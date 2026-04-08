@@ -1,3 +1,8 @@
+export { meridianFinancials } from './financials'
+export { meridianTechnology } from './technology'
+export { meridianClinical } from './clinical'
+export { meridianLeadership } from './leadership'
+
 export const meridianHealth = {
   org: {
     name: "Meridian Health System",
@@ -6,8 +11,10 @@ export const meridianHealth = {
     headquarters: "Charlotte, NC",
     states: ["NC", "SC", "VA", "TN"],
     employees: 42000,
+    physicians: 3800,
     revenue: 11.2,
     operatingMargin: 1.8,
+    targetOperatingMargin: 4.0,
   },
   hospitals: {
     total: 23,
