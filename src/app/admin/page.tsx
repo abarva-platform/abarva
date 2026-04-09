@@ -14,6 +14,7 @@ const LINKS = [
   { href: '/admin/approvals', label: 'Approvals' },
   { href: '/admin/outcomes', label: 'Outcome Tracker' },
   { href: '/admin/brief', label: 'Pre-Meeting Brief' },
+  { href: '/admin/context', label: 'Business Context' },
 ]
 
 const ENGAGEMENTS = [
@@ -67,6 +68,7 @@ export default function AdminHub() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <a href={`/?client=${eng.id}`} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#2563EB', color: 'white', textAlign: 'center' }}>Open →</a>
                   {eng.id === 'meridian' && <a href="/admin/brief" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#0F172A', color: '#E6EDF3', textAlign: 'center', border: '1px solid #1E293B' }}>Brief →</a>}
+                  {eng.id === 'meridian' && <a href="/admin/context" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#1E3A5F', color: '#FFFFFF', textAlign: 'center' }}>Context →</a>}
                   {eng.pending > 0 && <a href="/admin/approvals" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#FEF2F2', color: '#DC2626', textAlign: 'center', border: '1px solid #FECACA' }}>{eng.pending} pending</a>}
                 </div>
               </div>
@@ -93,7 +95,7 @@ export default function AdminHub() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={S.card}>
               <div style={S.label}>QUICK ACTIONS</div>
-              {[{ label: '+ New Engagement', href: '/search', color: '#2563EB' }, { label: 'Upload Data', href: '/admin/data', color: '#7C3AED' }, { label: 'Review Approvals (3)', href: '/admin/approvals', color: '#DC2626' }, { label: 'Outcome Tracker', href: '/admin/outcomes', color: '#059669' }].map((a, i) => (
+              {[{ label: '+ New Engagement', href: '/search', color: '#2563EB' }, { label: 'Upload Data', href: '/admin/data', color: '#7C3AED' }, { label: 'Review Approvals (3)', href: '/admin/approvals', color: '#DC2626' }, { label: 'Outcome Tracker', href: '/admin/outcomes', color: '#059669' }, { label: 'Business Context', href: '/admin/context', color: '#0F172A' }].map((a, i) => (
                 <a key={i} href={a.href} style={{ display: 'block', padding: '10px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', background: `${a.color}10`, color: a.color, border: `1px solid ${a.color}30`, marginBottom: '8px' }}>{a.label}</a>
               ))}
             </div>
