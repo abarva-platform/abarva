@@ -65,12 +65,7 @@ export default function AbarvaNav({ clientId, onClientChange, activePage, showAd
               {c.name}
             </button>
           ))}
-          {extraClients.map(c => (
-            <button key={c.id} onClick={() => switchClient(c.id)} style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: clientId === c.id ? 'none' : '1px solid #E2E8F0', background: clientId === c.id ? '#7C3AED' : '#F8FAFC', color: clientId === c.id ? '#FFFFFF' : '#475569' }}>
-              {c.name}
-            </button>
-          ))}
-          <a href="/search" style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#F0FDF4', color: '#059669', border: '1px solid #D1FAE5' }}>+ New</a>
+          <a href="/search" style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#F0FDF4', color: '#059669', border: '1px solid #D1FAE5' }}>+ New Client</a>
         </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
