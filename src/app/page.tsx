@@ -123,7 +123,7 @@ export default function Home() {
                   {p.bullets.map((b, i) => (
                     <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
                       <span style={{ color: p.accent, fontSize: '10px', marginTop: '3px', flexShrink: 0 }}>✓</span>
-                      <span style={{ fontSize: '12px', color: '#475569', lineHeight: 1.4 }}>{b}</span>
+                      <span style={{ fontSize: '12px', color: '#475569', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{b}</span>
                     </div>
                   ))}
                 </div>
