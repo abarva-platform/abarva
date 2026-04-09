@@ -70,9 +70,14 @@ export default function AbarvaNav({ clientId, onClientChange, activePage, showAd
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {showAdmin && (
+          <div style={{ display: 'flex', gap: '8px' }}>
+          <a href="/investor" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#1E3A5F', color: '#FFFFFF', border: 'none' }}>
+            Investor View
+          </a>
           <a href="/admin" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: activePage === 'admin' ? '#EFF6FF' : '#F8FAFC', color: activePage === 'admin' ? '#2563EB' : '#475569', border: '1px solid #E2E8F0' }}>
             Maestro Admin
           </a>
+        </div>
         )}
         <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 10px', borderRadius: '20px', background: '#EFF6FF', color: '#2563EB' }}>Maestro</span>
         <span style={{ fontSize: '13px', color: '#475569' }}>{user?.firstName}</span>
