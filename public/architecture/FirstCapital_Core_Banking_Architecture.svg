@@ -1,0 +1,221 @@
+<svg viewBox="0 0 1100 780" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <rect width="1100" height="780" fill="#FAFAFA"/>
+  
+  <!-- Title -->
+  <rect x="0" y="0" width="1100" height="50" fill="#1E3A5F"/>
+  <text x="550" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="bold">FIRST CAPITAL FINANCIAL — CORE BANKING ARCHITECTURE</text>
+  <text x="550" y="44" text-anchor="middle" fill="#94A3B8" font-size="10">$18B Assets · $168M IT Budget · April 2026 · Confidential</text>
+
+  <!-- Legend -->
+  <rect x="20" y="56" width="1060" height="26" fill="#F8FAFC" rx="4"/>
+  <rect x="30" y="63" width="12" height="12" fill="#ECFDF5" stroke="#059669" stroke-width="1.5" rx="2"/>
+  <text x="48" y="73" fill="#374151" font-size="10">Healthy</text>
+  <rect x="100" y="63" width="12" height="12" fill="#FFFBEB" stroke="#D97706" stroke-width="1.5" rx="2"/>
+  <text x="118" y="73" fill="#374151" font-size="10">Issues</text>
+  <rect x="170" y="63" width="12" height="12" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5" rx="2"/>
+  <text x="188" y="73" fill="#374151" font-size="10">Critical Risk</text>
+  <rect x="270" y="63" width="12" height="12" fill="#EFF6FF" stroke="#2563EB" stroke-width="1.5" rx="2"/>
+  <text x="288" y="73" fill="#374151" font-size="10">New / In Progress</text>
+  <text x="750" y="73" fill="#94A3B8" font-size="10">FIS HORIZON is 22 years old at 87% capacity — core banking modernization decision required by Q3 2026</text>
+
+  <!-- LAYER 1: CUSTOMER CHANNELS -->
+  <rect x="20" y="88" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="102" text-anchor="middle" fill="white" font-size="11" font-weight="bold">CUSTOMER CHANNELS</text>
+
+  <!-- Online Banking -->
+  <rect x="30" y="114" width="180" height="75" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="120" y="134" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Q2 Digital Banking</text>
+  <text x="120" y="150" text-anchor="middle" fill="#374151" font-size="9">Online Banking · 1.8M customers</text>
+  <text x="120" y="166" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">T+1 balances (stale data)</text>
+  <text x="120" y="180" text-anchor="middle" fill="#94A3B8" font-size="8">$4.8M/yr · Expires 2026</text>
+
+  <!-- Mobile -->
+  <rect x="225" y="114" width="180" height="75" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" rx="5"/>
+  <text x="315" y="134" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Mobile App</text>
+  <text x="315" y="150" text-anchor="middle" fill="#374151" font-size="9">iOS + Android · 420K active</text>
+  <text x="315" y="166" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">Rating: 3.2/5 (threshold 3.8)</text>
+  <text x="315" y="180" text-anchor="middle" fill="#94A3B8" font-size="8">UX overhaul approved</text>
+
+  <!-- Account Opening -->
+  <rect x="420" y="114" width="180" height="75" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" rx="5"/>
+  <text x="510" y="134" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Narmi Account Opening</text>
+  <text x="510" y="150" text-anchor="middle" fill="#374151" font-size="9">Digital account opening</text>
+  <text x="510" y="166" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">64% abandonment (18 min)</text>
+  <text x="510" y="180" text-anchor="middle" fill="#94A3B8" font-size="8">Benchmark: 32% / 8 min</text>
+
+  <!-- Branch Network -->
+  <rect x="615" y="114" width="200" height="75" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="715" y="134" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Branch Network</text>
+  <text x="715" y="150" text-anchor="middle" fill="#374151" font-size="9">84 branches · MD/VA/DC/PA/DE</text>
+  <text x="715" y="166" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">FIS IBS Teller · Live</text>
+  <text x="715" y="180" text-anchor="middle" fill="#94A3B8" font-size="8">Cisco network · AT&T MPLS</text>
+
+  <!-- Call Center -->
+  <rect x="830" y="114" width="240" height="75" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="950" y="134" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Call Center / IVR</text>
+  <text x="950" y="150" text-anchor="middle" fill="#374151" font-size="9">Avaya platform · 180 agents</text>
+  <text x="950" y="166" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="950" y="180" text-anchor="middle" fill="#94A3B8" font-size="8">Not integrated with core banking data</text>
+
+  <!-- LAYER 2: CORE BANKING -->
+  <rect x="20" y="197" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="211" text-anchor="middle" fill="white" font-size="11" font-weight="bold">CORE BANKING PLATFORM — THE CRITICAL CONSTRAINT</text>
+
+  <!-- FIS HORIZON - Large Critical Box -->
+  <rect x="30" y="223" width="620" height="110" fill="#FEF2F2" stroke="#DC2626" stroke-width="3" rx="5"/>
+  <text x="340" y="248" text-anchor="middle" fill="#1E3A5F" font-size="14" font-weight="bold">FIS HORIZON 3.4 — CORE BANKING</text>
+  <text x="340" y="267" text-anchor="middle" fill="#374151" font-size="10">FIS Global · Installed 2002 · 22 YEARS OLD · Last major feature release: 2018</text>
+  <text x="340" y="287" text-anchor="middle" fill="#DC2626" font-size="12" font-weight="bold">87% peak capacity · Cannot support FedNow or RTP natively · FIS raising fees 18% in 2025</text>
+  <text x="340" y="305" text-anchor="middle" fill="#374151" font-size="10">$18M/yr license + maintenance · Contract 2027 · 100 undocumented customizations</text>
+  <text x="340" y="323" text-anchor="middle" fill="#94A3B8" font-size="9">Core banking replacement evaluated 2x in 5 years — no decision. API modernization layer: $3-8M alternative.</text>
+
+  <!-- Replacement Options -->
+  <rect x="665" y="223" width="415" height="110" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" rx="5"/>
+  <text x="872" y="245" text-anchor="middle" fill="#1E3A5F" font-size="12" font-weight="bold">MODERNIZATION OPTIONS (Decision Required Q3 2026)</text>
+  <text x="872" y="263" text-anchor="middle" fill="#374151" font-size="10">Option A: API Layer on HORIZON — $3-8M · 6 months · Enables FedNow without replacement</text>
+  <text x="872" y="279" text-anchor="middle" fill="#374151" font-size="10">Option B: Temenos Transact — $25-80M · 24-36 months · Best fit for $18B bank</text>
+  <text x="872" y="295" text-anchor="middle" fill="#374151" font-size="10">Option C: Thought Machine — $40-100M · 36-48 months · Cloud-native · High risk</text>
+  <text x="872" y="311" text-anchor="middle" fill="#2563EB" font-size="10" font-weight="bold">Abarva recommendation: Option A now + Option B decision by Q3 2026</text>
+  <text x="872" y="327" text-anchor="middle" fill="#94A3B8" font-size="9">Cost of inaction: $180M deposit risk + FIS fee increase + regulatory exposure</text>
+
+  <!-- LAYER 3: PAYMENTS -->
+  <rect x="20" y="341" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="355" text-anchor="middle" fill="white" font-size="11" font-weight="bold">PAYMENTS INFRASTRUCTURE</text>
+
+  <!-- FedNow MISSING -->
+  <rect x="30" y="367" width="200" height="80" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="130" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">FedNow</text>
+  <text x="130" y="405" text-anchor="middle" fill="#DC2626" font-size="11" font-weight="bold">NOT LIVE</text>
+  <text x="130" y="422" text-anchor="middle" fill="#374151" font-size="9">68% of peers live</text>
+  <text x="130" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">$180M deposit risk · API approved</text>
+
+  <!-- RTP -->
+  <rect x="245" y="367" width="180" height="80" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" rx="5"/>
+  <text x="335" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">RTP (Real-Time)</text>
+  <text x="335" y="405" text-anchor="middle" fill="#DC2626" font-size="11" font-weight="bold">NOT LIVE</text>
+  <text x="335" y="422" text-anchor="middle" fill="#374151" font-size="9">Commercial clients requesting</text>
+  <text x="335" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">Blocked by HORIZON architecture</text>
+
+  <!-- ACH/Wire -->
+  <rect x="440" y="367" width="180" height="80" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="530" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">ACH and FedWire</text>
+  <text x="530" y="405" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold">Live · Stable</text>
+  <text x="530" y="422" text-anchor="middle" fill="#374151" font-size="9">FIS managed · Same-day ACH</text>
+  <text x="530" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">$1.2M/yr · Expires 2027</text>
+
+  <!-- Cards -->
+  <rect x="635" y="367" width="180" height="80" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="725" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">FIS CardNet</text>
+  <text x="725" y="405" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold">Live · Stable</text>
+  <text x="725" y="422" text-anchor="middle" fill="#374151" font-size="9">Debit + credit processing</text>
+  <text x="725" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">Tightly coupled to HORIZON</text>
+
+  <!-- Zelle -->
+  <rect x="830" y="367" width="120" height="80" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="890" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Zelle</text>
+  <text x="890" y="405" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold">Live</text>
+  <text x="890" y="422" text-anchor="middle" fill="#374151" font-size="9">P2P consumer</text>
+  <text x="890" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">No commercial P2P</text>
+
+  <!-- SWIFT -->
+  <rect x="965" y="367" width="115" height="80" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="1022" y="388" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">SWIFT</text>
+  <text x="1022" y="405" text-anchor="middle" fill="#059669" font-size="11" font-weight="bold">Live</text>
+  <text x="1022" y="422" text-anchor="middle" fill="#374151" font-size="9">International wires</text>
+  <text x="1022" y="436" text-anchor="middle" fill="#94A3B8" font-size="8">Correspondent banking</text>
+
+  <!-- LAYER 4: RISK AND COMPLIANCE -->
+  <rect x="20" y="455" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="469" text-anchor="middle" fill="white" font-size="11" font-weight="bold">RISK, COMPLIANCE AND SECURITY</text>
+
+  <!-- NICE Actimize -->
+  <rect x="30" y="481" width="240" height="85" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="150" y="501" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">NICE Actimize SAM</text>
+  <text x="150" y="518" text-anchor="middle" fill="#374151" font-size="9">AML · Version 8.1 (2 behind)</text>
+  <text x="150" y="534" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">78% false positive rate</text>
+  <text x="150" y="550" text-anchor="middle" fill="#374151" font-size="9">34% automation vs 72% benchmark</text>
+  <text x="150" y="563" text-anchor="middle" fill="#94A3B8" font-size="8">3 OCC MRAs · Upgrade to 10.2 needed</text>
+
+  <!-- SQL Server DW -->
+  <rect x="285" y="481" width="220" height="85" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="395" y="501" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">SQL Server 2017 DW</text>
+  <text x="395" y="518" text-anchor="middle" fill="#374151" font-size="9">Data Warehouse · Financial reporting</text>
+  <text x="395" y="534" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">EOS: OCTOBER 2025 (6 months)</text>
+  <text x="395" y="550" text-anchor="middle" fill="#374151" font-size="9">Migration to Snowflake in progress</text>
+  <text x="395" y="563" text-anchor="middle" fill="#94A3B8" font-size="8">OCC MRA risk if not migrated</text>
+
+  <!-- CrowdStrike -->
+  <rect x="520" y="481" width="180" height="85" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="610" y="501" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">CrowdStrike Falcon</text>
+  <text x="610" y="518" text-anchor="middle" fill="#374151" font-size="9">Endpoint Security</text>
+  <text x="610" y="534" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · 84% coverage</text>
+  <text x="610" y="550" text-anchor="middle" fill="#374151" font-size="9">$2.1M/yr · Expires 2026</text>
+  <text x="610" y="563" text-anchor="middle" fill="#94A3B8" font-size="8">16% branches not enrolled</text>
+
+  <!-- Splunk -->
+  <rect x="715" y="481" width="180" height="85" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="805" y="501" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Splunk SIEM</text>
+  <text x="805" y="518" text-anchor="middle" fill="#374151" font-size="9">Security Monitoring</text>
+  <text x="805" y="534" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">60% log sources connected</text>
+  <text x="805" y="550" text-anchor="middle" fill="#374151" font-size="9">$1.4M/yr · Expires 2026</text>
+  <text x="805" y="563" text-anchor="middle" fill="#94A3B8" font-size="8">HORIZON logs not integrated</text>
+
+  <!-- Snowflake New -->
+  <rect x="910" y="481" width="170" height="85" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" rx="5"/>
+  <text x="995" y="501" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Snowflake</text>
+  <text x="995" y="518" text-anchor="middle" fill="#374151" font-size="9">Cloud DW (replacing SQL Server)</text>
+  <text x="995" y="534" text-anchor="middle" fill="#2563EB" font-size="10" font-weight="bold">Migration in progress</text>
+  <text x="995" y="550" text-anchor="middle" fill="#374151" font-size="9">$1.2M/yr · Expires 2027</text>
+  <text x="995" y="563" text-anchor="middle" fill="#94A3B8" font-size="8">Must complete before Oct 2025</text>
+
+  <!-- LAYER 5: INFRASTRUCTURE -->
+  <rect x="20" y="574" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="588" text-anchor="middle" fill="white" font-size="11" font-weight="bold">INFRASTRUCTURE AND CLOUD</text>
+
+  <!-- Bethesda DC -->
+  <rect x="30" y="600" width="220" height="70" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="140" y="620" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Bethesda Data Center</text>
+  <text x="140" y="637" text-anchor="middle" fill="#374151" font-size="9">Primary · Owned · 48 racks</text>
+  <text x="140" y="653" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">HORIZON on-prem — aging</text>
+  <text x="140" y="666" text-anchor="middle" fill="#94A3B8" font-size="8">$9.2M/yr · Consolidation planned</text>
+
+  <!-- Azure -->
+  <rect x="265" y="600" width="220" height="70" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" rx="5"/>
+  <text x="375" y="620" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Microsoft Azure</text>
+  <text x="375" y="637" text-anchor="middle" fill="#374151" font-size="9">Cloud Platform · 28% workloads</text>
+  <text x="375" y="653" text-anchor="middle" fill="#2563EB" font-size="10" font-weight="bold">Growing · FedNow target platform</text>
+  <text x="375" y="666" text-anchor="middle" fill="#94A3B8" font-size="8">$5.2M/yr · ExpressRoute connected</text>
+
+  <!-- Branch Network -->
+  <rect x="500" y="600" width="220" height="70" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="610" y="620" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Branch Network (84 branches)</text>
+  <text x="610" y="637" text-anchor="middle" fill="#374151" font-size="9">Cisco switching · AT&T MPLS</text>
+  <text x="610" y="653" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="610" y="666" text-anchor="middle" fill="#94A3B8" font-size="8">$6.8M/yr · SD-WAN evaluation</text>
+
+  <!-- Workday HR -->
+  <rect x="735" y="600" width="180" height="70" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="825" y="620" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Workday HCM</text>
+  <text x="825" y="637" text-anchor="middle" fill="#374151" font-size="9">HR · 4,200 employees</text>
+  <text x="825" y="653" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="825" y="666" text-anchor="middle" fill="#94A3B8" font-size="8">$2.8M/yr</text>
+
+  <!-- ServiceNow -->
+  <rect x="930" y="600" width="150" height="70" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="1005" y="620" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">ServiceNow</text>
+  <text x="1005" y="637" text-anchor="middle" fill="#374151" font-size="9">ITSM · IT operations</text>
+  <text x="1005" y="653" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="1005" y="666" text-anchor="middle" fill="#94A3B8" font-size="8">$1.2M/yr</text>
+
+  <!-- Key Risk Callouts -->
+  <rect x="20" y="678" width="1060" height="70" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5" rx="5"/>
+  <text x="550" y="698" text-anchor="middle" fill="#DC2626" font-size="12" font-weight="bold">CRITICAL RISKS REQUIRING IMMEDIATE ACTION</text>
+  <text x="40" y="716" fill="#374151" font-size="10">1. FedNow not live — 68% of peers live — $180M commercial deposit risk — API layer approved, deploy within 6 months</text>
+  <text x="40" y="731" fill="#374151" font-size="10">2. SQL Server 2017 EOS October 2025 — 6 months — Snowflake migration must complete — OCC MRA risk if not done</text>
+  <text x="40" y="746" fill="#374151" font-size="10">3. NICE Actimize 2 versions behind — 78% false positive rate — 3 OCC MRAs — upgrade to 10.2 within 90 days</text>
+
+  <!-- Footer -->
+  <rect x="0" y="752" width="1100" height="28" fill="#F8FAFC"/>
+  <text x="20" y="770" fill="#94A3B8" font-size="9">Generated by Abarva Intelligence Platform · April 2026 · Confidential — First Capital Financial</text>
+  <text x="1080" y="770" text-anchor="end" fill="#94A3B8" font-size="9">Data confidence: 88%</text>
+</svg>

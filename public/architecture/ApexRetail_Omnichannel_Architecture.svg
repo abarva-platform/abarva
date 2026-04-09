@@ -1,0 +1,215 @@
+<svg viewBox="0 0 1100 820" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, sans-serif">
+  <rect width="1100" height="820" fill="#FAFAFA"/>
+  
+  <rect x="0" y="0" width="1100" height="50" fill="#1E3A5F"/>
+  <text x="550" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="bold">APEX RETAIL GROUP — OMNICHANNEL TECHNOLOGY ARCHITECTURE</text>
+  <text x="550" y="44" text-anchor="middle" fill="#94A3B8" font-size="10">800 Stores · $12.4B Revenue · $285M IT Budget · April 2026 · Confidential</text>
+
+  <rect x="20" y="56" width="1060" height="24" fill="#F8FAFC" rx="3"/>
+  <rect x="30" y="63" width="12" height="12" fill="#ECFDF5" stroke="#059669" rx="2"/>
+  <text x="48" y="73" fill="#374151" font-size="10">Healthy</text>
+  <rect x="100" y="63" width="12" height="12" fill="#FFFBEB" stroke="#D97706" rx="2"/>
+  <text x="118" y="73" fill="#374151" font-size="10">Issues</text>
+  <rect x="170" y="63" width="12" height="12" fill="#FEF2F2" stroke="#DC2626" rx="2"/>
+  <text x="188" y="73" fill="#374151" font-size="10">Critical Risk</text>
+  <rect x="270" y="63" width="12" height="12" fill="#EFF6FF" stroke="#2563EB" rx="2"/>
+  <text x="288" y="73" fill="#374151" font-size="10">Partial / New</text>
+  <text x="700" y="73" fill="#94A3B8" font-size="10">SAP ECC support ends 2027 · 8,400 customizations · Board decision required Q3 2024 (MISSED)</text>
+
+  <!-- LAYER 1: CUSTOMER EXPERIENCE -->
+  <rect x="20" y="86" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="100" text-anchor="middle" fill="white" font-size="11" font-weight="bold">CUSTOMER EXPERIENCE LAYER</text>
+
+  <!-- SFCC -->
+  <rect x="30" y="112" width="220" height="90" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="140" y="133" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Salesforce Commerce Cloud</text>
+  <text x="140" y="150" text-anchor="middle" fill="#374151" font-size="9">Ecommerce · $8.4M/yr · Exp 2026</text>
+  <text x="140" y="167" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">4.2s load (vs 2.0 benchmark)</text>
+  <text x="140" y="183" text-anchor="middle" fill="#374151" font-size="9">72% cart abandonment · $840M loss</text>
+  <text x="140" y="198" text-anchor="middle" fill="#94A3B8" font-size="8">Einstein personalization UNACTIVATED</text>
+
+  <!-- Mobile App -->
+  <rect x="265" y="112" width="180" height="90" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="355" y="133" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Mobile App</text>
+  <text x="355" y="150" text-anchor="middle" fill="#374151" font-size="9">iOS + Android · $2M/yr</text>
+  <text x="355" y="167" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">Rating: 3.7/5 (below 4.0)</text>
+  <text x="355" y="183" text-anchor="middle" fill="#374151" font-size="9">Mobile conversion 1.8% vs 3.4%</text>
+  <text x="355" y="198" text-anchor="middle" fill="#94A3B8" font-size="8">UX redesign in progress</text>
+
+  <!-- Punchh Loyalty -->
+  <rect x="460" y="112" width="200" height="90" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="560" y="133" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Punchh Loyalty</text>
+  <text x="560" y="150" text-anchor="middle" fill="#374151" font-size="9">18M members · $1.8M/yr · Exp 2026</text>
+  <text x="560" y="167" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">NOT connected to ecommerce</text>
+  <text x="560" y="183" text-anchor="middle" fill="#374151" font-size="9">42% active vs 68% benchmark</text>
+  <text x="560" y="198" text-anchor="middle" fill="#94A3B8" font-size="8">$1.24B revenue gap</text>
+
+  <!-- Segment CDP -->
+  <rect x="675" y="112" width="200" height="90" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="775" y="133" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Segment CDP</text>
+  <text x="775" y="150" text-anchor="middle" fill="#374151" font-size="9">Customer Data Platform · $2.4M/yr</text>
+  <text x="775" y="167" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">50% profile fragmentation</text>
+  <text x="775" y="183" text-anchor="middle" fill="#374151" font-size="9">Same customer counted 2.8x</text>
+  <text x="775" y="198" text-anchor="middle" fill="#94A3B8" font-size="8">CCPA compliance risk</text>
+
+  <!-- NCR POS -->
+  <rect x="890" y="112" width="190" height="90" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="985" y="133" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">NCR Counterpoint POS</text>
+  <text x="985" y="150" text-anchor="middle" fill="#374151" font-size="9">800 stores · 28K devices · $12.4M/yr</text>
+  <text x="985" y="167" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">Version 9.0 (vs 12.0 current)</text>
+  <text x="985" y="183" text-anchor="middle" fill="#374151" font-size="9">4-hour inventory sync delay</text>
+  <text x="985" y="198" text-anchor="middle" fill="#94A3B8" font-size="8">Loyalty not integrated at checkout</text>
+
+  <!-- LAYER 2: ERP AND SUPPLY CHAIN -->
+  <rect x="20" y="210" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="224" text-anchor="middle" fill="white" font-size="11" font-weight="bold">ERP AND ORDER MANAGEMENT — THE CRITICAL CONSTRAINT</text>
+
+  <!-- SAP ECC - Large Critical -->
+  <rect x="30" y="236" width="380" height="105" fill="#FEF2F2" stroke="#DC2626" stroke-width="3" rx="5"/>
+  <text x="220" y="258" text-anchor="middle" fill="#1E3A5F" font-size="13" font-weight="bold">SAP ECC 6.0 — CORE ERP</text>
+  <text x="220" y="276" text-anchor="middle" fill="#374151" font-size="9">SAP SE · 14 years old · 8,400 customizations · $18M/yr</text>
+  <text x="220" y="294" text-anchor="middle" fill="#DC2626" font-size="12" font-weight="bold">SUPPORT ENDING 2027 · BOARD DECISION MISSED Q3 2024</text>
+  <text x="220" y="311" text-anchor="middle" fill="#374151" font-size="9">CFO blocking $180M S4 HANA · Alternatives: Rise with SAP ($40-80M) or MS Dynamics ($20-60M)</text>
+  <text x="220" y="328" text-anchor="middle" fill="#94A3B8" font-size="8">60-80% of 8,400 customizations need rework for S4 · 140 undocumented ABAP programs</text>
+
+  <!-- IBM Sterling OMS -->
+  <rect x="425" y="236" width="220" height="105" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="535" y="258" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">IBM Sterling OMS</text>
+  <text x="535" y="275" text-anchor="middle" fill="#374151" font-size="9">Order Management · v10.0 · $4.2M/yr</text>
+  <text x="535" y="292" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">3 VERSIONS BEHIND (v13.0 current)</text>
+  <text x="535" y="308" text-anchor="middle" fill="#374151" font-size="9">Overselling 3x/month</text>
+  <text x="535" y="324" text-anchor="middle" fill="#94A3B8" font-size="8">No real-time store inventory · IBM fees +28% 2026</text>
+
+  <!-- SAP Ariba -->
+  <rect x="660" y="236" width="180" height="105" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="750" y="258" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">SAP Ariba</text>
+  <text x="750" y="275" text-anchor="middle" fill="#374151" font-size="9">Procurement · $2M/yr</text>
+  <text x="750" y="292" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="750" y="308" text-anchor="middle" fill="#374151" font-size="9">$2.4B managed spend</text>
+  <text x="750" y="324" text-anchor="middle" fill="#94A3B8" font-size="8">48% China sourcing risk</text>
+
+  <!-- Infor WFM -->
+  <rect x="855" y="236" width="225" height="105" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="967" y="258" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Infor WFM (Store Labor)</text>
+  <text x="967" y="275" text-anchor="middle" fill="#374151" font-size="9">Workforce Scheduling · $3.2M/yr</text>
+  <text x="967" y="292" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">68% annual staff turnover</text>
+  <text x="967" y="308" text-anchor="middle" fill="#374151" font-size="9">28,000 store employees</text>
+  <text x="967" y="324" text-anchor="middle" fill="#94A3B8" font-size="8">Min wage increases $48M impact</text>
+
+  <!-- LAYER 3: SUPPLY CHAIN -->
+  <rect x="20" y="349" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="363" text-anchor="middle" fill="white" font-size="11" font-weight="bold">SUPPLY CHAIN AND FULFILLMENT</text>
+
+  <!-- o9 Demand Planning -->
+  <rect x="30" y="375" width="250" height="90" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="155" y="396" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">o9 Demand Planning</text>
+  <text x="155" y="413" text-anchor="middle" fill="#374151" font-size="9">AI Demand Forecasting · $6.8M/yr</text>
+  <text x="155" y="430" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">40% IMPLEMENTED · STALLED</text>
+  <text x="155" y="446" text-anchor="middle" fill="#374151" font-size="9">Forecast accuracy 62% vs 84%</text>
+  <text x="155" y="460" text-anchor="middle" fill="#94A3B8" font-size="8">$180M excess inventory directly caused</text>
+
+  <!-- Manhattan WMS -->
+  <rect x="295" y="375" width="210" height="90" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="400" y="396" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Manhattan WMS</text>
+  <text x="400" y="413" text-anchor="middle" fill="#374151" font-size="9">Warehouse Mgmt · 6 of 8 DCs · $4.8M/yr</text>
+  <text x="400" y="430" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">6 of 8 DCs live</text>
+  <text x="400" y="446" text-anchor="middle" fill="#374151" font-size="9">Contract expiring 2025</text>
+  <text x="400" y="460" text-anchor="middle" fill="#94A3B8" font-size="8">Not integrated with o9</text>
+
+  <!-- Oracle TMS -->
+  <rect x="520" y="375" width="180" height="90" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="610" y="396" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Oracle TMS</text>
+  <text x="610" y="413" text-anchor="middle" fill="#374151" font-size="9">Transportation Mgmt · $2.8M/yr</text>
+  <text x="610" y="430" text-anchor="middle" fill="#059669" font-size="10" font-weight="bold">Live · Stable</text>
+  <text x="610" y="446" text-anchor="middle" fill="#374151" font-size="9">On-time to stores: 82%</text>
+  <text x="610" y="460" text-anchor="middle" fill="#94A3B8" font-size="8">Benchmark: 96%</text>
+
+  <!-- Distribution Centers -->
+  <rect x="715" y="375" width="365" height="90" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="897" y="396" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Distribution Network (8 DCs · 4.8M sq ft)</text>
+  <text x="897" y="413" text-anchor="middle" fill="#374151" font-size="9">Columbus OH (HQ) · Atlanta · Dallas · Chicago · Philadelphia · Phoenix · Seattle · Memphis</text>
+  <text x="897" y="430" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">Inventory accuracy 84% vs 98% benchmark</text>
+  <text x="897" y="446" text-anchor="middle" fill="#374151" font-size="9">2 DCs automated · 6 DCs manual · RFID in 84 stores only</text>
+  <text x="897" y="460" text-anchor="middle" fill="#94A3B8" font-size="8">Omnichannel impossible at 84% accuracy · Ship-from-store blocked by OMS version</text>
+
+  <!-- LAYER 4: DATA AND AI -->
+  <rect x="20" y="473" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="487" text-anchor="middle" fill="white" font-size="11" font-weight="bold">DATA, ANALYTICS AND AI</text>
+
+  <!-- Snowflake -->
+  <rect x="30" y="499" width="200" height="80" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" rx="5"/>
+  <text x="130" y="520" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Snowflake</text>
+  <text x="130" y="537" text-anchor="middle" fill="#374151" font-size="9">Cloud Data Warehouse</text>
+  <text x="130" y="554" text-anchor="middle" fill="#2563EB" font-size="10" font-weight="bold">40% Migrated</text>
+  <text x="130" y="570" text-anchor="middle" fill="#94A3B8" font-size="8">SAP + store data not loaded</text>
+
+  <!-- Databricks -->
+  <rect x="245" y="499" width="200" height="80" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="345" y="520" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Databricks</text>
+  <text x="345" y="537" text-anchor="middle" fill="#374151" font-size="9">ML Platform · $3.6M/yr</text>
+  <text x="345" y="554" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">3 models in production</text>
+  <text x="345" y="570" text-anchor="middle" fill="#94A3B8" font-size="8">15+ models expected · CDO vacant</text>
+
+  <!-- Einstein (unactivated) -->
+  <rect x="460" y="499" width="220" height="80" fill="#FEF2F2" stroke="#DC2626" stroke-width="2.5" rx="5"/>
+  <text x="570" y="520" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Salesforce Einstein</text>
+  <text x="570" y="537" text-anchor="middle" fill="#374151" font-size="9">Personalization (included in SFCC)</text>
+  <text x="570" y="554" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">PURCHASED · NEVER ACTIVATED</text>
+  <text x="570" y="570" text-anchor="middle" fill="#94A3B8" font-size="8">$248M revenue opportunity · $0 incremental cost</text>
+
+  <!-- Tableau -->
+  <rect x="695" y="499" width="180" height="80" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="785" y="520" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Tableau and Power BI</text>
+  <text x="785" y="537" text-anchor="middle" fill="#374151" font-size="9">BI and Reporting · $1.6M/yr</text>
+  <text x="785" y="554" text-anchor="middle" fill="#D97706" font-size="10" font-weight="bold">284 dashboards · 142 active</text>
+  <text x="785" y="570" text-anchor="middle" fill="#94A3B8" font-size="8">Not connected to Snowflake</text>
+
+  <!-- Churn model undeployed -->
+  <rect x="890" y="499" width="190" height="80" fill="#FEF2F2" stroke="#DC2626" stroke-width="2" rx="5"/>
+  <text x="985" y="520" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Churn Prediction Model</text>
+  <text x="985" y="537" text-anchor="middle" fill="#374151" font-size="9">Built and validated in Databricks</text>
+  <text x="985" y="554" text-anchor="middle" fill="#DC2626" font-size="10" font-weight="bold">VALIDATED · NOT DEPLOYED</text>
+  <text x="985" y="570" text-anchor="middle" fill="#94A3B8" font-size="8">No MLOps pipeline · CDO vacant</text>
+
+  <!-- LAYER 5: INFRASTRUCTURE -->
+  <rect x="20" y="587" width="1060" height="20" fill="#1E3A5F" rx="3"/>
+  <text x="550" y="601" text-anchor="middle" fill="white" font-size="11" font-weight="bold">INFRASTRUCTURE</text>
+
+  <rect x="30" y="613" width="200" height="65" fill="#FFFBEB" stroke="#D97706" stroke-width="2" rx="5"/>
+  <text x="130" y="632" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Bethesda + Richmond DCs</text>
+  <text x="130" y="649" text-anchor="middle" fill="#374151" font-size="9">Primary + DR · Owned</text>
+  <text x="130" y="663" text-anchor="middle" fill="#94A3B8" font-size="8">SAP on-prem requirement · $7.2M/yr</text>
+
+  <rect x="245" y="613" width="200" height="65" fill="#EFF6FF" stroke="#2563EB" stroke-width="2" rx="5"/>
+  <text x="345" y="632" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Microsoft Azure (28%)</text>
+  <text x="345" y="649" text-anchor="middle" fill="#374151" font-size="9">Cloud Platform · Growing</text>
+  <text x="345" y="663" text-anchor="middle" fill="#94A3B8" font-size="8">$7.2M/yr · SAP migration target</text>
+
+  <rect x="460" y="613" width="200" height="65" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="560" y="632" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Store Network (800 stores)</text>
+  <text x="560" y="649" text-anchor="middle" fill="#374151" font-size="9">AT&T MPLS · SD-WAN 240 stores</text>
+  <text x="560" y="663" text-anchor="middle" fill="#94A3B8" font-size="8">$9.2M/yr · Full SD-WAN planned</text>
+
+  <rect x="675" y="613" width="200" height="65" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="775" y="632" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Security (CrowdStrike + Palo Alto)</text>
+  <text x="775" y="649" text-anchor="middle" fill="#374151" font-size="9">Endpoint + NGFW + PCI DSS</text>
+  <text x="775" y="663" text-anchor="middle" fill="#94A3B8" font-size="8">$4.8M/yr · 800 stores in scope</text>
+
+  <rect x="890" y="613" width="190" height="65" fill="#ECFDF5" stroke="#059669" stroke-width="2" rx="5"/>
+  <text x="985" y="632" text-anchor="middle" fill="#1E3A5F" font-size="11" font-weight="bold">Workday HCM</text>
+  <text x="985" y="649" text-anchor="middle" fill="#374151" font-size="9">HR · 28,000 employees</text>
+  <text x="985" y="663" text-anchor="middle" fill="#94A3B8" font-size="8">$3.2M/yr · Store scheduling gap</text>
+
+  <!-- Critical Risks -->
+  <rect x="20" y="685" width="1060" height="95" fill="#FEF2F2" stroke="#DC2626" stroke-width="1.5" rx="5"/>
+  <text x="550" y="704" text-anchor="middle" fill="#DC2626" font-size="12" font-weight="bold">CRITICAL RISKS AND OPPORTUNITIES</text>
+  <text x="40" y="722" fill="#374151" font-size="10">RISK 1: SAP ECC support ends 2027 — 8,400 customizations — board decision missed — CFO blocking $180M investment — must decide by Q2 2026</text>
+  <text x="40" y="737" fill="#374151" font-size="10">RISK 2: Inventory accuracy 84% vs 98% benchmark — omnichannel fulfillment impossible — $180M excess inventory from 62% forecast accuracy</text>
+  <text x="40" y="752" fill="#059669" font-size="10">OPPORTUNITY 1: Activate Salesforce Einstein — already purchased — $248M personalization revenue — 6 weeks to implement — $0 incremental cost</text>
+  <text x="40" y="767" fill="#059669" font-size="10">OPPORTUNITY 2: Connect Punchh loyalty to SFCC checkout — $1.24B loyalty revenue unlock — 60-day project — 18M members currently cannot redeem online</text>
+  <text x="40" y="782" fill="#2563EB" font-size="10">DECISION: Complete o9 demand planning (60% remaining) — $180M inventory reduction — 9-month payback on $6.8M already spent</text>
+
+  <rect x="0" y="784" width="1100" height="36" fill="#F8FAFC"/>
+  <text x="20" y="806" fill="#94A3B8" font-size="9">Generated by Abarva Intelligence Platform · April 2026 · Confidential — Apex Retail Group</text>
+  <text x="1080" y="806" text-anchor="end" fill="#94A3B8" font-size="9">Data confidence: 86% · $285M IT budget · 800 stores</text>
+</svg>

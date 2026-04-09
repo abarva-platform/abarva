@@ -1053,6 +1053,24 @@ export default function Home() {
                       Upload Data →
                     </button>
                   </div>
+                  <div className="p-5 rounded-xl mt-4" style={{background: '#F0F9FF', border: '1px solid #BAE6FD'}}>
+                    <h3 className="text-sm font-semibold mb-1" style={{color: '#0369A1'}}>Architecture Diagrams</h3>
+                    <p className="text-xs mb-3" style={{color: '#6B7280'}}>Current state enterprise architecture — SVG format</p>
+                    <div className="space-y-2">
+                      {[
+                        { name: 'Meridian Enterprise Architecture', file: '/architecture/Meridian_Enterprise_Architecture.svg' },
+                        { name: 'First Capital Core Banking', file: '/architecture/FirstCapital_Core_Banking_Architecture.svg' },
+                        { name: 'Apex Retail Omnichannel', file: '/architecture/ApexRetail_Omnichannel_Architecture.svg' },
+                      ].map((d, i) => (
+                        <a key={i} href={d.file} target="_blank"
+                          className="flex items-center justify-between p-2 rounded-lg transition"
+                          style={{background: '#FFFFFF', border: '1px solid #BAE6FD'}}>
+                          <p className="text-xs font-medium" style={{color: '#0F172A'}}>{d.name}</p>
+                          <span className="text-xs font-medium" style={{color: '#0369A1'}}>↗ View</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                   <div className="p-5 rounded-xl" style={{background: '#F0FDF4', border: '1px solid #D1FAE5'}}>
                     <h3 className="text-sm font-semibold mb-1" style={{color: '#059669'}}>Download Templates</h3>
                     <p className="text-xs mb-3" style={{color: '#6B7280'}}>Pre-built templates for structured data collection</p>
@@ -1063,6 +1081,9 @@ export default function Home() {
                         { name: 'Application and Technology Inventory', file: 'Meridian_Application_Technology_Inventory.xlsx', desc: '47 systems, integrations, vendor contracts' },
                         { name: 'Healthcare Quality and RCM Data', file: 'Meridian_Healthcare_Quality_RCM_Data.xlsx', desc: 'RCM by payer, HEDIS scores, 23 hospitals' },
                         { name: 'IT Financial Models — All 3 Clients', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'Meridian $504M, First Capital $168M, Apex $285M' },
+                        { name: 'Workforce and HR Analytics', file: 'Meridian_Workforce_HR_Analytics.xlsx', desc: '23 hospitals, 756 travel nurses, $142M travel cost' },
+                        { name: 'Vendor Performance Scorecard', file: 'Meridian_Vendor_Performance_Scorecard.xlsx', desc: '32 vendors, SLA tracking, $10M penalties available' },
+                        { name: 'Apex Store Technology Inventory', file: 'Apex_Retail_Store_Technology_Inventory.xlsx', desc: '800 stores, POS, network, security by location' },
                       ].map((t, i) => (
                         <a key={i} href={`/templates/${t.file}`} download
                           className="flex items-center justify-between p-3 rounded-lg transition"
