@@ -1057,11 +1057,13 @@ export default function Home() {
                     <h3 className="text-sm font-semibold mb-1" style={{color: '#0369A1'}}>Architecture Diagrams</h3>
                     <p className="text-xs mb-3" style={{color: '#6B7280'}}>Current state enterprise architecture — SVG format</p>
                     <div className="space-y-2">
-                      {[
+                      {(activeClient === 'meridian' ? [
                         { name: 'Meridian Enterprise Architecture', file: '/architecture/Meridian_Enterprise_Architecture.svg' },
-                        { name: 'First Capital Core Banking', file: '/architecture/FirstCapital_Core_Banking_Architecture.svg' },
-                        { name: 'Apex Retail Omnichannel', file: '/architecture/ApexRetail_Omnichannel_Architecture.svg' },
-                      ].map((d, i) => (
+                      ] : activeClient === 'firstcapital' ? [
+                        { name: 'First Capital Core Banking Architecture', file: '/architecture/FirstCapital_Core_Banking_Architecture.svg' },
+                      ] : activeClient === 'apexretail' ? [
+                        { name: 'Apex Retail Omnichannel Architecture', file: '/architecture/ApexRetail_Omnichannel_Architecture.svg' },
+                      ] : []).map((d, i) => (
                         <a key={i} href={d.file} target="_blank"
                           className="flex items-center justify-between p-2 rounded-lg transition"
                           style={{background: '#FFFFFF', border: '1px solid #BAE6FD'}}>
@@ -1075,16 +1077,21 @@ export default function Home() {
                     <h3 className="text-sm font-semibold mb-1" style={{color: '#059669'}}>Download Templates</h3>
                     <p className="text-xs mb-3" style={{color: '#6B7280'}}>Pre-built templates for structured data collection</p>
                     <div className="space-y-2">
-                      {[
+                      {(activeClient === 'meridian' ? [
                         { name: 'IT Financial Model FY2024', file: 'Meridian_IT_Financial_Model_FY2024.xlsx', desc: 'Budget, headcount, capex, cloud spend' },
                         { name: 'Data Center Infrastructure', file: 'Meridian_DataCenter_Infrastructure_Inventory.xlsx', desc: '1,240 servers, network, storage' },
                         { name: 'Application and Technology Inventory', file: 'Meridian_Application_Technology_Inventory.xlsx', desc: '47 systems, integrations, vendor contracts' },
                         { name: 'Healthcare Quality and RCM Data', file: 'Meridian_Healthcare_Quality_RCM_Data.xlsx', desc: 'RCM by payer, HEDIS scores, 23 hospitals' },
-                        { name: 'IT Financial Models — All 3 Clients', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'Meridian $504M, First Capital $168M, Apex $285M' },
                         { name: 'Workforce and HR Analytics', file: 'Meridian_Workforce_HR_Analytics.xlsx', desc: '23 hospitals, 756 travel nurses, $142M travel cost' },
                         { name: 'Vendor Performance Scorecard', file: 'Meridian_Vendor_Performance_Scorecard.xlsx', desc: '32 vendors, SLA tracking, $10M penalties available' },
-                        { name: 'Apex Store Technology Inventory', file: 'Apex_Retail_Store_Technology_Inventory.xlsx', desc: '800 stores, POS, network, security by location' },
-                      ].map((t, i) => (
+                      ] : activeClient === 'firstcapital' ? [
+                        { name: 'IT Financial Model FY2024', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'First Capital $168M IT budget — all categories' },
+                      ] : activeClient === 'apexretail' ? [
+                        { name: 'IT Financial Model FY2024', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'Apex Retail $285M IT budget — all categories' },
+                        { name: 'Store Technology Inventory', file: 'Apex_Retail_Store_Technology_Inventory.xlsx', desc: '800 stores, POS, network, security by location' },
+                      ] : [
+                        { name: 'IT Financial Models — All Clients', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'Meridian, First Capital, Apex Retail' },
+                      ]).map((t, i) => (
                         <a key={i} href={`/templates/${t.file}`} download
                           className="flex items-center justify-between p-3 rounded-lg transition"
                           style={{background: '#FFFFFF', border: '1px solid #D1FAE5'}}>
