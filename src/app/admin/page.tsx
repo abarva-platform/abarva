@@ -13,6 +13,7 @@ const LINKS = [
   { href: '/admin/data', label: 'Data Loader' },
   { href: '/admin/approvals', label: 'Approvals' },
   { href: '/admin/outcomes', label: 'Outcome Tracker' },
+  { href: '/admin/brief', label: 'Pre-Meeting Brief' },
 ]
 
 const ENGAGEMENTS = [
@@ -65,6 +66,7 @@ export default function AdminHub() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <a href={`/?client=${eng.id}`} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#2563EB', color: 'white', textAlign: 'center' }}>Open →</a>
+                  {eng.id === 'meridian' && <a href="/admin/brief" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#0F172A', color: '#E6EDF3', textAlign: 'center', border: '1px solid #1E293B' }}>Brief →</a>}
                   {eng.pending > 0 && <a href="/admin/approvals" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#FEF2F2', color: '#DC2626', textAlign: 'center', border: '1px solid #FECACA' }}>{eng.pending} pending</a>}
                 </div>
               </div>
