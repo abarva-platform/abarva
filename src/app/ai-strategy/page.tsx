@@ -425,6 +425,19 @@ function AIStrategyContent() {
                 ))}
               </div>
             </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+              {[
+                { label: 'Generate Architecture Pattern', href: '/architecture?client=' + activeClient },
+                { label: 'Generate Solution Blueprint', href: '/blueprint?client=' + activeClient },
+                { label: 'View Data Intelligence', href: '/data-intelligence?client=' + activeClient },
+              ].map((btn, i) => (
+                <a key={i} href={btn.href} style={{ display: 'block', padding: '12px 16px', borderRadius: '10px', background: '#0F172A', color: '#F8FAFC', textDecoration: 'none', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid #1E293B', letterSpacing: '0.01em' }}
+                  onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#1E293B'}
+                  onMouseLeave={e => (e.currentTarget as HTMLElement).style.background = '#0F172A'}>
+                  {btn.label} →
+                </a>
+              ))}
+            </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button onClick={() => setStep(5)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
               <a href="/" style={{ padding: '12px 32px', borderRadius: '10px', background: '#059669', color: 'white', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Done — Return to Dashboard</a>

@@ -44,6 +44,7 @@ function DiagnoseContent() {
   const [loading, setLoading] = useState(false)
   const [streaming, setStreaming] = useState('')
   const [activeClient, setActiveClient] = useState(clientId)
+  const [sidebarTab, setSidebarTab] = useState<'snapshot' | 'findings' | 'actions' | 'data'>('snapshot')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
@@ -71,6 +72,57 @@ function DiagnoseContent() {
       { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', status: 'yellow' as const },
       { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), status: 'yellow' as const },
     ]
+  }
+
+  function getDataFiles() {
+    if (activeClient === 'firstcapital') return [
+      { file: 'index.ts', label: 'Organization & Financials', confidence: 88 },
+      { file: 'technology_inventory.ts', label: 'Tech Stack Inventory', confidence: 87 },
+      { file: 'architecture.ts', label: 'System Architecture', confidence: 85 },
+      { file: 'ai.ts', label: 'AI Capabilities', confidence: 83 },
+    ]
+    if (activeClient === 'apexretail') return [
+      { file: 'index.ts', label: 'Organization & Financials', confidence: 86 },
+      { file: 'technology_inventory.ts', label: 'Tech Stack Inventory', confidence: 84 },
+      { file: 'ai.ts', label: 'AI Capabilities', confidence: 82 },
+    ]
+    return [
+      { file: 'financials.ts', label: 'Financial Performance', confidence: 95 },
+      { file: 'technology.ts', label: 'EHR & RCM Systems', confidence: 92 },
+      { file: 'technology_inventory.ts', label: 'Tech Stack Inventory', confidence: 94 },
+      { file: 'clinical.ts', label: 'Clinical Operations', confidence: 88 },
+      { file: 'leadership.ts', label: 'Leadership Insights', confidence: 90 },
+      { file: 'architecture.ts', label: 'System Architecture', confidence: 85 },
+      { file: 'ai.ts', label: 'AI Initiatives', confidence: 87 },
+    ]
+  }
+
+  function getKeyFindings() {
+    if (activeClient === 'firstcapital') return [
+      { finding: '68% cost-to-income ratio', source: 'index.ts — financials' },
+      { finding: 'FIS HORIZON 22 years old', source: 'index.ts — technology' },
+      { finding: '41% digital adoption', source: 'index.ts — technology.digital' },
+      { finding: '$3.8M excess fraud losses', source: 'index.ts — financials' },
+    ]
+    if (activeClient === 'apexretail') return [
+      { finding: '3.8% operating margin vs 6% target', source: 'index.ts — financials' },
+      { finding: '4.2x inventory turnover (6.8x benchmark)', source: 'index.ts — financials' },
+      { finding: '72% cart abandonment rate', source: 'index.ts — technology' },
+      { finding: '42% loyalty active rate', source: 'index.ts — financials' },
+    ]
+    return [
+      { finding: '$94M RCM denial write-off', source: 'financials.ts + technology.ts' },
+      { finding: 'Epic optimization 58/100', source: 'technology.ts — ehr' },
+      { finding: '1.8% operating margin', source: 'financials.ts' },
+      { finding: 'Blue Ridge integration 8mo overdue', source: 'technology.ts + leadership.ts' },
+      { finding: '3.5 MA Star Rating', source: 'index.ts — healthPlan' },
+    ]
+  }
+
+  function getContradictions() {
+    if (activeClient === 'firstcapital') return firstCapital.contradictions
+    if (activeClient === 'apexretail') return apexRetail.contradictions
+    return meridianHealth.contradictions
   }
 
   async function sendMessage(text?: string) {
@@ -109,7 +161,7 @@ function DiagnoseContent() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming('') }} activePage="diagnose" />
+      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming(''); setSidebarTab('snapshot') }} activePage="diagnose" />
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>
@@ -168,32 +220,104 @@ function DiagnoseContent() {
             </button>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
-          <div style={S.card}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>CLIENT SNAPSHOT</div>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{clientName}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>{confidence}% data confidence</div>
-            {getMetrics().map((m, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#475569' }}>{m.label}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{m.value}</span>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColors[m.status], display: 'block' }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
+          {/* Tab bar */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '4px' }}>
+            {([
+              { id: 'snapshot', label: 'Snapshot' },
+              { id: 'findings', label: 'Findings' },
+              { id: 'actions', label: 'Actions' },
+              { id: 'data', label: 'Data Foundation' },
+            ] as { id: typeof sidebarTab, label: string }[]).map(t => (
+              <button key={t.id} onClick={() => setSidebarTab(t.id)}
+                style={{ padding: '5px 4px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', lineHeight: 1.2, textAlign: 'center' as const, border: sidebarTab === t.id ? 'none' : '1px solid #E2E8F0', background: sidebarTab === t.id ? '#2563EB' : '#FFFFFF', color: sidebarTab === t.id ? '#FFFFFF' : '#475569' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Snapshot tab */}
+          {sidebarTab === 'snapshot' && (
+            <div style={S.card}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>CLIENT SNAPSHOT</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{clientName}</div>
+              <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>{confidence}% data confidence</div>
+              {getMetrics().map((m, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '12px', color: '#475569' }}>{m.label}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{m.value}</span>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColors[m.status], display: 'block' }} />
+                  </div>
                 </div>
+              ))}
+            </div>
+          )}
+
+          {/* Findings tab */}
+          {sidebarTab === 'findings' && (
+            <div style={S.card}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>KEY CONTRADICTIONS</div>
+              {getContradictions().map((c, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '10px', paddingBottom: '10px', borderBottom: i < getContradictions().length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                  <span style={{ color: '#DC2626', fontSize: '12px', flexShrink: 0, marginTop: '1px' }}>!</span>
+                  <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{c}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Actions tab */}
+          {sidebarTab === 'actions' && (
+            <div style={S.card}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>QUICK ACTIONS</div>
+              {[
+                { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
+                { label: 'Build Business Case', href: '/justify?client=' + activeClient },
+                { label: 'Select Vendor', href: '/select?client=' + activeClient },
+                { label: 'Maestro Admin', href: '/admin' },
+              ].map((a, i) => (
+                <a key={i} href={a.href} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>{a.label} →</a>
+              ))}
+            </div>
+          )}
+
+          {/* Data Foundation tab */}
+          {sidebarTab === 'data' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={S.card}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>DATA FILES LOADED</div>
+                {getDataFiles().map((f, i) => (
+                  <div key={i} style={{ marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3px' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: '#0F172A', fontFamily: 'monospace' }}>{f.file}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: f.confidence >= 90 ? '#059669' : f.confidence >= 85 ? '#D97706' : '#DC2626' }}>{f.confidence}%</span>
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>{f.label}</div>
+                    <div style={{ height: '4px', background: '#F1F5F9', borderRadius: '2px' }}>
+                      <div style={{ height: '4px', borderRadius: '2px', width: f.confidence + '%', background: f.confidence >= 90 ? '#059669' : f.confidence >= 85 ? '#D97706' : '#DC2626' }} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div style={S.card}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>QUICK ACTIONS</div>
-            {[
-              { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
-              { label: 'Build Business Case', href: '/justify?client=' + activeClient },
-              { label: 'Select Vendor', href: '/select?client=' + activeClient },
-              { label: 'Maestro Admin', href: '/admin' },
-            ].map((a, i) => (
-              <a key={i} href={a.href} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>{a.label} →</a>
-            ))}
-          </div>
+
+              <div style={S.card}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>FINDING — SOURCE MAP</div>
+                {getKeyFindings().map((kf, i) => (
+                  <div key={i} style={{ marginBottom: '10px', paddingBottom: '10px', borderBottom: i < getKeyFindings().length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '2px', lineHeight: 1.4 }}>{kf.finding}</div>
+                    <div style={{ fontSize: '11px', color: '#6B7280', fontFamily: 'monospace' }}>{kf.source}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={S.card}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>EXPLORE DATA LAYER</div>
+                <a href={'/data-intelligence?client=' + activeClient} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>Data Intelligence →</a>
+                <a href={'/architecture?client=' + activeClient} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0' }}>Architecture →</a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
