@@ -34,7 +34,7 @@ const BLUEPRINTS: Record<string, any> = {
       cmsDeadline: 'The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) requires all applicable payers and providers to implement electronic prior authorization by January 1, 2026. Non-compliance penalties: up to $1,000 per day per API specification not met. At 77% non-compliance, Meridians exposure is $7-28M annually depending on enforcement intensity.',
     },
     solutionDesign: {
-      approach: 'Deploy an AI-powered prior auth automation layer that connects directly to Epic's existing prior auth workflow, integrates with all 847 payer portals via the vendors pre-built connections, and uses NLP to auto-complete authorization requests from clinical documentation.',
+      approach: 'Deploy an AI-powered prior auth automation layer that connects directly to Epics existing prior auth workflow, integrates with all 847 payer portals via the vendors pre-built connections, and uses NLP to auto-complete authorization requests from clinical documentation.',
       architecture: [
         { layer: 'AI Layer', component: 'NLP Engine', description: 'Reads Epic clinical notes and auto-populates prior auth fields. Classifies authorization likelihood before submission.', technology: 'Claude API (Anthropic) — selected for medical document comprehension' },
         { layer: 'Integration Layer', component: 'Epic FHIR API', description: 'Pulls clinical data, pushes auth status back to Epic workflow. Eliminates dual data entry.', technology: 'Epic FHIR R4 — native integration, no custom build' },
