@@ -21,10 +21,14 @@ const CLIENTS = [
     finding: 'The RCM vendor contract guarantees a 12% denial rate. Actual rate: 18.2%. That is $8M in contractual penalties — never once enforced in three years.',
     wow: 'How did it know about the penalty clause before the first meeting?',
     metrics: [
-      { label: 'Operating Margin', value: '1.8%', target: 'Target: 4.0%', red: true },
-      { label: 'RCM Denial Rate', value: '18.2%', target: 'Contract SLA: 12%', red: true },
-      { label: 'AI Pilots Scaled', value: '0 of 6', target: '24 months of effort', red: true },
-      { label: 'Epic Optimization', value: '58/100', target: 'Benchmark: 80+', red: false },
+      { label: 'Operating Margin', value: '1.8%', target: 'Target: 4.0%', red: true, office: 'Financial' },
+      { label: 'RCM Denial Rate', value: '18.2%', target: 'Contract SLA: 12%', red: true, office: 'Back Office' },
+      { label: 'Epic Optimization', value: '58/100', target: 'Benchmark: 80+', red: false, office: 'Back Office' },
+      { label: 'MA Star Rating', value: '3.5', target: '$34M bonus below 4.0', red: false, office: 'Front Office' },
+      { label: 'Prior Auth Connected', value: '23%', target: 'CMS requires 100% by Jan 2026', red: true, office: 'Middle Office' },
+      { label: 'AI Pilots Scaled', value: '0 of 6', target: '24 months of effort', red: true, office: 'Back Office' },
+      { label: 'IT Budget', value: '$504M', target: '4.5% of revenue', red: false, office: 'IT' },
+      { label: 'Travel Nurse Cost', value: '$142M', target: 'Benchmark: $68M', red: true, office: 'Middle Office' },
     ],
   },
   {
@@ -37,10 +41,14 @@ const CLIENTS = [
     finding: 'Real-time payments infrastructure is not live. 68% of peer institutions are live. Three commercial clients have formally inquired about alternatives in the past 90 days.',
     wow: 'How did it know the exact peer benchmark and deposit risk exposure?',
     metrics: [
-      { label: 'Cost-to-Income', value: '68%', target: 'Benchmark: 61%', red: true },
-      { label: 'Digital Adoption', value: '41%', target: 'Benchmark: 67%', red: true },
-      { label: 'Core Banking Age', value: '22 years', target: 'Critical threshold', red: true },
-      { label: 'AML False Positives', value: '78%', target: 'Benchmark: 25%', red: true },
+      { label: 'Cost-to-Income', value: '68%', target: 'Benchmark: 61%', red: true, office: 'Financial' },
+      { label: 'Digital Adoption', value: '41%', target: 'Benchmark: 67%', red: true, office: 'Front Office' },
+      { label: 'FedNow Live', value: 'No', target: '68% of peers live', red: true, office: 'Back Office' },
+      { label: 'Core Banking Age', value: '22 yrs', target: 'Critical threshold: 20yr', red: true, office: 'IT' },
+      { label: 'AML False Positives', value: '78%', target: 'Benchmark: 25%', red: true, office: 'Middle Office' },
+      { label: 'Mobile App Rating', value: '3.2/5', target: 'Switch threshold: 3.5', red: true, office: 'Front Office' },
+      { label: 'Compliance % of IT', value: '34%', target: 'Benchmark: 22%', red: true, office: 'IT' },
+      { label: 'Account Abandonment', value: '64%', target: 'Benchmark: 32%', red: true, office: 'Front Office' },
     ],
   },
   {
@@ -53,10 +61,14 @@ const CLIENTS = [
     finding: 'The personalization engine has been in the existing software license for 14 months. Never activated. $248M annual revenue opportunity. Activation cost: $800K. Time to value: 6 weeks.',
     wow: 'How did it know the tool was purchased but idle — before anyone said a word?',
     metrics: [
-      { label: 'Operating Margin', value: '3.8%', target: 'Target: 6.0%', red: true },
-      { label: 'Cart Abandonment', value: '72%', target: 'Benchmark: 58%', red: true },
-      { label: 'Loyalty Active', value: '42%', target: 'Benchmark: 68%', red: true },
-      { label: 'Forecast Accuracy', value: '62%', target: 'Benchmark: 84%', red: true },
+      { label: 'Operating Margin', value: '3.8%', target: 'Target: 6.0%', red: true, office: 'Financial' },
+      { label: 'Cart Abandonment', value: '72%', target: 'Benchmark: 58%', red: true, office: 'Front Office' },
+      { label: 'Loyalty Active Rate', value: '42%', target: 'Benchmark: 68%', red: true, office: 'Front Office' },
+      { label: 'Inventory Turnover', value: '4.2x', target: 'Benchmark: 6.8x', red: true, office: 'Back Office' },
+      { label: 'Forecast Accuracy', value: '62%', target: 'Benchmark: 84%', red: true, office: 'Middle Office' },
+      { label: 'Shrinkage Rate', value: '2.8%', target: 'Benchmark: 1.4%', red: true, office: 'Middle Office' },
+      { label: 'SAP ECC Age', value: '14 yrs', target: 'Support ends 2027', red: true, office: 'IT' },
+      { label: 'Einstein Activated', value: 'No', target: '$248M opportunity idle', red: true, office: 'IT' },
     ],
   },
 ]
@@ -139,7 +151,7 @@ export default function InvestorPage() {
             { label: 'Time to Value', value: '2 hours', sub: 'vs 16 weeks traditional' },
           ].map((m, i) => (
             <div key={i} style={{ padding: '16px 24px', borderRight: '1px solid #E5E7EB' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>{m.label}</div>
+              <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#374151', marginBottom: '4px' }}>{m.label}</div>
               <div style={{ fontSize: '22px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '2px' }}>{m.value}</div>
               <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{m.sub}</div>
             </div>
@@ -313,13 +325,16 @@ export default function InvestorPage() {
                 <div style={{ fontSize: '13px', color: '#D97706', fontStyle: 'italic' }}>"{client.wow}"</div>
               </div>
 
-              {/* 4 metrics — same grid, aligned */}
+              {/* 8 metrics — 4 columns x 2 rows with office tags */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', background: '#E5E7EB', gap: '1px' }}>
-                {client.metrics.map((m, i) => (
-                  <div key={i} style={{ background: '#fff', padding: '20px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.red ? '#DC2626' : '#D97706', height: '32px', display: 'flex', alignItems: 'flex-start', marginBottom: '8px', lineHeight: 1.3 }}>{m.label}</div>
-                    <div style={{ fontSize: '26px', fontWeight: 800, color: m.red ? '#DC2626' : '#D97706', letterSpacing: '-0.025em', marginBottom: '4px' }}>{m.value}</div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{m.target}</div>
+                {client.metrics.map((m: any, i: number) => (
+                  <div key={i} style={{ background: '#fff', padding: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.red ? '#DC2626' : '#D97706', lineHeight: 1.3, flex: 1, paddingRight: '4px' }}>{m.label}</div>
+                      <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '2px 6px', borderRadius: '100px', background: '#F3F4F6', color: '#6B7280', flexShrink: 0, whiteSpace: 'nowrap' as const }}>{m.office}</span>
+                    </div>
+                    <div style={{ fontSize: '22px', fontWeight: 800, color: m.red ? '#DC2626' : '#D97706', letterSpacing: '-0.025em', marginBottom: '2px' }}>{m.value}</div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{m.target}</div>
                   </div>
                 ))}
               </div>
