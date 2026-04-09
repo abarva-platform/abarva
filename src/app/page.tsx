@@ -9,8 +9,9 @@ import { meridianClinical } from '@/data/meridian/index'
 import { meridianLeadership } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
+import { regulatoryAlerts } from '@/data/knowledge/regulatory'
 
-type Tab = 'overview' | 'financial' | 'technology' | 'clinical' | 'leadership' | 'diagnose' | 'transform' | 'data'
+type Tab = 'overview' | 'financial' | 'technology' | 'clinical' | 'leadership' | 'diagnose' | 'transform' | 'data' | 'intelligence'
 
 export default function Home() {
   const { user } = useUser()
@@ -24,6 +25,8 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [greenFieldClients, setGreenFieldClients] = useState<Array<{id: string, name: string}>>([])
   const [denialRate, setDenialRate] = useState(18.2)
+  const [selectedSystem, setSelectedSystem] = useState<any>(null)
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
   const [epicScore, setEpicScore] = useState(58)
   const [maStars, setMaStars] = useState(3.5)
 
@@ -75,6 +78,7 @@ export default function Home() {
     { id: 'clinical', label: 'Clinical', icon: '♥' },
     { id: 'leadership', label: 'Leadership', icon: '◈' },
     { id: 'data', label: 'Data Manager', icon: '⊞' },
+    { id: 'intelligence', label: 'Intelligence', icon: '◉' },
   ]
 
   const statusDot = (s: 'red' | 'yellow' | 'green') => (
@@ -143,22 +147,22 @@ export default function Home() {
 
   function getOverviewMetrics() {
     if (activeClient === 'firstcapital') return [
-      { label: 'Cost-to-Income', value: `${firstCapital.financials.costToIncomeRatio}%`, target: `Target: ${firstCapital.financials.targetCostToIncomeRatio}%`, status: 'red' as const },
-      { label: 'Digital Adoption', value: `${firstCapital.technology.digital.digitalAdoptionRate}%`, target: 'Benchmark: 67%', status: 'red' as const },
-      { label: 'Core Banking Age', value: `${firstCapital.technology.coreBanking.age} yrs`, target: 'Critical: 20 yrs', status: 'red' as const },
-      { label: 'FedNow Live', value: 'No', target: '68% of peers live', status: 'red' as const },
+      { label: 'Cost-to-Income', value: `${firstCapital.financials.costToIncomeRatio}%`, target: `Target: ${firstCapital.financials.targetCostToIncomeRatio}%`, status: 'red' as const, tab: 'financial' },
+      { label: 'Digital Adoption', value: `${firstCapital.technology.digital.digitalAdoptionRate}%`, target: 'Benchmark: 67%', status: 'red' as const, tab: 'technology' },
+      { label: 'Core Banking Age', value: `${firstCapital.technology.coreBanking.age} yrs`, target: 'Critical: 20 yrs', status: 'red' as const, tab: 'technology' },
+      { label: 'FedNow Live', value: 'No', target: '68% of peers live', status: 'red' as const, tab: 'technology' },
     ]
     if (activeClient === 'apexretail') return [
-      { label: 'Operating Margin', value: `${apexRetail.org.operatingMargin}%`, target: `Target: ${apexRetail.org.targetOperatingMargin}%`, status: 'red' as const },
-      { label: 'Digital Revenue', value: `${apexRetail.org.ecommercePercent}%`, target: 'Target: 45%', status: 'yellow' as const },
-      { label: 'Inventory Turnover', value: `${apexRetail.financials.inventoryTurnover}x`, target: 'Benchmark: 6.8x', status: 'red' as const },
-      { label: 'Loyalty Active Rate', value: `${apexRetail.financials.loyaltyMemberPercent}%`, target: 'Benchmark: 68%', status: 'yellow' as const },
+      { label: 'Operating Margin', value: `${apexRetail.org.operatingMargin}%`, target: `Target: ${apexRetail.org.targetOperatingMargin}%`, status: 'red' as const, tab: 'financial' },
+      { label: 'Digital Revenue', value: `${apexRetail.org.ecommercePercent}%`, target: 'Target: 45%', status: 'yellow' as const, tab: 'technology' },
+      { label: 'Inventory Turnover', value: `${apexRetail.financials.inventoryTurnover}x`, target: 'Benchmark: 6.8x', status: 'red' as const, tab: 'technology' },
+      { label: 'Loyalty Active Rate', value: `${apexRetail.financials.loyaltyMemberPercent}%`, target: 'Benchmark: 68%', status: 'yellow' as const, tab: 'diagnose' },
     ]
     return [
-      { label: 'Operating Margin', value: `${meridianHealth.org.operatingMargin}%`, target: `Target: ${meridianHealth.financials.targetOperatingMargin}%`, status: 'red' as const },
-      { label: 'RCM Denial Rate', value: `${meridianHealth.technology.rcm.denialRate}%`, target: 'Benchmark: 11.4%', status: 'red' as const },
-      { label: 'Epic Optimization', value: `${meridianHealth.technology.ehr.optimizationScore}/100`, target: 'Target: 85/100', status: 'yellow' as const },
-      { label: 'MA Star Rating', value: `${meridianHealth.healthPlan.medicareAdvantage.starRating}`, target: 'Bonus: 4.0 stars', status: 'yellow' as const },
+      { label: 'Operating Margin', value: `${meridianHealth.org.operatingMargin}%`, target: `Target: ${meridianHealth.financials.targetOperatingMargin}%`, status: 'red' as const, tab: 'financial' },
+      { label: 'RCM Denial Rate', value: `${meridianHealth.technology.rcm.denialRate}%`, target: 'Benchmark: 11.4%', status: 'red' as const, tab: 'financial' },
+      { label: 'Epic Optimization', value: `${meridianHealth.technology.ehr.optimizationScore}/100`, target: 'Target: 85/100', status: 'yellow' as const, tab: 'technology' },
+      { label: 'MA Star Rating', value: `${meridianHealth.healthPlan.medicareAdvantage.starRating}`, target: 'Bonus: 4.0 stars', status: 'yellow' as const, tab: 'clinical' },
     ]
   }
 
@@ -187,6 +191,11 @@ export default function Home() {
       { category: 'HR and Workforce', confidence: 0, status: 'missing', source: 'Not loaded · Requires CHRO approval' },
       { category: 'Engagement History', confidence: 0, status: 'missing', source: 'No prior engagements' },
     ]
+  }
+  function getRegulatoryAlerts() {
+    if (activeClient === 'firstcapital') return regulatoryAlerts.firstcapital
+    if (activeClient === 'apexretail') return regulatoryAlerts.apexretail
+    return regulatoryAlerts.meridian
   }
 
   function getPrescribedLoads() {
@@ -259,7 +268,7 @@ export default function Home() {
               {isGreenField && <span className="text-xs bg-yellow-900 text-yellow-300 px-2 py-0.5 rounded mb-3 inline-block">Public data only</span>}
               <nav className="space-y-1 mt-3">
                 {navItems.map(item => (
-                  <button key={item.id} onClick={() => setActiveTab(item.id as Tab)}
+                  <button key={item.id} onClick={() => { if (item.id === 'intelligence') { window.location.href = `/intelligence?client=${activeClient}` } else { setActiveTab(item.id as Tab) } }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition ${activeTab === item.id ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-900'}`}>
                     <span className="text-xs">{item.icon}</span>
                     {item.label}
@@ -334,13 +343,18 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-4 gap-4 mb-8">
                 {getOverviewMetrics().map(metric => (
-                  <div key={metric.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-500 transition" onClick={() => setActiveTab('financial')}>
+                  <div key={metric.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-500 transition"
+                    onClick={() => {
+                      if (metric.tab) setActiveTab(metric.tab as Tab)
+                      else setActiveTab('financial')
+                    }}>
                     <div className="flex justify-between items-start mb-3">
                       <span className="text-sm text-gray-400">{metric.label}</span>
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${metric.status === 'red' ? 'bg-red-500' : metric.status === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'}`} />
                     </div>
                     <div className="text-3xl font-bold mb-1">{metric.value}</div>
                     <div className="text-xs text-gray-500">{metric.target}</div>
+                    <p className="text-xs text-blue-400 mt-2">Click to explore →</p>
                   </div>
                 ))}
               </div>
@@ -634,79 +648,179 @@ export default function Home() {
           {/* TECHNOLOGY TAB */}
           {!isGreenField && activeTab === 'technology' && (
             <div>
-              <h2 className="text-xl font-bold mb-6">Technology Landscape — {currentClient.name}</h2>
-              {activeClient === 'meridian' && (
-                <>
-                  <div className="grid grid-cols-3 gap-4 mb-8">
-                    {[
-                      { label: 'Epic Optimization', value: `${meridianTechnology.ehr.optimizationScore}/100`, sub: 'Target: 85/100', status: 'yellow' as const },
-                      { label: 'MyChart Adoption', value: `${meridianTechnology.ehr.modules[2].adoption}%`, sub: `Target: ${meridianTechnology.ehr.modules[2].target}%`, status: 'red' as const },
-                      { label: 'Reporting Backlog', value: `${meridianTechnology.analytics.reportingBacklog}`, sub: 'Outstanding requests', status: 'red' as const },
-                    ].map(m => (
-                      <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                        <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
-                        <div className="text-2xl font-bold mb-1">{m.value}</div>
-                        <div className="text-xs text-gray-500">{m.sub}</div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Technology Landscape — {currentClient.name}</h2>
+                {selectedSystem && (
+                  <button onClick={() => setSelectedSystem(null)} className="text-sm text-gray-400 hover:text-white transition">
+                    ← Back to all systems
+                  </button>
+                )}
+              </div>
+
+              {/* SYSTEM DETAIL VIEW */}
+              {selectedSystem && (
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="col-span-2">
+                    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h3 className="text-xl font-bold mb-1">{selectedSystem.name}</h3>
+                          <p className="text-gray-400 text-sm">{selectedSystem.function} · {selectedSystem.vendor}</p>
+                        </div>
+                        <span className={`text-xs px-3 py-1 rounded-full ${selectedSystem.status === 'Live' ? 'bg-green-900 text-green-300' : selectedSystem.status.includes('overdue') || selectedSystem.status.includes('underperforming') || selectedSystem.status.includes('Replacing') ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'}`}>
+                          {selectedSystem.status}
+                        </span>
                       </div>
-                    ))}
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">Annual Cost</p>
+                          <p className="font-bold text-lg">${selectedSystem.annualCost}M</p>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">Contract Expiry</p>
+                          <p className="font-bold text-lg">{selectedSystem.contractExpiry}</p>
+                        </div>
+                        <div className="bg-gray-800 rounded-lg p-3">
+                          <p className="text-xs text-gray-500 mb-1">Vendor</p>
+                          <p className="font-bold">{selectedSystem.vendor}</p>
+                        </div>
+                      </div>
+                      {selectedSystem.issues && selectedSystem.issues.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Known Issues</h4>
+                          <div className="space-y-2">
+                            {selectedSystem.issues.map((issue: string, i: number) => (
+                              <div key={i} className="flex gap-2 text-sm">
+                                <span className="text-red-400 flex-shrink-0">⚠</span>
+                                <span className="text-gray-300">{issue}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                    <table className="w-full text-sm">
-                      <thead><tr className="border-b border-gray-800">
-                        <th className="text-left p-4 text-gray-400 font-medium">System</th>
-                        <th className="text-left p-4 text-gray-400 font-medium">Function</th>
-                        <th className="text-left p-4 text-gray-400 font-medium">Status</th>
-                        <th className="text-right p-4 text-gray-400 font-medium">Annual Cost</th>
-                      </tr></thead>
-                      <tbody>
-                        {meridianTechnology.systems.map((s, i) => (
-                          <tr key={i} className="border-b border-gray-800 last:border-0">
-                            <td className="p-4 font-medium">{s.name}</td>
-                            <td className="p-4 text-gray-400">{s.function}</td>
-                            <td className="p-4"><span className={`text-xs px-2 py-1 rounded ${s.status === 'Live' ? 'bg-green-900 text-green-300' : s.status.includes('overdue') || s.status.includes('underperforming') || s.status.includes('Replacing') ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'}`}>{s.status}</span></td>
-                            <td className="p-4 text-right">${s.annualCost}M</td>
-                          </tr>
+                  <div className="space-y-4">
+                    <div className="bg-blue-950 border border-blue-800 rounded-xl p-5">
+                      <h4 className="font-semibold text-blue-300 mb-3">Abarva Assessment</h4>
+                      <p className="text-sm text-gray-300 mb-4">
+                        {selectedSystem.status.includes('underperforming') || selectedSystem.status.includes('overdue')
+                          ? `This system is underperforming and requires immediate attention. The contract expires ${selectedSystem.contractExpiry} — use this as leverage.`
+                          : selectedSystem.status === 'Live'
+                          ? `This system is live but may have optimization opportunities. Review the issues above.`
+                          : `This system requires action. Review the status and issues carefully.`
+                        }
+                      </p>
+                      <button
+                        onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(`Tell me about our ${selectedSystem.name} situation — performance, risks, and what we should do`), 300) }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition"
+                      >
+                        Ask Abarva about this system →
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(`Build me a business case for replacing or renegotiating our ${selectedSystem.name} contract`), 300) }}
+                      className="w-full bg-gray-800 hover:bg-gray-700 text-white text-xs font-semibold py-3 rounded-xl transition"
+                    >
+                      Build replacement business case →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* SYSTEM LIST VIEW */}
+              {!selectedSystem && (
+                <>
+                  {activeClient === 'meridian' && (
+                    <>
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        {[
+                          { label: 'Epic Optimization', value: `${meridianTechnology.ehr.optimizationScore}/100`, sub: 'Target: 85/100', status: 'yellow' as const },
+                          { label: 'MyChart Adoption', value: `${meridianTechnology.ehr.modules[2].adoption}%`, sub: `Target: ${meridianTechnology.ehr.modules[2].target}%`, status: 'red' as const },
+                          { label: 'Reporting Backlog', value: `${meridianTechnology.analytics.reportingBacklog}`, sub: 'Outstanding requests', status: 'red' as const },
+                        ].map(m => (
+                          <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
+                            <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
+                            <div className="text-2xl font-bold mb-1">{m.value}</div>
+                            <div className="text-xs text-gray-500">{m.sub}</div>
+                          </div>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      </div>
+                      <p className="text-xs text-gray-500 mb-3">Click any system to see details, issues, and recommendations</p>
+                      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead><tr className="border-b border-gray-800">
+                            <th className="text-left p-4 text-gray-400 font-medium">System</th>
+                            <th className="text-left p-4 text-gray-400 font-medium">Function</th>
+                            <th className="text-left p-4 text-gray-400 font-medium">Status</th>
+                            <th className="text-right p-4 text-gray-400 font-medium">Annual Cost</th>
+                            <th className="text-right p-4 text-gray-400 font-medium">Expiry</th>
+                          </tr></thead>
+                          <tbody>
+                            {meridianTechnology.systems.map((s, i) => (
+                              <tr key={i} onClick={() => setSelectedSystem(s)}
+                                className="border-b border-gray-800 last:border-0 cursor-pointer hover:bg-gray-800 transition">
+                                <td className="p-4 font-medium">{s.name}</td>
+                                <td className="p-4 text-gray-400">{s.function}</td>
+                                <td className="p-4"><span className={`text-xs px-2 py-1 rounded ${s.status === 'Live' ? 'bg-green-900 text-green-300' : s.status.includes('overdue') || s.status.includes('underperforming') || s.status.includes('Replacing') ? 'bg-red-900 text-red-300' : 'bg-yellow-900 text-yellow-300'}`}>{s.status}</span></td>
+                                <td className="p-4 text-right">${s.annualCost}M</td>
+                                <td className="p-4 text-right text-gray-400">{s.contractExpiry}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
+                  {activeClient === 'firstcapital' && (
+                    <>
+                      <p className="text-xs text-gray-500 mb-3">Click any metric to ask Abarva about it</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { label: 'Core Banking Age', value: `${firstCapital.technology.coreBanking.age} years`, sub: 'FIS HORIZON — critical threshold exceeded', status: 'red' as const, prompt: 'Tell me about our FIS HORIZON situation — age, capacity, and modernization options' },
+                          { label: 'Peak Capacity', value: `${firstCapital.technology.coreBanking.peakCapacityUtilization}%`, sub: 'No headroom for growth', status: 'red' as const, prompt: 'Our core banking is at 87% peak capacity — what does that mean and what do we do?' },
+                          { label: 'Digital Adoption', value: `${firstCapital.technology.digital.digitalAdoptionRate}%`, sub: 'Benchmark: 67%', status: 'red' as const, prompt: 'Digital adoption at 41% vs 67% benchmark — what is driving this and how do we fix it?' },
+                          { label: 'Mobile App Rating', value: `${firstCapital.technology.digital.mobileAppRating}/5`, sub: 'Competitive threshold: 3.8', status: 'red' as const, prompt: 'Our mobile app rating is 3.2 — what is killing our score and what do we prioritize?' },
+                          { label: 'FedNow Live', value: 'No', sub: `${firstCapital.technology.payments.peerBanksOnFedNow}% of peers live`, status: 'red' as const, prompt: 'How do we get FedNow live given our FIS HORIZON constraint?' },
+                          { label: 'AML Automation', value: `${firstCapital.technology.aml.automationRate}%`, sub: `Benchmark: ${firstCapital.technology.aml.benchmarkAutomationRate}%`, status: 'red' as const, prompt: 'Our AML automation is at 34% vs 72% benchmark — what needs to change?' },
+                        ].map(m => (
+                          <div key={m.label}
+                            onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(m.prompt), 300) }}
+                            className="bg-gray-900 border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-500 transition">
+                            <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
+                            <div className="text-2xl font-bold mb-1">{m.value}</div>
+                            <div className="text-xs text-gray-500">{m.sub}</div>
+                            <p className="text-xs text-blue-400 mt-2">Click to ask Abarva →</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                  {activeClient === 'apexretail' && (
+                    <>
+                      <p className="text-xs text-gray-500 mb-3">Click any metric to ask Abarva about it</p>
+                      <div className="grid grid-cols-3 gap-4">
+                        {[
+                          { label: 'SAP ECC Age', value: `${apexRetail.technology.erp.age} years`, sub: 'Support ending 2027', status: 'red' as const, prompt: 'SAP ECC support ends 2027 — what are our migration options and what should we decide?' },
+                          { label: 'SAP Customizations', value: apexRetail.technology.erp.customizations.toLocaleString(), sub: 'Makes migration complex', status: 'red' as const, prompt: 'We have 8400 SAP customizations — how does this affect our migration options and timeline?' },
+                          { label: 'Inventory Accuracy', value: `${apexRetail.operations.supplyChain.inventoryAccuracy}%`, sub: 'Benchmark: 98%', status: 'red' as const, prompt: 'Inventory accuracy at 84% vs 98% benchmark — what is causing this and how do we fix it?' },
+                          { label: 'Forecast Accuracy', value: `${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.current}%`, sub: `Benchmark: ${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.benchmarkAccuracy}%`, status: 'red' as const, prompt: 'Demand forecast accuracy at 62% vs 84% benchmark — o9 is 40% implemented and stalled — what do we do?' },
+                          { label: 'Cart Abandonment', value: `${apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate}%`, sub: `Benchmark: ${apexRetail.technology.commercePlatform.ecommerce.benchmarkCartAbandonmentRate}%`, status: 'red' as const, prompt: 'Cart abandonment at 72% vs 58% benchmark — what is causing this and what do we fix first?' },
+                          { label: 'Page Load Time', value: `${apexRetail.technology.commercePlatform.ecommerce.pageLoadTime}s`, sub: 'Costs $48M per second', status: 'red' as const, prompt: 'Page load at 4.2 seconds vs 2.0 benchmark — what is slowing us down and what do we do?' },
+                        ].map(m => (
+                          <div key={m.label}
+                            onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(m.prompt), 300) }}
+                            className="bg-gray-900 border border-gray-800 rounded-xl p-5 cursor-pointer hover:border-blue-500 transition">
+                            <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
+                            <div className="text-2xl font-bold mb-1">{m.value}</div>
+                            <div className="text-xs text-gray-500">{m.sub}</div>
+                            <p className="text-xs text-blue-400 mt-2">Click to ask Abarva →</p>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
-              )}
-              {activeClient === 'firstcapital' && (
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'Core Banking Age', value: `${firstCapital.technology.coreBanking.age} years`, sub: 'FIS HORIZON — critical threshold exceeded', status: 'red' as const },
-                    { label: 'Peak Capacity', value: `${firstCapital.technology.coreBanking.peakCapacityUtilization}%`, sub: 'No headroom for growth', status: 'red' as const },
-                    { label: 'Digital Adoption', value: `${firstCapital.technology.digital.digitalAdoptionRate}%`, sub: 'Benchmark: 67%', status: 'red' as const },
-                    { label: 'Mobile App Rating', value: `${firstCapital.technology.digital.mobileAppRating}/5`, sub: 'Competitive threshold: 3.8', status: 'red' as const },
-                    { label: 'FedNow Live', value: 'No', sub: `${firstCapital.technology.payments.peerBanksOnFedNow}% of peers live`, status: 'red' as const },
-                    { label: 'AML Automation', value: `${firstCapital.technology.aml.automationRate}%`, sub: `Benchmark: ${firstCapital.technology.aml.benchmarkAutomationRate}%`, status: 'red' as const },
-                  ].map(m => (
-                    <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                      <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
-                      <div className="text-2xl font-bold mb-1">{m.value}</div>
-                      <div className="text-xs text-gray-500">{m.sub}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {activeClient === 'apexretail' && (
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'SAP ECC Age', value: `${apexRetail.technology.erp.age} years`, sub: 'Support ending 2027 — decision needed', status: 'red' as const },
-                    { label: 'SAP Customizations', value: apexRetail.technology.erp.customizations.toLocaleString(), sub: 'Makes migration extremely complex', status: 'red' as const },
-                    { label: 'Inventory Accuracy', value: `${apexRetail.operations.supplyChain.inventoryAccuracy}%`, sub: 'Benchmark: 98% — omnichannel impossible', status: 'red' as const },
-                    { label: 'Forecast Accuracy', value: `${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.current}%`, sub: `Benchmark: ${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.benchmarkAccuracy}%`, status: 'red' as const },
-                    { label: 'Cart Abandonment', value: `${apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate}%`, sub: `Benchmark: ${apexRetail.technology.commercePlatform.ecommerce.benchmarkCartAbandonmentRate}%`, status: 'red' as const },
-                    { label: 'Page Load Time', value: `${apexRetail.technology.commercePlatform.ecommerce.pageLoadTime}s`, sub: 'Benchmark: 2.0s — costs $48M per second', status: 'red' as const },
-                  ].map(m => (
-                    <div key={m.label} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                      <div className="flex justify-between mb-2"><span className="text-sm text-gray-400">{m.label}</span>{statusDot(m.status)}</div>
-                      <div className="text-2xl font-bold mb-1">{m.value}</div>
-                      <div className="text-xs text-gray-500">{m.sub}</div>
-                    </div>
-                  ))}
-                </div>
               )}
             </div>
           )}
@@ -809,20 +923,133 @@ export default function Home() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Data Inventory</h3>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {getDataInventory().map((item, i) => (
-                      <div key={i} className="flex items-center gap-4 p-3 bg-gray-900 rounded-lg border border-gray-800 hover:border-gray-600 transition cursor-pointer">
-                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.status === 'loaded' ? 'bg-green-500' : item.status === 'partial' ? 'bg-yellow-500' : 'bg-gray-600'}`} />
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium">{item.category}</span>
-                            <span className="text-xs text-gray-400">{item.confidence}% confidence</span>
+                      <div key={i} className="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                        <div
+                          className="flex items-center gap-4 p-3 hover:bg-gray-800 transition cursor-pointer"
+                          onClick={() => setExpandedCategory(expandedCategory === item.category ? null : item.category)}
+                        >
+                          <div className={`w-2 h-2 rounded-full flex-shrink-0 ${item.status === 'loaded' ? 'bg-green-500' : item.status === 'partial' ? 'bg-yellow-500' : 'bg-gray-600'}`} />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm font-medium">{item.category}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-gray-400">{item.confidence}% confidence</span>
+                                <span className="text-gray-600 text-xs">{expandedCategory === item.category ? '▲' : '▼'}</span>
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-500">{item.source}</p>
                           </div>
-                          <p className="text-xs text-gray-500">{item.source}</p>
+                          {item.status === 'missing' && <button onClick={e => e.stopPropagation()} className="text-xs bg-blue-900 text-blue-300 px-3 py-1 rounded hover:bg-blue-800 transition flex-shrink-0">Request</button>}
+                          {item.status === 'partial' && <button onClick={e => e.stopPropagation()} className="text-xs bg-yellow-900 text-yellow-300 px-3 py-1 rounded hover:bg-yellow-800 transition flex-shrink-0">Upload more</button>}
+                          {item.status === 'loaded' && <span className="text-xs text-green-400 flex-shrink-0">✓ Loaded</span>}
                         </div>
-                        {item.status === 'missing' && <button className="text-xs bg-blue-900 text-blue-300 px-3 py-1 rounded hover:bg-blue-800 transition flex-shrink-0">Request</button>}
-                        {item.status === 'partial' && <button className="text-xs bg-yellow-900 text-yellow-300 px-3 py-1 rounded hover:bg-yellow-800 transition flex-shrink-0">Upload more</button>}
-                        {item.status === 'loaded' && <span className="text-xs text-green-400 flex-shrink-0">✓ Loaded</span>}
+
+                        {expandedCategory === item.category && (
+                          <div className="border-t border-gray-800 p-4 bg-gray-950">
+                            {item.status === 'loaded' && (
+                              <div className="space-y-3">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">What Abarva knows</p>
+                                {item.category === 'Financial Performance' && activeClient === 'meridian' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ Revenue: $11.2B (FY2023) | $10.4B (FY2022) | $9.8B (FY2021)</p>
+                                    <p>✓ Operating margin: 1.8% vs 4.0% target</p>
+                                    <p>✓ RCM denial rate: 18.2% — $94M written off FY2023</p>
+                                    <p>✓ Days in AR: 52 vs 42 target</p>
+                                    <p>✓ IT budget: $340M — $84M for transformation</p>
+                                    <p>✓ Consulting spend: $67M FY2023</p>
+                                  </div>
+                                )}
+                                {item.category === 'Technology Landscape' && activeClient === 'meridian' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ Epic EHR: optimization 58/100 — 12 of 47 Cogito dashboards live</p>
+                                    <p>✓ Ensemble RCM: SLA compliance 67% vs 95% — $8M penalties available</p>
+                                    <p>✓ Azure Synapse: 40% implemented — stalled</p>
+                                    <p>✓ Cerner (Blue Ridge): 2 hospitals — 8 months overdue migration</p>
+                                    <p>✓ 10 systems cataloged with contracts and expiry dates</p>
+                                  </div>
+                                )}
+                                {item.category === 'Financial Performance' && activeClient === 'firstcapital' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ Total assets: $18B</p>
+                                    <p>✓ Cost-to-income: 68% vs 55% target</p>
+                                    <p>✓ Return on assets: 0.82% vs 1.1% benchmark</p>
+                                    <p>✓ Fraud losses: $7M vs $3.2M benchmark</p>
+                                    <p>✓ IT budget: $168M — 34% consumed by compliance</p>
+                                  </div>
+                                )}
+                                {item.category === 'Technology Landscape' && activeClient === 'firstcapital' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ FIS HORIZON: 22 years old — 87% peak capacity</p>
+                                    <p>✓ Q2 Digital Banking: mobile rating 3.2/5</p>
+                                    <p>✓ NICE Actimize: AML — 34% automation vs 72% benchmark</p>
+                                    <p>✓ SQL Server 2017: data warehouse — end of support Oct 2025</p>
+                                    <p>✓ FedNow: not live — 68% of peers live</p>
+                                  </div>
+                                )}
+                                {item.category === 'Financial Performance' && activeClient === 'apexretail' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ Revenue: $12.4B (FY2023) | $11.8B (FY2022)</p>
+                                    <p>✓ Operating margin: 3.8% vs 6.0% target</p>
+                                    <p>✓ Gross margin: 34.2% vs 38.4% benchmark</p>
+                                    <p>✓ Inventory turnover: 4.2x vs 6.8x benchmark</p>
+                                    <p>✓ Shrinkage: 2.8% — $347M annual loss</p>
+                                  </div>
+                                )}
+                                {item.category === 'Technology Landscape' && activeClient === 'apexretail' && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ SAP ECC 6.0: 14 years old — 8,400 customizations — support ending 2027</p>
+                                    <p>✓ Salesforce Commerce Cloud: 4.2s page load — 72% cart abandonment</p>
+                                    <p>✓ o9 Demand Planning: 40% implemented — forecast at 62% accuracy</p>
+                                    <p>✓ IBM Sterling OMS: 3 versions behind — overselling 3x per month</p>
+                                    <p>✓ Databricks: recently deployed — only 3 models in production</p>
+                                  </div>
+                                )}
+                                {!['Financial Performance', 'Technology Landscape'].includes(item.category) && (
+                                  <div className="space-y-1 text-xs text-gray-300">
+                                    <p>✓ {item.source}</p>
+                                    <p className="text-gray-500">Click Ask Abarva to explore this data in detail</p>
+                                  </div>
+                                )}
+                                <button
+                                  onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(`Tell me what Abarva knows about our ${item.category} and what the key insights are`), 300) }}
+                                  className="mt-2 text-xs text-blue-400 hover:text-blue-300 transition"
+                                >
+                                  Ask Abarva about this data →
+                                </button>
+                              </div>
+                            )}
+                            {item.status === 'partial' && (
+                              <div className="space-y-2">
+                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Partial data loaded</p>
+                                <p className="text-xs text-gray-300">{item.source}</p>
+                                <p className="text-xs text-yellow-400">Loading complete data would increase confidence from {item.confidence}% to ~85%</p>
+                                <button
+                                  onClick={() => { setActiveTab('diagnose'); setTimeout(() => sendMessage(`What additional ${item.category} data do we need and what would it unlock?`), 300) }}
+                                  className="mt-2 text-xs text-blue-400 hover:text-blue-300 transition"
+                                >
+                                  Ask Abarva what to load →
+                                </button>
+                              </div>
+                            )}
+                            {item.status === 'missing' && (
+                              <div className="space-y-2">
+                                <p className="text-xs text-gray-400">This data has not been loaded. Here is what loading it would unlock:</p>
+                                <p className="text-xs text-blue-300">
+                                  {item.category === 'Board Materials' && 'Strategic priorities confirmed, investment appetite clarified, board risk tolerance understood'}
+                                  {item.category === 'HR and Workforce' && 'Change readiness score, talent gap analysis, transformation capacity assessment'}
+                                  {item.category === 'Vendor Contracts' && 'SLA penalty analysis, negotiation leverage, contract optimization opportunities'}
+                                  {item.category === 'Engagement History' && 'Prior initiative outcomes, what was tried before, failure pattern detection'}
+                                  {item.category === 'Customer Analytics' && 'Churn risk, growth opportunities, segment profitability'}
+                                  {item.category === 'Store Performance' && 'Portfolio optimization, closure candidates, investment priorities'}
+                                  {!['Board Materials','HR and Workforce','Vendor Contracts','Engagement History','Customer Analytics','Store Performance'].includes(item.category) && 'Deeper intelligence and more precise recommendations'}
+                                </p>
+                                <p className="text-xs text-gray-500">Requires: {item.source.replace('Not loaded · ', '').replace('Requires ', '')}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

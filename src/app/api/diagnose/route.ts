@@ -1,113 +1,286 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { meridianHealth } from "@/data/meridian/index";
-import { meridianFinancials } from "@/data/meridian/index";
-import { meridianTechnology } from "@/data/meridian/index";
-import { meridianClinical } from "@/data/meridian/index";
-import { meridianLeadership } from "@/data/meridian/index";
+import { meridianHealth, meridianFinancials, meridianTechnology, meridianClinical, meridianLeadership } from "@/data/meridian/index";
+import { firstCapital } from "@/data/firstcapital/index";
+import { apexRetail } from "@/data/apexretail/index";
+import { finservBenchmarks } from "@/data/knowledge/finserv";
+import { retailBenchmarks } from "@/data/knowledge/retail";
+import { crossIndustryKnowledge } from "@/data/knowledge/crossIndustry";
 
 const client = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const MERIDIAN_CONTEXT = `
-MERIDIAN HEALTH SYSTEM — COMPLETE INTELLIGENCE BRIEF
+function getMeridianContext() {
+  return `
+CURRENT CLIENT: MERIDIAN HEALTH SYSTEM
+Industry: Healthcare | Type: Integrated Delivery Network
 
 ORGANIZATION:
-- 23 hospitals across NC, SC, VA, TN | 42,000 employees | $11.2B revenue
-- Operating margin: 1.8% | Board target: 4.0% by FY2026
-- Post-merger with Blue Ridge Health Network (2022) — integration still incomplete
+- 23 hospitals across NC, SC, VA, TN
+- 42,000 employees | $11.2B revenue
+- Post-merger with Blue Ridge Health Network 2022 — integration incomplete
 
-FINANCIAL PERFORMANCE:
-- RCM denial rate: 18.2% vs 11.4% benchmark — $94M written off FY2023
-- Days in AR: 52 vs 42 target
-- IT budget: $340M — only $84M for transformation
-- Consulting spend: $67M in FY2023
-- MA star rating: 3.5 — $34M bonus revenue at risk below 4.0
-- Travel nurse cost: $48M — 8% of labor budget
-- Value-based care: 41% revenue at risk
+FINANCIAL:
+- Operating margin: ${meridianHealth.org.operatingMargin}% vs ${meridianHealth.financials.targetOperatingMargin}% board target
+- RCM denial rate: ${meridianHealth.technology.rcm.denialRate}% vs 11.4% benchmark — $${meridianHealth.technology.rcm.denialWriteOff2023}M written off FY2023
+- Days in AR: ${meridianHealth.technology.rcm.daysInAR} vs 42 benchmark
+- IT budget: $${meridianHealth.financials.itBudget2024}M — only $${meridianHealth.financials.itBudgetBreakdown.projectsAndTransformation}M for transformation
+- MA star rating: ${meridianHealth.healthPlan.medicareAdvantage.starRating} — $34M bonus at risk below 4.0
+- Travel nurse cost: $${meridianClinical.workforce.travelNurseCost2023}M
 
-TECHNOLOGY LANDSCAPE:
-- Epic EHR: optimization score 58/100 — only 12 of 47 Cogito dashboards live
-- MyChart adoption: 34% vs 60% target
-- Prior auth: connected to only 23% of payers despite module being purchased
-- Blue Ridge: 2 hospitals still on legacy Cerner — migration 8 months overdue
-- Azure Synapse data warehouse: 40% complete
-- Reporting backlog: 340 outstanding requests
-- Ensemble RCM: SLA compliance 67% vs 95% target — $8M penalties never enforced
-- Workday: HR and Finance — live but integration gaps post-merger
-- Kronos: Workforce management — live with integration gaps
+TECHNOLOGY:
+- Epic EHR: optimization ${meridianHealth.technology.ehr.optimizationScore}/100 — 12 of 47 Cogito dashboards live
+- MyChart: ${meridianTechnology.ehr.modules[2].adoption}% adoption vs 60% target
+- Prior auth: 23% of payers connected — CMS rule requires 100% by January 2026
+- Blue Ridge Cerner: 2 hospitals — 8 months overdue migration
+- Ensemble RCM: SLA compliance 67% vs 95% — $8M penalties never enforced
+- Azure Synapse: 40% implemented — stalled
+- Reporting backlog: ${meridianTechnology.analytics.reportingBacklog} requests
 
-CLINICAL PERFORMANCE:
-- Quality score: 58th national percentile
-- Readmission rate: 14.2% vs 11.8% target
-- Patient satisfaction HCAHPS: 72 vs 80 target
-- Nurse turnover: 22% | Vacancy rate: 14% | 1,840 open positions
-- Sepsis AI: live at 2 hospitals | Readmission AI: pilot at 1 hospital
-
-AI OPPORTUNITIES IDENTIFIED:
-- Prior auth automation: $28M savings, 6 months to value, 7x ROI
-- RCM denial prevention AI: $42M savings, 9 months, 7x ROI
-- Sepsis prediction expansion: $18M savings, 3 months, 9x ROI
-- Readmission prevention: $24M savings, 6 months, 8x ROI
-- Coding AI: $16M savings, 4 months, 8x ROI
-- Care gap closure: $34M savings, 12 months, 7x ROI
+CLINICAL:
+- Quality: ${meridianClinical.quality.nationalPercentile}th national percentile
+- Readmission: ${meridianClinical.quality.readmissionRate}% vs 12.1% benchmark
+- Nurse turnover: ${meridianClinical.workforce.nurseTurnoverRate}% vs 18% benchmark
+- Sepsis AI: 2 hospitals only — never scaled
 
 LEADERSHIP:
-- CEO Dr. Patricia Holloway (6yr): Value-based care champion. Board patience running thin.
-- CIO Marcus Webb (8mo): "I inherited a mess. 23 hospitals operating like 23 different companies."
-- CFO Robert Chen (4yr): "The $94M denial write-off keeps me up at night. I want out of Ensemble but termination fee is $14M."
-- COO James Whitfield (11yr): "Show me a vendor who will put their fees at risk and I will listen."
-- CMIO Dr. Sarah Okonkwo (2yr): "Epic is not the problem. We never finished the implementation."
-- CDO: VACANT — CIO carrying both roles
+- CIO Marcus Webb (8 months): "I inherited a mess. 23 hospitals operating like 23 different companies."
+- CFO Robert Chen: "The $94M denial write-off keeps me up at night. Ensemble promised 12% — we are at 18.2%."
+- COO James Whitfield: "Show me a vendor who will put their fees at risk and I will listen."
+- CMIO Dr. Okonkwo: "Epic is not the problem. We never finished the implementation."
+- CDO: VACANT
 
-CONTRADICTIONS IN MERIDIAN DATA:
-1. IT budget increased 12% but 67% allocated to run-the-business — only 25% for transformation
-2. Board mandated 4% margin by FY2026 but approved only $84M for transformation vs $200M needed
-3. CIO hired to drive transformation but CDO role vacant — carrying both jobs 8 months in
-4. RCM outsourced at $48M/year but vendor missing SLAs — $8M penalties never enforced
-5. Prior auth AI evaluation in progress but Epic module already purchased and only 23% deployed
-6. Blue Ridge Cerner migration 8 months overdue but no additional budget allocated
+CONTRADICTIONS:
+${meridianHealth.contradictions.map((c, i) => `${i + 1}. ${c}`).join("\n")}
 
-ACTIVE VENDOR CONTRACTS:
-- Ensemble Health Partners: RCM outsourcing $48M/yr | Expires 2026 | Underperforming
-- Epic Systems: EHR $18M/yr | Expires 2028 | Solid but underoptimized
-- Workday: HR/Finance $4.2M/yr | Expires 2026
-- Kronos/UKG: Workforce $2.8M/yr | Expires 2025
-- Azure/Microsoft: Data platform $2.2M/yr | Expires 2027
-- Infor Lawson: Legacy finance $1.8M/yr | Sunsetting
+INDUSTRY BENCHMARKS (Healthcare):
+- RCM denial: Top quartile 8.2% | Median 11.4% | Bottom quartile 16.8%
+- Operating margin: Top quartile 5.2% | Median 3.1%
+- Epic optimization: Top quartile 88 | Median 72
+- Nurse turnover: Top quartile 12% | Median 18%
+- MA star bonus threshold: 4.0 stars
+
+VENDOR INTELLIGENCE:
+- Ensemble: KLAS 3.2/5 — declining — multiple health systems reporting same SLA failures
+- Huron Consulting: Strongest Epic optimization track record
+- Waystar: KLAS 4.1 — AI-native RCM — strong prior auth automation
+- SI rates: Accenture $280-420/hr | Huron $220-350/hr | Deloitte $300-450/hr
+
+ACTIVE FAILURE PATTERNS:
+- F001 Vendor Dependency: Ensemble RCM $48M/year — 67% SLA compliance
+- F003 Budget Mismatch: 4% margin target — only $84M transformation budget
+- F005 Leadership Vacancy: CDO vacant 8+ months
+- F006 Pilot Purgatory: Sepsis AI at 2 hospitals 18+ months — never scaled
 `;
+}
+
+function getFirstCapitalContext() {
+  return `
+CURRENT CLIENT: FIRST CAPITAL FINANCIAL
+Industry: Financial Services | Type: Regional Bank
+
+ORGANIZATION:
+- $18B assets | 4,200 employees | 84 branches
+- Mid-Atlantic market: MD, VA, DC, PA, DE
+- Cost-to-income: ${firstCapital.financials.costToIncomeRatio}% vs ${firstCapital.financials.targetCostToIncomeRatio}% target
+
+FINANCIAL:
+- Total assets: $${firstCapital.org.assets}B
+- Cost-to-income: ${firstCapital.financials.costToIncomeRatio}% vs 55% target | Benchmark: 61%
+- Return on assets: ${firstCapital.financials.returnOnAssets}% vs 1.1% benchmark
+- Fraud losses: $${firstCapital.financials.fraudLosses2023}M vs $${firstCapital.financials.benchmarkFraudLosses}M benchmark
+- IT budget: $${firstCapital.financials.itBudget}M — ${firstCapital.financials.complianceCostAsPercentIT}% consumed by compliance
+- Annual fraud excess: $${firstCapital.financials.annualFraudExcess}M above benchmark
+
+TECHNOLOGY:
+- Core banking: FIS HORIZON ${firstCapital.technology.coreBanking.version} — ${firstCapital.technology.coreBanking.age} years old — 87% peak capacity
+- FedNow: NOT LIVE — ${firstCapital.technology.payments.peerBanksOnFedNow}% of peers live — $${firstCapital.technology.payments.commercialDepositRisk}M commercial deposit risk
+- Digital banking: Q2 Platform — showing T+1 balances — 24-hour stale data
+- Mobile app rating: ${firstCapital.technology.digital.mobileAppRating}/5 vs 3.8 competitive threshold
+- Digital adoption: ${firstCapital.technology.digital.digitalAdoptionRate}% vs 67% benchmark
+- Account opening abandonment: ${firstCapital.technology.digital.accountOpeningAbandonmentRate}% vs 32% benchmark
+- AML: NICE Actimize — ${firstCapital.technology.aml.automationRate}% automation vs ${firstCapital.technology.aml.benchmarkAutomationRate}% benchmark — 78% false positive rate
+- SQL Server 2017: data warehouse — end of support October 2025
+- Cloud adoption: 28% vs 48% peer median
+
+LEADERSHIP:
+- CTO James Okafor (18 months): "We have 14 years of technical debt and 2 years to fix it."
+- CFO Robert Martinez: "I am not writing a $180M check at 68% cost-to-income."
+- COO Sandra Williams: "Every system implemented took twice as long and cost twice as much."
+- CMO David Park: "1.8M digital customers seeing yesterday's balances — that is not digital banking."
+
+CONTRADICTIONS:
+${firstCapital.contradictions.map((c, i) => `${i + 1}. ${c}`).join("\n")}
+
+INDUSTRY BENCHMARKS (Financial Services):
+- Cost-to-income: Top quartile 52% | Median 61% | Bottom quartile 70%
+- Digital adoption: Top quartile 78% | Median 67%
+- Core banking age: Modern <5 yrs | Aging 12+ | Legacy 20+ | Critical 25+
+- AML automation: Top quartile 82% | Median 72%
+- Return on assets: Top quartile 1.4% | Median 1.1%
+
+REGULATORY ALERTS:
+- FedNow: Active urgency — 68% of peers live — commercial clients leaving now
+- SQL Server 2017: End of support October 2025 — 6 months away
+- CFPB Section 1033: 2026 — API layer required — FIS HORIZON cannot support natively
+- OCC MRAs: 3 active from March 2023 exam — MFA gaps, vendor risk, BCP
+
+VENDOR INTELLIGENCE:
+- FIS HORIZON: Raising fees 18% in 2025 — last major feature release 2018
+- Temenos: Best cloud-native replacement for $18B bank — $25-80M implementation
+- Thought Machine: Highest upside, highest risk — best for digital-first strategy
+- NICE Actimize: 2 major versions behind — missing ML detection models
+`;
+}
+
+function getApexRetailContext() {
+  return `
+CURRENT CLIENT: APEX RETAIL GROUP
+Industry: Retail | Type: Omnichannel Retailer
+
+ORGANIZATION:
+- 800 stores across 42 states | 28,000 employees
+- $${apexRetail.org.revenue}B revenue | Operating margin: ${apexRetail.org.operatingMargin}% vs ${apexRetail.org.targetOperatingMargin}% target
+- Headquarters: Columbus OH | Categories: Apparel, Home, Electronics, Beauty, Sports
+
+FINANCIAL:
+- Revenue: $${apexRetail.financials.revenue2023}B (FY2023) | $${apexRetail.financials.revenue2022}B (FY2022)
+- Operating margin: ${apexRetail.financials.operatingMargin2023}% vs ${apexRetail.financials.targetOperatingMargin}% target | Benchmark: 5.8%
+- Gross margin: ${apexRetail.financials.grossMargin2023}% vs 38.4% benchmark — $496M gap
+- Inventory turnover: ${apexRetail.financials.inventoryTurnover}x vs 6.8x benchmark — $180M excess inventory
+- Shrinkage: ${apexRetail.financials.shrinkageRate}% — $347M annual loss vs 1.4% benchmark
+- Digital revenue: ${apexRetail.org.ecommercePercent}% of total vs 38% benchmark — $1.24B Amazon risk
+- Loyalty active: ${apexRetail.financials.loyaltyMemberPercent}% of 18M members vs 68% benchmark — $1.24B opportunity
+- IT budget: $${apexRetail.financials.itBudget}M — ${apexRetail.financials.itBudgetAsPercentRevenue}% of revenue vs 3.1% benchmark
+
+TECHNOLOGY:
+- SAP ECC 6.0: ${apexRetail.technology.erp.age} years old — ${apexRetail.technology.erp.customizations.toLocaleString()} customizations — support ending 2027
+- Salesforce Commerce Cloud: ${apexRetail.technology.commercePlatform.ecommerce.pageLoadTime}s page load vs 2.0 benchmark — costs $48M per second
+- Cart abandonment: ${apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate}% vs ${apexRetail.technology.commercePlatform.ecommerce.benchmarkCartAbandonmentRate}% benchmark — $840M recovery opportunity
+- o9 Demand Planning: 40% implemented — forecast accuracy ${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.current}% vs ${apexRetail.technology.supplyChain.demandPlanning.forecastAccuracy.benchmarkAccuracy}% benchmark
+- IBM Sterling OMS: 3 versions behind — overselling events 3x per month
+- Inventory accuracy: ${apexRetail.operations.supplyChain.inventoryAccuracy}% vs 98% benchmark — omnichannel impossible
+- CDP (Segment): 50% profile fragmentation — same customer counted 2.8 times
+- Loyalty (Punchh): 28% redemption vs 52% benchmark — not connected to ecommerce checkout
+- Databricks: recently deployed — only 3 models in production
+- Personalization: NONE deployed — $248M revenue opportunity identified
+
+LEADERSHIP:
+- CEO Margaret Chen: "We have 800 stores and a website that does not talk to them. That is not omnichannel."
+- CTO James Okafor: "14 years of technical debt and 2 years to fix it before SAP pulls support."
+- CFO Robert Martinez: "I am not writing a $180M check for SAP S4 HANA at 3.8% margin."
+- COO Sandra Williams: "Every system implemented took twice as long and cost twice as much."
+- CMO David Park: "18 million loyalty members and we market to them like strangers."
+- CSCO Lisa Thompson: "48% China sourcing is a strategic risk — same exposure as 2020-2022."
+
+CONTRADICTIONS:
+${apexRetail.contradictions.map((c, i) => `${i + 1}. ${c}`).join("\n")}
+
+AI OPPORTUNITIES:
+- Demand forecasting: $180M savings | 9 months | 8x ROI
+- Personalization engine: $248M revenue | 6 months | 12x ROI
+- Dynamic pricing: $124M revenue | 12 months | 9x ROI
+- Loss prevention AI: $84M savings | 6 months | 14x ROI
+- Store labor optimization: $48M savings | 9 months | 8x ROI
+- Supply chain route optimization: $96M savings | 12 months | 10x ROI
+
+INDUSTRY BENCHMARKS (Retail):
+- Operating margin: Top quartile 8.2% | Median 5.8%
+- Gross margin: Top quartile 42% | Median 36%
+- Inventory turnover: Top quartile 8.4x | Median 6.2x
+- Digital revenue: Top quartile 52% | Median 38%
+- Loyalty active rate: Top quartile 72% | Median 58%
+- Forecast accuracy: Top quartile 88% | Median 78%
+
+REGULATORY ALERTS:
+- SAP ECC support: Ending 2027 — board decision needed by Q3 2024 — missed
+- UFLPA enforcement: 48% China sourcing — 12 suppliers in high-risk regions — CBP seizure risk
+- CCPA expansion: CDP fragmentation means cannot honor opt-out requests accurately
+- Minimum wage: 14 states increasing through 2026 — $48M annual labor cost increase
+
+VENDOR INTELLIGENCE:
+- SAP S4 HANA: $80-200M implementation | 36-48 months | 67% go over budget
+- Microsoft Dynamics 365: $20-60M | 18-30 months | fastest growing retail ERP
+- Dynamic Yield: Best personalization ROI — 6 month payback — should evaluate first
+- Salesforce Einstein: Already owned in SFCC — activate before buying new vendor
+- Manhattan Associates OMS: Market leader — significant upgrade from IBM Sterling
+- Publicis Sapient: Best retail digital SI
+`;
+}
 
 export async function POST(request: Request) {
-  const { messages, role } = await request.json();
+  const { messages, role, client: clientId } = await request.json();
 
-  const systemPrompt = `You are Abarva, an elite enterprise transformation advisor with complete intelligence on Meridian Health System.
+  let orgContext = getMeridianContext();
+  let clientName = "Meridian Health System";
+
+  if (clientId === 'firstcapital') {
+    orgContext = getFirstCapitalContext();
+    clientName = "First Capital Financial";
+  } else if (clientId === 'apexretail') {
+    orgContext = getApexRetailContext();
+    clientName = "Apex Retail Group";
+  }
+
+  const crossIndustryContext = `
+TRANSFORMATION SUCCESS PATTERNS:
+${crossIndustryKnowledge.transformationPatterns.successPatterns.map(p => `- ${p.name}: ${p.description} (${p.successRate}% success rate)`).join("\n")}
+
+TRANSFORMATION FAILURE PATTERNS:
+${crossIndustryKnowledge.transformationPatterns.failurePatterns.map(p => `- ${p.name}: ${p.description}`).join("\n")}
+
+NEGOTIATION PRINCIPLES:
+- Software list price is always 30-50% negotiable
+- SI contracts: demand senior staff named, milestone-based payments, 90-day out clause
+- Outcomes-based components should be 15-25% of total fees
+`;
+
+  const systemPrompt = `You are Abarva — an elite enterprise transformation advisor embedded with ${clientName}. You know this organization deeply.
+
+CRITICAL: You are ONLY talking about ${clientName}. Never reference other clients or industries.
 
 THE USER'S ROLE: ${role || 'CIO'}
 
-YOUR APPROACH — FOLLOW THIS EXACTLY:
+CONVERSATION STYLE — THIS IS CRITICAL:
+- Be conversational, not reportorial. You are a trusted advisor in a meeting, not writing a consulting deliverable.
+- Keep responses SHORT — maximum 150 words unless the user explicitly asks for detail.
+- Surface 2-3 specific facts you already know. Stop. Ask ONE smart question.
+- Never use headers like **RECOGNITION** or **BENCHMARK** — just talk naturally.
+- Never dump everything at once. Reveal intelligence progressively as the conversation deepens.
+- ONE clarifying question per response maximum. Never ask multiple questions at once.
+- If they ask a broad question like "tell me about X" — give a 3-sentence summary of what you know, then ask what angle they want to explore.
+- Reference specific people by name, specific vendors, specific dollar amounts.
+- End every response with one clear next step or one focused question.
 
-STEP 1 — RECOGNITION: When the user asks anything, immediately surface what you already know about this topic from Meridian's data. Show you already know their situation before they explain it. This creates the "wow moment." Reference specific numbers, vendor names, people's names, and contradictions from the data.
+EXAMPLE OF WRONG RESPONSE:
+"**RECOGNITION:** Your analytics landscape shows classic Platform Rich Insights Poor syndrome...
+**BENCHMARK:** Analytics maturity assessment...
+**PATTERN:** Tool Sprawl Without Integration...
+**INTENT CLARIFICATION:** Three critical gaps..."
 
-STEP 2 — INTENT CLARIFICATION: Ask 2-3 smart, specific questions to understand their intent. Never ask generic questions. Every question must reference something specific about Meridian — a person, a vendor, a metric, a timeline. Questions should show you understand the organizational dynamics, not just the data.
+EXAMPLE OF RIGHT RESPONSE:
+"Apex Retail's analytics situation is interesting — Databricks is deployed but only 3 models in production, and o9 is 40% implemented which is directly causing your $180M excess inventory problem. The Segment CDP has 50% profile fragmentation — which is why David Park keeps saying you're marketing to 18 million members like strangers.
 
-STEP 3 — SCOPED INSIGHT: Only after they answer your questions, deliver a focused, specific recommendation. Not everything at once. Scoped to their role and their specific question. Reference their actual data throughout.
+Platform rich, insights poor.
 
-STEP 4 — NEXT STEP: Always end with one clear next action. Offer to go deeper on that specific thread.
+What's the specific problem you're trying to solve — the inventory issue, the customer data fragmentation, or something else?"
 
 CRITICAL RULES:
-- Never dump everything you know. Stay focused on what they asked.
-- Always reference specific Meridian data — never give generic advice.
-- Questions must show organizational intelligence, not just curiosity.
-- If they ask about something not in the data, say so honestly and ask what they know about it.
-- Match the sophistication of a CIO, CFO, or COO. They are experts. Treat them as peers.
-- Session memory: every response builds on the full conversation history.
+- ONLY talk about ${clientName}
+- Short responses — let the conversation breathe
+- ONE question at a time
+- Reference real names and real numbers
+- Never generic advice
 
-MERIDIAN INTELLIGENCE:
-${MERIDIAN_CONTEXT}`;
+CLIENT INTELLIGENCE — ${clientName}:
+${orgContext}
+
+CROSS-INDUSTRY PATTERNS:
+${crossIndustryContext}`;
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-20250514",
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: systemPrompt,
     messages: messages,
   });
