@@ -99,14 +99,14 @@ function IntelligenceContent() {
     : ['EHR/EMR', 'Revenue Cycle Management', 'Patient Engagement', 'ERP', 'Data Warehouse', 'Business Intelligence', 'Cloud Platform', 'Cybersecurity', 'Integration Engine', 'Imaging/PACS', 'Pharmacy', 'Workforce Management']
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
-      <nav className="border-b border-gray-800 px-6 py-3 flex justify-between items-center flex-shrink-0">
+    <div className="min-h-screen flex flex-col" style={{background: "#FAFAFA", color: "#0F172A"}}>
+      <nav className="px-6 py-3 flex justify-between items-center flex-shrink-0" style={{background: "#FFFFFF", borderBottom: "1px solid #E2E8F0"}}>
         <div className="flex items-center gap-4">
-          <button onClick={() => window.location.href = '/'} className="text-gray-400 hover:text-white text-sm">Back to Dashboard</button>
+          <button onClick={() => window.location.href = '/'} className="text-sm transition" style={{color: "#2563EB"}}>Back to Dashboard</button>
           <span className="text-gray-600">|</span>
-          <h1 className="text-lg font-bold">Technology Intelligence</h1>
+          <h1 className="text-lg font-bold" style={{color: "#0F172A"}}>Technology Intelligence</h1>
           <span className="text-gray-600">|</span>
-          <span className="text-sm text-gray-400">{clientName}</span>
+          <span className="text-sm" style={{color: "#475569"}}>{clientName}</span>
           <span className={`text-xs px-2 py-1 rounded ${overallScore >= 70 ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
             {overallScore}% complete
           </span>
@@ -127,7 +127,7 @@ function IntelligenceContent() {
       </nav>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-6" style={{background: "#FAFAFA"}}>
 
           {selectedSystem && (
             <div>
@@ -243,7 +243,7 @@ function IntelligenceContent() {
                           <span className="font-medium text-sm">{sys.name}</span>
                           <span className="text-xs text-red-400">Critical</span>
                         </div>
-                        <p className="text-xs text-gray-400">{sys.riskReason?.substring(0, 80)}...</p>
+                        <p className="text-xs" style={{color: "#94A3B8"}}>{sys.riskReason?.substring(0, 80)}...</p>
                       </button>
                     ))}
                   </div>
@@ -256,7 +256,7 @@ function IntelligenceContent() {
                           <span className="font-medium text-sm">{gap.area}</span>
                           <span className="text-xs text-yellow-400">{gap.severity}</span>
                         </div>
-                        <p className="text-xs text-gray-400">{gap.businessImpact}</p>
+                        <p className="text-xs" style={{color: "#94A3B8"}}>{gap.businessImpact}</p>
                       </button>
                     ))}
                   </div>
@@ -279,7 +279,7 @@ function IntelligenceContent() {
                         className={`p-5 rounded-xl border text-left transition hover:opacity-90 ${redCount > 0 ? 'bg-red-950 border-red-800' : systems.length === 0 ? 'bg-gray-900 border-gray-700' : 'bg-gray-900 border-gray-800'}`}>
                         <div className="flex justify-between items-start mb-3">
                           <h3 className="font-semibold">{domain}</h3>
-                          <span className="text-xs text-gray-400">{systems.length === 0 ? 'No data' : `${systems.length} systems`}</span>
+                          <span className="text-xs" style={{color: "#94A3B8"}}>{systems.length === 0 ? 'No data' : `${systems.length} systems`}</span>
                         </div>
                         {domainCost > 0 && <p className="text-xs text-gray-500 mb-2">${domainCost.toFixed(1)}M/yr</p>}
                         <div className="flex flex-wrap gap-1">
@@ -308,7 +308,7 @@ function IntelligenceContent() {
                         <div className="flex justify-between items-start mb-2">
                           <div>
                             <h4 className="font-semibold">{sys.name}</h4>
-                            <p className="text-xs text-gray-400">{sys.vendor}</p>
+                            <p className="text-xs" style={{color: "#94A3B8"}}>{sys.vendor}</p>
                           </div>
                           <div className="flex gap-2 items-center">
                             {healthBadge(sys.health)}
@@ -415,16 +415,16 @@ function IntelligenceContent() {
 
         </div>
 
-        <div className="w-80 border-l border-gray-800 flex flex-col bg-gray-950">
-          <div className="p-4 border-b border-gray-800">
-            <h3 className="font-semibold text-sm mb-1">Technology Agent</h3>
-            <p className="text-xs text-gray-400">Ask anything about the technology landscape</p>
+        <div className="w-80 flex flex-col" style={{background: "#FFFFFF", borderLeft: "1px solid #E2E8F0"}}>
+          <div className="p-4" style={{borderBottom: "1px solid #E2E8F0"}}>
+            <h3 className="font-semibold text-sm mb-1" style={{color: "#0F172A"}}>Technology Agent</h3>
+            <p className="text-xs" style={{color: "#94A3B8"}}>Ask anything about the technology landscape</p>
           </div>
           {chatMessages.length === 0 && (
             <div className="p-4 space-y-2">
               {['What systems are at highest risk?', 'Which contracts expire soon?', 'Where are we overspending?', 'What is our biggest integration risk?'].map((s, i) => (
                 <button key={i} onClick={() => sendChat(s)}
-                  className="w-full text-left text-xs bg-gray-900 border border-gray-800 rounded-lg p-3 text-gray-300 hover:border-blue-500 transition">{s}</button>
+                  className="w-full text-left text-xs rounded-lg p-3 transition" style={{background: "#F4F6F8", border: "1px solid #E2E8F0", color: "#374151"}}>{s}</button>
               ))}
             </div>
           )}
@@ -436,22 +436,22 @@ function IntelligenceContent() {
                 </div>
               </div>
             ))}
-            {chatLoading && !streamingResponse && <div className="text-xs text-gray-400 p-3">Analyzing...</div>}
+            {chatLoading && !streamingResponse && <div className="text-xs p-3" style={{color: "#94A3B8"}}>Analyzing...</div>}
             {streamingResponse && (
               <div className="flex justify-start">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-3 text-xs text-gray-200 max-w-xs whitespace-pre-wrap">{streamingResponse}</div>
+                <div className="rounded-xl p-3 text-xs max-w-xs whitespace-pre-wrap" style={{background: "#FFFFFF", border: "1px solid #E2E8F0", color: "#374151"}}>{streamingResponse}</div>
               </div>
             )}
             <div ref={chatEndRef} />
           </div>
-          <div className="p-4 border-t border-gray-800 flex gap-2">
-            <input className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 text-xs"
+          <div className="p-4 flex gap-2" style={{borderTop: "1px solid #E2E8F0"}}>
+            <input className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none" style={{background: "#FFFFFF", border: "1px solid #E2E8F0", color: "#0F172A"}}
               placeholder="Ask about any system..."
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') sendChat() }} />
             <button onClick={() => sendChat()} disabled={chatLoading || !chatInput.trim()}
-              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs px-3 py-2 rounded-lg">Send</button>
+              className="disabled:opacity-50 text-xs px-3 py-2 rounded-lg font-medium" style={{background: "#2563EB", color: "#FFFFFF"}}>Send</button>
           </div>
         </div>
       </div>
