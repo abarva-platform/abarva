@@ -1060,6 +1060,9 @@ export default function Home() {
                       {[
                         { name: 'IT Financial Model FY2024', file: 'Meridian_IT_Financial_Model_FY2024.xlsx', desc: 'Budget, headcount, capex, cloud spend' },
                         { name: 'Data Center Infrastructure', file: 'Meridian_DataCenter_Infrastructure_Inventory.xlsx', desc: '1,240 servers, network, storage' },
+                        { name: 'Application and Technology Inventory', file: 'Meridian_Application_Technology_Inventory.xlsx', desc: '47 systems, integrations, vendor contracts' },
+                        { name: 'Healthcare Quality and RCM Data', file: 'Meridian_Healthcare_Quality_RCM_Data.xlsx', desc: 'RCM by payer, HEDIS scores, 23 hospitals' },
+                        { name: 'IT Financial Models — All 3 Clients', file: 'Enterprise_IT_Financial_Models_All_Clients.xlsx', desc: 'Meridian $504M, First Capital $168M, Apex $285M' },
                       ].map((t, i) => (
                         <a key={i} href={`/templates/${t.file}`} download
                           className="flex items-center justify-between p-3 rounded-lg transition"
