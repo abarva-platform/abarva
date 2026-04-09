@@ -1,0 +1,66 @@
+export const meridianAI = {
+  maturity: {
+    dataReadiness: { overall: 58, clinical: 62, financial: 72, operational: 48, technology: 42 },
+    techReadiness: { overall: 44, mlPlatform: 28, dataPlatform: 35, integration: 42, mlops: 12, governance: 8 },
+    orgReadiness: { overall: 32, talent: 28, literacy: 24, changeCapacity: 34, leadership: 42 },
+    currentInitiatives: [
+      { name: "Sepsis Early Warning AI", status: "Pilot Purgatory", scope: "2 of 23 hospitals", monthsStuck: 18, investment: 400000, outcome: "Proven 31% mortality reduction" },
+      { name: "Denial Prediction Model", status: "Validated — Not Deployed", scope: "Built on Ensemble data", monthsStuck: 8, investment: 280000, outcome: "Model validated no MLOps to deploy" },
+      { name: "Readmission Risk Scoring", status: "In Development", scope: "Epic data only", monthsStuck: 4, investment: 160000, outcome: "TBD" },
+      { name: "Prior Auth Automation", status: "RFP Stage", scope: "Enterprise", monthsStuck: 6, investment: 0, outcome: "TBD" },
+      { name: "Nurse Scheduling ML", status: "Concept Only", scope: "None", monthsStuck: 12, investment: 0, outcome: "TBD" },
+      { name: "Clinical Documentation AI", status: "Pilot Purgatory", scope: "1 department", monthsStuck: 10, investment: 120000, outcome: "Physician satisfaction high not scaled" },
+    ],
+    pattern: "PILOT_PURGATORY",
+    pilotsPurgatory: 6,
+    patternDescription: "6 AI initiatives started in 24 months and 0 scaled to enterprise. Root cause: No MLOps, no CDO, no governance framework.",
+  },
+  interviews: {
+    cio: { name: "Marcus Webb", tenure: "8 months", aiPriority: "Complete Azure Synapse foundation first", biggestBlocker: "CDO vacancy — no one owns the data and AI strategy", investmentAppetite: "$15-25M over 18 months phased by proven ROI", successMetric: "3 AI models in production by Q4 2025", changeReadiness: "Low", aiQuote: "We have the ingredients but no recipe and no chef." },
+    cfo: { name: "Robert Chen", tenure: "5 years", aiPriority: "Reduce the $94M denial write-off", biggestBlocker: "Proving ROI before committing capital", investmentAppetite: "Only outcome-based", successMetric: "Denial rate below 14% by end of FY2025", changeReadiness: "Medium", aiQuote: "Show me the P&L impact first. I will write the check after." },
+    cmio: { name: "Dr. Sarah Okonkwo", tenure: "3 years", aiPriority: "Clinical decision support — sepsis, readmissions, care gaps", biggestBlocker: "Physician alert fatigue", investmentAppetite: "Whatever it takes to improve clinical outcomes", successMetric: "Sepsis mortality below national benchmark", changeReadiness: "High", aiQuote: "The sepsis model works. The barrier is not clinical. It is operational." },
+    coo: { name: "James Whitfield", tenure: "6 years", aiPriority: "Nurse scheduling — $142M in travel nurse spend is unsustainable", biggestBlocker: "Staff resistance to AI scheduling. Union considerations in 4 states.", investmentAppetite: "$5-10M if it reduces travel nurse dependency", successMetric: "Travel nurse FTE below 400 by Q4 2025", changeReadiness: "Low", aiQuote: "Every dollar on travel nurses is a dollar we cannot invest in permanent staff." },
+  },
+  changeReadiness: {
+    overall: 38,
+    components: { leadership: 42, workforce: 28, technology: 44, culture: 34, capacity: 32 },
+    riskFactors: [
+      "24% nurse turnover reduces change capacity",
+      "6 AI pilots stuck — change fatigue from failed promises",
+      "CDO vacant 8+ months — no AI change champion",
+      "Blue Ridge cultural integration incomplete",
+      "Epic optimization abandoned in 2023 — IT trust deficit",
+    ],
+    recommendation: "Sequence RCM initiatives first — CFO wins, low resistance. Then scale clinical AI. Do not start nursing AI until union engagement complete.",
+  },
+  opportunities: {
+    frontOffice: [
+      { id: "fo-001", name: "Prior Auth AI Automation", annualValue: 28000000, investment: 4200000, roi: 6.7, timeline: "9 months", dataReadiness: "yellow", dataReadinessPct: 68, aiApproach: "NLP and rules engine for auto-submission across all payers", complexity: "medium", wave: 1, vendor: ["Olive AI", "Waystar AI", "Cohere Health"], problem: "23% of payers connected. 77% of prior auths processed manually. CMS deadline Jan 2026." },
+      { id: "fo-002", name: "Patient No-Show Prediction", annualValue: 14700000, investment: 1800000, roi: 8.2, timeline: "6 months", dataReadiness: "green", dataReadinessPct: 84, aiApproach: "ML classification on 3 years of Epic scheduling history", complexity: "low", wave: 1, vendor: ["Build internal"], problem: "18% no-show rate. $42M annual revenue loss. Epic data complete and clean." },
+      { id: "fo-003", name: "MA Star Rating Optimization", annualValue: 34000000, investment: 8000000, roi: 4.25, timeline: "12 months", dataReadiness: "yellow", dataReadinessPct: 58, aiApproach: "HEDIS gap prediction and automated care gap outreach", complexity: "high", wave: 2, vendor: ["Arcadia", "Lightbeam Health"], problem: "3.5 stars. $34M quality bonus at risk below 4.0. 10 HEDIS measures below target." },
+      { id: "fo-004", name: "Sepsis AI Scale-up", annualValue: 24000000, investment: 2000000, roi: 12.0, timeline: "6 months", dataReadiness: "green", dataReadinessPct: 91, aiApproach: "Scale existing validated model from 2 to 23 hospitals", complexity: "low", wave: 1, vendor: ["Internal model already built"], problem: "Pilot proven at 2 hospitals. 31% mortality reduction. Stuck 18 months due to lack of MLOps." },
+      { id: "fo-005", name: "Care Gap Closure Automation", annualValue: 22000000, investment: 6200000, roi: 3.5, timeline: "12 months", dataReadiness: "yellow", dataReadinessPct: 62, aiApproach: "Population health ML and Epic-triggered automated outreach", complexity: "high", wave: 2, vendor: ["Innovaccer", "Health Catalyst"], problem: "AWV completion 46% vs 65% target. Breast cancer screening 71% vs 80% target." },
+      { id: "fo-006", name: "MyChart Chatbot", annualValue: 4000000, investment: 800000, roi: 5.0, timeline: "4 months", dataReadiness: "green", dataReadinessPct: 88, aiApproach: "LLM chatbot integrated with Epic SSO for self-service", complexity: "low", wave: 1, vendor: ["Microsoft Copilot Studio", "Nuance"], problem: "23% of 3.4M annual call center calls are MyChart password resets. $4M annual waste." },
+    ],
+    middleOffice: [
+      { id: "mo-001", name: "Denial Prediction Pre-submission", annualValue: 37600000, investment: 3200000, roi: 11.75, timeline: "9 months", dataReadiness: "yellow", dataReadinessPct: 72, aiApproach: "ML on claim characteristics to flag high-risk claims before submission", complexity: "medium", wave: 1, vendor: ["Waystar AI", "Experian Health"], problem: "18.2% denial rate. Model already validated. Blocked by Ensemble cooperation and MLOps gap." },
+      { id: "mo-002", name: "Coding Accuracy AI", annualValue: 18000000, investment: 2400000, roi: 7.5, timeline: "6 months", dataReadiness: "green", dataReadinessPct: 82, aiApproach: "NLP on Epic clinical notes to suggest ICD-10 and CPT codes", complexity: "low", wave: 1, vendor: ["Nuance DAX", "3M 360 Encompass", "Nym Health"], problem: "Coding errors are 3rd largest denial reason. $17M annual write-off preventable with AI." },
+      { id: "mo-003", name: "Nurse Scheduling Optimization", annualValue: 28000000, investment: 4800000, roi: 5.8, timeline: "9 months", dataReadiness: "yellow", dataReadinessPct: 64, aiApproach: "ML optimization on Kronos scheduling and Epic census data", complexity: "medium", wave: 2, vendor: ["Avantas", "ShiftWizard", "Symplr"], problem: "756 travel nurses at $188K avg. $142M annual cost. 24% permanent nurse turnover." },
+      { id: "mo-004", name: "Travel Nurse Demand Prediction", annualValue: 14000000, investment: 1600000, roi: 8.75, timeline: "6 months", dataReadiness: "green", dataReadinessPct: 78, aiApproach: "Time series forecasting on historical staffing patterns by unit and season", complexity: "low", wave: 1, vendor: ["Build internal on Azure ML"], problem: "Reactive travel nurse contracting. Premium rates vs planned 90-day advance booking." },
+      { id: "mo-005", name: "Supply Chain Demand Forecasting", annualValue: 8000000, investment: 800000, roi: 10.0, timeline: "4 months", dataReadiness: "green", dataReadinessPct: 76, aiApproach: "ML forecasting on historical supply consumption by department and DRG", complexity: "low", wave: 1, vendor: ["Prodigo Solutions", "Build on Azure ML"], problem: "Manual supply ordering. 18% stockout rate. $8M annual waste from emergency procurement." },
+    ],
+    backOffice: [
+      { id: "bo-001", name: "AP Invoice Automation", annualValue: 4200000, investment: 800000, roi: 5.25, timeline: "4 months", dataReadiness: "green", dataReadinessPct: 88, aiApproach: "OCR and NLP for touchless invoice processing integrated with Workday", complexity: "low", wave: 1, vendor: ["Esker", "Bottomline Technologies", "Stampli"], problem: "84% of invoices processed manually. 42 AP FTE. Workday integration straightforward." },
+      { id: "bo-002", name: "Contract Analytics AI", annualValue: 6000000, investment: 600000, roi: 10.0, timeline: "3 months", dataReadiness: "green", dataReadinessPct: 82, aiApproach: "NLP on vendor contracts to surface risk flags and SLA tracking", complexity: "low", wave: 1, vendor: ["Ironclad", "Evisort", "Build on Azure OpenAI"], problem: "$11.7M in available SLA penalties. $0 enforced. Contracts not monitored systematically." },
+      { id: "bo-003", name: "Azure Cost Optimization AI", annualValue: 4200000, investment: 200000, roi: 21.0, timeline: "2 months", dataReadiness: "green", dataReadinessPct: 92, aiApproach: "Azure Cost Management API and ML for VM right-sizing and reserved instance optimization", complexity: "low", wave: 1, vendor: ["Azure Advisor native", "Cloudability"], problem: "340 VMs below 20% utilization. $1.8M identified waste. No FinOps governance." },
+      { id: "bo-004", name: "AIOps Incident Prediction", annualValue: 8000000, investment: 2400000, roi: 3.3, timeline: "12 months", dataReadiness: "yellow", dataReadinessPct: 58, aiApproach: "ML on Azure Monitor telemetry to predict infrastructure failures before impact", complexity: "high", wave: 2, vendor: ["Dynatrace", "Moogsoft"], problem: "Reactive IT operations. Average 4.2 hours to detect incidents. $8M annual downtime cost." },
+      { id: "bo-005", name: "GenAI Clinical Documentation", annualValue: 42000000, investment: 4000000, roi: 10.5, timeline: "12 months", dataReadiness: "yellow", dataReadinessPct: 66, aiApproach: "Ambient AI listening and LLM for automated SOAP note generation in Epic", complexity: "high", wave: 3, vendor: ["Nuance DAX Copilot", "Abridge", "Suki"], problem: "Physicians spend 2.1 hours per day on documentation. 68% report burnout. $42M productivity opportunity." },
+    ],
+  },
+  roadmap: {
+    wave1: { name: "Foundation and Quick Wins", months: "0-6", totalInvestment: 15200000, totalAnnualValue: 100700000, roi: 5.8, initiatives: ["fo-002", "fo-004", "fo-006", "mo-001", "mo-002", "mo-004", "mo-005", "bo-001", "bo-002", "bo-003"], prerequisite: "" },
+    wave2: { name: "Core Clinical and Operational AI", months: "6-12", totalInvestment: 22400000, totalAnnualValue: 96000000, roi: 4.3, initiatives: ["fo-001", "fo-003", "fo-005", "mo-003", "bo-004"], prerequisite: "CDO hired, MLOps deployed, Azure Synapse complete" },
+    wave3: { name: "Transformative and Strategic AI", months: "12-18", totalInvestment: 18000000, totalAnnualValue: 124000000, roi: 6.9, initiatives: ["bo-005"], prerequisite: "Wave 1 and 2 complete, AI governance established" },
+    summary: { totalInvestment: 55600000, totalAnnualValue: 292000000, blendedROI: 5.25, paybackMonths: 8.2, mckinseyEquivalent: 4000000, abarvaFee: 180000, saving: 3820000 },
+  },
+}

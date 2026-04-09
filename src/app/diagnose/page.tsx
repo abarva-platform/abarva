@@ -1,0 +1,209 @@
+'use client'
+import { useState, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
+import { meridianHealth } from '@/data/meridian/index'
+import { firstCapital } from '@/data/firstcapital/index'
+import { apexRetail } from '@/data/apexretail/index'
+
+const S = {
+  page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
+  card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px' } as React.CSSProperties,
+}
+
+const SUGGESTIONS: Record<string, Record<string, string[]>> = {
+  meridian: {
+    CIO: ['Should we stay with Ensemble or switch RCM vendors?', 'What should I prioritize in my first 90 days?', 'How do we fix the Blue Ridge Cerner migration?'],
+    CFO: ['How do we recover the $94M in RCM revenue leakage?', 'Is our $504M IT budget allocated correctly?', 'What is the fastest path to 4% operating margin?'],
+    COO: ['How do we reduce travel nurse dependency — $142M annual cost?', 'Our readmission rate is too high — what drives it?', 'The Blue Ridge integration is failing — what do we do?'],
+    CMIO: ['How do we get Epic optimized — 58/100 after 7 years?', 'Physician burnout is getting worse — how can AI help?', 'We have AI pilots stuck — how do we scale sepsis AI?'],
+    CEO: ['What is our path to 4% operating margin by FY2026?', 'How do we position Meridian as the AI leader in Southeast?', 'The board is losing patience — what do I tell them?'],
+  },
+  firstcapital: {
+    CIO: ['Replace FIS HORIZON or add an API layer?', 'How do we get FedNow live before we lose commercial clients?', 'SQL Server 2017 EOS October — what do we do?'],
+    CFO: ['ROI case for core banking modernization?', 'How do we get cost-to-income from 68% to 55%?', 'Fraud losses $3.8M above benchmark — fastest fix?'],
+    COO: ['Every tech project goes over budget — how do we fix that?', 'How do we automate AML without adding headcount?', 'What is driving our 64% account opening abandonment?'],
+    CMO: ['1.8M digital customers seeing yesterday balances — fix?', 'Mobile app rating 3.2 — what is killing our score?', 'Digital adoption 41% vs 67% benchmark — root cause?'],
+    CEO: ['Strategic risk of keeping FIS HORIZON 3 more years?', 'How do we position as digital bank without $180M investment?', 'How long before commercial clients leave without FedNow?'],
+  },
+  apexretail: {
+    CIO: ['S4 HANA or Microsoft Dynamics — right SAP path?', 'o9 demand planning 40% implemented and stalled — fix?', 'IBM Sterling OMS 3 versions behind — upgrade or replace?'],
+    CFO: ['ROI case for SAP migration options?', 'Inventory turnover 4.2x vs 6.8x — what does that cost us?', 'How do we get operating margin from 3.8% to 6% in 24 months?'],
+    COO: ['Inventory accuracy 84% vs 98% — omnichannel is impossible', 'How do we reduce 68% annual staff turnover?', 'China sourcing 48% — how do we diversify?'],
+    CMO: ['18M loyalty members — 42% active vs 68% benchmark — why?', 'Einstein personalization — why is it not activated?', 'Cart abandonment 72% — what do we fix first?'],
+    CEO: ['SAP ECC support ends 2027 — what do I tell the board?', 'Amazon is taking share — what is the digital strategy?', 'How do we close the $840M cart abandonment opportunity?'],
+  },
+}
+
+function DiagnoseContent() {
+  const searchParams = useSearchParams()
+  const clientId = searchParams.get('client') || 'meridian'
+  const [role, setRole] = useState('CIO')
+  const [messages, setMessages] = useState<Array<{role: string, content: string}>>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [streaming, setStreaming] = useState('')
+  const [activeClient, setActiveClient] = useState(clientId)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+  const confidence = activeClient === 'firstcapital' ? 88 : activeClient === 'apexretail' ? 86 : 94
+  const roles = activeClient === 'meridian' ? ['CIO', 'CFO', 'COO', 'CMIO', 'CEO'] : ['CIO', 'CFO', 'COO', 'CMO', 'CEO']
+  const statusColors = { red: '#DC2626', yellow: '#D97706', green: '#059669' }
+  const suggestions = SUGGESTIONS[activeClient]?.[role] || SUGGESTIONS.meridian.CIO
+
+  function getMetrics() {
+    if (activeClient === 'firstcapital') return [
+      { label: 'Cost-to-Income', value: firstCapital.financials.costToIncomeRatio + '%', status: 'red' as const },
+      { label: 'Digital Adoption', value: firstCapital.technology.digital.digitalAdoptionRate + '%', status: 'red' as const },
+      { label: 'Core Banking Age', value: firstCapital.technology.coreBanking.age + ' yrs', status: 'red' as const },
+      { label: 'FedNow Live', value: 'No', status: 'red' as const },
+    ]
+    if (activeClient === 'apexretail') return [
+      { label: 'Operating Margin', value: apexRetail.org.operatingMargin + '%', status: 'red' as const },
+      { label: 'Inventory Turnover', value: apexRetail.financials.inventoryTurnover + 'x', status: 'red' as const },
+      { label: 'Cart Abandonment', value: apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate + '%', status: 'red' as const },
+      { label: 'Loyalty Active', value: apexRetail.financials.loyaltyMemberPercent + '%', status: 'yellow' as const },
+    ]
+    return [
+      { label: 'Operating Margin', value: meridianHealth.org.operatingMargin + '%', status: 'red' as const },
+      { label: 'RCM Denial Rate', value: meridianHealth.technology.rcm.denialRate + '%', status: 'red' as const },
+      { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', status: 'yellow' as const },
+      { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), status: 'yellow' as const },
+    ]
+  }
+
+  async function sendMessage(text?: string) {
+    const msg = text || input
+    if (!msg.trim()) return
+    const updated = [...messages, { role: 'user', content: msg }]
+    setMessages(updated)
+    setInput('')
+    setLoading(true)
+    setStreaming('')
+    try {
+      const res = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updated, role, client: activeClient })
+      })
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      let full = ''
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          full += decoder.decode(value)
+          setStreaming(full)
+        }
+      }
+      setMessages(prev => [...prev, { role: 'assistant', content: full }])
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Error connecting. Please try again.' }])
+    }
+    setStreaming('')
+    setLoading(false)
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+  }
+
+  return (
+    <div style={S.page}>
+      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming('') }} activePage="diagnose" />
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
+        <span style={{ color: '#D1D5DB' }}>›</span>
+        <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Diagnose</span>
+        <span style={{ color: '#D1D5DB' }}>›</span>
+        <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName}</span>
+      </div>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: 'calc(100vh - 136px)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            {roles.map(r => (
+              <button key={r} onClick={() => { setRole(r); setMessages([]); setStreaming('') }}
+                style={{ padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: role === r ? 'none' : '1px solid #E2E8F0', background: role === r ? '#2563EB' : '#FFFFFF', color: role === r ? '#FFFFFF' : '#475569' }}>
+                {r}
+              </button>
+            ))}
+            <button onClick={() => { setMessages([]); setStreaming('') }} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#6B7280' }}>Clear</button>
+          </div>
+          {messages.length === 0 && !streaming && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px' }}>Suggested for {role}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                {suggestions.map((s, i) => (
+                  <button key={i} onClick={() => sendMessage(s)}
+                    style={{ ...S.card, padding: '12px', textAlign: 'left', cursor: 'pointer', fontSize: '12px', color: '#374151', lineHeight: 1.5 }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
+                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+            {messages.map((msg, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{ maxWidth: '80%', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const, background: msg.role === 'user' ? '#2563EB' : '#FFFFFF', color: msg.role === 'user' ? '#FFFFFF' : '#374151', border: msg.role === 'user' ? 'none' : '1px solid #E2E8F0' }}>
+                  {msg.content}
+                </div>
+              </div>
+            ))}
+            {loading && !streaming && <div style={{ ...S.card, padding: '12px 16px', fontSize: '13px', color: '#94A3B8', width: 'fit-content' }}>Analyzing {clientName}...</div>}
+            {streaming && <div style={{ maxWidth: '80%', ...S.card, padding: '12px 16px', fontSize: '14px', color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{streaming}</div>}
+            <div ref={bottomRef} />
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <input value={input} onChange={e => setInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
+              placeholder={'Ask Abarva anything as ' + role + ' at ' + clientName + '...'}
+              style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontSize: '14px', border: '1px solid #E2E8F0', outline: 'none', background: '#FFFFFF', color: '#0F172A', fontFamily: 'Inter, sans-serif' }}
+              onFocus={e => (e.target as HTMLInputElement).style.borderColor = '#2563EB'}
+              onBlur={e => (e.target as HTMLInputElement).style.borderColor = '#E2E8F0'} />
+            <button onClick={() => sendMessage()} disabled={loading || !input.trim()}
+              style={{ padding: '12px 24px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: '#2563EB', color: 'white', border: 'none', cursor: 'pointer', opacity: loading || !input.trim() ? 0.5 : 1 }}>
+              Send
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto' }}>
+          <div style={S.card}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>CLIENT SNAPSHOT</div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{clientName}</div>
+            <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>{confidence}% data confidence</div>
+            {getMetrics().map((m, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#475569' }}>{m.label}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{m.value}</span>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: statusColors[m.status], display: 'block' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={S.card}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>QUICK ACTIONS</div>
+            {[
+              { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
+              { label: 'Build Business Case', href: '/justify?client=' + activeClient },
+              { label: 'Select Vendor', href: '/select?client=' + activeClient },
+              { label: 'Maestro Admin', href: '/admin' },
+            ].map((a, i) => (
+              <a key={i} href={a.href} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>{a.label} →</a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function DiagnosePage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
+      <DiagnoseContent />
+    </Suspense>
+  )
+}
