@@ -2,255 +2,335 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
-import { meridianAI } from '@/data/meridian/ai'
-import { firstCapitalAI } from '@/data/firstcapital/ai'
-import { apexRetailAI } from '@/data/apexretail/ai'
 
-const S = {
-  page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
-  card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' } as React.CSSProperties,
-}
+const STATUS_COLOR: Record<string, string> = { URGENT: '#EF4444', HIGH: '#F59E0B', MEDIUM: '#4DA3FF' }
+const STATUS_BG: Record<string, string> = { URGENT: 'rgba(239,68,68,0.12)', HIGH: 'rgba(245,158,11,0.12)', MEDIUM: 'rgba(77,163,255,0.12)' }
 
-const STEPS = [{ id: 1, name: 'Requirement' }, { id: 2, name: 'Vendor Options' }, { id: 3, name: 'Compare' }, { id: 4, name: 'Negotiation' }]
-const DIMS = ['TCO (3yr)', 'Implementation Timeline', 'KLAS Score', 'Integration Complexity', 'Vendor Stability', 'Support Model', 'AI/ML Capability', 'Reference Customers']
-
-// Client-specific vendor data
-const VENDOR_DB: Record<string, any[]> = {
-  meridian: [
-    { name: 'Cohere Health', klas: 4.4, cost: '$2.1-3.2M', timeline: '6-9 mo', bestFor: 'Prior auth automation with ML — Epic integrated', risk: 'Low', ai: true, peers: ['Advocate Aurora', 'Baylor Scott & White'], recommendation: true },
-    { name: 'Waystar AI', klas: 4.1, cost: '$3.0-4.8M', timeline: '9-12 mo', bestFor: 'Integrated RCM and prior auth platform', risk: 'Medium', ai: true, peers: ['HCA Healthcare', 'CommonSpirit Health'], recommendation: false },
-    { name: 'Olive AI', klas: 3.8, cost: '$4.2-6.0M', timeline: '12-18 mo', bestFor: 'Broad RCM automation beyond prior auth', risk: 'High', ai: true, peers: ['Bon Secours', 'Spectrum Health'], recommendation: false },
-  ],
-  firstcapital: [
-    { name: 'Finzly', klas: 4.3, cost: '$2.8-4.2M', timeline: '6-9 mo', bestFor: 'FedNow on legacy core banking — HORIZON compatible', risk: 'Low', ai: false, peers: ['Pacific Premier Bank', 'Glacier Bank'], recommendation: true },
-    { name: 'NICE Actimize 10.2', klas: 4.1, cost: '$2.4-3.6M', timeline: '6-9 mo', bestFor: 'AML upgrade from existing 8.1 — reduces false positives 78% to 42%', risk: 'Low', ai: true, peers: ['Existing vendor upgrade'], recommendation: false },
-    { name: 'Zest AI', klas: 4.0, cost: '$1.8-3.2M', timeline: '6-12 mo', bestFor: 'Credit underwriting ML on alternative data', risk: 'Medium', ai: true, peers: ['Patelco CU', 'Sunrise Banks'], recommendation: false },
-    { name: 'Feedzai', klas: 4.2, cost: '$2.4-4.0M', timeline: '6-9 mo', bestFor: 'Real-time fraud detection via API layer', risk: 'Low', ai: true, peers: ['Fifth Third Bank', 'Santander'], recommendation: false },
-  ],
-  apexretail: [
-    { name: 'Salesforce Professional Services', klas: 4.2, cost: '$400-800K', timeline: '6-8 weeks', bestFor: 'Einstein activation — already purchased, zero incremental software cost', risk: 'Low', ai: true, peers: ['Gap Inc', 'L Brands', 'Tapestry'], recommendation: true },
-    { name: 'o9 Solutions (existing)', klas: 4.1, cost: '$4.2-6.8M', timeline: '9-12 mo', bestFor: 'Complete existing 60% of demand forecasting implementation', risk: 'Medium', ai: true, peers: ['Nike', 'H&M', 'Puma'], recommendation: false },
-    { name: 'Twilio Segment PS', klas: 4.0, cost: '$600K-1.2M', timeline: '60-90 days', bestFor: 'CDP identity resolution — reduce 2.8x duplication to 1.1x', risk: 'Low', ai: true, peers: ['Existing vendor'], recommendation: false },
-    { name: 'Klaviyo', klas: 4.3, cost: '$800K-1.6M', timeline: '4-6 mo', bestFor: 'Cart abandonment recovery — real-time triggered email and SMS', risk: 'Low', ai: true, peers: ['Glossier', 'Chubbies', 'Brooklinen'], recommendation: false },
-  ],
-}
-
-const CLIENT_NOTES: Record<string, string[]> = {
-  meridian: [
-    'You have $8M in enforceable Ensemble SLA penalties — use as leverage when evaluating RCM alternatives',
-    'Mention you are evaluating Cohere, Waystar, and Olive — all want this deal',
-    'CDO role is vacant — negotiate vendor implementation leadership as part of the deal',
-    'Implementation team must have prior Epic integration experience — make it non-negotiable',
-  ],
-  firstcapital: [
-    'FIS HORIZON constraint is known — any vendor must have reference clients on HORIZON specifically',
-    '3 OCC MRAs in progress — new vendor must not add compliance risk — get written confirmation',
-    'Mention you are also evaluating full core banking modernization — creates urgency for the vendor',
-    'Require FedNow go-live within 6 months as a contractual milestone with penalty for delay',
-  ],
-  apexretail: [
-    'Einstein is already purchased and paid for — use as leverage: We may just activate Einstein ourselves',
-    'SAP decision pending — any vendor must work with both ECC today and S4 HANA tomorrow',
-    'Request CDO advisory hours as part of the implementation — you lack internal data leadership',
-    'Tie 30% of implementation fees to achieving measurable outcomes not just go-live dates',
-  ],
-}
-
-function score(v: any, dim: string) {
-  if (dim === 'KLAS Score') return v.klas ? v.klas + '/5.0' : 'N/A'
-  if (dim === 'AI/ML Capability') return v.ai ? '★★★★★' : '★★★☆☆'
-  if (dim === 'Reference Customers') return v.peers?.join(', ')
-  const m: Record<string, string> = { Low: '★★★★★', Medium: '★★★★☆', High: '★★★☆☆' }
-  return m[v.risk] || '★★★☆☆'
-}
+const DECISIONS = [
+  {
+    id: 'prior-auth',
+    label: 'Prior Auth Automation',
+    status: 'URGENT',
+    deadline: 'CMS mandate: Jan 2027',
+    context: 'CMS Prior Authorization rule requires electronic prior auth by January 2027. Meridian processes 847K prior auth requests annually at $28.50 each. Current 14-day average delay is driving physician attrition and $94M in avoidable cost.',
+    options: [
+      {
+        name: 'Cohere Health', cost: '$2.1–3.2M', timeline: '6–9 mo', score: 94, recommended: true, tag: 'Epic-native integration',
+        bullets: ['ML approval prediction 94% accuracy', 'Pre-built Epic FHIR integration — no middleware', 'Advocate Aurora + Baylor Scott & White references', 'Reduces 14-day avg to 2.3 days at peer sites'],
+      },
+      {
+        name: 'Waystar AI', cost: '$3.0–4.8M', timeline: '9–12 mo', score: 81, recommended: false, tag: 'Integrated RCM play',
+        bullets: ['Combined prior auth + full RCM platform', 'HCA Healthcare + CommonSpirit references', 'Higher cost and longer timeline than Cohere', 'Overlap with existing Ensemble RCM contract'],
+      },
+      {
+        name: 'Olive AI', cost: '$4.2–6.0M', timeline: '12–18 mo', score: 68, recommended: false, tag: 'Broad automation suite',
+        bullets: ['Beyond prior auth — covers broader RCM automation', 'Bon Secours + Spectrum Health references', 'Highest cost, longest implementation window', 'Recent layoffs create vendor stability risk'],
+      },
+    ],
+    recommendation: 'Cohere Health is the clear choice. Their Epic FHIR integration avoids a 6-month middleware build, and their 94% ML accuracy exceeds your 85% target. The $8M in enforceable Ensemble SLA penalties gives you direct negotiating leverage — use it to get Cohere at the low end of their range.',
+    negotiation: 'Disclose you are evaluating all three vendors simultaneously. Demand named Epic integration leads committed before signing. Request outcome-based pricing tied to approval rate improvement, not go-live date.',
+  },
+  {
+    id: 'cdo',
+    label: 'CDO / AI Leadership',
+    status: 'URGENT',
+    deadline: 'Board asks every quarter',
+    context: 'The CDO role has been vacant since March 2025. Without executive ownership, the $94M AI savings pipeline stalls. Three AI vendors have already stated they will not commit to contracts without a named internal champion on the Meridian side.',
+    options: [
+      {
+        name: 'Hire Full-Time CDO', cost: '$420–580K/yr', timeline: '4–6 mo search', score: 88, recommended: true, tag: 'Permanent fix',
+        bullets: ['Right-sized for a $2.1B health system', 'Creates vendor accountability structure', 'Board-level credibility for AI roadmap', 'Risk: wrong hire takes 18 months to unwind'],
+      },
+      {
+        name: 'Fractional CDO (Consulting)', cost: '$180–240K/yr', timeline: '30 days', score: 74, recommended: false, tag: 'Fast but limited',
+        bullets: ['Get moving in 30 days', 'Typically 20% time — not a real owner', 'Vendors see it as a placeholder move', 'No institutional knowledge building'],
+      },
+      {
+        name: 'Promote Internal Analytics Lead', cost: '$60–80K raise', timeline: 'Immediate', score: 61, recommended: false, tag: 'Internal option',
+        bullets: ['Mark Chen knows the data estate deeply', 'No AI vendor management experience', 'Board likely to push back on seniority', 'Signals insufficient AI ambition'],
+      },
+      {
+        name: 'Defer to 2026', cost: '$0', timeline: 'N/A', score: 22, recommended: false, tag: 'Status quo',
+        bullets: ['No near-term cost', 'Loses board confidence quarter over quarter', 'Vendors deprioritize Meridian pipeline', '$94M savings pipeline deteriorates further'],
+      },
+    ],
+    recommendation: 'Hire a full-time CDO. The cost is trivial relative to the $94M annual savings at stake. Specify healthcare AI operational experience — not just a data science background. Use the job description itself to signal vendor seriousness and create urgency.',
+    negotiation: 'Negotiate current AI vendor contracts to include a 90-day re-opener clause triggered if CDO hire changes strategic direction. Protect yourself from pre-CDO commitments.',
+  },
+  {
+    id: 'epic-ai',
+    label: 'Epic AI Module Activation',
+    status: 'HIGH',
+    deadline: 'Epic upgrade window: Q3 2026',
+    context: 'Meridian is on Epic Cogito but has not activated DAX Copilot, Predictive Risk Scoring, or the Sepsis Early Warning models already licensed. The annual Epic upgrade in Q3 2026 is the natural activation window — missing it means another 12 months of delay.',
+    options: [
+      {
+        name: 'Activate via SI Partner', cost: '$800K–1.4M', timeline: '6–9 mo', score: 91, recommended: true, tag: 'Fastest to clinical value',
+        bullets: ['Deloitte or Accenture Epic COE resources', 'Clinical workflow redesign included', 'Change management budget built in', 'Avoids internal IT resourcing gap'],
+      },
+      {
+        name: 'Epic Professional Services', cost: '$1.1–1.8M', timeline: '9–12 mo', score: 78, recommended: false, tag: 'Direct from Epic',
+        bullets: ['Deep product knowledge from the source', 'Slower scheduling, higher list cost', 'Less flexibility on workflow customization', 'No dedicated change management expertise'],
+      },
+      {
+        name: 'Internal IT Activation', cost: '$180–320K', timeline: '12–18 mo', score: 44, recommended: false, tag: 'Low cost, high risk',
+        bullets: ['IT team already at capacity', 'DAX requires clinical informaticist skill set', 'Timeline incompatible with Q3 window', 'High rework probability — peer health systems 0 for 3'],
+      },
+    ],
+    recommendation: 'Engage an SI with proven Epic DAX deployments at Meridian\'s scale. DAX Copilot alone should recover 45 minutes per physician per day — across 820 physicians that is $18M in recovered capacity annually. The SI cost pays back in under 45 days.',
+    negotiation: 'Make DAX Copilot physician satisfaction (target: 80%+ would recommend after 90 days) a contractual milestone tied to 20% of SI fees. Prevents an activation-only engagement with no adoption follow-through.',
+  },
+  {
+    id: 'rcm',
+    label: 'RCM Platform',
+    status: 'HIGH',
+    deadline: '$8M SLA penalties enforceable now',
+    context: 'Ensemble Health Partners holds your current RCM contract with $8M in documented SLA breaches on file. You have leverage right now. Revenue cycle performance is 31% below peer benchmark on net collection rate and denial resolution time.',
+    options: [
+      {
+        name: 'Renegotiate Ensemble Contract', cost: '$8M penalty recovery', timeline: '60–90 days', score: 89, recommended: true, tag: 'Use your leverage first',
+        bullets: ['$8M in enforceable SLA breach penalties', 'Demand 25% fee reduction + reset SLAs with teeth', 'Threat of full re-platform creates urgency', 'Fastest path to financial recovery — no migration risk'],
+      },
+      {
+        name: 'Re-platform to Waystar', cost: '$3.0–4.8M migration', timeline: '9–12 mo', score: 83, recommended: false, tag: 'Full re-platform option',
+        bullets: ['Integrated claims + prior auth on one platform', 'HCA Healthcare + CommonSpirit references', 'Best option if Ensemble renegotiation fails', 'Migration disruption carries operational risk'],
+      },
+      {
+        name: 'nThrive (Kaufman Hall)', cost: '$2.4–4.2M', timeline: '9–15 mo', score: 71, recommended: false, tag: 'Mid-market alternative',
+        bullets: ['Strong denial management AI capabilities', 'Better fit for smaller health systems', 'Private equity owned — long-term stability risk', 'Weaker prior auth automation module'],
+      },
+    ],
+    recommendation: 'Use the $8M SLA leverage against Ensemble before committing to any re-platform. Hire outside counsel to send the breach demand letter before any negotiation meeting — it fundamentally changes the power dynamic. Do not telegraph a final decision until you have Ensemble\'s best offer in writing.',
+    negotiation: 'Give Ensemble a 30-day deadline for a written remediation plan with specific KPI commitments. If they miss it, begin the Waystar RFP immediately. The credible exit threat is your strongest asset.',
+  },
+  {
+    id: 'data-platform',
+    label: 'Data & Analytics Platform',
+    status: 'HIGH',
+    deadline: 'AI use cases blocked without this',
+    context: 'Epic Caboodle is Meridian\'s only analytical data store. It cannot support real-time AI use cases, streaming clinical data, or ML model training. A modern data lakehouse is a hard dependency for 5 of the 7 AI initiatives in the $94M savings pipeline.',
+    options: [
+      {
+        name: 'Databricks on Azure', cost: '$1.8–3.2M/yr', timeline: '6–9 mo', score: 92, recommended: true, tag: 'Healthcare AI leader',
+        bullets: ['Delta Lake for HIPAA-compliant streaming data', 'Unity Catalog for Epic data governance layer', 'Providence Health + Kaiser Permanente references', 'MLflow for model lifecycle — needed for clinical AI'],
+      },
+      {
+        name: 'Snowflake + Azure ML', cost: '$1.4–2.6M/yr', timeline: '6–9 mo', score: 84, recommended: false, tag: 'Strong SQL-first option',
+        bullets: ['Best-in-class SQL analytics and BI layer', 'Weaker real-time streaming than Databricks', 'Excellent for financial and operational reporting', 'Additional Azure ML tooling adds cost'],
+      },
+      {
+        name: 'Azure Synapse Analytics', cost: '$900K–1.6M/yr', timeline: '4–6 mo', score: 68, recommended: false, tag: 'Microsoft bundle play',
+        bullets: ['Potential discount via existing Azure EA', 'Weaker for ML model deployment at scale', 'Limited healthcare-specific data tooling', 'Microsoft roadmap deprioritizing Synapse for Fabric'],
+      },
+      {
+        name: 'Keep Epic Caboodle Only', cost: '$0 incremental', timeline: 'N/A', score: 18, recommended: false, tag: 'Status quo — blocks AI',
+        bullets: ['No additional platform cost', 'Cannot support streaming or real-time AI', 'Blocks the entire $94M savings pipeline', 'Eliminates competitive differentiation within 24 months'],
+      },
+    ],
+    recommendation: 'Databricks on Azure is the only platform that can support your full AI roadmap. Providence Health\'s deployment at comparable scale is the right reference to visit. The $2M annual cost is 2% of the $94M savings it enables — frame it that way to the board.',
+    negotiation: 'Databricks is aggressive on healthcare deals. Request a committed-use discount, Unity Catalog licensing at no cost for Year 1, and a named Customer Success Manager with prior Epic integration experience as contractual terms.',
+  },
+  {
+    id: 'physician-ai',
+    label: 'Physician AI Tools',
+    status: 'MEDIUM',
+    deadline: 'Physician attrition: 34 lost in 2025',
+    context: 'Meridian lost 34 physicians in 2025, 60% citing administrative burden as the primary reason. Average physician spends 3.1 hours per day on documentation. AI-assisted documentation directly addresses the top attrition driver and is the fastest ROI in the AI portfolio.',
+    options: [
+      {
+        name: 'Nuance DAX (Microsoft)', cost: '$400–700K/yr', timeline: '3–5 mo', score: 93, recommended: true, tag: 'Clinical documentation standard',
+        bullets: ['Ambient AI — no dictation, no templates required', 'Epic-native integration live since late 2024', '91% physician satisfaction at peer health systems', 'Reduces documentation time 45 min/day per physician'],
+      },
+      {
+        name: 'Augmedix', cost: '$350–600K/yr', timeline: '4–6 mo', score: 79, recommended: false, tag: 'Live scribe + AI hybrid',
+        bullets: ['Human scribe + AI model combination', 'Better for complex subspecialty documentation', 'Less Epic-native integration than DAX', 'Smaller health system reference base'],
+      },
+      {
+        name: 'Suki AI', cost: '$280–480K/yr', timeline: '3–4 mo', score: 71, recommended: false, tag: 'Lower cost entry point',
+        bullets: ['Voice AI for clinical note generation', 'Smaller vendor — long-term stability risk', 'Good fit for primary care workflows', 'Limited coverage for specialist use cases'],
+      },
+    ],
+    recommendation: 'Nuance DAX is the market standard for health systems at Meridian\'s scale. The ROI is simple: 45 min/day recovered across 820 physicians = $18M annually in productive physician capacity. Frame this as attrition prevention — not a technology purchase — when presenting to the board.',
+    negotiation: 'Check your existing Microsoft EA before pricing — DAX is often bundled with M365 enterprise agreements at significant discount. Negotiate a 6-month pilot for 200 physicians before committing to full deployment.',
+  },
+  {
+    id: 'ai-governance',
+    label: 'AI Governance Model',
+    status: 'MEDIUM',
+    deadline: 'Board request: Q1 2026',
+    context: 'The board requested a formal AI governance framework in Q1 2026. Without it, Meridian cannot safely deploy clinical AI models or satisfy upcoming HHS AI transparency requirements. Governance is table stakes for deploying any of the $94M roadmap initiatives.',
+    options: [
+      {
+        name: 'Internal AI Ethics Committee', cost: '$180–280K/yr', timeline: '3–4 mo to establish', score: 86, recommended: true, tag: 'Right long-term model',
+        bullets: ['CMO + CDO + Legal + Clinical Informatics leads', 'Owns model validation, approval, and monitoring', 'Meets HHS AI transparency requirements directly', 'Credible to medical staff, regulators, and board'],
+      },
+      {
+        name: 'Third-Party AI Audit Firm', cost: '$320–520K/yr', timeline: '2–3 mo', score: 74, recommended: false, tag: 'External credibility layer',
+        bullets: ['Independent validation of clinical AI models', 'Strong optics for board and external stakeholders', 'Adds approval overhead to deployment timelines', 'Not a substitute for internal governance authority'],
+      },
+      {
+        name: 'AHA AI Consortium Membership', cost: '$45–75K/yr', timeline: 'Immediate', score: 58, recommended: false, tag: 'Peer benchmarking access',
+        bullets: ['Access to peer health system governance frameworks', 'Not a decision-making body for Meridian', 'Good supplement to accelerate framework design', 'Policy advocacy participation as side benefit'],
+      },
+    ],
+    recommendation: 'Build the internal committee — it is the only structure with actual decision authority over Meridian\'s AI deployments. Use the AHA consortium to shortcut framework design by 60 days. Budget a third-party AI audit for Year 1 clinical model deployments to establish external validation credibility.',
+    negotiation: 'Frame the committee charter explicitly around HHS AI transparency requirements. This gives the incoming CDO a legal mandate to enforce governance decisions — not just best-practice advocacy that can be overridden.',
+  },
+]
 
 function SelectContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
-  const [step, setStep] = useState(1)
   const [activeClient, setActiveClient] = useState(clientId)
-  const [selectedInit, setSelectedInit] = useState<string | null>(null)
-  const [selectedVendor, setSelectedVendor] = useState<any>(null)
+  const [selectedId, setSelectedId] = useState(DECISIONS[0].id)
 
-  const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
-  const ai = activeClient === 'firstcapital' ? firstCapitalAI : activeClient === 'apexretail' ? apexRetailAI : meridianAI
-
-  // Client-specific vendors
-  const vendors = VENDOR_DB[activeClient] || VENDOR_DB.meridian
-  const recommended = vendors.find(v => v.recommendation)
-
-  // Wave 1 opportunities for this client
-  const wave1Opps = [
-    ...ai.opportunities.frontOffice,
-    ...ai.opportunities.middleOffice,
-    ...ai.opportunities.backOffice,
-  ].filter((o: any) => o.wave === 1).slice(0, 8)
-
-  const StepNav = () => (
-    <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex' }}>
-        {STEPS.map(s => (
-          <button key={s.id} onClick={() => s.id <= step && setStep(s.id)}
-            style={{ padding: '12px 20px', fontSize: '13px', fontWeight: step === s.id ? 600 : 400, color: step === s.id ? '#D97706' : step > s.id ? '#D97706' : '#94A3B8', background: 'none', border: 'none', cursor: s.id <= step ? 'pointer' : 'default', borderBottom: step === s.id ? '2px solid #D97706' : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === s.id ? '#D97706' : step > s.id ? '#D97706' : '#F1F5F9', color: step === s.id || step > s.id ? 'white' : '#94A3B8' }}>{step > s.id ? '✓' : s.id}</span>
-            {s.name}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
+  const decision = DECISIONS.find(d => d.id === selectedId) || DECISIONS[0]
+  const recommended = decision.options.find(o => o.recommended)
 
   return (
-    <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1); setSelectedInit(null); setSelectedVendor(null) }} activePage="select" />
+    <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+      <AbarvaNav clientId={activeClient} onClientChange={id => setActiveClient(id)} activePage="select" />
+
+      {/* breadcrumb */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>
-        <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Select</span>
+        <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Decision Intelligence</span>
         <span style={{ color: '#D1D5DB' }}>›</span>
-        <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName}</span>
+        <span style={{ fontSize: '13px', color: '#6B7280' }}>Meridian Health System</span>
       </div>
-      <StepNav />
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px' }}>
+      {/* two-column layout */}
+      <div style={{ display: 'flex', height: 'calc(100vh - 113px)' }}>
 
-        {step === 1 && (
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Define Requirement</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Select an initiative — Abarva surfaces vendors matched to {clientName} context</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
-              {wave1Opps.map((opp: any, i: number) => (
-                <button key={i} onClick={() => setSelectedInit(opp.name)}
-                  style={{ padding: '16px', borderRadius: '10px', textAlign: 'left', cursor: 'pointer', background: selectedInit === opp.name ? '#FFFBEB' : '#FFFFFF', border: '1px solid ' + (selectedInit === opp.name ? '#D97706' : '#E2E8F0'), width: '100%', transition: 'all 0.15s' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{opp.name}</div>
-                      <div style={{ fontSize: '12px', color: '#6B7280' }}>{opp.aiApproach}</div>
-                    </div>
-                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#D97706', flexShrink: 0, marginLeft: '16px' }}>${(opp.annualValue / 1000000).toFixed(0)}M value</div>
-                  </div>
+        {/* left sidebar */}
+        <div style={{ width: '280px', flexShrink: 0, background: '#111827', overflowY: 'auto', borderRight: '1px solid #1F2937' }}>
+          <div style={{ padding: '20px 16px 12px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: '#6EE7B7', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '4px' }}>Decision Intelligence</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#F9FAFB', marginBottom: '2px' }}>Meridian Health System</div>
+            <div style={{ fontSize: '11px', color: '#6B7280' }}>7 open decisions · $292M at stake</div>
+          </div>
+
+          <div style={{ height: '1px', background: '#1F2937', margin: '0 16px 12px' }} />
+
+          {['URGENT', 'HIGH', 'MEDIUM'].map(status => (
+            <div key={status} style={{ marginBottom: '16px' }}>
+              <div style={{ padding: '0 16px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: STATUS_COLOR[status], letterSpacing: '0.1em' }}>{status}</span>
+              </div>
+              {DECISIONS.filter(d => d.status === status).map(d => (
+                <button
+                  key={d.id}
+                  onClick={() => setSelectedId(d.id)}
+                  style={{
+                    display: 'block', width: '100%', textAlign: 'left' as const, padding: '10px 16px',
+                    background: selectedId === d.id ? '#1F2937' : 'transparent',
+                    border: 'none', borderLeft: selectedId === d.id ? `3px solid ${STATUS_COLOR[d.status]}` : '3px solid transparent',
+                    cursor: 'pointer', transition: 'all 0.1s',
+                  }}>
+                  <div style={{ fontSize: '13px', fontWeight: selectedId === d.id ? 600 : 400, color: selectedId === d.id ? '#F9FAFB' : '#9CA3AF', marginBottom: '2px', lineHeight: 1.3 }}>{d.label}</div>
+                  <div style={{ fontSize: '11px', color: '#4B5563' }}>{d.deadline}</div>
                 </button>
               ))}
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button onClick={() => selectedInit && setStep(2)} disabled={!selectedInit}
-                style={{ padding: '12px 32px', borderRadius: '10px', fontSize: '14px', fontWeight: 600, background: selectedInit ? '#D97706' : '#E2E8F0', color: selectedInit ? 'white' : '#94A3B8', border: 'none', cursor: selectedInit ? 'pointer' : 'not-allowed' }}>
-                Find Vendors →
-              </button>
-            </div>
-          </div>
-        )}
+          ))}
 
-        {step === 2 && (
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Vendor Options</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px' }}>{selectedInit} · {vendors.length} vendors evaluated for {clientName}</p>
-            {recommended && (
-              <div style={{ ...S.card, marginBottom: '16px', background: '#FFFBEB', border: '2px solid #D97706' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#D97706', textTransform: 'uppercase' as const, marginBottom: '6px' }}>ABARVA RECOMMENDATION</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>{recommended.name}</div>
-                <div style={{ fontSize: '13px', color: '#374151', marginTop: '4px' }}>{recommended.bestFor}</div>
+          <div style={{ height: '1px', background: '#1F2937', margin: '0 16px 16px' }} />
+          <div style={{ padding: '0 16px 20px' }}>
+            <a href="/admin" style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: '#6B7280', textDecoration: 'none', border: '1px solid #1F2937', textAlign: 'center' as const }}>← Engagement Hub</a>
+          </div>
+        </div>
+
+        {/* right content area */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
+          <div style={{ maxWidth: '900px' }}>
+
+            {/* decision header */}
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: STATUS_BG[decision.status], color: STATUS_COLOR[decision.status], letterSpacing: '0.06em' }}>{decision.status}</span>
+                <span style={{ fontSize: '12px', color: '#94A3B8' }}>{decision.deadline}</span>
               </div>
-            )}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(' + Math.min(vendors.length, 3) + ', 1fr)', gap: '16px', marginBottom: '24px' }}>
-              {vendors.map((v, i) => (
-                <div key={i} style={{ ...S.card, border: '1px solid ' + (v.recommendation ? '#D97706' : '#E2E8F0'), background: v.recommendation ? '#FEFCE8' : '#FFFFFF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A' }}>{v.name}</div>
-                    {v.recommendation && <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: '#D97706', color: 'white', flexShrink: 0 }}>RECOMMENDED</span>}
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', marginBottom: '10px', marginTop: 0 }}>{decision.label}</h1>
+              <p style={{ fontSize: '14px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{decision.context}</p>
+            </div>
+
+            {/* options */}
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>OPTIONS EVALUATED</div>
+            <div style={{ display: 'grid', gridTemplateColumns: decision.options.length === 4 ? 'repeat(2, 1fr)' : 'repeat(' + Math.min(decision.options.length, 3) + ', 1fr)', gap: '12px', marginBottom: '24px' }}>
+              {decision.options.map((opt, i) => (
+                <div key={i} style={{
+                  background: opt.recommended ? '#FFFFFF' : '#FFFFFF',
+                  border: opt.recommended ? '2px solid #0F172A' : '1px solid #E2E8F0',
+                  borderRadius: '12px', padding: '16px',
+                  position: 'relative' as const,
+                }}>
+                  {opt.recommended && (
+                    <div style={{ position: 'absolute' as const, top: '-1px', right: '12px', background: '#0F172A', color: '#2DD4C8', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '0 0 8px 8px', letterSpacing: '0.06em' }}>RECOMMENDED</div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', marginTop: opt.recommended ? '8px' : 0 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{opt.name}</div>
+                    <div style={{ fontSize: '18px', fontWeight: 700, color: opt.recommended ? '#0F172A' : '#94A3B8', marginLeft: '8px', flexShrink: 0 }}>{opt.score}</div>
                   </div>
-                  {[{ label: 'KLAS', value: v.klas + '/5.0' }, { label: 'Cost', value: v.cost }, { label: 'Timeline', value: v.timeline }, { label: 'Risk', value: v.risk }].map((row, ri) => (
-                    <div key={ri} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '11px', color: '#94A3B8' }}>{row.label}</span>
-                      <span style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{row.value}</span>
+                  <div style={{ fontSize: '11px', color: '#2563EB', fontWeight: 600, marginBottom: '10px' }}>{opt.tag}</div>
+                  <div style={{ display: 'flex', gap: '16px', marginBottom: '12px' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '2px' }}>COST</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{opt.cost}</div>
                     </div>
-                  ))}
-                  <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #F1F5F9', fontSize: '11px', color: '#374151' }}>{v.peers?.join(' · ')}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(1)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-              <button onClick={() => setStep(3)} style={{ padding: '12px 32px', borderRadius: '10px', background: '#D97706', color: 'white', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Compare Vendors →</button>
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Vendor Comparison</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>8-dimension analysis for {clientName}</p>
-            <div style={{ ...S.card, overflowX: 'auto', marginBottom: '24px' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
-                <thead>
-                  <tr>
-                    <th style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>Dimension</th>
-                    {vendors.map((v, i) => (
-                      <th key={i} style={{ padding: '10px 14px', textAlign: 'center', fontSize: '12px', fontWeight: 700, color: v.recommendation ? '#D97706' : '#0F172A', background: v.recommendation ? '#FEFCE8' : '#F8FAFC', borderBottom: '1px solid #E2E8F0', minWidth: '160px' }}>
-                        {v.name}
-                        {v.recommendation && <div style={{ fontSize: '10px', color: '#D97706' }}>RECOMMENDED</div>}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {DIMS.map((dim, di) => (
-                    <tr key={di} style={{ background: di % 2 === 0 ? '#FFFFFF' : '#F8FAFC' }}>
-                      <td style={{ padding: '10px 14px', fontSize: '13px', color: '#374151', borderBottom: '1px solid #F1F5F9' }}>{dim}</td>
-                      {vendors.map((v, vi) => (
-                        <td key={vi} style={{ padding: '10px 14px', textAlign: 'center', fontSize: '12px', color: '#374151', borderBottom: '1px solid #F1F5F9' }}>{score(v, dim)}</td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(2)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-              <button onClick={() => { setSelectedVendor(recommended || vendors[0]); setStep(4) }} style={{ padding: '12px 32px', borderRadius: '10px', background: '#D97706', color: 'white', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Get Negotiation Playbook →</button>
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
-          <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Negotiation Playbook</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>{(selectedVendor || recommended)?.name} · Specific to {clientName}</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-              {[
-                { title: 'Pricing Leverage', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', items: ['Request 15-20% discount off list — standard for multi-year deals', 'Fixed implementation fee cap — not time-and-materials', 'Year 2-3 pricing locked at CPI — prevent escalation', 'Free training for 10 internal staff included in contract'] },
-                { title: 'SLA and Penalty Terms', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE', items: ['99.9% uptime SLA with financial penalties for breach', 'P1 issues resolved in 4 hours — not 24 hours', 'Tie 20% of fees to achieving your target performance metric', 'Right to terminate with 90 days notice if SLAs missed 2+ quarters'] },
-                { title: 'Contract Structure', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE', items: ['Phase 1 pilot only — do not sign full enterprise deal upfront', 'Data ownership clause — all your data portable on exit', 'Named implementation team committed before signing', 'Most favored nation pricing — you get any better deal offered to others'] },
-                { title: 'Walk Away Conditions', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', items: ['No outcome-based pricing option available', 'Implementation team not named before contract signing', 'No reference customers of your size and complexity', 'Proprietary data formats that prevent migration to another vendor'] },
-              ].map((section, i) => (
-                <div key={i} style={{ ...S.card, background: section.bg, border: '1px solid ' + section.border }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: section.color, marginBottom: '12px' }}>{section.title}</div>
-                  {section.items.map((item, ii) => (
-                    <div key={ii} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{ color: section.color, flexShrink: 0 }}>→</span>
-                      <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{item}</span>
+                    <div>
+                      <div style={{ fontSize: '10px', color: '#94A3B8', marginBottom: '2px' }}>TIMELINE</div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{opt.timeline}</div>
+                    </div>
+                  </div>
+                  {opt.bullets.map((b, bi) => (
+                    <div key={bi} style={{ display: 'flex', gap: '6px', marginBottom: '5px' }}>
+                      <span style={{ color: opt.recommended ? '#059669' : '#94A3B8', flexShrink: 0, fontSize: '12px' }}>·</span>
+                      <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.4 }}>{b}</span>
                     </div>
                   ))}
                 </div>
               ))}
             </div>
-            <div style={{ ...S.card, background: '#1E3A5F', marginBottom: '24px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>SPECIFIC TO {clientName.toUpperCase()}</div>
-              {(CLIENT_NOTES[activeClient] || CLIENT_NOTES.meridian).map((tip, i) => (
-                <div key={i} style={{ display: 'flex', gap: '10px', padding: '10px 12px', background: 'rgba(255,255,255,0.08)', borderRadius: '8px', marginBottom: '8px' }}>
-                  <span style={{ color: '#FCD34D', fontWeight: 700, flexShrink: 0 }}>⚡</span>
-                  <span style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.5 }}>{tip}</span>
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(3)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-              <a href="/" style={{ padding: '12px 32px', borderRadius: '10px', background: '#D97706', color: 'white', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>✓ Done</a>
-            </div>
-          </div>
-        )}
 
+            {/* Abarva recommendation */}
+            <div style={{ background: '#0D1117', borderRadius: '12px', padding: '20px 24px', marginBottom: '16px', border: '1px solid #21262D' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2DD4C8' }} />
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>Abarva Recommendation</span>
+                {recommended && <span style={{ fontSize: '11px', color: '#8B949E', marginLeft: '4px' }}>→ {recommended.name}</span>}
+              </div>
+              <p style={{ fontSize: '13px', color: '#E6EDF3', lineHeight: 1.6, margin: 0 }}>{decision.recommendation}</p>
+            </div>
+
+            {/* negotiation note */}
+            <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '12px', padding: '16px 20px', marginBottom: '32px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#D97706', letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>Negotiation Note</div>
+              <p style={{ fontSize: '13px', color: '#78350F', lineHeight: 1.6, margin: 0 }}>{decision.negotiation}</p>
+            </div>
+
+            {/* footer nav */}
+            <div style={{ display: 'flex', gap: '12px', paddingTop: '8px', borderTop: '1px solid #F1F5F9' }}>
+              {(() => {
+                const idx = DECISIONS.findIndex(d => d.id === selectedId)
+                const prev = DECISIONS[idx - 1]
+                const next = DECISIONS[idx + 1]
+                return (
+                  <>
+                    {prev && (
+                      <button onClick={() => setSelectedId(prev.id)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: '13px', fontWeight: 600, color: '#475569', cursor: 'pointer' }}>← {prev.label}</button>
+                    )}
+                    <div style={{ flex: 1 }} />
+                    {next && (
+                      <button onClick={() => setSelectedId(next.id)} style={{ padding: '8px 16px', borderRadius: '8px', background: '#0F172A', border: 'none', fontSize: '13px', fontWeight: 600, color: '#F8FAFC', cursor: 'pointer' }}>{next.label} →</button>
+                    )}
+                  </>
+                )
+              })()}
+            </div>
+
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -258,7 +338,7 @@ function SelectContent() {
 
 export default function SelectPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
       <SelectContent />
     </Suspense>
   )
