@@ -31,15 +31,15 @@ const BLUEPRINTS: Record<string, any> = {
         { metric: 'CMS compliance', current: '23%', target: '100% by Jan 2026', gap: '8 months', dollarImpact: '$1M/day penalty exposure' },
       ],
       rootCause: 'Ensemble Health Partners, contracted at $48M/year to manage RCM, has connected only 23% of payers to electronic prior auth despite contractual requirements. The $8M in accumulated SLA penalties have never been enforced. Ensemble has no financial incentive to accelerate because the manual process requires more Ensemble staff — and their contract is structured on FTE count, not outcomes.',
-      cmsDeadline: 'The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) requires all applicable payers and providers to implement electronic prior authorization by January 1, 2026. Non-compliance penalties: up to $1,000 per day per API specification not met. At 77% non-compliance, Meridian's exposure is $7-28M annually depending on enforcement intensity.',
+      cmsDeadline: 'The CMS Interoperability and Prior Authorization Final Rule (CMS-0057-F) requires all applicable payers and providers to implement electronic prior authorization by January 1, 2026. Non-compliance penalties: up to $1,000 per day per API specification not met. At 77% non-compliance, Meridians exposure is $7-28M annually depending on enforcement intensity.',
     },
     solutionDesign: {
-      approach: 'Deploy an AI-powered prior auth automation layer that connects directly to Epic's existing prior auth workflow, integrates with all 847 payer portals via the vendor's pre-built connections, and uses NLP to auto-complete authorization requests from clinical documentation.',
+      approach: 'Deploy an AI-powered prior auth automation layer that connects directly to Epic's existing prior auth workflow, integrates with all 847 payer portals via the vendors pre-built connections, and uses NLP to auto-complete authorization requests from clinical documentation.',
       architecture: [
         { layer: 'AI Layer', component: 'NLP Engine', description: 'Reads Epic clinical notes and auto-populates prior auth fields. Classifies authorization likelihood before submission.', technology: 'Claude API (Anthropic) — selected for medical document comprehension' },
         { layer: 'Integration Layer', component: 'Epic FHIR API', description: 'Pulls clinical data, pushes auth status back to Epic workflow. Eliminates dual data entry.', technology: 'Epic FHIR R4 — native integration, no custom build' },
-        { layer: 'Payer Layer', component: 'Payer Network', description: '847 payer connections pre-built by vendor. Covers 100% of Meridian's payer mix.', technology: 'Vendor-managed — Cohere Health or Waystar' },
-        { layer: 'Analytics Layer', component: 'Denial Prediction', description: 'ML model scores each auth request before submission. Flags high-risk requests for human review.', technology: 'Azure ML — Meridian's existing platform' },
+        { layer: 'Payer Layer', component: 'Payer Network', description: '847 payer connections pre-built by vendor. Covers 100% of Meridians payer mix.', technology: 'Vendor-managed — Cohere Health or Waystar' },
+        { layer: 'Analytics Layer', component: 'Denial Prediction', description: 'ML model scores each auth request before submission. Flags high-risk requests for human review.', technology: 'Azure ML — Meridians existing platform' },
         { layer: 'Governance Layer', component: 'Audit Trail', description: 'Every AI decision logged. Explainable output for compliance. HIPAA-compliant PHI handling.', technology: 'Azure Monitor + existing BAA' },
       ],
       dataRequirements: [
@@ -51,12 +51,12 @@ const BLUEPRINTS: Record<string, any> = {
       ],
     },
     vendorDecision: {
-      headline: 'Abarva recommends Cohere Health over Waystar and Olive for Meridian's specific context.',
+      headline: 'Abarva recommends Cohere Health over Waystar and Olive for Meridians specific context.',
       recommendation: 'Cohere Health',
       reasoning: [
         'Epic integration: Cohere has 23 live Epic integrations. Their implementation team has completed the exact Meridian version (2023) at Advocate Aurora. Implementation is 6 weeks not the 16 weeks Waystar requires.',
-        'Payer network: Cohere covers 847 payers — Meridian's complete payer mix including the 6 TennCare plans that are the highest denial risk.',
-        'AI approach: Cohere's NLP model was trained on 180M prior auth requests. Denial prediction accuracy is 91% vs 78% for Waystar.',
+        'Payer network: Cohere covers 847 payers — Meridians complete payer mix including the 6 TennCare plans that are the highest denial risk.',
+        'AI approach: Coheres NLP model was trained on 180M prior auth requests. Denial prediction accuracy is 91% vs 78% for Waystar.',
         'Pricing: Cohere list price is $2.8-3.8M. Abarva intelligence shows Baylor Scott & White paid $2.1M for same scope in Q4 2024. Target: $2.0-2.4M.',
         'Ensemble leverage: Cohere actively competes against Ensemble and will price aggressively to displace them.',
       ],
@@ -143,7 +143,7 @@ const BLUEPRINTS: Record<string, any> = {
         { metric: 'CMS compliance status', baseline: '23%', target: '100% by Jan 2026', frequency: 'Monthly', owner: 'CIO / Legal' },
       ],
       risks: [
-        { risk: 'Ensemble non-cooperation on denial data', probability: 'High', impact: 'Medium', mitigation: 'Use Cohere's payer network data as primary — Ensemble data is secondary. Simultaneously enforce $8M SLA penalties as leverage.' },
+        { risk: 'Ensemble non-cooperation on denial data', probability: 'High', impact: 'Medium', mitigation: 'Use Coheres payer network data as primary — Ensemble data is secondary. Simultaneously enforce $8M SLA penalties as leverage.' },
         { risk: 'Blue Ridge Cerner data unavailable', probability: 'Medium', impact: 'Low', mitigation: 'Phase 1 covers 21 Epic hospitals. Add 2 Blue Ridge hospitals in Phase 3 after Cerner migration completes.' },
         { risk: 'CDO vacancy delays governance', probability: 'High', impact: 'High', mitigation: 'Abarva Maestro covers CDO functions during implementation. CDO hire must start immediately — this is the critical path.' },
         { risk: 'Payer portal changes post go-live', probability: 'Low', impact: 'Medium', mitigation: 'Cohere maintains payer network — contractually responsible for keeping connections current.' },

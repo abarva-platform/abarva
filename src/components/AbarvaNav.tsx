@@ -71,6 +71,24 @@ export default function AbarvaNav({ clientId, onClientChange, activePage, showAd
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         {showAdmin && (
           <div style={{ display: 'flex', gap: '8px' }}>
+          <a href={'/architecture?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#0D1117', color: '#2DD4C8', border: '1px solid #21262D' }}>
+            Architecture
+          </a>
+          <a href={'/data-intelligence?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#F0FDF4', color: '#059669', border: '1px solid #A7F3D0' }}>
+            Data Intel
+          </a>
+          <a href={'/blueprint?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#EFF6FF', color: '#1B4FD8', border: '1px solid #BFDBFE' }}>
+            Blueprint
+          </a>
+          <a href={'/architecture?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#0D1117', color: '#2DD4C8', border: '1px solid #21262D' }}>
+            Architecture
+          </a>
+          <a href={'/data-intelligence?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#F0FDF4', color: '#059669', border: '1px solid #A7F3D0' }}>
+            Data Intel
+          </a>
+          <a href={'/blueprint?client=' + clientId} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#EFF6FF', color: '#1B4FD8', border: '1px solid #BFDBFE' }}>
+            Blueprint
+          </a>
           <a href="/investor" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#1E3A5F', color: '#FFFFFF', border: 'none' }}>
             Investor View
           </a>
