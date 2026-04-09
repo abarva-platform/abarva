@@ -107,8 +107,6 @@ export default function InvestorPage() {
 
   return (
     <div style={T.page}>
-      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-
       {/* NAV */}
       <nav style={T.nav}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -182,58 +180,56 @@ export default function InvestorPage() {
             <div>
               <span style={T.label}>The Problem</span>
               <h1 style={T.h1}>$200B spent on transformation consulting. Outcomes are almost never tracked.</h1>
-              <p style={T.body}>Every large enterprise spends $50–200M on transformation programs. Consultants leave. Knowledge walks out the door. The next engagement starts from zero. Nobody is accountable for whether it worked.</p>
+              <p style={{ fontSize: '15px', lineHeight: 1.7, color: '#4B5563', marginBottom: '24px', maxWidth: '620px' }}>Every large enterprise spends $50–200M on transformation programs. Consultants leave. Knowledge walks out. The next engagement starts from zero. Nobody is accountable for whether it worked.</p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: '12px', overflow: 'hidden', border: '1px solid #E5E7EB', marginBottom: '40px' }}>
-                <div style={{ padding: '28px', background: '#FEF2F2', borderRight: '1px solid #FECACA' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#DC2626', marginBottom: '20px' }}>Traditional Consulting</div>
-                  {[
-                    ['Time to first insight', '16 weeks'],
-                    ['Cost per engagement', '$3–5M'],
-                    ['Data foundation', 'Interviews and surveys'],
-                    ['Benchmarks', '18-month-old industry data'],
-                    ['Accountability', 'None — paid regardless'],
-                    ['Knowledge retained', 'Walks out the door'],
-                    ['Updates when things change', 'New engagement required'],
-                  ].map(([k, v], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid #FECACA' }}>
-                      <span style={{ fontSize: '13px', color: '#6B7280' }}>{k}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#DC2626' }}>{v}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ padding: '28px', background: '#F0FDF4', borderLeft: '1px solid #A7F3D0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#059669', marginBottom: '20px' }}>Abarva</div>
-                  {[
-                    ['Time to first insight', '2 hours'],
-                    ['Cost', '$200–500K + 15% of savings'],
-                    ['Data foundation', 'Your actual systems data'],
-                    ['Benchmarks', 'Real-time peer intelligence'],
-                    ['Accountability', 'Paid only on outcomes'],
-                    ['Knowledge retained', 'Permanent memory'],
-                    ['Updates when things change', 'Living platform'],
-                  ].map(([k, v], i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid #A7F3D0' }}>
-                      <span style={{ fontSize: '13px', color: '#6B7280' }}>{k}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#059669' }}>{v}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+              {/* Market metrics — above fold */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '24px' }}>
                 {[
                   { label: 'TAM', value: '$200B', sub: 'Annual consulting spend', accent: '#1B4FD8' },
                   { label: 'Value per engagement', value: '$50–200M', sub: 'Average Fortune 500', accent: '#6D28D9' },
                   { label: 'Abarva fee per client', value: '$10–60M', sub: 'At 15% of savings', accent: '#047857' },
                   { label: 'At 1% penetration', value: '$500M+', sub: 'ARR potential', accent: '#B45309' },
                 ].map((m, i) => (
-                  <div key={i} style={{ ...T.statCard }}>
-                    <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.accent, marginBottom: '8px' }}>{m.label}</div>
-                    <div style={{ fontSize: '26px', fontWeight: 700, color: '#111827', letterSpacing: '-0.02em', marginBottom: '4px' }}>{m.value}</div>
-                    <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{m.sub}</div>
+                  <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '16px', borderTop: '2px solid ' + m.accent }}>
+                    <div style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.accent, marginBottom: '6px' }}>{m.label}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: '#111827', letterSpacing: '-0.02em', marginBottom: '2px' }}>{m.value}</div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{m.sub}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Compact comparison table */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr' }}>
+                  {/* Header */}
+                  <div style={{ padding: '12px 16px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }} />
+                  <div style={{ padding: '12px 16px', background: '#FEF2F2', borderBottom: '1px solid #E5E7EB', borderRight: '1px solid #E5E7EB' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#DC2626' }}>Traditional Consulting</span>
+                  </div>
+                  <div style={{ padding: '12px 16px', background: '#F0FDF4', borderBottom: '1px solid #E5E7EB' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#059669' }}>Abarva</span>
+                  </div>
+                  {/* Rows */}
+                  {[
+                    ['Time to insight', '16 weeks', '2 hours'],
+                    ['Cost', '$3–5M per engagement', '$200–500K + 15% of savings'],
+                    ['Data foundation', 'Interviews and surveys', 'Your actual systems data'],
+                    ['Accountability', 'None — paid regardless', 'Paid only on outcomes'],
+                    ['Knowledge retained', 'Walks out the door', 'Permanent institutional memory'],
+                  ].map(([label, bad, good], i) => (
+                    <>
+                      <div key={label + 'l'} style={{ padding: '11px 16px', background: i % 2 === 0 ? '#FFFFFF' : '#F9FAFB', borderBottom: '1px solid #F3F4F6', borderRight: '1px solid #E5E7EB' }}>
+                        <span style={{ fontSize: '13px', color: '#6B7280' }}>{label}</span>
+                      </div>
+                      <div key={label + 'b'} style={{ padding: '11px 16px', background: i % 2 === 0 ? '#FEF2F2' : '#FEF9F9', borderBottom: '1px solid #F3F4F6', borderRight: '1px solid #E5E7EB' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#DC2626' }}>{bad}</span>
+                      </div>
+                      <div key={label + 'g'} style={{ padding: '11px 16px', background: i % 2 === 0 ? '#F0FDF4' : '#F7FDF9', borderBottom: '1px solid #F3F4F6' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#059669' }}>{good}</span>
+                      </div>
+                    </>
+                  ))}
+                </div>
               </div>
             </div>
           )}
