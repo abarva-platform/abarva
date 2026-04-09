@@ -222,7 +222,7 @@ function IntelligenceContent() {
                 <div>
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Score by Domain</h3>
                   <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
-                    {inventory.scoringModel.categories.map((cat, i) => (
+                    {inventory.scoringModel.categories.map((cat: any, i: number) => (
                       <div key={i}>
                         <div className="flex justify-between text-sm mb-1">
                           <span className="text-gray-300">{cat.name}</span>
@@ -249,7 +249,7 @@ function IntelligenceContent() {
                   </div>
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-3">Architecture Gaps</h3>
                   <div className="space-y-2">
-                    {inventory.gaps.map((gap, i) => (
+                    {inventory.gaps.map((gap: any, i: number) => (
                       <button key={i} onClick={() => sendChat(`Tell me about the ${gap.area} gap`)}
                         className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-left hover:border-yellow-600 transition">
                         <div className="flex justify-between mb-1">
