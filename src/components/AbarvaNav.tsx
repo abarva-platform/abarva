@@ -28,10 +28,23 @@ export default function AbarvaNav({ clientId, onClientChange, activePage, showAd
       {/* LEFT */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-          <div style={{ width: '28px', height: '28px', background: '#111827', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: '13px', fontWeight: 800 }}>A</span>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <line x1="8" y1="8" x2="14" y2="14" stroke="#CBD5E1" strokeWidth="1" />
+            <line x1="14" y1="14" x2="20" y2="8" stroke="#CBD5E1" strokeWidth="1" />
+            <line x1="14" y1="14" x2="20" y2="20" stroke="#CBD5E1" strokeWidth="1" />
+            <line x1="8" y1="8" x2="4" y2="16" stroke="#CBD5E1" strokeWidth="1" />
+            <line x1="20" y1="20" x2="14" y2="24" stroke="#CBD5E1" strokeWidth="1" />
+            <circle cx="8" cy="8" r="2" fill="#1B4FD8" />
+            <circle cx="20" cy="8" r="2" fill="#94A3B8" />
+            <circle cx="14" cy="14" r="2.5" fill="#0F172A" />
+            <circle cx="20" cy="20" r="2" fill="#94A3B8" />
+            <circle cx="4" cy="16" r="1.5" fill="#CBD5E1" />
+            <circle cx="14" cy="24" r="1.5" fill="#CBD5E1" />
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0px' }}>
+            <span style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.01em', lineHeight: 1.1 }}>Abar<span style={{ color: '#1B4FD8' }}>VA</span></span>
+            <span style={{ fontSize: '9px', fontWeight: 400, color: '#94A3B8', fontFamily: 'monospace', letterSpacing: '0.02em', lineHeight: 1 }}>Enterprise AI Operating System</span>
           </div>
-          <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>Abarva</span>
         </a>
         <div style={{ width: '1px', height: '20px', background: '#E5E7EB' }} />
         {CLIENTS.map(c => (
