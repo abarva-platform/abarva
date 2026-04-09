@@ -76,6 +76,7 @@ export default function Home() {
     { id: 'ai-strategy', name: 'AI Strategy', tagline: 'Enterprise AI strategy in 2 hours, not 6 months', bullets: ['Data, tech, and org readiness scores', 'Front, middle, back office opportunity scan', 'Prioritized 18-month roadmap with ROI'], href: '/ai-strategy?client=' + clientId, accent: '#7C3AED', icon: '◈', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
     { id: 'justify', name: 'Justify', tagline: 'Board-ready business case in 30 minutes, not 8 weeks', bullets: ['Auto-populated baseline from your actual data', 'Conservative, Base, and Optimistic scenarios', 'Export to PDF or Excel'], href: '/justify?client=' + clientId, accent: '#059669', icon: '$', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
     { id: 'select', name: 'Select', tagline: 'Vendor selection and negotiation in days, not months', bullets: ['KLAS scores and peer reference data', 'Integration complexity with your actual stack', 'Negotiation playbook with specific leverage'], href: '/select?client=' + clientId, accent: '#D97706', icon: '◎', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
+    { id: 'domain-strategy', name: 'Domain Strategy', tagline: 'Deep-dive AI strategy by business domain', bullets: ['Six domains: RCM, clinical, workforce, tech, patient, supply', 'Use case map, architecture, and phased roadmap per domain', 'Investment summary with payback at steady state'], href: '/domain-strategy?client=' + clientId, accent: '#0891B2', icon: '⬡', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
   ]
 
   return (
@@ -107,7 +108,7 @@ export default function Home() {
 
         {/* Products */}
         <div style={S.lbl}>PRODUCTS</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '32px' }}>
           {products.map(p => (
             <a key={p.id} href={p.href} style={{ textDecoration: 'none' }}>
               <div style={{ ...S.card, cursor: 'pointer', transition: 'all 0.15s', height: '100%' }}

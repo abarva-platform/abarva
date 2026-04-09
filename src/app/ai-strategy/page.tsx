@@ -275,6 +275,12 @@ function AIStrategyContent() {
                 )
               })}
             </div>
+            <div style={{ marginBottom: '16px' }}>
+              <a href={'/domain-strategy?client=' + activeClient} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '8px', background: '#0F172A', color: '#2DD4C8', fontSize: '13px', fontWeight: 600, textDecoration: 'none', border: '1px solid #1E293B' }}>
+                ◈ Go deeper on a domain →
+              </a>
+              <span style={{ marginLeft: '12px', fontSize: '12px', color: '#94A3B8' }}>Get a complete AI strategy for one business domain</span>
+            </div>
             <NavBtns prev={2} next={4} nextLabel="Next: Prioritization →" />
           </div>
         )}
