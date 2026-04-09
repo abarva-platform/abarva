@@ -1041,7 +1041,7 @@ export default function Home() {
                     </div>
                     <p className="text-xs" style={{color: '#94A3B8'}}>Loading additional data increases diagnosis precision.</p>
                   </div>
-                  <div className="p-5 rounded-xl" style={{background: '#EFF6FF', border: '1px solid #BFDBFE'}}>
+                  <div className="p-5 rounded-xl mb-4" style={{background: '#EFF6FF', border: '1px solid #BFDBFE'}}>
                     <h3 className="text-sm font-semibold mb-3" style={{color: '#1D4ED8'}}>Prescribed Next Load</h3>
                     <div className="space-y-2">
                       {getPrescribedLoads().map((p, i) => (
@@ -1052,6 +1052,26 @@ export default function Home() {
                       style={{background: '#2563EB', color: '#FFFFFF'}}>
                       Upload Data →
                     </button>
+                  </div>
+                  <div className="p-5 rounded-xl" style={{background: '#F0FDF4', border: '1px solid #D1FAE5'}}>
+                    <h3 className="text-sm font-semibold mb-1" style={{color: '#059669'}}>Download Templates</h3>
+                    <p className="text-xs mb-3" style={{color: '#6B7280'}}>Pre-built templates for structured data collection</p>
+                    <div className="space-y-2">
+                      {[
+                        { name: 'IT Financial Model FY2024', file: 'Meridian_IT_Financial_Model_FY2024.xlsx', desc: 'Budget, headcount, capex, cloud spend' },
+                        { name: 'Data Center Infrastructure', file: 'Meridian_DataCenter_Infrastructure_Inventory.xlsx', desc: '1,240 servers, network, storage' },
+                      ].map((t, i) => (
+                        <a key={i} href={`/templates/${t.file}`} download
+                          className="flex items-center justify-between p-3 rounded-lg transition"
+                          style={{background: '#FFFFFF', border: '1px solid #D1FAE5'}}>
+                          <div>
+                            <p className="text-xs font-medium" style={{color: '#0F172A'}}>{t.name}</p>
+                            <p className="text-xs" style={{color: '#94A3B8'}}>{t.desc}</p>
+                          </div>
+                          <span className="text-xs font-medium" style={{color: '#059669'}}>↓ Excel</span>
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
