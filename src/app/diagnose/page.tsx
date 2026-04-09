@@ -51,6 +51,7 @@ function DiagnoseContent() {
   const confidence = activeClient === 'firstcapital' ? 88 : activeClient === 'apexretail' ? 86 : 94
   const roles = activeClient === 'meridian' ? ['CIO', 'CFO', 'COO', 'CMIO', 'CEO'] : ['CIO', 'CFO', 'COO', 'CMO', 'CEO']
   const statusColors = { red: '#DC2626', yellow: '#D97706', green: '#059669' }
+  const clientColor = activeClient === 'firstcapital' ? '#7C3AED' : activeClient === 'apexretail' ? '#059669' : '#2563EB'
   const suggestions = SUGGESTIONS[activeClient]?.[role] || SUGGESTIONS.meridian.CIO
 
   function getMetrics() {
@@ -186,8 +187,8 @@ function DiagnoseContent() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
                 {suggestions.map((s, i) => (
                   <button key={i} onClick={() => sendMessage(s)}
-                    style={{ ...S.card, padding: '12px', textAlign: 'left', cursor: 'pointer', fontSize: '12px', color: '#374151', lineHeight: 1.5 }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
+                    style={{ ...S.card, padding: '12px', textAlign: 'left', cursor: 'pointer', fontSize: '12px', color: '#374151', lineHeight: 1.5, borderLeft: '3px solid ' + clientColor }}
+                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = clientColor}
                     onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
                     {s}
                   </button>
@@ -286,7 +287,13 @@ function DiagnoseContent() {
           {sidebarTab === 'data' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={S.card}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>DATA FILES LOADED</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>DATA FILES LOADED</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#059669', display: 'block' }} />
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: '#059669' }}>Generated from your data</span>
+                  </div>
+                </div>
                 {getDataFiles().map((f, i) => (
                   <div key={i} style={{ marginBottom: '10px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '3px' }}>

@@ -11,7 +11,7 @@ import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
 
 const S = {
-  page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
+  page: { minHeight: '100vh', backgroundColor: '#F8FAFC', backgroundImage: 'radial-gradient(circle, #E5E7EB 1px, transparent 1px)', backgroundSize: '24px 24px', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
   lbl: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '16px' } as React.CSSProperties,
 }
@@ -92,7 +92,7 @@ export default function Home() {
         {/* Metrics */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
           {data.metrics.map((m, i) => (
-            <div key={i} style={{ ...S.card, cursor: 'pointer' }}
+            <div key={i} style={{ ...S.card, cursor: 'pointer', borderTop: '3px solid ' + sc[m.status] }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
@@ -131,6 +131,28 @@ export default function Home() {
               </div>
             </a>
           ))}
+        </div>
+
+        {/* CADE proof point */}
+        <div style={{ background: '#111827', borderRadius: '12px', padding: '40px 48px', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Proven in production</div>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#E6EDF3', lineHeight: 1.4 }}>Presbyterian Healthcare Services · live deployment</div>
+            </div>
+            <div style={{ display: 'flex', gap: '56px' }}>
+              {[
+                { value: '40%', label: 'Productivity increase' },
+                { value: '60%', label: 'Cost reduction' },
+                { value: '94%', label: 'Data confidence' },
+              ].map((s, i) => (
+                <div key={i} style={{ textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#2DD4C8', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '4px' }}>{s.value}</div>
+                  <div style={{ fontSize: '12px', color: '#6B7280' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Bottom panels */}

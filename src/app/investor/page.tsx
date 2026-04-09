@@ -98,6 +98,24 @@ export default function InvestorPage() {
   const client = CLIENTS[clientIdx]
   const platformARR = 40*200000 + 40*350000 + 20*500000
   const totalY1 = platformARR + 24000000
+  const [counts, setCounts] = useState([0, 0, 0, 0])
+  const animatedRef = useRef(false)
+
+  useEffect(() => {
+    if (section !== 'problem' || animatedRef.current) return
+    animatedRef.current = true
+    const targets = [200, 200, 60, 500]
+    const steps = 50
+    const stepMs = 1500 / steps
+    let step = 0
+    const timer = setInterval(() => {
+      step++
+      const eased = 1 - Math.pow(1 - step / steps, 3)
+      setCounts(targets.map(v => Math.round(v * eased)))
+      if (step >= steps) clearInterval(timer)
+    }, stepMs)
+    return () => clearInterval(timer)
+  }, [section])
 
   const css = `
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -182,17 +200,20 @@ export default function InvestorPage() {
         {/* THE PROBLEM */}
         {section === 'problem' && (
           <div>
-            <div className="tag" style={{ color: '#DC2626' }}>The Problem</div>
-            <h1 className="h1">$200B spent on transformation consulting.<br />Outcomes are almost never tracked.</h1>
-            <p className="body">Every large enterprise spends $50–200M on transformation programs. Consultants leave. Knowledge walks out. The next engagement starts from zero. Nobody is accountable for whether it worked.</p>
+            {/* Dark hero band */}
+            <div style={{ background: '#111827', borderRadius: '12px', padding: '48px', marginBottom: '40px' }}>
+              <div className="tag" style={{ color: '#6EE7B7' }}>The Problem</div>
+              <h1 style={{ fontSize: '42px', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.025em', color: '#F9FAFB', marginBottom: '16px' }}>$200B spent on transformation consulting.<br />Outcomes are almost never tracked.</h1>
+              <p style={{ fontSize: '16px', lineHeight: 1.75, color: '#9CA3AF', marginBottom: 0, maxWidth: '600px' }}>Every large enterprise spends $50–200M on transformation programs. Consultants leave. Knowledge walks out. The next engagement starts from zero. Nobody is accountable for whether it worked.</p>
+            </div>
 
-            {/* Market metrics — 4 columns, fixed label height */}
+            {/* Market metrics — 4 columns, animated */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#E5E7EB', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '40px' }}>
               {[
-                { label: 'Total addressable market', value: '$200B', sub: 'Annual consulting spend', color: '#1B4FD8' },
-                { label: 'Value per Fortune 500 engagement', value: '$50–200M', sub: 'Average identified', color: '#6D28D9' },
-                { label: 'Abarva fee per client per year', value: '$10–60M', sub: 'At 15% of savings', color: '#047857' },
-                { label: 'Revenue at 1% Fortune 500 penetration', value: '$500M+', sub: 'ARR potential', color: '#B45309' },
+                { label: 'Total addressable market', value: '$' + counts[0] + 'B', sub: 'Annual consulting spend', color: '#1B4FD8' },
+                { label: 'Value per Fortune 500 engagement', value: '$50–' + counts[1] + 'M', sub: 'Average identified', color: '#6D28D9' },
+                { label: 'Abarva fee per client per year', value: '$10–' + counts[2] + 'M', sub: 'At 15% of savings', color: '#047857' },
+                { label: 'Revenue at 1% Fortune 500 penetration', value: '$' + counts[3] + 'M+', sub: 'ARR potential', color: '#B45309' },
               ].map((m, i) => (
                 <div key={i} style={{ background: '#fff', padding: '24px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.color, height: '32px', display: 'flex', alignItems: 'flex-start', marginBottom: '10px', lineHeight: 1.3 }}>{m.label}</div>
