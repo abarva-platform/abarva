@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { meridianTechInventory } from '@/data/meridian/technology_inventory'
 import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory'
+import { firstCapitalTechInventory } from '@/data/firstcapital/technology_inventory'
 import { calculateTechScore, getScoreLabel, getCriticalSystems, getSystemsByDomain, getSystemsByUnit, getSystemsByCategory, getTotalAnnualCost } from '@/data/knowledge/scoring'
 
 type View = 'scorecard' | 'functional' | 'technical' | 'byunit'
@@ -22,7 +23,7 @@ function IntelligenceContent() {
   const clientName = clientId === 'firstcapital' ? 'First Capital Financial' :
     clientId === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
 
-  const inventory = clientId === 'apexretail' ? apexRetailTechInventory : meridianTechInventory
+  const inventory = clientId === 'apexretail' ? apexRetailTechInventory : clientId === 'firstcapital' ? firstCapitalTechInventory : meridianTechInventory
   const overallScore = calculateTechScore(inventory)
   const criticalSystems = getCriticalSystems(inventory)
   const totalCost = getTotalAnnualCost(inventory)
@@ -79,9 +80,23 @@ function IntelligenceContent() {
     )
   }
 
-  const domains = ['Patient Care', 'Revenue Cycle', 'Patient Engagement', 'Finance and Administration', 'Supply Chain', 'Data and Analytics', 'Infrastructure', 'Health Plan']
-  const businessUnits = ['Provider/Hospitals', 'Blue Ridge Facilities', 'Health Plan', 'Shared Services', 'Critical Access Hospitals']
-  const categories = ['EHR/EMR', 'Revenue Cycle Management', 'Patient Engagement', 'ERP', 'Data Warehouse', 'Business Intelligence', 'Cloud Platform', 'Cybersecurity', 'Integration Engine', 'Imaging/PACS', 'Pharmacy', 'Workforce Management']
+  const domains = clientId === 'apexretail'
+    ? ['Customer Experience', 'Store Operations', 'Supply Chain', 'Finance and Administration', 'Data and Analytics', 'Infrastructure']
+    : clientId === 'firstcapital'
+    ? ['Digital Banking', 'Core Banking', 'Payments', 'Risk and Compliance', 'Data and Analytics', 'Infrastructure']
+    : ['Patient Care', 'Revenue Cycle', 'Patient Engagement', 'Finance and Administration', 'Supply Chain', 'Data and Analytics', 'Infrastructure', 'Health Plan']
+
+  const businessUnits = clientId === 'apexretail'
+    ? ['Digital', 'Store Operations', 'Marketing', 'Shared Services']
+    : clientId === 'firstcapital'
+    ? ['Retail Banking', 'Commercial Banking', 'Risk and Compliance', 'Shared Services']
+    : ['Provider/Hospitals', 'Blue Ridge Facilities', 'Health Plan', 'Shared Services', 'Critical Access Hospitals']
+
+  const categories = clientId === 'apexretail'
+    ? ['ERP', 'Ecommerce Platform', 'Order Management', 'Supply Chain Planning', 'Warehouse Management', 'Customer Data Platform', 'Loyalty Platform', 'Data and AI Platform', 'Data Warehouse', 'Point of Sale']
+    : clientId === 'firstcapital'
+    ? ['Core Banking', 'Digital Banking', 'Payments', 'AML and Compliance', 'Data Warehouse', 'Cybersecurity']
+    : ['EHR/EMR', 'Revenue Cycle Management', 'Patient Engagement', 'ERP', 'Data Warehouse', 'Business Intelligence', 'Cloud Platform', 'Cybersecurity', 'Integration Engine', 'Imaging/PACS', 'Pharmacy', 'Workforce Management']
 
   return (
     <div className="min-h-screen bg-gray-950 text-white flex flex-col">
