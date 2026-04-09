@@ -145,12 +145,29 @@ export default function InvestorPage() {
 
       {/* TOP NAV */}
       <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', height: '60px', display: 'flex', alignItems: 'center', padding: '0 40px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '32px', height: '32px', background: '#111827', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: '#fff', fontSize: '14px', fontWeight: 800 }}>A</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="4" fill="#111827" />
+            <circle cx="5" cy="5" r="2.5" fill="#1B4FD8" />
+            <circle cx="27" cy="5" r="2.5" fill="#94A3B8" />
+            <circle cx="5" cy="27" r="2.5" fill="#94A3B8" />
+            <circle cx="27" cy="27" r="2.5" fill="#1B4FD8" />
+            <circle cx="16" cy="3" r="2" fill="#1B4FD8" />
+            <circle cx="29" cy="16" r="2" fill="#94A3B8" />
+            <line x1="16" y1="16" x2="5" y2="5" stroke="#1B4FD8" strokeWidth="1" opacity="0.5" />
+            <line x1="16" y1="16" x2="27" y2="5" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
+            <line x1="16" y1="16" x2="5" y2="27" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
+            <line x1="16" y1="16" x2="27" y2="27" stroke="#1B4FD8" strokeWidth="1" opacity="0.5" />
+            <line x1="16" y1="16" x2="16" y2="3" stroke="#1B4FD8" strokeWidth="1" opacity="0.4" />
+            <line x1="16" y1="16" x2="29" y2="16" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
+          </svg>
+          <div>
+            <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
+              <span style={{ color: '#111827' }}>Abar</span><span style={{ color: '#1B4FD8' }}>VA</span>
+            </div>
+            <div style={{ fontSize: '9px', fontWeight: 600, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase' as const, fontFamily: 'monospace' }}>Enterprise AI Operating System</div>
           </div>
-          <span style={{ fontSize: '17px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>Abarva</span>
-          <span style={{ fontSize: '12px', color: '#9CA3AF', padding: '3px 10px', background: '#F3F4F6', borderRadius: '100px', marginLeft: '4px' }}>Investor Overview · Confidential</span>
+          <span style={{ fontSize: '11px', color: '#9CA3AF', padding: '3px 10px', background: '#F3F4F6', borderRadius: '100px', marginLeft: '4px' }}>Investor Overview · Confidential</span>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <a href="/diagnose?client=meridian" style={{ padding: '9px 20px', borderRadius: '8px', background: '#111827', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 700, letterSpacing: '-0.01em' }}>Healthcare Demo →</a>
@@ -163,15 +180,15 @@ export default function InvestorPage() {
       <div style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB', padding: '0 40px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderLeft: '1px solid #E5E7EB' }}>
           {[
-            { label: 'TAM', value: '$200B', sub: 'Enterprise transformation' },
-            { label: 'Year 1 Revenue', value: fmt(totalY1), sub: '100 clients · conservative' },
-            { label: 'Seed Ask', value: '$10–15M', sub: '5 → 100 clients' },
-            { label: 'Time to Value', value: '2 hours', sub: 'vs 16 weeks traditional' },
+            { label: 'TAM', value: '$200B', sub: 'Enterprise transformation', color: '#1B4FD8' },
+            { label: 'Year 1 Revenue', value: fmt(totalY1), sub: '100 clients · conservative', color: '#6D28D9' },
+            { label: 'Seed Ask', value: '$10–15M', sub: '5 → 100 clients', color: '#047857' },
+            { label: 'Time to Value', value: '2 hours', sub: 'vs 16 weeks traditional', color: '#B45309' },
           ].map((m, i) => (
-            <div key={i} style={{ padding: '16px 24px', borderRight: '1px solid #E5E7EB' }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#374151', marginBottom: '4px' }}>{m.label}</div>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '2px' }}>{m.value}</div>
-              <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{m.sub}</div>
+            <div key={i} style={{ padding: '20px 28px', borderRight: '1px solid #E5E7EB' }}>
+              <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: m.color, marginBottom: '6px' }}>{m.label}</div>
+              <div style={{ fontSize: '28px', fontWeight: 800, color: '#111827', letterSpacing: '-0.025em', lineHeight: 1.05, marginBottom: '4px' }}>{m.value}</div>
+              <div style={{ fontSize: '12px', color: '#6B7280' }}>{m.sub}</div>
             </div>
           ))}
         </div>
