@@ -649,14 +649,14 @@ export default function InvestorPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '16px' }}>
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Founder & CEO</div>
-                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '4px' }}>Anand Sundaram</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '4px' }}>Abarva Founder</div>
                 </div>
                 <div style={{ padding: '6px 18px', borderRadius: '100px', background: '#2DD4C820', border: '1px solid #2DD4C840', fontSize: '13px', fontWeight: 600, color: '#2DD4C8' }}>Founder</div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px', marginBottom: '28px' }}>
                 {[
                   'Managing Director, Accenture — Data & AI North America Growth Lead',
-                  'Built CADE (Catalyst Analytics Delivery Engine) on AWS Bedrock and Claude — deployed at Presbyterian Healthcare Services — 40% productivity increase, 60% cost reduction',
+                  'Built CADE (Catalyst Analytics Delivery Engine) on AWS Bedrock and Claude — deployed at Enterprise Healthcare Client — 40% productivity increase, 60% cost reduction',
                   '20+ years enterprise transformation across healthcare, financial services, retail',
                   'Led $200M+ in technology transformation engagements at Fortune 500 companies',
                 ].map((bullet, i) => (
@@ -670,7 +670,7 @@ export default function InvestorPage() {
                 <div style={{ fontSize: '13px', color: '#FED7AA', lineHeight: 1.75, fontStyle: 'italic' }}>
                   "I spent 20 years watching enterprises pay $3-5M for consulting engagements that left no institutional memory. The consultants left, the knowledge walked out, and the next engagement started from zero. Abarva is the platform I wish I had built 10 years ago."
                 </div>
-                <div style={{ fontSize: '11px', color: '#D97706', fontWeight: 700, marginTop: '10px' }}>— Anand Sundaram, Founder & CEO</div>
+                <div style={{ fontSize: '11px', color: '#D97706', fontWeight: 700, marginTop: '10px' }}>— Abarva Founder & CEO</div>
               </div>
             </div>
 
@@ -680,7 +680,7 @@ export default function InvestorPage() {
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Proven in Production — Not a Prototype</div>
                   <div style={{ fontSize: '20px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '8px' }}>CADE — Catalyst Analytics Delivery Engine</div>
-                  <div style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '560px' }}>Built by the Abarva founder at Accenture and deployed at Presbyterian Healthcare Services. CADE runs on AWS Bedrock and Claude — the same intelligence layer, same agent orchestration, same outcome-based model as Abarva.</div>
+                  <div style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '560px' }}>Built by the Abarva founder at Accenture and deployed at Enterprise Healthcare Client. CADE runs on AWS Bedrock and Claude — the same intelligence layer, same agent orchestration, same outcome-based model as Abarva.</div>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#21262D', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
@@ -696,7 +696,7 @@ export default function InvestorPage() {
                 ))}
               </div>
               <div style={{ padding: '14px 18px', background: '#0D1117', borderRadius: '8px', border: '1px solid #21262D' }}>
-                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>CADE is the architectural proof of concept for Abarva — same intelligence layer, same agent orchestration, same outcome-based model. Presbyterian Healthcare is the first reference customer.</span>
+                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>CADE is the architectural proof of concept for Abarva — same intelligence layer, same agent orchestration, same outcome-based model. Enterprise Healthcare Client is the first reference customer.</span>
               </div>
             </div>
 

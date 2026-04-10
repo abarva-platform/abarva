@@ -213,7 +213,7 @@ export default function Home() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Proven in production</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#E6EDF3', lineHeight: 1.4 }}>Presbyterian Healthcare Services · live deployment</div>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: '#E6EDF3', lineHeight: 1.4 }}>Enterprise Healthcare Client · live deployment</div>
             </div>
             <div style={{ display: 'flex', gap: '56px' }}>
               {[

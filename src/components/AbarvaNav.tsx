@@ -13,17 +13,12 @@ interface AbarvaNavProps {
 
 function DropItem({ icon, name, desc, href }: { icon: string; name: string; desc: string; href: string }) {
   return (
-    <a
-      href={href}
-      style={{ display: 'flex', gap: '12px', padding: '10px 12px', borderRadius: '8px', textDecoration: 'none', alignItems: 'center' }}
-      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1C2128')}
-      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
-    >
-      <div style={{ width: '32px', height: '32px', background: '#21262D', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
+    <a href={href} className="drop-item">
+      <div className="drop-icon" style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
         {icon}
       </div>
       <div>
-        <div style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 600, marginBottom: '2px' }}>{name}</div>
+        <div className="drop-name" style={{ fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{name}</div>
         <div style={{ fontSize: '11px', color: '#6B7280' }}>{desc}</div>
       </div>
     </a>
@@ -60,7 +55,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
   const linkCss = (id: DropdownId): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: '4px',
     padding: '0 14px', height: '64px', cursor: 'pointer',
-    color: open === id ? '#2DD4C8' : '#9CA3AF',
+    color: open === id ? '#2DD4C8' : '#E6EDF3',
     fontSize: '13px', fontWeight: open === id ? 600 : 500,
     borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
     boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s, font-weight 0.1s',
@@ -75,6 +70,27 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
           #ab-center { display: none !important; }
           #ab-hamburger { display: flex !important; }
         }
+        .drop-item {
+          display: flex; gap: 12px; padding: 10px 12px; border-radius: 8px;
+          text-decoration: none; align-items: center; background: transparent;
+          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
+        }
+        .drop-item:hover { background: rgba(45,212,200,0.08); border-left-color: #2DD4C8; padding-left: 14px; }
+        .drop-name { color: #E6EDF3; }
+        .drop-item:hover .drop-name { color: #2DD4C8; }
+        .drop-icon { background: #21262D; }
+        .drop-item:hover .drop-icon { background: rgba(45,212,200,0.15); }
+        .drop-simple {
+          display: block; padding: 8px 12px; border-radius: 6px; font-size: 13px;
+          color: #E6EDF3; text-decoration: none; margin-bottom: 2px;
+          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
+        }
+        .drop-simple:hover { background: rgba(45,212,200,0.08); color: #2DD4C8; border-left-color: #2DD4C8; padding-left: 14px; }
+        .drop-card {
+          padding: 10px 12px; border-radius: 8px; margin-bottom: 4px;
+          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box; cursor: pointer;
+        }
+        .drop-card:hover { background: rgba(45,212,200,0.08); border-left-color: #2DD4C8; padding-left: 14px; }
       ` }} />
       <nav style={{
         background: '#0D1117', borderBottom: '1px solid #21262D', height: '64px',
@@ -165,10 +181,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                     { label: 'Technology & Software', href: null },
                   ] as { label: string; href: string | null }[]).map((item, i) => (
                     item.href ? (
-                      <a key={i} href={item.href}
-                        style={{ display: 'block', padding: '8px 12px', borderRadius: '6px', fontSize: '13px', color: '#C9D1D9', textDecoration: 'none', marginBottom: '2px' }}
-                        onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1C2128')}
-                        onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
+                      <a key={i} href={item.href} className="drop-simple">
                         {item.label}
                       </a>
                     ) : (
@@ -185,9 +198,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                     { name: 'First Capital', sub: 'Financial Services · $18B Assets', href: '/diagnose?client=firstcapital' },
                     { name: 'Apex Retail', sub: 'Retail · $12.4B', href: '/diagnose?client=apexretail' },
                   ].map((c, i) => (
-                    <div key={i} style={{ padding: '10px 12px', borderRadius: '8px', marginBottom: '4px' }}
-                      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#1C2128')}
-                      onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
+                    <div key={i} className="drop-card">
                       <div style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 600, marginBottom: '2px' }}>{c.name}</div>
                       <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{c.sub}</div>
                       <a href={c.href} style={{ fontSize: '11px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>Open Demo →</a>
@@ -233,9 +244,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
 
           {/* Investor View */}
           <a href="/investor"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#9CA3AF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#E6EDF3', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#9CA3AF'; el.style.borderBottomColor = 'transparent' }}>
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#E6EDF3'; el.style.borderBottomColor = 'transparent' }}>
             Investor View
           </a>
         </div>
