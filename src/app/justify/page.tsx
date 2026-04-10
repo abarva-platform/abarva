@@ -30,6 +30,7 @@ function JustifyContent() {
   const [scenario, setScenario] = useState<'conservative'|'base'|'optimistic'>('base')
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+  const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
   const ai = activeClient === 'firstcapital' ? firstCapitalAI : activeClient === 'apexretail' ? apexRetailAI : meridianAI
   const allOpps = [...ai.opportunities.frontOffice, ...ai.opportunities.middleOffice, ...ai.opportunities.backOffice].sort((a: any, b: any) => (b.annualValue||0) - (a.annualValue||0))
 
@@ -64,7 +65,7 @@ function JustifyContent() {
         <span style={{ color: '#D1D5DB' }}>›</span>
         <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Justify</span>
         <span style={{ color: '#D1D5DB' }}>›</span>
-        <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName}</span>
+        <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
       </div>
       <StepNav />
       <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px' }}>

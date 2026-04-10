@@ -19,6 +19,7 @@ const S = {
 export default function Home() {
   const { user } = useUser()
   const [clientId, setClientId] = useState('meridian')
+  const [selectorOpen, setSelectorOpen] = useState(false)
 
   function getData() {
     if (clientId === 'firstcapital') return {
@@ -86,9 +87,40 @@ export default function Home() {
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
 
         {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Good morning, {user?.firstName || 'Maestro'}.</div>
           <div style={{ fontSize: '14px', color: '#6B7280' }}>{data.name} · {data.industry} · {data.confidence}% data confidence</div>
+        </div>
+
+        {/* Client Selector */}
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}>
+          <div onClick={() => setSelectorOpen(o => !o)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 14px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#0F172A', userSelect: 'none' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: clientId === 'meridian' ? '#2563EB' : clientId === 'firstcapital' ? '#7C3AED' : '#059669', display: 'block', flexShrink: 0 }} />
+            Viewing: {data.name}
+            <span style={{ fontSize: '10px', color: '#9CA3AF', marginLeft: '2px' }}>{selectorOpen ? '▴' : '▾'}</span>
+          </div>
+          {selectorOpen && (
+            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '6px', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', minWidth: '220px' }}>
+              {([
+                { id: 'meridian', name: 'Meridian Health', sub: 'Healthcare', color: '#2563EB' },
+                { id: 'firstcapital', name: 'First Capital', sub: 'Financial Services', color: '#7C3AED' },
+                { id: 'apexretail', name: 'Apex Retail', sub: 'Retail', color: '#059669' },
+              ] as { id: string; name: string; sub: string; color: string }[]).map(c => (
+                <div key={c.id} onClick={() => { setClientId(c.id); setSelectorOpen(false) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', background: clientId === c.id ? '#F8FAFC' : 'transparent' }}
+                  onMouseEnter={e => { if (clientId !== c.id) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                  onMouseLeave={e => { if (clientId !== c.id) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
+                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, display: 'block', flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{c.name}</div>
+                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{c.sub}</div>
+                  </div>
+                  {clientId === c.id && <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#059669', fontWeight: 700 }}>✓</span>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Metrics */}

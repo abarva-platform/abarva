@@ -73,6 +73,7 @@ function AIStrategyContent() {
   }, [step, activeClient])
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+  const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
   const ai = activeClient === 'firstcapital' ? firstCapitalAI : activeClient === 'apexretail' ? apexRetailAI : meridianAI
   const accents: Record<string, string> = { front: '#2563EB', middle: '#7C3AED', back: '#059669' }
 
@@ -96,7 +97,7 @@ function AIStrategyContent() {
       <span style={{ color: '#D1D5DB' }}>›</span>
       <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>AI Strategy</span>
       <span style={{ color: '#D1D5DB' }}>›</span>
-      <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName}</span>
+      <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
     </div>
   )
 

@@ -186,6 +186,8 @@ function SelectContent() {
 
   const decision = DECISIONS.find(d => d.id === selectedId) || DECISIONS[0]
   const recommended = decision.options.find(o => o.recommended)
+  const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+  const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
@@ -195,9 +197,9 @@ function SelectContent() {
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>
-        <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Decision Intelligence</span>
+        <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Select</span>
         <span style={{ color: '#D1D5DB' }}>›</span>
-        <span style={{ fontSize: '13px', color: '#6B7280' }}>Meridian Health System</span>
+        <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
       </div>
 
       {/* two-column layout */}

@@ -144,35 +144,42 @@ export default function InvestorPage() {
       <style>{css}</style>
 
       {/* TOP NAV */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', height: '60px', display: 'flex', alignItems: 'center', padding: '0 40px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <circle cx="16" cy="16" r="4" fill="#111827" />
-            <circle cx="5" cy="5" r="2.5" fill="#1B4FD8" />
-            <circle cx="27" cy="5" r="2.5" fill="#94A3B8" />
-            <circle cx="5" cy="27" r="2.5" fill="#94A3B8" />
-            <circle cx="27" cy="27" r="2.5" fill="#1B4FD8" />
-            <circle cx="16" cy="3" r="2" fill="#1B4FD8" />
-            <circle cx="29" cy="16" r="2" fill="#94A3B8" />
-            <line x1="16" y1="16" x2="5" y2="5" stroke="#1B4FD8" strokeWidth="1" opacity="0.5" />
-            <line x1="16" y1="16" x2="27" y2="5" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
-            <line x1="16" y1="16" x2="5" y2="27" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
-            <line x1="16" y1="16" x2="27" y2="27" stroke="#1B4FD8" strokeWidth="1" opacity="0.5" />
-            <line x1="16" y1="16" x2="16" y2="3" stroke="#1B4FD8" strokeWidth="1" opacity="0.4" />
-            <line x1="16" y1="16" x2="29" y2="16" stroke="#94A3B8" strokeWidth="1" opacity="0.4" />
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', height: '64px', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 40px', position: 'sticky' as const, top: 0, zIndex: 100, fontFamily: '-apple-system, "Helvetica Neue", sans-serif' }}>
+        {/* Left — Logo */}
+        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <line x1="8" y1="8" x2="14" y2="14" stroke="#2DD4C8" strokeWidth="1" opacity="0.6" />
+            <line x1="14" y1="14" x2="20" y2="8" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+            <line x1="14" y1="14" x2="20" y2="20" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+            <line x1="8" y1="8" x2="4" y2="16" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
+            <line x1="20" y1="20" x2="14" y2="24" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
+            <circle cx="8" cy="8" r="2" fill="#2DD4C8" />
+            <circle cx="20" cy="8" r="2" fill="#6B7280" />
+            <circle cx="14" cy="14" r="2.5" fill="#E6EDF3" />
+            <circle cx="20" cy="20" r="2" fill="#6B7280" />
+            <circle cx="4" cy="16" r="1.5" fill="#4B5563" />
+            <circle cx="14" cy="24" r="1.5" fill="#4B5563" />
           </svg>
           <div>
-            <div style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
-              <span style={{ color: '#111827' }}>Abar</span><span style={{ color: '#1B4FD8' }}>VA</span>
+            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'monospace', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+              <span style={{ color: '#E6EDF3' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
-            <div style={{ fontSize: '9px', fontWeight: 600, color: '#94A3B8', letterSpacing: '0.06em', textTransform: 'uppercase' as const, fontFamily: 'monospace' }}>Enterprise AI Operating System</div>
+            <div style={{ fontSize: '9px', color: '#6B7280', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1 }}>Enterprise AI Operating System</div>
           </div>
-          <span style={{ fontSize: '11px', color: '#9CA3AF', padding: '3px 10px', background: '#F3F4F6', borderRadius: '100px', marginLeft: '4px' }}>Investor Overview · Confidential</span>
+          <span style={{ fontSize: '11px', color: '#6B7280', padding: '3px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', marginLeft: '4px', fontFamily: 'monospace' }}>Investor Overview · Confidential</span>
+        </a>
+        {/* Center — Section links */}
+        <div style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
+          {SECTIONS.map(s => (
+            <button key={s.id} onClick={() => setSection(s.id)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: section === s.id ? 600 : 400, color: section === s.id ? '#E6EDF3' : '#6B7280', padding: '0 14px', height: '64px', borderBottom: section === s.id ? '2px solid #2DD4C8' : '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.1s', fontFamily: 'inherit', whiteSpace: 'nowrap' as const }}>
+              {s.label}
+            </button>
+          ))}
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <a href="/diagnose?client=meridian" style={{ padding: '9px 20px', borderRadius: '8px', background: '#111827', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 700, letterSpacing: '-0.01em' }}>Healthcare Demo →</a>
-          <a href="/diagnose?client=apexretail" style={{ padding: '9px 20px', borderRadius: '8px', background: '#047857', color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 700, letterSpacing: '-0.01em' }}>Retail Demo →</a>
-          <a href="/" style={{ fontSize: '13px', color: '#9CA3AF', textDecoration: 'none', marginLeft: '8px' }}>← Platform</a>
+        {/* Right */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <a href="/" style={{ fontSize: '13px', color: '#9CA3AF', textDecoration: 'none' }}>← Platform</a>
         </div>
       </div>
 
@@ -195,7 +202,7 @@ export default function InvestorPage() {
       </div>
 
       {/* SECTION SUB-NAV — NVIDIA style */}
-      <div style={{ background: '#111827', position: 'sticky' as const, top: '60px', zIndex: 99 }}>
+      <div style={{ background: '#111827', position: 'sticky' as const, top: '64px', zIndex: 99 }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
