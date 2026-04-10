@@ -85,25 +85,30 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
 
         {/* LEFT — Logo */}
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <svg width="34" height="34" viewBox="0 0 28 28" fill="none">
-            <line x1="8" y1="8" x2="14" y2="14" stroke="#60A5FA" strokeWidth="1.2" opacity="0.6" />
-            <line x1="14" y1="14" x2="20" y2="8" stroke="#60A5FA" strokeWidth="1.2" opacity="0.6" />
-            <line x1="14" y1="14" x2="20" y2="20" stroke="#60A5FA" strokeWidth="1.2" opacity="0.6" />
-            <line x1="8" y1="8" x2="4" y2="16" stroke="#60A5FA" strokeWidth="1.2" opacity="0.6" />
-            <line x1="20" y1="20" x2="14" y2="24" stroke="#60A5FA" strokeWidth="1.2" opacity="0.6" />
-            <circle cx="8" cy="8" r="3.5" fill="#60A5FA" />
-            <circle cx="20" cy="8" r="3.5" fill="#60A5FA" />
-            <circle cx="14" cy="14" r="6" fill="#2DD4C8" />
-            <circle cx="20" cy="20" r="3.5" fill="#60A5FA" />
-            <circle cx="4" cy="16" r="3.5" fill="#60A5FA" />
-            <circle cx="14" cy="24" r="3.5" fill="#60A5FA" />
+          <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
+            {/* Lines: hub to 6 satellites */}
+            <line x1="16" y1="16" x2="16" y2="6"    stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            <line x1="16" y1="16" x2="16" y2="26"   stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            <line x1="16" y1="16" x2="7.3" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            <line x1="16" y1="16" x2="7.3" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
+            {/* Satellite nodes — hexagonal */}
+            <circle cx="16"   cy="6"  r="2.2" fill="#60A5FA" />
+            <circle cx="24.7" cy="11" r="2.2" fill="#60A5FA" />
+            <circle cx="24.7" cy="21" r="2.2" fill="#60A5FA" />
+            <circle cx="16"   cy="26" r="2.2" fill="#60A5FA" />
+            <circle cx="7.3"  cy="21" r="2.2" fill="#60A5FA" />
+            <circle cx="7.3"  cy="11" r="2.2" fill="#60A5FA" />
+            {/* Hub */}
+            <circle cx="16" cy="16" r="5.5" fill="#2DD4C8" />
           </svg>
           <div>
             <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-              <span style={{ color: '#FFFFFF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
+              <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
             <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px' }}>
-              Enterprise AI Operating System
+              Enterprise AI Brain
             </div>
           </div>
         </a>
