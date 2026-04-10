@@ -7,6 +7,7 @@ const SECTIONS = [
   { id: 'clients', label: 'Live Client Economics' },
   { id: 'revenue', label: 'Revenue Model' },
   { id: 'compounding', label: 'The Moat' },
+  { id: 'team', label: 'The Team' },
   { id: 'seed', label: 'Seed Round' },
 ]
 
@@ -102,6 +103,8 @@ export default function InvestorPage() {
   const animatedRef = useRef(false)
   const [clientProgress, setClientProgress] = useState(0)
   const clientRafRef = useRef<number | null>(null)
+
+  useEffect(() => { document.title = 'Abarva Investor Overview — Confidential' }, [])
 
   useEffect(() => {
     if (section !== 'problem' || animatedRef.current) return
@@ -494,6 +497,56 @@ export default function InvestorPage() {
               </div>
             </div>
 
+            {/* Comparable valuations */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
+              <div style={{ padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#6B7280' }}>Why Abarva Commands a Premium Multiple</span>
+              </div>
+              <div style={{ overflowX: 'auto' as const }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+                  <thead>
+                    <tr style={{ background: '#F9FAFB' }}>
+                      {['Company', 'Valuation', 'ARR', 'Multiple', 'Why'].map((h, i) => (
+                        <th key={i} style={{ padding: '12px 20px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#6B7280', textAlign: 'left' as const, borderBottom: '1px solid #E5E7EB', borderRight: i < 4 ? '1px solid #E5E7EB' : 'none' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { company: 'Harvey AI', val: '$3B+', arr: '~$50M', mult: '60x', why: 'AI replaces legal work — outcome-accountable', color: '#1B4FD8' },
+                      { company: 'Ambience Healthcare', val: '$2B+', arr: '~$30M', mult: '67x', why: 'AI replaces clinical documentation — health system clients', color: '#047857' },
+                      { company: 'Databricks', val: '$62B', arr: '~$2B', mult: '31x', why: 'Enterprise data platform — SaaS model', color: '#6D28D9' },
+                      { company: 'Abarva (projected)', val: 'Target: $2.2B', arr: '$56M', mult: '40–60x', why: 'AI replaces transformation consulting — outcome-based', color: '#B45309' },
+                    ].map((row, i) => (
+                      <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#F9FAFB', borderTop: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '14px 20px', fontSize: '14px', fontWeight: 700, color: row.color, borderRight: '1px solid #E5E7EB' }}>{row.company}</td>
+                        <td style={{ padding: '14px 20px', fontSize: '14px', fontWeight: 600, color: '#111827', borderRight: '1px solid #E5E7EB' }}>{row.val}</td>
+                        <td style={{ padding: '14px 20px', fontSize: '14px', color: '#374151', borderRight: '1px solid #E5E7EB' }}>{row.arr}</td>
+                        <td style={{ padding: '14px 20px', fontSize: '14px', fontWeight: 700, color: '#059669', borderRight: '1px solid #E5E7EB' }}>{row.mult}</td>
+                        <td style={{ padding: '14px 20px', fontSize: '13px', color: '#6B7280' }}>{row.why}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ padding: '20px 24px', background: '#EFF6FF', borderTop: '1px solid #BFDBFE' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#1B4FD8', marginBottom: '16px' }}>Valuation Scenarios at $56M ARR</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+                  {[
+                    { label: 'Conservative', mult: '20x', val: '$1.1B', color: '#6B7280' },
+                    { label: 'Base Case', mult: '40x', val: '$2.2B', color: '#1B4FD8' },
+                    { label: 'Premium', mult: '60x', val: '$3.4B', color: '#047857' },
+                  ].map((s, i) => (
+                    <div key={i} style={{ padding: '16px', background: '#fff', borderRadius: '8px', border: '1px solid #BFDBFE', textAlign: 'center' as const }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, marginBottom: '6px' }}>{s.label}</div>
+                      <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '4px' }}>{s.mult} multiple</div>
+                      <div style={{ fontSize: '28px', fontWeight: 800, color: s.color, letterSpacing: '-0.025em' }}>{s.val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '24px' }}>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#D97706', marginBottom: '10px' }}>Stream 3 · Technology Consumption · Phase 2</div>
               <div style={{ fontSize: '15px', color: '#374151', lineHeight: 1.75 }}>Every AI initiative Abarva recommends requires technology — AI infrastructure, data platforms, SaaS tools. When clients procure through Abarva, we earn 10–15% on consumption. This stream builds automatically as clients implement recommendations. No additional sales motion required.</div>
@@ -554,6 +607,141 @@ export default function InvestorPage() {
                 <span style={{ fontSize: '14px', color: '#374151' }}>AI replaces enterprise transformation consulting. TAM is 10× larger. Outcome-based model creates superior revenue quality and higher multiples than pure SaaS.</span>
               </div>
             </div>
+
+            {/* Maestro Leverage Model */}
+            <div style={{ marginTop: '32px', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 24px', background: '#111827', borderBottom: '1px solid #21262D' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8' }}>The Maestro Leverage Model</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#E5E7EB' }}>
+                {[
+                  { year: 'Year 1', ratio: '1:5', color: '#9CA3AF', desc: 'One Maestro supports 5 active clients with full Abarva platform backing. Human expertise multiplied.' },
+                  { year: 'Year 2', ratio: '1:15', color: '#1B4FD8', desc: 'Outcome data from Year 1 reduces diagnostic time. Maestro pattern-matches across 15 concurrent engagements.' },
+                  { year: 'Year 3', ratio: '1:40', color: '#6D28D9', desc: 'Transformation Genome handles 80% of analysis automatically. Maestro focuses on judgment and relationships.' },
+                  { year: 'Year 5', ratio: '1:100', color: '#047857', desc: 'Institutional knowledge of 2,000+ engagements. One Maestro manages 100 clients with AI doing the diagnostic work.' },
+                ].map((m, i) => (
+                  <div key={i} style={{ background: '#fff', padding: '24px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, marginBottom: '8px' }}>{m.year}</div>
+                    <div style={{ fontSize: '36px', fontWeight: 800, color: m.color, letterSpacing: '-0.03em', marginBottom: '12px' }}>{m.ratio}</div>
+                    <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.6 }}>{m.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '14px 24px', background: '#FFFBEB', borderTop: '1px solid #FEF3C7' }}>
+                <span style={{ fontSize: '13px', color: '#374151' }}>
+                  <strong style={{ color: '#D97706' }}>Precedent: </strong>
+                  Harvey AI went from 1 lawyer : 10 matters to 1 lawyer : 200 matters. Abarva applies the same leverage model to enterprise transformation.
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TEAM */}
+        {section === 'team' && (
+          <div>
+            <div className="tag" style={{ color: '#2DD4C8' }}>The Team</div>
+            <h1 className="h1">Built by someone who has done this<br />for 20 years at the largest scale.</h1>
+            <p className="body">Not a product person who hired consultants to validate the idea. The founder is the product.</p>
+
+            {/* Founder card */}
+            <div style={{ background: '#111827', borderRadius: '12px', padding: '40px', marginBottom: '24px', border: '1px solid #21262D' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '16px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Founder & CEO</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '4px' }}>Anand Sundaram</div>
+                </div>
+                <div style={{ padding: '6px 18px', borderRadius: '100px', background: '#2DD4C820', border: '1px solid #2DD4C840', fontSize: '13px', fontWeight: 600, color: '#2DD4C8' }}>Founder</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px', marginBottom: '28px' }}>
+                {[
+                  'Managing Director, Accenture — Data & AI North America Growth Lead',
+                  'Built CADE (Catalyst Analytics Delivery Engine) on AWS Bedrock and Claude — deployed at Presbyterian Healthcare Services — 40% productivity increase, 60% cost reduction',
+                  '20+ years enterprise transformation across healthcare, financial services, retail',
+                  'Led $200M+ in technology transformation engagements at Fortune 500 companies',
+                ].map((bullet, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                    <span style={{ color: '#2DD4C8', fontSize: '14px', flexShrink: 0, marginTop: '2px', fontWeight: 700 }}>→</span>
+                    <span style={{ fontSize: '14px', color: '#C9D1D9', lineHeight: 1.6 }}>{bullet}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#451A03', borderLeft: '4px solid #2DD4C8', borderRadius: '0 8px 8px 0', padding: '20px 24px' }}>
+                <div style={{ fontSize: '13px', color: '#FED7AA', lineHeight: 1.75, fontStyle: 'italic' }}>
+                  "I spent 20 years watching enterprises pay $3-5M for consulting engagements that left no institutional memory. The consultants left, the knowledge walked out, and the next engagement started from zero. Abarva is the platform I wish I had built 10 years ago."
+                </div>
+                <div style={{ fontSize: '11px', color: '#D97706', fontWeight: 700, marginTop: '10px' }}>— Anand Sundaram, Founder & CEO</div>
+              </div>
+            </div>
+
+            {/* Proof of Concept */}
+            <div style={{ background: '#111827', border: '1px solid #21262D', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap' as const, gap: '12px' }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Proven in Production — Not a Prototype</div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '8px' }}>CADE — Catalyst Analytics Delivery Engine</div>
+                  <div style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '560px' }}>Built by the Abarva founder at Accenture and deployed at Presbyterian Healthcare Services. CADE runs on AWS Bedrock and Claude — the same intelligence layer, same agent orchestration, same outcome-based model as Abarva.</div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#21262D', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
+                {[
+                  { value: '40%', label: 'Productivity increase' },
+                  { value: '60%', label: 'Cost reduction' },
+                  { value: '6 weeks', label: 'Concept to production' },
+                ].map((m, i) => (
+                  <div key={i} style={{ padding: '24px', background: '#161B22', textAlign: 'center' as const }}>
+                    <div style={{ fontSize: '32px', fontWeight: 800, color: '#2DD4C8', letterSpacing: '-0.025em', marginBottom: '6px' }}>{m.value}</div>
+                    <div style={{ fontSize: '12px', color: '#6B7280' }}>{m.label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '14px 18px', background: '#0D1117', borderRadius: '8px', border: '1px solid #21262D' }}>
+                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>CADE is the architectural proof of concept for Abarva — same intelligence layer, same agent orchestration, same outcome-based model. Presbyterian Healthcare is the first reference customer.</span>
+              </div>
+            </div>
+
+            {/* Planned Team */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
+              <div style={{ padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#6B7280' }}>Planned Team · Seed Round Hiring</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#E5E7EB' }}>
+                {[
+                  { role: 'Head of Engineering', color: '#1B4FD8', bg: '#EFF6FF', desc: 'Senior full-stack, AI/ML background, enterprise SaaS experience.', timing: 'Month 1' },
+                  { role: 'Maestro #1', color: '#6D28D9', bg: '#F5F3FF', desc: 'Former Deloitte or McKinsey partner, healthcare or financial services background.', timing: 'Month 1' },
+                  { role: 'Maestro #2', color: '#047857', bg: '#ECFDF5', desc: 'Former Big 4 Managing Director, retail or technology background.', timing: 'Month 2' },
+                  { role: 'Enterprise Sales Director', color: '#B45309', bg: '#FFFBEB', desc: 'Former Salesforce or Veeva enterprise sales, $500K+ deal experience.', timing: 'Month 3' },
+                ].map((m, i) => (
+                  <div key={i} style={{ padding: '24px', background: '#fff' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '15px', fontWeight: 700, color: m.color }}>{m.role}</div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '100px', background: '#F3F4F6', color: '#6B7280', flexShrink: 0, marginLeft: '8px' }}>Hiring {m.timing}</span>
+                    </div>
+                    <div style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6 }}>{m.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Advisors */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#6B7280' }}>Advisors — Recruiting</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#E5E7EB' }}>
+                {[
+                  { title: 'Healthcare CIO Advisor', name: '[Name TBD]', desc: 'Former CIO at major health system. Recruiting.', color: '#1B4FD8' },
+                  { title: 'Financial Services Advisor', name: '[Name TBD]', desc: 'Former CTO at regional bank. Recruiting.', color: '#6D28D9' },
+                  { title: 'AI/ML Technical Advisor', name: '[Name TBD]', desc: 'Former research scientist at Anthropic or Google DeepMind. Recruiting.', color: '#047857' },
+                ].map((m, i) => (
+                  <div key={i} style={{ padding: '24px', background: '#F9FAFB' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: m.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' }}>{m.title}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '6px' }}>{m.name}</div>
+                    <div style={{ fontSize: '13px', color: '#6B7280' }}>{m.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -589,6 +777,61 @@ export default function InvestorPage() {
                   ))}
                 </div>
               ))}
+            </div>
+
+            {/* GTM section */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
+              <div style={{ padding: '16px 24px', background: '#111827', borderBottom: '1px solid #21262D' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8' }}>Go-to-Market — 5 Channels</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: '#E5E7EB' }}>
+                {[
+                  { label: 'Founder Network', desc: 'Direct CIO relationships built over 20 years at Accenture. First 3-5 clients close without outbound.', color: '#1B4FD8' },
+                  { label: 'Maestro Network', desc: 'Each Maestro brings 5-10 warm enterprise relationships. 4 Maestros = 40 warm introductions.', color: '#6D28D9' },
+                  { label: 'CIO Advisory Board', desc: 'Advisory board members are clients and referrers. Target: 6 members by Month 6.', color: '#047857' },
+                  { label: 'Conference & Thought Leadership', desc: 'ViVE, HIMSS, Sibos. Founder-led speaking. CIO research reports.', color: '#B45309' },
+                  { label: 'Inbound & Referral', desc: 'Client success drives referral. One happy CIO at a health system talks to 5 peers.', color: '#059669' },
+                ].map((c, i) => (
+                  <div key={i} style={{ padding: '20px', background: '#fff' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: c.color, marginBottom: '8px' }}>{c.label}</div>
+                    <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.6 }}>{c.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '20px 24px', background: '#F9FAFB', borderTop: '1px solid #E5E7EB' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+                  {[
+                    { label: 'CAC', value: '$80K', color: '#6D28D9' },
+                    { label: 'Year 1 LTV', value: '$4.7M', color: '#047857' },
+                    { label: 'LTV:CAC', value: '58:1', color: '#1B4FD8' },
+                    { label: 'Sales cycle', value: '60-90 days', color: '#B45309' },
+                  ].map((m, i) => (
+                    <div key={i} style={{ textAlign: 'center' as const }}>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, marginBottom: '4px' }}>{m.label}</div>
+                      <div style={{ fontSize: '24px', fontWeight: 800, color: m.color, letterSpacing: '-0.025em' }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Monthly Client Ramp</div>
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
+                  {[
+                    { month: 'Month 1', clients: 3, max: 100 },
+                    { month: 'Month 3', clients: 8, max: 100 },
+                    { month: 'Month 6', clients: 25, max: 100 },
+                    { month: 'Month 9', clients: 55, max: 100 },
+                    { month: 'Month 12', clients: 100, max: 100 },
+                  ].map((row, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '64px', fontSize: '11px', color: '#6B7280', flexShrink: 0 }}>{row.month}</div>
+                      <div style={{ flex: 1, height: '20px', background: '#F1F5F9', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: (row.clients / row.max * 100) + '%', background: '#1B4FD8', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '6px' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#fff' }}>{row.clients}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: '12px', padding: '32px' }}>
