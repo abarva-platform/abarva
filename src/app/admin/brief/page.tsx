@@ -268,6 +268,17 @@ export default function PreMeetingBrief() {
             </div>
           </section>
 
+          {/* Timeline reference */}
+          <div style={{ marginTop: '14px', background: T.surface2, border: `1px solid rgba(245,158,11,0.2)`, borderRadius: '8px', padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontFamily: T.mono, fontSize: '9px', fontWeight: 700, color: T.amber, letterSpacing: '1.5px', marginBottom: '5px', textTransform: 'uppercase' as const }}>Understand the History First</div>
+              <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text3, lineHeight: 1.65 }}>Every answer above connects to a decision Meridian made before Marcus arrived. Open the Decision Timeline before the Q&amp;A starts — CIOs recognize themselves in it immediately.</div>
+            </div>
+            <a href="/timeline?client=meridian" style={{ fontFamily: T.mono, fontSize: '10px', padding: '8px 16px', borderRadius: '6px', background: 'rgba(245,158,11,0.07)', color: T.amber, border: `1px solid rgba(245,158,11,0.2)`, textDecoration: 'none', flexShrink: 0, marginLeft: '20px', whiteSpace: 'nowrap' as const }}>
+              Decision Timeline →
+            </a>
+          </div>
+
           {/* ── 3. WHAT TO SHOW (blue) ── */}
           <section style={{ background: T.surface, border: `1px solid ${T.border2}`, borderLeft: `3px solid ${T.blue}`, borderRadius: '10px', padding: '32px', marginBottom: '20px' }}>
             <Rule label="What to Show — Demo Flow" color={T.blue} />

@@ -325,6 +325,11 @@ function DiagnoseContent() {
                   View Contradiction Map →
                 </a>
               )}
+              {!loadingContradictions && contradictions && (
+                <a href={'/timeline?client=' + activeClient} style={{ display: 'block', padding: '10px 14px', borderRadius: '10px', background: '#FFFFFF', color: '#0F172A', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center', border: '1px solid #E2E8F0' }}>
+                  View Decision Timeline →
+                </a>
+              )}
             </div>
           )}
 

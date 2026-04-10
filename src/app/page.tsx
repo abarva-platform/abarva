@@ -168,7 +168,10 @@ export default function Home() {
                 <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{f}</span>
               </div>
             ))}
-            <a href={'/contradictions?client=' + clientId} style={{ display: 'block', marginTop: '4px', padding: '8px', borderRadius: '8px', background: '#0D1117', color: '#2DD4C8', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+            <a href={'/timeline?client=' + clientId} style={{ display: 'block', marginTop: '4px', padding: '8px', borderRadius: '8px', background: '#0F172A', color: '#F8FAFC', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
+              View Decision Timeline →
+            </a>
+            <a href={'/contradictions?client=' + clientId} style={{ display: 'block', marginTop: '6px', padding: '8px', borderRadius: '8px', background: '#0D1117', color: '#2DD4C8', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
               View Contradiction Map →
             </a>
             <a href={'/diagnose?client=' + clientId} style={{ display: 'block', marginTop: '6px', padding: '8px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
