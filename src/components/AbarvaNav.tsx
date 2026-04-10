@@ -63,7 +63,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
     color: open === id ? '#E6EDF3' : '#9CA3AF',
     fontSize: '13px', fontWeight: 500,
     borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
-    boxSizing: 'border-box' as const, transition: 'color 0.1s',
+    boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s',
     userSelect: 'none' as const,
     fontFamily: '-apple-system, "Helvetica Neue", sans-serif',
   })

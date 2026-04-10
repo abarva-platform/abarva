@@ -251,10 +251,19 @@ function ContradictionsContent() {
           0% { opacity: 0.5; transform: scale(1); }
           100% { opacity: 0; transform: scale(1.4); }
         }
+        @keyframes drawLine {
+          from { stroke-dashoffset: 200; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes nodeAppear {
+          from { opacity: 0; transform: scale(0.7); }
+          to { opacity: 1; transform: scale(1); }
+        }
         .crit-ring { animation: critPulse 2s ease-out infinite; transform-box: fill-box; transform-origin: center; }
         .high-ring { animation: highPulse 2.8s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-        .net-node { cursor: pointer; transition: opacity 0.15s; }
+        .net-node { cursor: pointer; transition: opacity 0.15s; animation: nodeAppear 0.4s ease-out both; transform-box: fill-box; transform-origin: center; }
         .net-node:hover { opacity: 0.85; }
+        .active-line { animation: drawLine 0.55s ease-out forwards; }
       ` }} />
 
       {/* Nav */}
@@ -319,18 +328,23 @@ function ContradictionsContent() {
               const p = nPos(node.angle)
               const isActive = selected?.id === node.id
               const color = SEV_COLOR[node.sev]
-              return (
+              return isActive ? (
+                <line key={node.id + '-line-active'}
+                  className="active-line"
+                  x1={CX} y1={CY} x2={p.x} y2={p.y}
+                  stroke={color} strokeWidth={2}
+                  strokeDasharray="200 200"
+                />
+              ) : (
                 <line key={node.id + '-line'}
                   x1={CX} y1={CY} x2={p.x} y2={p.y}
-                  stroke={isActive ? color : '#21262D'}
-                  strokeWidth={isActive ? 2 : 1}
-                  strokeDasharray={isActive ? 'none' : '4 4'}
+                  stroke="#21262D" strokeWidth={1} strokeDasharray="4 4"
                 />
               )
             })}
 
             {/* Nodes */}
-            {cd.nodes.map(node => {
+            {cd.nodes.map((node, ni) => {
               const { x, y } = nPos(node.angle)
               const isActive = selected?.id === node.id
               const color = SEV_COLOR[node.sev]
@@ -338,7 +352,8 @@ function ContradictionsContent() {
               const metricY = isTop ? y - 54 : y + 54
 
               return (
-                <g key={node.id} className="net-node" onClick={() => setSelectedId(node.id)}>
+                <g key={node.id} className="net-node" onClick={() => setSelectedId(node.id)}
+                  style={{ animationDelay: `${ni * 80}ms` }}>
                   {/* Pulse ring */}
                   {node.sev === 'CRITICAL' && (
                     <circle cx={x} cy={y} r={NODE_R + 12} fill="none" stroke={color} strokeWidth={1.5}

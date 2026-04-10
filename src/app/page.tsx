@@ -1,6 +1,6 @@
 'use client'
 import { useUser } from '@clerk/nextjs'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
@@ -20,6 +20,33 @@ export default function Home() {
   const { user } = useUser()
   const [clientId, setClientId] = useState('meridian')
   const [selectorOpen, setSelectorOpen] = useState(false)
+  const [animProgress, setAnimProgress] = useState(0)
+  const animRafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (animRafRef.current) cancelAnimationFrame(animRafRef.current)
+    setAnimProgress(0)
+    const t0 = performance.now()
+    const dur = 1800
+    const tick = (now: number) => {
+      const p = Math.min((now - t0) / dur, 1)
+      setAnimProgress(1 - Math.pow(1 - p, 3))
+      if (p < 1) animRafRef.current = requestAnimationFrame(tick)
+      else animRafRef.current = null
+    }
+    animRafRef.current = requestAnimationFrame(tick)
+    return () => { if (animRafRef.current) cancelAnimationFrame(animRafRef.current) }
+  }, [clientId])
+
+  function animVal(raw: string): string {
+    const m = raw.match(/^(\$?)(\d+\.?\d*)(.*)$/)
+    if (!m) return raw
+    const num = parseFloat(m[2])
+    if (num > 999) return raw
+    const cur = num * animProgress
+    const str = m[2].includes('.') ? cur.toFixed(1) : String(Math.round(cur))
+    return m[1] + str + m[3]
+  }
 
   function getData() {
     if (clientId === 'firstcapital') return {
@@ -95,6 +122,18 @@ export default function Home() {
 
   return (
     <div style={S.page}>
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes redPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+          50% { box-shadow: 0 0 0 5px rgba(220,38,38,0.13); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .m-red { animation: redPulse 3s ease-in-out infinite; }
+        .fade-up { animation: fadeUp 0.45s ease-out both; }
+      ` }} />
       <AbarvaNav clientId={clientId} onClientChange={setClientId} activePage="home" />
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '28px 32px' }}>
 
@@ -138,12 +177,13 @@ export default function Home() {
         {/* Metrics — 4×2 grid */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '20px' }}>
           {data.metrics.map((m, i) => (
-            <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', height: '88px', boxSizing: 'border-box', cursor: 'pointer', position: 'relative' as const }}
+            <div key={clientId + i} className={m.status === 'red' ? 'm-red fade-up' : 'fade-up'}
+              style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', height: '88px', boxSizing: 'border-box' as const, cursor: 'pointer', position: 'relative' as const, animationDelay: `${i * 50}ms` }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
               <span style={{ position: 'absolute' as const, top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: sc[m.status], display: 'block' }} />
               <div style={{ fontSize: '10px', color: '#6B7280', marginBottom: '4px', fontWeight: 600, letterSpacing: '0.03em' }}>{m.label}</div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1, marginBottom: '3px' }}>{m.value}</div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1, marginBottom: '3px' }}>{animVal(m.value)}</div>
               <div style={{ fontSize: '11px', color: '#94A3B8' }}>{m.sub}</div>
             </div>
           ))}
@@ -215,22 +255,33 @@ export default function Home() {
 
           {/* Data Readiness */}
           <div style={S.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <div style={S.lbl}>DATA READINESS</div>
-              <span style={{ fontSize: '24px', fontWeight: 700, color: '#2563EB' }}>{data.confidence}%</span>
+              <span style={{ fontSize: '22px', fontWeight: 700, color: '#2563EB' }}>{Math.round(data.confidence * animProgress)}%</span>
             </div>
-            {cats.map((cat, i) => (
-              <div key={i} style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', color: '#475569' }}>{cat.name}</span>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: cat.pct >= 70 ? '#059669' : cat.pct >= 50 ? '#D97706' : '#DC2626' }}>{cat.pct}%</span>
-                </div>
-                <div style={{ height: '4px', background: '#F1F5F9', borderRadius: '2px' }}>
-                  <div style={{ height: '4px', borderRadius: '2px', width: cat.pct + '%', background: cat.pct >= 70 ? '#059669' : cat.pct >= 50 ? '#D97706' : '#DC2626' }} />
-                </div>
-              </div>
-            ))}
-            <a href="/admin/data" style={{ display: 'block', marginTop: '16px', padding: '8px', borderRadius: '8px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>Manage Data →</a>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px 8px' }}>
+              {cats.map((cat, i) => {
+                const r = 24, circ = 2 * Math.PI * r
+                const color = cat.pct >= 70 ? '#059669' : cat.pct >= 50 ? '#D97706' : '#DC2626'
+                const offset = circ * (1 - (cat.pct * animProgress) / 100)
+                return (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0' }}>
+                    <div style={{ position: 'relative', width: '60px', height: '60px' }}>
+                      <svg width="60" height="60" viewBox="0 0 60 60" style={{ transform: 'rotate(-90deg)' }}>
+                        <circle cx="30" cy="30" r={r} fill="none" stroke="#F1F5F9" strokeWidth="6" />
+                        <circle cx="30" cy="30" r={r} fill="none" stroke={color} strokeWidth="6"
+                          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
+                      </svg>
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>
+                        {Math.round(cat.pct * animProgress)}%
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</div>
+                  </div>
+                )
+              })}
+            </div>
+            <a href="/admin/data" style={{ display: 'block', marginTop: '12px', padding: '8px', borderRadius: '8px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>Manage Data →</a>
           </div>
 
           {/* Regulatory Alerts */}

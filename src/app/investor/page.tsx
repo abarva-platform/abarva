@@ -100,6 +100,8 @@ export default function InvestorPage() {
   const totalY1 = platformARR + 24000000
   const [counts, setCounts] = useState([0, 0, 0, 0])
   const animatedRef = useRef(false)
+  const [clientProgress, setClientProgress] = useState(0)
+  const clientRafRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (section !== 'problem' || animatedRef.current) return
@@ -116,6 +118,21 @@ export default function InvestorPage() {
     }, stepMs)
     return () => clearInterval(timer)
   }, [section])
+
+  useEffect(() => {
+    if (section !== 'clients') return
+    if (clientRafRef.current) cancelAnimationFrame(clientRafRef.current)
+    setClientProgress(0)
+    const t0 = performance.now()
+    const tick = (now: number) => {
+      const p = Math.min((now - t0) / 2000, 1)
+      setClientProgress(1 - Math.pow(1 - p, 3))
+      if (p < 1) clientRafRef.current = requestAnimationFrame(tick)
+      else clientRafRef.current = null
+    }
+    clientRafRef.current = requestAnimationFrame(tick)
+    return () => { if (clientRafRef.current) cancelAnimationFrame(clientRafRef.current) }
+  }, [clientIdx, section])
 
   const css = `
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -384,10 +401,10 @@ export default function InvestorPage() {
             {/* Economics */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr) 1.5fr', gap: '1px', background: '#E5E7EB', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
               {[
-                { label: 'Client ROI', value: client.roi + 'x', color: '#059669' },
-                { label: 'Payback period', value: client.payback + ' months', color: '#1B4FD8' },
-                { label: 'Consulting avoided', value: fmt(client.consultingAvoided), color: '#6D28D9' },
-                { label: 'Year 1 savings', value: fmt(client.savingsRealized), color: '#B45309' },
+                { label: 'Client ROI', value: (client.roi * clientProgress).toFixed(1) + 'x', color: '#059669' },
+                { label: 'Payback period', value: Math.round(client.payback * clientProgress) + ' months', color: '#1B4FD8' },
+                { label: 'Consulting avoided', value: fmt(client.consultingAvoided * clientProgress), color: '#6D28D9' },
+                { label: 'Year 1 savings', value: fmt(client.savingsRealized * clientProgress), color: '#B45309' },
               ].map((m, i) => (
                 <div key={i} style={{ background: '#fff', padding: '20px' }}>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.color, height: '32px', display: 'flex', alignItems: 'flex-start', marginBottom: '8px', lineHeight: 1.3 }}>{m.label}</div>
@@ -398,15 +415,15 @@ export default function InvestorPage() {
                 <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#1B4FD8', marginBottom: '12px' }}>Abarva Year 1 Economics</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '13px', color: '#6B7280' }}>Platform fee</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{fmt(client.platformFee)}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{fmt(client.platformFee * clientProgress)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #BFDBFE' }}>
                   <span style={{ fontSize: '13px', color: '#6B7280' }}>Outcome fee (15%)</span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#1B4FD8' }}>{fmt(client.outcomeFee)}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#1B4FD8' }}>{fmt(client.outcomeFee * clientProgress)}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: '#111827' }}>Total Year 1</span>
-                  <span style={{ fontSize: '20px', fontWeight: 800, color: '#059669', letterSpacing: '-0.02em' }}>{fmt(client.totalYear1)}</span>
+                  <span style={{ fontSize: '20px', fontWeight: 800, color: '#059669', letterSpacing: '-0.02em' }}>{fmt(client.totalYear1 * clientProgress)}</span>
                 </div>
               </div>
             </div>
