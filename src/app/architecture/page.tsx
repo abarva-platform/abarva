@@ -622,25 +622,23 @@ function ArchContent() {
   return (
     <div style={{ background: '#0D1117', minHeight: '100vh' }}>
       {/* Top nav */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', height: '48px', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 200 }}>
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', height: '48px', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 200 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="4" fill="#2DD4C8" />
-              <circle cx="5" cy="5" r="2.5" fill="#1B4FD8" />
-              <circle cx="27" cy="5" r="2.5" fill="#1B4FD8" />
-              <circle cx="5" cy="27" r="2.5" fill="#1B4FD8" />
-              <circle cx="27" cy="27" r="2.5" fill="#1B4FD8" />
-              <circle cx="16" cy="2" r="2" fill="#4DA3FF" />
-              <circle cx="16" cy="30" r="2" fill="#4DA3FF" />
-              <line x1="16" y1="16" x2="5" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="5" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="16" y2="2" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="16" y2="30" stroke="#2DD4C8" strokeWidth="0.5" />
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <line x1="8" y1="8" x2="14" y2="14" stroke="#2DD4C8" strokeWidth="1" opacity="0.6" />
+              <line x1="14" y1="14" x2="20" y2="8" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+              <line x1="14" y1="14" x2="20" y2="20" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+              <line x1="8" y1="8" x2="4" y2="16" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
+              <line x1="20" y1="20" x2="14" y2="24" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
+              <circle cx="8" cy="8" r="2" fill="#2DD4C8" />
+              <circle cx="20" cy="8" r="2" fill="#6B7280" />
+              <circle cx="14" cy="14" r="2.5" fill="#E6EDF3" />
+              <circle cx="20" cy="20" r="2" fill="#6B7280" />
+              <circle cx="4" cy="16" r="1.5" fill="#4B5563" />
+              <circle cx="14" cy="24" r="1.5" fill="#4B5563" />
             </svg>
-            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', fontWeight: 600, color: '#E6EDF3' }}>
+            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', fontWeight: 700, color: '#E6EDF3' }}>
               Abar<span style={{ color: '#2DD4C8' }}>VA</span>
             </span>
           </a>
@@ -657,7 +655,7 @@ function ArchContent() {
       </div>
 
       {/* Client selector */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', gap: '4px' }}>
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', gap: '4px' }}>
         {CLIENTS.map(c => (
           <button key={c.id} onClick={() => setSelected(c.id)}
             style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selected === c.id ? c.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.15s' }}>

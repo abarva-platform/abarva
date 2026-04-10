@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, Suspense, useEffect } from 'react'
+import { useState, useRef, Suspense, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { meridianHealth } from '@/data/meridian/index'
@@ -45,6 +45,9 @@ function DiagnoseContent() {
   const [loading, setLoading] = useState(false)
   const [streaming, setStreaming] = useState('')
   const [activeClient, setActiveClient] = useState(clientId)
+  const [lastError, setLastError] = useState<'timeout' | 'error' | null>(null)
+  const pendingMessages = useRef<Array<{role: string, content: string}>>([])
+  const abortRef = useRef<AbortController | null>(null)
   const [sidebarTab, setSidebarTab] = useState<'snapshot' | 'findings' | 'actions' | 'data'>('snapshot')
   const [contradictions, setContradictions] = useState<Contradiction[] | null>(null)
   const [loadingContradictions, setLoadingContradictions] = useState(false)
@@ -144,21 +147,28 @@ function DiagnoseContent() {
     return meridianHealth.contradictions
   }
 
-  async function sendMessage(text?: string) {
-    const msg = text || input
-    if (!msg.trim()) return
-    const updated = [...messages, { role: 'user', content: msg }]
-    setMessages(updated)
-    setInput('')
+  const executeRequest = useCallback(async (msgs: Array<{role: string, content: string}>, currentClient: string, currentRole: string) => {
+    pendingMessages.current = msgs
     setLoading(true)
     setStreaming('')
+    setLastError(null)
+
+    const controller = new AbortController()
+    abortRef.current = controller
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     try {
       const res = await fetch('/api/diagnose', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updated, role, client: activeClient })
+        body: JSON.stringify({ messages: msgs, role: currentRole, client: currentClient }),
+        signal: controller.signal,
       })
-      if (!res.ok) throw new Error('API error ' + res.status)
+      clearTimeout(timeoutId)
+      if (!res.ok) {
+        const errText = await res.text().catch(() => '')
+        throw new Error(errText || 'HTTP ' + res.status)
+      }
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       let full = ''
@@ -171,17 +181,32 @@ function DiagnoseContent() {
         }
       }
       setMessages(prev => [...prev, { role: 'assistant', content: full }])
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Error connecting. Please try again.' }])
+    } catch (err: unknown) {
+      clearTimeout(timeoutId)
+      const isTimeout = err instanceof Error && err.name === 'AbortError'
+      setLastError(isTimeout ? 'timeout' : 'error')
     }
     setStreaming('')
     setLoading(false)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+  }, [])
+
+  async function sendMessage(text?: string) {
+    const msg = text || input
+    if (!msg.trim()) return
+    const updated = [...messages, { role: 'user', content: msg }]
+    setMessages(updated)
+    setInput('')
+    await executeRequest(updated, activeClient, role)
+  }
+
+  async function retryRequest() {
+    await executeRequest(pendingMessages.current, activeClient, role)
   }
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming(''); setSidebarTab('snapshot') }} activePage="diagnose" />
+      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming(''); setLastError(null); setSidebarTab('snapshot') }} activePage="diagnose" />
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>
@@ -193,12 +218,12 @@ function DiagnoseContent() {
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
             {roles.map(r => (
-              <button key={r} onClick={() => { setRole(r); setMessages([]); setStreaming('') }}
+              <button key={r} onClick={() => { setRole(r); setMessages([]); setStreaming(''); setLastError(null) }}
                 style={{ padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: role === r ? 'none' : '1px solid #E2E8F0', background: role === r ? '#2563EB' : '#FFFFFF', color: role === r ? '#FFFFFF' : '#475569' }}>
                 {r}
               </button>
             ))}
-            <button onClick={() => { setMessages([]); setStreaming('') }} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#6B7280' }}>Clear</button>
+            <button onClick={() => { setMessages([]); setStreaming(''); setLastError(null) }} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#6B7280' }}>Clear</button>
           </div>
           {messages.length === 0 && !streaming && (
             <div style={{ marginBottom: '16px' }}>
@@ -225,6 +250,16 @@ function DiagnoseContent() {
             ))}
             {loading && !streaming && <div style={{ ...S.card, padding: '12px 16px', fontSize: '13px', color: '#94A3B8', width: 'fit-content' }}>Analyzing {clientName}...</div>}
             {streaming && <div style={{ maxWidth: '80%', ...S.card, padding: '12px 16px', fontSize: '14px', color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{streaming}</div>}
+            {lastError && !loading && (
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <div style={{ maxWidth: '80%', borderRadius: '12px', padding: '12px 16px', fontSize: '13px', background: '#FFF7ED', color: '#92400E', border: '1px solid #FED7AA', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' as const }}>
+                  <span>{lastError === 'timeout' ? 'Taking longer than usual.' : 'Error connecting to Abarva.'}</span>
+                  <button onClick={retryRequest} style={{ padding: '5px 12px', borderRadius: '6px', background: '#2563EB', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
+                    Try again →
+                  </button>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>

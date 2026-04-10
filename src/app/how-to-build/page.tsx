@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#0D1117', fontFamily: "'IBM Plex Sans', Inter, sans-serif", color: '#E6EDF3' } as React.CSSProperties,
@@ -68,34 +69,10 @@ function HowToBuildContent() {
 
   return (
     <div style={S.page}>
-      {/* Nav */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', height: '48px', display: 'flex', alignItems: 'center', padding: '0 32px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="4" fill="#2DD4C8" />
-              <circle cx="5" cy="5" r="2.5" fill="#1B4FD8" /><circle cx="27" cy="5" r="2.5" fill="#1B4FD8" />
-              <circle cx="5" cy="27" r="2.5" fill="#1B4FD8" /><circle cx="27" cy="27" r="2.5" fill="#1B4FD8" />
-              <line x1="16" y1="16" x2="5" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="5" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-            </svg>
-            <span style={{ ...S.mono, fontSize: '13px', fontWeight: 600, color: '#E6EDF3' }}>Abar<span style={{ color: '#2DD4C8' }}>VA</span></span>
-          </a>
-          <span style={{ color: '#30363D' }}>›</span>
-          <span style={{ ...S.mono, fontSize: '11px', color: '#8B949E' }}>How to Build This</span>
-          <span style={{ ...S.mono, fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: meta.cloudBg + '22', color: meta.accent, border: '1px solid ' + meta.cloudBg + '55' }}>{meta.cloud}</span>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <a href={'/architecture?client=' + selectedClient} style={{ ...S.mono, fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(77,163,255,0.1)', color: '#4DA3FF', textDecoration: 'none', border: '1px solid rgba(77,163,255,0.3)' }}>← Architecture</a>
-          <a href={'/ai-strategy?client=' + selectedClient} style={{ ...S.mono, fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(110,231,183,0.1)', color: '#6EE7B7', textDecoration: 'none', border: '1px solid rgba(110,231,183,0.3)' }}>AI Strategy →</a>
-          <a href="/" style={{ ...S.mono, fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', color: '#6B7280', textDecoration: 'none', border: '1px solid #21262D' }}>← Platform</a>
-        </div>
-      </div>
+      <AbarvaNav clientId={selectedClient} />
 
       {/* Client selector */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 32px', display: 'flex', gap: '4px' }}>
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', padding: '0 32px', display: 'flex', gap: '4px' }}>
         {Object.entries(CLIENT_META).map(([id, m]) => (
           <button key={id} onClick={() => setSelectedClient(id)}
             style={{ padding: '10px 20px', ...S.mono, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === id ? '2px solid ' + m.accent : '2px solid transparent', background: 'transparent', color: selectedClient === id ? m.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>

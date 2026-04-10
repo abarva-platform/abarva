@@ -209,21 +209,27 @@ function BlueprintContent() {
       <style>{css}</style>
 
       {/* TOP NAV */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E5E7EB', height: '56px', display: 'flex', alignItems: 'center', padding: '0 32px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 100 }}>
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', height: '56px', display: 'flex', alignItems: 'center', padding: '0 32px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 100 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <div style={{ width: '28px', height: '28px', background: '#111827', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontSize: '12px', fontWeight: 800 }}>A</span>
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827', letterSpacing: '-0.01em' }}>Abarva</span>
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
+              <line x1="8" y1="8" x2="14" y2="14" stroke="#2DD4C8" strokeWidth="1" opacity="0.6" />
+              <line x1="14" y1="14" x2="20" y2="8" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+              <line x1="14" y1="14" x2="20" y2="20" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
+              <circle cx="8" cy="8" r="2" fill="#2DD4C8" />
+              <circle cx="14" cy="14" r="2.5" fill="#E6EDF3" />
+              <circle cx="20" cy="8" r="2" fill="#6B7280" />
+              <circle cx="20" cy="20" r="2" fill="#6B7280" />
+            </svg>
+            <span style={{ fontSize: '14px', fontWeight: 700, fontFamily: 'monospace', color: '#E6EDF3' }}>Abar<span style={{ color: '#2DD4C8' }}>VA</span></span>
           </a>
-          <span style={{ color: '#D1D5DB', fontSize: '16px' }}>›</span>
-          <span style={{ fontSize: '13px', color: '#6B7280' }}>{bp.client}</span>
-          <span style={{ color: '#D1D5DB', fontSize: '16px' }}>›</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#111827' }}>Solution Blueprint</span>
+          <span style={{ color: '#30363D', fontSize: '16px' }}>›</span>
+          <span style={{ fontSize: '13px', color: '#8B949E' }}>{bp.client}</span>
+          <span style={{ color: '#30363D', fontSize: '16px' }}>›</span>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#E6EDF3' }}>Solution Blueprint</span>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button style={{ padding: '7px 16px', borderRadius: '8px', background: '#F3F4F6', color: '#374151', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Export PDF</button>
+          <button style={{ padding: '7px 16px', borderRadius: '8px', background: '#21262D', color: '#C9D1D9', border: '1px solid #30363D', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Export PDF</button>
           <a href={`/justify?client=${clientId}`} style={{ padding: '7px 16px', borderRadius: '8px', background: bp.color, color: '#fff', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>Build Business Case →</a>
         </div>
       </div>

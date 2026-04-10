@@ -209,6 +209,14 @@ VENDOR INTELLIGENCE:
 }
 
 export async function POST(request: Request) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.error("Diagnose API: ANTHROPIC_API_KEY not configured");
+    return new Response("API configuration error — contact support", {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   const { messages, role, client: clientId } = await request.json();
 
   let orgContext = getMeridianContext();
