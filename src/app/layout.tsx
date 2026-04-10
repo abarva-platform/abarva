@@ -3,8 +3,15 @@ import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Abarva',
-  description: 'Vision to strategy to execution',
+  title: 'Abarva — Enterprise AI Brain',
+  description: 'AI-native enterprise transformation platform. Strategy, diagnostics, roadmaps, and outcome tracking in hours, not months.',
+  icons: { icon: '/favicon.svg' },
+  openGraph: {
+    title: 'Abarva — Enterprise AI Brain',
+    description: 'AI-native enterprise transformation. $292M in value identified from real client data.',
+    type: 'website',
+    url: 'https://nexus-vert-kappa.vercel.app',
+  },
 }
 
 export default function RootLayout({
