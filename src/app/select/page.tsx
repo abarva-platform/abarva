@@ -202,6 +202,22 @@ function SelectContent() {
         <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
       </div>
 
+      {/* Journey */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>
+        {[
+          { label: 'Diagnose', href: '/diagnose?client=' + clientId, active: false },
+          { label: 'AI Strategy', href: '/ai-strategy?client=' + clientId, active: false },
+          { label: 'Justify', href: '/justify?client=' + clientId, active: false },
+          { label: 'Select', href: '/select?client=' + clientId, active: true },
+          { label: 'Blueprint', href: '/blueprint?client=' + clientId, active: false },
+        ].map((s, i) => (
+          <a key={i} href={s.href} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 12px', height: '36px', fontSize: '11px', fontWeight: s.active ? 700 : 500, color: s.active ? '#1B4FD8' : '#9CA3AF', textDecoration: 'none', borderBottom: s.active ? '2px solid #1B4FD8' : '2px solid transparent', whiteSpace: 'nowrap' as const, boxSizing: 'border-box' as const }}>
+            {s.active && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1B4FD8', display: 'block' }} />}
+            {s.label}
+          </a>
+        ))}
+      </div>
+
       {/* two-column layout */}
       <div style={{ display: 'flex', height: 'calc(100vh - 113px)' }}>
 

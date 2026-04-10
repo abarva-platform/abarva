@@ -214,6 +214,21 @@ function DiagnoseContent() {
         <span style={{ color: '#D1D5DB' }}>›</span>
         <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
       </div>
+      {/* Journey */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>
+        {[
+          { label: 'Diagnose', href: '/diagnose?client=' + activeClient, active: true },
+          { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient, active: false },
+          { label: 'Justify', href: '/justify?client=' + activeClient, active: false },
+          { label: 'Select', href: '/select?client=' + activeClient, active: false },
+          { label: 'Blueprint', href: '/blueprint?client=' + activeClient, active: false },
+        ].map((step, i) => (
+          <a key={i} href={step.href} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 12px', height: '36px', fontSize: '11px', fontWeight: step.active ? 700 : 500, color: step.active ? '#1B4FD8' : '#9CA3AF', textDecoration: 'none', borderBottom: step.active ? '2px solid #1B4FD8' : '2px solid transparent', whiteSpace: 'nowrap' as const, boxSizing: 'border-box' as const }}>
+            {step.active && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1B4FD8', display: 'block' }} />}
+            {step.label}
+          </a>
+        ))}
+      </div>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 32px', display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', height: 'calc(100vh - 136px)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>

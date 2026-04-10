@@ -72,6 +72,7 @@ export default function AdminHub() {
                   {eng.id === 'meridian' && <a href="/admin/brief" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#0F172A', color: '#E6EDF3', textAlign: 'center', border: '1px solid #1E293B' }}>Brief →</a>}
                   {eng.id === 'meridian' && <a href="/admin/context" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#1E3A5F', color: '#FFFFFF', textAlign: 'center' }}>Context →</a>}
                   {eng.id === 'meridian' && <a href="/value-template?client=meridian" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#059669', color: '#FFFFFF', textAlign: 'center' }}>Value Template →</a>}
+                  <a href={`/outcomes?client=${eng.id}`} style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#ECFDF5', color: '#059669', textAlign: 'center', border: '1px solid #A7F3D0' }}>Track Outcomes →</a>
                   {eng.pending > 0 && <a href="/admin/approvals" style={{ padding: '6px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', background: '#FEF2F2', color: '#DC2626', textAlign: 'center', border: '1px solid #FECACA' }}>{eng.pending} pending</a>}
                 </div>
               </div>

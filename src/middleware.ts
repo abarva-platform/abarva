@@ -18,6 +18,8 @@ const isPublicRoute = createRouteMatcher([
   '/contradictions(.*)',
   '/timeline(.*)',
   '/scenarios(.*)',
+  '/board-deck(.*)',
+  '/outcomes(.*)',
   '/search(.*)',
   '/admin(.*)',
 ])

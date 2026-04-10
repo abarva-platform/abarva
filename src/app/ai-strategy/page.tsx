@@ -128,6 +128,21 @@ function AIStrategyContent() {
     <div style={S.page}>
       <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1) }} activePage="ai-strategy" />
       <Breadcrumb />
+      {/* Journey */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>
+        {[
+          { label: 'Diagnose', href: '/diagnose?client=' + activeClient, active: false },
+          { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient, active: true },
+          { label: 'Justify', href: '/justify?client=' + activeClient, active: false },
+          { label: 'Select', href: '/select?client=' + activeClient, active: false },
+          { label: 'Blueprint', href: '/blueprint?client=' + activeClient, active: false },
+        ].map((step, i) => (
+          <a key={i} href={step.href} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 12px', height: '36px', fontSize: '11px', fontWeight: step.active ? 700 : 500, color: step.active ? '#1B4FD8' : '#9CA3AF', textDecoration: 'none', borderBottom: step.active ? '2px solid #1B4FD8' : '2px solid transparent', whiteSpace: 'nowrap' as const, boxSizing: 'border-box' as const }}>
+            {step.active && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1B4FD8', display: 'block' }} />}
+            {step.label}
+          </a>
+        ))}
+      </div>
       <StepNav />
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
 
@@ -460,6 +475,10 @@ function AIStrategyContent() {
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Export AI Strategy</h1>
             <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>What McKinsey charges ${(ai.roadmap.summary.mckinseyEquivalent / 1000000).toFixed(1)}M and 16 weeks to produce</p>
+            <a href={'/board-deck?client=' + activeClient} style={{ display: 'block', padding: '16px', borderRadius: '10px', background: '#0D1117', border: '1px solid #2DD4C8', marginBottom: '12px', textDecoration: 'none' }}>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#2DD4C8', marginBottom: '4px' }}>Generate Board Presentation →</div>
+              <div style={{ fontSize: '12px', color: '#6B7280' }}>10 slides · Every number sourced · Board-ready</div>
+            </a>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
               {[
                 { title: 'Executive Summary', format: 'PDF', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', audience: 'Board and CEO' },
