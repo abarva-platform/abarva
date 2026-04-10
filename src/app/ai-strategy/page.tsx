@@ -1,10 +1,11 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
+import type { FailureAnalysis, InitiativeRisk } from '@/lib/intelligence/types'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -51,6 +52,25 @@ function AIStrategyContent() {
   const [oppTab, setOppTab] = useState<'front' | 'middle' | 'back'>('front')
   const [priority, setPriority] = useState<'revenue' | 'cost' | 'risk'>('revenue')
   const [budget, setBudget] = useState<'conservative' | 'moderate' | 'aggressive'>('moderate')
+  const [riskMap, setRiskMap] = useState<Record<string, InitiativeRisk>>({})
+  const [riskNarrative, setRiskNarrative] = useState<string | null>(null)
+  const [loadingRisk, setLoadingRisk] = useState(false)
+
+  useEffect(() => {
+    if (step !== 3 || activeClient !== 'meridian') return
+    if (Object.keys(riskMap).length > 0) return // already loaded
+    setLoadingRisk(true)
+    fetch('/api/intelligence/failures', { method: 'POST' })
+      .then(r => r.json())
+      .then((data: FailureAnalysis) => {
+        const map: Record<string, InitiativeRisk> = {}
+        data.risks.forEach(r => { map[r.initiativeId] = r })
+        setRiskMap(map)
+        setRiskNarrative(data.narrative)
+        setLoadingRisk(false)
+      })
+      .catch(() => setLoadingRisk(false))
+  }, [step, activeClient])
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
   const ai = activeClient === 'firstcapital' ? firstCapitalAI : activeClient === 'apexretail' ? apexRetailAI : meridianAI
@@ -226,7 +246,23 @@ function AIStrategyContent() {
         {step === 3 && (
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>AI Opportunity Scan</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Every AI opportunity tied to actual client data</p>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: activeClient === 'meridian' ? '16px' : '24px' }}>Every AI opportunity tied to actual client data</p>
+            {activeClient === 'meridian' && (
+              <div style={{ marginBottom: '24px', padding: '16px 20px', background: '#0F172A', borderRadius: '10px', border: '1px solid #1E293B' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' }}>
+                  FAILURE GENOME ANALYSIS — TRANSFORMATION RISK
+                </div>
+                {loadingRisk && (
+                  <div style={{ fontSize: '13px', color: '#94A3B8' }}>Scoring initiatives against 7 failure patterns...</div>
+                )}
+                {!loadingRisk && riskNarrative && (
+                  <div style={{ fontSize: '13px', color: '#E2E8F0', lineHeight: 1.6 }}>{riskNarrative}</div>
+                )}
+                {!loadingRisk && !riskNarrative && (
+                  <div style={{ fontSize: '13px', color: '#94A3B8' }}>Risk scoring unavailable</div>
+                )}
+              </div>
+            )}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
               {[
                 { label: 'Total Annual Value', value: '$' + (ai.roadmap.summary.totalAnnualValue / 1000000000).toFixed(2) + 'B', color: '#059669' },
@@ -258,18 +294,31 @@ function AIStrategyContent() {
                 const rb = opp.dataReadiness === 'green' ? '#ECFDF5' : opp.dataReadiness === 'yellow' ? '#FFFBEB' : '#FEF2F2'
                 const wc = opp.wave === 1 ? '#059669' : opp.wave === 2 ? '#2563EB' : '#7C3AED'
                 const wb = opp.wave === 1 ? '#ECFDF5' : opp.wave === 2 ? '#EFF6FF' : '#F5F3FF'
+                const risk = riskMap[opp.id]
+                const prob = risk?.successProbability
+                const isBlocked = risk?.isBlocked
+                const probColor = prob == null ? null : prob >= 60 ? '#059669' : prob >= 35 ? '#D97706' : '#DC2626'
+                const probBg = prob == null ? null : prob >= 60 ? '#ECFDF5' : prob >= 35 ? '#FFFBEB' : '#FEF2F2'
                 return (
-                  <div key={i} style={{ ...S.card, padding: '16px', borderLeft: '3px solid ' + accents[oppTab] }}>
+                  <div key={i} style={{ ...S.card, padding: '16px', borderLeft: '3px solid ' + (isBlocked ? '#DC2626' : accents[oppTab]) }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', flex: 1, paddingRight: '8px' }}>{opp.name}</div>
                       <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', flexShrink: 0 }}>${(opp.annualValue / 1000000).toFixed(0)}M</div>
                     </div>
                     <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '10px', lineHeight: 1.4 }}>{opp.problem}</div>
+                    {isBlocked && risk?.criticalBlocker && (
+                      <div style={{ fontSize: '10px', color: '#DC2626', background: '#FEF2F2', padding: '4px 8px', borderRadius: '6px', marginBottom: '8px', fontWeight: 500 }}>
+                        ⚠ {risk.criticalBlocker}
+                      </div>
+                    )}
                     <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' as const }}>
                       <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: rb, color: rc }}>Data: {opp.dataReadinessPct}%</span>
                       <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0' }}>${(opp.investment / 1000000).toFixed(1)}M invest</span>
                       <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0' }}>{opp.roi}x ROI</span>
                       <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: wb, color: wc }}>Wave {opp.wave}</span>
+                      {prob != null && (
+                        <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '10px', background: probBg!, color: probColor! }}>{prob}% success</span>
+                      )}
                     </div>
                   </div>
                 )

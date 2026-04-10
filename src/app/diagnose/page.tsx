@@ -1,10 +1,11 @@
 'use client'
-import { useState, useRef, Suspense } from 'react'
+import { useState, useRef, Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
+import type { Contradiction } from '@/lib/intelligence/types'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -45,7 +46,23 @@ function DiagnoseContent() {
   const [streaming, setStreaming] = useState('')
   const [activeClient, setActiveClient] = useState(clientId)
   const [sidebarTab, setSidebarTab] = useState<'snapshot' | 'findings' | 'actions' | 'data'>('snapshot')
+  const [contradictions, setContradictions] = useState<Contradiction[] | null>(null)
+  const [loadingContradictions, setLoadingContradictions] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (sidebarTab !== 'findings') return
+    setContradictions(null)
+    setLoadingContradictions(true)
+    fetch('/api/intelligence/contradictions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clientId: activeClient }),
+    })
+      .then(r => r.json())
+      .then((data: Contradiction[]) => { setContradictions(data); setLoadingContradictions(false) })
+      .catch(() => setLoadingContradictions(false))
+  }, [sidebarTab, activeClient])
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
   const confidence = activeClient === 'firstcapital' ? 88 : activeClient === 'apexretail' ? 86 : 94
@@ -257,14 +274,52 @@ function DiagnoseContent() {
 
           {/* Findings tab */}
           {sidebarTab === 'findings' && (
-            <div style={S.card}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>KEY CONTRADICTIONS</div>
-              {getContradictions().map((c, i) => (
-                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '10px', paddingBottom: '10px', borderBottom: i < getContradictions().length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                  <span style={{ color: '#DC2626', fontSize: '12px', flexShrink: 0, marginTop: '1px' }}>!</span>
-                  <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{c}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {loadingContradictions && (
+                <div style={{ ...S.card, padding: '20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '6px' }}>Analyzing contradictions in client data...</div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>Comparing commitments against actuals</div>
                 </div>
-              ))}
+              )}
+              {!loadingContradictions && contradictions && contradictions.map((c) => {
+                const severityColor = c.severity === 'critical' ? '#DC2626' : c.severity === 'high' ? '#D97706' : '#2563EB'
+                const severityBg = c.severity === 'critical' ? '#FEF2F2' : c.severity === 'high' ? '#FFFBEB' : '#EFF6FF'
+                return (
+                  <div key={c.id} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ padding: '10px 12px', borderBottom: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A', lineHeight: 1.3, flex: 1, paddingRight: '8px' }}>{c.title}</div>
+                      <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '8px', background: severityBg, color: severityColor, flexShrink: 0, textTransform: 'uppercase' as const }}>
+                        {c.severity}
+                      </span>
+                    </div>
+                    <div style={{ padding: '8px 12px', background: '#F8FAFC', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                        <div>
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#059669', textTransform: 'uppercase' as const, marginBottom: '2px' }}>A: {c.dataPointA.label}</div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>{c.dataPointA.value}</div>
+                          <div style={{ fontSize: '9px', color: '#94A3B8', marginTop: '1px', lineHeight: 1.3 }}>{c.dataPointA.source.split(',')[0]}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: severityColor, textTransform: 'uppercase' as const, marginBottom: '2px' }}>B: {c.dataPointB.label}</div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>{c.dataPointB.value}</div>
+                          <div style={{ fontSize: '9px', color: '#94A3B8', marginTop: '1px', lineHeight: 1.3 }}>{c.dataPointB.source.split(',')[0]}</div>
+                        </div>
+                      </div>
+                    </div>
+                    {c.finding && (
+                      <div style={{ padding: '8px 12px', borderBottom: '1px solid #F1F5F9' }}>
+                        <div style={{ fontSize: '10px', color: '#374151', lineHeight: 1.4 }}>{c.finding}</div>
+                      </div>
+                    )}
+                    <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      {c.recommendation && (
+                        <div style={{ fontSize: '10px', color: '#2563EB', lineHeight: 1.4, flex: 1 }}>→ {c.recommendation}</div>
+                      )}
+                      <span style={{ fontSize: '9px', color: '#94A3B8', flexShrink: 0 }}>{c.confidence}% conf.</span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
