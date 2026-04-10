@@ -320,6 +320,11 @@ function DiagnoseContent() {
                   </div>
                 )
               })}
+              {!loadingContradictions && contradictions && (
+                <a href={'/contradictions?client=' + activeClient} style={{ display: 'block', padding: '10px 14px', borderRadius: '10px', background: '#0D1117', color: '#2DD4C8', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center', border: '1px solid #2DD4C8', letterSpacing: '0.02em' }}>
+                  View Contradiction Map →
+                </a>
+              )}
             </div>
           )}
 
