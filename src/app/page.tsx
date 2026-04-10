@@ -88,7 +88,7 @@ export default function Home() {
         { label: 'RCM Denial Rate', value: meridianHealth.technology.rcm.denialRate + '%', sub: 'Benchmark: 11.4%', status: 'red' as const },
         { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', sub: 'Target: 85/100', status: 'amber' as const },
         { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), sub: '$34M bonus below 4.0', status: 'amber' as const },
-        { label: 'Prior Auth Connected', value: '0%', sub: 'Peers: 62% automated', status: 'red' as const },
+        { label: 'Prior Auth Connected', value: '23%', sub: 'Peers: 62% automated', status: 'red' as const },
         { label: 'Travel Nurse Cost', value: '$48M', sub: 'Target: $28M', status: 'red' as const },
         { label: 'CDO Status', value: 'Vacant', sub: '14 months unfilled', status: 'red' as const },
         { label: 'AI Pilots Scaled', value: '0 / 6', sub: 'All stalled at pilot', status: 'red' as const },
