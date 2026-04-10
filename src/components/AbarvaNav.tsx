@@ -60,10 +60,10 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
   const linkCss = (id: DropdownId): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: '4px',
     padding: '0 14px', height: '64px', cursor: 'pointer',
-    color: open === id ? '#E6EDF3' : '#9CA3AF',
-    fontSize: '13px', fontWeight: 500,
+    color: open === id ? '#2DD4C8' : '#9CA3AF',
+    fontSize: '13px', fontWeight: open === id ? 600 : 500,
     borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
-    boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s',
+    boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s, font-weight 0.1s',
     userSelect: 'none' as const,
     fontFamily: '-apple-system, "Helvetica Neue", sans-serif',
   })
@@ -107,7 +107,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.1, letterSpacing: '-0.02em' }}>
               <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
-            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px' }}>
+            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>
               Enterprise AI Brain
             </div>
           </div>
@@ -233,9 +233,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
 
           {/* Investor View */}
           <a href="/investor"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#9CA3AF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.1s' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.color = '#E6EDF3')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = '#9CA3AF')}>
+            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#9CA3AF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#9CA3AF'; el.style.borderBottomColor = 'transparent' }}>
             Investor View
           </a>
         </div>

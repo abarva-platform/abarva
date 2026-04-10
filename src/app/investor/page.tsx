@@ -183,7 +183,7 @@ export default function InvestorPage() {
             <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.1, letterSpacing: '-0.02em' }}>
               <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
-            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px' }}>Enterprise AI Brain</div>
+            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>Enterprise AI Brain</div>
           </div>
           <span style={{ fontSize: '11px', color: '#6B7280', padding: '3px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', marginLeft: '4px', fontFamily: 'monospace' }}>Investor Overview · Confidential</span>
         </a>
