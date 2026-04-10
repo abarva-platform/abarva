@@ -386,6 +386,15 @@ function AIStrategyContent() {
                 )
               })}
             </div>
+            <div style={{ marginBottom: '16px', padding: '14px 16px', background: '#F5F3FF', border: '1px solid #DDD6FE', borderRadius: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#7C3AED', marginBottom: '2px' }}>Want to test different assumptions?</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Change investment, timeline, and targets — see how outcomes change in real time</div>
+              </div>
+              <a href={'/scenarios?client=' + activeClient} style={{ padding: '8px 18px', borderRadius: '8px', background: '#7C3AED', color: 'white', fontSize: '12px', fontWeight: 700, textDecoration: 'none', flexShrink: 0, marginLeft: '16px', whiteSpace: 'nowrap' as const }}>
+                Model Different Scenarios →
+              </a>
+            </div>
             <NavBtns prev={3} next={5} nextLabel="Next: Roadmap →" />
           </div>
         )}

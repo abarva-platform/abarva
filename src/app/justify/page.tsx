@@ -203,9 +203,12 @@ function JustifyContent() {
                 </tbody>
               </table>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <button onClick={() => setStep(3)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
-              <button onClick={() => setStep(5)} style={{ padding: '12px 32px', borderRadius: '10px', background: '#059669', color: 'white', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Export Business Case →</button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <a href={'/scenarios?client=' + activeClient} style={{ padding: '12px 20px', borderRadius: '10px', background: '#F5F3FF', color: '#7C3AED', border: '1px solid #DDD6FE', fontSize: '13px', fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center' }}>Run Scenario Analysis →</a>
+                <button onClick={() => setStep(5)} style={{ padding: '12px 32px', borderRadius: '10px', background: '#059669', color: 'white', border: 'none', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>Export Business Case →</button>
+              </div>
             </div>
           </div>
         )}

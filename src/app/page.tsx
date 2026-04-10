@@ -77,6 +77,7 @@ export default function Home() {
     { id: 'justify', name: 'Justify', tagline: 'Board-ready business case in 30 minutes, not 8 weeks', bullets: ['Auto-populated baseline from your actual data', 'Conservative, Base, and Optimistic scenarios', 'Export to PDF or Excel'], href: '/justify?client=' + clientId, accent: '#059669', icon: '$', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
     { id: 'select', name: 'Select', tagline: 'Vendor selection and negotiation in days, not months', bullets: ['KLAS scores and peer reference data', 'Integration complexity with your actual stack', 'Negotiation playbook with specific leverage'], href: '/select?client=' + clientId, accent: '#D97706', icon: '◎', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
     { id: 'domain-strategy', name: 'Domain Strategy', tagline: 'Deep-dive AI strategy by business domain', bullets: ['Six domains: RCM, clinical, workforce, tech, patient, supply', 'Use case map, architecture, and phased roadmap per domain', 'Investment summary with payback at steady state'], href: '/domain-strategy?client=' + clientId, accent: '#0891B2', icon: '⬡', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
+    { id: 'scenarios', name: 'Scenario Modeling', tagline: 'Change assumptions. See the impact. Decide faster.', bullets: ['Interactive sliders update outcomes in real time', 'Conservative / Base / Optimistic scenario comparison', 'Risk indicators and highest ROI decision engine'], href: '/scenarios?client=' + clientId, accent: '#7C3AED', icon: '⊞', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
   ]
 
   return (
@@ -108,7 +109,7 @@ export default function Home() {
 
         {/* Products */}
         <div style={S.lbl}>PRODUCTS</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px', marginBottom: '32px' }}>
           {products.map(p => (
             <a key={p.id} href={p.href} style={{ textDecoration: 'none' }}>
               <div style={{ ...S.card, cursor: 'pointer', transition: 'all 0.15s', height: '100%' }}
