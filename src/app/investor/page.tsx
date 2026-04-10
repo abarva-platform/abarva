@@ -211,10 +211,6 @@ export default function InvestorPage() {
               {s.label}
             </button>
           ))}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingRight: '0', gap: '8px' }}>
-            <a href="/diagnose?client=meridian" style={{ fontSize: '12px', color: '#6EE7B7', textDecoration: 'none', padding: '0 16px', fontWeight: 600 }}>Healthcare Demo →</a>
-            <a href="/diagnose?client=apexretail" style={{ fontSize: '12px', color: '#6EE7B7', textDecoration: 'none', padding: '0 16px', fontWeight: 600 }}>Retail Demo →</a>
-          </div>
         </div>
       </div>
 

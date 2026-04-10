@@ -25,10 +25,14 @@ export default function Home() {
     if (clientId === 'firstcapital') return {
       name: 'First Capital Financial', industry: 'Financial Services', confidence: 88,
       metrics: [
-        { label: 'Cost-to-Income', value: firstCapital.financials.costToIncomeRatio + '%', sub: 'Target: 55% | Benchmark: 61%', status: 'red' as const },
+        { label: 'Cost-to-Income', value: firstCapital.financials.costToIncomeRatio + '%', sub: 'Target: 55%', status: 'red' as const },
         { label: 'Digital Adoption', value: firstCapital.technology.digital.digitalAdoptionRate + '%', sub: 'Benchmark: 67%', status: 'red' as const },
-        { label: 'Core Banking Age', value: firstCapital.technology.coreBanking.age + ' yrs', sub: 'Critical threshold: 20 yrs', status: 'red' as const },
+        { label: 'Core Banking Age', value: firstCapital.technology.coreBanking.age + ' yrs', sub: 'Critical: 20 yrs', status: 'red' as const },
         { label: 'FedNow Live', value: 'No', sub: '68% of peers live', status: 'red' as const },
+        { label: 'AML False Positives', value: '94%', sub: 'Target: <60%', status: 'red' as const },
+        { label: 'Mobile App Rating', value: '2.8★', sub: 'Peers: 4.4★', status: 'red' as const },
+        { label: 'Account Abandonment', value: '67%', sub: 'Target: <30%', status: 'red' as const },
+        { label: 'OCC MRAs', value: '3 Open', sub: 'Target: 0', status: 'red' as const },
       ],
       findings: firstCapital.contradictions.slice(0, 3),
       alerts: regulatoryAlerts.firstcapital.slice(0, 3),
@@ -38,9 +42,13 @@ export default function Home() {
       name: 'Apex Retail Group', industry: 'Retail', confidence: 86,
       metrics: [
         { label: 'Operating Margin', value: apexRetail.org.operatingMargin + '%', sub: 'Target: ' + apexRetail.org.targetOperatingMargin + '%', status: 'red' as const },
-        { label: 'Digital Revenue', value: apexRetail.org.ecommercePercent + '%', sub: 'Target: 45%', status: 'yellow' as const },
-        { label: 'Inventory Turnover', value: apexRetail.financials.inventoryTurnover + 'x', sub: 'Benchmark: 6.8x', status: 'red' as const },
-        { label: 'Loyalty Active', value: apexRetail.financials.loyaltyMemberPercent + '%', sub: 'Benchmark: 68%', status: 'yellow' as const },
+        { label: 'Cart Abandonment', value: '71%', sub: 'Benchmark: 58%', status: 'red' as const },
+        { label: 'Loyalty Active', value: apexRetail.financials.loyaltyMemberPercent + '%', sub: 'Benchmark: 68%', status: 'red' as const },
+        { label: 'Forecast Accuracy', value: '61%', sub: 'Target: 85%', status: 'red' as const },
+        { label: 'Einstein Activated', value: 'No', sub: '$4.2M license unused', status: 'red' as const },
+        { label: 'Inventory Accuracy', value: apexRetail.financials.inventoryTurnover + 'x', sub: 'Benchmark: 6.8x', status: 'red' as const },
+        { label: 'Shrinkage Rate', value: '2.8%', sub: 'Benchmark: 1.5%', status: 'red' as const },
+        { label: 'SAP Support Ends', value: '2027', sub: '18 months to migrate', status: 'red' as const },
       ],
       findings: apexRetail.contradictions.slice(0, 3),
       alerts: regulatoryAlerts.apexretail.slice(0, 3),
@@ -51,8 +59,12 @@ export default function Home() {
       metrics: [
         { label: 'Operating Margin', value: meridianHealth.org.operatingMargin + '%', sub: 'Target: 4.0%', status: 'red' as const },
         { label: 'RCM Denial Rate', value: meridianHealth.technology.rcm.denialRate + '%', sub: 'Benchmark: 11.4%', status: 'red' as const },
-        { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', sub: 'Target: 85/100', status: 'yellow' as const },
-        { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), sub: '$34M bonus below 4.0', status: 'yellow' as const },
+        { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', sub: 'Target: 85/100', status: 'amber' as const },
+        { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), sub: '$34M bonus below 4.0', status: 'amber' as const },
+        { label: 'Prior Auth Connected', value: '0%', sub: 'Peers: 62% automated', status: 'red' as const },
+        { label: 'Travel Nurse Cost', value: '$48M', sub: 'Target: $28M', status: 'red' as const },
+        { label: 'CDO Status', value: 'Vacant', sub: '14 months unfilled', status: 'red' as const },
+        { label: 'AI Pilots Scaled', value: '0 / 6', sub: 'All stalled at pilot', status: 'red' as const },
       ],
       findings: meridianHealth.contradictions.slice(0, 3),
       alerts: regulatoryAlerts.meridian.slice(0, 3),
@@ -61,7 +73,7 @@ export default function Home() {
   }
 
   const data = getData()
-  const sc: Record<string, string> = { red: '#DC2626', yellow: '#D97706', green: '#059669' }
+  const sc: Record<string, string> = { red: '#DC2626', yellow: '#D97706', amber: '#D97706', green: '#059669' }
 
   const cats = [
     { name: 'Financial', pct: clientId === 'meridian' ? 85 : clientId === 'firstcapital' ? 82 : 80 },
@@ -84,7 +96,7 @@ export default function Home() {
   return (
     <div style={S.page}>
       <AbarvaNav clientId={clientId} onClientChange={setClientId} activePage="home" />
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '28px 32px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '16px' }}>
@@ -93,7 +105,7 @@ export default function Home() {
         </div>
 
         {/* Client Selector */}
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '24px' }}>
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
           <div onClick={() => setSelectorOpen(o => !o)}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 14px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#0F172A', userSelect: 'none' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: clientId === 'meridian' ? '#2563EB' : clientId === 'firstcapital' ? '#7C3AED' : '#059669', display: 'block', flexShrink: 0 }} />
@@ -123,17 +135,15 @@ export default function Home() {
           )}
         </div>
 
-        {/* Metrics */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        {/* Metrics — 4×2 grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '20px' }}>
           {data.metrics.map((m, i) => (
-            <div key={i} style={{ ...S.card, cursor: 'pointer', borderTop: '3px solid ' + sc[m.status] }}
+            <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', height: '88px', boxSizing: 'border-box', cursor: 'pointer', position: 'relative' as const }}
               onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
               onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', color: '#6B7280' }}>{m.label}</span>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: sc[m.status], display: 'block', marginTop: '4px' }} />
-              </div>
-              <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{m.value}</div>
+              <span style={{ position: 'absolute' as const, top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: sc[m.status], display: 'block' }} />
+              <div style={{ fontSize: '10px', color: '#6B7280', marginBottom: '4px', fontWeight: 600, letterSpacing: '0.03em' }}>{m.label}</div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1, marginBottom: '3px' }}>{m.value}</div>
               <div style={{ fontSize: '11px', color: '#94A3B8' }}>{m.sub}</div>
             </div>
           ))}
@@ -141,17 +151,18 @@ export default function Home() {
 
         {/* Products */}
         <div style={S.lbl}>PRODUCTS</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
           {products.map(p => (
             <a key={p.id} href={p.href} style={{ textDecoration: 'none', display: 'flex' }}>
-              <div style={{ ...S.card, display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
+              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', height: '140px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
                 onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
                 onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'none'; el.style.boxShadow = 'none' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: p.btnColor + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '14px' }}>{p.icon}</div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#059669', marginBottom: '5px' }}>Ready</div>
-                <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>{p.name}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55, flex: 1 }}>{p.tagline}</div>
-                <div style={{ padding: '9px 16px', borderRadius: '8px', background: p.btnColor, color: 'white', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, marginTop: '18px' }}>Launch {p.name} →</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '15px', lineHeight: 1 }}>{p.icon}</span>
+                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{p.name}</span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.45, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>{p.tagline}</div>
+                <div style={{ padding: '0 16px', height: '36px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '12px', fontWeight: 700, textAlign: 'center' as const, marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Launch {p.name} →</div>
               </div>
             </a>
           ))}

@@ -91,16 +91,16 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             <line x1="14" y1="14" x2="20" y2="20" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
             <line x1="8" y1="8" x2="4" y2="16" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
             <line x1="20" y1="20" x2="14" y2="24" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
-            <circle cx="8" cy="8" r="2" fill="#2DD4C8" />
-            <circle cx="20" cy="8" r="2" fill="#6B7280" />
-            <circle cx="14" cy="14" r="2.5" fill="#E6EDF3" />
-            <circle cx="20" cy="20" r="2" fill="#6B7280" />
-            <circle cx="4" cy="16" r="1.5" fill="#4B5563" />
-            <circle cx="14" cy="24" r="1.5" fill="#4B5563" />
+            <circle cx="8" cy="8" r="2" fill="#4DA3FF" />
+            <circle cx="20" cy="8" r="2" fill="#4DA3FF" />
+            <circle cx="14" cy="14" r="2.5" fill="#2DD4C8" />
+            <circle cx="20" cy="20" r="2" fill="#4DA3FF" />
+            <circle cx="4" cy="16" r="1.5" fill="#4DA3FF" />
+            <circle cx="14" cy="24" r="1.5" fill="#4DA3FF" />
           </svg>
           <div>
-            <div style={{ fontSize: '16px', fontWeight: 700, fontFamily: 'monospace', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
-              <span style={{ color: '#E6EDF3' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
+            <div style={{ fontSize: '17px', fontWeight: 800, fontFamily: 'monospace', lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+              <span style={{ color: '#FFFFFF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
             <div style={{ fontSize: '9px', color: '#6B7280', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1 }}>
               Enterprise AI Operating System
