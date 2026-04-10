@@ -3,7 +3,7 @@ import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const S = {
-  page: { minHeight: '100vh', background: '#FFFFFF', fontFamily: 'Georgia, "Times New Roman", serif', color: '#1a1a1a' } as React.CSSProperties,
+  page: { minHeight: '100vh', background: '#FFFFFF', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif", color: '#1a1a1a' } as React.CSSProperties,
   body: { maxWidth: '900px', margin: '0 auto', padding: '48px 48px 80px' } as React.CSSProperties,
   sectionHeader: (accent: string) => ({
     background: '#111827', padding: '14px 20px', borderRadius: '0', marginBottom: '0',

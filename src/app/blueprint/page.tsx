@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const BLUEPRINTS: Record<string, any> = {
@@ -181,6 +181,8 @@ function BlueprintContent() {
   const clientId = searchParams.get('client') || 'meridian'
   const [section, setSection] = useState('summary')
   const bp = BLUEPRINTS[clientId] || BLUEPRINTS.meridian
+
+  useEffect(() => { document.title = 'Blueprint — ' + bp.client + ' | Abarva' }, [bp.client])
 
   const css = `
     * { box-sizing: border-box; margin: 0; padding: 0; }

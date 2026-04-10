@@ -1,10 +1,10 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 
 const CLIENTS = [
   { id: 'meridian', name: 'Meridian Health', cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
-  { id: 'firstcapital', name: 'First Capital', cloud: 'AWS', accent: '#FF9900', cloudBg: '#E8650A' },
+  { id: 'firstcapital', name: 'First Capital', cloud: 'AWS', accent: '#F59E0B', cloudBg: '#E8650A' },
   { id: 'apexretail', name: 'Apex Retail', cloud: 'GCP', accent: '#34A853', cloudBg: '#1D9E75' },
 ]
 
@@ -231,10 +231,10 @@ const MERIDIAN_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8
 </div></body></html>`
 
 // ─────────────────────── FIRST CAPITAL / AWS ────────────────────────
-const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>First Capital — AWS AI Architecture</title><style>:root{--accent:#FF9900}${CSS}</style></head><body>
-<div class="cover" style="border-bottom-color:#FF9900">
+const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>First Capital — AWS AI Architecture</title><style>:root{--accent:#F59E0B}${CSS}</style></head><body>
+<div class="cover" style="border-bottom-color:#F59E0B">
   <div>
-    <div class="ey" style="color:#FF9900">Abarva · Architecture Pattern · AWS</div>
+    <div class="ey" style="color:#F59E0B">Abarva · Architecture Pattern · AWS</div>
     <div class="ct">First Capital Financial<br>AI Orchestration Architecture</div>
     <div class="csub">Built from actual tech stack data · <span>88% data confidence</span> · April 2026</div>
   </div>
@@ -248,13 +248,13 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
 </div>
 <div class="wrap">
 <div class="boundary" style="border-color:#E8650A">
-  <div class="blabel" style="color:#FF9900">First Capital AWS Organization — SOC2 Type II · PCI-DSS Level 1 · PrivateLink · Multi-region active-active</div>
+  <div class="blabel" style="color:#F59E0B">First Capital AWS Organization — SOC2 Type II · PCI-DSS Level 1 · PrivateLink · Multi-region active-active</div>
 
   <div class="lw" style="border-color:#30363D;margin-bottom:3px">
     <div class="lh" style="background:#1C2128;color:#9CA3AF">Layer 5 — Customer and employee entry points &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px;color:#6B7280">Digital customers · Branch staff · Call center · Compliance team · Finance</span></div>
     <table class="colt"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><tr>
-      <td style="background:#1a1408"><div class="cn" style="color:#FF9900">Q2 Digital Banking</div><div class="cd">Mobile/web · 1.8M customers · yesterday balances (T+1 bug) · 64% account opening abandonment</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#FF9900;border-color:rgba(255,153,0,0.25)">3.2/5.0 rating · fix needed</span></div></td>
-      <td style="background:#1a1408"><div class="cn" style="color:#FF9900">Branch Systems</div><div class="cd">84 branches · teller terminals · loan origination · FIS HORIZON connected · real-time needed</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#FF9900;border-color:rgba(255,153,0,0.25)">Live · 84 locations</span></div></td>
+      <td style="background:#1a1408"><div class="cn" style="color:#F59E0B">Q2 Digital Banking</div><div class="cd">Mobile/web · 1.8M customers · yesterday balances (T+1 bug) · 64% account opening abandonment</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">3.2/5.0 rating · fix needed</span></div></td>
+      <td style="background:#1a1408"><div class="cn" style="color:#F59E0B">Branch Systems</div><div class="cd">84 branches · teller terminals · loan origination · FIS HORIZON connected · real-time needed</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">Live · 84 locations</span></div></td>
       <td style="background:#1a1408"><div class="cn" style="color:#9CA3AF">Call Center</div><div class="cd">Inbound customer service · fraud disputes · account inquiries · 340 agents · Amazon Connect planned</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">AI upgrade Q3 2026</span></div></td>
       <td style="background:#1a1408"><div class="cn" style="color:#9CA3AF">Employee Portal</div><div class="cd">Compliance staff · BSA/AML team · finance team · HR queries · IT support tickets</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">Internal · active</span></div></td>
       <td style="background:#1a1408"><div class="cn" style="color:#F59E0B">Microsoft Teams</div><div class="cd">Internal collaboration · compliance workflow · regulatory response coordination · M365 integrated</div><div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">AI agent expansion</span></div></td>
@@ -262,31 +262,31 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
     <div class="lb">Account opening · Payment requests · AML alerts · Fraud disputes · IT support · Regulatory queries · FedNow payments</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,0.04)">
       <div style="padding:2px 0;text-align:center;border-right:1px solid rgba(255,255,255,0.06);font-family:monospace;font-size:8px;font-weight:700;color:#6EE7B7;background:#1C2128">&#11015; routine → Oracle / Salesforce / Workday / ServiceNow agents</div>
-      <div style="padding:2px 0;text-align:center;font-family:monospace;font-size:8px;font-weight:700;color:#FF9900;background:#1C2128">&#11015; complex reasoning → Claude on AWS Bedrock</div>
+      <div style="padding:2px 0;text-align:center;font-family:monospace;font-size:8px;font-weight:700;color:#F59E0B;background:#1C2128">&#11015; complex reasoning → Claude on AWS Bedrock</div>
     </div>
   </div>
 
   <div class="sg" style="grid-template-columns:1fr 1fr;margin-bottom:3px">
-    <div class="lw" style="border-color:#FF9900">
-      <div class="lh" style="background:#201400;color:#FF9900">Layer 4A — Claude Sonnet · AWS Bedrock · Meta-orchestrator</div>
-      <div class="lb" style="color:#FF9900;opacity:0.7">All within AWS VPC · no data leaves First Capital network · SOC2 Type II compliant · PCI-DSS zone isolation</div>
+    <div class="lw" style="border-color:#F59E0B">
+      <div class="lh" style="background:#201400;color:#F59E0B">Layer 4A — Claude Sonnet · AWS Bedrock · Meta-orchestrator</div>
+      <div class="lb" style="color:#F59E0B;opacity:0.7">All within AWS VPC · no data leaves First Capital network · SOC2 Type II compliant · PCI-DSS zone isolation</div>
       <table class="colt"><col style="width:50%"><col style="width:50%"><tr>
         <td style="background:#180e00">
-          <div class="cn" style="color:#FF9900">Financial AI agents</div>
+          <div class="cn" style="color:#F59E0B">Financial AI agents</div>
           <div class="cd">FedNow payment routing agent · AML investigation agent · Fraud detection agent · Compliance reporting agent · Credit decision support agent</div>
-          <div><span class="badge" style="background:rgba(255,153,0,0.1);color:#FF9900;border-color:rgba(255,153,0,0.25)">Claude Sonnet via Bedrock</span></div>
+          <div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">Claude Sonnet via Bedrock</span></div>
           <div class="fd"><div class="fdl">Why Claude on Bedrock · not Azure OpenAI</div><div class="fdb">AWS-native · no cross-cloud data movement · SOC2 and PCI-DSS compliant · Bedrock provides model abstraction for future switching</div></div>
         </td>
         <td style="background:#180e00">
-          <div class="cn" style="color:#FF9900">Routing logic</div>
+          <div class="cn" style="color:#F59E0B">Routing logic</div>
           <div class="cd">Simple: routes to Oracle OCI / Salesforce FSC / Workday / ServiceNow agents · Complex: Claude reasons directly · Compliance checkpoint: always human-in-loop for AML decisions above $10K</div>
           <div class="warn"><div class="wl">Compliance boundary</div><div class="wb">BSA/AML decisions above threshold always require human review. Claude supports, never decides alone. OCC examiners will review agent logs.</div></div>
         </td>
       </tr></table>
     </div>
     <div class="lw" style="border-color:#E8650A">
-      <div class="lh" style="background:#1a1000;color:#FF9900">Layer 4B — Specialized platform agents</div>
-      <div class="lb" style="color:#FF9900;opacity:0.7">Each platform owns its domain · Claude orchestrates cross-platform workflows</div>
+      <div class="lh" style="background:#1a1000;color:#F59E0B">Layer 4B — Specialized platform agents</div>
+      <div class="lb" style="color:#F59E0B;opacity:0.7">Each platform owns its domain · Claude orchestrates cross-platform workflows</div>
       <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
         <td style="background:#140c00">
           <div class="cn" style="color:#9CA3AF">Oracle OCI agents</div>
@@ -312,12 +312,12 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
     </div>
   </div>
 
-  <div class="lw" style="border-color:#FF9900;margin-bottom:3px">
-    <div class="lh" style="background:#1a1000;color:#FF9900">Layer 3 — Data and intelligence platform (Databricks on AWS)</div>
+  <div class="lw" style="border-color:#F59E0B;margin-bottom:3px">
+    <div class="lh" style="background:#1a1000;color:#F59E0B">Layer 3 — Data and intelligence platform (Databricks on AWS)</div>
     <table class="colt"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><tr>
       <td style="background:#130c00">
-        <div style="font-family:monospace;font-size:7.5px;color:#FF9900;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Primary Data Platform</div>
-        <div class="cn" style="color:#FF9900">Databricks on AWS</div>
+        <div style="font-family:monospace;font-size:7.5px;color:#F59E0B;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Primary Data Platform</div>
+        <div class="cn" style="color:#F59E0B">Databricks on AWS</div>
         <div class="cd">Unity Catalog · transaction data · customer 360 · fraud ML models · AML pattern detection</div>
         <div class="warn"><div class="wl">Selected over Snowflake</div><div class="wb">ML-heavy workload · fraud models need Databricks MLflow · AML pattern detection · Snowflake SQL-only insufficient</div></div>
       </td>
@@ -346,7 +346,7 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
         <div><span class="badge" style="background:rgba(110,231,183,0.1);color:#6EE7B7;border-color:rgba(110,231,183,0.25)">PCI-DSS required</span></div>
       </td>
     </tr></table>
-    <div class="arr" style="background:#1a1000"><span style="color:#FF9900;font-weight:900">&#11015;</span> <span style="font-size:7.5px;color:#FF9900">to Layer 2 — integration and security</span></div>
+    <div class="arr" style="background:#1a1000"><span style="color:#F59E0B;font-weight:900">&#11015;</span> <span style="font-size:7.5px;color:#F59E0B">to Layer 2 — integration and security</span></div>
   </div>
 
   <div class="lw" style="border-color:#30363D;margin-bottom:3px">
@@ -363,9 +363,9 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
         <div class="fd"><div class="fdl">URGENT — commercial deposit risk</div><div class="fdb">$340M commercial deposit exposure from 3 large clients who inquired about alternatives in 90 days. Finzly can get FedNow live in 90 days.</div></div>
       </td>
       <td style="background:#141920">
-        <div class="cn" style="color:#FF9900">Amazon EventBridge</div>
+        <div class="cn" style="color:#F59E0B">Amazon EventBridge</div>
         <div class="cd">Event streaming · transaction events · real-time fraud triggers · AML alert pipeline · Kafka replacement</div>
-        <div><span class="badge" style="background:rgba(255,153,0,0.1);color:#FF9900;border-color:rgba(255,153,0,0.25)">Deploy Wave 1</span></div>
+        <div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">Deploy Wave 1</span></div>
       </td>
       <td style="background:#141920">
         <div class="cn" style="color:#9CA3AF">Secrets Manager + KMS</div>
@@ -392,7 +392,7 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
   <div class="lh" style="background:#1C2128;color:#9CA3AF">External vendor network &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">Outside AWS boundary · API-connected · SOC2 and PCI-DSS vetted</span></div>
   <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
     <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Temenos (recommended)</div><div class="cd">Cloud-native core banking · replaces FIS HORIZON · SaaS model · AWS-native · 3-year migration runway · OCC-familiar</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">Abarva recommended · start eval now</span></div></td>
-    <td style="background:#161B22"><div class="cn" style="color:#FF9900">Finzly</div><div class="cd">FedNow enablement · fastest path to live · 90-day deployment · payment hub architecture · $340M deposit risk resolved</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#FF9900;border-color:rgba(255,153,0,0.25)">URGENT · fastest FedNow path</span></div></td>
+    <td style="background:#161B22"><div class="cn" style="color:#F59E0B">Finzly</div><div class="cd">FedNow enablement · fastest path to live · 90-day deployment · payment hub architecture · $340M deposit risk resolved</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">URGENT · fastest FedNow path</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#4DA3FF">Anthropic Claude via Bedrock</div><div class="cd">Claude Sonnet · AWS Bedrock native · SOC2 · PCI-DSS data stays in AWS · no cross-cloud exposure · model abstraction</div><div><span class="badge" style="background:rgba(77,163,255,0.1);color:#4DA3FF;border-color:rgba(77,163,255,0.25)">Selected · AWS-native</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#9CA3AF">Accenture FS (if needed)</div><div class="cd">Core banking SI for Temenos migration · financial services practice · only if Temenos PS insufficient · day rate risk</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">Contingency only</span></div></td>
   </tr></table>
@@ -607,6 +607,8 @@ function ArchContent() {
   const [selected, setSelected] = useState(clientId)
 
   const client = CLIENTS.find(c => c.id === selected) || CLIENTS[0]
+
+  useEffect(() => { document.title = 'Architecture — ' + client.name + ' | Abarva' }, [client.name])
 
   function handleDownload() {
     const html = HTML_MAP[selected]

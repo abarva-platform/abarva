@@ -68,6 +68,9 @@ function DiagnoseContent() {
   }, [sidebarTab, activeClient])
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+
+  useEffect(() => { document.title = 'Diagnose — ' + clientName + ' | Abarva' }, [clientName])
+
   const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
   const confidence = activeClient === 'firstcapital' ? 88 : activeClient === 'apexretail' ? 86 : 94
   const roles = activeClient === 'meridian' ? ['CIO', 'CFO', 'COO', 'CMIO', 'CEO'] : ['CIO', 'CFO', 'COO', 'CMO', 'CEO']
