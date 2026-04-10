@@ -157,6 +157,7 @@ function DiagnoseContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: updated, role, client: activeClient })
       })
+      if (!res.ok) throw new Error('API error ' + res.status)
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       let full = ''

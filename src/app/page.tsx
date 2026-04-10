@@ -72,12 +72,12 @@ export default function Home() {
   ]
 
   const products = [
-    { id: 'diagnose', name: 'Diagnose', tagline: 'Know your situation in 48 hours, not 6 months', bullets: ['Role-specific analysis — CIO, CFO, COO, CEO', 'Real benchmark comparisons with exact percentiles', 'Contradictions surfaced automatically'], href: '/diagnose?client=' + clientId, accent: '#2563EB', icon: '⚡', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
-    { id: 'ai-strategy', name: 'AI Strategy', tagline: 'Enterprise AI strategy in 2 hours, not 6 months', bullets: ['Data, tech, and org readiness scores', 'Front, middle, back office opportunity scan', 'Prioritized 18-month roadmap with ROI'], href: '/ai-strategy?client=' + clientId, accent: '#7C3AED', icon: '◈', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
-    { id: 'justify', name: 'Justify', tagline: 'Board-ready business case in 30 minutes, not 8 weeks', bullets: ['Auto-populated baseline from your actual data', 'Conservative, Base, and Optimistic scenarios', 'Export to PDF or Excel'], href: '/justify?client=' + clientId, accent: '#059669', icon: '$', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
-    { id: 'select', name: 'Select', tagline: 'Vendor selection and negotiation in days, not months', bullets: ['KLAS scores and peer reference data', 'Integration complexity with your actual stack', 'Negotiation playbook with specific leverage'], href: '/select?client=' + clientId, accent: '#D97706', icon: '◎', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
-    { id: 'domain-strategy', name: 'Domain Strategy', tagline: 'Deep-dive AI strategy by business domain', bullets: ['Six domains: RCM, clinical, workforce, tech, patient, supply', 'Use case map, architecture, and phased roadmap per domain', 'Investment summary with payback at steady state'], href: '/domain-strategy?client=' + clientId, accent: '#0891B2', icon: '⬡', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
-    { id: 'scenarios', name: 'Scenario Modeling', tagline: 'Change assumptions. See the impact. Decide faster.', bullets: ['Interactive sliders update outcomes in real time', 'Conservative / Base / Optimistic scenario comparison', 'Risk indicators and highest ROI decision engine'], href: '/scenarios?client=' + clientId, accent: '#7C3AED', icon: '⊞', status: 'Ready', sc: '#059669', sb: '#ECFDF5' },
+    { id: 'diagnose', name: 'Diagnose', tagline: 'Know your situation in 48 hours, not 6 months', href: '/diagnose?client=' + clientId, btnColor: '#1B4FD8', icon: '⚡' },
+    { id: 'ai-strategy', name: 'AI Strategy', tagline: 'Enterprise AI strategy in 2 hours, not 6 months', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '◈' },
+    { id: 'justify', name: 'Justify', tagline: 'Board-ready business case in 30 minutes, not 8 weeks', href: '/justify?client=' + clientId, btnColor: '#047857', icon: '$' },
+    { id: 'select', name: 'Select', tagline: 'Vendor selection and negotiation in days, not months', href: '/select?client=' + clientId, btnColor: '#B45309', icon: '◎' },
+    { id: 'domain-strategy', name: 'Domain Strategy', tagline: 'Deep-dive AI strategy by business domain', href: '/domain-strategy?client=' + clientId, btnColor: '#0369A1', icon: '⬡' },
+    { id: 'scenarios', name: 'Scenario Modeling', tagline: 'Change assumptions. See the impact. Decide faster.', href: '/scenarios?client=' + clientId, btnColor: '#DC2626', icon: '⊞' },
   ]
 
   return (
@@ -109,27 +109,17 @@ export default function Home() {
 
         {/* Products */}
         <div style={S.lbl}>PRODUCTS</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
           {products.map(p => (
-            <a key={p.id} href={p.href} style={{ textDecoration: 'none' }}>
-              <div style={{ ...S.card, cursor: 'pointer', transition: 'all 0.15s', height: '100%' }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = p.accent; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = '#E2E8F0'; el.style.transform = 'none'; el.style.boxShadow = 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: p.accent + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px' }}>{p.icon}</div>
-                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', background: p.sb, color: p.sc }}>{p.status}</span>
-                </div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{p.name}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px', lineHeight: 1.5 }}>{p.tagline}</div>
-                <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '12px', marginBottom: '16px' }}>
-                  {p.bullets.map((b, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '6px', marginBottom: '6px' }}>
-                      <span style={{ color: p.accent, fontSize: '10px', marginTop: '3px', flexShrink: 0 }}>✓</span>
-                      <span style={{ fontSize: '12px', color: '#475569', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>{b}</span>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ padding: '8px 16px', borderRadius: '8px', background: p.accent, color: 'white', fontSize: '13px', fontWeight: 600, textAlign: 'center' }}>Launch {p.name} →</div>
+            <a key={p.id} href={p.href} style={{ textDecoration: 'none', display: 'flex' }}>
+              <div style={{ ...S.card, display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'none'; el.style.boxShadow = 'none' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: p.btnColor + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', marginBottom: '14px' }}>{p.icon}</div>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: '#059669', marginBottom: '5px' }}>Ready</div>
+                <div style={{ fontSize: '17px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>{p.name}</div>
+                <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.55, flex: 1 }}>{p.tagline}</div>
+                <div style={{ padding: '9px 16px', borderRadius: '8px', background: p.btnColor, color: 'white', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, marginTop: '18px' }}>Launch {p.name} →</div>
               </div>
             </a>
           ))}

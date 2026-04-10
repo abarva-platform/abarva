@@ -278,25 +278,39 @@ ${orgContext}
 CROSS-INDUSTRY PATTERNS:
 ${crossIndustryContext}`;
 
-  const stream = await client.messages.stream({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2048,
-    system: systemPrompt,
-    messages: messages,
-  });
+  let stream;
+  try {
+    stream = await client.messages.stream({
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
+      system: systemPrompt,
+      messages: messages,
+    });
+  } catch (err) {
+    console.error("Diagnose stream init error:", err);
+    return new Response("Error initializing AI response. Please try again.", {
+      status: 500,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
 
   const encoder = new TextEncoder();
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        if (
-          chunk.type === "content_block_delta" &&
-          chunk.delta.type === "text_delta"
-        ) {
-          controller.enqueue(encoder.encode(chunk.delta.text));
+      try {
+        for await (const chunk of stream) {
+          if (
+            chunk.type === "content_block_delta" &&
+            chunk.delta.type === "text_delta"
+          ) {
+            controller.enqueue(encoder.encode(chunk.delta.text));
+          }
         }
+        controller.close();
+      } catch (err) {
+        console.error("Diagnose stream error:", err);
+        controller.error(err);
       }
-      controller.close();
     },
   });
 
