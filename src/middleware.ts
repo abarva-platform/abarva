@@ -14,6 +14,7 @@ const isPublicRoute = createRouteMatcher([
   '/data-intelligence(.*)',
   '/domain-strategy(.*)',
   '/value-template(.*)',
+  '/how-to-build(.*)',
   '/search(.*)',
   '/admin(.*)',
 ])

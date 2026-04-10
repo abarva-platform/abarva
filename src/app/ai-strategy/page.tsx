@@ -483,8 +483,8 @@ function AIStrategyContent() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
               {[
                 { label: 'Generate Architecture Pattern', href: '/architecture?client=' + activeClient },
+                { label: 'Generate Build Plan', href: '/how-to-build?client=' + activeClient },
                 { label: 'Generate Solution Blueprint', href: '/blueprint?client=' + activeClient },
-                { label: 'View Data Intelligence', href: '/data-intelligence?client=' + activeClient },
               ].map((btn, i) => (
                 <a key={i} href={btn.href} style={{ display: 'block', padding: '12px 16px', borderRadius: '10px', background: '#0F172A', color: '#F8FAFC', textDecoration: 'none', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid #1E293B', letterSpacing: '0.01em' }}
                   onMouseEnter={e => (e.currentTarget as HTMLElement).style.background = '#1E293B'}

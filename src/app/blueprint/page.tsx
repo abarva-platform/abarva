@@ -485,6 +485,10 @@ function BlueprintContent() {
                   </table>
                 </div>
               ))}
+              <div style={{ marginBottom: '12px' }}>
+                <a href={'/how-to-build?client=' + clientId} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '8px', background: '#0F172A', color: '#2DD4C8', textDecoration: 'none', fontSize: '13px', fontWeight: 600, border: '1px solid #1E293B' }}>View Full Build Plan →</a>
+                <span style={{ marginLeft: '12px', fontSize: '12px', color: '#6B7280' }}>4-phase approach · cost comparison · agent decision matrix · outcome tracking</span>
+              </div>
               <div className="card">
                 <h3 className="h3">Agent vs Human Decision Matrix</h3>
                 <table>
