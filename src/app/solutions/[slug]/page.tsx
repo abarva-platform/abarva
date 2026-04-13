@@ -1,5 +1,7 @@
-import AbarvaNav from '@/components/AbarvaNav'
+'use client'
+import { use } from 'react'
 import { notFound } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const T = {
   bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
@@ -192,12 +194,8 @@ const SOLUTIONS: Record<string, Solution> = {
   },
 }
 
-export function generateStaticParams() {
-  return Object.keys(SOLUTIONS).map(slug => ({ slug }))
-}
-
-export default async function SolutionPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
+export default function SolutionPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
   const s = SOLUTIONS[slug]
   if (!s) notFound()
 
