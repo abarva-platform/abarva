@@ -47,6 +47,7 @@ const SUGGESTIONS: Record<string, Record<string, string[]>> = {
 function DiagnoseContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
+  const solutionParam = searchParams.get('solution')
   const [role, setRole] = useState('CIO')
   const [messages, setMessages] = useState<Array<{role: string, content: string}>>([])
   const [input, setInput] = useState('')
@@ -329,6 +330,18 @@ function DiagnoseContent() {
         <span style={{ color: '#D1D5DB' }}>›</span>
         <span style={{ fontSize: '13px', color: '#6B7280' }}>{clientName} · {clientIndustry}</span>
       </div>
+      {/* Solution banner */}
+      {solutionParam && (
+        <div style={{ background: '#0D2B1A', borderBottom: '1px solid #166534', padding: '8px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, color: '#2DD4C8' }}>{solutionParam}</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#6EE7B7' }}>
+              Running {solutionParam} solution — intelligence pre-configured for this engagement
+            </span>
+          </div>
+          <a href={`/solutions`} style={{ fontSize: '11px', color: '#6EE7B7', textDecoration: 'none', opacity: 0.7 }}>← All Solutions</a>
+        </div>
+      )}
       {/* Journey */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>
         {[

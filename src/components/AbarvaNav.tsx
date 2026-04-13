@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import { useUser, UserButton } from '@clerk/nextjs'
 
-type DropdownId = 'products' | 'clients' | 'deliverables' | null
+type DropdownId = 'products' | 'solutions' | 'clients' | 'deliverables' | null
 
 interface AbarvaNavProps {
   clientId?: string
@@ -187,6 +187,61 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                   <DropItem icon="🏗" name="Architecture Pattern" desc="3-cloud AI orchestration diagram" href={`/architecture?client=${clientId}`} />
                   <DropItem icon="📋" name="Solution Blueprint" desc="Full implementation plan" href={`/blueprint?client=${clientId}`} />
                   <DropItem icon="📈" name="Board Presentation" desc="10-slide board deck generator" href={`/board-deck?client=${clientId}`} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Solutions ▾ */}
+          <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
+            onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
+            <div style={linkCss('solutions')}>
+              Solutions
+              <span style={{ fontSize: '10px', color: open === 'solutions' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
+            </div>
+            {open === 'solutions' && (
+              <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
+                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '480px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                {[
+                  {
+                    vertical: 'Healthcare',
+                    items: [
+                      { code: 'HP-01', name: 'Revenue Cycle Intelligence', problem: 'Your denial rate is costing you more than you report.', href: '/solutions/revenue-cycle-intelligence' },
+                      { code: 'HP-02', name: 'Patient Access & Growth', problem: 'Your referral leakage is invisible until patients leave.', href: '/solutions/patient-access-growth' },
+                    ],
+                  },
+                  {
+                    vertical: 'Financial Services',
+                    items: [
+                      { code: 'BK-01', name: 'AI Portfolio Accountability', problem: 'You are spending on AI. Do you know if it is working?', href: '/solutions/ai-portfolio-accountability' },
+                      { code: 'BK-02', name: 'Customer Revenue Intelligence', problem: 'Digital adoption at 41% while peers are at 67%.', href: '/solutions/customer-revenue-intelligence' },
+                    ],
+                  },
+                  {
+                    vertical: 'Retail',
+                    items: [
+                      { code: 'RT-01', name: 'Supply Chain AI Rationalization', problem: 'You have 14 supply chain tools. 6 are redundant.', href: '/solutions/supply-chain-ai' },
+                      { code: 'RT-02', name: 'Customer Intelligence', problem: 'Conversion at 2.3% while category peers are at 3.8%.', href: '/solutions/customer-intelligence' },
+                    ],
+                  },
+                ].map(group => (
+                  <div key={group.vertical}>
+                    <div style={COL_HEAD}>{group.vertical}</div>
+                    {group.items.map(s => (
+                      <a key={s.code} href={s.href} style={{ display: 'block', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '4px', borderLeft: '2px solid transparent', transition: 'all 0.12s ease', boxSizing: 'border-box' }}
+                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(45,212,200,0.08)'; el.style.borderLeftColor = '#2DD4C8'; el.style.paddingLeft = '14px' }}
+                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderLeftColor = 'transparent'; el.style.paddingLeft = '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, color: '#2DD4C8' }}>{s.code}</span>
+                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>{s.name}</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.4 }}>{s.problem}</div>
+                      </a>
+                    ))}
+                  </div>
+                ))}
+                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #21262D', paddingTop: '12px', marginTop: '4px' }}>
+                  <a href="/solutions" style={{ fontSize: '12px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>See all solutions →</a>
                 </div>
               </div>
             )}
