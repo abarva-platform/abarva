@@ -2,6 +2,7 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import EngagementProgress from '@/components/EngagementProgress'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
@@ -60,6 +61,7 @@ function JustifyContent() {
   return (
     <div style={S.page}>
       <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1); setSelectedOpp(null) }} activePage="justify" />
+      <EngagementProgress />
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>

@@ -2,6 +2,7 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import EngagementProgress from '@/components/EngagementProgress'
 
 const STATUS_COLOR: Record<string, string> = { URGENT: '#EF4444', HIGH: '#F59E0B', MEDIUM: '#4DA3FF' }
 const STATUS_BG: Record<string, string> = { URGENT: 'rgba(239,68,68,0.12)', HIGH: 'rgba(245,158,11,0.12)', MEDIUM: 'rgba(77,163,255,0.12)' }
@@ -192,6 +193,7 @@ function SelectContent() {
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
       <AbarvaNav clientId={activeClient} onClientChange={id => setActiveClient(id)} activePage="select" />
+      <EngagementProgress />
 
       {/* breadcrumb */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>

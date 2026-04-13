@@ -2,6 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import EngagementProgress from '@/components/EngagementProgress'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
@@ -127,6 +128,7 @@ function AIStrategyContent() {
   return (
     <div style={S.page}>
       <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1) }} activePage="ai-strategy" />
+      <EngagementProgress />
       <Breadcrumb />
       {/* Journey */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>

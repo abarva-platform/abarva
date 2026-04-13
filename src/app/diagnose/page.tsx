@@ -2,9 +2,14 @@
 import { useState, useRef, Suspense, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import EngagementProgress from '@/components/EngagementProgress'
+import ResponseOptions from '@/components/ResponseOptions'
+import type { ResponseOption } from '@/components/ResponseOptions'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
+import { getUseCases, severityEmoji, severityColor } from '@/data/use-cases'
+import type { ClientId, RoleId } from '@/data/use-cases'
 import type { Contradiction } from '@/lib/intelligence/types'
 
 const S = {
@@ -207,9 +212,33 @@ function DiagnoseContent() {
     await executeRequest(pendingMessages.current, activeClient, role)
   }
 
+  function getFollowUpOptions(): ResponseOption[] {
+    return [
+      {
+        icon: '💰',
+        title: 'Show dollar impact',
+        description: 'Quantify the full financial cost of this issue',
+        promptText: `What is the full financial impact of this issue on ${clientName}? Give me a dollar figure I can put in front of the board.`,
+      },
+      {
+        icon: '🎯',
+        title: 'Fastest path to fix',
+        description: '90-day resolution plan with clear owners',
+        promptText: `What is the fastest path to resolve this — give me a 90-day plan with clear owners and first actions for ${clientName}.`,
+      },
+      {
+        icon: '👤',
+        title: 'Who owns this',
+        description: 'Identify the accountable executive and their stance',
+        promptText: `Which executive at ${clientName} is accountable for this problem, and what is their stated position versus what the data shows?`,
+      },
+    ]
+  }
+
   return (
     <div style={S.page}>
       <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming(''); setLastError(null); setSidebarTab('snapshot') }} activePage="diagnose" />
+      <EngagementProgress />
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
         <span style={{ color: '#D1D5DB' }}>›</span>
@@ -244,28 +273,47 @@ function DiagnoseContent() {
             <button onClick={() => { setMessages([]); setStreaming(''); setLastError(null) }} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: '20px', fontSize: '12px', cursor: 'pointer', background: '#F8FAFC', border: '1px solid #E2E8F0', color: '#6B7280' }}>Clear</button>
           </div>
           {messages.length === 0 && !streaming && (
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px' }}>Suggested for {role}</div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                {suggestions.map((s, i) => (
-                  <button key={i} onClick={() => sendMessage(s)}
-                    style={{ ...S.card, padding: '12px', textAlign: 'left', cursor: 'pointer', fontSize: '12px', color: '#374151', lineHeight: 1.5, borderLeft: '3px solid ' + clientColor }}
-                    onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = clientColor}
-                    onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
-                    {s}
+            <div style={{ marginBottom: '16px', overflowY: 'auto', maxHeight: 'calc(100vh - 280px)' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '10px' }}>Priority issues for {role} — {clientName}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {getUseCases(activeClient as ClientId, role as RoleId).map((uc, i) => (
+                  <button key={i} onClick={() => sendMessage(uc.title + ' — ' + uc.metric)}
+                    style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderLeft: '3px solid ' + severityColor(uc.severity), borderRadius: '8px', padding: '12px 14px', textAlign: 'left', cursor: 'pointer', display: 'flex', gap: '12px', alignItems: 'flex-start' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = '#2DD4C8'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'; (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}>
+                    <span style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }}>{severityEmoji(uc.severity)}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginBottom: '3px' }}>{uc.title}</div>
+                      <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.4, marginBottom: '3px' }}>{uc.metric}</div>
+                      <div style={{ fontSize: '11px', color: '#059669', fontWeight: 500 }}>{uc.impact}</div>
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
           )}
           <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-            {messages.map((msg, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '80%', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const, background: msg.role === 'user' ? '#2563EB' : '#FFFFFF', color: msg.role === 'user' ? '#FFFFFF' : '#374151', border: msg.role === 'user' ? 'none' : '1px solid #E2E8F0' }}>
-                  {msg.content}
+            {messages.map((msg, i) => {
+              const isLastAssistant = msg.role === 'assistant' && i === messages.length - 1
+              return (
+                <div key={i}>
+                  <div style={{ display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '80%', borderRadius: '12px', padding: '12px 16px', fontSize: '14px', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const, background: msg.role === 'user' ? '#2563EB' : '#FFFFFF', color: msg.role === 'user' ? '#FFFFFF' : '#374151', border: msg.role === 'user' ? 'none' : '1px solid #E2E8F0' }}>
+                      {msg.content}
+                    </div>
+                  </div>
+                  {isLastAssistant && !loading && (
+                    <div style={{ maxWidth: '80%' }}>
+                      <ResponseOptions
+                        options={getFollowUpOptions()}
+                        onSelect={(text) => sendMessage(text)}
+                        disabled={loading}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
             {loading && !streaming && <div style={{ ...S.card, padding: '12px 16px', fontSize: '13px', color: '#94A3B8', width: 'fit-content' }}>Analyzing {clientName}...</div>}
             {streaming && <div style={{ maxWidth: '80%', ...S.card, padding: '12px 16px', fontSize: '14px', color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{streaming}</div>}
             {lastError && !loading && (
