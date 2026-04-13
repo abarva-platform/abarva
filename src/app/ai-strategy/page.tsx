@@ -570,14 +570,28 @@ function AIStrategyContent() {
             <div style={{ ...S.card, marginBottom: '24px' }}>
               <div style={S.label}>SKILLS GAP ANALYSIS</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-                {[
+                {(activeClient === 'firstcapital' ? [
+                  { skill: 'ML Engineering', current: 3, needed: 9, gap: 6, urgency: 'high' },
+                  { skill: 'Data Engineering', current: 4, needed: 10, gap: 6, urgency: 'high' },
+                  { skill: 'AI Risk & Compliance', current: 1, needed: 4, gap: 3, urgency: 'high' },
+                  { skill: 'Fraud AI Specialist', current: 2, needed: 5, gap: 3, urgency: 'medium' },
+                  { skill: 'MLOps', current: 0, needed: 2, gap: 2, urgency: 'medium' },
+                  { skill: 'FinTech AI Product Management', current: 0, needed: 2, gap: 2, urgency: 'medium' },
+                ] : activeClient === 'apexretail' ? [
+                  { skill: 'ML Engineering', current: 2, needed: 7, gap: 5, urgency: 'high' },
+                  { skill: 'Data Engineering', current: 3, needed: 10, gap: 7, urgency: 'high' },
+                  { skill: 'Personalization AI', current: 1, needed: 4, gap: 3, urgency: 'high' },
+                  { skill: 'Demand Forecasting', current: 2, needed: 5, gap: 3, urgency: 'medium' },
+                  { skill: 'MLOps', current: 0, needed: 2, gap: 2, urgency: 'medium' },
+                  { skill: 'Retail AI Product Management', current: 0, needed: 2, gap: 2, urgency: 'medium' },
+                ] : [
                   { skill: 'ML Engineering', current: 2, needed: 8, gap: 6, urgency: 'high' },
                   { skill: 'Data Engineering', current: 5, needed: 12, gap: 7, urgency: 'high' },
                   { skill: 'AI Product Management', current: 0, needed: 3, gap: 3, urgency: 'high' },
                   { skill: 'Prompt Engineering', current: 1, needed: 4, gap: 3, urgency: 'medium' },
                   { skill: 'MLOps', current: 0, needed: 2, gap: 2, urgency: 'medium' },
                   { skill: 'Healthcare AI Compliance', current: 0, needed: 1, gap: 1, urgency: 'medium' },
-                ].map((s, i) => (
+                ]).map((s, i) => (
                   <div key={i} style={{ padding: '14px', borderRadius: '10px', background: s.urgency === 'high' ? '#FEF2F2' : '#FFFBEB', border: '1px solid ' + (s.urgency === 'high' ? '#FECACA' : '#FDE68A') }}>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '8px' }}>{s.skill}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>
@@ -599,11 +613,19 @@ function AIStrategyContent() {
                 <a href={'/select?client=' + activeClient} style={{ fontSize: '12px', fontWeight: 600, color: '#7C3AED', textDecoration: 'none' }}>Find the right platform → Marketplace</a>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {[
+                {(activeClient === 'firstcapital' ? [
+                  { name: 'NICE Actimize 10.2', category: 'AML / Fraud Detection', score: 91, rec: true, referral: false, reason: 'Existing vendor — upgrade from 8.1. Reduces AML false positives from 78% to 42%. Fastest path to OCC MRA resolution.' },
+                  { name: 'FICO Falcon', category: 'Real-time Fraud AI', score: 87, rec: true, referral: true, reason: 'Market standard for real-time card fraud scoring. FedNow API-compatible. Reduces fraud losses toward $3.2M benchmark.' },
+                  { name: 'Snowflake + Azure ML', category: 'Data Platform', score: 82, rec: false, referral: false, reason: 'Required to exit SQL Server 2017 EOS risk. Enables real-time ML — unlocks personalization and credit AI in Wave 2.' },
+                ] : activeClient === 'apexretail' ? [
+                  { name: 'Salesforce Einstein', category: 'Personalization AI', score: 89, rec: true, referral: true, reason: 'Existing investment — activate unused modules. Personalization and product recommendations already licensed.' },
+                  { name: 'Databricks', category: 'AI Data Platform', score: 85, rec: true, referral: false, reason: 'Industry standard for retail demand forecasting and inventory AI. Proven at Walmart and Target scale.' },
+                  { name: 'Dynamic Yield', category: 'Real-time Personalization', score: 78, rec: false, referral: false, reason: 'Best-in-class for checkout personalization. Evaluate after Databricks data platform is live.' },
+                ] : [
                   { name: 'Cohere Health', category: 'Prior Auth AI', score: 88, rec: true, referral: true, reason: 'Highest prior auth accuracy in healthcare vertical. Pre-integrated with Epic.' },
                   { name: 'Amazon Bedrock', category: 'AI Infrastructure', score: 85, rec: true, referral: true, reason: 'Best fit for Meridian\'s AWS-heavy infrastructure. HIPAA-eligible. Claude 3.5 available.' },
                   { name: 'Workday AI', category: 'Workforce Analytics', score: 76, rec: false, referral: false, reason: 'Strong in HR but limited clinical integration. Evaluate only if Workday is strategic.' },
-                ].map((v, i) => (
+                ]).map((v, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid ' + (v.rec ? '#A7F3D0' : '#E2E8F0') }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -680,8 +702,8 @@ function AIStrategyContent() {
                 {[
                   { label: 'Year 1 Investment', value: '$' + (ai.roadmap.wave1.totalInvestment / 1000000).toFixed(0) + 'M', sub: 'Capex + Opex' },
                   { label: 'Year 2 Value', value: '$' + ((ai.roadmap.wave1.totalAnnualValue + ai.roadmap.wave2.totalAnnualValue) / 1000000).toFixed(0) + 'M', sub: 'Annual run rate' },
-                  { label: 'Operating Margin Impact', value: '+1.2pts', sub: 'On 4.0% target path' },
-                  { label: 'FTE Impact', value: '-28 FTE', sub: 'Redeployment, not reduction' },
+                  { label: 'Efficiency Impact', value: activeClient === 'firstcapital' ? '-6pts C/I ratio' : activeClient === 'apexretail' ? '+2.4pts margin' : '+1.2pts margin', sub: activeClient === 'firstcapital' ? 'Toward 62% target' : activeClient === 'apexretail' ? 'On EBITDA path' : 'On 4.0% target path' },
+                  { label: 'FTE Impact', value: activeClient === 'firstcapital' ? '-34 FTE' : activeClient === 'apexretail' ? '-41 FTE' : '-28 FTE', sub: 'Redeployment, not reduction' },
                 ].map((m, i) => (
                   <div key={i}>
                     <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '4px' }}>{m.label}</div>
