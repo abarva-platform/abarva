@@ -112,11 +112,11 @@ export default function Home() {
   ]
 
   const products = [
-    { id: 'diagnose', name: 'Diagnose', tagline: 'Know your situation in 48 hours, not 6 months', href: '/diagnose?client=' + clientId, btnColor: '#1B4FD8', icon: '⚡' },
-    { id: 'ai-strategy', name: 'AI Strategy', tagline: 'Enterprise AI strategy in 2 hours, not 6 months', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '◈' },
-    { id: 'justify', name: 'Justify', tagline: 'Board-ready business case in 30 minutes, not 8 weeks', href: '/justify?client=' + clientId, btnColor: '#047857', icon: '$' },
-    { id: 'select', name: 'Select', tagline: 'Vendor selection and negotiation in days, not months', href: '/select?client=' + clientId, btnColor: '#B45309', icon: '◎' },
-    { id: 'domain-strategy', name: 'Domain Strategy', tagline: 'Deep-dive AI strategy by business domain', href: '/domain-strategy?client=' + clientId, btnColor: '#0369A1', icon: '⬡' },
+    { id: 'diagnose', name: 'Situation Intelligence', tagline: "What's actually broken — and what's it costing us?", href: '/diagnose?client=' + clientId, btnColor: '#1B4FD8', icon: '⚡' },
+    { id: 'ai-strategy', name: 'AI Investment Intelligence', tagline: 'Where should we place our bets — and what are they worth?', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '🎯' },
+    { id: 'justify', name: 'Business Case Intelligence', tagline: 'How do I make this number defensible to my board?', href: '/justify?client=' + clientId, btnColor: '#047857', icon: '💰' },
+    { id: 'select', name: 'Vendor Intelligence', tagline: 'Who do I actually trust — and why?', href: '/select?client=' + clientId, btnColor: '#B45309', icon: '🔍' },
+    { id: 'outcomes', name: 'Outcome Intelligence', tagline: 'Are we winning — or just spending?', href: '/outcomes?client=' + clientId, btnColor: '#0369A1', icon: '🎛' },
     { id: 'scenarios', name: 'Scenario Modeling', tagline: 'Change assumptions. See the impact. Decide faster.', href: '/scenarios?client=' + clientId, btnColor: '#DC2626', icon: '⊞' },
   ]
 
@@ -139,7 +139,10 @@ export default function Home() {
 
         {/* Header */}
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Good morning, {user?.firstName || 'Maestro'}.</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>AbarVa Intelligence Platform</div>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', marginBottom: '4px', fontFamily: "'Fraunces', Georgia, serif", lineHeight: 1.2 }}>
+            {user ? `Good morning, ${user.firstName || 'Maestro'}.` : 'Act on intelligence.'}
+          </div>
           <div style={{ fontSize: '14px', color: '#6B7280' }}>{data.name} · {data.industry} · {data.confidence}% data confidence</div>
         </div>
 
@@ -202,7 +205,7 @@ export default function Home() {
                   <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{p.name}</span>
                 </div>
                 <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.45, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>{p.tagline}</div>
-                <div style={{ padding: '0 16px', height: '36px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '12px', fontWeight: 700, textAlign: 'center' as const, marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Launch {p.name} →</div>
+                <div style={{ padding: '0 16px', height: '36px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '12px', fontWeight: 700, textAlign: 'center' as const, marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Start Analysis →</div>
               </div>
             </a>
           ))}
@@ -249,7 +252,7 @@ export default function Home() {
               View Contradiction Map →
             </a>
             <a href={'/diagnose?client=' + clientId} style={{ display: 'block', marginTop: '6px', padding: '8px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
-              Ask Abarva about these →
+              Ask AbarVa about these →
             </a>
           </div>
 

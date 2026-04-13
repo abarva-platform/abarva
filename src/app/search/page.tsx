@@ -104,7 +104,7 @@ export default function SearchPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <nav className="border-b border-gray-800 px-8 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">Abarva</h1>
+        <h1 className="text-xl font-bold">AbarVa</h1>
         <button
           onClick={() => window.location.href = '/'}
           className="text-sm text-gray-400 hover:text-white transition"
@@ -120,7 +120,7 @@ export default function SearchPage() {
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold mb-4">Instant Org Intelligence</h2>
               <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-                Enter any organization name. Abarva gathers public intelligence,
+                Enter any organization name. AbarVa gathers public intelligence,
                 maps it to our knowledge base, and produces a transformation brief
                 in under 60 seconds.
               </p>
@@ -230,7 +230,7 @@ export default function SearchPage() {
               <div className="bg-blue-950 border border-blue-800 rounded-xl p-6">
                 <h3 className="font-semibold mb-2 text-blue-300">Next Step</h3>
                 <p className="text-sm text-gray-300 mb-4">
-                  Save this organization as a client workspace. Abarva will guide you
+                  Save this organization as a client workspace. AbarVa will guide you
                   through loading additional data to increase confidence from 45% to 90%+.
                 </p>
                 <button

@@ -96,7 +96,7 @@ const MERIDIAN: TEvent[] = [
   },
   {
     year: 2026, sev: 'green', future: true,
-    title: 'The Inflection Point — If Abarva Recommendations Are Followed',
+    title: 'The Inflection Point — If AbarVa Recommendations Are Followed',
     body: 'CDO hired within 60 days. Ensemble penalties enforced — $8M recovered and applied to Synapse completion. Cohere Health contracted for prior auth automation. MLOps pipeline built in 90 days. Sepsis AI scaled to 23 hospitals.',
     impact: '$292M annual value realized. 4.0% margin target achieved. Board AI commitment delivered. CMS compliance by January 2026 deadline met.',
   },
@@ -165,7 +165,7 @@ const FIRST_CAPITAL: TEvent[] = [
   },
   {
     year: 2026, sev: 'green', future: true,
-    title: 'The Inflection Point — If Abarva Recommendations Are Followed',
+    title: 'The Inflection Point — If AbarVa Recommendations Are Followed',
     body: 'FedNow activated via Finzly 90-day implementation. AML upgraded and moved to SageMaker — false positive rate drops from 78% to 35%. Modular API layer deployed over FIS HORIZON. SQL Server patched. OCC MRAs resolved.',
     impact: 'Cost-to-income ratio moves from 68% toward 55% target. Commercial client attrition risk neutralized. OCC enforcement action avoided.',
   },
@@ -234,7 +234,7 @@ const APEX: TEvent[] = [
   },
   {
     year: 2026, sev: 'green', future: true,
-    title: 'The Inflection Point — If Abarva Recommendations Are Followed',
+    title: 'The Inflection Point — If AbarVa Recommendations Are Followed',
     body: 'Einstein personalization activated using clean Segment profiles — 6-week implementation. o9 demand planning completed — inventory accuracy to 98%. SAP S/4HANA migration plan approved. IBM Sterling upgraded. UFLPA sourcing map complete.',
     impact: '$840M cart abandonment opportunity addressed. Inventory turnover moves from 4.2x toward 6.8x benchmark. Operating margin pathway to 6% target established.',
   },
@@ -438,7 +438,7 @@ function TimelineContent() {
               This is not bad strategy. This is the execution gap that consulting firms profit from — and never fix.
             </div>
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#2DD4C8', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '-0.01em' }}>
-              Abarva was built to close it.
+              AbarVa was built to close it.
             </div>
           </div>
         </div>

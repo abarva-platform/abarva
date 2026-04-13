@@ -56,7 +56,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
     display: 'flex', alignItems: 'center', gap: '4px',
     padding: '0 14px', height: '64px', cursor: 'pointer',
     color: open === id ? '#2DD4C8' : '#FFFFFF',
-    fontSize: '13px', fontWeight: open === id ? 600 : 500,
+    fontSize: '14px', fontWeight: open === id ? 700 : 600,
     borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
     boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s, font-weight 0.1s',
     userSelect: 'none' as const,
@@ -76,13 +76,13 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
           border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
         }
         .drop-item:hover { background: rgba(45,212,200,0.08); border-left-color: #2DD4C8; padding-left: 14px; }
-        .drop-name { color: #E6EDF3; }
+        .drop-name { color: #FFFFFF; }
         .drop-item:hover .drop-name { color: #2DD4C8; }
         .drop-icon { background: #21262D; }
         .drop-item:hover .drop-icon { background: rgba(45,212,200,0.15); }
         .drop-simple {
           display: block; padding: 8px 12px; border-radius: 6px; font-size: 13px;
-          color: #E6EDF3; text-decoration: none; margin-bottom: 2px;
+          color: #FFFFFF; text-decoration: none; margin-bottom: 2px;
           border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
         }
         .drop-simple:hover { background: rgba(45,212,200,0.08); color: #2DD4C8; border-left-color: #2DD4C8; padding-left: 14px; }
@@ -132,25 +132,25 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             {/* Wordmark: ABAR smaller, VA larger — deliberate size contrast */}
             <div style={{ lineHeight: 1.05, display: 'flex', alignItems: 'baseline' }}>
               <span style={{
-                fontSize: '17px', fontWeight: 800,
+                fontSize: '17px', fontWeight: 700,
                 fontFamily: "'Georgia', serif",
                 color: '#FFFFFF',
                 letterSpacing: '-0.02em',
-              }}>ABAR</span>
+              }}>Abar</span>
               <span style={{
                 fontSize: '23px', fontWeight: 900,
                 fontFamily: "'Georgia', serif",
                 color: '#2DD4C8',
                 letterSpacing: '-0.03em',
                 marginLeft: '-1px',
-              }}>VA</span>
+              }}>Va</span>
             </div>
             <div style={{
               fontSize: '10px',
-              color: '#94A3B8',
+              color: '#FFFFFF',
               fontFamily: "'DM Sans', sans-serif",
               fontWeight: 700,
-              letterSpacing: '0.04em',
+              letterSpacing: '0.01em',
               marginTop: '3px',
               whiteSpace: 'nowrap',
             }}>Intelligence. Now act on it.</div>
@@ -171,20 +171,22 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
               <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
                 style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '560px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                 <div>
-                  <div style={COL_HEAD}>Platform</div>
-                  <DropItem icon="⚡" name="Diagnose" desc="Know your situation in 48 hours" href={`/diagnose?client=${clientId}`} />
-                  <DropItem icon="🧠" name="AI Strategy" desc="Enterprise AI roadmap in 2 hours" href={`/ai-strategy?client=${clientId}`} />
-                  <DropItem icon="💰" name="Justify" desc="Board-ready business case in 30 minutes" href={`/justify?client=${clientId}`} />
-                  <DropItem icon="🎯" name="Select" desc="Technology decision intelligence" href={`/select?client=${clientId}`} />
-                  <DropItem icon="📊" name="Domain Strategy" desc="Deep-dive AI strategy by domain" href={`/domain-strategy?client=${clientId}`} />
-                  <DropItem icon="🔬" name="Scenarios" desc="Decision simulation engine" href={`/scenarios?client=${clientId}`} />
+                  <div style={COL_HEAD}>Intelligence Suite</div>
+                  <DropItem icon="⚡" name="Situation Intelligence" desc="What's actually broken — and what's it costing us?" href={`/diagnose?client=${clientId}`} />
+                  <DropItem icon="🎯" name="AI Investment Intelligence" desc="Where should we place our bets — and what are they worth?" href={`/ai-strategy?client=${clientId}`} />
+                  <DropItem icon="💰" name="Business Case Intelligence" desc="How do I make this number defensible to my board?" href={`/justify?client=${clientId}`} />
+                  <DropItem icon="🔍" name="Vendor Intelligence" desc="Who do I actually trust — and why?" href={`/select?client=${clientId}`} />
+                  <DropItem icon="🎛" name="Outcome Intelligence" desc="Are we winning — or just spending?" href={`/control-tower?client=${clientId}`} />
+                  <DropItem icon="⚙️" name="Delivery Intelligence" desc="Are we shipping faster — or just adding tools?" href={`/ai-pdlc?client=${clientId}`} />
                 </div>
                 <div>
-                  <div style={COL_HEAD}>Deliverables</div>
+                  <div style={COL_HEAD}>More Intelligence</div>
+                  <DropItem icon="👥" name="Workforce Intelligence" desc="What does my team look like in 18 months?" href={`/future-of-work?client=${clientId}`} />
+                  <DropItem icon="📊" name="Data Estate Intelligence" desc="Is our data estate an asset or a liability?" href={`/analytics-modernization?client=${clientId}`} />
+                  <DropItem icon="🛒" name="Procurement Intelligence" desc="What should we buy — and what are we already paying for?" href={`/marketplace?client=${clientId}`} />
                   <DropItem icon="🏗" name="Architecture Pattern" desc="3-cloud AI orchestration diagram" href={`/architecture?client=${clientId}`} />
                   <DropItem icon="📋" name="Solution Blueprint" desc="Full implementation plan" href={`/blueprint?client=${clientId}`} />
                   <DropItem icon="📈" name="Board Presentation" desc="10-slide board deck generator" href={`/board-deck?client=${clientId}`} />
-                  <DropItem icon="💎" name="Value Template" desc="ROI framework, client-editable" href={`/value-template?client=${clientId}`} />
                 </div>
               </div>
             )}
@@ -227,7 +229,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                     { name: 'Apex Retail', sub: 'Retail · $12.4B', href: '/diagnose?client=apexretail' },
                   ].map((c, i) => (
                     <div key={i} className="drop-card">
-                      <div style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 600, marginBottom: '2px' }}>{c.name}</div>
+                      <div style={{ fontSize: '13px', color: '#FFFFFF', fontWeight: 600, marginBottom: '2px' }}>{c.name}</div>
                       <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{c.sub}</div>
                       <a href={c.href} style={{ fontSize: '11px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>Open Demo →</a>
                     </div>
@@ -236,9 +238,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                 <div>
                   <div style={COL_HEAD}>Resources</div>
                   <div style={{ background: '#0D1117', border: '1px solid #21262D', borderRadius: '10px', padding: '16px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#E6EDF3', marginBottom: '6px', lineHeight: 1.4 }}>See Abarva in action</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px', lineHeight: 1.4 }}>See AbarVa in action</div>
                     <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.5, marginBottom: '12px' }}>
-                      Watch how Abarva diagnoses a real enterprise in 4 minutes
+                      Watch how AbarVa diagnoses a real enterprise in 4 minutes
                     </div>
                     <a href="/investor" style={{ fontSize: '12px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>
                       Watch demo →
@@ -272,7 +274,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
 
           {/* Investor View */}
           <a href="/investor"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8' }}
             onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#FFFFFF'; el.style.borderBottomColor = 'transparent' }}>
             Investor View

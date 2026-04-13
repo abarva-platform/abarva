@@ -93,7 +93,7 @@ function ValueTemplateContent() {
             </div>
             <div style={{ fontSize: '12px', color: '#64748B', fontFamily: 'Inter, sans-serif', lineHeight: 1.6 }}>
               A framework for quantifying the impact of AI-enabled transformation<br />
-              April 2026 · Prepared by Abarva Intelligence Platform
+              April 2026 · Prepared by AbarVa Intelligence Platform
             </div>
           </div>
 
@@ -371,8 +371,8 @@ function ValueTemplateContent() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px' }}>
             {[
               { label: 'Optimistic Scenario (50%)', value: '$87.2M', sub: 'Annual savings at full deployment', color: '#F59E0B' },
-              { label: 'Abarva Outcome Fee (15%)', value: fmt(abarvaFee), sub: 'Calculated quarterly on verified savings', color: '#EF4444' },
-              { label: 'Net Client Value', value: fmt(netValue), sub: 'After Abarva fee — your return', color: '#6EE7B7' },
+              { label: 'AbarVa Outcome Fee (15%)', value: fmt(abarvaFee), sub: 'Calculated quarterly on verified savings', color: '#EF4444' },
+              { label: 'Net Client Value', value: fmt(netValue), sub: 'After AbarVa fee — your return', color: '#6EE7B7' },
             ].map((s, i) => (
               <div key={i}>
                 <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{s.label}</div>
@@ -386,7 +386,7 @@ function ValueTemplateContent() {
         {/* Footer */}
         <div style={{ paddingTop: '20px', borderTop: '1px solid #E2E8F0' }}>
           <p style={{ fontSize: '11px', color: '#94A3B8', lineHeight: 1.7, fontFamily: 'Inter, sans-serif', margin: 0 }}>
-            All baseline figures sourced from Meridian data loaded into Abarva Intelligence Platform. Target figures represent Meridian leadership commitments entered above. Abarva outcome fees are calculated quarterly against savings verified by third-party audit. This document is confidential and prepared exclusively for Meridian Health System leadership.
+            All baseline figures sourced from Meridian data loaded into AbarVa Intelligence Platform. Target figures represent Meridian leadership commitments entered above. AbarVa outcome fees are calculated quarterly against savings verified by third-party audit. This document is confidential and prepared exclusively for Meridian Health System leadership.
           </p>
           <div className="no-print" style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
             <a href="/admin" style={{ fontFamily: 'Inter, sans-serif', padding: '8px 16px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, color: '#475569', textDecoration: 'none' }}>← Engagement Hub</a>

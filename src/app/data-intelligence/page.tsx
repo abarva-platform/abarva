@@ -177,7 +177,7 @@ function DataContent() {
           {section === 'overview' && (
             <div>
               <h1 className="h1">Data Intelligence — {d.client}</h1>
-              <p className="body" style={{ marginBottom: '24px' }}>Every insight Abarva surfaces is sourced to a specific row in a specific file.</p>
+              <p className="body" style={{ marginBottom: '24px' }}>Every insight AbarVa surfaces is sourced to a specific row in a specific file.</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#E5E7EB', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
                 {[
                   { label: 'Data categories', value: '5', sub: 'Financial, Tech, Clinical, Workforce, Vendors', color: '#1B4FD8' },
@@ -233,7 +233,7 @@ function DataContent() {
                 </div>
               </div>
               <div className="card">
-                <h2 className="h2">What Abarva Knows — Sourced to Specific Data</h2>
+                <h2 className="h2">What AbarVa Knows — Sourced to Specific Data</h2>
                 <table>
                   <thead><tr><th>Finding</th><th>Value</th><th>Source</th><th>Why It Matters</th></tr></thead>
                   <tbody>
@@ -279,7 +279,7 @@ function DataContent() {
           {section === 'howweknow' && (
             <div>
               <h1 className="h1">How We Know This</h1>
-              <p className="body" style={{ marginBottom: '16px' }}>Every claim Abarva makes is tied to a specific row in a specific file. No guessing. No assumptions.</p>
+              <p className="body" style={{ marginBottom: '16px' }}>Every claim AbarVa makes is tied to a specific row in a specific file. No guessing. No assumptions.</p>
               <div className="card" style={{ background: '#EFF6FF', border: '1px solid #BFDBFE', marginBottom: '16px' }}>
                 <p className="body" style={{ fontWeight: 600, color: '#1B4FD8' }}>The most common question in every demo: "How did you know that?" This page is the answer.</p>
               </div>

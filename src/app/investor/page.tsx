@@ -104,7 +104,7 @@ export default function InvestorPage() {
   const [clientProgress, setClientProgress] = useState(0)
   const clientRafRef = useRef<number | null>(null)
 
-  useEffect(() => { document.title = 'Abarva Investor Overview — Confidential' }, [])
+  useEffect(() => { document.title = 'AbarVa Investor Overview — Confidential' }, [])
 
   useEffect(() => {
     if (section !== 'problem' || animatedRef.current) return
@@ -254,7 +254,7 @@ export default function InvestorPage() {
               {[
                 { label: 'Total addressable market', value: '$' + counts[0] + 'B', sub: 'Annual consulting spend', color: '#1B4FD8' },
                 { label: 'Value per Fortune 500 engagement', value: '$50–' + counts[1] + 'M', sub: 'Average identified', color: '#6D28D9' },
-                { label: 'Abarva fee per client per year', value: '$10–' + counts[2] + 'M', sub: 'At 15% of savings', color: '#047857' },
+                { label: 'AbarVa fee per client per year', value: '$10–' + counts[2] + 'M', sub: 'At 15% of savings', color: '#047857' },
                 { label: 'Revenue at 1% Fortune 500 penetration', value: '$' + counts[3] + 'M+', sub: 'ARR potential', color: '#B45309' },
               ].map((m, i) => (
                 <div key={i} style={{ background: '#fff', padding: '24px' }}>
@@ -273,7 +273,7 @@ export default function InvestorPage() {
                   <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#DC2626' }}>Traditional Consulting</span>
                 </div>
                 <div style={{ padding: '14px 20px', background: '#ECFDF5', borderBottom: '2px solid #A7F3D0' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#059669' }}>Abarva</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#059669' }}>AbarVa</span>
                 </div>
               </div>
               {[
@@ -304,7 +304,7 @@ export default function InvestorPage() {
           <div>
             <div className="tag" style={{ color: '#6D28D9' }}>The Differentiation</div>
             <h1 className="h1">What general AI assistants<br />cannot do. Ever.</h1>
-            <p className="body">General AI assistants know everything about the world but nothing about your company. Abarva knows everything about your company and uses the world to benchmark it.</p>
+            <p className="body">General AI assistants know everything about the world but nothing about your company. AbarVa knows everything about your company and uses the world to benchmark it.</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '1px', background: '#E5E7EB', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden' }}>
               {/* Header row */}
@@ -314,7 +314,7 @@ export default function InvestorPage() {
                   <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#DC2626' }}>General AI Assistant</span>
                 </div>
                 <div style={{ padding: '14px 20px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#059669' }}>Abarva</span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#059669' }}>AbarVa</span>
                 </div>
               </div>
               {[
@@ -326,7 +326,7 @@ export default function InvestorPage() {
                 {
                   capability: 'Remembers every engagement',
                   before: 'Every session starts from zero. Cannot learn from past advice or track outcomes.',
-                  after: 'Remembers every recommendation and outcome. Year 3 Abarva — with outcome data from 800 clients — is fundamentally more valuable than Year 1.',
+                  after: 'Remembers every recommendation and outcome. Year 3 AbarVa — with outcome data from 800 clients — is fundamentally more valuable than Year 1.',
                 },
                 {
                   capability: 'Accountable for outcomes',
@@ -360,7 +360,7 @@ export default function InvestorPage() {
           <div>
             <div className="tag" style={{ color: '#047857' }}>Live Client Economics</div>
             <h1 className="h1">Three clients. Real data. Real economics.</h1>
-            <p className="body">Not projections. Value identified from actual client data loaded into Abarva today.</p>
+            <p className="body">Not projections. Value identified from actual client data loaded into AbarVa today.</p>
 
             {/* Client selector */}
             <div style={{ display: 'flex', gap: '8px', marginBottom: '32px' }}>
@@ -383,7 +383,7 @@ export default function InvestorPage() {
                 <span style={{ background: client.color + '15', color: client.color, fontSize: '12px', fontWeight: 700, padding: '5px 14px', borderRadius: '100px', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{client.tier}</span>
               </div>
               <div style={{ padding: '20px 24px', background: '#FFFBEB', borderBottom: '1px solid #FEF3C7' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#D97706', marginBottom: '8px' }}>What Abarva Found Before the First Meeting</div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#D97706', marginBottom: '8px' }}>What AbarVa Found Before the First Meeting</div>
                 <div style={{ fontSize: '15px', color: '#374151', lineHeight: 1.7, marginBottom: '8px' }}>{client.finding}</div>
                 <div style={{ fontSize: '13px', color: '#D97706', fontStyle: 'italic' }}>"{client.wow}"</div>
               </div>
@@ -417,7 +417,7 @@ export default function InvestorPage() {
                 </div>
               ))}
               <div style={{ background: '#EFF6FF', padding: '20px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#1B4FD8', marginBottom: '12px' }}>Abarva Year 1 Economics</div>
+                <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#1B4FD8', marginBottom: '12px' }}>AbarVa Year 1 Economics</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                   <span style={{ fontSize: '13px', color: '#6B7280' }}>Platform fee</span>
                   <span style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{fmt(client.platformFee * clientProgress)}</span>
@@ -500,7 +500,7 @@ export default function InvestorPage() {
             {/* Comparable valuations */}
             <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
               <div style={{ padding: '16px 24px', background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#6B7280' }}>Why Abarva Commands a Premium Multiple</span>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#6B7280' }}>Why AbarVa Commands a Premium Multiple</span>
               </div>
               <div style={{ overflowX: 'auto' as const }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
@@ -516,7 +516,7 @@ export default function InvestorPage() {
                       { company: 'Harvey AI', val: '$3B+', arr: '~$50M', mult: '60x', why: 'AI replaces legal work — outcome-accountable', color: '#1B4FD8' },
                       { company: 'Ambience Healthcare', val: '$2B+', arr: '~$30M', mult: '67x', why: 'AI replaces clinical documentation — health system clients', color: '#047857' },
                       { company: 'Databricks', val: '$62B', arr: '~$2B', mult: '31x', why: 'Enterprise data platform — SaaS model', color: '#6D28D9' },
-                      { company: 'Abarva (projected)', val: 'Target: $2.2B', arr: '$56M', mult: '40–60x', why: 'AI replaces transformation consulting — outcome-based', color: '#B45309' },
+                      { company: 'AbarVa (projected)', val: 'Target: $2.2B', arr: '$56M', mult: '40–60x', why: 'AI replaces transformation consulting — outcome-based', color: '#B45309' },
                     ].map((row, i) => (
                       <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#F9FAFB', borderTop: '1px solid #F3F4F6' }}>
                         <td style={{ padding: '14px 20px', fontSize: '14px', fontWeight: 700, color: row.color, borderRight: '1px solid #E5E7EB' }}>{row.company}</td>
@@ -549,7 +549,7 @@ export default function InvestorPage() {
 
             <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '24px' }}>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#D97706', marginBottom: '10px' }}>Stream 3 · Technology Consumption · Phase 2</div>
-              <div style={{ fontSize: '15px', color: '#374151', lineHeight: 1.75 }}>Every AI initiative Abarva recommends requires technology — AI infrastructure, data platforms, SaaS tools. When clients procure through Abarva, we earn 10–15% on consumption. This stream builds automatically as clients implement recommendations. No additional sales motion required.</div>
+              <div style={{ fontSize: '15px', color: '#374151', lineHeight: 1.75 }}>Every AI initiative AbarVa recommends requires technology — AI infrastructure, data platforms, SaaS tools. When clients procure through AbarVa, we earn 10–15% on consumption. This stream builds automatically as clients implement recommendations. No additional sales motion required.</div>
             </div>
           </div>
         )}
@@ -558,13 +558,13 @@ export default function InvestorPage() {
         {section === 'compounding' && (
           <div>
             <div className="tag" style={{ color: '#6D28D9' }}>The Compounding Moat</div>
-            <h1 className="h1">Abarva gets harder to compete with<br />every year.</h1>
+            <h1 className="h1">AbarVa gets harder to compete with<br />every year.</h1>
             <p className="body">The Transformation Genome. Every client engagement adds to a proprietary dataset of what works, what fails, and why. No competitor can replicate five years of outcome data across two thousand clients.</p>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#E5E7EB', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '32px' }}>
               {[
                 { year: 'Year 1', clients: '100 clients', color: '#9CA3AF',
-                  text: 'Abarva knows 100 companies deeply. Useful. A well-funded competitor could replicate it with 18 months of engineering.',
+                  text: 'AbarVa knows 100 companies deeply. Useful. A well-funded competitor could replicate it with 18 months of engineering.',
                   data: 'Outcome data: none yet' },
                 { year: 'Year 2', clients: '300 clients', color: '#1B4FD8',
                   text: 'Outcome data from Year 1 improves recommendations. Knows what works and what fails across 100 companies.',
@@ -603,7 +603,7 @@ export default function InvestorPage() {
                 ))}
               </div>
               <div style={{ padding: '16px 24px', background: '#EFF6FF', borderTop: '1px solid #BFDBFE' }}>
-                <span style={{ fontSize: '14px', fontWeight: 800, color: '#1B4FD8' }}>Abarva: </span>
+                <span style={{ fontSize: '14px', fontWeight: 800, color: '#1B4FD8' }}>AbarVa: </span>
                 <span style={{ fontSize: '14px', color: '#374151' }}>AI replaces enterprise transformation consulting. TAM is 10× larger. Outcome-based model creates superior revenue quality and higher multiples than pure SaaS.</span>
               </div>
             </div>
@@ -615,7 +615,7 @@ export default function InvestorPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: '#E5E7EB' }}>
                 {[
-                  { year: 'Year 1', ratio: '1:5', color: '#9CA3AF', desc: 'One Maestro supports 5 active clients with full Abarva platform backing. Human expertise multiplied.' },
+                  { year: 'Year 1', ratio: '1:5', color: '#9CA3AF', desc: 'One Maestro supports 5 active clients with full AbarVa platform backing. Human expertise multiplied.' },
                   { year: 'Year 2', ratio: '1:15', color: '#1B4FD8', desc: 'Outcome data from Year 1 reduces diagnostic time. Maestro pattern-matches across 15 concurrent engagements.' },
                   { year: 'Year 3', ratio: '1:40', color: '#6D28D9', desc: 'Transformation Genome handles 80% of analysis automatically. Maestro focuses on judgment and relationships.' },
                   { year: 'Year 5', ratio: '1:100', color: '#047857', desc: 'Institutional knowledge of 2,000+ engagements. One Maestro manages 100 clients with AI doing the diagnostic work.' },
@@ -630,7 +630,7 @@ export default function InvestorPage() {
               <div style={{ padding: '14px 24px', background: '#FFFBEB', borderTop: '1px solid #FEF3C7' }}>
                 <span style={{ fontSize: '13px', color: '#374151' }}>
                   <strong style={{ color: '#D97706' }}>Precedent: </strong>
-                  Harvey AI went from 1 lawyer : 10 matters to 1 lawyer : 200 matters. Abarva applies the same leverage model to enterprise transformation.
+                  Harvey AI went from 1 lawyer : 10 matters to 1 lawyer : 200 matters. AbarVa applies the same leverage model to enterprise transformation.
                 </span>
               </div>
             </div>
@@ -649,7 +649,7 @@ export default function InvestorPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap' as const, gap: '16px' }}>
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Founder & CEO</div>
-                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '4px' }}>Abarva Founder</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '4px' }}>AbarVa Founder</div>
                 </div>
                 <div style={{ padding: '6px 18px', borderRadius: '100px', background: '#2DD4C820', border: '1px solid #2DD4C840', fontSize: '13px', fontWeight: 600, color: '#2DD4C8' }}>Founder</div>
               </div>
@@ -668,9 +668,9 @@ export default function InvestorPage() {
               </div>
               <div style={{ background: '#451A03', borderLeft: '4px solid #2DD4C8', borderRadius: '0 8px 8px 0', padding: '20px 24px' }}>
                 <div style={{ fontSize: '13px', color: '#FED7AA', lineHeight: 1.75, fontStyle: 'italic' }}>
-                  "I spent 20 years watching enterprises pay $3-5M for consulting engagements that left no institutional memory. The consultants left, the knowledge walked out, and the next engagement started from zero. Abarva is the platform I wish I had built 10 years ago."
+                  "I spent 20 years watching enterprises pay $3-5M for consulting engagements that left no institutional memory. The consultants left, the knowledge walked out, and the next engagement started from zero. AbarVa is the platform I wish I had built 10 years ago."
                 </div>
-                <div style={{ fontSize: '11px', color: '#D97706', fontWeight: 700, marginTop: '10px' }}>— Abarva Founder & CEO</div>
+                <div style={{ fontSize: '11px', color: '#D97706', fontWeight: 700, marginTop: '10px' }}>— AbarVa Founder & CEO</div>
               </div>
             </div>
 

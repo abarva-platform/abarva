@@ -17,7 +17,7 @@ export async function POST(request: Request) {
           name: "web_search",
         } as any,
       ],
-      system: `You are Abarva's intelligence gathering engine. When given an organization name, search for and synthesize all publicly available information relevant to enterprise transformation.
+      system: `You are AbarVa's intelligence gathering engine. When given an organization name, search for and synthesize all publicly available information relevant to enterprise transformation.
 
 Search for and extract:
 1. Financial performance — revenue, margins, growth, key metrics

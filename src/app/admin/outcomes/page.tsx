@@ -24,9 +24,9 @@ export default function AdminOutcomes() {
       <div style={S.subnav}>{LINKS.map(l => <a key={l.href} href={l.href} style={{ padding: '6px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', background: l.active ? '#1E3A5F' : '#F8FAFC', color: l.active ? '#FFFFFF' : '#475569', border: '1px solid #E2E8F0', flexShrink: 0 }}>{l.label}</a>)}</div>
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Outcome Tracker</h1>
-        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Tracking every committed initiative against baseline — Abarva fees tied to results</p>
+        <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Tracking every committed initiative against baseline — AbarVa fees tied to results</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>
-          {[{ label: 'Total Value Committed', value: '$571M', color: '#059669' }, { label: 'Abarva Fees at Risk', value: '$11.4M', color: '#2563EB' }, { label: 'Avg Progress', value: '11%', color: '#D97706' }, { label: 'At Risk', value: '1 of 4', color: '#DC2626' }].map((m, i) => (
+          {[{ label: 'Total Value Committed', value: '$571M', color: '#059669' }, { label: 'AbarVa Fees at Risk', value: '$11.4M', color: '#2563EB' }, { label: 'Avg Progress', value: '11%', color: '#D97706' }, { label: 'At Risk', value: '1 of 4', color: '#DC2626' }].map((m, i) => (
             <div key={i} style={S.card}>
               <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{m.label}</div>
               <div style={{ fontSize: '26px', fontWeight: 700, color: m.color }}>{m.value}</div>
@@ -58,7 +58,7 @@ export default function AdminOutcomes() {
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '4px' }}>Abarva commentary</div>
+                    <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '4px' }}>AbarVa commentary</div>
                     <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5, padding: '10px 12px', background: sb, borderRadius: '8px', border: `1px solid ${sbo}` }}>{init.commentary}</div>
                   </div>
                   <div style={{ minWidth: '140px' }}>

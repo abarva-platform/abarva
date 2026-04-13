@@ -69,7 +69,7 @@ function DiagnoseContent() {
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
 
-  useEffect(() => { document.title = 'Diagnose — ' + clientName + ' | Abarva' }, [clientName])
+  useEffect(() => { document.title = 'Diagnose — ' + clientName + ' | AbarVa' }, [clientName])
 
   const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
   const confidence = activeClient === 'firstcapital' ? 88 : activeClient === 'apexretail' ? 86 : 94
@@ -271,7 +271,7 @@ function DiagnoseContent() {
             {lastError && !loading && (
               <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                 <div style={{ maxWidth: '80%', borderRadius: '12px', padding: '12px 16px', fontSize: '13px', background: '#FFF7ED', color: '#92400E', border: '1px solid #FED7AA', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' as const }}>
-                  <span>{lastError === 'timeout' ? 'Taking longer than usual.' : 'Error connecting to Abarva.'}</span>
+                  <span>{lastError === 'timeout' ? 'Taking longer than usual.' : 'Error connecting to AbarVa.'}</span>
                   <button onClick={retryRequest} style={{ padding: '5px 12px', borderRadius: '6px', background: '#2563EB', color: 'white', border: 'none', fontSize: '12px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' as const }}>
                     Try again →
                   </button>
@@ -283,7 +283,7 @@ function DiagnoseContent() {
           <div style={{ display: 'flex', gap: '12px' }}>
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
-              placeholder={'Ask Abarva anything as ' + role + ' at ' + clientName + '...'}
+              placeholder={'Ask AbarVa anything as ' + role + ' at ' + clientName + '...'}
               style={{ flex: 1, padding: '12px 16px', borderRadius: '10px', fontSize: '14px', border: '1px solid #E2E8F0', outline: 'none', background: '#FFFFFF', color: '#0F172A', fontFamily: 'Inter, sans-serif' }}
               onFocus={e => (e.target as HTMLInputElement).style.borderColor = '#2563EB'}
               onBlur={e => (e.target as HTMLInputElement).style.borderColor = '#E2E8F0'} />

@@ -229,7 +229,7 @@ function ScenCol({ label, data, color, flashGen, id }: { label: string; data: Sc
         { k: 'inv', l: 'Investment', v: `$${data.investment.toFixed(1)}M` },
         { k: 'roi', l: 'ROI', v: `${data.roi.toFixed(1)}x` },
         { k: 'pay', l: 'Payback', v: `${data.payback.toFixed(1)} mo` },
-        { k: 'fee', l: 'Abarva fee', v: `$${data.fee.toFixed(1)}M` },
+        { k: 'fee', l: 'AbarVa fee', v: `$${data.fee.toFixed(1)}M` },
       ] as const).map(r => (
         <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
           <span style={{ fontSize: '11px', color: '#6B7280' }}>{r.l}</span>
@@ -410,7 +410,7 @@ function ScenariosContent() {
           {/* 4 headline metrics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '16px' }}>
             <BigMetric id="tv" label="Total Year 1 Value" value={`$${fmt1(out.totalValue)}M`} color="#059669" flashGen={flashGen} />
-            <BigMetric id="fee" label="Abarva Outcome Fee" value={`$${fmt1(out.abarvaFee)}M`} sub="15% of realized value" color="#2563EB" flashGen={flashGen} />
+            <BigMetric id="fee" label="AbarVa Outcome Fee" value={`$${fmt1(out.abarvaFee)}M`} sub="15% of realized value" color="#2563EB" flashGen={flashGen} />
             <BigMetric id="net" label="Net Client Value" value={`$${fmt1(out.netValue)}M`} color={out.netValue >= 0 ? '#059669' : '#DC2626'} flashGen={flashGen} />
             <BigMetric id="pay" label="Payback Period" value={out.payback > 0 && out.payback < 200 ? `${fmt1(out.payback)} mo` : 'N/A'} color="#0F172A" flashGen={flashGen} />
           </div>

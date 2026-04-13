@@ -55,7 +55,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13
 const MERIDIAN_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Meridian — Azure AI Architecture</title><style>:root{--accent:#4DA3FF}${CSS}</style></head><body>
 <div class="cover">
   <div>
-    <div class="ey">Abarva · Architecture Pattern · Azure</div>
+    <div class="ey">AbarVa · Architecture Pattern · Azure</div>
     <div class="ct">Meridian Health System<br>AI Orchestration Architecture</div>
     <div class="csub">Built from actual tech stack data · <span>94% data confidence</span> · April 2026</div>
   </div>
@@ -208,7 +208,7 @@ const MERIDIAN_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8
 <div class="lw" style="border-color:#30363D;margin-top:8px">
   <div class="lh" style="background:#1C2128;color:#9CA3AF">External vendor network &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">Outside Azure boundary · API-connected · PHI transmitted under BAA only</span></div>
   <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
-    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Cohere Health (recommended)</div><div class="cd">847 payer connections pre-built · prior auth automation · Epic 2023 native · CMS-compliant · replaces Ensemble prior auth function</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">Abarva recommended · $2.0-2.4M</span></div></td>
+    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Cohere Health (recommended)</div><div class="cd">847 payer connections pre-built · prior auth automation · Epic 2023 native · CMS-compliant · replaces Ensemble prior auth function</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">AbarVa recommended · $2.0-2.4M</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#4DA3FF">Anthropic Claude API</div><div class="cd">Claude Sonnet via Azure AI Foundry · PHI stays in Azure tenant · BAA active · $2.1M/year at Meridian scale · 91% medical accuracy</div><div><span class="badge" style="background:rgba(77,163,255,0.1);color:#4DA3FF;border-color:rgba(77,163,255,0.25)">Selected over OpenAI</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#9CA3AF">Huron Consulting</div><div class="cd">Epic optimization SI · 23 Epic engagements last 3 years · $220-280/hr vs traditional SI $320-420/hr · faster delivery</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">Outcome-based SI for Epic</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#F59E0B">Avanade</div><div class="cd">Azure ML pipeline build · Microsoft Gold Partner · 40% lower rates than traditional SI · MLOps specialist for healthcare</div><div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">Outcome-based SI for Azure ML</span></div></td>
@@ -227,14 +227,14 @@ const MERIDIAN_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8
   <div class="rbox" style="background:rgba(39,174,96,0.06);border:1px solid rgba(39,174,96,0.2)"><div class="rt" style="color:#27AE60">Transform — with this architecture</div><div class="rb" style="color:#9CA3AF">Claude automates 12,000 prior auths/month · denial rate to 12% · $28M recovered · CMS-compliant Jan 2026 · sepsis AI at all 23 hospitals · Ensemble replaced or reformed · $292M total annual value</div></div>
 </div>
 
-<div class="foot">Abarva Intelligence Platform · Meridian Health System · Azure Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
+<div class="foot">AbarVa Intelligence Platform · Meridian Health System · Azure Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
 </div></body></html>`
 
 // ─────────────────────── FIRST CAPITAL / AWS ────────────────────────
 const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>First Capital — AWS AI Architecture</title><style>:root{--accent:#F59E0B}${CSS}</style></head><body>
 <div class="cover" style="border-bottom-color:#F59E0B">
   <div>
-    <div class="ey" style="color:#F59E0B">Abarva · Architecture Pattern · AWS</div>
+    <div class="ey" style="color:#F59E0B">AbarVa · Architecture Pattern · AWS</div>
     <div class="ct">First Capital Financial<br>AI Orchestration Architecture</div>
     <div class="csub">Built from actual tech stack data · <span>88% data confidence</span> · April 2026</div>
   </div>
@@ -391,7 +391,7 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
 <div class="lw" style="border-color:#30363D;margin-top:8px">
   <div class="lh" style="background:#1C2128;color:#9CA3AF">External vendor network &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">Outside AWS boundary · API-connected · SOC2 and PCI-DSS vetted</span></div>
   <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
-    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Temenos (recommended)</div><div class="cd">Cloud-native core banking · replaces FIS HORIZON · SaaS model · AWS-native · 3-year migration runway · OCC-familiar</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">Abarva recommended · start eval now</span></div></td>
+    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Temenos (recommended)</div><div class="cd">Cloud-native core banking · replaces FIS HORIZON · SaaS model · AWS-native · 3-year migration runway · OCC-familiar</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">AbarVa recommended · start eval now</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#F59E0B">Finzly</div><div class="cd">FedNow enablement · fastest path to live · 90-day deployment · payment hub architecture · $340M deposit risk resolved</div><div><span class="badge" style="background:rgba(255,153,0,0.1);color:#F59E0B;border-color:rgba(255,153,0,0.25)">URGENT · fastest FedNow path</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#4DA3FF">Anthropic Claude via Bedrock</div><div class="cd">Claude Sonnet · AWS Bedrock native · SOC2 · PCI-DSS data stays in AWS · no cross-cloud exposure · model abstraction</div><div><span class="badge" style="background:rgba(77,163,255,0.1);color:#4DA3FF;border-color:rgba(77,163,255,0.25)">Selected · AWS-native</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#9CA3AF">Tier-1 SI (if needed)</div><div class="cd">Core banking SI for Temenos migration · financial services practice · only if Temenos PS insufficient · day rate risk</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">Contingency only</span></div></td>
@@ -410,14 +410,14 @@ const FIRST_CAPITAL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="
   <div class="rbox" style="background:rgba(39,174,96,0.06);border:1px solid rgba(39,174,96,0.2)"><div class="rt" style="color:#27AE60">Transform — with this architecture</div><div class="rb" style="color:#9CA3AF">AI-automated AML · 25% false positive target · FedNow live in 90 days · real-time balances · $340M deposits secured · Temenos migration started · $4.2M analyst cost eliminated</div></div>
 </div>
 
-<div class="foot">Abarva Intelligence Platform · First Capital Financial · AWS Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
+<div class="foot">AbarVa Intelligence Platform · First Capital Financial · AWS Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
 </div></body></html>`
 
 // ─────────────────────── APEX RETAIL / GCP ────────────────────────
 const APEX_RETAIL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Apex Retail — GCP AI Architecture</title><style>:root{--accent:#34A853}${CSS}</style></head><body>
 <div class="cover" style="border-bottom-color:#34A853">
   <div>
-    <div class="ey" style="color:#34A853">Abarva · Architecture Pattern · Google Cloud</div>
+    <div class="ey" style="color:#34A853">AbarVa · Architecture Pattern · Google Cloud</div>
     <div class="ct">Apex Retail Group<br>AI Orchestration Architecture</div>
     <div class="csub">Built from actual tech stack data · <span>86% data confidence</span> · April 2026</div>
   </div>
@@ -573,7 +573,7 @@ const APEX_RETAIL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UT
 <div class="lw" style="border-color:#30363D;margin-top:8px">
   <div class="lh" style="background:#1C2128;color:#9CA3AF">External vendor network &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">Outside GCP boundary · API-connected · CCPA vetted</span></div>
   <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
-    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Dynamic Yield (recommended)</div><div class="cd">Personalization platform · 6-month payback · recommended as Einstein complement · real-time A/B · 800 store personalization</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">Abarva recommended · activate Einstein first</span></div></td>
+    <td style="background:#161B22"><div class="cn" style="color:#6EE7B7">Dynamic Yield (recommended)</div><div class="cd">Personalization platform · 6-month payback · recommended as Einstein complement · real-time A/B · 800 store personalization</div><div><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">AbarVa recommended · activate Einstein first</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#F59E0B">Manhattan Associates</div><div class="cd">OMS replacement for IBM Sterling · cloud-native · omnichannel native · Wave 2 · ends OMS blocker</div><div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">OMS replacement Wave 2</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#34A853">Anthropic Claude via Vertex AI</div><div class="cd">Claude Sonnet · Vertex AI-native · GCP data residency · CCPA compliant · retail ML + reasoning · $124M dynamic pricing</div><div><span class="badge" style="background:rgba(52,168,83,0.1);color:#34A853;border-color:rgba(52,168,83,0.25)">Selected · Vertex-native</span></div></td>
     <td style="background:#161B22"><div class="cn" style="color:#9CA3AF">Publicis Sapient</div><div class="cd">Retail SI · GCP + Salesforce practice · SAP migration experience · competitive rate for retail</div><div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">SI for SAP migration</span></div></td>
@@ -592,7 +592,7 @@ const APEX_RETAIL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UT
   <div class="rbox" style="background:rgba(39,174,96,0.06);border:1px solid rgba(39,174,96,0.2)"><div class="rt" style="color:#27AE60">Transform — with this architecture</div><div class="rb" style="color:#9CA3AF">Einstein activated · personalized to 18M members · cart abandonment 58% · $248M recovered · demand forecast 84% · $68M inventory savings · SAP migration started on time</div></div>
 </div>
 
-<div class="foot">Abarva Intelligence Platform · Apex Retail Group · GCP Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
+<div class="foot">AbarVa Intelligence Platform · Apex Retail Group · GCP Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
 </div></body></html>`
 
 const HTML_MAP: Record<string, string> = {
@@ -608,7 +608,7 @@ function ArchContent() {
 
   const client = CLIENTS.find(c => c.id === selected) || CLIENTS[0]
 
-  useEffect(() => { document.title = 'Architecture — ' + client.name + ' | Abarva' }, [client.name])
+  useEffect(() => { document.title = 'Architecture — ' + client.name + ' | AbarVa' }, [client.name])
 
   function handleDownload() {
     const html = HTML_MAP[selected]

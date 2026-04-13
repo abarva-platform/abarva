@@ -88,7 +88,7 @@ function JustifyContent() {
         {step === 1 && (
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Select Initiative</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Abarva auto-populates the baseline from {clientName} loaded data</p>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>AbarVa auto-populates the baseline from {clientName} loaded data</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
               {allOpps.map((opp: any, i: number) => (
                 <button key={i} onClick={() => setSelectedOpp(opp)}
@@ -153,7 +153,7 @@ function JustifyContent() {
         {step === 3 && selectedOpp && (
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Set Target</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Abarva recommends targets based on peer benchmarks</p>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>AbarVa recommends targets based on peer benchmarks</p>
             <div style={{ ...S.card, marginBottom: '24px' }}>
               <div style={S.label}>SELECT SCENARIO</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
@@ -246,7 +246,7 @@ function JustifyContent() {
               <div style={{ fontSize: '14px', color: '#059669', fontWeight: 700, marginBottom: '8px' }}>Business case complete</div>
               <div style={{ fontSize: '36px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{fmt(vals.annualVal)} annual value</div>
               <div style={{ fontSize: '14px', color: '#6B7280' }}>{vals.roi.toFixed(1)}x ROI · {vals.payback.toFixed(0)} month payback</div>
-              <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '8px' }}>What McKinsey charges $1-2M to produce — Abarva generated this in 4 minutes from your actual data</div>
+              <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '8px' }}>What McKinsey charges $1-2M to produce — AbarVa generated this in 4 minutes from your actual data</div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button onClick={() => setStep(4)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>

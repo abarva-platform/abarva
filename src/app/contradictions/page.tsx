@@ -479,7 +479,7 @@ function ContradictionsContent() {
                 {/* CTA */}
                 <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
                   <a href={'/diagnose?client=' + selectedClient} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(77,163,255,0.1)', color: '#4DA3FF', textDecoration: 'none', fontSize: '12px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(77,163,255,0.25)' }}>
-                    Ask Abarva about this →
+                    Ask AbarVa about this →
                   </a>
                   <a href={'/blueprint?client=' + selectedClient} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(45,212,200,0.1)', color: '#2DD4C8', textDecoration: 'none', fontSize: '12px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(45,212,200,0.25)' }}>
                     Solution Blueprint →

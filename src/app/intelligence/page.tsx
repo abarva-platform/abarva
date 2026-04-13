@@ -188,7 +188,7 @@ function IntelligenceContent() {
                     <p className="text-sm text-gray-300 mb-4">{selectedSystem.nextAction}</p>
                     <button onClick={() => sendChat(`Tell me about ${selectedSystem.name} and what we should do`)}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition">
-                      Ask Abarva
+                      Ask AbarVa
                     </button>
                   </div>
                 </div>
@@ -300,7 +300,7 @@ function IntelligenceContent() {
                     {getSystemsByDomain(inventory, selectedDomain).length === 0 ? (
                       <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 text-center">
                         <p className="text-gray-400 mb-2">No systems inventoried</p>
-                        <button onClick={() => sendChat(`What systems should we have in ${selectedDomain}?`)} className="text-xs text-blue-400">Ask Abarva</button>
+                        <button onClick={() => sendChat(`What systems should we have in ${selectedDomain}?`)} className="text-xs text-blue-400">Ask AbarVa</button>
                       </div>
                     ) : getSystemsByDomain(inventory, selectedDomain).map((sys: any, i: number) => (
                       <button key={i} onClick={() => setSelectedSystem(sys)}

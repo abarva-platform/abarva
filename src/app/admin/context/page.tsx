@@ -82,7 +82,7 @@ const KPIS = [
 const POLITICAL = [
   {
     title: 'Ensemble Relationship',
-    body: 'CEO has a personal relationship with the Ensemble CEO going back 12 years. Do not recommend full replacement in the first meeting — frame any RCM conversation as performance improvement and SLA governance, not termination. The exit case must emerge from the CFO\'s own analysis, not from Abarva.',
+    body: 'CEO has a personal relationship with the Ensemble CEO going back 12 years. Do not recommend full replacement in the first meeting — frame any RCM conversation as performance improvement and SLA governance, not termination. The exit case must emerge from the CFO\'s own analysis, not from AbarVa.',
   },
   {
     title: 'Blue Ridge Culture',

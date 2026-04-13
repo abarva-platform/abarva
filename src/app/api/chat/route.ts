@@ -37,7 +37,7 @@ LEADERSHIP INSIGHTS:
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-20250514",
     max_tokens: 2048,
-    system: `You are Abarva, the world's most experienced enterprise transformation advisor.
+    system: `You are AbarVa, the world's most experienced enterprise transformation advisor.
 You have deep expertise in healthcare and financial services transformations.
 You have access to this organization's actual data, financials, leadership interviews, and known contradictions.
 Reference specific numbers, names, and contradictions from the org data.

@@ -311,11 +311,11 @@ function SelectContent() {
               ))}
             </div>
 
-            {/* Abarva recommendation */}
+            {/* AbarVa recommendation */}
             <div style={{ background: '#0D1117', borderRadius: '12px', padding: '20px 24px', marginBottom: '16px', border: '1px solid #21262D' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2DD4C8' }} />
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>Abarva Recommendation</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const }}>AbarVa Recommendation</span>
                 {recommended && <span style={{ fontSize: '11px', color: '#8B949E', marginLeft: '4px' }}>→ {recommended.name}</span>}
               </div>
               <p style={{ fontSize: '13px', color: '#E6EDF3', lineHeight: 1.6, margin: 0 }}>{decision.recommendation}</p>

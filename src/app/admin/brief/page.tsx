@@ -47,7 +47,7 @@ const QUESTIONS = [
     a: '$4.2M investment. $28M Year 1 return. 1.8-month payback after go-live. Robert Chen has already seen these numbers — ask him before the meeting.',
   },
   {
-    q: 'How do I know Abarva\'s numbers are right?',
+    q: 'How do I know AbarVa\'s numbers are right?',
     a: 'Every number in this brief is sourced to a specific row in a specific file in your data. Click any metric on the platform and see exactly where it came from.',
   },
 ]
@@ -67,7 +67,7 @@ const DEMO_STEPS = [
   },
   {
     n: '03',
-    action: 'Ask Abarva as CIO',
+    action: 'Ask AbarVa as CIO',
     href: '/diagnose?client=meridian',
     why: 'Type: "Should we stay with Ensemble?" Live in the room. He will watch the response build in real time.',
   },
@@ -180,7 +180,7 @@ export default function PreMeetingBrief() {
           <div style={{ textAlign: 'right', fontFamily: T.mono, fontSize: '9.5px', color: T.text3, lineHeight: 2.4, flexShrink: 0 }}>
             <div><strong style={{ color: T.text2 }}>MEETING DATE</strong>&nbsp;&nbsp;April 18, 2026</div>
             <div><strong style={{ color: T.text2 }}>LOCATION</strong>&nbsp;&nbsp;Meridian HQ · Charlotte, NC</div>
-            <div><strong style={{ color: T.text2 }}>PREPARED BY</strong>&nbsp;&nbsp;Abarva Intelligence</div>
+            <div><strong style={{ color: T.text2 }}>PREPARED BY</strong>&nbsp;&nbsp;AbarVa Intelligence</div>
             <div><strong style={{ color: T.text2 }}>DATA CONFIDENCE</strong>&nbsp;&nbsp;<span style={{ color: T.green }}>94%</span></div>
           </div>
         </div>

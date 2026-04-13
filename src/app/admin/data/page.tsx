@@ -285,7 +285,7 @@ export default function AdminData() {
               <div style={{ textAlign: 'center' as const, padding: '24px' }}>
                 <div style={{ fontSize: '40px', marginBottom: '16px' }}>✓</div>
                 <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', marginBottom: '8px' }}>Intelligence Updated</div>
-                <div style={{ fontSize: '14px', color: '#6B7280' }}>Abarva is processing your updates. Confidence scores will refresh within 2 hours.</div>
+                <div style={{ fontSize: '14px', color: '#6B7280' }}>AbarVa is processing your updates. Confidence scores will refresh within 2 hours.</div>
               </div>
             ) : (
               <>

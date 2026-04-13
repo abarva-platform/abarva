@@ -98,7 +98,7 @@ function HowToBuildContent() {
               num: '0', title: 'Foundation', months: 'Month 0–3',
               invest: '$2–4M', accentColor: '#6B7280',
               subtitle: 'Do not build agents yet. Build the governed data foundation.',
-              team: ['1 Databricks/Snowflake PS (vendor-funded)', '1 Data Engineer', '1 Abarva Maestro'],
+              team: ['1 Databricks/Snowflake PS (vendor-funded)', '1 Data Engineer', '1 AbarVa Maestro'],
               builds: ['Lakehouse setup · Unity Catalog governance', '3 priority data sources connected', 'RAG knowledge base seeded', 'Security and compliance baseline'],
               warning: 'No agents yet — agents without governed data are dangerous.',
               output: 'Governed data platform ready for agents',
@@ -107,7 +107,7 @@ function HowToBuildContent() {
               num: '1', title: 'First Agent', months: 'Month 3–6',
               invest: '$3–6M', accentColor: meta.accent,
               subtitle: 'One agent. One workflow. Prove the pattern.',
-              team: [selectedClient === 'meridian' ? 'Bedrock/Vertex or Azure AI engineer' : 'Bedrock/Vertex AI engineer', '1 domain expert (internal)', '1 Abarva Maestro', 'Human-in-loop always'],
+              team: [selectedClient === 'meridian' ? 'Bedrock/Vertex or Azure AI engineer' : 'Bedrock/Vertex AI engineer', '1 domain expert (internal)', '1 AbarVa Maestro', 'Human-in-loop always'],
               builds: [meta.firstAgent + ' (the highest-ROI workflow)', meta.firstAgentVendor, 'Audit trail + human override controls', 'Outcome measurement baseline'],
               warning: meta.firstAgentValue,
               output: '1 agent in production · audited · measurable · human oversight',
@@ -116,19 +116,19 @@ function HowToBuildContent() {
               num: '2', title: 'Agent Network', months: 'Month 6–12',
               invest: '$8–15M', accentColor: '#7C3AED',
               subtitle: 'Add agents systematically. Claude orchestrates them all.',
-              team: ['3–4 engineers · domain experts per agent', '1 Abarva Maestro for governance', 'Platform agents (Workday · ServiceNow · Salesforce)', 'No large SI'],
+              team: ['3–4 engineers · domain experts per agent', '1 AbarVa Maestro for governance', 'Platform agents (Workday · ServiceNow · Salesforce)', 'No large SI'],
               builds: ['Claude becomes meta-orchestrator across all agents', 'ServiceNow as workflow control plane', '5–8 agents in production', 'Failure Genome monitoring on all agents'],
               warning: 'Claude routes: routine → platform agents · complex → direct reasoning',
               output: 'Orchestrated agent network · governed · auditable',
             },
             {
               num: '3', title: 'Scale and Compound', months: 'Month 12–24',
-              invest: 'Maintenance + Abarva outcome fee', accentColor: '#2DD4C8',
+              invest: 'Maintenance + AbarVa outcome fee', accentColor: '#2DD4C8',
               subtitle: 'The platform improves itself. You manage outcomes.',
-              team: ['Existing engineering team', '1 Abarva Maestro (oversight)', 'Agents add new agents', 'Transformation Genome advisory'],
+              team: ['Existing engineering team', '1 AbarVa Maestro (oversight)', 'Agents add new agents', 'Transformation Genome advisory'],
               builds: ['Agents improve from outcome data', 'New agents added in weeks not months', 'Failure Genome feeds recommendations', 'Value measurement dashboard live'],
-              warning: 'Abarva fee = 15% of verified value delivered — aligned with your goals',
-              output: '$50–200M annual value · Abarva fee scales with value',
+              warning: 'AbarVa fee = 15% of verified value delivered — aligned with your goals',
+              output: '$50–200M annual value · AbarVa fee scales with value',
             },
           ].map((phase, i) => (
             <div key={i} style={{ ...S.card, borderTop: '3px solid ' + phase.accentColor }}>
@@ -169,14 +169,14 @@ function HowToBuildContent() {
             <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '12px' }}>
               <thead>
                 <tr>
-                  {['', 'Traditional SI', 'Abarva + Lean Team', 'Hybrid'].map((h, i) => (
+                  {['', 'Traditional SI', 'AbarVa + Lean Team', 'Hybrid'].map((h, i) => (
                     <th key={i} style={{ padding: '10px 16px', textAlign: i === 0 ? 'left' as const : 'center' as const, ...S.mono, fontSize: '9px', color: i === 2 ? '#2DD4C8' : '#6B7280', letterSpacing: '0.08em', textTransform: 'uppercase' as const, borderBottom: '1px solid #21262D', background: i === 2 ? 'rgba(45,212,200,0.04)' : 'transparent' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  ['Strategy + architecture', '$5–8M', '$0 (Abarva platform)', '$500K'],
+                  ['Strategy + architecture', '$5–8M', '$0 (AbarVa platform)', '$500K'],
                   ['Implementation Phase 0', '$8–12M', '$2–4M', '$4–6M'],
                   ['Implementation Phase 1', '$10–15M', '$3–6M', '$5–8M'],
                   ['Implementation Phase 2', '$12–18M', '$8–15M', '$10–14M'],
@@ -282,8 +282,8 @@ function HowToBuildContent() {
             <div style={{ fontSize: '13px', color: '#E6EDF3', lineHeight: 1.7 }}>
               Every recommendation has a predicted outcome.<br />
               Every outcome is measured against prediction.<br />
-              <span style={{ color: '#2DD4C8', fontWeight: 600 }}>Abarva fee = 15% of verified value delivered.</span><br />
-              <span style={{ fontSize: '12px', color: '#8B949E' }}>This is how Abarva stays aligned with your goals — not your project plan.</span>
+              <span style={{ color: '#2DD4C8', fontWeight: 600 }}>AbarVa fee = 15% of verified value delivered.</span><br />
+              <span style={{ fontSize: '12px', color: '#8B949E' }}>This is how AbarVa stays aligned with your goals — not your project plan.</span>
             </div>
           </div>
         </div>

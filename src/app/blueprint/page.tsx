@@ -8,7 +8,7 @@ const BLUEPRINTS: Record<string, any> = {
     industry: 'Healthcare IDN · 23 Hospitals · $11.2B Revenue',
     initiative: 'Prior Authorization AI Automation',
     domain: 'Middle Office · Revenue Cycle Management',
-    preparedBy: 'Abarva Intelligence Platform',
+    preparedBy: 'AbarVa Intelligence Platform',
     date: 'April 2026',
     color: '#1B4FD8',
     executiveSummary: {
@@ -20,7 +20,7 @@ const BLUEPRINTS: Record<string, any> = {
         'Investment: $4.2M over 9 months. Annual value: $28M. Payback: 1.8 months after go-live.',
         'Critical dependency: This initiative requires Ensemble cooperation OR becomes the exit strategy from Ensemble.',
       ],
-      decision: 'The board needs to make one decision this week: enforce the $8M in Ensemble penalties as leverage, or begin parallel RCM vendor evaluation. Abarva recommends both simultaneously.',
+      decision: 'The board needs to make one decision this week: enforce the $8M in Ensemble penalties as leverage, or begin parallel RCM vendor evaluation. AbarVa recommends both simultaneously.',
     },
     problemStatement: {
       current: [
@@ -51,13 +51,13 @@ const BLUEPRINTS: Record<string, any> = {
       ],
     },
     vendorDecision: {
-      headline: 'Abarva recommends Cohere Health over Waystar and Olive for Meridians specific context.',
+      headline: 'AbarVa recommends Cohere Health over Waystar and Olive for Meridians specific context.',
       recommendation: 'Cohere Health',
       reasoning: [
         'Epic integration: Cohere has 23 live Epic integrations. Their implementation team has completed the exact Meridian version (2023) at Advocate Aurora. Implementation is 6 weeks not the 16 weeks Waystar requires.',
         'Payer network: Cohere covers 847 payers — Meridians complete payer mix including the 6 TennCare plans that are the highest denial risk.',
         'AI approach: Coheres NLP model was trained on 180M prior auth requests. Denial prediction accuracy is 91% vs 78% for Waystar.',
-        'Pricing: Cohere list price is $2.8-3.8M. Abarva intelligence shows Baylor Scott & White paid $2.1M for same scope in Q4 2024. Target: $2.0-2.4M.',
+        'Pricing: Cohere list price is $2.8-3.8M. AbarVa intelligence shows Baylor Scott & White paid $2.1M for same scope in Q4 2024. Target: $2.0-2.4M.',
         'Ensemble leverage: Cohere actively competes against Ensemble and will price aggressively to displace them.',
       ],
       vendorComparison: [
@@ -79,7 +79,7 @@ const BLUEPRINTS: Record<string, any> = {
         {
           phase: 'Phase 1', name: 'Foundation and Contracting', duration: 'Months 1-2', cost: '$800K',
           resources: [
-            { role: 'Abarva Maestro', type: 'Abarva', allocation: '40%', cost: 'Included in platform fee', responsibility: 'Vendor negotiation, contract review, stakeholder alignment' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '40%', cost: 'Included in platform fee', responsibility: 'Vendor negotiation, contract review, stakeholder alignment' },
             { role: 'Epic Integration Lead', type: 'Internal', allocation: '50%', cost: '$0 incremental', responsibility: 'Epic FHIR API configuration, workflow design' },
             { role: 'Cohere Implementation Lead', type: 'Vendor', allocation: '100%', cost: 'Included in vendor fee', responsibility: 'Payer network configuration, system setup' },
             { role: 'Legal / Contracting', type: 'Internal', allocation: '20%', cost: '$0 incremental', responsibility: 'BAA, SLA terms, penalty clauses' },
@@ -91,7 +91,7 @@ const BLUEPRINTS: Record<string, any> = {
             { role: 'Cohere PS Team (3)', type: 'Vendor', allocation: '100%', cost: 'Included in vendor fee', responsibility: 'Payer integrations, NLP configuration, Epic build' },
             { role: 'Azure ML Engineer', type: 'SI (Avanade)', allocation: '100%', cost: '$180K (3 months)', responsibility: 'Denial prediction model on Azure ML' },
             { role: 'Epic Analyst', type: 'Internal', allocation: '75%', cost: '$0 incremental', responsibility: 'Workflow configuration, UAT' },
-            { role: 'Abarva Maestro', type: 'Abarva', allocation: '20%', cost: 'Included', responsibility: 'Milestone governance, issue escalation' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '20%', cost: 'Included', responsibility: 'Milestone governance, issue escalation' },
           ],
         },
         {
@@ -99,7 +99,7 @@ const BLUEPRINTS: Record<string, any> = {
           resources: [
             { role: 'Cohere PS Team (2)', type: 'Vendor', allocation: '100%', cost: 'Included in vendor fee', responsibility: 'Go-live support, payer issue resolution' },
             { role: 'Prior Auth Coordinator (retrain)', type: 'Internal', allocation: '100%', cost: '$0 incremental', responsibility: 'Exception handling, payer escalations' },
-            { role: 'Abarva Maestro', type: 'Abarva', allocation: '10%', cost: 'Included', responsibility: 'Outcome measurement, fee calculation' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '10%', cost: 'Included', responsibility: 'Outcome measurement, fee calculation' },
           ],
         },
       ],
@@ -145,14 +145,14 @@ const BLUEPRINTS: Record<string, any> = {
       risks: [
         { risk: 'Ensemble non-cooperation on denial data', probability: 'High', impact: 'Medium', mitigation: 'Use Coheres payer network data as primary — Ensemble data is secondary. Simultaneously enforce $8M SLA penalties as leverage.' },
         { risk: 'Blue Ridge Cerner data unavailable', probability: 'Medium', impact: 'Low', mitigation: 'Phase 1 covers 21 Epic hospitals. Add 2 Blue Ridge hospitals in Phase 3 after Cerner migration completes.' },
-        { risk: 'CDO vacancy delays governance', probability: 'High', impact: 'High', mitigation: 'Abarva Maestro covers CDO functions during implementation. CDO hire must start immediately — this is the critical path.' },
+        { risk: 'CDO vacancy delays governance', probability: 'High', impact: 'High', mitigation: 'AbarVa Maestro covers CDO functions during implementation. CDO hire must start immediately — this is the critical path.' },
         { risk: 'Payer portal changes post go-live', probability: 'Low', impact: 'Medium', mitigation: 'Cohere maintains payer network — contractually responsible for keeping connections current.' },
       ],
       nextSteps: [
         { action: 'Enforce $8M Ensemble SLA penalties', owner: 'CFO + Legal', deadline: 'This week', rationale: 'Creates leverage for Ensemble cooperation AND funds Phase 1' },
         { action: 'Issue RFP to Cohere Health and Waystar', owner: 'CIO', deadline: 'This week', rationale: 'Parallel track — 6-week vendor selection process' },
         { action: 'Post CDO job description', owner: 'CHRO', deadline: 'This week', rationale: 'CDO is critical path — 90-day hire timeline means start now' },
-        { action: 'Brief CFO on business case', owner: 'CIO + Abarva', deadline: 'Next week', rationale: 'Robert Chen needs to approve $4.2M — business case is ready' },
+        { action: 'Brief CFO on business case', owner: 'CIO + AbarVa', deadline: 'Next week', rationale: 'Robert Chen needs to approve $4.2M — business case is ready' },
         { action: 'Notify CMS of remediation plan', owner: 'CIO + Legal', deadline: 'This month', rationale: 'Proactive notification reduces penalty risk — shows good faith' },
       ],
     },
@@ -182,7 +182,7 @@ function BlueprintContent() {
   const [section, setSection] = useState('summary')
   const bp = BLUEPRINTS[clientId] || BLUEPRINTS.meridian
 
-  useEffect(() => { document.title = 'Blueprint — ' + bp.client + ' | Abarva' }, [bp.client])
+  useEffect(() => { document.title = 'Blueprint — ' + bp.client + ' | AbarVa' }, [bp.client])
 
   const css = `
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -318,7 +318,7 @@ function BlueprintContent() {
               </div>
 
               <div className="card" style={{ background: '#F0FDF4', border: '1px solid #A7F3D0' }}>
-                <h3 className="h3" style={{ color: '#059669', marginBottom: '12px' }}>Abarva Economics on This Initiative</h3>
+                <h3 className="h3" style={{ color: '#059669', marginBottom: '12px' }}>AbarVa Economics on This Initiative</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                   <div><div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Platform fee</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>{fmt(bp.businessCase.abarvaFee.platform)}</div></div>
                   <div><div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Outcome fee (15%)</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>{fmt(bp.businessCase.abarvaFee.outcomeFee)}</div></div>
@@ -411,7 +411,7 @@ function BlueprintContent() {
               <div className="card" style={{ borderLeft: '4px solid ' + bp.color, marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: bp.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '4px' }}>Abarva Recommendation</div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: bp.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '4px' }}>AbarVa Recommendation</div>
                     <div style={{ fontSize: '24px', fontWeight: 800, color: '#111827' }}>{bp.vendorDecision.recommendation}</div>
                   </div>
                   <span className="badge" style={{ background: '#ECFDF5', color: '#059669', fontSize: '12px', padding: '6px 14px' }}>RECOMMENDED</span>
@@ -483,7 +483,7 @@ function BlueprintContent() {
                       {phase.resources.map((r: any, ri: number) => (
                         <tr key={ri}>
                           <td style={{ fontWeight: 600 }}>{r.role}</td>
-                          <td><span className="badge" style={{ background: r.type === 'Abarva' ? '#EFF6FF' : r.type === 'Vendor' ? '#F5F3FF' : r.type === 'Internal' ? '#ECFDF5' : '#FEF2F2', color: r.type === 'Abarva' ? '#1B4FD8' : r.type === 'Vendor' ? '#6D28D9' : r.type === 'Internal' ? '#059669' : '#DC2626' }}>{r.type}</span></td>
+                          <td><span className="badge" style={{ background: r.type === 'AbarVa' ? '#EFF6FF' : r.type === 'Vendor' ? '#F5F3FF' : r.type === 'Internal' ? '#ECFDF5' : '#FEF2F2', color: r.type === 'AbarVa' ? '#1B4FD8' : r.type === 'Vendor' ? '#6D28D9' : r.type === 'Internal' ? '#059669' : '#DC2626' }}>{r.type}</span></td>
                           <td>{r.allocation}</td>
                           <td style={{ fontWeight: 600, color: r.cost === 'Included in platform fee' || r.cost === 'Included' || r.cost === '$0 incremental' ? '#059669' : '#111827' }}>{r.cost}</td>
                           <td style={{ color: '#6B7280', fontSize: '12px' }}>{r.responsibility}</td>

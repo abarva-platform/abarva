@@ -28,7 +28,7 @@ export async function POST() {
   const message = await client.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
-    system: `You are Abarva, an enterprise transformation advisor. You are looking at Meridian Health System's AI initiative portfolio.
+    system: `You are AbarVa, an enterprise transformation advisor. You are looking at Meridian Health System's AI initiative portfolio.
 You have scored each initiative against the Transformation Failure Genome — seven historically validated failure patterns.
 
 Write a sequencing narrative in 3-4 sentences. Be direct, specific, and clinically honest:

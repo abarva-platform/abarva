@@ -27,7 +27,7 @@ const CIO_QUESTIONS = [
   'If budget were not a constraint, what would you fix first?',
   'Who in your organization will resist AI adoption most — and why?',
   'What does a win look like for you personally in the next 12 months?',
-  'What should Abarva know that is not in any document?',
+  'What should AbarVa know that is not in any document?',
 ]
 
 type FileSpec = {
@@ -181,13 +181,13 @@ const CATEGORIES: Category[] = [
       },
       {
         filename: 'Vendor_Performance_Scorecard.xlsx',
-        why: 'Finds SLA breaches and identifies leverage for renegotiation. Every major vendor finding in every Abarva engagement traces back to this file.',
+        why: 'Finds SLA breaches and identifies leverage for renegotiation. Every major vendor finding in every AbarVa engagement traces back to this file.',
         extracts: 'Vendor name, SLA metric, contractual target, actual performance, trend, penalty clauses, contract end date',
         howToExport: [
           'Vendor management team or procurement — request quarterly vendor review document',
           'CIO or COO office — SLA reporting is usually presented in a leadership review',
         ],
-        wow: 'Every major finding in our vendor analysis comes from this file. The Ensemble $8M penalty. The Mirth Connect performance degradation. The Olive AI pilot failure. All documented here — and all invisible to leadership until Abarva surfaced them.',
+        wow: 'Every major finding in our vendor analysis comes from this file. The Ensemble $8M penalty. The Mirth Connect performance degradation. The Olive AI pilot failure. All documented here — and all invisible to leadership until AbarVa surfaced them.',
       },
     ],
   },
@@ -226,7 +226,7 @@ function FileCard({ file, accent }: { file: FileSpec; accent: string }) {
         <div style={{ padding: '16px', background: '#FFFFFF', borderTop: '1px solid #F1F5F9' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: file.howToExport ? '16px' : 0 }}>
             <div>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Why Abarva needs this</div>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Why AbarVa needs this</div>
               <p style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, margin: 0 }}>{file.why}</p>
             </div>
             <div>
@@ -281,7 +281,7 @@ export default function DataGuidePage() {
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Data Collection Guide — What Good Looks Like</h1>
-          <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px' }}>The 12 files that give Abarva 94% confidence. Each file described, sourced, and templated.</p>
+          <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '16px' }}>The 12 files that give AbarVa 94% confidence. Each file described, sourced, and templated.</p>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' as const }}>
             <span style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: '#ECFDF5', color: '#059669', border: '1px solid #A7F3D0' }}>✓ Gold Standard: 12 files → 94% confidence</span>
             <span style={{ fontSize: '12px', fontWeight: 700, padding: '5px 12px', borderRadius: '20px', background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>⚠ Minimum Viable: 5 files → 70% confidence</span>
@@ -345,7 +345,7 @@ export default function DataGuidePage() {
                       </div>
                     </div>
                     <div style={{ background: '#FFF7ED', border: '1px solid #FED7AA', borderRadius: '8px', padding: '12px 14px', marginBottom: '14px', fontSize: '12px', color: '#92400E' }}>
-                      Abarva sends a link → leader answers 8 questions in browser. Format: async, 15 minutes, no scheduling required. What it adds: <strong>political context, personal priorities, and what leaders will not say in a meeting.</strong>
+                      AbarVa sends a link → leader answers 8 questions in browser. Format: async, 15 minutes, no scheduling required. What it adds: <strong>political context, personal priorities, and what leaders will not say in a meeting.</strong>
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '10px' }}>Standard CIO question set (example)</div>
                     {CIO_QUESTIONS.map((q, i) => (
@@ -364,7 +364,7 @@ export default function DataGuidePage() {
         {/* Incremental data strategy */}
         <div style={{ background: '#111827', borderRadius: '12px', padding: '28px 32px', marginBottom: '24px' }}>
           <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Staying Current</div>
-          <div style={{ fontSize: '16px', fontWeight: 700, color: '#F9FAFB', marginBottom: '6px' }}>Data loaded once gets stale. Here is how Abarva stays current.</div>
+          <div style={{ fontSize: '16px', fontWeight: 700, color: '#F9FAFB', marginBottom: '6px' }}>Data loaded once gets stale. Here is how AbarVa stays current.</div>
           <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '24px' }}>Three-tier refresh model — most is automated.</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
