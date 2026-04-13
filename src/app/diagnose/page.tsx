@@ -231,12 +231,11 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
         return (
           <button
             key={n}
-            onClick={() => (done || n <= step) ? setStep(n) : undefined}
+            onClick={() => setStep(n)}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '0 20px', height: '48px', background: 'none', border: 'none',
-              cursor: (done || n <= step) ? 'pointer' : 'default',
-              fontFamily: T.sans, whiteSpace: 'nowrap',
+              cursor: 'pointer', fontFamily: T.sans, whiteSpace: 'nowrap',
               borderBottom: active ? '2px solid ' + T.teal : '2px solid transparent',
             }}
           >
@@ -244,13 +243,13 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
               width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 800,
-              background: active ? T.teal : done ? T.teal + '30' : T.border,
-              color: active ? '#0D1117' : done ? T.teal : T.text3,
+              background: active ? T.teal : done ? T.teal + '30' : T.border2,
+              color: active ? '#0D1117' : done ? T.teal : T.text2,
               border: done && !active ? '1px solid ' + T.teal + '60' : 'none',
             }}>
               {done && !active ? '✓' : n}
             </span>
-            <span style={{ fontSize: '12px', fontWeight: active ? 700 : 500, color: active ? T.text : n <= step ? T.text2 : T.text3 }}>
+            <span style={{ fontSize: '12px', fontWeight: active ? 700 : 500, color: active ? T.text : T.text2 }}>
               {label}
             </span>
           </button>
