@@ -9,6 +9,7 @@ const SECTIONS = [
   { id: 'compounding', label: 'The Moat' },
   { id: 'team', label: 'The Team' },
   { id: 'seed', label: 'Seed Round' },
+  { id: 'naysayer', label: 'Hard Questions' },
 ]
 
 const CLIENTS = [
@@ -91,6 +92,102 @@ function fmt(n: number) {
   if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M'
   if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K'
   return '$' + n.toLocaleString()
+}
+
+const OBJECTIONS = [
+  {
+    q: '"McKinsey will build this."',
+    a: 'McKinsey builds strategy for clients — they do not build software platforms. Their business model is billing hours, not compounding data. If McKinsey wanted to build AbarVa, they would have to stop billing their best partners to write code for 24 months — and then compete against the clients who pay them. That is not their incentive structure. The firms most likely to try are the boutique digital strategy shops, not the Tier-1s. And none of them have the Transformation Genome.',
+    win: 'McKinsey\'s incentive is to keep the engagement going. AbarVa\'s incentive is to make the outcome measurable — which ends the engagement sooner but creates the referral.',
+  },
+  {
+    q: '"ChatGPT already does this."',
+    a: 'ChatGPT has no knowledge of your organization. It cannot tell you that your RCM vendor is breaching a contract SLA penalty clause from Section 14.3 of an MSA it has never read. AbarVa ingests your actual data — financial filings, vendor contracts, stakeholder interview transcripts, Epic optimization scores — and reasons across all of it simultaneously. ChatGPT gives you a generic answer. AbarVa gives you the specific contradiction between what your CFO said and what your balance sheet shows.',
+    win: 'General AI gives general answers. AbarVa gives answers that are defensible in a board meeting because every number traces to a specific source.',
+  },
+  {
+    q: '"Clients won\'t pay for AI-generated strategy."',
+    a: 'Clients already pay $4–8M for AI-assisted strategy from the big consultancies — they just do not know it. McKinsey partners use AI to write the first draft of every deck. The question is not whether AI generates strategy. The question is whether the client gets credit for it. AbarVa is the first platform where the client owns the intelligence — and where the intelligence is accountable to a measurable outcome, not a billing cycle.',
+    win: 'Our three design partners have seen the platform. All three asked "how do we get started" before we finished the demo. The market is more ready than the objection assumes.',
+  },
+  {
+    q: '"You earn referral fees — that biases your recommendations."',
+    a: 'Yes — AbarVa earns referral fees on vendor placements, disclosed on every recommendation. This is how financial advisors, insurance brokers, and real estate professionals operate — disclosed fees within an independent advisory model. The referral does not change the score. The scoring methodology is published and auditable. If a client selects a different vendor than our recommendation, we support that decision fully. Our platform tracks outcomes regardless — and the outcome fee model at Series A means recommending the wrong vendor would directly hurt AbarVa\'s future revenue. That is the alignment.',
+    win: 'Transparency is the defense. Disclosure on every card, methodology auditable, outcome fee creates alignment between AbarVa\'s long-term revenue and recommending the right vendor.',
+  },
+  {
+    q: '"Attribution of outcomes is impossible."',
+    a: 'Attribution is hard when you do not establish a baseline. AbarVa\'s entire design starts with a countersigned baseline before any initiative begins — a specific metric, a specific number, a specific date. When the outcome is measured 12 months later, the delta is unambiguous. The consulting industry made attribution impossible because they had no incentive to establish a baseline. We do — because our outcome fee depends on it.',
+    win: 'Baseline at contract signing. Outcome measured 12 months later. The delta is defensible because we established the measurement framework before anyone started spending money.',
+  },
+  {
+    q: '"Security — our data can\'t leave our environment."',
+    a: 'AbarVa can deploy in a client\'s own cloud environment — Azure tenant, AWS account, or on-premises. No data leaves the perimeter. The Claude API call happens through the client\'s own API gateway with their own credentials. We are not asking clients to upload their data to a third-party SaaS. We are asking them to run our platform inside their environment. Healthcare and financial services clients have done this with every major enterprise software vendor for two decades.',
+    win: 'Private cloud deployment is a standard enterprise option. The security objection dissolves when clients realize they are not sharing data with AbarVa — they are running AbarVa\'s software in their own environment.',
+  },
+  {
+    q: '"Claude will get too expensive or change their API."',
+    a: 'AbarVa is model-agnostic. The platform is designed with a model abstraction layer — Claude is the default because it produces the best results on complex multi-document reasoning tasks, but GPT-4o, Gemini, and open-source models are all viable alternatives. Anthropic pricing has gone down 80% in 18 months as competition increases. The risk is the opposite of what the objection assumes — AI inference is getting cheaper, not more expensive.',
+    win: 'Model abstraction layer. Multiple providers supported. Inference costs declining. This objection gets weaker every quarter.',
+  },
+  {
+    q: '"This is just a wrapper on an LLM."',
+    a: 'The LLM is the reasoning engine. The value is in what it reasons over. AbarVa has three years of client-specific data ingestion pipelines, contradiction detection logic, benchmark databases across 40 industries, vendor performance records from real engagements, and a growing Transformation Genome of what works and what fails. A wrapper on an LLM with none of that context gives you ChatGPT. AbarVa with that context gives you a CFO-grade analysis that takes McKinsey three months to produce.',
+    win: 'The moat is the data and the context, not the model. The model is a commodity. The Transformation Genome is not.',
+  },
+  {
+    q: '"The big SIs will build their own version."',
+    a: 'The big SIs are structurally prevented from building AbarVa. Their revenue model is hours billed. A platform that reduces engagement length and makes outcomes measurable would cannibalize their core business. Accenture cannot build something that tells clients they are overpaying for Accenture. Deloitte cannot build something that tracks whether Deloitte\'s recommendations actually worked. The conflict is structural, not technical.',
+    win: 'The incentive conflict is permanent. The SIs cannot build a platform that measures their own performance. AbarVa can — and does.',
+  },
+  {
+    q: '"The market isn\'t ready."',
+    a: 'Every board of directors in America has asked their CIO for an AI strategy in the past 12 months. Every CFO wants outcome-based contracts because they have been burned by consulting engagements that delivered decks but no results. The demand is not speculative — our three design partners are paying clients who sought us out. The market is not waiting for AI in enterprise transformation. It is waiting for AI that is accountable to a measurable result.',
+    win: 'We have paying clients. The market is ready. The question is whether we can scale to meet the demand.',
+  },
+  {
+    q: '"You need a much bigger team to scale."',
+    a: 'The platform does 80% of the work that currently requires a team of 8 consultants. One Maestro with AbarVa can carry 4–6 enterprise clients — the same work that previously required a team of 12. At 30 clients, we need 6 Maestros, not 40 consultants. At 100 clients, we need 20 Maestros. The scaling model is 3–4x more efficient than the consulting model — and the output is higher quality because it is grounded in data, not intuition.',
+    win: 'Maestro-to-client ratio is 1:4 to 1:6. At 100 clients: 20 Maestros, not 200. Gross margin at scale is 89% — not achievable in a pure consulting model.',
+  },
+  {
+    q: '"What happens when someone better-funded copies this?"',
+    a: 'They can copy the platform interface. They cannot copy the Transformation Genome — the causal knowledge graph built from real client outcomes. A copycat starting today has zero. We have three live engagements loading. By the time a well-funded competitor ships something viable, we will have 30 client outcomes in the database. By the time they reach 30, we will have 200. The compounding advantage accelerates. And our outcome fee model means we are economically aligned with clients in a way that a well-funded but unaligned competitor cannot replicate quickly.',
+    win: 'The Transformation Genome compounds. A copycat starting today competes against our historical data advantage that grows with every engagement. That gap widens, not narrows, over time.',
+  },
+]
+
+function NaysayerSection() {
+  const [openIdx, setOpenIdx] = useState<number | null>(null)
+  return (
+    <div>
+      <div className="tag" style={{ color: '#DC2626' }}>The Hard Questions</div>
+      <h1 className="h1">12 reasons this fails.<br />Why none of them do.</h1>
+      <p className="body">Every objection a sophisticated investor will raise — and the specific answer to each one. Read all twelve before the first meeting.</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {OBJECTIONS.map((obj, i) => (
+          <div key={i} style={{ border: '1px solid #E5E7EB', borderRadius: '10px', overflow: 'hidden' }}>
+            <button
+              onClick={() => setOpenIdx(openIdx === i ? null : i)}
+              style={{ width: '100%', padding: '16px 20px', background: openIdx === i ? '#F9FAFB' : '#FFFFFF', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', fontFamily: 'inherit' }}
+            >
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#111827' }}>{obj.q}</span>
+              <span style={{ fontSize: '18px', color: '#6B7280', flexShrink: 0, transition: 'transform 0.15s', transform: openIdx === i ? 'rotate(180deg)' : 'none' }}>▾</span>
+            </button>
+            {openIdx === i && (
+              <div style={{ padding: '0 20px 20px', background: '#FAFAFA', borderTop: '1px solid #F3F4F6' }}>
+                <p style={{ fontSize: '14px', color: '#374151', lineHeight: 1.75, margin: '16px 0 14px' }}>{obj.a}</p>
+                <div style={{ background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '12px 16px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: '#059669', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>Why we win — </span>
+                  <span style={{ fontSize: '13px', color: '#065F46' }}>{obj.win}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function InvestorPage() {
@@ -439,8 +536,67 @@ export default function InvestorPage() {
         {section === 'revenue' && (
           <div>
             <div className="tag" style={{ color: '#B45309' }}>Revenue Model</div>
-            <h1 className="h1">Three tiers. Two revenue streams.<br />One aligned incentive.</h1>
-            <p className="body">Platform fee gets us in the door. Outcome fee is where we build the business. Technology consumption revenue builds automatically in Phase 2.</p>
+            <h1 className="h1">Three active streams today.<br />Outcome fee unlocks at Series A.</h1>
+            <p className="body">Design partner pricing: $500–750K flat, full access, no per-seat friction. Outcome fee activates once we have three documented baselines and three verified outcomes. That is the model that makes AbarVa structurally unlike anything else in this market.</p>
+
+            {/* 4-stream breakdown */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '32px' }}>
+              {[
+                { num: '01', label: 'Enterprise License', status: 'Active', color: '#1B4FD8', price: '$500K–750K', detail: 'Flat annual fee. Full platform access. Unlimited users. Design partners (Clients 1–10). Post-Client-10: tier pricing based on usage data.' },
+                { num: '02', label: 'Solution Add-Ons', status: 'Active', color: '#6D28D9', price: '$120K–500K', detail: 'Pre-integrated deployment for a specific CXO problem — ready in 48 hours. Maestro T&M time concentrates here. Sold alongside platform license.' },
+                { num: '03', label: 'Marketplace Referral', status: 'Active', color: '#047857', price: '10–15% disclosed', detail: 'Referral agreements on vendor recommendations. Disclosed on every card, never affects the score. Builds automatically as clients implement recommendations.' },
+                { num: '04', label: 'Outcome Fee', status: 'Series A unlock', color: '#D97706', price: '15–20% of savings', detail: 'Activates once we have 3 documented baselines and 3 verified outcomes. At $5M ARR with 3 case studies: Series A opens at $80–100M pre-money. This is the model that changes the category.' },
+              ].map((s, i) => (
+                <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderTop: '3px solid ' + s.color, borderRadius: '12px', padding: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div>
+                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#9CA3AF', letterSpacing: '0.1em' }}>STREAM {s.num}</span>
+                      <div style={{ fontSize: '16px', fontWeight: 800, color: '#111827', marginTop: '2px' }}>{s.label}</div>
+                    </div>
+                    <span style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.08em', background: s.status === 'Active' ? '#ECFDF5' : '#FFFBEB', color: s.status === 'Active' ? '#059669' : '#D97706', border: '1px solid ' + (s.status === 'Active' ? '#6EE7B7' : '#FDE68A'), borderRadius: '4px', padding: '2px 8px', whiteSpace: 'nowrap' as const }}>
+                      {s.status.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: s.color, marginBottom: '8px' }}>{s.price}</div>
+                  <div style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.6 }}>{s.detail}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Unit economics table — 30 clients */}
+            <div style={{ border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', marginBottom: '32px' }}>
+              <div style={{ padding: '16px 24px', background: '#111827', borderBottom: '1px solid #21262D' }}>
+                <span style={{ fontSize: '12px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8' }}>Unit Economics · 30-Client Model · Three Active Streams</span>
+              </div>
+              <div style={{ overflowX: 'auto' as const }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#F9FAFB' }}>
+                      {['Stream', 'Clients', 'Price', 'Annual Revenue', 'Gross Margin'].map((h, i) => (
+                        <th key={i} style={{ padding: '10px 16px', fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#6B7280', textAlign: 'left' as const, borderBottom: '1px solid #E5E7EB' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { stream: 'Enterprise License', clients: '30', price: '$625K avg', revenue: '$18.75M', margin: '92%', color: '#1B4FD8' },
+                      { stream: 'Solution Add-Ons', clients: '20 of 30', price: '$180K avg', revenue: '$3.6M', margin: '78%', color: '#6D28D9' },
+                      { stream: 'Marketplace Referral', clients: '30', price: '12% avg on $1.2M txns', revenue: '$4.32M', margin: '100%', color: '#047857' },
+                      { stream: 'Subtotal — 3 active streams', clients: '', price: '', revenue: '$26.67M', margin: '89%', color: '#111827' },
+                      { stream: '× Scaled (30 → avg of 30 × cohort)', clients: '', price: '', revenue: '$67.5M ARR', margin: '89%', color: '#059669' },
+                    ].map((row, i) => (
+                      <tr key={i} style={{ background: i === 3 ? '#F9FAFB' : i === 4 ? '#ECFDF5' : '#FFFFFF', borderTop: '1px solid #F3F4F6' }}>
+                        <td style={{ padding: '12px 16px', fontWeight: i >= 3 ? 700 : 500, color: row.color }}>{row.stream}</td>
+                        <td style={{ padding: '12px 16px', color: '#374151' }}>{row.clients}</td>
+                        <td style={{ padding: '12px 16px', color: '#374151' }}>{row.price}</td>
+                        <td style={{ padding: '12px 16px', fontWeight: 700, color: row.color }}>{row.revenue}</td>
+                        <td style={{ padding: '12px 16px', color: '#374151' }}>{row.margin}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '40px' }}>
               {TIERS.map((tier, i) => (
@@ -851,6 +1007,8 @@ export default function InvestorPage() {
             </div>
           </div>
         )}
+
+        {section === 'naysayer' && <NaysayerSection />}
 
       </div>
     </div>

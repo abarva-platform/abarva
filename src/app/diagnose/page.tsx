@@ -11,6 +11,8 @@ import { apexRetail } from '@/data/apexretail/index'
 import { getUseCases, severityEmoji, severityColor } from '@/data/use-cases'
 import type { ClientId, RoleId } from '@/data/use-cases'
 import type { Contradiction } from '@/lib/intelligence/types'
+import { isDemoMode, streamDemoResponse } from '@/lib/demo-mode'
+import type { DemoClient } from '@/data/demo'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -53,6 +55,8 @@ function DiagnoseContent() {
   const [lastError, setLastError] = useState<'timeout' | 'error' | null>(null)
   const pendingMessages = useRef<Array<{role: string, content: string}>>([])
   const abortRef = useRef<AbortController | null>(null)
+  const cancelDemoRef = useRef<(() => void) | null>(null)
+  const demoMode = isDemoMode()
   const [sidebarTab, setSidebarTab] = useState<'snapshot' | 'findings' | 'actions' | 'data'>('snapshot')
   const [contradictions, setContradictions] = useState<Contradiction[] | null>(null)
   const [loadingContradictions, setLoadingContradictions] = useState(false)
@@ -155,11 +159,48 @@ function DiagnoseContent() {
     return meridianHealth.contradictions
   }
 
+  // Map a user message to the closest demo response key
+  function resolveDemoKey(msg: string): string {
+    const m = msg.toLowerCase()
+    if (m.includes('denial') || m.includes('rcm')) return 'rcm-denial-rate'
+    if (m.includes('margin') || m.includes('94m') || m.includes('94 m')) return 'operating-margin'
+    if (m.includes('fednow') || m.includes('fed now') || m.includes('real-time payment')) return 'fednow-urgency'
+    if (m.includes('einstein') || m.includes('personaliz')) return 'einstein-activation'
+    if (m.includes('travel nurse') || m.includes('staffing')) return 'rcm-denial-rate'
+    if (m.includes('prior auth')) return 'rcm-denial-rate'
+    if (m.includes('epic')) return 'operating-margin'
+    return 'rcm-denial-rate' // fallback to richest response
+  }
+
   const executeRequest = useCallback(async (msgs: Array<{role: string, content: string}>, currentClient: string, currentRole: string) => {
     pendingMessages.current = msgs
     setLoading(true)
     setStreaming('')
     setLastError(null)
+
+    // Demo mode: stream pre-cached response
+    if (isDemoMode()) {
+      const lastUserMsg = [...msgs].reverse().find(m => m.role === 'user')?.content ?? ''
+      const key = resolveDemoKey(lastUserMsg)
+      let accumulated = ''
+      const cancel = streamDemoResponse(
+        currentClient as DemoClient,
+        key,
+        (chunk) => {
+          accumulated += chunk
+          setStreaming(accumulated)
+        },
+        () => {
+          setMessages(prev => [...prev, { role: 'assistant', content: accumulated }])
+          setStreaming('')
+          setLoading(false)
+          setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+        },
+        35,
+      )
+      cancelDemoRef.current = cancel
+      return
+    }
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -197,6 +238,7 @@ function DiagnoseContent() {
     setStreaming('')
     setLoading(false)
     setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function sendMessage(text?: string) {
@@ -236,7 +278,12 @@ function DiagnoseContent() {
   }
 
   return (
-    <div style={S.page}>
+    <div style={{ ...S.page, position: 'relative' }}>
+      {demoMode && (
+        <div style={{ position: 'fixed', top: '14px', right: '16px', zIndex: 9999, background: '#F97316', color: '#FFFFFF', fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 8px', borderRadius: '4px', pointerEvents: 'none' }}>
+          DEMO
+        </div>
+      )}
       <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setMessages([]); setStreaming(''); setLastError(null); setSidebarTab('snapshot') }} activePage="diagnose" />
       <EngagementProgress />
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
