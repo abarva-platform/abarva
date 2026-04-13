@@ -429,7 +429,7 @@ function DiagnoseContent() {
             )}
             <div ref={bottomRef} />
           </div>
-          {messages.length >= 2 && !loading && (
+          {!loading && (
             <div style={{ marginBottom: '12px', padding: '12px 16px', background: '#F5F3FF', borderRadius: '10px', border: '1px solid #DDD6FE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', marginBottom: '2px' }}>Diagnosis complete</div>

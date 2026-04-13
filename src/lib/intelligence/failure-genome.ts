@@ -10,6 +10,8 @@
  */
 
 import { meridianAI } from '@/data/meridian/ai'
+import { firstCapitalAI } from '@/data/firstcapital/ai'
+import { apexRetailAI } from '@/data/apexretail/ai'
 import type { FailurePattern, InitiativeRisk } from './types'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -73,6 +75,34 @@ interface ClientReadiness {
   changeReadinessOverall: number
   hasMLOpsPlatform: boolean
   hasDataPlatform: boolean
+}
+
+function getClientReadiness(clientId: string): ClientReadiness {
+  if (clientId === 'firstcapital') {
+    const m = firstCapitalAI.maturity
+    return {
+      cdoVacant: true, // No CDO role — documented in patternDescription
+      mlopsScore: m.techReadiness.mlops, // 8/100
+      dataReadinessOverall: m.dataReadiness.overall, // 52/100
+      pilotsPurgatory: m.pilotsPurgatory, // 2
+      changeReadinessOverall: firstCapitalAI.changeReadiness.overall, // 44/100
+      hasMLOpsPlatform: m.techReadiness.mlops > 30,
+      hasDataPlatform: m.techReadiness.dataPlatform > 40,
+    }
+  }
+  if (clientId === 'apexretail') {
+    const m = apexRetailAI.maturity
+    return {
+      cdoVacant: true, // CDO vacant — explicitly documented
+      mlopsScore: m.techReadiness.mlops, // 18/100
+      dataReadinessOverall: m.dataReadiness.overall, // 54/100
+      pilotsPurgatory: m.pilotsPurgatory, // 4
+      changeReadinessOverall: apexRetailAI.changeReadiness.overall, // 36/100
+      hasMLOpsPlatform: m.techReadiness.mlops > 30,
+      hasDataPlatform: m.techReadiness.dataPlatform > 40,
+    }
+  }
+  return getMeridianReadiness()
 }
 
 function getMeridianReadiness(): ClientReadiness {
@@ -196,6 +226,63 @@ export function scoreMeridianInitiatives(): InitiativeRisk[] {
 export function getMeridianRiskMap(): Record<string, InitiativeRisk> {
   const risks = scoreMeridianInitiatives()
   return Object.fromEntries(risks.map(r => [r.initiativeId, r]))
+}
+
+export function scoreFirstCapitalInitiatives(): InitiativeRisk[] {
+  const readiness = getClientReadiness('firstcapital')
+  const allOpps: Opportunity[] = [
+    ...firstCapitalAI.opportunities.frontOffice,
+    ...firstCapitalAI.opportunities.middleOffice,
+    ...firstCapitalAI.opportunities.backOffice,
+  ]
+
+  return allOpps.map(opp => {
+    const patterns = detectPatterns(opp, readiness)
+    const successProbability = computeSuccessProbability(patterns)
+    const isBlocked = patterns.some(p => p.code === 'F005' || p.code === 'F006') || successProbability < 35
+
+    return {
+      initiativeId: opp.id,
+      initiativeName: opp.name,
+      annualValue: opp.annualValue,
+      successProbability,
+      activePatterns: patterns,
+      criticalBlocker: getCriticalBlocker(patterns),
+      isBlocked,
+    }
+  })
+}
+
+export function scoreApexInitiatives(): InitiativeRisk[] {
+  const readiness = getClientReadiness('apexretail')
+  const allOpps: Opportunity[] = [
+    ...apexRetailAI.opportunities.frontOffice,
+    ...apexRetailAI.opportunities.middleOffice,
+    ...apexRetailAI.opportunities.backOffice,
+  ]
+
+  return allOpps.map(opp => {
+    const patterns = detectPatterns(opp, readiness)
+    const successProbability = computeSuccessProbability(patterns)
+    const isBlocked = patterns.some(p => p.code === 'F005' || p.code === 'F006') || successProbability < 35
+
+    return {
+      initiativeId: opp.id,
+      initiativeName: opp.name,
+      annualValue: opp.annualValue,
+      successProbability,
+      activePatterns: patterns,
+      criticalBlocker: getCriticalBlocker(patterns),
+      isBlocked,
+    }
+  })
+}
+
+// Generic scorer — dispatches by clientId
+export function scoreInitiatives(clientId: string): InitiativeRisk[] {
+  if (clientId === 'firstcapital') return scoreFirstCapitalInitiatives()
+  if (clientId === 'apexretail') return scoreApexInitiatives()
+  return scoreMeridianInitiatives()
 }
 
 // Identify the single critical dependency node — the initiative that unlocks the most value

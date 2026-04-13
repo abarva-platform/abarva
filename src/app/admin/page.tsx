@@ -349,12 +349,12 @@ function EngagementCard({
 
       {/* Action buttons */}
       <div style={{ padding: '14px 20px', display: 'flex', gap: '8px' }}>
-        <button
-          onClick={onOpenSummary}
-          style={{ flex: 1, padding: '10px', background: client.color, color: '#0D1117', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+        <a
+          href={'/admin/client/' + client.id}
+          style={{ flex: 1, padding: '10px', background: client.color, color: '#0D1117', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', textAlign: 'center' }}
         >
           Open Intelligence →
-        </button>
+        </a>
         <button
           onClick={() => onOpenPanel('financials')}
           style={{ padding: '10px 18px', background: T.surface2, color: T.text, border: '1px solid ' + T.border2, borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}

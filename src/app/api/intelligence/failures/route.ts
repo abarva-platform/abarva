@@ -1,21 +1,31 @@
 /**
  * POST /api/intelligence/failures
  *
- * Scores all Meridian AI initiatives against the Transformation Failure Genome,
+ * Scores all AI initiatives against the Transformation Failure Genome,
  * then asks Claude to write a sequencing narrative — the critical path.
  *
- * Body: {} (Meridian only for now)
+ * Body: { client: 'meridian' | 'firstcapital' | 'apexretail' }
  * Returns: { risks: InitiativeRisk[], narrative: string }
  */
 
 import Anthropic from '@anthropic-ai/sdk'
-import { scoreMeridianInitiatives, getCriticalPath } from '@/lib/intelligence/failure-genome'
+import { scoreInitiatives, getCriticalPath } from '@/lib/intelligence/failure-genome'
 import type { FailureAnalysis } from '@/lib/intelligence/types'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-export async function POST() {
-  const risks = scoreMeridianInitiatives()
+const CLIENT_NAMES: Record<string, string> = {
+  meridian: 'Meridian Health System',
+  firstcapital: 'First Capital Financial',
+  apexretail: 'Apex Retail Group',
+}
+
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}))
+  const clientId: string = body.client ?? 'meridian'
+  const clientName = CLIENT_NAMES[clientId] ?? 'Meridian Health System'
+
+  const risks = scoreInitiatives(clientId)
   const criticalPath = getCriticalPath(risks)
 
   const blocked = risks.filter(r => r.isBlocked)
@@ -25,10 +35,10 @@ export async function POST() {
     `${r.initiativeName} (${r.initiativeId}): ${r.successProbability}% success probability — ${r.isBlocked ? 'BLOCKED' : 'viable'} — Blocker: ${r.criticalBlocker} — Patterns: ${r.activePatterns.map(p => p.code).join(', ') || 'none'}`
   ).join('\n')
 
-  const message = await client.messages.create({
+  const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-20250514',
     max_tokens: 1024,
-    system: `You are AbarVa, an enterprise transformation advisor. You are looking at Meridian Health System's AI initiative portfolio.
+    system: `You are AbarVa, an enterprise transformation advisor. You are looking at ${clientName}'s AI initiative portfolio.
 You have scored each initiative against the Transformation Failure Genome — seven historically validated failure patterns.
 
 Write a sequencing narrative in 3-4 sentences. Be direct, specific, and clinically honest:
@@ -39,7 +49,7 @@ Write a sequencing narrative in 3-4 sentences. Be direct, specific, and clinical
 Use specific dollar amounts and initiative names. Do not use markdown or bullet points — just flowing prose.`,
     messages: [{
       role: 'user',
-      content: `Meridian AI Portfolio Analysis:
+      content: `${clientName} AI Portfolio Analysis:
 
 Critical Node: ${criticalPath.criticalNode}
 Locked Value: $${(criticalPath.lockedValue / 1000000).toFixed(0)}M blocked until this resolves

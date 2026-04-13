@@ -78,11 +78,21 @@ function AIStrategyContent() {
   const [riskNarrative, setRiskNarrative] = useState<string | null>(null)
   const [loadingRisk, setLoadingRisk] = useState(false)
 
+  // Reset risk data when client changes
   useEffect(() => {
-    if (step !== 3 || activeClient !== 'meridian') return
-    if (Object.keys(riskMap).length > 0) return // already loaded
+    setRiskMap({})
+    setRiskNarrative(null)
+  }, [activeClient])
+
+  useEffect(() => {
+    if (step !== 3) return
+    if (Object.keys(riskMap).length > 0) return // already loaded for this client
     setLoadingRisk(true)
-    fetch('/api/intelligence/failures', { method: 'POST' })
+    fetch('/api/intelligence/failures', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client: activeClient }),
+    })
       .then(r => r.json())
       .then((data: FailureAnalysis) => {
         const map: Record<string, InitiativeRisk> = {}
