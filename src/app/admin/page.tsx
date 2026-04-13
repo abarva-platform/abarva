@@ -24,6 +24,7 @@ const LINKS = [
   { href: '/admin/new-client', label: 'New Engagement' },
   { href: '/admin/playbook', label: 'Playbook' },
   { href: '/admin/data', label: 'Data Loader' },
+  { href: '/admin/data-governance', label: 'Data Governance' },
   { href: '/admin/approvals', label: 'Approvals' },
   { href: '/admin/outcomes', label: 'Outcome Tracker' },
   { href: '/admin/intelligence', label: 'Intelligence' },

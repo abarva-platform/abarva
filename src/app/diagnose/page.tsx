@@ -13,6 +13,7 @@ import type { ClientId, RoleId } from '@/data/use-cases'
 import type { Contradiction } from '@/lib/intelligence/types'
 import { isDemoMode, streamDemoResponse } from '@/lib/demo-mode'
 import type { DemoClient } from '@/data/demo'
+import DataUnlock from '@/components/DataUnlock'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -58,6 +59,7 @@ function DiagnoseContent() {
   const cancelDemoRef = useRef<(() => void) | null>(null)
   const demoMode = isDemoMode()
   const [sidebarTab, setSidebarTab] = useState<'snapshot' | 'findings' | 'actions' | 'data'>('snapshot')
+  const [lastQuery, setLastQuery] = useState('')
   const [contradictions, setContradictions] = useState<Contradiction[] | null>(null)
   const [loadingContradictions, setLoadingContradictions] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -246,6 +248,7 @@ function DiagnoseContent() {
     if (!msg.trim()) return
     const updated = [...messages, { role: 'user', content: msg }]
     setMessages(updated)
+    setLastQuery(msg)
     setInput('')
     await executeRequest(updated, activeClient, role)
   }
@@ -351,6 +354,11 @@ function DiagnoseContent() {
                   </div>
                   {isLastAssistant && !loading && (
                     <div style={{ maxWidth: '80%' }}>
+                      <DataUnlock
+                        orgId={activeClient}
+                        queryText={lastQuery}
+                        onRefresh={() => { setMessages(prev => prev.slice(0, -1)); executeRequest(messages.slice(0, -1), activeClient, role) }}
+                      />
                       <ResponseOptions
                         options={getFollowUpOptions()}
                         onSelect={(text) => sendMessage(text)}
