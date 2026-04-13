@@ -534,14 +534,14 @@ export default function AdminHub() {
           <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '12px', padding: '16px' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Quick Access</div>
             {CLIENT_REGISTRY.map(client => (
-              <button key={client.id}
-                onClick={() => setOpenSummary(client.id)}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 0', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', borderBottom: '1px solid ' + T.border, marginBottom: '4px' }}>
+              <a key={client.id}
+                href={'/admin/client/' + client.id}
+                style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 0', textDecoration: 'none', borderBottom: '1px solid ' + T.border, marginBottom: '4px' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: client.color, flexShrink: 0 }} />
                 <span style={{ flex: 1, fontSize: '12px', fontWeight: 600, color: T.text2, textAlign: 'left' }}>{client.shortName}</span>
                 <span style={{ fontSize: '11px', color: T.text3 }}>{client.dataCompleteness}%</span>
                 <span style={{ fontSize: '11px', color: client.color }}>→</span>
-              </button>
+              </a>
             ))}
           </div>
 
