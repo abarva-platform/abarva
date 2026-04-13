@@ -260,9 +260,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                 <div>
                   <div style={COL_HEAD}>By Industry</div>
                   {([
-                    { label: 'Healthcare & Life Sciences', href: '/diagnose?client=meridian' },
-                    { label: 'Financial Services', href: '/diagnose?client=firstcapital' },
-                    { label: 'Retail & CPG', href: '/diagnose?client=apexretail' },
+                    { label: 'Healthcare & Life Sciences', href: '/admin/client/meridian' },
+                    { label: 'Financial Services', href: '/admin/client/firstcapital' },
+                    { label: 'Retail & CPG', href: '/admin/client/apexretail' },
                     { label: 'Technology & Software', href: null },
                   ] as { label: string; href: string | null }[]).map((item, i) => (
                     item.href ? (
@@ -279,9 +279,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                 <div>
                   <div style={COL_HEAD}>Live Demos</div>
                   {[
-                    { name: 'Meridian Health', sub: 'Healthcare · $11.2B', href: '/diagnose?client=meridian' },
-                    { name: 'First Capital', sub: 'Financial Services · $18B Assets', href: '/diagnose?client=firstcapital' },
-                    { name: 'Apex Retail', sub: 'Retail · $12.4B', href: '/diagnose?client=apexretail' },
+                    { name: 'Meridian Health', sub: 'Healthcare · $11.2B', href: '/admin/client/meridian' },
+                    { name: 'First Capital', sub: 'Financial Services · $18B Assets', href: '/admin/client/firstcapital' },
+                    { name: 'Apex Retail', sub: 'Retail · $12.4B', href: '/admin/client/apexretail' },
                   ].map((c, i) => (
                     <div key={i} className="drop-card">
                       <div style={{ fontSize: '13px', color: '#FFFFFF', fontWeight: 600, marginBottom: '2px' }}>{c.name}</div>
@@ -326,6 +326,14 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
               </div>
             )}
           </div>
+
+          {/* Maestro */}
+          <a href="/admin"
+            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s', fontFamily: "'DM Sans', sans-serif" }}
+            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8'; el.style.textDecoration = 'underline' }}
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#FFFFFF'; el.style.borderBottomColor = 'transparent'; el.style.textDecoration = 'none' }}>
+            Maestro
+          </a>
 
           {/* Investor View */}
           <a href="/investor"

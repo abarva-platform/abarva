@@ -298,7 +298,7 @@ const CLIENT_BENCHMARKS: Record<ClientId, BenchmarkItem[]> = {
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function Sparkline({ data, color, width = 64, height = 28 }: { data: number[]; color: string; width?: number; height?: number }) {
-  const PAD = 3
+  const PAD = 4
   const min = Math.min(...data)
   const max = Math.max(...data)
   const r = Math.max(max - min, 0.001)
@@ -307,29 +307,23 @@ function Sparkline({ data, color, width = 64, height = 28 }: { data: number[]; c
     PAD + (height - PAD * 2) - ((v - min) / r) * (height - PAD * 2),
   ] as [number, number])
 
-  // Smooth cubic bezier segments
-  let linePath = `M ${pts[0][0]},${pts[0][1]}`
-  for (let i = 1; i < pts.length; i++) {
-    const [px, py] = pts[i - 1]
-    const [cx, cy] = pts[i]
-    const cpx = (px + cx) / 2
-    linePath += ` C ${cpx},${py} ${cpx},${cy} ${cx},${cy}`
-  }
-  const areaPath = linePath + ` L ${pts[pts.length - 1][0]},${height + 2} L ${pts[0][0]},${height + 2} Z`
+  // Straight line segments — clean at small sizes with 3 data points
+  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ')
+  const areaPath = linePath + ` L ${pts[pts.length - 1][0].toFixed(1)},${height} L ${pts[0][0].toFixed(1)},${height} Z`
   const [lx, ly] = pts[pts.length - 1]
-  const gradId = `sg${color.replace(/[^a-f0-9]/gi, '')}`
+  const gradId = `sg${color.replace(/[^a-f0-9]/gi, '')}${width}`
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={areaPath} fill={`url(#${gradId})`} />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={lx} cy={ly} r="2.5" fill={color} />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx.toFixed(1)} cy={ly.toFixed(1)} r="2" fill={color} />
     </svg>
   )
 }
@@ -546,8 +540,8 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 800,
               background: active ? T.teal : done ? T.teal + '25' : 'transparent',
-              color: active ? T.bg : done ? T.teal : 'rgba(239,246,255,0.6)',
-              border: active ? 'none' : done ? '1px solid ' + T.teal + '50' : '1px solid rgba(239,246,255,0.25)',
+              color: active ? T.bg : done ? T.teal : 'rgba(239,246,255,0.7)',
+              border: active ? 'none' : done ? '1px solid ' + T.teal + '50' : '1px solid rgba(239,246,255,0.3)',
             }}>
               {done && !active ? '✓' : n}
             </span>
@@ -566,7 +560,7 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
   const label = issue.severity === 'critical' ? 'CRITICAL' : issue.severity === 'warning' ? 'WARNING' : 'WATCH'
   const metric = ISSUE_METRICS[issue.id]
   return (
-    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderLeft: '4px solid ' + borderColor, borderRadius: '8px', marginBottom: '10px', overflow: 'hidden' }}>
+    <div style={{ background: '#0D1520', border: '1px solid ' + T.border, borderLeft: '4px solid ' + borderColor, borderRadius: '8px', marginBottom: '10px', overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ flex: 1 }}>
@@ -1156,7 +1150,7 @@ function DiagnoseContent() {
   const [activeClient, setActiveClient] = useState<ClientId>(clientId)
   const [step, setStep] = useState(1)
   const [role, setRole] = useState<RoleId>('CIO')
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set([1]))
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set<number>())
   const [confidence, setConfidence] = useState(0)
 
   const meta = CLIENT_META[activeClient]
@@ -1182,8 +1176,8 @@ function DiagnoseContent() {
 
   function advanceStep() {
     const next = Math.min(step + 1, 6)
+    setCompletedSteps(prev => new Set([...prev, step])) // mark current step complete before advancing
     setStep(next)
-    setCompletedSteps(prev => new Set([...prev, next]))
   }
 
   return (
@@ -1225,16 +1219,16 @@ function DiagnoseContent() {
       </div>
 
       {/* Step navigator */}
-      <StepNav step={step} setStep={n => { setStep(n); setCompletedSteps(prev => new Set([...prev, n])) }} completedSteps={completedSteps} />
+      <StepNav step={step} setStep={n => { if (n !== step) { setCompletedSteps(prev => new Set([...prev, step])); setStep(n) } }} completedSteps={completedSteps} />
 
       {/* Zone content */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px' }}>
 
         {/* Step title */}
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '24px', textAlign: 'left' }}>
           {step === 1 && (
             <>
-              <h1 style={{ fontSize: '18px', fontWeight: 700, color: T.text, margin: '0 0 4px', textAlign: 'left' }}>What's Happening at {meta.name}</h1>
+              <h1 style={{ fontSize: '18px', fontWeight: 700, color: T.text, margin: '0 0 4px', textAlign: 'left', fontFamily: T.sans }}>What&apos;s Happening at {meta.name}</h1>
               <p style={{ fontSize: '13px', color: T.text2, margin: 0, textAlign: 'left' }}>
                 {issues.filter(i => i.severity === 'critical').length} critical issues · {issues.filter(i => i.severity === 'warning').length} warnings · sorted by relevance to {role}
               </p>
