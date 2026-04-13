@@ -113,11 +113,14 @@ export default function Home() {
 
   const products = [
     { id: 'diagnose', name: 'Situation Intelligence', tagline: "What's actually broken — and what's it costing us?", href: '/diagnose?client=' + clientId, btnColor: '#1B4FD8', icon: '⚡' },
-    { id: 'ai-strategy', name: 'AI Investment Intelligence', tagline: 'Where should we place our bets — and what are they worth?', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '🎯' },
-    { id: 'justify', name: 'Business Case Intelligence', tagline: 'How do I make this number defensible to my board?', href: '/justify?client=' + clientId, btnColor: '#047857', icon: '💰' },
-    { id: 'select', name: 'Vendor Intelligence', tagline: 'Who do I actually trust — and why?', href: '/select?client=' + clientId, btnColor: '#B45309', icon: '🔍' },
-    { id: 'outcomes', name: 'Outcome Intelligence', tagline: 'Are we winning — or just spending?', href: '/outcomes?client=' + clientId, btnColor: '#0369A1', icon: '🎛' },
-    { id: 'scenarios', name: 'Scenario Modeling', tagline: 'Change assumptions. See the impact. Decide faster.', href: '/scenarios?client=' + clientId, btnColor: '#DC2626', icon: '⊞' },
+    { id: 'ai-strategy', name: 'AI Investment Intelligence', tagline: 'Where should we place our bets — and which are high-risk?', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '🎯' },
+    { id: 'select', name: 'Select Intelligence', tagline: 'Which vendor should we choose — and what does the contract need to say?', href: '/select?client=' + clientId, btnColor: '#047857', icon: '🔍' },
+    { id: 'blueprint', name: 'Blueprint Intelligence', tagline: 'What should our AI architecture look like given our current state?', href: '/blueprint?client=' + clientId, btnColor: '#B45309', icon: '🏗' },
+    { id: 'ai-pdlc', name: 'AI PDLC Intelligence', tagline: 'How do we stop AI projects from dying in pilot?', href: '/ai-pdlc?client=' + clientId, btnColor: '#DC2626', icon: '⚙' },
+    { id: 'future-of-work', name: 'Future of Work Intelligence', tagline: 'Which roles change, which disappear — and what do we owe our workforce?', href: '/future-of-work?client=' + clientId, btnColor: '#0369A1', icon: '👥' },
+    { id: 'analytics-modernization', name: 'Analytics Modernization Intelligence', tagline: 'Is our data estate ready for AI — and what is it costing us that it isn\'t?', href: '/analytics-modernization?client=' + clientId, btnColor: '#7C3AED', icon: '📊' },
+    { id: 'control-tower', name: 'Control Tower Intelligence', tagline: 'Which AI tools are actually being used — and which are running unsupervised?', href: '/control-tower?client=' + clientId, btnColor: '#059669', icon: '🗼' },
+    { id: 'outcomes', name: 'Outcome Intelligence', tagline: 'Are our AI investments delivering — and can we prove it to the board?', href: '/outcomes?client=' + clientId, btnColor: '#D97706', icon: '📈' },
   ]
 
   return (
@@ -140,9 +143,10 @@ export default function Home() {
         {/* Header */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>AbarVa Intelligence Platform</div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', marginBottom: '4px', fontFamily: "'Fraunces', Georgia, serif", lineHeight: 1.2 }}>
+          <div style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', marginBottom: '2px', fontFamily: "'Fraunces', Georgia, serif", lineHeight: 1.2 }}>
             {user ? `Good morning, ${user.firstName || 'Maestro'}.` : 'Act on intelligence.'}
           </div>
+          {!user && <div style={{ fontSize: '18px', fontWeight: 400, color: '#6B7280', marginBottom: '4px', fontFamily: "'Fraunces', Georgia, serif", fontStyle: 'italic' }}>Before the window closes.</div>}
           <div style={{ fontSize: '14px', color: '#6B7280' }}>{data.name} · {data.industry} · {data.confidence}% data confidence</div>
         </div>
 
@@ -192,20 +196,20 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Products */}
-        <div style={S.lbl}>PRODUCTS</div>
+        {/* Intelligence Suite */}
+        <div style={S.lbl}>INTELLIGENCE SUITE — 9 PRODUCTS</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
           {products.map(p => (
             <a key={p.id} href={p.href} style={{ textDecoration: 'none', display: 'flex' }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', height: '140px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'none'; el.style.boxShadow = 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '15px', lineHeight: 1 }}>{p.icon}</span>
-                  <span style={{ fontSize: '15px', fontWeight: 800, color: '#111827' }}>{p.name}</span>
+              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 18px', minHeight: '120px', boxSizing: 'border-box' as const, display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; el.style.borderColor = '#2563EB' }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'none'; el.style.boxShadow = 'none'; el.style.borderColor = '#E2E8F0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '14px', lineHeight: 1 }}>{p.icon}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>{p.name}</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.45, flex: 1, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' as const }}>{p.tagline}</div>
-                <div style={{ padding: '0 16px', height: '36px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '12px', fontWeight: 700, textAlign: 'center' as const, marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Start Analysis →</div>
+                <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.45, flex: 1, fontStyle: 'italic' }}>{p.tagline}</div>
+                <div style={{ padding: '0 12px', height: '32px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '11px', fontWeight: 700, textAlign: 'center' as const, marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Start Analysis →</div>
               </div>
             </a>
           ))}

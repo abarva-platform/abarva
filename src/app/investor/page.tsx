@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 
 const SECTIONS = [
   { id: 'problem', label: 'The Problem' },
+  { id: 'platform', label: 'The Platform' },
   { id: 'moat', label: 'Why Not General AI' },
   { id: 'clients', label: 'Live Client Economics' },
   { id: 'revenue', label: 'Revenue Model' },
@@ -397,6 +398,89 @@ export default function InvestorPage() {
           </div>
         )}
 
+        {/* THE PLATFORM — INTELLIGENCE SUITE */}
+        {section === 'platform' && (
+          <div>
+            <div className="tag" style={{ color: '#1B4FD8' }}>The Platform</div>
+            <h1 className="h1">Nine intelligence products.<br />Every stage of the transformation lifecycle.</h1>
+            <p className="body">All connected. All accountable to the same outcome. Navigate from problem identification to verified savings without leaving the platform.</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+              {[
+                {
+                  num: '01', name: 'Situation Intelligence', route: '/diagnose', color: '#DC2626',
+                  question: '"What is actually broken in our organization — and what is it costing us?"',
+                  desc: 'Contradiction map. Dollar quantification. Role-specific intelligence. Before the first meeting.',
+                },
+                {
+                  num: '02', name: 'AI Investment Intelligence', route: '/ai-strategy', color: '#1B4FD8',
+                  question: '"Where should we bet our AI budget — and which bets are high-risk?"',
+                  desc: '6-step workflow from ground truth to board deck. Failure Genome scoring. 90-minute output.',
+                },
+                {
+                  num: '03', name: 'Select Intelligence', route: '/select', color: '#047857',
+                  question: '"Which vendor should we choose — and what does the contract need to say?"',
+                  desc: 'Ranked shortlist against your data readiness. Referral disclosed. RFP generation.',
+                },
+                {
+                  num: '04', name: 'Blueprint Intelligence', route: '/blueprint', color: '#6D28D9',
+                  question: '"What should our AI architecture look like given our current state?"',
+                  desc: 'Infrastructure gap analysis. Build vs buy. 90-day implementation roadmap.',
+                },
+                {
+                  num: '05', name: 'AI PDLC Intelligence', route: '/ai-pdlc', color: '#B45309',
+                  question: '"How do we stop AI projects from dying in pilot?"',
+                  desc: 'Delivery maturity scoring. Governance model. Sprint-level risk tracking.',
+                },
+                {
+                  num: '06', name: 'Future of Work Intelligence', route: '/future-of-work', color: '#0369A1',
+                  question: '"Which roles change, which disappear, and what do we owe our workforce?"',
+                  desc: 'Role impact modeling. Retraining pathways. Workforce scenario planning.',
+                },
+                {
+                  num: '07', name: 'Analytics Modernization Intelligence', route: '/analytics-modernization', color: '#7C3AED',
+                  question: '"Is our data estate ready for AI — and what is it costing us that it isn\'t?"',
+                  desc: 'Data readiness scorecard. Migration priority ranking. Cost-of-delay model.',
+                },
+                {
+                  num: '08', name: 'Control Tower Intelligence', route: '/control-tower', color: '#047857',
+                  question: '"Which AI tools are actually being used — and which are running unsupervised?"',
+                  desc: 'Shadow AI detection. Override rate monitoring. Responsible AI scorecard.',
+                },
+                {
+                  num: '09', name: 'Outcome Intelligence', route: '/outcomes', color: '#D97706',
+                  question: '"Are our AI investments actually delivering — and how do we prove it to the board?"',
+                  desc: 'Baseline-to-actual tracking. Attribution confidence. Board report export.',
+                },
+              ].map(p => (
+                <a key={p.num} href={p.route + '?client=meridian'} style={{ textDecoration: 'none', display: 'block', background: '#FFFFFF', border: '1px solid #E5E7EB', borderTop: '3px solid ' + p.color, borderRadius: '10px', padding: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 800, color: '#9CA3AF', letterSpacing: '0.1em' }}>{p.num}</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700, color: p.color, background: p.color + '12', padding: '2px 8px', borderRadius: '4px', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>Live</span>
+                  </div>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#111827', marginBottom: '8px', lineHeight: 1.3 }}>{p.name}</div>
+                  <div style={{ fontSize: '12px', color: p.color, fontStyle: 'italic', lineHeight: 1.5, marginBottom: '8px' }}>{p.question}</div>
+                  <div style={{ fontSize: '11px', color: '#9CA3AF', lineHeight: 1.5 }}>{p.desc}</div>
+                </a>
+              ))}
+            </div>
+
+            <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '12px', padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
+              {[
+                { label: 'Products in suite', value: '9', sub: 'All live with Meridian data', color: '#1B4FD8' },
+                { label: 'Demo time to value', value: '90 min', sub: 'Board deck from raw data', color: '#047857' },
+                { label: 'Consulting equivalent', value: '$3.2M+', sub: 'Per McKinsey engagement', color: '#DC2626' },
+              ].map((m, i) => (
+                <div key={i} style={{ textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '36px', fontWeight: 800, color: m.color, letterSpacing: '-0.025em', marginBottom: '4px' }}>{m.value}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', marginBottom: '2px' }}>{m.label}</div>
+                  <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{m.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* WHY NOT GENERAL AI */}
         {section === 'moat' && (
           <div>
@@ -704,9 +788,33 @@ export default function InvestorPage() {
               </div>
             </div>
 
-            <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '24px' }}>
+            <div style={{ background: '#FFFBEB', border: '1px solid #FEF3C7', borderRadius: '12px', padding: '24px', marginBottom: '20px' }}>
               <div style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#D97706', marginBottom: '10px' }}>Stream 3 · Technology Consumption · Phase 2</div>
               <div style={{ fontSize: '15px', color: '#374151', lineHeight: 1.75 }}>Every AI initiative AbarVa recommends requires technology — AI infrastructure, data platforms, SaaS tools. When clients procure through AbarVa, we earn 10–15% on consumption. This stream builds automatically as clients implement recommendations. No additional sales motion required.</div>
+            </div>
+
+            {/* McKinsey callout card */}
+            <div style={{ background: '#111827', border: '1px solid #374151', borderRadius: '14px', padding: '28px', display: 'grid', gridTemplateColumns: '1fr auto', gap: '24px', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' as const, color: '#6B7280', marginBottom: '10px' }}>The Consulting Alternative</div>
+                <div style={{ fontSize: '20px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', lineHeight: 1.3, marginBottom: '8px' }}>
+                  McKinsey would charge $3.2M and take 16 weeks for the same output.
+                </div>
+                <div style={{ fontSize: '14px', color: '#9CA3AF', lineHeight: 1.7 }}>
+                  With their assumptions, not yours. No baseline. No accountability. No outcome fee — because there is no outcome tracked.
+                  AbarVa delivers the same intelligence in 90 minutes using your own data. Every number is defensible because it came from inside your organization.
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
+                <div style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>McKinsey cost</div>
+                <div style={{ fontSize: '36px', fontWeight: 900, color: '#DC2626', letterSpacing: '-0.03em', lineHeight: 1 }}>$3.2M</div>
+                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>16 weeks · their assumptions</div>
+                <div style={{ marginTop: '16px' }}>
+                  <div style={{ fontSize: '11px', color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>AbarVa cost</div>
+                  <div style={{ fontSize: '36px', fontWeight: 900, color: '#10B981', letterSpacing: '-0.03em', lineHeight: 1 }}>$500K</div>
+                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>90 minutes · your data</div>
+                </div>
+              </div>
             </div>
           </div>
         )}

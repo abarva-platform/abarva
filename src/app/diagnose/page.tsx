@@ -155,6 +155,39 @@ function DiagnoseContent() {
     ]
   }
 
+  function getCostSummary() {
+    if (activeClient === 'firstcapital') return {
+      total: '$127M',
+      label: 'Total annual cost exposure',
+      items: [
+        { label: 'Digital revenue at risk', value: '$68M', color: '#DC2626' },
+        { label: 'Excess fraud losses vs benchmark', value: '$3.8M', color: '#DC2626' },
+        { label: 'Cost-to-income gap (55% target)', value: '$41M', color: '#D97706' },
+        { label: 'FedNow commercial client risk', value: '$14M', color: '#D97706' },
+      ],
+    }
+    if (activeClient === 'apexretail') return {
+      total: '$183M',
+      label: 'Total annual cost exposure',
+      items: [
+        { label: 'Inventory carrying cost (4.2x vs 6.8x)', value: '$94M', color: '#DC2626' },
+        { label: 'Cart abandonment revenue loss', value: '$52M', color: '#DC2626' },
+        { label: 'Loyalty program underperformance', value: '$28M', color: '#D97706' },
+        { label: 'Einstein activation gap', value: '$9M', color: '#D97706' },
+      ],
+    }
+    return {
+      total: '$218M',
+      label: 'Total annual cost exposure',
+      items: [
+        { label: 'RCM denial write-offs (18.2% rate)', value: '$94M', color: '#DC2626' },
+        { label: 'Operating margin board gap', value: '$94M', color: '#DC2626' },
+        { label: 'Prior auth delay cost (4.2d vs 1.8d)', value: '$18M', color: '#D97706' },
+        { label: 'Epic underutilization loss', value: '$12M', color: '#D97706' },
+      ],
+    }
+  }
+
   function getContradictions() {
     if (activeClient === 'firstcapital') return firstCapital.contradictions
     if (activeClient === 'apexretail') return apexRetail.contradictions
@@ -425,6 +458,7 @@ function DiagnoseContent() {
 
           {/* Snapshot tab */}
           {sidebarTab === 'snapshot' && (
+            <>
             <div style={S.card}>
               <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>CLIENT SNAPSHOT</div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{clientName}</div>
@@ -439,6 +473,23 @@ function DiagnoseContent() {
                 </div>
               ))}
             </div>
+            {/* What this is costing you */}
+            <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '12px', padding: '16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#991B1B', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '10px' }}>WHAT THIS IS COSTING YOU</div>
+              {(() => { const c = getCostSummary(); return (
+                <>
+                  <div style={{ fontSize: '28px', fontWeight: 900, color: '#DC2626', letterSpacing: '-0.03em', marginBottom: '4px' }}>{c.total}</div>
+                  <div style={{ fontSize: '11px', color: '#B91C1C', marginBottom: '12px' }}>{c.label}</div>
+                  {c.items.map((item, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#374151', flex: 1, paddingRight: '8px', lineHeight: 1.3 }}>{item.label}</span>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: item.color, flexShrink: 0 }}>{item.value}</span>
+                    </div>
+                  ))}
+                </>
+              )})()}
+            </div>
+            </>
           )}
 
           {/* Findings tab */}
@@ -504,16 +555,37 @@ function DiagnoseContent() {
 
           {/* Actions tab */}
           {sidebarTab === 'actions' && (
-            <div style={S.card}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>QUICK ACTIONS</div>
-              {[
-                { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
-                { label: 'Build Business Case', href: '/justify?client=' + activeClient },
-                { label: 'Select Vendor', href: '/select?client=' + activeClient },
-                { label: 'Maestro Admin', href: '/admin' },
-              ].map((a, i) => (
-                <a key={i} href={a.href} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>{a.label} →</a>
-              ))}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {/* Situation Brief export */}
+              <div style={{ background: '#0D1117', border: '1px solid #2DD4C8', borderRadius: '10px', padding: '14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' }}>SITUATION BRIEF</div>
+                <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '12px', lineHeight: 1.5 }}>One-page HTML export with the 3 key findings, dollar quantification, and contradiction map. Send before the first meeting.</div>
+                <button
+                  onClick={() => {
+                    const cost = activeClient === 'firstcapital' ? '$127M' : activeClient === 'apexretail' ? '$183M' : '$218M'
+                    const name = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
+                    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Situation Brief — ${name}</title><style>body{font-family:Inter,sans-serif;max-width:800px;margin:40px auto;padding:0 24px;color:#0F172A}h1{font-size:28px;font-weight:900;margin-bottom:4px}h2{font-size:16px;font-weight:700;margin:24px 0 8px;color:#DC2626}.metric{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}.m{padding:16px;border:1px solid #E2E8F0;border-radius:8px}.label{font-size:11px;color:#6B7280;text-transform:uppercase;font-weight:700}.value{font-size:22px;font-weight:800;color:#DC2626}.total{font-size:32px;font-weight:900;color:#DC2626;border:2px solid #DC2626;padding:16px;border-radius:8px;margin-bottom:24px}</style></head><body><div style="font-size:11px;text-transform:uppercase;font-weight:700;color:#2DD4C8;letter-spacing:0.1em;margin-bottom:8px">Situation Brief · AbarVa Intelligence Platform</div><h1>${name}</h1><div style="font-size:14px;color:#6B7280;margin-bottom:24px">Prepared by AbarVa · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div><h2>What This Is Costing You</h2><div class="total">${cost} total annual cost exposure</div><h2>Three Key Contradictions</h2><div class="metric">${['Operating margin below board target', 'RCM denial rate 6 pts above benchmark', 'Prior auth 133% slower than peers'].map(f => `<div class="m"><div class="label">Finding</div><div style="font-size:13px;font-weight:600;margin-top:4px">${f}</div></div>`).join('')}</div><div style="margin-top:32px;padding:16px;background:#F8FAFC;border-radius:8px;font-size:12px;color:#6B7280">This brief was prepared by AbarVa using publicly available data. Schedule a full Situation Intelligence session to load proprietary data and identify the full gap. abarva.com</div></body></html>`
+                    const blob = new Blob([html], { type: 'text/html' })
+                    const url = URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url; a.download = `situation-brief-${activeClient}.html`; a.click()
+                    URL.revokeObjectURL(url)
+                  }}
+                  style={{ width: '100%', padding: '10px', borderRadius: '8px', background: '#2DD4C8', color: '#0D1117', fontSize: '12px', fontWeight: 700, border: 'none', cursor: 'pointer', textAlign: 'center' as const }}>
+                  Export Situation Brief (HTML)
+                </button>
+              </div>
+              <div style={S.card}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>NEXT STEPS</div>
+                {[
+                  { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
+                  { label: 'Build Business Case', href: '/justify?client=' + activeClient },
+                  { label: 'Select Vendor', href: '/select?client=' + activeClient },
+                  { label: 'Maestro Admin', href: '/admin' },
+                ].map((a, i) => (
+                  <a key={i} href={a.href} style={{ display: 'block', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', fontWeight: 500, textDecoration: 'none', background: '#F8FAFC', color: '#2563EB', border: '1px solid #E2E8F0', marginBottom: '8px' }}>{a.label} →</a>
+                ))}
+              </div>
             </div>
           )}
 
