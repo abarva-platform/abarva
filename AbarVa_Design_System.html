@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Complete Logo, Font & Nav System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,700;0,9..144,900;1,9..144,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --teal:    #2DD4C8;
+  --teal-dk: #22B5A9;
+  --teal-bg: rgba(45,212,200,0.08);
+  --teal-bg2:rgba(45,212,200,0.15);
+  --nav-bg:  #0D1117;
+  --nav-bdr: #21262D;
+  --drop-bg: #161B22;
+  --white:   #FFFFFF;
+  --gray1:   #94A3B8;
+  --gray2:   #6B7280;
+  --gray3:   #4B5563;
+  --gray4:   #21262D;
+  --page-bg: #060A12;
+  --card-bg: #0D1520;
+  --card-bdr:#1C2D45;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--page-bg);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  padding: 0 0 80px;
+}
+
+/* ── PAGE HEADER ── */
+.page-header { padding: 52px 64px 0; margin-bottom: 48px; }
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 10px;
+}
+.page-title {
+  font-family: 'Fraunces', serif;
+  font-size: 36px; font-weight: 900;
+  letter-spacing: -0.02em; line-height: 1.1;
+  margin-bottom: 10px;
+}
+.page-title span { color: var(--teal); }
+.page-intro { font-size: 14px; color: var(--gray2); line-height: 1.7; max-width: 640px; }
+
+/* ── SECTION ── */
+.section { padding: 0 64px; margin-bottom: 64px; }
+.section-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 600;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--teal); margin-bottom: 6px;
+}
+.section-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.section-sub { font-size: 13px; color: var(--gray2); margin-bottom: 28px; line-height: 1.6; }
+
+hr.divider { border: none; border-top: 1px solid var(--card-bdr); margin: 0 64px 56px; }
+
+/* ── LIVE NAV (interactive) ── */
+#live-nav {
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-bdr);
+  height: 64px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 32px;
+  position: sticky; top: 0; z-index: 100;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 48px;
+}
+.logo-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.wordmark { display: flex; align-items: baseline; }
+.wm-abar {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px; font-weight: 800;
+  color: var(--white); letter-spacing: -0.02em;
+}
+.wm-va {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 23px; font-weight: 900;
+  color: var(--teal); letter-spacing: -0.03em;
+  margin-left: -1px;
+}
+.tagline {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: 700;
+  color: var(--white); letter-spacing: 0.01em;
+  margin-top: 3px; white-space: nowrap; line-height: 1;
+}
+
+/* nav center */
+.nav-center { display: flex; align-items: center; height: 64px; }
+
+/* nav link — default */
+.nl {
+  display: flex; align-items: center; gap: 3px;
+  padding: 0 14px; height: 64px; cursor: pointer;
+  color: var(--white);
+  font-size: 14px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  border-bottom: 2px solid transparent;
+  box-sizing: border-box;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.2s, font-weight 0.1s;
+  user-select: none; white-space: nowrap;
+}
+.nl:hover, .nl.active {
+  color: var(--teal);
+  border-bottom-color: var(--teal);
+  font-weight: 700;
+}
+.nl:hover .chev, .nl.active .chev { color: var(--teal); }
+.chev { font-size: 10px; color: var(--gray1); margin-left: 1px; transition: color 0.15s; }
+
+/* dropdown */
+.drop-wrap { position: relative; height: 64px; display: flex; align-items: center; }
+.dropdown {
+  display: none; position: absolute; top: 64px; left: 0;
+  background: var(--drop-bg); border: 1px solid var(--nav-bdr);
+  border-radius: 12px; padding: 20px; z-index: 200;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+  min-width: 320px;
+}
+.drop-wrap:hover .dropdown { display: block; }
+.drop-head {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; font-weight: 700; color: var(--gray2);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin-bottom: 10px; padding-left: 12px;
+}
+.drop-item {
+  display: flex; gap: 12px; padding: 10px 12px; border-radius: 8px;
+  text-decoration: none; align-items: center;
+  border-left: 2px solid transparent;
+  transition: all 0.12s ease; cursor: pointer;
+}
+.drop-item:hover {
+  background: var(--teal-bg);
+  border-left-color: var(--teal);
+  padding-left: 14px;
+}
+.drop-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--gray4); display: flex; align-items: center;
+  justify-content: center; font-size: 14px; flex-shrink: 0;
+  transition: background 0.12s;
+}
+.drop-item:hover .drop-icon { background: var(--teal-bg2); }
+.drop-intel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 600; color: var(--teal);
+  text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px;
+}
+.drop-name { font-size: 13px; font-weight: 600; color: var(--white); margin-bottom: 2px; transition: color 0.12s; }
+.drop-item:hover .drop-name { color: var(--teal); }
+.drop-q { font-size: 11px; color: var(--gray2); line-height: 1.4; }
+
+/* right buttons */
+.nav-right { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.btn-demo {
+  padding: 0 18px; height: 36px; display: flex; align-items: center;
+  border-radius: 8px; background: var(--teal); color: #0D1117;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.btn-demo:hover { background: var(--teal-dk); }
+.btn-si {
+  padding: 0 18px; height: 36px; display: flex; align-items: center;
+  border-radius: 8px; border: 1px solid var(--gray3);
+  color: var(--white); font-size: 13px; font-weight: 500;
+  text-decoration: none; font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-si:hover { background: var(--gray4); border-color: var(--gray2); }
+
+/* ── SPEC GRID ── */
+.spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.spec-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.spec-grid.four  { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+/* spec cards */
+.spec-card {
+  background: var(--card-bg); border: 1px solid var(--card-bdr);
+  border-radius: 12px; overflow: hidden;
+}
+.spec-card.teal  { border-color: var(--teal); }
+.spec-card.gold  { border-color: #F59E0B; }
+
+.spec-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+  padding: 6px 14px; display: block;
+}
+.b-teal { background: rgba(45,212,200,0.12); color: var(--teal); }
+.b-gold { background: rgba(245,158,11,0.12); color: #F59E0B; }
+.b-gray { background: rgba(75,96,128,0.12); color: var(--gray1); }
+
+.spec-preview {
+  background: var(--nav-bg); padding: 24px 20px;
+  border-bottom: 1px solid var(--card-bdr);
+  display: flex; align-items: center; min-height: 80px;
+}
+.spec-meta { padding: 14px 16px; }
+.spec-name { font-size: 12px; font-weight: 700; color: var(--white); margin-bottom: 4px; }
+.spec-detail { font-size: 11px; color: var(--gray2); line-height: 1.6; }
+.spec-verdict { font-size: 11px; font-weight: 600; margin-top: 6px; }
+.v-yes { color: #34D399; }
+.v-no  { color: #EF4444; }
+
+/* mini nav mockup */
+.mini-nav {
+  background: var(--nav-bg); border: 1px solid var(--nav-bdr);
+  border-radius: 8px; height: 52px; display: flex; align-items: center;
+  padding: 0 16px; gap: 6px; width: 100%;
+}
+.sp { flex: 1; }
+
+/* ── WORKFLOW STEP NAV ── */
+.step-nav {
+  background: #0A0F1A; border-bottom: 1px solid var(--card-bdr);
+  display: flex; align-items: center; padding: 0 32px; height: 52px;
+  gap: 4px; overflow-x: auto;
+}
+.step-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 0 16px; height: 52px; white-space: nowrap;
+  font-size: 13px; font-weight: 500; color: var(--gray2);
+  border-bottom: 2px solid transparent; box-sizing: border-box;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+}
+.step-item:hover { color: var(--white); border-bottom-color: var(--gray3); }
+.step-item.done  { color: var(--teal); }
+.step-item.done:hover { border-bottom-color: var(--teal); }
+.step-item.current {
+  color: var(--white); font-weight: 700;
+  border-bottom-color: var(--teal);
+}
+.step-num {
+  width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+.step-num.n-todo    { background: var(--gray4); color: var(--gray2); }
+.step-num.n-done    { background: var(--teal); color: #0D1117; }
+.step-num.n-current { background: var(--white); color: #0D1117; }
+.step-arrow { font-size: 10px; color: var(--gray3); margin: 0 2px; }
+
+/* ── TOKEN TABLE ── */
+.token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.token-table thead th {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--gray2); padding: 10px 16px; text-align: left;
+  border-bottom: 1px solid var(--card-bdr);
+}
+.token-table tbody tr { border-bottom: 1px solid rgba(28,45,69,0.4); }
+.token-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.token-table tbody td { padding: 11px 16px; color: var(--gray1); }
+.token-table tbody td:first-child { color: var(--white); font-weight: 600; }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.swatch {
+  display: inline-block; width: 12px; height: 12px;
+  border-radius: 3px; vertical-align: middle; margin-right: 6px;
+}
+
+/* ── CODE BLOCK ── */
+.code-block { background: #060A12; border-radius: 8px; padding: 16px; margin-top: 12px; }
+.code-label {
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  color: #34D399; letter-spacing: 0.1em; margin-bottom: 8px;
+}
+pre {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: var(--gray1); line-height: 1.8; white-space: pre-wrap;
+}
+pre .hl  { color: var(--teal); }
+pre .cm  { color: var(--gray3); }
+pre .str { color: #F59E0B; }
+
+/* logo SVG reuse */
+.logo-svg { flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     LIVE INTERACTIVE NAV — hover everything
+══════════════════════════════════════ -->
+<nav id="live-nav">
+
+  <!-- Logo -->
+  <a class="logo-wrap" href="#">
+    <svg class="logo-svg" width="34" height="34" viewBox="0 0 32 32" fill="none">
+      <line x1="16" y1="16" x2="16"   y2="6"   stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+      <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+      <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.3"/>
+      <line x1="16" y1="16" x2="16"   y2="26"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+      <line x1="16" y1="16" x2="7.3"  y2="21"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.3"/>
+      <line x1="16" y1="16" x2="7.3"  y2="11"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+      <line x1="16"   y1="6"  x2="24.7" y2="11" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <line x1="24.7" y1="11" x2="24.7" y2="21" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <line x1="24.7" y1="21" x2="16"   y2="26" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <line x1="16"   y1="26" x2="7.3"  y2="21" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <line x1="7.3"  y1="21" x2="7.3"  y2="11" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <line x1="7.3"  y1="11" x2="16"   y2="6"  stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+      <circle cx="16"   cy="6"  r="2.2" fill="#2DD4C8" opacity="0.9"/>
+      <circle cx="24.7" cy="11" r="2.2" fill="#2DD4C8" opacity="0.7"/>
+      <circle cx="24.7" cy="21" r="2.2" fill="#2DD4C8" opacity="0.55"/>
+      <circle cx="16"   cy="26" r="2.2" fill="#2DD4C8" opacity="0.7"/>
+      <circle cx="7.3"  cy="21" r="2.2" fill="#2DD4C8" opacity="0.55"/>
+      <circle cx="7.3"  cy="11" r="2.2" fill="#2DD4C8" opacity="0.9"/>
+      <circle cx="16" cy="16" r="8"   fill="#2DD4C8" opacity="0.08"/>
+      <circle cx="16" cy="16" r="5.5" fill="#2DD4C8"/>
+      <circle cx="16" cy="16" r="2.2" fill="#0D1117"/>
+    </svg>
+    <div>
+      <div class="wordmark">
+        <span class="wm-abar">Abar</span>
+        <span class="wm-va">Va</span>
+      </div>
+      <div class="tagline">Intelligence. Now act on it.</div>
+    </div>
+  </a>
+
+  <!-- Center links -->
+  <nav class="nav-center">
+
+    <div class="drop-wrap">
+      <div class="nl">Products <span class="chev">▾</span></div>
+      <div class="dropdown" style="min-width:520px;display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="drop-head">Diagnose & Plan</div>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">⚡</div>
+            <div>
+              <div class="drop-intel">Situation Intelligence</div>
+              <div class="drop-name">What's actually broken?</div>
+              <div class="drop-q">And what's it costing us?</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">🎯</div>
+            <div>
+              <div class="drop-intel">AI Investment Intelligence</div>
+              <div class="drop-name">Where should we place our bets?</div>
+              <div class="drop-q">And what are they worth?</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">💰</div>
+            <div>
+              <div class="drop-intel">Business Case Intelligence</div>
+              <div class="drop-name">How do I make this defensible?</div>
+              <div class="drop-q">To my board.</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">🔍</div>
+            <div>
+              <div class="drop-intel">Vendor Intelligence</div>
+              <div class="drop-name">Who do I actually trust?</div>
+              <div class="drop-q">And why?</div>
+            </div>
+          </a>
+        </div>
+        <div>
+          <div class="drop-head">Execute & Track</div>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">🎛</div>
+            <div>
+              <div class="drop-intel">Outcome Intelligence</div>
+              <div class="drop-name">Are we winning?</div>
+              <div class="drop-q">Or just spending?</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">⚙️</div>
+            <div>
+              <div class="drop-intel">Delivery Intelligence</div>
+              <div class="drop-name">Are we shipping faster?</div>
+              <div class="drop-q">Or just adding tools?</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">👥</div>
+            <div>
+              <div class="drop-intel">Workforce Intelligence</div>
+              <div class="drop-name">What does my team look like?</div>
+              <div class="drop-q">In 18 months.</div>
+            </div>
+          </a>
+          <a class="drop-item" href="#">
+            <div class="drop-icon">📊</div>
+            <div>
+              <div class="drop-intel">Data Estate Intelligence</div>
+              <div class="drop-name">Asset or liability?</div>
+              <div class="drop-q">Our data estate, right now.</div>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="drop-wrap">
+      <div class="nl">Clients <span class="chev">▾</span></div>
+      <div class="dropdown" style="min-width:360px">
+        <div class="drop-head">Live Demos</div>
+        <a class="drop-item" href="#">
+          <div class="drop-icon">🏥</div>
+          <div>
+            <div class="drop-name">Meridian Health System</div>
+            <div class="drop-q">Healthcare · $11.2B · RCM + AI Portfolio</div>
+          </div>
+        </a>
+        <a class="drop-item" href="#">
+          <div class="drop-icon">🏦</div>
+          <div>
+            <div class="drop-name">First Capital Financial</div>
+            <div class="drop-q">Financial Services · $18B Assets · FedNow</div>
+          </div>
+        </a>
+        <a class="drop-item" href="#">
+          <div class="drop-icon">🛍</div>
+          <div>
+            <div class="drop-name">Apex Retail Group</div>
+            <div class="drop-q">Retail · $12.4B · 800 stores</div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <a class="nl" href="#">Investor View</a>
+
+  </nav>
+
+  <!-- Right -->
+  <div class="nav-right">
+    <a class="btn-demo" href="#">Book a Demo</a>
+    <a class="btn-si"   href="#">Sign In</a>
+  </div>
+
+</nav>
+
+<!-- ══════════════════════════════════════
+     PAGE CONTENT
+══════════════════════════════════════ -->
+<div class="page-header">
+  <div class="eyebrow">AbarVa · Design System · April 2026</div>
+  <h1 class="page-title">Logo, Fonts & Nav <span>Complete System</span></h1>
+  <p class="page-intro">
+    Hover the live nav above to test every state. Every spec below is exact — copy the code values directly into AbarvaNav.tsx.
+    This covers: the logo mark, the wordmark, the tagline, all main nav states, dropdown states, and the workflow step navigator used on every product page.
+  </p>
+</div>
+
+<!-- ══ SECTION 1: LOGO ══ -->
+<div class="section">
+  <div class="section-label">Section 1</div>
+  <div class="section-title">The Logo System</div>
+  <div class="section-sub">Three parts: the mark (SVG), the wordmark (Georgia serif), and the tagline (DM Sans). All three together = the logo lockup.</div>
+
+  <div class="spec-grid" style="grid-template-columns:1fr 1fr 1fr;gap:20px">
+
+    <!-- MARK -->
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">The Mark — SVG</div>
+      <div class="spec-preview" style="justify-content:center;min-height:120px">
+        <svg width="72" height="72" viewBox="0 0 32 32" fill="none">
+          <line x1="16" y1="16" x2="16"   y2="6"   stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+          <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+          <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.3"/>
+          <line x1="16" y1="16" x2="16"   y2="26"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+          <line x1="16" y1="16" x2="7.3"  y2="21"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.3"/>
+          <line x1="16" y1="16" x2="7.3"  y2="11"  stroke="#2DD4C8" stroke-width="1.2" opacity="0.4"/>
+          <line x1="16" y1="6" x2="24.7" y2="11"   stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <line x1="24.7" y1="11" x2="24.7" y2="21" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <line x1="24.7" y1="21" x2="16"  y2="26" stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <line x1="16" y1="26" x2="7.3"  y2="21"  stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <line x1="7.3" y1="21" x2="7.3" y2="11"  stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <line x1="7.3" y1="11" x2="16"  y2="6"   stroke="#2DD4C8" stroke-width="0.6" opacity="0.15"/>
+          <circle cx="16"   cy="6"  r="2.2" fill="#2DD4C8" opacity="0.9"/>
+          <circle cx="24.7" cy="11" r="2.2" fill="#2DD4C8" opacity="0.7"/>
+          <circle cx="24.7" cy="21" r="2.2" fill="#2DD4C8" opacity="0.55"/>
+          <circle cx="16"   cy="26" r="2.2" fill="#2DD4C8" opacity="0.7"/>
+          <circle cx="7.3"  cy="21" r="2.2" fill="#2DD4C8" opacity="0.55"/>
+          <circle cx="7.3"  cy="11" r="2.2" fill="#2DD4C8" opacity="0.9"/>
+          <circle cx="16" cy="16" r="8"   fill="#2DD4C8" opacity="0.08"/>
+          <circle cx="16" cy="16" r="5.5" fill="#2DD4C8"/>
+          <circle cx="16" cy="16" r="2.2" fill="#0D1117"/>
+        </svg>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Hexagon knowledge graph</div>
+        <div class="spec-detail">
+          6 spoke lines from hub · opacity 0.3–0.4<br>
+          Outer hexagon ring · opacity 0.15<br>
+          6 satellite nodes · opacity 0.55–0.9<br>
+          Hub glow (r=8, op 0.08) + fill (r=5.5) + dot (r=2.2, #0D1117)<br>
+          All strokes + fills: <span style="color:#2DD4C8">#2DD4C8</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORDMARK -->
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">The Wordmark — Georgia Serif</div>
+      <div class="spec-preview" style="justify-content:center;min-height:120px;flex-direction:column;gap:16px">
+        <!-- Full size -->
+        <div style="display:flex;align-items:baseline">
+          <span style="font-family:Georgia,serif;font-size:32px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em">Abar</span>
+          <span style="font-family:Georgia,serif;font-size:42px;font-weight:900;color:#2DD4C8;letter-spacing:-0.03em;margin-left:-1px">Va</span>
+        </div>
+        <!-- Nav size -->
+        <div style="display:flex;align-items:baseline">
+          <span style="font-family:Georgia,serif;font-size:17px;font-weight:800;color:#FFFFFF;letter-spacing:-0.02em">Abar</span>
+          <span style="font-family:Georgia,serif;font-size:23px;font-weight:900;color:#2DD4C8;letter-spacing:-0.03em;margin-left:-1px">Va</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">AbarVa — two-weight contrast</div>
+        <div class="spec-detail">
+          "Abar": Georgia serif, 800 weight, <span style="color:#FFFFFF">#FFFFFF</span>, 17px nav<br>
+          "Va": Georgia serif, 900 weight, <span style="color:#2DD4C8">#2DD4C8</span>, 23px nav (35% larger)<br>
+          letterSpacing: -0.02em (Abar) / -0.03em (Va)<br>
+          marginLeft: -1px on Va — removes gap at baseline junction<br>
+          Never ABARVA. Never all caps. Capital V is the hook.
+        </div>
+        <div class="spec-verdict v-yes">✓ Georgia loads without Google Fonts — zero network dependency</div>
+      </div>
+    </div>
+
+    <!-- TAGLINE -->
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">The Tagline — DM Sans</div>
+      <div class="spec-preview" style="justify-content:center;flex-direction:column;gap:12px;min-height:120px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;color:#FFFFFF;letter-spacing:0.01em;white-space:nowrap">
+          Intelligence. Now act on it.
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#FFFFFF;letter-spacing:0.01em">
+          Intelligence. Now act on it.
+        </div>
+        <div style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:#FFFFFF;letter-spacing:0.01em">
+          Intelligence. Now act on it.
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Sentence case · DM Sans 700 · Pure white</div>
+        <div class="spec-detail">
+          fontFamily: 'DM Sans', sans-serif<br>
+          fontSize: 10px in nav · scales up at larger sizes<br>
+          fontWeight: <strong style="color:#FFFFFF">700</strong> (bold — not 400, not 500)<br>
+          color: <strong style="color:#FFFFFF">#FFFFFF</strong> (not gray, not #94A3B8)<br>
+          letterSpacing: 0.01em (natural — not 0.08em stretched)<br>
+          textTransform: none (sentence case — not ALL CAPS)
+        </div>
+        <div class="spec-verdict v-yes">✓ Replaced: "AI Transformation Engine" / "Enterprise AI Brain"</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECTION 2: NAV STATES ══ -->
+<div class="section">
+  <div class="section-label">Section 2</div>
+  <div class="section-title">Main Nav — All 5 States</div>
+  <div class="section-sub">Every state a nav element can be in. White when idle. Teal when hovered or active. Weight increases on interaction.</div>
+
+  <div class="spec-grid" style="grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+    <!-- STATE 1: DEFAULT -->
+    <div class="spec-card">
+      <div class="spec-badge b-gray">State 1 — Default (nothing hovered)</div>
+      <div class="spec-preview">
+        <div class="mini-nav">
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF">Products</span>
+          <span style="font-size:10px;color:#94A3B8;margin-left:2px">▾</span>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-left:8px">Clients</span>
+          <span style="font-size:10px;color:#94A3B8;margin-left:2px">▾</span>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-left:8px">Investor View</span>
+          <div class="sp"></div>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Idle state</div>
+        <div class="spec-detail mono">
+          color: #FFFFFF<br>
+          fontSize: 14px<br>
+          fontWeight: 600<br>
+          borderBottom: 2px solid transparent<br>
+          chevron color: #94A3B8
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 2: HOVER -->
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">State 2 — Hovered</div>
+      <div class="spec-preview">
+        <div class="mini-nav">
+          <!-- Hovered -->
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#2DD4C8;border-bottom:2px solid #2DD4C8;height:52px;display:flex;align-items:center;padding:0 2px;box-sizing:border-box">Products</span>
+          <span style="font-size:10px;color:#2DD4C8;margin-left:2px">▾</span>
+          <!-- Idle -->
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-left:8px">Clients</span>
+          <span style="font-size:10px;color:#94A3B8;margin-left:2px">▾</span>
+          <div class="sp"></div>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">On hover — teal + weight boost + underline</div>
+        <div class="spec-detail mono">
+          color: #2DD4C8  ← teal<br>
+          fontWeight: 700  ← up from 600<br>
+          borderBottom: 2px solid #2DD4C8<br>
+          chevron color: #2DD4C8<br>
+          transition: color 0.15s, border-color 0.2s
+        </div>
+        <div class="spec-verdict v-yes">✓ Non-hovered links stay white — visible, not invisible</div>
+      </div>
+    </div>
+
+    <!-- STATE 3: ACTIVE PAGE -->
+    <div class="spec-card gold">
+      <div class="spec-badge b-gold">State 3 — Active (current page)</div>
+      <div class="spec-preview">
+        <div class="mini-nav">
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#2DD4C8;border-bottom:2px solid #2DD4C8;height:52px;display:flex;align-items:center;box-sizing:border-box">Products</span>
+          <span style="font-size:10px;color:#2DD4C8;margin-left:2px">▾</span>
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF;margin-left:8px">Clients</span>
+          <span style="font-size:10px;color:#94A3B8;margin-left:2px">▾</span>
+          <div class="sp"></div>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Active/selected page — same as hover, persistent</div>
+        <div class="spec-detail mono">
+          color: #2DD4C8<br>
+          fontWeight: 700<br>
+          borderBottom: 2px solid #2DD4C8<br>
+          Driven by: open === id ? '#2DD4C8' : '#FFFFFF'<br>
+          Also use activePage prop to persist across route changes
+        </div>
+      </div>
+    </div>
+
+    <!-- STATE 4: DROPDOWN OPEN -->
+    <div class="spec-card">
+      <div class="spec-badge b-gray">State 4 — Dropdown open</div>
+      <div class="spec-preview" style="flex-direction:column;gap:12px;padding:16px">
+        <div class="mini-nav">
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:#2DD4C8;border-bottom:2px solid #2DD4C8;height:52px;display:flex;align-items:center;box-sizing:border-box">Products</span>
+          <span style="font-size:10px;color:#2DD4C8;margin-left:2px">▾</span>
+          <div class="sp"></div>
+        </div>
+        <!-- Mini dropdown preview -->
+        <div style="background:#161B22;border:1px solid #21262D;border-radius:8px;padding:12px;width:100%">
+          <div class="drop-item" style="padding:8px 10px">
+            <div class="drop-icon" style="width:26px;height:26px;border-radius:6px;font-size:12px">⚡</div>
+            <div>
+              <div style="font-size:9px;font-weight:600;color:#2DD4C8;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1px">Situation Intelligence</div>
+              <div style="font-size:12px;font-weight:600;color:#FFFFFF">What's actually broken?</div>
+              <div style="font-size:10px;color:#6B7280">And what's it costing us?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Dropdown items — three-line hierarchy</div>
+        <div class="spec-detail">
+          Intelligence name: 9px, JetBrains Mono, teal, uppercase<br>
+          CXO Question (main): 13px, DM Sans, 600, white<br>
+          Sub-question: 11px, #6B7280<br>
+          Hover: teal-bg + left border + name turns teal<br>
+          Always visible — not hover-only
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATE 5: BUTTONS -->
+  <div class="spec-grid" style="grid-template-columns:1fr 1fr 1fr;gap:16px">
+
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">Button — Book a Demo</div>
+      <div class="spec-preview" style="gap:16px;flex-direction:column">
+        <a class="btn-demo" href="#" style="width:fit-content">Book a Demo</a>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a class="btn-demo" href="#" style="background:#22B5A9;width:fit-content">Book a Demo</a>
+          <span style="font-size:11px;color:#6B7280">on hover</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Primary CTA</div>
+        <div class="spec-detail mono">
+          background: #2DD4C8<br>
+          color: #0D1117 (dark text on teal)<br>
+          fontSize: 13px · fontWeight: 700<br>
+          height: 36px · borderRadius: 8px<br>
+          hover → background: #22B5A9
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-card">
+      <div class="spec-badge b-gray">Button — Sign In</div>
+      <div class="spec-preview" style="gap:16px;flex-direction:column">
+        <a class="btn-si" href="#" style="width:fit-content">Sign In</a>
+        <div style="display:flex;align-items:center;gap:8px">
+          <a class="btn-si" href="#" style="background:#21262D;border-color:#6B7280;width:fit-content">Sign In</a>
+          <span style="font-size:11px;color:#6B7280">on hover</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Secondary CTA</div>
+        <div class="spec-detail mono">
+          background: transparent<br>
+          color: #FFFFFF (white — not gray)<br>
+          border: 1px solid #4B5563<br>
+          fontSize: 13px · fontWeight: 500<br>
+          hover → bg: #21262D, border: #6B7280
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-card">
+      <div class="spec-badge b-gray">Chevrons ▾</div>
+      <div class="spec-preview" style="flex-direction:column;gap:12px;justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:#94A3B8">▾</span>
+          <span style="font-size:12px;color:#6B7280">idle — #94A3B8</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:#2DD4C8">▾</span>
+          <span style="font-size:12px;color:#6B7280">hover/active — #2DD4C8</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Dropdown indicators</div>
+        <div class="spec-detail mono">
+          idle: color #94A3B8 · fontSize 10px<br>
+          hover/open: color #2DD4C8<br>
+          transition: color 0.15s<br>
+          Appears on: Products, Clients only<br>
+          Not on: Investor View (no dropdown)
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECTION 3: WORKFLOW STEP NAV ══ -->
+<div class="section">
+  <div class="section-label">Section 3</div>
+  <div class="section-title">Workflow Step Navigator</div>
+  <div class="section-sub">Every product page has a step-by-step progress nav below the main nav. Four states: todo, done, current, hover. Used on AI Investment Intelligence, Situation Intelligence, Business Case Intelligence, and all other product workflows.</div>
+
+  <!-- Live step nav examples -->
+  <div style="background:var(--card-bg);border:1px solid var(--card-bdr);border-radius:12px;overflow:hidden;margin-bottom:20px">
+    <div style="padding:12px 20px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gray2);letter-spacing:0.15em;text-transform:uppercase;border-bottom:1px solid var(--card-bdr)">
+      AI Investment Intelligence — Step 3 active
+    </div>
+    <div class="step-nav">
+      <a class="step-item done" href="#">
+        <div class="step-num n-done">✓</div>
+        Ground Truth
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item done" href="#">
+        <div class="step-num n-done">✓</div>
+        Where Executives Disagree
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item current" href="#">
+        <div class="step-num n-current">3</div>
+        Every Bet Available
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item" href="#">
+        <div class="step-num n-todo">4</div>
+        Your Three Bets
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item" href="#">
+        <div class="step-num n-todo">5</div>
+        Wave 1 Starts in 90 Days
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item" href="#">
+        <div class="step-num n-todo">6</div>
+        Board Deck Ready
+      </a>
+    </div>
+  </div>
+
+  <div style="background:var(--card-bg);border:1px solid var(--card-bdr);border-radius:12px;overflow:hidden;margin-bottom:24px">
+    <div style="padding:12px 20px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gray2);letter-spacing:0.15em;text-transform:uppercase;border-bottom:1px solid var(--card-bdr)">
+      Situation Intelligence — Step 4 active (2 done, 2 remaining)
+    </div>
+    <div class="step-nav">
+      <a class="step-item done" href="#">
+        <div class="step-num n-done">✓</div>
+        Select Your Role
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item done" href="#">
+        <div class="step-num n-done">✓</div>
+        Your Situation
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item done" href="#">
+        <div class="step-num n-done">✓</div>
+        Ask Anything
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item current" href="#">
+        <div class="step-num n-current">4</div>
+        Contradiction Map
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item" href="#">
+        <div class="step-num n-todo">5</div>
+        Cost of Gaps
+      </a>
+      <span class="step-arrow">›</span>
+      <a class="step-item" href="#">
+        <div class="step-num n-todo">6</div>
+        Brief Ready
+      </a>
+    </div>
+  </div>
+
+  <!-- Step state spec -->
+  <div class="spec-grid" style="grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+
+    <div class="spec-card">
+      <div class="spec-badge b-gray">State: Todo</div>
+      <div class="spec-preview" style="justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="step-num n-todo">4</div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#6B7280;font-weight:500">Your Three Bets</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Not yet reached</div>
+        <div class="spec-detail mono">
+          color: #6B7280<br>
+          fontWeight: 500<br>
+          num bg: #21262D<br>
+          num color: #6B7280<br>
+          borderBottom: transparent
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-card teal">
+      <div class="spec-badge b-teal">State: Done</div>
+      <div class="spec-preview" style="justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="step-num n-done">✓</div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#2DD4C8;font-weight:500">Ground Truth</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Completed step</div>
+        <div class="spec-detail mono">
+          color: #2DD4C8<br>
+          fontWeight: 500<br>
+          num bg: #2DD4C8<br>
+          num color: #0D1117<br>
+          num content: ✓<br>
+          hover → borderBottom: #2DD4C8
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-card gold">
+      <div class="spec-badge b-gold">State: Current</div>
+      <div class="spec-preview" style="justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #2DD4C8;padding-bottom:2px">
+          <div class="step-num n-current">3</div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#FFFFFF;font-weight:700">Every Bet Available</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Active step — where you are</div>
+        <div class="spec-detail mono">
+          color: #FFFFFF<br>
+          fontWeight: 700 (bold)<br>
+          num bg: #FFFFFF<br>
+          num color: #0D1117<br>
+          borderBottom: 2px solid #2DD4C8
+        </div>
+      </div>
+    </div>
+
+    <div class="spec-card">
+      <div class="spec-badge b-gray">State: Hover (any)</div>
+      <div class="spec-preview" style="justify-content:center">
+        <div style="display:flex;align-items:center;gap:8px;border-bottom:2px solid #4B5563;padding-bottom:2px">
+          <div class="step-num n-todo">5</div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:13px;color:#FFFFFF;font-weight:500">Wave 1 Starts</span>
+        </div>
+      </div>
+      <div class="spec-meta">
+        <div class="spec-name">Mouse over any step</div>
+        <div class="spec-detail mono">
+          color: #FFFFFF<br>
+          borderBottom: 2px solid #4B5563<br>
+          Done hover: borderBottom: #2DD4C8<br>
+          Clickable even if todo<br>
+          (allows jumping back to review)
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECTION 4: FONT SYSTEM ══ -->
+<div class="section">
+  <div class="section-label">Section 4</div>
+  <div class="section-title">The Font System — Three Fonts, One Role Each</div>
+  <div class="section-sub">Every font has exactly one job. Never mix roles. Never use a font for a purpose it isn't assigned to.</div>
+
+  <div style="background:var(--card-bg);border:1px solid var(--card-bdr);border-radius:12px;overflow:hidden;margin-bottom:24px">
+    <table class="token-table">
+      <thead>
+        <tr>
+          <th>Font</th>
+          <th>Role</th>
+          <th>Where used</th>
+          <th>Weights</th>
+          <th>Load</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span style="font-family:Georgia,serif;font-size:15px;font-weight:700;color:#FFFFFF">Georgia</span></td>
+          <td>Wordmark only</td>
+          <td class="mono">AbarVa logo — nowhere else</td>
+          <td class="mono">800 (Abar) · 900 (Va)</td>
+          <td><span style="color:#34D399">Built-in — zero load</span></td>
+        </tr>
+        <tr>
+          <td><span style="font-family:'Fraunces',serif;font-size:15px;font-weight:700;color:#FFFFFF">Fraunces</span></td>
+          <td>Hero headlines</td>
+          <td class="mono">Homepage H1 · investor H1 · product landing H1</td>
+          <td class="mono">700 · 900</td>
+          <td><span style="color:#F59E0B">Google Fonts — 1 load</span></td>
+        </tr>
+        <tr>
+          <td><span style="font-family:'DM Sans',sans-serif;font-size:15px;font-weight:400;color:#FFFFFF">DM Sans</span></td>
+          <td>All UI text</td>
+          <td class="mono">Nav · tagline · body · buttons · cards · sub-headings</td>
+          <td class="mono">300 · 400 · 500 · 600 · 700</td>
+          <td><span style="color:#F59E0B">Google Fonts — 1 load</span></td>
+        </tr>
+        <tr>
+          <td><span style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:400;color:#FFFFFF">JetBrains Mono</span></td>
+          <td>Labels · data · code</td>
+          <td class="mono">Intelligence names · metric values · code · tags · eyebrows</td>
+          <td class="mono">400 · 600</td>
+          <td><span style="color:#F59E0B">Google Fonts — 1 load</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Type scale -->
+  <div style="background:var(--card-bg);border:1px solid var(--card-bdr);border-radius:12px;padding:28px;margin-bottom:24px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gray2);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:24px">Type scale in use</div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'Fraunces',serif;font-size:52px;font-weight:900;color:#FFFFFF;letter-spacing:-0.02em;line-height:1">Ah</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">Fraunces 52px 900 — homepage/investor hero only</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'Fraunces',serif;font-size:36px;font-weight:900;color:#FFFFFF;letter-spacing:-0.02em">Act on intelligence.</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">Fraunces 36px 900 — product page hero</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:24px;font-weight:700;color:#FFFFFF">Where should we place our bets?</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">DM Sans 24px 700 — CXO question on cards</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:700;color:#FFFFFF">Wave 1 Starts in 90 Days</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">DM Sans 18px 700 — step headers</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:#FFFFFF">Products</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">DM Sans 14px 600 — nav links (idle)</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#2DD4C8;text-transform:uppercase;letter-spacing:0.1em">SITUATION INTELLIGENCE</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">JetBrains Mono 11px 600 — Intelligence names</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:400;color:#6B7280">Surfaces the contradictions your teams are working around.</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">DM Sans 13px 400 — product descriptions</div>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:20px">
+        <div style="font-family:'DM Sans',sans-serif;font-size:10px;font-weight:700;color:#FFFFFF">Intelligence. Now act on it.</div>
+        <div style="font-size:11px;color:var(--gray2);font-family:'JetBrains Mono',monospace">DM Sans 10px 700 — tagline in nav</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECTION 5: COLOUR TOKENS ══ -->
+<div class="section">
+  <div class="section-label">Section 5</div>
+  <div class="section-title">Colour Tokens — Every Value</div>
+
+  <div style="background:var(--card-bg);border:1px solid var(--card-bdr);border-radius:12px;overflow:hidden;margin-bottom:24px">
+    <table class="token-table">
+      <thead>
+        <tr><th>Token</th><th>Value</th><th>Used for</th><th>Never use for</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Teal</td>
+          <td class="mono"><span class="swatch" style="background:#2DD4C8"></span>#2DD4C8</td>
+          <td>Va wordmark · hover states · CTA bg · active borders · teal text · Intelligence names · teal underline</td>
+          <td>Body text · backgrounds · disabled states</td>
+        </tr>
+        <tr>
+          <td>Teal Dark</td>
+          <td class="mono"><span class="swatch" style="background:#22B5A9"></span>#22B5A9</td>
+          <td>Book a Demo button hover only</td>
+          <td>Anything else</td>
+        </tr>
+        <tr>
+          <td>Teal BG</td>
+          <td class="mono"><span class="swatch" style="background:rgba(45,212,200,0.08);border:1px solid #2DD4C8"></span>rgba(45,212,200,0.08)</td>
+          <td>Dropdown item hover background · card hover background</td>
+          <td>Nav background · page background</td>
+        </tr>
+        <tr>
+          <td>White</td>
+          <td class="mono"><span class="swatch" style="background:#FFFFFF;border:1px solid #333"></span>#FFFFFF</td>
+          <td>Nav links (idle) · wordmark "Abar" · tagline · all primary text · step current · button text on dark</td>
+          <td>Never dilute to off-white for important UI text</td>
+        </tr>
+        <tr>
+          <td>Gray 1</td>
+          <td class="mono"><span class="swatch" style="background:#94A3B8"></span>#94A3B8</td>
+          <td>Chevrons (idle) · secondary text · step numbers (todo)</td>
+          <td>Nav links · primary text · anything that needs to be clearly readable</td>
+        </tr>
+        <tr>
+          <td>Gray 2</td>
+          <td class="mono"><span class="swatch" style="background:#6B7280"></span>#6B7280</td>
+          <td>Dropdown descriptions · helper text · step items (todo) · sub-labels</td>
+          <td>Anything interactive · anything the CXO needs to read</td>
+        </tr>
+        <tr>
+          <td>Gray 3</td>
+          <td class="mono"><span class="swatch" style="background:#4B5563"></span>#4B5563</td>
+          <td>Sign In border (idle) · "Soon" labels · disabled items</td>
+          <td>Text — too dark to read</td>
+        </tr>
+        <tr>
+          <td>Nav BG</td>
+          <td class="mono"><span class="swatch" style="background:#0D1117;border:1px solid #333"></span>#0D1117</td>
+          <td>Main nav bar · step nav bar · dropdown item hover resource card</td>
+          <td>Page background (too bright)</td>
+        </tr>
+        <tr>
+          <td>Nav Border</td>
+          <td class="mono"><span class="swatch" style="background:#21262D;border:1px solid #333"></span>#21262D</td>
+          <td>Nav bottom border · dropdown borders · card borders</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Drop BG</td>
+          <td class="mono"><span class="swatch" style="background:#161B22;border:1px solid #333"></span>#161B22</td>
+          <td>Dropdown panel background only</td>
+          <td>Nav · cards · page</td>
+        </tr>
+        <tr>
+          <td>Page BG</td>
+          <td class="mono"><span class="swatch" style="background:#060A12;border:1px solid #333"></span>#060A12</td>
+          <td>Page background · code blocks · deepest level</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>Card BG</td>
+          <td class="mono"><span class="swatch" style="background:#0D1520;border:1px solid #333"></span>#0D1520</td>
+          <td>Product cards · spec cards · content sections</td>
+          <td>—</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- ══ SECTION 6: CODE ══ -->
+<div class="section">
+  <div class="section-label">Section 6</div>
+  <div class="section-title">Exact Code — Copy Into AbarvaNav.tsx</div>
+
+  <div class="spec-grid" style="gap:16px">
+
+    <div>
+      <div class="code-block">
+        <div class="code-label">linkCss() function — all 4 nav links</div>
+        <pre>const linkCss = (id: DropdownId): React.CSSProperties => ({
+  display: 'flex', alignItems: 'center', gap: '4px',
+  padding: '0 14px', height: '64px', cursor: 'pointer',
+  color: open === id ? <span class="hl">'#2DD4C8'</span> : <span class="hl">'#FFFFFF'</span>,
+  fontSize: <span class="hl">'14px'</span>,
+  fontWeight: open === id ? <span class="hl">700</span> : <span class="hl">600</span>,
+  fontFamily: <span class="hl">"'DM Sans', sans-serif"</span>,
+  borderBottom: open === id
+    ? <span class="hl">'2px solid #2DD4C8'</span>
+    : '2px solid transparent',
+  boxSizing: 'border-box',
+  transition: 'color 0.15s, border-color 0.2s',
+  userSelect: 'none', whiteSpace: 'nowrap',
+})</pre>
+      </div>
+
+      <div class="code-block" style="margin-top:12px">
+        <div class="code-label">Wordmark — exact values</div>
+        <pre><span class="cm">// "Abar" span</span>
+fontSize: <span class="hl">'17px'</span>, fontWeight: <span class="hl">800</span>,
+fontFamily: <span class="hl">"'Georgia', 'Times New Roman', serif"</span>,
+color: <span class="hl">'#FFFFFF'</span>, letterSpacing: <span class="hl">'-0.02em'</span>
+
+<span class="cm">// "Va" span</span>
+fontSize: <span class="hl">'23px'</span>, fontWeight: <span class="hl">900</span>,
+fontFamily: <span class="hl">"'Georgia', 'Times New Roman', serif"</span>,
+color: <span class="hl">'#2DD4C8'</span>, letterSpacing: <span class="hl">'-0.03em'</span>,
+marginLeft: <span class="hl">'-1px'</span></pre>
+      </div>
+    </div>
+
+    <div>
+      <div class="code-block">
+        <div class="code-label">Tagline — exact values</div>
+        <pre>fontFamily: <span class="hl">"'DM Sans', sans-serif"</span>,
+fontSize: <span class="hl">'10px'</span>,
+fontWeight: <span class="hl">700</span>,
+color: <span class="hl">'#FFFFFF'</span>,
+letterSpacing: <span class="hl">'0.01em'</span>,
+lineHeight: <span class="hl">1</span>,
+marginTop: '3px',
+whiteSpace: 'nowrap'
+
+<span class="cm">// Content:</span>
+<span class="str">'Intelligence. Now act on it.'</span></pre>
+      </div>
+
+      <div class="code-block" style="margin-top:12px">
+        <div class="code-label">Investor View link — hover handlers</div>
+        <pre>style={{ color: <span class="hl">'#FFFFFF'</span>, fontWeight: <span class="hl">600</span>,
+  fontSize: <span class="hl">'14px'</span>, borderBottom: '2px solid transparent' }}
+
+onMouseEnter={e => {
+  el.style.color = <span class="hl">'#2DD4C8'</span>
+  el.style.borderBottomColor = <span class="hl">'#2DD4C8'</span>
+  el.style.fontWeight = <span class="hl">'700'</span>
+}}
+onMouseLeave={e => {
+  el.style.color = <span class="hl">'#FFFFFF'</span>
+  el.style.borderBottomColor = 'transparent'
+  el.style.fontWeight = <span class="hl">'600'</span>
+}}</pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div style="text-align:center;padding:40px 0 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:#1C2D45;letter-spacing:0.15em">
+  AbarVa · COMPLETE DESIGN SYSTEM · LOGO · FONTS · NAV · APRIL 2026 · CONFIDENTIAL
+</div>
+
+</body>
+</html>
