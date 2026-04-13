@@ -55,7 +55,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
   const linkCss = (id: DropdownId): React.CSSProperties => ({
     display: 'flex', alignItems: 'center', gap: '4px',
     padding: '0 14px', height: '64px', cursor: 'pointer',
-    color: open === id ? '#2DD4C8' : '#E6EDF3',
+    color: open === id ? '#2DD4C8' : '#FFFFFF',
     fontSize: '13px', fontWeight: open === id ? 600 : 500,
     borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
     boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s, font-weight 0.1s',
@@ -102,30 +102,58 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
         {/* LEFT — Logo */}
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
           <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
-            {/* Lines: hub to 6 satellites */}
-            <line x1="16" y1="16" x2="16" y2="6"    stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="16" y2="26"   stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="7.3" y2="21"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            <line x1="16" y1="16" x2="7.3" y2="11"  stroke="#60A5FA" strokeWidth="1.2" opacity="0.55" />
-            {/* Satellite nodes — hexagonal */}
-            <circle cx="16"   cy="6"  r="2.2" fill="#60A5FA" />
-            <circle cx="24.7" cy="11" r="2.2" fill="#60A5FA" />
-            <circle cx="24.7" cy="21" r="2.2" fill="#60A5FA" />
-            <circle cx="16"   cy="26" r="2.2" fill="#60A5FA" />
-            <circle cx="7.3"  cy="21" r="2.2" fill="#60A5FA" />
-            <circle cx="7.3"  cy="11" r="2.2" fill="#60A5FA" />
-            {/* Hub */}
+            {/* Outer hexagon ring: lines connecting adjacent satellite nodes */}
+            <line x1="16" y1="6"   x2="24.7" y2="11"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            <line x1="24.7" y1="11" x2="24.7" y2="21"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            <line x1="24.7" y1="21" x2="16"   y2="26"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            <line x1="16"   y1="26" x2="7.3"  y2="21"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            <line x1="7.3"  y1="21" x2="7.3"  y2="11"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            <line x1="7.3"  y1="11" x2="16"   y2="6"   stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
+            {/* Spokes: hub to 6 satellites — teal */}
+            <line x1="16" y1="16" x2="16"   y2="6"   stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            <line x1="16" y1="16" x2="16"   y2="26"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            <line x1="16" y1="16" x2="7.3"  y2="21"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            <line x1="16" y1="16" x2="7.3"  y2="11"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
+            {/* Satellite nodes */}
+            <circle cx="16"   cy="6"  r="2.2" fill="#2DD4C8" />
+            <circle cx="24.7" cy="11" r="2.2" fill="#2DD4C8" />
+            <circle cx="24.7" cy="21" r="2.2" fill="#2DD4C8" />
+            <circle cx="16"   cy="26" r="2.2" fill="#2DD4C8" />
+            <circle cx="7.3"  cy="21" r="2.2" fill="#2DD4C8" />
+            <circle cx="7.3"  cy="11" r="2.2" fill="#2DD4C8" />
+            {/* Hub: glow ring + solid fill + inner dot */}
+            <circle cx="16" cy="16" r="8"   fill="#2DD4C8" opacity="0.08" />
             <circle cx="16" cy="16" r="5.5" fill="#2DD4C8" />
+            <circle cx="16" cy="16" r="2.2" fill="#0D1117" />
           </svg>
           <div>
-            <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.1, letterSpacing: '-0.02em' }}>
-              <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
+            {/* Wordmark: ABAR smaller, VA larger — deliberate size contrast */}
+            <div style={{ lineHeight: 1.05, display: 'flex', alignItems: 'baseline' }}>
+              <span style={{
+                fontSize: '17px', fontWeight: 800,
+                fontFamily: "'Georgia', serif",
+                color: '#FFFFFF',
+                letterSpacing: '-0.02em',
+              }}>ABAR</span>
+              <span style={{
+                fontSize: '23px', fontWeight: 900,
+                fontFamily: "'Georgia', serif",
+                color: '#2DD4C8',
+                letterSpacing: '-0.03em',
+                marginLeft: '-1px',
+              }}>VA</span>
             </div>
-            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>
-              Intelligence. Now act on it.
-            </div>
+            <div style={{
+              fontSize: '10px',
+              color: '#94A3B8',
+              fontFamily: "'DM Sans', sans-serif",
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              marginTop: '3px',
+              whiteSpace: 'nowrap',
+            }}>Intelligence. Now act on it.</div>
           </div>
         </a>
 
@@ -137,7 +165,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             onMouseEnter={() => openDrop('products')} onMouseLeave={startClose}>
             <div style={linkCss('products')}>
               Products
-              <span style={{ fontSize: '10px', color: open === 'products' ? '#2DD4C8' : '#6B7280', marginLeft: '2px' }}>▾</span>
+              <span style={{ fontSize: '10px', color: open === 'products' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
             </div>
             {open === 'products' && (
               <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
@@ -167,7 +195,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             onMouseEnter={() => openDrop('clients')} onMouseLeave={startClose}>
             <div style={linkCss('clients')}>
               Clients
-              <span style={{ fontSize: '10px', color: open === 'clients' ? '#2DD4C8' : '#6B7280', marginLeft: '2px' }}>▾</span>
+              <span style={{ fontSize: '10px', color: open === 'clients' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
             </div>
             {open === 'clients' && (
               <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
@@ -226,7 +254,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             onMouseEnter={() => openDrop('deliverables')} onMouseLeave={startClose}>
             <div style={linkCss('deliverables')}>
               Deliverables
-              <span style={{ fontSize: '10px', color: open === 'deliverables' ? '#2DD4C8' : '#6B7280', marginLeft: '2px' }}>▾</span>
+              <span style={{ fontSize: '10px', color: open === 'deliverables' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
             </div>
             {open === 'deliverables' && (
               <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
@@ -244,9 +272,9 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
 
           {/* Investor View */}
           <a href="/investor"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#E6EDF3', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
+            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '13px', fontWeight: 500, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
             onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#E6EDF3'; el.style.borderBottomColor = 'transparent' }}>
+            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#FFFFFF'; el.style.borderBottomColor = 'transparent' }}>
             Investor View
           </a>
         </div>
@@ -271,7 +299,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
             <UserButton />
           ) : (
             <a href="/sign-in"
-              style={{ padding: '0 18px', height: '36px', display: 'flex', alignItems: 'center', borderRadius: '8px', background: 'transparent', color: '#9CA3AF', border: '1px solid #30363D', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}
+              style={{ padding: '0 18px', height: '36px', display: 'flex', alignItems: 'center', borderRadius: '8px', background: 'transparent', color: '#FFFFFF', border: '1px solid #4B5563', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}
               onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#21262D')}
               onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
               Sign In
