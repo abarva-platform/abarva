@@ -1,0 +1,73 @@
+export const apexOutcomes = {
+  summary: {
+    activeInitiatives: 2,
+    totalStoresInPilot: 57,
+    totalBaselineOverspendMillions: 2.1,
+    totalCommittedSavingsMillions: 0.8,
+    totalCurrentSavingsMillions: 0.6,
+    overallProgressPercent: 75,
+    status: "On track — early stage",
+  },
+  initiatives: [
+    {
+      id: "outcome-001",
+      name: "Store Labor Optimization Pilot",
+      status: "Live",
+      liveMonths: 4,
+      pilotStores: 12,
+      totalStores: 1240,
+      percentRollout: 0.97,
+      baselineMillions: 2.1,
+      committedSavingsMillions: 0.8,
+      currentSavingsMillions: 0.6,
+      progressPercent: 75,
+      trajectory: "On track",
+      notes:
+        "12 stores live for 4 months. $0.6M savings delivered against $0.8M commitment. Early but on pace. CPO (Lisa Chen) is active champion. Full rollout to 1,240 stores would yield $28M annually.",
+      metrics: {
+        laborHoursReducedPercent: 8.2,
+        schedulingAccuracyImprovement: 14,
+        managerSatisfactionScore: 4.1,
+        turnoverChangePilotStores: -3.2,
+      },
+      nextMilestone: "Decision to expand to 100 stores by end of Q2 2026",
+    },
+    {
+      id: "outcome-002",
+      name: "Shrinkage Prevention AI Pilot",
+      status: "Live",
+      liveMonths: 2,
+      pilotStores: 45,
+      totalStores: 1240,
+      percentRollout: 3.6,
+      baselineShrinkagePercent: 3.1,
+      committedShrinkagePercent: 1.8,
+      currentShrinkagePercent: 2.4,
+      improvementPercent: 22.6,
+      trajectory: "Ahead of pace",
+      notes:
+        "45 stores live for 2 months. Shrinkage moved from 3.1% to 2.4% — 22.6% reduction in 2 months against a 12-month target of 42% reduction. Ahead of pace. Computer vision plus transaction anomaly detection working well.",
+      metrics: {
+        shrinkageReductionPercent: 22.6,
+        falsePositiveRate: 3.1,
+        caseResolutionTimeHours: 4.2,
+        lossPreventionStaffSatisfaction: 4.4,
+      },
+      nextMilestone: "Expand to 200 stores by end of Q2 2026",
+    },
+  ],
+  projectedAtScale: [
+    {
+      initiative: "Store Labor Optimization",
+      currentAnnualRunRateMillions: 1.8,
+      projectedAtFullScaleMillions: 28,
+      storesForFullScale: 1240,
+    },
+    {
+      initiative: "Shrinkage Prevention AI",
+      currentAnnualRunRateMillions: 3.2,
+      projectedAtFullScaleMillions: 19,
+      storesForFullScale: 1240,
+    },
+  ],
+}
