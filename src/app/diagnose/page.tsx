@@ -5,16 +5,15 @@ import AbarvaNav from '@/components/AbarvaNav'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
-import type { Contradiction } from '@/lib/intelligence/types'
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
 const T = {
-  bg: '#0D1117', surface: '#161B22', surface2: '#1C2333',
-  border: '#21262D', border2: '#30363D',
-  text: '#E6EDF3', text2: '#8B949E', text3: '#6E7681',
+  bg: '#060A12', surface: '#0D1520', surface2: '#162030',
+  border: '#1C2D45', border2: '#2D3748',
+  text: '#EFF6FF', text2: '#94A3B8', text3: '#94A3B8',
   teal: '#2DD4C8', blue: '#4DA3FF', amber: '#F59E0B',
-  red: '#F85149', green: '#3FB950', purple: '#A371F7',
+  red: '#EF4444', green: '#10B981', purple: '#A371F7',
   mono: 'JetBrains Mono, Menlo, monospace',
   sans: 'DM Sans, Inter, system-ui, sans-serif',
 }
@@ -218,7 +217,310 @@ const SEVERITY_COLOR: Record<Severity, string> = {
   critical: T.red, warning: T.amber, watch: T.text3,
 }
 
+// ─── Issue Metrics / KPI / Benchmark Data ─────────────────────────────────────
+
+interface IssueMetric { label: string; current: string; benchmark: string; gap?: string }
+interface KPIData {
+  label: string; value: string; trend?: number[]
+  direction: 'up-bad' | 'down-bad'
+  target: string; gap: string
+  sparkColor?: string
+}
+interface BenchmarkItem {
+  label: string; current: number; peerMedian: number; topQuartile: number
+  unit: string; lowerIsBetter?: boolean
+}
+
+const ISSUE_METRICS: Record<string, IssueMetric> = {
+  M01: { label: 'RCM Denial Rate',     current: '18.2%',          benchmark: '12.1% benchmark', gap: '+6.1pp'         },
+  M02: { label: 'AI Pilots Scaled',    current: '0 of 6',          benchmark: '3+ expected'                           },
+  M03: { label: 'Travel Nurse Spend',  current: '$48M',            benchmark: '$28M target',     gap: '+$20M/yr'      },
+  M04: { label: 'Epic Score',          current: '61 / 100',        benchmark: '74 peer avg'                           },
+  M05: { label: 'Prior Auth Speed',    current: '4.2 days',        benchmark: '1.8d peer median',gap: '133% slower'   },
+  M06: { label: 'MA Star Rating',      current: '3.2 ★',           benchmark: '4.0 threshold'                         },
+  M07: { label: 'AI Spend Tracked',    current: '$0 / $42M',       benchmark: '100% should track'                     },
+  FC01: { label: 'Digital Adoption',   current: '41%',             benchmark: '67% peers',       gap: '−26pp'         },
+  FC02: { label: 'System Age',         current: '22 years',        benchmark: '6yr avg',         gap: '+16 yrs behind'},
+  FC03: { label: 'FedNow Status',      current: 'Not live',        benchmark: '76% peers live'                        },
+  FC04: { label: 'AI Outcomes',        current: '0 tracked',       benchmark: 'Baseline required'                     },
+  FC05: { label: 'Cost-to-Income',     current: '68%',             benchmark: '55% best-in-class',gap: '+13pp'        },
+  AX01: { label: 'Einstein Status',    current: 'Never activated', benchmark: 'Purchased · idle'                      },
+  AX02: { label: 'Cart Abandonment',   current: '72%',             benchmark: '58% benchmark',   gap: '+14pp'         },
+  AX03: { label: 'Inventory Turns',    current: '4.2x',            benchmark: '6.8x peers',      gap: '−2.6x'         },
+  AX04: { label: 'Shadow IT Spend',    current: '$38M',            benchmark: '$0 managed'                            },
+}
+
+const CLIENT_KPI_DATA: Record<ClientId, KPIData[]> = {
+  meridian: [
+    { label: 'OPERATING MARGIN',   value: '1.8%',  trend: [3.2, 2.1, 1.8],   direction: 'down-bad', target: '4.0%',  gap: '$179M / yr gap',     sparkColor: '#EF4444' },
+    { label: 'RCM DENIAL RATE',    value: '18.2%', trend: [14.2, 16.8, 18.2], direction: 'up-bad',   target: '12.1%', gap: '$94M / yr at risk',  sparkColor: '#EF4444' },
+    { label: 'PRIOR AUTH COVERAGE',value: '23%',   trend: [31, 27, 23],       direction: 'down-bad', target: '62%',   gap: '−39pp vs peers',     sparkColor: '#F59E0B' },
+    { label: 'MA STAR RATING',     value: '3.2 ★', trend: [3.8, 3.6, 3.2],   direction: 'down-bad', target: '4.0 ★', gap: '$34M bonus at risk', sparkColor: '#F59E0B' },
+  ],
+  firstcapital: [
+    { label: 'DIGITAL ADOPTION',   value: '41%',      trend: [35, 38, 41],      direction: 'up-bad',   target: '67%',      gap: '−26pp vs peers'     },
+    { label: 'COST-TO-INCOME',     value: '68%',      trend: [66, 67, 68],      direction: 'up-bad',   target: '55%',      gap: '$99M / yr gap'      },
+    { label: 'AML FALSE POSITIVE', value: '78%',      trend: [72, 75, 78],      direction: 'up-bad',   target: '30%',      gap: '6 excess FTE'       },
+    { label: 'MOBILE APP RATING',  value: '3.2 / 5',  trend: [3.4, 3.3, 3.2],   direction: 'down-bad', target: '4.5 / 5',  gap: '180K at churn risk' },
+  ],
+  apexretail: [
+    { label: 'CART ABANDONMENT',   value: '72%',      trend: [68, 70, 72],      direction: 'up-bad',   target: '58%',      gap: '$840M opportunity'  },
+    { label: 'INVENTORY TURNS',    value: '4.2x',     trend: [5.2, 4.8, 4.2],   direction: 'down-bad', target: '6.8x',     gap: '$180M tied up'      },
+    { label: 'LOYALTY ACTIVE',     value: '42%',      trend: [48, 45, 42],      direction: 'down-bad', target: '68%',      gap: '−26pp vs peers'     },
+    { label: 'OPERATING MARGIN',   value: '3.8%',     trend: [4.2, 4.0, 3.8],   direction: 'down-bad', target: '6.0%',     gap: '−2.2pp from target' },
+  ],
+}
+
+const CLIENT_BENCHMARKS: Record<ClientId, BenchmarkItem[]> = {
+  meridian: [
+    { label: 'RCM Denial Rate',    current: 18.2, peerMedian: 14.2, topQuartile: 10.8, unit: '%',    lowerIsBetter: true },
+    { label: 'Prior Auth Days',    current: 4.2,  peerMedian: 1.8,  topQuartile: 1.2,  unit: 'd',    lowerIsBetter: true },
+    { label: 'Epic Score',         current: 61,   peerMedian: 74,   topQuartile: 90,   unit: '/100'                      },
+    { label: 'MA Star Rating',     current: 3.2,  peerMedian: 3.5,  topQuartile: 4.5,  unit: '★'                         },
+    { label: 'Operating Margin',   current: 1.8,  peerMedian: 2.8,  topQuartile: 5.2,  unit: '%'                         },
+  ],
+  firstcapital: [
+    { label: 'Digital Adoption',   current: 41,   peerMedian: 58,   topQuartile: 72,   unit: '%'                         },
+    { label: 'Cost-to-Income',     current: 68,   peerMedian: 60,   topQuartile: 52,   unit: '%',    lowerIsBetter: true },
+    { label: 'AML False Positive', current: 78,   peerMedian: 55,   topQuartile: 30,   unit: '%',    lowerIsBetter: true },
+    { label: 'FedNow Live Peers',  current: 0,    peerMedian: 76,   topQuartile: 92,   unit: '%'                         },
+    { label: 'Mobile App Rating',  current: 3.2,  peerMedian: 4.0,  topQuartile: 4.7,  unit: '/5'                        },
+  ],
+  apexretail: [
+    { label: 'Cart Abandonment',   current: 72,   peerMedian: 62,   topQuartile: 52,   unit: '%',    lowerIsBetter: true },
+    { label: 'Inventory Turns',    current: 4.2,  peerMedian: 5.8,  topQuartile: 7.2,  unit: 'x'                         },
+    { label: 'Loyalty Active Rate',current: 42,   peerMedian: 55,   topQuartile: 68,   unit: '%'                         },
+    { label: 'Ecommerce Revenue',  current: 18,   peerMedian: 28,   topQuartile: 42,   unit: '%'                         },
+    { label: 'Operating Margin',   current: 3.8,  peerMedian: 5.2,  topQuartile: 8.1,  unit: '%'                         },
+  ],
+}
+
 // ─── Components ───────────────────────────────────────────────────────────────
+
+function Sparkline({ data, color, width = 64, height = 28 }: { data: number[]; color: string; width?: number; height?: number }) {
+  const PAD = 3
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const r = Math.max(max - min, 0.001)
+  const pts = data.map((v, i) => [
+    PAD + (i / (data.length - 1)) * (width - PAD * 2),
+    PAD + (height - PAD * 2) - ((v - min) / r) * (height - PAD * 2),
+  ] as [number, number])
+
+  // Smooth cubic bezier segments
+  let linePath = `M ${pts[0][0]},${pts[0][1]}`
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i - 1]
+    const [cx, cy] = pts[i]
+    const cpx = (px + cx) / 2
+    linePath += ` C ${cpx},${py} ${cpx},${cy} ${cx},${cy}`
+  }
+  const areaPath = linePath + ` L ${pts[pts.length - 1][0]},${height + 2} L ${pts[0][0]},${height + 2} Z`
+  const [lx, ly] = pts[pts.length - 1]
+  const gradId = `sg${color.replace(/[^a-f0-9]/gi, '')}`
+
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ overflow: 'visible', flexShrink: 0 }}>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradId})`} />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="2.5" fill={color} />
+    </svg>
+  )
+}
+
+function KPITile({ kpi }: { kpi: KPIData }) {
+  const last = kpi.trend?.[kpi.trend.length - 1] ?? 0
+  const first = kpi.trend?.[0] ?? 0
+  const trendDir = kpi.trend ? (last > first ? '↑' : '↓') : ''
+  const sc = kpi.sparkColor ?? T.red
+  return (
+    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderTop: '2px solid ' + sc, borderRadius: '10px', padding: '16px 18px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <div style={{ fontSize: '9px', fontWeight: 700, color: T.text2, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: T.mono, lineHeight: 1.4, maxWidth: '130px' }}>{kpi.label}</div>
+        {kpi.trend && <Sparkline data={kpi.trend} color={sc} />}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '5px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '26px', fontWeight: 800, color: sc, lineHeight: 1 }}>{kpi.value}</span>
+        {trendDir && <span style={{ fontSize: '14px', color: sc, fontWeight: 700, opacity: 0.7 }}>{trendDir}</span>}
+      </div>
+      <div style={{ borderTop: '1px solid ' + T.border, paddingTop: '8px' }}>
+        <div style={{ fontSize: '10px', color: T.text2 }}>Target <span style={{ color: T.text, fontWeight: 600 }}>{kpi.target}</span></div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: T.amber, marginTop: '3px' }}>{kpi.gap}</div>
+      </div>
+    </div>
+  )
+}
+
+function BenchmarkPanel({ benchmarks }: { benchmarks: BenchmarkItem[] }) {
+  return (
+    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px', padding: '18px' }}>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', fontFamily: T.mono }}>BENCHMARK POSITION</div>
+      {benchmarks.map(b => {
+        const max = Math.max(b.current, b.peerMedian, b.topQuartile) * 1.1 || 1
+        const behind = b.lowerIsBetter ? b.current > b.peerMedian : b.current < b.peerMedian
+        return (
+          <div key={b.label} style={{ marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '5px' }}>
+              <span style={{ fontSize: '11px', color: T.text2 }}>{b.label}</span>
+              <span style={{ fontSize: '12px', fontWeight: 800, color: behind ? T.red : T.green, fontFamily: T.mono }}>{b.current}{b.unit}</span>
+            </div>
+            {[
+              { label: 'You',   pct: (b.current / max) * 100,     color: behind ? T.red : T.teal },
+              { label: 'Peer',  pct: (b.peerMedian / max) * 100,  color: T.text3                 },
+              { label: 'Top Q', pct: (b.topQuartile / max) * 100, color: T.green + '60'          },
+            ].map(bar => (
+              <div key={bar.label} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                <div style={{ width: '32px', fontSize: '9px', color: T.text3, textAlign: 'right', fontFamily: T.mono, flexShrink: 0 }}>{bar.label}</div>
+                <div style={{ flex: 1, height: '5px', background: T.bg, borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: bar.pct + '%', background: bar.color, borderRadius: '3px', transition: 'width 700ms ease' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+      <div style={{ display: 'flex', gap: '12px', marginTop: '8px', paddingTop: '10px', borderTop: '1px solid ' + T.border }}>
+        {[{ c: T.teal, l: 'You' }, { c: T.text3, l: 'Peer median' }, { c: T.green, l: 'Top Q' }].map(x => (
+          <div key={x.l} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: x.c, flexShrink: 0 }} />
+            <span style={{ fontSize: '9px', color: T.text3 }}>{x.l}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Trajectory Chart ─────────────────────────────────────────────────────────
+
+const TRAJECTORY_DATA: Record<ClientId, { title: string; leftLabel: string; rightLabel: string; leftPts: number[]; rightPts: number[]; years: string[] }> = {
+  meridian:     { title: 'Revenue is growing. Margin is collapsing.',     leftLabel: 'Revenue ($B)', rightLabel: 'Op. Margin (%)', leftPts: [9.8, 10.1, 10.5, 10.9, 11.2], rightPts: [3.8, 3.4, 3.2, 2.1, 1.8], years: ['FY21','FY22','FY23','FY24','FY25'] },
+  firstcapital: { title: 'Assets are growing. Efficiency is deteriorating.', leftLabel: 'Assets ($B)',  rightLabel: 'Cost/Income (%)', leftPts: [16.2, 16.8, 17.2, 17.8, 18.0], rightPts: [62, 64, 65, 67, 68], years: ['FY21','FY22','FY23','FY24','FY25'] },
+  apexretail:   { title: 'Revenue is growing. Margin is under pressure.',   leftLabel: 'Revenue ($B)', rightLabel: 'Op. Margin (%)', leftPts: [10.8, 11.2, 11.6, 11.9, 12.2], rightPts: [5.8, 5.2, 4.8, 4.2, 3.8], years: ['FY21','FY22','FY23','FY24','FY25'] },
+}
+
+function TrajectoryChart({ clientId }: { clientId: ClientId }) {
+  const d = TRAJECTORY_DATA[clientId]
+  const n = d.leftPts.length
+  const W = 900, H = 110, pl = 44, pr = 44, pt = 14, pb = 24
+  const iW = W - pl - pr, iH = H - pt - pb
+  const minL = Math.min(...d.leftPts) * 0.96, maxL = Math.max(...d.leftPts) * 1.03
+  const minR = Math.min(...d.rightPts) * 0.88, maxR = Math.max(...d.rightPts) * 1.06
+  const xp = (i: number) => pl + (i / (n - 1)) * iW
+  const yL = (v: number) => pt + iH - ((v - minL) / (maxL - minL)) * iH
+  const yR = (v: number) => pt + iH - ((v - minR) / (maxR - minR)) * iH
+  const path = (pts: number[], yFn: (v: number) => number) => {
+    let p = `M ${xp(0)},${yFn(pts[0])}`
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (xp(i-1) + xp(i)) / 2
+      p += ` C ${mx},${yFn(pts[i-1])} ${mx},${yFn(pts[i])} ${xp(i)},${yFn(pts[i])}`
+    }
+    return p
+  }
+  return (
+    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '12px', padding: '16px 20px', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 600, color: T.text, fontFamily: T.sans }}>{d.title} <span style={{ fontWeight: 400, color: T.text2 }}>Here is why.</span></div>
+        <div style={{ display: 'flex', gap: '14px', flexShrink: 0 }}>
+          {[[T.teal, d.leftLabel], [T.red, d.rightLabel]].map(([c, l]) => (
+            <div key={l as string} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div style={{ width: '18px', height: '2px', background: c as string, borderRadius: '1px' }} />
+              <span style={{ fontSize: '10px', color: T.text2, fontFamily: T.mono }}>{l as string}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ overflow: 'visible' }}>
+        <line x1={pl} y1={pt} x2={W-pr} y2={pt} stroke={T.border} strokeWidth="1" opacity="0.4" />
+        <line x1={pl} y1={H-pb} x2={W-pr} y2={H-pb} stroke={T.border} strokeWidth="1" opacity="0.4" />
+        {d.years.map((yr, i) => <text key={yr} x={xp(i)} y={H-5} textAnchor="middle" fill="#94A3B8" fontSize="9" fontFamily="monospace">{yr}</text>)}
+        <text x={pl-4} y={pt+4} textAnchor="end" fill={T.teal} fontSize="9" fontFamily="monospace">{d.leftPts[n-1].toFixed(1)}</text>
+        <text x={pl-4} y={H-pb} textAnchor="end" fill={T.teal} fontSize="9" fontFamily="monospace" opacity="0.5">{d.leftPts[0].toFixed(1)}</text>
+        <text x={W-pr+4} y={pt+4} textAnchor="start" fill={T.red} fontSize="9" fontFamily="monospace" opacity="0.5">{d.rightPts[0].toFixed(1)}%</text>
+        <text x={W-pr+4} y={H-pb} textAnchor="start" fill={T.red} fontSize="9" fontFamily="monospace">{d.rightPts[n-1].toFixed(1)}%</text>
+        <path d={path(d.leftPts, yL)} fill="none" stroke={T.teal} strokeWidth="2.5" strokeLinecap="round" />
+        <path d={path(d.rightPts, yR)} fill="none" stroke={T.red} strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx={xp(n-1)} cy={yL(d.leftPts[n-1])} r="4" fill={T.teal} />
+        <circle cx={xp(n-1)} cy={yR(d.rightPts[n-1])} r="4" fill={T.red} />
+      </svg>
+    </div>
+  )
+}
+
+// ─── Donut Chart ──────────────────────────────────────────────────────────────
+
+function DonutChart({ issues, filter, onFilter }: { issues: Issue[]; filter: Severity | null; onFilter: (s: Severity | null) => void }) {
+  const counts = [
+    issues.filter(i => i.severity === 'critical').length,
+    issues.filter(i => i.severity === 'warning').length,
+    issues.filter(i => i.severity === 'watch').length,
+  ]
+  const labels: Severity[] = ['critical', 'warning', 'watch']
+  const colors = [T.red, T.amber, '#475569']
+  const total = issues.length || 1
+  const cx = 60, cy = 60, r = 44, sw = 14
+
+  const arcPath = (s: number, e: number) => {
+    const toXY = (d: number) => {
+      const rad = (d - 90) * Math.PI / 180
+      return [cx + r * Math.cos(rad), cy + r * Math.sin(rad)] as [number, number]
+    }
+    const [sx, sy] = toXY(s), [ex, ey] = toXY(e)
+    return `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${r} ${r} 0 ${e - s > 180 ? 1 : 0} 1 ${ex.toFixed(1)} ${ey.toFixed(1)}`
+  }
+
+  let cumDeg = 0
+  const segs = labels.map((sev, i) => {
+    const cnt = counts[i]
+    const span = (cnt / total) * 360
+    const startD = cumDeg, endD = cumDeg + span - (cnt && span > 4 ? 2 : 0)
+    cumDeg += span
+    return { sev, cnt, color: colors[i], startD, endD }
+  })
+
+  return (
+    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px', padding: '14px', marginBottom: '10px' }}>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: T.text2, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px', fontFamily: T.mono }}>SEVERITY SUMMARY</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ position: 'relative', flexShrink: 0, width: 120, height: 120 }}>
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx={cx} cy={cy} r={r} fill="none" stroke={T.border} strokeWidth={sw} />
+            {segs.map(s => s.cnt > 0 ? (
+              <path key={s.sev} d={arcPath(s.startD, s.endD)} fill="none"
+                stroke={filter === null || filter === s.sev ? s.color : s.color + '30'}
+                strokeWidth={filter === s.sev ? sw + 3 : sw} strokeLinecap="round"
+                style={{ cursor: 'pointer', transition: 'all 200ms' }}
+                onClick={() => onFilter(filter === s.sev ? null : s.sev)}
+              />
+            ) : null)}
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+            <div style={{ fontSize: '22px', fontWeight: 700, color: T.red, lineHeight: 1, fontFamily: 'Georgia, serif' }}>{counts[0]}</div>
+            <div style={{ fontSize: '8px', fontWeight: 700, color: T.text2, letterSpacing: '0.08em', fontFamily: T.mono }}>CRITICAL</div>
+          </div>
+        </div>
+        <div style={{ flex: 1 }}>
+          {segs.map(s => (
+            <button key={s.sev} onClick={() => s.cnt ? onFilter(filter === s.sev ? null : s.sev) : undefined}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', background: filter === s.sev ? s.color + '12' : 'none', border: '1px solid ' + (filter === s.sev ? s.color + '40' : 'transparent'), borderRadius: '5px', padding: '4px 8px', cursor: s.cnt ? 'pointer' : 'default', marginBottom: '4px' }}>
+              <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+              <span style={{ fontSize: '12px', color: T.text2, fontFamily: T.sans }}>
+                <span style={{ fontWeight: 700, color: T.text }}>{s.cnt}</span> {s.sev}
+              </span>
+            </button>
+          ))}
+          {filter && <button onClick={() => onFilter(null)} style={{ fontSize: '10px', color: T.teal, background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.sans, padding: '2px 8px' }}>× clear</button>}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n: number) => void; completedSteps: Set<number> }) {
   const steps = ['What\'s Happening', 'Why It\'s Happening', 'What\'s At Risk', 'Ask Anything', 'What To Do Next', 'Situation Brief Ready']
@@ -243,13 +545,13 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
               width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '9px', fontWeight: 800,
-              background: active ? T.teal : done ? T.teal + '30' : T.border2,
-              color: active ? '#0D1117' : done ? T.teal : T.text2,
-              border: done && !active ? '1px solid ' + T.teal + '60' : 'none',
+              background: active ? T.teal : done ? T.teal + '25' : 'transparent',
+              color: active ? T.bg : done ? T.teal : 'rgba(239,246,255,0.6)',
+              border: active ? 'none' : done ? '1px solid ' + T.teal + '50' : '1px solid rgba(239,246,255,0.25)',
             }}>
               {done && !active ? '✓' : n}
             </span>
-            <span style={{ fontSize: '12px', fontWeight: active ? 700 : 500, color: active ? T.text : T.text2 }}>
+            <span style={{ fontSize: '12px', fontWeight: active ? 700 : 500, color: active ? T.text : 'rgba(239,246,255,0.7)' }}>
               {label}
             </span>
           </button>
@@ -262,8 +564,9 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
 function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: boolean; onToggle: () => void }) {
   const borderColor = SEVERITY_COLOR[issue.severity]
   const label = issue.severity === 'critical' ? 'CRITICAL' : issue.severity === 'warning' ? 'WARNING' : 'WATCH'
+  const metric = ISSUE_METRICS[issue.id]
   return (
-    <div style={{ background: '#0D1520', border: '1px solid ' + T.border2, borderLeft: '4px solid ' + borderColor, borderRadius: '8px', marginBottom: '10px', overflow: 'hidden' }}>
+    <div style={{ background: T.surface, border: '1px solid ' + T.border, borderLeft: '4px solid ' + borderColor, borderRadius: '8px', marginBottom: '10px', overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
           <div style={{ flex: 1 }}>
@@ -271,7 +574,23 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
               <span style={{ fontSize: '9px', fontWeight: 800, color: borderColor, letterSpacing: '0.1em', fontFamily: T.mono }}>{label}</span>
               <span style={{ fontSize: '9px', color: T.text3, fontFamily: T.mono }}>#{issue.id}</span>
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: T.text, marginBottom: '6px' }}>{issue.title}</div>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: T.text, marginBottom: '10px' }}>{issue.title}</div>
+            {metric && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', marginBottom: '10px', background: T.surface, border: '1px solid ' + T.border, borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{ padding: '8px 12px' }}>
+                  <div style={{ fontSize: '9px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px', fontFamily: T.mono }}>CURRENT</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: borderColor, lineHeight: 1 }}>{metric.current}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', borderLeft: '1px solid ' + T.border, borderRight: '1px solid ' + T.border, background: T.bg }}>
+                  <span style={{ fontSize: '9px', color: T.text3, fontFamily: T.mono }}>vs</span>
+                </div>
+                <div style={{ padding: '8px 12px' }}>
+                  <div style={{ fontSize: '9px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px', fontFamily: T.mono }}>BENCHMARK</div>
+                  <div style={{ fontSize: '18px', fontWeight: 800, color: T.text2, lineHeight: 1 }}>{metric.benchmark}</div>
+                  {metric.gap && <div style={{ fontSize: '10px', fontWeight: 700, color: borderColor, marginTop: '3px' }}>{metric.gap}</div>}
+                </div>
+              </div>
+            )}
             <div style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '10px' }}>{issue.body}</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, background: T.teal + '18', color: T.teal, border: '1px solid ' + T.teal + '40', borderRadius: '12px', padding: '3px 10px' }}>{issue.impact}</span>
@@ -304,7 +623,7 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
 
 // ─── Zone 1 ───────────────────────────────────────────────────────────────────
 
-function Zone1({ issues, role }: { issues: Issue[]; role: RoleId }) {
+function Zone1({ issues, role, clientId }: { issues: Issue[]; role: RoleId; clientId: ClientId }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [filter, setFilter] = useState<Severity | null>(null)
 
@@ -316,68 +635,41 @@ function Zone1({ issues, role }: { issues: Issue[]; role: RoleId }) {
   })
 
   const visible = filter ? sorted.filter(i => i.severity === filter) : sorted
-  const critical = issues.filter(i => i.severity === 'critical').length
-  const warning = issues.filter(i => i.severity === 'warning').length
-  const watch = issues.filter(i => i.severity === 'watch').length
+  const kpis = CLIENT_KPI_DATA[clientId]
+  const benchmarks = CLIENT_BENCHMARKS[clientId]
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px', alignItems: 'start' }}>
-      {/* Left: issue cards */}
-      <div>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '14px', fontFamily: T.mono }}>
-          {visible.length} ISSUES DETECTED · SORTED BY ROLE RELEVANCE
-        </div>
-        {visible.map(issue => (
-          <IssueCard
-            key={issue.id} issue={issue}
-            expanded={expanded === issue.id}
-            onToggle={() => setExpanded(expanded === issue.id ? null : issue.id)}
-          />
-        ))}
+    <div>
+      {/* Trajectory chart — full width */}
+      <TrajectoryChart clientId={clientId} />
+
+      {/* Row 1: KPI tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        {kpis.map((kpi, i) => <KPITile key={i} kpi={kpi} />)}
       </div>
 
-      {/* Right: severity summary + timeline */}
-      <div>
-        {/* Severity donut (simplified) */}
-        <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px', padding: '18px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', fontFamily: T.mono }}>SEVERITY BREAKDOWN</div>
-          {[
-            { label: 'Critical', count: critical, color: T.red },
-            { label: 'Warning', count: warning, color: T.amber },
-            { label: 'Watch', count: watch, color: T.text3 },
-          ].map(s => (
-            <button
-              key={s.label}
-              onClick={() => setFilter(filter === s.label.toLowerCase() as Severity ? null : s.label.toLowerCase() as Severity)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '8px 10px',
-                background: filter === s.label.toLowerCase() ? s.color + '15' : 'transparent',
-                border: '1px solid ' + (filter === s.label.toLowerCase() ? s.color + '40' : 'transparent'),
-                borderRadius: '6px', cursor: 'pointer', fontFamily: T.sans, marginBottom: '4px',
-              }}
-            >
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
-              <span style={{ flex: 1, fontSize: '13px', fontWeight: 600, color: s.count > 0 ? T.text : T.text3, textAlign: 'left' }}>{s.label}</span>
-              <span style={{ fontSize: '18px', fontWeight: 800, color: s.color }}>{s.count}</span>
-            </button>
+      {/* Row 2: issue cards + right sidebar */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 290px', gap: '24px', alignItems: 'start' }}>
+        {/* Left: issue cards */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: T.mono }}>
+              {visible.length} ISSUES · SORTED BY ROLE RELEVANCE
+            </div>
+          </div>
+          {visible.map(issue => (
+            <IssueCard
+              key={issue.id} issue={issue}
+              expanded={expanded === issue.id}
+              onToggle={() => setExpanded(expanded === issue.id ? null : issue.id)}
+            />
           ))}
-          {filter && (
-            <button onClick={() => setFilter(null)} style={{ width: '100%', marginTop: '8px', padding: '6px', background: 'none', border: '1px solid ' + T.border, borderRadius: '6px', fontSize: '11px', color: T.text3, cursor: 'pointer', fontFamily: T.sans }}>
-              Clear filter
-            </button>
-          )}
         </div>
 
-        {/* Financial summary */}
-        <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px', padding: '18px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px', fontFamily: T.mono }}>TOTAL EXPOSURE</div>
-          <div style={{ fontSize: '28px', fontWeight: 800, color: T.red, marginBottom: '6px' }}>
-            ${issues.reduce((sum, i) => {
-              const m = i.impact.match(/\$(\d+)/)
-              return sum + (m ? parseInt(m[1]) : 0)
-            }, 0)}M+
-          </div>
-          <div style={{ fontSize: '12px', color: T.text3 }}>identified at risk across {issues.length} issues</div>
+        {/* Right: severity donut + benchmark panel */}
+        <div>
+          <DonutChart issues={issues} filter={filter} onFilter={setFilter} />
+          <BenchmarkPanel benchmarks={benchmarks} />
         </div>
       </div>
     </div>
@@ -386,85 +678,93 @@ function Zone1({ issues, role }: { issues: Issue[]; role: RoleId }) {
 
 // ─── Zone 2 ───────────────────────────────────────────────────────────────────
 
+interface TensionRow { id: string; reported: string; reportedSub: string; actual: string; actualSub: string; gap: string; gapSub: string; reportedBy: string; dataSource: string; gapStarted: string }
+
+const STATIC_CONTRADICTIONS: Record<ClientId, TensionRow[]> = {
+  meridian: [
+    { id:'M-C1', reported:'94.2% collection rate',   reportedSub:'Board Q3 2025 — Robert Chen (CFO)', actual:'87.1% actual',          actualSub:'Ensemble Health Partners claims extract',  gap:'$31M gap',         gapSub:'3 consecutive quarters',  reportedBy:'Robert Chen (CFO) · Q3 Board Deck · Sep 2025',          dataSource:'Ensemble Health Partners · Claims Extract · Nov 2025',   gapStarted:'Q1 2025' },
+    { id:'M-C2', reported:'6 AI pilots running',      reportedSub:'AI Committee · Jan 2026 — Marcus Webb', actual:'0 delivering value', actualSub:'AI Assessment · March 2026',               gap:'$42M sunk',        gapSub:'Zero tracked outcomes',   reportedBy:'Marcus Webb (CIO) · AI Committee Report · Jan 2026',     dataSource:'AI Investment Assessment · March 2026',                   gapStarted:'Q3 2025' },
+    { id:'M-C3', reported:'Prior auth vendor selected',reportedSub:'CMIO briefing · Oct 2025',           actual:'Contract lapsed',      actualSub:'Vendor contract review · Feb 2026',        gap:'6-month delay',    gapSub:'3 payer contracts at risk', reportedBy:'Dr. Sarah Okonkwo (CMIO) · Oct 2025 briefing',           dataSource:'Vendor contract audit file · Feb 2026',                   gapStarted:'Nov 2025' },
+    { id:'M-C4', reported:'Epic go-live complete',    reportedSub:'CIO town hall · 2023',                actual:'6 modules still dark', actualSub:'Epic optimization audit · 2026',           gap:'$34M missed',      gapSub:'CMS incentive at risk',   reportedBy:'Marcus Webb (CIO) · Go-live announcement · 2023',        dataSource:'Epic optimization score: 58/100 · March 2026',            gapStarted:'Post go-live 2023' },
+    { id:'M-C5', reported:'CDO in final interviews',  reportedSub:'Board update · Feb 2026',            actual:'Search paused · 14 months', actualSub:'HR records · April 2026',             gap:'AI has no owner',  gapSub:'$42M program leaderless', reportedBy:'Board presentation · Feb 2026',                          dataSource:'HR records · CDO role vacant since Feb 2025',             gapStarted:'Feb 2025' },
+  ],
+  firstcapital: [
+    { id:'FC-C1', reported:'FedNow on roadmap Q1 2026', reportedSub:'CTO board update · Q3 2025',       actual:'Not started · April 2026', actualSub:'IT project register · April 2026',    gap:'Deadline at risk', gapSub:'Jan 2027 hard date',      reportedBy:'James Okafor (CTO) · Q3 board update · 2025',            dataSource:'IT project register · April 2026 review',                 gapStarted:'Q4 2025' },
+    { id:'FC-C2', reported:'3 AI pilots delivering ROI',reportedSub:'CDO quarterly · Q4 2025',          actual:'0 with tracked baselines', actualSub:'AI assessment · March 2026',          gap:'$1.6M untracked',  gapSub:'Zero accountability',     reportedBy:'CDO quarterly report · December 2025',                   dataSource:'AI Investment Assessment · March 2026',                   gapStarted:'Q3 2025' },
+    { id:'FC-C3', reported:'Digital adoption at 52%', reportedSub:'CMO report · Q3 2025',               actual:'41% · stagnant',          actualSub:'Segment analytics · March 2026',      gap:'$48M gap',         gapSub:'180K at churn risk',      reportedBy:'CMO report · Q3 2025',                                   dataSource:'Segment analytics platform · March 2026',                 gapStarted:'Q4 2024' },
+    { id:'FC-C4', reported:'FIS HORIZON upgrade roadmapped', reportedSub:'IT strategy · 2024',          actual:'No funding approved',     actualSub:'IT budget review · Q1 2026',          gap:'AI deferred',      gapSub:'22-year-old system',      reportedBy:'IT 5-year strategy document · 2024',                     dataSource:'IT budget committee minutes · Q1 2026',                   gapStarted:'2024' },
+    { id:'FC-C5', reported:'AML compliance in tolerance', reportedSub:'Compliance committee · Q3 2025', actual:'78% false positive rate', actualSub:'OCC MRA findings · Feb 2026',         gap:'$1.1M excess',     gapSub:'OCC MRA active',          reportedBy:'Compliance committee report · Q3 2025',                  dataSource:'OCC MRA findings · February 2026',                        gapStarted:'Q2 2024' },
+  ],
+  apexretail: [
+    { id:'AX-C1', reported:'Einstein personalization live', reportedSub:'Salesforce contract · 2023',   actual:'Never activated',         actualSub:'Tech audit · March 2026',             gap:'$248M idle',       gapSub:'Fully licensed · never used', reportedBy:'Salesforce contract documents · 2023',                  dataSource:'Einstein activation audit · March 2026',                  gapStarted:'License inception 2023' },
+    { id:'AX-C2', reported:'Churn model in production', reportedSub:'Data Science update · Q3 2025',    actual:'Built · not deployed',    actualSub:'Engineering review · April 2026',     gap:'8 months lost',    gapSub:'Churn prevention unrealized', reportedBy:'Data Science quarterly · Q3 2025',                       dataSource:'Engineering deployment log · April 2026',                 gapStarted:'Aug 2025' },
+    { id:'AX-C3', reported:'o9 fully implemented',    reportedSub:'CSCO board update · Q4 2025',        actual:'40% after 18 months',     actualSub:'o9 project review · March 2026',      gap:'$180M trapped',    gapSub:'Excess inventory on balance sheet', reportedBy:'Lisa Thompson (CSCO) · Q4 2025 board',                  dataSource:'o9 project review · March 2026',                          gapStarted:'Q3 2024' },
+    { id:'AX-C4', reported:'Cart recovery flows active', reportedSub:'eCommerce update · Jan 2026',     actual:'Infrastructure not connected', actualSub:'eCommerce audit · March 2026',    gap:'$840M unrealized', gapSub:'Segment + Klaviyo idle',  reportedBy:'eCommerce Q4 update · January 2026',                     dataSource:'eCommerce platform audit · March 2026',                   gapStarted:'Q2 2025' },
+    { id:'AX-C5', reported:'AI strategy approved',    reportedSub:'Board minutes · Q1 2026',            actual:'CDO vacant · no owner',   actualSub:'HR records · April 2026',             gap:'Roadmap stalled',  gapSub:'No implementation leader', reportedBy:'Board minutes · January 2026',                           dataSource:'HR org chart · April 2026',                               gapStarted:'Q1 2025' },
+  ],
+}
+
 function Zone2({ clientId }: { clientId: ClientId }) {
-  const [contradictions, setContradictions] = useState<Contradiction[] | null>(null)
-  const [loading, setLoading] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [animate, setAnimate] = useState(false)
+  const rows = STATIC_CONTRADICTIONS[clientId]
 
   useEffect(() => {
-    setContradictions(null)
-    setLoading(true)
-    fetch('/api/intelligence/contradictions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clientId }),
-    })
-      .then(r => r.json())
-      .then((data: Contradiction[]) => { setContradictions(data); setLoading(false) })
-      .catch(() => setLoading(false))
+    setAnimate(false)
+    setExpanded(null)
+    const t = setTimeout(() => setAnimate(true), 60)
+    return () => clearTimeout(t)
   }, [clientId])
-
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '48px', color: T.text3 }}>
-      <span style={{ fontSize: '13px' }}>Mapping contradictions from client data…</span>
-    </div>
-  )
-
-  if (!contradictions?.length) return (
-    <div style={{ padding: '48px', color: T.text3, fontSize: '14px' }}>No contradictions detected for this client.</div>
-  )
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr', gap: '0', marginBottom: '12px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 0 10px', fontFamily: T.mono }}>WHAT WAS REPORTED</div>
-        <div />
-        <div style={{ fontSize: '10px', fontWeight: 700, color: T.red, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0 0 10px', fontFamily: T.mono }}>WHAT DATA SHOWS</div>
+      {/* Column headers */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr', gap: '0', marginBottom: '14px', padding: '0 16px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: T.text2, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: T.mono }}>WHAT WAS REPORTED</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: T.teal, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: T.mono, textAlign: 'center' }}>THE GAP</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: T.red, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: T.mono, textAlign: 'right' }}>WHAT DATA SHOWS</div>
       </div>
 
-      {contradictions.map(c => (
-        <div key={c.id} style={{ marginBottom: '6px' }}>
+      {rows.map((c, idx) => (
+        <div key={c.id} style={{ marginBottom: '8px' }}>
           <button
             onClick={() => setExpanded(expanded === c.id ? null : c.id)}
-            style={{ display: 'grid', gridTemplateColumns: '1fr 80px 1fr', width: '100%', background: T.surface, border: '1px solid ' + T.border, borderRadius: '8px', cursor: 'pointer', fontFamily: T.sans, overflow: 'hidden' }}
+            style={{ display: 'block', width: '100%', background: T.surface, border: '1px solid ' + (expanded === c.id ? T.teal + '50' : T.border), borderRadius: '10px', cursor: 'pointer', fontFamily: T.sans, overflow: 'hidden', textAlign: 'left' }}
           >
-            <div style={{ padding: '14px 16px', textAlign: 'left', borderRight: '1px solid ' + T.border }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.06em', marginBottom: '4px', textTransform: 'uppercase' }}>{c.dataPointA.label}</div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: T.text }}>{c.dataPointA.value}</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px', background: '#0D1520' }}>
-              <div style={{ width: '100%', height: '2px', background: `linear-gradient(90deg, ${T.text2}, ${T.red})`, marginBottom: '6px' }} />
-              <div style={{ fontSize: '10px', fontWeight: 700, color: T.red, textAlign: 'center', lineHeight: 1.3 }}>{c.gap.split(' — ')[0]}</div>
-            </div>
-            <div style={{ padding: '14px 16px', textAlign: 'left', borderLeft: '1px solid ' + T.border }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: T.red, letterSpacing: '0.06em', marginBottom: '4px', textTransform: 'uppercase' }}>{c.dataPointB.label}</div>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: T.red }}>{c.dataPointB.value}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 1fr' }}>
+              {/* Left: reported */}
+              <div style={{ padding: '14px 16px', borderRight: '1px solid ' + T.border }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: T.text, marginBottom: '3px' }}>{c.reported}</div>
+                <div style={{ fontSize: '11px', color: T.text2 }}>{c.reportedSub}</div>
+              </div>
+              {/* Center: tension line + gap */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '10px 8px', borderLeft: '1px solid ' + T.border, borderRight: '1px solid ' + T.border, background: T.bg }}>
+                <div style={{ width: '100%', height: '2px', background: `linear-gradient(90deg, ${T.text2}, ${T.red})`, marginBottom: '6px', transformOrigin: 'left', transform: animate ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 500ms ease ${idx * 80}ms` }} />
+                <div style={{ fontSize: '12px', fontWeight: 700, color: T.red, textAlign: 'center', lineHeight: 1.3 }}>{c.gap}</div>
+                <div style={{ fontSize: '10px', color: T.amber, textAlign: 'center', marginTop: '2px' }}>{c.gapSub}</div>
+              </div>
+              {/* Right: actual */}
+              <div style={{ padding: '14px 16px', textAlign: 'right' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: T.red, marginBottom: '3px' }}>{c.actual}</div>
+                <div style={{ fontSize: '11px', color: T.text2 }}>{c.actualSub}</div>
+              </div>
             </div>
           </button>
+          {/* Expanded attribution */}
           {expanded === c.id && (
-            <div style={{ background: '#0D1520', border: '1px solid ' + T.border, borderTop: 'none', borderRadius: '0 0 8px 8px', padding: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
+            <div style={{ background: T.surface, border: '1px solid ' + T.border, borderTop: 'none', borderRadius: '0 0 10px 10px', padding: '14px 16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 {[
-                  { label: 'Reported by', value: c.dataPointA.source },
-                  { label: 'Data source', value: c.dataPointB.source },
-                ].map((m, i) => (
-                  <div key={i}>
-                    <div style={{ fontSize: '9px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px', fontFamily: T.mono }}>{m.label}</div>
-                    <div style={{ fontSize: '11px', color: T.text2 }}>{m.value}</div>
+                  { label: 'REPORTED BY', value: c.reportedBy },
+                  { label: 'DATA SOURCE', value: c.dataSource },
+                  { label: 'GAP STARTED', value: c.gapStarted },
+                ].map(m => (
+                  <div key={m.label}>
+                    <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '4px', fontFamily: T.mono }}>{m.label}</div>
+                    <div style={{ fontSize: '11px', color: T.text2, lineHeight: 1.5 }}>{m.value}</div>
                   </div>
                 ))}
               </div>
-              {c.financialImpact && (
-                <div style={{ padding: '10px 14px', background: T.red + '10', border: '1px solid ' + T.red + '30', borderRadius: '6px', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 700, color: T.red }}>{c.financialImpact}</span>
-                </div>
-              )}
-              {c.finding && (
-                <div style={{ fontSize: '13px', color: T.text2, lineHeight: 1.6, marginBottom: '10px' }}>{c.finding}</div>
-              )}
-              {c.recommendation && (
-                <div style={{ fontSize: '13px', color: T.teal, lineHeight: 1.6 }}>→ {c.recommendation}</div>
-              )}
             </div>
           )}
         </div>
@@ -897,7 +1197,7 @@ function DiagnoseContent() {
             <div style={{ fontSize: '10px', fontWeight: 800, color: T.teal, letterSpacing: '0.14em', fontFamily: T.mono, marginBottom: '8px' }}>
               ⚡ SITUATION INTELLIGENCE
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: T.text, marginBottom: '12px', maxWidth: '580px', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '28px', fontWeight: 500, color: T.text, marginBottom: '12px', maxWidth: '640px', lineHeight: 1.3, fontFamily: "'Fraunces', Georgia, serif" }}>
               "What's actually broken — and what is it costing you?"
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -934,8 +1234,8 @@ function DiagnoseContent() {
         <div style={{ marginBottom: '24px' }}>
           {step === 1 && (
             <>
-              <h1 style={{ fontSize: '24px', fontWeight: 800, color: T.text, margin: '0 0 6px' }}>What's Happening at {meta.name}</h1>
-              <p style={{ fontSize: '14px', color: T.text2, margin: 0 }}>
+              <h1 style={{ fontSize: '18px', fontWeight: 700, color: T.text, margin: '0 0 4px', textAlign: 'left' }}>What's Happening at {meta.name}</h1>
+              <p style={{ fontSize: '13px', color: T.text2, margin: 0, textAlign: 'left' }}>
                 {issues.filter(i => i.severity === 'critical').length} critical issues · {issues.filter(i => i.severity === 'warning').length} warnings · sorted by relevance to {role}
               </p>
             </>
@@ -972,7 +1272,7 @@ function DiagnoseContent() {
           )}
         </div>
 
-        {step === 1 && <Zone1 issues={issues} role={role} />}
+        {step === 1 && <Zone1 issues={issues} role={role} clientId={activeClient} />}
         {step === 2 && <Zone2 clientId={activeClient} />}
         {step === 3 && <Zone3 clientId={activeClient} />}
         {step === 4 && <Zone4 clientId={activeClient} role={role} />}
@@ -984,7 +1284,7 @@ function DiagnoseContent() {
           <div style={{ marginTop: '32px', display: 'flex', justifyContent: 'flex-end' }}>
             <button
               onClick={advanceStep}
-              style={{ padding: '12px 28px', background: T.teal, color: '#0D1117', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: T.sans }}
+              style={{ padding: '12px 28px', background: T.teal, color: '#060A12', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 800, cursor: 'pointer', fontFamily: T.sans }}
             >
               {step === 4 ? 'Move to Actions →' : step === 5 ? 'Get Your Brief →' : 'Next →'}
             </button>
@@ -993,13 +1293,21 @@ function DiagnoseContent() {
       </div>
 
       {/* Role switcher — persistent bottom bar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: T.surface, borderTop: '1px solid ' + T.border, padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 40 }}>
-        <span style={{ fontSize: '11px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', marginRight: '8px', fontFamily: T.mono }}>VIEWING AS:</span>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0A1628', borderTop: '1px solid ' + T.border, padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 40 }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: T.text2, letterSpacing: '0.1em', marginRight: '10px', fontFamily: T.mono }}>VIEWING AS:</span>
         {ROLES.map(r => (
           <button
             key={r}
             onClick={() => setRole(r)}
-            style={{ padding: '6px 14px', background: role === r ? T.teal + '20' : 'transparent', border: '1px solid ' + (role === r ? T.teal + '60' : T.border), borderRadius: '6px', fontSize: '12px', fontWeight: role === r ? 700 : 500, color: role === r ? T.teal : T.text3, cursor: 'pointer', fontFamily: T.sans }}
+            style={{
+              padding: '5px 14px',
+              background: role === r ? T.teal : 'transparent',
+              border: '1px solid ' + (role === r ? T.teal : 'rgba(239,246,255,0.2)'),
+              borderRadius: '6px',
+              fontSize: '12px', fontWeight: role === r ? 700 : 500,
+              color: role === r ? '#060A12' : '#EFF6FF',
+              cursor: 'pointer', fontFamily: T.sans,
+            }}
           >
             {r}
           </button>
