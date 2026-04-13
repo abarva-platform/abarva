@@ -9,6 +9,7 @@ const SECTIONS = [
   { id: 'compounding', label: 'The Moat' },
   { id: 'team', label: 'The Team' },
   { id: 'seed', label: 'Seed Round' },
+  { id: 'competitive', label: 'Competitive' },
   { id: 'naysayer', label: 'Hard Questions' },
 ]
 
@@ -1004,6 +1005,90 @@ export default function InvestorPage() {
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {section === 'competitive' && (
+          <div>
+            <div className="tag" style={{ color: '#6366F1' }}>Competitive Landscape</div>
+            <h2 style={{ fontSize: '36px', fontWeight: 800, color: '#111827', marginBottom: '12px', letterSpacing: '-0.025em' }}>Nobody owns the outcome.</h2>
+            <p style={{ fontSize: '16px', color: '#6B7280', marginBottom: '48px', maxWidth: '560px', lineHeight: 1.7 }}>Every competitor solves part of the problem. None of them is accountable to whether the transformation actually worked.</p>
+
+            {/* 2x2 matrix */}
+            <div style={{ position: 'relative', width: '100%', maxWidth: '580px', margin: '0 auto 48px', aspectRatio: '1', border: '1px solid #E5E7EB', borderRadius: '12px', overflow: 'hidden', background: '#F9FAFB' }}>
+              {/* Axis labels */}
+              <div style={{ position: 'absolute', bottom: '8px', left: '50%', transform: 'translateX(-50%)', fontSize: '11px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Outcome Accountability →</div>
+              <div style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%) rotate(-90deg)', fontSize: '11px', fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.08em', whiteSpace: 'nowrap' }}>Intelligence Depth →</div>
+
+              {/* Quadrant shading */}
+              <div style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '50%', background: 'rgba(99,102,241,0.04)', borderBottom: '1px dashed #E5E7EB', borderLeft: '1px dashed #E5E7EB' }} />
+
+              {/* Competitors: x=accountability (0-100), y=intelligence (0-100) */}
+              {[
+                { name: 'McKinsey', x: 18, y: 72, color: '#DC2626', desc: 'Deep analysis, zero accountability' },
+                { name: 'ChatGPT', x: 12, y: 28, color: '#9CA3AF', desc: 'Generic, no client context' },
+                { name: 'Palantir', x: 55, y: 68, color: '#F59E0B', desc: 'Data ops, not transformation strategy' },
+                { name: 'ServiceNow', x: 48, y: 42, color: '#10B981', desc: 'Workflow, not intelligence' },
+                { name: 'Distyl', x: 62, y: 58, color: '#6366F1', desc: 'Ops AI, not enterprise transformation' },
+                { name: 'AbarVa', x: 88, y: 90, color: '#2DD4C8', desc: 'Intelligence + outcome alignment', bold: true },
+              ].map(p => (
+                <div key={p.name} style={{
+                  position: 'absolute',
+                  left: (24 + p.x * 0.72) + '%',
+                  bottom: (10 + p.y * 0.72) + '%',
+                  transform: 'translate(-50%, 50%)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px',
+                }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: p.color, border: p.bold ? '2px solid ' + p.color : 'none', boxShadow: p.bold ? '0 0 12px ' + p.color + '60' : 'none' }} />
+                  <span style={{ fontSize: p.bold ? '12px' : '11px', fontWeight: p.bold ? 800 : 600, color: p.bold ? '#111827' : '#374151', whiteSpace: 'nowrap', background: p.bold ? '#fff' : 'transparent', padding: p.bold ? '1px 4px' : 0, borderRadius: '4px' }}>{p.name}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Competitor cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '16px' }}>
+              {[
+                {
+                  name: 'McKinsey / BCG / Bain',
+                  color: '#DC2626', bg: '#FEF2F2',
+                  weakness: 'Outcome-blind billing. Gets paid whether the transformation works or not.',
+                  win: 'AbarVa\'s outcome fee model means we earn more when the client wins. That alignment is structurally impossible for a firm billing by the hour.',
+                },
+                {
+                  name: 'ChatGPT / General AI',
+                  color: '#9CA3AF', bg: '#F9FAFB',
+                  weakness: 'No client context. No benchmark data. No accountability. Generic responses to complex organizational problems.',
+                  win: 'AbarVa has three layers of client data, 40 industry benchmarks, and a Transformation Genome. ChatGPT has the training data. We have the context.',
+                },
+                {
+                  name: 'Palantir',
+                  color: '#F59E0B', bg: '#FFFBEB',
+                  weakness: 'Data operations platform, not transformation strategy. Requires large data engineering teams to deploy. CXO rarely touches it.',
+                  win: 'AbarVa is designed for the CXO, not the data engineer. 90 minutes to a board deck, not 6 months to a data lake.',
+                },
+                {
+                  name: 'ServiceNow',
+                  color: '#10B981', bg: '#F0FDF4',
+                  weakness: 'Workflow and ITSM. Excellent at process automation. Not built for strategic intelligence or investment decisions.',
+                  win: 'Different buyer (CIO operations vs. CEO transformation). AbarVa sits upstream of the workflow — we decide what to automate, ServiceNow automates it.',
+                },
+                {
+                  name: 'Distyl AI',
+                  color: '#6366F1', bg: '#EEF2FF',
+                  weakness: 'Operational AI for industrial and logistics use cases. Strong ML engineering, narrow applicability to enterprise transformation.',
+                  win: 'Distyl built $1.8B doing AI for operations. We\'re doing it for the transformation lifecycle — a larger, less-served category with a better monetization model.',
+                },
+              ].map(c => (
+                <div key={c.name} style={{ background: c.bg, border: '1px solid ' + c.bg.replace('F2', 'E0').replace('FB', 'E5').replace('EB', 'D6').replace('DF', 'C6').replace('F4', 'A7').replace('FF', 'BB'), borderRadius: '10px', padding: '20px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#111827', marginBottom: '10px', lineHeight: 1.3 }}>{c.name}</div>
+                  <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px', lineHeight: 1.5 }}>{c.weakness}</div>
+                  <div style={{ borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '10px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 800, color: '#2DD4C8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>How AbarVa wins</div>
+                    <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{c.win}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
