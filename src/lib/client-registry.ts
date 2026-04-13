@@ -270,7 +270,7 @@ export const CLIENT_REGISTRY: ClientEntry[] = [
     vertical: 'Financial Services',
     revenue: `$${firstCapital.org.assets}B assets`,
     employees: firstCapital.org.employees.toLocaleString(),
-    color: '#4DA3FF', // blue — financial services
+    color: '#6366F1', // indigo — financial services
     status: 'active',
     maestro: 'Anand Sundaram',
     startDate: 'March 28, 2026',

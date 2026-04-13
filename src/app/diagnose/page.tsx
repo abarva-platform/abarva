@@ -12,7 +12,7 @@ const T = {
   bg: '#060A12', surface: '#0D1520', surface2: '#162030',
   border: '#1C2D45', border2: '#2D3748',
   text: '#EFF6FF', text2: '#94A3B8', text3: '#94A3B8',
-  teal: '#2DD4C8', blue: '#4DA3FF', amber: '#F59E0B',
+  teal: '#2DD4C8', blue: '#6366F1', amber: '#F59E0B',
   red: '#EF4444', green: '#10B981', purple: '#A371F7',
   mono: 'JetBrains Mono, Menlo, monospace',
   sans: 'DM Sans, Inter, system-ui, sans-serif',

@@ -126,6 +126,26 @@ const ALL_PRODUCTS = [
 
 const TABS = ['Overview', 'Data & Files', 'Gaps & Needs', 'Approvals', 'Audit Log', 'Intelligence', 'Team Access']
 
+// ─── Access pill helper ───────────────────────────────────────────────────────
+
+function getAccessPill(key: string): { label: string; color: string } {
+  if (key === 'financials' || key === 'vendors')
+    return { label: 'Role-restricted', color: '#EF4444' }
+  if (key === 'leadership' || key === 'interviews')
+    return { label: 'Maestro only', color: '#6366F1' }
+  return { label: 'All users', color: '#2DD4C8' }
+}
+
+// ─── CSS animations (injected once at the root) ───────────────────────────────
+
+const ANIM_CSS = `
+  @keyframes urgent-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 5px #EF4444; }
+    50%       { opacity: 0.35; box-shadow: 0 0 10px #EF4444; }
+  }
+  .urgent-dot { animation: urgent-pulse 1.4s ease-in-out infinite; }
+`
+
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function MetricCard({ tile }: { tile: MetricTile }) {
@@ -181,7 +201,7 @@ function CategoryRow({ cat, color }: { cat: DataCategory; color: string }) {
                 <div style={{ fontSize: '11px', color: cat.approvedBy ? T.text : T.amber, fontFamily: T.sans }}>
                   {cat.approvedBy ?? '⏳ Pending approval'}
                 </div>
-                <span style={{ fontSize: '10px', fontWeight: 600, color: T.teal, background: T.teal + '18', border: '1px solid ' + T.teal + '40', borderRadius: '20px', padding: '2px 8px', width: 'fit-content' }}>All users</span>
+                {(() => { const ap = getAccessPill(cat.key); return <span style={{ fontSize: '10px', fontWeight: 600, color: ap.color, background: ap.color + '18', border: '1px solid ' + ap.color + '40', borderRadius: '20px', padding: '2px 8px', width: 'fit-content' }}>{ap.label}</span> })()}
               </div>
             </>
           )}
@@ -249,7 +269,7 @@ function TabOverview({ client }: { client: ClientEntry }) {
           {approvals.map((a, i) => (
             <div key={i} style={{ padding: '10px 0', borderBottom: i < approvals.length - 1 ? '1px solid ' + T.border : 'none' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', marginBottom: '3px' }}>
-                {a.hoursAgo > 48 && <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: T.red, flexShrink: 0, marginTop: '3px', boxShadow: '0 0 6px ' + T.red }} />}
+                {a.hoursAgo > 48 && <span className="urgent-dot" style={{ width: '6px', height: '6px', borderRadius: '50%', background: T.red, flexShrink: 0, marginTop: '3px' }} />}
                 <div style={{ fontSize: '12px', fontWeight: 500, color: T.text, fontFamily: T.sans, wordBreak: 'break-all', lineHeight: 1.4 }}>{a.file}</div>
               </div>
               <div style={{ fontSize: '11px', color: T.text2, fontFamily: T.sans, marginBottom: '8px' }}>{a.uploadedBy} · {a.uploadedAt}</div>
@@ -333,7 +353,7 @@ function TabDataFiles({ client }: { client: ClientEntry }) {
                   <div style={{ fontSize: '10px', color: T.text2 }}>{cat.loadedDate}</div>
                 </div>
                 <div style={{ fontSize: '11px', color: T.text, fontFamily: T.sans }}>{cat.approvedBy ?? '—'}</div>
-                <span style={{ fontSize: '10px', fontWeight: 600, color: T.teal, background: T.teal + '18', border: '1px solid ' + T.teal + '40', borderRadius: '10px', padding: '2px 8px', width: 'fit-content' }}>All users</span>
+                {(() => { const ap = getAccessPill(cat.key); return <span style={{ fontSize: '10px', fontWeight: 600, color: ap.color, background: ap.color + '18', border: '1px solid ' + ap.color + '40', borderRadius: '10px', padding: '2px 8px', width: 'fit-content' }}>{ap.label}</span> })()}
               </div>
             </div>
           ) : (
@@ -527,6 +547,7 @@ export default function ClientDashboard({ params }: { params: Promise<{ clientId
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans, color: T.text }}>
+      <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
       {/* Color strip */}
       <div style={{ height: '4px', background: color }} />
 
