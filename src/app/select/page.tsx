@@ -179,16 +179,239 @@ const DECISIONS = [
   },
 ]
 
+// Vendors with AbarVa referral relationships — disclosed on every card
+const REFERRAL_VENDORS = new Set(['Cohere Health', 'Databricks on Azure', 'Nuance DAX (Microsoft)', 'Amazon Bedrock'])
+
+// Vendors with "Why not" explanations
+const WHY_NOT: Record<string, string> = {
+  'Waystar AI': 'Overlap with your existing Ensemble RCM contract creates redundancy. Higher cost than Cohere for prior auth alone. Best evaluated after Ensemble renegotiation.',
+  'Olive AI': 'Recent Series E restructuring and layoffs create vendor stability risk. Timeline incompatible with CMS mandate. Not the right moment.',
+  'Fractional CDO (Consulting)': 'Vendors have told us directly they deprioritize organizations without full-time AI leadership. A fractional CDO signals insufficient commitment.',
+  'Promote Internal Analytics Lead': 'Mark Chen is an excellent analyst. This role requires vendor contract authority and board-level credibility he does not yet have.',
+  'Defer to 2026': 'Every quarter without a CDO costs roughly $6M in delayed AI pipeline execution. This is not a neutral option.',
+  'Epic Professional Services': 'Epic PS has a 9-month backlog and charges list price. SI partner route is faster, more flexible, and better at change management.',
+  'Internal IT Activation': 'Your IT team is at capacity. Three peer health systems tried internal DAX activation in 2024 — all three failed and restarted with an SI.',
+  'nThrive (Kaufman Hall)': 'Private equity ownership creates pricing instability risk. Weaker prior auth automation is a dealbreaker given the CMS mandate.',
+  'Keep Epic Caboodle Only': 'This blocks your entire AI roadmap. Not a viable option.',
+  'Snowflake + Azure ML': 'Strong for analytics. Not strong enough for real-time clinical AI streaming — your specific requirement.',
+  'Azure Synapse Analytics': 'Microsoft is de-emphasizing Synapse in favor of Microsoft Fabric. You would be building on a deprecated architecture.',
+  'Augmedix': 'Live scribe model is being outpaced by pure AI. DAX ambient AI requires zero physician behavior change — Augmedix still requires structured workflow.',
+  'Suki AI': 'Smaller vendor with limited subspecialty coverage. Risk profile is high for a primary care-plus-specialist deployment at Meridian\'s scale.',
+  'Third-Party AI Audit Firm': 'Useful supplement. Not a substitute for an internal governance body with actual decision authority.',
+  'AHA AI Consortium Membership': 'Good for benchmarking. Has no governance authority over Meridian\'s deployments.',
+}
+
+type EntryPath = 'select' | 'rationalize' | 'audit' | 'rfp'
+
 function SelectContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
   const [activeClient, setActiveClient] = useState(clientId)
   const [selectedId, setSelectedId] = useState(DECISIONS[0].id)
+  const [entryPath, setEntryPath] = useState<EntryPath | null>(null)
+  const [openWhyNot, setOpenWhyNot] = useState<string | null>(null)
+  const [rfpStreaming, setRfpStreaming] = useState(false)
+  const [rfpText, setRfpText] = useState('')
 
   const decision = DECISIONS.find(d => d.id === selectedId) || DECISIONS[0]
   const recommended = decision.options.find(o => o.recommended)
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial' : activeClient === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
   const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services' : activeClient === 'apexretail' ? 'Retail' : 'Healthcare'
+
+  function generateRFP() {
+    if (rfpStreaming) return
+    setRfpStreaming(true)
+    setRfpText('')
+    const rfpContent = `REQUEST FOR PROPOSAL
+${decision.label.toUpperCase()}
+${clientName} — ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1 — OVERVIEW AND CONTEXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${clientName} is soliciting proposals for ${decision.label}.
+
+Background: ${decision.context}
+
+This RFP is issued to qualified vendors. Responses are due within 30 days of issuance.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2 — SCOPE OF WORK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Vendors are requested to provide:
+• Detailed implementation approach and timeline
+• Integration requirements with existing systems
+• Staffing plan and named project resources
+• References from comparable organizations (minimum 3)
+• Pricing model with all cost components itemized
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3 — EVALUATION CRITERIA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Proposals will be scored on:
+• Technical capability and integration depth (30%)
+• Implementation timeline and approach (25%)
+• Total cost of ownership over 3 years (20%)
+• Reference quality and outcome data (15%)
+• Vendor stability and roadmap (10%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4 — MANDATORY REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+All vendors must confirm:
+• HIPAA BAA execution prior to any data access
+• Named implementation lead committed before contract signing
+• Outcome-based pricing component available (minimum 20% at risk)
+• Exit clause at 12 months with data portability guaranteed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5 — SUBMISSION REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Deadline: 30 days from issuance
+Format: PDF, maximum 40 pages excluding appendices
+Contact: [Procurement contact to be designated]
+
+Generated by AbarVa Vendor Intelligence. All criteria derived from ${clientName} data.`
+
+    let i = 0
+    const interval = setInterval(() => {
+      i += 3
+      if (i >= rfpContent.length) {
+        setRfpText(rfpContent)
+        setRfpStreaming(false)
+        clearInterval(interval)
+      } else {
+        setRfpText(rfpContent.slice(0, i))
+      }
+    }, 16)
+  }
+
+  // Entry path selector
+  if (!entryPath) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
+        <div style={{ maxWidth: '640px', width: '100%' }}>
+          <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>What are you trying to decide?</div>
+            <div style={{ fontSize: '14px', color: '#6B7280' }}>Choose a path — we&apos;ll load the right intelligence for {clientName}.</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+            {[
+              { id: 'select' as EntryPath, icon: '◈', title: 'Select a vendor', desc: '7 open decisions · Scored shortlists · Negotiation playbooks', color: '#0F172A', bg: '#FFFFFF', border: '#E2E8F0' },
+              { id: 'rationalize' as EntryPath, icon: '◇', title: 'Rationalize vendors', desc: 'Audit current spend · Identify overlap · Consolidation opportunities', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE' },
+              { id: 'audit' as EntryPath, icon: '◉', title: 'Audit current vendors', desc: 'Performance vs SLA · Value realized · Renegotiation leverage', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A' },
+              { id: 'rfp' as EntryPath, icon: '◎', title: 'Build an RFP/RFI', desc: 'One-click RFP from your requirements · Download formatted document', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0' },
+            ].map(path => (
+              <button key={path.id} onClick={() => setEntryPath(path.id)}
+                style={{ padding: '20px', background: path.bg, border: '1px solid ' + path.border, borderRadius: '12px', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', transition: 'all 150ms' }}
+                onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)'}
+                onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}>
+                <div style={{ fontSize: '24px', marginBottom: '10px', color: path.color }}>{path.icon}</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{path.title}</div>
+                <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.4 }}>{path.desc}</div>
+              </button>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <a href="/admin" style={{ fontSize: '13px', color: '#94A3B8', textDecoration: 'none' }}>← Engagement Hub</a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // IT Audit path
+  if (entryPath === 'audit') {
+    const vendors = [
+      { name: 'Ensemble Health Partners', category: 'RCM', spend: '$28M/yr', sla: 'BREACHED', slaDetail: '$8M in documented SLA violations', score: 38, action: 'Renegotiate immediately', urgency: 'red' },
+      { name: 'Epic Systems', category: 'EHR', spend: '$84M total / $12M/yr', sla: 'MET', slaDetail: 'Optimization score 58/100 — underutilized', score: 71, action: 'Activate DAX + AI modules', urgency: 'amber' },
+      { name: 'Microsoft Azure', category: 'Cloud', spend: '$4.2M/yr', sla: 'MET', slaDetail: 'Underutilized capacity — 34% utilization', score: 76, action: 'Consolidate workloads', urgency: 'amber' },
+      { name: 'Nuance (Microsoft)', category: 'Voice AI', spend: '$0 (licensed, unused)', sla: 'N/A', slaDetail: 'DAX Copilot licensed but not activated', score: 55, action: 'Activate immediately — free', urgency: 'red' },
+      { name: 'Workday', category: 'HR/Finance', spend: '$6.8M/yr', sla: 'MET', slaDetail: 'AI workforce planning module unused', score: 73, action: 'Activate workforce analytics', urgency: 'amber' },
+    ]
+    return (
+      <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+        <AbarvaNav clientId={activeClient} onClientChange={id => setActiveClient(id)} activePage="select" />
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+            <div>
+              <button onClick={() => setEntryPath(null)} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#6B7280', cursor: 'pointer', padding: 0, marginBottom: '6px', display: 'block' }}>← Change path</button>
+              <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', margin: 0 }}>Vendor Audit — {clientName}</h1>
+            </div>
+            <div style={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>$141M total vendor spend</div>
+          </div>
+          <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden', marginBottom: '24px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 200px 80px 200px', gap: 0, padding: '10px 20px', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0', fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>
+              <span>Vendor</span><span>Annual Spend</span><span>SLA Status</span><span>Score</span><span>Recommended Action</span>
+            </div>
+            {vendors.map((v, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 200px 80px 200px', gap: 0, padding: '16px 20px', borderBottom: i < vendors.length - 1 ? '1px solid #F1F5F9' : 'none', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{v.name}</div>
+                  <div style={{ fontSize: '11px', color: '#94A3B8' }}>{v.category}</div>
+                </div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>{v.spend}</div>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: v.sla === 'BREACHED' ? '#DC2626' : v.sla === 'MET' ? '#059669' : '#94A3B8', marginBottom: '2px' }}>{v.sla}</div>
+                  <div style={{ fontSize: '11px', color: '#6B7280' }}>{v.slaDetail}</div>
+                </div>
+                <div style={{ fontSize: '18px', fontWeight: 700, color: v.score >= 70 ? '#059669' : v.score >= 50 ? '#D97706' : '#DC2626' }}>{v.score}</div>
+                <div>
+                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 8px', borderRadius: '6px', background: v.urgency === 'red' ? '#FEF2F2' : '#FFFBEB', color: v.urgency === 'red' ? '#DC2626' : '#D97706' }}>{v.action}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: '#0D1117', borderRadius: '12px', padding: '20px', border: '1px solid #1E293B' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' }}>IMMEDIATE RENEGOTIATION OPPORTUNITY</div>
+            <div style={{ fontSize: '13px', color: '#E2E8F0', lineHeight: 1.6 }}>Ensemble Health Partners has $8M in enforceable SLA breach penalties. Use this leverage before any renegotiation meeting. Outside counsel should send the breach demand letter first — it fundamentally changes the power dynamic. Nuance DAX is licensed but dormant — activating it costs nothing and recovers $18M annually in physician capacity.</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // RFP path
+  if (entryPath === 'rfp') {
+    return (
+      <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+        <AbarvaNav clientId={activeClient} onClientChange={id => setActiveClient(id)} activePage="select" />
+        <div style={{ maxWidth: '800px', margin: '0 auto', padding: '32px' }}>
+          <button onClick={() => setEntryPath(null)} style={{ background: 'none', border: 'none', fontSize: '13px', color: '#6B7280', cursor: 'pointer', padding: 0, marginBottom: '16px', display: 'block' }}>← Change path</button>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', marginBottom: '6px' }}>Build an RFP / RFI</h1>
+          <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Select a decision to generate a complete RFP document in seconds. All requirements derived from {clientName} data.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '24px' }}>
+            {DECISIONS.slice(0, 6).map(d => (
+              <button key={d.id} onClick={() => setSelectedId(d.id)}
+                style={{ padding: '12px', background: selectedId === d.id ? '#0F172A' : '#FFFFFF', border: '1px solid ' + (selectedId === d.id ? '#0F172A' : '#E2E8F0'), borderRadius: '8px', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: selectedId === d.id ? '#2DD4C8' : '#0F172A', lineHeight: 1.3 }}>{d.label}</div>
+              </button>
+            ))}
+          </div>
+          <button onClick={generateRFP} disabled={rfpStreaming}
+            style={{ padding: '12px 28px', background: rfpStreaming ? '#94A3B8' : '#059669', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: rfpStreaming ? 'not-allowed' : 'pointer', marginBottom: '20px', fontFamily: 'inherit' }}>
+            {rfpStreaming ? 'Generating...' : 'Generate RFP →'}
+          </button>
+          {rfpText && (
+            <div style={{ background: '#0F172A', borderRadius: '12px', padding: '24px', border: '1px solid #1E293B' }}>
+              <pre style={{ fontSize: '12px', color: '#E2E8F0', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}>{rfpText}</pre>
+              {!rfpStreaming && (
+                <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
+                  <button style={{ padding: '8px 16px', background: '#2DD4C8', color: '#0D1117', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>Download as PDF →</button>
+                  <button style={{ padding: '8px 16px', background: 'none', color: '#8B949E', border: '1px solid #30363D', borderRadius: '6px', fontSize: '12px', cursor: 'pointer', fontFamily: 'inherit' }}>Copy to clipboard</button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
@@ -288,8 +511,13 @@ function SelectContent() {
                   {opt.recommended && (
                     <div style={{ position: 'absolute' as const, top: '-1px', right: '12px', background: '#0F172A', color: '#2DD4C8', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '0 0 8px 8px', letterSpacing: '0.06em' }}>RECOMMENDED</div>
                   )}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px', marginTop: opt.recommended ? '8px' : 0 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{opt.name}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px', marginTop: opt.recommended ? '8px' : 0 }}>
+                    <div>
+                      <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>{opt.name}</div>
+                      {REFERRAL_VENDORS.has(opt.name) && (
+                        <span style={{ fontSize: '10px', fontWeight: 600, color: '#D97706' }}>★ AbarVa referral partner — disclosed</span>
+                      )}
+                    </div>
                     <div style={{ fontSize: '18px', fontWeight: 700, color: opt.recommended ? '#0F172A' : '#94A3B8', marginLeft: '8px', flexShrink: 0 }}>{opt.score}</div>
                   </div>
                   <div style={{ fontSize: '11px', color: '#2563EB', fontWeight: 600, marginBottom: '10px' }}>{opt.tag}</div>
@@ -309,6 +537,19 @@ function SelectContent() {
                       <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.4 }}>{b}</span>
                     </div>
                   ))}
+                  {!opt.recommended && WHY_NOT[opt.name] && (
+                    <div style={{ marginTop: '10px', borderTop: '1px solid #F1F5F9', paddingTop: '8px' }}>
+                      <button onClick={() => setOpenWhyNot(openWhyNot === opt.name ? null : opt.name)}
+                        style={{ background: 'none', border: 'none', padding: 0, fontSize: '11px', color: '#94A3B8', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                        {openWhyNot === opt.name ? '▲ Hide' : '▼ Why not this one?'}
+                      </button>
+                      {openWhyNot === opt.name && (
+                        <div style={{ marginTop: '6px', padding: '8px 10px', background: '#FEF2F2', borderRadius: '6px', fontSize: '12px', color: '#78350F', lineHeight: 1.5 }}>
+                          {WHY_NOT[opt.name]}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
