@@ -22,6 +22,37 @@ const CATEGORIES = ['Financial Performance', 'Technology Inventory', 'Leadership
 const SOLUTIONS = ['Situation Intelligence', 'AI Investment Intelligence', 'Business Case Intelligence', 'Vendor Intelligence', 'Outcome Intelligence', 'Delivery Intelligence', 'Workforce Intelligence', 'Data Estate Intelligence', 'Procurement Intelligence']
 const ROLES = ['CIO', 'CFO', 'COO', 'CMIO', 'CMO', 'CEO', 'CDO', 'CRO']
 
+const STANDARD_METRICS: Record<string, Array<{ metric: string; source: string }>> = {
+  Healthcare: [
+    { metric: 'RCM Denial Rate (%)', source: 'RCM vendor monthly report' },
+    { metric: 'Prior Auth Approval Time (days)', source: 'Epic scheduling data' },
+    { metric: 'Operating Margin (%)', source: 'Finance ERP / CFO report' },
+    { metric: 'Travel Nurse FTE Count', source: 'Kronos / HR system' },
+    { metric: 'AI Pilot Count (stuck or scaled)', source: 'IT project tracker' },
+  ],
+  'Financial Services': [
+    { metric: 'Core System Downtime (hours/month)', source: 'IT operations log' },
+    { metric: 'Manual Processing Rate (%)', source: 'Operations team survey' },
+    { metric: 'Cost per Transaction ($)', source: 'Finance ERP' },
+    { metric: 'Compliance Gap Count', source: 'Risk management system' },
+    { metric: 'Time to Market — New Product (weeks)', source: 'PMO tracker' },
+  ],
+  Retail: [
+    { metric: 'Loyalty Active Rate (%)', source: 'CRM / CDP platform' },
+    { metric: 'Inventory Out-of-Stock Rate (%)', source: 'POS / WMS system' },
+    { metric: 'Same-Day Fulfillment Rate (%)', source: 'Order management system' },
+    { metric: 'Marketing Personalization Score', source: 'Email platform analytics' },
+    { metric: 'Cart Abandonment Rate (%)', source: 'e-commerce analytics' },
+  ],
+  Manufacturing: [
+    { metric: 'OEE (Overall Equipment Effectiveness, %)', source: 'MES / SCADA system' },
+    { metric: 'Unplanned Downtime (hours/month)', source: 'Maintenance system' },
+    { metric: 'Defect Rate (PPM)', source: 'Quality management system' },
+    { metric: 'Supply Chain On-Time Delivery (%)', source: 'ERP / SCM system' },
+    { metric: 'Energy Cost per Unit ($)', source: 'Utilities / ERP' },
+  ],
+}
+
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', background: '#161B22', border: '1px solid #30363D',
   borderRadius: '8px', fontSize: '14px', color: '#E6EDF3', outline: 'none',
@@ -148,16 +179,39 @@ export default function NewClientWizard() {
               </div>
             </div>
             <div>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: T.text2, display: 'block', marginBottom: '12px' }}>Baseline Metrics</label>
-              <p style={{ fontSize: '13px', color: T.text3, marginBottom: '12px' }}>Document starting metrics before the engagement begins. These become the outcome attribution baseline.</p>
-              {baselines.map((b, i) => (
-                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                  <input style={inputStyle} placeholder="Metric name" value={b.metric} onChange={e => setBaselines(bl => bl.map((x, bi) => bi === i ? { ...x, metric: e.target.value } : x))} />
+              <label style={{ fontSize: '13px', fontWeight: 600, color: T.text2, display: 'block', marginBottom: '8px' }}>Baseline Metrics</label>
+              <p style={{ fontSize: '13px', color: T.text3, marginBottom: '12px' }}>Document starting metrics now. These become the outcome attribution baseline — required for outcome fee calculation.</p>
+
+              {/* Pre-populated standard metrics for vertical */}
+              {org.vertical && STANDARD_METRICS[org.vertical] && (
+                <div style={{ background: T.surface2, border: '1px solid ' + T.border2, borderRadius: '8px', padding: '14px', marginBottom: '12px' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: T.teal, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Standard {org.vertical} Baseline Metrics</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {STANDARD_METRICS[org.vertical].map(sm => (
+                      <button key={sm.metric} onClick={() => {
+                        if (!baselines.some(b => b.metric === sm.metric)) {
+                          setBaselines(prev => [...prev.filter(b => b.metric), { metric: sm.metric, current: '', target: '', source: sm.source }])
+                        }
+                      }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: baselines.some(b => b.metric === sm.metric) ? T.teal + '15' : T.surface, border: '1px solid ' + (baselines.some(b => b.metric === sm.metric) ? T.teal : T.border), borderRadius: '6px', padding: '8px 12px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+                        <span style={{ fontSize: '12px', color: baselines.some(b => b.metric === sm.metric) ? T.teal : T.text2 }}>{sm.metric}</span>
+                        <span style={{ fontSize: '10px', color: T.text3 }}>{baselines.some(b => b.metric === sm.metric) ? '✓ Added' : '+ Add'}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Manual entry rows */}
+              <div style={{ fontSize: '11px', fontWeight: 700, color: T.text3, textTransform: 'uppercase', marginBottom: '8px' }}>Entered Baselines</div>
+              {baselines.filter(b => b.metric).map((b, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 2fr', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                  <div style={{ fontSize: '12px', color: T.text2, padding: '10px 12px', background: T.surface2, borderRadius: '8px', border: '1px solid ' + T.border }}>{b.metric}</div>
                   <input style={inputStyle} placeholder="Current value" value={b.current} onChange={e => setBaselines(bl => bl.map((x, bi) => bi === i ? { ...x, current: e.target.value } : x))} />
                   <input style={inputStyle} placeholder="Target value" value={b.target} onChange={e => setBaselines(bl => bl.map((x, bi) => bi === i ? { ...x, target: e.target.value } : x))} />
+                  <input style={{ ...inputStyle, fontSize: '12px', color: T.text3 }} placeholder="Measurement source" value={(b as { source?: string }).source ?? ''} onChange={e => setBaselines(bl => bl.map((x, bi) => bi === i ? { ...x, source: e.target.value } : x))} />
                 </div>
               ))}
-              <button onClick={() => setBaselines(b => [...b, { metric: '', current: '', target: '' }])} style={{ background: 'none', border: '1px dashed ' + T.border2, borderRadius: '8px', color: T.text3, padding: '8px 16px', cursor: 'pointer', fontSize: '12px', width: '100%', fontFamily: 'inherit', marginTop: '4px' }}>+ Add metric</button>
+              <button onClick={() => setBaselines(b => [...b, { metric: '', current: '', target: '', source: '' } as { metric: string; current: string; target: string; source: string }])} style={{ background: 'none', border: '1px dashed ' + T.border2, borderRadius: '8px', color: T.text3, padding: '8px 16px', cursor: 'pointer', fontSize: '12px', width: '100%', fontFamily: 'inherit', marginTop: '4px' }}>+ Add custom metric</button>
             </div>
           </div>
         )}
