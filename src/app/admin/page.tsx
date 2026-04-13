@@ -1,6 +1,12 @@
 'use client'
 import { useState, useEffect } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import { meridianHealth } from '@/data/meridian/index'
+import { meridianAI } from '@/data/meridian/ai'
+import { firstCapital } from '@/data/firstcapital/index'
+import { firstCapitalAI } from '@/data/firstcapital/ai'
+import { apexRetail } from '@/data/apexretail/index'
+import { apexRetailAI } from '@/data/apexretail/ai'
 
 const T = {
   bg: '#0D1117',
@@ -31,64 +37,78 @@ const LINKS = [
   { href: '/admin/revenue', label: 'Revenue' },
 ]
 
+function fmtVal(n: number): string {
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
+  return `$${Math.round(n / 1e6)}M`
+}
+
+function dataCompleteness(inv: Array<{ confidence: number; status: string }>): number {
+  const active = inv.filter(d => d.status !== 'missing')
+  if (!active.length) return 0
+  return Math.round(active.reduce((s, d) => s + d.confidence, 0) / active.length)
+}
+
+const fcPersonalization = (apexRetail.aiOpportunities as Array<{ useCase: string; annualRevenue?: number }>)
+  .find(o => o.useCase === 'Personalization engine')
+
 const ENGAGEMENTS = [
   {
     id: 'meridian',
-    name: 'Meridian Health System',
+    name: meridianHealth.org.name,
     industry: 'Healthcare',
     confidence: 94,
-    completeness: 87,
+    completeness: 87, // financials, technology, clinical, leadership all fully loaded
     phase: 'AI Strategy',
     lastActivity: '2 hours ago',
     pending: 2,
     milestone: 'AI Strategy Board Presentation',
     milestoneDate: 'Apr 18',
-    value: '$292M',
+    value: fmtVal(meridianAI.roadmap.summary.totalAnnualValue),
     color: T.blue,
     metrics: [
-      { label: 'Operating Margin', value: '1.8%', target: 'Target 4.0%', alert: true },
-      { label: 'RCM Denial Rate', value: '18.2%', target: 'SLA 12%', alert: true },
-      { label: 'Prior Auth Days', value: '4.2d', target: 'Peer 1.8d', alert: true },
+      { label: 'Operating Margin', value: meridianHealth.org.operatingMargin + '%', target: 'Target ' + meridianHealth.org.targetOperatingMargin + '%', alert: meridianHealth.org.operatingMargin < meridianHealth.org.targetOperatingMargin },
+      { label: 'RCM Denial Rate', value: meridianHealth.technology.rcm.denialRate + '%', target: 'SLA ' + meridianHealth.technology.rcm.benchmarkDenialRate + '%', alert: meridianHealth.technology.rcm.denialRate > meridianHealth.technology.rcm.benchmarkDenialRate },
+      { label: 'Prior Auth Days', value: meridianHealth.technology.rcm.priorAuthAvgDays + 'd', target: 'Peer ' + meridianHealth.technology.rcm.priorAuthPeerDays + 'd', alert: meridianHealth.technology.rcm.priorAuthAvgDays > meridianHealth.technology.rcm.priorAuthPeerDays },
     ],
     plan: { license: '$625K', solutions: 2, maestroHrsRemaining: 18, maestroHrsTotal: 40 },
   },
   {
     id: 'firstcapital',
-    name: 'First Capital Financial',
+    name: firstCapital.org.name,
     industry: 'Financial Services',
     confidence: 88,
-    completeness: 72,
+    completeness: dataCompleteness(firstCapital.dataInventory),
     phase: 'Diagnose',
     lastActivity: '1 day ago',
     pending: 1,
     milestone: 'FedNow Architecture Review',
     milestoneDate: 'Apr 22',
-    value: '$198M',
+    value: fmtVal(firstCapitalAI.roadmap.summary.totalAnnualValue),
     color: T.purple,
     metrics: [
-      { label: 'FedNow Live', value: 'No', target: '68% peers live', alert: true },
-      { label: 'Cost-to-Income', value: '68%', target: 'Target 55%', alert: true },
-      { label: 'Mobile Rating', value: '2.8', target: 'Threshold 3.8', alert: true },
+      { label: 'FedNow Live', value: firstCapital.technology.payments.fedNowLive ? 'Yes' : 'No', target: firstCapital.technology.payments.peerBanksOnFedNow + '% peers live', alert: !firstCapital.technology.payments.fedNowLive },
+      { label: 'Cost-to-Income', value: firstCapital.org.costToIncomeRatio + '%', target: 'Target ' + firstCapital.org.targetCostToIncomeRatio + '%', alert: firstCapital.org.costToIncomeRatio > firstCapital.org.targetCostToIncomeRatio },
+      { label: 'Mobile Rating', value: String(firstCapital.technology.digital.mobileAppRating), target: 'Threshold 3.8', alert: firstCapital.technology.digital.mobileAppRating < 3.8 },
     ],
     plan: { license: '$500K', solutions: 1, maestroHrsRemaining: 28, maestroHrsTotal: 40 },
   },
   {
     id: 'apexretail',
-    name: 'Apex Retail Group',
+    name: apexRetail.org.name,
     industry: 'Retail',
     confidence: 86,
-    completeness: 68,
+    completeness: dataCompleteness(apexRetail.dataInventory),
     phase: 'Justify',
     lastActivity: '3 hours ago',
     pending: 0,
     milestone: 'Einstein Activation Business Case',
     milestoneDate: 'Apr 15',
-    value: '$624M',
+    value: fmtVal(apexRetailAI.roadmap.summary.totalAnnualValue),
     color: T.green,
     metrics: [
-      { label: 'Einstein Active', value: 'No', target: '$248M idle', alert: true },
-      { label: 'Inventory Turns', value: '4.2x', target: 'Benchmark 6.8x', alert: true },
-      { label: 'Cart Abandon', value: '72%', target: 'Benchmark 58%', alert: true },
+      { label: 'Einstein Active', value: 'No', target: fcPersonalization ? '$' + Math.round((fcPersonalization.annualRevenue ?? 248000000) / 1e6) + 'M idle' : '$248M idle', alert: true },
+      { label: 'Inventory Turns', value: apexRetail.financials.inventoryTurnover + 'x', target: 'Benchmark 6.8x', alert: apexRetail.financials.inventoryTurnover < 6.8 },
+      { label: 'Cart Abandon', value: apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate + '%', target: 'Benchmark ' + apexRetail.technology.commercePlatform.ecommerce.benchmarkCartAbandonmentRate + '%', alert: apexRetail.technology.commercePlatform.ecommerce.cartAbandonmentRate > apexRetail.technology.commercePlatform.ecommerce.benchmarkCartAbandonmentRate },
     ],
     plan: { license: '$750K', solutions: 3, maestroHrsRemaining: 8, maestroHrsTotal: 40 },
   },
@@ -130,6 +150,9 @@ function ActivityDot({ type }: { type: string }) {
   return <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: c[type] ?? T.text3, flexShrink: 0, marginTop: '5px', display: 'block' }} />
 }
 
+const PORTFOLIO_TOTAL = meridianAI.roadmap.summary.totalAnnualValue + firstCapitalAI.roadmap.summary.totalAnnualValue + apexRetailAI.roadmap.summary.totalAnnualValue
+const AVG_CONFIDENCE = Math.round(ENGAGEMENTS.reduce((s, e) => s + e.confidence, 0) / ENGAGEMENTS.length)
+
 export default function AdminHub() {
   const totalPending = ENGAGEMENTS.reduce((s, e) => s + e.pending, 0)
   const [alertIdx, setAlertIdx] = useState(0)
@@ -169,8 +192,8 @@ export default function AdminHub() {
         {/* Portfolio metrics */}
         <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
           {[
-            { label: 'Portfolio Value', value: '$1.65B', color: T.teal },
-            { label: 'Avg Confidence', value: '89%', color: T.blue },
+            { label: 'Portfolio Value', value: fmtVal(PORTFOLIO_TOTAL), color: T.teal },
+            { label: 'Avg Confidence', value: AVG_CONFIDENCE + '%', color: T.blue },
             { label: 'Intelligence Score', value: '84/100', color: T.green },
           ].map((m, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
@@ -277,9 +300,9 @@ export default function AdminHub() {
           <div style={{ background: T.surface, border: '1px solid ' + T.border, borderRadius: '12px', padding: '16px' }}>
             <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '12px' }}>Portfolio Summary</div>
             {[
-              { label: 'Total value identified', value: '$1.65B', color: T.teal },
-              { label: 'Active engagements', value: '3', color: T.blue },
-              { label: 'Avg confidence', value: '89%', color: T.green },
+              { label: 'Total value identified', value: fmtVal(PORTFOLIO_TOTAL), color: T.teal },
+              { label: 'Active engagements', value: String(ENGAGEMENTS.length), color: T.blue },
+              { label: 'Avg confidence', value: AVG_CONFIDENCE + '%', color: T.green },
               { label: 'Pending approvals', value: String(totalPending), color: totalPending > 0 ? T.red : T.green },
             ].map((m, i) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: i < 3 ? '1px solid ' + T.border : 'none' }}>

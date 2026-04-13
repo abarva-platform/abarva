@@ -45,10 +45,13 @@ export const meridianHealth = {
       vendor: "Ensemble Health Partners",
       contractValue: 48,
       denialRate: 18.2,
+      benchmarkDenialRate: 12.0,
       denialWriteOff2023: 94,
       cleanClaimRate: 87,
       daysInAR: 52,
       priorAuthOverturnRate: 61,
+      priorAuthAvgDays: 4.2,
+      priorAuthPeerDays: 1.8,
     },
   },
   financials: {
