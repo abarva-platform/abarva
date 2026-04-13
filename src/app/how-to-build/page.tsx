@@ -245,7 +245,7 @@ function HowToBuildContent() {
 
         {/* Outcome Tracking Note */}
         <div style={{ ...S.card, borderLeft: '4px solid #2DD4C8', background: '#0D1117', padding: '24px 28px' }}>
-          <div style={{ ...S.mono, fontSize: '11px', color: '#2DD4C8', letterSpacing: '0.1em', marginBottom: '16px' }}>ABARVA TRACKS OUTCOMES — NOT TASKS</div>
+          <div style={{ ...S.mono, fontSize: '11px', color: '#2DD4C8', letterSpacing: '0.1em', marginBottom: '16px' }}>AbarVa TRACKS OUTCOMES — NOT TASKS</div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
             <div>
               <div style={{ fontSize: '12px', color: '#EF4444', fontWeight: 600, marginBottom: '8px' }}>We do not track:</div>

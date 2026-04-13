@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
+import PostHogProvider from '@/components/PostHogProvider'
+import MobileGuard from '@/components/MobileGuard'
 
 export const metadata: Metadata = {
-  title: 'Abarva — Enterprise AI Brain',
-  description: 'AI-native enterprise transformation platform. Strategy, diagnostics, roadmaps, and outcome tracking in hours, not months.',
+  title: 'AbarVa',
+  description: 'Intelligence. Now act on it.',
   icons: { icon: '/favicon.svg' },
   openGraph: {
-    title: 'Abarva — Enterprise AI Brain',
-    description: 'AI-native enterprise transformation. $292M in value identified from real client data.',
+    title: 'AbarVa — Intelligence. Now act on it.',
+    description: 'AbarVa gives you what consultants never could — intelligence from your own data, accountable to your actual outcomes.',
     type: 'website',
     url: 'https://nexus-vert-kappa.vercel.app',
   },
@@ -22,7 +24,13 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body>{children}</body>
+        <body>
+          <PostHogProvider>
+            <MobileGuard>
+              {children}
+            </MobileGuard>
+          </PostHogProvider>
+        </body>
       </html>
     </ClerkProvider>
   )

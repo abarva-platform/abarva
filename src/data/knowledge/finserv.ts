@@ -175,7 +175,7 @@ export const finservBenchmarks = {
     ],
     si: [
       {
-        name: "Accenture",
+        name: "Global Tier-1 SI",
         type: "Global SI",
         finservStrength: "Very strong — largest financial services practice globally",
         bestFor: ["Core banking transformation", "Digital banking", "Cloud migration"],

@@ -92,8 +92,8 @@ const LANDMINES = [
     instead: 'Frame it as SLA performance accountability. "You have $8M in contractual penalties available right now. Use them." The exit conversation happens on its own timetable after that.',
   },
   {
-    warn: 'Do not mention Accenture by name.',
-    why: 'Marcus came from a failed Accenture engagement at his previous health system — a $14M program that delivered nothing and ran 18 months over schedule. It is a personal wound.',
+    warn: 'Do not reference failed large-scale SI engagements by name.',
+    why: 'Marcus came from a failed large-scale SI engagement at his previous health system — a $14M program that delivered nothing and ran 18 months over schedule. It is a personal wound.',
     instead: 'Reference Huron and Avanade as implementation partners. If traditional consulting comes up, say "outcome-based" not "boutique" or "next-gen." He will hear the difference.',
   },
   {
@@ -341,7 +341,7 @@ export default function PreMeetingBrief() {
           {/* Footer */}
           <div style={{ marginTop: '40px', paddingTop: '16px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text3, letterSpacing: '0.5px' }}>
-              MAESTRO INTELLIGENCE · ABARVA · INTERNAL USE ONLY · MERIDIAN HEALTH SYSTEM · APRIL 2026
+              MAESTRO INTELLIGENCE · AbarVa · INTERNAL USE ONLY · MERIDIAN HEALTH SYSTEM · APRIL 2026
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <a href="/admin/context" style={{ fontFamily: T.mono, fontSize: '10px', color: T.text3, textDecoration: 'none', padding: '6px 14px', border: `1px solid ${T.border2}`, borderRadius: '5px' }}>Business Context →</a>

@@ -66,7 +66,7 @@ const DECISIONS = [
     options: [
       {
         name: 'Activate via SI Partner', cost: '$800K–1.4M', timeline: '6–9 mo', score: 91, recommended: true, tag: 'Fastest to clinical value',
-        bullets: ['Deloitte or Accenture Epic COE resources', 'Clinical workflow redesign included', 'Change management budget built in', 'Avoids internal IT resourcing gap'],
+        bullets: ['Top-tier SI Epic COE resources', 'Clinical workflow redesign included', 'Change management budget built in', 'Avoids internal IT resourcing gap'],
       },
       {
         name: 'Epic Professional Services', cost: '$1.1–1.8M', timeline: '9–12 mo', score: 78, recommended: false, tag: 'Direct from Epic',

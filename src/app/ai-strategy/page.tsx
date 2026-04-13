@@ -244,7 +244,7 @@ function AIStrategyContent() {
               ))}
             </div>
             <div style={{ ...S.card, marginBottom: '24px', background: '#F0FDF4', border: '1px solid #A7F3D0' }}>
-              <div style={S.label}>ABARVA SYNTHESIS AND RECOMMENDATION</div>
+              <div style={S.label}>AbarVa SYNTHESIS AND RECOMMENDATION</div>
               <div style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6, marginBottom: '12px' }}>{ai.changeReadiness.recommendation}</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {ai.changeReadiness.riskFactors.slice(0, 3).map((r: string, i: number) => (
@@ -493,7 +493,7 @@ function AIStrategyContent() {
               ))}
             </div>
             <div style={{ ...S.card, background: '#1E3A5F', marginBottom: '24px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>ABARVA vs TRADITIONAL CONSULTING</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#94A3B8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>AbarVa vs TRADITIONAL CONSULTING</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 {[
                   { label: 'Time to deliver', mckinsey: '16 weeks', abarva: '5 days' },

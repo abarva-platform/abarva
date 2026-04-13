@@ -208,7 +208,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* CADE proof point */}
+        {/* Platform proof point */}
         <div style={{ background: '#111827', borderRadius: '12px', padding: '40px 48px', marginBottom: '32px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>

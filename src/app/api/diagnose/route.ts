@@ -64,7 +64,7 @@ VENDOR INTELLIGENCE:
 - Ensemble: KLAS 3.2/5 — declining — multiple health systems reporting same SLA failures
 - Huron Consulting: Strongest Epic optimization track record
 - Waystar: KLAS 4.1 — AI-native RCM — strong prior auth automation
-- SI rates: Accenture $280-420/hr | Huron $220-350/hr | Deloitte $300-450/hr
+- SI rates: Top-tier $280-420/hr | Specialist $220-350/hr | Boutique $160-250/hr
 
 ACTIVE FAILURE PATTERNS:
 - F001 Vendor Dependency: Ensemble RCM $48M/year — 67% SLA compliance

@@ -1,4 +1,8 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
@@ -24,9 +28,17 @@ const isPublicRoute = createRouteMatcher([
   '/admin(.*)',
 ])
 
-export default clerkMiddleware(async (auth, request) => {
+export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
   if (!isPublicRoute(request)) {
     await auth.protect()
+  }
+
+  // Tag mobile UA requests — consumed by server components via x-is-mobile header
+  const ua = request.headers.get('user-agent') ?? ''
+  if (MOBILE_UA.test(ua)) {
+    const response = NextResponse.next()
+    response.headers.set('x-is-mobile', '1')
+    return response
   }
 })
 

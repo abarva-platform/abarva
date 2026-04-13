@@ -449,7 +449,7 @@ function ContradictionsContent() {
                   { label: 'WHAT WAS COMMITTED', text: selected.committed, accent: '#6EE7B7', bg: 'rgba(110,231,183,0.06)', border: 'rgba(110,231,183,0.2)', icon: '✓' },
                   { label: 'WHAT ACTUALLY HAPPENED', text: selected.actual, accent: '#FCA5A5', bg: 'rgba(239,68,68,0.06)', border: 'rgba(239,68,68,0.2)', icon: '✗' },
                   { label: 'ROOT CAUSE', text: selected.rootCause, accent: '#FDE68A', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.2)', icon: '⬤' },
-                  { label: 'ABARVA RECOMMENDATION', text: selected.recommendation, accent: '#93C5FD', bg: 'rgba(77,163,255,0.06)', border: 'rgba(77,163,255,0.2)', icon: '→' },
+                  { label: 'AbarVa RECOMMENDATION', text: selected.recommendation, accent: '#93C5FD', bg: 'rgba(77,163,255,0.06)', border: 'rgba(77,163,255,0.2)', icon: '→' },
                 ].map((section, i) => (
                   <div key={i} style={{ marginBottom: '12px', padding: '14px 16px', borderRadius: '8px', background: section.bg, border: '1px solid ' + section.border }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>

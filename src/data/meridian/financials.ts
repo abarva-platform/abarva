@@ -65,7 +65,7 @@ export const meridianFinancials = {
     },
     topVendors: [
       { name: "McKinsey", spend: 14, engagement: "Operating margin improvement strategy" },
-      { name: "Accenture", spend: 11, engagement: "Epic optimization assessment" },
+      { name: "Huron Consulting", spend: 11, engagement: "Epic optimization assessment" },
       { name: "Deloitte", spend: 9, engagement: "Post-merger integration planning" },
       { name: "Ensemble Health Partners", spend: 48, engagement: "RCM outsourcing" },
     ],

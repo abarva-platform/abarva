@@ -186,7 +186,7 @@ export default function InvestorPage() {
             <div style={{ fontSize: '18px', fontWeight: 900, fontFamily: "'IBM Plex Mono', monospace", lineHeight: 1.1, letterSpacing: '-0.02em' }}>
               <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
-            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>Enterprise AI Brain</div>
+            <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>Intelligence. Now act on it.</div>
           </div>
           <span style={{ fontSize: '11px', color: '#6B7280', padding: '3px 10px', background: 'rgba(255,255,255,0.05)', borderRadius: '100px', marginLeft: '4px', fontFamily: 'monospace' }}>Investor Overview · Confidential</span>
         </a>
@@ -655,9 +655,9 @@ export default function InvestorPage() {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px', marginBottom: '28px' }}>
                 {[
-                  'Managing Director, Accenture — Data & AI North America Growth Lead',
-                  'Built CADE (Catalyst Analytics Delivery Engine) on AWS Bedrock and Claude — deployed at Enterprise Healthcare Client — 40% productivity increase, 60% cost reduction',
-                  '20+ years enterprise transformation across healthcare, financial services, retail',
+                  'Enterprise transformation leader across healthcare, financial services, and retail',
+                  'Built a production multi-agent AI system on AWS Bedrock and Claude — deployed at a major health system — 40% productivity increase, 60% cost reduction',
+                  '20+ years enterprise transformation at Fortune 50 scale',
                   'Led $200M+ in technology transformation engagements at Fortune 500 companies',
                 ].map((bullet, i) => (
                   <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
@@ -679,8 +679,8 @@ export default function InvestorPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', flexWrap: 'wrap' as const, gap: '12px' }}>
                 <div>
                   <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#2DD4C8', marginBottom: '8px' }}>Proven in Production — Not a Prototype</div>
-                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '8px' }}>CADE — Catalyst Analytics Delivery Engine</div>
-                  <div style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '560px' }}>Built by the Abarva founder at Accenture and deployed at Enterprise Healthcare Client. CADE runs on AWS Bedrock and Claude — the same intelligence layer, same agent orchestration, same outcome-based model as Abarva.</div>
+                  <div style={{ fontSize: '20px', fontWeight: 800, color: '#F9FAFB', letterSpacing: '-0.02em', marginBottom: '8px' }}>Production Multi-Agent Intelligence System</div>
+                  <div style={{ fontSize: '13px', color: '#9CA3AF', lineHeight: 1.6, maxWidth: '560px' }}>Built by the AbarVa founder and deployed at a major enterprise healthcare client. Runs on AWS Bedrock and Claude — the same intelligence layer, same agent orchestration, same outcome-based model as AbarVa.</div>
                 </div>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#21262D', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
@@ -696,7 +696,7 @@ export default function InvestorPage() {
                 ))}
               </div>
               <div style={{ padding: '14px 18px', background: '#0D1117', borderRadius: '8px', border: '1px solid #21262D' }}>
-                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>CADE is the architectural proof of concept for Abarva — same intelligence layer, same agent orchestration, same outcome-based model. Enterprise Healthcare Client is the first reference customer.</span>
+                <span style={{ fontSize: '13px', color: '#9CA3AF' }}>This production deployment is the architectural proof of concept for AbarVa — same intelligence layer, same agent orchestration, same outcome-based model. The health system is the first reference client.</span>
               </div>
             </div>
 
@@ -786,7 +786,7 @@ export default function InvestorPage() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '1px', background: '#E5E7EB' }}>
                 {[
-                  { label: 'Founder Network', desc: 'Direct CIO relationships built over 20 years at Accenture. First 3-5 clients close without outbound.', color: '#1B4FD8' },
+                  { label: 'Founder Network', desc: 'Direct CIO relationships built over 20 years of enterprise transformation leadership. First 3-5 clients close without outbound.', color: '#1B4FD8' },
                   { label: 'Maestro Network', desc: 'Each Maestro brings 5-10 warm enterprise relationships. 4 Maestros = 40 warm introductions.', color: '#6D28D9' },
                   { label: 'CIO Advisory Board', desc: 'Advisory board members are clients and referrers. Target: 6 members by Month 6.', color: '#047857' },
                   { label: 'Conference & Thought Leadership', desc: 'ViVE, HIMSS, Sibos. Founder-led speaking. CIO research reports.', color: '#B45309' },

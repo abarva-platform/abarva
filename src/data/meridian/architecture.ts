@@ -668,7 +668,7 @@ export const meridianArchitecture = {
         employees: 28000,
         annualLicenseCost: 4200000,
         implementationYear: 2021,
-        siPartner: "Accenture",
+        siPartner: "Huron Consulting",
         issues: [
           "Supply chain not implemented — using Infor Lawson for supply chain",
           "Procurement implementation 30% complete — gap in spend analytics",

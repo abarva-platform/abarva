@@ -124,7 +124,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
               <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
             </div>
             <div style={{ fontSize: '9px', color: '#9CA3AF', fontFamily: 'monospace', letterSpacing: '0.04em', lineHeight: 1, marginTop: '1px', whiteSpace: 'nowrap' }}>
-              Enterprise AI Brain
+              Intelligence. Now act on it.
             </div>
           </div>
         </a>

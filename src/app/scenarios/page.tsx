@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type SI = 'accenture' | 'huronavanade' | 'internal'
+type SI = 'traditional' | 'huronavanade' | 'internal'
 interface Risk { sev: 'red' | 'amber'; msg: string }
 interface ScenData { value: number; investment: number; roi: number; payback: number; fee: number }
 interface Out {
@@ -32,7 +32,7 @@ interface APXI {
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const SI_COST: Record<SI, number> = { accenture: 9.0, huronavanade: 4.2, internal: 1.8 }
+const SI_COST: Record<SI, number> = { traditional: 9.0, huronavanade: 4.2, internal: 1.8 }
 
 const M_DEF: MI = {
   cdoHired: false, ensemblePenalties: false, cohereContracted: false,
@@ -81,7 +81,7 @@ function calcMeridian(inp: MI): Out {
     const wks = Math.floor((inp.synapseCompletionDays - 120) / 7)
     risks.push({ sev: 'red', msg: `AI model deployment blocked — ${wks} extra weeks = $${(wks * 0.8).toFixed(1)}M delayed` })
   }
-  if (inp.siSelection === 'accenture') risks.push({ sev: 'amber', msg: 'Accenture rate: $320–420/hr. Same work, 2x cost. ROI drops from 6.7x to 4.2x.' })
+  if (inp.siSelection === 'traditional') risks.push({ sev: 'amber', msg: 'Traditional SI rate: $320–420/hr. Same work, 2x cost. ROI drops from 6.7x to 4.2x.' })
 
   let highestROI = 'Hire a CDO this week. $5.6M in value per week of delay. Every other decision depends on this one.'
   if (inp.cdoHired && !inp.ensemblePenalties) highestROI = 'Enforce Ensemble SLA penalties. $8M in 30 days. Zero implementation cost.'
@@ -111,7 +111,7 @@ function calcFC(inp: FCI): Out {
   if (!inp.fednowLive) risks.push({ sev: 'red', msg: '68% of peers live on FedNow — 3 commercial clients evaluating alternatives · $23M attrition risk' })
   if (!inp.amlToSageMaker) risks.push({ sev: 'amber', msg: 'AML false positive rate 78% vs 45% benchmark — 3 FTEs in manual review permanently' })
   if (!inp.coreBankingDecision) risks.push({ sev: 'amber', msg: 'Core banking decision deferred — OCC MRAs accumulating, digital adoption gap widening' })
-  if (inp.siSelection === 'accenture') risks.push({ sev: 'amber', msg: 'Accenture rate: $320–420/hr. Same work, 2x cost. ROI drops significantly.' })
+  if (inp.siSelection === 'traditional') risks.push({ sev: 'amber', msg: 'Traditional SI rate: $320–420/hr. Same work, 2x cost. ROI drops significantly.' })
 
   let highestROI = 'Activate FedNow via Finzly — 90-day implementation. $23M commercial attrition prevented. Resolves 2 of 3 OCC MRAs.'
   if (inp.fednowLive && !inp.amlToSageMaker) highestROI = 'Upgrade AML to SageMaker. False positive rate drops from 78% to 35%. Resolves remaining OCC MRAs.'
@@ -141,7 +141,7 @@ function calcApex(inp: APXI): Out {
   if (!inp.segmentFixed) risks.push({ sev: 'red', msg: '50% profile fragmentation in Segment CDP — Einstein activation blocked until resolved' })
   if (!inp.einsteinActivated) risks.push({ sev: 'amber', msg: 'Einstein purchased, never activated — $248M annual value idle in a paid license' })
   if (!inp.sapDecisionMade) risks.push({ sev: 'red', msg: 'SAP ECC support ends 2027 — board decision overdue Q3 2024 — migration runway compressing monthly' })
-  if (inp.siSelection === 'accenture') risks.push({ sev: 'amber', msg: 'Accenture rate: $320–420/hr. Same work, 2x cost.' })
+  if (inp.siSelection === 'traditional') risks.push({ sev: 'amber', msg: 'Traditional SI rate: $320–420/hr. Same work, 2x cost.' })
 
   let highestROI = 'Fix Segment CDP profile fragmentation first. Until customer identity is unified, Einstein cannot be activated and $248M stays blocked.'
   if (inp.segmentFixed && !inp.einsteinActivated) highestROI = 'Activate Einstein personalization. 6-week implementation. $248M annual revenue at full attribution.'
@@ -269,7 +269,7 @@ function MeridianPanel({ inp, setInp, onFlash }: { inp: MI; setInp: (v: MI) => v
       <div style={{ ...SLBL, marginTop: '20px' }}>Investment</div>
       <Slider label="Wave 1 investment" min={2} max={8} step={0.1} value={inp.wave1Investment} onChange={v => set('wave1Investment', v)} fmt={v => `$${v.toFixed(1)}M`} hint="Platform foundation + implementation" />
       <RadioGroup label="System Integrator" value={inp.siSelection} onChange={v => set('siSelection', v as SI)} options={[
-        { id: 'accenture', label: 'Accenture', cost: '$9.0M', warn: true },
+        { id: 'traditional', label: 'Traditional SI', cost: '$9.0M', warn: true },
         { id: 'huronavanade', label: 'Huron + Avanade', cost: '$4.2M' },
         { id: 'internal', label: 'Internal only', cost: '$1.8M' },
       ]} />
@@ -297,7 +297,7 @@ function FCPanel({ inp, setInp, onFlash }: { inp: FCI; setInp: (v: FCI) => void;
       <div style={{ ...SLBL, marginTop: '20px' }}>Investment</div>
       <Slider label="Wave 1 investment" min={1} max={4} step={0.1} value={inp.wave1Investment} onChange={v => set('wave1Investment', v)} fmt={v => `$${v.toFixed(1)}M`} hint="FedNow integration + AML modernization" />
       <RadioGroup label="System Integrator" value={inp.siSelection} onChange={v => set('siSelection', v as SI)} options={[
-        { id: 'accenture', label: 'Accenture', cost: '$9.0M', warn: true },
+        { id: 'traditional', label: 'Traditional SI', cost: '$9.0M', warn: true },
         { id: 'huronavanade', label: 'Huron + Avanade', cost: '$4.2M' },
         { id: 'internal', label: 'Internal only', cost: '$1.8M' },
       ]} />
@@ -321,7 +321,7 @@ function ApexPanel({ inp, setInp, onFlash }: { inp: APXI; setInp: (v: APXI) => v
       <div style={{ ...SLBL, marginTop: '20px' }}>Investment</div>
       <Slider label="Wave 1 investment" min={2} max={10} step={0.2} value={inp.wave1Investment} onChange={v => set('wave1Investment', v)} fmt={v => `$${v.toFixed(1)}M`} hint="Einstein activation + Segment fix + SAP assessment" />
       <RadioGroup label="System Integrator" value={inp.siSelection} onChange={v => set('siSelection', v as SI)} options={[
-        { id: 'accenture', label: 'Accenture', cost: '$9.0M', warn: true },
+        { id: 'traditional', label: 'Traditional SI', cost: '$9.0M', warn: true },
         { id: 'huronavanade', label: 'Huron + Avanade', cost: '$4.2M' },
         { id: 'internal', label: 'Internal only', cost: '$1.8M' },
       ]} />
