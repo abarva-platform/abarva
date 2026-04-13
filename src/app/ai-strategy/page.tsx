@@ -15,13 +15,31 @@ const S = {
 }
 
 const STEPS = [
-  { id: 1, name: 'Current State' },
-  { id: 2, name: 'Stakeholder Input' },
-  { id: 3, name: 'Opportunities' },
-  { id: 4, name: 'Prioritization' },
-  { id: 5, name: 'Roadmap' },
-  { id: 6, name: 'Export' },
+  { id: 1, name: 'Ground Truth' },
+  { id: 2, name: 'Executives Disagree' },
+  { id: 3, name: 'Every Bet' },
+  { id: 4, name: 'Your Three Bets' },
+  { id: 5, name: 'Wave 1 Plan' },
+  { id: 6, name: 'What We Need' },
+  { id: 7, name: 'Business Case' },
+  { id: 8, name: 'Board Deck Ready' },
 ]
+
+type PlatformChoice = 'agnostic' | 'azure' | 'aws' | 'google'
+type ScopeChoice = 'enterprise' | 'domain' | 'hybrid'
+
+const PLATFORM_LABELS: Record<PlatformChoice, string> = {
+  agnostic: 'Platform Agnostic',
+  azure: 'Azure + OpenAI',
+  aws: 'AWS + Claude',
+  google: 'Google + Gemini',
+}
+
+const SCOPE_LABELS: Record<ScopeChoice, { label: string; desc: string; rec: boolean }> = {
+  enterprise: { label: 'Enterprise-wide', desc: 'All functions. Highest value, highest complexity.', rec: false },
+  hybrid: { label: 'Hybrid (recommended)', desc: 'Start in one domain, design for enterprise rollout.', rec: true },
+  domain: { label: 'Single Domain', desc: 'One function. Fast ROI, lower risk.', rec: false },
+}
 
 function Gauge({ label, score }: { label: string, score: number }) {
   const c = score >= 60 ? '#059669' : score >= 40 ? '#D97706' : '#DC2626'
@@ -49,6 +67,9 @@ function AIStrategyContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
   const [step, setStep] = useState(1)
+  const [scopeChosen, setScopeChosen] = useState(false)
+  const [scope, setScope] = useState<ScopeChoice>('hybrid')
+  const [platform, setPlatform] = useState<PlatformChoice>('agnostic')
   const [activeClient, setActiveClient] = useState(clientId)
   const [oppTab, setOppTab] = useState<'front' | 'middle' | 'back'>('front')
   const [priority, setPriority] = useState<'revenue' | 'cost' | 'risk'>('revenue')
@@ -125,11 +146,56 @@ function AIStrategyContent() {
     </div>
   )
 
+  // Scope selector — shown before step 1 on first visit
+  const ScopeSelector = () => (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '24px' }}>
+      <div style={{ background: '#FFFFFF', borderRadius: '20px', padding: '40px', maxWidth: '600px', width: '100%' }}>
+        <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '6px' }}>What is the scope of this AI strategy?</div>
+        <div style={{ fontSize: '14px', color: '#6B7280', marginBottom: '28px' }}>This shapes how opportunities are prioritized and sequenced.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+          {(Object.entries(SCOPE_LABELS) as [ScopeChoice, typeof SCOPE_LABELS[ScopeChoice]][]).map(([key, val]) => (
+            <button key={key} onClick={() => setScope(key)}
+              style={{ padding: '14px 16px', background: scope === key ? '#F5F3FF' : '#F8FAFC', border: '2px solid ' + (scope === key ? '#7C3AED' : '#E2E8F0'), borderRadius: '10px', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{ width: '18px', height: '18px', borderRadius: '50%', border: '2px solid ' + (scope === key ? '#7C3AED' : '#CBD5E0'), background: scope === key ? '#7C3AED' : 'transparent', marginTop: '2px', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>
+                  {val.label}
+                  {val.rec && <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, background: '#7C3AED', color: 'white', borderRadius: '4px', padding: '1px 6px' }}>RECOMMENDED</span>}
+                </div>
+                <div style={{ fontSize: '12px', color: '#6B7280' }}>{val.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        {scope === 'domain' || scope === 'hybrid' ? (
+          <div style={{ marginBottom: '20px', padding: '12px 14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '8px' }}>Select starting domain</div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {['Revenue Cycle', 'Finance', 'Operations', 'Clinical', 'Technology', 'Supply Chain', 'Customer'].map(d => (
+                <span key={d} style={{ padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, background: '#E2E8F0', color: '#475569', cursor: 'pointer' }}>{d}</span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <button onClick={() => setScopeChosen(true)}
+          style={{ width: '100%', padding: '14px', background: '#7C3AED', color: 'white', border: 'none', borderRadius: '10px', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
+          Build AI Strategy — {SCOPE_LABELS[scope].label} →
+        </button>
+      </div>
+    </div>
+  )
+
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1) }} activePage="ai-strategy" />
+      {!scopeChosen && <ScopeSelector />}
+      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1); setScopeChosen(false) }} activePage="ai-strategy" />
       <EngagementProgress />
       <Breadcrumb />
+      {scopeChosen && (
+        <div style={{ background: '#F5F3FF', borderBottom: '1px solid #DDD6FE', padding: '6px 32px', fontSize: '12px', color: '#7C3AED', fontWeight: 600 }}>
+          📍 Scope: {SCOPE_LABELS[scope].label} | {clientName} | Step {step} of 8
+        </div>
+      )}
       {/* Journey */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #F3F4F6', padding: '0 32px', display: 'flex', alignItems: 'center', gap: '0', height: '36px', overflowX: 'auto' as const }}>
         {[
@@ -205,7 +271,7 @@ function AIStrategyContent() {
                 <span style={{ fontSize: '12px', color: '#374151' }}>{ai.maturity.patternDescription}</span>
               </div>
             </div>
-            <NavBtns next={2} nextLabel="Next: Stakeholder Input →" />
+            <NavBtns next={2} nextLabel="Next: Executive Disagreements →" />
           </div>
         )}
 
@@ -257,7 +323,7 @@ function AIStrategyContent() {
                 ))}
               </div>
             </div>
-            <NavBtns prev={1} next={3} nextLabel="Next: Opportunities →" />
+            <NavBtns prev={1} next={3} nextLabel="Next: Every Bet Available →" />
           </div>
         )}
 
@@ -348,7 +414,7 @@ function AIStrategyContent() {
               </a>
               <span style={{ marginLeft: '12px', fontSize: '12px', color: '#94A3B8' }}>Get a complete AI strategy for one business domain</span>
             </div>
-            <NavBtns prev={2} next={4} nextLabel="Next: Prioritization →" />
+            <NavBtns prev={2} next={4} nextLabel="Next: Your Three Bets →" />
           </div>
         )}
 
@@ -413,7 +479,29 @@ function AIStrategyContent() {
                 Model Different Scenarios →
               </a>
             </div>
-            <NavBtns prev={3} next={5} nextLabel="Next: Roadmap →" />
+            {/* Platform toggle */}
+            <div style={{ ...S.card, marginBottom: '24px', border: '1px solid #DDD6FE', background: '#FAFAFF' }}>
+              <div style={S.label}>PLATFORM ARCHITECTURE</div>
+              <div style={{ fontSize: '13px', color: '#6B7280', marginBottom: '12px' }}>Select your cloud + AI platform or stay platform-agnostic to see technology-neutral recommendations.</div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {(Object.entries(PLATFORM_LABELS) as [PlatformChoice, string][]).map(([key, label]) => (
+                  <button key={key} onClick={() => setPlatform(key)}
+                    style={{ padding: '8px 18px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: '1px solid ' + (platform === key ? '#7C3AED' : '#E2E8F0'), background: platform === key ? '#7C3AED' : '#FFFFFF', color: platform === key ? '#FFFFFF' : '#475569' }}>
+                    {key === 'aws' ? '★ ' : ''}{label}
+                    {key === 'aws' && activeClient === 'meridian' && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#ECFDF5', color: '#059669', borderRadius: '3px', padding: '1px 5px' }}>Best fit</span>}
+                  </button>
+                ))}
+              </div>
+              {platform !== 'agnostic' && (
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#FFFFFF', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px', color: '#374151' }}>
+                  {platform === 'aws' && '☁ AWS architecture: Amazon Bedrock (Claude 3.5) · Amazon HealthLake · SageMaker · Comprehend Medical · S3 Data Lake'}
+                  {platform === 'azure' && '☁ Azure architecture: Azure OpenAI (GPT-4o) · Azure Health Data Services · Azure ML · Cognitive Services · ADLS Gen2'}
+                  {platform === 'google' && '☁ Google architecture: Vertex AI (Gemini 1.5) · Healthcare Data Engine · BigQuery ML · Healthcare NLP API · Cloud Storage'}
+                  <span style={{ marginLeft: '12px', color: '#7C3AED', fontWeight: 600 }}>Referral: AbarVa has a disclosed referral relationship with this platform provider.</span>
+                </div>
+              )}
+            </div>
+            <NavBtns prev={3} next={5} nextLabel="Next: Wave 1 Starts in 90 Days →" />
           </div>
         )}
 
@@ -469,28 +557,166 @@ function AIStrategyContent() {
                 </div>
               )
             })}
-            <NavBtns prev={4} next={6} nextLabel="Next: Export →" />
+            <NavBtns prev={4} next={6} nextLabel="Next: What We Need →" />
           </div>
         )}
 
         {step === 6 && (
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Export AI Strategy</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>What McKinsey charges ${(ai.roadmap.summary.mckinseyEquivalent / 1000000).toFixed(1)}M and 16 weeks to produce</p>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>What Do We Need</h1>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Skills gap, vendor recommendations, and platform requirements for your Wave 1 initiatives</p>
+
+            {/* Skills gap */}
+            <div style={{ ...S.card, marginBottom: '24px' }}>
+              <div style={S.label}>SKILLS GAP ANALYSIS</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                {[
+                  { skill: 'ML Engineering', current: 2, needed: 8, gap: 6, urgency: 'high' },
+                  { skill: 'Data Engineering', current: 5, needed: 12, gap: 7, urgency: 'high' },
+                  { skill: 'AI Product Management', current: 0, needed: 3, gap: 3, urgency: 'high' },
+                  { skill: 'Prompt Engineering', current: 1, needed: 4, gap: 3, urgency: 'medium' },
+                  { skill: 'MLOps', current: 0, needed: 2, gap: 2, urgency: 'medium' },
+                  { skill: 'Healthcare AI Compliance', current: 0, needed: 1, gap: 1, urgency: 'medium' },
+                ].map((s, i) => (
+                  <div key={i} style={{ padding: '14px', borderRadius: '10px', background: s.urgency === 'high' ? '#FEF2F2' : '#FFFBEB', border: '1px solid ' + (s.urgency === 'high' ? '#FECACA' : '#FDE68A') }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '8px' }}>{s.skill}</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>
+                      <span>Current: {s.current}</span><span>Needed: {s.needed}</span>
+                    </div>
+                    <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '3px' }}>
+                      <div style={{ height: '6px', borderRadius: '3px', width: (s.current / s.needed * 100) + '%', background: s.urgency === 'high' ? '#DC2626' : '#D97706' }} />
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: s.urgency === 'high' ? '#DC2626' : '#D97706', marginTop: '4px' }}>Gap: {s.gap} FTEs</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Vendor recommendations */}
+            <div style={{ ...S.card, marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={S.label}>VENDOR RECOMMENDATIONS</div>
+                <a href={'/select?client=' + activeClient} style={{ fontSize: '12px', fontWeight: 600, color: '#7C3AED', textDecoration: 'none' }}>Find the right platform → Marketplace</a>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {[
+                  { name: 'Cohere Health', category: 'Prior Auth AI', score: 88, rec: true, referral: true, reason: 'Highest prior auth accuracy in healthcare vertical. Pre-integrated with Epic.' },
+                  { name: 'Amazon Bedrock', category: 'AI Infrastructure', score: 85, rec: true, referral: true, reason: 'Best fit for Meridian\'s AWS-heavy infrastructure. HIPAA-eligible. Claude 3.5 available.' },
+                  { name: 'Workday AI', category: 'Workforce Analytics', score: 76, rec: false, referral: false, reason: 'Strong in HR but limited clinical integration. Evaluate only if Workday is strategic.' },
+                ].map((v, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '14px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid ' + (v.rec ? '#A7F3D0' : '#E2E8F0') }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{v.name}</span>
+                        <span style={{ fontSize: '11px', color: '#6B7280' }}>{v.category}</span>
+                        {v.rec && <span style={{ fontSize: '10px', fontWeight: 700, background: '#059669', color: 'white', borderRadius: '3px', padding: '1px 6px' }}>RECOMMENDED</span>}
+                        {v.referral && <span style={{ fontSize: '10px', color: '#D97706', fontWeight: 600 }}>★ Referral partner — disclosed</span>}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#6B7280' }}>{v.reason}</div>
+                    </div>
+                    <div style={{ fontSize: '22px', fontWeight: 700, color: v.score >= 80 ? '#059669' : '#D97706', flexShrink: 0 }}>{v.score}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <NavBtns prev={5} next={7} nextLabel="Next: Business Case →" />
+          </div>
+        )}
+
+        {step === 7 && (
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Business Case</h1>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Three scenarios — CFO-grade financials. Every number sourced from {clientName} data.</p>
+
+            {/* 3 Scenarios */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '28px' }}>
+              {[
+                {
+                  name: 'Conservative', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0',
+                  investment: ai.roadmap.wave1.totalInvestment / 1000000,
+                  annualValue: ai.roadmap.wave1.totalAnnualValue / 1000000,
+                  roi: ai.roadmap.wave1.roi, payback: 14,
+                  desc: 'Wave 1 only. Proven use cases. Minimal org change.',
+                },
+                {
+                  name: 'Moderate', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE',
+                  investment: (ai.roadmap.wave1.totalInvestment + ai.roadmap.wave2.totalInvestment) / 1000000,
+                  annualValue: (ai.roadmap.wave1.totalAnnualValue + ai.roadmap.wave2.totalAnnualValue) / 1000000,
+                  roi: ai.roadmap.wave2.roi, payback: 18,
+                  desc: 'Waves 1+2. Parallel workstreams. Recommended.',
+                },
+                {
+                  name: 'Aggressive', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE',
+                  investment: ai.roadmap.summary.totalInvestment / 1000000,
+                  annualValue: ai.roadmap.summary.totalAnnualValue / 1000000,
+                  roi: ai.roadmap.summary.blendedROI, payback: 22,
+                  desc: 'All 3 waves concurrent. Maximum value, maximum risk.',
+                },
+              ].map((scenario, i) => (
+                <div key={i} style={{ ...S.card, background: scenario.bg, border: '1px solid ' + scenario.border }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, color: scenario.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>{scenario.name}</div>
+                  <div style={{ fontSize: '12px', color: '#374151', marginBottom: '16px', fontStyle: 'italic' }}>{scenario.desc}</div>
+                  {[
+                    { label: 'Total Investment', value: '$' + scenario.investment.toFixed(0) + 'M' },
+                    { label: 'Annual Value', value: '$' + scenario.annualValue.toFixed(0) + 'M' },
+                    { label: 'ROI', value: scenario.roi + 'x' },
+                    { label: 'Payback Period', value: scenario.payback + ' months' },
+                    { label: 'NPV (5yr)', value: '$' + (scenario.annualValue * 4 - scenario.investment).toFixed(0) + 'M' },
+                  ].map((m, mi) => (
+                    <div key={mi} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: mi < 4 ? '1px solid rgba(0,0,0,0.05)' : 'none' }}>
+                      <span style={{ fontSize: '12px', color: '#6B7280' }}>{m.label}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: scenario.color }}>{m.value}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {/* CFO summary */}
+            <div style={{ ...S.card, background: '#0F172A', marginBottom: '24px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>CFO FINANCIAL SUMMARY — MODERATE SCENARIO</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                {[
+                  { label: 'Year 1 Investment', value: '$' + (ai.roadmap.wave1.totalInvestment / 1000000).toFixed(0) + 'M', sub: 'Capex + Opex' },
+                  { label: 'Year 2 Value', value: '$' + ((ai.roadmap.wave1.totalAnnualValue + ai.roadmap.wave2.totalAnnualValue) / 1000000).toFixed(0) + 'M', sub: 'Annual run rate' },
+                  { label: 'Operating Margin Impact', value: '+1.2pts', sub: 'On 4.0% target path' },
+                  { label: 'FTE Impact', value: '-28 FTE', sub: 'Redeployment, not reduction' },
+                ].map((m, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: '11px', color: '#94A3B8', marginBottom: '4px' }}>{m.label}</div>
+                    <div style={{ fontSize: '22px', fontWeight: 700, color: '#2DD4C8' }}>{m.value}</div>
+                    <div style={{ fontSize: '10px', color: '#6B7280' }}>{m.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <NavBtns prev={6} next={8} nextLabel="Generate Board Deck →" />
+          </div>
+        )}
+
+        {step === 8 && (
+          <div>
+            <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Your Board Deck is Ready</h1>
+            <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>What McKinsey charges ${(ai.roadmap.summary.mckinseyEquivalent / 1000000).toFixed(1)}M and 16 weeks to produce. This used {clientName}&apos;s own data.</p>
             <a href={'/board-deck?client=' + activeClient} style={{ display: 'block', padding: '16px', borderRadius: '10px', background: '#0D1117', border: '1px solid #2DD4C8', marginBottom: '12px', textDecoration: 'none' }}>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#2DD4C8', marginBottom: '4px' }}>Generate Board Presentation →</div>
               <div style={{ fontSize: '12px', color: '#6B7280' }}>10 slides · Every number sourced · Board-ready</div>
             </a>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
               {[
-                { title: 'Executive Summary', format: 'PDF', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', audience: 'Board and CEO' },
-                { title: 'Full Business Case', format: 'Excel', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', audience: 'CFO and Finance' },
-                { title: 'Technical Roadmap', format: 'PowerPoint', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE', audience: 'CIO and IT' },
+                { title: 'Board Presentation', format: 'HTML', color: '#2DD4C8', bg: '#F0FDFA', border: '#99F6E4', audience: 'Board, CEO' },
+                { title: 'Business Case (Excel)', format: 'Excel', color: '#059669', bg: '#ECFDF5', border: '#A7F3D0', audience: 'CFO, Finance' },
+                { title: 'Technical Roadmap', format: 'PowerPoint', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE', audience: 'CIO, IT' },
+                { title: 'Executive Summary', format: 'PDF', color: '#DC2626', bg: '#FEF2F2', border: '#FECACA', audience: 'All executives' },
+                { title: 'Platform Architecture', format: 'PDF', color: '#7C3AED', bg: '#F5F3FF', border: '#DDD6FE', audience: 'CTO, Architects' },
+                { title: 'Vendor Evaluation', format: 'PDF', color: '#D97706', bg: '#FFFBEB', border: '#FDE68A', audience: 'Procurement, CFO' },
               ].map((exp, i) => (
-                <div key={i} style={{ ...S.card, background: exp.bg, border: '1px solid ' + exp.border, textAlign: 'center' }}>
-                  <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{exp.title}</div>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: exp.color, marginBottom: '16px' }}>{exp.format} · For {exp.audience}</div>
-                  <button style={{ width: '100%', padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', background: exp.color, color: 'white' }}>Download {exp.format} →</button>
+                <div key={i} style={{ ...S.card, background: exp.bg, border: '1px solid ' + exp.border, textAlign: 'center' as const }}>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{exp.title}</div>
+                  <div style={{ fontSize: '11px', fontWeight: 600, color: exp.color, marginBottom: '12px' }}>{exp.format} · {exp.audience}</div>
+                  <button style={{ width: '100%', padding: '8px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: 'none', background: exp.color, color: 'white' }}>Download →</button>
                 </div>
               ))}
             </div>
@@ -525,7 +751,7 @@ function AIStrategyContent() {
               ))}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <button onClick={() => setStep(5)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
+              <button onClick={() => setStep(7)} style={{ padding: '12px 24px', borderRadius: '10px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '14px', fontWeight: 600, cursor: 'pointer' }}>← Back</button>
               <a href="/" style={{ padding: '12px 32px', borderRadius: '10px', background: '#059669', color: 'white', textDecoration: 'none', fontSize: '14px', fontWeight: 600 }}>Done — Return to Dashboard</a>
             </div>
           </div>

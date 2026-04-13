@@ -383,6 +383,17 @@ function DiagnoseContent() {
             )}
             <div ref={bottomRef} />
           </div>
+          {messages.length >= 2 && !loading && (
+            <div style={{ marginBottom: '12px', padding: '12px 16px', background: '#F5F3FF', borderRadius: '10px', border: '1px solid #DDD6FE', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#7C3AED', marginBottom: '2px' }}>Diagnosis complete</div>
+                <div style={{ fontSize: '12px', color: '#6B7280' }}>Turn this diagnosis into a full AI strategy →</div>
+              </div>
+              <a href={'/ai-strategy?client=' + activeClient} style={{ padding: '8px 18px', borderRadius: '8px', background: '#7C3AED', color: 'white', fontSize: '13px', fontWeight: 700, textDecoration: 'none', flexShrink: 0, whiteSpace: 'nowrap' as const }}>
+                AI Strategy →
+              </a>
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '12px' }}>
             <input value={input} onChange={e => setInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() } }}
