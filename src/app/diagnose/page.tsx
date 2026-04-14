@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
+import AbarvaNav from '@/components/AbarvaNav'
 import { useSearchParams } from 'next/navigation'
 import { filterIssuesByRole } from '@/lib/situation-intelligence'
 import { meridianHealth } from '@/data/meridian/index'
@@ -1597,6 +1598,7 @@ function DiagnoseContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
+      <AbarvaNav activePage="diagnose" clientId={activeClient} />
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border }}>

@@ -1,5 +1,6 @@
 'use client'
 import { useState, Suspense, useEffect } from 'react'
+import AbarvaNav from '@/components/AbarvaNav'
 import { useSearchParams } from 'next/navigation'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
@@ -113,6 +114,7 @@ function JustifyContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
+      <AbarvaNav activePage="justify" clientId={activeClient} />
 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>

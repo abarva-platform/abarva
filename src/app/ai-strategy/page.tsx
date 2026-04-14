@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
+import AbarvaNav from '@/components/AbarvaNav'
 import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { FAILURE_PATTERNS, MERIDIAN_GENOME_SUMMARY } from '@/data/knowledge/failure-patterns'
@@ -839,6 +840,7 @@ function AiStrategyContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
+      <AbarvaNav activePage="ai-strategy" clientId={clientId} />
       <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
 
       {/* Product Header */}
