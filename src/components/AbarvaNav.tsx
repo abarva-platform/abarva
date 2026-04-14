@@ -172,7 +172,7 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                 style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '320px' }}>
                 <DropItem icon="⚡" name="Situation" desc="What's actually broken — and what's it costing us?" href={`/diagnose?client=${clientId}`} />
                 <DropItem icon="🎯" name="AI Investment" desc="Where should we place our bets — and what are they worth?" href={`/ai-strategy?client=${clientId}`} />
-                <DropItem icon="🔍" name="Vendor" desc="Who do I actually trust — and why?" href={`/select?client=${clientId}`} />
+                <DropItem icon="🔍" name="Vendor" desc="Who do I actually trust — and why?" href={`/vendor-intelligence?client=${clientId}`} />
                 <DropItem icon="💰" name="Business Case" desc="How do I make this number defensible to my board?" href={`/justify?client=${clientId}`} />
                 <DropItem icon="🎛" name="Outcome" desc="Are we winning — or just spending?" href={`/control-tower?client=${clientId}`} />
               </div>

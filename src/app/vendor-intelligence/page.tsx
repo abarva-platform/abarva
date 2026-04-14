@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { MERIDIAN_RCM_VENDORS, ENSEMBLE_REFERENCE_OUTCOMES } from '@/data/knowledge/vendor-outcomes'
 import { MERIDIAN_CONTRACT_BENCHMARKS, MERIDIAN_NEGOTIATION_SEQUENCE } from '@/data/knowledge/contract-benchmarks'
 import { scoreVendorFit, vendorColorBucket } from '@/lib/vendor-intelligence'
@@ -912,7 +913,7 @@ function VendorIntelligenceContent() {
   const searchParams = useSearchParams()
   const clientParam = (searchParams.get('client') as Client) || 'meridian'
   const [client, setClient] = useState<Client>(clientParam)
-  const [mode, setMode] = useState<Mode>('select')
+  const [mode, setMode] = useState<Mode>('optimize')
   const [showClientMenu, setShowClientMenu] = useState(false)
 
   // Score vendors for display
@@ -933,6 +934,8 @@ function VendorIntelligenceContent() {
       fontFamily: T.sans,
     }}>
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
+
+      <AbarvaNav clientId={client} onClientChange={(id) => setClient(id as Client)} activePage="select" />
 
       {/* Header */}
       <div style={{
