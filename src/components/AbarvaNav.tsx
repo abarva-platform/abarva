@@ -36,11 +36,16 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
   const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 200) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
-  // Derive client from URL: /admin/client/arcturus → 'arcturus'
+  // Derive client from URL — only used for the nav label, never for routing
   const urlClientId = pathname?.split('/admin/client/')?.[1]?.split('/')?.[0] || null
-  const metaClientId = user?.publicMetadata?.clientId as string | null | undefined
-  const cid = urlClientId || clientId || metaClientId || 'meridian'
-  const workspaceHref = cid ? `/admin/client/${cid}` : '/admin'
+  const cid = urlClientId || clientId || 'meridian'
+
+  // Workspace link comes ONLY from the logged-in user's own metadata
+  const metaClientId = user?.publicMetadata?.clientId as string | undefined
+  const metaRole     = user?.publicMetadata?.role     as string | undefined
+  const workspaceHref = metaRole === 'admin' || !metaClientId
+    ? '/admin'
+    : `/admin/client/${metaClientId}`
 
   const signedIn = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Maestro'
