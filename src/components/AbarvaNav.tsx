@@ -55,7 +55,7 @@ export default function AbarvaNav({ clientId = 'meridian', activePage = '', onCl
             <span style={{ fontFamily: 'Georgia,serif', fontSize: '23px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
           <span style={{ fontFamily: 'monospace', fontSize: '9px', color: TEXT, letterSpacing: '.06em', marginTop: '1px' }}>
-            Intelligence. Now act on it.
+            know it. build it. own it.
           </span>
         </a>
 
