@@ -410,6 +410,100 @@ const SOLUTIONS = {
   },
 }
 
+// ── Per-client hero metrics ───────────────────────────────────────────────────
+const CLIENT_METRICS: Record<string, Partial<Record<Client, Array<{ icon: string; text: string; source: string }>>>> = {
+  'HC-01': {
+    meridian: [
+      { icon: '🔴', text: 'Denial rate 18.2% vs 11.4% benchmark — $94M annual gap', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'Prior auth 23% automated vs 62% peer average', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Health systems at your size averaged 6.1pp improvement in 14 months', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '47 deployments in Genome · 71% achieved target', source: 'FROM GENOME' },
+      { icon: '🔴', text: '3 failure patterns detected: CDO, prior auth data, vendor selection', source: 'FROM GENOME' },
+    ],
+    firstcapital: [
+      { icon: '🟡', text: 'No RCM programme active — not applicable for financial services', source: 'FROM YOUR DATA' },
+      { icon: '🟢', text: 'Consider FS-01 Digital Banking Transformation instead', source: 'FROM GENOME' },
+    ],
+    apexretail: [
+      { icon: '🟡', text: 'No healthcare revenue cycle operations — not applicable', source: 'FROM YOUR DATA' },
+      { icon: '🟢', text: 'Consider AM-01 Analytics Modernization instead', source: 'FROM GENOME' },
+    ],
+  },
+  'AM-01': {
+    meridian: [
+      { icon: '🔴', text: '312 apps in inventory — 42% flagged redundant', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '$38M shadow IT spend — untracked SaaS', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Organizations your size typically have 3-4x more tools than needed', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '23 engagements · average $4.2M savings year 1', source: 'FROM GENOME' },
+      { icon: '🟢', text: 'License rationalization: $2-4M immediate opportunity identified', source: 'FROM YOUR DATA' },
+    ],
+    firstcapital: [
+      { icon: '🔴', text: '180 applications — 38% redundancy rate estimated', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '$22M shadow IT estimated based on headcount', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '23 engagements · average $4.2M savings year 1', source: 'FROM GENOME' },
+    ],
+    apexretail: [
+      { icon: '🔴', text: '420 applications including full e-commerce stack', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '5 analytics tools across departments — overlap detected', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '23 engagements · average $4.2M savings year 1', source: 'FROM GENOME' },
+    ],
+  },
+  'IT-01': {
+    meridian: [
+      { icon: '🔴', text: 'IT spend 4.5% of revenue — above 3.8% peer median', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '$2.1M in vendor SLA credits unclaimed right now', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '3 vendor contracts renewing in the next 90 days', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Organizations your size overpay vendors by 15-25% on average', source: 'FROM INDUSTRY' },
+      { icon: '🟢', text: '31 IT spend engagements · average $11M savings year 1', source: 'FROM GENOME' },
+    ],
+    firstcapital: [
+      { icon: '🔴', text: 'IT spend 3.8% of AUM — elevated for community bank', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '$800K estimated SLA credits based on contract review', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '31 IT spend engagements · average $11M savings year 1', source: 'FROM GENOME' },
+    ],
+    apexretail: [
+      { icon: '🔴', text: 'IT spend 2.8% of revenue — in range but opportunity exists', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Multiple logistics vendors with capability overlap detected', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '31 IT spend engagements · average $11M savings year 1', source: 'FROM GENOME' },
+    ],
+  },
+  'FS-01': {
+    firstcapital: [
+      { icon: '🔴', text: 'Digital adoption 41% vs 67% peer benchmark — $48M revenue gap', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'Core system 22 years old — FIS HORIZON — modernization critical', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'FedNow: not compliant — January 2027 hard deadline', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Banks closing digital gap: average $22M annual revenue uplift at your AUM', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '34 digital banking engagements · 68% success rate', source: 'FROM GENOME' },
+    ],
+    meridian: [
+      { icon: '🟡', text: 'Not a financial services organization — see HC-01 instead', source: 'FROM YOUR DATA' },
+      { icon: '🟢', text: 'Consider HC-01 Revenue Cycle Intelligence for Meridian', source: 'FROM GENOME' },
+    ],
+    apexretail: [
+      { icon: '🟡', text: 'Retail financial services scope — see AI-01 or AM-01', source: 'FROM YOUR DATA' },
+    ],
+  },
+  'AI-01': {
+    meridian: [
+      { icon: '🔴', text: '0 of 6 AI pilots delivering value — $42M stalled', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '14 AI tools found in shadow IT — not in IT registry', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Less than 12% of enterprise AI spend has documented outcome measurement', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: 'Average value unlocked by accountability reset: $28M', source: 'FROM GENOME' },
+      { icon: '🔴', text: 'Responsible AI score 52/100 — compliance exposure', source: 'FROM YOUR DATA' },
+    ],
+    firstcapital: [
+      { icon: '🔴', text: 'Fraud ML pilot stalled — no outcome measurement in place', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'AI spend estimated $4M — no ROI tracking', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '41 accountability engagements · 82% success rate', source: 'FROM GENOME' },
+    ],
+    apexretail: [
+      { icon: '🔴', text: 'Personalisation AI deployed — outcomes not measured', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '$8M AI investment — no baseline locked before deployment', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '41 accountability engagements · 82% success rate', source: 'FROM GENOME' },
+    ],
+  },
+}
+
 // ── Solution banner (when running in solution mode) ───────────────────────────
 function SolutionBanner({
   solution, client, currentStep,
@@ -462,8 +556,9 @@ function SolutionPageContent({ slug }: { slug: string }) {
   }
 
   const color = objectiveColor(solution.objective)
-  const runUrl = buildSolutionUrl(clientParam, solution.code)
   const defaultClient: Client = solution.vertical === 'Financial Services' ? 'firstcapital' : clientParam
+  const runUrl = buildSolutionUrl(defaultClient, solution.code)
+  const clientMetrics = CLIENT_METRICS[solution.code]?.[defaultClient] ?? solution.metrics
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
@@ -510,7 +605,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
 
           {/* Five metric tiles */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-            {solution.metrics.map(({ icon, text, source }) => (
+            {clientMetrics.map(({ icon, text, source }) => (
               <div key={text} style={{
                 background: T.bg,
                 border: `1px solid ${T.border}`,
