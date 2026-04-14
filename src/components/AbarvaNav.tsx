@@ -40,12 +40,8 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
   const urlClientId = pathname?.split('/admin/client/')?.[1]?.split('/')?.[0] || null
   const cid = urlClientId || clientId || 'meridian'
 
-  // Workspace link comes ONLY from the logged-in user's own metadata
   const metaClientId = user?.publicMetadata?.clientId as string | undefined
   const metaRole     = user?.publicMetadata?.role     as string | undefined
-  const workspaceHref = metaRole === 'admin' || !metaClientId
-    ? '/admin'
-    : `/admin/client/${metaClientId}`
 
   const signedIn = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Maestro'
@@ -74,11 +70,6 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
           <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 900, color: TEAL }}>Va</span>
         </div>
         <span style={{ fontFamily: MONO, fontSize: '8px', color: TEXT, letterSpacing: '.04em', opacity: .7 }}>know it. build it. own it.</span>
-      </a>
-
-      {/* Home link */}
-      <a href="/" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
-        Home
       </a>
 
       {/* Intelligence dropdown */}
@@ -153,19 +144,14 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
             {/* Dynamic client name from URL */}
             {urlClientId && CLIENT_NAMES[urlClientId] && (
               <span style={{
-                fontSize: '13px', color: MUTED, fontFamily: SANS,
+                fontSize: '13px', color: TEXT, fontFamily: SANS,
                 padding: '0 16px', borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}`,
               }}>
                 {CLIENT_NAMES[urlClientId]}
               </span>
             )}
 
-            {/* My workspace link */}
-            <a href={workspaceHref} style={{ fontSize: '12px', color: MUTED, textDecoration: 'none', fontFamily: MONO, letterSpacing: '.04em', padding: '0 8px' }}>
-              My workspace
-            </a>
-
-            {/* Identity + dropdown */}
+            {/* Identity pill + dropdown */}
             <div style={{ position: 'relative' as const }}>
               <button
                 onClick={() => setUserMenuOpen(o => !o)}
@@ -177,7 +163,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
               >
                 <div style={{ textAlign: 'right' as const }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{displayName}</div>
-                  <div style={{ fontSize: '10px', color: MUTED, fontFamily: SANS }}>Admin Maestro</div>
+                  <div style={{ fontSize: '10px', color: TEAL, fontFamily: SANS }}>{metaRole === 'admin' ? 'Admin' : 'Maestro'}</div>
                 </div>
                 <div style={{
                   width: '30px', height: '30px', borderRadius: '50%',
@@ -194,15 +180,12 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
                   background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '10px',
                   padding: '6px 0', zIndex: 300, minWidth: '160px',
                 }}>
-                  <a href={workspaceHref} onClick={() => setUserMenuOpen(false)} style={{ display: 'block', padding: '9px 16px', fontSize: '13px', color: TEXT, textDecoration: 'none', fontFamily: SANS }}>
-                    My workspace
-                  </a>
                   <button
                     onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
                     style={{
                       width: '100%', textAlign: 'left' as const, padding: '9px 16px',
-                      fontSize: '13px', color: MUTED, background: 'transparent',
-                      border: 'none', borderTop: `1px solid ${BORDER}`, cursor: 'pointer', fontFamily: SANS,
+                      fontSize: '13px', color: TEXT, background: 'transparent',
+                      border: 'none', cursor: 'pointer', fontFamily: SANS,
                     }}
                   >
                     Sign out
