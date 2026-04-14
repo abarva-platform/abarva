@@ -1,333 +1,762 @@
 'use client'
-import { use } from 'react'
-import { notFound } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
 
+import { Suspense, use } from 'react'
+import { useSearchParams, notFound } from 'next/navigation'
+import { buildSolutionUrl, objectiveColor } from '@/lib/solution-library'
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
-  bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
-  border: '#21262D', border2: '#30363D',
-  text: '#E6EDF3', text2: '#C9D1D9', text3: '#8B949E',
-  teal: '#2DD4C8', blue: '#4DA3FF', amber: '#F59E0B', red: '#EF4444', green: '#6EE7B7',
+  bg: '#060A12',
+  surface: '#0D1520',
+  border: '#1C2D45',
+  teal: '#2DD4C8',
+  red: '#EF4444',
+  amber: '#F59E0B',
+  green: '#10B981',
+  indigo: '#6366F1',
+  text: '#EFF6FF',
+  secondary: '#94A3B8',
+  fraunces: 'Fraunces, Georgia, serif',
+  mono: '"JetBrains Mono", "Fira Code", monospace',
+  sans: '"DM Sans", system-ui, sans-serif',
 }
 
-type Solution = {
-  code: string
-  name: string
-  vertical: string
-  objective: string
-  color: string
-  problem: string
-  problemContext: string
-  findings: Array<{ stat: string; detail: string; severity: 'critical' | 'warning' | 'info' }>
-  products: Array<{ name: string; href: string }>
-  dataRequired: string[]
-  outcomeMetric: string
-  timeToInsight: string
-  timeToOutcome: string
-  client: string
-  entryHref: string
+type Client = 'meridian' | 'firstcapital' | 'apexretail'
+
+const CLIENT_LABELS: Record<Client, string> = {
+  meridian: 'Meridian Health',
+  firstcapital: 'First Capital Bank',
+  apexretail: 'Apex Retail',
 }
 
-const SOLUTIONS: Record<string, Solution> = {
+// ── Full solution definitions ─────────────────────────────────────────────────
+const SOLUTIONS = {
   'revenue-cycle-intelligence': {
-    code: 'HP-01',
+    code: 'HC-01',
     name: 'Revenue Cycle Intelligence',
+    objective: 'Grow' as const,
+    office: 'Front Office',
     vertical: 'Healthcare',
-    objective: 'Optimise',
-    color: T.teal,
-    problem: 'Your denial rate is costing you more than you report to the board.',
-    problemContext: 'Most health systems track denial rates by payer — but few track the true write-off. The gap between reported collection rates and actual claims data can exceed $30M annually. Leadership is presenting the wrong number to the board, and the RCM vendor is not penalized for the delta.',
-    findings: [
-      { stat: '6.8pp above benchmark', detail: 'Denial rate 18.2% vs 11.4% peer median — $31M annual gap at Meridian scale', severity: 'critical' },
-      { stat: '38% of denials', detail: 'Prior authorization — fixable in 90 days with AI automation (Cohere Health, 94/100)', severity: 'critical' },
-      { stat: '$31M gap', detail: 'Leadership reports 94.2% collection to board. Claims data shows 87.1%. Revenue miscounted.', severity: 'critical' },
-      { stat: '$8M unclaimed', detail: '3 RCM vendors missing SLA thresholds — $8M in SLA credits enforceable now', severity: 'warning' },
-    ],
+    problem: 'My denial rate is killing us and my board is asking questions I can\'t answer about where the revenue went.',
+    entryHref: '/diagnose',
     products: [
-      { name: 'Situation Intelligence', href: '/diagnose' },
-      { name: 'AI Investment Intelligence', href: '/ai-strategy' },
-      { name: 'Business Case Intelligence', href: '/justify' },
-      { name: 'Vendor Intelligence', href: '/select' },
-      { name: 'Outcome Intelligence', href: '/control-tower' },
+      { name: 'Situation Intelligence', href: '/diagnose', role: 'Surface the full RCM picture — denial waterfall, prior auth gaps, cost per claim' },
+      { name: 'AI Investment Intelligence', href: '/ai-strategy', role: 'Which RCM AI bets deliver the most value first' },
+      { name: 'Vendor Intelligence', href: '/vendor-intelligence', role: 'Score RCM AI vendors against your situation and Genome data' },
+      { name: 'Business Case Intelligence', href: '/business-case', role: 'CFO-ready model with risk-adjusted NPV and board brief' },
+      { name: 'Outcome Intelligence', href: '/outcome-intelligence', role: 'Lock baseline, track savings, trigger outcome fee' },
     ],
-    dataRequired: ['Claims data (24 months)', 'Denial codes by payer', 'Prior auth logs', 'Payer contracts with SLA clauses', 'Epic extract (AR aging)', 'RCM vendor performance reports'],
-    outcomeMetric: 'Denial rate reduction × revenue recovered vs baseline',
-    timeToInsight: '48 hours',
-    timeToOutcome: '90–180 days',
-    client: 'meridian',
-    entryHref: '/diagnose?client=meridian&solution=HP-01',
+    workflow: [
+      {
+        step: 1,
+        name: 'Situation Intelligence',
+        what: 'Surface the full RCM picture — denial waterfall, prior auth gaps, cost per claim vs peers',
+        yourData: 'Denial rate 18.2% · $94M revenue gap · Prior auth 23%',
+        industry: 'Health systems at your size: median denial 11.4% · $13.8M per point',
+        genome: '47 deployments · 71% achieve target · 34% fail without CDO',
+        output: 'Situation Brief: "What\'s happening and why it costs you"',
+      },
+      {
+        step: 2,
+        name: 'AI Investment Intelligence',
+        what: 'Identify which RCM AI bets deliver value first at Meridian\'s readiness level',
+        yourData: 'Data readiness 67% · Tech 52% · Org 41%',
+        industry: 'RCM AI median payback: 14 months · $28M base case',
+        genome: '3 failure patterns detected · Adjusted success 76% with mitigations',
+        output: '5 prioritized investment bets with confidence scores',
+      },
+      {
+        step: 3,
+        name: 'Vendor Intelligence',
+        what: 'Score RCM AI vendors against your situation, then build the contract and RFP',
+        yourData: 'Epic native required · Azure integration · HIPAA BAA mandatory',
+        industry: 'Ensemble: 71% success rate · 8 similar wins · $4-6M year 1',
+        genome: 'CDO vacancy risk in 3 of 12 Ensemble failures — mitigate before contract',
+        output: 'Vendor scorecard + contract intelligence + RFP',
+      },
+      {
+        step: 4,
+        name: 'Business Case Intelligence',
+        what: 'Build the CFO-defensible business case with three scenarios and risk adjustment',
+        yourData: '$13.8M per denial rate point · $6.2M year 1 investment',
+        industry: '40th price percentile · Base case achieved 62% of the time',
+        genome: 'Risk-adjusted NPV $41M · 76% success with mitigations',
+        output: 'Board brief + CFO validation mode',
+      },
+      {
+        step: 5,
+        name: 'Outcome Intelligence',
+        what: 'Lock the baseline, track savings, trigger the outcome fee when verified',
+        yourData: 'Baseline 18.2% denial rate locked · Methodology signed',
+        industry: 'Verification threshold: $5M · Third-party audit required',
+        genome: 'AbarVa earns 15-20% of verified savings above baseline',
+        output: 'Immutable baseline record + quarterly board report',
+      },
+    ],
+    genomeData: {
+      successRate: 71,
+      outcomeRange: '$28-94M annually',
+      failurePattern: 'CDO vacancy at go-live (in 34% of failures)',
+      avoidance: 'Appoint CDO interim 90 days before go-live. All 3 closest peers succeeded with this step.',
+      sampleSize: 47,
+    },
+    dataRequirements: [
+      { label: 'Claims data (12 months)', loaded: true },
+      { label: 'Denial reason codes', loaded: true },
+      { label: 'Prior auth payer connections', loaded: true },
+      { label: 'Cost per claim by department', loaded: false, unlocks: 'Opportunity sizing' },
+      { label: 'CDO org chart', loaded: false, unlocks: 'Governance assessment' },
+    ],
+    metrics: [
+      { icon: '🔴', text: 'Denial rate 18.2% vs 11.4% benchmark — $94M annual gap', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'Prior auth 23% automated vs 62% peer average', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Health systems at your size averaged 6.1pp improvement in 14 months', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '47 deployments in Genome · 71% achieved target', source: 'FROM GENOME' },
+      { icon: '🔴', text: '3 failure patterns detected: CDO, prior auth data, vendor selection', source: 'FROM GENOME' },
+    ],
   },
-  'patient-access-growth': {
-    code: 'HP-02',
-    name: 'Patient Access & Growth',
-    vertical: 'Healthcare',
-    objective: 'Grow',
-    color: T.teal,
-    problem: 'Your referral leakage is invisible until patients leave the network.',
-    problemContext: 'Referral leakage — patients referred out of network — is the silent revenue drain in every health system. The CIO sees an Epic utilization number. The CMO sees press-ganey scores. Nobody sees the downstream revenue that walked out the door last quarter.',
-    findings: [
-      { stat: '34% MyChart adoption', detail: 'Meridian at 34% vs 60% target — patient portal non-adoption is the leading indicator of referral leakage', severity: 'critical' },
-      { stat: '3.5 stars', detail: 'Medicare Advantage at 3.5 — below 4.0 CMS threshold. Every 0.1-star improvement = $4M in bonus payments', severity: 'critical' },
-      { stat: '23 hospitals', detail: 'Operating as 23 separate entities — no unified patient record across network, blocking care coordination AI', severity: 'warning' },
-      { stat: '12 Cogito dashboards', detail: 'Only 12 of 47 Cogito analytics dashboards live — physician access intelligence not activated', severity: 'warning' },
-    ],
+  'analytics-modernization-intelligence': {
+    code: 'AM-01',
+    name: 'Analytics Modernization Intelligence',
+    objective: 'Optimise' as const,
+    office: 'Back Office',
+    vertical: 'All',
+    problem: 'We have hundreds of reports, a dozen BI tools, and nobody knows which ones anyone uses. We\'re paying millions to maintain analytics nobody reads.',
+    entryHref: '/diagnose',
     products: [
-      { name: 'Situation Intelligence', href: '/diagnose' },
-      { name: 'Workforce Intelligence', href: '/future-of-work' },
-      { name: 'Data Estate Intelligence', href: '/analytics-modernization' },
-      { name: 'Outcome Intelligence', href: '/control-tower' },
+      { name: 'Situation Intelligence', href: '/diagnose', role: 'Full analytics estate picture — inventory, usage, redundancy' },
+      { name: 'Business Case Intelligence', href: '/business-case', role: 'Migration ROI model with rationalization savings' },
+      { name: 'Vendor Intelligence', href: '/vendor-intelligence', role: 'Cloud stack scored for your situation' },
+      { name: 'Data Estate Intelligence', href: '/data-intelligence', role: 'Inventory and rationalize before migrating' },
     ],
-    dataRequired: ['Patient access metrics (Epic)', 'Referral leakage reports', 'MyChart adoption data', 'Medicare Advantage Stars data', 'Network coverage map', 'Competitor proximity data'],
-    outcomeMetric: 'Net new patients captured × average revenue per patient',
-    timeToInsight: '48 hours',
-    timeToOutcome: '120–240 days',
-    client: 'meridian',
-    entryHref: '/diagnose?client=meridian&solution=HP-02',
+    workflow: [
+      {
+        step: 1,
+        name: 'Situation Intelligence',
+        what: 'Map the full analytics estate — every tool, every report, every license',
+        yourData: '312 apps · 42% redundant · $38M shadow IT',
+        industry: '3-4x more tools than needed typical at your size · 62% of reports never accessed',
+        genome: 'Most common mistake: migrating before rationalizing',
+        output: 'Analytics estate map with rationalization opportunities',
+      },
+      {
+        step: 2,
+        name: 'Data Estate Intelligence',
+        what: 'Inventory and rationalize before spending on migration',
+        yourData: '3 BI platforms overlapping · IT spend 4.5% of revenue',
+        industry: 'License rationalization saves $2-4M immediately at your scale',
+        genome: '23 engagements · average Year 1 savings $4.2M',
+        output: 'Rationalization plan with immediate license savings',
+      },
+      {
+        step: 3,
+        name: 'Vendor Intelligence',
+        what: 'Select cloud analytics stack scored against your situation',
+        yourData: 'Azure infrastructure already in place',
+        industry: 'Fabric + PowerBI native at Azure shops: 40% deployment faster',
+        genome: 'Vendors chosen on demo quality: 4x higher failure rate',
+        output: 'Vendor scorecard + migration RFP',
+      },
+      {
+        step: 4,
+        name: 'Business Case Intelligence',
+        what: 'Build the CFO model for migration + rationalization ROI',
+        yourData: '$38M shadow IT baseline · 312 app inventory',
+        industry: '$2-4M immediate · $6.8M by year 3 average',
+        genome: 'Risk-adjusted: 74% success rate at your readiness profile',
+        output: 'Board brief with 3 scenarios',
+      },
+    ],
+    genomeData: {
+      successRate: 74,
+      outcomeRange: '$3-8M annual savings',
+      failurePattern: 'Migrating before rationalizing (in 68% of failures)',
+      avoidance: 'Complete rationalization sprint before any cloud migration begins.',
+      sampleSize: 23,
+    },
+    dataRequirements: [
+      { label: 'Application inventory', loaded: true },
+      { label: 'BI tool license data', loaded: true },
+      { label: 'Report usage analytics', loaded: false, unlocks: 'Rationalization scoring' },
+      { label: 'IT spend breakdown', loaded: true },
+    ],
+    metrics: [
+      { icon: '🔴', text: '312 apps in inventory — 42% flagged redundant', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '$38M shadow IT spend — untracked SaaS', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Organizations your size typically have 3-4x more tools than needed', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '23 engagements · average $4.2M savings year 1', source: 'FROM GENOME' },
+      { icon: '🟢', text: 'License rationalization: $2-4M immediate opportunity identified', source: 'FROM YOUR DATA' },
+    ],
+  },
+  'it-spend-optimization-intelligence': {
+    code: 'IT-01',
+    name: 'IT Spend Optimization Intelligence',
+    objective: 'Optimise' as const,
+    office: 'Back Office',
+    vertical: 'All',
+    problem: 'I\'m spending hundreds of millions on IT. I can\'t tell my CFO what we\'re getting for it or where to cut.',
+    entryHref: '/diagnose',
+    products: [
+      { name: 'Situation Intelligence', href: '/diagnose', role: 'Full IT spend picture — vendor portfolio, SLA status, market rates' },
+      { name: 'Vendor Intelligence', href: '/vendor-intelligence', role: 'Optimize current vendors — claim credits, renegotiate, consolidate' },
+      { name: 'Business Case Intelligence', href: '/business-case', role: 'Rebalancing model with savings projections' },
+      { name: 'Outcome Intelligence', href: '/outcome-intelligence', role: 'Track savings vs IT spend baseline' },
+    ],
+    workflow: [
+      {
+        step: 1,
+        name: 'Situation Intelligence',
+        what: 'Map the full IT spend — every vendor, every contract, every SLA',
+        yourData: 'IT spend 4.5% revenue · $2.1M SLA credits unclaimed · 3 contracts renewing',
+        industry: 'Organizations your size overpay vendors by 15-25% on average',
+        genome: 'Fastest win: claim existing SLA credits (avg 3 weeks)',
+        output: 'IT spend map with immediate action items',
+      },
+      {
+        step: 2,
+        name: 'Vendor Intelligence — Optimize mode',
+        what: 'Claim SLA credits, renegotiate at renewal, consolidate overlapping vendors',
+        yourData: 'Ensemble $2.1M credits owed NOW · Epic renewing in 90 days',
+        industry: 'Contract timing is the single biggest lever — negotiate at renewal',
+        genome: 'Reference clients leverage: $50-100K per major vendor',
+        output: 'Credit claims + negotiation briefs + consolidation plan',
+      },
+      {
+        step: 3,
+        name: 'Business Case Intelligence',
+        what: 'Build the CFO model for IT spend rebalancing',
+        yourData: '$2.1M immediate · $8-18M annual potential',
+        industry: 'Average savings: $11M year 1 at your scale',
+        genome: 'Risk-adjusted: 79% success rate',
+        output: 'Board brief with 3 scenarios',
+      },
+      {
+        step: 4,
+        name: 'Outcome Intelligence',
+        what: 'Lock IT spend baseline, track savings vs target',
+        yourData: '$168M annual vendor spend baseline',
+        industry: '12-month payback typical',
+        genome: '31 engagements · 79% success rate',
+        output: 'Vendor spend dashboard + quarterly board report',
+      },
+    ],
+    genomeData: {
+      successRate: 79,
+      outcomeRange: '$8-18M annual savings',
+      failurePattern: 'Negotiating too early — before contract renewal window opens',
+      avoidance: 'Map all renewal dates first. Negotiate only within 90-day window for maximum leverage.',
+      sampleSize: 31,
+    },
+    dataRequirements: [
+      { label: 'Vendor contract list', loaded: true },
+      { label: 'SLA performance data', loaded: true },
+      { label: 'IT spend by category', loaded: true },
+      { label: 'License utilization data', loaded: false, unlocks: 'License right-sizing analysis' },
+    ],
+    metrics: [
+      { icon: '🔴', text: 'IT spend 4.5% of revenue — above 3.8% peer median', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '$2.1M in vendor SLA credits unclaimed right now', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: '3 vendor contracts renewing in the next 90 days', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Organizations your size overpay vendors by 15-25% on average', source: 'FROM INDUSTRY' },
+      { icon: '🟢', text: '31 IT spend engagements · average $11M savings year 1', source: 'FROM GENOME' },
+    ],
+  },
+  'digital-banking-transformation': {
+    code: 'FS-01',
+    name: 'Digital Banking Transformation',
+    objective: 'Grow' as const,
+    office: 'Front Office',
+    vertical: 'Financial Services',
+    problem: 'Our digital adoption is 26 percentage points behind our competitors. Every point costs us revenue and customers.',
+    entryHref: '/diagnose',
+    products: [
+      { name: 'Situation Intelligence', href: '/diagnose', role: 'Digital adoption picture — gap analysis, FedNow deadline, core system risk' },
+      { name: 'AI Investment Intelligence', href: '/ai-strategy', role: 'Which digital bets deliver value fastest at your tech readiness' },
+      { name: 'Vendor Intelligence', href: '/vendor-intelligence', role: 'Core modernization and digital banking vendors scored' },
+      { name: 'Business Case Intelligence', href: '/business-case', role: 'Transformation ROI model with FedNow compliance cost' },
+      { name: 'Outcome Intelligence', href: '/outcome-intelligence', role: 'Track digital adoption vs baseline' },
+    ],
+    workflow: [
+      {
+        step: 1,
+        name: 'Situation Intelligence',
+        what: 'Map the digital adoption gap — core system age, FedNow status, mobile NPS',
+        yourData: 'Digital adoption 41% vs 67% benchmark · FIS HORIZON 22 years old',
+        industry: 'FedNow compliance cost: $8-14M at your core system age',
+        genome: 'Primary failure: underestimating core system integration complexity',
+        output: 'Digital gap brief with FedNow deadline path',
+      },
+      {
+        step: 2,
+        name: 'AI Investment Intelligence',
+        what: 'Which digital AI bets come first at First Capital\'s readiness profile',
+        yourData: 'Data readiness 52% · Tech 38% — core system risk',
+        industry: 'Banks closing digital gap: $22M annual revenue uplift at your AUM',
+        genome: 'CEO sponsor from day 1 in 94% of successes',
+        output: 'Prioritized digital bets with readiness gaps identified',
+      },
+      {
+        step: 3,
+        name: 'Vendor Intelligence',
+        what: 'Select core modernization and digital banking vendors',
+        yourData: 'FIS HORIZON replacement or modernization required',
+        industry: 'FedNow API layer: 3 vendors with proven HORIZON integration',
+        genome: 'Vendor selected on demo quality: 4x failure rate',
+        output: 'Vendor scorecard + core modernization RFP',
+      },
+      {
+        step: 4,
+        name: 'Business Case Intelligence',
+        what: 'Build the board case for transformation investment',
+        yourData: '$48M revenue gap · $8-14M FedNow compliance cost',
+        industry: '$22M annual uplift at your AUM if gap closed in 24 months',
+        genome: 'Risk-adjusted: 68% success with CEO sponsor',
+        output: 'Board brief with regulatory compliance timeline',
+      },
+      {
+        step: 5,
+        name: 'Outcome Intelligence',
+        what: 'Lock digital adoption baseline, track improvement monthly',
+        yourData: '41% digital adoption baseline locked',
+        industry: 'Monthly NPS tracking · quarterly board report',
+        genome: 'AbarVa fee: 15-20% of revenue uplift above baseline',
+        output: 'Digital dashboard + board report',
+      },
+    ],
+    genomeData: {
+      successRate: 68,
+      outcomeRange: '$18-48M annual revenue uplift',
+      failurePattern: 'Underestimating core system integration complexity (in 58% of failures)',
+      avoidance: 'Complete core system integration assessment before vendor selection. Budget 30% contingency.',
+      sampleSize: 34,
+    },
+    dataRequirements: [
+      { label: 'Digital adoption metrics', loaded: true },
+      { label: 'Core system architecture', loaded: true },
+      { label: 'FedNow compliance status', loaded: true },
+      { label: 'Mobile NPS data', loaded: true },
+      { label: 'Customer AUM by channel', loaded: false, unlocks: 'Revenue gap sizing' },
+    ],
+    metrics: [
+      { icon: '🔴', text: 'Digital adoption 41% vs 67% peer benchmark — $48M revenue gap', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'Core system 22 years old — FIS HORIZON — modernization critical', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: 'FedNow: not compliant — January 2027 hard deadline', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Banks closing digital gap: average $22M annual revenue uplift at your AUM', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: '34 digital banking engagements · 68% success rate', source: 'FROM GENOME' },
+    ],
   },
   'ai-portfolio-accountability': {
-    code: 'BK-01',
+    code: 'AI-01',
     name: 'AI Portfolio Accountability',
-    vertical: 'Financial Services',
-    objective: 'Protect',
-    color: T.blue,
-    problem: 'You are spending on AI. Do you know if it is working?',
-    problemContext: 'Most financial institutions now have 20–40 active AI initiatives. Almost none have a baseline. Without a baseline, there is no outcome. Without an outcome, every AI investment is a cost center, not a value driver. The board is asking the right question — the platform has not been tracking the answer.',
-    findings: [
-      { stat: '28 AI initiatives', detail: 'First Capital has 28 active AI initiatives — $0 in tracked outcomes. No baseline established for any of them', severity: 'critical' },
-      { stat: '78% false positive rate', detail: 'AML system generating 78% false positives vs 42% peer benchmark — $7M annual excess cost', severity: 'critical' },
-      { stat: '$168M IT budget', detail: '0.93% of assets — below peer median of 1.2%. Underinvestment while competitors deploy AI at scale', severity: 'warning' },
-      { stat: 'CDO reports to CRO', detail: 'Data governance misaligned with AI ambition — structural blocker to AI velocity', severity: 'warning' },
-    ],
+    objective: 'Protect' as const,
+    office: 'Middle Office',
+    vertical: 'All',
+    problem: 'We\'ve spent tens of millions on AI. I can\'t tell the board what\'s working, what isn\'t, or whether any of it was worth it.',
+    entryHref: '/diagnose',
     products: [
-      { name: 'Outcome Intelligence', href: '/control-tower' },
-      { name: 'AI Investment Intelligence', href: '/ai-strategy' },
-      { name: 'Business Case Intelligence', href: '/justify' },
-      { name: 'Delivery Intelligence', href: '/ai-pdlc' },
+      { name: 'Situation Intelligence', href: '/diagnose', role: 'AI program current state — which pilots are real, which are stalled' },
+      { name: 'AI Investment Intelligence', href: '/ai-strategy', role: 'Re-prioritize AI bets based on Genome success patterns' },
+      { name: 'Outcome Intelligence', href: '/outcome-intelligence', role: 'Lock baseline, start tracking, trigger fees on verified savings' },
     ],
-    dataRequired: ['AI initiative inventory', 'Baseline metrics per initiative', 'IT spend by category', 'Vendor performance data', 'Model accuracy logs', 'Business outcome tracking'],
-    outcomeMetric: 'Verified savings per AI initiative vs baseline cost',
-    timeToInsight: '48 hours',
-    timeToOutcome: '90–180 days',
-    client: 'firstcapital',
-    entryHref: '/control-tower?client=firstcapital&solution=BK-01',
-  },
-  'customer-revenue-intelligence': {
-    code: 'BK-02',
-    name: 'Customer Revenue Intelligence',
-    vertical: 'Financial Services',
-    objective: 'Grow',
-    color: T.blue,
-    problem: 'Digital adoption at 41% while peers are at 67%.',
-    problemContext: 'Digital adoption is a leading indicator of customer lifetime value, cross-sell rates, and churn. First Capital has 1.8 million customers seeing yesterday\'s balances on a mobile app rated 3.2/5.0. Every percentage point of adoption gap is a pipeline of customers who will move to a digital-first competitor.',
-    findings: [
-      { stat: '41% digital adoption', detail: 'vs 67% peer benchmark — $180M commercial deposits at risk of migration in the next 24 months', severity: 'critical' },
-      { stat: '3.2/5.0 app rating', detail: 'Mobile app rating 3.2 vs 4.1 peer benchmark — root cause: real-time data not live (FedNow blocked)', severity: 'critical' },
-      { stat: 'FedNow not live', detail: '67% of peer banks now live on FedNow. First Capital: implementation blocked by FIS HORIZON data model', severity: 'critical' },
-      { stat: '$99M efficiency gap', detail: 'Cost-to-income 68% vs 55% target — digital channel shift is the primary lever', severity: 'warning' },
+    workflow: [
+      {
+        step: 1,
+        name: 'Situation Intelligence',
+        what: 'Inventory all AI spend — find the stalled pilots, the shadow AI, the missing baselines',
+        yourData: '0 of 6 AI pilots delivering value · 14 AI tools in shadow IT',
+        industry: 'Less than 12% of enterprise AI spend has outcome measurement',
+        genome: 'Most common finding: leadership thinks pilots are running — data shows zero delivery',
+        output: 'AI program current state map',
+      },
+      {
+        step: 2,
+        name: 'AI Investment Intelligence',
+        what: 'Re-prioritize which AI bets to continue, pause, or cancel',
+        yourData: '$42M AI budget committed · $0 in tracked outcomes',
+        industry: 'Average value unlocked by accountability reset: $28M',
+        genome: 'Genome pattern: pilots fail when no baseline locked before start',
+        output: 'Re-prioritized AI portfolio with stop/continue/start decisions',
+      },
+      {
+        step: 3,
+        name: 'Outcome Intelligence',
+        what: 'Lock baselines for all continuing initiatives. Start tracking.',
+        yourData: 'Responsible AI score 52/100 — compliance exposure',
+        industry: 'Verification threshold: $5M · fee at 15-20%',
+        genome: '41 accountability engagements · 82% success rate',
+        output: 'Locked baselines + quarterly board accountability report',
+      },
     ],
-    products: [
-      { name: 'Situation Intelligence', href: '/diagnose' },
-      { name: 'AI Investment Intelligence', href: '/ai-strategy' },
-      { name: 'Vendor Intelligence', href: '/select' },
-      { name: 'Business Case Intelligence', href: '/justify' },
+    genomeData: {
+      successRate: 82,
+      outcomeRange: '$42M stalled spend unlocked · 90 days',
+      failurePattern: 'No baseline locked before pilot start (in 91% of failures)',
+      avoidance: 'Lock baseline on day 1 of every pilot. No exceptions.',
+      sampleSize: 41,
+    },
+    dataRequirements: [
+      { label: 'AI program inventory', loaded: true },
+      { label: 'AI spend by initiative', loaded: true },
+      { label: 'Pilot status tracking', loaded: false, unlocks: 'Portfolio accountability map' },
+      { label: 'Responsible AI scores', loaded: true },
     ],
-    dataRequired: ['Digital channel analytics', 'Mobile app ratings and reviews', 'Customer LTV by segment', 'FedNow readiness assessment', 'FIS HORIZON config', 'Churn indicators by cohort'],
-    outcomeMetric: 'Digital adoption increase × revenue per digital customer vs non-digital',
-    timeToInsight: '48 hours',
-    timeToOutcome: '90–180 days',
-    client: 'firstcapital',
-    entryHref: '/diagnose?client=firstcapital&solution=BK-02',
-  },
-  'supply-chain-ai': {
-    code: 'RT-01',
-    name: 'Supply Chain AI Rationalization',
-    vertical: 'Retail',
-    objective: 'Optimise',
-    color: T.amber,
-    problem: 'You have 14 supply chain tools. 6 are redundant.',
-    problemContext: 'Retail supply chains have been automated with overlapping tools across four acquisition cycles. The result is a $38M annual shadow IT spend that the CTO cannot account for, a demand forecasting system that contradicts the procurement system, and AI vendors charging for capabilities the organization already owns elsewhere.',
-    findings: [
-      { stat: '14 supply chain tools', detail: '6 are redundant with existing capabilities — $14–22M in recoverable annual license spend', severity: 'critical' },
-      { stat: '62% forecast accuracy', detail: 'o9 demand forecasting at 62% vs 84% benchmark — system is 40% implemented. Activation beats replacement.', severity: 'critical' },
-      { stat: '$38M shadow IT', detail: 'Untracked SaaS spend — 43% of which duplicates licensed capabilities in SAP or Salesforce', severity: 'warning' },
-      { stat: '4.2x inventory turns', detail: 'vs 6.8x benchmark — $180M excess inventory annually. Root cause: demand forecasting accuracy gap', severity: 'warning' },
+    metrics: [
+      { icon: '🔴', text: '0 of 6 AI pilots delivering value — $42M stalled', source: 'FROM YOUR DATA' },
+      { icon: '🔴', text: '14 AI tools found in shadow IT — not in IT registry', source: 'FROM YOUR DATA' },
+      { icon: '🟡', text: 'Less than 12% of enterprise AI spend has documented outcome measurement', source: 'FROM INDUSTRY' },
+      { icon: '🟡', text: 'Average value unlocked by accountability reset: $28M', source: 'FROM GENOME' },
+      { icon: '🔴', text: 'Responsible AI score 52/100 — compliance exposure', source: 'FROM YOUR DATA' },
     ],
-    products: [
-      { name: 'Procurement Intelligence', href: '/marketplace' },
-      { name: 'AI Investment Intelligence', href: '/ai-strategy' },
-      { name: 'Business Case Intelligence', href: '/justify' },
-      { name: 'Delivery Intelligence', href: '/ai-pdlc' },
-    ],
-    dataRequired: ['Current vendor contracts (all supply chain tools)', 'SaaS spend inventory', 'o9 implementation status', 'Demand forecast accuracy logs', 'Inventory aging report', 'IT license utilization data'],
-    outcomeMetric: 'Vendor consolidation savings + inventory reduction vs baseline',
-    timeToInsight: '48 hours',
-    timeToOutcome: '60–120 days',
-    client: 'apexretail',
-    entryHref: '/ai-pdlc?client=apexretail&solution=RT-01',
-  },
-  'customer-intelligence': {
-    code: 'RT-02',
-    name: 'Customer Intelligence',
-    vertical: 'Retail',
-    objective: 'Grow',
-    color: T.amber,
-    problem: 'Conversion at 2.3% while category peers are at 3.8%.',
-    problemContext: 'Apex Retail has 18 million loyalty members, a licensed Salesforce Einstein personalization engine, and a built-and-validated churn prediction model. None of it is deployed. The AI is paid for and idle. Every month of delay is measurable revenue that did not happen.',
-    findings: [
-      { stat: 'Einstein idle', detail: 'Salesforce Einstein licensed, paid, and not activated. Personalization revenue opportunity: $248M annually', severity: 'critical' },
-      { stat: '2.3% conversion', detail: 'vs 3.8% benchmark — 1.5pp gap at Apex scale = $180M annual revenue delta', severity: 'critical' },
-      { stat: '69% cart abandonment', detail: 'vs 58% benchmark — personalization activation alone recovers 8–12pp of abandonment', severity: 'critical' },
-      { stat: 'Churn model built, not deployed', detail: '340K duplicate customer profiles are the only technical blocker — fixable in 30 days', severity: 'warning' },
-    ],
-    products: [
-      { name: 'Situation Intelligence', href: '/diagnose' },
-      { name: 'AI Investment Intelligence', href: '/ai-strategy' },
-      { name: 'Vendor Intelligence', href: '/select' },
-      { name: 'Outcome Intelligence', href: '/control-tower' },
-    ],
-    dataRequired: ['Salesforce Einstein config', 'Customer loyalty data (18M members)', 'Conversion funnel analytics', 'Cart abandonment logs', 'Churn model validation data', 'Customer duplicate profile report'],
-    outcomeMetric: 'Conversion rate increase + loyalty revenue vs pre-personalization baseline',
-    timeToInsight: '48 hours',
-    timeToOutcome: '60–120 days',
-    client: 'apexretail',
-    entryHref: '/diagnose?client=apexretail&solution=RT-02',
   },
 }
 
-export default function SolutionPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params)
-  const s = SOLUTIONS[slug]
-  if (!s) notFound()
-
-  const severityColor = { critical: T.red, warning: T.amber, info: T.teal }
-
+// ── Solution banner (when running in solution mode) ───────────────────────────
+function SolutionBanner({
+  solution, client, currentStep,
+}: {
+  solution: typeof SOLUTIONS['revenue-cycle-intelligence'];
+  client: Client;
+  currentStep: number;
+}) {
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: 'DM Sans, Inter, -apple-system, sans-serif' }}>
-      <AbarvaNav clientId={s.client} />
-
-      {/* Section 1 — The Problem */}
-      <div style={{ borderBottom: '1px solid ' + T.border, padding: '56px 0 48px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700, color: s.color }}>{s.code}</span>
-            <span style={{ padding: '3px 9px', background: s.color + '20', border: '1px solid ' + s.color + '50', borderRadius: '10px', fontSize: '10px', fontWeight: 700, color: s.color }}>
-              {s.vertical.toUpperCase()}
-            </span>
-            <span style={{ padding: '3px 9px', background: T.surface2, border: '1px solid ' + T.border2, borderRadius: '10px', fontSize: '10px', fontWeight: 600, color: T.text3 }}>
-              {s.objective.toUpperCase()}
-            </span>
-          </div>
-          <h1 style={{ fontSize: 'clamp(24px,3.5vw,44px)', fontWeight: 800, color: T.text, lineHeight: 1.15, margin: '0 0 20px', fontFamily: 'Fraunces, Georgia, serif' }}>
-            {s.name}
-          </h1>
-          <p style={{ fontSize: '18px', color: T.text2, lineHeight: 1.65, margin: '0 0 16px', maxWidth: '640px' }}>
-            &ldquo;{s.problem}&rdquo;
-          </p>
-          <p style={{ fontSize: '14px', color: T.text3, lineHeight: 1.7, margin: 0, maxWidth: '600px' }}>
-            {s.problemContext}
-          </p>
-        </div>
+    <div style={{
+      background: T.surface,
+      borderBottom: `1px solid ${T.border}`,
+      padding: '10px 32px',
+      display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
+    }}>
+      <div style={{ fontSize: 10, fontFamily: T.mono, color: T.teal }}>
+        {solution.name.toUpperCase()} · {solution.code}
       </div>
-
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 32px' }}>
-
-        {/* Section 2 — What AbarVa Finds */}
-        <div style={{ padding: '48px 0', borderBottom: '1px solid ' + T.border }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '20px' }}>
-            What AbarVa typically surfaces:
+      <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary }}>
+        Step {currentStep} of {solution.workflow.length}: {solution.workflow[currentStep - 1]?.name}
+      </div>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+        {solution.workflow.map((s, i) => (
+          <div
+            key={i}
+            style={{
+              fontSize: 9, fontFamily: T.mono,
+              padding: '2px 8px', borderRadius: 4,
+              background: i + 1 === currentStep ? T.teal : i + 1 < currentStep ? 'rgba(45,212,200,0.2)' : 'transparent',
+              color: i + 1 === currentStep ? T.bg : i + 1 < currentStep ? T.teal : T.secondary,
+              border: `1px solid ${i + 1 <= currentStep ? T.teal : T.border}`,
+            }}
+          >
+            {i + 1 < currentStep ? '✓ ' : ''}{s.name.split(' ')[0]}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '14px' }}>
-            {s.findings.map((f, i) => (
-              <div key={i} style={{
-                padding: '16px 18px', background: T.surface,
-                border: `1px solid ${severityColor[f.severity]}30`,
-                borderLeft: `4px solid ${severityColor[f.severity]}`,
-                borderRadius: '10px',
-              }}>
-                <div style={{ fontSize: '15px', fontWeight: 800, color: severityColor[f.severity], marginBottom: '6px' }}>{f.stat}</div>
-                <div style={{ fontSize: '13px', color: T.text2, lineHeight: 1.55 }}>{f.detail}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 3 — Products Activated */}
-        <div style={{ padding: '48px 0', borderBottom: '1px solid ' + T.border }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '20px' }}>
-            The Intelligence products that run on this solution:
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-            {s.products.map(p => (
-              <a key={p.name} href={`${p.href}?client=${s.client}&solution=${s.code}`} style={{
-                padding: '8px 16px', background: T.surface,
-                border: `1px solid ${s.color}50`, borderRadius: '8px',
-                fontSize: '13px', fontWeight: 600, color: s.color, textDecoration: 'none',
-                transition: 'all 150ms',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = s.color + '15' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = T.surface }}
-              >
-                {p.name} →
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 4 — Data Required */}
-        <div style={{ padding: '48px 0', borderBottom: '1px solid ' + T.border }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '20px' }}>
-            What the Maestro loads in Phase 1:
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '8px' }}>
-            {s.dataRequired.map((d, i) => (
-              <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', padding: '10px 12px', background: T.surface2, borderRadius: '8px', border: '1px solid ' + T.border }}>
-                <span style={{ color: T.teal, flexShrink: 0, fontSize: '12px' }}>◈</span>
-                <span style={{ fontSize: '13px', color: T.text2 }}>{d}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 5 — The Outcome */}
-        <div style={{ padding: '48px 0', borderBottom: '1px solid ' + T.border }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '20px' }}>
-            The outcome
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
-            <div style={{ padding: '16px', background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px' }}>
-              <div style={{ fontSize: '10px', color: T.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Outcome metric</div>
-              <div style={{ fontSize: '13px', color: T.text2, lineHeight: 1.5 }}>{s.outcomeMetric}</div>
-            </div>
-            <div style={{ padding: '16px', background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px' }}>
-              <div style={{ fontSize: '10px', color: T.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Time to first insight</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: s.color }}>{s.timeToInsight}</div>
-            </div>
-            <div style={{ padding: '16px', background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px' }}>
-              <div style={{ fontSize: '10px', color: T.text3, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>Time to verified outcome</div>
-              <div style={{ fontSize: '18px', fontWeight: 800, color: s.color }}>{s.timeToOutcome}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 6 — Start This Solution */}
-        <div style={{ padding: '48px 0 80px' }}>
-          <div style={{ padding: '36px', background: T.surface, border: '1px solid ' + s.color + '40', borderRadius: '16px', textAlign: 'center' }}>
-            <div style={{ fontSize: '13px', color: T.text3, marginBottom: '8px' }}>Ready to run this solution with your data?</div>
-            <h3 style={{ fontSize: '20px', fontWeight: 700, color: T.text, margin: '0 0 24px' }}>
-              Start {s.name} →
-            </h3>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <a href={s.entryHref} style={{ padding: '14px 32px', background: s.color, color: '#0D1117', borderRadius: '10px', fontSize: '14px', fontWeight: 700, textDecoration: 'none' }}>
-                Start {s.code}: {s.name} →
-              </a>
-              <a href="/solutions" style={{ padding: '14px 24px', background: T.surface2, color: T.text3, border: '1px solid ' + T.border2, borderRadius: '10px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-                ← All Solutions
-              </a>
-            </div>
-          </div>
-        </div>
-
+        ))}
       </div>
     </div>
+  )
+}
+
+// ── Individual solution page content ─────────────────────────────────────────
+function SolutionPageContent({ slug }: { slug: string }) {
+  const searchParams = useSearchParams()
+  const clientParam = (searchParams.get('client') as Client) || 'meridian'
+  const solution = SOLUTIONS[slug as keyof typeof SOLUTIONS]
+
+  if (!solution) {
+    notFound()
+  }
+
+  const color = objectiveColor(solution.objective)
+  const runUrl = buildSolutionUrl(clientParam, solution.code)
+  const defaultClient: Client = solution.vertical === 'Financial Services' ? 'firstcapital' : clientParam
+
+  return (
+    <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
+      <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
+
+      {/* Back nav */}
+      <div style={{ borderBottom: `1px solid ${T.border}`, padding: '12px 32px' }}>
+        <a
+          href="/solutions"
+          style={{ fontSize: 12, fontFamily: T.mono, color: T.secondary, textDecoration: 'none' }}
+        >
+          ← Solution Library
+        </a>
+      </div>
+
+      {/* Section 1 — Hero */}
+      <div style={{
+        background: T.surface,
+        borderBottom: `1px solid ${T.border}`,
+        padding: '40px 32px',
+      }}>
+        {/* Color top bar */}
+        <div style={{ height: 3, background: color, marginBottom: 24, marginLeft: -32, marginRight: -32, width: 'calc(100% + 64px)' }} />
+
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          {/* Badges */}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+            {[solution.code, solution.objective, solution.office, solution.vertical].map(badge => (
+              <div key={badge} style={{
+                fontSize: 9, fontFamily: T.mono, padding: '2px 8px',
+                border: `1px solid ${T.border}`, color: T.secondary, borderRadius: 4,
+              }}>
+                {badge}
+              </div>
+            ))}
+          </div>
+
+          <div style={{ fontSize: 36, fontFamily: T.fraunces, color: T.text, marginBottom: 12 }}>
+            {solution.name}
+          </div>
+          <div style={{ fontSize: 16, fontFamily: T.sans, color: T.secondary, fontStyle: 'italic', marginBottom: 32, maxWidth: 600 }}>
+            &ldquo;{solution.problem}&rdquo;
+          </div>
+
+          {/* Five metric tiles */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            {solution.metrics.map(({ icon, text, source }) => (
+              <div key={text} style={{
+                background: T.bg,
+                border: `1px solid ${T.border}`,
+                borderRadius: 8, padding: 16,
+              }}>
+                <div style={{
+                  fontSize: 8, fontFamily: T.mono, marginBottom: 8,
+                  color: source === 'FROM YOUR DATA' ? T.teal
+                    : source === 'FROM INDUSTRY' ? T.indigo
+                    : '#F472B6',
+                }}>
+                  {source}
+                </div>
+                <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: 11, fontFamily: T.sans, color: T.text, lineHeight: 1.4 }}>{text}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 24, display: 'flex', gap: 8 }}>
+            <a
+              href={runUrl}
+              style={{
+                padding: '12px 28px', background: color, color: T.bg,
+                border: 'none', borderRadius: 8, fontSize: 13,
+                fontFamily: T.mono, fontWeight: 700,
+                cursor: 'pointer', textDecoration: 'none',
+                display: 'inline-block',
+              }}
+            >
+              Run for {CLIENT_LABELS[defaultClient]} →
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px 64px' }}>
+
+        {/* Section 2 — Five-step workflow */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 32 }}>
+            The Five-Step Workflow
+          </div>
+          {solution.workflow.map((step, i) => (
+            <div key={step.step} style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+              {/* Step number + connector */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: T.teal, color: T.bg,
+                  fontSize: 14, fontFamily: T.mono, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  {step.step}
+                </div>
+                {i < solution.workflow.length - 1 && (
+                  <div style={{ width: 2, flex: 1, background: T.border, marginTop: 8, minHeight: 40 }} />
+                )}
+              </div>
+
+              {/* Step content */}
+              <div style={{ flex: 1, paddingBottom: 16 }}>
+                <div style={{ fontSize: 16, fontFamily: T.sans, fontWeight: 700, color: T.text, marginBottom: 4 }}>
+                  {step.name}
+                </div>
+                <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, marginBottom: 16 }}>
+                  {step.what}
+                </div>
+
+                {/* Three-source panel */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
+                  {[
+                    { label: 'FROM YOUR DATA', color: T.teal, text: step.yourData },
+                    { label: 'FROM INDUSTRY', color: T.indigo, text: step.industry },
+                    { label: 'FROM GENOME', color: '#F472B6', text: step.genome },
+                  ].map(({ label, color: c, text }) => (
+                    <div key={label} style={{
+                      background: T.surface, border: `1px solid ${T.border}`,
+                      borderRadius: 6, padding: '10px 12px',
+                    }}>
+                      <div style={{ fontSize: 8, fontFamily: T.mono, color: c, marginBottom: 6 }}>{label}</div>
+                      <div style={{ fontSize: 11, fontFamily: T.sans, color: T.text, lineHeight: 1.4 }}>{text}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Output artifact */}
+                <div style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 12px',
+                  background: 'rgba(45,212,200,0.08)',
+                  border: `1px solid rgba(45,212,200,0.3)`,
+                  borderRadius: 6,
+                }}>
+                  <span style={{ fontSize: 9, fontFamily: T.mono, color: T.teal }}>OUTPUT:</span>
+                  <span style={{ fontSize: 11, fontFamily: T.sans, color: T.text }}>{step.output}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Section 3 — Products activated */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+            Products Activated
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+            {solution.products.map(product => (
+              <a
+                key={product.name}
+                href={`${product.href}?client=${defaultClient}`}
+                style={{
+                  background: T.surface, border: `1px solid ${T.border}`,
+                  borderRadius: 8, padding: 16, textDecoration: 'none',
+                  display: 'block',
+                  transition: 'border-color 0.15s',
+                }}
+              >
+                <div style={{ fontSize: 13, fontFamily: T.sans, fontWeight: 700, color: T.teal, marginBottom: 6 }}>
+                  {product.name}
+                </div>
+                <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                  {product.role}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 4 — From the Genome */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+            From the Transformation Genome
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
+              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>SUCCESS RATE</div>
+              <div style={{ fontSize: 32, fontFamily: T.mono, color: T.teal, marginBottom: 4 }}>{solution.genomeData.successRate}%</div>
+              <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                Based on {solution.genomeData.sampleSize} engagements
+              </div>
+            </div>
+            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
+              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>TYPICAL OUTCOME</div>
+              <div style={{ fontSize: 18, fontFamily: T.mono, color: T.text, marginBottom: 4 }}>{solution.genomeData.outcomeRange}</div>
+              <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                Across {solution.genomeData.sampleSize} Genome engagements
+              </div>
+            </div>
+            <div style={{ background: T.surface, border: `1px solid ${T.amber}`, borderRadius: 8, padding: 20 }}>
+              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.amber, marginBottom: 8 }}>MOST COMMON FAILURE</div>
+              <div style={{ fontSize: 12, fontFamily: T.sans, color: T.text, marginBottom: 8 }}>
+                {solution.genomeData.failurePattern}
+              </div>
+              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
+                Avoidance: {solution.genomeData.avoidance}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 5 — Data requirements */}
+        <div style={{ marginBottom: 64 }}>
+          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+            Data Requirements
+          </div>
+          <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden', maxWidth: 600 }}>
+            {solution.dataRequirements.map((req, i) => (
+              <div
+                key={req.label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 12,
+                  padding: '12px 16px',
+                  borderBottom: i < solution.dataRequirements.length - 1 ? `1px solid ${T.border}` : 'none',
+                }}
+              >
+                <span style={{ color: req.loaded ? T.green : T.red, fontSize: 14, flexShrink: 0 }}>
+                  {req.loaded ? '✓' : '✗'}
+                </span>
+                <span style={{ fontSize: 12, fontFamily: T.sans, color: T.text, flex: 1 }}>
+                  {req.label}
+                </span>
+                {!req.loaded && 'unlocks' in req && (
+                  <span style={{ fontSize: 10, fontFamily: T.mono, color: T.amber }}>
+                    Unlocks: {req.unlocks}
+                  </span>
+                )}
+                {!req.loaded && (
+                  <button style={{
+                    fontSize: 10, fontFamily: T.mono, padding: '3px 8px',
+                    background: 'transparent', border: `1px solid ${T.border}`,
+                    color: T.secondary, borderRadius: 4, cursor: 'pointer',
+                  }}>
+                    Download template →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section 6 — Run this solution */}
+        <div>
+          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+            Run This Solution
+          </div>
+          <div style={{
+            background: 'rgba(45,212,200,0.06)',
+            border: `1px solid rgba(45,212,200,0.25)`,
+            borderRadius: 12, padding: 32, maxWidth: 600,
+          }}>
+            <a
+              href={runUrl}
+              style={{
+                display: 'inline-block',
+                padding: '14px 32px',
+                background: color, color: T.bg,
+                border: 'none', borderRadius: 8,
+                fontSize: 15, fontFamily: T.mono, fontWeight: 700,
+                cursor: 'pointer', textDecoration: 'none',
+                marginBottom: 16,
+              }}
+            >
+              Run for {CLIENT_LABELS[defaultClient]} →
+            </a>
+            <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, lineHeight: 1.6 }}>
+              This will open Situation Intelligence pre-configured for {solution.name}, with {CLIENT_LABELS[defaultClient]} loaded.
+              All {solution.products.length} products will be available in sequence.
+              Estimated time: 45-90 minutes for full analysis.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function SolutionDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = use(params)
+  return (
+    <Suspense>
+      <SolutionPageContent slug={slug} />
+    </Suspense>
   )
 }
