@@ -2,7 +2,7 @@
 import { useState, useRef } from 'react'
 import { useUser, UserButton } from '@clerk/nextjs'
 
-type DropdownId = 'products' | 'solutions' | 'clients' | 'deliverables' | null
+type DropdownId = 'intelligence' | 'solutions' | 'clients' | null
 
 interface AbarvaNavProps {
   clientId?: string
@@ -160,34 +160,21 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
         {/* CENTER — Nav links with dropdowns */}
         <div id="ab-center" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
 
-          {/* Products ▾ */}
+          {/* Intelligence ▾ */}
           <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-            onMouseEnter={() => openDrop('products')} onMouseLeave={startClose}>
-            <div style={linkCss('products')}>
-              Products
-              <span style={{ fontSize: '10px', color: open === 'products' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
+            onMouseEnter={() => openDrop('intelligence')} onMouseLeave={startClose}>
+            <div style={linkCss('intelligence')}>
+              Intelligence
+              <span style={{ fontSize: '10px', color: open === 'intelligence' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
             </div>
-            {open === 'products' && (
+            {open === 'intelligence' && (
               <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
-                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '560px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                <div>
-                  <div style={COL_HEAD}>Intelligence Suite</div>
-                  <DropItem icon="⚡" name="Situation Intelligence" desc="What's actually broken — and what's it costing us?" href={`/diagnose?client=${clientId}`} />
-                  <DropItem icon="🎯" name="AI Investment Intelligence" desc="Where should we place our bets — and what are they worth?" href={`/ai-strategy?client=${clientId}`} />
-                  <DropItem icon="💰" name="Business Case Intelligence" desc="How do I make this number defensible to my board?" href={`/justify?client=${clientId}`} />
-                  <DropItem icon="🔍" name="Vendor Intelligence" desc="Who do I actually trust — and why?" href={`/select?client=${clientId}`} />
-                  <DropItem icon="🎛" name="Outcome Intelligence" desc="Are we winning — or just spending?" href={`/control-tower?client=${clientId}`} />
-                  <DropItem icon="⚙️" name="Delivery Intelligence" desc="Are we shipping faster — or just adding tools?" href={`/ai-pdlc?client=${clientId}`} />
-                </div>
-                <div>
-                  <div style={COL_HEAD}>More Intelligence</div>
-                  <DropItem icon="👥" name="Workforce Intelligence" desc="What does my team look like in 18 months?" href={`/future-of-work?client=${clientId}`} />
-                  <DropItem icon="📊" name="Data Estate Intelligence" desc="Is our data estate an asset or a liability?" href={`/analytics-modernization?client=${clientId}`} />
-                  <DropItem icon="🛒" name="Procurement Intelligence" desc="What should we buy — and what are we already paying for?" href={`/marketplace?client=${clientId}`} />
-                  <DropItem icon="🏗" name="Architecture Pattern" desc="3-cloud AI orchestration diagram" href={`/architecture?client=${clientId}`} />
-                  <DropItem icon="📋" name="Solution Blueprint" desc="Full implementation plan" href={`/blueprint?client=${clientId}`} />
-                  <DropItem icon="📈" name="Board Presentation" desc="10-slide board deck generator" href={`/board-deck?client=${clientId}`} />
-                </div>
+                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '320px' }}>
+                <DropItem icon="⚡" name="Situation" desc="What's actually broken — and what's it costing us?" href={`/diagnose?client=${clientId}`} />
+                <DropItem icon="🎯" name="AI Investment" desc="Where should we place our bets — and what are they worth?" href={`/ai-strategy?client=${clientId}`} />
+                <DropItem icon="🔍" name="Vendor" desc="Who do I actually trust — and why?" href={`/select?client=${clientId}`} />
+                <DropItem icon="💰" name="Business Case" desc="How do I make this number defensible to my board?" href={`/justify?client=${clientId}`} />
+                <DropItem icon="🎛" name="Outcome" desc="Are we winning — or just spending?" href={`/control-tower?client=${clientId}`} />
               </div>
             )}
           </div>
@@ -302,27 +289,6 @@ export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
                     </a>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-          {/* Deliverables ▾ */}
-          <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-            onMouseEnter={() => openDrop('deliverables')} onMouseLeave={startClose}>
-            <div style={linkCss('deliverables')}>
-              Deliverables
-              <span style={{ fontSize: '10px', color: open === 'deliverables' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
-            </div>
-            {open === 'deliverables' && (
-              <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
-                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '380px' }}>
-                <div style={COL_HEAD}>Deliverables</div>
-                <DropItem icon="🏗" name="Architecture Pattern" desc="3-cloud AI orchestration diagram" href={`/architecture?client=${clientId}`} />
-                <DropItem icon="📋" name="Solution Blueprint" desc="Full implementation plan" href={`/blueprint?client=${clientId}`} />
-                <DropItem icon="📈" name="Board Presentation" desc="10-slide board deck generator" href={`/board-deck?client=${clientId}`} />
-                <DropItem icon="💎" name="Value Template" desc="ROI framework, client-editable" href={`/value-template?client=${clientId}`} />
-                <DropItem icon="🗺" name="Decision Timeline" desc="Key decisions and their outcomes" href={`/timeline?client=${clientId}`} />
-                <DropItem icon="🔗" name="Contradiction Map" desc="Strategic contradictions visualized" href={`/contradictions?client=${clientId}`} />
               </div>
             )}
           </div>
