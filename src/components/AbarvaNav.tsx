@@ -29,9 +29,9 @@ const PRODUCTS = [
 ]
 
 const SOLUTIONS = [
-  { name: 'AI-Powered PDLC',                    desc: 'Build products faster with AI agents',        tag: 'CIO · All verticals', path: '/solutions/pdlc' },
-  { name: 'AI-Powered Transformation Delivery', desc: 'Replace large consulting teams with Maestros', tag: 'CIO · All verticals', path: '/solutions/delivery' },
-  { name: 'Margin Optimization',                desc: 'Recover margin across revenue, cost and AI',   tag: 'CEO · CFO · COO',    path: '/solutions/margin' },
+  { name: 'AI-Powered PDLC',                    desc: 'Build products faster with AI agents',        path: '/solutions/pdlc' },
+  { name: 'AI-Powered Transformation Delivery', desc: 'Replace large consulting teams with Maestros', path: '/solutions/delivery' },
+  { name: 'Margin Optimization',                desc: 'Recover margin across revenue, cost and AI',   path: '/solutions/margin' },
 ]
 
 export default function AbarvaNav({ clientId = 'meridian', activePage = '', onClientChange }: NavProps) {
@@ -72,7 +72,7 @@ export default function AbarvaNav({ clientId = 'meridian', activePage = '', onCl
         <DropMenu label="Solutions" id="solutions" open={open} openDrop={openDrop} startClose={startClose}>
           <DropSection label="Three solutions">
             {SOLUTIONS.map(s => (
-              <DropItem key={s.name} name={s.name} desc={s.desc} href={s.path} tag={s.tag} />
+              <DropItem key={s.name} name={s.name} desc={s.desc} href={s.path} />
             ))}
           </DropSection>
         </DropMenu>
