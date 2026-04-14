@@ -87,11 +87,11 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
             onMouseEnter={cancelClose} onMouseLeave={startClose}
           >
             {[
-              { name: 'Situation',     path: `/diagnose?client=${cid}`,    desc: "What's actually broken — and what is it costing?" },
-              { name: 'Strategy',      path: `/ai-strategy?client=${cid}`, desc: 'Where should we place our AI bets?' },
-              { name: 'Vendor',        path: `/select?client=${cid}`,      desc: 'Which vendor actually wins in our situation?' },
-              { name: 'Business Case', path: `/justify?client=${cid}`,     desc: 'How do we justify this to the board?' },
-              { name: 'Outcomes',      path: `/outcomes?client=${cid}`,    desc: 'Did it work — and can we prove it?' },
+              { name: 'Situation Intelligence',     path: `/diagnose?client=${cid}`,    desc: "What's actually broken — and what is it costing?" },
+              { name: 'AI Investment Intelligence', path: `/ai-strategy?client=${cid}`, desc: 'Where should we place our AI bets?' },
+              { name: 'Vendor Intelligence',        path: `/select?client=${cid}`,      desc: 'Which vendor actually wins in our situation?' },
+              { name: 'Business Case Intelligence', path: `/justify?client=${cid}`,     desc: 'How do we justify this to the board?' },
+              { name: 'Outcome Intelligence',       path: `/outcomes?client=${cid}`,    desc: 'Did it work — and can we prove it?' },
             ].map(item => (
               <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
@@ -123,39 +123,23 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
                 <div style={{ fontSize: '11px', color: MUTED, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
               </a>
             ))}
+            <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />
+            <a href="/solutions" onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
+              <div style={{ fontSize: '13px', color: TEAL, fontFamily: SANS }}>View all solutions →</div>
+            </a>
           </div>
         )}
       </div>
 
-      {/* Clients dropdown — unauthenticated only */}
-      {isLoaded && !user && (
-        <div style={{ position: 'relative' as const }} onMouseEnter={() => openDrop('clients')} onMouseLeave={startClose}>
-          <button style={{ fontSize: '13px', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
-            Clients ▾
-          </button>
-          {open === 'clients' && (
-            <div
-              style={{ position: 'absolute' as const, top: '64px', left: 0, background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 0', minWidth: '320px', zIndex: 300 }}
-              onMouseEnter={cancelClose} onMouseLeave={startClose}
-            >
-              {[
-                { name: 'Meridian Health System',  path: '/diagnose?client=meridian',     sub: 'Healthcare · $11.2B' },
-                { name: 'First Capital Financial', path: '/diagnose?client=firstcapital', sub: 'Financial Services' },
-                { name: 'Apex Retail Group',       path: '/diagnose?client=apexretail',   sub: 'Retail · $12.4B' },
-              ].map(item => (
-                <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
-                  <div style={{ fontSize: '11px', color: MUTED, fontFamily: SANS, marginTop: '2px' }}>{item.sub}</div>
-                </a>
-              ))}
-              <div style={{ borderTop: `1px solid ${BORDER}`, margin: '8px 0' }} />
-              <div style={{ padding: '8px 20px', fontSize: '11px', color: '#475569', fontFamily: SANS }}>
-                Arcturus · Nexora · other Maestro clients require login
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      {/* Platform link */}
+      <a href="/platform" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+        Platform
+      </a>
+
+      {/* Clients link */}
+      <a href="/clients" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+        Clients
+      </a>
 
       {/* Right side */}
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>

@@ -68,34 +68,27 @@ export default function Homepage() {
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
               {/* Stat 1 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${RED}`,borderRadius:10,padding:'20px 16px'}}>
-                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Consulting spend wasted</div>
+                <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Consulting spend wasted</div>
                 <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,lineHeight:1}}>$800B</div>
-                <div style={{fontSize:11,color:DIM,marginTop:4}}>Global annual market with no outcome accountability</div>
+                <div style={{fontSize:11,color:MUTED,marginTop:4}}>Global annual market with no outcome accountability</div>
               </div>
               {/* Stat 2 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${AMBER}`,borderRadius:10,padding:'20px 16px'}}>
-                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Enterprise AI with zero ROI</div>
+                <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Enterprise AI with zero ROI</div>
                 <div style={{fontFamily:SERIF,fontSize:32,color:AMBER,lineHeight:1}}>73%</div>
-                <div style={{fontSize:11,color:DIM,marginTop:4}}>Of AI investments produce no verified outcome</div>
+                <div style={{fontSize:11,color:MUTED,marginTop:4}}>Of AI investments produce no verified outcome</div>
               </div>
               {/* Stat 3 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${GREEN}`,borderRadius:10,padding:'20px 16px'}}>
-                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>AbarVa fee model</div>
-                <div style={{fontFamily:SERIF,fontSize:32,color:GREEN,lineHeight:1}}>15–20%</div>
-                <div style={{fontSize:11,color:DIM,marginTop:4}}>Of verified savings only. Not a retainer. Not day-rates.</div>
+                <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>AbarVa model</div>
+                <div style={{fontFamily:SERIF,fontSize:18,color:GREEN,lineHeight:1.2}}>Skin in the game</div>
+                <div style={{fontSize:11,color:MUTED,marginTop:4}}>Fee tied to your outcomes. Not our hours.</div>
               </div>
               {/* Stat 4 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${TEAL}`,borderRadius:10,padding:'20px 16px'}}>
-                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Time to first intelligence</div>
+                <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Time to first intelligence</div>
                 <div style={{fontFamily:SERIF,fontSize:32,color:TEAL,lineHeight:1}}>48hrs</div>
-                <div style={{fontSize:11,color:DIM,marginTop:4}}>From kickoff to your first Situation brief</div>
-              </div>
-              {/* Wide investor card */}
-              <div style={{gridColumn:'1 / -1',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'16px 20px',display:'flex',alignItems:'flex-start' as const,gap:12}}>
-                <span style={{color:TEAL,fontSize:16,flexShrink:0}}>🔒</span>
-                <span style={{fontSize:12,color:MUTED,lineHeight:1.6}}>
-                  Harvey AI is $11B doing for legal what we do for enterprise transformation. Same structure. Their category $500B. Ours $800B. Nobody has touched it.
-                </span>
+                <div style={{fontSize:11,color:MUTED,marginTop:4}}>From kickoff to your first Situation brief</div>
               </div>
             </div>
           </div>
@@ -146,7 +139,7 @@ export default function Homepage() {
               <div key={p.id} style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'20px',position:'relative' as const,overflow:'hidden'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>{p.intel}</div>
                 <div style={{fontSize:13,fontWeight:500,color:WHITE,marginBottom:8,lineHeight:1.4}}>{p.q}</div>
-                <div style={{fontSize:11,color:DIM,marginBottom:16}}>{p.impact}</div>
+                <div style={{fontSize:11,color:MUTED,marginBottom:16}}>{p.impact}</div>
                 <a href={`/${p.id}?client=meridian`} style={{color:TEAL,fontFamily:MONO,fontSize:11,textDecoration:'none',cursor:'pointer'}}>Explore →</a>
               </div>
             ))}
@@ -178,7 +171,7 @@ export default function Homepage() {
                 </div>
                 <div style={{width:160,flexShrink:0,padding:'24px',display:'flex',flexDirection:'column' as const,justifyContent:'center'}}>
                   <div style={{fontFamily:SERIF,fontSize:20,color:WHITE}}>{row.metric}</div>
-                  <div style={{fontSize:11,color:DIM}}>{row.sub}</div>
+                  <div style={{fontSize:11,color:MUTED}}>{row.sub}</div>
                 </div>
               </div>
             ))}
@@ -189,20 +182,24 @@ export default function Homepage() {
       {/* DEMO */}
       <div id="demo" style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
         <div style={{maxWidth:1200,margin:'0 auto'}}>
-          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>See it working. Right now. No signup.</div>
-          <p style={{fontSize:15,color:MUTED,marginBottom:40}}>
-            Three real organizations. Three real problems. AbarVa&apos;s intelligence running live.
+          <div style={{fontFamily:MONO,fontSize:10,color:TEAL,letterSpacing:'.14em',textTransform:'uppercase' as const,marginBottom:12}}>
+            See it working · No signup required
+          </div>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Three composite organizations. Real-world data. Live intelligence.</div>
+          <p style={{fontSize:15,color:MUTED,marginBottom:40,lineHeight:1.6}}>
+            Built from real-world datasets across healthcare, financial services, and retail. Every metric is real. Every problem is one a CXO has faced.
           </p>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16,marginBottom:48}}>
             {[
-              {name:'Meridian Health System',  color:TEAL,           vertical:'Healthcare',         revenue:'$11.2B', finding:'"$94M AI spend · zero documented ROI"',        href:'/diagnose?client=meridian'},
-              {name:'First Capital Financial', color:'#818CF8',      vertical:'Financial Services', revenue:'$1.84B', finding:'"41% digital adoption · target 67%"',           href:'/diagnose?client=firstcapital'},
-              {name:'Apex Retail Group',       color:AMBER,          vertical:'Retail',             revenue:'$12.4B', finding:'"$248M Einstein AI idle · 18 months deployed"', href:'/diagnose?client=apexretail'},
+              {name:'Meridian Health System',  color:TEAL,      vertical:'Healthcare',         revenue:'$11.2B', finding:'"$94M AI spend · zero documented ROI"',        dataNote:'Built from real-world healthcare data',    href:'/diagnose?client=meridian'},
+              {name:'First Capital Financial', color:'#818CF8', vertical:'Financial Services', revenue:'$1.84B', finding:'"41% digital adoption · target 67%"',           dataNote:'Built from real-world finserv data',        href:'/diagnose?client=firstcapital'},
+              {name:'Apex Retail Group',       color:AMBER,     vertical:'Retail',             revenue:'$12.4B', finding:'"$248M Einstein AI idle · 18 months deployed"', dataNote:'Built from real-world retail data',         href:'/diagnose?client=apexretail'},
             ].map(t => (
               <a key={t.name} href={t.href} style={{display:'block',background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${t.color}`,borderRadius:12,padding:24,textDecoration:'none',cursor:'pointer'}}>
                 <div style={{fontSize:16,fontWeight:500,color:WHITE,marginBottom:4}}>{t.name}</div>
-                <div style={{fontFamily:MONO,fontSize:10,color:DIM}}>{t.vertical} · {t.revenue}</div>
+                <div style={{fontFamily:MONO,fontSize:10,color:MUTED}}>{t.vertical} · {t.revenue}</div>
                 <div style={{fontSize:13,color:MUTED,fontStyle:'italic',marginTop:12,lineHeight:1.4}}>{t.finding}</div>
+                <div style={{fontSize:11,color:MUTED,marginTop:8}}>{t.dataNote}</div>
               </a>
             ))}
           </div>
@@ -213,7 +210,7 @@ export default function Homepage() {
             </div>
             <div style={{fontSize:16,fontWeight:500,color:WHITE,marginBottom:8}}>Recorded product walkthrough — 8 minutes</div>
             <div style={{fontSize:13,color:MUTED,lineHeight:1.5,marginBottom:12}}>Watch a full Maestro session from Situation through Strategy to Business Case</div>
-            <div style={{fontFamily:MONO,fontSize:11,color:DIM}}>(Video coming soon · Request a live demo below)</div>
+            <div style={{fontFamily:MONO,fontSize:11,color:MUTED}}>(Video coming soon · Request a live demo below)</div>
           </div>
         </div>
       </div>
@@ -223,17 +220,17 @@ export default function Homepage() {
         <div style={{maxWidth:1200,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>We earn nothing until outcomes are verified.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48,lineHeight:1.6}}>
-            Four steps. Baseline locked on day 0. AbarVa earns 15–20% of verified savings only.
+            Four steps. Baseline locked on day 0. Fee tied to your outcomes — not our hours.
           </p>
           <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:32}}>
             {[
               {num:'01',name:'DIAGNOSE', desc:'Situation product · 48hrs · your data'},
               {num:'02',name:'PRESCRIBE',desc:'Strategy + Vendor + Business Case'},
               {num:'03',name:'EXECUTE',  desc:'Maestro team embeds · knowledge stays'},
-              {num:'04',name:'VERIFY',   desc:'Baseline vs actuals · 15–20% of verified savings'},
+              {num:'04',name:'VERIFY',   desc:'Baseline vs actuals · fee on outcomes only'},
             ].map((step, i, arr) => (
               <div key={step.num} style={{padding:'24px',borderRight: i < arr.length-1 ? `1px solid ${BORDER}` : 'none'}}>
-                <div style={{fontFamily:MONO,fontSize:11,color:DIM,marginBottom:16}}>{step.num}</div>
+                <div style={{fontFamily:MONO,fontSize:11,color:MUTED,marginBottom:16}}>{step.num}</div>
                 <div style={{fontFamily:MONO,fontSize:11,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>{step.name}</div>
                 <div style={{fontSize:13,color:MUTED,lineHeight:1.5}}>{step.desc}</div>
               </div>
@@ -339,7 +336,7 @@ export default function Homepage() {
                   >
                     Request a conversation →
                   </button>
-                  <div style={{fontSize:12,color:DIM,marginTop:8}}>No sales calls. A Maestro responds within 24 hours.</div>
+                  <div style={{fontSize:12,color:MUTED,marginTop:8}}>No sales calls. A Maestro responds within 24 hours.</div>
                 </form>
               ) : (
                 <div style={{fontSize:15,color:TEAL,lineHeight:1.7}}>
@@ -365,7 +362,7 @@ export default function Homepage() {
             <a href="/sign-in" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Investors</a>
             <a href="#contact" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Contact</a>
             <a href="/sign-in" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Login</a>
-            <span style={{fontSize:11,color:DIM}}>© 2026 AbarVa</span>
+            <span style={{fontSize:11,color:MUTED}}>© 2026 AbarVa</span>
           </div>
         </div>
       </div>
