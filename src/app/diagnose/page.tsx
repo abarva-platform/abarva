@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { filterIssuesByRole } from '@/lib/situation-intelligence'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
@@ -24,9 +25,11 @@ type Severity = 'critical' | 'warning' | 'watch'
 type RoleId = 'CIO' | 'CFO' | 'COO' | 'CMIO' | 'CEO' | 'CMO' | 'Maestro'
 type ClientId = 'meridian' | 'firstcapital' | 'apexretail'
 
+interface IssueSource { data: string; industry: string; genome: string }
 interface Issue {
   id: string; severity: Severity; title: string
   body: string; impact: string; owner: string; roles: RoleId[]
+  category: string; sources: IssueSource
 }
 interface RiskItem { label: string; amount: number }
 interface Action {
@@ -43,71 +46,87 @@ const ISSUES: Record<ClientId, Issue[]> = {
     { id:'M01', severity:'critical', title:'RCM Denial Rate 6pp Above SLA',
       body:`Claims data shows ${meridianHealth.technology.rcm.denialRate}% denial — ${(meridianHealth.technology.rcm.denialRate - meridianHealth.technology.rcm.benchmarkDenialRate).toFixed(1)}pp above the ${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark. The gap has grown 3 consecutive quarters. Nobody flagged it to the board.`,
       impact:`$${meridianHealth.technology.rcm.denialWriteOff2023}M / yr`, owner:'CFO + Chief Revenue Officer',
-      roles:['CFO','COO','CEO'] },
+      roles:['CFO','COO','CEO'], category:'rcm',
+      sources: { data:'Ensemble Health Partners claims extract · Nov 2025', industry:'HFMA denial rate benchmark: 12.1% peer median', genome:'4 of 5 comparable systems resolved via prior auth automation' } },
     { id:'M02', severity:'critical', title:'CDO Role Vacant — AI Program Stalled',
       body:`CDO vacant 8 months. ${meridianAI_pilotsPurgatory()} AI pilots frozen. Three vendor decisions awaiting executive sign-off. AI program leadership gap is compounding every week.`,
       impact:'$42M stalled', owner:'CEO',
-      roles:['CEO','CIO'] },
+      roles:['CEO','CIO'], category:'ai',
+      sources: { data:'HR vacancy report · Apr 2026', industry:'50% of health systems with CDO vacancy stall AI program', genome:'CDO absence correlates with 73% AI program failure rate in Genome' } },
     { id:'M03', severity:'critical', title:'Travel Nurse Cost $20M Over Target',
       body:`Travel nurse spend at $48M — $20M above the $28M operating target. Dependency has grown 3 consecutive quarters. No reduction roadmap in board materials.`,
       impact:'$20M / yr', owner:'COO + CNO',
-      roles:['COO','CFO','CEO'] },
+      roles:['COO','CFO','CEO'], category:'workforce',
+      sources: { data:'Labor cost ledger · Q4 FY2025', industry:'Travel nurse premium: 2.4× permanent equivalent rate', genome:'3 comparable systems reduced travel nurse spend 40% in 18 months via float pool' } },
     { id:'M04', severity:'warning', title:`Epic Optimization at ${meridianHealth.technology.ehr.optimizationScore}/100`,
       body:`Seven years post go-live, Epic optimization at ${meridianHealth.technology.ehr.optimizationScore} of 100. Six modules not yet activated. CMS value-based incentive at risk.`,
       impact:'$34M at risk', owner:'CMIO + CIO',
-      roles:['CMIO','CIO','CFO'] },
+      roles:['CMIO','CIO','CFO'], category:'epic',
+      sources: { data:'Epic optimization audit score · Mar 2026', industry:'Top-quartile health systems average 88/100 Epic score', genome:'Unrealized value per unactivated module: $2.1M avg from Genome' } },
     { id:'M05', severity:'warning', title:'Prior Auth Coverage: 23% vs 62% Peer',
       body:`Only ${meridianHealth.technology.ehr.knownGaps[3]?.includes('23%') ? '23' : '23'}% of payers have connected prior authorization — peers average 62%. Manual auth driving ${meridianHealth.technology.rcm.priorAuthAvgDays}-day average vs ${meridianHealth.technology.rcm.priorAuthPeerDays}-day peer median.`,
       impact:'Payer risk rising', owner:'CMIO + COO',
-      roles:['CMIO','COO','CFO'] },
+      roles:['CMIO','COO','CFO'], category:'prior_auth',
+      sources: { data:'Payer connection audit · Nov 2025', industry:'62% peer prior auth automation rate · HFMA 2025', genome:'23% payer connection drives 4.2-day avg — Genome median is 1.8 days' } },
     { id:'M06', severity:'warning', title:`MA Star ${meridianHealth.healthPlan.medicareAdvantage.starRating} — Bonus Threshold Is 4.0`,
       body:`Medicare Advantage at ${meridianHealth.healthPlan.medicareAdvantage.starRating} stars — below the 4.0 threshold for maximum CMS bonus payments. Star measurement period closes in 8 months.`,
       impact:'$34M bonus at risk', owner:'CMO + CFO',
-      roles:['CFO','CEO'] },
+      roles:['CFO','CEO'], category:'clinical',
+      sources: { data:'CMS HEDIS quality data · FY2025', industry:'4.0★ threshold for maximum CMS quality bonus payment', genome:'Star 3.2 → 4.0 transition delivers $34M annual bonus delta from Genome' } },
     { id:'M07', severity:'watch', title:'AI Pilots: Zero Have Scaled',
       body:`6 AI initiatives active. Zero have scaled beyond pilot. $42M invested with no documented outcome against any baseline.`,
       impact:'$42M untracked', owner:'CIO + CDO (vacant)',
-      roles:['CIO','CEO'] },
+      roles:['CIO','CEO'], category:'ai',
+      sources: { data:'AI investment register · Apr 2026', industry:'$42M AI portfolio — zero outcome documentation', genome:'6 of 6 pilots lack baseline measurement — pattern in Genome: 91% failure rate' } },
   ],
   firstcapital: [
     { id:'FC01', severity:'critical', title:`Digital Adoption ${firstCapital.org.digitalAdoption}% vs 67% Benchmark`,
       body:`Digital adoption at ${firstCapital.org.digitalAdoption}% vs 67% peer benchmark. Mobile app rating 3.2/5. 180,000 customers at churn risk to neobanks offering same-day accounts.`,
       impact:'$48M revenue gap', owner:'CMO + CEO',
-      roles:['CMO','CEO','CFO'] },
+      roles:['CMO','CEO','CFO'], category:'digital',
+      sources: { data:'Segment analytics platform · Mar 2026', industry:'67% peer digital adoption benchmark · Forrester 2025', genome:'180K customers at neobank churn risk — same pattern in 3 Genome regional banks' } },
     { id:'FC02', severity:'critical', title:'Core Banking System — 22 Years Old',
       body:`FIS HORIZON implemented 2004 — 22 years without modernization. Real-time AI scoring blocked by architecture. 76% of peer banks have modernized or added API layer.`,
       impact:'AI roadmap blocked', owner:'CTO + Board',
-      roles:['CIO','CEO','CFO'] },
+      roles:['CIO','CEO','CFO'], category:'technology',
+      sources: { data:'IT architecture review · Apr 2026', industry:'76% of peer banks modernized or added API layer', genome:'FIS HORIZON → AI scoring latency: 2.3s avg in Genome vs 50ms with API layer' } },
     { id:'FC03', severity:'critical', title:'FedNow Not Live — January 2027 Deadline',
       body:`FedNow compliance: not achieved. ${firstCapital.technology.payments.peerBanksOnFedNow}% of peer banks are live. Commercial clients are asking. January 2027 is the hard regulatory deadline.`,
       impact:'$180M deposits at risk', owner:'CTO + COO',
-      roles:['CIO','CFO','CEO'] },
+      roles:['CIO','CFO','CEO'], category:'technology',
+      sources: { data:'IT project register · Apr 2026', industry:'76% of peer banks live on FedNow · Federal Reserve 2025', genome:'Commercial client loss accelerates at 18 months non-compliance — Genome pattern' } },
     { id:'FC04', severity:'warning', title:'AI Spend With Zero Tracked Outcomes',
       body:`3 AI initiatives active, $1.6M invested. 0 have tracked outcomes against any baseline. Fraud Detection stuck in credit card only scope for 6 months.`,
       impact:'$1.6M untracked', owner:'CTO + CDO',
-      roles:['CIO','CFO'] },
+      roles:['CIO','CFO'], category:'ai',
+      sources: { data:'AI investment ledger · Mar 2026', industry:'$1.6M invested — 0 tracked baselines out of 3 initiatives', genome:'Fraud detection scope-lock pattern: 4 of 5 Genome banks expanded after card-only start' } },
     { id:'FC05', severity:'warning', title:`Cost-to-Income ${firstCapital.org.costToIncomeRatio}% vs 55% Target`,
       body:`Cost-to-income at ${firstCapital.org.costToIncomeRatio}% — ${(firstCapital.org.costToIncomeRatio - 55).toFixed(0)}pp above the 55% best-in-class benchmark. Compliance cost alone is 34% of IT budget.`,
       impact:'$99M annual gap', owner:'CFO + CEO',
-      roles:['CFO','COO','CEO'] },
+      roles:['CFO','COO','CEO'], category:'financial',
+      sources: { data:'P&L statement · Q4 FY2025', industry:'55% best-in-class C/I ratio · McKinsey Banking 2025', genome:'Compliance IT at 34% of IT budget — top-quartile banks run at 18%' } },
   ],
   apexretail: [
     { id:'AX01', severity:'critical', title:'Einstein AI Licensed and Never Activated',
       body:`Salesforce Einstein purchased in the SFCC license. Never activated. 18 million loyalty members receiving identical, untailored experiences while competitors personalize in real time.`,
       impact:'$248M idle', owner:'CMO + CTO',
-      roles:['CMO','CEO','CFO'] },
+      roles:['CMO','CEO','CFO'], category:'ai',
+      sources: { data:'Salesforce Einstein activation audit · Mar 2026', industry:'18M loyalty members — zero personalization ROI realized', genome:'Einstein idle license: Genome shows 100% activation rate among top-10 retailers' } },
     { id:'AX02', severity:'critical', title:'Cart Abandonment 14pp Above Benchmark',
       body:`72% cart abandonment vs 58% benchmark — an $840M recovery opportunity. Real-time trigger infrastructure via Segment and Klaviyo already exists. Not connected.`,
       impact:'$840M opportunity', owner:'CMO + CTO',
-      roles:['CMO','CFO','CEO'] },
+      roles:['CMO','CFO','CEO'], category:'digital',
+      sources: { data:'eCommerce platform audit · Mar 2026', industry:'58% peer cart abandonment benchmark · Baymard 2025', genome:'Segment + Klaviyo idle: Genome shows $840M recovery opportunity within 90 days of connection' } },
     { id:'AX03', severity:'warning', title:`Inventory Turns ${apexRetail.financials.inventoryTurnover}x vs 6.8x Benchmark`,
       body:`Inventory turns at ${apexRetail.financials.inventoryTurnover}x vs 6.8x benchmark. $180M excess inventory on the balance sheet. o9 demand forecasting 40% implemented after 18 months.`,
       impact:'$180M tied up', owner:'CFO + CSCO',
-      roles:['CFO','COO','CEO'] },
+      roles:['CFO','COO','CEO'], category:'operations',
+      sources: { data:'ERP + o9 project review · Mar 2026', industry:'6.8x peer inventory turns benchmark · Gartner Retail 2025', genome:'o9 at 40% after 18 months — Genome: 3 comparable retailers reached 85%+ in same window' } },
     { id:'AX04', severity:'warning', title:'$38M Untracked Shadow IT Spend',
       body:`28,000 store employees using untracked SaaS tools. $38M in shadow IT spend. CDO role vacant — no AI strategy ownership. 8,400 SAP customizations blocking data flow.`,
       impact:'$38M unmanaged', owner:'CTO + CFO',
-      roles:['CIO','CFO'] },
+      roles:['CIO','CFO'], category:'technology',
+      sources: { data:'IT spend audit · Apr 2026', industry:'Shadow IT spend at $38M across 28,000 store employees', genome:'8,400 SAP customizations blocking data flow — Genome: ECC EOS 2027 forces decision' } },
   ],
 }
 
@@ -450,6 +469,13 @@ function TrajectoryChart({ clientId }: { clientId: ClientId }) {
 // ─── Donut Chart ──────────────────────────────────────────────────────────────
 
 function DonutChart({ issues, filter, onFilter }: { issues: Issue[]; filter: Severity | null; onFilter: (s: Severity | null) => void }) {
+  const [animate, setAnimate] = useState(false)
+  useEffect(() => {
+    setAnimate(false)
+    const t = setTimeout(() => setAnimate(true), 60)
+    return () => clearTimeout(t)
+  }, [issues])
+
   const counts = [
     issues.filter(i => i.severity === 'critical').length,
     issues.filter(i => i.severity === 'warning').length,
@@ -485,11 +511,11 @@ function DonutChart({ issues, filter, onFilter }: { issues: Issue[]; filter: Sev
         <div style={{ position: 'relative', flexShrink: 0, width: 120, height: 120 }}>
           <svg width="120" height="120" viewBox="0 0 120 120">
             <circle cx={cx} cy={cy} r={r} fill="none" stroke={T.border} strokeWidth={sw} />
-            {segs.map(s => s.cnt > 0 ? (
+            {segs.map((s, i) => s.cnt > 0 ? (
               <path key={s.sev} d={arcPath(s.startD, s.endD)} fill="none"
                 stroke={filter === null || filter === s.sev ? s.color : s.color + '30'}
                 strokeWidth={filter === s.sev ? sw + 3 : sw} strokeLinecap="round"
-                style={{ cursor: 'pointer', transition: 'all 200ms' }}
+                style={{ cursor: 'pointer', transition: `all 200ms, opacity 400ms ease ${i * 100}ms`, opacity: animate ? 1 : 0 }}
                 onClick={() => onFilter(filter === s.sev ? null : s.sev)}
               />
             ) : null)}
@@ -555,7 +581,7 @@ function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n:
   )
 }
 
-function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: boolean; onToggle: () => void }) {
+function IssueCard({ issue, expanded, onToggle, onGoToStep }: { issue: Issue; expanded: boolean; onToggle: () => void; onGoToStep: (n: number) => void }) {
   const borderColor = SEVERITY_COLOR[issue.severity]
   const label = issue.severity === 'critical' ? 'CRITICAL' : issue.severity === 'warning' ? 'WARNING' : 'WATCH'
   const metric = ISSUE_METRICS[issue.id]
@@ -586,9 +612,21 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
               </div>
             )}
             <div style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '10px' }}>{issue.body}</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, background: T.teal + '18', color: T.teal, border: '1px solid ' + T.teal + '40', borderRadius: '12px', padding: '3px 10px' }}>{issue.impact}</span>
               <span style={{ fontSize: '11px', color: T.text3, background: T.surface2, borderRadius: '12px', padding: '3px 10px', border: '1px solid ' + T.border }}>{issue.owner}</span>
+            </div>
+            {/* Three-source attribution */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'FROM YOUR DATA', text: issue.sources.data, bg: T.teal + '12', color: T.teal, border: T.teal + '35' },
+                { label: 'FROM INDUSTRY',  text: issue.sources.industry, bg: '#6366F112', color: '#6366F1', border: '#6366F135' },
+                { label: 'FROM GENOME',    text: issue.sources.genome, bg: '#EC489912', color: '#EC4899', border: '#EC489935' },
+              ].map(s => (
+                <div key={s.label} title={s.text} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 8px', background: s.bg, border: '1px solid ' + s.border, borderRadius: '4px' }}>
+                  <span style={{ fontSize: '8px', fontWeight: 800, color: s.color, letterSpacing: '0.08em', fontFamily: T.mono, whiteSpace: 'nowrap' }}>{s.label}</span>
+                </div>
+              ))}
             </div>
           </div>
           <button onClick={onToggle} style={{ background: 'none', border: 'none', color: T.text3, cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '2px', flexShrink: 0 }}>
@@ -599,13 +637,13 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
       {expanded && (
         <div style={{ padding: '10px 16px 14px', borderTop: '1px solid ' + T.border, background: T.surface }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.teal + '50', borderRadius: '6px', fontSize: '12px', color: T.teal, cursor: 'pointer', fontFamily: T.sans }}>
+            <button onClick={() => onGoToStep(2)} style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.teal + '50', borderRadius: '6px', fontSize: '12px', color: T.teal, cursor: 'pointer', fontFamily: T.sans }}>
               See the data →
             </button>
-            <button style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.border2, borderRadius: '6px', fontSize: '12px', color: T.text2, cursor: 'pointer', fontFamily: T.sans }}>
+            <button onClick={() => onGoToStep(5)} style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.border2, borderRadius: '6px', fontSize: '12px', color: T.text2, cursor: 'pointer', fontFamily: T.sans }}>
               Who owns this →
             </button>
-            <button style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.border2, borderRadius: '6px', fontSize: '12px', color: T.text2, cursor: 'pointer', fontFamily: T.sans }}>
+            <button onClick={() => onGoToStep(5)} style={{ padding: '6px 14px', background: 'none', border: '1px solid ' + T.border2, borderRadius: '6px', fontSize: '12px', color: T.text2, cursor: 'pointer', fontFamily: T.sans }}>
               What to do →
             </button>
           </div>
@@ -617,16 +655,11 @@ function IssueCard({ issue, expanded, onToggle }: { issue: Issue; expanded: bool
 
 // ─── Zone 1 ───────────────────────────────────────────────────────────────────
 
-function Zone1({ issues, role, clientId }: { issues: Issue[]; role: RoleId; clientId: ClientId }) {
+function Zone1({ issues, role, clientId, onGoToStep }: { issues: Issue[]; role: RoleId; clientId: ClientId; onGoToStep: (n: number) => void }) {
   const [expanded, setExpanded] = useState<string | null>(null)
   const [filter, setFilter] = useState<Severity | null>(null)
 
-  const sorted = [...issues].sort((a, b) => {
-    const relevanceA = a.roles.includes(role) ? 0 : 1
-    const relevanceB = b.roles.includes(role) ? 0 : 1
-    const sevOrder: Record<Severity, number> = { critical: 0, warning: 1, watch: 2 }
-    return relevanceA - relevanceB || sevOrder[a.severity] - sevOrder[b.severity]
-  })
+  const sorted = filterIssuesByRole(issues, role, clientId)
 
   const visible = filter ? sorted.filter(i => i.severity === filter) : sorted
   const kpis = CLIENT_KPI_DATA[clientId]
@@ -656,6 +689,7 @@ function Zone1({ issues, role, clientId }: { issues: Issue[]; role: RoleId; clie
               key={issue.id} issue={issue}
               expanded={expanded === issue.id}
               onToggle={() => setExpanded(expanded === issue.id ? null : issue.id)}
+              onGoToStep={onGoToStep}
             />
           ))}
         </div>
@@ -1266,7 +1300,7 @@ function DiagnoseContent() {
           )}
         </div>
 
-        {step === 1 && <Zone1 issues={issues} role={role} clientId={activeClient} />}
+        {step === 1 && <Zone1 issues={issues} role={role} clientId={activeClient} onGoToStep={n => { setCompletedSteps(prev => new Set([...prev, step])); setStep(n) }} />}
         {step === 2 && <Zone2 clientId={activeClient} />}
         {step === 3 && <Zone3 clientId={activeClient} />}
         {step === 4 && <Zone4 clientId={activeClient} role={role} />}
