@@ -436,7 +436,7 @@ function SelectContent() {
                   const active = step === n
                   const done = completedSteps.has(n)
                   return (
-                    <button key={n} onClick={() => { if (n <= step || done) { setCompletedSteps(prev => new Set([...prev, step])); setStep(n) } }}
+                    <button key={n} onClick={() => { setCompletedSteps(prev => new Set([...prev, step])); setStep(n) }}
                       style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '12px 14px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.sans, whiteSpace: 'nowrap', borderBottom: active ? `2px solid ${T.teal}` : '2px solid transparent' }}>
                       <span style={{ width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '8px', fontWeight: 800, fontFamily: T.mono,
                         background: active ? T.teal : done ? `${T.teal}25` : 'transparent',
