@@ -9,7 +9,7 @@ export default function SignInPage() {
       alignItems: 'center',
       justifyContent: 'center',
     }}>
-      <SignIn forceRedirectUrl="/admin/client/arcturus" />
+      <SignIn forceRedirectUrl="/auth-redirect" />
     </div>
   )
 }

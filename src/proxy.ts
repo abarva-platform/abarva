@@ -6,8 +6,7 @@ const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/investor(.*)',
+  '/auth-redirect(.*)',
   '/',
   '/diagnose(.*)',
   '/ai-strategy(.*)',
