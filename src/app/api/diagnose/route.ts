@@ -6,10 +6,6 @@ import { finservBenchmarks } from "@/data/knowledge/finserv";
 import { retailBenchmarks } from "@/data/knowledge/retail";
 import { crossIndustryKnowledge } from "@/data/knowledge/crossIndustry";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 function getMeridianContext() {
   return `
 CURRENT CLIENT: MERIDIAN HEALTH SYSTEM
@@ -227,6 +223,8 @@ export async function POST(request: Request) {
     })
     return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
   }
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   let orgContext = getMeridianContext();
   let clientName = "Meridian Health System";

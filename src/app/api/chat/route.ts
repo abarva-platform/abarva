@@ -1,10 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { meridianHealth } from "@/data/meridian";
 
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
 export async function POST(request: Request) {
   const { orgName, orgSize, vertical, challenge } = await request.json();
 
@@ -33,6 +29,8 @@ LEADERSHIP INSIGHTS:
 - CMIO: "${meridianHealth.interviewInsights.cmio}"
 `
     : "";
+
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const stream = await client.messages.stream({
     model: "claude-sonnet-4-20250514",

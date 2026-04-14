@@ -42,7 +42,7 @@ export default function Homepage() {
               <em style={{color:TEAL}}>window closes.</em>
             </h1>
             <p style={{fontSize:17,color:MUTED,maxWidth:480,lineHeight:1.7,marginBottom:32}}>
-              AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, embeds a small Maestro team to execute — and earns its fee only when outcomes are verified.
+              AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, and embeds a small Maestro team to execute — fee tied to your outcomes, not our hours.
             </p>
             <div style={{display:'flex',gap:12,flexWrap:'wrap' as const}}>
               <a href="/diagnose?client=meridian" style={{background:TEAL,color:BG,padding:'12px 22px',borderRadius:8,fontSize:13,fontWeight:600,textDecoration:'none',cursor:'pointer'}}>
@@ -69,7 +69,7 @@ export default function Homepage() {
               {/* Stat 1 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${RED}`,borderRadius:10,padding:'20px 16px'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Consulting spend wasted</div>
-                <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,lineHeight:1}}>$800B</div>
+                <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,lineHeight:1}}>$200B</div>
                 <div style={{fontSize:11,color:MUTED,marginTop:4}}>Global annual market with no outcome accountability</div>
               </div>
               {/* Stat 2 */}
@@ -218,7 +218,7 @@ export default function Homepage() {
       {/* HOW WE EARN */}
       <div style={{padding:'80px 32px'}}>
         <div style={{maxWidth:1200,margin:'0 auto'}}>
-          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>We earn nothing until outcomes are verified.</div>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Skin in the game. Fee on outcomes only.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48,lineHeight:1.6}}>
             Four steps. Baseline locked on day 0. Fee tied to your outcomes — not our hours.
           </p>
