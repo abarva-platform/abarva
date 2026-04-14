@@ -2,243 +2,374 @@
 import { useState } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 
-const BG = '#060A12'
-const CARD = '#0D1520'
-const BORDER = '#1C2D45'
-const TEAL = '#2DD4C8'
-const WHITE = '#EFF6FF'
-const MUTED = '#94A3B8'
+const BG='#060A12', CARD='#0D1520', BORDER='#1C2D45'
+const TEAL='#2DD4C8', WHITE='#EFF6FF', MUTED='#94A3B8', DIM='#475569'
+const RED='#EF4444', AMBER='#F59E0B', GREEN='#34D399'
+const SANS='DM Sans, sans-serif', MONO='JetBrains Mono, monospace', SERIF='Georgia, serif'
 
-const SOLUTIONS = [
-  {
-    id: 'pdlc',
-    name: 'AI-Powered PDLC',
-    owner: 'CIO · All verticals',
-    color: '#6366F1',
-    href: '/solutions/pdlc',
-    problem: '"We\'re spending $300M in capital. Time to production is 16 months. My engineers aren\'t building — they\'re in meetings."',
-    value: '$18M consulting reduction',
-    metric: '16mo → 8mo delivery',
-  },
-  {
-    id: 'delivery',
-    name: 'AI-Powered Transformation Delivery',
-    owner: 'CIO · CTO · All verticals',
-    color: TEAL,
-    href: '/solutions/delivery',
-    problem: '"80 consultants on site. 70% of their time is getting up to speed. Knowledge walks out the door every Friday."',
-    value: '4 Maestros replace 40 consultants',
-    metric: 'Knowledge stays permanently',
-  },
-  {
-    id: 'margin',
-    name: 'Margin Optimization',
-    owner: 'CEO · CFO · COO',
-    color: '#F59E0B',
-    href: '/solutions/margin',
-    problem: '"Operating margin 1.8% against a 4% target. Don\'t know exactly where the margin is leaking or which lever to pull first."',
-    value: '$60–120M annual recovery',
-    metric: 'Unlocks by vertical',
-  },
-]
+const inputStyle: React.CSSProperties = {
+  background: '#0D1520',
+  border: `1px solid ${BORDER}`,
+  color: WHITE,
+  borderRadius: 6,
+  padding: '10px 12px',
+  fontSize: 13,
+  fontFamily: SANS,
+  width: '100%',
+  boxSizing: 'border-box' as const,
+}
 
-const PRODUCTS = [
-  { name: 'Situation',     q: 'What\'s actually broken — and what is it costing?', href: '/diagnose?client=meridian',    color: '#EF4444' },
-  { name: 'Strategy',      q: 'Where should we place our AI bets?',               href: '/ai-strategy?client=meridian', color: '#6366F1' },
-  { name: 'Vendor',        q: 'Which vendor wins in our situation?',              href: '/select?client=meridian',       color: '#F59E0B' },
-  { name: 'Business Case', q: 'How do we justify this to the board?',            href: '/justify?client=meridian',      color: '#34D399' },
-  { name: 'Outcomes',      q: 'Did it work — and can we prove it?',             href: '/outcomes?client=meridian',     color: TEAL },
-]
-
-const CLIENTS = [
-  { id: 'meridian',     name: 'Meridian Health',  sub: 'Healthcare',         color: TEAL,      href: '/diagnose?client=meridian' },
-  { id: 'firstcapital', name: 'First Capital',    sub: 'Financial Services', color: '#6366F1', href: '/diagnose?client=firstcapital' },
-  { id: 'apexretail',   name: 'Apex Retail',      sub: 'Retail',             color: '#F59E0B', href: '/diagnose?client=apexretail' },
-]
-
-export default function Home() {
-  const [hSol, setHSol] = useState<string | null>(null)
-  const [hProd, setHProd] = useState<string | null>(null)
+export default function Homepage() {
+  const [formData, setFormData] = useState({name:'',org:'',email:'',interest:'',message:''})
+  const [submitted, setSubmitted] = useState(false)
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', color: WHITE }}>
-      <AbarvaNav />
+    <div style={{minHeight:'100vh',background:BG,fontFamily:SANS,color:WHITE}}>
+      <AbarvaNav activePage="home" />
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px' }}>
+      {/* HERO */}
+      <div style={{padding:'100px 32px 80px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:64,alignItems:'center'}}>
 
-        {/* ── HERO ──────────────────────────────────────────────── */}
-        <div style={{ padding: '80px 0 64px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: '11px', color: TEAL, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: '20px' }}>
-            Enterprise transformation · AI-native · Outcome-accountable
-          </div>
-          <h1 style={{ fontFamily: 'Georgia,serif', fontSize: '54px', fontWeight: 500, color: WHITE, lineHeight: 1.2, margin: '0 auto 20px', maxWidth: '820px' }}>
-            Act on intelligence.<br />Before the window closes.
-          </h1>
-          <p style={{ fontSize: '17px', color: MUTED, maxWidth: '560px', margin: '0 auto 36px', lineHeight: 1.75 }}>
-            AbarVa diagnoses what is broken, prescribes the right architecture and vendors, embeds a small Maestro team to execute, and earns its fee only when outcomes are verified.
-          </p>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a href="/diagnose?client=meridian" style={{ background: TEAL, color: BG, padding: '13px 28px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
-              See it with Meridian Health →
-            </a>
-            <a href="/investor" style={{ border: `1px solid ${BORDER}`, color: WHITE, padding: '13px 24px', borderRadius: '8px', fontSize: '14px', textDecoration: 'none' }}>
-              Investor view
-            </a>
-            <a href="/admin" style={{ color: MUTED, padding: '13px 16px', fontSize: '13px', textDecoration: 'none' }}>
-              Maestro login →
-            </a>
-          </div>
-        </div>
-
-        {/* ── SOLUTIONS ─────────────────────────────────────────── */}
-        <div style={{ marginBottom: '64px' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-            Three solutions
-          </div>
-          <div style={{ fontSize: '13px', color: MUTED, marginBottom: '20px' }}>
-            Each one diagnoses, prescribes, executes, and tracks. AbarVa earns nothing until outcomes are verified.
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {SOLUTIONS.map(s => (
-              <a
-                key={s.id}
-                href={s.href}
-                style={{ textDecoration: 'none' }}
-                onMouseEnter={() => setHSol(s.id)}
-                onMouseLeave={() => setHSol(null)}
-              >
-                <div style={{
-                  background: CARD,
-                  border: `1px solid ${hSol === s.id ? s.color : BORDER}`,
-                  borderLeft: `4px solid ${s.color}`,
-                  borderRadius: '0 12px 12px 0',
-                  padding: '20px 24px',
-                  display: 'grid',
-                  gridTemplateColumns: '260px 1fr 200px',
-                  gap: '24px',
-                  alignItems: 'center',
-                  transition: 'border-color .15s',
-                }}>
-                  <div>
-                    <div style={{ fontSize: '15px', fontWeight: 500, color: WHITE, marginBottom: '5px' }}>{s.name}</div>
-                    <div style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, letterSpacing: '.06em', textTransform: 'uppercase', background: '#1C2D45', display: 'inline-block', padding: '2px 8px', borderRadius: '4px' }}>{s.owner}</div>
-                  </div>
-                  <div style={{ fontSize: '13px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6 }}>{s.problem}</div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: s.color, marginBottom: '3px' }}>{s.value}</div>
-                    <div style={{ fontSize: '11px', color: MUTED, marginBottom: '10px' }}>{s.metric}</div>
-                    <div style={{ fontSize: '12px', color: hSol === s.id ? TEAL : '#374151', transition: 'color .15s' }}>Explore →</div>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {/* ── PRODUCTS ──────────────────────────────────────────── */}
-        <div style={{ marginBottom: '64px' }}>
-          <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-            Five products — the intelligence engine
-          </div>
-          <div style={{ fontSize: '13px', color: MUTED, marginBottom: '20px' }}>
-            Solutions activate products in sequence. Products can also be used independently.
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: '10px' }}>
-            {PRODUCTS.map(p => (
-              <a
-                key={p.name}
-                href={p.href}
-                style={{ textDecoration: 'none' }}
-                onMouseEnter={() => setHProd(p.name)}
-                onMouseLeave={() => setHProd(null)}
-              >
-                <div style={{
-                  background: CARD,
-                  border: `1px solid ${hProd === p.name ? TEAL : BORDER}`,
-                  borderTop: `3px solid ${p.color}`,
-                  borderRadius: '0 0 12px 12px',
-                  padding: '18px 16px',
-                  height: '156px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  transition: 'border-color .15s',
-                }}>
-                  <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                    {p.name}
-                  </div>
-                  <div style={{ fontSize: '12px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6, flex: 1 }}>
-                    "{p.q}"
-                  </div>
-                  <div style={{ fontSize: '11px', color: hProd === p.name ? TEAL : '#374151', marginTop: '10px', transition: 'color .15s' }}>
-                    Open →
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-
-        {/* ── PROOF POINT ───────────────────────────────────────── */}
-        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '36px 40px', marginBottom: '64px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '28px' }}>
-            <div style={{ maxWidth: '420px' }}>
-              <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                Proven in production
-              </div>
-              <div style={{ fontFamily: 'Georgia,serif', fontSize: '18px', color: WHITE, lineHeight: 1.5, marginBottom: '8px' }}>
-                Major health system · Live deployment
-              </div>
-              <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
-                Knowledge layer ingested 225 scheduled jobs, 160 database schemas, 236 Tableau workbooks. The system now answers in seconds what used to take weeks of asking the right person.
-              </div>
+          {/* Left column */}
+          <div>
+            <div style={{fontFamily:MONO,fontSize:10,color:TEAL,letterSpacing:'.14em',textTransform:'uppercase' as const,marginBottom:16}}>
+              Enterprise transformation · AI-native · Outcome-accountable
             </div>
-            <div style={{ display: 'flex', gap: '56px', flexWrap: 'wrap' }}>
-              {[
-                { v: '40%',  l: 'Productivity increase' },
-                { v: '60%',  l: 'Consulting cost reduction' },
-                { v: '8×',   l: 'Faster knowledge access' },
-              ].map((s, i) => (
-                <div key={i} style={{ textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'Georgia,serif', fontSize: '40px', fontWeight: 500, color: TEAL, lineHeight: 1, marginBottom: '6px' }}>{s.v}</div>
-                  <div style={{ fontSize: '12px', color: MUTED, maxWidth: '100px' }}>{s.l}</div>
-                </div>
-              ))}
+            <h1 style={{fontFamily:SERIF,fontSize:52,fontWeight:500,lineHeight:1.15,marginBottom:20,margin:'0 0 20px'}}>
+              Act on intelligence.<br />
+              Before the<br />
+              <em style={{color:TEAL}}>window closes.</em>
+            </h1>
+            <p style={{fontSize:17,color:MUTED,maxWidth:480,lineHeight:1.7,marginBottom:32}}>
+              AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, embeds a small Maestro team to execute — and earns its fee only when outcomes are verified.
+            </p>
+            <div style={{display:'flex',gap:12,flexWrap:'wrap' as const}}>
+              <a href="/diagnose?client=meridian" style={{background:TEAL,color:BG,padding:'12px 22px',borderRadius:8,fontSize:13,fontWeight:600,textDecoration:'none',cursor:'pointer'}}>
+                See it with Meridian Health →
+              </a>
+              <a href="#demo" style={{background:'transparent',color:MUTED,border:`1px solid ${BORDER}`,padding:'12px 22px',borderRadius:8,fontSize:13,textDecoration:'none',cursor:'pointer'}}>
+                Watch a demo
+              </a>
+              <a href="#contact" style={{color:MUTED,fontSize:13,textDecoration:'none',padding:'12px 0',cursor:'pointer'}}>
+                Contact us
+              </a>
+            </div>
+            <div style={{marginTop:24,display:'flex',alignItems:'center',gap:8}}>
+              <span style={{width:6,height:6,borderRadius:'50%',background:TEAL,flexShrink:0}} />
+              <a href="/sign-in" style={{fontSize:'12px',color:AMBER,textDecoration:'none'}}>
+                Investor view secured separately — request access →
+              </a>
             </div>
           </div>
-        </div>
 
-        {/* ── CLIENT ENTRY POINTS ───────────────────────────────── */}
-        <div style={{ textAlign: 'center', paddingBottom: '72px' }}>
-          <div style={{ fontFamily: 'Georgia,serif', fontSize: '26px', fontWeight: 500, color: WHITE, marginBottom: '10px' }}>
-            Ready to see your situation?
+          {/* Right column — stat grid */}
+          <div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+              {/* Stat 1 */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${RED}`,borderRadius:10,padding:'20px 16px'}}>
+                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Consulting spend wasted</div>
+                <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,lineHeight:1}}>$800B</div>
+                <div style={{fontSize:11,color:DIM,marginTop:4}}>Global annual market with no outcome accountability</div>
+              </div>
+              {/* Stat 2 */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${AMBER}`,borderRadius:10,padding:'20px 16px'}}>
+                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Enterprise AI with zero ROI</div>
+                <div style={{fontFamily:SERIF,fontSize:32,color:AMBER,lineHeight:1}}>73%</div>
+                <div style={{fontSize:11,color:DIM,marginTop:4}}>Of AI investments produce no verified outcome</div>
+              </div>
+              {/* Stat 3 */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${GREEN}`,borderRadius:10,padding:'20px 16px'}}>
+                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>AbarVa fee model</div>
+                <div style={{fontFamily:SERIF,fontSize:32,color:GREEN,lineHeight:1}}>15–20%</div>
+                <div style={{fontSize:11,color:DIM,marginTop:4}}>Of verified savings only. Not a retainer. Not day-rates.</div>
+              </div>
+              {/* Stat 4 */}
+              <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${TEAL}`,borderRadius:10,padding:'20px 16px'}}>
+                <div style={{fontFamily:MONO,fontSize:9,color:DIM,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Time to first intelligence</div>
+                <div style={{fontFamily:SERIF,fontSize:32,color:TEAL,lineHeight:1}}>48hrs</div>
+                <div style={{fontSize:11,color:DIM,marginTop:4}}>From kickoff to your first Situation brief</div>
+              </div>
+              {/* Wide investor card */}
+              <div style={{gridColumn:'1 / -1',background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'16px 20px',display:'flex',alignItems:'flex-start' as const,gap:12}}>
+                <span style={{color:TEAL,fontSize:16,flexShrink:0}}>🔒</span>
+                <span style={{fontSize:12,color:MUTED,lineHeight:1.6}}>
+                  Harvey AI is $11B doing for legal what we do for enterprise transformation. Same structure. Their category $500B. Ours $800B. Nobody has touched it.
+                </span>
+              </div>
+            </div>
           </div>
-          <div style={{ fontSize: '14px', color: MUTED, marginBottom: '28px' }}>
-            Load Meridian Health, First Capital, or Apex Retail — each with real client data.
-          </div>
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            {CLIENTS.map(c => (
-              <a
-                key={c.id}
-                href={c.href}
-                style={{
-                  background: CARD, border: `1px solid ${BORDER}`,
-                  padding: '14px 22px', borderRadius: '10px',
-                  textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px',
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = c.color }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER }}
-              >
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: WHITE }}>{c.name}</div>
-                  <div style={{ fontSize: '11px', color: MUTED }}>{c.sub}</div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
 
+        </div>
       </div>
+
+      {/* PROBLEM BAND */}
+      <div style={{background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`,padding:'40px 32px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1px 1fr 1px 1fr',gap:0,maxWidth:900,margin:'0 auto'}}>
+          <div style={{padding:'0 32px',textAlign:'center' as const}}>
+            <div style={{fontFamily:SERIF,fontSize:42,color:RED,marginBottom:8}}>$94M</div>
+            <div style={{fontSize:13,color:MUTED}}>Meridian Health&apos;s AI portfolio — zero with documented ROI</div>
+          </div>
+          <div style={{background:BORDER}} />
+          <div style={{padding:'0 32px',textAlign:'center' as const}}>
+            <div style={{fontFamily:SERIF,fontSize:42,color:AMBER,marginBottom:8}}>71%</div>
+            <div style={{fontSize:13,color:MUTED}}>Arcturus Financial&apos;s cost-to-income ratio vs 58% target — $840M gap</div>
+          </div>
+          <div style={{background:BORDER}} />
+          <div style={{padding:'0 32px',textAlign:'center' as const}}>
+            <div style={{fontFamily:SERIF,fontSize:42,color:AMBER,marginBottom:8}}>18 months</div>
+            <div style={{fontSize:13,color:MUTED}}>Since Apex deployed Salesforce Einstein — adoption: 23%</div>
+          </div>
+        </div>
+      </div>
+
+      {/* PRODUCTS */}
+      <div style={{padding:'80px 32px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{fontFamily:MONO,fontSize:10,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.14em',marginBottom:12}}>
+            Five products · One intelligence layer
+          </div>
+          <div style={{fontFamily:SERIF,fontSize:38,color:WHITE,marginBottom:12}}>
+            Intelligence that tells you what to do next.
+          </div>
+          <p style={{fontSize:16,color:MUTED,maxWidth:560,marginBottom:48,lineHeight:1.7}}>
+            Each product runs on your data, your industry benchmarks, and 340 cross-client patterns from the Transformation Genome. The answer is specific. The source is transparent.
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))',gap:16}}>
+            {[
+              {id:'diagnose',    intel:'Situation Intelligence',     q:"What's actually broken — and what is it costing?",    impact:'Uncover the real cost of what\'s broken'},
+              {id:'ai-strategy', intel:'AI Strategy Intelligence',   q:'Where should we place our AI bets?',                  impact:'Prioritize what actually delivers'},
+              {id:'select',      intel:'Vendor Intelligence',        q:'Which vendor actually wins in our situation?',         impact:'Score against your data, not demos'},
+              {id:'justify',     intel:'Business Case Intelligence', q:'How do we justify this to the board?',                 impact:'CFO-defensible models, risk-adjusted'},
+              {id:'outcomes',    intel:'Outcome Intelligence',       q:"Did it work — and can we prove it?",                  impact:'Baseline locked. Outcomes verified.'},
+            ].map(p => (
+              <div key={p.id} style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'20px',position:'relative' as const,overflow:'hidden'}}>
+                <div style={{fontFamily:MONO,fontSize:9,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>{p.intel}</div>
+                <div style={{fontSize:13,fontWeight:500,color:WHITE,marginBottom:8,lineHeight:1.4}}>{p.q}</div>
+                <div style={{fontSize:11,color:DIM,marginBottom:16}}>{p.impact}</div>
+                <a href={`/${p.id}?client=meridian`} style={{color:TEAL,fontFamily:MONO,fontSize:11,textDecoration:'none',cursor:'pointer'}}>Explore →</a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SOLUTIONS */}
+      <div style={{padding:'0 32px 80px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Diagnosis is just the start. We execute.</div>
+          <p style={{fontSize:15,color:MUTED,marginBottom:40,lineHeight:1.6}}>
+            AbarVa doesn&apos;t hand you a report and leave. Maestros embed. They execute. They track outcomes.
+          </p>
+          <div style={{display:'flex',flexDirection:'column' as const,gap:0,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden'}}>
+            {[
+              {name:'AI-Powered PDLC',    href:'/solutions/pdlc',     desc:'Build products at twice the velocity', quote:'"We\'re spending $300M in capital. Time to production is 16 months. Engineers aren\'t building — they\'re in meetings."', metric:'$18M reduction', sub:'consulting spend'},
+              {name:'AI-Powered Delivery',href:'/solutions/delivery', desc:'Replace consulting teams with Maestros', quote:'"80 consultants on site. 70% of their time is getting up to speed. Knowledge walks out the door every Friday."', metric:'4 Maestros', sub:'replace 40'},
+              {name:'Margin Optimization',href:'/solutions/margin',   desc:'Recover margin across revenue, cost, AI', quote:'"Operating margin 1.8% against a 4% target. Don\'t know where it\'s leaking or which lever to pull first."', metric:'$60–120M', sub:'annual recovery'},
+            ].map((row, i, arr) => (
+              <div key={row.name} style={{display:'flex',alignItems:'stretch',borderBottom: i < arr.length-1 ? `1px solid ${BORDER}` : 'none'}}>
+                <div style={{flex:1,padding:'24px',borderRight:`1px solid ${BORDER}`}}>
+                  <div style={{fontFamily:MONO,fontSize:10,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:6}}>{row.name}</div>
+                  <div style={{fontSize:14,fontWeight:500,color:WHITE,marginBottom:4}}>{row.desc}</div>
+                  <a href={row.href} style={{color:TEAL,fontSize:'12px',textDecoration:'none',fontFamily:MONO,cursor:'pointer'}}>Learn more →</a>
+                </div>
+                <div style={{flex:1,padding:'24px',borderRight:`1px solid ${BORDER}`,background:'rgba(255,255,255,0.01)'}}>
+                  <span style={{fontSize:13,color:MUTED,fontStyle:'italic',lineHeight:1.5}}>{row.quote}</span>
+                </div>
+                <div style={{width:160,flexShrink:0,padding:'24px',display:'flex',flexDirection:'column' as const,justifyContent:'center'}}>
+                  <div style={{fontFamily:SERIF,fontSize:20,color:WHITE}}>{row.metric}</div>
+                  <div style={{fontSize:11,color:DIM}}>{row.sub}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* DEMO */}
+      <div id="demo" style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>See it working. Right now. No signup.</div>
+          <p style={{fontSize:15,color:MUTED,marginBottom:40}}>
+            Three real organizations. Three real problems. AbarVa&apos;s intelligence running live.
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16,marginBottom:48}}>
+            {[
+              {name:'Meridian Health System',  color:TEAL,           vertical:'Healthcare',         revenue:'$11.2B', finding:'"$94M AI spend · zero documented ROI"',        href:'/diagnose?client=meridian'},
+              {name:'First Capital Financial', color:'#818CF8',      vertical:'Financial Services', revenue:'$1.84B', finding:'"41% digital adoption · target 67%"',           href:'/diagnose?client=firstcapital'},
+              {name:'Apex Retail Group',       color:AMBER,          vertical:'Retail',             revenue:'$12.4B', finding:'"$248M Einstein AI idle · 18 months deployed"', href:'/diagnose?client=apexretail'},
+            ].map(t => (
+              <a key={t.name} href={t.href} style={{display:'block',background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${t.color}`,borderRadius:12,padding:24,textDecoration:'none',cursor:'pointer'}}>
+                <div style={{fontSize:16,fontWeight:500,color:WHITE,marginBottom:4}}>{t.name}</div>
+                <div style={{fontFamily:MONO,fontSize:10,color:DIM}}>{t.vertical} · {t.revenue}</div>
+                <div style={{fontSize:13,color:MUTED,fontStyle:'italic',marginTop:12,lineHeight:1.4}}>{t.finding}</div>
+              </a>
+            ))}
+          </div>
+          {/* Video placeholder */}
+          <div style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:12,padding:'32px',textAlign:'center' as const,maxWidth:600,margin:'0 auto'}}>
+            <div style={{width:40,height:40,borderRadius:'50%',background:'rgba(45,212,200,0.15)',border:'1px solid rgba(45,212,200,0.4)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:18,color:TEAL,marginBottom:12}}>
+              ▶
+            </div>
+            <div style={{fontSize:16,fontWeight:500,color:WHITE,marginBottom:8}}>Recorded product walkthrough — 8 minutes</div>
+            <div style={{fontSize:13,color:MUTED,lineHeight:1.5,marginBottom:12}}>Watch a full Maestro session from Situation through Strategy to Business Case</div>
+            <div style={{fontFamily:MONO,fontSize:11,color:DIM}}>(Video coming soon · Request a live demo below)</div>
+          </div>
+        </div>
+      </div>
+
+      {/* HOW WE EARN */}
+      <div style={{padding:'80px 32px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>We earn nothing until outcomes are verified.</div>
+          <p style={{fontSize:15,color:MUTED,marginBottom:48,lineHeight:1.6}}>
+            Four steps. Baseline locked on day 0. AbarVa earns 15–20% of verified savings only.
+          </p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:0,border:`1px solid ${BORDER}`,borderRadius:12,overflow:'hidden',marginBottom:32}}>
+            {[
+              {num:'01',name:'DIAGNOSE', desc:'Situation product · 48hrs · your data'},
+              {num:'02',name:'PRESCRIBE',desc:'Strategy + Vendor + Business Case'},
+              {num:'03',name:'EXECUTE',  desc:'Maestro team embeds · knowledge stays'},
+              {num:'04',name:'VERIFY',   desc:'Baseline vs actuals · 15–20% of verified savings'},
+            ].map((step, i, arr) => (
+              <div key={step.num} style={{padding:'24px',borderRight: i < arr.length-1 ? `1px solid ${BORDER}` : 'none'}}>
+                <div style={{fontFamily:MONO,fontSize:11,color:DIM,marginBottom:16}}>{step.num}</div>
+                <div style={{fontFamily:MONO,fontSize:11,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>{step.name}</div>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.5}}>{step.desc}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:'rgba(45,212,200,0.04)',border:'1px solid rgba(45,212,200,0.2)',borderRadius:12,padding:'24px 32px',display:'flex',alignItems:'flex-start' as const,gap:12}}>
+            <span style={{fontSize:16,flexShrink:0}}>🔒</span>
+            <span style={{fontSize:14,color:WHITE,lineHeight:1.6}}>
+              The baseline is locked on Day 0 and is immutable. Every metric. Every assumption. Verified by the CXO. We cannot move the goalposts — and neither can you.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* PROOF */}
+      <div style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:24,maxWidth:900,margin:'0 auto'}}>
+          {[
+            {num:'340', label:'Transformation patterns in the Genome — each with documented failure rates'},
+            {num:'89%', label:'Of organizations with regulatory overdue + no plan face enforcement action within 90 days'},
+            {num:'79%', label:'Of CDO vacancies at AI governance crunch points result in programme failure'},
+          ].map(c => (
+            <div key={c.num} style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'28px'}}>
+              <div style={{fontFamily:SERIF,fontSize:48,color:TEAL}}>{c.num}</div>
+              <div style={{fontSize:13,color:MUTED,marginTop:8,lineHeight:1.5}}>{c.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CONTACT */}
+      <div id="contact" style={{padding:'80px 32px'}}>
+        <div style={{maxWidth:1200,margin:'0 auto'}}>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Ready to see your organization in here?</div>
+          <p style={{fontSize:15,color:MUTED,marginBottom:48}}>No sales calls. A Maestro responds within 24 hours.</p>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48}}>
+
+            {/* Left — contact options */}
+            <div style={{display:'flex',flexDirection:'column' as const,gap:12}}>
+              <a href="/diagnose?client=meridian" style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'16px 20px',textDecoration:'none',display:'block',cursor:'pointer'}}>
+                <div style={{fontSize:14,fontWeight:500,color:TEAL,marginBottom:4}}>See a live demo</div>
+                <div style={{fontSize:12,color:MUTED}}>No login required. See real intelligence running on real data.</div>
+              </a>
+              <a href="/sign-in" style={{background:CARD,border:`1px solid ${BORDER}`,borderRadius:10,padding:'16px 20px',textDecoration:'none',display:'block',cursor:'pointer'}}>
+                <div style={{fontSize:14,fontWeight:500,color:WHITE,marginBottom:4}}>Maestro login</div>
+                <div style={{fontSize:12,color:MUTED}}>Enter your org email — AbarVa routes you automatically</div>
+              </a>
+              <a href="/sign-in" style={{background:CARD,border:'1px solid rgba(245,158,11,0.3)',borderRadius:10,padding:'16px 20px',textDecoration:'none',display:'block',cursor:'pointer'}}>
+                <div style={{fontSize:14,fontWeight:500,color:AMBER,marginBottom:4}}>Investor view</div>
+                <div style={{fontSize:12,color:MUTED}}>Secured separately — request access</div>
+              </a>
+            </div>
+
+            {/* Right — form */}
+            <div>
+              {!submitted ? (
+                <form onSubmit={e => { e.preventDefault(); setSubmitted(true) }}>
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:16}}>
+                    <input
+                      placeholder="First name"
+                      value={formData.name}
+                      onChange={e => setFormData({...formData, name: e.target.value})}
+                      style={inputStyle}
+                    />
+                    <input
+                      placeholder="Last name"
+                      style={inputStyle}
+                    />
+                  </div>
+                  <input
+                    placeholder="Organization email"
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    style={{...inputStyle, marginBottom:16}}
+                  />
+                  <input
+                    placeholder="Organization name"
+                    value={formData.org}
+                    onChange={e => setFormData({...formData, org: e.target.value})}
+                    style={{...inputStyle, marginBottom:16}}
+                  />
+                  <select
+                    value={formData.interest}
+                    onChange={e => setFormData({...formData, interest: e.target.value})}
+                    style={{...inputStyle, marginBottom:16}}
+                  >
+                    <option value="">What brings you here?</option>
+                    <option value="cxo">CXO / Executive</option>
+                    <option value="investor">Investor</option>
+                    <option value="exploring">Exploring AbarVa</option>
+                    <option value="maestro">Maestro candidate</option>
+                  </select>
+                  <textarea
+                    placeholder="Message (optional)"
+                    rows={3}
+                    value={formData.message}
+                    onChange={e => setFormData({...formData, message: e.target.value})}
+                    style={{...inputStyle, marginBottom:16}}
+                  />
+                  <button
+                    type="submit"
+                    style={{width:'100%',background:TEAL,color:BG,padding:'12px',borderRadius:8,fontSize:14,fontWeight:600,cursor:'pointer',border:'none'}}
+                  >
+                    Request a conversation →
+                  </button>
+                  <div style={{fontSize:12,color:DIM,marginTop:8}}>No sales calls. A Maestro responds within 24 hours.</div>
+                </form>
+              ) : (
+                <div style={{fontSize:15,color:TEAL,lineHeight:1.7}}>
+                  Thank you — a Maestro will be in touch within 24 hours.
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* FOOTER */}
+      <div style={{borderTop:`1px solid ${BORDER}`}}>
+        <div style={{padding:'32px',display:'flex',justifyContent:'space-between',alignItems:'center',maxWidth:1200,margin:'0 auto',flexWrap:'wrap' as const,gap:16}}>
+          <div>
+            <span style={{fontFamily:SERIF,fontSize:18,fontWeight:500,color:WHITE,letterSpacing:'-0.01em'}}>Abar</span>
+            <span style={{fontFamily:MONO,fontSize:14,color:TEAL,letterSpacing:'.04em'}}>Va</span>
+          </div>
+          <div style={{display:'flex',gap:20,alignItems:'center',flexWrap:'wrap' as const}}>
+            <a href="/diagnose?client=meridian" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Intelligence</a>
+            <a href="/solutions/pdlc" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Solutions</a>
+            <a href="/sign-in" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Investors</a>
+            <a href="#contact" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Contact</a>
+            <a href="/sign-in" style={{fontSize:13,color:MUTED,textDecoration:'none',cursor:'pointer'}}>Login</a>
+            <span style={{fontSize:11,color:DIM}}>© 2026 AbarVa</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   )
 }

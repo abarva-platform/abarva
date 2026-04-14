@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider signInUrl="/sign-in" afterSignOutUrl="/" >
       <html lang="en">
         <body>
           <PostHogProvider>

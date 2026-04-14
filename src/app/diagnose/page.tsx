@@ -1,11 +1,12 @@
 'use client'
 import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PageShell from '@/components/PageShell'
 import { filterIssuesByRole } from '@/lib/situation-intelligence'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
+import { arcturusFinancial } from '@/data/arcturus/index'
+import { nexoraRetail } from '@/data/nexora/index'
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -22,8 +23,8 @@ const T = {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Severity = 'critical' | 'warning' | 'watch'
-type RoleId = 'CIO' | 'CFO' | 'COO' | 'CMIO' | 'CEO' | 'CMO' | 'Maestro'
-type ClientId = 'meridian' | 'firstcapital' | 'apexretail'
+type RoleId = 'CIO' | 'CFO' | 'COO' | 'CMIO' | 'CEO' | 'CMO' | 'CRO' | 'Maestro'
+type ClientId = 'meridian' | 'firstcapital' | 'apexretail' | 'arcturus' | 'nexora'
 
 interface IssueSource { data: string; industry: string; genome: string }
 interface Issue {
@@ -128,6 +129,65 @@ const ISSUES: Record<ClientId, Issue[]> = {
       roles:['CIO','CFO'], category:'technology',
       sources: { data:'IT spend audit · Apr 2026', industry:'Shadow IT spend at $38M across 28,000 store employees', genome:'8,400 SAP customizations blocking data flow — Genome: ECC EOS 2027 forces decision' } },
   ],
+  arcturus: [
+    { id:'AR01', severity:'critical', title:'$94M AI Investment — Zero Documented ROI',
+      body:'28 AI initiatives active. 0 have documented baselines or outcome tracking. $94M committed. $0 return verified. CFO cannot defend this at the next board meeting.',
+      impact:'$94M untracked', owner:'CIO + CFO',
+      roles:['CFO','CIO','CEO'], category:'ai',
+      sources: { data:'AI investment register · Apr 2026', industry:'$94M AI portfolio — zero outcome documentation across 28 initiatives', genome:'0 of 28 with baselines — Genome shows 91% failure rate for ungoverned AI portfolios' } },
+    { id:'AR02', severity:'critical', title:'CDO Role Vacant 11 Months — 14 AI Initiatives Blocked',
+      body:`CDO vacant 11 months. 14 of 28 AI initiatives cite CDO vacancy as primary stall reason. 3 search firms engaged with no hire. Every AI and data initiative is blocked or degraded.`,
+      impact:'14 initiatives blocked', owner:'CEO',
+      roles:['CEO','CIO'], category:'ai',
+      sources: { data:'HR vacancy report · Apr 2026', industry:'Asset managers with CDO vacancy stall AI programme in 11+ months in 68% of cases', genome:'CDO absence correlates with 79% AI programme failure rate at this stage — Genome' } },
+    { id:'AR03', severity:'critical', title:'MAS FEAT Overdue 4 Months — $2.4B AUM at Risk',
+      body:'MAS FEAT explainability requirement overdue. Zero AI models have FEAT-compliant documentation. MAS supervisory action under consideration. $2.4B Singapore AUM at regulatory risk.',
+      impact:'$2.4B AUM at risk', owner:'CRO + CEO',
+      roles:['CEO','CFO'], category:'regulatory',
+      sources: { data:'CRO regulatory report · Apr 2026', industry:'MAS FEAT deadline passed December 2025 — overdue 4 months', genome:'FEAT non-compliance at this stage carries $2.4B AUM exit risk based on Genome precedents' } },
+    { id:'AR04', severity:'warning', title:'Cost-to-Income 71% vs 61% Peer Median — $840M Gap',
+      body:'CIR at 71% vs 61% peer median. No credible cost-reduction programme in place. IT budget 35% above peer benchmark. AI efficiency gains stalled by CDO vacancy and governance freeze.',
+      impact:'$840M efficiency gap', owner:'CFO + CEO',
+      roles:['CFO','CEO','CIO'], category:'financial',
+      sources: { data:'CFO financial data · Apr 2026', industry:'61% CIR peer median · McKinsey Asset Management 2025', genome:'AI-driven CIR improvement from 71% to 58% requires 18-24 months and a functional CDO — pattern in Genome' } },
+    { id:'AR05', severity:'warning', title:'Salesforce FSC 44% Adoption — $38M Investment at Risk',
+      body:'$38M invested in Salesforce FSC since August 2024. 44% adoption. NPS 31 vs industry median 58. SSO not wired to Bloomberg AIM — advisors have no reason to migrate.',
+      impact:'$38M at risk', owner:'CIO + CRO',
+      roles:['CIO','CFO'], category:'technology',
+      sources: { data:'CTO data upload · Apr 2026', industry:'FSC adoption median: 72% at 18 months post go-live', genome:'44% adoption at 20 months matches Genome pattern: SSO gap is the #1 adoption blocker (87% correlation)' } },
+    { id:'AR06', severity:'warning', title:'Aladdin Stress Testing Monthly vs SEC Daily Requirement',
+      body:'BlackRock Aladdin configured for monthly stress testing. SEC requires daily cadence. 11-month gap in compliance with risk model regulatory requirement.',
+      impact:'SEC regulatory exposure', owner:'CRO + Head of Technology',
+      roles:['CFO','CIO'], category:'regulatory',
+      sources: { data:'CRO compliance review · Apr 2026', industry:'SEC stress testing frequency requirement: daily for AUM above $500B', genome:'Monthly stress testing in daily-requirement context: direct SEC examination risk — Genome shows 3 exam failures on this specific gap' } },
+  ],
+  nexora: [
+    { id:'NX01', severity:'critical', title:'Einstein AI Licensed 18 Months — Never Activated',
+      body:`Salesforce Einstein licensed for 18 months. $14M/yr paid. Zero activation work started. 28.4M loyalty members receiving identical, untailored experiences. CIO and CMO ownership dispute unresolved.`,
+      impact:'$248M idle', owner:'CMO + CIO',
+      roles:['CMO','CEO','CFO'], category:'ai',
+      sources: { data:'Salesforce Einstein activation audit · Apr 2026', industry:'28.4M loyalty members — zero personalisation ROI realised', genome:'Einstein idle license: 100% activation rate among top-10 global retailers — Genome' } },
+    { id:'NX02', severity:'critical', title:'SAP R/3 EOL December 2027 — No Migration Programme',
+      body:`SAP R/3 Continental Europe hits end-of-life December 2027. 20 months remaining. 8,200 customisations. No migration programme initiated. No budget allocated. No SI selected. Migration window is 18–24 months.`,
+      impact:'$4.6B revenue region at risk', owner:'COO + CFO',
+      roles:['COO','CFO','CEO'], category:'technology',
+      sources: { data:'SAP EOL documentation + COO data upload · Apr 2026', industry:'SAP R/3 mainstream maintenance ends Dec 2025 — extended only until Dec 2027', genome:'ERP EOL <24 months with no migration plan: 83% failure rate — highest-risk Genome pattern' } },
+    { id:'NX03', severity:'critical', title:'E-Commerce at -2.1% Margin — Growing Channel Destroying Blended Margin',
+      body:'E-commerce running at -2.1% contribution margin. Revenue growing (22% of total). Every unit of ecommerce growth destroys blended margin. $346M excess fulfilment cost + $269M return cost = $615M annual drag.',
+      impact:'$615M annual drag', owner:'CFO + CMO',
+      roles:['CFO','CEO'], category:'financial',
+      sources: { data:'CFO channel P&L · Apr 2026', industry:'E-commerce peer margin median: +2.8% (Nexora: -2.1%)', genome:'Negative ecom margin with growing channel: 64% of comparable retailers required fulfilment reset before margin recovery' } },
+    { id:'NX04', severity:'warning', title:'o9 Demand Forecasting 40% After 18 Months — $900M Inventory Impact',
+      body:`o9 demand forecasting 40% implemented after 18 months. $6.8M invested. Inventory turns 4.2x vs 6.8x benchmark. $900M excess inventory on balance sheet. Completion vs restart decision required.`,
+      impact:'$900M trapped capital', owner:'COO + CFO',
+      roles:['COO','CFO','CEO'], category:'operations',
+      sources: { data:'COO operations data · Apr 2026', industry:'6.8x inventory turns benchmark · Gartner Retail 2025', genome:'o9 at 40% after 18 months — completion (85% success) vs restart (58% success) — Genome recommends completion' } },
+    { id:'NX05', severity:'warning', title:'Shrinkage 2.8% vs 1.4% Benchmark — $259M Excess',
+      body:'Shrinkage at 2.8% of revenue ($515M). Industry benchmark 1.4% ($257M). $259M excess annually. 12-store AI pilot proven 34% reduction. Scale decision pending with no executive sponsor named.',
+      impact:'$259M above benchmark', owner:'COO + CEO',
+      roles:['COO','CFO'], category:'operations',
+      sources: { data:'COO shrinkage data · Apr 2026', industry:'1.4% industry median shrinkage rate', genome:'AI shrinkage detection pilot-to-scale: 71% success when executive sponsor named at start' } },
+  ],
 }
 
 function meridianAI_pilotsPurgatory() {
@@ -157,6 +217,19 @@ const FINANCIAL_RISKS: Record<ClientId, RiskItem[]> = {
     { label: 'Excess inventory cost', amount: 180 },
     { label: 'Shadow IT unmanaged', amount: 38 },
   ],
+  arcturus: [
+    { label: 'AI investment untracked ($94M)', amount: 94 },
+    { label: 'CIR efficiency gap vs peer median', amount: 840 },
+    { label: 'MAS FEAT — AUM at regulatory risk', amount: 2400 },
+    { label: 'Salesforce FSC investment at risk', amount: 38 },
+  ],
+  nexora: [
+    { label: 'Einstein idle (18 months)', amount: 248 },
+    { label: 'E-commerce fulfilment drag ($615M)', amount: 615 },
+    { label: 'Excess inventory ($900M)', amount: 900 },
+    { label: 'Shrinkage excess vs benchmark', amount: 259 },
+    { label: 'SAP R/3 migration (unfunded)', amount: 35 },
+  ],
 }
 
 const TIMELINE_EVENTS: Record<ClientId, TimelineEvent[]> = {
@@ -175,6 +248,18 @@ const TIMELINE_EVENTS: Record<ClientId, TimelineEvent[]> = {
     { label: 'SAP ECC support', note: '2027 end-of-support', urgency: 'amber' },
     { label: 'Churn model', note: 'Already built — deploy now', urgency: 'red' },
     { label: 'o9 completion', note: 'Q4 2026 milestone', urgency: 'amber' },
+  ],
+  arcturus: [
+    { label: 'MAS FEAT overdue', note: '4 months past deadline — escalating', urgency: 'red' },
+    { label: 'CDO hire', note: '11 months vacant — AI blocked', urgency: 'red' },
+    { label: 'Aladdin cadence fix', note: 'Daily stress test required now', urgency: 'amber' },
+    { label: 'Salesforce renewal', note: 'August 2026 — adoption at 44%', urgency: 'amber' },
+  ],
+  nexora: [
+    { label: 'Einstein activation', note: '18 months idle — activate this week', urgency: 'red' },
+    { label: 'SAP R/3 EOL', note: 'December 2027 — 20 months, no plan', urgency: 'red' },
+    { label: 'o9 decision', note: 'Finish vs restart — Q2 2026 deadline', urgency: 'amber' },
+    { label: 'SAP Oracle renewal', note: 'UK Oracle EBS Nov 2026', urgency: 'amber' },
   ],
 }
 
@@ -202,6 +287,22 @@ const ACTIONS: Record<ClientId, Action[]> = {
     { n:4, horizon:'month', title:'o9 Completion — Finish What You Started', rationale:'$6.8M paid, 40% implemented, $180M inventory opportunity.', owner:'CSCO + CFO', impact:'$180M inventory', effort:'9 months', risk:'MEDIUM' },
     { n:5, horizon:'quarter', title:'CDP Identity Resolution — Unify 18M Profiles', rationale:'50% profile fragmentation blocking all personalization.', owner:'CTO + CMO', impact:'Foundation for all AI', effort:'90 days', risk:'MEDIUM' },
   ],
+  arcturus: [
+    { n:1, horizon:'week', title:'MAS FEAT Remediation — Model Inventory This Week', rationale:'Overdue 4 months. MAS supervisory action imminent. $2.4B Singapore AUM at risk.', owner:'CRO + CIO', impact:'$2.4B AUM protected', effort:'3 months', risk:'HIGH' },
+    { n:2, horizon:'week', title:'CDO Hire — Appoint Interim to Unblock 14 Initiatives', rationale:'11 months vacant. 14 of 28 AI initiatives explicitly blocked. Board will ask.', owner:'CEO', impact:'14 initiatives unblocked', effort:'1 week (interim)', risk:'HIGH' },
+    { n:3, horizon:'month', title:'Aladdin Daily Stress Testing — Configuration Fix', rationale:'SEC requirement is daily. Running monthly. Direct regulatory exposure.', owner:'CRO + Head of Technology', impact:'SEC compliance', effort:'2 weeks', risk:'LOW' },
+    { n:4, horizon:'month', title:'AI Portfolio Reset — Baseline Every Initiative', rationale:'$94M invested with zero documented outcomes. CFO board exposure next meeting.', owner:'CIO + CDO (interim)', impact:'$94M accountability', effort:'4 weeks', risk:'LOW' },
+    { n:5, horizon:'month', title:'Salesforce FSC SSO — Bloomberg AIM Integration', rationale:'44% adoption driven by missing SSO. Advisors have no reason to switch without Bloomberg data.', owner:'Head of Technology', impact:'Adoption unblocked', effort:'8 weeks', risk:'MEDIUM' },
+    { n:6, horizon:'quarter', title:'Golden Record Programme — CDO Led', rationale:'14 data silos. No golden record. 18 of 28 AI initiatives need this as foundation.', owner:'CDO (hire first)', impact:'18 AI initiatives unblocked', effort:'12 months', risk:'MEDIUM' },
+  ],
+  nexora: [
+    { n:1, horizon:'week', title:'Einstein Ownership — Appoint Single Executive Now', rationale:'18 months idle due to CIO/CMO ownership dispute. Resolve this week.', owner:'CEO', impact:'$248M unblocked', effort:'1 week', risk:'LOW' },
+    { n:2, horizon:'week', title:'SAP R/3 Migration — Start SI RFP Now', rationale:'EOL December 2027. 20 months left. Migration takes 18-24 months. No margin for delay.', owner:'COO + CFO', impact:'$4.6B revenue protected', effort:'3 months scoping', risk:'HIGH' },
+    { n:3, horizon:'month', title:'Einstein Activation Sprint — 8 Weeks to Revenue', rationale:'$1.2M activation cost. $248M annual upside. 207:1 ROI. Highest-ROI action available.', owner:'CMO + CIO (joint ownership)', impact:'$248M activated', effort:'8 weeks', risk:'LOW' },
+    { n:4, horizon:'month', title:'Cart Recovery — Connect Klaviyo + Segment', rationale:'Triggers built. Infrastructure paid for. Platform teams not coordinated.', owner:'CIO', impact:'$68M recovery', effort:'8 weeks', risk:'LOW' },
+    { n:5, horizon:'month', title:'o9 Completion — Fixed-Fee Contract', rationale:'$6.8M invested, 40% done, $900M inventory at stake. Negotiate completion contract.', owner:'COO', impact:'$180M inventory freed', effort:'9 months', risk:'MEDIUM' },
+    { n:6, horizon:'quarter', title:'Fulfilment Cost — Carrier Consolidation + Return Friction', rationale:'$615M annual drag from fulfilment + returns. CFO mandate: ecom margin positive.', owner:'CFO + COO', impact:'$269M fulfilment improvement', effort:'9 months', risk:'MEDIUM' },
+  ],
 }
 
 const PRE_BUILT_QUESTIONS: Record<ClientId, Partial<Record<RoleId, string[]>>> = {
@@ -224,12 +325,28 @@ const PRE_BUILT_QUESTIONS: Record<ClientId, Partial<Record<RoleId, string[]>>> =
     CEO: ['SAP ECC support ends 2027 — what do I tell the board?','Amazon is taking share — what is the digital strategy?','How do we close the $840M cart abandonment opportunity?'],
     Maestro: ['What data am I missing?','Which finding needs the most urgent attention?','Draft CEO briefing for the board'],
   },
+  arcturus: {
+    CIO: ['Golden record — what will it take and how long?','Bloomberg AIM API layer vs full replacement — what does the Genome say?','CDO interim vs external hire — fastest path to unblocking the AI programme?'],
+    CFO: ['How do I defend the $94M AI spend at the next board meeting?','What is the fastest path to CIR improvement without a CDO?','Model risk governance — what does MAS FEAT actually require us to do?'],
+    CRO: ['Which AI models are live and which have regulatory exposure right now?','FEAT remediation — what are the 3 most urgent actions?','SEC MRA — what is the remediation timeline?'],
+    CEO: ['What is the board message on CDO vacancy?','How do we close the $840M CIR gap in 24 months?','What does an AI-native asset manager actually look like — and how far are we?'],
+    Maestro: ['What data am I missing that would sharpen this picture?','Which finding needs the most urgent CXO attention?','Draft the CRO briefing on FEAT remediation'],
+  },
+  nexora: {
+    CIO: ['Einstein — who owns the activation and why has it taken 18 months?','SAP R/3 migration — which SI should we talk to first?','o9 completion vs restart — what does the data say?'],
+    CFO: ['E-commerce margin path to positive — what levers and what timeline?','SAP R/3 migration budget — what am I approving in the next 90 days?','ROI case for Einstein activation — what is the payback period?'],
+    COO: ['o9 completion fixed-fee contract — what terms should I demand?','Inventory turns 4.2x to 6.0x — what is the realistic 18-month roadmap?','Shrinkage AI scale decision — what does the pilot data say about ROI?'],
+    CMO: ['Einstein activation 8-week plan — who does what?','Loyalty active rate 42% to 65% — what is the 12-month programme?','Cart recovery 72% abandonment — what is blocking activation?'],
+    Maestro: ['What data am I missing?','Which finding is most urgent?','Draft the CFO briefing on SAP migration decision'],
+  },
 }
 
 const CLIENT_META: Record<ClientId, { name: string; confidence: number; color: string }> = {
   meridian: { name: 'Meridian Health System', confidence: 94, color: T.teal },
   firstcapital: { name: 'First Capital Financial', confidence: 81, color: T.blue },
   apexretail: { name: 'Apex Retail Group', confidence: 81, color: T.amber },
+  arcturus: { name: 'Arcturus Financial Group', confidence: 88, color: T.blue },
+  nexora: { name: 'Nexora Retail & Consumer', confidence: 87, color: T.teal },
 }
 
 const SEVERITY_COLOR: Record<Severity, string> = {
@@ -267,6 +384,17 @@ const ISSUE_METRICS: Record<string, IssueMetric> = {
   AX02: { label: 'Cart Abandonment',   current: '72%',             benchmark: '58% benchmark',   gap: '+14pp'         },
   AX03: { label: 'Inventory Turns',    current: '4.2x',            benchmark: '6.8x peers',      gap: '−2.6x'         },
   AX04: { label: 'Shadow IT Spend',    current: '$38M',            benchmark: '$0 managed'                            },
+  AR01: { label: 'AI ROI on $94M',    current: '$0 documented',   benchmark: '100% should track'                     },
+  AR02: { label: 'CDO Vacancy',        current: '11 months',       benchmark: 'Filled'                                },
+  AR03: { label: 'MAS FEAT',           current: 'Overdue 4 months',benchmark: 'Compliant Dec 2025'                    },
+  AR04: { label: 'Cost-to-Income',     current: '71%',             benchmark: '61% peer median', gap: '+10pp'         },
+  AR05: { label: 'FSC Adoption',       current: '44%',             benchmark: '72% avg', gap: '−28pp'                 },
+  AR06: { label: 'Stress Test Freq',   current: 'Monthly',         benchmark: 'Daily (SEC req.)'                      },
+  NX01: { label: 'Einstein Status',    current: 'Never activated', benchmark: '$14M/yr license paid'                  },
+  NX02: { label: 'SAP R/3 Status',     current: 'EOL Dec 2027',    benchmark: 'Migration in progress'                 },
+  NX03: { label: 'E-Com Margin',       current: '-2.1%',           benchmark: '+2.8% peer median', gap: '−4.9pp'      },
+  NX04: { label: 'o9 Completion',      current: '40%',             benchmark: '100% in 18 months'                     },
+  NX05: { label: 'Shrinkage Rate',     current: '2.8% ($515M)',    benchmark: '1.4% industry', gap: '+$259M/yr'       },
 }
 
 // Role-specific KPI tiles — each role sees metrics most relevant to their world
@@ -391,6 +519,76 @@ const ROLE_KPI_DATA: Record<ClientId, Record<string, KPIData[]>> = {
       { label: 'OPERATING MARGIN',    value: '3.8%',          trend: [4.2, 4.0, 3.8],  target: '6.0%',      gap: '−2.2pp from target'                     },
     ],
   },
+  arcturus: {
+    CIO: [
+      { label: 'AI INITIATIVES',      value: '3 of 28 live',  trend: [6, 4, 3],         target: '10+ live',  gap: '$94M untracked',     sparkColor: '#EF4444' },
+      { label: 'CDO VACANCY',         value: '11 months',     trend: [4, 8, 11],        target: 'Filled',    gap: '14 initiatives stalled', sparkColor: '#EF4444' },
+      { label: 'FSC ADOPTION',        value: '44%',           trend: [32, 38, 44],      target: '85%',       gap: '$38M at risk',       sparkColor: '#F59E0B' },
+      { label: 'DATA SILOS',          value: '14 systems',    trend: [14, 14, 14],      target: '1 (golden record)', gap: 'AI blocked',  sparkColor: '#F59E0B' },
+    ],
+    CFO: [
+      { label: 'COST-TO-INCOME',      value: '71%',           trend: [69, 70, 71],      target: '58%',       gap: '$840M gap',          sparkColor: '#EF4444' },
+      { label: 'AI PORTFOLIO ROI',    value: '0% ($0/$94M)',  trend: [0, 0, 0],         target: '38% peers', gap: '$36M/yr shortfall',  sparkColor: '#EF4444' },
+      { label: 'IT BUDGET VS PEERS',  value: '4.2% rev',      trend: [3.9, 4.0, 4.2],  target: '3.1%',      gap: '+$178M/yr',          sparkColor: '#F59E0B' },
+      { label: 'FSC ADOPTION',        value: '44%',           trend: [32, 38, 44],      target: '85%',       gap: '$38M invested',      sparkColor: '#F59E0B' },
+    ],
+    CRO: [
+      { label: 'MAS FEAT STATUS',     value: 'Overdue 4mo',   trend: [0, 0, 0],         target: 'Compliant', gap: '$2.4B AUM at risk',  sparkColor: '#EF4444' },
+      { label: 'AI MODELS GOVERNED',  value: '0 of 28',       trend: [0, 0, 0],         target: '28 / 28',   gap: 'Regulatory exposure',sparkColor: '#EF4444' },
+      { label: 'STRESS TEST FREQ',    value: 'Monthly',       trend: [0, 0, 0],         target: 'Daily',     gap: 'SEC requirement',    sparkColor: '#EF4444' },
+      { label: 'SEC MRA',             value: 'Open (Sep 24)', trend: [0, 0, 0],         target: 'Closed',    gap: 'Exam risk',          sparkColor: '#F59E0B' },
+    ],
+    CEO: [
+      { label: 'COST-TO-INCOME',      value: '71%',           trend: [69, 70, 71],      target: '58%',       gap: '$840M gap',          sparkColor: '#EF4444' },
+      { label: 'AI PORTFOLIO ROI',    value: '0% ($0/$94M)',  trend: [0, 0, 0],         target: '38% peers', gap: '$94M untracked',     sparkColor: '#EF4444' },
+      { label: 'MAS FEAT STATUS',     value: 'Overdue 4mo',   trend: [0, 0, 0],         target: 'Compliant', gap: '$2.4B AUM risk',     sparkColor: '#EF4444' },
+      { label: 'CDO VACANCY',         value: '11 months',     trend: [4, 8, 11],        target: 'Filled',    gap: 'AI programme stalled', sparkColor: '#F59E0B' },
+    ],
+    Maestro: [
+      { label: 'COST-TO-INCOME',      value: '71%',           trend: [69, 70, 71],      target: '58%',       gap: '$840M gap'                              },
+      { label: 'AI PORTFOLIO ROI',    value: '0%',            trend: [0, 0, 0],         target: '38% peers', gap: '$94M untracked'                         },
+      { label: 'CDO VACANCY',         value: '11 months',     trend: [4, 8, 11],        target: 'Filled',    gap: '14 initiatives stalled'                 },
+      { label: 'MAS FEAT STATUS',     value: 'Overdue 4mo',   trend: [0, 0, 0],         target: 'Compliant', gap: '$2.4B AUM risk'                         },
+    ],
+  },
+  nexora: {
+    CMO: [
+      { label: 'EINSTEIN STATUS',     value: 'Idle 18 months',trend: [0, 0, 0],         target: 'Active',    gap: '$248M idle',         sparkColor: '#EF4444' },
+      { label: 'LOYALTY ACTIVE',      value: '42%',           trend: [48, 45, 42],      target: '68%',       gap: '16.5M inactive',     sparkColor: '#EF4444' },
+      { label: 'CART ABANDONMENT',    value: '72%',           trend: [68, 70, 72],      target: '58%',       gap: '$68M idle',          sparkColor: '#F59E0B' },
+      { label: 'EMAIL OPEN RATE',     value: '14%',           trend: [16, 15, 14],      target: '28%',       gap: '−14pp vs benchmark', sparkColor: '#F59E0B' },
+    ],
+    CFO: [
+      { label: 'OPERATING MARGIN',    value: '3.2%',          trend: [4.8, 3.9, 3.2],  target: '6.5%',      gap: '$610M gap',          sparkColor: '#EF4444' },
+      { label: 'ECOM MARGIN',         value: '-2.1%',         trend: [-1.2, -1.8, -2.1], target: '+2.8%',   gap: '$615M drag',         sparkColor: '#EF4444' },
+      { label: 'AI ROI',              value: '8% ($12M)',     trend: [4, 6, 8],         target: '38% peers', gap: '$44M shortfall',     sparkColor: '#EF4444' },
+      { label: 'INVENTORY EXCESS',    value: '$900M',         trend: [600, 750, 900],   target: '<$200M',    gap: '4.2x vs 6.8x',      sparkColor: '#F59E0B' },
+    ],
+    CIO: [
+      { label: 'EINSTEIN STATUS',     value: 'Idle 18 months',trend: [0, 0, 0],         target: 'Active',    gap: '$248M idle',         sparkColor: '#EF4444' },
+      { label: 'AI ROI',              value: '8% ($12M)',     trend: [4, 6, 8],         target: '38%',       gap: '$44M shortfall',     sparkColor: '#EF4444' },
+      { label: 'ERP AI-READY',        value: '2 of 6 regions',trend: [1, 2, 2],         target: '6 of 6',    gap: 'SAP R/3 EOL 2027',  sparkColor: '#F59E0B' },
+      { label: 'O9 COMPLETION',       value: '40%',           trend: [10, 25, 40],      target: '100%',      gap: '18 months stalled',  sparkColor: '#F59E0B' },
+    ],
+    COO: [
+      { label: 'INVENTORY TURNS',     value: '4.2x',          trend: [5.2, 4.8, 4.2],  target: '6.8x',      gap: '$900M excess',       sparkColor: '#EF4444' },
+      { label: 'ON-TIME DELIVERY',    value: '71%',           trend: [74, 72, 71],      target: '88%',       gap: '−17pp vs benchmark', sparkColor: '#EF4444' },
+      { label: 'SHRINKAGE',           value: '2.8% ($515M)',  trend: [2.4, 2.6, 2.8],  target: '1.4%',      gap: '$259M excess',       sparkColor: '#F59E0B' },
+      { label: 'O9 COMPLETION',       value: '40%',           trend: [10, 25, 40],      target: '100%',      gap: '$900M blocked',      sparkColor: '#F59E0B' },
+    ],
+    CEO: [
+      { label: 'OPERATING MARGIN',    value: '3.2%',          trend: [4.8, 3.9, 3.2],  target: '6.5%',      gap: '$610M gap',          sparkColor: '#EF4444' },
+      { label: 'EINSTEIN STATUS',     value: 'Idle 18 months',trend: [0, 0, 0],         target: 'Active',    gap: '$248M idle',         sparkColor: '#EF4444' },
+      { label: 'SAP R/3 EOL',         value: 'Dec 2027',      trend: [0, 0, 0],         target: 'Migration started', gap: '20 months left', sparkColor: '#EF4444' },
+      { label: 'ECOM MARGIN',         value: '-2.1%',         trend: [-1.2, -1.8, -2.1], target: '+2.8%',   gap: 'Growing & negative', sparkColor: '#F59E0B' },
+    ],
+    Maestro: [
+      { label: 'OPERATING MARGIN',    value: '3.2%',          trend: [4.8, 3.9, 3.2],  target: '6.5%',      gap: '$610M gap'                              },
+      { label: 'EINSTEIN STATUS',     value: 'Idle 18 months',trend: [0, 0, 0],         target: 'Active',    gap: '$248M idle'                             },
+      { label: 'ECOM MARGIN',         value: '-2.1%',         trend: [-1.2, -1.8, -2.1], target: '+2.8%',   gap: '$615M drag'                             },
+      { label: 'SAP R/3 EOL',         value: 'Dec 2027',      trend: [0, 0, 0],         target: 'Migration started', gap: '20 months left'                 },
+    ],
+  },
 }
 
 const CLIENT_BENCHMARKS: Record<ClientId, BenchmarkItem[]> = {
@@ -414,6 +612,20 @@ const CLIENT_BENCHMARKS: Record<ClientId, BenchmarkItem[]> = {
     { label: 'Loyalty Active Rate',current: 42,   peerMedian: 55,   topQuartile: 68,   unit: '%'                         },
     { label: 'Ecommerce Revenue',  current: 18,   peerMedian: 28,   topQuartile: 42,   unit: '%'                         },
     { label: 'Operating Margin',   current: 3.8,  peerMedian: 5.2,  topQuartile: 8.1,  unit: '%'                         },
+  ],
+  arcturus: [
+    { label: 'Cost-to-Income Ratio',  current: 71,  peerMedian: 61,  topQuartile: 52,   unit: '%',   lowerIsBetter: true },
+    { label: 'AI ROI on Investment',  current: 0,   peerMedian: 38,  topQuartile: 72,   unit: '%'                        },
+    { label: 'Client Portal Adoption',current: 44,  peerMedian: 72,  topQuartile: 88,   unit: '%'                        },
+    { label: 'AUM per Employee',      current: 500, peerMedian: 620, topQuartile: 840,  unit: '$M'                       },
+    { label: 'AI Maturity Score',     current: 28,  peerMedian: 54,  topQuartile: 78,   unit: '/100'                     },
+  ],
+  nexora: [
+    { label: 'Operating Margin',      current: 3.2, peerMedian: 5.1, topQuartile: 7.8,  unit: '%'                        },
+    { label: 'Inventory Turns',       current: 4.2, peerMedian: 5.6, topQuartile: 7.4,  unit: 'x'                        },
+    { label: 'Shrinkage Rate',        current: 2.8, peerMedian: 1.4, topQuartile: 0.9,  unit: '%',   lowerIsBetter: true },
+    { label: 'AI ROI on Investment',  current: 8,   peerMedian: 38,  topQuartile: 72,   unit: '%'                        },
+    { label: 'Loyalty Active Rate',   current: 42,  peerMedian: 64,  topQuartile: 82,   unit: '%'                        },
   ],
 }
 
@@ -521,6 +733,8 @@ const TRAJECTORY_DATA: Record<ClientId, TrajData> = {
   meridian:     { title: 'Revenue is growing. Margin is collapsing.',     leftLabel: 'Revenue ($B)', rightLabel: 'Op. Margin (%)', leftPts: [9.8, 10.1, 10.5, 10.9, 11.2], rightPts: [3.8, 3.4, 3.2, 2.1, 1.8], years: ['FY21','FY22','FY23','FY24','FY25'] },
   firstcapital: { title: 'Assets are growing. Efficiency is deteriorating.', leftLabel: 'Assets ($B)',  rightLabel: 'Cost/Income (%)', leftPts: [16.2, 16.8, 17.2, 17.8, 18.0], rightPts: [62, 64, 65, 67, 68], years: ['FY21','FY22','FY23','FY24','FY25'] },
   apexretail:   { title: 'Revenue is growing. Margin is under pressure.',   leftLabel: 'Revenue ($B)', rightLabel: 'Op. Margin (%)', leftPts: [10.8, 11.2, 11.6, 11.9, 12.2], rightPts: [5.8, 5.2, 4.8, 4.2, 3.8], years: ['FY21','FY22','FY23','FY24','FY25'] },
+  arcturus:     { title: 'AUM is growing. Cost income ratio is worsening.', leftLabel: 'AUM ($B)',    rightLabel: 'Cost/Income (%)', leftPts: [12.8, 13.4, 14.2, 15.1, 16.2], rightPts: [65, 67, 69, 70, 71], years: ['FY21','FY22','FY23','FY24','FY25'] },
+  nexora:       { title: 'Revenue is growing. Operating margin is declining.', leftLabel: 'Revenue ($B)', rightLabel: 'Op. Margin (%)', leftPts: [14.8, 15.6, 16.4, 17.1, 18.2], rightPts: [5.4, 4.8, 4.2, 3.6, 3.2], years: ['FY21','FY22','FY23','FY24','FY25'] },
 }
 
 // Role-specific trajectory charts — each role sees the story most relevant to their mandate
@@ -538,6 +752,16 @@ const ROLE_TRAJECTORY: Record<ClientId, Partial<Record<string, TrajData>>> = {
     CMO: { title: 'Loyalty base is growing. Engagement is falling.',   leftLabel: 'Members (M)',       rightLabel: 'Active Rate (%)', leftPts: [14.2, 15.8, 16.9, 17.6, 18.0], rightPts: [52, 49, 46, 44, 42], years: ['FY21','FY22','FY23','FY24','FY25'] },
     CIO: { title: 'AI tools are multiplying. Integration is declining.',leftLabel: 'AI Tools (#)',      rightLabel: 'Integrated (%)', leftPts: [8, 12, 18, 24, 28],  rightPts: [60, 50, 42, 35, 30],    years: ['FY21','FY22','FY23','FY24','FY25'] },
     COO: { title: 'Revenue is growing. Inventory cost compounds.',      leftLabel: 'Revenue ($B)',      rightLabel: 'Inv. Turns (x)', leftPts: [10.8, 11.2, 11.6, 11.9, 12.2], rightPts: [5.8, 5.2, 4.8, 4.4, 4.2], years: ['FY21','FY22','FY23','FY24','FY25'] },
+  },
+  arcturus: {
+    CIO:  { title: 'AI investment is compounding. Outcomes are zero.',   leftLabel: 'AI Spend ($M)',    rightLabel: 'ROI (%)',         leftPts: [14, 22, 36, 58, 94],  rightPts: [12, 8, 4, 2, 0],         years: ['FY21','FY22','FY23','FY24','FY25'] },
+    CFO:  { title: 'AUM is growing. CIR keeps widening.',               leftLabel: 'AUM ($B)',          rightLabel: 'Cost/Income (%)', leftPts: [12.8, 13.4, 14.2, 15.1, 16.2], rightPts: [65, 67, 69, 70, 71], years: ['FY21','FY22','FY23','FY24','FY25'] },
+    CRO:  { title: 'AI models are proliferating. Governance is absent.', leftLabel: 'AI Models (#)',    rightLabel: 'Governed (%)',    leftPts: [4, 8, 14, 21, 28],    rightPts: [80, 62, 44, 28, 0],      years: ['FY21','FY22','FY23','FY24','FY25'] },
+  },
+  nexora: {
+    CMO:  { title: 'Loyalty members are growing. Engagement is flat.',   leftLabel: 'Members (M)',      rightLabel: 'Active Rate (%)', leftPts: [18.4, 22.6, 25.1, 27.2, 28.4], rightPts: [54, 50, 46, 44, 42], years: ['FY21','FY22','FY23','FY24','FY25'] },
+    COO:  { title: 'Revenue is growing. Inventory turns are declining.',  leftLabel: 'Revenue ($B)',     rightLabel: 'Inv. Turns (x)', leftPts: [14.8, 15.6, 16.4, 17.1, 18.2], rightPts: [5.8, 5.4, 5.0, 4.6, 4.2], years: ['FY21','FY22','FY23','FY24','FY25'] },
+    CFO:  { title: 'eCommerce is growing. It is margin-negative.',        leftLabel: 'eComm Revenue ($B)', rightLabel: 'eComm Margin (%)', leftPts: [2.4, 3.2, 4.4, 5.8, 7.2], rightPts: [0.8, 0.2, -0.4, -1.2, -2.1], years: ['FY21','FY22','FY23','FY24','FY25'] },
   },
 }
 
@@ -855,6 +1079,20 @@ const STATIC_CONTRADICTIONS: Record<ClientId, TensionRow[]> = {
     { id:'AX-C4', reported:'Cart recovery flows active', reportedSub:'eCommerce update · Jan 2026',     actual:'Infrastructure not connected', actualSub:'eCommerce audit · March 2026',    gap:'$840M unrealized', gapSub:'Segment + Klaviyo idle',  reportedBy:'eCommerce Q4 update · January 2026',                     dataSource:'eCommerce platform audit · March 2026',                   gapStarted:'Q2 2025' },
     { id:'AX-C5', reported:'AI strategy approved',    reportedSub:'Board minutes · Q1 2026',            actual:'CDO vacant · no owner',   actualSub:'HR records · April 2026',             gap:'Roadmap stalled',  gapSub:'No implementation leader', reportedBy:'Board minutes · January 2026',                           dataSource:'HR org chart · April 2026',                               gapStarted:'Q1 2025' },
   ],
+  arcturus: [
+    { id:'AR-C1', reported:'AI programme delivering ROI',  reportedSub:'CIO board update · Q3 2025',     actual:'$0 verified return on $94M', actualSub:'AI investment audit · March 2026',  gap:'$94M untracked',   gapSub:'Zero baselines locked',    reportedBy:'Raj Malhotra (CIO) · Q3 2025 board update',              dataSource:'AI investment audit · March 2026',                         gapStarted:'Q3 2024' },
+    { id:'AR-C2', reported:'CDO search in final round',    reportedSub:'Board update · Q2 2025',         actual:'Vacant 11 months',           actualSub:'HR records · April 2026',           gap:'AI has no owner',  gapSub:'11 months of paralysis',   reportedBy:'Board presentation · Q2 2025',                           dataSource:'HR records · CDO role vacant since May 2025',              gapStarted:'May 2025' },
+    { id:'AR-C3', reported:'MAS FEAT remediation underway',reportedSub:'CRO board brief · Q4 2025',      actual:'4 months overdue',           actualSub:'MAS correspondence · April 2026',   gap:'Regulatory risk',  gapSub:'Examination letter received', reportedBy:'Sarah Chen (CRO) · Q4 2025 board brief',                dataSource:'MAS FEAT correspondence · April 2026',                     gapStarted:'Q4 2025' },
+    { id:'AR-C4', reported:'Aladdin stress testing daily', reportedSub:'Risk committee · Q3 2025',       actual:'Monthly configuration only', actualSub:'Aladdin audit log · March 2026',    gap:'SEC exposure',     gapSub:'$500B AUM requirement',    reportedBy:'Risk committee minutes · Q3 2025',                       dataSource:'BlackRock Aladdin configuration audit · March 2026',       gapStarted:'Q2 2025' },
+    { id:'AR-C5', reported:'Salesforce FSC adopted',       reportedSub:'CRM programme update · Q4 2025', actual:'44% user adoption',         actualSub:'Salesforce analytics · April 2026',  gap:'56% dark',         gapSub:'Churn model data incomplete', reportedBy:'CRM programme director · Q4 2025 update',               dataSource:'Salesforce adoption analytics · April 2026',               gapStarted:'Q3 2024' },
+  ],
+  nexora: [
+    { id:'NX-C1', reported:'Einstein personalisation live',reportedSub:'Salesforce contract · Jan 2024', actual:'Never activated',            actualSub:'Einstein audit · March 2026',       gap:'$248M idle',       gapSub:'18 months, zero activation', reportedBy:'Salesforce contract inception · January 2024',           dataSource:'Einstein activation audit · March 2026',                   gapStarted:'Contract inception Jan 2024' },
+    { id:'NX-C2', reported:'o9 implementation complete',   reportedSub:'CSCO update · Q2 2025',          actual:'40% after 18 months',        actualSub:'o9 project review · March 2026',    gap:'$180M trapped',    gapSub:'NA only · 4 regions pending', reportedBy:'CSCO quarterly report · Q2 2025',                        dataSource:'o9 programme review · March 2026',                         gapStarted:'Q4 2024' },
+    { id:'NX-C3', reported:'E-commerce profitable',        reportedSub:'CEO investor update · Q3 2025',  actual:'-2.1% contribution margin',  actualSub:'CFO management accounts · Q1 2026', gap:'$615M drag',       gapSub:'Growing a loss-making channel', reportedBy:'CEO investor update · Q3 2025',                          dataSource:'CFO management accounts · Q1 2026',                        gapStarted:'Q3 2024' },
+    { id:'NX-C4', reported:'SAP migration on roadmap',     reportedSub:'IT strategy document · 2024',    actual:'Not started · 20 months to EOL', actualSub:'IT audit · April 2026',         gap:'Forced migration',  gapSub:'Dec 2027 hard EOL',         reportedBy:'IT 5-year strategy · 2024',                              dataSource:'SAP EOL notice + IT audit · April 2026',                   gapStarted:'EOL announced 2024' },
+    { id:'NX-C5', reported:'Shrinkage AI expanding',       reportedSub:'COO board brief · Q4 2025',      actual:'12 stores only · no sponsor', actualSub:'Operations audit · March 2026',    gap:'$259M idle',       gapSub:'2,388 stores waiting',      reportedBy:'Priya Krishnamurthy (COO) · Q4 2025 board',              dataSource:'Operations programme audit · March 2026',                  gapStarted:'Q3 2025' },
+  ],
 }
 
 function Zone2({ clientId }: { clientId: ClientId }) {
@@ -955,6 +1193,20 @@ function Zone3({ clientId }: { clientId: ClientId }) {
       { level: 'HIGH', text: 'o9 at 40% → $6.8M paid, $180M inventory still trapped' },
       { level: 'MEDIUM', text: 'CDP fragmentation → CCPA compliance risk + personalization blocked' },
       { level: 'MEDIUM', text: '68% store turnover → AI training investment wasted on staff who leave' },
+    ],
+    arcturus: [
+      { level: 'HIGH', text: 'CDO vacancy 11 months → AI governance absent, MAS FEAT 4 months overdue' },
+      { level: 'HIGH', text: '$94M AI investment with $0 verified return → CFO scrutiny mounting' },
+      { level: 'HIGH', text: 'MAS FEAT overdue → regulatory examination risk, potential business restriction' },
+      { level: 'MEDIUM', text: 'Bloomberg AIM Dec 2026 auto-renewal → no negotiation strategy in place' },
+      { level: 'MEDIUM', text: 'Salesforce FSC 44% adoption → churn model trained on incomplete client data' },
+    ],
+    nexora: [
+      { level: 'HIGH', text: 'Einstein idle 18 months → $248M annual revenue opportunity compounding daily' },
+      { level: 'HIGH', text: 'SAP R/3 EOL Dec 2027 → forced migration with 8,200 customisations and 20 months left' },
+      { level: 'HIGH', text: 'eCommerce -2.1% margin → CFO may block AI investment entirely if not resolved' },
+      { level: 'MEDIUM', text: 'o9 at 40% stalled → $900M inventory trapped, COO credibility at risk' },
+      { level: 'MEDIUM', text: 'Shrinkage AI pilot no sponsor → $259M opportunity with no scale decision' },
     ],
   }
 
@@ -1314,11 +1566,15 @@ function DiagnoseContent() {
 
   const meta = CLIENT_META[activeClient]
   const issues = ISSUES[activeClient]
-  const ROLES: RoleId[] = activeClient === 'apexretail'
-    ? ['CMO', 'CFO', 'COO', 'CEO', 'CIO', 'Maestro']
-    : activeClient === 'firstcapital'
-      ? ['CIO', 'CFO', 'COO', 'CMO', 'CEO', 'Maestro']
-      : ['CIO', 'CFO', 'COO', 'CMIO', 'CEO', 'Maestro']
+  const ROLES: RoleId[] = activeClient === 'arcturus'
+    ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
+    : activeClient === 'nexora'
+      ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
+      : activeClient === 'apexretail'
+        ? ['CMO', 'CFO', 'COO', 'CEO', 'CIO', 'Maestro']
+        : activeClient === 'firstcapital'
+          ? ['CIO', 'CFO', 'COO', 'CMO', 'CEO', 'Maestro']
+          : ['CIO', 'CFO', 'COO', 'CMIO', 'CEO', 'Maestro']
 
   // Animate confidence on load / client change
   useEffect(() => {
@@ -1340,39 +1596,60 @@ function DiagnoseContent() {
   }
 
   return (
-    <PageShell activePage="diagnose" clientId={activeClient}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
 
       {/* Product header */}
-      <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '20px 48px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 800, color: T.teal, letterSpacing: '0.14em', fontFamily: T.mono, marginBottom: '8px' }}>
-              ⚡ SITUATION INTELLIGENCE
-            </div>
-            <div style={{ fontSize: '28px', fontWeight: 500, color: T.text, marginBottom: '12px', maxWidth: '640px', lineHeight: 1.3, fontFamily: "'Fraunces', Georgia, serif" }}>
-              "What's actually broken — and what is it costing you?"
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '13px', color: T.text3 }}>
-                Data confidence: <span style={{ fontWeight: 700, color: confidence >= meta.confidence ? meta.color : T.amber }}>{confidence}%</span>
-              </span>
-              <div style={{ display: 'flex', gap: '6px' }}>
-                {(['meridian', 'firstcapital', 'apexretail'] as ClientId[]).map(c => (
-                  <button
-                    key={c}
-                    onClick={() => { setActiveClient(c); setStep(1); setCompletedSteps(new Set([1])) }}
-                    style={{ padding: '4px 12px', background: activeClient === c ? CLIENT_META[c].color + '20' : 'transparent', border: '1px solid ' + (activeClient === c ? CLIENT_META[c].color + '60' : T.border), borderRadius: '6px', fontSize: '11px', fontWeight: activeClient === c ? 700 : 500, color: activeClient === c ? CLIENT_META[c].color : T.text3, cursor: 'pointer', fontFamily: T.sans }}
-                  >
-                    {CLIENT_META[c].name.split(' ')[0]}
-                  </button>
-                ))}
+      <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border }}>
+        <div style={{ padding: '20px 48px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '10px', fontWeight: 800, color: T.teal, letterSpacing: '0.14em', fontFamily: T.mono, marginBottom: '8px' }}>
+                ⚡ SITUATION INTELLIGENCE
+              </div>
+              <div style={{ fontSize: '28px', fontWeight: 500, color: T.text, marginBottom: '12px', maxWidth: '640px', lineHeight: 1.3, fontFamily: "'Fraunces', Georgia, serif" }}>
+                "What's actually broken — and what is it costing you?"
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '13px', color: T.text3 }}>
+                  Data confidence: <span style={{ fontWeight: 700, color: confidence >= meta.confidence ? meta.color : T.amber }}>{confidence}%</span>
+                </span>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                  {(Object.keys(CLIENT_META) as ClientId[]).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => { setActiveClient(c); setStep(1); setCompletedSteps(new Set([1])); setRole('Maestro') }}
+                      style={{ padding: '3px 10px', background: activeClient === c ? CLIENT_META[c].color + '20' : 'transparent', border: '1px solid ' + (activeClient === c ? CLIENT_META[c].color + '50' : T.border), borderRadius: '5px', fontSize: '10px', fontWeight: activeClient === c ? 700 : 400, color: activeClient === c ? CLIENT_META[c].color : T.text3, cursor: 'pointer', fontFamily: T.sans }}
+                    >
+                      {CLIENT_META[c].name.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: T.mono }}>VIEWING AS</div>
+              <div style={{ fontSize: '16px', fontWeight: 800, color: T.teal }}>{role}</div>
+            </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px', fontFamily: T.mono }}>VIEWING AS</div>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: T.text }}>{role}</div>
-          </div>
+        </div>
+        {/* Role tabs strip */}
+        <div style={{ borderTop: '1px solid ' + T.border, padding: '8px 48px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '9px', fontWeight: 700, color: T.text2, fontFamily: T.mono, letterSpacing: '0.1em', marginRight: '8px', flexShrink: 0 }}>VIEWING AS</span>
+          {ROLES.map(r => (
+            <button key={r} onClick={() => setRole(r)}
+              style={{
+                padding: '4px 14px', height: '28px',
+                background: role === r ? T.teal : 'transparent',
+                border: `1px solid ${role === r ? T.teal : 'rgba(239,246,255,0.12)'}`,
+                borderRadius: '20px',
+                fontSize: '11px', fontWeight: role === r ? 700 : 400,
+                color: role === r ? '#060A12' : T.text2,
+                cursor: 'pointer', fontFamily: T.sans,
+                whiteSpace: 'nowrap' as const,
+                transition: 'all 0.12s',
+              }}
+            >{r}</button>
+          ))}
         </div>
       </div>
 
@@ -1444,28 +1721,7 @@ function DiagnoseContent() {
         )}
       </div>
 
-      {/* Role switcher — persistent bottom bar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0A1628', borderTop: '1px solid ' + T.border, padding: '10px 48px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 40 }}>
-        <span style={{ fontSize: '10px', fontWeight: 700, color: T.text2, letterSpacing: '0.1em', marginRight: '10px', fontFamily: T.mono }}>VIEWING AS:</span>
-        {ROLES.map(r => (
-          <button
-            key={r}
-            onClick={() => setRole(r)}
-            style={{
-              padding: '5px 14px',
-              background: role === r ? T.teal : 'transparent',
-              border: '1px solid ' + (role === r ? T.teal : 'rgba(239,246,255,0.2)'),
-              borderRadius: '6px',
-              fontSize: '12px', fontWeight: role === r ? 700 : 500,
-              color: role === r ? '#060A12' : '#EFF6FF',
-              cursor: 'pointer', fontFamily: T.sans,
-            }}
-          >
-            {r}
-          </button>
-        ))}
-      </div>
-    </PageShell>
+    </div>
   )
 }
 

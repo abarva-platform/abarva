@@ -1,7 +1,6 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PageShell from '@/components/PageShell'
 import { supabase } from '@/lib/supabase'
 import { FAILURE_PATTERNS, MERIDIAN_GENOME_SUMMARY } from '@/data/knowledge/failure-patterns'
 
@@ -265,6 +264,119 @@ const CLIENT_DATA: Record<string, ClientProfile> = {
     metrics: { bets: 5, analyzed: 12, value3yr: '$2.1B', peers: 38, patterns: 127, confidence: 83 },
     cxo: 'Margaret Chen, CEO',
   },
+  arcturus: {
+    name: 'Arcturus Financial Group',
+    tagline: 'Where should we place our AI bets — and what is blocking the technology we already own?',
+    readiness: { data: 32, tech: 28, org: 35 },
+    percentiles: { data: '28th', tech: '19th', org: '29th' },
+    gaugeBreakdown: {
+      data: {
+        clientItems: ['Bloomberg AIM positions ✓ (siloed)', 'Aladdin risk data ✓ (disconnected)', 'FSC CRM ✓ (44% adoption)', 'Golden record ✗', 'Unified data model ✗'],
+        industryNote: 'Asset managers at 32% data readiness can pursue regulatory compliance AI and stress testing automation — data-intensive AI requires golden record as foundation',
+        genomeNote: '14 siloed systems without golden record — Genome shows 88% of portfolio construction AI programmes fail at this data maturity stage',
+      },
+      tech: {
+        clientItems: ['Azure cloud ✓', 'Salesforce FSC ✓ (44% adoption)', 'Bloomberg AIM (28yr, limited API) ✗', 'No ML platform ✗', 'No MLOps ✗'],
+        industryNote: '19th percentile tech readiness is driven by Bloomberg AIM API constraints — cloud infrastructure exists but AI execution layer is absent',
+        genomeNote: 'Bloomberg AIM API layer is the fastest tech unlocker — resolves 80% of AI data access issues without core migration risk',
+      },
+      org: {
+        clientItems: ['CEO champion ✓', 'CRO urgency (MAS FEAT) ✓', 'CDO vacant 11 months ✗', 'CFO skeptic ✗', 'CRO blocking deployments ✗'],
+        industryNote: '29th percentile org readiness manageable with CEO champion — regulatory pressure is a forcing function for governance AI investment',
+        genomeNote: 'CDO vacancy is highest-risk org signal. Interim CDO appointment reduces programme failure probability by 64% within 30 days',
+      },
+    },
+    faultLines: [
+      { side1: 'CEO: "AI is our strategy"', side2: 'CRO: "Governance first"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'CRO is right — deploying AI without governance creates MAS FEAT liability. CEO goal and CRO constraint are sequential, not opposing', genomeNote: 'Organisations that resolved this by framing governance as enablement (not restriction) deployed 3.2x more AI in Year 2', talkingPoint: 'Reframe for CEO: governance IS the AI strategy in a regulated environment. Every model you govern is a model regulators allow you to use.' },
+      { side1: 'CIO: "Foundation first"', side2: 'CFO: "Show me ROI first"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'Golden record (Wave 1) produces $35M in reporting and data access savings before portfolio construction AI. CFO ROI is Wave 1, not Wave 3', genomeNote: 'In 18 similar asset managers with this fault line unresolved, AI programme ROI was 52% lower over 24 months', talkingPoint: 'Show CFO the Wave 1 ROI from governance + churn remediation + stress testing — $172M annual value without the golden record being complete' },
+      { side1: 'CFO: "Cut the IT budget"', side2: 'CIO: "Investment required"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'IT budget 4.2% of revenue vs 3.1% peer — $178M above benchmark. But cutting without rationalisation removes AI-enabling infrastructure', genomeNote: 'Budget cuts without CDO-led rationalisation reduce AI ROI by 71% — rationalisation first, then cuts', talkingPoint: 'CDO rationalisation delivers $40-60M IT savings while funding AI — the CFO gets the budget reduction as an output of AI investment, not a pre-condition' },
+      { side1: 'CRO: "Freeze all AI"', side2: 'CIO: "Need to deploy AI"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'CRO freeze is legitimate but blocking $94M portfolio and competitive capability. Governance framework resolves the freeze in 6 months', genomeNote: 'CRO freeze with governance pathway resolved in 71% of cases within 6 months — faster than any alternative', talkingPoint: 'CRO freeze is the most important signal — it means the path is governancefirst, not resistance. Present the 6-month framework as the resolution.' },
+      { side1: 'CEO: "CDO search ongoing"', side2: 'CIO: "Need CDO now"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: '11 months is 3x the median CDO search time. Interim appointment in Week 1 costs nothing and unblocks 14 initiatives', genomeNote: 'Interim CDO (3-6 months) succeeds in unlocking AI programme in 84% of cases — preferred to waiting for permanent hire', talkingPoint: 'Appoint interim CDO from existing team this week. Permanent search continues. The cost of another week of vacancy is $5M in unrealised AI value.' },
+    ],
+    bets: [
+      { id: 'governance', rank: 1, name: 'AI Governance and Model Risk Framework', category: 'Compliance · Middle Office', phase: 'Protect', wave: 'Wave 1 · 90 days', annualValueLow: 25, annualValueHigh: 35, confidence: 86, roi: 8, timeline: '6 months to full compliance', failureRisk: 'MEDIUM', fromData: ['0 of 28 AI models governed', 'MAS FEAT overdue 4 months', 'CRO has frozen deployments'], fromIndustry: ['6 governance deployments analysed', 'IBM OpenPages median 8-month implementation', 'Regulatory penalty precedent: $47M for FEAT breach'], fromGenome: ['Governance framework = deployment unlock', 'CRO sign-off restores $94M pipeline', 'CDO vacancy is primary risk'], objection: 'Governance is overhead, not value creation.', response: 'Governance unlocks the CRO freeze on new AI deployments. The $94M stalled portfolio becomes deployable the moment a governance framework exists. This is the master key.', leadDataPoint: 'MAS FEAT overdue 4 months — $2.4B Singapore AUM at regulatory risk right now' },
+      { id: 'goldenrecord', rank: 2, name: 'Golden Record Data Foundation', category: 'Technology · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 28, annualValueHigh: 35, confidence: 74, roi: 2.9, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['14 data silos, no golden record', '3-day reporting lag', '18 of 28 AI initiatives blocked'], fromIndustry: ['9 MDM deployments analysed', 'Informatica median 10-month implementation', '3-day lag → real-time: $12M annual savings'], fromGenome: ['Foundation bet — unlocks 18 AI initiatives', 'Without golden record, Wave 2 and 3 cannot proceed', 'CDO must own this programme'], objection: 'We have tried to unify data before and it failed.', response: 'Previous attempts lacked a CDO owner — every data unification that succeeds has a named executive owner. This is the prerequisite for golden record success, not a technology challenge.', leadDataPoint: '18 of 28 AI initiatives cannot proceed without golden record — this is the single most value-unlocking infrastructure investment available' },
+      { id: 'stresstesting', rank: 3, name: 'Daily Aladdin Stress Testing', category: 'Risk · Back Office', phase: 'Protect', wave: 'Wave 1 · 30 days', annualValueLow: 14, annualValueHigh: 18, confidence: 92, roi: 7.5, timeline: '6 weeks to compliance', failureRisk: 'LOW', fromData: ['SEC requirement: daily', 'Aladdin configured: monthly', 'Configuration-only fix — no new vendor'], fromIndustry: ['Aladdin configuration upgrade: 4-week average', 'No competitive replacement required', 'Direct SEC compliance path'], fromGenome: ['Highest-confidence bet — no integration risk', 'Fastest ROI: 6 weeks to compliance', 'SEC examination risk removed immediately'], objection: 'Our risk team says monthly is adequate.', response: 'SEC stated requirement is daily for AUM above $500B. Monthly is not adequate — it is a compliance gap. This is not a judgement call; it is a documented regulatory requirement.', leadDataPoint: 'SEC daily stress testing requirement — currently monthly. Direct examination risk with no technical complexity to resolve it.' },
+      { id: 'churnremediation', rank: 4, name: 'Client Churn Prediction (Remediated)', category: 'Client Intelligence · Front Office', phase: 'Retain', wave: 'Wave 1 · 90 days', annualValueLow: 64, annualValueHigh: 84, confidence: 72, roi: 26, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['Model exists — 44% data coverage only', '56% of client signals missing', 'FSC at 44% adoption'], fromIndustry: ['9 similar deployments analysed', 'Churn model with 85%+ data coverage: 3.4x better accuracy', 'Retraining sprint: 60 days'], fromGenome: ['Data gap is the single blocker', 'FSC adoption target unlocks full model performance', 'CDO must govern the retraining'], objection: 'The churn model failed — why would a retrained version work?', response: 'The model did not fail — it was trained on incomplete data. 44% adoption means the model only sees 44% of client signals. Remediate the data gap, retrain on complete data, and accuracy reaches peer levels.', leadDataPoint: '$280M in AUM at churn risk — current model misses 56% of at-risk clients due to data gap' },
+      { id: 'esg', rank: 5, name: 'Automated ESG Scoring', category: 'Investment Intelligence · Middle Office', phase: 'Grow', wave: 'Wave 2 · 6 months', annualValueLow: 38, annualValueHigh: 45, confidence: 68, roi: 7, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['ESG mandates: 3 institutional clients', 'No CDO to govern data standards', 'Compliance block on sign-off'], fromIndustry: ['7 ESG AI deployments analysed', 'Clarity AI median: 8 months to production', 'ESG premium AUM: $45M annual uplift'], fromGenome: ['CDO governance prerequisite required', 'Wave 2 — after governance framework live', 'Compliance sign-off requires CDO-governed data standards'], objection: 'ESG data quality is inconsistent — AI scoring will be wrong.', response: 'ESG data inconsistency is the reason you need AI — not the reason to avoid it. ML identifies the most reliable signals and flags inconsistent sources. Clarity AI has done this at 40+ asset managers.', leadDataPoint: '3 institutional clients with ESG mandates at risk. $45M AUM premium from ESG-certified portfolios. CDO governance unlocks this.' },
+    ],
+    opportunities: [
+      { id: 'mo-001', name: 'AI Governance Framework', value: 35000000, complexity: 'medium', confidence: 86, wave: 1, isBet: true },
+      { id: 'bo-001', name: 'Golden Record Infrastructure', value: 35000000, complexity: 'high', confidence: 74, wave: 1, isBet: true },
+      { id: 'bo-002', name: 'Daily Stress Testing', value: 18000000, complexity: 'medium', confidence: 92, wave: 1, isBet: true },
+      { id: 'fo-001', name: 'Client Churn Prediction', value: 84000000, complexity: 'medium', confidence: 72, wave: 1, isBet: true },
+      { id: 'mo-003', name: 'ESG Scoring', value: 45000000, complexity: 'high', confidence: 68, wave: 2, isBet: true },
+      { id: 'fo-002', name: 'Portfolio Construction AI', value: 120000000, complexity: 'high', confidence: 42, wave: 3, isBet: false },
+      { id: 'fo-003', name: 'Client Reporting AI', value: 22000000, complexity: 'medium', confidence: 58, wave: 2, isBet: false },
+      { id: 'mo-002', name: 'Regulatory Change Monitor', value: 15000000, complexity: 'medium', confidence: 64, wave: 2, isBet: false },
+      { id: 'mo-004', name: 'Advisor Productivity', value: 38000000, complexity: 'medium', confidence: 62, wave: 2, isBet: false },
+      { id: 'bo-003', name: 'Bloomberg API Layer', value: 28000000, complexity: 'high', confidence: 52, wave: 2, isBet: false },
+    ],
+    wave1Plan: {
+      days1_30: { tasks: ['Interim CDO appointed', 'MAS FEAT model inventory completed', 'AI governance scope agreed'], owner: 'CRO + CEO', investment: '$2M' },
+      days31_60: { tasks: ['Governance framework live', 'Daily Aladdin stress testing live', 'Churn model data gap analysis'], owner: 'CDO (interim) + CIO', investment: '$4M' },
+      days61_90: { tasks: ['AI portfolio baselines locked', 'Churn model retraining started', 'Golden record vendor selected'], owner: 'CDO + CFO', investment: '$2M' },
+      total: { investment: '$22M', annualValue: '$172M', roi: '7.9x' },
+    },
+    metrics: { bets: 5, analyzed: 10, value3yr: '$1.2B', peers: 42, patterns: 127, confidence: 88 },
+    cxo: 'Victoria Hargreaves, CEO',
+  },
+  nexora: {
+    name: 'Nexora Retail & Consumer',
+    tagline: 'Where should we activate first — and why has built-not-deployed become the pattern?',
+    readiness: { data: 38, tech: 48, org: 42 },
+    percentiles: { data: '32nd', tech: '51st', org: '38th' },
+    gaugeBreakdown: {
+      data: {
+        clientItems: ['SFCC transaction data ✓', 'Loyalty data ✓ (unactivated)', 'Databricks churn model ✓ (not deployed)', '6 ERP regions ✗ (not unified)', 'Supplier data ✗'],
+        industryNote: 'Retailers at 38% data readiness can activate existing tools (Einstein, Klaviyo) and deploy validated models — no new data investment required for Wave 1',
+        genomeNote: 'Identity and loyalty data is available — activation sprint (6 weeks) unlocks 3 of 5 Wave 1 opportunities without new data infrastructure',
+      },
+      tech: {
+        clientItems: ['Salesforce SFCC ✓', 'Einstein licensed ✓ (not activated)', 'Klaviyo + Segment ✓ (not connected)', 'Databricks ✓ (APAC only)', 'o9 Solutions ✓ (40% implemented)'],
+        industryNote: '51st percentile tech readiness — tools exist and are paid for. Activation is the gap, not technology investment.',
+        genomeNote: 'Built-not-deployed pattern: organisations with $148M invested and $12M returned have the highest short-term ROI potential — activation beats build by 30x here',
+      },
+      org: {
+        clientItems: ['CMO champion ✓', 'COO inventory urgency ✓', 'CIO/CMO ownership dispute ✗', 'No CDO ✗', 'CFO mandate (ecom margin) ✗'],
+        industryNote: '38th percentile org readiness driven by CIO/CMO ownership dispute — resolve this one conflict and the programme unlocks',
+        genomeNote: 'Ownership dispute on highest-ROI initiative (Einstein) is the primary stall signal — week-one resolution unlocks $248M',
+      },
+    },
+    faultLines: [
+      { side1: 'CMO: "Einstein activation now"', side2: 'CIO: "Who owns it?"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: '18 months of ownership dispute has cost $252M in foregone Einstein revenue. Resolve this week, not this quarter.', genomeNote: 'Ownership disputes on AI assets resolved by CEO appointment (vs negotiation) succeed in 94% of cases — average 4 days to resolution', talkingPoint: 'CEO needs to appoint a single owner in writing. CMO and CIO have both proven the dispute cannot self-resolve.' },
+      { side1: 'CFO: "No new AI investment"', side2: 'CMO: "Einstein pays for itself"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'Einstein activation cost is $1.2M — license already paid at $14M/yr. 207:1 ROI. CFO will approve $1.2M once the ownership issue is resolved.', genomeNote: 'CMO is right and CFO will agree — the dispute is about ownership, not budget. Resolve ownership first, budget second.', talkingPoint: 'Show CFO the $1.2M activation cost vs $14M/yr already paying — this is not a budget conversation, it is an execution conversation.' },
+      { side1: 'COO: "Finish o9 first"', side2: 'CEO: "New AI capabilities"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'o9 completion (9 months) and Einstein activation (8 weeks) run in parallel — different teams, different budgets. Not a sequencing conflict.', genomeNote: 'Parallel track success rate: 84% when initiatives are truly non-dependent. o9 and Einstein share no dependencies.', talkingPoint: 'COO and CEO are both right — show them the parallel track plan. Same budget period, both complete.' },
+      { side1: 'CFO: "Ecom margin first"', side2: 'CEO: "Ecom growth"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'E-commerce at -2.1% margin. Growing this channel at current cost structure destroys blended margin. CFO is correct — margin fix must precede volume growth.', genomeNote: 'Growing negative-margin channels has 78% probability of requiring emergency cost restructuring — CFO urgency is correct', talkingPoint: 'Fulfilment cost reduction and return friction are achievable in 9 months. CFO gets margin positive before the next budget cycle.' },
+      { side1: 'CMO: "Loyalty reactivation"', side2: 'CIO: "Data quality first"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Loyalty data at 45% readiness is sufficient for Einstein personalisation — Wave 1 works at this quality. CIO data concern is Wave 2, not Wave 1.', genomeNote: 'Einstein activation at 45% data readiness achieves 68% of full personalisation value — sufficient for Wave 1 ROI case', talkingPoint: 'CIO data concern is real but Wave 2. Einstein delivers significant value at current data quality — do not wait for perfection.' },
+    ],
+    bets: [
+      { id: 'einstein-act', rank: 1, name: 'Einstein Personalisation Activation', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 8 weeks', annualValueLow: 180, annualValueHigh: 248, confidence: 88, roi: 207, timeline: '8 weeks to first revenue', failureRisk: 'LOW', fromData: ['Einstein: licensed, never activated', '28.4M loyalty members untouched', '$14M/yr license paid for 18 months'], fromIndustry: ['12 Einstein activations analysed', 'Avg activation: 8 weeks', 'Avg Year 1 uplift: $94M at comparable loyalty scale'], fromGenome: ['Highest ROI bet in retail dataset', '207:1 on activation cost', 'Ownership dispute is only risk'], objection: 'We have discussed Einstein activation for 18 months and nothing has happened.', response: 'The barrier was ownership, not technology. Appoint a single executive owner this week. With that resolved, 8 weeks to revenue is achievable and documented in 12 peer activations.', leadDataPoint: '$14M/yr license paid for 18 months — $252M in cumulative lost opportunity. Week 1 owner appointment is the only missing piece.' },
+      { id: 'cart-recovery', rank: 2, name: 'Cart Recovery (Klaviyo + Segment)', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 8 weeks', annualValueLow: 54, annualValueHigh: 68, confidence: 89, roi: 85, timeline: '8 weeks to recovery', failureRisk: 'LOW', fromData: ['Triggers built in Klaviyo', 'Segment connected to SFCC', 'Cart abandonment: 72% vs 58% benchmark'], fromIndustry: ['19 Klaviyo+Segment deployments analysed', 'Avg cart recovery rate: 14-18%', 'Platform activation: 6-8 weeks average'], fromGenome: ['Infrastructure already paid — activation only', '89% success rate for this exact setup', 'Platform team coordination is the only risk'], objection: 'We built this and it did not get deployed.', response: 'Platform teams were not coordinated end-to-end. The fix is a single joint kick-off with Klaviyo, Segment, and SFCC teams — documented in 8 weeks at comparable retailers.', leadDataPoint: '$68M cart recovery opportunity. Infrastructure paid for. Platform team coordination is the only requirement.' },
+      { id: 'o9-complete', rank: 3, name: 'o9 Demand Forecasting Completion', category: 'Supply Chain · Middle Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 120, annualValueHigh: 180, confidence: 78, roi: 50, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['o9 40% complete after 18 months', '$6.8M invested', '$900M excess inventory'], fromIndustry: ['22 o9 completion engagements analysed', 'Completion success rate: 85%', 'Restart success rate: 58%'], fromGenome: ['Finish vs restart: completion wins in 92% of cases', 'Fixed-fee completion contract required', 'COO ownership is prerequisite'], objection: 'o9 has already failed once — why continue?', response: 'o9 stalled, not failed. 40% is implemented and working in North America. The remaining 60% is a known scope on a proven platform. Completion success rate is 85% vs 58% for restart.', leadDataPoint: '$6.8M already invested and working in NA. $900M inventory excess is the business case for completing what was started.' },
+      { id: 'shrinkage-scale', rank: 4, name: 'Shrinkage AI Detection Scale', category: 'Operations · Middle Office', phase: 'Save', wave: 'Wave 2 · 6 months', annualValueLow: 100, annualValueHigh: 130, confidence: 82, roi: 15, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['12-store pilot: 34% shrinkage reduction', '$259M excess vs benchmark', 'No executive sponsor named'], fromIndustry: ['14 shrinkage AI scale programmes analysed', 'Median ROI: 14x on scale investment', 'Store rollout: 200 stores/month achievable'], fromGenome: ['Pilot proven — scale decision is the only variable', 'Executive sponsor naming is prerequisite for scale success', 'Wave 2 after Einstein ROI validated'], objection: 'Pilots always look good — scale is different.', response: 'This pilot ran for 6 months across 12 stores. The Genome has 14 comparable scale programmes — all succeeded when: pilot ran >6 months, executive sponsor named, rollout team dedicated. All three conditions are achievable in 30 days.', leadDataPoint: '12-store pilot proven. $130M annual recovery at 2,400 stores. Executive sponsor appointment is the only gate.' },
+      { id: 'fulfilment', rank: 5, name: 'E-Commerce Fulfilment Cost Reduction', category: 'Operations · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 180, annualValueHigh: 269, confidence: 76, roi: 56, timeline: '9 months to margin improvement', failureRisk: 'MEDIUM', fromData: ['Fulfilment: $18.40/order vs $11.20 target', 'Return rate 28% vs 18% industry', '$615M annual drag combined'], fromIndustry: ['18 carrier consolidation programmes analysed', 'Median fulfilment savings: $4.80/order in year 1', 'Return friction ($3-5 charge): 31% return rate reduction'], fromGenome: ['CFO mandate makes this non-optional', 'Carrier consolidation + return friction closes 60% of margin gap', 'Manhattan Associates and Shipbob preferred at this order volume'], objection: 'Return friction will reduce conversion.', response: 'Return friction reduces casual returns by 31% and maintains 94% of purchase conversion at comparable retailers. The customer who buys with intent is not deterred — the chronic returner is.', leadDataPoint: '$615M annual fulfilment + returns drag. CFO has mandated ecom margin positive — this programme is the path.' },
+    ],
+    opportunities: [
+      { id: 'fo-001', name: 'Einstein Activation', value: 248000000, complexity: 'low', confidence: 88, wave: 1, isBet: true },
+      { id: 'fo-002', name: 'Cart Recovery', value: 68000000, complexity: 'low', confidence: 89, wave: 1, isBet: true },
+      { id: 'mo-001', name: 'o9 Completion', value: 180000000, complexity: 'medium', confidence: 78, wave: 1, isBet: true },
+      { id: 'mo-002', name: 'Shrinkage AI Scale', value: 130000000, complexity: 'medium', confidence: 82, wave: 2, isBet: true },
+      { id: 'bo-002', name: 'Fulfilment Cost Reduction', value: 269000000, complexity: 'medium', confidence: 76, wave: 1, isBet: true },
+      { id: 'fo-003', name: 'Loyalty Reactivation', value: 84000000, complexity: 'medium', confidence: 72, wave: 1, isBet: false },
+      { id: 'bo-001', name: 'SAP R/3 Migration', value: 0, complexity: 'high', confidence: 94, wave: 1, isBet: false },
+      { id: 'mo-003', name: 'Store Traffic AI', value: 85000000, complexity: 'high', confidence: 48, wave: 3, isBet: false },
+      { id: 'bo-003', name: 'Supplier Risk Intelligence', value: 45000000, complexity: 'medium', confidence: 62, wave: 2, isBet: false },
+    ],
+    wave1Plan: {
+      days1_30: { tasks: ['CEO appoints Einstein owner', 'Baseline locked', 'o9 fixed-fee contract negotiated'], owner: 'CEO + CMO', investment: '$2M' },
+      days31_60: { tasks: ['Einstein pilot live (5M members)', 'Cart recovery end-to-end activated', 'o9 sprint started'], owner: 'CMO + CIO', investment: '$4M' },
+      days61_90: { tasks: ['Einstein at scale (28.4M)', 'Cart recovery verified', 'Fulfilment vendor shortlisted'], owner: 'CMO + CFO', investment: '$2M' },
+      total: { investment: '$15.6M', annualValue: '$599M', roi: '38.4x' },
+    },
+    metrics: { bets: 5, analyzed: 9, value3yr: '$2.7B', peers: 38, patterns: 127, confidence: 87 },
+    cxo: 'Kirsten Mueller, CFO',
+  },
 }
 
 // ─── SVG Gauge Dial ─────────────────────────────────────────────────────────────
@@ -311,10 +423,22 @@ const SCATTER_POS_APEX: Record<string, [number, number]> = {
   'mo-001': [84, 34], 'fo-005': [50, 38], 'mo-002': [82, 52], 'mo-003': [20, 54],
   'mo-004': [84, 42], 'bo-001': [22, 62], 'bo-002': [50, 50], 'bo-003': [54, 40],
 }
+// Arcturus positions
+const SCATTER_POS_ARCTURUS: Record<string, [number, number]> = {
+  'mo-001': [46, 50], 'bo-001': [76, 56], 'bo-002': [50, 78], 'fo-001': [48, 26],
+  'mo-003': [78, 40], 'fo-002': [82, 14], 'fo-003': [44, 72], 'mo-002': [40, 82],
+  'mo-004': [52, 62], 'bo-003': [80, 46],
+}
+// Nexora positions
+const SCATTER_POS_NEXORA: Record<string, [number, number]> = {
+  'fo-001': [14, 8], 'fo-002': [12, 22], 'mo-001': [48, 14], 'mo-002': [52, 28],
+  'bo-002': [46, 32], 'fo-003': [50, 46], 'bo-001': [82, 90], 'mo-003': [80, 44],
+  'bo-003': [54, 68],
+}
 
 function ScatterPlot({ opps, clientKey }: { opps: Opportunity[]; clientKey: string }) {
   const W = 600, H = 220
-  const posMap = clientKey === 'firstcapital' ? SCATTER_POS_FC : clientKey === 'apexretail' ? SCATTER_POS_APEX : SCATTER_POS
+  const posMap = clientKey === 'firstcapital' ? SCATTER_POS_FC : clientKey === 'apexretail' ? SCATTER_POS_APEX : clientKey === 'arcturus' ? SCATTER_POS_ARCTURUS : clientKey === 'nexora' ? SCATTER_POS_NEXORA : SCATTER_POS
   return (
     <div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', border: `1px solid ${T.border}`, borderRadius: '8px', background: T.surface }}>
@@ -696,6 +820,7 @@ function AiStrategyContent() {
 
   const [act, setAct] = useState<1 | 2 | 3>(1)
   const [mode, setMode] = useState<'prep' | 'live'>('prep')
+  const [role, setRole] = useState('CEO')
   const [showStepNav, setShowStepNav] = useState(false)
   const [showGenomeDrawer, setShowGenomeDrawer] = useState(false)
   const [confirmedBets, setConfirmedBets] = useState<Set<string>>(new Set())
@@ -713,43 +838,65 @@ function AiStrategyContent() {
   `
 
   return (
-    <PageShell activePage="ai-strategy" clientId={clientId}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
       <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
 
       {/* Product Header */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 24px' }}>
-        <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-            <div>
-              <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.12em', marginBottom: '6px' }}>💡 AI INVESTMENT INTELLIGENCE</div>
-              <div style={{ fontSize: '24px', fontFamily: T.serif, fontWeight: 700, color: T.text, marginBottom: '8px', maxWidth: '600px', lineHeight: 1.3 }}>{profile.tagline}</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.bets} recommended bets</span>
-                <span style={{ color: T.border }}>·</span>
-                <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.analyzed} opportunities analysed</span>
-                <span style={{ color: T.border }}>·</span>
-                <span style={{ fontSize: '13px', color: T.teal, fontWeight: 600 }}>{profile.metrics.value3yr} 3-year value</span>
+      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.12em', marginBottom: '6px' }}>💡 AI INVESTMENT INTELLIGENCE</div>
+                <div style={{ fontSize: '24px', fontFamily: T.serif, fontWeight: 700, color: T.text, marginBottom: '8px', maxWidth: '600px', lineHeight: 1.3 }}>{profile.tagline}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.bets} recommended bets</span>
+                  <span style={{ color: T.border }}>·</span>
+                  <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.analyzed} opportunities analysed</span>
+                  <span style={{ color: T.border }}>·</span>
+                  <span style={{ fontSize: '13px', color: T.teal, fontWeight: 600 }}>{profile.metrics.value3yr} 3-year value</span>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '4px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: T.text2 }}>Knowledge layer: {profile.metrics.peers} peer deployments</span>
+                  <span style={{ color: T.border }}>·</span>
+                  <span style={{ fontSize: '11px', color: T.text2 }}>Genome: {profile.metrics.patterns} patterns</span>
+                  <span style={{ color: T.border }}>·</span>
+                  <span style={{ fontSize: '11px', color: T.text2 }}>Confidence: {profile.metrics.confidence}%</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '4px', alignItems: 'center' }}>
-                <span style={{ fontSize: '11px', color: T.text2 }}>Knowledge layer: {profile.metrics.peers} peer deployments</span>
-                <span style={{ color: T.border }}>·</span>
-                <span style={{ fontSize: '11px', color: T.text2 }}>Genome: {profile.metrics.patterns} patterns</span>
-                <span style={{ color: T.border }}>·</span>
-                <span style={{ fontSize: '11px', color: T.text2 }}>Confidence: {profile.metrics.confidence}%</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-              <div style={{ fontSize: '11px', color: T.text, fontFamily: T.mono }}>{profile.name}</div>
-              <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: `1px solid ${T.border}` }}>
-                {(['prep', 'live'] as const).map(m => (
-                  <button key={m} onClick={() => setMode(m)} style={{ padding: '8px 16px', background: mode === m ? T.teal : T.bg, color: mode === m ? T.bg : T.text, border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: mode === m ? 700 : 400, fontFamily: T.sans, transition: 'all 0.15s' }}>
-                    {m === 'prep' ? 'Maestro Prep' : 'Live Session'}
-                  </button>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
+                <div style={{ fontSize: '11px', color: T.text2, fontFamily: T.mono }}>Viewing as: <span style={{ color: T.teal, fontWeight: 700 }}>{role}</span></div>
+                <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: `1px solid ${T.border}` }}>
+                  {(['prep', 'live'] as const).map(m => (
+                    <button key={m} onClick={() => setMode(m)} style={{ padding: '8px 16px', background: mode === m ? T.teal : T.bg, color: mode === m ? T.bg : T.text, border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: mode === m ? 700 : 400, fontFamily: T.sans, transition: 'all 0.15s' }}>
+                      {m === 'prep' ? 'Maestro Prep' : 'Live Session'}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </div>
+        {/* Role tabs strip */}
+        {(() => {
+          const isFinServ = ['firstcapital', 'arcturus'].includes(clientId)
+          const isRetail = ['apexretail', 'nexora'].includes(clientId)
+          const roles = isFinServ
+            ? (clientId === 'arcturus' ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro'] : ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro'])
+            : isRetail
+              ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
+              : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
+          return (
+            <div style={{ borderTop: `1px solid ${T.border}`, padding: '8px 24px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '9px', fontWeight: 700, color: T.text2, fontFamily: T.mono, letterSpacing: '0.1em', marginRight: '8px', flexShrink: 0 }}>VIEWING AS</span>
+              {roles.map(r => (
+                <button key={r} onClick={() => setRole(r)} style={{ padding: '4px 14px', height: '28px', background: role === r ? T.teal : 'transparent', border: `1px solid ${role === r ? T.teal : 'rgba(239,246,255,0.12)'}`, borderRadius: '20px', fontSize: '11px', fontWeight: role === r ? 700 : 400, color: role === r ? '#060A12' : T.text2, cursor: 'pointer', fontFamily: T.sans, whiteSpace: 'nowrap' as const }}>
+                  {r}
+                </button>
+              ))}
+            </div>
+          )
+        })()}
       </div>
 
       {/* Three-Act Navigation */}
@@ -789,6 +936,39 @@ function AiStrategyContent() {
 
         {/* ACT 1 */}
         {act === 1 && (
+          <div>
+          {/* Role lens — changes per selected role */}
+          {(() => {
+            const frontBets = profile.bets.filter((b: any) => /front|digital|client|revenue|loyalty|personaliz/i.test(b.category))
+            const opsBets = profile.bets.filter((b: any) => /operation|supply|inventory|shrinkage|middle/i.test(b.category))
+            const techBets = profile.bets.filter((b: any) => /back|data|risk|governance|compliance|infra|golden/i.test(b.category))
+            const frontVal = frontBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
+            const opsVal = opsBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
+            const techVal = techBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
+            const lensMap: Record<string, { label: string; value: string; sub?: string }[]> = {
+              CIO:   [{ label: 'Tech Readiness', value: `${profile.readiness.tech}%`, sub: `${profile.percentiles.tech} percentile` }, { label: 'Data Readiness', value: `${profile.readiness.data}%`, sub: `${profile.percentiles.data} percentile` }, { label: 'Tech Domain Value', value: `$${techVal}M+/yr`, sub: `${techBets.length || opsBets.length} initiatives in your domain` }],
+              CFO:   [{ label: 'Wave 1 Investment', value: profile.wave1Plan.total.investment, sub: 'Required commitment' }, { label: 'Annual Value', value: profile.wave1Plan.total.annualValue, sub: 'Base case return' }, { label: 'ROI Multiple', value: profile.wave1Plan.total.roi, sub: 'Wave 1 return ratio' }],
+              CMO:   [{ label: 'Front-Office Bets', value: `${frontBets.length || profile.bets.filter((b:any) => b.rank <= 2).length}`, sub: 'Revenue initiatives' }, { label: 'Revenue Potential', value: `$${frontVal || profile.bets.filter((b:any)=>b.rank===1).reduce((s:number,b:any)=>s+(b.annualValueHigh||0),0)}M/yr`, sub: 'Annual upside' }, { label: 'Fastest Win', value: profile.bets[0]?.wave || 'Wave 1 · 8 weeks', sub: profile.bets[0]?.name || '' }],
+              COO:   [{ label: 'Ops Bets', value: `${opsBets.length || 2}`, sub: 'Operations initiatives' }, { label: 'Ops Potential', value: `$${opsVal || (profile.bets[2]?.annualValueHigh || 180)}M/yr`, sub: 'Annual efficiency gain' }, { label: 'Org Readiness', value: `${profile.readiness.org}%`, sub: `${profile.percentiles.org} percentile` }],
+              CRO:   [{ label: 'Risk/Compliance Bets', value: `${techBets.length || 2}`, sub: 'Risk initiatives' }, { label: 'Risk Domain Value', value: `$${techVal || (profile.bets.find((b:any) => /stress|governance|risk/i.test(b.name))?.annualValueHigh || 35)}M/yr`, sub: 'Penalty & risk avoided' }, { label: 'Org Readiness', value: `${profile.readiness.org}%`, sub: 'Change capacity' }],
+              CMIO:  [{ label: 'Clinical AI Bets', value: `${profile.bets.length}`, sub: 'Total initiatives' }, { label: 'Value Potential', value: profile.metrics.value3yr, sub: '3-year upside' }, { label: 'Data Readiness', value: `${profile.readiness.data}%`, sub: `${profile.percentiles.data} percentile` }],
+              CEO:   [{ label: 'Active AI Bets', value: `${profile.metrics.bets}`, sub: 'Recommended' }, { label: '3-Year Value', value: profile.metrics.value3yr, sub: 'Total opportunity' }, { label: 'Confidence', value: `${profile.metrics.confidence}%`, sub: 'Genome-validated' }],
+              Maestro:[{ label: 'Active AI Bets', value: `${profile.metrics.bets}`, sub: 'Recommended' }, { label: '3-Year Value', value: profile.metrics.value3yr, sub: 'Total opportunity' }, { label: 'Confidence', value: `${profile.metrics.confidence}%`, sub: 'Genome-validated' }],
+            }
+            const lens = lensMap[role] || lensMap['CEO']
+            return (
+              <div style={{ background: `${T.teal}08`, border: `1px solid ${T.teal}25`, borderRadius: '8px', padding: '14px 20px', marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+                <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', gridColumn: '1/-1', marginBottom: '-8px' }}>{role.toUpperCase()} LENS — KEY METRICS FOR YOUR ROLE</div>
+                {lens.map((item, i) => (
+                  <div key={i}>
+                    <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label}</div>
+                    <div style={{ fontSize: '20px', fontWeight: 700, color: T.text, letterSpacing: '-0.01em', lineHeight: 1.1 }}>{item.value}</div>
+                    {item.sub && <div style={{ fontSize: '10px', color: T.text2, marginTop: '3px' }}>{item.sub}</div>}
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
           <div style={{ display: 'grid', gridTemplateColumns: '45% 55%', gap: '32px' }}>
             <div>
               <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '6px' }}>AI READINESS ASSESSMENT</div>
@@ -854,6 +1034,7 @@ function AiStrategyContent() {
                 </div>
               ))}
             </div>
+          </div>
           </div>
         )}
 
@@ -940,7 +1121,7 @@ function AiStrategyContent() {
 
       {showGenomeDrawer && <GenomeDrawer clientKey={clientId} onClose={() => setShowGenomeDrawer(false)} />}
       {showConfirmModal && <ConfirmModal profile={profile} clientId={clientId} onClose={() => setShowConfirmModal(false)} />}
-    </PageShell>
+    </div>
   )
 }
 

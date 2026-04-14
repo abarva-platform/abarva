@@ -1,282 +1,272 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useUser, useClerk } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 
-const TEAL = '#2DD4C8'
-const BORDER = '#1C2D45'
-const CARD = '#0D1520'
-const TEXT = '#EFF6FF'
-const MUTED = '#94A3B8'
-const PAGE_BG = '#060A12'
+const BG='#060A12', CARD='#0D1520', BORDER='#1C2D45'
+const TEAL='#2DD4C8', WHITE='#EFF6FF', MUTED='#94A3B8'
+const AMBER='#F59E0B'
+const SANS='DM Sans, sans-serif', MONO='JetBrains Mono, monospace', SERIF='Georgia, serif'
 
 interface NavProps {
+  activePage?: 'home'|'diagnose'|'ai-strategy'|'select'|'justify'|'outcomes'|'solutions'|'maestro'|'investor'|'admin'|string
   clientId?: string
-  activePage?: string
-  onClientChange?: (id: string) => void
+  onClientChange?: (id: any) => void
 }
 
-const CLIENTS = [
-  { id: 'meridian',     name: 'Meridian Health System',   sub: 'Healthcare · $11.2B',          color: TEAL,      dot: TEAL },
-  { id: 'firstcapital', name: 'First Capital Financial',  sub: 'Financial Services · $18B AUM', color: '#6366F1', dot: '#6366F1' },
-  { id: 'apexretail',   name: 'Apex Retail Group',        sub: 'Retail · $12.4B',              color: '#F59E0B', dot: '#F59E0B' },
-]
+export default function AbarvaNav({ activePage, clientId }: NavProps) {
+  const [open, setOpen] = useState<string|null>(null)
+  const [showUserMenu, setShowUserMenu] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+  const { isLoaded, user } = useUser()
+  const { signOut } = useClerk()
+  const router = useRouter()
 
-const PRODUCTS = [
-  { name: 'Situation',      desc: "What's actually broken — and what is it costing?", path: '/diagnose' },
-  { name: 'Strategy',       desc: 'Where should we place our AI bets?',               path: '/ai-strategy' },
-  { name: 'Vendor',         desc: 'Which vendor wins in our situation?',              path: '/select' },
-  { name: 'Business Case',  desc: 'How do we justify this to the board?',            path: '/justify' },
-  { name: 'Outcomes',       desc: 'Did it work — and can we prove it?',              path: '/outcomes' },
-]
+  const openDrop = (id: string) => { clearTimeout(closeTimer.current); setOpen(id) }
+  const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 200) }
+  const cancelClose = () => clearTimeout(closeTimer.current)
 
-const SOLUTIONS = [
-  { name: 'AI-Powered PDLC',                    desc: 'Build products faster with AI agents',        path: '/solutions/pdlc' },
-  { name: 'AI-Powered Transformation Delivery', desc: 'Replace large consulting teams with Maestros', path: '/solutions/delivery' },
-  { name: 'Margin Optimization',                desc: 'Recover margin across revenue, cost and AI',   path: '/solutions/margin' },
-]
-
-export default function AbarvaNav({ clientId = 'meridian', activePage = '', onClientChange }: NavProps) {
-  const [open, setOpen] = useState<string | null>(null)
-  const [clientOpen, setClientOpen] = useState(false)
-  let closeTimer: ReturnType<typeof setTimeout>
-
-  const openDrop = (name: string) => { clearTimeout(closeTimer); setOpen(name) }
-  const startClose = () => { closeTimer = setTimeout(() => setOpen(null), 180) }
-
-  const activeClient = CLIENTS.find(c => c.id === clientId) || CLIENTS[0]
+  const cid = clientId || 'meridian'
 
   return (
-    <nav style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 200 }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px', display: 'flex', alignItems: 'center', height: '64px' }}>
+    <div style={{
+      height: '64px',
+      position: 'sticky' as const,
+      top: 0,
+      zIndex: 200,
+      background: CARD,
+      borderBottom: `1px solid ${BORDER}`,
+      display: 'flex',
+      flexDirection: 'row' as const,
+      alignItems: 'center',
+      padding: '0 28px',
+      gap: '4px',
+      boxSizing: 'border-box' as const,
+    }}>
+      {/* Wordmark */}
+      <a href="/" style={{textDecoration:'none',display:'flex',flexDirection:'column' as const,lineHeight:1,marginRight:'32px',flexShrink:0}}>
+        <div style={{display:'flex',alignItems:'baseline'}}>
+          <span style={{fontFamily:SERIF,fontSize:'17px',fontWeight:800,color:WHITE}}>Abar</span>
+          <span style={{fontFamily:SERIF,fontSize:'22px',fontWeight:900,color:TEAL}}>Va</span>
+        </div>
+        <span style={{fontFamily:MONO,fontSize:'8px',color:WHITE,letterSpacing:'.04em',opacity:.7}}>know it. build it. own it.</span>
+      </a>
 
-        {/* Wordmark — always navigates home */}
-        <a href="/" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', marginRight: '28px', lineHeight: 1, flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline' }}>
-            <span style={{ fontFamily: 'Georgia,serif', fontSize: '17px', fontWeight: 800, color: TEXT }}>Abar</span>
-            <span style={{ fontFamily: 'Georgia,serif', fontSize: '23px', fontWeight: 900, color: TEAL }}>Va</span>
-          </div>
-          <span style={{ fontFamily: 'monospace', fontSize: '9px', color: TEXT, letterSpacing: '.06em', marginTop: '1px' }}>
-            know it. build it. own it.
-          </span>
-        </a>
-
-        {/* Intelligence ▾ */}
-        <DropMenu label="Intelligence" id="intelligence" open={open} openDrop={openDrop} startClose={startClose}>
-          <DropSection label="Five products">
-            {PRODUCTS.map(p => (
-              <DropItem key={p.name} name={p.name} desc={p.desc} href={`${p.path}?client=${clientId}`} />
-            ))}
-          </DropSection>
-        </DropMenu>
-
-        {/* Solutions ▾ */}
-        <DropMenu label="Solutions" id="solutions" open={open} openDrop={openDrop} startClose={startClose}>
-          <DropSection label="Three solutions">
-            {SOLUTIONS.map(s => (
-              <DropItem key={s.name} name={s.name} desc={s.desc} href={s.path} />
-            ))}
-          </DropSection>
-        </DropMenu>
-
-        {/* Clients ▾ */}
-        <DropMenu label="Clients" id="clients" open={open} openDrop={openDrop} startClose={startClose}>
-          <DropSection label="Demo clients">
-            {CLIENTS.map(c => (
-              <ClientDropItem
-                key={c.id}
-                client={c}
-                active={c.id === clientId}
-                onSelect={onClientChange ? (id) => { onClientChange(id); setOpen(null) } : undefined}
-              />
-            ))}
-          </DropSection>
-          <div style={{ borderTop: `1px solid ${BORDER}`, margin: '6px 0', padding: '8px 12px 4px' }}>
-            <a href="/admin" style={{ fontSize: '12px', color: TEAL, textDecoration: 'none', fontFamily: 'monospace', letterSpacing: '.04em' }}>
-              Open Maestro portal →
-            </a>
-          </div>
-        </DropMenu>
-
-        {/* Right side */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
-
-          {/* Active client pill — shows which client is loaded */}
-          {onClientChange && (
-            <div style={{ position: 'relative', marginRight: '8px' }}>
-              <button
-                onClick={() => setClientOpen(o => !o)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '7px',
-                  background: 'rgba(45,212,200,0.08)', border: `1px solid rgba(45,212,200,0.2)`,
-                  borderRadius: '20px', padding: '5px 12px 5px 8px',
-                  cursor: 'pointer', color: TEAL, fontSize: '12px', fontWeight: 500,
-                }}
+      {/* Intelligence dropdown */}
+      <div
+        style={{position:'relative' as const}}
+        onMouseEnter={() => openDrop('intel')}
+        onMouseLeave={startClose}
+      >
+        <button style={{
+          fontSize:'13px',color:MUTED,background:'none',border:'none',cursor:'pointer',
+          padding:'8px 10px',fontFamily:SANS,
+        }}>
+          Intelligence ▾
+        </button>
+        {open === 'intel' && (
+          <div
+            style={{
+              position:'absolute' as const,top:'64px',left:0,
+              background:CARD,border:`1px solid ${BORDER}`,
+              borderRadius:'12px',padding:'8px 0',minWidth:'320px',zIndex:300,
+            }}
+            onMouseEnter={cancelClose}
+            onMouseLeave={startClose}
+          >
+            {[
+              { name:'Situation',     path:`/diagnose?client=${cid}`,    desc:"What's actually broken — and what is it costing?" },
+              { name:'Strategy',      path:`/ai-strategy?client=${cid}`, desc:'Where should we place our AI bets?' },
+              { name:'Vendor',        path:`/select?client=${cid}`,      desc:'Which vendor actually wins in our situation?' },
+              { name:'Business Case', path:`/justify?client=${cid}`,     desc:'How do we justify this to the board?' },
+              { name:'Outcomes',      path:`/outcomes?client=${cid}`,    desc:'Did it work — and can we prove it?' },
+            ].map(item => (
+              <a
+                key={item.name}
+                href={item.path}
+                onClick={() => setOpen(null)}
+                style={{display:'block',padding:'10px 20px',textDecoration:'none'}}
               >
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeClient.dot, flexShrink: 0 }} />
-                {activeClient.name.split(' ')[0]} {activeClient.name.split(' ')[1]}
-                <span style={{ fontSize: '9px', color: MUTED }}>▾</span>
-              </button>
-              {clientOpen && (
-                <div style={{
-                  position: 'absolute', top: '100%', right: 0, marginTop: '6px',
-                  background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '10px',
-                  padding: '6px', zIndex: 300, minWidth: '220px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,.5)',
-                }}>
-                  {CLIENTS.map(c => (
-                    <button
-                      key={c.id}
-                      onClick={() => { onClientChange(c.id); setClientOpen(false) }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
-                        padding: '9px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer',
-                        background: c.id === clientId ? 'rgba(45,212,200,0.08)' : 'transparent',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{c.name}</div>
-                        <div style={{ fontSize: '11px', color: MUTED }}>{c.sub}</div>
-                      </div>
-                      {c.id === clientId && <span style={{ marginLeft: 'auto', color: TEAL, fontSize: '12px' }}>✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
+                <div style={{fontSize:'13px',fontWeight:500,color:WHITE,fontFamily:SANS}}>{item.name}</div>
+                <div style={{fontSize:'11px',color:MUTED,fontFamily:SANS,marginTop:'2px'}}>{item.desc}</div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Solutions dropdown */}
+      <div
+        style={{position:'relative' as const}}
+        onMouseEnter={() => openDrop('solutions')}
+        onMouseLeave={startClose}
+      >
+        <button style={{
+          fontSize:'13px',color:MUTED,background:'none',border:'none',cursor:'pointer',
+          padding:'8px 10px',fontFamily:SANS,
+        }}>
+          Solutions ▾
+        </button>
+        {open === 'solutions' && (
+          <div
+            style={{
+              position:'absolute' as const,top:'64px',left:0,
+              background:CARD,border:`1px solid ${BORDER}`,
+              borderRadius:'12px',padding:'8px 0',minWidth:'320px',zIndex:300,
+            }}
+            onMouseEnter={cancelClose}
+            onMouseLeave={startClose}
+          >
+            {[
+              { name:'AI-Powered PDLC',         path:'/solutions/pdlc',     desc:'Build products at twice the velocity' },
+              { name:'AI-Powered Delivery',      path:'/solutions/delivery', desc:'Replace consulting teams with Maestros' },
+              { name:'Margin Optimization',      path:'/solutions/margin',   desc:'Recover margin across revenue, cost, AI' },
+            ].map(item => (
+              <a
+                key={item.name}
+                href={item.path}
+                onClick={() => setOpen(null)}
+                style={{display:'block',padding:'10px 20px',textDecoration:'none'}}
+              >
+                <div style={{fontSize:'13px',fontWeight:500,color:WHITE,fontFamily:SANS}}>{item.name}</div>
+                <div style={{fontSize:'11px',color:MUTED,fontFamily:SANS,marginTop:'2px'}}>{item.desc}</div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Clients dropdown — unauthenticated only */}
+      {isLoaded && !user && (
+        <div
+          style={{position:'relative' as const}}
+          onMouseEnter={() => openDrop('clients')}
+          onMouseLeave={startClose}
+        >
+          <button style={{
+            fontSize:'13px',color:MUTED,background:'none',border:'none',cursor:'pointer',
+            padding:'8px 10px',fontFamily:SANS,
+          }}>
+            Clients ▾
+          </button>
+          {open === 'clients' && (
+            <div
+              style={{
+                position:'absolute' as const,top:'64px',left:0,
+                background:CARD,border:`1px solid ${BORDER}`,
+                borderRadius:'12px',padding:'8px 0',minWidth:'320px',zIndex:300,
+              }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={startClose}
+            >
+              {[
+                { name:'Meridian Health System',  path:'/diagnose?client=meridian',     sub:'Healthcare · $11.2B' },
+                { name:'First Capital Financial', path:'/diagnose?client=firstcapital', sub:'Financial Services' },
+                { name:'Apex Retail Group',       path:'/diagnose?client=apexretail',   sub:'Retail · $12.4B' },
+              ].map(item => (
+                <a
+                  key={item.name}
+                  href={item.path}
+                  onClick={() => setOpen(null)}
+                  style={{display:'block',padding:'10px 20px',textDecoration:'none'}}
+                >
+                  <div style={{fontSize:'13px',fontWeight:500,color:WHITE,fontFamily:SANS}}>{item.name}</div>
+                  <div style={{fontSize:'11px',color:MUTED,fontFamily:SANS,marginTop:'2px'}}>{item.sub}</div>
+                </a>
+              ))}
+              <div style={{borderTop:`1px solid ${BORDER}`,margin:'8px 0'}}/>
+              <div style={{padding:'8px 20px',fontSize:'11px',color:'#475569',fontFamily:SANS}}>
+                Arcturus · Nexora · other Maestro clients require login
+              </div>
             </div>
           )}
+        </div>
+      )}
 
-          {/* Investor View */}
+      {/* Signed-in static client label */}
+      {isLoaded && user && (
+        <span style={{fontSize:'13px',color:MUTED,padding:'0 16px',borderLeft:`1px solid ${BORDER}`,fontFamily:SANS}}>
+          Arcturus Financial
+        </span>
+      )}
+
+      {/* Right side — unauthenticated */}
+      {isLoaded && !user && (
+        <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'8px'}}>
           <a href="/investor" style={{
-            fontSize: '13px', fontWeight: 500, color: activePage === 'investor' ? TEAL : TEXT,
-            textDecoration: 'none', padding: '0 14px', height: '64px',
-            display: 'flex', alignItems: 'center',
-            borderBottom: activePage === 'investor' ? `2px solid ${TEAL}` : '2px solid transparent',
-          }}>
-            Investor View
-          </a>
-
-          {/* Maestro CTA */}
-          <a href="/admin" style={{
-            background: TEAL, color: '#060A12',
-            fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-            padding: '8px 18px', borderRadius: '8px', flexShrink: 0,
-          }}>
-            Maestro
-          </a>
+            fontSize:'12px',color:AMBER,textDecoration:'none',
+            padding:'6px 12px',border:`1px solid rgba(245,158,11,0.3)`,borderRadius:'6px',
+            fontFamily:SANS,
+          }}>Investor view</a>
+          <a href="/sign-in" style={{
+            background:TEAL,color:BG,textDecoration:'none',
+            padding:'8px 18px',borderRadius:'8px',fontSize:'13px',fontWeight:600,
+            fontFamily:SANS,
+          }}>Login →</a>
         </div>
-      </div>
-    </nav>
-  )
-}
+      )}
 
-// ─── Sub-components ────────────────────────────────────────────────────────
-
-function DropMenu({ label, id, open, openDrop, startClose, children }: {
-  label: string; id: string; open: string | null
-  openDrop: (id: string) => void; startClose: () => void; children: React.ReactNode
-}) {
-  const isOpen = open === id
-  return (
-    <div
-      style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-      onMouseEnter={() => openDrop(id)}
-      onMouseLeave={startClose}
-    >
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '3px', padding: '0 14px',
-        fontSize: '14px', fontWeight: 500, color: isOpen ? TEAL : TEXT,
-        cursor: 'pointer', height: '64px', userSelect: 'none',
-        borderBottom: isOpen ? `2px solid ${TEAL}` : '2px solid transparent',
-        transition: 'color .12s, border-color .12s',
-      }}>
-        {label}
-        <span style={{ fontSize: '9px', color: isOpen ? TEAL : MUTED, marginTop: '1px' }}>▾</span>
-      </div>
-      {isOpen && (
-        <div
-          onMouseEnter={() => clearTimeout(undefined)}
-          onMouseLeave={startClose}
-          style={{
-            position: 'absolute', top: '64px', left: 0, minWidth: '260px',
-            background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '12px',
-            padding: '8px', zIndex: 200, boxShadow: '0 12px 40px rgba(0,0,0,.5)',
-          }}
-        >
-          {children}
-        </div>
+      {/* Right side — authenticated */}
+      {isLoaded && user && (
+        <AuthedRight user={user} showUserMenu={showUserMenu} setShowUserMenu={setShowUserMenu} signOut={signOut} router={router} />
       )}
     </div>
   )
 }
 
-function DropSection({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <div style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 12px 4px' }}>
-        {label}
-      </div>
-      {children}
-    </div>
-  )
-}
+function AuthedRight({ user, showUserMenu, setShowUserMenu, signOut, router }: {
+  user: NonNullable<ReturnType<typeof useUser>['user']>
+  showUserMenu: boolean
+  setShowUserMenu: React.Dispatch<React.SetStateAction<boolean>>
+  signOut: ReturnType<typeof useClerk>['signOut']
+  router: ReturnType<typeof useRouter>
+}) {
+  const displayName = user.fullName || user.emailAddresses[0]?.emailAddress || 'Maestro'
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
-function DropItem({ name, desc, href, tag }: { name: string; desc: string; href: string; tag?: string }) {
   return (
-    <a
-      href={href}
-      style={{ display: 'block', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '1px' }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{name}</span>
-        {tag && (
-          <span style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, background: '#1C2D45', padding: '2px 7px', borderRadius: '4px', letterSpacing: '.04em' }}>
-            {tag}
-          </span>
+    <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px',position:'relative' as const}}>
+      <a href="/admin" style={{fontSize:'13px',color:MUTED,textDecoration:'none',fontFamily:SANS}}>
+        My projects
+      </a>
+      <div style={{position:'relative' as const}}>
+        <div
+          onClick={() => setShowUserMenu(v => !v)}
+          style={{
+            width:'32px',height:'32px',borderRadius:'50%',
+            background:TEAL,color:BG,
+            display:'flex',alignItems:'center',justifyContent:'center',
+            fontSize:'12px',fontWeight:700,cursor:'pointer',fontFamily:SANS,flexShrink:0,
+          }}
+        >
+          {initials}
+        </div>
+        {showUserMenu && (
+          <div style={{
+            position:'absolute' as const,top:'40px',right:0,
+            background:CARD,border:`1px solid ${BORDER}`,
+            borderRadius:'12px',padding:'8px 0',minWidth:'200px',zIndex:300,
+          }}>
+            <a
+              href="/admin"
+              onClick={() => setShowUserMenu(false)}
+              style={{display:'block',padding:'10px 20px',textDecoration:'none',fontSize:'13px',color:WHITE,fontFamily:SANS}}
+            >
+              My projects
+            </a>
+            <button
+              onClick={() => { setShowUserMenu(false); signOut(() => router.push('/')) }}
+              style={{
+                display:'block',width:'100%',textAlign:'left' as const,
+                padding:'10px 20px',background:'none',border:'none',
+                fontSize:'13px',color:MUTED,fontFamily:SANS,cursor:'pointer',
+              }}
+            >
+              Sign out
+            </button>
+          </div>
         )}
       </div>
-      <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.4 }}>{desc}</div>
-    </a>
-  )
-}
-
-function ClientDropItem({ client, active, onSelect }: {
-  client: typeof CLIENTS[0]; active: boolean; onSelect?: (id: string) => void
-}) {
-  const content = (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
-      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: client.dot, flexShrink: 0 }} />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{client.name}</div>
-        <div style={{ fontSize: '11px', color: MUTED }}>{client.sub}</div>
-      </div>
-      {active && <span style={{ fontSize: '11px', color: TEAL }}>✓</span>}
     </div>
-  )
-
-  if (onSelect) {
-    return (
-      <button
-        onClick={() => onSelect(client.id)}
-        style={{ display: 'flex', width: '100%', padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: active ? 'rgba(45,212,200,0.06)' : 'transparent', textAlign: 'left', marginBottom: '1px' }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
-        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-      >
-        {content}
-      </button>
-    )
-  }
-
-  return (
-    <a
-      href={`/admin/client/${client.id}`}
-      style={{ display: 'flex', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '1px' }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
-    >
-      {content}
-    </a>
   )
 }

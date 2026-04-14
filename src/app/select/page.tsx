@@ -1,7 +1,6 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PageShell from '@/components/PageShell'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
@@ -14,13 +13,15 @@ const T = {
 }
 
 type Mode = 'select' | 'optimize'
-type ClientId = 'meridian' | 'firstcapital' | 'apexretail'
+type ClientId = 'meridian' | 'firstcapital' | 'apexretail' | 'arcturus' | 'nexora'
 
 // ── Client meta ────────────────────────────────────────────────────────────────
 const CLIENT_META: Record<ClientId, { name: string; industry: string; vertical: 'Healthcare' | 'FinServ' | 'Retail' }> = {
   meridian:     { name: 'Meridian Health System', industry: 'Healthcare', vertical: 'Healthcare' },
   firstcapital: { name: 'First Capital Financial', industry: 'Financial Services', vertical: 'FinServ' },
   apexretail:   { name: 'Apex Retail Group', industry: 'Retail', vertical: 'Retail' },
+  arcturus:     { name: 'Arcturus Financial Group', industry: 'Financial Services', vertical: 'FinServ' },
+  nexora:       { name: 'Nexora Retail & Consumer', industry: 'Retail', vertical: 'Retail' },
 }
 
 // ── Vendor decisions per client ────────────────────────────────────────────────
@@ -243,6 +244,106 @@ const DECISIONS: Record<ClientId, Decision[]> = {
       negotiation: 'Klaviyo + Segment are month-to-month at this stage. Negotiate long-term commitments only after cart recovery results are confirmed in production. Use the first 90 days as validation before any multi-year lock-in.',
     },
   ],
+  arcturus: [
+    {
+      id: 'ai-governance', name: 'AI Governance Framework Vendor', status: 'URGENT',
+      deadline: 'MAS FEAT overdue 4 months — regulatory risk', initiativeType: 'ai-governance',
+      context: 'MAS FEAT model risk framework is 4 months overdue. CDO vacant 11 months. No AI governance infrastructure. $94M in AI investments with zero compliance documentation. Interim CDO cannot begin risk model inventory without a governance platform.',
+      vendors: [
+        { id: 'collibra', name: 'Collibra Governance', score: 91, outcomeRate: 0.87, referenceMatch: 89, cost: '$420K–680K', timeline: '3–6 mo', failureRisk: 'LOW', recommended: true, tag: 'FEAT-ready',
+          fromData: 'MAS FEAT overdue · No AI model inventory · Bloomberg 180ms latency undocumented', fromIndustry: '87% success rate at asset managers · Pre-built MAS FEAT template available', fromGenome: 'Fastest path to MAS compliance · Interim CDO can drive independently',
+          bullets: ['Pre-built MAS FEAT compliance templates', 'Asset manager references: Schroders, Invesco, Manulife', 'AI model inventory built in — no custom configuration', 'Interim CDO can own independently without full CDO hire'] },
+        { id: 'alation', name: 'Alation Data Catalog', score: 78, outcomeRate: 0.74, referenceMatch: 72, cost: '$380K–600K', timeline: '4–8 mo', failureRisk: 'MEDIUM', recommended: false, tag: 'Data-first approach',
+          fromData: 'Stronger for data cataloguing than AI model governance', fromIndustry: 'Good for data lineage · Less native MAS FEAT compliance support', fromGenome: '74% success rate · FEAT compliance requires additional configuration',
+          bullets: ['Strong data cataloguing and lineage', 'Less native AI model risk governance than Collibra', 'MAS FEAT compliance requires custom template work', 'Better fit if data catalogue is the primary priority'] },
+        { id: 'servicenow-grc', name: 'ServiceNow GRC', score: 71, outcomeRate: 0.68, referenceMatch: 65, cost: '$600K–1.0M', timeline: '6–12 mo', failureRisk: 'HIGH', recommended: false, tag: 'Broader GRC platform',
+          fromData: 'Overkill for AI model governance alone · High implementation complexity', fromIndustry: 'Strong for enterprise-wide GRC · AI model governance is not core use case', fromGenome: '68% success rate for AI governance standalone · 14-month average for full GRC',
+          bullets: ['Enterprise GRC platform with AI governance module', 'Overkill for AI model risk alone', 'Long implementation conflicts with MAS FEAT urgency', 'Consider only if board wants full enterprise GRC in 24 months'] },
+      ],
+      recommendation: 'Collibra with the pre-built MAS FEAT template is the fastest path to regulatory compliance. The $94M AI investment has zero compliance documentation — this is the foundation everything else rests on. Engage Collibra PS for a 90-day FEAT sprint.',
+      negotiation: 'Use the MAS FEAT deadline urgency to compress timeline commitments. Demand a named delivery lead with prior MAS FEAT implementation experience. Milestone payment: 40% on kick-off, 40% at FEAT inventory complete, 20% at MAS sign-off.',
+    },
+    {
+      id: 'bloomberg-aim', name: 'Bloomberg AIM Modernisation Path', status: 'HIGH',
+      deadline: 'Bloomberg AIM contract: Dec 2026 — auto-renews', initiativeType: 'trading-platform',
+      context: 'Bloomberg AIM on-premises at $42M/yr. Cloud migration would reduce latency from 180ms to <50ms and unlock AI-native trading analytics. Dec 2026 contract auto-renews — decision point is now, 8 months before renewal.',
+      vendors: [
+        { id: 'bloomberg-cloud', name: 'Bloomberg AIM Cloud Migration', score: 88, outcomeRate: 0.83, referenceMatch: 86, cost: '$6–12M migration + potential rate reduction', timeline: '12–18 mo', failureRisk: 'LOW', recommended: true, tag: 'Logical next step',
+          fromData: '$42M/yr contract · 180ms latency · Azure primary cloud already in use', fromIndustry: 'Bloomberg cloud: 83% of migrated asset managers report latency under 50ms', fromGenome: '83% success rate · Use Dec 2026 renewal as leverage for rate and migration support',
+          bullets: ['180ms → <50ms latency with Bloomberg cloud', 'Azure-native — aligns with primary cloud strategy', 'Dec 2026 renewal is negotiation leverage', 'Migration support negotiable as part of renewal terms'] },
+        { id: 'simcorp-replace', name: 'SimCorp Dimension (Replace AIM)', score: 74, outcomeRate: 0.70, referenceMatch: 68, cost: '$28–45M (full replacement)', timeline: '24–36 mo', failureRisk: 'HIGH', recommended: false, tag: 'Platform replacement',
+          fromData: 'Full replacement creates 2-year parallel run risk', fromIndustry: 'SimCorp strong for large asset managers with complex multi-asset mandates', fromGenome: '70% success rate · Average overrun 9 months · Parallel run creates risk in 34% of cases',
+          bullets: ['SimCorp strong for complex multi-asset mandates', 'Full replacement: 2-year parallel run risk', 'Average overrun $8M and 9 months at comparable scale', 'Dec 2026 renewal makes this timeline impossible without extension'] },
+      ],
+      recommendation: 'Use the Dec 2026 renewal as leverage to negotiate Bloomberg AIM cloud migration at no incremental license cost. The $42M/yr contract gives significant leverage — Bloomberg will fund migration support rather than risk losing a $42M relationship.',
+      negotiation: 'Brief Bloomberg 6 months before renewal. Request: (1) cloud migration support funded by Bloomberg, (2) rate freeze or reduction in exchange for 3-year commitment, (3) latency SLA of <50ms in cloud environment as contractual term.',
+    },
+    {
+      id: 'cdo-hire', name: 'CDO Appointment (Interim or Full)', status: 'HIGH',
+      deadline: 'CDO vacant 11 months — all AI blocked', initiativeType: 'executive-search',
+      context: '11 months without a CDO. AI governance has no owner. MAS FEAT inventory has no owner. Churn model retraining has no sponsor. Every AI initiative in the roadmap cites CDO vacancy as a blocker. Interim appointment in 2 weeks resolves the paralysis while full search runs.',
+      vendors: [
+        { id: 'interim-cdo', name: 'Interim CDO (Odgers Berndtson)', score: 93, outcomeRate: 0.90, referenceMatch: 91, cost: '$180K–280K (90-day engagement)', timeline: '2 weeks to appoint', failureRisk: 'LOW', recommended: true, tag: 'Unblocks everything',
+          fromData: '11 months vacant · MAS FEAT blocked · Churn model blocked · Governance blocked', fromIndustry: '90% of asset managers with CDO vacancy >6 months use interim first', fromGenome: 'Interim CDO resolves programme paralysis in median 3 weeks · Full hire takes 4–6 months',
+          bullets: ['2 weeks to appoint — resolves 11-month paralysis immediately', 'MAS FEAT inventory can begin Week 3', 'Bridges to permanent hire without programme delay', 'Odgers has 6 interim CDOs with MAS FEAT experience available'] },
+        { id: 'full-cdo-search', name: 'Full CDO Search (Korn Ferry)', score: 79, outcomeRate: 0.75, referenceMatch: 76, cost: '$380K–520K (retained search)', timeline: '4–6 months to hire', failureRisk: 'MEDIUM', recommended: false, tag: 'Permanent hire only',
+          fromData: 'Full search takes 4–6 months — MAS FEAT cannot wait', fromIndustry: '79% success rate for permanent CDO hire at asset managers', fromGenome: '75% success rate · Programmes stall for full search duration in 68% of cases',
+          bullets: ['Permanent hire — right for long-term AI governance', 'Full search takes 4–6 months', 'MAS FEAT deadline cannot wait 4 months', 'Recommended after interim CDO is in place'] },
+      ],
+      recommendation: 'Appoint interim CDO within 2 weeks, run full permanent search in parallel. The 11-month vacancy has created $94M in blocked initiatives. Interim CDO cost is recovered in the first week once MAS FEAT inventory begins — the programme paralysis cost exceeds the search fee daily.',
+      negotiation: 'For interim: negotiate fixed-scope 90-day engagement with option to extend. For permanent search: request outcome-based fee with 90-day replacement guarantee. Both searches run concurrently — interim CDO can influence permanent hire criteria.',
+    },
+  ],
+  nexora: [
+    {
+      id: 'einstein-owner', name: 'Einstein Activation — Appoint Owner & SI', status: 'URGENT',
+      deadline: '$14M/yr paid · 18 months idle · $248M opportunity', initiativeType: 'personalization-ai',
+      context: 'Salesforce Einstein licensed for 18 months at $14M/yr. Zero activation work started. CIO and CMO ownership dispute has created paralysis. A single week-1 CEO decision to appoint an owner unlocks 207:1 ROI on $1.2M activation cost.',
+      vendors: [
+        { id: 'salesforce-ps-nexora', name: 'Salesforce Professional Services', score: 94, outcomeRate: 0.91, referenceMatch: 92, cost: '$800K–1.2M one-time', timeline: '8 weeks', failureRisk: 'LOW', recommended: true, tag: 'Already licensed',
+          fromData: 'Einstein: licensed 18 months · $14M/yr paid · Zero activation · CIO/CMO dispute resolved by CEO', fromIndustry: '12 Einstein SFCC activations analysed · Avg 8 weeks · 91% success rate', fromGenome: '91% success rate once single owner appointed · Ownership clarity is the only prerequisite',
+          bullets: ['Already licensed — $0 incremental license cost', 'Salesforce PS SFCC Einstein specialist team available', 'Nike + Sephora activation playbook at comparable scale', '8-week timeline to first personalised revenue'] },
+        { id: 'accenture-sfcc', name: 'Accenture SFCC Practice', score: 82, outcomeRate: 0.79, referenceMatch: 80, cost: '$1.4–2.2M', timeline: '10–14 weeks', failureRisk: 'LOW', recommended: false, tag: 'SI-led activation',
+          fromData: 'Higher cost than Salesforce PS for same scope', fromIndustry: 'Accenture strong for large-scale SFCC customisation · Einstein activation not core differentiator', fromGenome: '79% success rate · Timeline 2–6 weeks longer than Salesforce PS',
+          bullets: ['SFCC expertise for complex customisation work', 'Einstein activation not Accenture\'s primary SFCC strength', 'Higher cost and longer timeline than Salesforce PS', 'Better fit if broader SFCC customisation is in scope'] },
+      ],
+      recommendation: 'CEO appoints single owner (CMO recommended — it is a revenue programme) on Day 1. Salesforce PS engagement signed Week 2. 8 weeks to first Einstein-personalised revenue. $1.2M activation cost against $14M/yr license already paid = 207:1 ROI.',
+      negotiation: 'Use 18 months of paid-but-idle license as leverage. Salesforce will accelerate delivery to protect the relationship — reference the $14M/yr at risk. Negotiate: fixed-fee 8-week activation, milestone payment, outcome metric (loyalty open rate uplift) as go-live criteria.',
+    },
+    {
+      id: 'o9-completion', name: 'o9 Demand Forecasting Completion', status: 'HIGH',
+      deadline: '$6.8M invested · 40% complete · $900M inventory at stake', initiativeType: 'supply-chain-ai',
+      context: 'o9 Solutions at 40% completion after 18 months. $6.8M invested and working in North America. $900M in excess inventory and 4.2x turns vs 6.8x benchmark. Fixed-fee completion contract required to prevent further scope drift.',
+      vendors: [
+        { id: 'o9-fixed-fee', name: 'o9 Fixed-Fee Completion Contract', score: 91, outcomeRate: 0.85, referenceMatch: 88, cost: '$3.0–4.2M (remaining scope)', timeline: '9–12 months', failureRisk: 'LOW', recommended: true, tag: 'Finish what you started',
+          fromData: '$6.8M invested · NA model working · 4 regions remaining · COO ownership confirmed', fromIndustry: '22 o9 completion engagements · 85% completion success vs 58% restart success', fromGenome: 'Fixed-fee contract is the only mechanism that prevents further drift · COO ownership required',
+          bullets: ['$6.8M already invested with working NA model', '85% completion success rate vs 58% restart', 'NA template rolls forward to remaining 4 regions', 'Fixed-fee: protects against further scope expansion'] },
+        { id: 'blue-yonder-nexora', name: 'Blue Yonder (Replace o9)', score: 68, outcomeRate: 0.62, referenceMatch: 60, cost: '$14–22M (full restart)', timeline: '18–24 months', failureRisk: 'HIGH', recommended: false, tag: 'Sunk cost trap',
+          fromData: 'Abandons $6.8M investment · 24-month restart delays $900M recovery', fromIndustry: 'Blue Yonder strong for $20B+ retailers with complex global supply chains', fromGenome: '62% success rate for replacement after 40% implementation · Average overrun 9 months',
+          bullets: ['Strong platform for very large multi-region retailers', 'Abandoning $6.8M creates sunk cost write-off', '18–24 month restart delays $900M inventory recovery', 'Replace only if o9 fixed-fee completion fails — not as first option'] },
+      ],
+      recommendation: 'Negotiate a fixed-fee completion contract with o9 immediately. The $6.8M invested and working NA model is the foundation — restart would be slower, more expensive, and historically less successful. COO must own this programme as single executive sponsor.',
+      negotiation: 'o9 has $6.8M in revenue and a programme at risk — they are motivated to complete. Demand: fixed-fee for remaining 4-region rollout, milestone payments tied to inventory turn improvement (not go-live), COO-level escalation path in contract.',
+    },
+    {
+      id: 'sap-r3-migration', name: 'SAP R/3 Migration SI Selection', status: 'HIGH',
+      deadline: 'SAP R/3 EOL December 2027 — 20 months remaining', initiativeType: 'erp-migration',
+      context: 'SAP R/3 Continental Europe: EOL December 2027. 8,200 customisations. $4.6B in revenue dependent on this region. 18–24 month migration window means starting now arrives exactly at deadline. Every month of delay increases forced-migration risk.',
+      vendors: [
+        { id: 'accenture-sap', name: 'Accenture SAP Practice', score: 88, outcomeRate: 0.83, referenceMatch: 86, cost: '$24–38M (full programme)', timeline: '18–24 months', failureRisk: 'MEDIUM', recommended: true, tag: 'Best at scale',
+          fromData: '8,200 customisations · $4.6B revenue region · Dec 2027 hard EOL · 20 months remaining', fromIndustry: 'Accenture SAP: 83% on-time at this scale · Largest Continental Europe SAP reference pool', fromGenome: '83% success rate at $4–6B revenue migration scope · Customisation rationalisation is #1 success factor',
+          bullets: ['Largest Continental European SAP reference pool', 'Best success rate for 8,000+ customisation migrations', 'Dedicated pre-discovery: customisation rationalisation sprint', 'Fixed-price discovery phase before full commitment'] },
+        { id: 'deloitte-sap', name: 'Deloitte SAP CoE', score: 84, outcomeRate: 0.80, referenceMatch: 82, cost: '$22–36M', timeline: '18–24 months', failureRisk: 'MEDIUM', recommended: false, tag: 'Strong alternative',
+          fromData: 'Strong alternative to Accenture for Continental Europe scope', fromIndustry: 'Deloitte SAP: strong for retail sector · Slightly less Continental Europe concentration', fromGenome: '80% success rate · Comparable to Accenture for this scope · Use as competitive RFP alternative',
+          bullets: ['Strong retail sector SAP practice', 'Competitive alternative to Accenture in RFP', 'Slightly less Continental Europe concentration', 'Include in 2-vendor RFP for competitive pricing'] },
+        { id: 'sap-ps-nexora', name: 'SAP Professional Services', score: 76, outcomeRate: 0.71, referenceMatch: 74, cost: '$28–44M', timeline: '24–36 months', failureRisk: 'HIGH', recommended: false, tag: 'Direct from SAP',
+          fromData: 'Highest cost · Timeline extends past EOL deadline', fromIndustry: 'SAP PS: slower scheduling · Higher cost than SI at comparable scale', fromGenome: '71% success rate · Timeline risk: 34% of SAP PS programmes miss EOL window',
+          bullets: ['Direct SAP expertise — deep product knowledge', 'Highest cost and longest timeline', '34% miss EOL window at this scope — unacceptable risk', 'Use as fallback only if SI approach fails'] },
+      ],
+      recommendation: 'Engage Accenture and Deloitte in a competitive 2-vendor RFP immediately. The EOL deadline is not negotiable — every month of delay narrows the window. Scope the RFP as a fixed-fee discovery phase (8 weeks) to rationalise 8,200 customisations before committing to full programme price.',
+      negotiation: 'Run a genuine competitive RFP — Accenture and Deloitte are both motivated. Fixed-price discovery phase is non-negotiable: this protects against customisation scope creep. Demand named leads with Continental Europe SAP experience before contract signing.',
+    },
+  ],
 }
 
 // ── Current vendor portfolios for Optimize mode ───────────────────────────────
@@ -278,6 +379,20 @@ const CURRENT_VENDORS: Record<ClientId, CurrentVendor[]> = {
     { id: 'salesforce-ax', name: 'Salesforce Commerce', category: 'eCommerce', annualSpend: 4_800_000, contractEnd: 'Feb 2027', contractedUptime: 99.9, actualUptime: 99.8, marketRate: 4_200_000, isRenewing: false, penaltyPerHour: 5_000 },
     { id: 'o9-ax', name: 'o9 Solutions', category: 'Demand Forecasting', annualSpend: 2_400_000, contractEnd: 'Nov 2026', contractedUptime: 99.5, actualUptime: 98.8, marketRate: 2_400_000, isRenewing: false, penaltyPerHour: 2_000 },
     { id: 'databricks-ax', name: 'Databricks', category: 'Data Platform', annualSpend: 3_200_000, contractEnd: 'Mar 2027', contractedUptime: 99.9, actualUptime: 99.9, marketRate: 2_800_000, isRenewing: false, penaltyPerHour: 4_000 },
+  ],
+  arcturus: [
+    { id: 'bloomberg', name: 'Bloomberg AIM', category: 'Order Management', annualSpend: 42_000_000, contractEnd: 'Dec 2026', contractedUptime: 99.9, actualUptime: 99.6, marketRate: 38_000_000, isRenewing: true, penaltyPerHour: 25_000 },
+    { id: 'aladdin', name: 'BlackRock Aladdin', category: 'Risk Analytics', annualSpend: 38_000_000, contractEnd: 'Mar 2027', contractedUptime: 99.9, actualUptime: 99.7, marketRate: 35_000_000, isRenewing: false, penaltyPerHour: 22_000 },
+    { id: 'salesforce-arc', name: 'Salesforce FSC', category: 'CRM', annualSpend: 14_000_000, contractEnd: 'Aug 2026', contractedUptime: 99.9, actualUptime: 99.8, marketRate: 12_000_000, isRenewing: false, penaltyPerHour: 6_000 },
+    { id: 'geneva', name: 'SS&C Advent Geneva', category: 'Portfolio Accounting', annualSpend: 12_000_000, contractEnd: 'Jun 2026', contractedUptime: 99.5, actualUptime: 98.9, marketRate: 11_000_000, isRenewing: false, penaltyPerHour: 8_000 },
+    { id: 'charles-river', name: 'Charles River IMS', category: 'Compliance', annualSpend: 8_000_000, contractEnd: 'Sep 2026', contractedUptime: 99.5, actualUptime: 99.3, marketRate: 7_500_000, isRenewing: false, penaltyPerHour: 5_000 },
+  ],
+  nexora: [
+    { id: 'sap-nexora', name: 'SAP (All Regions)', category: 'ERP', annualSpend: 50_000_000, contractEnd: 'Dec 2027', contractedUptime: 99.9, actualUptime: 99.5, marketRate: 45_000_000, isRenewing: true, penaltyPerHour: 30_000 },
+    { id: 'sfcc', name: 'Salesforce SFCC + Einstein', category: 'Commerce + AI', annualSpend: 21_000_000, contractEnd: 'Feb 2027', contractedUptime: 99.9, actualUptime: 99.8, marketRate: 18_000_000, isRenewing: false, penaltyPerHour: 12_000 },
+    { id: 'o9-nexora', name: 'o9 Solutions', category: 'Demand Forecasting', annualSpend: 2_400_000, contractEnd: 'Nov 2026', contractedUptime: 99.5, actualUptime: 97.8, marketRate: 2_400_000, isRenewing: false, penaltyPerHour: 3_000 },
+    { id: 'databricks-nexora', name: 'Databricks', category: 'Data Platform', annualSpend: 3_200_000, contractEnd: 'Mar 2027', contractedUptime: 99.9, actualUptime: 99.9, marketRate: 2_800_000, isRenewing: false, penaltyPerHour: 4_000 },
+    { id: 'klaviyo', name: 'Klaviyo', category: 'Email Marketing', annualSpend: 800_000, contractEnd: 'Jun 2026', contractedUptime: 99.9, actualUptime: 99.9, marketRate: 800_000, isRenewing: false, penaltyPerHour: 500 },
   ],
 }
 
@@ -316,9 +431,44 @@ function SelectContent() {
   const [selectedDecisionId, setSelectedDecisionId] = useState<string | null>(urlDecision || DECISIONS[urlClient][0]?.id || null)
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null)
   const [leverageChecked, setLeverageChecked] = useState<Set<string>>(new Set())
+  const [role, setRole] = useState('Maestro')
 
   const meta = CLIENT_META[client]
   const decisions = DECISIONS[client]
+
+  const ROLES = meta.vertical === 'FinServ'
+    ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
+    : meta.vertical === 'Retail'
+    ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
+    : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
+
+  // Role-filtered decision counts
+  const ROLE_DOMAIN: Record<string, string[]> = {
+    CIO:    ['tech', 'platform', 'data', 'epic', 'migration', 'ai'],
+    CFO:    ['rcm', 'contract', 'cost', 'renegotiate', 'workforce'],
+    CMO:    ['customer', 'einstein', 'crm', 'marketing'],
+    COO:    ['workforce', 'supply', 'fulfilment', 'operations', 'o9'],
+    CRO:    ['risk', 'governance', 'compliance', 'bloomberg', 'stress'],
+    CMIO:   ['epic', 'prior-auth', 'clinical', 'workforce'],
+    CEO:    [],  // sees all
+    Maestro: [], // sees all
+  }
+
+  function decisionsForRole(r: string) {
+    const keywords = ROLE_DOMAIN[r] || []
+    if (keywords.length === 0) return decisions
+    return decisions.filter(d =>
+      keywords.some(k => d.initiativeType.toLowerCase().includes(k) || d.id.toLowerCase().includes(k))
+    )
+  }
+  const roleDecisions = decisionsForRole(role)
+  const roleSpend = (() => {
+    const cv = CURRENT_VENDORS[client]
+    const keywords = ROLE_DOMAIN[role] || []
+    if (keywords.length === 0) return cv
+    return cv.filter(v => keywords.some(k => v.name.toLowerCase().includes(k)))
+  })()
+
   const decision = decisions.find(d => d.id === selectedDecisionId) || decisions[0]
   const vendors = decision.vendors
   const selectedVendor = vendors.find(v => v.id === selectedVendorId) || vendors[0]
@@ -348,7 +498,7 @@ function SelectContent() {
   const riskColor = (r: string) => r === 'HIGH' ? T.red : r === 'MEDIUM' ? T.amber : T.green
 
   return (
-    <PageShell activePage="select" clientId={client}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
@@ -385,6 +535,58 @@ function SelectContent() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Role tabs strip */}
+      <div style={{ background: '#060E18', borderBottom: `1px solid ${T.border}`, padding: '0 40px', display: 'flex', alignItems: 'center', gap: '2px', height: '38px' }}>
+        {ROLES.map(r => {
+          const isActive = role === r
+          return (
+            <button key={r} onClick={() => setRole(r)}
+              style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+            >{r}</button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+          Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
+        </div>
+      </div>
+
+      {/* Role lens */}
+      <div style={{ background: `${T.teal}08`, borderBottom: `1px solid ${T.border}`, padding: '12px 40px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '16px' }}>
+          {(() => {
+            const rd = roleDecisions
+            const urgentCount = rd.filter(d => d.status === 'URGENT').length
+            const roleCV = roleSpend
+            const roleTotal = roleCV.reduce((s, v) => s + v.annualSpend, 0)
+            const mostUrgent = rd[0]
+            const labels: [string, string, string] = role === 'CFO'
+              ? ['Decisions in Scope', 'Vendor Spend in Domain', 'Most Urgent Decision']
+              : role === 'CRO'
+              ? ['Risk/Compliance Decisions', 'Risk Vendor Spend', 'Top Risk Decision']
+              : role === 'CMO'
+              ? ['Customer Decisions', 'Marketing Stack Spend', 'Top Customer Decision']
+              : role === 'COO'
+              ? ['Ops Decisions', 'Ops Vendor Spend', 'Top Ops Decision']
+              : role === 'CMIO'
+              ? ['Clinical Decisions', 'Clinical Tech Spend', 'Top Clinical Decision']
+              : ['Decisions in Scope', 'Vendor Spend', 'Most Urgent Decision']
+            return [
+              { label: labels[0], value: rd.length > 0 ? `${rd.length} open` : 'None in scope' },
+              { label: labels[1], value: roleTotal > 0 ? fmt$(roleTotal) : fmt$(totalSpend) + ' total' },
+              { label: labels[2], value: mostUrgent ? mostUrgent.name : '—', sub: mostUrgent ? mostUrgent.status : '' },
+            ].map((item, i) => (
+              <div key={i}>
+                <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>{item.label}</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: T.text, fontFamily: T.serif }}>{item.value}</div>
+                {item.sub && <div style={{ fontSize: '10px', color: statusColor(item.sub), fontFamily: T.mono, fontWeight: 700, marginTop: '2px' }}>{item.sub}</div>}
+              </div>
+            ))
+          })()}
         </div>
       </div>
 
@@ -832,7 +1034,7 @@ function SelectContent() {
         )}
 
       </div>
-    </PageShell>
+    </div>
   )
 }
 

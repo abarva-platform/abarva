@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import PageShell from '@/components/PageShell'
 
 // ─── Design system ─────────────────────────────────────────────────────────────
 const T = {
@@ -70,7 +69,7 @@ function EngagementRow({ e }: { e: typeof ENGAGEMENTS[number] }) {
 
 export default function AdminPage() {
   return (
-    <PageShell activePage="admin">
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
 
       {/* Content */}
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '60px 24px' }}>
@@ -112,6 +111,6 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-    </PageShell>
+    </div>
   )
 }

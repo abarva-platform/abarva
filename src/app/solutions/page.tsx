@@ -22,12 +22,14 @@ const T = {
 }
 
 // ── Solution data ─────────────────────────────────────────────────────────────
-type Client = 'meridian' | 'firstcapital' | 'apexretail'
+type Client = 'meridian' | 'firstcapital' | 'apexretail' | 'arcturus' | 'nexora'
 
 const CLIENT_LABELS: Record<Client, string> = {
   meridian: 'Meridian Health',
   firstcapital: 'First Capital Bank',
   apexretail: 'Apex Retail',
+  arcturus: 'Arcturus Financial',
+  nexora: 'Nexora Retail',
 }
 
 // Client-specific FROM YOUR DATA for each solution
@@ -46,6 +48,12 @@ const SOLUTION_CLIENT_DATA: Record<string, Record<Client, Array<{ icon: string; 
     apexretail: [
       { icon: '🟡', text: 'No healthcare operations — not applicable', source: 'data' },
     ],
+    arcturus: [
+      { icon: '🟡', text: 'No healthcare operations — not applicable', source: 'data' },
+    ],
+    nexora: [
+      { icon: '🟡', text: 'No healthcare operations — not applicable', source: 'data' },
+    ],
   },
   'AM-01': {
     meridian: [
@@ -61,6 +69,14 @@ const SOLUTION_CLIENT_DATA: Record<string, Record<Client, Array<{ icon: string; 
     apexretail: [
       { icon: '🔴', text: '420 applications including e-commerce stack', source: 'data' },
       { icon: '🟡', text: '5 analytics tools across departments', source: 'data' },
+    ],
+    arcturus: [
+      { icon: '🔴', text: '240 applications — financial services stack', source: 'data' },
+      { icon: '🟡', text: '4 BI tools with significant overlap', source: 'data' },
+    ],
+    nexora: [
+      { icon: '🔴', text: '380 applications including retail and e-commerce', source: 'data' },
+      { icon: '🟡', text: '6 analytics tools across merchandising and ops', source: 'data' },
     ],
   },
   'IT-01': {
@@ -78,6 +94,14 @@ const SOLUTION_CLIENT_DATA: Record<string, Record<Client, Array<{ icon: string; 
       { icon: '🔴', text: 'IT spend 2.8% of revenue — in range but opportunity', source: 'data' },
       { icon: '🟡', text: 'Multiple logistics vendors with overlap detected', source: 'data' },
     ],
+    arcturus: [
+      { icon: '🔴', text: 'IT spend 3.2% of AUM — benchmark is 2.6%', source: 'data' },
+      { icon: '🟡', text: '$1.4M estimated SLA credits unclaimed', source: 'industry' },
+    ],
+    nexora: [
+      { icon: '🔴', text: 'IT spend 3.1% of revenue — retail benchmark 2.4%', source: 'data' },
+      { icon: '🟡', text: 'Supply chain vendor overlap identified across 3 systems', source: 'data' },
+    ],
   },
   'FS-01': {
     firstcapital: [
@@ -91,6 +115,14 @@ const SOLUTION_CLIENT_DATA: Record<string, Record<Client, Array<{ icon: string; 
     ],
     apexretail: [
       { icon: '🟡', text: 'Retail financial services — see AM-01 or AI-01', source: 'data' },
+    ],
+    arcturus: [
+      { icon: '🔴', text: 'Digital adoption 38% vs 64% peer benchmark', source: 'data' },
+      { icon: '🟡', text: 'Core system 18 years old — modernization window approaching', source: 'data' },
+    ],
+    nexora: [
+      { icon: '🟡', text: 'Retail — financial services scope limited', source: 'data' },
+      { icon: '🟢', text: 'Consider AM-01 Analytics Modernization instead', source: 'industry' },
     ],
   },
   'AI-01': {
@@ -107,6 +139,14 @@ const SOLUTION_CLIENT_DATA: Record<string, Record<Client, Array<{ icon: string; 
     apexretail: [
       { icon: '🔴', text: 'Personalisation AI deployed — outcomes unclear', source: 'data' },
       { icon: '🟡', text: '$8M AI investment — no baseline locked', source: 'data' },
+    ],
+    arcturus: [
+      { icon: '🔴', text: 'Risk AI pilot — no outcome baseline established', source: 'data' },
+      { icon: '🟡', text: '$6M AI budget — ROI untracked', source: 'industry' },
+    ],
+    nexora: [
+      { icon: '🔴', text: 'Recommendation AI deployed — conversion impact unmeasured', source: 'data' },
+      { icon: '🟡', text: '$11M AI investment — no outcomes framework', source: 'data' },
     ],
   },
 }
@@ -291,7 +331,7 @@ function SolutionCard({ solution, client }: { solution: typeof ALL_SOLUTIONS[0];
               textAlign: 'center', display: 'block',
             }}
           >
-            Run for {CLIENT_LABELS[client]} →
+            Start this Solution →
           </a>
           <a
             href={href}
@@ -398,10 +438,9 @@ function FilterBar({ filter, onChange }: { filter: SolutionFilter; onChange: (f:
 // ── Solutions content ─────────────────────────────────────────────────────────
 function SolutionsContent() {
   const searchParams = useSearchParams()
-  const clientParam = (searchParams.get('client') as Client) || 'meridian'
-  const [client, setClient] = useState<Client>(clientParam)
+  // Client comes from session/URL — not exposed as a UI control
+  const client = (searchParams.get('client') as Client) || 'meridian'
   const [filter, setFilter] = useState<SolutionFilter>({})
-  const [showClientMenu, setShowClientMenu] = useState(false)
 
   const filteredSolutions = filterSolutions(
     ALL_SOLUTIONS as Parameters<typeof filterSolutions>[0],
@@ -409,97 +448,41 @@ function SolutionsContent() {
   )
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
-      {/* Header */}
-      <div style={{
-        borderBottom: `1px solid ${T.border}`,
-        padding: '32px 32px 24px',
-        background: T.bg,
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', marginBottom: 8 }}>
-              SOLUTION LIBRARY
+      {/* Page header */}
+      <div style={{ borderBottom: `1px solid ${T.border}`, padding: '40px 0 32px' }}>
+        <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+          Solution Library
+        </div>
+        <div style={{ fontSize: 40, fontFamily: T.fraunces, color: T.text, marginBottom: 12, lineHeight: 1.1 }}>
+          Find your problem. Run the solution.
+        </div>
+        <div style={{ fontSize: 15, fontFamily: T.sans, color: T.secondary, maxWidth: 580, marginBottom: 24, lineHeight: 1.6 }}>
+          Each solution is a pre-configured path from problem to outcome — combining your data, industry context, and the Transformation Genome.
+        </div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          {['5 Solutions', '5 Verticals', 'Avg 76% success rate'].map(stat => (
+            <div key={stat} style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, padding: '5px 14px', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: 20, background: 'rgba(45,212,200,0.06)' }}>
+              {stat}
             </div>
-            <div style={{ fontSize: 32, fontFamily: T.fraunces, color: T.text, marginBottom: 8 }}>
-              Find your problem. Run the solution.
-            </div>
-            <div style={{ fontSize: 14, fontFamily: T.sans, color: T.secondary, maxWidth: 560 }}>
-              Each solution is a pre-configured path from problem to outcome — combining your data, industry context, and the Transformation Genome.
-            </div>
-          </div>
-
-          {/* Client selector */}
-          <div style={{ position: 'relative' }}>
-            <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 6 }}>
-              SHOWING SOLUTIONS FOR:
-            </div>
-            <button
-              onClick={() => setShowClientMenu(m => !m)}
-              style={{
-                padding: '10px 18px',
-                background: T.surface,
-                border: `1px solid ${T.teal}`,
-                color: T.teal,
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 13,
-                fontFamily: T.mono,
-              }}
-            >
-              {CLIENT_LABELS[client]} ▾
-            </button>
-            {showClientMenu && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 4,
-                background: T.surface, border: `1px solid ${T.border}`,
-                borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 200,
-              }}>
-                {(['meridian', 'firstcapital', 'apexretail'] as Client[]).map(c => (
-                  <button
-                    key={c}
-                    onClick={() => { setClient(c); setShowClientMenu(false) }}
-                    style={{
-                      width: '100%', padding: '12px 16px',
-                      background: c === client ? 'rgba(45,212,200,0.1)' : 'transparent',
-                      color: c === client ? T.teal : T.text,
-                      border: 'none', cursor: 'pointer',
-                      fontSize: 13, fontFamily: T.mono, textAlign: 'left',
-                    }}
-                  >
-                    {CLIENT_LABELS[c]}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       </div>
 
       {/* Filter + grid */}
-      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '32px 48px 64px' }}>
+      <div style={{ padding: '32px 0 64px' }}>
         <FilterBar filter={filter} onChange={setFilter} />
-
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-          gap: 20,
-          animation: 'fadein 0.3s ease-out',
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20, animation: 'fadein 0.3s ease-out' }}>
           {filteredSolutions.map(solution => (
             <SolutionCard key={solution.code} solution={solution as typeof ALL_SOLUTIONS[0]} client={client} />
           ))}
         </div>
-
         {filteredSolutions.length === 0 && (
           <div style={{ textAlign: 'center', padding: 64, color: T.secondary, fontFamily: T.mono, fontSize: 13 }}>
             No solutions match these filters.{' '}
-            <button
-              onClick={() => setFilter({})}
-              style={{ color: T.teal, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: T.mono }}
-            >
+            <button onClick={() => setFilter({})} style={{ color: T.teal, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: T.mono }}>
               Clear filters
             </button>
           </div>

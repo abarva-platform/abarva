@@ -1,7 +1,6 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PageShell from '@/components/PageShell'
 
 const T = {
   bg: '#060A12', surface: '#0D1520', surface2: '#162030',
@@ -81,6 +80,128 @@ const MERIDIAN_INITIATIVES = [
   },
 ]
 
+const ARCTURUS_INITIATIVES = [
+  {
+    id: 'ai-governance',
+    title: 'AI Governance Framework',
+    category: 'Compliance',
+    status: 'at-risk' as const,
+    baseline: 'None',
+    current: 'Vendor Selected',
+    target: 'MAS FEAT Compliant by Month 4',
+    metric: 'Compliance Status',
+    dollarImpact: '$35M',
+    dollarGap: '$35M penalty exposure',
+    attributionConf: 86,
+    week: 1,
+    totalWeeks: 16,
+    owner: 'Interim CDO',
+    vendor: 'Collibra (pending)',
+    commentary: 'Week 1: Interim CDO appointed. Collibra FEAT template selected. MAS model inventory sprint begins Week 3. 4 months overdue — 16-week remediation programme started.',
+    history: [0, 5, 10, 18, 28, 40],
+  },
+  {
+    id: 'cdo-hire',
+    title: 'CDO Executive Appointment',
+    category: 'Leadership',
+    status: 'at-risk' as const,
+    baseline: 'Vacant (11 months)',
+    current: 'Interim appointed',
+    target: 'Permanent CDO by Month 5',
+    metric: 'Leadership Coverage',
+    dollarImpact: '$94M',
+    dollarGap: '$94M AI pipeline blocked',
+    attributionConf: 78,
+    week: 1,
+    totalWeeks: 20,
+    owner: 'Victoria Hargreaves, CEO',
+    vendor: 'Odgers Berndtson (interim) + Korn Ferry (permanent)',
+    commentary: 'Interim CDO in seat Week 2. Permanent search launched Week 1 via Korn Ferry. All AI initiatives unblocked once interim is in role.',
+    history: [0, 0, 20, 40, 60, 65],
+  },
+  {
+    id: 'stress-testing',
+    title: 'Daily Aladdin Stress Testing',
+    category: 'Risk & Compliance',
+    status: 'on-track' as const,
+    baseline: 'Monthly',
+    current: 'Monthly',
+    target: 'Daily by Week 6',
+    metric: 'Stress Test Frequency',
+    dollarImpact: '$18M',
+    dollarGap: 'SEC compliance gap',
+    attributionConf: 92,
+    week: 1,
+    totalWeeks: 6,
+    owner: 'Raj Malhotra, CIO',
+    vendor: 'BlackRock Aladdin (configuration only)',
+    commentary: 'Configuration-only change — no new vendor required. SEC daily requirement confirmed. Aladdin configuration sprint scoped for Weeks 2–6. Highest-confidence initiative in the programme.',
+    history: [1, 1, 1, 1, 1, 1],
+  },
+]
+
+const NEXORA_INITIATIVES = [
+  {
+    id: 'einstein-activation',
+    title: 'Einstein Personalisation Activation',
+    category: 'Digital Commerce',
+    status: 'on-track' as const,
+    baseline: 'Not Activated',
+    current: 'Owner Appointed',
+    target: 'Live for 28.4M Members by Week 8',
+    metric: 'Activation Status',
+    dollarImpact: '$248M',
+    dollarGap: '$248M idle revenue',
+    attributionConf: 88,
+    week: 1,
+    totalWeeks: 8,
+    owner: 'Sophie Laurent, CMO',
+    vendor: 'Salesforce Professional Services',
+    commentary: 'CEO appointed CMO as single owner Day 1. Salesforce PS engagement letter signed Week 2. Pilot for 5M loyalty members live by Week 4, full 28.4M rollout by Week 8.',
+    history: [0, 10, 10, 30, 55, 70],
+  },
+  {
+    id: 'o9-completion',
+    title: 'o9 Demand Forecasting Completion',
+    category: 'Supply Chain',
+    status: 'at-risk' as const,
+    baseline: '40% (NA only)',
+    current: '40%',
+    target: '100% by Month 9',
+    metric: 'Implementation Progress',
+    dollarImpact: '$180M',
+    dollarGap: '$900M inventory trapped',
+    attributionConf: 78,
+    week: 1,
+    totalWeeks: 36,
+    owner: 'Priya Krishnamurthy, COO',
+    vendor: 'o9 Solutions (fixed-fee completion)',
+    commentary: 'Fixed-fee completion contract under negotiation. COO named as single owner. EMEA sprint starts Week 4. NA model serves as template for remaining 4 regions.',
+    history: [40, 40, 40, 42, 44, 46],
+  },
+  {
+    id: 'fulfilment-cost',
+    title: 'E-Commerce Fulfilment Cost Reduction',
+    category: 'Operations',
+    status: 'on-track' as const,
+    baseline: '$18.40/order',
+    current: '$18.40/order',
+    target: '$11.20/order by Month 9',
+    metric: 'Fulfilment Cost Per Order',
+    dollarImpact: '$269M',
+    dollarGap: '$615M drag (fulfilment + returns)',
+    attributionConf: 76,
+    week: 1,
+    totalWeeks: 36,
+    owner: 'Kirsten Mueller, CFO',
+    vendor: 'Shipbob + Manhattan Associates',
+    commentary: 'Carrier consolidation RFP issued Week 1. Return friction pilot scoped for 3 markets. CFO mandated margin positive before year-end — this programme is the path.',
+    history: [18.4, 18.4, 18.3, 18.2, 18.0, 17.8],
+  },
+]
+
+type Initiative = typeof MERIDIAN_INITIATIVES[number]
+
 const statusColor = { 'on-track': T.green, 'at-risk': T.amber, 'behind': T.red }
 const statusLabel = { 'on-track': 'On Track', 'at-risk': 'At Risk', 'behind': 'Behind' }
 
@@ -103,12 +224,12 @@ function MiniSparkline({ history, status }: { history: number[]; status: string 
   )
 }
 
-function TabPortfolio() {
+function TabPortfolio({ initiatives }: { initiatives: Initiative[] }) {
   return (
     <div>
       {/* Heat map summary row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
-        {MERIDIAN_INITIATIVES.map(init => (
+        {initiatives.map(init => (
           <div key={init.id} style={{ background: T.surface, border: `1px solid ${statusColor[init.status]}40`, borderRadius: '12px', padding: '20px', position: 'relative' as const }}>
             <div style={{ position: 'absolute' as const, top: '16px', right: '16px', width: '8px', height: '8px', borderRadius: '50%', background: statusColor[init.status] }} />
             <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '6px' }}>{init.category}</div>
@@ -143,8 +264,8 @@ function TabPortfolio() {
             </tr>
           </thead>
           <tbody>
-            {MERIDIAN_INITIATIVES.map((init, i) => (
-              <tr key={init.id} style={{ borderBottom: i < MERIDIAN_INITIATIVES.length - 1 ? `1px solid ${T.border}` : 'none' }}>
+            {initiatives.map((init, i) => (
+              <tr key={init.id} style={{ borderBottom: i < initiatives.length - 1 ? `1px solid ${T.border}` : 'none' }}>
                 <td style={{ padding: '12px 14px', fontSize: '13px', fontWeight: 600, color: T.text }}>{init.title}</td>
                 <td style={{ padding: '12px 14px', fontSize: '12px', color: T.text3 }}>{init.category}</td>
                 <td style={{ padding: '12px 14px', fontSize: '12px', color: T.text3 }}>{init.baseline}</td>
@@ -162,7 +283,7 @@ function TabPortfolio() {
           </tbody>
         </table>
         <div style={{ padding: '14px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ fontSize: '12px', color: T.text3 }}>Total pipeline: 3 initiatives · $146M combined impact</div>
+          <div style={{ fontSize: '12px', color: T.text3 }}>Total pipeline: {initiatives.length} initiatives · tracking active</div>
           <div style={{ fontSize: '12px', fontWeight: 700, color: T.teal }}>$0 verified · Tracking begins Month 3</div>
         </div>
       </div>
@@ -170,10 +291,10 @@ function TabPortfolio() {
   )
 }
 
-function TabDetail() {
+function TabDetail({ initiatives }: { initiatives: Initiative[] }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      {MERIDIAN_INITIATIVES.map(init => (
+      {initiatives.map(init => (
         <div key={init.id} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px', padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
             <div>
@@ -430,12 +551,32 @@ function OutcomesContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
   const [tab, setTab] = useState<TabId>('portfolio')
+  const [role, setRole] = useState('Maestro')
 
-  const clientName = clientId === 'firstcapital' ? 'First Capital Financial' : clientId === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
-  const isMeridian = clientId === 'meridian'
+  const clientIndustry = clientId === 'firstcapital' || clientId === 'arcturus' ? 'FinServ'
+    : clientId === 'apexretail' || clientId === 'nexora' ? 'Retail'
+    : 'Healthcare'
+  const ROLES = clientIndustry === 'FinServ'
+    ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
+    : clientIndustry === 'Retail'
+    ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
+    : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
+
+  const clientName = clientId === 'firstcapital' ? 'First Capital Financial'
+    : clientId === 'apexretail' ? 'Apex Retail Group'
+    : clientId === 'arcturus' ? 'Arcturus Financial Group'
+    : clientId === 'nexora' ? 'Nexora Retail & Consumer'
+    : 'Meridian Health System'
+
+  const initiatives: Initiative[] = clientId === 'arcturus' ? ARCTURUS_INITIATIVES
+    : clientId === 'nexora' ? NEXORA_INITIATIVES
+    : clientId === 'meridian' ? MERIDIAN_INITIATIVES
+    : []
+
+  const hasInitiatives = initiatives.length > 0
 
   return (
-    <PageShell activePage="outcomes" clientId={clientId}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
 
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
@@ -460,6 +601,62 @@ function OutcomesContent() {
         </div>
       </div>
 
+      {/* Role tabs strip */}
+      <div style={{ background: '#060E18', borderBottom: `1px solid ${T.border}`, padding: '0 40px', display: 'flex', alignItems: 'center', gap: '2px', height: '38px' }}>
+        {ROLES.map(r => {
+          const isActive = role === r
+          return (
+            <button key={r} onClick={() => setRole(r)}
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+            >{r}</button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+          Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
+        </div>
+      </div>
+
+      {/* Role lens */}
+      <div style={{ background: `${T.teal}08`, borderBottom: `1px solid ${T.border}`, padding: '12px 40px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px' }}>
+          {(() => {
+            const ROLE_CAT: Record<string, string[]> = {
+              CIO:    ['platform', 'tech', 'data', 'ai', 'system'],
+              CFO:    ['cost', 'contract', 'rcm', 'revenue', 'financial'],
+              CMO:    ['customer', 'einstein', 'crm', 'marketing', 'revenue'],
+              COO:    ['ops', 'supply', 'fulfil', 'workforce', 'scheduling'],
+              CRO:    ['risk', 'governance', 'compliance', 'stress'],
+              CMIO:   ['clinical', 'prior', 'patient', 'physician'],
+              CEO:    [],
+              Maestro: [],
+            }
+            const cats = ROLE_CAT[role] || []
+            const scopeInits = cats.length === 0 ? initiatives
+              : initiatives.filter(init =>
+                  cats.some(k => init.title.toLowerCase().includes(k) || (init.category || '').toLowerCase().includes(k))
+                )
+            const onTrack = scopeInits.filter(i => i.status === 'on-track').length
+            const parseDollar = (s: string) => parseFloat(s.replace(/[^0-9.]/g, '')) * (s.includes('M') ? 1_000_000 : s.includes('K') ? 1_000 : 1)
+            const bestDollar = scopeInits.length > 0 ? scopeInits[0] : initiatives[0] || null
+            const totalParsed = scopeInits.reduce((s, i) => s + parseDollar(i.dollarImpact as string || '$0'), 0)
+            const pipelineStr = totalParsed >= 1_000_000 ? `$${(totalParsed/1_000_000).toFixed(0)}M` : totalParsed > 0 ? `$${totalParsed.toLocaleString()}` : '$146M'
+            return [
+              { label: 'Initiatives in Scope', value: scopeInits.length > 0 ? `${scopeInits.length} active` : 'All initiatives' },
+              { label: role === 'CFO' ? 'Revenue at Stake' : 'Pipeline Value', value: pipelineStr },
+              { label: 'Top Initiative', value: bestDollar ? bestDollar.title : initiatives[0]?.title || '—', sub: onTrack + ' on track' },
+            ].map((item, i) => (
+              <div key={i}>
+                <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '3px' }}>{item.label}</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: T.text }}>{item.value}</div>
+                {item.sub && <div style={{ fontSize: '10px', color: T.teal, fontWeight: 600, marginTop: '2px' }}>{item.sub}</div>}
+              </div>
+            ))
+          })()}
+        </div>
+      </div>
+
       {/* Tab bar */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 40px', display: 'flex', gap: '0' }}>
@@ -480,10 +677,10 @@ function OutcomesContent() {
       </div>
 
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '28px 40px' }}>
-        {isMeridian ? (
+        {hasInitiatives ? (
           <>
-            {tab === 'portfolio' && <TabPortfolio />}
-            {tab === 'detail' && <TabDetail />}
+            {tab === 'portfolio' && <TabPortfolio initiatives={initiatives} />}
+            {tab === 'detail' && <TabDetail initiatives={initiatives} />}
             {tab === 'verification' && <TabVerification />}
             {tab === 'forecast' && <TabForecast />}
             {tab === 'board' && <TabBoard />}
@@ -496,7 +693,7 @@ function OutcomesContent() {
           </div>
         )}
       </div>
-    </PageShell>
+    </div>
   )
 }
 

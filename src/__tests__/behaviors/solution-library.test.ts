@@ -6,11 +6,11 @@ import {
 } from '@/lib/solution-library'
 
 const ALL_SOLUTIONS: Solution[] = [
-  { code: 'HC-01', objective: 'Grow',     office: 'Front Office',  vertical: 'Healthcare' },
-  { code: 'AM-01', objective: 'Optimise', office: 'Back Office',   vertical: 'All' },
-  { code: 'IT-01', objective: 'Optimise', office: 'Back Office',   vertical: 'All' },
-  { code: 'FS-01', objective: 'Grow',     office: 'Front Office',  vertical: 'Financial Services' },
-  { code: 'AI-01', objective: 'Protect',  office: 'Middle Office', vertical: 'All' },
+  { code: 'HC-01', name: 'Health Growth',         objective: 'Grow',     office: 'Front Office',  vertical: 'Healthcare' },
+  { code: 'AM-01', name: 'Analytics Modernise',   objective: 'Optimise', office: 'Back Office',   vertical: 'All' },
+  { code: 'IT-01', name: 'IT Optimise',           objective: 'Optimise', office: 'Back Office',   vertical: 'All' },
+  { code: 'FS-01', name: 'FS Growth',             objective: 'Grow',     office: 'Front Office',  vertical: 'Financial Services' },
+  { code: 'AI-01', name: 'AI Protect',            objective: 'Protect',  office: 'Middle Office', vertical: 'All' },
 ]
 
 describe('Solution Library behaviors', () => {

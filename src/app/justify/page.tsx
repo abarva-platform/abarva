@@ -1,10 +1,11 @@
 'use client'
 import { useState, Suspense, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import PageShell from '@/components/PageShell'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
+import { arcturusAI } from '@/data/arcturus/ai'
+import { nexoraAI } from '@/data/nexora/ai'
 
 const T = {
   bg: '#060A12', surface: '#0D1520', border: '#1C2D45',
@@ -64,16 +65,29 @@ function JustifyContent() {
   const [activeClient] = useState(clientParam)
   const [selectedOpp, setSelectedOpp] = useState<any>(null)
   const [scenario, setScenario] = useState<'conservative' | 'base' | 'optimistic'>('base')
+  const [role, setRole] = useState('Maestro')
 
   const clientName = activeClient === 'firstcapital' ? 'First Capital Financial'
     : activeClient === 'apexretail' ? 'Apex Retail Group'
+    : activeClient === 'arcturus' ? 'Arcturus Financial Group'
+    : activeClient === 'nexora' ? 'Nexora Retail & Consumer'
     : 'Meridian Health System'
   const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services'
     : activeClient === 'apexretail' ? 'Retail'
+    : activeClient === 'arcturus' ? 'Financial Services'
+    : activeClient === 'nexora' ? 'Retail'
     : 'Healthcare'
+
+  const ROLES = clientIndustry === 'Financial Services'
+    ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
+    : clientIndustry === 'Retail'
+    ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
+    : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
 
   const ai = activeClient === 'firstcapital' ? firstCapitalAI
     : activeClient === 'apexretail' ? apexRetailAI
+    : activeClient === 'arcturus' ? arcturusAI
+    : activeClient === 'nexora' ? nexoraAI
     : meridianAI
 
   const allOpps = [
@@ -98,7 +112,7 @@ function JustifyContent() {
   ]
 
   return (
-    <PageShell activePage="justify" clientId={activeClient}>
+    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -132,6 +146,65 @@ function JustifyContent() {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* ── Role tabs strip ────────────────────────────────────────────────── */}
+      <div style={{ background: '#060E18', borderBottom: `1px solid ${T.border}`, padding: '0 32px', display: 'flex', alignItems: 'center', gap: '2px', height: '38px' }}>
+        {ROLES.map(r => {
+          const isActive = role === r
+          return (
+            <button key={r} onClick={() => setRole(r)}
+              style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+            >{r}</button>
+          )
+        })}
+        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+          Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
+        </div>
+      </div>
+
+      {/* ── Role lens ──────────────────────────────────────────────────────── */}
+      <div style={{ background: `${T.teal}08`, borderBottom: `1px solid ${T.border}`, padding: '12px 32px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px' }}>
+          {(() => {
+            const front = ai.opportunities.frontOffice || []
+            const mid   = ai.opportunities.middleOffice || []
+            const back  = ai.opportunities.backOffice  || []
+            const oppsForRole = role === 'CMO'
+              ? front
+              : role === 'COO'
+              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/ops|supply|fulfil|workforce|sched/))
+              : role === 'CIO'
+              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/platform|tech|data|migration|infrastructure|ai/))
+              : role === 'CRO'
+              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/risk|compliance|govern|stress|fraud/))
+              : role === 'CMIO'
+              ? [...front, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/clinical|prior|patient|physician|care/))
+              : allOpps
+
+            const scopeVal = oppsForRole.reduce((s: number, o: any) => s + (o.annualValue || 0), 0)
+            const best = oppsForRole.reduce((b: any, o: any) => (!b || (o.annualValue||0) > (b.annualValue||0)) ? o : b, null as any)
+            const roi = best && best.investment ? ((best.annualValue || 0) * 3 / best.investment) : null
+
+            return [
+              { label: role === 'CFO' ? 'Total 3-Year Value' : 'Value in Scope (3yr)',
+                value: fmt(scopeVal * 3) },
+              { label: role === 'CFO' ? 'Median Payback' : 'Initiatives in Scope',
+                value: role === 'CFO' ? '14 mo' : String(oppsForRole.length) + ' initiatives' },
+              { label: 'Top Initiative',
+                value: best ? best.name : '—',
+                sub: roi ? `${roi.toFixed(1)}× ROI` : '' },
+            ].map((item, i) => (
+              <div key={i}>
+                <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>{item.label}</div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: T.text, fontFamily: T.serif }}>{item.value}</div>
+                {item.sub && <div style={{ fontSize: '10px', color: T.teal, fontFamily: T.mono, fontWeight: 600, marginTop: '2px' }}>{item.sub}</div>}
+              </div>
+            ))
+          })()}
         </div>
       </div>
 
@@ -575,7 +648,7 @@ function JustifyContent() {
         )}
 
       </div>
-    </PageShell>
+    </div>
   )
 }
 
