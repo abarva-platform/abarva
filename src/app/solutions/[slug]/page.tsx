@@ -2,6 +2,7 @@
 
 import { Suspense, use } from 'react'
 import { useSearchParams, notFound } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { buildSolutionUrl, objectiveColor } from '@/lib/solution-library'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -636,6 +637,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
+      <AbarvaNav />
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
       {/* SECTION 1 — IMPACT HERO */}

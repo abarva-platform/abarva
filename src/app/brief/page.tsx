@@ -1,6 +1,7 @@
 'use client'
 import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
@@ -145,6 +146,7 @@ function BriefContent() {
       color: C.text,
       padding: '0',
     }}>
+      <AbarvaNav />
       {/* Header */}
       <div style={{
         background: C.surface,

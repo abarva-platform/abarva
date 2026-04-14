@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { meridianTechInventory } from '@/data/meridian/technology_inventory'
 import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory'
 import { firstCapitalTechInventory } from '@/data/firstcapital/technology_inventory'
@@ -100,31 +101,7 @@ function IntelligenceContent() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{background: "#FAFAFA", color: "#0F172A"}}>
-      <nav className="px-6 py-3 flex justify-between items-center flex-shrink-0" style={{background: "#FFFFFF", borderBottom: "1px solid #E2E8F0"}}>
-        <div className="flex items-center gap-4">
-          <button onClick={() => window.location.href = '/'} className="text-sm transition" style={{color: "#2563EB"}}>Back to Dashboard</button>
-          <span className="text-gray-600">|</span>
-          <h1 className="text-lg font-bold" style={{color: "#0F172A"}}>Technology Intelligence</h1>
-          <span className="text-gray-600">|</span>
-          <span className="text-sm" style={{color: "#475569"}}>{clientName}</span>
-          <span className={`text-xs px-2 py-1 rounded ${overallScore >= 70 ? 'bg-green-900 text-green-300' : 'bg-yellow-900 text-yellow-300'}`}>
-            {overallScore}% complete
-          </span>
-        </div>
-        <div className="flex gap-2">
-          {([
-            { id: 'scorecard', label: 'Scorecard' },
-            { id: 'functional', label: 'By Function' },
-            { id: 'technical', label: 'By Category' },
-            { id: 'byunit', label: 'By Business Unit' },
-          ] as {id: View, label: string}[]).map(v => (
-            <button key={v.id} onClick={() => { setActiveView(v.id); setSelectedSystem(null); setSelectedDomain(null) }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${activeView === v.id ? 'bg-blue-600 text-white' : 'bg-gray-900 text-gray-400 hover:text-white border border-gray-800'}`}>
-              {v.label}
-            </button>
-          ))}
-        </div>
-      </nav>
+      <AbarvaNav />
 
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-1 overflow-y-auto p-6" style={{background: "#FAFAFA"}}>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import {
   calcAnnualValue,
   calcNetValue,
@@ -349,6 +350,7 @@ function BusinessCaseContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
+      <AbarvaNav />
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
       {challenge && (

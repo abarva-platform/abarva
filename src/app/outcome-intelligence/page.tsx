@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { calcProgress, calcVariance, calcInitiativeStatus, calcOutcomeFee, calcPortfolioSummary } from '@/lib/outcome-intelligence'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -831,6 +832,7 @@ function OutcomeIntelligenceContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
+      <AbarvaNav />
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
       {/* Header */}

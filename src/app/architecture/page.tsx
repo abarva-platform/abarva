@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const CLIENTS = [
   { id: 'meridian', name: 'Meridian Health', cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
@@ -623,38 +624,7 @@ function ArchContent() {
 
   return (
     <div style={{ background: '#0D1117', minHeight: '100vh' }}>
-      {/* Top nav */}
-      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', height: '48px', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 200 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-              <line x1="8" y1="8" x2="14" y2="14" stroke="#2DD4C8" strokeWidth="1" opacity="0.6" />
-              <line x1="14" y1="14" x2="20" y2="8" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
-              <line x1="14" y1="14" x2="20" y2="20" stroke="#6B7280" strokeWidth="1" opacity="0.5" />
-              <line x1="8" y1="8" x2="4" y2="16" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
-              <line x1="20" y1="20" x2="14" y2="24" stroke="#6B7280" strokeWidth="1" opacity="0.4" />
-              <circle cx="8" cy="8" r="2" fill="#2DD4C8" />
-              <circle cx="20" cy="8" r="2" fill="#6B7280" />
-              <circle cx="14" cy="14" r="2.5" fill="#E6EDF3" />
-              <circle cx="20" cy="20" r="2" fill="#6B7280" />
-              <circle cx="4" cy="16" r="1.5" fill="#4B5563" />
-              <circle cx="14" cy="24" r="1.5" fill="#4B5563" />
-            </svg>
-            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', fontWeight: 700, color: '#E6EDF3' }}>
-              Abar<span style={{ color: '#2DD4C8' }}>VA</span>
-            </span>
-          </a>
-          <span style={{ color: '#30363D' }}>›</span>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', color: '#8B949E' }}>Architecture Generator</span>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', padding: '2px 8px', borderRadius: '4px', background: client.cloudBg + '22', color: client.accent, border: '1px solid ' + client.cloudBg + '55' }}>{client.cloud}</span>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <a href={'/how-to-build?client=' + selected} style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(45,212,200,0.1)', color: '#2DD4C8', textDecoration: 'none', border: '1px solid rgba(45,212,200,0.3)' }}>How to Build This →</a>
-          <a href={'/data-intelligence?client=' + selected} style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(77,163,255,0.1)', color: '#4DA3FF', textDecoration: 'none', border: '1px solid rgba(77,163,255,0.3)' }}>Data Intelligence →</a>
-          <button onClick={handleDownload} style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', color: '#8B949E', border: '1px solid #30363D', cursor: 'pointer' }}>↓ Download</button>
-          <a href="/" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', color: '#6B7280', textDecoration: 'none', border: '1px solid #21262D' }}>← Platform</a>
-        </div>
-      </div>
+      <AbarvaNav />
 
       {/* Client selector */}
       <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', gap: '4px' }}>

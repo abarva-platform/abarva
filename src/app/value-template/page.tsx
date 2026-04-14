@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#FFFFFF', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif", color: '#1a1a1a' } as React.CSSProperties,
@@ -47,6 +48,7 @@ function ValueTemplateContent() {
 
   return (
     <div style={S.page}>
+      <AbarvaNav />
       <style dangerouslySetInnerHTML={{ __html: `
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         @media print {

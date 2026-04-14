@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const SUGGESTED_ORGS = [
   { name: 'HCA Healthcare', type: 'Health System', size: '$60B revenue' },
@@ -103,15 +104,7 @@ export default function SearchPage() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-white">
-      <nav className="border-b border-gray-800 px-8 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold">AbarVa</h1>
-        <button
-          onClick={() => window.location.href = '/'}
-          className="text-sm text-gray-400 hover:text-white transition"
-        >
-          Back to dashboard
-        </button>
-      </nav>
+      <AbarvaNav />
 
       <div className="max-w-4xl mx-auto px-8 py-12">
 

@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const T = {
   bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
@@ -544,20 +545,7 @@ export default function DemoPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'DM Sans, Inter, -apple-system, sans-serif', color: T.text, display: 'flex', flexDirection: 'column' }}>
-      {/* Top nav */}
-      <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <span style={{ fontFamily: 'Georgia, serif', fontSize: '17px', fontWeight: 700, color: '#fff' }}>Abar</span>
-          <span style={{ fontFamily: 'Georgia, serif', fontSize: '22px', fontWeight: 900, color: T.teal }}>Va</span>
-        </div>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: T.text3, textAlign: 'center' }}>
-          SEE ABARVA IN ACTION
-          <span style={{ display: 'block', fontSize: '11px', fontWeight: 400, color: T.text3 }}>
-            Meridian Health System · Healthcare · $11.2B revenue
-          </span>
-        </div>
-        <a href="/" style={{ fontSize: '12px', color: T.text3, textDecoration: 'none' }}>← Back</a>
-      </div>
+      <AbarvaNav />
 
       {/* Progress bar */}
       <ProgressBar act={act} onJump={handleJump} autoPlay={autoPlay} onToggle={handleToggleMode} paused={paused} onPause={handlePause} />

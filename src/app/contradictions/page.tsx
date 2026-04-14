@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 
 type Sev = 'CRITICAL' | 'HIGH'
 
@@ -266,35 +267,7 @@ function ContradictionsContent() {
         .active-line { animation: drawLine 0.55s ease-out forwards; }
       ` }} />
 
-      {/* Nav */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', height: '48px', display: 'flex', alignItems: 'center', padding: '0 24px', justifyContent: 'space-between', position: 'sticky' as const, top: 0, zIndex: 200 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="4" fill="#2DD4C8" />
-              <circle cx="5" cy="5" r="2.5" fill="#1B4FD8" /><circle cx="27" cy="5" r="2.5" fill="#1B4FD8" />
-              <circle cx="5" cy="27" r="2.5" fill="#1B4FD8" /><circle cx="27" cy="27" r="2.5" fill="#1B4FD8" />
-              <line x1="16" y1="16" x2="5" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="5" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="5" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="27" y2="27" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="16" y2="2" stroke="#2DD4C8" strokeWidth="0.5" />
-              <line x1="16" y1="16" x2="16" y2="30" stroke="#2DD4C8" strokeWidth="0.5" />
-            </svg>
-            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px', fontWeight: 600, color: '#E6EDF3' }}>Abar<span style={{ color: '#2DD4C8' }}>VA</span></span>
-          </a>
-          <span style={{ color: '#30363D' }}>›</span>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', color: '#8B949E' }}>Contradiction Network</span>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', padding: '2px 8px', borderRadius: '4px', background: 'rgba(239,68,68,0.12)', color: '#EF4444', border: '1px solid rgba(239,68,68,0.3)' }}>
-            {critCount} CRITICAL · {highCount} HIGH
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <a href={'/diagnose?client=' + selectedClient} style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(77,163,255,0.1)', color: '#4DA3FF', textDecoration: 'none', border: '1px solid rgba(77,163,255,0.3)' }}>Diagnose →</a>
-          <a href={'/architecture?client=' + selectedClient} style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(45,212,200,0.1)', color: '#2DD4C8', textDecoration: 'none', border: '1px solid rgba(45,212,200,0.3)' }}>Architecture →</a>
-          <a href="/" style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', padding: '5px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', color: '#6B7280', textDecoration: 'none', border: '1px solid #21262D' }}>← Platform</a>
-        </div>
-      </div>
+      <AbarvaNav />
 
       {/* Client selector */}
       <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
