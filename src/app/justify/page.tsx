@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
+import PageShell from '@/components/PageShell'
 import { meridianAI } from '@/data/meridian/ai'
 import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
@@ -67,8 +67,7 @@ function JustifyContent() {
   )
 
   return (
-    <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(1); setSelectedOpp(null) }} activePage="justify" />
+    <PageShell activePage="justify" clientId={activeClient}>
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <a href="/" style={{ fontSize: '13px', color: T.text2, textDecoration: 'none' }}>Home</a>
         <span style={{ color: T.border }}>›</span>
@@ -279,7 +278,7 @@ function JustifyContent() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   )
 }
 

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
+import PageShell from '@/components/PageShell'
 import { filterIssuesByRole } from '@/lib/situation-intelligence'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
@@ -1340,8 +1340,7 @@ function DiagnoseContent() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans, color: T.text, paddingBottom: '80px' }}>
-      <AbarvaNav clientId={activeClient} activePage="diagnose" />
+    <PageShell activePage="diagnose" clientId={activeClient}>
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '20px 48px' }}>
@@ -1466,7 +1465,7 @@ function DiagnoseContent() {
           </button>
         ))}
       </div>
-    </div>
+    </PageShell>
   )
 }
 

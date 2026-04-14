@@ -1,312 +1,243 @@
 'use client'
-import { useUser } from '@clerk/nextjs'
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { meridianHealth } from '@/data/meridian/index'
-import { firstCapital } from '@/data/firstcapital/index'
-import { apexRetail } from '@/data/apexretail/index'
-import { regulatoryAlerts } from '@/data/knowledge/regulatory'
-import { meridianAI } from '@/data/meridian/ai'
-import { firstCapitalAI } from '@/data/firstcapital/ai'
-import { apexRetailAI } from '@/data/apexretail/ai'
 
-const S = {
-  page: { minHeight: '100vh', backgroundColor: '#F8FAFC', backgroundImage: 'radial-gradient(circle, #E5E7EB 1px, transparent 1px)', backgroundSize: '24px 24px', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
-  card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  lbl: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '16px' } as React.CSSProperties,
-}
+const BG = '#060A12'
+const CARD = '#0D1520'
+const BORDER = '#1C2D45'
+const TEAL = '#2DD4C8'
+const WHITE = '#EFF6FF'
+const MUTED = '#94A3B8'
+
+const SOLUTIONS = [
+  {
+    id: 'pdlc',
+    name: 'AI-Powered PDLC',
+    owner: 'CIO · All verticals',
+    color: '#6366F1',
+    href: '/solutions/pdlc',
+    problem: '"We\'re spending $300M in capital. Time to production is 16 months. My engineers aren\'t building — they\'re in meetings."',
+    value: '$18M consulting reduction',
+    metric: '16mo → 8mo delivery',
+  },
+  {
+    id: 'delivery',
+    name: 'AI-Powered Transformation Delivery',
+    owner: 'CIO · CTO · All verticals',
+    color: TEAL,
+    href: '/solutions/delivery',
+    problem: '"80 consultants on site. 70% of their time is getting up to speed. Knowledge walks out the door every Friday."',
+    value: '4 Maestros replace 40 consultants',
+    metric: 'Knowledge stays permanently',
+  },
+  {
+    id: 'margin',
+    name: 'Margin Optimization',
+    owner: 'CEO · CFO · COO',
+    color: '#F59E0B',
+    href: '/solutions/margin',
+    problem: '"Operating margin 1.8% against a 4% target. Don\'t know exactly where the margin is leaking or which lever to pull first."',
+    value: '$60–120M annual recovery',
+    metric: 'Unlocks by vertical',
+  },
+]
+
+const PRODUCTS = [
+  { name: 'Situation',     q: 'What\'s actually broken — and what is it costing?', href: '/diagnose?client=meridian',    color: '#EF4444' },
+  { name: 'Strategy',      q: 'Where should we place our AI bets?',               href: '/ai-strategy?client=meridian', color: '#6366F1' },
+  { name: 'Vendor',        q: 'Which vendor wins in our situation?',              href: '/select?client=meridian',       color: '#F59E0B' },
+  { name: 'Business Case', q: 'How do we justify this to the board?',            href: '/justify?client=meridian',      color: '#34D399' },
+  { name: 'Outcomes',      q: 'Did it work — and can we prove it?',             href: '/outcomes?client=meridian',     color: TEAL },
+]
+
+const CLIENTS = [
+  { id: 'meridian',     name: 'Meridian Health',  sub: 'Healthcare',         color: TEAL,      href: '/diagnose?client=meridian' },
+  { id: 'firstcapital', name: 'First Capital',    sub: 'Financial Services', color: '#6366F1', href: '/diagnose?client=firstcapital' },
+  { id: 'apexretail',   name: 'Apex Retail',      sub: 'Retail',             color: '#F59E0B', href: '/diagnose?client=apexretail' },
+]
 
 export default function Home() {
-  const { user } = useUser()
-  const [clientId, setClientId] = useState('meridian')
-  const [selectorOpen, setSelectorOpen] = useState(false)
-  const [animProgress, setAnimProgress] = useState(0)
-  const animRafRef = useRef<number | null>(null)
-
-  useEffect(() => {
-    if (animRafRef.current) cancelAnimationFrame(animRafRef.current)
-    setAnimProgress(0)
-    const t0 = performance.now()
-    const dur = 1800
-    const tick = (now: number) => {
-      const p = Math.min((now - t0) / dur, 1)
-      setAnimProgress(1 - Math.pow(1 - p, 3))
-      if (p < 1) animRafRef.current = requestAnimationFrame(tick)
-      else animRafRef.current = null
-    }
-    animRafRef.current = requestAnimationFrame(tick)
-    return () => { if (animRafRef.current) cancelAnimationFrame(animRafRef.current) }
-  }, [clientId])
-
-  function animVal(raw: string): string {
-    const m = raw.match(/^(\$?)(\d+\.?\d*)(.*)$/)
-    if (!m) return raw
-    const num = parseFloat(m[2])
-    if (num > 999) return raw
-    const cur = num * animProgress
-    const str = m[2].includes('.') ? cur.toFixed(1) : String(Math.round(cur))
-    return m[1] + str + m[3]
-  }
-
-  function getData() {
-    if (clientId === 'firstcapital') return {
-      name: 'First Capital Financial', industry: 'Financial Services', confidence: 88,
-      metrics: [
-        { label: 'Cost-to-Income', value: firstCapital.financials.costToIncomeRatio + '%', sub: 'Target: 55%', status: 'red' as const },
-        { label: 'Digital Adoption', value: firstCapital.technology.digital.digitalAdoptionRate + '%', sub: 'Benchmark: 67%', status: 'red' as const },
-        { label: 'Core Banking Age', value: firstCapital.technology.coreBanking.age + ' yrs', sub: 'Critical: 20 yrs', status: 'red' as const },
-        { label: 'FedNow Live', value: 'No', sub: '68% of peers live', status: 'red' as const },
-        { label: 'AML False Positives', value: '94%', sub: 'Target: <60%', status: 'red' as const },
-        { label: 'Mobile App Rating', value: '2.8★', sub: 'Peers: 4.4★', status: 'red' as const },
-        { label: 'Account Abandonment', value: '67%', sub: 'Target: <30%', status: 'red' as const },
-        { label: 'OCC MRAs', value: '3 Open', sub: 'Target: 0', status: 'red' as const },
-      ],
-      findings: firstCapital.contradictions.slice(0, 3),
-      alerts: regulatoryAlerts.firstcapital.slice(0, 3),
-      aiScore: firstCapitalAI.maturity.dataReadiness.overall,
-    }
-    if (clientId === 'apexretail') return {
-      name: 'Apex Retail Group', industry: 'Retail', confidence: 86,
-      metrics: [
-        { label: 'Operating Margin', value: apexRetail.org.operatingMargin + '%', sub: 'Target: ' + apexRetail.org.targetOperatingMargin + '%', status: 'red' as const },
-        { label: 'Cart Abandonment', value: '71%', sub: 'Benchmark: 58%', status: 'red' as const },
-        { label: 'Loyalty Active', value: apexRetail.financials.loyaltyMemberPercent + '%', sub: 'Benchmark: 68%', status: 'red' as const },
-        { label: 'Forecast Accuracy', value: '61%', sub: 'Target: 85%', status: 'red' as const },
-        { label: 'Einstein Activated', value: 'No', sub: '$4.2M license unused', status: 'red' as const },
-        { label: 'Inventory Accuracy', value: apexRetail.financials.inventoryTurnover + 'x', sub: 'Benchmark: 6.8x', status: 'red' as const },
-        { label: 'Shrinkage Rate', value: '2.8%', sub: 'Benchmark: 1.5%', status: 'red' as const },
-        { label: 'SAP Support Ends', value: '2027', sub: '18 months to migrate', status: 'red' as const },
-      ],
-      findings: apexRetail.contradictions.slice(0, 3),
-      alerts: regulatoryAlerts.apexretail.slice(0, 3),
-      aiScore: apexRetailAI.maturity.dataReadiness.overall,
-    }
-    return {
-      name: 'Meridian Health System', industry: 'Healthcare', confidence: 94,
-      metrics: [
-        { label: 'Operating Margin', value: meridianHealth.org.operatingMargin + '%', sub: 'Target: 4.0%', status: 'red' as const },
-        { label: 'RCM Denial Rate', value: meridianHealth.technology.rcm.denialRate + '%', sub: 'Benchmark: 11.4%', status: 'red' as const },
-        { label: 'Epic Optimization', value: meridianHealth.technology.ehr.optimizationScore + '/100', sub: 'Target: 85/100', status: 'amber' as const },
-        { label: 'MA Star Rating', value: String(meridianHealth.healthPlan.medicareAdvantage.starRating), sub: '$34M bonus below 4.0', status: 'amber' as const },
-        { label: 'Prior Auth Connected', value: '23%', sub: 'Peers: 62% automated', status: 'red' as const },
-        { label: 'Travel Nurse Cost', value: '$48M', sub: 'Target: $28M', status: 'red' as const },
-        { label: 'CDO Status', value: 'Vacant', sub: '14 months unfilled', status: 'red' as const },
-        { label: 'AI Pilots Scaled', value: '0 / 6', sub: 'All stalled at pilot', status: 'red' as const },
-      ],
-      findings: meridianHealth.contradictions.slice(0, 3),
-      alerts: regulatoryAlerts.meridian.slice(0, 3),
-      aiScore: meridianAI.maturity.dataReadiness.overall,
-    }
-  }
-
-  const data = getData()
-  const sc: Record<string, string> = { red: '#DC2626', yellow: '#D97706', amber: '#D97706', green: '#059669' }
-
-  const cats = [
-    { name: 'Financial', pct: clientId === 'meridian' ? 85 : clientId === 'firstcapital' ? 82 : 80 },
-    { name: 'Technology', pct: clientId === 'meridian' ? 78 : clientId === 'firstcapital' ? 74 : 76 },
-    { name: 'Operations', pct: clientId === 'meridian' ? 72 : clientId === 'firstcapital' ? 68 : 70 },
-    { name: 'Leadership', pct: clientId === 'meridian' ? 84 : 80 },
-    { name: 'AI Maturity', pct: data.aiScore },
-    { name: 'Vendors', pct: clientId === 'meridian' ? 45 : 44 },
-  ]
-
-  const products = [
-    { id: 'diagnose', name: 'Situation Intelligence', tagline: "What's actually broken — and what's it costing us?", href: '/diagnose?client=' + clientId, btnColor: '#1B4FD8', icon: '⚡' },
-    { id: 'ai-strategy', name: 'AI Investment Intelligence', tagline: 'Where should we place our bets — and which are high-risk?', href: '/ai-strategy?client=' + clientId, btnColor: '#6D28D9', icon: '🎯' },
-    { id: 'select', name: 'Select Intelligence', tagline: 'Which vendor should we choose — and what does the contract need to say?', href: '/select?client=' + clientId, btnColor: '#047857', icon: '🔍' },
-    { id: 'blueprint', name: 'Blueprint Intelligence', tagline: 'What should our AI architecture look like given our current state?', href: '/blueprint?client=' + clientId, btnColor: '#B45309', icon: '🏗' },
-    { id: 'ai-pdlc', name: 'AI PDLC Intelligence', tagline: 'How do we stop AI projects from dying in pilot?', href: '/ai-pdlc?client=' + clientId, btnColor: '#DC2626', icon: '⚙' },
-    { id: 'future-of-work', name: 'Future of Work Intelligence', tagline: 'Which roles change, which disappear — and what do we owe our workforce?', href: '/future-of-work?client=' + clientId, btnColor: '#0369A1', icon: '👥' },
-    { id: 'analytics-modernization', name: 'Analytics Modernization Intelligence', tagline: 'Is our data estate ready for AI — and what is it costing us that it isn\'t?', href: '/analytics-modernization?client=' + clientId, btnColor: '#7C3AED', icon: '📊' },
-    { id: 'control-tower', name: 'Control Tower Intelligence', tagline: 'Which AI tools are actually being used — and which are running unsupervised?', href: '/control-tower?client=' + clientId, btnColor: '#059669', icon: '🗼' },
-    { id: 'outcomes', name: 'Outcome Intelligence', tagline: 'Are our AI investments delivering — and can we prove it to the board?', href: '/outcomes?client=' + clientId, btnColor: '#D97706', icon: '📈' },
-  ]
+  const [hSol, setHSol] = useState<string | null>(null)
+  const [hProd, setHProd] = useState<string | null>(null)
 
   return (
-    <div style={S.page}>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes redPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
-          50% { box-shadow: 0 0 0 5px rgba(220,38,38,0.13); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .m-red { animation: redPulse 3s ease-in-out infinite; }
-        .fade-up { animation: fadeUp 0.45s ease-out both; }
-      ` }} />
-      <AbarvaNav clientId={clientId} onClientChange={setClientId} activePage="home" />
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '28px 32px' }}>
+    <div style={{ background: BG, minHeight: '100vh', fontFamily: '"DM Sans", sans-serif', color: WHITE }}>
+      <AbarvaNav />
 
-        {/* Header */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>AbarVa Intelligence Platform</div>
-          <div style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', marginBottom: '2px', fontFamily: "'Fraunces', Georgia, serif", lineHeight: 1.2 }}>
-            {user ? `Good morning, ${user.firstName || 'Maestro'}.` : 'Act on intelligence.'}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px' }}>
+
+        {/* ── HERO ──────────────────────────────────────────────── */}
+        <div style={{ padding: '80px 0 64px', textAlign: 'center' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: '11px', color: TEAL, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: '20px' }}>
+            Enterprise transformation · AI-native · Outcome-accountable
           </div>
-          {!user && <div style={{ fontSize: '18px', fontWeight: 400, color: '#6B7280', marginBottom: '4px', fontFamily: "'Fraunces', Georgia, serif", fontStyle: 'italic' }}>Before the window closes.</div>}
-          <div style={{ fontSize: '14px', color: '#6B7280' }}>{data.name} · {data.industry} · {data.confidence}% data confidence</div>
+          <h1 style={{ fontFamily: 'Georgia,serif', fontSize: '54px', fontWeight: 500, color: WHITE, lineHeight: 1.2, margin: '0 auto 20px', maxWidth: '820px' }}>
+            Act on intelligence.<br />Before the window closes.
+          </h1>
+          <p style={{ fontSize: '17px', color: MUTED, maxWidth: '560px', margin: '0 auto 36px', lineHeight: 1.75 }}>
+            AbarVa diagnoses what is broken, prescribes the right architecture and vendors, embeds a small Maestro team to execute, and earns its fee only when outcomes are verified.
+          </p>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <a href="/diagnose?client=meridian" style={{ background: TEAL, color: BG, padding: '13px 28px', borderRadius: '8px', fontSize: '14px', fontWeight: 600, textDecoration: 'none' }}>
+              See it with Meridian Health →
+            </a>
+            <a href="/investor" style={{ border: `1px solid ${BORDER}`, color: WHITE, padding: '13px 24px', borderRadius: '8px', fontSize: '14px', textDecoration: 'none' }}>
+              Investor view
+            </a>
+            <a href="/admin" style={{ color: MUTED, padding: '13px 16px', fontSize: '13px', textDecoration: 'none' }}>
+              Maestro login →
+            </a>
+          </div>
         </div>
 
-        {/* Client Selector */}
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
-          <div onClick={() => setSelectorOpen(o => !o)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 14px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: '#0F172A', userSelect: 'none' }}>
-            <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: clientId === 'meridian' ? '#2563EB' : clientId === 'firstcapital' ? '#7C3AED' : '#059669', display: 'block', flexShrink: 0 }} />
-            Viewing: {data.name}
-            <span style={{ fontSize: '10px', color: '#9CA3AF', marginLeft: '2px' }}>{selectorOpen ? '▴' : '▾'}</span>
+        {/* ── SOLUTIONS ─────────────────────────────────────────── */}
+        <div style={{ marginBottom: '64px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
+            Three solutions
           </div>
-          {selectorOpen && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, marginTop: '4px', background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '6px', zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.08)', minWidth: '220px' }}>
-              {([
-                { id: 'meridian', name: 'Meridian Health', sub: 'Healthcare', color: '#2563EB' },
-                { id: 'firstcapital', name: 'First Capital', sub: 'Financial Services', color: '#7C3AED' },
-                { id: 'apexretail', name: 'Apex Retail', sub: 'Retail', color: '#059669' },
-              ] as { id: string; name: string; sub: string; color: string }[]).map(c => (
-                <div key={c.id} onClick={() => { setClientId(c.id); setSelectorOpen(false) }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', background: clientId === c.id ? '#F8FAFC' : 'transparent' }}
-                  onMouseEnter={e => { if (clientId !== c.id) (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
-                  onMouseLeave={e => { if (clientId !== c.id) (e.currentTarget as HTMLElement).style.background = 'transparent' }}>
-                  <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, display: 'block', flexShrink: 0 }} />
+          <div style={{ fontSize: '13px', color: MUTED, marginBottom: '20px' }}>
+            Each one diagnoses, prescribes, executes, and tracks. AbarVa earns nothing until outcomes are verified.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {SOLUTIONS.map(s => (
+              <a
+                key={s.id}
+                href={s.href}
+                style={{ textDecoration: 'none' }}
+                onMouseEnter={() => setHSol(s.id)}
+                onMouseLeave={() => setHSol(null)}
+              >
+                <div style={{
+                  background: CARD,
+                  border: `1px solid ${hSol === s.id ? s.color : BORDER}`,
+                  borderLeft: `4px solid ${s.color}`,
+                  borderRadius: '0 12px 12px 0',
+                  padding: '20px 24px',
+                  display: 'grid',
+                  gridTemplateColumns: '260px 1fr 200px',
+                  gap: '24px',
+                  alignItems: 'center',
+                  transition: 'border-color .15s',
+                }}>
                   <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{c.name}</div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{c.sub}</div>
+                    <div style={{ fontSize: '15px', fontWeight: 500, color: WHITE, marginBottom: '5px' }}>{s.name}</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, letterSpacing: '.06em', textTransform: 'uppercase', background: '#1C2D45', display: 'inline-block', padding: '2px 8px', borderRadius: '4px' }}>{s.owner}</div>
                   </div>
-                  {clientId === c.id && <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#059669', fontWeight: 700 }}>✓</span>}
+                  <div style={{ fontSize: '13px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6 }}>{s.problem}</div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500, color: s.color, marginBottom: '3px' }}>{s.value}</div>
+                    <div style={{ fontSize: '11px', color: MUTED, marginBottom: '10px' }}>{s.metric}</div>
+                    <div style={{ fontSize: '12px', color: hSol === s.id ? TEAL : '#374151', transition: 'color .15s' }}>Explore →</div>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </a>
+            ))}
+          </div>
         </div>
 
-        {/* Metrics — 4×2 grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '20px' }}>
-          {data.metrics.map((m, i) => (
-            <div key={clientId + i} className={m.status === 'red' ? 'm-red fade-up' : 'fade-up'}
-              style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '14px 16px', height: '88px', boxSizing: 'border-box' as const, cursor: 'pointer', position: 'relative' as const, animationDelay: `${i * 50}ms` }}
-              onMouseEnter={e => (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'}
-              onMouseLeave={e => (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'}>
-              <span style={{ position: 'absolute' as const, top: '10px', right: '10px', width: '6px', height: '6px', borderRadius: '50%', background: sc[m.status], display: 'block' }} />
-              <div style={{ fontSize: '10px', color: '#6B7280', marginBottom: '4px', fontWeight: 600, letterSpacing: '0.03em' }}>{m.label}</div>
-              <div style={{ fontSize: '22px', fontWeight: 700, color: '#0F172A', lineHeight: 1.1, marginBottom: '3px' }}>{animVal(m.value)}</div>
-              <div style={{ fontSize: '11px', color: '#94A3B8' }}>{m.sub}</div>
-            </div>
-          ))}
+        {/* ── PRODUCTS ──────────────────────────────────────────── */}
+        <div style={{ marginBottom: '64px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
+            Five products — the intelligence engine
+          </div>
+          <div style={{ fontSize: '13px', color: MUTED, marginBottom: '20px' }}>
+            Solutions activate products in sequence. Products can also be used independently.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0,1fr))', gap: '10px' }}>
+            {PRODUCTS.map(p => (
+              <a
+                key={p.name}
+                href={p.href}
+                style={{ textDecoration: 'none' }}
+                onMouseEnter={() => setHProd(p.name)}
+                onMouseLeave={() => setHProd(null)}
+              >
+                <div style={{
+                  background: CARD,
+                  border: `1px solid ${hProd === p.name ? TEAL : BORDER}`,
+                  borderTop: `3px solid ${p.color}`,
+                  borderRadius: '0 0 12px 12px',
+                  padding: '18px 16px',
+                  height: '156px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'border-color .15s',
+                }}>
+                  <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                    {p.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6, flex: 1 }}>
+                    "{p.q}"
+                  </div>
+                  <div style={{ fontSize: '11px', color: hProd === p.name ? TEAL : '#374151', marginTop: '10px', transition: 'color .15s' }}>
+                    Open →
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
         </div>
 
-        {/* Intelligence Suite */}
-        <div style={S.lbl}>INTELLIGENCE SUITE — 9 PRODUCTS</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
-          {products.map(p => (
-            <a key={p.id} href={p.href} style={{ textDecoration: 'none', display: 'flex' }}>
-              <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 18px', minHeight: '120px', boxSizing: 'border-box' as const, display: 'flex', flexDirection: 'column', width: '100%', cursor: 'pointer', transition: 'all 0.15s' }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; el.style.borderColor = '#2563EB' }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'none'; el.style.boxShadow = 'none'; el.style.borderColor = '#E2E8F0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
-                  <span style={{ fontSize: '14px', lineHeight: 1 }}>{p.icon}</span>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#111827', lineHeight: 1.3 }}>{p.name}</span>
-                </div>
-                <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.45, flex: 1, fontStyle: 'italic' }}>{p.tagline}</div>
-                <div style={{ padding: '0 12px', height: '32px', borderRadius: '6px', background: p.btnColor, color: 'white', fontSize: '11px', fontWeight: 700, textAlign: 'center' as const, marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Start Analysis →</div>
+        {/* ── PROOF POINT ───────────────────────────────────────── */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '36px 40px', marginBottom: '64px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '28px' }}>
+            <div style={{ maxWidth: '420px' }}>
+              <div style={{ fontFamily: 'monospace', fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                Proven in production
               </div>
-            </a>
-          ))}
-        </div>
-
-        {/* Platform proof point */}
-        <div style={{ background: '#111827', borderRadius: '12px', padding: '40px 48px', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Proven in production</div>
-              <div style={{ fontSize: '15px', fontWeight: 600, color: '#E6EDF3', lineHeight: 1.4 }}>Enterprise Healthcare Client · live deployment</div>
+              <div style={{ fontFamily: 'Georgia,serif', fontSize: '18px', color: WHITE, lineHeight: 1.5, marginBottom: '8px' }}>
+                Major health system · Live deployment
+              </div>
+              <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
+                Knowledge layer ingested 225 scheduled jobs, 160 database schemas, 236 Tableau workbooks. The system now answers in seconds what used to take weeks of asking the right person.
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: '56px' }}>
+            <div style={{ display: 'flex', gap: '56px', flexWrap: 'wrap' }}>
               {[
-                { value: '40%', label: 'Productivity increase' },
-                { value: '60%', label: 'Cost reduction' },
-                { value: '94%', label: 'Data confidence' },
+                { v: '40%',  l: 'Productivity increase' },
+                { v: '60%',  l: 'Consulting cost reduction' },
+                { v: '8×',   l: 'Faster knowledge access' },
               ].map((s, i) => (
-                <div key={i} style={{ textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#2DD4C8', letterSpacing: '-0.02em', lineHeight: 1.1, marginBottom: '4px' }}>{s.value}</div>
-                  <div style={{ fontSize: '12px', color: '#6B7280' }}>{s.label}</div>
+                <div key={i} style={{ textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'Georgia,serif', fontSize: '40px', fontWeight: 500, color: TEAL, lineHeight: 1, marginBottom: '6px' }}>{s.v}</div>
+                  <div style={{ fontSize: '12px', color: MUTED, maxWidth: '100px' }}>{s.l}</div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Bottom panels */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-
-          {/* Findings */}
-          <div style={S.card}>
-            <div style={S.lbl}>TOP FINDINGS</div>
-            {data.findings.map((f, i) => (
-              <div key={i} style={{ display: 'flex', gap: '10px', padding: '10px 12px', background: '#FEF2F2', borderRadius: '8px', border: '1px solid #FECACA', alignItems: 'flex-start', marginBottom: '10px' }}>
-                <span style={{ color: '#DC2626', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>{i + 1}</span>
-                <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.5 }}>{f}</span>
-              </div>
-            ))}
-            <a href={'/timeline?client=' + clientId} style={{ display: 'block', marginTop: '4px', padding: '8px', borderRadius: '8px', background: '#0F172A', color: '#F8FAFC', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
-              View Decision Timeline →
-            </a>
-            <a href={'/contradictions?client=' + clientId} style={{ display: 'block', marginTop: '6px', padding: '8px', borderRadius: '8px', background: '#0D1117', color: '#2DD4C8', fontSize: '12px', fontWeight: 700, textDecoration: 'none', textAlign: 'center' }}>
-              View Contradiction Map →
-            </a>
-            <a href={'/diagnose?client=' + clientId} style={{ display: 'block', marginTop: '6px', padding: '8px', borderRadius: '8px', background: '#EFF6FF', color: '#2563EB', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>
-              Ask AbarVa about these →
-            </a>
+        {/* ── CLIENT ENTRY POINTS ───────────────────────────────── */}
+        <div style={{ textAlign: 'center', paddingBottom: '72px' }}>
+          <div style={{ fontFamily: 'Georgia,serif', fontSize: '26px', fontWeight: 500, color: WHITE, marginBottom: '10px' }}>
+            Ready to see your situation?
           </div>
-
-          {/* Data Readiness */}
-          <div style={S.card}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={S.lbl}>DATA READINESS</div>
-              <span style={{ fontSize: '22px', fontWeight: 700, color: '#2563EB' }}>{Math.round(data.confidence * animProgress)}%</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '4px 8px' }}>
-              {cats.map((cat, i) => {
-                const r = 24, circ = 2 * Math.PI * r
-                const color = cat.pct >= 70 ? '#059669' : cat.pct >= 50 ? '#D97706' : '#DC2626'
-                const offset = circ * (1 - (cat.pct * animProgress) / 100)
-                return (
-                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0' }}>
-                    <div style={{ position: 'relative', width: '60px', height: '60px' }}>
-                      <svg width="60" height="60" viewBox="0 0 60 60" style={{ transform: 'rotate(-90deg)' }}>
-                        <circle cx="30" cy="30" r={r} fill="none" stroke="#F1F5F9" strokeWidth="6" />
-                        <circle cx="30" cy="30" r={r} fill="none" stroke={color} strokeWidth="6"
-                          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-                      </svg>
-                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>
-                        {Math.round(cat.pct * animProgress)}%
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '10px', color: '#475569', fontWeight: 600, textAlign: 'center', lineHeight: 1.2 }}>{cat.name}</div>
-                  </div>
-                )
-              })}
-            </div>
-            <a href="/admin/data" style={{ display: 'block', marginTop: '12px', padding: '8px', borderRadius: '8px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>Manage Data →</a>
+          <div style={{ fontSize: '14px', color: MUTED, marginBottom: '28px' }}>
+            Load Meridian Health, First Capital, or Apex Retail — each with real client data.
           </div>
-
-          {/* Regulatory Alerts */}
-          <div style={S.card}>
-            <div style={S.lbl}>REGULATORY ALERTS</div>
-            {data.alerts.map((alert, i) => (
-              <div key={i} style={{ padding: '10px 12px', borderRadius: '8px', background: alert.severity === 'red' ? '#FEF2F2' : '#FFFBEB', border: '1px solid ' + (alert.severity === 'red' ? '#FECACA' : '#FDE68A'), marginBottom: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A' }}>{alert.title}</span>
-                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 6px', borderRadius: '10px', background: alert.severity === 'red' ? '#FEE2E2' : '#FEF3C7', color: alert.severity === 'red' ? '#DC2626' : '#D97706', flexShrink: 0, marginLeft: '8px' }}>{alert.monthsRemaining === 0 ? 'Active' : alert.monthsRemaining + 'mo'}</span>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            {CLIENTS.map(c => (
+              <a
+                key={c.id}
+                href={c.href}
+                style={{
+                  background: CARD, border: `1px solid ${BORDER}`,
+                  padding: '14px 22px', borderRadius: '10px',
+                  textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = c.color }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = BORDER }}
+              >
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: WHITE }}>{c.name}</div>
+                  <div style={{ fontSize: '11px', color: MUTED }}>{c.sub}</div>
                 </div>
-                <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.4 }}>{(alert as any).meridianGap || (alert as any).gap || ''}</div>
-              </div>
+              </a>
             ))}
-            <a href={'/diagnose?client=' + clientId} style={{ display: 'block', padding: '8px', borderRadius: '8px', background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', fontSize: '12px', fontWeight: 600, textDecoration: 'none', textAlign: 'center' }}>Get compliance plan →</a>
           </div>
-
         </div>
+
       </div>
     </div>
   )

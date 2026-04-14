@@ -1,343 +1,282 @@
 'use client'
-import { useState, useRef } from 'react'
-import { useUser, UserButton } from '@clerk/nextjs'
+import { useState } from 'react'
 
-type DropdownId = 'intelligence' | 'solutions' | 'clients' | null
+const TEAL = '#2DD4C8'
+const BORDER = '#1C2D45'
+const CARD = '#0D1520'
+const TEXT = '#EFF6FF'
+const MUTED = '#94A3B8'
+const PAGE_BG = '#060A12'
 
-interface AbarvaNavProps {
+interface NavProps {
   clientId?: string
-  onClientChange?: (clientId: string) => void
   activePage?: string
-  showAdmin?: boolean
+  onClientChange?: (id: string) => void
 }
 
-function DropItem({ icon, name, desc, href }: { icon: string; name: string; desc: string; href: string }) {
+const CLIENTS = [
+  { id: 'meridian',     name: 'Meridian Health System',   sub: 'Healthcare · $11.2B',          color: TEAL,      dot: TEAL },
+  { id: 'firstcapital', name: 'First Capital Financial',  sub: 'Financial Services · $18B AUM', color: '#6366F1', dot: '#6366F1' },
+  { id: 'apexretail',   name: 'Apex Retail Group',        sub: 'Retail · $12.4B',              color: '#F59E0B', dot: '#F59E0B' },
+]
+
+const PRODUCTS = [
+  { name: 'Situation',      desc: "What's actually broken — and what is it costing?", path: '/diagnose' },
+  { name: 'Strategy',       desc: 'Where should we place our AI bets?',               path: '/ai-strategy' },
+  { name: 'Vendor',         desc: 'Which vendor wins in our situation?',              path: '/select' },
+  { name: 'Business Case',  desc: 'How do we justify this to the board?',            path: '/justify' },
+  { name: 'Outcomes',       desc: 'Did it work — and can we prove it?',              path: '/outcomes' },
+]
+
+const SOLUTIONS = [
+  { name: 'AI-Powered PDLC',                    desc: 'Build products faster with AI agents',        tag: 'CIO · All verticals', path: '/solutions/pdlc' },
+  { name: 'AI-Powered Transformation Delivery', desc: 'Replace large consulting teams with Maestros', tag: 'CIO · All verticals', path: '/solutions/delivery' },
+  { name: 'Margin Optimization',                desc: 'Recover margin across revenue, cost and AI',   tag: 'CEO · CFO · COO',    path: '/solutions/margin' },
+]
+
+export default function AbarvaNav({ clientId = 'meridian', activePage = '', onClientChange }: NavProps) {
+  const [open, setOpen] = useState<string | null>(null)
+  const [clientOpen, setClientOpen] = useState(false)
+  let closeTimer: ReturnType<typeof setTimeout>
+
+  const openDrop = (name: string) => { clearTimeout(closeTimer); setOpen(name) }
+  const startClose = () => { closeTimer = setTimeout(() => setOpen(null), 180) }
+
+  const activeClient = CLIENTS.find(c => c.id === clientId) || CLIENTS[0]
+
   return (
-    <a href={href} className="drop-item">
-      <div className="drop-icon" style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', flexShrink: 0 }}>
-        {icon}
+    <nav style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, position: 'sticky', top: 0, zIndex: 200 }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px', display: 'flex', alignItems: 'center', height: '64px' }}>
+
+        {/* Wordmark — always navigates home */}
+        <a href="/" style={{ display: 'flex', flexDirection: 'column', textDecoration: 'none', marginRight: '28px', lineHeight: 1, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontFamily: 'Georgia,serif', fontSize: '17px', fontWeight: 800, color: TEXT }}>Abar</span>
+            <span style={{ fontFamily: 'Georgia,serif', fontSize: '23px', fontWeight: 900, color: TEAL }}>Va</span>
+          </div>
+          <span style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, letterSpacing: '.06em', textTransform: 'uppercase', marginTop: '1px' }}>
+            Intelligence. Now act on it.
+          </span>
+        </a>
+
+        {/* Intelligence ▾ */}
+        <DropMenu label="Intelligence" id="intelligence" open={open} openDrop={openDrop} startClose={startClose}>
+          <DropSection label="Five products">
+            {PRODUCTS.map(p => (
+              <DropItem key={p.name} name={p.name} desc={p.desc} href={`${p.path}?client=${clientId}`} />
+            ))}
+          </DropSection>
+        </DropMenu>
+
+        {/* Solutions ▾ */}
+        <DropMenu label="Solutions" id="solutions" open={open} openDrop={openDrop} startClose={startClose}>
+          <DropSection label="Three solutions">
+            {SOLUTIONS.map(s => (
+              <DropItem key={s.name} name={s.name} desc={s.desc} href={s.path} tag={s.tag} />
+            ))}
+          </DropSection>
+        </DropMenu>
+
+        {/* Clients ▾ */}
+        <DropMenu label="Clients" id="clients" open={open} openDrop={openDrop} startClose={startClose}>
+          <DropSection label="Demo clients">
+            {CLIENTS.map(c => (
+              <ClientDropItem
+                key={c.id}
+                client={c}
+                active={c.id === clientId}
+                onSelect={onClientChange ? (id) => { onClientChange(id); setOpen(null) } : undefined}
+              />
+            ))}
+          </DropSection>
+          <div style={{ borderTop: `1px solid ${BORDER}`, margin: '6px 0', padding: '8px 12px 4px' }}>
+            <a href="/admin" style={{ fontSize: '12px', color: TEAL, textDecoration: 'none', fontFamily: 'monospace', letterSpacing: '.04em' }}>
+              Open Maestro portal →
+            </a>
+          </div>
+        </DropMenu>
+
+        {/* Right side */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+
+          {/* Active client pill — shows which client is loaded */}
+          {onClientChange && (
+            <div style={{ position: 'relative', marginRight: '8px' }}>
+              <button
+                onClick={() => setClientOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '7px',
+                  background: 'rgba(45,212,200,0.08)', border: `1px solid rgba(45,212,200,0.2)`,
+                  borderRadius: '20px', padding: '5px 12px 5px 8px',
+                  cursor: 'pointer', color: TEAL, fontSize: '12px', fontWeight: 500,
+                }}
+              >
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: activeClient.dot, flexShrink: 0 }} />
+                {activeClient.name.split(' ')[0]} {activeClient.name.split(' ')[1]}
+                <span style={{ fontSize: '9px', color: MUTED }}>▾</span>
+              </button>
+              {clientOpen && (
+                <div style={{
+                  position: 'absolute', top: '100%', right: 0, marginTop: '6px',
+                  background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '10px',
+                  padding: '6px', zIndex: 300, minWidth: '220px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,.5)',
+                }}>
+                  {CLIENTS.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => { onClientChange(c.id); setClientOpen(false) }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '10px', width: '100%',
+                        padding: '9px 12px', borderRadius: '7px', border: 'none', cursor: 'pointer',
+                        background: c.id === clientId ? 'rgba(45,212,200,0.08)' : 'transparent',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.dot, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{c.name}</div>
+                        <div style={{ fontSize: '11px', color: MUTED }}>{c.sub}</div>
+                      </div>
+                      {c.id === clientId && <span style={{ marginLeft: 'auto', color: TEAL, fontSize: '12px' }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Investor View */}
+          <a href="/investor" style={{
+            fontSize: '13px', fontWeight: 500, color: activePage === 'investor' ? TEAL : TEXT,
+            textDecoration: 'none', padding: '0 14px', height: '64px',
+            display: 'flex', alignItems: 'center',
+            borderBottom: activePage === 'investor' ? `2px solid ${TEAL}` : '2px solid transparent',
+          }}>
+            Investor View
+          </a>
+
+          {/* Maestro CTA */}
+          <a href="/admin" style={{
+            background: TEAL, color: '#060A12',
+            fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+            padding: '8px 18px', borderRadius: '8px', flexShrink: 0,
+          }}>
+            Maestro
+          </a>
+        </div>
       </div>
-      <div>
-        <div className="drop-name" style={{ fontSize: '13px', fontWeight: 600, marginBottom: '2px' }}>{name}</div>
-        <div style={{ fontSize: '11px', color: '#6B7280' }}>{desc}</div>
+    </nav>
+  )
+}
+
+// ─── Sub-components ────────────────────────────────────────────────────────
+
+function DropMenu({ label, id, open, openDrop, startClose, children }: {
+  label: string; id: string; open: string | null
+  openDrop: (id: string) => void; startClose: () => void; children: React.ReactNode
+}) {
+  const isOpen = open === id
+  return (
+    <div
+      style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
+      onMouseEnter={() => openDrop(id)}
+      onMouseLeave={startClose}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '3px', padding: '0 14px',
+        fontSize: '14px', fontWeight: 500, color: isOpen ? TEAL : TEXT,
+        cursor: 'pointer', height: '64px', userSelect: 'none',
+        borderBottom: isOpen ? `2px solid ${TEAL}` : '2px solid transparent',
+        transition: 'color .12s, border-color .12s',
+      }}>
+        {label}
+        <span style={{ fontSize: '9px', color: isOpen ? TEAL : MUTED, marginTop: '1px' }}>▾</span>
       </div>
+      {isOpen && (
+        <div
+          onMouseEnter={() => clearTimeout(undefined)}
+          onMouseLeave={startClose}
+          style={{
+            position: 'absolute', top: '64px', left: 0, minWidth: '260px',
+            background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '12px',
+            padding: '8px', zIndex: 200, boxShadow: '0 12px 40px rgba(0,0,0,.5)',
+          }}
+        >
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DropSection({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', padding: '6px 12px 4px' }}>
+        {label}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function DropItem({ name, desc, href, tag }: { name: string; desc: string; href: string; tag?: string }) {
+  return (
+    <a
+      href={href}
+      style={{ display: 'block', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '1px' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+        <span style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{name}</span>
+        {tag && (
+          <span style={{ fontFamily: 'monospace', fontSize: '9px', color: MUTED, background: '#1C2D45', padding: '2px 7px', borderRadius: '4px', letterSpacing: '.04em' }}>
+            {tag}
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.4 }}>{desc}</div>
     </a>
   )
 }
 
-const COL_HEAD: React.CSSProperties = {
-  fontSize: '10px', color: '#6B7280', fontWeight: 700,
-  textTransform: 'uppercase' as const, letterSpacing: '0.1em',
-  marginBottom: '10px', paddingLeft: '12px',
-}
+function ClientDropItem({ client, active, onSelect }: {
+  client: typeof CLIENTS[0]; active: boolean; onSelect?: (id: string) => void
+}) {
+  const content = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%' }}>
+      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: client.dot, flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT }}>{client.name}</div>
+        <div style={{ fontSize: '11px', color: MUTED }}>{client.sub}</div>
+      </div>
+      {active && <span style={{ fontSize: '11px', color: TEAL }}>✓</span>}
+    </div>
+  )
 
-const DROP_PANEL: React.CSSProperties = {
-  background: '#161B22', border: '1px solid #21262D', borderRadius: '12px',
-  padding: '20px', zIndex: 200, boxShadow: '0 16px 48px rgba(0,0,0,0.5)',
-}
-
-export default function AbarvaNav({ clientId = 'meridian' }: AbarvaNavProps) {
-  const { user } = useUser()
-  const [open, setOpen] = useState<DropdownId>(null)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const openDrop = (id: DropdownId) => {
-    if (timer.current) clearTimeout(timer.current)
-    setOpen(id)
+  if (onSelect) {
+    return (
+      <button
+        onClick={() => onSelect(client.id)}
+        style={{ display: 'flex', width: '100%', padding: '9px 12px', borderRadius: '8px', border: 'none', cursor: 'pointer', background: active ? 'rgba(45,212,200,0.06)' : 'transparent', textAlign: 'left', marginBottom: '1px' }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+      >
+        {content}
+      </button>
+    )
   }
-  const startClose = () => {
-    timer.current = setTimeout(() => setOpen(null), 150)
-  }
-  const cancelClose = () => {
-    if (timer.current) clearTimeout(timer.current)
-  }
-
-  const linkCss = (id: DropdownId): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: '4px',
-    padding: '0 14px', height: '64px', cursor: 'pointer',
-    color: open === id ? '#2DD4C8' : '#FFFFFF',
-    fontSize: '14px', fontWeight: open === id ? 700 : 600,
-    borderBottom: open === id ? '2px solid #2DD4C8' : '2px solid transparent',
-    boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s, font-weight 0.1s',
-    userSelect: 'none' as const,
-    fontFamily: '-apple-system, "Helvetica Neue", sans-serif',
-  })
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: `
-        @media (max-width: 768px) {
-          #ab-center { display: none !important; }
-          #ab-hamburger { display: flex !important; }
-        }
-        .drop-item {
-          display: flex; gap: 12px; padding: 10px 12px; border-radius: 8px;
-          text-decoration: none; align-items: center; background: transparent;
-          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
-        }
-        .drop-item:hover { background: rgba(45,212,200,0.08); border-left-color: #2DD4C8; padding-left: 14px; }
-        .drop-name { color: #FFFFFF; }
-        .drop-item:hover .drop-name { color: #2DD4C8; }
-        .drop-icon { background: #21262D; }
-        .drop-item:hover .drop-icon { background: rgba(45,212,200,0.15); }
-        .drop-simple {
-          display: block; padding: 8px 12px; border-radius: 6px; font-size: 13px;
-          color: #FFFFFF; text-decoration: none; margin-bottom: 2px;
-          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box;
-        }
-        .drop-simple:hover { background: rgba(45,212,200,0.08); color: #2DD4C8; border-left-color: #2DD4C8; padding-left: 14px; }
-        .drop-card {
-          padding: 10px 12px; border-radius: 8px; margin-bottom: 4px;
-          border-left: 2px solid transparent; transition: all 0.12s ease; box-sizing: border-box; cursor: pointer;
-        }
-        .drop-card:hover { background: rgba(45,212,200,0.08); border-left-color: #2DD4C8; padding-left: 14px; }
-      ` }} />
-      <nav style={{
-        background: '#0D1117', borderBottom: '1px solid #21262D', height: '64px',
-        display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center',
-        padding: '0 32px', position: 'sticky', top: 0, zIndex: 100,
-        fontFamily: '-apple-system, "Helvetica Neue", sans-serif',
-      }}>
-
-        {/* LEFT — Logo */}
-        <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
-          <svg width="34" height="34" viewBox="0 0 32 32" fill="none">
-            {/* Outer hexagon ring: lines connecting adjacent satellite nodes */}
-            <line x1="16" y1="6"   x2="24.7" y2="11"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            <line x1="24.7" y1="11" x2="24.7" y2="21"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            <line x1="24.7" y1="21" x2="16"   y2="26"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            <line x1="16"   y1="26" x2="7.3"  y2="21"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            <line x1="7.3"  y1="21" x2="7.3"  y2="11"  stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            <line x1="7.3"  y1="11" x2="16"   y2="6"   stroke="#2DD4C8" strokeWidth="0.8" opacity="0.15" />
-            {/* Spokes: hub to 6 satellites — teal */}
-            <line x1="16" y1="16" x2="16"   y2="6"   stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            <line x1="16" y1="16" x2="24.7" y2="11"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            <line x1="16" y1="16" x2="24.7" y2="21"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            <line x1="16" y1="16" x2="16"   y2="26"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            <line x1="16" y1="16" x2="7.3"  y2="21"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            <line x1="16" y1="16" x2="7.3"  y2="11"  stroke="#2DD4C8" strokeWidth="1.2" opacity="0.4" />
-            {/* Satellite nodes */}
-            <circle cx="16"   cy="6"  r="2.2" fill="#2DD4C8" />
-            <circle cx="24.7" cy="11" r="2.2" fill="#2DD4C8" />
-            <circle cx="24.7" cy="21" r="2.2" fill="#2DD4C8" />
-            <circle cx="16"   cy="26" r="2.2" fill="#2DD4C8" />
-            <circle cx="7.3"  cy="21" r="2.2" fill="#2DD4C8" />
-            <circle cx="7.3"  cy="11" r="2.2" fill="#2DD4C8" />
-            {/* Hub: glow ring + solid fill + inner dot */}
-            <circle cx="16" cy="16" r="8"   fill="#2DD4C8" opacity="0.08" />
-            <circle cx="16" cy="16" r="5.5" fill="#2DD4C8" />
-            <circle cx="16" cy="16" r="2.2" fill="#0D1117" />
-          </svg>
-          <div>
-            {/* Wordmark: ABAR smaller, VA larger — deliberate size contrast */}
-            <div style={{ lineHeight: 1.05, display: 'flex', alignItems: 'baseline' }}>
-              <span style={{
-                fontSize: '17px', fontWeight: 700,
-                fontFamily: "'Georgia', serif",
-                color: '#FFFFFF',
-                letterSpacing: '-0.02em',
-              }}>Abar</span>
-              <span style={{
-                fontSize: '23px', fontWeight: 900,
-                fontFamily: "'Georgia', serif",
-                color: '#2DD4C8',
-                letterSpacing: '-0.03em',
-                marginLeft: '-1px',
-              }}>Va</span>
-            </div>
-            <div style={{
-              fontSize: '10px',
-              color: '#FFFFFF',
-              fontFamily: "'DM Sans', sans-serif",
-              fontWeight: 700,
-              letterSpacing: '0.01em',
-              marginTop: '3px',
-              whiteSpace: 'nowrap',
-            }}>Intelligence. Now act on it.</div>
-          </div>
-        </a>
-
-        {/* CENTER — Nav links with dropdowns */}
-        <div id="ab-center" style={{ display: 'flex', alignItems: 'center', height: '64px' }}>
-
-          {/* Intelligence ▾ */}
-          <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-            onMouseEnter={() => openDrop('intelligence')} onMouseLeave={startClose}>
-            <div style={linkCss('intelligence')}>
-              Intelligence
-              <span style={{ fontSize: '10px', color: open === 'intelligence' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
-            </div>
-            {open === 'intelligence' && (
-              <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
-                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '320px' }}>
-                <DropItem icon="⚡" name="Situation" desc="What's actually broken — and what's it costing us?" href={`/diagnose?client=${clientId}`} />
-                <DropItem icon="🎯" name="AI Investment" desc="Where should we place our bets — and what are they worth?" href={`/ai-strategy?client=${clientId}`} />
-                <DropItem icon="🔍" name="Vendor" desc="Who do I actually trust — and why?" href={`/vendor-intelligence?client=${clientId}`} />
-                <DropItem icon="💰" name="Business Case" desc="How do I make this number defensible to my board?" href={`/justify?client=${clientId}`} />
-                <DropItem icon="🎛" name="Outcome" desc="Are we winning — or just spending?" href={`/control-tower?client=${clientId}`} />
-              </div>
-            )}
-          </div>
-
-          {/* Solutions ▾ */}
-          <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-            onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
-            <div style={linkCss('solutions')}>
-              Solutions
-              <span style={{ fontSize: '10px', color: open === 'solutions' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
-            </div>
-            {open === 'solutions' && (
-              <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
-                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '480px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                {[
-                  {
-                    vertical: 'Healthcare',
-                    items: [
-                      { code: 'HP-01', name: 'Revenue Cycle Intelligence', problem: 'Your denial rate is costing you more than you report.', href: '/solutions/revenue-cycle-intelligence' },
-                      { code: 'HP-02', name: 'Patient Access & Growth', problem: 'Your referral leakage is invisible until patients leave.', href: '/solutions/patient-access-growth' },
-                    ],
-                  },
-                  {
-                    vertical: 'Financial Services',
-                    items: [
-                      { code: 'BK-01', name: 'AI Portfolio Accountability', problem: 'You are spending on AI. Do you know if it is working?', href: '/solutions/ai-portfolio-accountability' },
-                      { code: 'BK-02', name: 'Customer Revenue Intelligence', problem: 'Digital adoption at 41% while peers are at 67%.', href: '/solutions/customer-revenue-intelligence' },
-                    ],
-                  },
-                  {
-                    vertical: 'Retail',
-                    items: [
-                      { code: 'RT-01', name: 'Supply Chain AI Rationalization', problem: 'You have 14 supply chain tools. 6 are redundant.', href: '/solutions/supply-chain-ai' },
-                      { code: 'RT-02', name: 'Customer Intelligence', problem: 'Conversion at 2.3% while category peers are at 3.8%.', href: '/solutions/customer-intelligence' },
-                    ],
-                  },
-                ].map(group => (
-                  <div key={group.vertical}>
-                    <div style={COL_HEAD}>{group.vertical}</div>
-                    {group.items.map(s => (
-                      <a key={s.code} href={s.href} style={{ display: 'block', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '4px', borderLeft: '2px solid transparent', transition: 'all 0.12s ease', boxSizing: 'border-box' }}
-                        onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(45,212,200,0.08)'; el.style.borderLeftColor = '#2DD4C8'; el.style.paddingLeft = '14px' }}
-                        onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'transparent'; el.style.borderLeftColor = 'transparent'; el.style.paddingLeft = '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
-                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 700, color: '#2DD4C8' }}>{s.code}</span>
-                          <span style={{ fontSize: '13px', fontWeight: 600, color: '#FFFFFF' }}>{s.name}</span>
-                        </div>
-                        <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.4 }}>{s.problem}</div>
-                      </a>
-                    ))}
-                  </div>
-                ))}
-                <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #21262D', paddingTop: '12px', marginTop: '4px' }}>
-                  <a href="/solutions" style={{ fontSize: '12px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>See all solutions →</a>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Clients ▾ */}
-          <div style={{ position: 'relative', height: '64px', display: 'flex', alignItems: 'center' }}
-            onMouseEnter={() => openDrop('clients')} onMouseLeave={startClose}>
-            <div style={linkCss('clients')}>
-              Clients
-              <span style={{ fontSize: '10px', color: open === 'clients' ? '#2DD4C8' : '#94A3B8', marginLeft: '2px' }}>▾</span>
-            </div>
-            {open === 'clients' && (
-              <div onMouseEnter={cancelClose} onMouseLeave={() => setOpen(null)}
-                style={{ ...DROP_PANEL, position: 'absolute', top: '64px', left: 0, minWidth: '640px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
-                <div>
-                  <div style={COL_HEAD}>By Industry</div>
-                  {([
-                    { label: 'Healthcare & Life Sciences', href: '/admin/client/meridian' },
-                    { label: 'Financial Services', href: '/admin/client/firstcapital' },
-                    { label: 'Retail & CPG', href: '/admin/client/apexretail' },
-                    { label: 'Technology & Software', href: null },
-                  ] as { label: string; href: string | null }[]).map((item, i) => (
-                    item.href ? (
-                      <a key={i} href={item.href} className="drop-simple">
-                        {item.label}
-                      </a>
-                    ) : (
-                      <div key={i} style={{ padding: '8px 12px', fontSize: '13px', color: '#4B5563', marginBottom: '2px' }}>
-                        {item.label} <span style={{ fontSize: '10px' }}>Soon</span>
-                      </div>
-                    )
-                  ))}
-                </div>
-                <div>
-                  <div style={COL_HEAD}>Live Demos</div>
-                  {[
-                    { name: 'Meridian Health', sub: 'Healthcare · $11.2B', href: '/admin/client/meridian' },
-                    { name: 'First Capital', sub: 'Financial Services · $18B Assets', href: '/admin/client/firstcapital' },
-                    { name: 'Apex Retail', sub: 'Retail · $12.4B', href: '/admin/client/apexretail' },
-                  ].map((c, i) => (
-                    <div key={i} className="drop-card">
-                      <div style={{ fontSize: '13px', color: '#FFFFFF', fontWeight: 600, marginBottom: '2px' }}>{c.name}</div>
-                      <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '6px' }}>{c.sub}</div>
-                      <a href={c.href} style={{ fontSize: '11px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>Open Demo →</a>
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <div style={COL_HEAD}>Resources</div>
-                  <div style={{ background: '#0D1117', border: '1px solid #21262D', borderRadius: '10px', padding: '16px' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#FFFFFF', marginBottom: '6px', lineHeight: 1.4 }}>See AbarVa in action</div>
-                    <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.5, marginBottom: '12px' }}>
-                      Watch how AbarVa diagnoses a real enterprise in 4 minutes
-                    </div>
-                    <a href="/investor" style={{ fontSize: '12px', color: '#2DD4C8', textDecoration: 'none', fontWeight: 600 }}>
-                      Watch demo →
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Maestro */}
-          <a href="/admin"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s', fontFamily: "'DM Sans', sans-serif" }}
-            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8'; el.style.textDecoration = 'underline' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#FFFFFF'; el.style.borderBottomColor = 'transparent'; el.style.textDecoration = 'none' }}>
-            Maestro
-          </a>
-
-          {/* Investor View */}
-          <a href="/investor"
-            style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: '64px', fontSize: '14px', fontWeight: 600, color: '#FFFFFF', textDecoration: 'none', borderBottom: '2px solid transparent', boxSizing: 'border-box' as const, transition: 'color 0.15s, border-color 0.25s' }}
-            onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#2DD4C8'; el.style.borderBottomColor = '#2DD4C8' }}
-            onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.color = '#FFFFFF'; el.style.borderBottomColor = 'transparent' }}>
-            Investor View
-          </a>
-        </div>
-
-        {/* RIGHT — CTAs */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
-          {/* Mobile hamburger — visible via CSS media query */}
-          <div id="ab-hamburger" style={{ display: 'none', flexDirection: 'column', gap: '4px', cursor: 'pointer', padding: '4px', marginRight: '8px' }}>
-            <div style={{ width: '18px', height: '2px', background: '#9CA3AF', borderRadius: '1px' }} />
-            <div style={{ width: '18px', height: '2px', background: '#9CA3AF', borderRadius: '1px' }} />
-            <div style={{ width: '18px', height: '2px', background: '#9CA3AF', borderRadius: '1px' }} />
-          </div>
-
-          <a href="/investor"
-            style={{ padding: '0 18px', height: '36px', display: 'flex', alignItems: 'center', borderRadius: '8px', background: '#2DD4C8', color: '#0D1117', fontSize: '13px', fontWeight: 700, textDecoration: 'none' }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#22B5A9')}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#2DD4C8')}>
-            Book a Demo
-          </a>
-
-          {user ? (
-            <UserButton />
-          ) : (
-            <a href="/sign-in"
-              style={{ padding: '0 18px', height: '36px', display: 'flex', alignItems: 'center', borderRadius: '8px', background: 'transparent', color: '#FFFFFF', border: '1px solid #4B5563', fontSize: '13px', fontWeight: 500, textDecoration: 'none' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#21262D')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}>
-              Sign In
-            </a>
-          )}
-        </div>
-      </nav>
-    </>
+    <a
+      href={`/admin/client/${client.id}`}
+      style={{ display: 'flex', padding: '9px 12px', borderRadius: '8px', textDecoration: 'none', marginBottom: '1px' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(45,212,200,0.06)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {content}
+    </a>
   )
 }

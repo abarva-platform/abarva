@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
+import PageShell from '@/components/PageShell'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
@@ -348,8 +348,7 @@ function SelectContent() {
   const riskColor = (r: string) => r === 'HIGH' ? T.red : r === 'MEDIUM' ? T.amber : T.green
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans, color: T.text }}>
-      <AbarvaNav clientId={client} onClientChange={handleClientChange} activePage="select" />
+    <PageShell activePage="select" clientId={client}>
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
@@ -833,7 +832,7 @@ function SelectContent() {
         )}
 
       </div>
-    </div>
+    </PageShell>
   )
 }
 

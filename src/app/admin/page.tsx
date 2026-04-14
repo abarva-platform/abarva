@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import PageShell from '@/components/PageShell'
 
 // ─── Design system ─────────────────────────────────────────────────────────────
 const T = {
@@ -69,23 +70,7 @@ function EngagementRow({ e }: { e: typeof ENGAGEMENTS[number] }) {
 
 export default function AdminPage() {
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans }}>
-      {/* Header */}
-      <div style={{ borderBottom: '1px solid ' + T.border, padding: '18px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ lineHeight: 1, marginBottom: '4px' }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 400, color: T.text }}>Abar</span>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: T.teal }}>Va</span>
-          </div>
-          <div style={{ fontSize: '9px', fontWeight: 700, color: T.text2, letterSpacing: '0.16em', textTransform: 'uppercase', fontFamily: T.mono }}>
-            Intelligence. Now act on it.
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: T.text }}>Anand Sundaram</div>
-          <div style={{ fontSize: '11px', color: T.text2 }}>Lead Maestro</div>
-        </div>
-      </div>
+    <PageShell activePage="admin">
 
       {/* Content */}
       <div style={{ maxWidth: '640px', margin: '0 auto', padding: '60px 24px' }}>
@@ -127,6 +112,6 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageShell>
   )
 }

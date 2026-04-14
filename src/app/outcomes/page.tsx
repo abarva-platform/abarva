@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
+import PageShell from '@/components/PageShell'
 
 const T = {
   bg: '#060A12', surface: '#0D1520', surface2: '#162030',
@@ -435,8 +435,7 @@ function OutcomesContent() {
   const isMeridian = clientId === 'meridian'
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: '"DM Sans", system-ui, sans-serif' }}>
-      <AbarvaNav clientId={clientId} activePage="outcomes" />
+    <PageShell activePage="outcomes" clientId={clientId}>
 
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
@@ -497,7 +496,7 @@ function OutcomesContent() {
           </div>
         )}
       </div>
-    </div>
+    </PageShell>
   )
 }
 

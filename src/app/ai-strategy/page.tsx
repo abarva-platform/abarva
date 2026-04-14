@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import AbarvaNav from '@/components/AbarvaNav'
+import PageShell from '@/components/PageShell'
 import { supabase } from '@/lib/supabase'
 import { FAILURE_PATTERNS, MERIDIAN_GENOME_SUMMARY } from '@/data/knowledge/failure-patterns'
 
@@ -713,9 +713,8 @@ function AiStrategyContent() {
   `
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans }}>
+    <PageShell activePage="ai-strategy" clientId={clientId}>
       <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
-      <AbarvaNav />
 
       {/* Product Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 24px' }}>
@@ -941,7 +940,7 @@ function AiStrategyContent() {
 
       {showGenomeDrawer && <GenomeDrawer clientKey={clientId} onClose={() => setShowGenomeDrawer(false)} />}
       {showConfirmModal && <ConfirmModal profile={profile} clientId={clientId} onClose={() => setShowConfirmModal(false)} />}
-    </div>
+    </PageShell>
   )
 }
 

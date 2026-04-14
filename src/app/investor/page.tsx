@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import AbarvaNav from '@/components/AbarvaNav'
 
 const SECTIONS = [
   { id: 'problem', label: 'The Problem' },
@@ -260,6 +261,7 @@ export default function InvestorPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#fff', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }}>
+      <AbarvaNav activePage="investor" />
       <style>{css}</style>
 
       {/* TOP NAV */}
