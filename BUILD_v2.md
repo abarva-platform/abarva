@@ -12334,3 +12334,1905 @@ BEHAVIOR TEST:
 
 COMMIT: git commit -m "Phase 4H/4J final: Complete interaction specs — every button wired, every chart data-verified, every check automated"
 
+
+---
+
+## PHASE 4H v2 — VENDOR PRODUCT: COMPLETE REDESIGN FROM SCRATCH (4 hours)
+
+REPLACES /select entirely. The current page is static, Meridian-only,
+and has no workflow, no lifecycle, no three-source attribution.
+Build from scratch using the design above.
+
+THE PRODUCT PROMISE:
+"Which vendor should we choose — and are we getting value from the vendors we already have?"
+
+TWO MODES. ONE PRODUCT.
+Mode 1: SELECT — CIO evaluating a new vendor decision
+Mode 2: OPTIMIZE CURRENT — CFO/Procurement evaluating existing portfolio
+
+---
+
+### PRODUCT HEADER (always visible)
+
+```
+🔍 VENDOR                              [Meridian Health ▾]
+"Which vendor should we choose — and are we getting value from what we already have?"
+
+Decisions open: 4  ·  Current vendors: 47  ·  SLA credits unclaimed: $2.1M  ·  Confidence: 94%
+
+[Select a Vendor]  [Optimize Current Vendors]   ← mode toggle, top right
+```
+
+Header data sources:
+- decisionsOpen: clientData[activeClient].vendorDecisions.filter(d => !d.resolved).length
+- currentVendors: clientData[activeClient].vendors.length
+- unclaimed credits: calculated from SLA breach detection
+- All four numbers must be different for each client
+
+BEHAVIOR TEST:
+Switch to First Capital → numbers must change
+Switch to Apex → numbers must change again
+If same numbers → not reading from client data
+
+---
+
+### MODE 1: SELECT A VENDOR
+
+SIX-STEP NAVIGATOR:
+[1. Define need] [2. Score landscape] [3. Shortlist] [4. References] [5. Negotiate] [6. Contract]
+
+- Active step: teal dot, teal text
+- Completed step: green dot, green text, checkmark
+- Future step: gray dot, white text 70% opacity
+- ALL step text WHITE — never gray on dark background
+
+Steps persist — navigating forward keeps prior step data
+
+---
+
+#### STEP 1: DEFINE NEED
+
+Left column: open vendor decisions list
+
+Each decision card:
+- Status pill: URGENT (red) / HIGH (amber) / MEDIUM (teal)
+- Decision name: DM Sans 13px 500 white
+- Deadline: DM Sans 11px #64748B
+- Context: DM Sans 11px #94A3B8 — 2-3 sentence plain English
+
+Active decision card: teal border, rgba(45,212,200,0.04) background
+Clicking any decision: loads that decision's vendor landscape in Step 2
+
+Meridian decisions (from clientData.meridian.vendorDecisions):
+1. Prior Auth Automation — URGENT — CMS mandate Jan 2027
+2. RCM AI Platform — URGENT — CDO hire needed first
+3. Epic AI Module Activation — HIGH — Epic upgrade Q3 2026
+4. Workforce AI Scheduling — MEDIUM — Travel nurse contract Q4
+
+First Capital decisions:
+1. FedNow Compliance — URGENT — Jan 2027 hard deadline
+2. Core Banking Modernization — HIGH — 22yr old FIS HORIZON
+3. AML AI Platform — HIGH — Regulatory pressure
+4. Digital Onboarding AI — MEDIUM — Conversion gap
+
+Apex Retail decisions:
+1. Einstein AI Optimization — URGENT — $248M idle
+2. Inventory Forecasting AI — HIGH — 4.2x turns vs 6.1x peers
+3. Supply Chain Orchestration — HIGH — fragmented systems
+4. Customer AI Personalization — MEDIUM — conversion 2.3% vs 3.8%
+
+BEHAVIOR TEST:
+Switch client → decision list must change completely
+If Prior Auth shows for First Capital → not reading from client data
+
+---
+
+#### STEP 2: SCORE LANDSCAPE
+
+Scatter plot — all assessed vendors as bubbles
+
+X axis: Implementation complexity at THIS client
+  - Computed from: clientData.dataReadiness, clientData.teamCapability,
+    clientData.integrationCount, clientData.existingStack
+  - NOT a generic complexity score
+Y axis: Outcome achievement rate (from Genome)
+  - Source: knowledgeLayer.vendorOutcomes[vendorId].genomeData.successRate
+Bubble size: Reference match score vs this client's profile
+Bubble color:
+  - Teal: recommended (top match)
+  - Blue: consider
+  - Amber: caution
+  - Gray: not recommended
+
+Header above chart:
+"[N] vendors assessed for [decision name] · [M] recommended for Meridian's profile"
+N and M must update when client changes
+
+HOVER STATE (must be wired — this is where bugs hide):
+onMouseEnter={() => setHoveredVendor(vendor.id)}
+Panel shows: name, outcome rate, reference match, Year 1 cost, top risk
+Clicking bubble: highlights corresponding card in Step 3
+
+BEHAVIOR TEST:
+Hover vendor A → note outcome rate
+Hover vendor B → different outcome rate must show
+If same → knowledgeLayer not keyed by vendorId
+
+---
+
+#### STEP 3: SHORTLIST (top 3 by combined score)
+
+LEFT COLUMN: Vendor cards (full width, stacked)
+
+Each card structure:
+```
+[VENDOR NAME]  [RECOMMENDED badge if top]  [RISK PILL]  [SCORE / 100]
+
+THREE SOURCE ATTRIBUTION:
+FROM YOUR DATA      FROM INDUSTRY         FROM GENOME
+[client-specific]   [market data]         [genome outcome]
+
+[4 bullet points — specific to this vendor + this client]
+
+[View references →]  [Build RFP →]  [Negotiation brief →]  [Failure Genome →]
+```
+
+THREE SOURCE ATTRIBUTION — data sources:
+FROM YOUR DATA:
+  source: clientData[activeClient] — specific metric for this initiative
+  For Prior Auth: denial rate, Epic configuration, Azure compatibility
+  For FedNow: core system age, current compliance status
+  NEVER show generic text here
+
+FROM INDUSTRY:
+  source: knowledgeLayer.vendorOutcomes[vendorId].industryData
+  Shows: cost range, timeline, market adoption, key references
+
+FROM GENOME:
+  source: knowledgeLayer.vendorOutcomes[vendorId].genomeData
+  Shows: success rate, failure rate, key failure patterns
+
+BEHAVIOR TEST — CRITICAL:
+Vendor A FROM GENOME → note success rate
+Vendor B FROM GENOME → must show different success rate
+If same → not keyed by vendorId
+
+SCORE calculation:
+const score = Math.round(
+  (outcomeRate * 0.4) +
+  (referenceMatch * 0.3) +
+  (priceScore * 0.2) +
+  (fitScore * 0.1)
+)
+
+RISK PILL:
+source: failurePatterns.scoreForClient(vendorId, activeClient)
+Returns: 'low' | 'medium' | 'high'
+Color: low=green, medium=amber, high=red
+NEVER hardcode risk level
+
+RIGHT COLUMN: Recommendation + Failure Genome
+
+RECOMMENDATION BOX:
+AbarVa recommendation in plain English
+2-3 sentences: who to choose, why, one condition if any
+Source: generated from top vendor's score + failure patterns
+Must be client-specific — reference client's actual situation
+
+FAILURE GENOME SIDEBAR:
+7 patterns scored for active vendor + active client
+Each pattern:
+  - Pattern name
+  - Risk pill: present / partial / not present
+  - One sentence: what it predicted historically
+  - One sentence: Meridian signal if present
+  - Mitigation: specific action
+
+BEHAVIOR TEST:
+Switch from Cohere to Waystar → Failure Genome must update
+Switch from Meridian to First Capital → different patterns visible
+If Genome shows same content → not keyed by vendor + client
+
+---
+
+#### STEP 4: REFERENCES
+
+Full-width reference list
+
+Header: "[N] organizations most similar to [client] where [vendor] was deployed"
+Similarity criteria shown: revenue range ✓ / EHR system ✓ / denial rate range ✓
+
+Each reference card:
+- Org descriptor (anonymized): "$10.2B health system, Midwest"
+- Baseline → outcome: "18.2% → 11.8% denial rate"
+- Timeline: "11 months to full value"
+- Annual savings: "$21M"
+- What went right: one line
+- What went wrong: one line (if applicable)
+- FAILED badge in red if the engagement failed
+
+Source: knowledgeLayer.vendorReferences
+  .filter(r => r.vendorId === selectedVendor.id)
+  .filter(r => similarityScore(r.orgProfile, clientProfile) > 0.65)
+  .sort((a, b) => b.similarityScore - a.similarityScore)
+  .slice(0, 8)
+
+BEHAVIOR TEST:
+References for Cohere + Meridian profile → note org descriptors
+References for Waystar + Meridian profile → different set
+References for Cohere + First Capital profile → different set
+If same references regardless of vendor or client → filter not running
+
+---
+
+#### STEP 5: NEGOTIATE
+
+LEFT: Price benchmark visualization
+
+Horizontal comparison:
+  Your estimate  ──────────────● $X (from budget entered)
+  25th pct       ──────── $Y (from contract benchmarks)
+  Median         ──────────────── $Z
+  75th pct       ──────────────────── $W
+
+Text below: "Your estimate is at the [N]th percentile — [below/at/above] market median"
+"Negotiating to the 25th percentile saves $[X] annually"
+
+Source: knowledgeLayer.contractBenchmarks[vendorId][initiativeType]
+BEHAVIOR TEST:
+Switch vendor → benchmark bars must change
+Switch initiative type → benchmark bars must change
+If bars same across vendors → not keyed by vendor
+
+LEVERAGE POINTS: checklist
+Each item: toggle checkbox
+Checked items → feed into negotiation brief
+
+Standard leverage points (always shown):
+☐ Multi-year commitment (3yr) → 15-20% pricing leverage
+☐ Reference client permission → $50-100K reduction
+☐ Pilot-first structure → vendor will agree
+☐ Q4 signature timing → vendor quota pressure 8-12%
+☐ Competing vendor shortlisted → creates urgency
+
+[Generate negotiation brief →] — disabled until ≥1 leverage point checked
+
+BRIEF OUTPUT:
+- Opening position (25th percentile)
+- Target position (35th percentile)
+- Walk-away (50th percentile)
+- Checked leverage points with how-to-use instructions
+- Red flags from this vendor's contract patterns
+- Opening script referencing client name and initiative
+
+---
+
+#### STEP 6: CONTRACT
+
+Clause library — filterd for this vendor + vertical + initiative
+
+MUST HAVE:
+① Data ownership — "All data, models, outputs remain Client property"
+② Exit rights — "90-day termination, full data export within 30 days"
+③ SLA definition — "99.5% monthly uptime, measured by [method]"
+④ SLA penalties — "$X per hour below SLA, credited automatically"
+
+HEALTHCARE-SPECIFIC (if client.vertical === 'Healthcare'):
+⑤ HIPAA BAA — must be signed before any PHI access
+⑥ Breach notification — 24 hours of suspected PHI breach
+⑦ Audit rights — annual HIPAA compliance audit
+
+BEHAVIOR TEST:
+Meridian (Healthcare) → 7 clauses shown
+First Capital (FinServ) → 4 standard clauses only
+If same clause count → vertical check not running
+
+[Generate SOW →] → pre-filled with:
+  - Client + vendor name
+  - Initiative scope
+  - Milestone schedule (calculated from today's date)
+  - Acceptance criteria from client baseline metrics
+  - Payment schedule: 20/20/20/20/20 tied to milestones
+
+---
+
+### MODE 2: OPTIMIZE CURRENT VENDORS
+
+PORTFOLIO HEADER (4 metric tiles):
+- Annual vendor spend: sum from vendors data
+- SLA credits unclaimed: auto-detected
+- Renewing in 90 days: count from contract dates
+- Vendors at risk: count with performance issues
+
+AUTOMATED CREDIT DETECTION — runs on page load:
+```typescript
+const credits = vendors.flatMap(v => {
+  const slaData = slaPerformance[v.id]
+  if (!slaData || slaData.actual >= v.sla_contracted) return []
+  const breach = v.sla_contracted - slaData.actual
+  const hours = breach * reportingPeriod * 720 // hours per month
+  const credit = hours * v.penalty_per_hour
+  return [{ vendorId: v.id, vendorName: v.name, creditOwed: credit }]
+})
+```
+
+Alert banner if credits.total > 0:
+"⚠ $[X] in SLA credits detected across [N] vendors — not yet claimed [Review →]"
+Alert disappears when user marks credits as claimed
+
+VENDOR ROWS — for each active vendor:
+
+```
+[VENDOR NAME]        $[SPEND]/yr · Contract ends [DATE]    [RISK PILL]
+
+SLA PERFORMANCE:
+Uptime:         [bar] [actual]% / [contracted]% contracted [✓ or ✗]
+Response time:  [bar] [actual]ms / [contracted]ms          [✓ or ✗]
+
+[CREDIT ALERT if breach detected]
+$[X] in credits owed — not yet claimed
+[Generate claim →]  [Negotiation brief →]
+```
+
+BAR COLOR LOGIC:
+actual >= contracted → teal (#2DD4C8)
+actual < contracted → red (#EF4444)
+Width: (actual / contracted) * 100 — capped at 100%
+
+BEHAVIOR TEST:
+Upload SLA data with Ensemble at 97.1% vs 99.5% contracted
+Bar must show RED at 97.6% width
+Credit must calculate correctly
+If bar shows green when below SLA → color logic inverted
+If credit always shows $2.1M → hardcoded not calculated
+
+RENEWAL TRACKER:
+For each vendor renewing in 90/180/365 days:
+  - Days until renewal (computed from today's date)
+  - Market rate comparison (from contract benchmarks)
+  - Overpayment detected if any
+  - [Negotiation brief →] opens renewal brief
+
+EXIT ANALYSIS (for any vendor):
+[Analyze exit →] produces:
+  1. Direct exit costs (from contract terms)
+  2. Replacement vendor score (re-runs selection engine)
+  3. Net decision model: stay + renegotiate vs exit + replace
+
+---
+
+### DATA FILES TO CREATE
+
+src/data/meridian/vendors.ts:
+```typescript
+export const meridianVendorDecisions = [
+  {
+    id: 'prior-auth',
+    name: 'Prior Auth Automation',
+    status: 'URGENT',
+    deadline: 'CMS mandate: Jan 2027',
+    context: '847K prior auth requests/yr at $28.50 each...',
+    initiativeType: 'prior-auth-ai',
+    budget: { min: 2000000, max: 5000000 }
+  },
+  // ... 3 more decisions
+]
+
+export const meridianCurrentVendors = [
+  {
+    id: 'ensemble',
+    name: 'Ensemble Health Partners',
+    annualSpend: 4200000,
+    contractEnd: '2027-12-31',
+    sla_uptime: 99.5,
+    sla_response_ms: 200,
+    penalty_per_hour: 5000,
+    category: 'RCM',
+  },
+  // ... 46 more vendors
+]
+```
+
+src/data/knowledge/vendor-outcomes.ts:
+```typescript
+export const vendorOutcomes = {
+  'cohere-health': {
+    industryData: {
+      costRange: { min: 2100000, max: 3200000 },
+      timelineMonths: { min: 6, max: 9 },
+      mlAccuracy: 0.94,
+      clientCount: 340,
+    },
+    genomeData: {
+      successRate: 0.89,
+      failureRate: 0.11,
+      totalDeployments: 9,
+      primaryFailurePattern: 'cdo-vacancy',
+    }
+  },
+  // ... all vendors
+}
+```
+
+src/data/knowledge/vendor-references.ts:
+```typescript
+export const vendorReferences = [
+  {
+    vendorId: 'cohere-health',
+    orgDescriptor: '$10.2B health system, Midwest',
+    baseline: { denialRate: 0.171 },
+    outcome: { denialRate: 0.118 },
+    timelineMonths: 11,
+    annualSavings: 21000000,
+    wentRight: 'Strong CDO leadership from day 1',
+    wentWrong: null,
+    failed: false,
+    orgProfile: {
+      revenueRange: [8000000000, 12000000000],
+      ehr: 'Epic',
+      denialRateBaseline: [0.15, 0.20],
+    }
+  },
+  // ... all references
+]
+```
+
+src/data/knowledge/contract-benchmarks.ts:
+```typescript
+export const contractBenchmarks = {
+  'cohere-health': {
+    'prior-auth-ai': {
+      p25: 2100000,
+      p50: 2650000,
+      p75: 3200000,
+      autoRenewalTrap: 'Annual increases not capped — negotiate CPI+2% cap',
+    }
+  }
+}
+```
+
+---
+
+### PHASE 4H QA GATE
+
+Header:
+- [ ] 4 metric tiles show correct values from client data
+- [ ] Mode toggle: Select / Optimize switches content
+- [ ] Switching client changes all 4 header metrics
+
+Step navigator:
+- [ ] All 6 steps visible, white text
+- [ ] Active step: teal, future steps: white 70% opacity
+- [ ] Steps never pre-checked on load
+
+Mode 1 — Select:
+- [ ] Decision list shows client-specific decisions
+- [ ] Meridian shows Prior Auth, RCM AI, Epic, Workforce
+- [ ] First Capital shows FedNow, Core Banking, AML, Digital
+- [ ] Switching client changes decision list completely
+- [ ] Clicking a decision loads that decision's vendor landscape
+
+Step 2 — Scatter plot:
+- [ ] Renders with vendor bubbles
+- [ ] Hovering bubble shows vendor-specific data
+- [ ] Hover Cohere → different outcome rate than hover Waystar
+- [ ] Filter changes vendor count shown in header
+
+Step 3 — Vendor cards:
+- [ ] 3 cards shown with correct scores
+- [ ] FROM YOUR DATA shows client-specific metrics
+- [ ] FROM GENOME shows vendor-specific success rate
+- [ ] Waystar genome data different from Cohere genome data
+- [ ] Risk pill computed (not hardcoded)
+- [ ] Recommendation box references client name and situation
+
+Step 4 — References:
+- [ ] References filtered by vendor + client profile
+- [ ] Cohere + Meridian references different from Waystar + Meridian
+- [ ] Cohere + Meridian different from Cohere + First Capital
+
+Step 5 — Negotiate:
+- [ ] Benchmark bars change when vendor changes
+- [ ] At least one leverage checkbox must be checked before brief generates
+- [ ] Brief contains vendor name and client name
+- [ ] Prices match what benchmark chart shows
+
+Step 6 — Contract:
+- [ ] Meridian shows 7 clauses (4 standard + 3 HIPAA)
+- [ ] First Capital shows 4 standard clauses only
+- [ ] SOW dates computed from today — not hardcoded
+
+Mode 2 — Optimize:
+- [ ] Portfolio totals calculated from vendor data
+- [ ] SLA bars: Ensemble bar red (below SLA), Epic uptime bar teal
+- [ ] Credit detection alert appears for Ensemble
+- [ ] $2.1M credit calculated correctly from breach data
+- [ ] [Generate claim →] produces document with correct vendor and amount
+- [ ] Renewal dates show days from today — not hardcoded
+
+COMMIT: git commit -m "Phase 4H v2: Vendor product complete redesign — Select + Optimize modes, 6-step workflow, three-source attribution, Failure Genome, SLA tracking, credit detection"
+
+
+---
+
+## PHASE DESIGN-1 — COMPLETE DESIGN SYSTEM PASS (Priority: Before any new features)
+
+Every product page has wrong backgrounds, wrong fonts, no JetBrains Mono,
+no Fraunces, insufficient teal, and gray text that will be invisible on dark.
+
+This is a systemic failure across all 5 products. Fix everything in one pass.
+
+---
+
+### THE DESIGN SYSTEM FILE
+
+A shared design system already exists at:
+src/lib/design-system.ts
+
+Import it in every product page:
+```typescript
+import { COLORS, FONTS, TEXT, COMPONENTS, CHART_COLORS, 
+         createSparklinePoints, severityColor } from '@/lib/design-system'
+```
+
+Never hardcode colors or fonts in product pages.
+If you see #F8FAFC in a product page — it is wrong.
+If you see Inter font in a product page — it is wrong.
+
+---
+
+### WHAT EVERY PRODUCT PAGE MUST HAVE
+
+1. PAGE BACKGROUND: #060A12 — not #F8FAFC, not #0D1117, not #111827
+2. CARD BACKGROUND: #0D1520
+3. BORDERS: #1C2D45
+4. FONTS:
+   - DM Sans for all body text and UI
+   - JetBrains Mono for labels, product names, section headers, metrics
+   - Fraunces for CXO questions and large metric values
+5. TEXT COLORS:
+   - Primary: #EFF6FF — main text, always
+   - Secondary: #94A3B8 — metadata, context
+   - Never: #6B7280 or darker on dark backgrounds
+6. TEAL: #2DD4C8 — used for active states, section labels, CTAs
+7. PRODUCT NAME: JetBrains Mono 11px 600 teal uppercase
+8. CXO QUESTION: Fraunces 28px 500 white
+
+---
+
+### PRODUCT-BY-PRODUCT FIXES
+
+#### SITUATION (/diagnose)
+Current: #F8FAFC background, Inter font, 1 teal use, 27 gray text instances
+
+Fix:
+- background: #060A12
+- fontFamily: DM Sans throughout
+- Product header: "SITUATION" in JetBrains Mono teal
+- CXO question: Fraunces 28px white
+- All section labels: JetBrains Mono 9px teal uppercase
+- Metric tile labels: JetBrains Mono 9px teal
+- Metric values: Fraunces 24px white
+- Issue card bodies: DM Sans 13px #94A3B8
+- Severity bars: 2px top border — red/amber/green (computed, not hardcoded)
+- Sparklines: SVG polylines, not squiggly lines
+- All tab text: white (#EFF6FF) — never gray
+- Replace all #6B7280 → #94A3B8 minimum
+
+#### STRATEGY (/ai-strategy)
+Current: #F8FAFC background, Inter font, 4 teal uses, 50 gray text instances
+
+Fix:
+- background: #060A12
+- Three-act navigation buttons: full width, prominent
+  Active act: teal background, dark text
+  Other acts: white text, dark background
+- Opportunity cards: three-source attribution
+  FROM YOUR DATA label: JetBrains Mono teal
+  FROM INDUSTRY label: JetBrains Mono amber
+  FROM GENOME label: JetBrains Mono indigo
+- Scatter plot: dark background, teal/blue/amber/gray bubbles
+- Failure Genome drawer: #0D1520 background, not white
+- Replace all #6B7280 → #94A3B8 minimum
+- All 50 gray text instances: audit each one and lighten to minimum #94A3B8
+
+#### VENDOR (/select)
+Being completely rebuilt per Phase 4H v2.
+Apply design system from scratch.
+No light backgrounds. No Inter. Full design system.
+
+#### BUSINESS CASE (/justify)
+Current: #F8FAFC background, Inter font, 0 teal uses, 28 gray text instances
+
+Fix:
+- background: #060A12
+- Section navigation: 5 sections clearly labeled
+- Scenario sliders: dark track (#1C2D45), teal thumb (#2DD4C8)
+- Scenario cards (Conservative/Base/Optimistic):
+  Conservative: amber accent
+  Base: teal accent
+  Optimistic: green accent
+- CFO validation mode: source citations visible on every number
+- Replace all gray text → minimum #94A3B8
+- 0 teal uses → add teal to CTAs, active states, labels
+
+#### OUTCOMES (/control-tower or /outcomes)
+Current: #0D1117 (close but wrong), Inter font, 2 teal uses, 21 gray text instances
+
+Fix:
+- background: #060A12 (not #0D1117)
+- Portfolio overview: 5 initiative cards
+- Progress bars: teal fill, dark track
+- Early warning flags: amber border, amber text
+- Board report button: teal, prominent
+- Replace all gray text → minimum #94A3B8
+
+---
+
+### THE GLOBAL GRAY TEXT RULE
+
+There are 144 gray text instances across 5 products.
+Every single one must be checked:
+
+IF the text is on a dark background (#060A12 or #0D1520):
+  #6B7280 → replace with #94A3B8 (minimum readable)
+  #9CA3AF → replace with #94A3B8 (fine)
+  #475569 → replace with #94A3B8 (minimum readable)
+  #374151 → replace with #64748B ONLY for truly muted metadata
+
+IF the text is on a light background (investor page only):
+  Gray text is fine — leave it
+
+RULE: On dark backgrounds, minimum text color is #94A3B8.
+No exceptions. If it's darker than that on dark — it's invisible.
+
+---
+
+### CHARTS AND GRAPHICS STANDARDS
+
+Every chart must follow these rules:
+
+SPARKLINES:
+```typescript
+// CORRECT — clean SVG polyline
+const points = createSparklinePoints(trendData, 60, 24)
+<polyline
+  points={points}
+  stroke={trendColor}
+  strokeWidth="1.5"
+  fill="none"
+  strokeLinecap="round"
+  strokeLinejoin="round"
+/>
+// WRONG — never use squiggly lines or emoji as charts
+```
+
+BAR CHARTS:
+- Background track: #1C2D45 (dark, barely visible)
+- Fill color: computed from data, not hardcoded
+- Labels: JetBrains Mono 11px white
+- Animation: fill from 0 on mount using CSS transition
+
+DONUT CHARTS:
+- Background ring: #1C2D45
+- Fill: SVG strokeDasharray animation clockwise
+- Center text: Fraunces 20px white
+- Legend: DM Sans 12px #94A3B8
+
+LINE CHARTS (trajectory):
+- Teal line: upward trend, positive
+- Red line: downward trend, negative/critical
+- Both: 2px stroke, round caps
+- Grid lines: #1C2D45, barely visible
+
+SCATTER PLOTS:
+- Dark background: #060A12
+- Bubbles: teal (recommended) / blue (consider) / amber (caution) / #1C2D45 (avoid)
+- Hover state: border lights up, tooltip appears
+- Labels: DM Sans 11px white
+
+GAUGE DIALS:
+- Background arc: #1C2D45
+- Fill arc: SVG path animation
+- Color computed: >80% teal, 60-80% amber, <60% red
+- Center: Fraunces 24px white
+- Label: JetBrains Mono 9px teal
+
+SEVERITY BARS (2px top border on metric tiles):
+```typescript
+const color = severityColor(actual, benchmark, direction)
+<div style={{
+  position: 'absolute', top: 0, left: 0, right: 0,
+  height: '2px', background: color
+}} />
+```
+
+---
+
+### THREE-SOURCE ATTRIBUTION STANDARD
+
+Every opportunity card, finding, and recommendation must show:
+
+```
+FROM YOUR DATA    FROM INDUSTRY      FROM GENOME
+─────────────    ───────────────    ─────────────
+[client data]    [market data]      [genome data]
+[JetBrains       [JetBrains         [JetBrains
+ Mono teal]       Mono amber]        Mono indigo]
+```
+
+The three columns are always visible.
+Never hide any column.
+Never show "N/A" — always have real data in each column.
+
+---
+
+### STEP NAVIGATOR STANDARD
+
+Used in: Situation (6 steps), Vendor (6 steps), Strategy (3 acts)
+
+```typescript
+// Correct step rendering:
+{steps.map((step, i) => (
+  <div
+    key={step.id}
+    style={{
+      padding: '10px 18px',
+      fontSize: '13px',
+      fontWeight: 500,
+      // ALWAYS white text — never gray
+      color: currentStep === i ? COLORS.teal : COLORS.textPrimary,
+      opacity: currentStep === i ? 1 : completedSteps.includes(i) ? 1 : 0.7,
+      borderBottom: currentStep === i ? `2px solid ${COLORS.teal}` : '2px solid transparent',
+      cursor: 'pointer',
+      fontFamily: FONTS.sans,
+    }}
+    onClick={() => setCurrentStep(i)}
+  >
+    {completedSteps.includes(i) ? '✓ ' : ''}{step.label}
+  </div>
+))}
+```
+
+Rules:
+- Active step: teal color, teal underline, 100% opacity
+- Completed step: green ✓ prefix, white text, 100% opacity
+- Future step: white text, 70% opacity
+- NO gray text on any step — never
+
+---
+
+### ROLE SWITCHER STANDARD (Situation only)
+
+Persistent bottom bar, always visible:
+
+```typescript
+<div style={{
+  position: 'sticky',
+  bottom: 0,
+  background: COLORS.cardBg,
+  borderTop: `1px solid ${COLORS.border}`,
+  padding: '10px 28px',
+  display: 'flex',
+  gap: '6px',
+}}>
+  {['CIO','CFO','COO','CMIO','CEO','Maestro'].map(role => (
+    <button
+      key={role}
+      onClick={() => setActiveRole(role)}
+      style={{
+        padding: '7px 16px',
+        borderRadius: '20px',
+        fontSize: '12px',
+        fontWeight: 500,
+        fontFamily: FONTS.sans,
+        cursor: 'pointer',
+        border: 'none',
+        // Active: teal background, dark text
+        // Inactive: transparent, WHITE text (not gray)
+        background: activeRole === role ? COLORS.teal : 'transparent',
+        color: activeRole === role ? COLORS.pageBg : COLORS.textPrimary,
+      }}
+    />
+  ))}
+</div>
+```
+
+---
+
+### EXECUTION ORDER
+
+1. Create shared design system: src/lib/design-system.ts ✓ (already done)
+
+2. Fix Situation (/diagnose):
+   - Change background to #060A12
+   - Add DM Sans + JetBrains Mono + Fraunces
+   - Fix all gray text → minimum #94A3B8
+   - Fix sparklines → clean SVG polylines
+   - Fix step navigator → all white text
+   - Fix role switcher → white text inactive, teal active
+
+3. Fix Strategy (/ai-strategy):
+   - Change background to #060A12
+   - Fix three-act navigation
+   - Add three-source attribution to opportunity cards
+   - Fix all 50 gray text instances
+
+4. Rebuild Vendor (/select):
+   - Per Phase 4H v2 — start from scratch with design system
+
+5. Fix Business Case (/justify):
+   - Change background to #060A12
+   - Add scenario cards with correct accent colors
+   - Fix all gray text
+
+6. Fix Outcomes (/outcomes or /control-tower):
+   - Change background from #0D1117 to #060A12
+   - Fix progress bars and charts
+
+After each product:
+- Screenshot the page
+- Verify: dark background, visible text, teal accents, JetBrains Mono labels
+- Run npm run test:behaviors
+
+After all products:
+- Full nav pass: every product navigable from nav
+- Role switcher test: CIO vs CFO shows different content
+- Client switcher test: Meridian vs FC shows different data
+- npm run test:before-commit
+
+COMMIT: git commit -m "Design-1: Complete design system pass — dark backgrounds, DM Sans + JetBrains Mono + Fraunces, white text, consistent teal, charts standardized"
+
+
+---
+
+## PHASE CUSTOM-1 — CUSTOM INVESTIGATION: COMPLETE DESIGN (4 hours)
+
+The most important product feature in the platform.
+This is where CXOs and Maestros spend the most time.
+Where new value is created. Where the platform proves it can think.
+
+URL: /investigate
+Nav label: Investigate (or accessible from every product via "Solve something different →")
+
+THE PRODUCT PROMISE:
+"You have the data. You have a question that doesn't fit a template.
+AbarVa will guide you through a structured investigation — 
+asking the right questions, using everything it knows,
+and producing a defensible answer with sourced evidence."
+
+---
+
+### WORKFLOW — 6 STAGES
+
+Every investigation moves through 6 stages.
+The user can go back to any previous stage at any time.
+Progress is auto-saved — investigations can be paused and resumed.
+
+STAGE 1: CAPTURE THE QUESTION
+STAGE 2: INTERPRET THE INTENT
+STAGE 3: CHECK THE DATA
+STAGE 4: SELECT THE ANGLES
+STAGE 5: INVESTIGATE
+STAGE 6: FINDINGS BRIEF
+
+Stage navigator always visible — same design as Situation steps:
+All stage labels: white text (#EFF6FF)
+Active stage: teal underline, teal text
+Completed stages: green ✓ prefix
+Future stages: white 70% opacity
+
+---
+
+### STAGE 1: CAPTURE THE QUESTION
+
+NOT a blank text field. A guided entry experience.
+
+HEADER:
+"What do you want to solve for?"
+Subtitle: "Be as specific or as vague as you like. I'll help you sharpen it."
+
+SUGGESTED STARTING POINTS (4 cards — changes based on what data is loaded):
+
+For Meridian (financial + clinical data):
+┌────────────────────────────────────────────────────────┐
+│ A  What's the financial impact of outsourcing RCM?     │
+│    Based on: your $47M cost structure + denial data    │
+├────────────────────────────────────────────────────────┤
+│ B  Should we build or buy our analytics platform?      │
+│    Based on: your 312-app inventory + $38M shadow IT   │
+├────────────────────────────────────────────────────────┤
+│ C  What happens to our margin if we lose our top payer?│
+│    Based on: your payer mix + contract data            │
+├────────────────────────────────────────────────────────┤
+│ D  Something different — I'll type my own question     │
+└────────────────────────────────────────────────────────┘
+
+Clicking A, B, or C: pre-fills the question and advances to Stage 2
+Clicking D: opens text input
+
+TEXT INPUT (when D selected):
+Multiline input, placeholder: "Describe what you want to understand..."
+Below input: "Don't worry about being precise — I'll help you sharpen it in the next step."
+[Start investigating →] button — disabled when empty
+
+IMPORTANT: Suggested cards are generated from the client's loaded data.
+They change when client changes.
+They change when new data is uploaded.
+Not hardcoded.
+
+DATA REQUIRED:
+suggestedQuestions = generateSuggestedQuestions(clientData, knowledgeLayer)
+// Returns 3-4 questions specific to what data is loaded
+
+---
+
+### STAGE 2: INTERPRET THE INTENT
+
+AbarVa interprets the question and offers 3-4 framings.
+The user selects the one closest to what they meant.
+This is the most important stage — it ensures the investigation answers the right question.
+
+HEADER (from AbarVa):
+"Here's how I understand what you're asking. Which is closest?"
+
+EXAMPLE — for "What's the impact of outsourcing RCM?":
+
+┌────────────────────────────────────────────────────────────────┐
+│ A  Financial model: compare 3-year cost of BPO vs internal    │
+│    Focus: NPV, payback period, cost per claim                  │
+├────────────────────────────────────────────────────────────────┤
+│ B  Strategic analysis: should we outsource given our situation │
+│    Focus: readiness, risk, timing, organizational impact       │
+├────────────────────────────────────────────────────────────────┤
+│ C  Vendor selection: which BPO wins for Meridian specifically  │
+│    Focus: outcome data, references, contract terms             │
+├────────────────────────────────────────────────────────────────┤
+│ D  All three — give me the complete picture                    │
+│    Takes longer but covers everything                          │
+│    → (dashed border, always available)                         │
+│    Something different — let me rephrase                       │
+└────────────────────────────────────────────────────────────────┘
+
+DESIGN:
+- 4 choice cards, stacked vertically
+- Each card: option letter (JetBrains Mono teal), question framing (white 13px), focus description (gray 11px)
+- Hover: teal border
+- Selected: teal border, rgba(45,212,200,0.05) background
+- D (all) and "something different" always last:
+  D: slightly lighter border styling
+  "Something different": dashed border, starts over from Stage 1
+
+[Confirm and continue →] — enabled after any selection
+
+AbarVa generates these framings from:
+// interpretQuestion(userQuestion, clientData, knowledgeLayer)
+// Returns 3 specific framings + "all" option
+// Each framing specifies: focus area, data needed, expected output
+
+---
+
+### STAGE 3: CHECK THE DATA
+
+AbarVa shows exactly what data it has, what's missing, and why it matters.
+Then offers a choice about how to proceed.
+
+LAYOUT: Two columns — data status (left) + choices (right)
+
+LEFT: DATA STATUS
+
+Section: What I have
+- List of loaded datasets relevant to this investigation
+- Each: green dot, dataset name, what it provides for this question
+
+Section: What's missing
+- List of datasets that would improve the investigation
+- Each: gray dot, dataset name, confidence impact if added
+
+For each missing dataset — one specific upload request:
+AMBER BOX:
+"What I need and why"
+Specific data points needed (not vague "more data")
+Why it matters for THIS investigation
+[Upload [template name] →] button
+
+RIGHT: CHOICES
+
+Always exactly 4 options:
+A: Upload missing data now — highest confidence (X%)
+B: Proceed with industry estimates — lower confidence (Y%)
+C: Enter key numbers manually — I'll ask you [N] questions
+D/→: Change the question
+
+CONFIDENCE CALCULATION:
+withAllData = 91%
+withEstimates = 67%
+These numbers are computed from which datasets are missing:
+- Missing workforce data: -12% confidence
+- Missing outcome baseline: -8% confidence
+- Missing payer contract detail: -6% confidence
+
+MANUAL ENTRY FLOW (option C):
+AbarVa asks 3-5 specific questions in sequence:
+Each question: context (why it's asking), input field, skip option
+Example: "How many FTEs work in your RCM department? (If unsure, I can use $85K/FTE fully-loaded from industry data)"
+
+---
+
+### STAGE 4: SELECT THE ANGLES
+
+AbarVa proposes 3-4 analytical angles.
+User selects which ones to include.
+
+HEADER:
+"Here are the angles I'll investigate. Choose what matters most to you."
+
+ANGLE CARDS:
+
+Each angle card shows:
+- Angle name
+- What I'll analyze (2-3 specific items)
+- What data I'll use (sources labeled)
+- Estimated confidence for this angle
+- Time to complete (rough estimate)
+
+EXAMPLE — RCM outsourcing:
+┌────────────────────────────────────────────────────────────────┐
+│ ANGLE 1: Financial comparison                                  │
+│ I'll analyze: 3-year NPV, payback period, annual savings       │
+│ Using: Your cost data + Genome (23 similar BPO transitions)    │
+│ Confidence: 82% · Estimated: 3 minutes                        │
+├────────────────────────────────────────────────────────────────┤
+│ ANGLE 2: Risk profile                                          │
+│ I'll analyze: Staff displacement, contract risk, vendor risk   │
+│ Using: Genome failure patterns + your org profile             │
+│ Confidence: 91% · Estimated: 2 minutes                        │
+├────────────────────────────────────────────────────────────────┤
+│ ANGLE 3: Vendor landscape                                      │
+│ I'll analyze: BPO vendors scored for Meridian's situation      │
+│ Using: Genome outcomes + your denial rate profile             │
+│ Confidence: 78% · Estimated: 4 minutes                        │
+├────────────────────────────────────────────────────────────────┤
+│ All three angles — full investigation                          │
+│ Total estimated time: ~9 minutes                               │
+└────────────────────────────────────────────────────────────────┘
+
+Multi-select: user can choose 1, 2, or all 3
+[Start investigation →] — enabled after at least one selected
+
+---
+
+### STAGE 5: INVESTIGATE
+
+The investigation runs. Findings stream in real time.
+AbarVa asks follow-up questions mid-investigation.
+User answers questions to shape the direction.
+
+LAYOUT: Main (findings) + Sidebar (summary + follow-ups)
+
+MAIN AREA:
+
+Angle header (current angle being investigated):
+[Angle 1] Financial comparison · [Running ●]
+
+Finding types — each has a left border + type label:
+
+INSIGHT (teal border):
+Finding text — what AbarVa found
+Source attribution (3 sources)
+Any numbers shown in the finding are from real data
+
+CRITICAL FINDING (red border):
+Something important that changes the calculation
+Must have specific data behind it
+Never a generic warning
+
+RISK FLAG (amber border):
+From Genome — pattern that preceded problems
+Shows: N of M situations had this pattern
+Shows: what it meant in practice
+Shows: mitigation
+
+QUESTION (indigo dashed border):
+AbarVa needs user input to continue
+Always 3-4 choices + "something different"
+Never blocks — user can skip any question
+Skipping: AbarVa uses best available assumption and notes it
+
+MID-INVESTIGATION QUESTIONS:
+These appear when the investigation reaches a fork.
+Examples:
+- "The model depends on your assumption about denial rate improvement. Which scenario?"
+  A: 4pp improvement (optimistic)
+  B: 2pp improvement (conservative)
+  C: No improvement assumed
+  D: Show me all three
+
+- "Do you want me to include the CDO vacancy risk in this analysis?"
+  A: Yes — model it as an ongoing risk
+  B: No — assume CDO hired before implementation
+  C: Show me both with and without
+
+User can answer or skip. Investigation continues either way.
+
+LIVE SUMMARY SIDEBAR:
+Accumulates key findings as they emerge.
+Shows: what we know so far, formatted as bullet list
+Updates after each finding
+The CIO can read this and understand the shape of the answer before it's complete.
+
+FOLLOW-UP QUESTIONS SIDEBAR:
+Queued questions AbarVa wants to ask
+User can answer them in any order
+Answering a question may add new findings
+
+---
+
+### STAGE 6: FINDINGS BRIEF
+
+The complete investigation output.
+Structured, sourced, and ready to share.
+
+BRIEF STRUCTURE:
+
+HEADER:
+Investigation: [Question title]
+Client: Meridian Health System
+Conducted: April 13, 2026
+Confidence: 82% overall
+
+EXECUTIVE SUMMARY (3-4 sentences):
+The bottom line. What the answer actually is.
+No hedging. No "it depends." A clear answer with the key condition.
+
+SECTION PER ANGLE:
+
+Angle 1 — Financial Comparison:
+Key numbers (3-4 metrics with source labels)
+Key findings (3-4 bullets, each sourced)
+The answer to this angle
+
+Angle 2 — Risk Profile:
+...
+
+Angle 3 — Vendor Landscape:
+...
+
+RECOMMENDATION:
+What AbarVa recommends and why.
+One condition if any.
+One risk to watch.
+
+WHAT TO DO NEXT:
+3 specific actions with owners and timeframes
+[Generate action plan →]
+
+DATA USED:
+List all data sources with confidence note
+"Where industry estimates were used instead of your data — noted here"
+
+OUTPUTS:
+[Download PDF →]
+[Export to Business Case →] → opens Business Case product pre-populated
+[Share with team →]
+[Add to Maestro brief →]
+[Save as template →] → saves this investigation type for reuse
+
+---
+
+### THE "SAVE AS TEMPLATE" FEATURE
+
+After any investigation, the user can save it as a template.
+This creates a pre-configured investigation that can be run for any client.
+
+Template captures:
+- The question framing
+- The angles selected
+- The key questions asked mid-investigation
+- The output structure
+
+Running a saved template for a new client:
+- Fills in client-specific data automatically
+- Asks the same mid-investigation questions
+- Produces a parallel output for comparison
+
+This is how the platform gets smarter. Every custom investigation that gets saved becomes a template that Maestros can deploy for other clients.
+
+---
+
+### DATA ARCHITECTURE
+
+Investigations are stored in Supabase:
+
+investigations table:
+  id, client_id, user_id, question, intent_framing,
+  angles_selected, data_used, findings (JSON),
+  confidence_score, created_at, completed_at, saved_as_template
+
+investigation_findings table:
+  id, investigation_id, angle, type (insight/critical/risk/question),
+  text, sources (JSON), user_response, created_at
+
+investigation_templates table:
+  id, name, question_template, angles, questions,
+  created_by, used_count, created_at
+
+---
+
+### PHASE CUSTOM-1 QA GATE
+
+Stage 1 — Question capture:
+- [ ] Suggested questions generated from client's loaded data
+- [ ] Meridian suggestions different from First Capital suggestions
+- [ ] Switching client changes suggested questions
+- [ ] Free text input activates when "Something different" selected
+- [ ] [Start investigating] disabled when text empty
+
+Stage 2 — Intent:
+- [ ] 4 framings generated from the user's question
+- [ ] All 4 options clickable
+- [ ] "Something different" restarts from Stage 1
+- [ ] Selecting any option enables [Confirm] button
+- [ ] Selected option clearly highlighted (teal border)
+
+Stage 3 — Data check:
+- [ ] Shows correct loaded datasets for active client
+- [ ] Missing datasets shown with specific confidence impact
+- [ ] Confidence numbers computed (not hardcoded)
+- [ ] 4 choices always present (upload/estimates/manual/rephrase)
+- [ ] Manual entry asks specific questions (not generic)
+- [ ] Proceeding with estimates shows confidence note throughout
+
+Stage 4 — Angles:
+- [ ] 3-4 angles shown relevant to the question
+- [ ] Each angle shows data it will use
+- [ ] Confidence per angle computed
+- [ ] Multi-select works — can choose 1, 2, or all
+- [ ] [Start] enables after ≥1 selected
+
+Stage 5 — Investigation:
+- [ ] Findings stream in real time (not all at once)
+- [ ] All four finding types render correctly (color-coded borders)
+- [ ] Each finding has source attribution
+- [ ] Mid-investigation questions appear at right moments
+- [ ] Choices always 3-4 options + "something different"
+- [ ] Skipping a question: investigation continues with noted assumption
+- [ ] Live summary sidebar updates after each finding
+- [ ] Follow-up questions sidebar queues correctly
+
+Stage 6 — Findings brief:
+- [ ] Executive summary is 3-4 sentences, clear answer
+- [ ] Sections organized by angle
+- [ ] All numbers sourced (FROM YOUR DATA / FROM INDUSTRY / FROM GENOME)
+- [ ] Recommendation is specific (not hedged)
+- [ ] [Export to Business Case →] opens Business Case pre-populated
+- [ ] [Save as template →] saves investigation type for reuse
+- [ ] [Download PDF →] downloads working PDF
+
+Zero dead ends:
+- [ ] Back button works at every stage
+- [ ] Saved investigations accessible from Maestro portal
+- [ ] Investigation auto-saves on every user action
+
+COMMIT: git commit -m "Custom-1: Custom Investigation — 6-stage guided workflow, streaming findings, mid-investigation questions, Genome patterns, findings brief, template saving"
+
+
+---
+
+## MASTER UPDATE — April 14, 2026 (supersedes conflicting earlier sections)
+
+This section reflects all decisions made today. It is authoritative.
+Where earlier sections conflict with this — this wins.
+
+---
+
+### PLATFORM STRUCTURE — LOCKED
+
+```
+ABARVA PLATFORM
+
+PRODUCTS (5 — the engine):
+  /diagnose       → Situation
+  /ai-strategy    → Strategy
+  /select         → Vendor (complete rebuild per Phase 4H v2)
+  /justify        → Business Case
+  /outcomes       → Outcomes
+
+SOLUTIONS (3 anchors — the door):
+  /solutions/pdlc      → AI-Powered PDLC
+  /solutions/delivery  → AI-Powered Transformation Delivery
+  /solutions/margin    → Margin Optimization
+
+ADMIN:
+  /admin               → Maestro engagement selector (Screen 1)
+  /admin/client/[id]   → Client engagement dashboard (Screen 2)
+
+OTHER:
+  /investor            → Investor view
+  /sign-up             → Sign up
+  /                    → Homepage
+```
+
+---
+
+### PAGES DELETED — DO NOT RECREATE
+
+These pages were deleted. Never reference them. Never link to them.
+
+/architecture, /blueprint, /board-deck, /contradictions,
+/data-intelligence, /domain-strategy, /how-to-build, /intelligence,
+/scenarios, /search, /timeline, /value-template,
+/admin/brief, /admin/context, /admin/data, /admin/data-guide,
+/admin/intelligence, /admin/outcomes, /admin/approvals
+
+---
+
+### NAV — LOCKED
+
+```
+[AbarVa wordmark] [Intelligence ▾] [Solutions ▾] [Clients ▾]    [Investor View] [Maestro]
+```
+
+Intelligence dropdown (5 products):
+  Situation     — /diagnose?client=[id]
+  Strategy      — /ai-strategy?client=[id]
+  Vendor        — /select?client=[id]
+  Business Case — /justify?client=[id]
+  Outcomes      — /outcomes?client=[id]
+
+Solutions dropdown (3):
+  AI-Powered PDLC                    — /solutions/pdlc
+  AI-Powered Transformation Delivery — /solutions/delivery
+  Margin Optimization                — /solutions/margin
+
+Clients dropdown:
+  Meridian Health System → /admin/client/meridian
+  First Capital Financial → /admin/client/firstcapital
+  Apex Retail Group → /admin/client/apexretail
+
+Maestro button → /admin (teal button, always visible)
+
+RULES:
+- "Deliverables" nav item: REMOVED PERMANENTLY
+- "Products" label: RENAMED to "Intelligence"
+- All text: white (#EFF6FF) on dark — never gray
+- Hover on links: color → #2DD4C8, underline appears
+- Active page: teal bottom border
+
+---
+
+### PRODUCT NAMING — LOCKED
+
+No "Intelligence" suffix on any product name.
+The products are called exactly:
+
+  Situation (not "Situation Intelligence")
+  Strategy (not "AI Investment Intelligence")
+  Vendor (not "Vendor Intelligence")
+  Business Case (not "Business Case Intelligence")
+  Outcomes (not "Outcome Intelligence")
+
+---
+
+### DESIGN SYSTEM — LOCKED AND NON-NEGOTIABLE
+
+File: src/lib/design-system.ts (already created)
+Import in every product page — never hardcode.
+
+BACKGROUNDS:
+  Page:   #060A12  ← every product page, never #F8FAFC or #0D1117
+  Card:   #0D1520
+  Inset:  #060A12 (inside cards)
+  Border: #1C2D45
+
+FONTS:
+  Body:    DM Sans
+  Labels:  JetBrains Mono (product names, section headers, badges)
+  Headings: Fraunces (CXO questions, large metric values)
+  NEVER:   Inter (currently wrong in all 5 products — fix this)
+
+TEXT COLORS (on dark backgrounds):
+  Primary:   #EFF6FF  ← white — all main text
+  Secondary: #94A3B8  ← readable gray — metadata, context
+  Muted:     #475569  ← only for truly muted items (timestamps)
+  NEVER:     #6B7280 or darker on dark backgrounds (invisible)
+
+TEAL: #2DD4C8
+  Used for: product eyebrows, section labels, active states, CTAs
+  Dim:      rgba(45,212,200,0.12) for backgrounds
+  Border:   rgba(45,212,200,0.25) for bordered elements
+
+PRODUCT HEADER PATTERN (same on every product):
+  background: #0D1520
+  border-bottom: 1px solid #1C2D45
+  padding: 18px 28px
+
+  Row 1:
+    LEFT: Product eyebrow (JetBrains Mono 10px teal uppercase)
+          CXO question (Fraunces 20px white)
+    RIGHT: Client pill ▾ (teal border, teal text)
+           Mode toggle [Guided] [Explore] [Custom]
+
+  Row 2: Meta stats
+    "Stat label: VALUE" — label #94A3B8, value #2DD4C8
+    Critical values: #EF4444 (red)
+    Warning values: #F59E0B (amber)
+
+TAB/STEP NAVIGATOR:
+  All step text: WHITE (#EFF6FF) — NEVER gray
+  Active step: color #2DD4C8, 2px teal bottom border, 100% opacity
+  Completed step: green ✓ prefix, white text
+  Future step: white text, 70% opacity
+  No gray text anywhere in the navigator — ever
+
+METRIC TILES:
+  background: #060A12
+  border: 1px solid #1C2D45
+  border-radius: 10px
+  padding: 14px
+  Severity bar: 2px top — red/amber/green (computed, never hardcoded)
+  Label: JetBrains Mono 9px teal uppercase
+  Value: Fraunces 22px white
+  Context: DM Sans 11px — red/amber based on severity
+  Benchmark: DM Sans 10px #475569
+
+CHARTS — STANDARDS:
+  All chart backgrounds: dark (#060A12 or #0D1520)
+  Sparklines: SVG polylines — NEVER squiggly lines
+    Teal = positive/improving
+    Red = critical/declining
+    Amber = warning
+  Bar tracks: #1C2D45 (dark, barely visible)
+  Bar fills: computed color based on value vs benchmark
+  Line charts: 2px stroke, round linecap, teal or red
+  Donut: SVG strokeDasharray animation, dark background ring
+  All axes labels: JetBrains Mono 10px white
+  All chart labels: DM Sans 11px white minimum
+
+LAYOUT:
+  max-width: 1400px (standard enterprise web app width)
+  margin: 0 auto
+  padding: 0 28px (content padding)
+  Standard 2-column: grid-template-columns: 1fr 300-340px
+
+ROLE SWITCHER (Situation product only):
+  Position: sticky bottom of viewport
+  Background: #0D1520
+  Border-top: 1px solid #1C2D45
+  Buttons: [CIO] [CFO] [COO] [CMIO] [CEO] [Maestro]
+  Active: background #2DD4C8, color #060A12
+  Inactive: transparent, WHITE (#EFF6FF) — never gray
+
+THREE-SOURCE ATTRIBUTION:
+  Every opportunity card, finding, and recommendation shows:
+  FROM YOUR DATA  → JetBrains Mono 8px #2DD4C8 (teal)
+  FROM INDUSTRY   → JetBrains Mono 8px #F59E0B (amber)
+  FROM GENOME     → JetBrains Mono 8px #818CF8 (indigo)
+  Each in its own column with dark inset background
+
+---
+
+### THE THREE SOLUTIONS — DETAILED SPEC
+
+---
+
+#### SOLUTION 1: AI-POWERED PDLC
+Route: /solutions/pdlc
+Owner: CIO · Engineering leads
+Vertical: Cross-vertical (Healthcare, FinServ, Retail all same)
+Color accent: #6366F1 (indigo)
+
+CXO sentence:
+"We're spending $300M in capital on new products.
+ Our average time to production is 16 months.
+ My engineers spend 60% of their time not building.
+ And I'm paying consulting firms to write requirements."
+
+DIAGNOSIS (from client data):
+  Meridian: 16mo avg time to production, 38% engineer build time,
+            $31M annual consulting spend, $0 knowledge retained
+  First Capital: 18mo avg, 35% build time, $28M consulting
+  Apex: 14mo avg, 41% build time, $22M consulting
+
+ARCHITECTURE PRESCRIPTION (always shown):
+  Claude Code — AI-native development for every team
+  5-layer agent orchestration (human + agent model)
+  Knowledge layer — 3-tier trust model, client-owned permanently
+  ServiceNow — governance, audit trail, approvals
+  Built on existing cloud infrastructure — no rip and replace
+
+WHAT AGENTS DO vs WHAT HUMANS DO:
+  Agents own: boilerplate, tests, documentation, deployment,
+               requirements synthesis, dependency scanning,
+               regression testing, code review (first pass)
+  Maestros own: architecture decisions, stakeholder relationships,
+                business logic, edge cases, quality judgment
+
+PRODUCTS ACTIVATED (in order):
+  1. Situation → current PDLC health, where velocity is lost
+  2. Strategy  → which AI tooling bets first, sequencing
+  3. Vendor    → tools scored for this team's stack and capability
+  4. Business Case → CIO board model: $300M → 40% more product
+  5. Outcomes  → velocity tracking monthly, consulting spend reduction
+
+MAESTRO TEAM (6 embedded):
+  1. Program Director — sets direction, governs agents, owns board relationship
+  2. Architecture Maestro — translates AI to client-specific design
+  3. Delivery Maestro × 2 — embedded in client engineering teams daily
+  4. Knowledge Maestro — builds and maintains knowledge layer
+  5. Outcomes Maestro — tracks velocity, triggers early warning
+
+COMMITTED OUTCOME (baseline locked):
+  Time to production: 16mo → 8mo by Month 18
+  Engineer build time: 38% → 65% by Month 12
+  Consulting spend: $31M → $10M by Month 18
+  AbarVa fee: 15-20% of verified savings only
+
+TEST DATA (for demo):
+  Client: Meridian Health System
+  Current PDLC metrics:
+    avg_time_to_production_months: 16
+    engineer_build_time_pct: 38
+    annual_consulting_spend: 31000000
+    projects_in_flight: 12
+    projects_behind: 7
+    knowledge_retention_pct: 5
+  Peer benchmarks:
+    best_in_class_months: 7
+    median_months: 11
+    target_build_time_pct: 65
+    target_consulting_spend: 10000000
+
+---
+
+#### SOLUTION 2: AI-POWERED TRANSFORMATION DELIVERY
+Route: /solutions/delivery
+Owner: CIO · CTO · Program sponsors
+Vertical: Cross-vertical
+Color accent: #2DD4C8 (teal)
+
+CXO sentence:
+"We're 18 months into a $50M transformation.
+ I've got 80 consultants on site. 70% of their time
+ is getting up to speed on our environment.
+ Knowledge walks out every Friday.
+ And nobody can tell me if we're actually on track."
+
+DIAGNOSIS (from client data):
+  What we measure:
+  - Consultant ramp time percentage (target <20%, typical 65-70%)
+  - Knowledge retention after engagement (target 90%, typical <5%)
+  - Program velocity vs committed milestone
+  - Failure pattern match score vs Genome
+
+WHAT THIS SOLUTION ADDS:
+  Week 0: Knowledge layer ingests entire client environment
+    - All documentation, system maps, prior assessments uploaded
+    - Structured into searchable knowledge base
+    - New Maestro onboards in days not weeks
+    - Client retains permanently — not held by consultant
+
+  Weekly: Failure Genome monitors program signals
+    - 7 failure patterns tracked in real time
+    - Early warning when pattern matches historical failures
+    - Specific intervention recommended before outcome is missed
+
+  Monthly: Outcome accountability
+    - Milestone delivery tracked vs committed
+    - Value delivered vs promised
+    - Consulting cost trend vs target
+
+PRODUCTS ACTIVATED:
+  1. Situation → program health, where time is being lost
+  2. Strategy  → course correction — if behind, what to change
+  3. Business Case → revised forecast at current trajectory
+  4. Outcomes  → milestone tracking, value delivery, fee accountability
+  NOTE: Knowledge layer runs continuously — it is the foundation,
+        not a product. Every product is grounded by it.
+
+MAESTRO TEAM (4 embedded):
+  1. Program Director — direction, board relationship, quality calls
+  2. Knowledge Maestro — builds layer week 0, trains client to own it
+  3. Delivery Maestro — embedded daily, runs agent workflows
+  4. Outcomes Maestro — tracks milestones, triggers early warning
+
+WHAT REPLACES:
+  Traditional: 40-80 consultants, 18-36 months, $40M+
+  AbarVa: 4 Maestros + agents, 6-12 months, $4-8M + outcome fee
+
+COMMITTED OUTCOME:
+  Consulting spend: -40% vs traditional model
+  Program delivered: on committed timeline
+  Knowledge retained: 100% stays with client permanently
+  AbarVa fee: 15-20% of verified delivery savings only
+
+TEST DATA (for demo):
+  Client: Meridian Health System
+  Current program:
+    program_name: "AI-Enabled Operations Transformation"
+    total_budget: 50000000
+    months_in: 18
+    consultant_count: 80
+    consultant_ramp_time_pct: 70
+    milestones_total: 24
+    milestones_complete: 11
+    milestones_at_risk: 6
+    knowledge_retained_pct: 3
+    annual_consulting_spend: 28000000
+
+---
+
+#### SOLUTION 3: MARGIN OPTIMIZATION
+Route: /solutions/margin
+Owner: CEO · CFO · COO
+Vertical: Healthcare, Retail, FinServ (with vertical-specific unlocks)
+Color accent: #F59E0B (amber)
+
+CXO sentence:
+"Our operating margin is 1.8% against a 4% target.
+ We know costs are rising and revenue is under pressure.
+ But we don't know exactly where the margin is leaking
+ or which lever to pull first."
+
+THIS IS THE UMBRELLA:
+Margin Optimization is the front door.
+The unlocks are the rooms.
+Each unlock is a separate workstream with its own Maestro team.
+
+VERTICAL UNLOCKS:
+  Healthcare unlocks:
+    Revenue Recovery — denial rate, prior auth, payer contracts
+    Labor Cost       — travel nurses, workforce AI, FTE redeployment
+    IT Spend         — vendor rationalization, SLA credits, contracts
+    AI Portfolio     — $42M stalled spend redirected to delivery
+
+  Retail unlocks:
+    Omnichannel Revenue   — conversion, cart abandonment, personalization
+    Inventory Efficiency  — turns, stockouts, demand forecasting
+    Vendor & Spend        — shadow IT, vendor consolidation, SLA credits
+
+  FinServ unlocks:
+    Digital Revenue   — adoption gap, fee income, cross-sell
+    Operations Cost   — C/I ratio, manual process automation
+    Compliance Cost   — regulatory AI governance, audit readiness
+
+DIAGNOSIS (Meridian Health — from client data):
+  Operating margin: 1.8% vs 4.0% target → $246M gap
+  RCM denial rate: 18.2% vs 11.4% benchmark → $94M leak
+  Travel nurses: $48M vs $28M target → $20M overage
+  IT spend: 4.5% of revenue vs 3.8% peer median
+  SLA credits unclaimed: $2.1M (Ensemble, right now)
+  AI portfolio: $42M committed, $0 tracked outcomes
+
+PRODUCTS ACTIVATED (by unlock):
+  ALL UNLOCKS start with:
+    1. Situation → full margin picture, where the leak is
+    2. Strategy  → which levers, which order, Wave 1 priority
+
+  REVENUE RECOVERY adds:
+    3. Vendor    → RCM AI vendors scored for Meridian
+    4. Business Case → CFO model with risk adjustment
+    5. Outcomes  → track denial rate vs baseline
+
+  LABOR COST adds:
+    3. Business Case → redeployment model, reskilling vs attrition
+    4. Outcomes  → FTE redeployment, travel nurse reduction
+
+  IT SPEND adds:
+    3. Vendor    → current vendors optimized, SLA credits claimed
+    4. Business Case → rebalancing model
+    5. Outcomes  → track savings vs IT spend baseline
+
+MAESTRO TEAM (3-5 embedded):
+  Base team (all unlocks):
+    Finance Maestro — CFO-facing, owns the business case
+    Data Maestro    — data extraction, benchmark analysis
+    Outcomes Maestro — baseline lock, monthly tracking
+
+  Per unlock activated:
+    +1 specialist Maestro (RCM, Workforce, IT, or Vendor specialist)
+
+COMMITTED OUTCOME (Meridian — all unlocks):
+  $60-120M annual margin recovery across activated unlocks
+  Each unlock has its own baseline and outcome commitment
+  AbarVa fee: 15-20% of verified savings per unlock only
+
+TEST DATA (for demo):
+  Client: Meridian Health System
+  Margin data:
+    operating_margin_actual: 1.8
+    operating_margin_target: 4.0
+    operating_margin_peer: 3.2
+    revenue: 11200000000
+    rcm_denial_rate: 18.2
+    rcm_denial_benchmark: 11.4
+    rcm_annual_gap: 94000000
+    travel_nurse_actual: 48000000
+    travel_nurse_target: 28000000
+    it_spend_pct_revenue: 4.5
+    it_spend_peer_median: 3.8
+    sla_credits_unclaimed: 2100000
+    ai_committed: 42000000
+    ai_tracked_outcomes: 0
+
+---
+
+### SOLUTION PAGE DESIGN — ALL THREE
+
+Each solution page has this structure:
+
+SECTION 1: HERO (full width, dark #0D1520)
+  Left:
+    Badge row: [Solution accent color badge] [Owner badge] [Vertical badge]
+    Solution name: Fraunces 28px white
+    CXO sentence: DM Sans 15px #94A3B8 italic, max-width 640px
+  Right:
+    Outcome range (large Fraunces number, teal)
+    "Typical annual value" label
+    "From [N] Genome engagements" footnote
+
+SECTION 2: DIAGNOSIS (5 metric tiles)
+  Label: "FROM YOUR DATA — [CLIENT NAME]"
+  5 tiles from client data
+  Each tile: severity bar + label + value + context + benchmark
+  Teal "← YOUR DATA" label below findings
+
+SECTION 3: THE PRESCRIPTION (3 columns)
+  Column 1: Architecture
+    Titled "Prescribed architecture"
+    Bullet list of specific tools and layers
+    "Built on your existing [cloud] — no rip and replace"
+
+  Column 2: Products activated (numbered list)
+    1. → 5. in sequence with what each one does
+
+  Column 3: Your Maestro team
+    Large number: "X Maestros embedded"
+    List of roles
+    "Replaces [N] traditional consultants"
+
+SECTION 4: THE COMMITMENT
+  Full-width card with teal border
+  "COMMITTED OUTCOME — [CLIENT NAME]"
+  3 specific outcome bullets with values
+  "AbarVa earns nothing until this is verified"
+  [Activate this solution →] CTA button
+  [Talk to a Maestro →] secondary button
+
+SECTION 5: UNLOCKS (Margin Optimization only)
+  3-column grid showing each unlock
+  Each unlock: name, CXO sentence, value range, [Activate →]
+  Client data pre-populates each unlock's diagnosis
+
+---
+
+### SOLUTIONS INDEX PAGE (/solutions)
+
+NOT BUILT YET — replaces the current /solutions page.
+
+Header:
+  Eyebrow: "Solutions" (JetBrains Mono teal)
+  Title: "Find your problem. Get the prescription." (Fraunces white)
+  Sub: "Three solutions. Each combines diagnosis, architecture, 
+       tools, a Maestro team, and an outcome commitment.
+       AbarVa earns nothing until outcomes are verified."
+  Active client shown: "Showing for: Meridian Health System ▾"
+
+Three solution cards (stacked vertically, full width):
+  Each card:
+    3px top bar (solution accent color)
+    Badges: owner + vertical
+    Solution name (18px white)
+    CXO sentence (italic, #94A3B8)
+    4 diagnosis findings FROM YOUR DATA
+    Products activated (5 product pills)
+    Committed outcome
+    [Activate →] and [Talk to Maestro →] buttons
+
+Filter bar below header:
+  [All] [IT/CIO] [Finance] [Healthcare] [Retail] [FinServ]
+  Filters which cards show (PDLC + Delivery = IT/CIO, etc.)
+
+---
+
+### BUILD ORDER FROM HERE
+
+1. PHASE DESIGN-1: Design system pass (dark bg, right fonts, white text)
+   - All 5 products get correct design system
+   - All gray text replaced with minimum #94A3B8
+   - All backgrounds changed from #F8FAFC to #060A12
+
+2. PHASE CLEANUP: Already done (15 pages removed, nav rewritten)
+
+3. PHASE 4H v2: Vendor product complete rebuild
+
+4. PHASE SOL-1: Solutions index page (/solutions)
+   - Three cards with client-specific data
+   - Filters working
+
+5. PHASE SOL-2: Each solution detail page
+   - /solutions/pdlc (full design above)
+   - /solutions/delivery (full design above)
+   - /solutions/margin (full design above)
+
+6. PHASE 3C FINAL: Maestro portal (already specced)
+7. PHASE 4F FINAL: Situation redesign (already specced)
+8. PHASE 4G FINAL: Strategy redesign (already specced)
+9. PHASE 4I: Business Case redesign
+10. PHASE 4J: Outcomes redesign
+
+---
+
+### COMPLETE CLAUDE CODE INSTRUCTION (paste this now)
+
+```
+Stop all current work. Read MASTER UPDATE section at the bottom of BUILD_v2.md.
+This is the authoritative state of the platform as of today.
+
+IMMEDIATE TASKS IN ORDER:
+
+TASK 1 — DESIGN SYSTEM PASS (do this first):
+  Import src/lib/design-system.ts in every product page.
+  
+  For each of these pages — change to dark design system:
+  /diagnose, /ai-strategy, /select, /justify, /outcomes
+  
+  Changes required on every page:
+  - background: #060A12 (was #F8FAFC — 4 pages wrong)
+  - fontFamily: DM Sans (body) + JetBrains Mono (labels) + Fraunces (headings)
+  - All text: minimum #94A3B8 — replace every #6B7280 or darker
+  - Product eyebrow: JetBrains Mono 10px teal uppercase
+  - CXO question: Fraunces 20px white
+  - Step/tab text: WHITE (#EFF6FF) — never gray
+  - Metric labels: JetBrains Mono 9px teal uppercase
+  - Metric values: Fraunces 22px white
+  - Severity bars: 2px top border computed from value vs benchmark
+  - Sparklines: clean SVG polylines (not squiggly)
+
+TASK 2 — NAV:
+  Replace src/components/AbarvaNav.tsx with outputs/AbarvaNav.tsx
+  (already written — just copy it in)
+
+TASK 3 — SOLUTION PAGES:
+  Build /solutions (index) with 3 solution cards per MASTER UPDATE spec
+  Build /solutions/pdlc per MASTER UPDATE spec
+  Build /solutions/delivery per MASTER UPDATE spec
+  Build /solutions/margin per MASTER UPDATE spec
+  
+  All use dark design system (#060A12 background)
+  All show client-specific diagnosis data FROM YOUR DATA
+  All have committed outcome section
+  All connect to /admin/client/[id] after activation
+
+TASK 4 — VENDOR REBUILD:
+  /select — complete rebuild per Phase 4H v2 spec
+
+TASK 5 — MAESTRO PORTAL:
+  /admin — rebuild per Phase 3C FINAL spec
+
+RULES (non-negotiable):
+  Background: #060A12 on every product and solution page
+  Text: #EFF6FF primary, #94A3B8 secondary — never darker gray on dark
+  Fonts: DM Sans + JetBrains Mono + Fraunces — never Inter
+  Step/tab text: always white — never gray
+  Three-source attribution: on every opportunity card
+  Client switching: must show different data for each client
+  Role switching: must show different issues for each role
+  All links: must resolve — no 404s, no dead ends
+  
+  Page width: max-width 1400px, standard enterprise web app
+  Content padding: 28px sides
+  Two-column layouts: grid-template-columns: 1fr 300-340px
+
+  Run npm run test:before-commit before every commit.
+  No commit without passing tests.
+
+Commit each task separately:
+  "Design-1: Dark design system across all 5 products"
+  "Solutions: Index + 3 solution pages built"
+  "Phase 4H v2: Vendor product rebuilt from scratch"
+  "Phase 3C: Maestro portal rebuilt"
+```
+
+COMMIT: This MASTER UPDATE documents the authoritative platform state.
+
