@@ -38,7 +38,9 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
 
   // Derive client from URL: /admin/client/arcturus → 'arcturus'
   const urlClientId = pathname?.split('/admin/client/')?.[1]?.split('/')?.[0] || null
-  const cid = urlClientId || clientId || 'meridian'
+  const metaClientId = user?.publicMetadata?.clientId as string | null | undefined
+  const cid = urlClientId || clientId || metaClientId || 'meridian'
+  const workspaceHref = cid ? `/admin/client/${cid}` : '/admin'
 
   const signedIn = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Maestro'
@@ -165,7 +167,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
             )}
 
             {/* My workspace link */}
-            <a href="/admin" style={{ fontSize: '12px', color: MUTED, textDecoration: 'none', fontFamily: MONO, letterSpacing: '.04em', padding: '0 8px' }}>
+            <a href={workspaceHref} style={{ fontSize: '12px', color: MUTED, textDecoration: 'none', fontFamily: MONO, letterSpacing: '.04em', padding: '0 8px' }}>
               My workspace
             </a>
 
@@ -198,7 +200,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
                   background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '10px',
                   padding: '6px 0', zIndex: 300, minWidth: '160px',
                 }}>
-                  <a href="/admin" onClick={() => setUserMenuOpen(false)} style={{ display: 'block', padding: '9px 16px', fontSize: '13px', color: TEXT, textDecoration: 'none', fontFamily: SANS }}>
+                  <a href={workspaceHref} onClick={() => setUserMenuOpen(false)} style={{ display: 'block', padding: '9px 16px', fontSize: '13px', color: TEXT, textDecoration: 'none', fontFamily: SANS }}>
                     My workspace
                   </a>
                   <button
