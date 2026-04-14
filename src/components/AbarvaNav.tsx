@@ -226,8 +226,11 @@ function AuthedRight({ user, showUserMenu, setShowUserMenu, signOut, router }: {
 
   return (
     <div style={{marginLeft:'auto',display:'flex',alignItems:'center',gap:'12px',position:'relative' as const}}>
-      <a href="/admin" style={{fontSize:'13px',color:MUTED,textDecoration:'none',fontFamily:SANS}}>
-        My projects
+      <a href="/admin" style={{
+        fontSize:'13px',color:'#060A12',textDecoration:'none',fontFamily:SANS,
+        background:TEAL,padding:'7px 16px',borderRadius:'8px',fontWeight:600,
+      }}>
+        Maestro →
       </a>
       <div style={{position:'relative' as const}}>
         <div
@@ -252,7 +255,7 @@ function AuthedRight({ user, showUserMenu, setShowUserMenu, signOut, router }: {
               onClick={() => setShowUserMenu(false)}
               style={{display:'block',padding:'10px 20px',textDecoration:'none',fontSize:'13px',color:WHITE,fontFamily:SANS}}
             >
-              My projects
+              Maestro workspace
             </a>
             <button
               onClick={() => { setShowUserMenu(false); signOut(() => router.push('/')) }}
