@@ -299,7 +299,7 @@ function TimelineContent() {
       <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');" }} />
       <AbarvaNav clientId={clientId} onClientChange={setClientId} activePage="timeline" />
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 32px 80px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 32px 80px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '40px' }}>

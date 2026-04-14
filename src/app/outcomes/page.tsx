@@ -442,7 +442,7 @@ function OutcomesContent() {
 
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, color: T.teal, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Outcome Intelligence</div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: T.text, letterSpacing: '-0.02em', marginBottom: '2px' }}>{clientName}</div>
@@ -465,7 +465,7 @@ function OutcomesContent() {
 
       {/* Tab bar */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 40px', display: 'flex', gap: '0' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 40px', display: 'flex', gap: '0' }}>
           {TABS.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               style={{
@@ -482,7 +482,7 @@ function OutcomesContent() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '28px 40px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '28px 40px' }}>
         {isMeridian ? (
           <>
             {tab === 'portfolio' && <TabPortfolio />}

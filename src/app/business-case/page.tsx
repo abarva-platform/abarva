@@ -460,7 +460,7 @@ function BusinessCaseContent() {
       </div>
 
       {/* Main content */}
-      <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 32px 64px', animation: 'fadein 0.3s ease-out' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 48px 64px', animation: 'fadein 0.3s ease-out' }}>
 
         {/* Section 1 — The Investment */}
         {activeSection === 1 && (

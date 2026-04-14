@@ -212,7 +212,7 @@ function DomainStrategyContent() {
 
       {/* Domain Selector — dark header */}
       <div style={{ background: '#111827', padding: '28px 32px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Domain AI Strategy</div>
             <div style={{ fontSize: '20px', fontWeight: 700, color: '#F9FAFB', marginBottom: '4px' }}>Meridian Health System</div>
@@ -240,7 +240,7 @@ function DomainStrategyContent() {
       </div>
 
       {/* Domain Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px' }}>
 
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>

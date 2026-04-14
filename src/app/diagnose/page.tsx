@@ -668,7 +668,7 @@ function DonutChart({ issues, filter, onFilter }: { issues: Issue[]; filter: Sev
 function StepNav({ step, setStep, completedSteps }: { step: number; setStep: (n: number) => void; completedSteps: Set<number> }) {
   const steps = ['What\'s Happening', 'Why It\'s Happening', 'What\'s At Risk', 'Ask Anything', 'What To Do Next', 'Situation Brief Ready']
   return (
-    <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '0 32px', display: 'flex', gap: '0', overflowX: 'auto' }}>
+    <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '0 48px', display: 'flex', gap: '0', overflowX: 'auto' }}>
       {steps.map((label, i) => {
         const n = i + 1
         const active = step === n
@@ -798,23 +798,25 @@ function Zone1({ issues, role, clientId, onGoToStep }: { issues: Issue[]; role: 
         {kpis.map((kpi, i) => <KPITile key={i} kpi={kpi} />)}
       </div>
 
-      {/* Row 2: issue cards + right sidebar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 290px', gap: '24px', alignItems: 'start' }}>
-        {/* Left: issue cards */}
+      {/* Row 2: issue cards (2-col grid) + right sidebar */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', gap: '28px', alignItems: 'start' }}>
+        {/* Left: issue cards in 2-column grid */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '14px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: T.mono }}>
               {visible.length} ISSUES · SORTED BY ROLE RELEVANCE
             </div>
           </div>
-          {visible.map(issue => (
-            <IssueCard
-              key={issue.id} issue={issue}
-              expanded={expanded === issue.id}
-              onToggle={() => setExpanded(expanded === issue.id ? null : issue.id)}
-              onGoToStep={onGoToStep}
-            />
-          ))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', alignItems: 'start' }}>
+            {visible.map(issue => (
+              <IssueCard
+                key={issue.id} issue={issue}
+                expanded={expanded === issue.id}
+                onToggle={() => setExpanded(expanded === issue.id ? null : issue.id)}
+                onGoToStep={onGoToStep}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Right: severity donut + benchmark panel */}
@@ -1342,7 +1344,7 @@ function DiagnoseContent() {
       <AbarvaNav clientId={activeClient} activePage="diagnose" />
 
       {/* Product header */}
-      <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '20px 32px' }}>
+      <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '20px 48px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 800, color: T.teal, letterSpacing: '0.14em', fontFamily: T.mono, marginBottom: '8px' }}>
@@ -1379,7 +1381,7 @@ function DiagnoseContent() {
       <StepNav step={step} setStep={n => { if (n !== step) { setCompletedSteps(prev => new Set([...prev, step])); setStep(n) } }} completedSteps={completedSteps} />
 
       {/* Zone content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 48px' }}>
 
         {/* Step title */}
         <div style={{ marginBottom: '24px', textAlign: 'left' }}>
@@ -1444,7 +1446,7 @@ function DiagnoseContent() {
       </div>
 
       {/* Role switcher — persistent bottom bar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0A1628', borderTop: '1px solid ' + T.border, padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 40 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#0A1628', borderTop: '1px solid ' + T.border, padding: '10px 48px', display: 'flex', alignItems: 'center', gap: '6px', zIndex: 40 }}>
         <span style={{ fontSize: '10px', fontWeight: 700, color: T.text2, letterSpacing: '0.1em', marginRight: '10px', fontFamily: T.mono }}>VIEWING AS:</span>
         {ROLES.map(r => (
           <button

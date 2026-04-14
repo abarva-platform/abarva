@@ -186,7 +186,7 @@ export default function PreMeetingBrief() {
         </div>
 
         {/* ─────────────────────────────────── BODY ─── */}
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '44px 56px 72px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '44px 56px 72px' }}>
 
           {/* ── 1. WHO YOU ARE MEETING (teal) ── */}
           <section style={{ background: T.surface, border: `1px solid ${T.border2}`, borderLeft: `3px solid ${T.teal}`, borderRadius: '10px', padding: '32px', marginBottom: '20px' }}>

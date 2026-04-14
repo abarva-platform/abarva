@@ -479,7 +479,7 @@ function SolutionsContent() {
       </div>
 
       {/* Filter + grid */}
-      <div style={{ maxWidth: 1300, margin: '0 auto', padding: '32px 32px 64px' }}>
+      <div style={{ maxWidth: 1600, margin: '0 auto', padding: '32px 48px 64px' }}>
         <FilterBar filter={filter} onChange={setFilter} />
 
         <div style={{

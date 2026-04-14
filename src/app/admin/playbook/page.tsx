@@ -141,7 +141,7 @@ export default function PlaybookPage() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
 
         {section === 'orientation' && (
           <div>

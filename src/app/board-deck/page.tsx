@@ -54,7 +54,7 @@ function BoardDeckContent() {
 
       {/* Header */}
       <div style={{ background: '#111827', borderBottom: '1px solid #21262D', padding: '24px 40px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Board Presentation</div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.02em', marginBottom: '4px' }}>{deck.client}</div>
@@ -69,7 +69,7 @@ function BoardDeckContent() {
       </div>
 
       {/* Slides */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 40px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 40px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {deck.slides.map((slide, i) => (
             <div key={i} style={{ background: '#111827', border: '1px solid #21262D', borderRadius: '12px', overflow: 'hidden', borderLeft: '4px solid ' + deck.color }}>

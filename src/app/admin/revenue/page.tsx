@@ -134,7 +134,7 @@ export default function RevenueDashboard() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 24px' }}>
 
         {/* Portfolio Summary */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '32px' }}>

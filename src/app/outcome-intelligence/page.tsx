@@ -922,7 +922,7 @@ function OutcomeIntelligenceContent() {
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 32px 64px', animation: 'fadein 0.3s ease-out' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 48px 64px', animation: 'fadein 0.3s ease-out' }}>
         {activeTab === 'portfolio' && <PortfolioTab />}
         {activeTab === 'deepdive' && <DeepDiveTab />}
         {activeTab === 'verification' && <VerificationTab />}

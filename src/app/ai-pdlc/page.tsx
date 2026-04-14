@@ -72,7 +72,7 @@ function StepLanding({ clientId, onStart }: { clientId: string; onStart: () => v
     'Board deck ready',
   ]
   return (
-    <div style={{ maxWidth: '860px', margin: '0 auto', padding: '48px 32px' }}>
+    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px' }}>
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '20px', background: '#F5F3FF', border: '1px solid #DDD6FE', marginBottom: '20px' }}>

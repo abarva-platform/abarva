@@ -1021,7 +1021,7 @@ function VendorIntelligenceContent() {
       </div>
 
       {/* Main content */}
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 32px 64px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 48px 64px' }}>
         <div style={{ animation: 'fadein 0.3s ease-out' }}>
           {mode === 'select' ? <SelectVendorMode /> : <OptimizeVendorsMode />}
         </div>

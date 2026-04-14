@@ -841,7 +841,7 @@ function ControlTowerInner() {
       <AbarvaNav clientId={activeClient} onClientChange={setActiveClient} />
       <EngagementProgress />
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 24px' }}>
         {/* Page header */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '20px', background: '#F0FDF4', border: '1px solid #A7F3D0', marginBottom: '16px' }}>

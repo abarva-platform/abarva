@@ -276,7 +276,7 @@ export default function DataGovernance() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
 
         {/* Tab 0: Pending Promotions */}
         {tab === 0 && (

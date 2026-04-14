@@ -276,7 +276,7 @@ export default function DataGuidePage() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '28px' }}>

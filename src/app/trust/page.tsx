@@ -81,7 +81,7 @@ export default function TrustPage() {
     <div style={S.page}>
       <AbarvaNav />
 
-      <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '48px 24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '48px 24px' }}>
         {/* Header */}
         <div style={{ marginBottom: '48px' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '20px', background: '#F0FDF4', border: '1px solid #A7F3D0', marginBottom: '20px' }}>

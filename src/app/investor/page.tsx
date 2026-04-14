@@ -306,7 +306,7 @@ export default function InvestorPage() {
 
       {/* KEY METRICS BAR */}
       <div style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB', padding: '0 40px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderLeft: '1px solid #E5E7EB' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', borderLeft: '1px solid #E5E7EB' }}>
           {[
             { label: 'TAM', value: '$200B', sub: 'Enterprise transformation', color: '#1B4FD8' },
             { label: 'Year 1 Revenue', value: fmt(totalY1), sub: '100 clients · conservative', color: '#6D28D9' },
@@ -324,7 +324,7 @@ export default function InvestorPage() {
 
       {/* SECTION SUB-NAV — NVIDIA style */}
       <div style={{ background: '#111827', position: 'sticky' as const, top: '64px', zIndex: 99 }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
           {SECTIONS.map(s => (
             <button key={s.id} onClick={() => setSection(s.id)}
               className={'subnav-btn' + (section === s.id ? ' active' : '')}
@@ -336,7 +336,7 @@ export default function InvestorPage() {
       </div>
 
       {/* CONTENT */}
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '56px 40px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '56px 40px' }}>
 
         {/* THE PROBLEM */}
         {section === 'problem' && (

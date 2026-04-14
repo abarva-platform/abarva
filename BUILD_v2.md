@@ -5586,3 +5586,6751 @@ Check PostHog dashboard immediately after the demo session ends.
 
 **McKinsey line rule (non-negotiable):** Appears exactly once — Step 6 only, in the video and in the product. Never in the narration before Step 6. Never on the homepage. Once, at the end, as a closing verdict.
 
+
+---
+
+## PHASE 3C — MAESTRO ADMIN: DASHBOARD & DATA VISIBILITY (2.5 hours)
+
+This is the most important phase for the Shail Jain demo.
+Without this, the platform is a series of disconnected pages.
+With this, it is a governed intelligence system with real clients, real data,
+and a clear operational story.
+
+The Maestro admin is the ENTRY POINT for every demo. Shail sits down.
+You open /admin. He sees three live engagements. He understands immediately
+what AbarVa does and how it works. Everything else flows from this moment.
+
+---
+
+### THE DEMO STORY THIS PAGE TELLS
+
+"This is your Maestro command center. You have three active clients.
+Each one has data loaded, intelligence running, and outcomes being tracked.
+Let me show you Meridian — here's everything we know about them,
+here's what data they've shared with us, and here's what we've found."
+
+Click Meridian. The platform opens with Meridian pre-loaded.
+That's the demo. The admin is what makes it feel real.
+
+---
+
+### Task 3C.1: Wire /admin to real client data
+
+The three client datasets already exist in the codebase:
+- src/data/meridian/index.ts — Meridian Health System
+- src/data/firstcapital/index.ts — First Capital Financial
+- src/data/apexretail/index.ts — Apex Retail Group
+
+Read each index.ts file and extract:
+- Client name, vertical, revenue, employee count
+- Key metrics (the numbers that matter most per vertical)
+- Which data files exist (determines completeness score)
+
+Build a clientRegistry that maps all three clients:
+
+```typescript
+// src/lib/client-registry.ts
+import { meridianData } from '@/data/meridian'
+import { firstCapitalData } from '@/data/firstcapital'
+import { apexRetailData } from '@/data/apexretail'
+
+export const CLIENT_REGISTRY = [
+  {
+    id: 'meridian',
+    name: 'Meridian Health System',
+    vertical: 'Healthcare',
+    revenue: '$11.2B',
+    employees: '31,000',
+    status: 'active',
+    maestro: 'Anand Sundaram',
+    startDate: 'March 15, 2026',
+    data: meridianData,
+    dataFiles: {
+      financials: true,
+      technology: true,
+      leadership: true,
+      clinical: true,
+      ai: true,
+      architecture: true,
+      interviews: true,
+      vendors: true,
+      outcomes: true,
+      benchmarks: true,
+    },
+    keyMetrics: [
+      { label: 'RCM Denial Rate', value: '18.2%', benchmark: '11.4%', status: 'critical' },
+      { label: 'IT Budget', value: '$504M', note: '4.5% of revenue' },
+      { label: 'AI Initiatives', value: '42', note: 'active' },
+      { label: 'Value Identified', value: '$94M', note: 'annual' },
+    ],
+  },
+  {
+    id: 'firstcapital',
+    name: 'First Capital Financial',
+    vertical: 'Financial Services',
+    revenue: '$18B AUM',
+    employees: '4,200',
+    status: 'active',
+    maestro: 'Anand Sundaram',
+    startDate: 'March 28, 2026',
+    data: firstCapitalData,
+    dataFiles: {
+      financials: true,
+      technology: true,
+      leadership: true,
+      clinical: false,
+      ai: true,
+      architecture: true,
+      interviews: false,
+      vendors: false,
+      outcomes: false,
+      benchmarks: false,
+    },
+    keyMetrics: [
+      { label: 'Digital Adoption', value: '41%', benchmark: '67%', status: 'critical' },
+      { label: 'IT Budget', value: '$168M', note: '0.93% of assets' },
+      { label: 'Core System Age', value: '22 years', note: 'FIS HORIZON' },
+      { label: 'Value Identified', value: '$48M', note: 'annual' },
+    ],
+  },
+  {
+    id: 'apexretail',
+    name: 'Apex Retail Group',
+    vertical: 'Retail',
+    revenue: '$12B',
+    employees: '28,000',
+    status: 'active',
+    maestro: 'Anand Sundaram',
+    startDate: 'April 2, 2026',
+    data: apexRetailData,
+    dataFiles: {
+      financials: false,
+      technology: true,
+      leadership: false,
+      clinical: false,
+      ai: true,
+      architecture: false,
+      interviews: false,
+      vendors: false,
+      outcomes: false,
+      benchmarks: false,
+    },
+    keyMetrics: [
+      { label: 'eCommerce Conversion', value: '2.3%', benchmark: '3.8%', status: 'warning' },
+      { label: 'IT Budget', value: '$285M', note: '2.4% of revenue' },
+      { label: 'Shadow IT', value: '$38M', note: 'untracked SaaS' },
+      { label: 'Value Identified', value: '$248M', note: 'annual' },
+    ],
+  },
+]
+
+export function getDataCompleteness(client: typeof CLIENT_REGISTRY[0]): number {
+  const files = Object.values(client.dataFiles)
+  return Math.round((files.filter(Boolean).length / files.length) * 100)
+}
+```
+
+---
+
+### Task 3C.2: Rebuild /admin — Three-Zone Layout
+
+Replace the current /admin with a fully wired version.
+
+**Zone 1 — Command Header (dark, full width)**
+```
+AbarVa Maestro                              [+ New Engagement]
+Anand Sundaram · Lead Maestro
+
+Portfolio Intelligence                 Total Value Identified
+3 Active Engagements                        $390M across 3 clients
+```
+
+**Zone 2 — Engagement Cards (3 cards, one per client)**
+
+Each card shows:
+- Left color bar: teal (healthcare), blue (finserv), orange (retail)
+- Client name + vertical badge
+- Maestro name + start date
+- Data completeness bar (visual, % filled)
+- 4 key metrics from clientRegistry
+- Data category status row (see Task 3C.3)
+- Two buttons: "Open Intelligence →" | "View Data →"
+
+Clicking "Open Intelligence →" navigates to the main platform
+with that client pre-selected (?client=meridian etc.)
+
+**Zone 3 — Right Sidebar**
+- Activity feed: last 5 actions across all clients
+- Quick stats: total value identified, avg data completeness, active alerts
+- "Add New Client →" button
+
+---
+
+### Task 3C.3: Data Category Status Row
+
+This is the key visual that answers "what data is loaded and approved."
+
+For each client card, show a horizontal row of category badges:
+
+```
+FINANCIALS  TECHNOLOGY  LEADERSHIP  CLINICAL  AI  VENDORS  INTERVIEWS  OUTCOMES
+  ✓ Loaded    ✓ Loaded    ✓ Loaded   ✓ Loaded  ✓   ✗ Missing  ✓ Loaded   ✗ Missing
+```
+
+Color coding:
+- ✓ Green badge = loaded and active — intelligence is using this data
+- ⏳ Amber badge = uploaded, pending steward approval
+- ✗ Gray badge = missing — click to see what uploading would unlock
+- 🔴 Red badge = data exists but flagged (stale, conflicting, needs review)
+
+Clicking any badge opens a Data Detail panel showing:
+- What data is in this category
+- When it was loaded
+- Who approved it
+- What intelligence it powers
+- If missing: "Upload [Category] Data →" with file format guide
+
+This is the "what was loaded/approved/being used by category" view you described.
+It must be visible on the engagement card itself — not buried in a sub-page.
+
+---
+
+### Task 3C.4: Data Detail Panel
+
+When a category badge is clicked, slide in a panel from the right:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MERIDIAN · FINANCIAL DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: ✓ Active — powering 4 intelligence modules
+
+Loaded: March 16, 2026
+Approved by: Marcus Webb (CIO)
+File: meridian_financials_2025.xlsx
+
+What this powers:
+• Situation Intelligence — operating margin analysis
+• AI Investment Intelligence — budget allocation
+• Business Case Intelligence — ROI baseline
+• Outcome Intelligence — savings tracking
+
+Key data points active:
+• Revenue: $11.2B (FY2025)
+• Operating margin: 2.1% (benchmark: 4.8%)
+• IT spend: $504M (4.5% of revenue)
+• RCM denial rate: 18.2% (benchmark: 11.4%)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+VENDORS DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Status: ✗ Missing
+
+What uploading would unlock:
+• Vendor Intelligence — spend analysis and contract review
+• Procurement Intelligence — optimization opportunities
+• Estimated value unlock: $8-14M in vendor savings
+
+[Upload Vendor Data →]    [See file format →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+### Task 3C.5: Demo Onboarding Flow
+
+For the Shail demo specifically — a guided first-time experience.
+
+Add a "Demo Mode" banner to the admin that says:
+"This is a live demo environment. Meridian, First Capital, and Apex Retail
+have pre-loaded data. Click any client to explore their intelligence."
+
+Add a "How This Works" expandable section on the admin:
+```
+HOW ABARVA WORKS FOR A NEW CLIENT
+
+Step 1: Create engagement → Client name, vertical, team roster
+Step 2: Load data → Upload files by category, steward approves
+Step 3: Intelligence activates → Dashboard populates with findings
+Step 4: Run workflows → Diagnose, Strategize, Select, Track
+Step 5: Outcomes verified → Outcome fee triggered on verified savings
+
+[See sample data files →]  [Start with a test client →]
+```
+
+"See sample data files" links to a download page with:
+- meridian_sample_financials.xlsx
+- meridian_sample_technology_inventory.xlsx
+- meridian_sample_interview_template.docx
+
+These are the test files Shail can use to simulate onboarding a real client.
+
+---
+
+### Task 3C.6: Engagement Intelligence Summary
+
+When "Open Intelligence →" is clicked from the admin card,
+the platform loads with that client pre-selected AND shows
+a one-screen intelligence summary before entering any product.
+
+This is the "what AbarVa already knows" moment from the design principles.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MERIDIAN HEALTH SYSTEM · INTELLIGENCE SUMMARY
+Data as of April 13, 2026 · 87% data completeness
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 3 CRITICAL ISSUES DETECTED
+• RCM denial rate 18.2% vs 11.4% benchmark — $94M annual impact
+• CDO role vacant 8 months — 3 AI vendors awaiting decision
+• Epic optimization score 34% — $13M in unclaimed value
+
+📊 INTELLIGENCE READY
+• Situation Intelligence — 12 contradictions mapped
+• AI Investment Intelligence — 12 opportunities ranked, $864M 3-year value
+• Vendor Intelligence — Prior Auth AI shortlist ready (4 vendors scored)
+
+[Start with Situation Intelligence →]
+[View AI Investment Intelligence →]
+[See all 9 products →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+This screen appears ONCE when entering from the admin.
+It is the "we already know your situation" moment that makes AbarVa
+feel categorically different from a consulting firm that starts from scratch.
+
+---
+
+### Phase 3C QA Gate
+
+**Admin dashboard:**
+- [ ] /admin loads with 3 engagement cards — real client names, real metrics
+- [ ] Each card shows correct data completeness % from actual files
+- [ ] Color bars correct: teal (Meridian), blue (First Capital), orange (Apex)
+- [ ] Key metrics on each card match the data in src/data/
+- [ ] "Open Intelligence →" button works for all 3 clients
+- [ ] "View Data →" opens data detail panel
+
+**Data category status row:**
+- [ ] All 8 categories shown on each card
+- [ ] Green badges on categories with real data files
+- [ ] Gray badges on missing categories
+- [ ] Clicking any badge opens the data detail panel
+- [ ] Detail panel shows correct info for loaded categories
+- [ ] Detail panel shows "what uploading would unlock" for missing categories
+
+**Intelligence summary:**
+- [ ] Opening Meridian shows the 3 critical issues correctly
+- [ ] Numbers match actual Meridian data (18.2% denial rate, etc.)
+- [ ] "Start with Situation Intelligence →" navigates correctly
+- [ ] Opening First Capital shows First Capital-specific summary
+- [ ] Opening Apex shows Apex-specific summary
+
+**Demo onboarding:**
+- [ ] "How This Works" section is visible and expandable on admin
+- [ ] Sample data files are downloadable
+- [ ] Demo mode banner is visible
+
+**Demo path verification:**
+- [ ] Open /admin → see 3 clients → click Meridian → see intelligence summary
+  → click Situation Intelligence → land in Diagnose with Meridian loaded
+  This full path must work in under 10 seconds. No dead ends.
+
+## PHASE 3C — SEE BELOW (final spec replaces this section)
+
+---
+
+## PHASE 3C — MAESTRO PORTAL: PRIVACY-FIRST COMPLETE REDESIGN (final spec)
+that makes a Maestro portal feel real and commanding.
+
+This is the entry point for every demo. Every investor. Every design partner.
+It must be stunning on first look and comprehensive on inspection.
+
+---
+
+### THE CURRENT /admin PROBLEMS — FIX ALL OF THESE
+
+1. Light background (#F8FAFC) — WRONG. Must be dark #060A12
+2. ENGAGEMENTS array is hardcoded — WRONG. Must read from src/data/
+3. "Open →" goes to /?client=meridian — WRONG. Must go to /admin/client/[clientId]
+4. Only Meridian gets extra buttons — WRONG. All 3 clients get full button set
+5. No data category badges — MISSING. Must show what's loaded visually
+6. No IT fingerprint metrics — MISSING. CIO/CFO expects to see their numbers
+7. No portfolio intelligence header — MISSING. No commanding first impression
+8. No "Add New Client" path — MISSING. No path for Riverside demo
+9. No dark design system — WRONG. Everything must match platform design
+
+---
+
+### ZONE 0 — COMMAND HEADER (full width, dark)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                                                                          │
+│  MAESTRO COMMAND CENTER                    [+ New Engagement]           │
+│  Anand Sundaram · Lead Maestro · AbarVa                                 │
+│                                                                          │
+│  ─────────────────────────────────────────────────────────────────────  │
+│                                                                          │
+│  PORTFOLIO INTELLIGENCE                                                  │
+│                                                                          │
+│  3 Active          $390M              20               87%              │
+│  Engagements       Value Identified   Contradictions   Avg Confidence   │
+│                    across portfolio   mapped                            │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+Design:
+- Background: #060A12
+- "MAESTRO COMMAND CENTER": JetBrains Mono 11px 600 teal uppercase
+- Name: DM Sans 14px 400 #94A3B8
+- Portfolio metrics: 4 large stats, Fraunces 36px white, label DM Sans 12px teal
+- All 4 stats animate from 0 on load
+- [+ New Engagement]: teal button, goes to /admin/new-client (Riverside flow)
+- Divider: 1px #1C2D45
+
+---
+
+### ZONE 1 — ENGAGEMENT CARDS (3 cards, full width)
+
+Each card is a comprehensive engagement overview.
+Cards stack vertically. Each card has 5 sections.
+
+**Card structure:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ████  MERIDIAN HEALTH SYSTEM              Healthcare · Active           │
+│ TEAL  Anand Sundaram · Started March 15, 2026                          │
+│ BAR   ──────────────────────────────────────────────────────────────── │
+│                                                                         │
+│ SECTION A — KEY METRICS (4 tiles in a row)                             │
+│ ┌───────────┐ ┌───────────┐ ┌───────────┐ ┌───────────┐              │
+│ │RCM Denial │ │Op. Margin │ │IT Budget  │ │AI Pilots  │              │
+│ │  18.2%   │ │   1.8%   │ │  $504M   │ │  0 of 6  │              │
+│ │↑ Critical │ │↓ Critical │ │4.5% rev  │ │ Stalled  │              │
+│ └───────────┘ └───────────┘ └───────────┘ └───────────┘              │
+│                                                                         │
+│ SECTION B — DATA CATEGORY BADGES                                       │
+│ FINANCIALS✓  TECHNOLOGY✓  LEADERSHIP✓  CLINICAL✓  AI✓                │
+│ VENDORS✓  INTERVIEWS✓  OUTCOMES✗  BENCHMARKS✓                        │
+│                                                                         │
+│ Data completeness: ████████████████░░░░ 87% · Confidence: 94%        │
+│                                                                         │
+│ SECTION C — TOP 3 FINDINGS                                             │
+│ 🔴 RCM denial 18.2% vs 11.4% benchmark — $94M annual gap             │
+│ 🔴 CDO vacant 14 months — $42M AI spend stalled                       │
+│ 🟡 Epic optimization 58/100 — $34M incentive at risk                  │
+│                                                                         │
+│ SECTION D — INTELLIGENCE STATUS                                        │
+│ ✓ Situation Intelligence  ✓ AI Investment  ✓ Vendor Intelligence      │
+│ ✓ Business Case           ◐ Outcome (needs baseline)                  │
+│                                                                         │
+│ SECTION E — ACTIONS                                                    │
+│ [Open Intelligence →]  [View Data →]  [Maestro Brief →]  [Track →]  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**Card design specs:**
+- Background: #0D1520
+- Border: 1px solid #1C2D45
+- Left color bar: 4px solid — teal (Healthcare) / blue (FinServ) / orange (Retail)
+- Border radius: 16px
+- Padding: 28px
+
+**Section A — Key Metrics:**
+- 4 tiles in a 4-column grid
+- Each tile: background #060A12, border 1px #1C2D45, border-radius 10px, padding 16px
+- Metric label: JetBrains Mono 10px teal uppercase
+- Value: Fraunces 28px white
+- Context: DM Sans 12px — red if critical, amber if warning, gray if ok
+- Pull from src/data/[client]/ — no hardcoding
+
+**Section B — Data Category Badges:**
+- 8 badges in a row: FINANCIALS · TECHNOLOGY · LEADERSHIP · CLINICAL · AI · VENDORS · INTERVIEWS · OUTCOMES
+- ✓ Green (#2DD4C8 background 20% opacity, teal text) = loaded and active
+- ✗ Gray (#1C2D45 background, #64748B text) = missing
+- ⏳ Amber = uploaded, pending approval
+- Clicking any badge opens data detail panel (slides in from right)
+- Completeness bar below badges: teal fill, animated on load
+
+**Section C — Top 3 Findings:**
+- Pull from client data — real findings, real numbers
+- 🔴 for critical, 🟡 for warning
+- Clicking any finding navigates to the relevant product zone
+
+**Section D — Intelligence Status:**
+- 9 product indicators in a row
+- ✓ = ready to run (teal checkmark)
+- ◐ = partial data (amber half-circle)
+- ✗ = needs data (gray x)
+
+**Section E — Actions:**
+- [Open Intelligence →]: PRIMARY — goes to /admin/client/[clientId]
+- [View Data →]: goes to data detail panel
+- [Maestro Brief →]: goes to /admin/brief?client=[id]
+- [Track Outcomes →]: goes to /admin/outcomes?client=[id]
+- ALL buttons work for ALL 3 clients — no Meridian-only conditions
+
+---
+
+### ZONE 2 — RIGHT SIDEBAR (320px, sticky)
+
+**Activity Feed:**
+```
+RECENT ACTIVITY
+
+● Situation Intelligence completed    2h ago
+  Meridian Health System
+
+● Board deck exported                 3h ago
+  Apex Retail Group
+
+● New data uploaded — Q2 financials   5h ago
+  First Capital Financial
+
+● CMS regulatory alert triggered      1d ago
+  Meridian Health System
+```
+
+**Quick Stats:**
+```
+PORTFOLIO SUMMARY
+
+Total value identified
+
+The /demo page is currently a static landing page. That is wrong.
+"See AbarVa in Action" must be an immersive guided experience —
+Shail clicks it and gets walked through the full journey as if he
+is the Maestro onboarding a new client for the first time.
+
+This is the most important 9 minutes in the entire platform.
+Every investor, every design partner, every CXO prospect goes through this.
+It must be flawless.
+
+---
+
+### THE NARRATIVE ARC — 4 ACTS, 9 MINUTES
+
+**Act 1 — The Setup (0:00–2:00)**
+"You've just signed Meridian Health System as a client.
+Here's what happens in the first 48 hours."
+
+**Act 2 — First Intelligence (2:00–5:00)**
+"Before your first CXO meeting, AbarVa has already found this."
+
+**Act 3 — The Strategy (5:00–8:00)**
+"The CIO asks: where should we place our AI bets?"
+
+**Act 4 — The Model (8:00–9:00)**
+"Here's how AbarVa gets paid."
+
+---
+
+### Task 2B.1: Replace /demo with guided experience
+
+Current /demo is a static page with video placeholder and form.
+Replace it entirely with the immersive guided flow below.
+
+The page has two modes:
+- **Guided mode** (default): auto-advances through Acts 1-4 with narration text
+- **Self-paced mode**: user clicks "Next" to advance manually
+
+Toggle at top right: [Auto-play] [Self-paced]
+
+---
+
+### Task 2B.2: Act 1 — The Setup Screen
+
+URL: /demo (Act 1 loads by default)
+
+**Header:**
+```
+SEE ABARVA IN ACTION
+Follow a real engagement from first meeting to board deck.
+Meridian Health System · Healthcare · $11.2B revenue
+```
+
+**Left panel — The Story (40% width):**
+```
+ACT 1 OF 4 · THE SETUP
+
+You've just signed Meridian Health System.
+Their CIO, Marcus Webb, has given you access
+to load their data.
+
+Here's what the Maestro does first.
+```
+
+**Right panel — Live Platform (60% width):**
+Show the /admin view with Meridian engagement card appearing.
+Animate in sequence:
+1. Card appears: "Meridian Health System · Healthcare"
+2. Data category badges appear one by one — each lighting up green
+   as it "loads": FINANCIALS ✓ → TECHNOLOGY ✓ → LEADERSHIP ✓ → CLINICAL ✓
+3. Confidence score animates from 0% to 87%
+4. Key metrics appear: RCM 18.2% | IT Budget $504M | 42 AI Initiatives
+5. Intelligence summary slides in: "3 Critical Issues Detected"
+
+**Narration text that appears as animation plays:**
+```
+"This is your Maestro command center.
+When Meridian loads their data, AbarVa begins
+analyzing immediately. No interviews needed.
+No weeks of discovery. 48 hours."
+```
+
+**Advance trigger:** After animation completes → "Continue to Act 2 →"
+
+---
+
+### Task 2B.3: Act 2 — First Intelligence
+
+**Left panel:**
+```
+ACT 2 OF 4 · FIRST INTELLIGENCE
+
+Before your first meeting with Marcus Webb,
+AbarVa has already found something important.
+
+Something his own team missed.
+```
+
+**Right panel — Situation Intelligence loads:**
+Show the Situation Intelligence page with Meridian pre-loaded.
+Animate in sequence:
+1. Role selector highlights "CIO"
+2. The contradiction surfaces automatically:
+   - "CONTRADICTION DETECTED" badge appears
+   - "Reported denial rate: 94.2% collection"
+   - "Actual denial rate from claims data: 87.1%"
+   - "$31M gap — revenue being miscounted"
+3. Financial impact card: "$94M annual value at risk"
+4. Response options appear:
+   - "Show me the dollar impact"
+   - "Who owns this problem?"
+   - "What's the fastest path to fix this?"
+
+**Narration:**
+```
+"AbarVa found a $31M contradiction in Meridian's
+own data. Their leadership team reported 94%
+collection rate to the board. Their claims data
+shows 87%. That gap is real money.
+
+You walk into the CIO meeting with this.
+No competitor can do that."
+```
+
+**Advance trigger:** "Continue to Act 3 →"
+
+---
+
+### Task 2B.4: Act 3 — The Strategy
+
+**Left panel:**
+```
+ACT 3 OF 4 · THE STRATEGY
+
+Marcus Webb asks the question every CIO asks:
+"Where should we place our AI bets?"
+
+AbarVa answers in 90 minutes.
+McKinsey answers in 16 weeks.
+```
+
+**Right panel — AI Investment Intelligence:**
+Show the 8-step workflow, fast-forwarding through steps 1-5:
+1. Step 1 "Ground Truth" — AI readiness scores appear (52, 41, 67)
+2. Step 2 "Executives Disagree" — fault lines map appears
+3. Step 3 "Every Bet" — 12 opportunities ranked by value
+4. Step 4 "Your Three Bets" — prioritization matrix with:
+   - Bet 1: RCM AI — $28M annual value, 7x ROI, Wave 1
+   - Bet 2: Prior Auth Automation — $18M, 9x ROI, Wave 1
+   - Bet 3: Clinical Documentation AI — $31M, 4x ROI, Wave 1
+5. Steps 5-7 flash through quickly
+6. **Step 8 lands and holds:** "Your Board Deck is Ready"
+   - The McKinsey comparison appears:
+   ```
+   This took 90 minutes.
+   McKinsey would have charged $3.2M and 16 weeks
+   for the same output.
+   ```
+   - 6 export cards appear: Board Presentation, Business Case, Technical Roadmap...
+
+**Narration:**
+```
+"Eight steps. Ninety minutes. A board-ready strategy
+built from Meridian's own data — not interviews,
+not frameworks, not generic best practices.
+
+Their data. Their numbers. Their decisions."
+```
+
+**Advance trigger:** "Continue to Act 4 →"
+
+---
+
+### Task 2B.5: Act 4 — The Model
+
+**Left panel:**
+```
+ACT 4 OF 4 · HOW ABARVA GETS PAID
+
+This is the part no consulting firm can match.
+
+AbarVa does not charge for time.
+AbarVa charges for outcomes.
+```
+
+**Right panel — Outcome model visualization:**
+Show a clean three-part visual:
+
+```
+┌─────────────────────────────────────────┐
+│  PLATFORM FEE                           │
+│  $500K/year · Full platform access      │
+│  Paid regardless of outcome             │
+└─────────────────────────────────────────┘
+
+        +
+
+┌─────────────────────────────────────────┐
+│  OUTCOME FEE                            │
+│  15-20% of verified savings             │
+│  Only triggered when savings are real   │
+│                                         │
+│  Meridian baseline: 18.2% denial rate   │
+│  Target: 12.0%                          │
+│  If achieved: $28M saved                │
+│  AbarVa fee: $4.2M - $5.6M             │
+└─────────────────────────────────────────┘
+
+        =
+
+┌─────────────────────────────────────────┐
+│  TOTAL IF MERIDIAN HITS TARGET          │
+│  $5.1M - $6.1M AbarVa earns            │
+│  $22M+ Meridian keeps                   │
+│  Both win. Or neither does.             │
+└─────────────────────────────────────────┘
+```
+
+**Narration:**
+```
+"McKinsey charges $3.2M whether it works or not.
+AbarVa earns $4.2M only if Meridian saves $28M.
+
+That's not a consulting model.
+That's a partnership."
+```
+
+**Final screen — The Close:**
+```
+┌─────────────────────────────────────────┐
+│                                         │
+│  AbarVa                                 │
+│  Intelligence. Now act on it.           │
+│                                         │
+│  [Book a Demo →]  [Talk to Anand →]    │
+│                                         │
+│  Or explore the platform yourself:      │
+│  [Open Meridian →] [Open First Capital] │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+---
+
+### Task 2B.6: Progress indicator
+
+At the top of /demo throughout all 4 acts:
+```
+[●───────────────] Act 1: Setup
+[●●──────────────] Act 2: Intelligence
+[●●●─────────────] Act 3: Strategy
+[●●●●────────────] Act 4: The Model
+```
+
+Current act highlighted. Past acts clickable (can go back).
+
+---
+
+### Task 2B.7: Auto-play timing
+
+In auto-play mode, each act advances after:
+- Act 1: 90 seconds (animation completes)
+- Act 2: 120 seconds
+- Act 3: 150 seconds
+- Act 4: 90 seconds
+
+Add a pause button. If user interacts with the platform panel
+(clicks anything), auto-play pauses automatically.
+
+---
+
+### Phase 2B QA Gate
+
+- [ ] /demo loads Act 1 by default
+- [ ] Act 1 animation: Meridian card appears, badges light up, confidence animates to 87%
+- [ ] Act 2: Contradiction detected, $31M gap shown, response options appear
+- [ ] Act 3: 8-step workflow visible, Step 8 "Board Deck Ready" shows McKinsey comparison
+- [ ] Act 4: Outcome model shows correctly with Meridian numbers
+- [ ] Final screen: "Book a Demo" and "Open Meridian →" both work
+- [ ] Progress indicator shows current act correctly
+- [ ] Auto-play advances correctly with correct timing
+- [ ] Pause on interaction works
+- [ ] Self-paced mode: "Next" button advances manually
+- [ ] All 4 acts work on 1440px without overflow
+- [ ] McKinsey line appears ONLY in Act 3 Step 8 — not before, not on Act 4
+
+COMMIT: git commit -m "Phase 2B: guided immersive demo — 4 acts, Meridian journey, outcome model"
+
+---
+
+## PHASE 1F — SOLUTIONS TAB & SOLUTION LIBRARY (2 hours)
+
+The Solutions tab is the secondary entry point into AbarVa.
+Products are how AbarVa works. Solutions are why clients buy.
+
+A CIO doesn't search for "AI Investment Intelligence."
+They search for "RCM denial rate problem" or "digital banking transformation."
+Solutions speak their language. Products do the work.
+
+The Solution Library spec is in AbarVa_Solution_Library.md — 1,265 lines,
+fully specced with 20+ solutions across 3 verticals.
+Build the 6 launch solutions for seed stage.
+
+---
+
+### THE NAVIGATION MODEL
+
+Solutions appear in the nav as a second dropdown:
+
+```
+Products ▾    Solutions ▾    Clients ▾    Deliverables ▾    Investor View
+```
+
+Solutions dropdown — grouped by vertical:
+
+```
+HEALTHCARE
+  Revenue Cycle Intelligence     HP-01
+  Patient Access & Growth        HP-02
+
+FINANCIAL SERVICES
+  AI Portfolio Accountability    BK-01
+  Customer Revenue Intelligence  BK-02
+
+RETAIL
+  Supply Chain AI                RT-01
+  Customer Intelligence          RT-02
+
+[See all solutions →]
+```
+
+Each solution in the dropdown shows:
+- Solution name (DM Sans 13px 600 white)
+- Solution code (JetBrains Mono 10px teal)
+- One-line problem statement (DM Sans 12px gray, always visible)
+
+---
+
+### Task 1F.1: Add Solutions to AbarvaNav
+
+Add Solutions dropdown between Products and Clients in the nav.
+
+```tsx
+// In AbarvaNav.tsx — add Solutions dropdown
+const SOLUTIONS = [
+  {
+    vertical: 'Healthcare',
+    items: [
+      {
+        code: 'HP-01',
+        name: 'Revenue Cycle Intelligence',
+        problem: 'Your denial rate is costing you more than you report.',
+        href: '/solutions/revenue-cycle-intelligence',
+      },
+      {
+        code: 'HP-02',
+        name: 'Patient Access & Growth',
+        problem: 'Your referral leakage is invisible until patients leave.',
+        href: '/solutions/patient-access-growth',
+      },
+    ],
+  },
+  {
+    vertical: 'Financial Services',
+    items: [
+      {
+        code: 'BK-01',
+        name: 'AI Portfolio Accountability',
+        problem: 'You are spending on AI. Do you know if it is working?',
+        href: '/solutions/ai-portfolio-accountability',
+      },
+      {
+        code: 'BK-02',
+        name: 'Customer Revenue Intelligence',
+        problem: 'Digital adoption at 41% while peers are at 67%.',
+        href: '/solutions/customer-revenue-intelligence',
+      },
+    ],
+  },
+  {
+    vertical: 'Retail',
+    items: [
+      {
+        code: 'RT-01',
+        name: 'Supply Chain AI Rationalization',
+        problem: 'You have 14 supply chain tools. 6 are redundant.',
+        href: '/solutions/supply-chain-ai',
+      },
+      {
+        code: 'RT-02',
+        name: 'Customer Intelligence',
+        problem: 'Conversion at 2.3% while category peers are at 3.8%.',
+        href: '/solutions/customer-intelligence',
+      },
+    ],
+  },
+]
+```
+
+---
+
+### Task 1F.2: Solution Library Index — /solutions
+
+Landing page for all solutions.
+
+**Header:**
+```
+SOLUTION LIBRARY
+The problems AbarVa solves.
+Every solution is a pre-configured combination of Intelligence products,
+calibrated to your vertical and your situation.
+```
+
+**Filter bar:**
+```
+[All] [Healthcare] [Financial Services] [Retail]
+[Grow] [Optimise] [Protect]
+```
+
+**Solution cards (6 cards, 3 per row):**
+
+Each card:
+```
+┌────────────────────────────────────────┐
+│ HP-01                    HEALTHCARE    │
+│                          GROW          │
+│ Revenue Cycle                          │
+│ Intelligence                           │
+│                                        │
+│ "Your denial rate is costing you       │
+│  more than you report to the board."   │
+│                                        │
+│ Products activated:                    │
+│ Situation · AI Investment · Vendor ·   │
+│ Business Case · Outcome                │
+│                                        │
+│ Typical value: $15–94M annually        │
+│                                        │
+│ [Explore Solution →]                   │
+└────────────────────────────────────────┘
+```
+
+---
+
+### Task 1F.3: Individual Solution Pages
+
+Build all 6 launch solution pages. Each follows the same template.
+
+Route: `/solutions/[solution-slug]`
+
+**Page structure for each solution:**
+
+```
+SECTION 1 — THE PROBLEM (dark background)
+Solution code + vertical badge
+Solution name (large, Fraunces serif)
+The problem statement — 2-3 sentences, CXO language
+"This is what keeps [CFO/CIO/COO] awake at 3am."
+
+SECTION 2 — THE INTELLIGENCE (what AbarVa finds)
+"What AbarVa typically surfaces:"
+3-4 finding cards with real benchmark data
+Example for HP-01:
+• "Denial rate 6.8pp above peer benchmark — $31M annual gap"
+• "Top denial reason: prior auth (38% of denials) — fixable in 90 days"
+• "Leadership reports 94.2% collection — data shows 87.1%"
+• "3 RCM vendors underperforming SLA — $2.1M in unclaimed credits"
+
+SECTION 3 — PRODUCTS ACTIVATED (how it works)
+"The Intelligence products that run on this solution:"
+Product tags — each links to the product page
+For HP-01: Situation Intelligence + AI Investment Intelligence +
+           Business Case Intelligence + Vendor Intelligence +
+           Outcome Intelligence
+
+SECTION 4 — WHAT YOU NEED (data requirements)
+"What the Maestro loads in Phase 1:"
+Checklist of required data files
+For HP-01: Claims data · Denial codes · Prior auth logs ·
+           Payer contracts · Epic extract · AR aging
+
+SECTION 5 — THE OUTCOME
+Outcome metric that triggers the fee
+For HP-01: "Denial rate reduction × revenue recovered vs baseline"
+Timeline: "Typical time to first insight: 48 hours"
+          "Typical time to verified outcome: 90-180 days"
+
+SECTION 6 — START THIS SOLUTION
+"[Start Revenue Cycle Intelligence →]"
+Navigates to /diagnose?client=meridian&solution=HP-01
+(pre-loads the RCM situation for Meridian)
+```
+
+---
+
+### Task 1F.4: Solution → Product handoff
+
+When a solution page's CTA is clicked, it should:
+1. Pre-select the relevant client (or prompt to select one)
+2. Pre-configure the product to run in solution mode
+3. Show a "You're running HP-01: Revenue Cycle Intelligence" banner
+   in the product that persists through the workflow
+
+This makes it feel like a guided solution engagement,
+not a generic product flow.
+
+---
+
+### Task 1F.5: Solution mapping to existing demo data
+
+The 6 launch solutions map to the existing Meridian and First Capital data:
+
+| Solution | Client | Entry Point | Key Finding |
+|---|---|---|---|
+| HP-01 Revenue Cycle | Meridian | /diagnose | 18.2% denial rate, $94M gap |
+| HP-02 Patient Access | Meridian | /diagnose | Referral leakage, Epic 34% |
+| BK-01 AI Portfolio | First Capital | /control-tower | 28 AI initiatives, $0 tracked |
+| BK-02 Customer Revenue | First Capital | /diagnose | 41% digital adoption, $48M |
+| RT-01 Supply Chain | Apex | /ai-pdlc | 14 tools, 6 redundant |
+| RT-02 Customer Intelligence | Apex | /diagnose | 2.3% conversion vs 3.8% |
+
+Each solution's "Explore Solution →" CTA should deep-link to
+the right product with the right client pre-loaded.
+
+---
+
+### Phase 1F QA Gate
+
+**Nav:**
+- [ ] Solutions dropdown appears in nav between Products and Clients
+- [ ] All 6 solutions listed with correct codes, names, problem statements
+- [ ] Vertical grouping correct: Healthcare / FinServ / Retail
+- [ ] Clicking any solution navigates to correct solution page
+
+**Solution Library /solutions:**
+- [ ] All 6 solution cards render correctly
+- [ ] Filter by vertical works: Healthcare shows HP-01, HP-02 only
+- [ ] Filter by objective works
+- [ ] Each card shows: code, vertical badge, name, problem, products activated, typical value
+- [ ] "Explore Solution →" navigates to correct solution page
+
+**Individual solution pages (check all 6):**
+- [ ] HP-01: Problem statement, 4 findings with Meridian numbers, 5 products, data checklist
+- [ ] HP-02: Correct findings for patient access
+- [ ] BK-01: First Capital AI portfolio findings
+- [ ] BK-02: 41% digital adoption, $48M value
+- [ ] RT-01: 14 supply chain tools, redundancy finding
+- [ ] RT-02: 2.3% conversion vs 3.8% benchmark
+- [ ] All CTAs deep-link to correct product + client
+- [ ] "Products Activated" tags link to the product pages
+
+**Solution → Product handoff:**
+- [ ] Clicking HP-01 CTA → /diagnose with Meridian pre-selected
+- [ ] "Running HP-01: Revenue Cycle Intelligence" banner visible in product
+- [ ] Banner persists through all workflow steps
+
+**Demo verification:**
+- [ ] Full path: Nav → Solutions → HP-01 → Explore → /diagnose Meridian loaded
+  Works end to end in under 5 clicks. No dead ends.
+
+COMMIT: git commit -m "Phase 1F: Solutions tab + 6 launch solution pages + solution-product handoff"
+
+
+---
+
+## PHASE 4F — SITUATION INTELLIGENCE: COMPLETE PRODUCT REDESIGN (3 hours)
+
+This is the AI-powered command center. The first product every CXO touches.
+It must be stunning, immediately intelligent, and visually commanding.
+
+The product promise: "Before your next board meeting, AbarVa tells you
+what's actually happening — not what your team reported.
+What's at risk. And exactly what to do next."
+
+---
+
+### PRODUCT BRANDING — TOP OF PAGE
+
+Every product has its own branded header. Situation Intelligence is no exception.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  ⚡ SITUATION INTELLIGENCE                    [Meridian Health ▾]   │
+│                                                                     │
+│  "What's actually broken — and what's it costing us?"              │
+│                                                                     │
+│  Data confidence: 94%  ·  12 contradictions  ·  $156M at risk      │
+│  Last updated: Today, 2:34 PM  ·  Viewing as: CIO  ·  [Switch ▾]  │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Design specs:
+- Background: #060A12 (platform dark)
+- Product name: JetBrains Mono 11px 600 teal uppercase — "SITUATION INTELLIGENCE"
+- CXO question: Fraunces serif 28px 700 white
+- Metrics row: DM Sans 13px 400 #94A3B8
+- Client selector: teal pill, DM Sans 13px 600 white
+- Confidence score: animated on load (counts up from 0 to 94%)
+
+---
+
+### STEP NAVIGATOR
+
+Sits directly below the product header. Always visible.
+
+```
+① What's Happening  ②  Why It's Happening  ③  What's At Risk
+④  Ask Anything  ⑤  What To Do Next  ⑥  Situation Brief Ready
+```
+
+Design:
+- Current step: white text, teal underline, bold
+- Completed steps: teal number badge with checkmark, white text
+- Future steps: gray number, gray text
+- Clicking any completed step navigates back — never loses data
+- Step names are short, CXO-language — never technical
+
+---
+
+### ZONE 1 — WHAT'S HAPPENING (Step 1)
+
+**Visual design — not a list. A command dashboard.**
+
+Left column (60%): Issue cards stacked vertically
+Right column (40%): Severity summary donut + timeline
+
+**Issue cards — each one:**
+```
+┌─────────────────────────────────────────────────────────┐
+│ 🔴 CRITICAL · RCM DENIAL RATE                          │
+│                                                         │
+│ Your team reported 94.2% collection to the board.      │
+│ Your claims data shows 87.1%.                          │
+│ That $31M gap has been growing for 3 quarters.         │
+│ Nobody flagged it.                                      │
+│                                                         │
+│ [$31M at risk]  [CFO + CRO own this]                  │
+│                                                         │
+│ [See the data →]  [Who owns this →]  [What to do →]   │
+└─────────────────────────────────────────────────────────┘
+```
+
+Card design:
+- Left border: 4px solid — red (critical) / amber (warning) / gray (watch)
+- Background: #0D1520
+- Issue label: JetBrains Mono 10px teal uppercase
+- Title: DM Sans 16px 700 white
+- Body: DM Sans 14px 400 #94A3B8 — plain language, no jargon
+- Impact pill: teal background, white text, dollar amount
+- Owner pill: dark background, gray text
+- Action buttons: teal text, 13px, hover → underline
+
+Right column — Severity Donut:
+```
+        ● 3 Critical
+      ●   ● 4 Warning  
+    ●       ● 5 Watch
+      ●   ●
+        ●
+    
+    $156M total at risk
+```
+- Animated on load — segments draw in sequence
+- Clicking a segment filters the issue cards to that severity
+
+Timeline strip below donut:
+```
+── NOW ──────── 6mo ──────── 12mo ──────── 18mo ──
+  RCM audit    MA Star     Prior auth    Epic full
+  needed       deadline    CMS mandate   activation
+```
+- Red dots for critical deadlines
+- Amber dots for important milestones
+- Hovering shows what's at stake
+
+**Meridian data to show (pre-populated, from client data):**
+- 🔴 RCM Denial Rate: 18.2% vs 11.4% benchmark — $94M gap
+- 🔴 CDO Vacant 14 months — $42M AI spend stalled, 6 pilots at 0
+- 🔴 Travel Nurse Spend: $48M vs $28M target — $20M overage
+- 🟡 Epic Optimization: 58/100 vs 85 target — $34M incentive at risk
+- 🟡 Prior Auth Connected: 23% vs 62% peer — payer risk rising
+- 🟡 MA Star Rating: 3.5 vs 4.0 needed — $34M bonus at risk
+- ⚪ AI Pilots Scaled: 0/6 — all stalled at pilot
+
+**First Capital data (pre-populated):**
+- 🔴 Digital Adoption: 41% vs 67% benchmark — $48M revenue gap
+- 🔴 Core System Age: 22 years — FIS HORIZON — modernization urgent
+- 🔴 FedNow Compliance: Not compliant — January 2027 deadline
+- 🟡 AI Initiatives: 28 active, $0 tracked outcomes
+- 🟡 C/I Ratio: 68% vs 55% best-in-class
+
+**Apex data (pre-populated):**
+- 🔴 Einstein AI: $248M idle — activated but not delivering
+- 🔴 Cart Abandonment: 72% vs 58% benchmark
+- 🟡 Inventory Turns: 4.2x vs 6.1x benchmark
+- 🟡 Shadow IT: $38M untracked SaaS spend
+
+---
+
+### ZONE 2 — WHY IT'S HAPPENING (Step 2)
+
+**Visual design — The Contradiction Map**
+
+Not a table. A visual tension map.
+
+Left side: "What was reported"
+Right side: "What the data shows"
+Center: tension lines connecting them — thicker = bigger gap
+
+```
+WHAT WAS REPORTED          GAP        WHAT DATA SHOWS
+
+RCM: 94.2% collection  ━━━━━━━━━━━━  87.1% actual
+                              ▲
+                           $31M gap
+
+AI: 6 pilots running   ━━━━━━━━━━━━  0 delivering value
+                              ▲
+                           $42M sunk
+
+Prior Auth: vendor     ━━━━━━━━━━━━  Contract lapsed
+selected                      ▲
+                           6mo delay
+
+Epic: go-live complete ━━━━━━━━━━━━  6 modules dark
+                              ▲
+                           $34M missed
+```
+
+Design:
+- Left column: white text, reported values
+- Center: teal tension lines, gap amount in red below each
+- Right column: red/amber text, actual values
+- Lines animate in on scroll — each one draws left to right
+- Clicking any row expands to show full evidence:
+  - Source of the report (interview quote, board deck slide)
+  - Source of the data (claims file, system extract)
+  - Date of divergence (when did the gap start?)
+
+**Source attribution on every contradiction:**
+```
+REPORTED BY: Marcus Webb (CIO) in Q3 board presentation, Oct 2025
+DATA SOURCE: Epic extract, November 2025 — 6 modules show activation_status: false
+GAP STARTED: Q2 2025 — 8 months of divergence
+```
+
+This is what makes AbarVa credible. Every finding has a source.
+No black box. No "the AI said so."
+
+---
+
+### ZONE 3 — WHAT'S AT RISK (Step 3)
+
+**Visual design — Risk Dashboard, three panels side by side**
+
+**Panel 1: Financial Risk**
+```
+FINANCIAL RISK                        $187M total
+
+RCM gap (annual)          $94M  ████████████████████ 
+AI spend undelivered      $42M  █████████
+Travel nurse overage      $20M  ████
+Epic incentive missed     $34M  ███████
+MA Star bonus at risk     $34M  ███████
+```
+- Horizontal bar chart
+- Bars animate in on load
+- Each bar clickable — opens detail panel
+- Total at top, bold, teal
+
+**Panel 2: Strategic Risk**
+```
+STRATEGIC RISK                    3 HIGH · 2 MEDIUM
+
+● HIGH    CDO vacancy → AI program stall
+          6 pilots frozen. Competitors moving.
+          
+● HIGH    Prior auth lag → payer relationship
+          3 payer contracts up for renewal Q3
+          
+● HIGH    Epic modules → CMS audit exposure  
+          Next CMS review: 90 days
+          
+● MEDIUM  MA Star decline → bonus loss
+● MEDIUM  Travel nurse dependency → margin squeeze
+```
+
+**Panel 3: Timeline Risk**
+```
+TIMELINE RISK
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TODAY        3 MONTHS      6 MONTHS      12 MONTHS
+  │               │             │              │
+  ▼               ▼             ▼              ▼
+RCM audit    Epic sprint    MA Star       Prior auth
+must start   complete       deadline      CMS mandate
+```
+- Timeline is horizontal, scrollable
+- Red markers = hard deadlines
+- Amber markers = action windows
+- Each marker shows what happens if missed
+
+---
+
+### ZONE 4 — ASK ANYTHING (Step 4)
+
+**Not a generic chatbox. A structured intelligence interface.**
+
+Left side: Pre-built questions by role
+Right side: Freeform input + streaming response
+
+**Pre-built questions (change when role switches):**
+
+CIO view:
+```
+[What should I say to the board about RCM?]
+[Which AI vendor decision is most urgent?]  
+[What does the CDO vacancy cost us per month?]
+[Where is Epic failing and who owns the fix?]
+[What does our peer group look like on digital maturity?]
+```
+
+CFO view:
+```
+[How much is the RCM gap costing us in cash?]
+[What's the ROI if we fix prior auth this quarter?]
+[Where is our IT spend vs benchmark?]
+[What's the financial impact of the MA Star gap?]
+[Build me a CFO brief for the board meeting]
+```
+
+CMIO view:
+```
+[What's driving the prior auth denial rate?]
+[Which Epic modules are dark and what do they cost?]
+[How does our clinical AI compare to peers?]
+[What's the patient access impact of our RCM problems?]
+```
+
+Maestro view (additional):
+```
+[What data am I missing that would sharpen this picture?]
+[Which finding needs the most urgent CXO attention?]
+[Draft the opening for my CIO briefing]
+[What questions will the CFO ask that I need to prepare for?]
+```
+
+Clicking a pre-built question fires it immediately.
+Response streams in on the right.
+Every response ends with: source citation + confidence score + next action.
+
+---
+
+### ZONE 5 — WHAT TO DO NEXT (Step 5)
+
+**Visual design — Action Command Center**
+
+Three time horizons, each with prioritized actions:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ THIS WEEK                                          2 actions     │
+├──────────────────────────────────────────────────────────────────┤
+│ 1. RCM AUDIT — Pull Q3 claims by payer and service line         │
+│    Why now: Gap growing 3 consecutive quarters. Board next month │
+│    Owner: CFO + Chief Revenue Officer                           │
+│    AbarVa: Analysis template ready → [Generate →]              │
+│    Effort: 2 days  ·  Impact: $31M identified  ·  Risk: HIGH   │
+├──────────────────────────────────────────────────────────────────┤
+│ 2. CDO INTERIM — Appoint interim to unblock 6 AI pilots         │
+│    Why now: $42M spent. 0 delivering. Board will ask.           │
+│    Owner: CEO                                                   │
+│    AbarVa: Vendor decision brief ready → [View →]              │
+│    Effort: 1 week  ·  Impact: $42M unblocked  ·  Risk: HIGH   │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ THIS MONTH                                         3 actions     │
+├──────────────────────────────────────────────────────────────────┤
+│ 3. PRIOR AUTH VENDOR — Reactivate or re-bid                     │
+│ 4. EPIC MODULES — 90-day activation sprint                      │
+│ 5. MA STAR PLAN — 6-month roadmap to 4.0                        │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ THIS QUARTER                                       2 actions     │
+├──────────────────────────────────────────────────────────────────┤
+│ 6. AI PROGRAM RESET — Baseline every initiative                  │
+│ 7. TRAVEL NURSE STRATEGY — 18-month reduction plan              │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+Each action card:
+- Expandable for full detail
+- Owner field — names, not just roles
+- AbarVa artifact button — generates or links to relevant output
+- Effort / Impact / Risk indicators
+- [Assign →] button — marks action as assigned with owner name
+
+---
+
+### ZONE 6 — SITUATION BRIEF (Step 6)
+
+**The output. Board-ready. One click.**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  YOUR SITUATION BRIEF IS READY                                  │
+│                                                                 │
+│  Meridian Health System · April 13, 2026 · CIO View            │
+│                                                                 │
+│  What's in it:                                                  │
+│  • 3 critical issues with data sources                         │
+│  • 12 contradictions mapped                                     │
+│  • $156M at risk, broken down by category                      │
+│  • 7 prioritized actions with owners and timelines             │
+│                                                                 │
+│  [Download Situation Brief →]     HTML · PDF · Word            │
+│  [Send to Board →]                email with brief attached    │
+│  [Build AI Strategy from this →]  takes you to next product   │
+│                                                                 │
+│  ─────────────────────────────────────────────────────────     │
+│  What McKinsey charges $1.8M and 8 weeks to produce.          │
+│  This took 4 minutes.                                          │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+The brief PDF auto-generates with:
+- AbarVa wordmark and client name
+- Date and role
+- All 4 zones summarized — 2 pages maximum
+- Every finding sourced
+- Action table with owners
+
+---
+
+### ROLE SWITCHER — PERSISTENT BOTTOM BAR
+
+Always visible. Never disappears.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Viewing as:  [CIO]  [CFO]  [COO]  [CMIO]  [CEO]  [Maestro]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+When role switches:
+- Zone 1 issues reorder by relevance to that role
+  (CFO sees financial issues first, CMIO sees clinical first)
+- Pre-built questions in Zone 4 change to role-specific
+- Brief export uses role-appropriate framing
+- Owner fields highlight actions owned by that role
+- The product header shows: "Viewing as: CFO"
+
+Maestro view adds:
+- Data gap indicators on every finding
+- Source attribution visible (not hidden)
+- "Draft CXO briefing" button
+- Confidence scores on every data point
+
+---
+
+### SCENARIO B — PROGRESSIVE DATA LOADING
+
+When a new client has partial data, every zone adapts:
+
+Zone 1 shows:
+```
+⚡ SITUATION INTELLIGENCE · RIVERSIDE MEDICAL
+Data confidence: 34% · 2 findings · More available with more data
+
+✓ FROM WHAT WE HAVE:
+🟡 Operating margin 1.8% — below 4.2% peer benchmark
+🟡 IT spend $142M — 6.7% of revenue, above sector average
+
+⬜ LOCKED — upload to unlock:
+  Technology inventory → unlocks 4 AI program findings
+  Clinical data → unlocks 6 quality and compliance findings
+  Interview transcripts → unlocks leadership contradictions
+
+[Upload Technology Data →]    Unlocks 4 findings · +18% confidence
+[Upload Clinical Data →]      Unlocks 6 findings · +22% confidence
+[Download templates →]
+```
+
+Zone 2 (contradictions): "2 patterns found. Upload interviews to surface leadership gaps."
+Zone 3 (risk): "Estimated $8-14M at risk based on peer patterns. Low confidence — need more data."
+Zone 4 (ask anything): Works immediately with whatever is loaded. Always answers.
+Zone 5 (actions): "3 actions available now. 4 more unlock with additional data."
+
+---
+
+### SCENARIO B DEMO FLOW — RIVERSIDE
+
+For the live upload demo moment:
+
+1. Open Riverside — 34% confidence, 2 findings visible, rest locked
+2. Drag `riverside_financials.xlsx` into upload zone
+3. Watch: FINANCIALS badge turns green, confidence animates to 52%
+4. New finding appears: "IT spend $142M — above sector average by 2.1pp"
+5. Drag `riverside_technology.xlsx`
+6. Watch: TECHNOLOGY badge turns green, confidence to 67%
+7. New findings: "14 supply chain tools — 6 appear redundant based on function overlap"
+8. "Upload claims data to quantify the RCM opportunity"
+9. Drag `riverside_claims.xlsx`
+10. Watch: confidence to 81%, denial rate surfaces: "Estimated 14-17% — need payer breakdown to confirm"
+
+This is the moment. The platform learning in real time.
+Every upload makes it smarter. Immediately.
+
+---
+
+### DATA SOURCES — WHAT POPULATES EACH ZONE
+
+For Claude Code: every finding must come from real data files.
+
+**Meridian Zone 1 sources:**
+- RCM Denial Rate → src/data/meridian/financials.ts → rcmDenialRate
+- CDO Status → src/data/meridian/leadership.ts → cdoStatus, cdoVacantMonths
+- Travel Nurse → src/data/meridian/financials.ts → travelNurseCost, travelNurseTarget
+- Epic Score → src/data/meridian/technology.ts → epicOptimizationScore
+- Prior Auth → src/data/meridian/clinical.ts → priorAuthConnected
+- MA Star → src/data/meridian/clinical.ts → maStarRating
+- AI Pilots → src/data/meridian/ai.ts → pilotsScaled, pilotsTotal
+
+**First Capital Zone 1 sources:**
+- Digital Adoption → src/data/firstcapital/technology.ts → digitalAdoptionRate
+- Core System Age → src/data/firstcapital/technology.ts → coreSystemAge
+- FedNow → src/data/firstcapital/technology.ts → fednowCompliant
+- AI Initiatives → src/data/firstcapital/ai.ts → totalInitiatives, trackedOutcomes
+- C/I Ratio → src/data/firstcapital/financials.ts → costIncomeRatio
+
+**Apex Zone 1 sources:**
+- Einstein → src/data/apexretail/ai.ts → einsteinStatus, einsteinValue
+- Cart Abandonment → src/data/apexretail/technology.ts → cartAbandonmentRate
+- Inventory Turns → src/data/apexretail/financials.ts → inventoryTurns
+- Shadow IT → src/data/apexretail/technology.ts → shadowItSpend
+
+---
+
+### Phase 4F QA Gate
+
+**Product header:**
+- [ ] "SITUATION INTELLIGENCE" in JetBrains Mono teal uppercase
+- [ ] CXO question in Fraunces serif white
+- [ ] Confidence score animates from 0% on load
+- [ ] Client selector shows correct client, switchable
+- [ ] All 6 steps visible in navigator
+
+**Zone 1 — What's Happening:**
+- [ ] Meridian shows 7 issues: 3 critical (red), 3 warning (amber), 1 watch
+- [ ] Each card has: severity border, title, 2-3 sentence plain English, impact pill, owner pill, 3 action buttons
+- [ ] Severity donut animates on load, segments are clickable filters
+- [ ] Timeline strip shows correct deadlines with correct dates
+- [ ] First Capital shows 5 issues with FC-specific numbers
+- [ ] Apex shows 4 issues with Apex-specific numbers
+
+**Zone 2 — Why It's Happening:**
+- [ ] Contradiction map shows as visual tension diagram (not a table)
+- [ ] Tension lines animate left to right on load
+- [ ] Each row shows: reported value, gap amount, actual value
+- [ ] Clicking any row expands to show source attribution
+- [ ] Source attribution shows: who reported it, what data contradicts it, when gap started
+- [ ] Meridian shows 5 contradictions minimum
+- [ ] FC and Apex each show 3+ contradictions
+
+**Zone 3 — What's At Risk:**
+- [ ] 3 panels: Financial / Strategic / Timeline
+- [ ] Financial: horizontal bar chart, animates on load, bars clickable
+- [ ] Strategic: 3 high + 2 medium risks with plain English descriptions
+- [ ] Timeline: horizontal scrollable, red and amber markers
+- [ ] All numbers match the data files
+
+**Zone 4 — Ask Anything:**
+- [ ] Pre-built questions visible on left, change when role switches
+- [ ] Clicking question fires it immediately, streams response
+- [ ] Freeform input works
+- [ ] Response includes source citation and confidence score
+- [ ] Maestro view shows additional questions
+
+**Zone 5 — What To Do Next:**
+- [ ] 3 time horizons: This Week / This Month / This Quarter
+- [ ] Each action: owner, why now, AbarVa artifact button, effort/impact/risk
+- [ ] Actions are client-specific (Meridian actions differ from FC actions)
+- [ ] [Generate →] buttons produce real artifacts
+
+**Zone 6 — Situation Brief:**
+- [ ] Brief downloads as HTML correctly
+- [ ] Contains all 4 zones summarized
+- [ ] AbarVa wordmark and client name on brief
+- [ ] "Build AI Strategy →" navigates correctly to /ai-strategy?client=
+
+**Role switcher:**
+- [ ] Always visible at bottom
+- [ ] Switching role reorders Zone 1 issues correctly
+- [ ] Pre-built questions in Zone 4 change
+- [ ] Maestro view shows data gap indicators and confidence scores
+- [ ] Role persists when navigating between steps
+
+**Scenario B (progressive loading):**
+- [ ] Riverside shows 34% confidence with 2 findings
+- [ ] Locked findings show with upload prompts
+- [ ] Uploading a file: badge turns green, confidence animates up, new findings appear
+- [ ] Demo upload flow works end to end in under 60 seconds per file
+
+COMMIT: git commit -m "Phase 4F: Situation Intelligence complete redesign — 4 zones, contradiction map, role switcher, progressive loading"
+
+
+---
+
+## PHASE 4G — AI INVESTMENT INTELLIGENCE: COMPLETE PRODUCT REDESIGN (4 hours)
+
+The product that closes the deal. Every investor, every design partner,
+every CXO who sees this will understand immediately what AbarVa does
+and why nothing else comes close.
+
+The product promise:
+"Where should we place our AI bets — and which ones will fail?"
+
+---
+
+### PRODUCT BRANDING — TOP OF PAGE
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  💡 AI INVESTMENT INTELLIGENCE              [Meridian Health ▾]     │
+│                                                                     │
+│  "Where should we place our AI bets — and which are high-risk?"    │
+│                                                                     │
+│  12 opportunities identified  ·  $864M 3-year value  ·  7 bets    │
+│  analyzed against failure patterns  ·  Confidence: 94%            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Design: identical system to Situation Intelligence.
+JetBrains Mono product name. Fraunces CXO question. Metrics row.
+
+---
+
+### THE THREE-ACT STRUCTURE
+
+Default navigation — three large act buttons:
+
+```
+[  ACT 1: THE TRUTH  ]  [  ACT 2: THE BETS  ]  [  ACT 3: THE BOARD DECK  ]
+```
+
+Each act is one complete screen. The CXO moves between acts.
+Within each act, depth is available — 8 steps total, accessible via
+"Go deeper →" or the step navigator that expands on demand.
+
+Step navigator (collapsed by default, expands on click):
+```
+▸ Show all 8 steps
+  ① Ground Truth  ② Executives Disagree  ③ Every Bet Available
+  ④ Your Three Bets  ⑤ Wave 1 Plan  ⑥ Business Case
+  ⑦ Failure Genome  ⑧ Board Deck Ready
+```
+
+---
+
+### ACT 1 — THE TRUTH
+
+**What it answers:** Before you place any bets, here is what
+your data actually shows — and where your executives disagree.
+
+**Screen layout: Two columns, full height**
+
+LEFT COLUMN — AI Readiness Scores (40%)
+
+Three gauge dials, large, animated on load:
+
+```
+        DATA              TECHNOLOGY           ORG
+      READINESS           READINESS          READINESS
+
+        67%                  52%               41%
+      ████████            █████               ████
+      STRONG             PARTIAL             WEAK
+
+   Your data is         Your stack         Leadership
+   investment-          can support        alignment
+   ready for 8          4 of 12            is the
+   of 12 bets           bets now           blocker
+```
+
+Below each dial — what it means in plain language.
+Clicking any dial opens a breakdown of what drives the score.
+
+Data Readiness breakdown:
+```
+Claims data ✓ 24 months     Epic extract ✓ complete
+Payer contracts ✓           Interview transcripts ✗ missing
+Vendor spend ✓              Workforce data ✗ missing
+```
+
+RIGHT COLUMN — Where Executives Disagree (60%)
+
+The executive fault line map. Visual, not a list.
+
+Five fault lines, each showing:
+- The topic
+- Who holds which position
+- The data verdict
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAULT LINE 1: AI INVESTMENT PRIORITY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CFO Chen:  "Cost reduction first.           ████ ────
+            Revenue cycle AI."                        │
+                                                      │ TENSION
+CIO Webb:  "Clinical AI first.              ──── ████
+            Patient outcomes."
+
+DATA SAYS: Revenue cycle AI has 7x ROI.
+           Clinical AI has 2x ROI but 60% failure rate.
+           The CFO is right but for the wrong reason.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAULT LINE 2: BUILD VS BUY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CIO Webb:  "Build on Epic.                  ████ ────
+            We own the data."                         │
+                                                      │ TENSION
+CMIO Patel:"Buy best-of-breed.              ──── ████
+            Epic AI is 2 years behind."
+
+DATA SAYS: 3 of 6 proposed Epic AI modules
+           have <40% activation rates across peers.
+           CMIO Patel's concern is validated.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Design:
+- Fault lines animate in one by one
+- Tension bars are visual — colored blocks showing position strength
+- Data verdict in teal — this is the referee
+- Expanding any fault line shows the source data + interview quotes
+
+**The insight this creates:**
+The CXO sees immediately that their leadership team is not aligned.
+AbarVa doesn't just surface the disagreement — it adjudicates it.
+That's what no consultant does on day one.
+
+---
+
+### ACT 2 — THE BETS
+
+**What it answers:** Every AI opportunity available to you,
+ranked by value. Your three bets. The 90-day plan.
+And what if you disagree.
+
+**Screen layout: Three panels**
+
+TOP PANEL — Opportunity Landscape (full width, 35% height)
+
+A visual scatter plot of all 12 opportunities:
+- X axis: Implementation complexity (low → high)
+- Y axis: Annual value ($M)
+- Bubble size: confidence score
+- Bubble color: Wave (Wave 1 = teal, Wave 2 = blue, Wave 3 = gray)
+- Hovering a bubble shows the opportunity name and key metrics
+
+```
+Annual
+Value
+  │
+$94M│          ●RCM AI
+    │       (Wave 1, teal)
+$48M│    ●Prior Auth
+    │
+$31M│              ●Clinical Doc
+    │
+$18M│  ●Travel Nurse  ●Workforce AI
+    │
+ $8M│●Epic Opt  ●Supply Chain  ●Analytics
+    │
+    └──────────────────────────────────────
+       Low          Medium          High
+                  Complexity
+```
+
+Clicking any bubble selects that opportunity and highlights it
+in the middle and bottom panels.
+
+MIDDLE PANEL — Opportunity Cards (full width, 35% height)
+
+Horizontal scrollable row of 12 opportunity cards.
+The three "recommended bets" are highlighted with teal border.
+
+Each card:
+```
+┌─────────────────────────────────────────────────────┐
+│ ⭐ BET 1 — RECOMMENDED                              │
+│                                                     │
+│ RCM AI Automation                                   │
+│ Revenue Cycle · Back Office · Grow                  │
+│                                                     │
+│ Annual Value    ROI      Wave    Timeline           │
+│   $28M          7x       1       90 days            │
+│                                                     │
+│ Failure Risk: 🟡 MEDIUM                             │
+│ "Historically fails on change mgmt — see patterns" │
+│ [View Failure Genome →]                             │
+│                                                     │
+│ [✓ Keep this bet]  [✗ Remove]  [↑ Promote]         │
+└─────────────────────────────────────────────────────┘
+```
+
+The three action buttons are the key:
+- [✓ Keep this bet] — accepts AbarVa's recommendation
+- [✗ Remove] — removes it, triggers "What this costs you" modal
+- [↑ Promote] — moves a non-recommended opportunity into the top 3
+
+**What if the CXO has other ideas:**
+
+If they remove a recommended bet:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRADE-OFF ANALYSIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+You removed: RCM AI Automation ($28M, 7x ROI)
+
+What this means:
+• 3-year value drops from $864M to $836M
+• Wave 1 ROI drops from 340% to 190%
+• Prior auth vendor gap remains unaddressed
+• CFO will ask about RCM at next board meeting
+
+AbarVa still recommends this. Here's why:
+[See full reasoning →]
+
+Your call. What would you replace it with?
+[Browse all 12 opportunities →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+If they add their own idea not in the list:
+```
+[+ Add your own opportunity]
+
+What's the initiative?
+[                              ]
+
+AbarVa will assess it against:
+• Your data (feasibility)
+• Peer outcomes (benchmark)
+• Failure patterns (risk)
+• Your current bets (conflict/synergy)
+
+[Assess this →]
+```
+
+AbarVa responds with an assessment in 30 seconds:
+```
+YOUR IDEA: "AI-powered staff scheduling"
+
+AbarVa Assessment:
+• Feasibility: HIGH — your workforce data supports this
+• Peer benchmark: $8-12M annual value at your scale
+• Failure risk: LOW — 71% success rate in peer health systems
+• Conflict with current bets: NONE — complements Bet 2
+
+Recommendation: Add to Wave 2. Here's why not Wave 1:
+[See reasoning →]
+
+[Add to Wave 2 →]  [Add to Wave 1 anyway →]  [Discard →]
+```
+
+BOTTOM PANEL — The 90-Day Plan (full width, 30% height)
+
+```
+YOUR WAVE 1 PLAN — STARTS IN 90 DAYS
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DAYS 1-30           DAYS 31-60          DAYS 61-90
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Baseline locked     Vendor selected     Pilot live
+RCM audit done      Contract signed     Team trained
+CDO interim         Data pipeline       First results
+appointed           established         measured
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Owner: CFO + CRO    Owner: CIO          Owner: CDO
+Investment: $4M     Investment: $2M     Investment: $2M
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total Wave 1: $8M investment · $28M annual return · 7x ROI
+```
+
+Metric cards below the plan:
+
+```
+[Total Investment]  [Annual Value]  [Blended ROI]  [Payback Period]
+     $21M               $77M            3.7x           4 months
+```
+
+McKinsey comparison card — last, after all other metrics:
+```
+┌─────────────────────────────────────────────────────┐
+│  This took 90 minutes.                              │
+│  McKinsey would have charged $3.2M and 16 weeks    │
+│  for the same output.                               │
+│                                                     │
+│  AbarVa used Meridian's own data.                  │
+│  McKinsey would have used interviews.              │
+│  These are not the same thing.                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+### THE FAILURE GENOME PANEL
+
+Accessed from any opportunity card via [View Failure Genome →]
+Opens as a right-side drawer — does not navigate away.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAILURE GENOME · RCM AI AUTOMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Overall failure risk: 🟡 MEDIUM (34% fail rate)
+
+7 FAILURE PATTERNS — scored for Meridian:
+
+① Change Management Failure          🔴 HIGH RISK
+  "Vendor selected, staff not bought in"
+  Meridian signal: CDO vacant 14 months
+  Mitigation: Appoint change lead before contract
+
+② Data Quality Failure               🟡 MEDIUM
+  "Clean data assumed, dirty data found"
+  Meridian signal: Claims data 94% clean
+  Mitigation: Data audit in Days 1-30
+
+③ Scope Creep                        🟢 LOW RISK
+  "Pilot expands before delivering"
+  Meridian signal: 6 stalled pilots suggest discipline
+  Mitigation: Hard 90-day pilot gate
+
+④ Vendor Overpromise                 🟡 MEDIUM
+  "Vendor demos on best case, delivers average"
+  Meridian signal: 3 vendors in queue
+  Mitigation: Reference check on similar health systems
+
+⑤ Integration Failure                🟢 LOW RISK
+⑥ Leadership Misalignment            🔴 HIGH RISK
+⑦ ROI Measurement Gap               🟡 MEDIUM
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Mitigation plan: [Generate full risk plan →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Every pattern:
+- Scored specifically for this client (not generic)
+- Meridian-specific signal that increases or decreases risk
+- Specific mitigation built into the Wave 1 plan
+
+---
+
+### ACT 3 — THE BOARD DECK
+
+**What it answers:** Your board deck is ready.
+Here is what it contains and how to present it.
+
+**Screen layout: Preview + Export**
+
+LEFT — Live preview panel (60%)
+
+A live HTML preview of the board deck — scrollable, actual slides:
+
+```
+SLIDE 1: Executive Summary
+"Meridian has $864M in AI value available over 3 years.
+ We recommend 3 bets. Wave 1 starts in 90 days."
+
+SLIDE 2: The Situation
+[Zone 1 from Situation Intelligence — top 3 issues]
+
+SLIDE 3: Where Executives Disagree
+[Fault line map from Act 1]
+
+SLIDE 4: Every Opportunity
+[Scatter plot from Act 2]
+
+SLIDE 5: Your Three Bets
+[3 opportunity cards, confirmed bets]
+
+SLIDE 6: The 90-Day Plan
+[Wave 1 plan from Act 2]
+
+SLIDE 7: The Investment Case
+[Financial model — 3 scenarios]
+
+SLIDE 8: Risk Mitigation
+[Failure Genome top risks + mitigations]
+
+SLIDE 9: What We Need to Proceed
+[Data gaps + decisions needed]
+
+SLIDE 10: AbarVa Outcome Commitment
+"We earn our fee only when these outcomes are verified."
+```
+
+Each slide is clickable — clicking opens an edit panel
+where the CXO can adjust any number, add context, or
+mark a slide as "exclude from this presentation."
+
+RIGHT — Export panel (40%)
+
+```
+YOUR BOARD DECK IS READY
+
+Meridian Health System
+AI Investment Strategy 2026
+Prepared by AbarVa · April 13, 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXPORT OPTIONS
+
+[📊 Present Now →]
+Open as full-screen presentation
+in your browser. No download needed.
+
+[⬇ Download HTML →]
+Single file. Opens in any browser.
+Send to board members before the meeting.
+
+[📈 Business Case Excel →]
+CFO-ready financial model.
+3 scenarios, sensitivity analysis.
+
+[🗺 Technical Roadmap →]
+CIO-ready implementation plan.
+Wave 1 detail with owners and dates.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT HAPPENS NEXT
+
+Once you present this to the board:
+1. AbarVa locks the baseline metrics
+2. Wave 1 begins — 90-day clock starts
+3. AbarVa tracks outcomes monthly
+4. Outcome fee triggers only on verified savings
+
+[Set the baseline and start Wave 1 →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+The "Present Now →" button opens the deck in full-screen
+presentation mode — a proper slideshow, keyboard navigable,
+with speaker notes visible only to the presenter.
+
+The "Set the baseline →" button is the most important button
+in the entire platform. Clicking it:
+1. Locks all current metrics as the baseline
+2. Creates the outcome tracking record in Supabase
+3. Starts the Wave 1 timeline
+4. Sends a confirmation email to the CXO
+5. Adds Meridian to the Outcome Intelligence dashboard
+
+This is the moment AbarVa becomes accountable.
+This is the moment the outcome fee model is real.
+Make this button feel like a commitment — not a form submit.
+
+---
+
+### SCENARIO B — PROGRESSIVE DATA LOADING
+
+Act 1 with partial data:
+```
+AI READINESS SCORES
+Data: 34% · Technology: Unknown · Org: Unknown
+
+[Upload technology inventory → unlocks Tech Readiness score]
+[Run executive interviews → unlocks Org Readiness + fault lines]
+
+What we can assess with current data:
+• Financial feasibility of 4 of 12 opportunities
+• Revenue cycle opportunity ($8-18M estimated, low confidence)
+• IT spend efficiency (above benchmark — modernization signal)
+```
+
+Act 2 with partial data:
+```
+OPPORTUNITIES AVAILABLE NOW: 4 of 12
+
+[●] Revenue Cycle AI — $8-18M estimated · Low confidence
+[●] IT Cost Optimization — $3-6M estimated · Low confidence
+[○] Prior Auth AI — needs clinical data
+[○] Clinical Documentation — needs clinical data
+
+Upload clinical data → unlocks 6 more opportunities
+Upload vendor contracts → refines cost estimates
+```
+
+Act 3 with partial data:
+```
+BOARD DECK — PARTIAL
+
+4 of 10 slides can be completed now.
+6 slides need more data:
+• Fault line map needs interview data
+• Failure Genome needs vendor data
+• Technical roadmap needs technology inventory
+
+[Present what we have →]
+[See what data unlocks full deck →]
+```
+
+---
+
+### DATA SOURCES — MERIDIAN
+
+Act 1 — Ground Truth:
+- AI readiness scores → src/data/meridian/ai.ts → readinessScores
+- Fault lines → src/data/meridian/interviews.ts → executiveFaultLines
+- Data completeness → src/data/meridian/ → file existence check
+
+Act 2 — Opportunities:
+- All 12 opportunities → src/data/meridian/ai.ts → aiOpportunities
+- Each opportunity: name, value, roi, wave, complexity, failureRisk
+- Failure patterns → src/data/meridian/ai.ts → failurePatterns
+
+Act 3 — Board Deck:
+- All data from Acts 1 and 2
+- Business case → src/data/meridian/financials.ts → businessCase
+- Investment model → calculated from opportunity selections
+
+---
+
+### Phase 4G QA Gate
+
+**Product header:**
+- [ ] "AI INVESTMENT INTELLIGENCE" in JetBrains Mono teal
+- [ ] CXO question in Fraunces serif white
+- [ ] Metrics row shows correct counts for Meridian
+- [ ] 3-act navigation visible and functional
+- [ ] Step navigator collapsed by default, expands correctly
+
+**Act 1 — The Truth:**
+- [ ] 3 gauge dials animate from 0 on load
+- [ ] Dial values: Data 67%, Technology 52%, Org 41% for Meridian
+- [ ] Clicking any dial opens readiness breakdown
+- [ ] 5 fault lines visible in right column
+- [ ] Fault lines show correct executive positions
+- [ ] Data verdict in teal for each fault line
+- [ ] Expanding a fault line shows source data and quotes
+
+**Act 2 — The Bets:**
+- [ ] Scatter plot renders with all 12 opportunities
+- [ ] Bubbles colored by wave (teal/blue/gray)
+- [ ] Clicking a bubble highlights its card
+- [ ] 3 recommended bets have teal border
+- [ ] Each card shows: value, ROI, wave, timeline, failure risk
+- [ ] [View Failure Genome →] opens right drawer correctly
+- [ ] [✓ Keep] / [✗ Remove] / [↑ Promote] all work
+- [ ] Removing a bet shows trade-off analysis with correct numbers
+- [ ] [+ Add your own opportunity] works and returns AI assessment
+- [ ] 90-day plan shows correct Days 1-30/31-60/61-90 breakdown
+- [ ] Metric cards show correct totals
+- [ ] McKinsey comparison card appears LAST after all metrics
+- [ ] FC and Apex show their own opportunity sets
+
+**Failure Genome drawer:**
+- [ ] Opens without navigating away
+- [ ] Shows 7 patterns for the selected opportunity
+- [ ] Each pattern scored specifically for the active client
+- [ ] Meridian-specific signals shown correctly
+- [ ] Mitigations reference the Wave 1 plan
+
+**Act 3 — The Board Deck:**
+- [ ] Live HTML preview shows all 10 slides
+- [ ] Clicking a slide opens edit panel
+- [ ] [Present Now →] opens full-screen presentation mode
+- [ ] Keyboard navigation works in presentation mode
+- [ ] [Download HTML →] downloads single file that opens in browser
+- [ ] [Business Case Excel →] downloads working spreadsheet
+- [ ] [Technical Roadmap →] downloads roadmap document
+- [ ] [Set the baseline →] creates outcome record in Supabase
+- [ ] Baseline confirmation shown after clicking
+- [ ] Meridian appears in Outcome Intelligence after baseline set
+
+**Scenario B (partial data):**
+- [ ] Partial readiness scores shown with upload prompts
+- [ ] 4 of 12 opportunities shown, rest locked with unlock prompts
+- [ ] Partial board deck shows 4 of 10 slides, rest gated
+
+COMMIT: git commit -m "Phase 4G: AI Investment Intelligence — 3-act design, scatter plot, failure genome drawer, live board deck, baseline commitment"
+
+
+---
+
+## PHASE 3C FINAL — MAESTRO PORTAL: PRIVACY-FIRST REDESIGN (3 hours)
+
+REPLACES everything currently at /admin entirely.
+Two screens. One iron rule.
+
+IRON RULE: No user ever sees data from a client they are not assigned to.
+Enforced at database layer (Supabase RLS), API layer, and application layer.
+No exceptions. No workarounds. Every access logged.
+
+---
+
+### THE ARCHITECTURE
+
+Three distinct user experiences:
+
+1. /admin — Engagement Selector (ALL users land here first)
+   No data visible. Just client names and status.
+
+2. /admin/client/[clientId] — Client Engagement Dashboard
+   One client. Full governance. Maestro and AbarVa Principal only.
+
+3. /dashboard — CXO View (separate — not admin)
+   What a CIO/CFO/CMIO sees. Their org only. Role-filtered.
+
+---
+
+### SCREEN 1 — ENGAGEMENT SELECTOR (/admin)
+
+URL: /admin
+Who sees it: Everyone — AbarVa Principal, Maestros, CXOs
+What it shows: Names and status only. Zero data.
+
+LAYOUT:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  AbarVa  (wordmark)          Anand Sundaram · Lead Maestro  │
+│  Intelligence. Now act on it.                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│           SELECT ENGAGEMENT                                 │
+│   You will enter that client's secure environment.          │
+│   No other client data is visible once inside.             │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ● Meridian Health System                            │   │
+│  │   Healthcare · Lead Maestro · Started Mar 15, 2026  │   │
+│  │                                        Active  ›    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ● First Capital Financial                           │   │
+│  │   Financial Services · Lead Maestro · Mar 28, 2026  │   │
+│  │                                        Active  ›    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ● Apex Retail Group                                 │   │
+│  │   Retail · Lead Maestro · April 2, 2026             │   │
+│  │                                        Active  ›    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ ◐ Riverside Medical Center                          │   │
+│  │   Healthcare · Lead Maestro · April 13, 2026        │   │
+│  │                                        Setup   ›    │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  + Start a new engagement                                   │
+│                                                             │
+│  🔒 Each engagement is a fully isolated environment.        │
+│     No data crosses between clients. All access is logged.  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+DESIGN SPECS:
+- Background: #060A12
+- Header: AbarVa wordmark (Georgia serif, Abar white 17px, Va teal 23px)
+- Tagline: JetBrains Mono 10px white uppercase
+- Section label: JetBrains Mono 10px teal uppercase letter-spacing
+- Sub-label: DM Sans 13px #64748B centered
+- Engagement rows: #0D1520 background, 1px #1C2D45 border, 12px radius
+- Row hover: border-color → #2DD4C8
+- Client name: DM Sans 15px 500 #EFF6FF
+- Client meta: DM Sans 12px #64748B
+- Status pill Active: rgba(45,212,200,0.12) background, #2DD4C8 text
+- Status pill Setup: rgba(251,191,36,0.12) background, #FBBF24 text
+- Arrow: #374151, hover → #2DD4C8
+- New engagement row: dashed border #1C2D45, hover → #2DD4C8
+- Privacy note: 🔒 icon, DM Sans 12px #374151, bottom of page
+- NO metrics, NO findings, NO data of any kind on this screen
+
+BEHAVIOR:
+- Clicking any row navigates to /admin/client/[clientId]
+- A Maestro assigned only to Meridian sees ONLY Meridian in the list
+- A CXO (Meridian CIO) sees only Meridian — and goes directly to /dashboard not /admin/client
+- URL manipulation (/admin/client/firstcapital by a Meridian-only user) → 403
+
+---
+
+### SCREEN 2 — CLIENT ENGAGEMENT DASHBOARD (/admin/client/[clientId])
+
+URL: /admin/client/meridian (and /firstcapital, /apexretail, /riverside)
+Who sees it: AbarVa Principal + assigned Maestros only
+CXOs never see this — they go to /dashboard
+
+HEADER:
+```
+[← Engagements]  ████  Meridian Health System
+                        Healthcare · $11.2B · 31,000 employees · 6 hospitals
+                        Lead Maestro: Anand Sundaram
+                                              [Lead Maestro pill]  [94% Confidence]
+```
+
+- Back button: white text, #1C2D45 border, hover → teal
+- Color strip: 4px teal (Healthcare) / indigo (FinServ) / amber (Retail)
+- Client name: DM Sans 18px 500 #EFF6FF
+- Client sub: DM Sans 12px #94A3B8
+- Role pill: JetBrains Mono 10px teal, rgba(45,212,200,0.12) bg
+- Confidence block: dark bg, Fraunces 22px white value, JetBrains Mono 9px teal label
+
+TAB BAR:
+```
+Overview  |  Data & Files  |  Gaps & Needs  |  Approvals [3]  |  Audit Log  |  Intelligence  |  Team Access
+```
+- All tabs: DM Sans 13px 500 #EFF6FF at 70% opacity
+- Hover: 100% opacity
+- Active: #2DD4C8, 2px teal bottom border, 100% opacity
+- NO gray text on any tab — white or teal only
+- Approvals badge: red pill with count, always visible
+
+---
+
+### TAB 1 — OVERVIEW
+
+SECTION A: Key Metrics (6-tile grid, full width)
+
+Each tile:
+- Background: #0D1520, border: 1px #1C2D45, radius: 12px
+- Top severity bar: 2px — red (critical) / amber (warning) / green (good)
+- Metric label: JetBrains Mono 9px teal uppercase
+- Value: Fraunces 24px white
+- Context: DM Sans 11px — red/amber/green depending on severity
+- Benchmark: DM Sans 10px #475569
+
+Meridian 6 tiles:
+1. RCM Denial Rate: 18.2% | ↑ Critical | BM: 11.4% | RED bar
+2. Operating Margin: 1.8% | ↓ Falling | Target: 4.0% | RED bar
+3. Epic Optimization: 58/100 | ↓ Below target | Target: 85 | AMBER bar
+4. AI Pilots Live: 0/6 | All stalled | $42M committed | RED bar
+5. Prior Auth: 23% | ↓ Below peers | Peers: 62% | AMBER bar
+6. MA Star Rating: 3.5 | Below bonus | Need: 4.0 | AMBER bar
+
+First Capital 6 tiles:
+1. Digital Adoption: 41% | ↓ Critical | BM: 67% | RED bar
+2. Core System Age: 22 yrs | FIS HORIZON | Urgent | RED bar
+3. FedNow Compliant: No | Jan 2027 deadline | 9 months | AMBER bar
+4. AI Initiatives: 28 active | $0 tracked outcomes | RED bar
+5. C/I Ratio: 68% | ↓ Above target | BM: 55% | AMBER bar
+6. IT Budget: $168M | 0.93% of AUM | vs 1.2% peer | AMBER bar
+
+Apex 6 tiles:
+1. Einstein AI: $248M | Idle · Not delivering | RED bar
+2. Cart Abandonment: 72% | BM: 58% | $31M gap | RED bar
+3. Inventory Turns: 4.2x | BM: 6.1x | Below peers | AMBER bar
+4. Shadow IT: $38M | Untracked SaaS | AMBER bar
+5. eComm Conversion: 2.3% | BM: 3.8% | $18M gap | RED bar
+6. IT Budget: $285M | 2.4% of revenue | GRAY bar
+
+SECTION B: Data Categories (left column 65%)
+
+Each category row:
+- Background: #0D1520, border: 1px #1C2D45, radius: 12px
+- Top completeness bar: thin horizontal bar, teal fill % = completeness
+  Green (active, 80%+): bar fills to completeness %
+  Amber (partial, 40-79%): bar fills to completeness % in amber
+  Red/dark (missing, <40%): bar nearly empty
+- Category name: DM Sans 14px 500 #EFF6FF
+- File count + last updated: DM Sans 11px #94A3B8
+- Status badge: Active / Partial / Missing
+- Chevron: #475569, expands to show file table
+
+EXPANDED FILE TABLE (inside each category):
+Column headers: File | Uploaded by | Approved by | Access
+Each file row shows:
+- File icon (colored by type) + filename + size
+- Who uploaded (name + role + date)
+- Who approved (name + role + date) OR pending status
+- Access pill: All users (teal) / Role-restricted (red) / Maestro only (indigo)
+
+File row grid: grid-template-columns: 32px 1fr 160px 140px 110px
+All text in file rows: #EFF6FF for names, #94A3B8 for metadata — NO gray
+
+Upload zone below categories:
+- Dashed border #1C2D45, hover → #2DD4C8
+- "Upload a new data file" DM Sans 13px #94A3B8
+- Sub: "Excel, CSV, Word, PDF · All uploads logged and require approval"
+- [Choose File] button: #2DD4C8 background, #060A12 text
+
+RIGHT COLUMN (35%): Three sidebar cards
+
+CARD 1: Pending Approvals
+Each approval item:
+- Filename: DM Sans 12px 500 #EFF6FF
+- Urgent indicator: pulsing 6px red dot for items >48hrs old
+- Meta: who uploaded, when, category, size
+- Buttons: [✓ Approve] teal | [Restrict] white | [Reject] red
+
+CARD 2: Data Gaps
+Each gap item:
+- Category name: DM Sans 12px 500 #EFF6FF
+- Confidence impact: JetBrains Mono 10px amber (+X% confidence)
+- Why needed: DM Sans 11px #94A3B8 — specific business reason
+- What it unlocks: DM Sans 11px #475569, unlocked items in teal
+- [Download Template] button: teal border, teal text
+
+CARD 3: Audit Log
+Columns: Time | User | Action | Category
+- Time: DM Sans 11px #475569
+- User: DM Sans 11px #2DD4C8
+- Action: DM Sans 11px #94A3B8
+- Category: DM Sans 11px #64748B
+Show last 10 entries. [View full log →] link at bottom.
+
+---
+
+### TAB 2 — DATA & FILES
+
+Full-width file management view.
+Same file table as Overview expanded state but for ALL categories simultaneously.
+Filter bar at top: [All] [Financials] [Technology] [Clinical] [Leadership] [Interviews] [Outcomes]
+Sort: by date, by category, by status, by uploader
+Search: filename search
+
+---
+
+### TAB 3 — GAPS & NEEDS
+
+Full-width gap analysis.
+Each gap gets a full card with:
+- Category name + confidence impact (large, prominent)
+- Business reason: WHY this data matters (2-3 sentences)
+- What it unlocks: specific products and analyses
+- What to tell the client: suggested language for requesting this data
+- Template download: the exact file to send
+- Status: Not started / In progress / Uploaded (pending approval)
+- [Mark as in progress] button
+
+---
+
+### TAB 4 — APPROVALS
+
+Full-width approval workflow.
+Three columns: Pending | Approved | Rejected
+Each item shows full detail: file, uploader, date, category, size, who needs to approve
+Approve / Restrict / Reject — with reason field on reject
+Bulk approve for Maestro on non-sensitive files
+
+---
+
+### TAB 5 — AUDIT LOG
+
+Full immutable audit trail.
+Columns: Timestamp | User | Role | Action | Category | File | IP
+Filters: by user, by category, by action type, by date range
+Export: [Download CSV] for compliance reporting
+Immutable: no delete, no edit — read only
+
+---
+
+### TAB 6 — INTELLIGENCE
+
+Entry point to all 9 products for this client.
+Same as the intelligence summary but within the admin context.
+9 product cards with status (ready / partial / needs data).
+Clicking any navigates to that product with client pre-loaded.
+
+---
+
+### TAB 7 — TEAM ACCESS
+
+Who has access to this engagement.
+Table: Name | Role | Access Level | Assigned By | Date | Last Active
+Add / Remove team members
+Access levels: View only / Standard / Full / Maestro
+Every change logged in audit trail
+
+---
+
+### DATA SOURCES
+
+All metrics and data pulled from src/data/[clientId]/ — no hardcoding.
+Client registry: src/lib/client-registry.ts
+Access control: src/lib/data-access.ts (role matrix)
+Supabase: RLS enforced on all tables by org_id
+
+---
+
+### SECURITY ENFORCEMENT
+
+Supabase RLS:
+- Every table has org_id column
+- Every query filtered by authenticated user's org_id
+- Service role key never used client-side
+- URL manipulation returns 403 immediately
+
+API layer:
+- Every route derives org_id from authenticated session — never from client params
+- /admin/client/firstcapital accessed by Meridian user → 403
+
+Application layer:
+- Engagement selector only shows clients user is assigned to
+- No client switcher visible once inside a client environment
+- Back button goes to selector — not to another client
+
+---
+
+### PHASE 3C QA GATE
+
+Screen 1 (Engagement Selector):
+- [ ] /admin shows ONLY client names and status — zero data visible
+- [ ] A Meridian-only Maestro sees ONLY Meridian in the list
+- [ ] Hovering a row: border turns teal, arrow turns teal
+- [ ] Clicking Meridian → /admin/client/meridian
+- [ ] Privacy note visible at bottom of page
+- [ ] All tab/link text is white (#EFF6FF) — no gray on dark background
+- [ ] URL manipulation to another client → 403
+
+Screen 2 (Client Dashboard):
+- [ ] Back button navigates to /admin selector
+- [ ] Color strip correct: teal (Meridian), indigo (First Capital), amber (Apex)
+- [ ] All 6 metric tiles show real data from src/data/[client]/
+- [ ] Severity bars: red for critical metrics, amber for warnings
+- [ ] ALL tab text is white (70% opacity inactive, 100% active, teal when selected)
+- [ ] NO gray text on any tab
+
+Data categories:
+- [ ] Completeness bar fills correctly per category
+- [ ] Expanding a category shows file table with correct columns
+- [ ] File table: filename, uploader (name + role + date), approver, access pill
+- [ ] Access pills: teal (All users), red (Role-restricted), indigo (Maestro only)
+- [ ] Pending files show amber "⏳ Pending approval" with who must approve
+- [ ] Upload zone hover → teal border
+
+Approvals sidebar:
+- [ ] 3 pending approvals shown with correct file names
+- [ ] Urgent indicator (pulsing dot) on items >48hrs old
+- [ ] Approve / Restrict / Reject buttons all functional
+- [ ] Approving a file → status changes to approved, audit log entry created
+
+Gaps sidebar:
+- [ ] 3 gaps shown with correct confidence impact
+- [ ] Business reason specific to this client
+- [ ] Download template buttons functional
+
+Audit log sidebar:
+- [ ] Shows last 10 entries with correct user, action, category
+- [ ] Immutable — no edit or delete UI
+
+Privacy enforcement:
+- [ ] Meridian Maestro cannot access /admin/client/firstcapital → 403
+- [ ] Every file view creates audit log entry
+- [ ] Audit log cannot be cleared by any UI action
+
+COMMIT: git commit -m "Phase 3C final: Maestro portal — privacy-first selector + full client engagement dashboard"
+
+---
+
+## PHASE 4F FINAL — SITUATION INTELLIGENCE: COMPLETE PRODUCT REDESIGN (3 hours)
+
+The AI-powered command center. First product every CXO touches.
+Replaces /diagnose entirely.
+
+The product promise:
+"Before your next board meeting, AbarVa tells you what's actually happening —
+not what your team reported. What's at risk. And exactly what to do next."
+
+---
+
+### PRODUCT HEADER (every product has this)
+
+```
+⚡ SITUATION INTELLIGENCE                [Meridian Health ▾]
+"What's actually broken — and what's it costing us?"
+Data confidence: 94%  ·  12 contradictions  ·  $156M at risk
+Last updated: Today  ·  Viewing as: CIO  ·  [Switch role ▾]
+```
+
+Design:
+- Background: #060A12
+- Product name: JetBrains Mono 11px 600 teal uppercase
+- CXO question: Fraunces 28px 500 white
+- Metrics row: DM Sans 13px #94A3B8
+- Confidence score: animates from 0 to 94% on load
+- Client selector: teal pill with chevron, switches client
+- Role switcher: shows current role, opens role menu
+
+---
+
+### STEP NAVIGATOR
+
+6 steps, always visible below product header:
+
+```
+① What's Happening  ②  Why It's Happening  ③  What's At Risk
+④  Ask Anything  ⑤  What To Do Next  ⑥  Situation Brief
+```
+
+Design:
+- Completed steps: teal circle with ✓, white text
+- Current step: white bold text, teal underline
+- Future steps: white text at 60% opacity
+- ALL step text: white (#EFF6FF) — never gray
+- Clicking any step navigates immediately — no gating
+
+---
+
+### STEP 1 — WHAT'S HAPPENING
+
+TWO COLUMN LAYOUT:
+
+LEFT (60%): Issue cards stacked vertically
+
+Each issue card:
+```
+┌──────────────────────────────────────────────────────┐
+│ [4px red left border]                                │
+│ 🔴 CRITICAL · RCM DENIAL RATE                        │
+│                                                      │
+│ Your team reported 94.2% collection to the board.   │
+│ Your claims data shows 87.1%.                        │
+│ That $31M gap has been growing for 3 quarters.       │
+│ Nobody flagged it.                                   │
+│                                                      │
+│ [$31M at risk]  [CFO + CRO own this]               │
+│                                                      │
+│ [See the data →]  [Who owns this →]  [What to do →] │
+└──────────────────────────────────────────────────────┘
+```
+
+Card design:
+- Background: #0D1520
+- Left border: 4px solid — red (critical) / amber (warning) / #1C2D45 (watch)
+- Severity label: JetBrains Mono 10px teal uppercase
+- Title: DM Sans 16px 500 white
+- Body: DM Sans 14px #94A3B8 — plain language, no consulting jargon
+- Impact pill: red bg, white text, dollar amount
+- Owner pill: #0D1520 bg, #94A3B8 text
+- Action buttons: teal text 13px, hover → underline
+
+Meridian issues (from real data):
+🔴 RCM Denial Rate — $94M gap, 3 quarters worsening
+🔴 CDO Vacant 14 months — $42M AI spend stalled, 0/6 pilots
+🔴 Travel Nurse Cost $48M vs $28M target — $20M overage
+🟡 Epic Optimization 58/100 vs 85 — $34M incentive at risk
+🟡 Prior Auth 23% vs 62% peers — payer risk rising
+🟡 MA Star 3.5 vs 4.0 needed — $34M bonus at risk
+⚪ AI Pilots 0/6 scaled — all stalled
+
+RIGHT (40%): Two panels stacked
+
+TOP — Severity Summary Donut:
+- SVG donut chart — segments: 3 critical (red), 4 warning (amber), 5 watch (gray)
+- Animates on load — segments draw in clockwise
+- Center: "$156M total at risk" — Fraunces 20px white
+- Legend below: ● 3 Critical  ● 4 Warning  ● 5 Watch
+- Clicking a segment filters issue cards to that severity
+
+BOTTOM — Benchmark Comparison:
+Horizontal bar chart, 4 metrics:
+```
+DENIAL RATE
+Meridian      ████████████████████ 18.2%  ← red
+Peer Median   ████████████         12.0%
+Top Quartile  ████████              8.2%
+
+OPERATING MARGIN
+Top Quartile  ████████████         5.2%
+Peer Median   ██████               3.4%
+Meridian      ██                   1.8%  ← red
+
+PRIOR AUTH
+Peers         █████████████        62%
+Meridian      ████                 23%   ← amber
+
+EPIC SCORE
+Target        █████████████████    85
+Meridian      ████████████         58    ← amber
+```
+
+Design:
+- Meridian bars: red when below benchmark, teal when above
+- Peer bars: #1C2D45 (dark)
+- Labels: DM Sans 11px #94A3B8
+- Values: JetBrains Mono 11px white
+- Animate bars on load — fill left to right
+
+TRAJECTORY CHART (above both columns, full width):
+A dual-axis mini chart:
+- Left axis: Revenue ($9.8B → $11.2B) — teal line going up
+- Right axis: Operating margin (3.2% → 2.1% → 1.8%) — red line going down
+- Title: "Revenue is growing. Margin is collapsing. Here is why."
+- This is the hook. The CIO sees the contradiction before reading anything.
+
+---
+
+### STEP 2 — WHY IT'S HAPPENING
+
+THE CONTRADICTION MAP — visual tension diagram, not a table.
+
+Full width. Each contradiction shown as a tension visualization:
+
+```
+WHAT WAS REPORTED          THE GAP        WHAT DATA SHOWS
+
+RCM: 94.2% collection ━━━━━━━━━━━━━━━━━━ 87.1% actual
+                              ↑
+                          $31M gap
+                        [3 quarters]
+
+AI: 6 pilots running  ━━━━━━━━━━━━━━━━━━ 0 delivering value
+                              ↑
+                          $42M sunk
+
+Prior Auth: vendor    ━━━━━━━━━━━━━━━━━━ Contract lapsed
+selected                      ↑
+                          6 month delay
+
+Epic: go-live done    ━━━━━━━━━━━━━━━━━━ 6 modules dark
+                              ↑
+                          $34M missed
+```
+
+Design:
+- Left column text: white, reported values
+- Center: teal tension lines (━━━), gap amount in red below each line
+- Right column text: red/amber, actual values
+- Lines animate left to right on step load
+- Clicking any row expands to show:
+  REPORTED BY: [Name, Role, Date, Source document]
+  DATA SOURCE: [File name, date, specific data point]
+  GAP STARTED: [Date divergence began]
+
+Meridian contradictions (from interview + data files):
+1. RCM collection: 94.2% reported → 87.1% actual → $31M gap
+2. AI pilots: 6 running → 0 delivering → $42M sunk
+3. Prior auth vendor: selected → contract lapsed → 6 month delay
+4. Epic go-live: complete → 6 modules dark → $34M missed
+5. CDO search: final interviews → search paused → 14 months
+
+---
+
+### STEP 3 — WHAT'S AT RISK
+
+THREE PANELS SIDE BY SIDE:
+
+PANEL 1: Financial Risk (horizontal bar chart)
+```
+FINANCIAL RISK                    $187M total
+
+RCM gap (annual)      $94M  ████████████████████
+AI spend undelivered  $42M  █████████
+Travel nurse overage  $20M  ████
+Epic incentive        $34M  ███████
+MA Star bonus         $34M  ███████
+```
+- Bars animate on load
+- Each bar clickable → opens detail panel
+- Total shown large at top in teal
+
+PANEL 2: Strategic Risk
+```
+● HIGH    CDO vacancy → AI program stall
+          6 pilots frozen. Competitors moving.
+
+● HIGH    Prior auth lag → payer relationship
+          3 payer contracts renewing Q3.
+
+● HIGH    Epic modules → CMS audit exposure
+          Next CMS review: 90 days.
+
+● MEDIUM  MA Star decline → bonus loss
+● MEDIUM  Travel nurse dependency → margin
+```
+Plain English. No bullet-point padding. Each item 2 lines max.
+
+PANEL 3: Timeline Risk
+Horizontal timeline, scrollable:
+```
+TODAY → 3 MONTHS → 6 MONTHS → 12 MONTHS → 18 MONTHS
+  │          │           │           │            │
+RCM audit  Epic      MA Star     Prior auth   HITRUST
+must start sprint    deadline    CMS mandate  target
+           done
+```
+Red dots = hard deadlines. Amber = action windows.
+Hovering shows what happens if missed.
+
+---
+
+### STEP 4 — ASK ANYTHING
+
+Not a generic chatbox. Structured intelligence interface.
+
+LEFT (35%): Pre-built questions by role
+RIGHT (65%): Response area
+
+Pre-built questions change when role switches.
+CIO questions (from data):
+- "What should I say to the board about RCM?"
+- "Which AI vendor decision is most urgent?"
+- "What does the CDO vacancy cost per month?"
+- "Where is Epic failing and who owns it?"
+- "How do we compare to peer health systems?"
+
+CFO questions:
+- "How much is the RCM gap costing in cash?"
+- "What's the ROI if we fix prior auth this quarter?"
+- "Where is our IT spend vs benchmark?"
+- "What's the financial impact of the MA Star gap?"
+
+CMIO questions:
+- "What's driving the prior auth denial rate?"
+- "Which Epic modules are dark and what do they cost?"
+- "How does our clinical AI compare to peers?"
+
+Maestro questions (additional):
+- "What data am I missing to sharpen this picture?"
+- "Draft the opening for my CIO briefing"
+- "What questions will the CFO ask?"
+
+Clicking a question fires it immediately.
+Response streams in on the right.
+Every response: source citation + confidence score + next action.
+
+---
+
+### STEP 5 — WHAT TO DO NEXT
+
+Three time horizons. Each action is specific, owned, actionable.
+
+```
+THIS WEEK                                        2 actions
+
+1. RCM AUDIT — Pull Q3 claims by payer
+   Why now: Gap growing 3 consecutive quarters. Board next month.
+   Owner: CFO + Chief Revenue Officer
+   AbarVa: Analysis template ready → [Generate →]
+   Effort: 2 days · Impact: $31M identified · Risk: HIGH
+
+2. CDO INTERIM — Appoint to unblock 6 AI pilots
+   Why now: $42M spent. 0 delivering. Board will ask.
+   Owner: CEO
+   AbarVa: Vendor decision brief ready → [View →]
+
+THIS MONTH                                       3 actions
+3. Prior Auth vendor — reactivate or re-bid
+4. Epic modules — 90-day activation sprint
+5. MA Star plan — 6-month roadmap to 4.0
+
+THIS QUARTER                                     2 actions
+6. AI program reset — baseline every initiative
+7. Travel nurse strategy — 18-month reduction plan
+```
+
+Design:
+- Time horizon headers: JetBrains Mono teal uppercase
+- Action number: large, teal
+- Action title: DM Sans 15px 500 white uppercase
+- Why now: DM Sans 13px #94A3B8 italic
+- Owner: DM Sans 12px white
+- Effort/Impact/Risk: pills
+- AbarVa artifact button: teal border, teal text, generates real artifact
+
+---
+
+### STEP 6 — SITUATION BRIEF
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  YOUR SITUATION BRIEF IS READY                          │
+│                                                         │
+│  Meridian Health System · April 13, 2026 · CIO View    │
+│                                                         │
+│  What's in it:                                          │
+│  · 3 critical issues with data sources                 │
+│  · 12 contradictions mapped                            │
+│  · $156M at risk, broken down by category              │
+│  · 7 prioritized actions with owners and timelines     │
+│                                                         │
+│  [Download Situation Brief →]   HTML · PDF · Word      │
+│  [Send to Board →]              email with brief       │
+│  [Build AI Strategy from this →] goes to AI Investment │
+│                                                         │
+│  ───────────────────────────────────────────────────── │
+│  What McKinsey charges $1.8M and 8 weeks to produce.  │
+│  This took 4 minutes.                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+Brief auto-generates as HTML with:
+- AbarVa wordmark + client name + date + role
+- All 4 steps summarized — 2 pages max
+- Every finding sourced
+- Action table with owners
+
+---
+
+### ROLE SWITCHER — PERSISTENT BOTTOM BAR
+
+Always visible. Fixed at bottom of viewport.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Viewing as:  [CIO]  [CFO]  [COO]  [CMIO]  [CEO]  [Maestro]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+When role switches:
+- Step 1: issues reorder by relevance to that role
+- Step 4: pre-built questions change
+- Step 6: brief uses role-appropriate framing
+- Maestro view: adds data gap indicators and confidence scores on every finding
+- Active role: teal background, dark text
+- Inactive roles: white text on dark, hover → teal text
+
+---
+
+### SCENARIO B — PROGRESSIVE LOADING (Riverside)
+
+When client has partial data:
+```
+⚡ SITUATION INTELLIGENCE · RIVERSIDE MEDICAL
+Data confidence: 34% · 2 findings · More available with more data
+
+✓ FROM WHAT WE HAVE:
+🟡 Operating margin 1.8% — below 4.2% peer benchmark
+🟡 IT spend $142M — 6.7% of revenue, above sector average
+
+⬜ LOCKED — upload to unlock:
+  Technology inventory → unlocks 4 AI program findings  [Upload →]
+  Clinical data → unlocks 6 quality findings            [Upload →]
+  Interview transcripts → unlocks leadership gaps       [Upload →]
+```
+
+Each upload in real time:
+1. File uploads → badge turns green → confidence animates up
+2. New findings appear with fade-in animation
+3. "What this unlocked" panel slides in from right
+
+---
+
+### PHASE 4F QA GATE
+
+Product header:
+- [ ] "SITUATION INTELLIGENCE" in JetBrains Mono teal uppercase
+- [ ] CXO question in Fraunces white
+- [ ] Confidence animates from 0% on load
+- [ ] Client selector works, switches between clients correctly
+- [ ] All 6 step labels WHITE — never gray
+
+Step 1:
+- [ ] Trajectory chart shows at full width above columns
+- [ ] Meridian: 7 issue cards with correct numbers from data files
+- [ ] Card left borders: red (critical), amber (warning)
+- [ ] Severity donut animates, clicking segment filters cards
+- [ ] Benchmark comparison shows 4 metrics with correct Meridian values
+- [ ] Meridian bars red when below benchmark
+- [ ] First Capital and Apex show their own correct issues
+
+Step 2:
+- [ ] Contradiction map renders as visual tension diagram — NOT a table
+- [ ] Tension lines animate left to right on step load
+- [ ] 5 contradictions shown for Meridian with correct reported vs actual values
+- [ ] Clicking any row expands source attribution
+- [ ] Source shows: who reported, data source, when gap started
+
+Step 3:
+- [ ] 3 panels: Financial / Strategic / Timeline
+- [ ] Financial bars animate, each clickable
+- [ ] Total $187M shown correctly for Meridian
+- [ ] Strategic risks in plain English — no jargon
+- [ ] Timeline shows correct deadlines
+
+Step 4:
+- [ ] Pre-built questions visible on left
+- [ ] Questions change when role switches
+- [ ] Clicking fires question immediately, response streams
+- [ ] Maestro view shows additional questions
+
+Step 5:
+- [ ] 3 time horizons with correct actions for Meridian
+- [ ] Actions are client-specific — not generic
+- [ ] [Generate →] buttons produce real artifacts
+- [ ] First Capital and Apex show their own actions
+
+Step 6:
+- [ ] Brief downloads as HTML correctly
+- [ ] Contains all findings with sources
+- [ ] "Build AI Strategy →" navigates to /ai-strategy?client=meridian
+- [ ] McKinsey line appears ONLY here — Step 6 only
+
+Role switcher:
+- [ ] Always visible at bottom
+- [ ] All role buttons: white text, teal when active
+- [ ] Switching reorders Step 1 issues correctly
+- [ ] Maestro view shows confidence scores and data gap indicators
+
+Scenario B (Riverside):
+- [ ] Opens with 34% confidence, 2 findings visible
+- [ ] Locked categories show upload prompts
+- [ ] Uploading file: badge turns green, confidence animates, findings appear
+- [ ] Works in under 60 seconds per file
+
+Zero dead ends:
+- [ ] Every button on every step goes somewhere correct
+- [ ] Every [→] button navigates with correct client pre-loaded
+- [ ] Back navigation always works
+- [ ] No 404s, no blank states, no broken layouts
+
+COMMIT: git commit -m "Phase 4F final: Situation Intelligence — 4 zones, trajectory chart, contradiction map, role switcher, progressive loading"
+
+
+---
+
+## PHASE 4G FINAL — AI INVESTMENT INTELLIGENCE: COMPLETE REDESIGN (4 hours)
+
+The product that closes the deal. The moment where industry intelligence,
+client data, and the Transformation Genome collide to produce something
+no consulting firm can produce on day one.
+
+The product promise:
+"Where should we place our AI bets — and which ones will fail?"
+
+REPLACES the current /ai-strategy page entirely.
+
+---
+
+### THE KNOWLEDGE LAYER PRINCIPLE
+
+This product draws from THREE sources simultaneously.
+Every recommendation is attributed to its source. Always transparent.
+
+SOURCE 1 — CLIENT DATA (what Meridian provided)
+Their actual numbers: denial rate, IT budget, vendor spend,
+Epic score, AI initiative status, leadership team, financials.
+This is what makes the recommendation specific to them.
+
+SOURCE 2 — INDUSTRY KNOWLEDGE LAYER (what AbarVa knows about the market)
+Peer outcomes across hundreds of similar organizations.
+Vendor performance data from real contracts.
+Regulatory environment and timeline intelligence.
+Benchmark distributions — not averages, full percentile ranges.
+
+SOURCE 3 — TRANSFORMATION GENOME (what AbarVa learned from real engagements)
+Pattern data from real transformation engagements, anonymised.
+Success patterns: what the organizations that succeeded did differently.
+Failure patterns: what the 34% who failed had in common.
+This is the proprietary layer no competitor can replicate.
+
+Every opportunity card shows all three sources.
+Every recommendation can be challenged and will respond with evidence.
+
+---
+
+### TWO MODES — MAESTRO PREP vs LIVE SESSION
+
+MAESTRO PREP MODE (default when Maestro opens the product)
+Full intelligence visible. Every layer. Every confidence score.
+Every source attribution. Every failure pattern detail.
+Suggested talking points per opportunity.
+Questions the CXO is likely to ask — and suggested answers.
+The Maestro uses this to prepare before the meeting.
+
+LIVE SESSION MODE (Maestro switches when CXO joins)
+Cleaner presentation. Knowledge layer evidence summarised, not raw.
+CXO sees the intelligence. Maestro sees the prep notes alongside.
+Real-time response to CXO challenges and alternative ideas.
+"Challenge this →" and "Assess alternative →" buttons prominent.
+
+Mode toggle in product header:
+[Maestro Prep]  [Live Session]
+Both modes work. Switching never loses the current session.
+
+---
+
+### PRODUCT HEADER
+
+```
+💡 AI INVESTMENT INTELLIGENCE        [Meridian Health ▾]  [Maestro Prep ▾]
+"Where should we place our AI bets — and which are high-risk?"
+
+5 recommended bets  ·  12 opportunities analyzed  ·  $864M 3-year value
+Knowledge layer: 47 peer deployments  ·  Genome: 127 patterns  ·  Confidence: 87%
+```
+
+Design:
+- Background: #060A12
+- Product name: JetBrains Mono 11px teal uppercase
+- CXO question: Fraunces 28px white
+- Metrics row: DM Sans 13px #94A3B8
+- Mode toggle: pill switcher, teal when active
+- All text: white or teal — never gray
+
+---
+
+### THREE-ACT NAVIGATION
+
+```
+[  ACT 1: THE TRUTH  ]  [  ACT 2: THE BETS  ]  [  ACT 3: THE BOARD DECK  ]
+```
+
+Acts are large clickable buttons, full width, prominent.
+Current act: teal background, dark text.
+Other acts: dark background, white text, hover → teal border.
+
+Step navigator (collapsed by default):
+```
+▸ Show all 8 steps
+  ① Ground Truth  ② Executives Disagree  ③ Every Opportunity
+  ④ Your Five Bets  ⑤ Wave 1 Plan  ⑥ Business Case
+  ⑦ Failure Genome  ⑧ Board Deck Ready
+```
+
+---
+
+### ACT 1 — THE TRUTH
+
+What it answers: Before placing bets, here is what your data
+actually shows — and where your executives disagree.
+And here is how you compare to peers who faced the same situation.
+
+LAYOUT: Two columns, full height.
+
+LEFT COLUMN (45%) — AI Readiness Gauges
+
+Three large gauge dials, animated on load:
+
+```
+     DATA              TECHNOLOGY           ORG
+   READINESS           READINESS          READINESS
+
+     67%                  52%               41%
+   ████████            █████               ████
+
+  58th percentile    43rd percentile    31st percentile
+  of peer health     of peer health     of peer health
+  systems            systems            systems
+```
+
+Below each gauge — three-source breakdown:
+
+DATA READINESS — 67%
+FROM YOUR DATA: Claims data ✓ · Epic extract ✓ · Payer contracts ✓
+                Interview transcripts ✗ · Workforce data ✗
+FROM INDUSTRY:  Health systems with 67%+ data readiness successfully
+                pursue 8 of 12 AI opportunity types
+FROM GENOME:    Organizations with this exact data profile averaged
+                $47M in Year 1 AI value when they prioritized RCM first
+
+Clicking any gauge opens full breakdown panel.
+
+RIGHT COLUMN (55%) — Executive Fault Lines
+
+Title: "Where your leadership team disagrees"
+Sub: "These fault lines predict which AI initiatives will face internal resistance."
+
+Five fault lines as visual tension diagram:
+
+```
+WHAT LEADERSHIP BELIEVES       TENSION      WHAT DATA SHOWS
+
+CFO: "Cost reduction first"   ━━━━━━━━━━━  Data: Revenue cycle AI
+CIO: "Clinical AI first"      ━━━━━━━━━━━  delivers 3.5x more value
+                                    ↑       than clinical AI at
+                               HIGH RISK    Meridian's data maturity
+                               for program
+                               failure
+
+CIO: "Build on Epic"          ━━━━━━━━━━━  Genome: 3 of 6 proposed
+CMIO: "Buy best-of-breed"     ━━━━━━━━━━━  Epic AI modules have <40%
+                                    ↑       activation in peer systems
+                               CMIO        CMIO concern validated
+                               validated
+```
+
+FROM GENOME annotation on each fault line:
+"In 23 similar organizations with this fault line unresolved,
+AI program ROI was 41% lower than organizations that resolved it first."
+
+This is what the knowledge layer adds. The fault line isn't just a disagreement.
+It's a quantified risk based on what happened elsewhere.
+
+MAESTRO PREP additions (visible in Maestro Prep mode only):
+- Suggested talking point for each fault line
+- "How to surface this with the CIO" guidance
+- Questions the CIO is likely to ask about this fault line
+
+---
+
+### ACT 2 — THE BETS
+
+What it answers: Here are your five recommended bets.
+Here is why. Here is what the alternatives cost you.
+And here is what we know from every organization that tried this before you.
+
+LAYOUT: Three panels stacked.
+
+---
+
+PANEL 1 — OPPORTUNITY LANDSCAPE (full width, 30% height)
+
+Scatter plot. Every opportunity as a bubble.
+
+X axis: Implementation complexity (Low → High)
+Y axis: Annual value ($M)
+Bubble size: Confidence score (bigger = higher confidence)
+Bubble color:
+- TEAL: Recommended bet (top 5)
+- BLUE: Wave 2 opportunity
+- GRAY: Wave 3 or not recommended
+
+Hover any bubble:
+```
+RCM AI Automation
+Annual value: $28-39M  ·  Confidence: 82%
+Complexity: Medium  ·  Timeline: 14 months to full value
+From your data: 18.2% denial rate, $504M IT budget
+From industry: 47 deployments, median value $19M
+From Genome: 34% fail rate — 3 risk signals present
+[View full analysis →]
+```
+
+The scatter plot makes the portfolio visible at a glance.
+High value + low complexity = obvious Wave 1.
+High value + high complexity = strategic Wave 2.
+Low value = deprioritize.
+
+---
+
+PANEL 2 — THE FIVE BETS (full width, 40% height)
+
+Horizontally scrollable row of 5 recommended bet cards.
+"Show all 12 →" button at the end of the row.
+
+Each bet card — THREE SOURCE ATTRIBUTION:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ ⭐ BET 1 — RECOMMENDED                              Wave 1 · 90 days │
+│                                                                     │
+│ RCM AI Automation                                                   │
+│ Revenue Cycle · Back Office · Grow                                  │
+│                                                                     │
+│ ┌─────────────────────────────────────────────────────────────────┐ │
+│ │ FROM YOUR DATA      FROM INDUSTRY         FROM GENOME           │ │
+│ │ Denial: 18.2%       47 deployments        34% fail rate         │ │
+│ │ Gap: 6.8pp          Median value: $19M    3 risk signals        │ │
+│ │ IT budget: $504M    Top quartile: $34M    present at Meridian   │ │
+│ └─────────────────────────────────────────────────────────────────┘ │
+│                                                                     │
+│ YOUR ESTIMATED VALUE                                                │
+│ $28-39M annually  ·  82% confidence  ·  7x ROI  ·  14mo to value  │
+│                                                                     │
+│ FAILURE RISK: 🟡 MEDIUM — 3 risk signals present                   │
+│ [View Failure Genome →]                                             │
+│                                                                     │
+│ [✓ Keep this bet]  [✗ Remove]  [? Challenge this]                 │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+Three action buttons:
+[✓ Keep this bet] — confirms the recommendation
+[✗ Remove] — triggers trade-off analysis
+[? Challenge this] — opens evidence panel for CXO to interrogate
+
+CHALLENGE THIS flow (when CXO questions a recommendation):
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CHALLENGE: RCM AI Automation
+
+You questioned this recommendation. Here is the evidence.
+
+FROM YOUR DATA:
+Your denial rate of 18.2% is 6.8 percentage points above
+the peer median of 11.4%. At your claims volume, each
+percentage point of improvement is worth approximately
+$13.8M annually. That is the source of the $28-39M estimate.
+
+FROM INDUSTRY:
+Of 47 health systems that prioritized RCM AI:
+· 31 achieved value within 18 months
+· Average improvement: 6.1 percentage points
+· Top quartile improvement: 8.3 percentage points
+· Your situation maps closest to the 31 who succeeded
+  based on: data readiness, IT budget, payer mix
+
+FROM GENOME:
+The 16 that failed had these in common:
+· 12 had a leadership vacancy at go-live (Meridian: CDO vacant)
+· 9 had incomplete prior auth data (Meridian: 23% connected)
+· 7 chose vendors on demo quality not reference outcomes
+
+AbarVa still recommends this. The risks are real but manageable.
+Here is what success looks like at Meridian specifically:
+[See the success pattern →]
+
+What would change this recommendation:
+· If you don't appoint a CDO interim before go-live
+· If prior auth data coverage stays below 40%
+· If vendor selection is based on price alone
+
+[I understand — keep this bet]  [Still remove it →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+REMOVE flow (when CXO removes a bet):
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+TRADE-OFF ANALYSIS
+
+You removed: RCM AI Automation
+
+What this means for Meridian:
+· 3-year value drops from $864M to $825M (-$39M)
+· Wave 1 ROI drops from 340% to 190%
+· The $94M denial rate gap remains unaddressed
+· Your CFO will ask about this at the next board meeting
+
+What would you replace it with?
+[Browse all 12 opportunities →]
+[Suggest your own →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+SUGGEST YOUR OWN flow:
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ASSESS AN ALTERNATIVE
+
+What initiative would you like to explore?
+[                                                ]
+
+AbarVa will assess it against:
+· Your data (feasibility at Meridian)
+· Industry outcomes (what happened elsewhere)
+· Transformation Genome (success and failure patterns)
+· Your current bets (conflicts and synergies)
+
+[Assess this →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[After 30 seconds — AI response:]
+
+ASSESSMENT: AI-Powered Staff Scheduling
+
+FROM YOUR DATA:
+Your workforce data is not loaded — assessment is partial.
+Based on industry patterns for your staff size (31,000):
+estimated value $8-14M annually at your scale.
+
+FROM INDUSTRY:
+Healthcare organizations your size: 71% success rate.
+Average time to value: 11 months.
+Primary risk: change management with clinical staff.
+
+FROM GENOME:
+Organizations with a vacant CDO (like Meridian) had 
+lower success rates on workforce AI — the same leadership
+gap that affects RCM AI affects this initiative too.
+
+RECOMMENDATION: Add to Wave 2 after CDO is appointed.
+Wave 1 with current leadership gap: 55% success probability.
+Wave 2 after CDO: 78% success probability.
+
+[Add to Wave 2 →]  [Add to Wave 1 anyway →]  [Discard →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+MAESTRO PREP additions on each card (visible in prep mode):
+- "Likely CXO objection: [specific objection]"
+- "Suggested response: [specific response]"
+- "Data point to lead with: [the most persuasive number]"
+- "The question that will surface resistance: [question]"
+
+---
+
+PANEL 3 — WAVE 1 PLAN (full width, 30% height)
+
+Three-phase timeline for the confirmed bets:
+
+```
+WAVE 1 PLAN — STARTS IN 90 DAYS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DAYS 1-30              DAYS 31-60           DAYS 61-90
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Baseline locked        Vendor selected      Pilot live
+RCM audit complete     Contract signed      Team trained
+CDO interim named      Data pipeline set    First results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Owner: CFO + CRO       Owner: CIO           Owner: CDO interim
+Investment: $4M        Investment: $2M      Investment: $2M
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Wave 1 total: $8M investment · $77M annual value · 3.7x ROI
+```
+
+Four metric cards below:
+
+```
+[Total Investment]    [Annual Value]    [Blended ROI]    [Time to Value]
+     $21M                $77M              3.7x            14 months
+```
+
+Industry context card (from knowledge layer) — last, prominent:
+```
+┌──────────────────────────────────────────────────────────┐
+│ INDUSTRY CONTEXT                                         │
+│                                                          │
+│ Health systems your size that completed this analysis    │
+│ and acted within 90 days achieved 2.3x more value       │
+│ than those that waited 6 months.                         │
+│                                                          │
+│ The window for Wave 1 pricing from current vendors       │
+│ closes in approximately 4 months based on market trends. │
+│                                                          │
+│ Leading advisory firms charge $2-4M and 16 weeks        │
+│ to produce a less data-specific version of this output. │
+└──────────────────────────────────────────────────────────┘
+```
+
+Note: Generic reference to "leading advisory firms" — never name specific firms.
+
+---
+
+### THE FAILURE GENOME DRAWER
+
+Accessed from any bet card via [View Failure Genome →]
+Opens as right-side drawer — does not navigate away.
+Width: 420px. Scrollable.
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FAILURE GENOME
+RCM AI Automation · Meridian Health System
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FROM THE GENOME: 47 deployments analyzed
+31 succeeded (66%) · 16 failed (34%)
+
+OVERALL RISK FOR MERIDIAN: 🟡 MEDIUM
+3 of 7 failure patterns are present.
+Here is what that means and what to do.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PATTERN 1: Leadership Vacancy at Go-Live
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Risk level: 🔴 HIGH — present at Meridian
+
+FROM GENOME: 12 of 16 failures had this.
+0 of the 31 successes had an unfilled CDO role
+at the time of vendor go-live.
+
+AT MERIDIAN: CDO vacant 14 months.
+3 vendor decisions await CDO authority.
+
+MITIGATION: Appoint interim CDO before vendor
+contract is signed. Even a 90-day interim
+reduces this risk from HIGH to LOW.
+
+Specific action: [Generate CDO interim brief →]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PATTERN 2: Incomplete Prior Auth Data
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Risk level: 🟡 MEDIUM — present at Meridian
+
+FROM GENOME: 9 of 16 failures started pilot
+without standardized prior auth data by payer.
+The AI model trained on incomplete data and
+underperformed by 40% vs projections.
+
+AT MERIDIAN: 23% prior auth connected.
+Peers average 62%. Gap is significant.
+
+MITIGATION: 30-day data remediation sprint
+before vendor selection. Brings coverage to
+estimated 55-60% — sufficient for pilot.
+
+Specific action: [Generate data sprint plan →]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PATTERN 3: Vendor Selected on Demo Quality
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Risk level: 🟡 MEDIUM — risk, not confirmed
+
+FROM GENOME: 7 of 16 failures chose vendors
+based on demo performance and price.
+The 31 successes used reference outcomes
+from similar health systems as primary criteria.
+
+AT MERIDIAN: Vendor selection not yet started.
+This risk is preventable.
+
+MITIGATION: Use the Vendor Intelligence product
+to score vendors on reference outcomes first,
+demo quality second.
+
+Specific action: [Open Vendor Intelligence →]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PATTERNS 4-7: NOT PRESENT AT MERIDIAN 🟢
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Data quality failure — your claims data is 94% clean
+✓ Scope creep — 6 stalled pilots show discipline exists
+✓ Integration failure — Epic native integration available
+✓ ROI measurement gap — AbarVa baseline will be set
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+BOTTOM LINE FOR MERIDIAN
+
+You can succeed at this. 31 organizations did.
+But you need to fix 2 things before go-live:
+1. Appoint CDO interim — before vendor contract
+2. Run 30-day prior auth data sprint — before pilot
+
+Do those two things and your success probability
+goes from 66% to 84% based on Genome patterns.
+
+[Generate full risk mitigation plan →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Design:
+- Drawer background: #0D1520
+- Pattern headers: JetBrains Mono 11px teal uppercase
+- Risk level pills: red/amber/green with icons
+- FROM GENOME prefix: JetBrains Mono 9px #64748B uppercase
+- AT MERIDIAN prefix: JetBrains Mono 9px #2DD4C8 uppercase
+- Body text: DM Sans 13px #94A3B8
+- Specific action buttons: teal border, teal text
+- Bottom line section: separate with teal top border
+
+---
+
+### ACT 3 — THE BOARD DECK
+
+What it answers: Your board deck is ready.
+One click. Already perfect.
+
+LAYOUT: Two columns.
+
+LEFT (55%) — Live preview panel
+
+Scrollable preview of the actual board deck slides.
+Each slide visible, readable, clickable to edit.
+
+10 slides:
+1. Executive Summary — "5 AI bets. $864M 3-year value. Wave 1 starts in 90 days."
+2. Your Situation — top 3 issues from Situation Intelligence
+3. Where Leadership Disagrees — fault line map from Act 1
+4. The Opportunity Landscape — scatter plot from Act 2
+5. Your Five Bets — 5 opportunity cards with three-source attribution
+6. The Wave 1 Plan — 90-day timeline with owners
+7. The Investment Case — 3-scenario financial model
+8. Risk Mitigation — Failure Genome top patterns + specific mitigations
+9. What We Need to Proceed — data gaps + decisions needed
+10. The Outcome Commitment — "AbarVa earns its fee only when outcomes are verified"
+
+Each slide has a pencil icon — clicking opens an inline edit panel.
+CXO can adjust any number, add context, exclude a slide.
+Changes update the download immediately.
+
+RIGHT (45%) — Export panel
+
+```
+YOUR BOARD DECK IS READY
+
+Meridian Health System
+AI Investment Strategy 2026
+Prepared by AbarVa · April 13, 2026
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOWNLOAD OPTIONS
+
+[📊 Present Now →]
+Open full-screen presentation in browser.
+Keyboard navigable. Speaker notes visible
+to presenter only.
+
+[⬇ Download HTML →]
+Single file. Opens in any browser.
+Send to board before the meeting.
+
+[📈 Business Case Excel →]
+CFO-ready financial model.
+3 scenarios with sensitivity analysis.
+
+[🗺 Technical Roadmap →]
+CIO-ready implementation plan.
+Wave 1 detail with owners and dates.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+MAESTRO PREP PACK (Maestro mode only)
+
+[📋 Talking Points Doc →]
+One page per bet. Objections + responses.
+Data points to lead with.
+
+[❓ Likely Questions →]
+What the CIO, CFO, and CMIO will ask.
+Suggested answers with evidence citations.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WHAT HAPPENS NEXT
+
+Once bets are confirmed:
+1. AbarVa locks the baseline metrics today
+2. Wave 1 begins — 90-day clock starts
+3. Outcomes tracked monthly in the platform
+4. Fee triggers only on verified savings
+
+[Confirm bets and set baseline →]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+CONFIRM BETS AND SET BASELINE — the most important button:
+
+Clicking opens a confirmation modal:
+```
+CONFIRM YOUR FIVE BETS
+Meridian Health System · April 13, 2026
+
+You are confirming:
+1. RCM AI Automation — $28-39M target
+2. Prior Auth AI — $18-24M target
+3. Clinical Documentation AI — $12-18M target
+4. Travel Nurse Reduction — $14-20M target
+5. Epic Optimization Sprint — $8-12M target
+
+Total Wave 1 target: $77M annual value
+
+AbarVa will:
+· Lock today's metrics as the baseline
+· Begin monthly outcome tracking
+· Report progress in Outcome Intelligence
+· Fee triggers only when savings are verified
+
+Marcus Webb, CIO — confirms this commitment
+[Signed: _______________]  [Date: April 13, 2026]
+
+[Confirm and Lock Baseline →]    [Not yet →]
+```
+
+After confirmation:
+- Baseline record created in Supabase
+- Meridian appears in Outcome Intelligence dashboard
+- Wave 1 clock starts
+- Confirmation sent to Maestro and CXO by email
+
+Design:
+- Modal background: #0D1520
+- Commitment line: Fraunces 16px white — feels weighty
+- Signature field: underlined, interactive
+- Confirm button: teal, prominent
+- Not yet: subtle, white text
+
+---
+
+### SCENARIO B — PROGRESSIVE LOADING
+
+Act 1 with partial data:
+```
+AI READINESS — PARTIAL DATA
+Data: 34% · Technology: Not loaded · Org: Not loaded
+
+FROM WHAT WE HAVE:
+· Financial feasibility assessed for 5 of 12 opportunities
+· Revenue cycle opportunity: $8-18M estimated (low confidence)
+· IT spend efficiency: above peer benchmark (modernization signal)
+
+FROM INDUSTRY (always available regardless of data):
+· Health systems your size with similar financial profile
+  have found RCM AI to be the highest-value first bet
+  in 71% of cases
+
+Upload technology inventory → unlocks Tech Readiness gauge
+Run executive interviews → unlocks Org Readiness + fault lines
+```
+
+Act 2 with partial data:
+```
+5 OF 12 OPPORTUNITIES ASSESSABLE NOW
+
+The 5 assessable opportunities show estimated values only.
+Confidence: LOW — based on industry patterns, not your specific data.
+
+Upload clinical data → refines 4 opportunity estimates significantly
+Upload vendor contracts → unlocks contract optimization opportunity
+```
+
+---
+
+### DATA SOURCES
+
+Act 1:
+- AI readiness scores → src/data/[client]/ai.ts → readinessScores
+- Percentile rankings → knowledge layer benchmark database
+- Fault lines → src/data/[client]/interviews.ts → executiveFaultLines
+- Genome context → src/data/knowledge/genome-patterns.ts
+
+Act 2:
+- All 12 opportunities → src/data/[client]/ai.ts → aiOpportunities
+- Three-source attribution → each opportunity has clientData, industryData, genomeData
+- Failure patterns → src/data/knowledge/failure-patterns.ts
+- Wave plan → calculated from confirmed bets
+
+Act 3:
+- Board deck → compiled from Acts 1 and 2
+- Business case → src/data/[client]/financials.ts → businessCase
+- Baseline record → Supabase outcomes table on confirmation
+
+Knowledge layer files to create:
+- src/data/knowledge/genome-patterns.ts — 127 patterns, anonymised
+- src/data/knowledge/failure-patterns.ts — 7 patterns with scoring logic
+- src/data/knowledge/industry-benchmarks.ts — percentile distributions
+- src/data/knowledge/peer-outcomes.ts — anonymised outcome data
+
+---
+
+### PHASE 4G QA GATE
+
+Product header:
+- [ ] "AI INVESTMENT INTELLIGENCE" JetBrains Mono teal uppercase
+- [ ] CXO question Fraunces white
+- [ ] Mode toggle: Maestro Prep / Live Session functional
+- [ ] Metrics row shows correct counts for active client
+- [ ] All text: white or teal — never gray
+
+Three-act navigation:
+- [ ] 3 act buttons full width, prominent
+- [ ] Current act: teal background
+- [ ] Step navigator collapsed by default, expands correctly
+- [ ] All step text: white — never gray
+
+Act 1:
+- [ ] 3 gauge dials animate from 0 on load
+- [ ] Percentile rankings shown below each gauge
+- [ ] Three-source breakdown visible for each gauge
+- [ ] 5 fault lines visible in tension diagram format
+- [ ] Genome context annotation on each fault line
+- [ ] Maestro Prep mode shows talking points and suggested responses
+- [ ] Meridian: Data 67%, Tech 52%, Org 41%
+- [ ] First Capital and Apex show their own correct scores
+
+Act 2:
+- [ ] Scatter plot renders with all 12 opportunities
+- [ ] Hover shows three-source attribution for each bubble
+- [ ] 5 recommended bets shown as cards (not 3)
+- [ ] "Show all 12 →" button works
+- [ ] Each card shows: FROM YOUR DATA / FROM INDUSTRY / FROM GENOME columns
+- [ ] [✓ Keep] / [✗ Remove] / [? Challenge] all functional
+- [ ] Challenge flow shows full evidence from all 3 sources
+- [ ] Remove flow shows trade-off analysis with correct numbers
+- [ ] "Suggest your own" input works, AI assessment returns in 30 seconds
+- [ ] Assessment uses knowledge layer — not just client data
+- [ ] Maestro Prep mode shows likely objections and suggested responses
+- [ ] Wave 1 plan shows correct Days 1-30/31-60/61-90
+- [ ] Industry context card shows generic comparison — no firm names
+- [ ] All 4 metric cards show correct totals
+
+Failure Genome drawer:
+- [ ] Opens as right-side drawer without navigating away
+- [ ] Shows all 7 patterns with Meridian-specific scoring
+- [ ] 3 risk patterns marked as present at Meridian
+- [ ] 4 patterns marked as not present (green checkmarks)
+- [ ] FROM GENOME and AT MERIDIAN prefixes on every pattern
+- [ ] Specific action buttons for each pattern functional
+- [ ] Bottom line shows correct success probability
+
+Act 3:
+- [ ] 10 slides visible in preview panel, all readable
+- [ ] Clicking any slide opens inline edit panel
+- [ ] [Present Now →] opens full-screen presentation mode
+- [ ] Keyboard navigation works in presentation mode
+- [ ] Speaker notes visible to presenter only
+- [ ] [Download HTML →] downloads single working file
+- [ ] [Business Case Excel →] downloads working spreadsheet
+- [ ] Maestro Prep mode shows Talking Points Doc and Likely Questions
+- [ ] [Confirm bets and set baseline →] opens confirmation modal
+- [ ] Confirmation modal shows all 5 bets with targets
+- [ ] Confirming creates baseline record in Supabase
+- [ ] Meridian appears in Outcome Intelligence after confirmation
+
+Knowledge layer:
+- [ ] Genome patterns file exists at src/data/knowledge/genome-patterns.ts
+- [ ] Failure patterns file exists with 7 patterns and scoring logic
+- [ ] Industry benchmarks file exists with percentile distributions
+- [ ] All knowledge layer data is anonymised — no client names
+- [ ] Three-source attribution shows on every opportunity card
+
+Scenario B:
+- [ ] Partial data shows industry context even without client data
+- [ ] Upload prompts specific to what each file unlocks
+- [ ] Confidence level shown clearly for partial assessments
+
+Zero dead ends:
+- [ ] Every button on every act navigates correctly
+- [ ] Every [→] goes somewhere complete with client pre-loaded
+- [ ] No 404s, no blank states
+- [ ] Back navigation always works
+
+COMMIT: git commit -m "Phase 4G final: AI Investment Intelligence — 3 acts, 5 bets, three-source attribution, Failure Genome drawer, Maestro prep mode, baseline commitment"
+
+
+---
+
+## TESTING FRAMEWORK — MANDATORY FOR ALL PHASES
+
+This framework applies to every phase from this point forward.
+No phase is complete until all tests pass.
+No commit happens until all tests pass.
+
+---
+
+### THE CORE PRINCIPLE
+
+Every interactive element must be tested for BEHAVIORAL CORRECTNESS
+not just VISUAL PRESENCE.
+
+The difference:
+WRONG: "The role switcher renders on screen" ← visual presence only
+RIGHT: "Clicking CFO shows different issues than CIO" ← behavioral correctness
+
+A button that exists but does nothing is a bug.
+A dropdown that opens but doesn't filter is a bug.
+A chart that animates but shows wrong data is a bug.
+
+---
+
+### LAYER 1 — BEHAVIOR SPECIFICATION (write before building)
+
+Before building any interactive component, Claude Code must write
+a behavior specification as a comment block at the top of the component:
+
+```typescript
+/**
+ * BEHAVIOR SPEC: RoleSwitcher
+ *
+ * INPUTS:
+ * - activeRole: 'CIO' | 'CFO' | 'COO' | 'CMIO' | 'CEO' | 'Maestro'
+ * - clientId: string
+ * - issues: Issue[]
+ *
+ * EXPECTED OUTPUTS when role changes:
+ * - CIO: shows Technology, Vendors, IT Financials issues first
+ *   Meridian CIO top issues: CDO Vacant, Epic Score, AI Pilots
+ * - CFO: shows Financial, RCM, IT Spend issues first
+ *   Meridian CFO top issues: RCM Denial Rate, Operating Margin, Travel Nurse
+ * - CMIO: shows Clinical, Quality, Epic issues first
+ *   Meridian CMIO top issues: Epic Score, Prior Auth, MA Star Rating
+ * - COO: shows Operations, Workforce issues first
+ * - CEO: shows all issues, highest severity first
+ * - Maestro: shows all issues + confidence scores + data gaps
+ *
+ * FAILURE CONDITIONS:
+ * - Clicking any role shows identical issues = BUG
+ * - Role switch takes >200ms to update = PERFORMANCE BUG
+ * - Issues do not reorder when role changes = BUG
+ *
+ * TEST: After building, verify by clicking each role in sequence
+ * and confirming the top issue changes for each role.
+ */
+```
+
+This comment must exist on EVERY interactive component.
+If it cannot be written, the component is not ready to build.
+
+---
+
+### LAYER 2 — AUTOMATED BEHAVIOR TESTS
+
+Create test file: `src/__tests__/behaviors/`
+
+One test file per product. Written alongside the build.
+
+```typescript
+// src/__tests__/behaviors/situation-intelligence.test.ts
+
+import { filterIssuesByRole } from '@/lib/situation-intelligence'
+import { meridianIssues } from '@/data/meridian/issues'
+
+describe('Situation Intelligence — Role Switcher', () => {
+
+  test('CIO sees Technology and AI issues first', () => {
+    const cioIssues = filterIssuesByRole(meridianIssues, 'CIO')
+    expect(cioIssues[0].category).toMatch(/technology|ai|vendor/i)
+    expect(cioIssues).not.toEqual(filterIssuesByRole(meridianIssues, 'CFO'))
+  })
+
+  test('CFO sees Financial and RCM issues first', () => {
+    const cfoIssues = filterIssuesByRole(meridianIssues, 'CFO')
+    expect(cfoIssues[0].category).toMatch(/financial|rcm|revenue/i)
+    expect(cfoIssues[0].id).toBe('rcm-denial-rate')
+  })
+
+  test('CMIO sees Clinical issues first', () => {
+    const cmioIssues = filterIssuesByRole(meridianIssues, 'CMIO')
+    expect(cmioIssues[0].category).toMatch(/clinical|quality|epic/i)
+  })
+
+  test('Each role shows different top issue', () => {
+    const roles = ['CIO', 'CFO', 'COO', 'CMIO', 'CEO'] as const
+    const topIssues = roles.map(role =>
+      filterIssuesByRole(meridianIssues, role)[0].id
+    )
+    const unique = new Set(topIssues)
+    expect(unique.size).toBeGreaterThan(2) // at least 3 different top issues
+  })
+
+  test('Maestro sees all issues plus confidence scores', () => {
+    const maestroIssues = filterIssuesByRole(meridianIssues, 'Maestro')
+    expect(maestroIssues.every(i => i.confidence !== undefined)).toBe(true)
+    expect(maestroIssues.length).toBeGreaterThanOrEqual(7)
+  })
+
+  test('First Capital shows different issues than Meridian for same role', () => {
+    const { firstCapitalIssues } = require('@/data/firstcapital/issues')
+    const meridianCIO = filterIssuesByRole(meridianIssues, 'CIO')
+    const fcCIO = filterIssuesByRole(firstCapitalIssues, 'CIO')
+    expect(meridianCIO[0].id).not.toBe(fcCIO[0].id)
+  })
+
+})
+
+describe('Situation Intelligence — Contradiction Map', () => {
+
+  test('Contradiction lines animate left to right on mount', () => {
+    // Visual test — verify CSS animation property exists
+    const { contradictions } = require('@/data/meridian/contradictions')
+    expect(contradictions.length).toBeGreaterThanOrEqual(5)
+    expect(contradictions[0]).toHaveProperty('reported')
+    expect(contradictions[0]).toHaveProperty('actual')
+    expect(contradictions[0]).toHaveProperty('gap')
+    expect(contradictions[0]).toHaveProperty('source')
+  })
+
+  test('Each contradiction has source attribution', () => {
+    const { contradictions } = require('@/data/meridian/contradictions')
+    contradictions.forEach((c: any) => {
+      expect(c.reportedBy).toBeTruthy()
+      expect(c.dataSource).toBeTruthy()
+      expect(c.gapStarted).toBeTruthy()
+    })
+  })
+
+})
+
+describe('Situation Intelligence — Client Switching', () => {
+
+  test('Switching to First Capital shows FC-specific issues', () => {
+    const { firstCapitalIssues } = require('@/data/firstcapital/issues')
+    const fcCIO = filterIssuesByRole(firstCapitalIssues, 'CIO')
+    // First Capital CIO top issue should be digital adoption, not RCM
+    expect(fcCIO[0].id).toBe('digital-adoption')
+  })
+
+  test('Switching to Apex shows Apex-specific issues', () => {
+    const { apexIssues } = require('@/data/apexretail/issues')
+    const apexCIO = filterIssuesByRole(apexIssues, 'CIO')
+    expect(apexCIO[0].id).toBe('einstein-idle')
+  })
+
+})
+```
+
+---
+
+### LAYER 2 — AI INVESTMENT INTELLIGENCE TESTS
+
+```typescript
+// src/__tests__/behaviors/ai-investment-intelligence.test.ts
+
+describe('AI Investment Intelligence — Three Source Attribution', () => {
+
+  test('Every opportunity has all three source attributions', () => {
+    const { meridianOpportunities } = require('@/data/meridian/ai')
+    meridianOpportunities.forEach((opp: any) => {
+      expect(opp.clientData).toBeTruthy()
+      expect(opp.industryData).toBeTruthy()
+      expect(opp.genomeData).toBeTruthy()
+    })
+  })
+
+  test('5 opportunities are recommended (Wave 1)', () => {
+    const { meridianOpportunities } = require('@/data/meridian/ai')
+    const recommended = meridianOpportunities.filter((o: any) => o.recommended)
+    expect(recommended.length).toBe(5)
+  })
+
+  test('12 total opportunities exist', () => {
+    const { meridianOpportunities } = require('@/data/meridian/ai')
+    expect(meridianOpportunities.length).toBe(12)
+  })
+
+})
+
+describe('AI Investment Intelligence — Challenge Flow', () => {
+
+  test('Challenge response includes all 3 source types', () => {
+    const { generateChallengeResponse } = require('@/lib/ai-investment')
+    const { meridianOpportunities } = require('@/data/meridian/ai')
+    const response = generateChallengeResponse(meridianOpportunities[0], 'meridian')
+    expect(response.fromClientData).toBeTruthy()
+    expect(response.fromIndustry).toBeTruthy()
+    expect(response.fromGenome).toBeTruthy()
+  })
+
+})
+
+describe('AI Investment Intelligence — Failure Genome', () => {
+
+  test('7 failure patterns exist', () => {
+    const { failurePatterns } = require('@/data/knowledge/failure-patterns')
+    expect(failurePatterns.length).toBe(7)
+  })
+
+  test('Each pattern scored for Meridian specifically', () => {
+    const { scoreFailurePatterns } = require('@/lib/failure-genome')
+    const scored = scoreFailurePatterns('meridian')
+    expect(scored.length).toBe(7)
+    scored.forEach((p: any) => {
+      expect(p.riskLevel).toMatch(/low|medium|high/i)
+      expect(p.meridianSignal).toBeTruthy()
+      expect(p.mitigation).toBeTruthy()
+    })
+  })
+
+  test('3 patterns are present at Meridian', () => {
+    const { scoreFailurePatterns } = require('@/lib/failure-genome')
+    const scored = scoreFailurePatterns('meridian')
+    const present = scored.filter((p: any) =>
+      p.riskLevel === 'high' || p.riskLevel === 'medium'
+    )
+    expect(present.length).toBe(3)
+  })
+
+})
+```
+
+---
+
+### LAYER 2 — MAESTRO PORTAL TESTS
+
+```typescript
+// src/__tests__/behaviors/maestro-portal.test.ts
+
+describe('Maestro Portal — Privacy Enforcement', () => {
+
+  test('Engagement selector shows no data — names only', () => {
+    const { getEngagementList } = require('@/lib/engagements')
+    const list = getEngagementList('maestro-user-id')
+    list.forEach((eng: any) => {
+      expect(eng.name).toBeTruthy()
+      expect(eng.vertical).toBeTruthy()
+      expect(eng.status).toBeTruthy()
+      // Must NOT have financial data, findings, or metrics
+      expect(eng.denialRate).toBeUndefined()
+      expect(eng.findings).toBeUndefined()
+      expect(eng.revenue).toBeUndefined()
+    })
+  })
+
+  test('Cross-client access returns 403', async () => {
+    const response = await fetch('/admin/client/firstcapital', {
+      headers: { 'x-user-org': 'meridian' }
+    })
+    expect(response.status).toBe(403)
+  })
+
+  test('Every file access creates audit log entry', async () => {
+    const { getAuditLog } = require('@/lib/audit')
+    const before = await getAuditLog('meridian')
+    await fetch('/admin/client/meridian/files/financials')
+    const after = await getAuditLog('meridian')
+    expect(after.length).toBe(before.length + 1)
+  })
+
+})
+
+describe('Maestro Portal — Data Categories', () => {
+
+  test('Meridian completeness score is correct', () => {
+    const { calculateCompleteness } = require('@/lib/data-completeness')
+    const score = calculateCompleteness('meridian')
+    expect(score).toBeGreaterThanOrEqual(85)
+    expect(score).toBeLessThanOrEqual(95)
+  })
+
+  test('First Capital completeness is lower than Meridian', () => {
+    const { calculateCompleteness } = require('@/lib/data-completeness')
+    const meridian = calculateCompleteness('meridian')
+    const fc = calculateCompleteness('firstcapital')
+    expect(fc).toBeLessThan(meridian)
+  })
+
+  test('Apex has lowest completeness', () => {
+    const { calculateCompleteness } = require('@/lib/data-completeness')
+    const meridian = calculateCompleteness('meridian')
+    const fc = calculateCompleteness('firstcapital')
+    const apex = calculateCompleteness('apexretail')
+    expect(apex).toBeLessThan(fc)
+    expect(apex).toBeLessThan(meridian)
+  })
+
+})
+```
+
+---
+
+### LAYER 3 — INTEGRATION TESTS (run before every commit)
+
+Create: `src/__tests__/integration/demo-paths.test.ts`
+
+```typescript
+// Full demo path tests — run before every commit
+// If any test fails — NO COMMIT
+
+describe('Demo Path 1 — Meridian CIO (3 minutes)', () => {
+
+  test('Step 1: /admin loads with client names only', async () => {
+    const page = await navigate('/admin')
+    expect(page).toContain('Meridian Health System')
+    expect(page).not.toContain('18.2%') // no metrics on selector
+    expect(page).not.toContain('$94M') // no findings on selector
+  })
+
+  test('Step 2: Clicking Meridian → /admin/client/meridian', async () => {
+    const destination = await getClickDestination('.meridian-row')
+    expect(destination).toBe('/admin/client/meridian')
+  })
+
+  test('Step 3: Client dashboard loads with real Meridian data', async () => {
+    const page = await navigate('/admin/client/meridian')
+    expect(page).toContain('18.2%') // RCM denial rate
+    expect(page).toContain('$504M') // IT budget
+    expect(page).toContain('94%') // confidence
+  })
+
+  test('Step 4: Open Intelligence → /diagnose?client=meridian', async () => {
+    const destination = await getClickDestination('.open-intelligence-btn')
+    expect(destination).toContain('/diagnose')
+    expect(destination).toContain('client=meridian')
+  })
+
+  test('Step 5: Situation Intelligence loads with Meridian issues', async () => {
+    const page = await navigate('/diagnose?client=meridian')
+    expect(page).toContain('SITUATION INTELLIGENCE')
+    expect(page).toContain('18.2%')
+    expect(page).toContain('CDO')
+  })
+
+  test('Step 6: Role switch changes top issue', async () => {
+    await navigate('/diagnose?client=meridian&role=CIO')
+    const cioTop = await getTopIssueId()
+    await clickRole('CFO')
+    const cfoTop = await getTopIssueId()
+    expect(cioTop).not.toBe(cfoTop)
+  })
+
+  test('Step 7: AI Strategy → /ai-strategy?client=meridian', async () => {
+    const destination = await getClickDestination('.build-ai-strategy-btn')
+    expect(destination).toContain('/ai-strategy')
+    expect(destination).toContain('client=meridian')
+  })
+
+})
+
+describe('Demo Path 2 — First Capital (different data)', () => {
+
+  test('First Capital shows FC-specific metrics', async () => {
+    const page = await navigate('/admin/client/firstcapital')
+    expect(page).toContain('41%') // digital adoption
+    expect(page).toContain('FedNow') // FC-specific
+    expect(page).not.toContain('18.2%') // NOT Meridian data
+  })
+
+  test('First Capital Situation Intelligence shows FC issues', async () => {
+    const page = await navigate('/diagnose?client=firstcapital')
+    expect(page).toContain('41%') // digital adoption
+    expect(page).not.toContain('CDO Vacant') // Meridian-specific issue
+  })
+
+})
+
+describe('Navigation — Zero Dead Ends', () => {
+
+  const criticalButtons = [
+    { selector: '.open-intelligence-btn', expectedPattern: '/admin/client/' },
+    { selector: '.build-ai-strategy-btn', expectedPattern: '/ai-strategy' },
+    { selector: '.situation-intelligence-btn', expectedPattern: '/diagnose' },
+    { selector: '.vendor-intelligence-btn', expectedPattern: '/select' },
+    { selector: '.outcome-intelligence-btn', expectedPattern: '/control-tower' },
+  ]
+
+  criticalButtons.forEach(({ selector, expectedPattern }) => {
+    test(`${selector} navigates to ${expectedPattern}`, async () => {
+      const destination = await getClickDestination(selector)
+      expect(destination).toContain(expectedPattern)
+    })
+  })
+
+  test('No 404 responses on any critical route', async () => {
+    const routes = [
+      '/admin', '/admin/client/meridian', '/admin/client/firstcapital',
+      '/admin/client/apexretail', '/diagnose', '/ai-strategy',
+      '/select', '/justify', '/control-tower', '/solutions',
+      '/investor', '/demo'
+    ]
+    for (const route of routes) {
+      const response = await fetch(route)
+      expect(response.status).not.toBe(404)
+    }
+  })
+
+})
+```
+
+---
+
+### HOW TO RUN TESTS
+
+Add to package.json:
+```json
+"scripts": {
+  "test": "jest",
+  "test:behaviors": "jest src/__tests__/behaviors",
+  "test:integration": "jest src/__tests__/integration",
+  "test:before-commit": "npm run test:behaviors && npm run test:integration && npm run build"
+}
+```
+
+Before EVERY commit, Claude Code must run:
+```bash
+npm run test:before-commit
+```
+
+If ANY test fails — fix the issue, do not commit.
+
+---
+
+### THE ROLE SWITCHER FIX — SPECIFIC
+
+The current role switcher bug: clicking role does not change data.
+
+The fix requires THREE things — not one:
+
+1. FILTER FUNCTION (the logic)
+```typescript
+// src/lib/situation-intelligence.ts
+export function filterIssuesByRole(issues: Issue[], role: Role): Issue[] {
+  const roleWeights: Record<Role, Record<string, number>> = {
+    CIO: { technology: 3, ai: 3, vendor: 2, financial: 1, clinical: 0 },
+    CFO: { financial: 3, rcm: 3, vendor: 2, technology: 1, clinical: 0 },
+    CMIO: { clinical: 3, quality: 3, epic: 2, ai: 1, financial: 0 },
+    COO: { operations: 3, workforce: 3, financial: 2, clinical: 1 },
+    CEO: { financial: 2, clinical: 2, technology: 2, operations: 2 },
+    Maestro: { financial: 1, clinical: 1, technology: 1, ai: 1 },
+  }
+  const weights = roleWeights[role]
+  return [...issues].sort((a, b) => {
+    const aWeight = weights[a.category] ?? 0
+    const bWeight = weights[b.category] ?? 0
+    return bWeight - aWeight
+  })
+}
+```
+
+2. STATE CONNECTION (the wiring)
+```typescript
+// In the Situation Intelligence component
+const [activeRole, setActiveRole] = useState<Role>('CIO')
+const filteredIssues = filterIssuesByRole(allIssues, activeRole)
+// filteredIssues must be what renders — not allIssues
+```
+
+3. ROLE SWITCHER CALLS SETTER (the trigger)
+```typescript
+// In the role switcher bar
+<RoleButton
+  role="CFO"
+  active={activeRole === 'CFO'}
+  onClick={() => setActiveRole('CFO')} // THIS must actually call setActiveRole
+/>
+```
+
+All three must exist. If any one is missing — the switcher does nothing.
+
+---
+
+### ADD TO EVERY PHASE QA GATE
+
+At the end of every phase QA gate, add:
+
+```
+BEHAVIORAL TESTS:
+- [ ] Run: npm run test:behaviors
+- [ ] All behavior tests pass
+- [ ] Run: npm run test:integration
+- [ ] All integration tests pass
+- [ ] Run: npm run build
+- [ ] Build passes with zero errors
+
+INTERACTIVE VERIFICATION (manual, 5 minutes):
+- [ ] Click every role in role switcher — verify data changes each time
+- [ ] Click every client in client selector — verify different data loads
+- [ ] Click every step in step navigator — verify step content changes
+- [ ] Click every "Show all" toggle — verify additional items appear
+- [ ] Click every action button — verify correct destination with correct client
+
+Only after all tests pass AND interactive verification complete:
+→ Commit
+```
+
+---
+
+### INSTRUCTION TO CLAUDE CODE
+
+Add this to every phase instruction:
+
+```
+TESTING REQUIREMENT:
+
+Before building any interactive component:
+1. Write the behavior spec comment block
+2. Write the test that defines success
+3. Build the component
+4. Run the test
+5. If test fails — fix the component, not the test
+
+Before every commit:
+npm run test:before-commit
+
+If any test fails — NO COMMIT.
+Fix the issue. Run tests again. Then commit.
+
+The role switcher specifically:
+- filterIssuesByRole() function must exist in src/lib/situation-intelligence.ts
+- Function must return different ordered arrays for CIO vs CFO vs CMIO
+- Component must use filteredIssues (not allIssues) to render
+- onClick must call setActiveRole — verify this explicitly
+- Test: click CIO, note top issue. Click CFO, verify top issue is different.
+```
+
+
+---
+
+## PHASE 4H — VENDOR INTELLIGENCE: COMPLETE DESIGN (3 hours)
+
+The product promise:
+"Which vendor wins in a situation like yours —
+and what should the contract say?"
+
+Two modes. One product. Same intelligence layer.
+
+---
+
+### PRODUCT HEADER
+
+```
+🔍 VENDOR INTELLIGENCE                    [Meridian Health ▾]
+"Which vendor should we choose — and what does the contract need to say?"
+
+Mode: [Select a Vendor]  [Optimize Current Vendors]
+Vendors assessed: 47  ·  Genome matches: 8  ·  Confidence: 87%
+```
+
+Design: identical system to Situation Intelligence and AI Investment Intelligence.
+JetBrains Mono product name teal. Fraunces CXO question white.
+Mode switcher in header — two pill buttons.
+
+---
+
+### MODE 1 — SELECT A VENDOR
+
+STEP 1: Define what you are selecting for
+
+Pre-populated from AI Investment Intelligence if run first.
+If not: form with these fields:
+
+```
+INITIATIVE TYPE
+[RCM AI Automation ▾]  ← pre-filled from confirmed bets
+
+BUDGET RANGE
+[$2M - $6M annually ▾]
+
+TIMELINE
+[Go-live within 12 months ▾]
+
+MUST-HAVE INTEGRATIONS
+[✓ Epic]  [✓ Azure]  [ ] Workday  [ ] Salesforce
+
+DEAL-BREAKER REQUIREMENTS
+[                                          ]
+e.g. "HIPAA BAA required, US-only data residency"
+
+SELECTION CHAMPION
+[CIO]  [CFO]  [CMIO]  [COO]  ← who owns this decision
+```
+
+[Find vendors →]
+
+---
+
+STEP 2: The vendor landscape
+
+Scatter plot — all assessed vendors as bubbles.
+
+X axis: Implementation complexity at YOUR org (Low → High)
+Y axis: Outcome achievement rate from Genome (0-100%)
+Bubble size: Reference match score (how similar their wins are to you)
+Bubble color:
+- TEAL: Recommended (top match)
+- BLUE: Consider (good match, trade-offs)
+- AMBER: Caution (mismatches detected)
+- GRAY: Not recommended for your situation
+
+For Meridian RCM AI — pre-seeded vendors (demo mode):
+- Ensemble Health Partners (teal — recommended)
+- Waystar (blue — consider)
+- R1 RCM (blue — consider)
+- Optum (amber — caution, complexity high)
+- Change Healthcare (gray — integration risk with Epic)
+
+Hover any bubble:
+```
+Ensemble Health Partners
+Outcome rate: 71% · Reference match: 8 wins at similar systems
+Year 1 cost: $4-6M · Implementation: 14 months avg
+FROM GENOME: 3 of their failures had CDO vacancy — risk at Meridian
+[View full analysis →]
+```
+
+Note: In demo mode, real vendor names are shown clearly labeled
+"Demo data — illustrative only."
+In live client mode, vendor names shown only to that client's team.
+
+---
+
+STEP 3: Scored shortlist (top 3)
+
+Three vendor cards side by side. Full-width.
+
+Each card — THREE SOURCE ATTRIBUTION:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ ⭐ RECOMMENDED · Ensemble Health Partners                     │
+│                                                              │
+│ FROM INDUSTRY        FROM GENOME           YOUR FIT          │
+│ $4-6M year 1         71% success rate      Epic native ✓     │
+│ 340+ clients         8 similar wins        Azure ✓           │
+│ RCM specialist       14mo avg to value     HIPAA BAA ✓       │
+│ 40th price %ile      3 failures: CDO gap   Team ready: Med   │
+│                                                              │
+│ OUTCOME RATE: 71% achieve target within 18 months           │
+│ PRICE BENCHMARK: Below market average for your scope        │
+│                                                              │
+│ RISK FLAG: 🟡 MEDIUM                                        │
+│ 3 of their failures had vacant CDO at go-live.             │
+│ Meridian has vacant CDO. Mitigate before contract.         │
+│                                                              │
+│ [View 8 references →]  [Build RFP →]  [Compare →]          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+STEP 4: Reference outcome matching
+
+Not a list of 3 client logos. Real outcomes from similar organizations.
+
+```
+8 ORGANIZATIONS SIMILAR TO MERIDIAN WHERE ENSEMBLE WAS DEPLOYED
+
+Similarity criteria:
+· Health system $8-15B revenue ✓
+· Epic primary EHR ✓
+· Denial rate >15% at baseline ✓
+· Midwest or Southeast geography ✓
+
+OUTCOMES:
+┌──────────────────────────────────────────────────────────────┐
+│ Org 1  $10.2B health system   Denial: 17.1% → 11.8%         │
+│        Time to value: 11mo    Savings: $21M annual           │
+│        What went right: Strong CDO leadership from day 1    │
+├──────────────────────────────────────────────────────────────┤
+│ Org 2  $8.8B health system    Denial: 19.4% → 13.2%         │
+│        Time to value: 16mo    Savings: $17M annual           │
+│        What went wrong: Prior auth data incomplete at pilot  │
+├──────────────────────────────────────────────────────────────┤
+│ Org 3  $11.1B health system   FAILED                        │
+│        Reason: CDO vacancy unresolved at go-live            │
+│        Cost: $3.2M sunk + 18mo delay                        │
+└──────────────────────────────────────────────────────────────┘
+[View all 8 →]
+```
+
+All organizations anonymized. Outcomes verified. Specific.
+This is what no analyst report provides.
+
+---
+
+STEP 5: Contract intelligence
+
+```
+CONTRACT BENCHMARKS FOR ENSEMBLE — MERIDIAN SCOPE
+
+PRICING (from 12 live contracts in Genome):
+Implementation fee: $1.2-1.8M (your estimate: $1.5M ✓ in range)
+Annual platform: $2.8-4.2M (your estimate: $3.5M ✓ in range)
+Outcome share clause: present in 8 of 12 contracts
+
+KEY TERMS THAT MATTER:
+✓ Data ownership: insist on full Meridian ownership of all outputs
+✓ SLA penalties: minimum 95% uptime, $X per hour below
+✓ Exit clause: 90-day exit with full data export
+⚠ Watch for: Auto-renewal with 10% price increase (in 7 of 12)
+⚠ Watch for: Arbitration clause limiting your remedies
+⚠ Watch for: "Best efforts" language on outcome commitments
+
+YOUR LEVERAGE:
+· Multi-year commitment → 15-20% discount available
+· Reference permission → $50-100K reduction possible
+· Pilot-first structure → reduces risk, Ensemble will agree
+
+RECOMMENDED NEGOTIATION SEQUENCE:
+1. Start with 3-year term ask (creates leverage)
+2. Request pilot-first with defined success criteria
+3. Add SLA penalty clause before signing
+4. Get data ownership in writing before pilot starts
+```
+
+---
+
+STEP 6: RFP generation
+
+One click. Pre-built from everything in Steps 1-5.
+
+```
+YOUR RFP IS READY
+
+Meridian Health System — RCM AI Automation
+Issued: April 13, 2026
+
+WHAT'S IN IT:
+· Meridian's specific requirements (from Step 1)
+· Must-have technical criteria (Epic integration, HIPAA BAA)
+· Outcome-based scoring criteria (weighted by Genome success factors)
+· Benchmark pricing anchors (from contract intelligence)
+· Mandatory contract terms (from Step 5)
+· Evaluation scoring rubric
+
+[Download RFP →]    [Send to vendors →]    [Start negotiation →]
+```
+
+---
+
+### MODE 2 — OPTIMIZE CURRENT VENDORS
+
+Full vendor portfolio dashboard.
+
+```
+CURRENT VENDOR PORTFOLIO · MERIDIAN
+$168M annual vendor spend · 47 active contracts
+
+PERFORMANCE SUMMARY:
+● 12 vendors: meeting SLA         ✓ No action needed
+● 8 vendors: SLA breach           ⚠ $4.2M credits available NOW
+● 3 vendors: renewing in 90 days  → Negotiate now
+● 6 vendors: capability overlap   → Consolidation possible
+● 4 vendors: above market rate    → Renegotiate
+```
+
+For each vendor — performance card:
+
+```
+Ensemble Health Partners
+Annual spend: $4.2M  ·  Contract end: Dec 2027
+
+SLA PERFORMANCE:
+Contracted: 99.5% uptime
+Actual: 97.1% uptime
+Gap: 2.4 percentage points
+Credits owed: $2.1M (NOT YET CLAIMED)
+
+MARKET RATE:
+Your rate: $4.2M/year
+Market median: $3.6M/year
+Overpaying: ~$600K/year
+
+RECOMMENDATION: Claim $2.1M credits immediately.
+Renegotiate at next renewal — leverage: you are
+a reference client they list publicly.
+[Generate credit claim →]  [Negotiation brief →]
+```
+
+---
+
+### DATA SOURCES
+
+Vendor landscape: src/data/knowledge/vendor-outcomes.ts
+Reference matches: scored against client data profile
+Contract benchmarks: src/data/knowledge/contract-benchmarks.ts
+Current vendor portfolio: src/data/[client]/vendors.ts
+
+---
+
+### PHASE 4H QA GATE
+
+Mode switcher:
+- [ ] [Select a Vendor] / [Optimize Current Vendors] toggle works
+- [ ] Switching mode never loses session data
+
+Select a Vendor flow:
+- [ ] Step 1 pre-populates from AI Investment Intelligence bets
+- [ ] Scatter plot renders with correct vendor positioning
+- [ ] Hover shows three-source attribution
+- [ ] 3 recommended vendors shown with full attribution cards
+- [ ] Reference outcomes show anonymized but specific data
+- [ ] Meridian: 8 reference matches with outcome data
+- [ ] Contract benchmarks show correct pricing and terms
+- [ ] Risk flags specific to Meridian (CDO vacancy warning)
+- [ ] RFP downloads as complete document
+
+Optimize Current Vendors:
+- [ ] Portfolio summary shows correct Meridian vendor count
+- [ ] SLA breach vendors highlighted with credit amounts
+- [ ] $2.1M Ensemble credit shown as immediately claimable
+- [ ] Renewal timeline shows 3 vendors renewing in 90 days
+- [ ] Market rate comparison shows overpayment amounts
+
+Zero dead ends:
+- [ ] Every [→] button navigates correctly
+- [ ] RFP download works
+- [ ] Connects to Business Case Intelligence correctly
+
+COMMIT: git commit -m "Phase 4H: Vendor Intelligence — selection flow, scatter plot, reference matching, contract intelligence, current vendor optimization"
+
+---
+
+## PHASE 4I — BUSINESS CASE INTELLIGENCE: COMPLETE DESIGN (2.5 hours)
+
+The product promise:
+"The CFO-ready business case — built from your data,
+benchmarked against peers, defensible in the board room."
+
+---
+
+### PRODUCT HEADER
+
+```
+📊 BUSINESS CASE INTELLIGENCE              [Meridian Health ▾]
+"What's the ROI — and how do I defend it in the board room?"
+
+Initiative: [RCM AI Automation ▾]    Role: [CIO building ▾]
+Data confidence: 94%  ·  Genome comparables: 47  ·  Scenarios: 3
+```
+
+Initiative selector: pulls from confirmed bets in AI Investment Intelligence.
+Role switcher: CIO (building mode) vs CFO (validation mode).
+
+---
+
+### FIVE SECTIONS — ONE BUSINESS CASE
+
+SECTION 1: THE INVESTMENT
+
+What are we committing to spend?
+
+```
+INVESTMENT SUMMARY — RCM AI AUTOMATION
+
+YEAR 1:
+Implementation fee:     $1.5M   ← from Vendor Intelligence
+Platform license:       $3.5M   ← from Vendor Intelligence
+Internal resources:     $0.8M   ← estimated from org size
+Change management:      $0.4M   ← Genome recommendation
+Year 1 total:           $6.2M
+
+ONGOING (Year 2+):
+Annual platform:        $3.5M
+Internal maintenance:   $0.3M
+Annual ongoing:         $3.8M
+
+3-YEAR TOTAL INVESTMENT: $13.8M
+
+FROM INDUSTRY: This pricing is in the 40th percentile
+for RCM AI at your revenue scale — below average.
+[See market comparison →]
+```
+
+SECTION 2: THE BASELINE
+
+Where are we starting from?
+
+Pre-populated from Situation Intelligence.
+This becomes the locked baseline when committed.
+
+```
+BASELINE METRICS — LOCKED APRIL 13, 2026
+
+Denial rate:                18.2%  ← from claims data
+Revenue impacted per point: $13.8M ← calculated from claims volume
+Cost to collect per claim:  $28.40 ← from financials
+Prior auth cycle time:      4.2 days ← from clinical data
+Travel nurse spend:         $48M/yr  ← from financials
+
+COST OF INACTION (annual):
+Every month at 18.2% denial rate costs Meridian $7.8M
+in recoverable revenue. That is the baseline cost of delay.
+
+FROM GENOME: Organizations that delayed action by 6 months
+captured 34% less value in Year 1 than those that moved immediately.
+```
+
+SECTION 3: THREE SCENARIOS
+
+Sliders for CFO stress-testing. All update in real time.
+
+```
+SCENARIO BUILDER
+
+Assumption sliders:
+Denial rate improvement:  [────●────────] 6.1pp  (base case)
+Time to full value:       [──────●──────] 14 months
+Adoption rate:            [────────●────] 85%
+Vendor performance:       [────●────────] Base
+
+                CONSERVATIVE    BASE CASE    OPTIMISTIC
+Improvement:    3.5pp           6.1pp        8.3pp
+Annual value:   $18M            $28M         $39M
+3yr net value:  $22M            $54M         $83M
+ROI:            1.6x            3.9x         6.0x
+Payback:        22 months       14 months    9 months
+
+FROM GENOME: Base case achieved 62% of the time.
+Optimistic case achieved 24% of the time.
+Conservative case: only 14% of deployments underperformed this.
+```
+
+SECTION 4: RISK-ADJUSTED RETURN
+
+```
+RISK ADJUSTMENT — FROM FAILURE GENOME
+
+Unadjusted success probability: 66%
+(Based on Genome failure rate for this initiative type)
+
+MERIDIAN-SPECIFIC ADJUSTMENTS:
++ Strong data readiness (67%)    → +8% probability
+- CDO vacancy                    → -12% probability
+- Prior auth data gap            → -6% probability
+
+ADJUSTED SUCCESS PROBABILITY: 56%
+
+WITH MITIGATIONS IN PLACE:
++ Appoint CDO interim            → +12% probability
++ 30-day data sprint             → +8% probability
+
+MITIGATED SUCCESS PROBABILITY: 76%
+
+Risk-adjusted NPV (base case, 76% probability): $41M
+
+RECOMMENDATION: Proceed with mitigations.
+Do not proceed without addressing CDO vacancy first.
+```
+
+SECTION 5: THE RECOMMENDATION PAGE
+
+One page. Printable. Board-ready.
+
+```
+BOARD RECOMMENDATION
+Meridian Health System · RCM AI Automation · April 2026
+
+THE INVESTMENT:     $13.8M over 3 years
+EXPECTED RETURN:    $28M annually (base case)
+PAYBACK:            14 months
+RISK-ADJUSTED NPV:  $41M
+SUCCESS PROBABILITY: 76% with mitigations in place
+
+WHAT WE ARE DECIDING:
+Approve Wave 1 investment in RCM AI Automation.
+Vendor: Ensemble Health Partners (recommended, pending RFP).
+Start date: Within 90 days of CDO interim appointment.
+
+TWO CONDITIONS FOR APPROVAL:
+1. CDO interim appointed before vendor contract signed
+2. Prior auth data coverage reaches 40% before pilot
+
+ABARVA OUTCOME COMMITMENT:
+AbarVa earns its fee only when savings are verified.
+Baseline locked: April 13, 2026.
+Fee: 15-20% of savings that exceed baseline.
+Third-party verification required above $5M.
+
+[Download Board Brief →]  [Send to CFO →]  [Lock baseline →]
+```
+
+---
+
+### CFO VALIDATION MODE
+
+When CIO sends to CFO — CFO sees same document but with:
+
+- Every number has a source citation
+- [Challenge this →] on every assumption
+- Comment field on every section
+- Approval buttons: [Approve this section] per section
+- Final: [Approve business case →] or [Request changes →]
+
+CFO challenge flow:
+```
+CFO challenged: "The $28M base case seems high."
+
+AbarVa response:
+FROM YOUR DATA: Your denial rate of 18.2% × 6.1pp improvement
+× $13.8M per point = $28.2M. The math uses your actual claims volume.
+
+FROM INDUSTRY: 47 similar deployments. Median improvement: 5.8pp.
+Your estimate of 6.1pp is conservative — 54th percentile outcome.
+
+FROM GENOME: Health systems at your data readiness (67%)
+achieved an average of 5.9pp improvement in 14 months.
+
+The number is defensible. Would you like to model a lower assumption?
+[Adjust assumption →]
+```
+
+---
+
+### PHASE 4I QA GATE
+
+- [ ] Initiative selector pre-populates from AI Investment bets
+- [ ] Role switcher: CIO vs CFO mode changes the view
+- [ ] Section 1: investment numbers match Vendor Intelligence output
+- [ ] Section 2: baseline pre-populated from Situation Intelligence
+- [ ] Section 3: all 3 scenarios calculated correctly
+- [ ] Sliders update all scenario numbers in real time
+- [ ] FROM GENOME probability ranges shown correctly for Meridian
+- [ ] Section 4: risk adjustment math correct (56% → 76% with mitigations)
+- [ ] Section 5: one-page board brief generates correctly
+- [ ] CFO mode: source citations on every number
+- [ ] CFO challenge flow: returns three-source evidence
+- [ ] [Send to CFO →] creates CFO-accessible link
+- [ ] [Lock baseline →] creates Supabase baseline record
+- [ ] Meridian, First Capital, Apex all show correct numbers
+
+COMMIT: git commit -m "Phase 4I: Business Case Intelligence — 5-section model, 3 scenarios, CFO validation mode, risk-adjusted NPV, board brief"
+
+---
+
+## PHASE 4J — OUTCOME INTELLIGENCE: COMPLETE DESIGN (2.5 hours)
+
+The product promise:
+"Are our AI investments delivering —
+and can we prove it to the board?"
+
+This is the accountability engine.
+The product that makes the outcome fee model real and auditable.
+
+---
+
+### PRODUCT HEADER
+
+```
+📈 OUTCOME INTELLIGENCE                    [Meridian Health ▾]
+"Are our AI investments delivering — and can we prove it to the board?"
+
+Portfolio: 5 initiatives  ·  Value committed: $77M  ·  Verified: $8.2M
+Outcome fees triggered: $1.2M  ·  Fees projected: $11.5M
+```
+
+---
+
+### FIVE TABS
+
+TAB 1: PORTFOLIO OVERVIEW
+
+Command dashboard. All initiatives visible at once.
+
+For each initiative — status card:
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ RCM AI Automation · Wave 1 · Ensemble Health Partners        │
+│ Baseline locked: April 13, 2026 · Day 127 of 420            │
+│                                                              │
+│ METRIC          BASELINE    CURRENT    TARGET    PROGRESS    │
+│ Denial rate     18.2%       16.8%      11.4%     ████░░ 21%  │
+│ Revenue impact  $0          $8.2M/yr   $28M/yr   ████░░ 29%  │
+│                                                              │
+│ STATUS: ✓ On track                                          │
+│ Next milestone: 12-month review — Oct 13, 2026              │
+│ Outcome fee triggered: $0 (threshold: $5M verified)         │
+│                                                              │
+│ EARLY WARNING: None                                          │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Portfolio summary bar at top:
+
+```
+PORTFOLIO HEALTH — MERIDIAN
+
+$77M committed  ·  $8.2M verified (11%)  ·  $68M on track  ·  $8M at risk
+
+[●●●●○] 4 of 5 initiatives on track
+```
+
+Color coding on progress bars:
+- Teal: on track or ahead
+- Amber: slightly behind (10-20% of expected pace)
+- Red: significantly behind (>20% behind expected pace)
+
+---
+
+TAB 2: INITIATIVE DEEP DIVE
+
+Select any initiative. See full detail.
+
+```
+RCM AI AUTOMATION — FULL TRACKING
+
+METRIC TREND CHART:
+Denial rate over time:
+18.2% ─────────────────●─────● (16.8% current)
+                              ↓ trajectory to
+                              11.4% target by Oct 2026
+
+[Baseline] [3mo] [6mo] [9mo] [12mo] [18mo] [24mo]
+
+MILESTONE TRACKER:
+✓ Baseline locked          April 13, 2026
+✓ Vendor selected          April 28, 2026
+✓ Contract signed          May 12, 2026
+✓ Data pipeline complete   June 3, 2026
+✓ Pilot live               July 1, 2026 (847 claims)
+● Pilot review             August 15, 2026 ← NEXT
+○ Full deployment          October 1, 2026
+○ 12-month verification    April 13, 2027
+
+VARIANCE ANALYSIS:
+Expected at Day 127: 18.2% → 17.1%
+Actual at Day 127:   18.2% → 16.8%
+Variance: 0.3pp AHEAD of expected trajectory ✓
+
+WHY AHEAD:
+· Prior auth data sprint completed early
+· CDO interim (appointed May 3) drove faster adoption
+· Payer contract renegotiation unlocked higher approval rates
+
+NEXT MILESTONE:
+Pilot review — August 15, 2026
+What needs to happen: 90-day pilot results reviewed
+Success criteria: >500 claims processed, denial rate below 17%
+Current: 847 claims, denial rate 16.8% ← PASSING
+```
+
+---
+
+TAB 3: OUTCOME VERIFICATION
+
+Where fees get triggered. Immutable records.
+
+```
+VERIFICATION HISTORY — MERIDIAN
+
+PENDING VERIFICATION:
+No verifications pending.
+Next eligible: April 13, 2027 (12-month mark)
+Threshold for third-party audit: $5M verified savings
+
+VERIFIED OUTCOMES:
+None yet — engagement in progress.
+Projected first verification: October 2026
+Expected amount: $8-12M annual savings
+Expected fee: $1.2-2.4M (15-20%)
+
+HOW VERIFICATION WORKS:
+1. AbarVa proposes outcome measurement with methodology
+2. Client reviews and confirms the numbers
+3. Third-party auditor confirms for savings >$5M
+4. Fee calculated: 15-20% of verified savings above baseline
+5. Record locked — immutable, cannot be changed
+6. Invoice issued
+
+BASELINE DOCUMENT (locked April 13, 2026):
+Denial rate: 18.2% — Meridian Health System claims data
+Methodology: AbarVa Outcome Attribution Framework v2.1
+Signed by: Marcus Webb (CIO) + Anand Sundaram (Maestro)
+[Download baseline document →]
+```
+
+The baseline document is fully visible and downloadable
+by the client. Transparency is the point.
+
+---
+
+TAB 4: EARLY WARNING
+
+Predictive flags from the Failure Genome.
+
+```
+EARLY WARNING SYSTEM — MERIDIAN
+
+ACTIVE FLAGS: 1 warning
+
+🟡 ADOPTION RATE SLOWING — RCM AI Automation
+Pattern detected: User adoption plateaued at 67% in month 3.
+In the Genome: 9 of 16 failures showed this same pattern.
+The 7 that recovered: all had executive champion re-engagement.
+
+RECOMMENDED ACTION:
+Schedule CIO review with clinical staff leads.
+Target: adoption back to 75%+ by end of month.
+[Generate adoption brief for CIO →]
+
+CLEARED FLAGS: 2 (this month)
+✓ Data quality flag cleared — prior auth data now 68% complete
+✓ Timeline flag cleared — pilot milestone hit on schedule
+
+GENOME PREDICTION:
+Current trajectory → 76% probability of achieving base case
+(up from 56% at start, after mitigations were applied)
+```
+
+---
+
+TAB 5: BOARD REPORT
+
+One click. Quarterly. Board-ready.
+
+```
+QUARTERLY BOARD REPORT — Q2 2026
+Meridian Health System · AI Investment Portfolio
+
+EXECUTIVE SUMMARY:
+5 AI initiatives active · $77M value committed
+$8.2M annual value verified to date (11% of committed)
+4 of 5 initiatives on track · 1 showing early warning signal
+
+INITIATIVE STATUS:
+[Table: each initiative, status, value to date, projected]
+
+VALUE TRAJECTORY:
+[Chart: committed vs verified vs projected over 24 months]
+
+ABARVA ACCOUNTABILITY:
+Outcome fees triggered to date: $1.2M
+Fees projected at full delivery: $11.5M
+AbarVa has earned nothing on the $6.8M not yet verified.
+Our fee tracks your success.
+
+NEXT QUARTER MILESTONES:
+· RCM AI: 6-month review — confirm trajectory
+· Prior Auth: vendor go-live — July 2026
+· Epic Sprint: 90-day results review
+
+[Download Board Report →]  [Send to Board →]
+```
+
+---
+
+### DATA SOURCES
+
+Initiative tracking: Supabase outcomes table
+Baseline records: Supabase baselines table (immutable, append-only)
+Milestone tracking: Supabase milestones table
+Verification records: Supabase verifications table (immutable)
+Genome predictions: src/data/knowledge/genome-patterns.ts
+
+All tables are append-only for audit purposes.
+No record can be deleted or modified after creation.
+
+---
+
+### PHASE 4J QA GATE
+
+Portfolio Overview:
+- [ ] All 5 Meridian initiatives shown as cards
+- [ ] Progress bars show correct percentages from real data
+- [ ] Portfolio summary bar shows correct totals
+- [ ] Status indicators: on track / warning / behind all correct
+- [ ] Color coding correct: teal/amber/red
+
+Initiative Deep Dive:
+- [ ] Metric trend chart animates correctly
+- [ ] Baseline shown as correct locked value
+- [ ] Milestone tracker shows completed/current/upcoming
+- [ ] Variance analysis: ahead/behind calculated correctly
+- [ ] "Why" section explains variance in plain English
+
+Outcome Verification:
+- [ ] Baseline document downloadable by client CXO
+- [ ] Verification process clearly explained
+- [ ] Immutable record noted — cannot be changed
+- [ ] Fee calculation formula visible
+
+Early Warning:
+- [ ] Adoption rate flag showing for Meridian (demo data)
+- [ ] Genome pattern cited specifically
+- [ ] Recommended action specific to situation
+- [ ] [Generate brief →] produces real artifact
+
+Board Report:
+- [ ] One-click download works
+- [ ] Contains all 5 initiatives
+- [ ] Value trajectory chart renders correctly
+- [ ] AbarVa accountability section prominent
+
+COMMIT: git commit -m "Phase 4J: Outcome Intelligence — portfolio tracking, verification, early warning, board report, baseline commitment"
+
+---
+
+## PHASE 1F FINAL — SOLUTION LIBRARY: COMPLETE REDESIGN (3 hours)
+
+REPLACES all earlier versions of Phase 1F entirely.
+
+Five solutions. Each one is a pre-configured problem-to-outcome path.
+Each one shows the client's own numbers before they click anything.
+Each one maps to specific products and produces specific outputs.
+
+---
+
+### THE SOLUTION LIBRARY INDEX (/solutions)
+
+HEADER:
+```
+SOLUTION LIBRARY
+Find your problem. Run the solution.
+
+Each solution is a pre-configured path from problem to outcome —
+combining your data, industry context, and the Transformation Genome.
+
+[All]  [Grow]  [Optimise]  [Protect]
+[Front Office]  [Middle Office]  [Back Office]
+[Healthcare]  [Financial Services]  [Retail]
+```
+
+Active client shown in header:
+"Showing solutions for: Meridian Health System ▾"
+All "FROM YOUR DATA" sections show Meridian's actual numbers.
+
+---
+
+### SOLUTION CARD DESIGN (index page)
+
+Each card has 5 zones:
+
+```
+┌──────────────────────────────────────────────────────┐
+│ [3px top bar — color by objective: green/amber/indigo]│
+│                                                      │
+│ ZONE 1 — BADGES                                      │
+│ [Optimise] [Back Office] [All Verticals]             │
+│                                                      │
+│ ZONE 2 — PROBLEM                                     │
+│ Analytics Modernization Intelligence                 │
+│ "We have 847 reports, 12 BI tools, and nobody knows  │
+│  which ones anyone uses."                            │
+│                                                      │
+│ ZONE 3 — FROM YOUR DATA                             │
+│ · 312 apps — 42% flagged redundant ← YOUR DATA      │
+│ · $38M shadow IT untracked ← YOUR DATA              │
+│ · 3 BI platforms overlapping ← INDUSTRY             │
+│                                                      │
+│ ZONE 4 — PRODUCTS + OUTCOME                         │
+│ Data Estate · AI Investment · Vendor · Business Case │
+│ Typical outcome: $3-8M savings · 18-24mo payback    │
+│ From 23 Genome engagements                          │
+│                                                      │
+│ ZONE 5 — CTA                                        │
+│ [Run for Meridian →]                                │
+└──────────────────────────────────────────────────────┘
+```
+
+Top bar colors:
+- Grow: #34D399 (green)
+- Optimise: #FBBF24 (amber)
+- Protect: #818CF8 (indigo)
+
+---
+
+### THE FIVE LAUNCH SOLUTIONS
+
+---
+
+#### SOLUTION 1: REVENUE CYCLE INTELLIGENCE
+
+Code: HC-01
+Objective: Grow
+Office: Front Office
+Verticals: Healthcare
+Products: Situation + AI Investment + Vendor + Business Case + Outcome
+
+Problem statement:
+"My denial rate is killing us and my board is asking
+questions I can't answer about where the revenue went."
+
+FROM YOUR DATA (Meridian):
+🔴 Denial rate 18.2% vs 11.4% benchmark — $94M annual gap
+🔴 Prior auth 23% automated vs 62% peer average
+🟡 Top denial reason: prior auth (38% of denials)
+🟡 Cost to collect: $28.40/claim vs $19.20 best-in-class
+
+FROM INDUSTRY:
+Health systems at your revenue size that fixed this:
+Average improvement: 6.1 percentage points in 14 months
+Top quartile: 8.3pp improvement
+
+FROM GENOME:
+47 deployments · 71% achieved target · 34% fail rate
+3 failure signals present at Meridian (CDO, prior auth data, vendor selection)
+
+SOLUTION WORKFLOW:
+Step 1: Situation Intelligence → surface the full RCM picture
+Step 2: AI Investment Intelligence → which RCM AI bets first
+Step 3: Vendor Intelligence → score RCM AI vendors against your situation
+Step 4: Business Case Intelligence → CFO model with risk adjustment
+Step 5: Outcome Intelligence → lock baseline, track savings, trigger fee
+
+TYPICAL OUTCOME:
+$28-94M annual value · 14 months to full value
+Fee: 15-20% of verified savings above baseline
+
+---
+
+#### SOLUTION 2: ANALYTICS MODERNIZATION INTELLIGENCE
+
+Code: AM-01
+Objective: Optimise
+Office: Back Office
+Verticals: All
+Products: Situation + Business Case + Vendor + Data Estate
+
+Problem statement:
+"We have hundreds of reports, a dozen BI tools, and
+nobody knows which ones anyone uses. We're paying
+millions to maintain analytics nobody reads."
+
+FROM YOUR DATA (Meridian):
+🔴 312 apps in inventory — 42% flagged as redundant
+🔴 $38M shadow IT spend — untracked SaaS
+🟡 3 BI platforms with overlapping capability
+🟡 IT spend 4.5% of revenue — above 3.8% peer median
+
+FROM INDUSTRY:
+Organizations your size typically have 3-4x more tools than needed
+62% of reports are never accessed after creation
+License rationalization saves $2-4M immediately at your scale
+
+FROM GENOME:
+23 analytics modernization engagements
+Average savings: $4.2M year 1, $6.8M by year 3
+Most common mistake: migrating before rationalizing
+
+SOLUTION WORKFLOW:
+Step 1: Situation Intelligence → full analytics estate picture
+Step 2: Data Estate Intelligence → inventory and rationalize
+Step 3: Vendor Intelligence → cloud stack scored for your situation
+Step 4: Business Case Intelligence → migration ROI model
+Step 5: Outcome Intelligence → track savings vs rationalization baseline
+
+TYPICAL OUTCOME:
+$3-8M annual savings · 18-24 months payback
+
+---
+
+#### SOLUTION 3: IT SPEND OPTIMIZATION INTELLIGENCE
+
+Code: IT-01
+Objective: Optimise
+Office: Back Office
+Verticals: All
+Products: Situation + Business Case + Vendor + Outcome
+
+Problem statement:
+"I'm spending hundreds of millions on IT. I can't tell
+my CFO what we're getting for it or where to cut."
+
+FROM YOUR DATA (Meridian):
+🔴 IT spend 4.5% of revenue — above 3.8% peer median
+🔴 $2.1M in vendor SLA credits unclaimed right now
+🟡 3 vendor contracts renewing in the next 90 days
+🟡 6 vendors with overlapping capabilities
+
+FROM INDUSTRY:
+Organizations your size overpay vendors by 15-25% on average
+Most have 40-60% of licenses underutilized
+Contract timing is the single biggest lever — negotiate at renewal
+
+FROM GENOME:
+31 IT spend optimization engagements
+Average savings: $11M year 1 at your scale
+Fastest win: claim existing SLA credits (average 3 weeks)
+
+SOLUTION WORKFLOW:
+Step 1: Situation Intelligence → full IT spend picture
+Step 2: Vendor Intelligence → optimize current vendors
+Step 3: Business Case Intelligence → rebalancing model
+Step 4: Outcome Intelligence → track savings vs IT spend baseline
+
+TYPICAL OUTCOME:
+$8-18M annual savings · 12 months payback
+
+---
+
+#### SOLUTION 4: DIGITAL BANKING TRANSFORMATION
+
+Code: FS-01
+Objective: Grow
+Office: Front Office
+Verticals: Financial Services
+Products: Situation + AI Investment + Vendor + Business Case + Outcome
+
+Problem statement:
+"Our digital adoption is 26 percentage points behind
+our competitors. Every point costs us revenue and customers."
+
+FROM YOUR DATA (First Capital):
+🔴 Digital adoption 41% vs 67% peer benchmark — $48M revenue gap
+🔴 Core system 22 years old — FIS HORIZON — modernization critical
+🔴 FedNow: not compliant — January 2027 hard deadline
+🟡 Mobile NPS 34 vs 58 best-in-class
+
+FROM INDUSTRY:
+Banks that closed the digital adoption gap in 24 months:
+Average revenue uplift: $22M annually at your AUM scale
+FedNow compliance estimated cost: $8-14M at your core system age
+
+FROM GENOME:
+34 digital banking transformation engagements
+Primary failure: underestimating core system integration complexity
+Success factor: executive sponsor at CEO level from day 1
+
+SOLUTION WORKFLOW:
+Step 1: Situation Intelligence → digital adoption picture
+Step 2: AI Investment Intelligence → which digital bets first
+Step 3: Vendor Intelligence → core modernization and digital vendors
+Step 4: Business Case Intelligence → transformation ROI model
+Step 5: Outcome Intelligence → track adoption vs baseline
+
+TYPICAL OUTCOME:
+$18-48M annual revenue uplift · 18 months to value
+
+---
+
+#### SOLUTION 5: AI PORTFOLIO ACCOUNTABILITY
+
+Code: AI-01
+Objective: Protect
+Office: Middle Office
+Verticals: All
+Products: Situation + Outcome + AI Investment
+
+Problem statement:
+"We've spent tens of millions on AI. I can't tell
+the board what's working, what isn't, or whether
+any of it was worth it."
+
+FROM YOUR DATA (Meridian):
+🔴 0 of 6 AI pilots delivering value — $42M stalled
+🔴 14 AI tools found in shadow IT — not in IT registry
+🟡 Responsible AI score 52/100 — compliance exposure
+🟡 $42M AI budget committed — $0 in tracked outcomes
+
+FROM INDUSTRY:
+Less than 12% of enterprise AI spend has a documented
+baseline and outcome measurement. The other 88% will
+never know if it worked.
+
+FROM GENOME:
+41 AI accountability engagements
+Most common finding: leadership thinks pilots are running —
+data shows none are delivering
+Average value unlocked by accountability reset: $28M
+
+SOLUTION WORKFLOW:
+Step 1: Situation Intelligence → AI program current state
+Step 2: AI Investment Intelligence → re-prioritize AI bets
+Step 3: Outcome Intelligence → lock baseline, start tracking
+Step 4: Repeat as each initiative delivers or fails
+
+TYPICAL OUTCOME:
+$42M stalled spend unlocked and redirected · 90 days
+Then: 15-20% outcome fee on verified savings
+
+---
+
+### INDIVIDUAL SOLUTION PAGE DESIGN (/solutions/[slug])
+
+Each solution page has 6 sections.
+
+SECTION 1: HERO (dark, full width)
+Solution name + badges + problem statement
+Five metric tiles (3 from client data, 2 from industry/Genome)
+Each tile: source label (FROM YOUR DATA / FROM INDUSTRY / FROM GENOME)
+Outcome range + Genome basis
+
+SECTION 2: THE FIVE-STEP WORKFLOW
+Step-by-step with connector lines
+Each step:
+- Step number (teal circle)
+- Step name (white 14px bold)
+- What happens (gray 12px)
+- Three-source panel (YOUR DATA / INDUSTRY / GENOME columns)
+- Output artifact (teal background card)
+
+SECTION 3: PRODUCTS ACTIVATED
+Grid of product cards
+Each card: product name + what role it plays in this solution
+Click → goes to that product pre-configured for this solution
+
+SECTION 4: FROM THE GENOME
+Three data points from similar engagements:
+- Success rate
+- Typical outcome range
+- Most common failure pattern (and how to avoid it)
+"Based on X engagements in the Transformation Genome"
+
+SECTION 5: DATA REQUIREMENTS
+What data is needed and what's already loaded:
+✓ Green: already loaded for active client
+✗ Red: missing — [Download template →]
+For each missing item: what it unlocks, confidence impact
+
+SECTION 6: RUN THIS SOLUTION
+```
+[Run for Meridian →]
+This will open Situation Intelligence pre-configured
+for Revenue Cycle Intelligence, with Meridian loaded.
+All 5 products will be available in sequence.
+Estimated time: 45-90 minutes for full analysis.
+```
+
+---
+
+### SOLUTION → PRODUCT HANDOFF
+
+When [Run for Meridian →] is clicked:
+
+1. URL: /diagnose?client=meridian&solution=HC-01
+2. Situation Intelligence opens with:
+   - "Running: Revenue Cycle Intelligence" banner
+   - Issues pre-sorted by RCM relevance
+   - RCM-specific pre-built questions in Ask Anything
+   - Step 6 brief titled "Revenue Cycle Situation Brief"
+3. "Next in this solution" breadcrumb visible at all times
+4. Progress: Step 1 of 5 · Revenue Cycle Intelligence
+
+Banner design (persistent top of every product when in solution mode):
+```
+REVENUE CYCLE INTELLIGENCE · HC-01
+Step 1 of 5: Situation Intelligence
+[1 ✓ Situation] [2 AI Investment] [3 Vendor] [4 Business Case] [5 Outcome]
+```
+
+---
+
+### PHASE 1F FINAL QA GATE
+
+Solution Library index (/solutions):
+- [ ] Active client shown in header (Meridian)
+- [ ] All 5 solution cards render correctly
+- [ ] Top bar colors: green (Grow) / amber (Optimise) / indigo (Protect)
+- [ ] FROM YOUR DATA section shows Meridian-specific numbers
+- [ ] Filters work: Objective / Office / Vertical all filter correctly
+- [ ] Switching client: FROM YOUR DATA updates to that client's numbers
+- [ ] [Run for Meridian →] CTA on each card correct
+
+Individual solution pages (check all 5):
+- [ ] HC-01: Revenue Cycle — 5 workflow steps, correct Meridian numbers
+- [ ] AM-01: Analytics Modernization — correct inventory numbers
+- [ ] IT-01: IT Spend Optimization — $2.1M SLA credit shown
+- [ ] FS-01: Digital Banking — First Capital numbers (not Meridian)
+- [ ] AI-01: AI Portfolio — 0/6 pilots, $42M stalled
+
+Each solution page:
+- [ ] Hero: 5 metric tiles with correct source labels
+- [ ] Workflow: all steps shown with three-source panels
+- [ ] Products activated: correct products for each solution
+- [ ] Genome data: success rate, outcome range, failure pattern
+- [ ] Data requirements: shows loaded vs missing for active client
+- [ ] [Run →] button navigates with correct client and solution params
+
+Solution → product handoff:
+- [ ] Solution banner visible in each product when running solution
+- [ ] Solution progress breadcrumb shows correct step
+- [ ] Issues in Situation Intelligence sorted by solution relevance
+- [ ] Pre-built questions change to solution-specific
+
+COMMIT: git commit -m "Phase 1F final: Solution Library — 5 solutions, client-specific data, product handoff, solution progress tracking"
+
+
+---
+
+## PHASE QA-1 — COMPLETE QUALITY PASS (Priority: Do this before any new features)
+
+This phase has one job: make everything that exists actually work.
+No new features. No new pages. Fix what's broken. Make it impactful.
+
+The standard: every click must do something meaningful.
+Every graphic must tell a story. Every number must be correct.
+Every role must show different data. Every client must show different data.
+
+---
+
+### THE ROOT CAUSE
+
+Claude Code builds UI components without wiring the logic.
+Three things must exist for any interactive element to work:
+
+1. THE LOGIC FUNCTION — the code that filters/transforms data
+2. THE STATE CONNECTION — the component reads from state
+3. THE TRIGGER — the click actually updates state
+
+If any one of these is missing — the click does nothing.
+
+For every interactive element below, verify all three exist.
+
+---
+
+### AUDIT 1 — ROLE SWITCHER (Situation Intelligence)
+
+THE BUG: Clicking CIO/CFO/COO/CMIO/CEO/Maestro shows identical data.
+
+ROOT CAUSE: filterIssuesByRole() function likely missing or
+component renders allIssues instead of filteredIssues.
+
+FIX — THREE THINGS REQUIRED:
+
+```typescript
+// 1. THE LOGIC — must exist in src/lib/situation-intelligence.ts
+export const ROLE_WEIGHTS: Record<string, Record<string, number>> = {
+  CIO: {
+    technology: 5, ai: 5, vendor: 4, digital: 4,
+    financial: 2, clinical: 1, workforce: 2
+  },
+  CFO: {
+    financial: 5, rcm: 5, revenue: 5, cost: 5,
+    vendor: 3, technology: 2, clinical: 1
+  },
+  CMIO: {
+    clinical: 5, quality: 5, epic: 5, prior_auth: 5,
+    ai: 3, workforce: 3, financial: 1
+  },
+  COO: {
+    operations: 5, workforce: 5, throughput: 4,
+    clinical: 3, financial: 3, technology: 2
+  },
+  CEO: {
+    financial: 4, strategic: 5, risk: 4,
+    clinical: 3, technology: 3, workforce: 3
+  },
+  Maestro: {
+    // Maestro sees everything — sorted by severity only
+    financial: 3, clinical: 3, technology: 3,
+    ai: 3, workforce: 3, vendor: 3
+  }
+}
+
+export function filterIssuesByRole(
+  issues: Issue[],
+  role: string,
+  client: string
+): Issue[] {
+  const weights = ROLE_WEIGHTS[role] || ROLE_WEIGHTS.CEO
+  return [...issues].sort((a, b) => {
+    const aScore = (weights[a.category] || 1) * (a.severity === 'critical' ? 3 : a.severity === 'warning' ? 2 : 1)
+    const bScore = (weights[b.category] || 1) * (b.severity === 'critical' ? 3 : b.severity === 'warning' ? 2 : 1)
+    return bScore - aScore
+  })
+}
+
+// 2. THE STATE — component must use this
+const [activeRole, setActiveRole] = useState('CIO')
+const displayIssues = filterIssuesByRole(allIssues, activeRole, clientId)
+// RENDER displayIssues — NOT allIssues
+
+// 3. THE TRIGGER — role button must call setter
+<button onClick={() => setActiveRole('CFO')}>CFO</button>
+```
+
+VERIFY BY TESTING:
+- Click CIO → top issue should be CDO Vacant or Epic (technology/AI)
+- Click CFO → top issue should be RCM Denial Rate or Operating Margin (financial)
+- Click CMIO → top issue should be Epic Optimization or Prior Auth (clinical)
+- If all three show the same top issue → still broken
+
+ADDITIONALLY — role switch must also change:
+- Pre-built questions in Ask Anything (Step 4)
+- Brief framing in Situation Brief (Step 6)
+- Section header: "3 critical issues · sorted by relevance to CFO"
+
+---
+
+### AUDIT 2 — CLIENT SWITCHER (all products)
+
+THE BUG: Switching between Meridian/First Capital/Apex
+may show the same data regardless of which client is selected.
+
+FIX PATTERN — same three things:
+
+```typescript
+// 1. THE DATA — must load by client
+const clientData = {
+  meridian: meridianIssues,
+  firstcapital: firstCapitalIssues,
+  apexretail: apexIssues
+}
+
+// 2. THE STATE
+const [activeClient, setActiveClient] = useState(
+  searchParams.get('client') || 'meridian'
+)
+const allIssues = clientData[activeClient] || clientData.meridian
+
+// 3. THE TRIGGER
+<button onClick={() => setActiveClient('firstcapital')}>
+  First Capital
+</button>
+```
+
+VERIFY:
+- Meridian: shows RCM 18.2%, CDO vacant, Epic 58/100
+- First Capital: shows digital adoption 41%, FedNow non-compliant, core system 22yrs
+- Apex: shows Einstein idle $248M, cart abandonment 72%, shadow IT $38M
+- If any two show the same numbers → broken
+
+---
+
+### AUDIT 3 — STEP NAVIGATOR (all products)
+
+THE BUG: Steps may be pre-checked on load or
+clicking a step may not change the content.
+
+FIX:
+```typescript
+const [currentStep, setCurrentStep] = useState(1)
+const [completedSteps, setCompletedSteps] = useState<number[]>([])
+
+// When advancing to next step:
+const advanceStep = (nextStep: number) => {
+  setCompletedSteps(prev => [...prev, currentStep])
+  setCurrentStep(nextStep)
+}
+
+// Step button rendering:
+// completed = completedSteps.includes(n) — checkmark
+// active = currentStep === n — teal underline
+// future = !completed && !active — white 70% opacity
+// NEVER pre-check steps on load
+```
+
+VERIFY:
+- On load: Step 1 active, steps 2-6 unchecked, no green marks
+- Click Step 2 manually: Step 1 gets checkmark, Step 2 becomes active
+- Step content changes when step changes
+
+---
+
+### AUDIT 4 — CONTRADICTION MAP (Situation Intelligence Step 2)
+
+THE BUG: May be rendering as a table instead of
+a visual tension diagram. Lines may not animate.
+
+REQUIRED DESIGN:
+```
+Left column (white text):      Center:           Right column (red/amber):
+"Reported 94.2% collection" ━━━━━━━━━━━━━━━━━━ "Actual 87.1% in data"
+                                    ↑
+                               $31M gap
+                             [3 quarters]
+
+"6 pilots running"          ━━━━━━━━━━━━━━━━━━ "0 delivering value"
+                                    ↑
+                               $42M sunk
+```
+
+The tension lines (━━━) must:
+- Animate from left to right on step load
+- Be teal colored
+- Show gap amount in red below each line
+- Show timespan in gray below gap
+
+Clicking any row expands to show:
+- REPORTED BY: [name, role, document, date]
+- DATA SOURCE: [file, date, specific data point]
+- GAP STARTED: [date when divergence began]
+
+If it's rendering as a table with columns — rebuild as the visual above.
+
+---
+
+### AUDIT 5 — BENCHMARK BARS (Situation Intelligence Step 1)
+
+THE BUG: Bars may all be the same color or
+Meridian bar may not be red when below benchmark.
+
+REQUIRED:
+```
+RCM DENIAL RATE
+Meridian    ████████████████████████ 18.2%  ← RED (above benchmark = bad)
+Peer Median ████████████████         12.0%  ← DARK GRAY
+Top Quartile ████████                 8.2%  ← DARK GRAY
+
+OPERATING MARGIN
+Top Quartile ████████████████         5.2%  ← DARK GRAY
+Peer Median  ████████                 3.4%  ← DARK GRAY
+Meridian     ████                     1.8%  ← RED (below benchmark = bad)
+```
+
+Color logic:
+- For metrics where HIGHER is WORSE (denial rate, cost):
+  Meridian bar RED if above peer median
+- For metrics where LOWER is WORSE (margin, adoption):
+  Meridian bar RED if below peer median
+- Always animate bars on step load (fill left to right)
+
+---
+
+### AUDIT 6 — SEVERITY DONUT (Situation Intelligence Step 1)
+
+THE BUG: May not animate. Segments may not filter cards.
+
+REQUIRED:
+- SVG donut chart — draws clockwise on load
+- Three segments: red (critical count), amber (warning), gray (watch)
+- Center text: total dollar amount at risk
+- Clicking red segment: filters issue cards to show only critical
+- Clicking amber: shows only warnings
+- Clicking center: shows all (reset filter)
+
+For Meridian: 3 critical (red), 4 warning (amber), 0 watch
+Center: "$156M at risk"
+
+---
+
+### AUDIT 7 — SPARKLINES (Situation Intelligence KPI tiles)
+
+THE BUG: Red squiggly lines instead of clean mini line charts.
+
+REQUIRED — SVG sparkline on each tile:
+```typescript
+// Deny rate sparkline data
+const denialTrend = [14.2, 16.8, 18.2] // 3 years
+// Draw as thin SVG polyline — going UP = bad = red line
+// Going DOWN = bad for margin = red line
+
+// Margin sparkline data
+const marginTrend = [3.2, 2.1, 1.8] // 3 years
+// Going DOWN = bad = red line
+
+// Implementation:
+const points = data.map((v, i) => {
+  const x = (i / (data.length - 1)) * width
+  const y = height - ((v - min) / (max - min)) * height
+  return `${x},${y}`
+}).join(' ')
+
+<polyline points={points} stroke="#EF4444" strokeWidth="1.5"
+  fill="none" strokeLinecap="round" strokeLinejoin="round" />
+```
+
+Each tile sparkline:
+- Margin: 3.2 → 2.1 → 1.8 (going down, red)
+- RCM Denial: 14.2 → 16.8 → 18.2 (going up, red — higher is worse)
+- Prior Auth: 31 → 27 → 23 (going down, amber — lower is worse)
+- MA Star: 3.8 → 3.6 → 3.2 (going down, amber)
+- Epic Score: 52 → 55 → 58 (going up slightly, amber — below target)
+- AI Pilots: 0 → 0 → 0 (flat, red — stuck at zero)
+
+---
+
+### AUDIT 8 — TRAJECTORY CHART (Situation Intelligence, top of Step 1)
+
+Missing entirely. Must be built.
+
+REQUIRED — dual-axis chart, full width, above KPI tiles:
+
+```
+Revenue ($B)                              Margin (%)
+$12B ──────────────────────────●         5%
+     ·                    ●              4%
+$10B ──────●─────                        3% ●────
+           Meridian                      2% ────●
+$8B  ──────────────────────────          1%      ●
+     2023          2024          2025    0%
+
+     Revenue ──── (teal, going up)
+     Margin  ──── (red, going down)
+```
+
+Title above chart (Fraunces 18px white):
+"Revenue is growing. Margin is collapsing. Here is why."
+
+This must be the FIRST thing visible on Step 1.
+The hook that makes the CIO lean forward.
+
+---
+
+### AUDIT 9 — KNOWLEDGE LAYER ATTRIBUTION
+
+THE BUG: Products may show findings without source attribution.
+Every data point must be clearly sourced.
+
+THREE SOURCE LABELS (must appear on every opportunity card,
+every finding, every recommendation):
+
+FROM YOUR DATA — teal label, 9px JetBrains Mono
+FROM INDUSTRY — amber label, 9px JetBrains Mono
+FROM GENOME — indigo label, 9px JetBrains Mono
+
+If a finding has no label → it appears to be made up.
+That destroys credibility. Every finding must be sourced.
+
+---
+
+### AUDIT 10 — GRAPHICS MAKE SENSE CHECK
+
+For every chart and graphic — run these checks:
+
+DONUT/PIE CHARTS:
+- Do segments add up to 100%?
+- Does the legend match the segments?
+- Are the colors meaningful (not just decorative)?
+
+BAR CHARTS:
+- Is the Y axis labeled?
+- Do bars start at zero (not at a misleading baseline)?
+- Are the values correct for the active client?
+
+LINE CHARTS/SPARKLINES:
+- Does the direction make intuitive sense?
+- Is up always better or is the context clear?
+- Are data points labeled at start and end?
+
+SCATTER PLOTS:
+- Are axis labels visible and correct?
+- Do all bubbles have hover states?
+- Is the "recommended" zone visually obvious?
+
+PROGRESS BARS:
+- Does 0% show as empty?
+- Does 100% show as full?
+- Is the color meaningful (teal=good, red=bad)?
+
+GAUGE DIALS:
+- Does the needle/fill match the percentage?
+- Is the scale labeled?
+- Does animating from 0 work correctly?
+
+---
+
+### AUDIT 11 — NAVIGATION COMPLETE PASS
+
+Check every clickable element across all pages.
+Use this checklist:
+
+HOMEPAGE (/):
+- [ ] Client cards — click → /admin/client/[clientId]
+- [ ] Product cards "Start Analysis" → product page with client param
+- [ ] Solutions cards → /solutions/[slug]
+- [ ] Nav: Products dropdown → correct product pages
+- [ ] Nav: Solutions dropdown → correct solution pages
+- [ ] Nav: Clients dropdown → correct client admin pages
+- [ ] Nav: Maestro → /admin
+- [ ] Nav: Investor View → /investor
+
+MAESTRO PORTAL (/admin):
+- [ ] Each client row → /admin/client/[clientId]
+- [ ] "+ New Engagement" → /admin/new-client
+
+CLIENT DASHBOARD (/admin/client/meridian):
+- [ ] All 7 tabs switch content correctly
+- [ ] "Open Intelligence →" → /diagnose?client=meridian
+- [ ] File rows expand to show details
+- [ ] Approve/Restrict/Reject buttons work
+- [ ] "Download template →" downloads correct file
+- [ ] Audit log shows real entries
+
+SITUATION INTELLIGENCE (/diagnose):
+- [ ] Role switcher → data changes for each role
+- [ ] Client switcher → data changes for each client
+- [ ] All 6 steps navigate correctly
+- [ ] Step content changes when step changes
+- [ ] Issue cards: "See the data →" → relevant detail
+- [ ] Issue cards: "Who owns this →" → owner detail
+- [ ] Issue cards: "What to do →" → action detail
+- [ ] Contradiction rows expand to show attribution
+- [ ] Benchmark bars: clicking a bar → detail panel
+- [ ] Donut segments: clicking → filters issue cards
+- [ ] Ask Anything: pre-built questions fire immediately
+- [ ] Ask Anything: freeform input streams response
+- [ ] "Build AI Strategy →" → /ai-strategy?client=meridian
+- [ ] "Download Situation Brief →" → downloads HTML
+
+AI INVESTMENT INTELLIGENCE (/ai-strategy):
+- [ ] 3-act buttons switch content
+- [ ] Mode toggle Maestro Prep / Live Session works
+- [ ] Scatter plot bubbles: hover → correct data
+- [ ] Scatter plot bubbles: click → highlights card
+- [ ] Bet cards: [✓ Keep] / [✗ Remove] / [? Challenge] all work
+- [ ] Remove bet: trade-off analysis appears with correct numbers
+- [ ] Challenge: evidence panel opens with 3-source attribution
+- [ ] "Suggest your own" → assessment returns
+- [ ] [View Failure Genome →] → drawer opens
+- [ ] Failure Genome: all 7 patterns scored for active client
+- [ ] [Present Now →] → full-screen presentation mode
+- [ ] [Confirm bets →] → modal opens with correct bets
+
+VENDOR INTELLIGENCE (/select):
+- [ ] Mode switcher: Select / Optimize works
+- [ ] Scatter plot renders with vendors
+- [ ] Vendor cards show 3-source attribution
+- [ ] [View references →] → opens reference list
+- [ ] [Build RFP →] → generates RFP document
+- [ ] Current vendor cards: SLA breach amounts shown
+- [ ] [Generate credit claim →] → produces document
+
+BUSINESS CASE INTELLIGENCE (/justify):
+- [ ] Initiative selector works
+- [ ] Role: CIO vs CFO mode changes view
+- [ ] Scenario sliders update all numbers in real time
+- [ ] [Send to CFO →] → creates shareable link
+- [ ] CFO challenge flow returns evidence
+- [ ] [Download Board Brief →] → downloads PDF
+
+OUTCOME INTELLIGENCE (/control-tower):
+- [ ] All 5 tabs switch content
+- [ ] Progress bars show correct percentages
+- [ ] Early warning flags show for Meridian
+- [ ] [Download baseline →] → client-accessible document
+- [ ] [Download Board Report →] → quarterly report
+
+SOLUTIONS (/solutions):
+- [ ] Filters work: Objective/Office/Vertical all filter
+- [ ] Active client shown in header
+- [ ] FROM YOUR DATA shows client-specific numbers
+- [ ] [Run for Meridian →] → correct product with solution param
+- [ ] Individual solution pages load correctly
+- [ ] Solution banner appears in products when running solution
+
+---
+
+### EXECUTION ORDER FOR THIS PHASE
+
+Claude Code must execute in this order:
+
+STEP 1: Fix role switcher (Audit 1)
+- Write filterIssuesByRole() function
+- Connect to component state
+- Wire onClick to state setter
+- TEST: CIO vs CFO shows different top issue
+- DO NOT PROCEED until verified working
+
+STEP 2: Fix client switcher (Audit 2)
+- Verify all three clients load different data
+- TEST: Switch to First Capital → see 41% digital adoption
+- TEST: Switch to Apex → see $248M Einstein idle
+- DO NOT PROCEED until verified working
+
+STEP 3: Fix step navigator (Audit 3)
+- No pre-checked steps on load
+- Clicking advances correctly
+- Content changes with step
+
+STEP 4: Fix contradiction map (Audit 4)
+- Visual tension diagram — not a table
+- Lines animate left to right
+- Clicking expands attribution
+
+STEP 5: Fix benchmark bars (Audit 5)
+- Meridian bars RED when below benchmark
+- Bars animate on load
+- Correct values for all 3 clients
+
+STEP 6: Fix severity donut (Audit 6)
+- Animates on load
+- Clicking segments filters cards
+
+STEP 7: Fix sparklines (Audit 7)
+- Clean SVG polylines
+- Correct 3-year trend data
+- Not squiggly lines
+
+STEP 8: Build trajectory chart (Audit 8)
+- Dual-axis chart at top of Step 1
+- Revenue up (teal) + Margin down (red)
+- Title: "Revenue is growing. Margin is collapsing. Here is why."
+
+STEP 9: Add knowledge layer attribution (Audit 9)
+- FROM YOUR DATA / FROM INDUSTRY / FROM GENOME labels
+- On every opportunity card, finding, and recommendation
+
+STEP 10: Graphics sense check (Audit 10)
+- Every chart checked against the checklist
+- Fix any that don't make sense
+
+STEP 11: Full navigation pass (Audit 11)
+- Every clickable element in the checklist
+- Fix every dead end found
+- Zero broken links
+
+After each step: run npm run test:behaviors
+After all steps: run npm run test:before-commit
+No commit until all 11 steps pass.
+
+COMMIT: git commit -m "Phase QA-1: Complete quality pass — role switcher wired, client switching correct, all graphics meaningful, zero dead ends"
+
+
+---
+
+## PHASE 4H FINAL — VENDOR INTELLIGENCE: COMPLETE INTERACTION SPEC
+
+### THE IRON RULE FOR ALL INTERACTIONS
+
+Every button, chart, and check must satisfy three conditions:
+1. DATA EXISTS — show empty state if not, never fake data
+2. DATA IS CLIENT-SPECIFIC — switching client must change the output
+3. CLICK PRODUCES VISIBLE CHANGE — verify before committing
+
+---
+
+### PHASE NAVIGATION
+
+Six phase tabs always visible at top of product:
+[Sourcing] [Evaluation] [Negotiation] [Contracting] [Management] [Renewal/Exit]
+
+Active phase: teal background dark text
+Others: white text dark background
+Clicking any phase navigates without losing data from completed phases
+Phase completion indicator: small teal checkmark when phase has output
+
+STATE MANAGEMENT:
+const [activePhase, setActivePhase] = useState('sourcing')
+const [completedPhases, setCompletedPhases] = useState<string[]>([])
+const [vendorSession, setVendorSession] = useState<VendorSession>({})
+
+VendorSession persists across phase navigation:
+  - Selected initiative (from Phase 1)
+  - Shortlisted vendors (from Phase 2)
+  - Negotiation positions (from Phase 3)
+  - Generated documents (from Phases 4-6)
+
+---
+
+### PHASE 1 — SOURCING
+
+BUTTON: "Define Initiative"
+  Disabled until: nothing (always enabled as entry point)
+  Opens: structured form — NOT freeform text
+  
+  Form fields with validation:
+  initiativeType: required, dropdown from INITIATIVE_TYPES constant
+  budget: required, dropdown ['<$1M','$1-3M','$3-6M','$6M+']
+  timeline: required, dropdown ['3mo','6mo','12mo','18mo+']
+  integrations: multi-select, at least one required
+  dealBreakers: optional text, max 200 chars
+  champion: required radio
+  
+  Submit button disabled until all required fields filled
+  On submit: runs matchVendors(formData, clientProfile, knowledgeLayer)
+  
+  Pre-population check:
+  if(aiInvestmentSession.confirmedBets.length > 0) {
+    initiativeType = aiInvestmentSession.confirmedBets[0].type
+    // Show banner: "Pre-filled from your confirmed AI bets"
+  }
+
+CHART: Vendor Scatter Plot
+  Renders after form submit — not before
+  Loading state: skeleton animation during data fetch (300-500ms)
+  
+  Axes:
+  X = complexityScore(client) — computed from:
+    (10 - client.dataReadiness) * 0.3 +
+    (10 - client.teamReadiness) * 0.4 +
+    client.integrationCount * 0.3
+  Y = vendor.outcomeRate — from knowledgeLayer.vendorOutcomes[id]
+  
+  Bubble size = referencMatchScore(vendor, clientProfile) scaled 8-24px
+  
+  Color logic (computed, never hardcoded):
+  if outcomeRate > 70 && complexityScore < 5: teal (recommended)
+  if outcomeRate > 60 || complexityScore < 6: blue (consider)
+  if outcomeRate < 60 && complexityScore > 6: amber (caution)
+  else: gray (not recommended)
+  
+  Header: "Showing [N] vendors for [initiativeType] · [M] recommended"
+  N and M must update when filters applied
+
+  HOVER STATE — must be wired:
+  onMouseEnter={e => setHoveredVendor(vendor.id)}
+  onMouseLeave={e => setHoveredVendor(null)}
+  Hover panel renders only when hoveredVendor !== null
+  Panel positioned relative to bubble, not fixed corner
+  
+  BEHAVIOR TEST:
+  Hover vendor A → note outcome rate shown
+  Hover vendor B → verify different outcome rate
+  If same → knowledgeLayer not loading per vendor
+
+FILTERS: [All] [<$3M] [$3-6M] [$6M+] [Healthcare] [FinServ] [Retail]
+  Each filter: onClick={applyFilter(type, value)}
+  Filtered vendor set stored in state: filteredVendors
+  Plot re-renders with filteredVendors only
+  Header count updates: "Showing 8 of 23 vendors"
+  
+  BEHAVIOR TEST:
+  Apply Healthcare filter → vendor count must decrease
+  If count stays same → filter not wired
+
+---
+
+### PHASE 2 — EVALUATION
+
+CHART: Shortlist Cards (top 3 by combined score)
+
+  Sort algorithm:
+  combinedScore = (outcomeRate * 0.4) + (referenceMatch * 0.3) + 
+                  (priceScore * 0.2) + (fitScore * 0.1)
+  Top 3 by combinedScore → show as cards
+  
+  Each card — data sources mapped explicitly:
+
+  FROM YOUR DATA column:
+    source: clientData[activeClient].keyMetric
+    For RCM initiative: denial rate (clientData.issues.find(i => i.id === 'rcm-denial'))
+    For Digital initiative: adoption rate (clientData.issues.find(i => i.id === 'digital-adoption'))
+    NEVER show generic text here — must be client's actual metric
+    
+  FROM INDUSTRY column:
+    source: knowledgeLayer.vendorOutcomes[vendorId].industryData
+    Shows: market share, client count, average contract value
+    Must differ per vendor (Ensemble ≠ Waystar ≠ R1)
+    
+  FROM GENOME column:
+    source: knowledgeLayer.vendorOutcomes[vendorId].genomeData
+    Shows: outcome rate, average time to value, failure patterns
+    Must differ per vendor
+    
+  BEHAVIOR TEST (critical — this is where bugs hide):
+  Check vendor A FROM GENOME → note outcome rate
+  Check vendor B FROM GENOME → must show different outcome rate
+  If same → knowledgeLayer.vendorOutcomes not keyed by vendorId
+
+  VALUE BAR:
+  width = (vendor.estimatedValue.max / maxValueAcrossShortlist) * 100
+  NEVER hardcode width
+  Both min and max bars: animate from 0 on mount using CSS transition
+  
+  CONFIDENCE RING:
+  SVG circle with strokeDasharray animation
+  stroke-dasharray: circumference * confidence / 100
+  stroke-dasharray: circumference (full, gray background)
+  Animation: from 0 to final value in 800ms
+  Color computed: confidence > 80 ? '#2DD4C8' : confidence > 60 ? '#F59E0B' : '#EF4444'
+  
+  RISK PILL:
+  source: failurePatterns.scoreForClient(vendorId, clientId)
+  Returns: { level: 'low'|'medium'|'high', signals: string[] }
+  Color: low=#34D399 medium=#F59E0B high=#EF4444
+  NEVER hardcode risk level — must compute per vendor per client
+
+BUTTON: "View References" 
+  onClick: opens right-side drawer, setDrawerOpen(true)
+  Drawer does NOT navigate — content stays behind
+  
+  Reference filter algorithm:
+  references = knowledgeLayer.vendorReferences
+    .filter(r => r.vendorId === selectedVendor.id)
+    .filter(r => similarityScore(r.orgProfile, clientProfile) > 0.65)
+    .sort((a, b) => b.similarityScore - a.similarityScore)
+    .slice(0, 8)
+    
+  BEHAVIOR TEST:
+  Open Meridian references → note org descriptors shown
+  Switch to First Capital → open references → must show DIFFERENT orgs
+  If same references appear → filter not using clientProfile
+
+BUTTON: "Compare Vendors"
+  Opens full-width comparison table
+  Each row: best value highlighted teal, worst value highlighted red
+  
+  Color logic per row:
+  values = vendors.map(v => v[metric])
+  best = Math.min(values) // for cost metrics
+  worst = Math.max(values) // for cost metrics
+  // (reversed for performance metrics)
+  
+  BEHAVIOR TEST:
+  All 3 vendor rows must have different values
+  Best value must be teal, worst must be red
+  If any row shows identical values across vendors → data not per-vendor
+
+BUTTON: "Remove from shortlist"
+  onClick: setShortlist(shortlist.filter(v => v.id !== vendorId))
+  Triggers trade-off panel:
+    "Removing [Vendor] reduces your shortlist to 2 options.
+     Estimated value impact: -$[X]M from your best case.
+     [Undo] [Confirm removal]"
+  Undo: restores vendor within 10 seconds
+  Confirm: removes permanently for this session
+
+---
+
+### PHASE 3 — NEGOTIATION
+
+CHART: Price Benchmark Visualization
+  Must be vendor-specific — switching vendor changes all values
+  
+  Data source: knowledgeLayer.contractBenchmarks[vendorId][initiativeType]
+  
+  Percentile bars:
+  25th pct value = benchmarks.p25
+  50th pct value = benchmarks.p50 (median)
+  75th pct value = benchmarks.p75
+  Your estimate = formData.budget midpoint
+  
+  Your position text:
+  const pct = calculatePercentile(yourEstimate, benchmarks)
+  text = `Your estimate is at the ${pct}th percentile — ${pct < 40 ? 'below' : pct > 60 ? 'above' : 'at'} market median`
+  
+  BEHAVIOR TEST:
+  Select Ensemble → note p50 value shown
+  Select Waystar → note p50 value
+  Must be different — different vendors have different market rates
+  If same → knowledgeLayer.contractBenchmarks not keyed by vendorId
+
+LEVERAGE CHECKBOXES:
+  Each leverage point has a checkbox
+  Checked items → included in negotiation brief
+  State: const [selectedLeverage, setSelectedLeverage] = useState<string[]>([])
+  
+  "Generate Brief" button disabled until at least 1 leverage point checked
+  Button tooltip when disabled: "Select at least one leverage point above"
+
+BUTTON: "Generate Negotiation Brief"
+  Opens modal or new panel
+  
+  Brief personalisation checks:
+  - Vendor name: must appear (vendorSession.selectedVendor.name)
+  - Client name: must appear (clientData.name)
+  - Price figures: must match benchmark chart shown
+  - Red flags: must be from this vendor's pattern data
+  - Opening script: must reference initiative type
+  
+  VERIFICATION FUNCTION (run before rendering):
+  function verifyBrief(brief: NegotiationBrief): string[] {
+    const issues = []
+    if (!brief.includes(vendorName)) issues.push('Missing vendor name')
+    if (!brief.includes(clientName)) issues.push('Missing client name')
+    if (brief.openingPosition !== benchmarks.p25) issues.push('Price mismatch')
+    return issues
+  }
+  if (issues.length > 0) console.error('Brief verification failed:', issues)
+
+---
+
+### PHASE 4 — CONTRACTING
+
+CLAUSE GENERATOR:
+  Healthcare vertical check — MUST be enforced:
+  
+  const allClauses = STANDARD_CLAUSES // always shown
+  const hipaaClauces = HIPAA_CLAUSES // only if Healthcare
+  const clauses = client.vertical === 'Healthcare'
+    ? [...allClauses, ...hipaaClauces]
+    : allClauses
+    
+  BEHAVIOR TEST:
+  Open for Meridian (Healthcare) → count total clauses
+  Open for Apex Retail → count total clauses
+  Meridian must show MORE clauses (HIPAA additions)
+  If same count → vertical check not running
+
+  Each clause has [Copy text] button
+  onClick: navigator.clipboard.writeText(clause.text)
+  Success indicator: button text changes to "Copied ✓" for 2 seconds
+
+SOW GENERATOR:
+  Milestone dates computed from today:
+  const today = new Date()
+  milestone1 = addDays(today, 30) // contract signing
+  milestone2 = addDays(today, 60) // data pipeline
+  milestone3 = addDays(today, 90) // pilot go-live
+  
+  NEVER hardcode dates — always computed from current date
+  
+  BEHAVIOR TEST:
+  Generate SOW today → note milestone dates
+  If dates are hardcoded (e.g. always "June 2026") → not computing from today
+
+---
+
+### PHASE 5 — MANAGEMENT
+
+CHART: SLA Performance Bars
+  For each vendor in vendor_contracts.xlsx + sla_performance.xlsx:
+  
+  Bar width = (actual / contracted) * 100
+  NEVER exceed 100% width even if actual > contracted
+  Color: actual >= contracted ? '#2DD4C8' : '#EF4444'
+  
+  Credit calculation:
+  function calculateCredit(vendor: VendorContract, performance: SLAPerformance) {
+    const breachHours = calculateBreachHours(performance.uptime, vendor.slaUptime, reportingPeriod)
+    return breachHours * vendor.penaltyPerHour
+  }
+  
+  BEHAVIOR TEST:
+  Upload SLA data showing 97.1% for 99.5% contracted
+  Bar must show RED at 97.6% width (97.1/99.5*100)
+  Credit must calculate: not zero, not $2.1M unless that's correct math
+  If bar shows green when below SLA → color logic inverted
+
+AUTOMATED CREDIT DETECTION:
+  Runs automatically on every file upload
+  Algorithm must run and surface results:
+  
+  useEffect(() => {
+    if (vendorContracts && slaPerformance) {
+      const credits = detectUnclaimedCredits(vendorContracts, slaPerformance)
+      if (credits.total > 0) {
+        setAlerts(prev => [...prev, {
+          type: 'UNCLAIMED_CREDITS',
+          amount: credits.total,
+          vendors: credits.byVendor
+        }])
+      }
+    }
+  }, [vendorContracts, slaPerformance])
+  
+  Alert banner: only appears when credits.total > 0
+  Alert disappears when user marks credits as claimed
+  
+  BEHAVIOR TEST:
+  Upload SLA showing breach → alert must appear automatically
+  No breach in data → no alert
+  If alert always shows regardless of data → hardcoded
+
+---
+
+### PHASE 6 — RENEWAL/EXIT
+
+CHART: Performance vs Promise
+  Two bars per metric — must animate separately:
+  Bar 1 (promised): animates to promised width in 600ms
+  Bar 2 (actual): animates to actual width in 800ms (offset)
+  
+  Color logic:
+  actual >= promised * 0.95 → teal (met — within 5%)
+  actual >= promised * 0.80 → amber (close — within 20%)
+  actual < promised * 0.80 → red (missed)
+  
+  Auto-recommendation logic:
+  const metCount = metrics.filter(m => m.actual >= m.promised * 0.95).length
+  const totalCount = metrics.length
+  const pct = metCount / totalCount
+  
+  if pct >= 0.75: recommend = 'renew'
+  elif pct >= 0.5: recommend = 'renegotiate'
+  else: recommend = 'exit analysis'
+  
+  BEHAVIOR TEST:
+  All metrics met → recommendation says "renew"
+  Change data so 2 of 4 met → recommendation says "renegotiate"
+  If recommendation never changes → logic not computing from data
+
+EXIT ANALYSIS:
+  Net model must recalculate when any input changes:
+  
+  const netAdvantage = useMemo(() => {
+    const stayValue = renegotiatedSavings
+    const exitValue = replacementVendorValue - exitCost
+    return exitValue - stayValue
+  }, [renegotiatedSavings, replacementVendorValue, exitCost])
+  
+  Displayed as: positive = "Exit saves $X more over 3 years"
+  Negative = "Staying saves $X more — exit not recommended at this cost"
+  
+  BEHAVIOR TEST:
+  Increase exit cost → net advantage must decrease
+  If recommendation doesn't change → useMemo not working
+
+---
+
+## PHASE 4J FINAL — OUTCOME INTELLIGENCE: COMPLETE INTERACTION SPEC
+
+### FIVE COMPONENT TABS
+
+Tab order: [Portfolio] [Adoption] [Business Value] [Risk & Compliance] [Cost & Consumption]
+
+Each tab has a status indicator:
+  ● teal = data loaded, component active
+  ● amber = partial data
+  ● gray = no data uploaded yet
+
+Tab header shows data freshness:
+  "Last updated: 3 days ago · [Upload new data →]"
+  Alert if data >30 days old: amber border on tab
+
+---
+
+### COMPONENT 1 — AI PORTFOLIO INVENTORY
+
+DATA SOURCE: it_portfolio_inventory.xlsx
+Required columns: id, name, platform, owner, stage, expected_outcome, actual_outcome
+
+GRAPHIC 1: Portfolio Status Donut
+  Segments computed from data:
+  scaled = data.filter(d => d.stage === 'scaled').length
+  pilot = data.filter(d => d.stage === 'pilot').length
+  retired = data.filter(d => d.stage === 'retired').length
+  
+  const total = scaled + pilot + retired
+  scaledPct = Math.round(scaled / total * 100)
+  pilotPct = Math.round(pilot / total * 100)
+  retiredPct = 100 - scaledPct - pilotPct // ensures adds to 100%
+  
+  SVG animation: strokeDashoffset from full to computed value in 800ms
+  Center text: "${total} Active" — from data count, never hardcoded
+  
+  CLICK BEHAVIOR:
+  clicking segment → setStageFilter(segment.stage)
+  table below re-renders with filteredData = data.filter(d => d.stage === stageFilter)
+  
+  BEHAVIOR TEST:
+  Click "Scaled" → table must show only scaled initiatives
+  Click "Pilot" → table must show DIFFERENT set of initiatives
+  Click center → table shows all
+  If table doesn't change → click not wired to filter state
+
+GRAPHIC 2: Platform Distribution
+  groupBy(data, 'platform') → count per platform
+  Horizontal bars, proportional widths
+  Bar width = (count / maxCount) * 80 // 80% of available width max
+  
+  BEHAVIOR TEST:
+  All bars must have different widths (unless counts are equal)
+  Bar labels must match platform names from the data file
+  If all bars same width → width not computed from count
+
+SHADOW AI DETECTION:
+  Runs on upload:
+  shadowAI = data.filter(d => !d.inITRegistry)
+  if (shadowAI.length > 0) {
+    showWarning(`${shadowAI.length} AI tools found not in IT registry`)
+  }
+  
+  Warning banner only appears when shadowAI.length > 0
+
+---
+
+### COMPONENT 2 — ADOPTION & USAGE
+
+DATA SOURCE: adoption_metrics.xlsx
+Required columns: month, platform, mau, workflow_augmentation_pct, tier1_resolved_pct, override_rate
+
+GRAPHIC 1: MAU Trend Line
+  Points = data.groupBy('month').map(month => ({
+    x: month.date,
+    y: month.mau.sum() // sum across all platforms for that month
+  }))
+  
+  Peer benchmark line: knowledgeLayer.benchmarks.mau[client.vertical]
+  
+  If only 1 data point: show single point, no line, message:
+  "Upload multiple months of data to see trend"
+  NEVER draw a line from a single point
+  
+  BEHAVIOR TEST:
+  Upload 3 months data → line shows 3 points connected
+  Upload 1 month data → single point, no line
+  If line always shows → not checking data point count
+
+GRAPHIC 2: Override Rate Gauge
+  overrideRate = data.average('override_rate')
+  
+  Color zone computation:
+  const gaugeColor = overrideRate < 0.10 ? '#2DD4C8'
+    : overrideRate < 0.20 ? '#F59E0B' : '#EF4444'
+  
+  Needle rotation: 
+  angle = overrideRate * 180 // 0% = left, 100% = right
+  
+  Industry context: always show peer average from knowledge layer
+  tooltip: `${(overrideRate*100).toFixed(1)}% override rate.
+    Peer average: ${(benchmark.overrideRate*100).toFixed(1)}%.
+    ${overrideRate < benchmark.overrideRate ? 'Below average (healthy)' : 'Above average — investigate'}`
+  
+  BEHAVIOR TEST:
+  Upload data with 12% override rate → needle at 12% position
+  Upload data with 25% override rate → needle at 25%, color changes to red
+  If needle doesn't move → rate not computed from data
+
+---
+
+### COMPONENT 3 — BUSINESS VALUE TRACKING
+
+DATA SOURCE: business_value_actuals.xlsx + baseline from Supabase
+Required columns: initiative_id, metric, baseline_value, current_value, date
+
+GRAPHIC 1: Value Waterfall Chart
+  const bars = initiatives.map(i => ({
+    label: i.name,
+    value: (i.currentValue - i.baselineValue) * i.annualImpactMultiplier,
+    type: 'gain' // or 'cost' for implementation
+  }))
+  
+  Each bar: teal if gain (positive), red if cost (negative)
+  Running total line: cumulative sum at each bar
+  Final bar: "Net Value" = sum of all bars
+  
+  ARITHMETIC CHECK (run before render):
+  const netFromBars = bars.reduce((sum, b) => sum + b.value, 0)
+  const displayedNet = lastBar.value
+  if (Math.abs(netFromBars - displayedNet) > 0.01) {
+    console.error('Waterfall arithmetic error: bars do not sum to net')
+  }
+  
+  BEHAVIOR TEST:
+  Change one initiative's current value → net bar must change
+  Waterfall bars must sum to the net total shown
+
+BASELINE COMPARISON:
+  Locked baseline loaded from Supabase baselines table
+  Current values from business_value_actuals.xlsx
+  
+  Progress bar:
+  progress = (baseline - current) / (baseline - target) * 100
+  // For metrics where lower is better (like denial rate)
+  
+  BEHAVIOR TEST:
+  baseline = 18.2%, current = 16.8%, target = 11.4%
+  progress = (18.2 - 16.8) / (18.2 - 11.4) * 100 = 20.6%
+  Bar must show 20.6% fill
+  If bar shows different % → calculation error
+
+FEE TRIGGER DETECTION:
+  Runs when business_value_actuals.xlsx is uploaded:
+  
+  for each initiative:
+    verifiedSavings = calculateVerifiedSavings(baseline, current, methodology)
+    if (verifiedSavings >= FEE_THRESHOLD && !initiative.feeTriggered) {
+      showFeeAlert(initiative, verifiedSavings)
+    }
+  
+  Alert: "Outcome threshold reached for [Initiative].
+    Verified savings: $[X]M. Fee calculation: $[Y]M.
+    [Initiate verification process →]"
+
+---
+
+### COMPONENT 4 — RISK & COMPLIANCE
+
+DATA SOURCE: risk_compliance_report.xlsx
+Required columns: metric_name, value, target, status, date
+
+GRAPHIC 1: Compliance Scorecard
+  For each metric:
+  status computed: value >= target ? 'met' : value >= target * 0.9 ? 'close' : 'missed'
+  Color: met=teal, close=amber, missed=red
+  
+  NEVER hardcode status — always computed from value vs target
+  
+  BEHAVIOR TEST:
+  Upload data with bias_reviews = 92%, target = 90%
+  Status must compute as 'met' → teal
+  Upload data with bias_reviews = 85%, target = 90%
+  Status must compute as 'close' → amber
+  If color doesn't change → status not computed from data
+
+DRIFT ALERT TIMELINE:
+  driftAlerts = data.filter(d => d.metric === 'drift_alert')
+  plotted on timeline by date
+  Each dot: hover shows model name, drift type, resolution
+  
+  "All resolved within 48 hours" text:
+  const allResolved = driftAlerts.every(a => a.resolved)
+  const maxResolutionTime = Math.max(...driftAlerts.map(a => a.resolutionHours))
+  text = allResolved && maxResolutionTime <= 48
+    ? 'All resolved within 48 hours, zero patient impact'
+    : `${driftAlerts.filter(a => !a.resolved).length} unresolved drift alerts`
+  
+  BEHAVIOR TEST:
+  Upload data with unresolved alert → text must change to show unresolved count
+  If text always says "all resolved" → not computing from data
+
+---
+
+### COMPONENT 5 — COST & CONSUMPTION
+
+DATA SOURCE: cost_consumption.xlsx
+Required columns: service_name, api_spend, tokens_consumed, cost_per_inference, gpu_utilization
+
+GRAPHIC 1: API Spend Treemap
+  Each service: rectangle with area proportional to spend
+  
+  concentration = service.spend / totalSpend * 100
+  border: concentration > 35 ? '2px solid #EF4444' : '1px solid #1C2D45'
+  
+  concentrationAlert = services.find(s => s.concentration > 35)
+  if (concentrationAlert) {
+    showWarning(`${concentrationAlert.name} consuming ${concentrationAlert.concentration.toFixed(0)}% of API spend`)
+  }
+  
+  BEHAVIOR TEST:
+  Upload data where chatbot = 40% of spend
+  Red border must appear on chatbot rectangle
+  Warning must appear
+  Change data so no service > 35% → red border disappears
+  If border always shows → threshold check not running
+
+GRAPHIC 2: Cost Per Inference Benchmark
+  yourCost = data.average('cost_per_inference')
+  industryBenchmark = knowledgeLayer.benchmarks.costPerInference[client.vertical]
+  
+  Comparison bar widths:
+  If your cost < industry: your bar shorter (good for cost metric)
+  Percentage label: `${((1 - yourCost/industryBenchmark) * 100).toFixed(0)}% below industry`
+  
+  If industry benchmark not available:
+  show "Industry benchmark not available for this vertical"
+  NEVER show a made-up benchmark
+
+GRAPHIC 3: GPU Utilization Trend
+  Points from monthly data in cost_consumption.xlsx
+  Target line from client-set target OR industry benchmark (80% default)
+  
+  Trend direction: computed, shown as indicator
+  const lastTwo = points.slice(-2)
+  trend = lastTwo[1].value > lastTwo[0].value ? 'improving' : 'declining'
+  trendLabel = `${trend === 'improving' ? '↑' : '↓'} ${Math.abs(lastTwo[1].value - lastTwo[0].value).toFixed(1)}pp since last month`
+  
+  BEHAVIOR TEST:
+  Upload data: Jan=45%, Feb=58%, Mar=74%
+  Trend must show "↑ improving"
+  Upload data: Jan=74%, Feb=68%, Mar=62%
+  Trend must show "↓ declining"
+
+---
+
+### UPLOAD → COMPONENT UNLOCK SYSTEM
+
+On every file upload — the unlock flow must execute:
+
+function onFileUploaded(file: UploadedFile, category: DataCategory) {
+  // 1. Parse file and extract data
+  const data = parseTemplate(file, category)
+  
+  // 2. Validate required columns present
+  const missing = validateColumns(data, REQUIRED_COLUMNS[category])
+  if (missing.length > 0) {
+    showError(`Missing required columns: ${missing.join(', ')}`)
+    return
+  }
+  
+  // 3. Store data in state
+  setComponentData(prev => ({ ...prev, [category]: data }))
+  
+  // 4. Update component status
+  setComponentStatus(prev => ({ ...prev, [category]: 'active' }))
+  
+  // 5. Animate tab badge (gray → teal)
+  animateTabBadge(category)
+  
+  // 6. Run automated checks
+  const alerts = runAutomatedChecks(data, category, clientProfile, knowledgeLayer)
+  setAlerts(prev => [...prev, ...alerts])
+  
+  // 7. Show "What this unlocked" panel
+  const unlocked = getUnlockedCapabilities(category)
+  showUnlockedPanel(unlocked)
+  
+  // 8. Recalculate confidence score
+  const newConfidence = calculateConfidence(allComponentData)
+  animateConfidenceScore(currentConfidence, newConfidence)
+}
+
+BEHAVIOR TEST for unlock flow:
+  Before upload: Component 1 tab shows gray dot
+  After upload: Component 1 tab shows teal dot
+  After upload: Unlocked panel appears listing new capabilities
+  After upload: Confidence score animates up
+  If none of these happen → upload handler not calling unlock flow
+
+---
+
+### BOARD REPORT GENERATOR
+
+One click. Always up to date.
+
+const generateBoardReport = () => {
+  const report = {
+    date: new Date().toLocaleDateString(),
+    client: clientData.name,
+    quarter: getCurrentQuarter(),
+    
+    // Must pull from live component data — not cached
+    portfolio: componentData.portfolio.summary,
+    adoption: componentData.adoption.summary,
+    businessValue: componentData.businessValue.summary,
+    risk: componentData.risk.summary,
+    cost: componentData.cost.summary,
+    
+    // Fee section — must compute from live verification data
+    feesTriggered: verificationData.total,
+    feesProjected: calculateProjectedFees(componentData.businessValue)
+  }
+  
+  VERIFICATION before download:
+  if (!report.portfolio) showError('Portfolio data not loaded')
+  if (!report.businessValue) showError('Business value data not loaded')
+  // Report generates even with partial data — shows what's available
+  
+  return renderBoardReport(report)
+}
+
+BEHAVIOR TEST:
+  Upload all 5 component data files
+  Generate board report → must contain data from all 5
+  If report shows placeholders → component data not flowing to report generator
+
+COMMIT: git commit -m "Phase 4H/4J final: Complete interaction specs — every button wired, every chart data-verified, every check automated"
+

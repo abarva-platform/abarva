@@ -151,7 +151,7 @@ function DataContent() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', maxWidth: '1480px', margin: '0 auto', padding: '0 24px' }}>
         <div style={{ padding: '32px 16px 32px 0', position: 'sticky' as const, top: '56px', height: 'calc(100vh - 56px)', overflowY: 'auto' as const }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>Data Confidence</div>

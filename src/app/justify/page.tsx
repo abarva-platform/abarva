@@ -85,7 +85,7 @@ function JustifyContent() {
         ))}
       </div>
       <StepNav />
-      <div style={{ maxWidth: '960px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
 
         {step === 1 && (
           <div>

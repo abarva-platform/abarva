@@ -719,7 +719,7 @@ function AiStrategyContent() {
 
       {/* Product Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.12em', marginBottom: '6px' }}>💡 AI INVESTMENT INTELLIGENCE</div>
@@ -755,7 +755,7 @@ function AiStrategyContent() {
 
       {/* Three-Act Navigation */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
             {([1, 2, 3] as const).map(a => (
               <button key={a} onClick={() => setAct(a)} style={{ padding: '16px', background: act === a ? T.teal : 'none', color: act === a ? T.bg : T.text, border: 'none', borderRight: a < 3 ? `1px solid ${T.border}` : 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: T.sans, transition: 'all 0.15s', letterSpacing: '0.01em' }}>
@@ -786,7 +786,7 @@ function AiStrategyContent() {
       </div>
 
       {/* Act Content */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 24px' }} className="act-fade">
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 24px' }} className="act-fade">
 
         {/* ACT 1 */}
         {act === 1 && (

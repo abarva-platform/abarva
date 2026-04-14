@@ -236,7 +236,7 @@ function BlueprintContent() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', maxWidth: '1200px', margin: '0 auto', padding: '0 24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', maxWidth: '1480px', margin: '0 auto', padding: '0 24px' }}>
 
         {/* SIDEBAR */}
         <div style={{ padding: '32px 16px 32px 0', position: 'sticky' as const, top: '56px', height: 'calc(100vh - 56px)', overflowY: 'auto' as const }}>

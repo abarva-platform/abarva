@@ -82,7 +82,7 @@ function HowToBuildContent() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>

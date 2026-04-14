@@ -582,7 +582,7 @@ export default function ClientDashboard({ params }: { params: Promise<{ clientId
       </div>
 
       {/* Content */}
-      <div style={{ maxWidth: '1300px', margin: '0 auto', padding: '24px 32px 80px' }}>
+      <div style={{ maxWidth: '1600px', margin: '0 auto', padding: '24px 32px 80px' }}>
         {activeTab === 0 && <TabOverview  client={client} />}
         {activeTab === 1 && <TabDataFiles client={client} />}
         {activeTab === 2 && <TabGapsNeeds client={client} />}

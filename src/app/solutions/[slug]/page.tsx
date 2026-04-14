@@ -483,12 +483,12 @@ function SolutionPageContent({ slug }: { slug: string }) {
       <div style={{
         background: T.surface,
         borderBottom: `1px solid ${T.border}`,
-        padding: '40px 32px',
+        padding: '40px 48px',
       }}>
         {/* Color top bar */}
         <div style={{ height: 3, background: color, marginBottom: 24, marginLeft: -32, marginRight: -32, width: 'calc(100% + 64px)' }} />
 
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
           {/* Badges */}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
             {[solution.code, solution.objective, solution.office, solution.vertical].map(badge => (
@@ -549,203 +549,212 @@ function SolutionPageContent({ slug }: { slug: string }) {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 32px 64px' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 48px 64px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 56, alignItems: 'start' }}>
 
-        {/* Section 2 — Five-step workflow */}
-        <div style={{ marginBottom: 64 }}>
-          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 32 }}>
-            The Five-Step Workflow
-          </div>
-          {solution.workflow.map((step, i) => (
-            <div key={step.step} style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
-              {/* Step number + connector */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: T.teal, color: T.bg,
-                  fontSize: 14, fontFamily: T.mono, fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  flexShrink: 0,
-                }}>
-                  {step.step}
-                </div>
-                {i < solution.workflow.length - 1 && (
-                  <div style={{ width: 2, flex: 1, background: T.border, marginTop: 8, minHeight: 40 }} />
-                )}
+          {/* LEFT — workflow + run CTA */}
+          <div>
+            {/* Section 2 — Five-step workflow */}
+            <div style={{ marginBottom: 48 }}>
+              <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 32 }}>
+                The Five-Step Workflow
               </div>
-
-              {/* Step content */}
-              <div style={{ flex: 1, paddingBottom: 16 }}>
-                <div style={{ fontSize: 16, fontFamily: T.sans, fontWeight: 700, color: T.text, marginBottom: 4 }}>
-                  {step.name}
-                </div>
-                <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, marginBottom: 16 }}>
-                  {step.what}
-                </div>
-
-                {/* Three-source panel */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
-                  {[
-                    { label: 'FROM YOUR DATA', color: T.teal, text: step.yourData },
-                    { label: 'FROM INDUSTRY', color: T.indigo, text: step.industry },
-                    { label: 'FROM GENOME', color: '#F472B6', text: step.genome },
-                  ].map(({ label, color: c, text }) => (
-                    <div key={label} style={{
-                      background: T.surface, border: `1px solid ${T.border}`,
-                      borderRadius: 6, padding: '10px 12px',
+              {solution.workflow.map((step, i) => (
+                <div key={step.step} style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+                  {/* Step number + connector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: T.teal, color: T.bg,
+                      fontSize: 14, fontFamily: T.mono, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
                     }}>
-                      <div style={{ fontSize: 8, fontFamily: T.mono, color: c, marginBottom: 6 }}>{label}</div>
-                      <div style={{ fontSize: 11, fontFamily: T.sans, color: T.text, lineHeight: 1.4 }}>{text}</div>
+                      {step.step}
                     </div>
-                  ))}
+                    {i < solution.workflow.length - 1 && (
+                      <div style={{ width: 2, flex: 1, background: T.border, marginTop: 8, minHeight: 40 }} />
+                    )}
+                  </div>
+
+                  {/* Step content */}
+                  <div style={{ flex: 1, paddingBottom: 16 }}>
+                    <div style={{ fontSize: 16, fontFamily: T.sans, fontWeight: 700, color: T.text, marginBottom: 4 }}>
+                      {step.name}
+                    </div>
+                    <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, marginBottom: 16 }}>
+                      {step.what}
+                    </div>
+
+                    {/* Three-source panel */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 12 }}>
+                      {[
+                        { label: 'FROM YOUR DATA', color: T.teal, text: step.yourData },
+                        { label: 'FROM INDUSTRY', color: T.indigo, text: step.industry },
+                        { label: 'FROM GENOME', color: '#F472B6', text: step.genome },
+                      ].map(({ label, color: c, text }) => (
+                        <div key={label} style={{
+                          background: T.surface, border: `1px solid ${T.border}`,
+                          borderRadius: 6, padding: '10px 12px',
+                        }}>
+                          <div style={{ fontSize: 8, fontFamily: T.mono, color: c, marginBottom: 6 }}>{label}</div>
+                          <div style={{ fontSize: 11, fontFamily: T.sans, color: T.text, lineHeight: 1.4 }}>{text}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Output artifact */}
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '6px 12px',
+                      background: 'rgba(45,212,200,0.08)',
+                      border: `1px solid rgba(45,212,200,0.3)`,
+                      borderRadius: 6,
+                    }}>
+                      <span style={{ fontSize: 9, fontFamily: T.mono, color: T.teal }}>OUTPUT:</span>
+                      <span style={{ fontSize: 11, fontFamily: T.sans, color: T.text }}>{step.output}</span>
+                    </div>
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                {/* Output artifact */}
-                <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '6px 12px',
-                  background: 'rgba(45,212,200,0.08)',
-                  border: `1px solid rgba(45,212,200,0.3)`,
-                  borderRadius: 6,
-                }}>
-                  <span style={{ fontSize: 9, fontFamily: T.mono, color: T.teal }}>OUTPUT:</span>
-                  <span style={{ fontSize: 11, fontFamily: T.sans, color: T.text }}>{step.output}</span>
+            {/* Section 6 — Run this solution */}
+            <div>
+              <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+                Run This Solution
+              </div>
+              <div style={{
+                background: 'rgba(45,212,200,0.06)',
+                border: `1px solid rgba(45,212,200,0.25)`,
+                borderRadius: 12, padding: 32,
+              }}>
+                <a
+                  href={runUrl}
+                  style={{
+                    display: 'inline-block',
+                    padding: '14px 32px',
+                    background: color, color: T.bg,
+                    border: 'none', borderRadius: 8,
+                    fontSize: 15, fontFamily: T.mono, fontWeight: 700,
+                    cursor: 'pointer', textDecoration: 'none',
+                    marginBottom: 16,
+                  }}
+                >
+                  Run for {CLIENT_LABELS[defaultClient]} →
+                </a>
+                <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, lineHeight: 1.6 }}>
+                  This will open Situation Intelligence pre-configured for {solution.name}, with {CLIENT_LABELS[defaultClient]} loaded.
+                  All {solution.products.length} products will be available in sequence.
+                  Estimated time: 45-90 minutes for full analysis.
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Section 3 — Products activated */}
-        <div style={{ marginBottom: 64 }}>
-          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
-            Products Activated
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
-            {solution.products.map(product => (
-              <a
-                key={product.name}
-                href={`${product.href}?client=${defaultClient}`}
-                style={{
-                  background: T.surface, border: `1px solid ${T.border}`,
-                  borderRadius: 8, padding: 16, textDecoration: 'none',
-                  display: 'block',
-                  transition: 'border-color 0.15s',
-                }}
-              >
-                <div style={{ fontSize: 13, fontFamily: T.sans, fontWeight: 700, color: T.teal, marginBottom: 6 }}>
-                  {product.name}
+
+          {/* RIGHT — products + genome + data requirements */}
+          <div>
+            {/* Section 3 — Products activated */}
+            <div style={{ marginBottom: 48 }}>
+              <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+                Products Activated
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                {solution.products.map(product => (
+                  <a
+                    key={product.name}
+                    href={`${product.href}?client=${defaultClient}`}
+                    style={{
+                      background: T.surface, border: `1px solid ${T.border}`,
+                      borderRadius: 8, padding: 16, textDecoration: 'none',
+                      display: 'block',
+                      transition: 'border-color 0.15s',
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontFamily: T.sans, fontWeight: 700, color: T.teal, marginBottom: 6 }}>
+                      {product.name}
+                    </div>
+                    <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                      {product.role}
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Section 4 — From the Genome */}
+            <div style={{ marginBottom: 48 }}>
+              <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+                From the Transformation Genome
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
+                  <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>SUCCESS RATE</div>
+                  <div style={{ fontSize: 32, fontFamily: T.mono, color: T.teal, marginBottom: 4 }}>{solution.genomeData.successRate}%</div>
+                  <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                    Based on {solution.genomeData.sampleSize} engagements
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
-                  {product.role}
+                <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
+                  <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>TYPICAL OUTCOME</div>
+                  <div style={{ fontSize: 18, fontFamily: T.mono, color: T.text, marginBottom: 4 }}>{solution.genomeData.outcomeRange}</div>
+                  <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                    Across {solution.genomeData.sampleSize} Genome engagements
+                  </div>
                 </div>
-              </a>
-            ))}
-          </div>
-        </div>
+                <div style={{ background: T.surface, border: `1px solid ${T.amber}`, borderRadius: 8, padding: 20 }}>
+                  <div style={{ fontSize: 10, fontFamily: T.mono, color: T.amber, marginBottom: 8 }}>MOST COMMON FAILURE</div>
+                  <div style={{ fontSize: 12, fontFamily: T.sans, color: T.text, marginBottom: 8 }}>
+                    {solution.genomeData.failurePattern}
+                  </div>
+                  <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
+                    Avoidance: {solution.genomeData.avoidance}
+                  </div>
+                </div>
+              </div>
+            </div>
 
-        {/* Section 4 — From the Genome */}
-        <div style={{ marginBottom: 64 }}>
-          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
-            From the Transformation Genome
+            {/* Section 5 — Data requirements */}
+            <div>
+              <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
+                Data Requirements
+              </div>
+              <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden' }}>
+                {solution.dataRequirements.map((req, i) => (
+                  <div
+                    key={req.label}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 16px',
+                      borderBottom: i < solution.dataRequirements.length - 1 ? `1px solid ${T.border}` : 'none',
+                    }}
+                  >
+                    <span style={{ color: req.loaded ? T.green : T.red, fontSize: 14, flexShrink: 0 }}>
+                      {req.loaded ? '✓' : '✗'}
+                    </span>
+                    <span style={{ fontSize: 12, fontFamily: T.sans, color: T.text, flex: 1 }}>
+                      {req.label}
+                    </span>
+                    {!req.loaded && 'unlocks' in req && (
+                      <span style={{ fontSize: 10, fontFamily: T.mono, color: T.amber }}>
+                        Unlocks: {req.unlocks}
+                      </span>
+                    )}
+                    {!req.loaded && (
+                      <button style={{
+                        fontSize: 10, fontFamily: T.mono, padding: '3px 8px',
+                        background: 'transparent', border: `1px solid ${T.border}`,
+                        color: T.secondary, borderRadius: 4, cursor: 'pointer',
+                      }}>
+                        Download template →
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
-              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>SUCCESS RATE</div>
-              <div style={{ fontSize: 32, fontFamily: T.mono, color: T.teal, marginBottom: 4 }}>{solution.genomeData.successRate}%</div>
-              <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
-                Based on {solution.genomeData.sampleSize} engagements
-              </div>
-            </div>
-            <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: 20 }}>
-              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 8 }}>TYPICAL OUTCOME</div>
-              <div style={{ fontSize: 18, fontFamily: T.mono, color: T.text, marginBottom: 4 }}>{solution.genomeData.outcomeRange}</div>
-              <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
-                Across {solution.genomeData.sampleSize} Genome engagements
-              </div>
-            </div>
-            <div style={{ background: T.surface, border: `1px solid ${T.amber}`, borderRadius: 8, padding: 20 }}>
-              <div style={{ fontSize: 10, fontFamily: T.mono, color: T.amber, marginBottom: 8 }}>MOST COMMON FAILURE</div>
-              <div style={{ fontSize: 12, fontFamily: T.sans, color: T.text, marginBottom: 8 }}>
-                {solution.genomeData.failurePattern}
-              </div>
-              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
-                Avoidance: {solution.genomeData.avoidance}
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Section 5 — Data requirements */}
-        <div style={{ marginBottom: 64 }}>
-          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
-            Data Requirements
-          </div>
-          <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, overflow: 'hidden', maxWidth: 600 }}>
-            {solution.dataRequirements.map((req, i) => (
-              <div
-                key={req.label}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '12px 16px',
-                  borderBottom: i < solution.dataRequirements.length - 1 ? `1px solid ${T.border}` : 'none',
-                }}
-              >
-                <span style={{ color: req.loaded ? T.green : T.red, fontSize: 14, flexShrink: 0 }}>
-                  {req.loaded ? '✓' : '✗'}
-                </span>
-                <span style={{ fontSize: 12, fontFamily: T.sans, color: T.text, flex: 1 }}>
-                  {req.label}
-                </span>
-                {!req.loaded && 'unlocks' in req && (
-                  <span style={{ fontSize: 10, fontFamily: T.mono, color: T.amber }}>
-                    Unlocks: {req.unlocks}
-                  </span>
-                )}
-                {!req.loaded && (
-                  <button style={{
-                    fontSize: 10, fontFamily: T.mono, padding: '3px 8px',
-                    background: 'transparent', border: `1px solid ${T.border}`,
-                    color: T.secondary, borderRadius: 4, cursor: 'pointer',
-                  }}>
-                    Download template →
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Section 6 — Run this solution */}
-        <div>
-          <div style={{ fontSize: 22, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
-            Run This Solution
-          </div>
-          <div style={{
-            background: 'rgba(45,212,200,0.06)',
-            border: `1px solid rgba(45,212,200,0.25)`,
-            borderRadius: 12, padding: 32, maxWidth: 600,
-          }}>
-            <a
-              href={runUrl}
-              style={{
-                display: 'inline-block',
-                padding: '14px 32px',
-                background: color, color: T.bg,
-                border: 'none', borderRadius: 8,
-                fontSize: 15, fontFamily: T.mono, fontWeight: 700,
-                cursor: 'pointer', textDecoration: 'none',
-                marginBottom: 16,
-              }}
-            >
-              Run for {CLIENT_LABELS[defaultClient]} →
-            </a>
-            <div style={{ fontSize: 12, fontFamily: T.sans, color: T.secondary, lineHeight: 1.6 }}>
-              This will open Situation Intelligence pre-configured for {solution.name}, with {CLIENT_LABELS[defaultClient]} loaded.
-              All {solution.products.length} products will be available in sequence.
-              Estimated time: 45-90 minutes for full analysis.
-            </div>
-          </div>
         </div>
       </div>
     </div>
