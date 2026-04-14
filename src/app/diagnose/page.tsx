@@ -605,7 +605,7 @@ function DonutChart({ issues, filter, onFilter }: { issues: Issue[]; filter: Sev
     issues.filter(i => i.severity === 'watch').length,
   ]
   const labels: Severity[] = ['critical', 'warning', 'watch']
-  const colors = [T.red, T.amber, '#475569']
+  const colors = [T.red, T.amber, T.text3]
   const total = issues.length || 1
   const cx = 60, cy = 60, r = 44, sw = 14
 

@@ -2,13 +2,12 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
-import EngagementProgress from '@/components/EngagementProgress'
 
 const T = {
-  bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
-  border: '#21262D', border2: '#30363D',
-  text: '#E6EDF3', text2: '#C9D1D9', text3: '#8B949E',
-  teal: '#2DD4C8', blue: '#4DA3FF', green: '#6EE7B7',
+  bg: '#060A12', surface: '#0D1520', surface2: '#162030',
+  border: '#1C2D45', border2: '#2D3748',
+  text: '#EFF6FF', text2: '#94A3B8', text3: '#94A3B8',
+  teal: '#2DD4C8', blue: '#6366F1', green: '#10B981',
   amber: '#F59E0B', red: '#EF4444', purple: '#A78BFA',
 }
 
@@ -436,9 +435,8 @@ function OutcomesContent() {
   const isMeridian = clientId === 'meridian'
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'Inter, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: T.bg, fontFamily: '"DM Sans", system-ui, sans-serif' }}>
       <AbarvaNav clientId={clientId} activePage="outcomes" />
-      <EngagementProgress />
 
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>
@@ -505,7 +503,7 @@ function OutcomesContent() {
 
 export default function OutcomesPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>Loading...</div>}>
       <OutcomesContent />
     </Suspense>
   )
