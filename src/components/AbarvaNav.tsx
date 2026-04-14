@@ -76,6 +76,11 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
         <span style={{ fontFamily: MONO, fontSize: '8px', color: TEXT, letterSpacing: '.04em', opacity: .7 }}>know it. build it. own it.</span>
       </a>
 
+      {/* Home link */}
+      <a href="/" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+        Home
+      </a>
+
       {/* Intelligence dropdown */}
       <div style={{ position: 'relative' as const }} onMouseEnter={() => openDrop('intel')} onMouseLeave={startClose}>
         <button style={{ fontSize: '13px', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
