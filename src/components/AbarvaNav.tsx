@@ -106,9 +106,10 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
             onMouseEnter={cancelClose} onMouseLeave={startClose}
           >
             {[
-              { name: 'AI-Powered PDLC',    path: '/solutions/pdlc',     desc: 'Build products at twice the velocity' },
-              { name: 'AI-Powered Delivery', path: '/solutions/delivery', desc: 'Replace consulting teams with Maestros' },
-              { name: 'Margin Optimization', path: '/solutions/margin',   desc: 'Recover margin across revenue, cost, AI' },
+              { name: 'AI-Powered PDLC',         path: '/solutions/pdlc',     desc: 'Build products at twice the velocity' },
+              { name: 'AI-Powered Delivery',      path: '/solutions/delivery', desc: 'Replace consulting teams with Maestros' },
+              { name: 'Margin Optimization',      path: '/solutions/margin',   desc: 'Recover margin across revenue, cost, AI' },
+              { name: 'Technology Modernization', path: '/solutions/tech',     desc: 'Govern the modernization the vendor cannot' },
             ].map(item => (
               <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>

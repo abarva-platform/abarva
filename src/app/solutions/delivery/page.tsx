@@ -1,373 +1,82 @@
 'use client'
 import { useState } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import SolutionLayout from '@/components/SolutionLayout'
 
-const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = '#94A3B8', DIM = '#475569'
-const RED = '#EF4444', AMBER = '#F59E0B', GREEN = '#34D399'
-const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
+const BG = '#060A12', SANS = 'DM Sans, sans-serif', WHITE = '#EFF6FF'
+const TEAL = '#2DD4C8', AMBER = '#F59E0B', GREEN = '#34D399', RED = '#EF4444'
+
+const PHASES = [
+  { num: 1, color: TEAL, title: 'Diagnose — what you are actually paying for',
+    desc: 'AbarVa maps every consulting relationship: what is delivered vs promised, what knowledge stays vs leaves, what is rebuilt engagement after engagement.',
+    products: ['Situation'] },
+  { num: 2, color: AMBER, title: 'Prescribe — the Maestro model',
+    desc: 'Define which consulting relationships to replace, what the Maestro team does instead, how knowledge is captured, and the board-level business case with CFO-grade ROI.',
+    products: ['Strategy', 'Business Case'] },
+  { num: 3, color: GREEN, title: 'Execute — Maestros embed, consulting spend drops',
+    desc: 'Maestros replace the consulting engagement. Fee on verified reduction in consulting spend and verified outcomes delivered.',
+    products: ['Vendor', 'Outcomes'] },
+]
+
+const GENOME = [
+  { rate: '84%', name: 'No named executive sponsor', sub: 'Transformation stalls without C-suite ownership' },
+  { rate: '76%', name: 'Pilot purgatory', sub: 'Prior failed engagements create credibility deficit' },
+  { rate: '61%', name: 'Change management gap', sub: 'Technology delivered — adoption fails' },
+]
+
+const DELIVERABLES = [
+  'Consulting relationship audit — value vs cost mapped',
+  'Maestro team design — roles, scope, knowledge model',
+  'Transition plan — from consulting to Maestros',
+  'Fee on verified consulting spend reduction',
+]
 
 const STARTERS = [
-  'We have 80 consultants on site and 70% of their time is getting up to speed. Knowledge walks out every Friday.',
+  '80 consultants on site. 70% of their time is getting up to speed. Knowledge walks out every Friday.',
   'We are spending $42M on consulting annually and cannot point to what has permanently changed.',
   'Every transformation programme ends and we start the next one from scratch.',
 ]
 
-const FINDINGS = [
-  {
-    severity: 'critical' as const,
-    title: '$42M consulting spend — zero permanent knowledge documented',
-    detail: '84% of failed transformations had no named executive sponsor. The Maestro model fixes ownership first.',
-  },
-  {
-    severity: 'critical' as const,
-    title: '76% — Pilot purgatory pattern detected',
-    detail: '3+ failed prior engagements is the strongest failure predictor in the Genome. Requires a fundamentally different delivery model.',
-  },
-  {
-    severity: 'warning' as const,
-    title: 'Knowledge transfer model doesn\'t exist',
-    detail: 'Every new consultant restarts the context-building process. Maestros build once and own permanently.',
-  },
-]
-
-const FOLLOWUP_OPTIONS = [
-  'Reduce consulting cost',
-  'Improve delivery quality and speed',
-  'Retain knowledge permanently',
-  'All three',
+const GENOME_FINDINGS = [
+  { severity: 'critical' as const, title: '$42M consulting spend — no documented knowledge transfer',
+    detail: 'Arcturus spends $42M annually on consulting. No knowledge management. Each engagement restarts from baseline.',
+    sources: ['Client financials', 'Genome F001 · 72%'] },
+  { severity: 'critical' as const, title: 'CDO vacant 11 months — no executive to own transformation',
+    detail: 'Every programme needs a named C-suite owner. Without one, consulting engagements drift without accountability.',
+    sources: ['Client leadership', 'Genome F002 · 84%'] },
 ]
 
 export default function SolutionDelivery() {
+  const [input, setInput] = useState('')
   const [step, setStep] = useState(0)
-  const [problem, setProblem] = useState('')
-  const [selectedOpt, setSelectedOpt] = useState('')
+  const [selected, setSelected] = useState('')
   const [launched, setLaunched] = useState(false)
-
-  function handleMatch() {
-    if (problem.trim()) setStep(1)
-  }
-
-  function handleLaunch() {
-    setLaunched(true)
-    setTimeout(() => { window.location.href = '/admin' }, 1200)
-  }
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
-
-      {/* ── Hero band ── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 32px 56px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '14px' }}>
-            Solution · Delivery Intelligence · AI-Powered Delivery · All verticals
-          </div>
-          <h1 style={{ fontFamily: SERIF, fontSize: '48px', fontWeight: 500, color: WHITE, margin: '0 0 16px', lineHeight: 1.15 }}>
-            AI-Powered Transformation Delivery
-          </h1>
-          <p style={{ fontSize: '18px', color: MUTED, maxWidth: '640px', lineHeight: 1.7, margin: '0 0 48px' }}>
-            Replace 40 consultants with 4 Maestros. Knowledge stays permanently. Fee only on verified consulting spend reduction.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-            {[
-              { value: '40', color: RED, label: 'Typical consulting team — 70% time onboarding' },
-              { value: '4', color: TEAL, label: 'AbarVa Maestro team — knowledge stays permanently' },
-              { value: '100%', color: AMBER, label: 'Knowledge lost per traditional consulting engagement' },
-              { value: '$42M', color: GREEN, label: 'Avg annual consulting spend replaced (Arcturus data)' },
-            ].map(({ value, color, label }) => (
-              <div key={value + label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '24px 20px', borderTop: `2px solid ${color}` }}>
-                <div style={{ fontFamily: SERIF, fontSize: '32px', color, marginBottom: '8px', lineHeight: 1 }}>{value}</div>
-                <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Three-phase section ── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '40px' }}>
-            How it works — three phases
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '0' }}>
-
-            {/* Phase 1 */}
-            <div style={{ padding: '28px 32px 28px 0', borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 1</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>Diagnose — what you are actually paying for</div>
-            </div>
-            <div style={{ padding: '28px 0 28px 32px', borderBottom: `1px solid ${BORDER}` }}>
-              <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, margin: '0 0 16px', maxWidth: '560px' }}>
-                Audit every consulting relationship. Map what each team actually delivers versus what the contract says. Quantify onboarding waste, context rebuilding cost, and knowledge that left with the last engagement.
-              </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-                {['Situation'].map(p => (
-                  <span key={p} style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'rgba(45,212,200,0.08)', border: `1px solid rgba(45,212,200,0.2)`, borderRadius: '4px', padding: '4px 10px' }}>{p}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Phase 2 */}
-            <div style={{ padding: '28px 32px 28px 0', borderRight: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}` }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 2</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>Prescribe — the Maestro model for this engagement</div>
-            </div>
-            <div style={{ padding: '28px 0 28px 32px', borderBottom: `1px solid ${BORDER}` }}>
-              <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, margin: '0 0 16px', maxWidth: '560px' }}>
-                Design the Maestro team configuration — roles, scope, knowledge ownership model. Build the business case for the board. Compare the 10-year economics of consulting-first vs Maestro-first delivery.
-              </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-                {['Strategy', 'Business Case'].map(p => (
-                  <span key={p} style={{ fontFamily: MONO, fontSize: '10px', color: AMBER, background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.2)`, borderRadius: '4px', padding: '4px 10px' }}>{p}</span>
-                ))}
-              </div>
-            </div>
-
-            {/* Phase 3 */}
-            <div style={{ padding: '28px 32px 28px 0', borderRight: `1px solid ${BORDER}` }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Phase 3</div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>Execute — Maestros embed, consulting spend drops</div>
-            </div>
-            <div style={{ padding: '28px 0 28px 32px' }}>
-              <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, margin: '0 0 16px', maxWidth: '560px' }}>
-                Maestros embed alongside the remaining consulting teams. Knowledge transfer is structured, tracked, and never repeated. As Maestros own more, consulting headcount drops. Fee is contingent on verified spend reduction.
-              </p>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-                {['Vendor', 'Outcomes'].map(p => (
-                  <span key={p} style={{ fontFamily: MONO, fontSize: '10px', color: GREEN, background: 'rgba(52,211,153,0.08)', border: `1px solid rgba(52,211,153,0.2)`, borderRadius: '4px', padding: '4px 10px' }}>{p}</span>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </div>
-
-      {/* ── Genome patterns panel ── */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '56px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
-            AbarVa Genome · Consulting dependency failure patterns
-          </div>
-          <p style={{ fontSize: '14px', color: DIM, margin: '0 0 36px' }}>
-            Across 200+ enterprise engagements — these three patterns predict transformation failure with 90%+ accuracy.
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-            {[
-              { pct: '84%', label: 'No named executive sponsor' },
-              { pct: '76%', label: 'Pilot purgatory (3+ prior failed engagements)' },
-              { pct: '61%', label: 'Change management gap' },
-            ].map(({ pct, label }) => (
-              <div key={pct} style={{ border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px 24px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '40px', fontWeight: 700, color: RED, lineHeight: 1, marginBottom: '12px' }}>{pct}</div>
-                <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Deliverables ── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '56px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '32px' }}>
-            Deliverables
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', maxWidth: '760px' }}>
-            {[
-              'Consulting relationship audit — value vs cost mapped',
-              'Maestro team design — roles, scope, knowledge model',
-              'Transition plan — from consulting to Maestros',
-              'Fee on verified consulting spend reduction',
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(45,212,200,0.12)', border: `1px solid rgba(45,212,200,0.3)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: TEAL }} />
-                </div>
-                <span style={{ fontSize: '14px', color: MUTED, lineHeight: 1.5 }}>{item}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Intake section ── */}
-      <div style={{ padding: '64px 32px 96px' }}>
-        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>
-            Genome match — start here
-          </div>
-          <h2 style={{ fontFamily: SERIF, fontSize: '28px', fontWeight: 500, color: WHITE, margin: '0 0 8px' }}>
-            Describe your consulting situation
-          </h2>
-          <p style={{ fontSize: '14px', color: MUTED, margin: '0 0 28px', lineHeight: 1.6 }}>
-            We will match it against the AbarVa Genome and surface the patterns that predict your outcome.
-          </p>
-
-          {/* Starter buttons */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-            {STARTERS.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => setProblem(s)}
-                style={{
-                  textAlign: 'left', background: 'rgba(45,212,200,0.04)', border: `1px solid ${BORDER}`,
-                  borderRadius: '8px', padding: '12px 16px', cursor: 'pointer', color: MUTED,
-                  fontSize: '13px', fontFamily: SANS, lineHeight: 1.5,
-                  transition: 'border-color 0.15s',
-                }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.35)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = BORDER)}
-              >
-                <span style={{ color: TEAL, fontFamily: MONO, fontSize: '10px', marginRight: '8px' }}>→</span>
-                {s}
-              </button>
-            ))}
-          </div>
-
-          {/* Textarea */}
-          <textarea
-            value={problem}
-            onChange={e => setProblem(e.target.value)}
-            placeholder="Or describe your situation in your own words…"
-            rows={4}
-            style={{
-              width: '100%', background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px',
-              padding: '16px', color: WHITE, fontSize: '14px', fontFamily: SANS, lineHeight: 1.6,
-              resize: 'vertical', outline: 'none', boxSizing: 'border-box',
-            }}
-            onFocus={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.4)')}
-            onBlur={e => (e.currentTarget.style.borderColor = BORDER)}
-          />
-
-          {/* Match button */}
-          {step === 0 && (
-            <button
-              onClick={handleMatch}
-              disabled={!problem.trim()}
-              style={{
-                marginTop: '16px', background: problem.trim() ? TEAL : DIM,
-                color: problem.trim() ? BG : MUTED, border: 'none', borderRadius: '8px',
-                padding: '13px 28px', fontSize: '14px', fontWeight: 600, fontFamily: SANS,
-                cursor: problem.trim() ? 'pointer' : 'not-allowed', transition: 'background 0.15s',
-              }}
-            >
-              Match to Genome →
-            </button>
-          )}
-
-          {/* ── Step 1: Findings ── */}
-          {step >= 1 && (
-            <div style={{ marginTop: '32px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
-                Genome match · 3 patterns identified
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-                {FINDINGS.map((f, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      background: CARD, border: `1px solid ${f.severity === 'critical' ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}`,
-                      borderLeft: `3px solid ${f.severity === 'critical' ? RED : AMBER}`,
-                      borderRadius: '10px', padding: '18px 20px',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <span style={{
-                        fontFamily: MONO, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase',
-                        color: f.severity === 'critical' ? RED : AMBER,
-                        background: f.severity === 'critical' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
-                        padding: '2px 8px', borderRadius: '4px',
-                      }}>
-                        {f.severity}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>{f.title}</div>
-                    <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{f.detail}</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* ── Step 1 → 2 follow-up ── */}
-              {step === 1 && (
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                    One follow-up question
-                  </div>
-                  <p style={{ fontSize: '15px', color: WHITE, marginBottom: '16px', fontWeight: 500 }}>
-                    What is the primary goal — reduce cost, improve quality, or retain knowledge permanently?
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '10px', marginBottom: '24px' }}>
-                    {FOLLOWUP_OPTIONS.map(opt => (
-                      <button
-                        key={opt}
-                        onClick={() => setSelectedOpt(opt)}
-                        style={{
-                          padding: '9px 18px', borderRadius: '8px', fontSize: '13px', fontFamily: SANS,
-                          cursor: 'pointer', border: `1px solid ${selectedOpt === opt ? TEAL : BORDER}`,
-                          background: selectedOpt === opt ? 'rgba(45,212,200,0.1)' : CARD,
-                          color: selectedOpt === opt ? TEAL : MUTED,
-                          transition: 'all 0.15s',
-                        }}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={() => setStep(2)}
-                    disabled={!selectedOpt}
-                    style={{
-                      background: selectedOpt ? TEAL : DIM, color: selectedOpt ? BG : MUTED,
-                      border: 'none', borderRadius: '8px', padding: '13px 28px',
-                      fontSize: '14px', fontWeight: 600, fontFamily: SANS,
-                      cursor: selectedOpt ? 'pointer' : 'not-allowed',
-                    }}
-                  >
-                    Create project and begin →
-                  </button>
-                </div>
-              )}
-
-              {/* ── Step 2: Launch ── */}
-              {step >= 2 && !launched && (
-                <div style={{ background: CARD, border: `1px solid rgba(45,212,200,0.25)`, borderRadius: '12px', padding: '28px 24px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                    Ready to launch
-                  </div>
-                  <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.6, margin: '0 0 20px' }}>
-                    AbarVa will create an AI-Powered Delivery project scoped to your primary goal: <strong style={{ color: WHITE }}>{selectedOpt}</strong>. Genome patterns pre-loaded. Consulting baseline locked on Day 0.
-                  </p>
-                  <button
-                    onClick={handleLaunch}
-                    style={{
-                      background: TEAL, color: BG, border: 'none', borderRadius: '8px',
-                      padding: '13px 28px', fontSize: '14px', fontWeight: 600, fontFamily: SANS, cursor: 'pointer',
-                    }}
-                  >
-                    Create project and begin →
-                  </button>
-                </div>
-              )}
-
-              {/* ── Launched state ── */}
-              {launched && (
-                <div style={{ background: 'rgba(52,211,153,0.06)', border: `1px solid rgba(52,211,153,0.3)`, borderRadius: '12px', padding: '28px 24px', textAlign: 'center' as const }}>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: GREEN, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                    Project created
-                  </div>
-                  <p style={{ fontSize: '15px', color: WHITE, margin: '0' }}>
-                    Opening your workspace…
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      <SolutionLayout
+        num="2 of 4" name="AI-Powered Transformation Delivery"
+        tagline="Replace 40 consultants with 4 Maestros. Knowledge stays permanently. The engagement ends; the intelligence does not."
+        meta={['CIO · CTO', 'All verticals', 'Full engagement lifecycle', 'Outcome-fee model']}
+        stats={[
+          { label: 'Typical consulting team', value: '40', color: RED, sub: 'People — 70% time onboarding' },
+          { label: 'AbarVa Maestro team', value: '4', color: TEAL, sub: 'Embedded — knowledge stays permanently' },
+          { label: 'Knowledge lost (consulting)', value: '100%', color: AMBER, sub: 'Exits with the team every Friday' },
+          { label: 'Consulting avoided', value: '$42M', color: GREEN, sub: 'Avg annual spend replaced (Arcturus)' },
+        ]}
+        phases={PHASES}
+        genome={GENOME}
+        deliverables={DELIVERABLES}
+        starters={STARTERS}
+        findings={GENOME_FINDINGS}
+        followUpQ="What is the primary goal — reduce cost, improve outcome quality, or retain knowledge?"
+        followUpOpts={['Reduce consulting cost', 'Improve delivery quality and speed', 'Retain knowledge permanently', 'All three — they are connected']}
+        input={input} setInput={setInput}
+        step={step} setStep={setStep}
+        selected={selected} setSelected={setSelected}
+        launched={launched} setLaunched={setLaunched}
+      />
     </div>
   )
 }
