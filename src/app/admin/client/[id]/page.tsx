@@ -185,11 +185,12 @@ const sectionTitle = (text: string) => (
 
 // ─── ADMIN TAB ─────────────────────────────────────────────────────────────────
 
-function AdminTab({ clientId, data, adminSection, setAdminSection }: {
+function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }: {
   clientId: string
   data: ClientData
   adminSection: string
   setAdminSection: (s: string) => void
+  isReadOnly: boolean
 }) {
   const pills = [
     { key: 'setup', label: 'Setup & engagement' },
@@ -250,7 +251,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
 
   const products = [
     { name: 'Situation Diagnosis', href: `/diagnose?client=${clientId}` },
-    { name: 'AI Strategy', href: `/ai-strategy?client=${clientId}` },
+    { name: 'AI Value Realization', href: `/ai-strategy?client=${clientId}` },
     { name: 'Vendor Selection', href: `/select?client=${clientId}` },
     { name: 'Business Case', href: `/justify?client=${clientId}` },
     { name: 'Outcomes Tracking', href: `/outcomes?client=${clientId}` },
@@ -264,8 +265,8 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
 
   return (
     <div>
-      {/* Demo engagements panel — always visible at top of Admin tab */}
-      <div style={{ marginBottom: '20px', padding: '16px 20px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px' }}>
+      {/* Demo engagements panel — admin only */}
+      {!isReadOnly && <div style={{ marginBottom: '20px', padding: '16px 20px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: clientSolutions.length > 0 ? '14px' : '0' }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Demo Engagements</div>
@@ -283,7 +284,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
             </div>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Sub-section pills */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
@@ -393,8 +394,8 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                       <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
                       <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
                     </div>
-                    <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: 'pointer', marginRight: '6px' }}>Approve</button>
-                    <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: 'pointer' }}>Reject</button>
+                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1, marginRight: '6px' }}>Approve</button>
+                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
                   </div>
                 ))
               }
@@ -403,9 +404,9 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: uploading ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${uploading ? BORDER : 'rgba(45,212,200,0.3)'}`, color: uploading ? DIM : TEAL, cursor: uploading ? 'default' : 'pointer' }}>
+                  onClick={() => !isReadOnly && fileInputRef.current?.click()}
+                  disabled={uploading || isReadOnly}
+                  style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: (uploading || isReadOnly) ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${(uploading || isReadOnly) ? BORDER : 'rgba(45,212,200,0.3)'}`, color: (uploading || isReadOnly) ? DIM : TEAL, cursor: (uploading || isReadOnly) ? 'default' : 'pointer', opacity: isReadOnly ? 0.5 : 1 }}>
                   {uploading ? 'Uploading…' : 'Upload files'}
                 </button>
                 <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
@@ -417,7 +418,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                     <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
                     <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.confidence}% confidence</div>
                   </div>
-                  <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: 'pointer' }}>Replace</button>
+                  <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Replace</button>
                 </div>
               ))}
             </div>
@@ -481,8 +482,8 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
               ))}
             </div>
 
-            {/* Dev tools */}
-            <div style={cardStyle()}>
+            {/* Dev tools — admin only */}
+            {!isReadOnly && <div style={cardStyle()}>
               {sectionTitle('Dev tools')}
               <div style={{ fontSize: '12px', color: MUTED, marginBottom: '12px', lineHeight: 1.5 }}>
                 Set Clerk publicMetadata for all demo accounts (role, clientId, preferredSolution).
@@ -517,7 +518,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                 </div>
                 <SeedAllDemosButton />
               </div>
-            </div>
+            </div>}
           </div>
         </div>
       )}
@@ -892,12 +893,13 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
 
 // ─── PROJECTS TAB ──────────────────────────────────────────────────────────────
 
-function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowNewProject }: {
+function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowNewProject, isReadOnly }: {
   clientId: string
   projView: string
   setProjView: (v: string) => void
   showNewProject: boolean
   setShowNewProject: (v: boolean) => void
+  isReadOnly: boolean
 }) {
   const projects = [
     { id: 'P001', name: 'Situation Diagnosis', status: 'Active', maestro: 'Anand S.', updated: '2026-04-12', progress: 65 },
@@ -919,10 +921,12 @@ function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowN
             </button>
           ))}
         </div>
-        <button onClick={() => setShowNewProject(!showNewProject)}
-          style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 16px', borderRadius: '6px', border: `1px solid ${TEAL}`, background: 'rgba(45,212,200,0.1)', color: TEAL, cursor: 'pointer' }}>
-          + New project
-        </button>
+        {!isReadOnly && (
+          <button onClick={() => setShowNewProject(!showNewProject)}
+            style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 16px', borderRadius: '6px', border: `1px solid ${TEAL}`, background: 'rgba(45,212,200,0.1)', color: TEAL, cursor: 'pointer' }}>
+            + New project
+          </button>
+        )}
       </div>
 
       {showNewProject && (
@@ -1051,7 +1055,7 @@ function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowN
 
 // ─── APPROVALS TAB ─────────────────────────────────────────────────────────────
 
-function ApprovalsTab() {
+function ApprovalsTab({ isReadOnly }: { isReadOnly: boolean }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '24px' }}>
       {/* Pending */}
@@ -1068,9 +1072,9 @@ function ApprovalsTab() {
               <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.size}</div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: 'pointer' }}>Approve</button>
-              <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: AMBER, cursor: 'pointer' }}>Restrict</button>
-              <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: 'pointer' }}>Reject</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Approve</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: AMBER, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Restrict</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
             </div>
           </div>
         ))}
@@ -1345,6 +1349,9 @@ export default function AdminClientPage() {
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
 
+  const metaRole = user.publicMetadata?.role as string | undefined
+  const isReadOnly = metaRole !== 'admin'
+
   const data = getClientData(clientId)
   if (!data) return (
     <div style={{ minHeight: '100vh', background: BG, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SANS }}>
@@ -1397,8 +1404,33 @@ export default function AdminClientPage() {
           </span>
         </div>
 
+        {/* Current State — module quick-access strip */}
+        <div style={{ display: 'flex', gap: '8px', padding: '14px 0 0', flexWrap: 'wrap' as const }}>
+          <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase' as const, display: 'flex', alignItems: 'center', marginRight: '4px', flexShrink: 0 }}>
+            Open module →
+          </div>
+          {[
+            { label: 'Diagnose',              sub: 'Situation · Findings',         href: `/diagnose?client=${clientId}`,          color: TEAL },
+            { label: 'Technology',            sub: 'Stack · Contracts · Spend',    href: `/intelligence?client=${clientId}`,      color: PURPLE },
+            { label: 'Architecture',          sub: 'Current & target state',       href: `/architecture?client=${clientId}`,      color: '#4DA3FF' },
+            { label: 'AI Delivery',           sub: 'Portfolio · Blockers · Roadmap', href: `/ai-pdlc?client=${clientId}`,        color: AMBER },
+            { label: 'Business Case',         sub: 'CFO-grade · Genome-validated', href: `/justify?client=${clientId}`,           color: GREEN },
+          ].map(m => (
+            <a key={m.label} href={m.href} style={{
+              display: 'flex', flexDirection: 'column' as const, gap: '1px',
+              padding: '6px 12px', borderRadius: '7px',
+              background: `${m.color}09`,
+              border: `1px solid ${m.color}30`,
+              textDecoration: 'none', flexShrink: 0,
+            }}>
+              <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: m.color }}>{m.label}</span>
+              <span style={{ fontFamily: MONO, fontSize: '8px', color: MUTED }}>{m.sub}</span>
+            </a>
+          ))}
+        </div>
+
         {/* Tab bar */}
-        <div style={{ height: '44px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', marginBottom: '28px' }}>
+        <div style={{ height: '44px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', marginBottom: '28px', marginTop: '8px' }}>
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               style={{
@@ -1422,7 +1454,7 @@ export default function AdminClientPage() {
 
         {/* Tab content */}
         {tab === 'admin' && (
-          <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} />
+          <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
         )}
         {tab === 'overview' && (
           <OverviewTab data={data} />
@@ -1431,18 +1463,18 @@ export default function AdminClientPage() {
           <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
         )}
         {tab === 'projects' && (
-          <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} />
+          <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
         )}
         {tab === 'approvals' && (
-          <ApprovalsTab />
+          <ApprovalsTab isReadOnly={isReadOnly} />
         )}
         {tab === 'activity' && (
           <ActivityTab data={data} />
         )}
       </div>
 
-      {/* Floating seed demos menu — accessible from every tab */}
-      <SeedDemosFloatMenu clientId={clientId} />
+      {/* Floating seed demos menu — admin only */}
+      {!isReadOnly && <SeedDemosFloatMenu clientId={clientId} />}
     </div>
   )
 }

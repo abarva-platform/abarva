@@ -40,7 +40,7 @@ export default function SolutionMargin() {
     { num: 2, color: AMBER, title: 'Prescribe — the sequenced recovery plan',
       desc: '3–5 specific interventions, sequenced by impact and feasibility. Each with a CFO-grade business case: investment required, savings range, timeline, risk, Genome validation.',
       products: ['Strategy', 'Business Case'] },
-    { num: 3, color: GREEN, title: 'Verify — baseline locked · savings tracked · fee earned',
+    { num: 3, color: GREEN, title: 'Value Realization — baseline locked · savings tracked · fee earned',
       desc: 'Baseline locked Day 0. Immutable. Monthly actuals tracked. Fee 15–20% of what is actually delivered — not what was promised.',
       products: ['Outcomes'] },
   ]
@@ -143,7 +143,7 @@ export default function SolutionMargin() {
             ))}
             <div style={{ marginLeft: 'auto' }}>
               <a href="/ai-strategy" style={{ fontSize: '12px', color: MUTED2, textDecoration: 'none' }}>
-                Full AI Strategy engagement →
+                Full AI Value Realization →
               </a>
             </div>
           </div>

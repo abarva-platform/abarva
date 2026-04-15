@@ -114,7 +114,7 @@ function JustifyContent() {
 
       {/* ── Product header ─────────────────────────────────────────────────── */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '24px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, color: T.teal, fontFamily: T.mono, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
               Business Case Intelligence
@@ -157,7 +157,7 @@ function JustifyContent() {
 
       {/* ── Role lens ──────────────────────────────────────────────────────── */}
       <div style={{ background: `${T.teal}08`, borderBottom: `1px solid ${T.border}`, padding: '12px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px' }}>
           {(() => {
             const front = ai.opportunities.frontOffice || []
             const mid   = ai.opportunities.middleOffice || []
@@ -215,7 +215,7 @@ function JustifyContent() {
 
       {/* ── Step nav ───────────────────────────────────────────────────────── */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex' }}>
           {STEPS.map(s => (
             <button key={s.id}
               onClick={() => s.id <= step && setStep(s.id)}
@@ -229,7 +229,7 @@ function JustifyContent() {
         </div>
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px' }}>
 
         {/* ── STEP 1: Select Initiative ───────────────────────────────────── */}
         {step === 1 && (

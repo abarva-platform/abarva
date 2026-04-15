@@ -107,7 +107,7 @@ export default function SolutionTech() {
     { num: 2, color: AMBER, title: 'Build the case the CFO will approve',
       desc: `Three previous attempts failed because the business case was built by the vendor. AbarVa builds it from the client's data with Genome patterns from prior modernizations at peer organisations.`,
       products: ['Strategy', 'Vendor', 'Business Case'] },
-    { num: 3, color: GREEN, title: 'Govern the delivery — Maestros embedded',
+    { num: 3, color: GREEN, title: 'Value Realization — Maestros embedded, outcomes verified',
       desc: 'Maestros govern the implementation. They hold the vendor accountable to the business case. Fee on verified maintenance cost reduction and milestone delivery.',
       products: ['Outcomes'] },
   ]
@@ -361,7 +361,7 @@ export default function SolutionTech() {
             ))}
             <div style={{ marginLeft: 'auto' }}>
               <a href="/ai-strategy" style={{ fontSize: '12px', color: MUTED, textDecoration: 'none' }}>
-                Full AI Strategy engagement →
+                Full AI Value Realization →
               </a>
             </div>
           </div>

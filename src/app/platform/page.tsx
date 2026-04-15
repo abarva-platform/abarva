@@ -12,7 +12,7 @@ export default function PlatformPage() {
       <AbarvaNav activePage="platform" />
 
       {/* Hero */}
-      <div style={{ padding: '96px 32px 80px', maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '96px 48px 80px', maxWidth: '1400px', margin: '0 auto' }}>
         <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '16px' }}>
           How AbarVa works
         </div>
@@ -27,8 +27,8 @@ export default function PlatformPage() {
       </div>
 
       {/* Three layers */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '64px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '64px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '32px' }}>
             Three layers · One platform
           </div>
@@ -77,8 +77,8 @@ export default function PlatformPage() {
       </div>
 
       {/* How a project works */}
-      <div style={{ padding: '80px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '80px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
             How a project works
           </div>
@@ -103,8 +103,8 @@ export default function PlatformPage() {
       </div>
 
       {/* Layer diagram */}
-      <div style={{ padding: '80px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '80px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
             Platform architecture
           </div>
@@ -140,8 +140,8 @@ export default function PlatformPage() {
       </div>
 
       {/* 5-phase engagement timeline */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
             How an engagement works
           </div>
@@ -175,7 +175,7 @@ export default function PlatformPage() {
       </div>
 
       {/* The Genome */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 32px' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 48px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'start' }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: '10px', color: AMBER, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
@@ -215,8 +215,8 @@ export default function PlatformPage() {
       </div>
 
       {/* Fee model */}
-      <div style={{ padding: '80px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ padding: '80px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
             The fee model
           </div>
@@ -262,7 +262,7 @@ export default function PlatformPage() {
       </div>
 
       {/* CTA */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '64px 32px' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '64px 48px' }}>
         <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'center' as const }}>
           <div style={{ fontFamily: SERIF, fontSize: '32px', color: WHITE, marginBottom: '12px' }}>
             See it running on real data.

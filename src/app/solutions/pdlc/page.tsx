@@ -15,7 +15,7 @@ const PHASES = [
   { num: 2, color: AMBER, title: 'Embed AI into the build cycle',
     desc: 'Maestros embed inside your engineering squads. AI agents handle scaffolding, testing, documentation, and review — the parts that slow humans down. Engineers build what requires judgment. Output doubles.',
     products: ['Strategy', 'Vendor'] },
-  { num: 3, color: GREEN, title: 'Verify improvement · earn the fee',
+  { num: 3, color: GREEN, title: 'Value Realization — verified outcomes · earned fee',
     desc: 'Baseline locked Day 0: cycle time, output per engineer, consulting spend. Monthly actuals tracked. Fee on verified improvement only. If time to production does not drop, we do not get paid.',
     products: ['Business Case', 'Outcomes'] },
 ]
@@ -133,7 +133,7 @@ export default function SolutionPDLC() {
             ))}
             <div style={{ marginLeft: 'auto' }}>
               <a href="/ai-strategy" style={{ fontSize: '12px', color: MUTED2, textDecoration: 'none' }}>
-                Full AI Strategy engagement →
+                Full AI Value Realization →
               </a>
             </div>
           </div>

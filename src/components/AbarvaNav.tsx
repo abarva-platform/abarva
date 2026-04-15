@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 const PAGE_BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
@@ -12,7 +12,6 @@ interface NavProps {
   activePage?: string
 }
 
-// Inner nav that uses the client context hook — must be inside Suspense boundary
 function NavInner({ activePage }: NavProps) {
   const [open, setOpen] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -23,25 +22,28 @@ function NavInner({ activePage }: NavProps) {
   const { signOut } = useClerk()
   const router = useRouter()
 
-  const { clientId, currentClient, allowedClients, canSwitch, switchClient, role } = useClientContext()
+  const { clientId, currentClient, allowedClients, canSwitch, switchClient } = useClientContext()
 
   const openDrop = (id: string) => { clearTimeout(closeTimer.current); setOpen(id) }
   const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 200) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
-  const metaClientId  = user?.publicMetadata?.clientId  as string | undefined
-  const metaRole      = user?.publicMetadata?.role       as string | undefined
+  const metaClientId = user?.publicMetadata?.clientId as string | undefined
+  const metaRole     = user?.publicMetadata?.role       as string | undefined
 
-  const signedIn      = isLoaded && !!user
-  const displayName   = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User'
-  const initials      = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const signedIn    = isLoaded && !!user
+  const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User'
+  const initials    = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   const roleLabel =
     metaRole === 'admin'    ? 'Admin'    :
     metaRole === 'investor' ? 'Investor' :
     metaRole === 'client'   ? 'Client'   : null
 
-  // Build solution link paths — admin sees engage routes, client sees portal routes
+  const isElevated = metaRole === 'admin' || metaRole === 'investor'
+  const isAdmin    = metaRole === 'admin'
+
+  // Solution link paths — admin sees engage routes, client sees portal routes
   const solutionPath = (sol: string) => {
     if (!signedIn) return `/solutions/${sol}`
     if (metaRole === 'admin') return `/engage/${clientId}/${sol}`
@@ -51,6 +53,51 @@ function NavInner({ activePage }: NavProps) {
 
   // Module nav links — carry the active client param
   const modulePath = (page: string) => `/${page}?client=${clientId}`
+
+  // Intelligence: admin/investor → maestro workspace, client → data-intelligence
+  const intelligencePath = isElevated
+    ? `/admin/client/${clientId}`
+    : modulePath('data-intelligence')
+
+  // 9 modules organised by phase
+  const AVR_PHASES = [
+    {
+      phase: 1,
+      label: 'DIAGNOSE',
+      color: '#4DA3FF',
+      modules: [
+        { name: 'Situation Intelligence',     desc: 'What is broken — and what it costs',        path: modulePath('diagnose') },
+        { name: 'Contradiction Intelligence', desc: 'What was promised vs what exists',           path: modulePath('contradictions') },
+        { name: 'Data Intelligence',          desc: 'Data readiness before AI investment',        path: modulePath('data-intelligence') },
+      ],
+    },
+    {
+      phase: 2,
+      label: 'PRESCRIBE',
+      color: '#F59E0B',
+      modules: [
+        { name: 'Technology Intelligence',    desc: 'Current stack — inventory, spend, contracts', path: modulePath('intelligence') },
+        { name: 'Vendor Intelligence',        desc: 'Vendor selection scored against your situation', path: modulePath('vendor-intelligence') },
+        { name: 'Architecture Intelligence',  desc: 'Target state — AI stack blueprint',           path: modulePath('architecture') },
+        { name: 'Business Case Intelligence', desc: 'CFO-grade case with Genome validation',       path: modulePath('justify') },
+      ],
+    },
+    {
+      phase: 3,
+      label: 'VALUE REALIZATION',
+      color: '#34D399',
+      modules: [
+        { name: 'AI Delivery Intelligence', desc: 'Portfolio, blockers, and delivery roadmap',   path: modulePath('ai-pdlc') },
+        { name: 'Outcome Intelligence',     desc: 'Baseline locked · verified delta · fee earned', path: modulePath('outcome-intelligence') },
+      ],
+    },
+  ]
+
+  const avrActive = [
+    'intelligence', 'architecture', 'ai-pdlc', 'ai-strategy',
+    'data-intelligence', 'justify', 'contradictions', 'outcome-intelligence',
+    'diagnose', 'vendor-intelligence',
+  ].includes(activePage || '')
 
   return (
     <div id="abarva-nav" style={{
@@ -68,7 +115,7 @@ function NavInner({ activePage }: NavProps) {
     }}>
 
       {/* Wordmark */}
-      <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', lineHeight: 1, marginRight: '28px', flexShrink: 0 }}>
+      <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', lineHeight: 1, marginRight: '20px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
           <span style={{ fontFamily: SERIF, fontSize: '17px', fontWeight: 800, color: TEXT }}>Abar</span>
           <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 900, color: TEAL }}>Va</span>
@@ -76,8 +123,8 @@ function NavInner({ activePage }: NavProps) {
         <span style={{ fontFamily: MONO, fontSize: '7.5px', color: TEXT, letterSpacing: '.04em', opacity: .6 }}>know it. build it. own it.</span>
       </a>
 
-      {/* ── Client toggle ─────────────────────────────── */}
-      {signedIn && (
+      {/* ── Client toggle — admin + investor only ───────────────────────────── */}
+      {signedIn && isElevated && (
         <div style={{ position: 'relative', marginRight: '16px' }}>
           <button
             onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
@@ -89,7 +136,6 @@ function NavInner({ activePage }: NavProps) {
               cursor: canSwitch ? 'pointer' : 'default',
             }}
           >
-            {/* Colour dot */}
             <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
             <div style={{ textAlign: 'left' }}>
               <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, color: TEXT, lineHeight: 1.2 }}>
@@ -104,7 +150,6 @@ function NavInner({ activePage }: NavProps) {
             )}
           </button>
 
-          {/* Dropdown — admin/investor only */}
           {canSwitch && clientToggleOpen && (
             <div
               onMouseLeave={() => setClientToggleOpen(false)}
@@ -118,7 +163,7 @@ function NavInner({ activePage }: NavProps) {
                 Switch Account
               </div>
               {ALL_CLIENTS.map(c => {
-                const isActive = c.id === clientId
+                const isActive  = c.id === clientId
                 const isAllowed = !!allowedClients.find(a => a.id === c.id)
                 return (
                   <button
@@ -150,11 +195,29 @@ function NavInner({ activePage }: NavProps) {
         </div>
       )}
 
-      {/* ── Nav links ──────────────────────────────────── */}
+      {/* ── Nav links: INTELLIGENCE | SOLUTIONS ▾ | AI VALUE REALIZATION ▾ ─── */}
 
-      {/* Solutions dropdown */}
+      {/* Intelligence — signed-in users only */}
+      {signedIn && (
+        <a
+          href={intelligencePath}
+          style={{
+            fontSize: '13px',
+            color: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? TEAL : TEXT,
+            padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+            borderBottom: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? `2px solid ${TEAL}` : '2px solid transparent',
+          }}>
+          Intelligence
+        </a>
+      )}
+
+      {/* Solutions ▾ */}
       <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
-        <button style={{ fontSize: '13px', color: TEXT, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
+        <button style={{
+          fontSize: '13px', color: activePage === 'solutions' ? TEAL : TEXT,
+          background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS,
+          borderBottom: activePage === 'solutions' ? `2px solid ${TEAL}` : '2px solid transparent',
+        }}>
           Solutions ▾
         </button>
         {open === 'solutions' && (
@@ -180,43 +243,95 @@ function NavInner({ activePage }: NavProps) {
         )}
       </div>
 
-      {/* Intelligence modules — shown to all signed-in users, carry client param */}
-      {signedIn && (
-        <>
-          <a href={modulePath('diagnose')}
-            style={{ fontSize: '13px', color: activePage === 'diagnose' ? TEAL : TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0, borderBottom: activePage === 'diagnose' ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-            Diagnose
-          </a>
-          <a href={modulePath('intelligence')}
-            style={{ fontSize: '13px', color: activePage === 'intelligence' ? TEAL : TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0, borderBottom: activePage === 'intelligence' ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-            Technology
-          </a>
-          <a href={modulePath('architecture')}
-            style={{ fontSize: '13px', color: activePage === 'architecture' ? TEAL : TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0, borderBottom: activePage === 'architecture' ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-            Architecture
-          </a>
-          <a href={modulePath('ai-pdlc')}
-            style={{ fontSize: '13px', color: activePage === 'ai-pdlc' ? TEAL : TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0, borderBottom: activePage === 'ai-pdlc' ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-            AI Delivery
-          </a>
-        </>
-      )}
-
-      {/* Public links */}
-      <a href="/ai-strategy" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
-        AI Strategy
-      </a>
-      <a href="/platform" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
-        Platform
-      </a>
-      {(metaRole === 'admin' || !signedIn) && (
-        <a href="/clients" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
-          Clients
+      {/* AI Value Realization ▾ — dropdown (signed-in) or plain link (public) */}
+      {signedIn ? (
+        <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
+          <button style={{
+            fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
+            color: avrActive ? TEAL : TEXT,
+            borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
+          }}>
+            AI Value Realization ▾
+          </button>
+          {open === 'avr' && (
+            <div
+              style={{ position: 'absolute', top: '60px', left: 0, background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 0', minWidth: '340px', zIndex: 300 }}
+              onMouseEnter={cancelClose} onMouseLeave={startClose}
+            >
+              {AVR_PHASES.map((phase, pi) => (
+                <div key={phase.phase}>
+                  {pi > 0 && <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />}
+                  <div style={{ padding: '6px 20px 4px' }}>
+                    <span style={{ fontFamily: MONO, fontSize: '7.5px', color: phase.color, letterSpacing: '.12em', textTransform: 'uppercase' as const }}>
+                      Phase {phase.phase} — {phase.label}
+                    </span>
+                  </div>
+                  {phase.modules.map(item => (
+                    <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '7px 20px 7px 28px', textDecoration: 'none' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: MUTED, fontFamily: SANS, marginTop: '1px' }}>{item.desc}</div>
+                    </a>
+                  ))}
+                </div>
+              ))}
+              <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />
+              <a href="/ai-strategy" onClick={() => setOpen(null)} style={{ display: 'block', padding: '8px 20px', textDecoration: 'none' }}>
+                <div style={{ fontSize: '12px', color: TEAL, fontFamily: SANS }}>View all 9 modules →</div>
+              </a>
+            </div>
+          )}
+        </div>
+      ) : (
+        <a href="/ai-strategy" style={{
+          fontSize: '13px', color: avrActive ? TEAL : TEXT, padding: '8px 10px',
+          fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+          borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
+        }}>
+          AI Value Realization
         </a>
       )}
 
-      {/* ── Right side ─────────────────────────────────── */}
+      {/* ── Right side ─────────────────────────────────────────────────────── */}
       <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+        {/* Maestro — admin + investor: links to client workspace */}
+        {signedIn && isElevated && (
+          <a href={`/admin/client/${clientId}`} style={{
+            fontSize: '11px', color: TEAL, textDecoration: 'none',
+            padding: '4px 12px',
+            border: `1px solid rgba(45,212,200,0.35)`,
+            background: 'rgba(45,212,200,0.07)',
+            borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
+            letterSpacing: '0.01em',
+          }}>
+            Maestro
+          </a>
+        )}
+
+        {/* Admin ⟶ — admin only: links to main admin dashboard */}
+        {isAdmin && (
+          <a href="/admin" style={{
+            fontSize: '11px', color: TEAL, textDecoration: 'none',
+            padding: '4px 12px',
+            border: `1px solid rgba(45,212,200,0.35)`,
+            background: 'rgba(45,212,200,0.07)',
+            borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
+            letterSpacing: '0.01em',
+          }}>
+            Admin ⟶
+          </a>
+        )}
+
+        {/* Platform — always visible */}
+        <a href="/platform" style={{
+          fontSize: '11px', color: MUTED, textDecoration: 'none',
+          padding: '4px 12px', border: `1px solid ${BORDER}`,
+          borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
+          letterSpacing: '0.01em',
+        }}>
+          Platform
+        </a>
+
         {signedIn ? (
           <div style={{ position: 'relative' }}>
             <button
@@ -252,7 +367,7 @@ function NavInner({ activePage }: NavProps) {
                   <div style={{ fontFamily: SANS, fontSize: '12px', color: TEXT, fontWeight: 500 }}>{displayName}</div>
                   {roleLabel && <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, marginTop: '2px' }}>{roleLabel}</div>}
                 </div>
-                {metaRole === 'admin' && (
+                {isAdmin && (
                   <a href="/admin" style={{ display: 'block', padding: '8px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '12px', color: MUTED }}>
                     Admin Dashboard
                   </a>

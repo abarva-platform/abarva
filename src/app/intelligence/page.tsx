@@ -531,6 +531,13 @@ function IntelligenceContent() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages, streamingResponse])
 
+  // Reset panel state when user switches clients
+  useEffect(() => {
+    setSelectedSystem(null)
+    setActiveTab('portfolio')
+    setChatMessages([])
+  }, [clientId])
+
   async function sendChat(text?: string) {
     const msg = text || chatInput
     if (!msg.trim()) return

@@ -121,9 +121,9 @@ const PHASES: {
     ],
   },
   {
-    label: 'EXECUTE & VERIFY',
+    label: 'VALUE REALIZATION',
     color: GREEN,
-    desc: 'AI to production. Outcomes verified. Fee earned.',
+    desc: 'AI in production. Value verified. Fee earned only on what moves.',
     modules: [
       {
         num: 8,
@@ -210,7 +210,7 @@ export default function AIStrategyPage() {
             onClick={() => { shouldRestoreScroll.current = true; setActiveModule(null) }}
             style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.05em', textTransform: 'uppercase' as const, padding: 0 }}
           >
-            ← AI Strategy
+            ← AI Value Realization
           </button>
           <div style={{ width: '1px', height: '16px', background: BORDER }} />
           <span style={{ fontSize: '12px', color: MUTED }}>{activeModule.name}</span>
@@ -249,12 +249,12 @@ export default function AIStrategyPage() {
           {/* Left: Headline + description + CTAs */}
           <div>
             <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.16em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>
-              AI Strategy Engagement · 9 Intelligence modules · One outcome
+              AI Value Realization · 9 Intelligence modules · One outcome
             </div>
             <h1 style={{ fontFamily: SERIF, fontSize: '54px', fontWeight: 500, lineHeight: 1.12, margin: '0 0 24px' }}>
               The complete AI<br />
-              strategy engagement.<br />
-              <em style={{ color: TEAL }}>9 modules. One outcome.</em>
+              value realization<br />
+              <em style={{ color: TEAL }}>engagement.</em>
             </h1>
             <p style={{ fontSize: '17px', color: MUTED, maxWidth: '560px', margin: '0 0 14px', lineHeight: 1.7 }}>
               AbarVa runs all 9 Intelligence modules together. A complete diagnostic and prescription —
@@ -291,7 +291,7 @@ export default function AIStrategyPage() {
                     fontFamily: SANS,
                   }}
                 >
-                  {seeded ? 'Demo loaded — redirecting…' : seeding ? 'Loading demo…' : 'Load AI Strategy Demo →'}
+                  {seeded ? 'Demo loaded — redirecting…' : seeding ? 'Loading demo…' : 'Load Value Realization Demo →'}
                 </button>
               )}
             </div>
@@ -492,11 +492,11 @@ export default function AIStrategyPage() {
               </div>
               <h2 style={{ fontFamily: SERIF, fontSize: '40px', fontWeight: 500, lineHeight: 1.2, margin: '0 0 16px' }}>
                 Land with a Solution.<br />
-                <em style={{ color: TEAL }}>Scale to AI Strategy.</em>
+                <em style={{ color: TEAL }}>Scale to AI Value Realization.</em>
               </h2>
               <p style={{ fontSize: '15px', color: MUTED, lineHeight: 1.7, margin: 0 }}>
                 Most engagements start with a specific problem — margin, delivery, or a technology decision.
-                Once the first outcome is verified, the full AI Strategy engagement layers on what comes next.
+                Once the first outcome is verified, the full AI Value Realization engagement layers on what comes next.
               </p>
             </div>
 

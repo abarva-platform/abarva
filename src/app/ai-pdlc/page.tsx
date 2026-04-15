@@ -347,6 +347,169 @@ const PRE_BUILT = [
   'Without the CDO and without the golden record — which 3 AI initiatives can I start ROI tracking on TODAY, and what does that baseline look like?',
 ]
 
+// ── Meridian Health System Data ────────────────────────────────────────────────
+const MERIDIAN_INITIATIVES: Initiative[] = [
+  {
+    id: 'm-01', name: 'Sepsis Early Warning AI', status: 'live-underperforming',
+    category: 'Middle Office', investment: 3.8, valueCommitted: 24, valueActual: 4.2,
+    monthsStuck: 14, rootCause: 'data',
+    blocker: 'MLOps pipeline absent — model runs on nightly Epic data exports, not real-time feeds. 3 of 5 live hospitals show <30% alert accuracy due to incomplete Epic flowsheet mapping. 13 hospitals have no deployment path.',
+    outcome: '5 of 18 hospitals live. 2 hospitals show 34% ICU transfer reduction — model is validated. 3 live hospitals show <30% accuracy. 13 hospitals not deployed. $3.8M invested, $4.2M of $24M committed annual value, 14 months of deployment stall.',
+    recommendation: 'Azure Synapse completion provides real-time Epic feeds. MLOps deployment layer (Databricks or Azure ML) adds model serving and monitoring. Target: all 18 hospitals within 9 months of Synapse go-live. Each month of delay = $1.7M in unrealised annual value.',
+  },
+  {
+    id: 'm-02', name: 'Clinical Coding AI', status: 'live-legacy',
+    category: 'Back Office', investment: 2.4, valueCommitted: 16, valueActual: 17.2,
+    monthsStuck: 0, rootCause: 'none',
+    blocker: 'Rules-based engine cannot handle ICD-11 code structure — transition mandated October 2026 requires full engine rebuild or replacement.',
+    outcome: 'Only outperforming initiative — 34% coding time reduction, $17.2M annual value vs $16M committed. ICD-11 mandate October 2026 will break the current system. No upgrade plan exists. The portfolio\'s one success is at risk.',
+    recommendation: 'ML-based coding engine upgrade — $1.8M, 8-month implementation, October 2026 deadline. Only $1.8M protects $17.2M annual value. Highest ROI maintenance investment in the portfolio. Start immediately.',
+  },
+  {
+    id: 'm-03', name: 'RCM Denial Prevention AI', status: 'live-underperforming',
+    category: 'Back Office', investment: 3.2, valueCommitted: 28, valueActual: 8.4,
+    monthsStuck: 0, rootCause: 'bloomberg',
+    blocker: 'Ensemble Health contract prohibits automated denial remediation workflows — AI identifies 89% of preventable denials but cannot trigger remediation. Manual intervention required for every flagged denial.',
+    outcome: 'Denial rate 18.2% vs 12% SLA target. AI correctly identifies 89% of preventable denials. Ensemble contract blocks automated remediation — staff must manually action every AI flag. $8.4M of $28M committed value recovered. Each 1pp denial rate improvement = $12M annual revenue.',
+    recommendation: 'Ensemble contract renewal October 2026 — negotiate workflow automation API access as renewal condition. CDO must own this negotiation. 6pp denial rate improvement (18.2% → 12%) = $74M annual revenue uplift.',
+  },
+  {
+    id: 'm-04', name: 'Prior Auth AI', status: 'stalled',
+    category: 'Back Office', investment: 1.8, valueCommitted: 18, valueActual: 0,
+    monthsStuck: 8, rootCause: 'bloomberg',
+    blocker: 'Ensemble contract prohibits alternative prior auth vendors for 62% of payer contracts. Currently live with 23 of 100 payers — 77% of prior auth volume excluded by contract terms.',
+    outcome: 'Pilot live with 23 payers — 34% reduction in manual authorisation time. Cannot extend to 77 remaining payers: Ensemble exclusivity clause. $1.8M invested, $0 at scale. 8 months blocked.',
+    recommendation: 'Ensemble October 2026 renewal is the negotiation window. CDO must demand elimination of prior auth exclusivity clause. 77% payer coverage unlocks $18M annually. October 2026 is the only leverage window for 5+ years.',
+  },
+  {
+    id: 'm-05', name: 'Travel Nurse Demand Prediction', status: 'stalled',
+    category: 'Middle Office', investment: 0.8, valueCommitted: 12, valueActual: 0,
+    monthsStuck: 6, rootCause: 'data',
+    blocker: 'Kronos WFM contract expired August 2025 — data export API suspended. Historical workforce data cannot be extracted for model training or live prediction.',
+    outcome: '$142M annual travel nurse spend. Demand prediction model would reduce spend 15–20% ($21–28M). Kronos contract expiry August 2025 killed the data feed. $0.8M invested, $0 value. 6 months stalled.',
+    recommendation: 'Kronos contract renewal immediately — data feed restoration in 30 days. Azure Synapse then ingests WFM data in real time. Travel nurse prediction is 6 months to live once Kronos data is restored. $21M+ annual value for a $0.8M model investment.',
+  },
+  {
+    id: 'm-06', name: 'Patient Readmission Prediction', status: 'stalled',
+    category: 'Middle Office', investment: 1.4, valueCommitted: 22, valueActual: 0,
+    monthsStuck: 5, rootCause: 'fsc',
+    blocker: 'Azure Synapse 40% complete — model requires real-time patient data across all 18 hospitals. Nightly Epic extracts are insufficient for 30-day readmission risk prediction.',
+    outcome: 'Model validated in sandbox on 2019 historical data — 78% accuracy, above 72% clinical threshold. Cannot train on live data or deploy without real-time pipeline. $1.4M invested, $0 value. 5 months stalled.',
+    recommendation: 'Azure Synapse completion (Wave 1) unlocks immediately. Once real-time pipeline live, 4-month path from sandbox to production deployment. Epic integration and clinical workflow build runs parallel to Synapse completion.',
+  },
+  {
+    id: 'm-07', name: 'ED Throughput AI', status: 'stalled',
+    category: 'Middle Office', investment: 1.2, valueCommitted: 14, valueActual: 0,
+    monthsStuck: 4, rootCause: 'fsc',
+    blocker: 'Azure Synapse required — ED model needs real-time patient flow data from Epic ADT events and bed management system. No real-time pipeline exists.',
+    outcome: '23% of Meridian ED patients exceed 4-hour target. Simulation on historical data shows 18% throughput improvement achievable. Cannot operationalise without real-time Epic ADT data feed. $1.2M invested, $0 value.',
+    recommendation: 'Wave 2 after Azure Synapse live. Epic ADT integration for bed management can be built in parallel to Synapse completion. Target: live 4 months after Synapse go-live.',
+  },
+  {
+    id: 'm-08', name: 'AI Governance Framework', status: 'planning',
+    category: 'Back Office', investment: 0.8, valueCommitted: 40, valueActual: 0,
+    monthsStuck: 0, rootCause: 'cdo',
+    blocker: 'CDO vacancy — governance owner required. CMS AI guidance and state regulations require documented framework before clinical AI expansion. No owner to create or ratify it.',
+    outcome: 'Not started. Unlocks clinical AI expansion to all 18 hospitals. Satisfies CMS AI assurance requirements. CDO vacancy means no executive to own model validation protocols, bias testing, or FDA SaMD classification decisions.',
+    recommendation: 'CDO hire Day 1 priority. Governance framework enables scaling clinical AI beyond current 5-hospital pilot. CMS compliance is weeks not months once CDO owns the process.',
+  },
+  {
+    id: 'm-09', name: 'Azure Synapse Completion', status: 'planning',
+    category: 'Back Office', investment: 4.8, valueCommitted: 0, valueActual: 0,
+    monthsStuck: 0, rootCause: 'cdo',
+    blocker: 'CDO vacancy — 40% complete, stalled 6 months. Three competing architecture proposals. No decision-maker with authority to choose between Databricks, Azure ML, and on-premises hybrid.',
+    outcome: '40% complete, $4.8M invested on a $12M project. Unblocks Patient Readmission Prediction, ED Throughput AI, and Sepsis scale-out. CDO must choose between 3 competing architecture proposals to proceed.',
+    recommendation: 'CDO hire unlocks immediately. Architecture decision in week 2. Synapse completion in 9 months. Every month of CDO vacancy = $3.1M/month in locked AI initiative value across 4 dependent initiatives.',
+  },
+  {
+    id: 'm-10', name: 'Clinical Decision Support Suite', status: 'planning',
+    category: 'Middle Office', investment: 2.4, valueCommitted: 18, valueActual: 0,
+    monthsStuck: 0, rootCause: 'cdo',
+    blocker: 'CDO vacancy and AI governance framework absent. FDA SaMD classification applies to 3 of 5 planned modules — requires governance framework before any can be built.',
+    outcome: 'Not started. 5 clinical decision support modules planned. FDA SaMD classification for 3 modules requires documented AI governance framework. Cannot proceed without governance framework and CDO authority.',
+    recommendation: 'Wave 2 after governance framework live and CDO hired. FDA SaMD pathway is 9–18 months once CDO makes classification decisions. Sequence: governance framework → FDA pathway → build.',
+  },
+]
+
+const MERIDIAN_BLOCKERS = [
+  {
+    id: 'cdo',
+    label: 'CDO Vacancy — 8 Months',
+    color: RED,
+    count: 3,
+    lockedValue: 82,
+    initiatives: ['AI Governance Framework', 'Azure Synapse Completion', 'Clinical Decision Support Suite'],
+    description: 'CDO role vacant 8 months. No executive owns data architecture decisions, Azure Synapse completion, AI governance, or Ensemble contract renegotiation authority. Three Synapse architecture proposals sit undecided. CMS AI guidance requires documented governance framework before clinical AI expansion — no owner exists to create it.',
+    fix: 'Hire CDO. Day 1: select Azure Synapse architecture from 3 proposals. Week 2: initiate AI governance framework. Month 1: begin Ensemble contract renegotiation strategy for October 2026 renewal. CDO hire is the single decision with the largest downstream impact on portfolio value.',
+    secondaryImpact: 'CDO vacancy stalls Azure Synapse — which blocks Patient Readmission Prediction ($22M) and ED Throughput AI ($14M). CDO also required to lead Ensemble negotiation. Total CDO-attributable locked value across primary and secondary effects: $164M.',
+  },
+  {
+    id: 'data',
+    label: 'MLOps Pipeline Missing',
+    color: AMBER,
+    count: 2,
+    lockedValue: 36,
+    initiatives: ['Sepsis AI (scale-out to 13 hospitals)', 'Travel Nurse Demand Prediction'],
+    description: 'No MLOps deployment infrastructure. Sepsis AI runs on nightly Epic data exports — cannot achieve real-time alerting or scale to remaining 13 hospitals. Travel nurse prediction built and validated, cannot reach production. Both initiatives are technically ready; the deployment rail is missing.',
+    fix: 'Azure Synapse completion provides the real-time data foundation. MLOps layer (Databricks or Azure ML) adds model serving and monitoring. Both initiatives can reach production within 6 months of MLOps infrastructure being live. Total timeline: 15 months from CDO hire.',
+    secondaryImpact: 'MLOps absence prevents Sepsis AI from reaching 13 remaining hospitals — $19.8M additional annual value waiting on deployment rails. Combined with Travel Nurse Prediction, total MLOps-blocked value: $31.8M annually.',
+  },
+  {
+    id: 'bloomberg',
+    label: 'Ensemble Contract Restrictions',
+    color: TEAL,
+    count: 2,
+    lockedValue: 46,
+    initiatives: ['RCM Denial Prevention AI (partial)', 'Prior Auth AI'],
+    description: 'Ensemble contract prohibits workflow automation and restricts prior auth alternatives for 62% of payer contracts. AI identifies denials and flags auth issues but cannot trigger remediation workflows. October 2026 renewal is the only negotiation window for 5+ years.',
+    fix: 'October 2026 Ensemble renewal is the leverage point. CDO leads negotiation: demand workflow automation API access and elimination of prior auth exclusivity clause. $46M in annual value depends on this negotiation. Preparation must begin now — 6 months before October 2026.',
+    secondaryImpact: 'Ensemble denial rate 18.2% vs 12% SLA. Each 1pp improvement = $12M annual revenue. Full SLA achievement = $74M annually. Ensemble restriction is Meridian\'s largest single source of unrealised RCM value.',
+  },
+  {
+    id: 'fsc',
+    label: 'Azure Synapse Stalled',
+    color: INDIGO,
+    count: 2,
+    lockedValue: 36,
+    initiatives: ['Patient Readmission Prediction', 'ED Throughput AI'],
+    description: 'Azure Synapse 40% complete, stalled 6 months. CDO vacancy means no decision-maker across 3 competing architecture proposals. Without Synapse, no real-time patient data pipeline. Readmission prediction and ED throughput models are built and validated — they wait on the data foundation.',
+    fix: 'CDO hire unlocks Synapse immediately. Architecture decision in week 2. Synapse completion in 9 months. This is fundamentally a CDO decision bottleneck — the technical work is scoped, the authority to proceed is missing.',
+    secondaryImpact: 'Azure Synapse also enables Sepsis AI scale-out to 13 remaining hospitals. Combined Synapse-dependent value: $55M annually. Synapse is the data foundation the entire clinical AI portfolio requires.',
+  },
+]
+
+const MERIDIAN_ROADMAP = [
+  {
+    wave: 1, name: 'Foundation & Governance', months: '0–6', investment: 8.4, annualValue: 58, color: GREEN,
+    prerequisite: 'CDO hire (Day 1)',
+    initiatives: ['CDO Hire', 'Azure Synapse Architecture Decision', 'AI Governance Framework (initiate)', 'Kronos Contract Renewal', 'Clinical Coding AI — ICD-11 Upgrade'],
+    outcome: 'CDO hired. Synapse architecture decided. ICD-11 upgrade underway — $17.2M value protected. Kronos data feed restored. AI governance framework initiated.',
+    unlocks: 'All Wave 2 initiatives. MLOps deployment path. Ensemble contract negotiation authority. CMS compliance pathway.',
+  },
+  {
+    wave: 2, name: 'Clinical AI Activation', months: '6–18', investment: 7.2, annualValue: 72, color: TEAL,
+    prerequisite: 'Wave 1: CDO, Synapse completion, governance framework, Kronos data restored',
+    initiatives: ['Sepsis AI — all 18 hospitals', 'Travel Nurse Demand Prediction', 'Patient Readmission Prediction', 'ED Throughput AI', 'Prior Auth AI (post-Ensemble negotiation)'],
+    outcome: 'Sepsis live at all 18 hospitals — $24M annual value. Travel nurse demand model live — $142M spend optimised. Three additional clinical AI models in production.',
+    unlocks: 'Wave 3 — Clinical Decision Support Suite. Ensemble negotiation delivers prior auth automation to 100 payers.',
+  },
+  {
+    wave: 3, name: 'Platform & Decision Support', months: '18–30', investment: 3.2, annualValue: 40, color: AMBER,
+    prerequisite: 'Wave 2: MLOps mature, governance live, Ensemble renegotiated, Synapse stable',
+    initiatives: ['Clinical Decision Support Suite', 'RCM Denial Prevention at SLA', 'Patient Experience AI'],
+    outcome: 'FDA SaMD-compliant clinical decision support live. RCM operating at <12% denial rate. AI-native health system operations.',
+    unlocks: 'Full AI-native clinical operations — CEO strategic objective.',
+  },
+]
+
+const MERIDIAN_PRE_BUILT = [
+  'Sepsis AI is live at 5 hospitals but 13 are still waiting — 14 months of deployment stall. MLOps pipeline is the blocker. What is the fastest path to all-hospital deployment, and what is the dollar value of each month of delay?',
+  'CDO has been vacant 8 months. Azure Synapse is at 40%, three architecture proposals, no decision-maker. What are the 5 decisions the incoming CDO must make in their first 30 days — ranked by downstream impact?',
+  'Ensemble October 2026 renewal is our only negotiation window for 5+ years. We need workflow automation API access and prior auth exclusivity eliminated. What is the negotiation strategy and what concessions should we offer?',
+  'Travel nurse spend is $142M annually. Demand prediction would cut it 15–20% — but Kronos data feed is dead (contract expired August 2025). What is the fastest path from Kronos renewal to model in production?',
+  'Clinical Coding AI is our only profitable initiative at $17.2M annual value. ICD-11 mandate hits October 2026. What does the upgrade plan look like, and what is the risk if we miss the deadline?',
+]
+
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function statusConfig(s: InitStatus) {
   if (s === 'live-underperforming') return { label: 'LIVE · UNDERPERFORMING', color: AMBER, dot: AMBER }
@@ -357,11 +520,12 @@ function statusConfig(s: InitStatus) {
   return { label: 'IN PLANNING', color: INDIGO, dot: INDIGO }
 }
 
-function rootCauseLabel(r: RootCause) {
+function rootCauseLabel(r: RootCause, clientId?: string) {
+  const isMeridian = clientId === 'meridian'
   if (r === 'cdo') return 'CDO Vacancy'
-  if (r === 'cro') return 'CRO Freeze'
-  if (r === 'fsc') return 'FSC Adoption'
-  if (r === 'bloomberg') return 'Bloomberg Data'
+  if (r === 'cro') return isMeridian ? 'CMO Approval' : 'CRO Freeze'
+  if (r === 'fsc') return isMeridian ? 'Azure Synapse' : 'FSC Adoption'
+  if (r === 'bloomberg') return isMeridian ? 'Ensemble Contract' : 'Bloomberg Data'
   if (r === 'data') return 'Data Pipeline'
   return '—'
 }
@@ -389,6 +553,14 @@ function AIDeliveryContent() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages, streamingResponse])
+
+  // Reset panel state when user switches clients
+  useEffect(() => {
+    setSelectedInit(null)
+    setSelectedBlocker(null)
+    setActiveTab('initiatives')
+    setChatMessages([])
+  }, [clientId])
 
   async function sendChat(text?: string) {
     const msg = text || chatInput
@@ -423,14 +595,20 @@ function AIDeliveryContent() {
     }
   }
 
-  const live = INITIATIVES.filter(i => i.status.startsWith('live'))
-  const stalled = INITIATIVES.filter(i => i.status === 'stalled')
-  const planning = INITIATIVES.filter(i => i.status === 'planning')
-  const cancelled = INITIATIVES.filter(i => i.status === 'cancelled')
+  const isMeridian = clientId === 'meridian'
+  const currentInitiatives = isMeridian ? MERIDIAN_INITIATIVES : INITIATIVES
+  const currentBlockers = isMeridian ? MERIDIAN_BLOCKERS : BLOCKERS
+  const currentRoadmap = isMeridian ? MERIDIAN_ROADMAP : ROADMAP
+  const currentPreBuilt = isMeridian ? MERIDIAN_PRE_BUILT : PRE_BUILT
 
-  const totalInvested = INITIATIVES.reduce((s, i) => s + i.investment, 0)
-  const totalActual = INITIATIVES.reduce((s, i) => s + i.valueActual, 0)
-  const totalCommitted = INITIATIVES.reduce((s, i) => s + i.valueCommitted, 0)
+  const live = currentInitiatives.filter(i => i.status.startsWith('live'))
+  const stalled = currentInitiatives.filter(i => i.status === 'stalled')
+  const planning = currentInitiatives.filter(i => i.status === 'planning')
+  const cancelled = currentInitiatives.filter(i => i.status === 'cancelled')
+
+  const totalInvested = currentInitiatives.reduce((s, i) => s + i.investment, 0)
+  const totalActual = currentInitiatives.reduce((s, i) => s + i.valueActual, 0)
+  const totalCommitted = currentInitiatives.reduce((s, i) => s + i.valueCommitted, 0)
   const roiPct = Math.round((totalActual / totalInvested) * 100)
 
   const stalledValue = stalled.reduce((s, i) => s + i.valueCommitted, 0)
@@ -446,25 +624,6 @@ function AIDeliveryContent() {
 
   const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
 
-  // Non-Arcturus client users: show coming-soon state (account isolation)
-  if (clientId !== 'arcturus') {
-    return (
-      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
-        <AbarvaNav activePage="ai-pdlc" />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '60px 24px' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' }}>AI Programme Intelligence · {currentClientName}</div>
-          <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0, textAlign: 'center' }}>AI Initiative Portfolio</h2>
-          <p style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, maxWidth: '480px', textAlign: 'center', lineHeight: 1.6 }}>
-            Your AI programme data is being prepared. This module will track your AI initiative portfolio, investment ROI, blockers, and three-wave delivery roadmap.
-          </p>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: `${TEAL}15`, border: `1px solid ${TEAL}35`, borderRadius: '6px', padding: '8px 20px' }}>
-            Coming soon — engagement scoping in progress
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
       <AbarvaNav activePage="ai-pdlc" />
@@ -475,22 +634,27 @@ function AIDeliveryContent() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                AI Programme Intelligence · Arcturus Financial Group · April 2026
+                AI Programme Intelligence · {currentClientName} · April 2026
               </div>
               <h1 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>
                 AI Initiative Portfolio
               </h1>
               <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
-                28 initiatives · $94M invested · {live.length} live · {stalled.length} stalled · {planning.length} in planning · ${totalActual}M actual annual value
+                {currentInitiatives.length} initiatives · ${Math.round(totalInvested)}M invested · {live.length} live · {stalled.length} stalled · {planning.length} in planning · ${Math.round(totalActual * 10) / 10}M actual annual value
               </p>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {[
+              {(isMeridian ? [
+                { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: `Across ${currentInitiatives.length} AI initiatives` },
+                { label: 'Denial Rate', value: '18.2%', color: RED, sub: 'vs 12% SLA target — $74M/yr gap' },
+                { label: 'Stalled Value', value: `$${stalledValue}M`, color: AMBER, sub: `${stalled.length} initiatives — blocked` },
+                { label: 'Immediate Action', value: 'CDO Hire', color: GREEN, sub: 'Unlocks all 4 root causes' },
+              ] : [
                 { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: 'Committed to AI since 2021' },
                 { label: 'Actual ROI', value: `${roiPct}%`, color: RED, sub: `$${totalActual}M of $${Math.round(totalCommitted)}M committed` },
                 { label: 'Stalled Value', value: `$${stalledValue}M`, color: AMBER, sub: `${stalled.length} initiatives — no progress` },
                 { label: 'Immediate Action', value: 'Day 1', color: GREEN, sub: 'Daily Stress Testing — CRO approved' },
-              ].map(m => (
+              ]).map(m => (
                 <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
                   <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
@@ -547,7 +711,7 @@ function AIDeliveryContent() {
                         </div>
                         {init.rootCause !== 'none' && (
                           <div style={{ fontFamily: MONO, fontSize: '7px', color: rootCauseColor(init.rootCause), background: `${rootCauseColor(init.rootCause)}15`, borderRadius: '3px', padding: '1px 4px', flexShrink: 0 }}>
-                            {rootCauseLabel(init.rootCause).split(' ')[0]}
+                            {rootCauseLabel(init.rootCause, clientId).split(' ')[0]}
                           </div>
                         )}
                       </button>
@@ -562,9 +726,9 @@ function AIDeliveryContent() {
           {activeTab === 'blockers' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginBottom: '4px', lineHeight: 1.5 }}>
-                4 root causes block 25 of 28 initiatives. Fix these in sequence and the portfolio unlocks.
+                {isMeridian ? '4 root causes constrain 9 of 10 initiatives. Fix these in sequence and the portfolio unlocks.' : '4 root causes block 25 of 28 initiatives. Fix these in sequence and the portfolio unlocks.'}
               </div>
-              {BLOCKERS.map(b => (
+              {currentBlockers.map(b => (
                 <button key={b.id} onClick={() => { setSelectedBlocker(b); setSelectedInit(null) }}
                   style={{ textAlign: 'left', background: selectedBlocker?.id === b.id ? `${b.color}08` : CARD, border: `1px solid ${selectedBlocker?.id === b.id ? b.color + '50' : b.color + '20'}`, borderLeft: `3px solid ${b.color}`, borderRadius: '6px', padding: '12px', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
@@ -576,7 +740,7 @@ function AIDeliveryContent() {
               ))}
               <div style={{ marginTop: '4px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '10px 12px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, marginBottom: '4px' }}>CRITICAL PATH</div>
-                <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>CDO hire unblocks everything else. Fix CDO → governance framework resolves CRO → SSO fixes FSC → Bloomberg negotiation follows. This is the only sequence that works.</div>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{isMeridian ? 'CDO hire unblocks everything else. CDO → Azure Synapse completes (data foundation) → MLOps deployment rails → Ensemble negotiation at October 2026 renewal. This is the only sequence that works.' : 'CDO hire unblocks everything else. Fix CDO → governance framework resolves CRO → SSO fixes FSC → Bloomberg negotiation follows. This is the only sequence that works.'}</div>
               </div>
             </div>
           )}
@@ -584,7 +748,7 @@ function AIDeliveryContent() {
           {/* ROADMAP TAB */}
           {activeTab === 'roadmap' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {ROADMAP.map(w => (
+              {currentRoadmap.map(w => (
                 <div key={w.wave} style={{ background: CARD, border: `1px solid ${w.color}25`, borderLeft: `3px solid ${w.color}`, borderRadius: '8px', padding: '12px' }}>
                   <div style={{ fontFamily: MONO, fontSize: '8px', color: w.color, marginBottom: '4px' }}>WAVE {w.wave} · {w.months} MONTHS</div>
                   <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{w.name}</div>
@@ -603,8 +767,8 @@ function AIDeliveryContent() {
               ))}
               <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '12px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, marginBottom: '4px' }}>PROGRAMME TOTAL</div>
-                <div style={{ fontFamily: MONO, fontSize: '14px', color: WHITE, marginBottom: '2px' }}>$66M → $412M/yr</div>
-                <div style={{ fontFamily: SANS, fontSize: '10px', color: MUTED }}>Waves 1–3 over 30 months. 6.2× annual value on investment.</div>
+                <div style={{ fontFamily: MONO, fontSize: '14px', color: WHITE, marginBottom: '2px' }}>{isMeridian ? '$18.8M → $170M/yr' : '$66M → $412M/yr'}</div>
+                <div style={{ fontFamily: SANS, fontSize: '10px', color: MUTED }}>{isMeridian ? 'Waves 1–3 over 30 months. 9.0× annual value on investment.' : 'Waves 1–3 over 30 months. 6.2× annual value on investment.'}</div>
               </div>
             </div>
           )}
@@ -669,7 +833,7 @@ function AIDeliveryContent() {
                     {selectedInit.rootCause !== 'none' && (
                       <div style={{ background: `${rcColor}06`, border: `1px solid ${rcColor}25`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
                         <div style={{ fontFamily: MONO, fontSize: '9px', color: rcColor, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                          Root Cause · {rootCauseLabel(selectedInit.rootCause)}
+                          Root Cause · {rootCauseLabel(selectedInit.rootCause, clientId)}
                         </div>
                         <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedInit.blocker}</div>
                       </div>
@@ -756,12 +920,33 @@ function AIDeliveryContent() {
               {/* Programme scorecard */}
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  AI Programme State · Arcturus Financial Group
+                  AI Programme State · {currentClientName}
                 </div>
 
                 {/* Headline alerts */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                  {[
+                  {(isMeridian ? [
+                    {
+                      severity: RED,
+                      title: '$23M invested — 3 of 10 initiatives live, $66M stalled value, 4 root causes blocking the portfolio',
+                      body: 'CDO vacancy blocks Azure Synapse and governance. MLOps absence prevents Sepsis AI from scaling. Ensemble contract blocks prior auth. These form a dependency chain — CDO hire resolves the first blocker, which unlocks the rest.',
+                    },
+                    {
+                      severity: GREEN,
+                      title: 'Clinical Coding AI is the only outperformer — $17.2M vs $16M committed. ICD-11 upgrade required by October 2026.',
+                      body: '$1.8M upgrade, 8-month implementation, October 2026 hard deadline. Missing this deadline puts $17.2M annual value at risk. This is the one action that protects existing portfolio value. Start immediately.',
+                    },
+                    {
+                      severity: AMBER,
+                      title: 'Ensemble October 2026 renewal is the portfolio\'s only negotiation window for 5+ years.',
+                      body: '$46M in locked value depends on this single negotiation. Demand workflow automation API access and elimination of prior auth exclusivity. CDO must lead — start preparation now, 6 months before October 2026 renewal date.',
+                    },
+                    {
+                      severity: INDIGO,
+                      title: 'CDO hire is the critical path — the single decision with the largest downstream impact.',
+                      body: 'CDO vacancy blocks Azure Synapse completion, AI governance framework, and Ensemble negotiation authority. All 4 root causes trace back to CDO vacancy. Every month of delay: $3.1M in compounding locked value across the portfolio.',
+                    },
+                  ] : [
                     {
                       severity: RED,
                       title: '$94M invested, $35M actual value — 63% programme shortfall',
@@ -782,7 +967,7 @@ function AIDeliveryContent() {
                       title: 'CDO hire is the critical path — it unblocks everything else',
                       body: 'CDO vacancy enables the AI Governance Framework (CRO unblock), Golden Record (data foundation), and Bloomberg Phase 4 (API negotiations). CDO hire is the single decision that has the largest downstream impact on portfolio value.',
                     },
-                  ].map((a, i) => (
+                  ]).map((a, i) => (
                     <div key={i} style={{ background: CARD, border: `1px solid ${a.severity}25`, borderLeft: `3px solid ${a.severity}`, borderRadius: '8px', padding: '14px 18px' }}>
                       <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{a.title}</div>
                       <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{a.body}</div>
@@ -831,7 +1016,7 @@ function AIDeliveryContent() {
                   Root Cause Map · Click for detail
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {BLOCKERS.map(b => (
+                  {currentBlockers.map(b => (
                     <button key={b.id} onClick={() => { setSelectedBlocker(b); setActiveTab('blockers') }}
                       style={{ textAlign: 'left', background: CARD, border: `1px solid ${b.color}25`, borderTop: `2px solid ${b.color}`, borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
                       <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, marginBottom: '4px', lineHeight: 1.3 }}>{b.label.split(' — ')[0]}</div>
@@ -858,7 +1043,7 @@ function AIDeliveryContent() {
             {/* Pre-built questions */}
             {chatMessages.length === 0 && (
               <div style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {PRE_BUILT.map((q, i) => (
+                {currentPreBuilt.map((q, i) => (
                   <button key={i} onClick={() => sendChat(q)}
                     style={{ textAlign: 'left', background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '9px 10px', cursor: 'pointer', fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.4 }}>
                     {q.length > 90 ? q.slice(0, 90) + '…' : q}
