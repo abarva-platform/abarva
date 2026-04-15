@@ -91,7 +91,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
 
       {/* Solutions dropdown */}
       <div style={{ position: 'relative' as const }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
-        <button style={{ fontSize: '13px', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
+        <button style={{ fontSize: '13px', color: TEXT, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
           Solutions ▾
         </button>
         {open === 'solutions' && (
@@ -118,17 +118,17 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
       </div>
 
       {/* AI Strategy link */}
-      <a href="/ai-strategy" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+      <a href="/ai-strategy" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
         AI Strategy
       </a>
 
       {/* Platform link */}
-      <a href="/platform" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+      <a href="/platform" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
         Platform
       </a>
 
       {/* Clients link */}
-      <a href="/clients" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+      <a href="/clients" style={{ fontSize: '13px', color: TEXT, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
         Clients
       </a>
 
