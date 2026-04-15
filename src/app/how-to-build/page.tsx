@@ -69,7 +69,7 @@ function HowToBuildContent() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={selectedClient} />
+      <AbarvaNav />
 
       {/* Client selector */}
       <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', padding: '0 32px', display: 'flex', gap: '4px' }}>

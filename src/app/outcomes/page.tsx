@@ -578,7 +578,7 @@ function OutcomesContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
-      <AbarvaNav activePage="outcomes" clientId={clientId} />
+      <AbarvaNav activePage="outcomes" />
 
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>

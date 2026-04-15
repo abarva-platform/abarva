@@ -1363,7 +1363,7 @@ export default function AdminClientPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
-      <AbarvaNav activePage="maestro" clientId={clientId} />
+      <AbarvaNav activePage="maestro" />
 
       {/* Breadcrumb */}
       <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>

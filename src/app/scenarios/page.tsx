@@ -371,7 +371,7 @@ function ScenariosContent() {
         @keyframes numflash{0%,20%{background:#FEF3C7;border-radius:3px}100%{background:transparent}}
         .numflash{animation:numflash 0.55s ease-out}
       `}} />
-      <AbarvaNav clientId={clientId} onClientChange={id => { setClientId(id); flash() }} activePage="scenarios" />
+      <AbarvaNav activePage="scenarios" />
 
       {/* Header */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '20px 32px' }}>

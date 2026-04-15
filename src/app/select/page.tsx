@@ -500,7 +500,7 @@ function SelectContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
-      <AbarvaNav activePage="select" clientId={client} />
+      <AbarvaNav activePage="select" />
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '20px 40px' }}>

@@ -50,7 +50,7 @@ function BoardDeckContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#0D1117', fontFamily: 'Inter, -apple-system, sans-serif' }}>
-      <AbarvaNav clientId={clientId} activePage="board-deck" />
+      <AbarvaNav activePage="board-deck" />
 
       {/* Header */}
       <div style={{ background: '#111827', borderBottom: '1px solid #21262D', padding: '24px 40px' }}>

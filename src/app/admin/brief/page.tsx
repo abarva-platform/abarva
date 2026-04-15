@@ -152,7 +152,7 @@ export default function PreMeetingBrief() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');" }} />
-      <AbarvaNav clientId="meridian" />
+      <AbarvaNav />
       <div style={{ minHeight: '100vh', background: T.bg, fontFamily: T.sans, color: T.text }}>
 
         {/* ─────────────────────────────────────── COVER ─── */}

@@ -838,7 +838,7 @@ function AnalyticsModernizationContent() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(0) }} activePage="analytics-modernization" />
+      <AbarvaNav activePage="analytics-modernization" />
       <EngagementProgress />
       <Breadcrumb />
       {step > 0 && <StepNav />}

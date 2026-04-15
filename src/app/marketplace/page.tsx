@@ -664,7 +664,7 @@ function MarketplaceInner() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={(c) => { setActiveClient(c) }} />
+      <AbarvaNav />
 
       {!entryPath ? (
         <EntryScreen onSelect={setEntryPath} />

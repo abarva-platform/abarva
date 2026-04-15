@@ -208,7 +208,7 @@ function DomainStrategyContent() {
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
       <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap');" }} />
-      <AbarvaNav clientId={activeClient} onClientChange={id => setActiveClient(id)} activePage="select" />
+      <AbarvaNav activePage="select" />
 
       {/* Domain Selector — dark header */}
       <div style={{ background: '#111827', padding: '28px 32px' }}>

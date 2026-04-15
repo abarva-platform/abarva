@@ -1112,7 +1112,7 @@ function VendorIntelligenceContent() {
     }}>
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
-      <AbarvaNav clientId={client} onClientChange={(id) => setClient(id as Client)} activePage="select" />
+      <AbarvaNav activePage="select" />
 
       {/* Header */}
       <div style={{

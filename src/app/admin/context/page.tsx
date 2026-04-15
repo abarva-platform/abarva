@@ -109,7 +109,7 @@ function SectionHeader({ n, label, meta }: { n: string; label: string; meta?: st
 export default function BusinessContext() {
   return (
     <div style={S.page}>
-      <AbarvaNav clientId="meridian" activePage="admin" />
+      <AbarvaNav activePage="admin" />
 
       {/* Subnav */}
       <div style={S.subnav}>

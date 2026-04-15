@@ -217,7 +217,7 @@ function FutureOfWorkContent() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={id => { setActiveClient(id); setStep(0) }} activePage="future-of-work" />
+      <AbarvaNav activePage="future-of-work" />
       <EngagementProgress />
       <Breadcrumb />
       {step > 0 && <StepNav />}

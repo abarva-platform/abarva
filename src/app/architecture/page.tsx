@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 import {
   ARCTURUS_TARGET_HTML,
   PATTERN_LANDING_ZONE_HTML,
@@ -11,10 +11,9 @@ import {
 } from './generated-html'
 
 const CLIENTS = [
-  { id: 'meridian', name: 'Meridian Health', cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
-  { id: 'firstcapital', name: 'First Capital', cloud: 'AWS', accent: '#F59E0B', cloudBg: '#E8650A' },
-  { id: 'apexretail', name: 'Apex Retail', cloud: 'GCP', accent: '#34A853', cloudBg: '#1D9E75' },
-  { id: 'arcturus', name: 'Arcturus Financial', cloud: 'Azure', accent: '#2DD4C8', cloudBg: '#0D7377' },
+  { id: 'meridian',   name: 'Meridian Health',    cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
+  { id: 'arcturus',   name: 'Arcturus Financial',  cloud: 'Azure', accent: '#2DD4C8', cloudBg: '#0D7377' },
+  { id: 'apexretail', name: 'Apex Retail',         cloud: 'GCP',   accent: '#F59E0B', cloudBg: '#B45309' },
 ]
 
 const CSS = `
@@ -891,16 +890,14 @@ const ARCTURUS_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8
 </div></body></html>`
 
 const CURRENT_HTML_MAP: Record<string, string> = {
-  meridian: MERIDIAN_HTML,
-  firstcapital: FIRST_CAPITAL_HTML,
+  meridian:   MERIDIAN_HTML,
+  arcturus:   ARCTURUS_HTML,
   apexretail: APEX_RETAIL_HTML,
-  arcturus: ARCTURUS_HTML,
 }
 
 const TARGET_HTML_MAP: Record<string, string | null> = {
-  arcturus: ARCTURUS_TARGET_HTML,
-  meridian: null,
-  firstcapital: null,
+  arcturus:   ARCTURUS_TARGET_HTML,
+  meridian:   null,
   apexretail: null,
 }
 
@@ -946,13 +943,17 @@ const PATTERNS = [
 type Mode = 'current' | 'target' | 'patterns'
 
 function ArchContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const { clientId, allowedClients } = useClientContext()
   const [selected, setSelected] = useState(clientId)
   const [mode, setMode] = useState<Mode>('current')
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null)
 
-  const client = CLIENTS.find(c => c.id === selected) || CLIENTS[0]
+  // Keep selected in sync with URL-driven clientId changes
+  useEffect(() => { setSelected(clientId) }, [clientId])
+
+  // Only show clients the user is allowed to see
+  const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
+  const client = visibleClients.find(c => c.id === selected) || visibleClients[0] || CLIENTS[0]
 
   useEffect(() => { document.title = 'Architecture — ' + client.name + ' | AbarVa' }, [client.name])
 
@@ -1027,7 +1028,7 @@ function ArchContent() {
         {/* Client selector — hidden in pattern library mode */}
         {mode !== 'patterns' && (
           <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
-            {CLIENTS.map(c => (
+            {visibleClients.map(c => (
               <button key={c.id} onClick={() => setSelected(c.id)}
                 style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selected === c.id ? c.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#21262D', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
@@ -1046,7 +1047,7 @@ function ArchContent() {
             )}
             {mode === 'current' && (
               <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#6B7280', padding: '0 8px' }}>
-                {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'firstcapital' ? 'Claude on AWS Bedrock' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · 4 root causes'}
+                {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · 4 root causes'}
               </div>
             )}
           </div>

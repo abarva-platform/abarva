@@ -171,7 +171,7 @@ export default function AdminOutcomes() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId="meridian" activePage="admin" />
+      <AbarvaNav activePage="admin" />
 
       {/* Subnav */}
       <div style={{ display: 'flex', gap: '8px', padding: '12px 32px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', overflowX: 'auto' }}>

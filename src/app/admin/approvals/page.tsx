@@ -25,7 +25,7 @@ const COMPLETED = [
 export default function AdminApprovals() {
   return (
     <div style={S.page}>
-      <AbarvaNav clientId="meridian" activePage="admin" />
+      <AbarvaNav activePage="admin" />
       <div style={S.subnav}>{LINKS.map(l => <a key={l.href} href={l.href} style={{ padding: '6px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', background: l.active ? '#1E3A5F' : '#F8FAFC', color: l.active ? '#FFFFFF' : '#475569', border: '1px solid #E2E8F0', flexShrink: 0 }}>{l.label}</a>)}</div>
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px' }}>
         <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Approval Workflows</h1>

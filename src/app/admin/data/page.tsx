@@ -102,7 +102,7 @@ export default function AdminData() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId="meridian" activePage="admin" />
+      <AbarvaNav activePage="admin" />
       <div style={{ display: 'flex', gap: '8px', padding: '12px 32px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', overflowX: 'auto' as const }}>
         {LINKS.map(l => <a key={l.href} href={l.href} style={{ padding: '6px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', background: (l as any).active ? '#1E3A5F' : '#F8FAFC', color: (l as any).active ? '#FFFFFF' : '#475569', border: '1px solid #E2E8F0', flexShrink: 0, whiteSpace: 'nowrap' as const }}>{l.label}</a>)}
       </div>

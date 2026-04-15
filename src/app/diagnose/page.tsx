@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, Suspense, useCallback } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useSearchParams } from 'next/navigation'
+import { useClientContext } from '@/lib/use-client-context'
 import { filterIssuesByRole } from '@/lib/situation-intelligence'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
@@ -1723,9 +1724,12 @@ ${actions.slice(0, 5).map(a => `<div class="action"><strong>${a.n}.</strong> <di
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 function DiagnoseContent() {
-  const searchParams = useSearchParams()
-  const clientId = (searchParams.get('client') || 'meridian') as ClientId
+  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const clientId = ctxClientId as ClientId
   const [activeClient, setActiveClient] = useState<ClientId>(clientId)
+
+  // Sync with URL-driven client changes
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
   const [step, setStep] = useState(1)
   const [role, setRole] = useState<RoleId>('CIO')
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set<number>())
@@ -1764,7 +1768,7 @@ function DiagnoseContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
-      <AbarvaNav activePage="diagnose" clientId={activeClient} />
+      <AbarvaNav activePage="diagnose" />
 
       {/* Product header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border }}>
@@ -1782,7 +1786,7 @@ function DiagnoseContent() {
                   Data confidence: <span style={{ fontWeight: 700, color: confidence >= meta.confidence ? meta.color : T.amber }}>{confidence}%</span>
                 </span>
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                  {(['meridian', 'arcturus'] as ClientId[]).map(c => (
+                  {(['meridian', 'arcturus'] as ClientId[]).filter(c => allowedClients.find(a => a.id === c)).map(c => (
                     <button
                       key={c}
                       onClick={() => { setActiveClient(c); setStep(1); setCompletedSteps(new Set([1])); setRole('Maestro') }}

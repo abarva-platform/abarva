@@ -838,7 +838,7 @@ function ControlTowerInner() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav clientId={activeClient} onClientChange={setActiveClient} />
+      <AbarvaNav />
       <EngagementProgress />
 
       <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 24px' }}>
