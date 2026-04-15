@@ -44,9 +44,9 @@ const CLIENTS: Client[] = [
   {
     id: 'arcturus',
     name: 'Arcturus Financial',
-    sector: 'Asset Management · 3,400 employees',
-    hq: 'New York, NY',
-    employees: '3,400',
+    sector: 'Asset Management · 13,000 employees',
+    hq: 'Singapore / London / New York',
+    employees: '13,000',
     accentColor: AMBER,
     painQuote: '"28 AI initiatives. Zero have a baseline. MAS FEAT compliance overdue 4 months. CDO role vacant 11 months."',
     metrics: [
@@ -266,7 +266,7 @@ export default function ClientsPage() {
             margin: '0 0 16px',
             lineHeight: 1.15,
           }}>
-            Three composite organizations.<br />Real-world data. Live intelligence.
+            Two composite organizations.<br />Real-world data. Live intelligence.
           </h1>
 
           <p style={{
@@ -276,7 +276,7 @@ export default function ClientsPage() {
             margin: '0 auto 32px',
             lineHeight: 1.7,
           }}>
-            Built from real-world datasets across healthcare, financial services, and asset management.
+            Built from real-world datasets across healthcare and financial services.
             Every metric is real. Every gap is real. Every recommendation is derived from the Genome —
             AbarVa&apos;s pattern library of what actually works.
           </p>
@@ -285,15 +285,17 @@ export default function ClientsPage() {
         {/* Client cards */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '24px',
           marginBottom: '32px',
+          maxWidth: '840px',
+          margin: '0 auto 32px',
         }}>
           {CLIENTS.map((client, i) => (
             <ClientCard
               key={client.id}
               client={client}
-              scanDelay={[300, 800, 1300][i]}
+              scanDelay={[300, 800][i]}
               trigger={trigger}
             />
           ))}
@@ -359,7 +361,7 @@ export default function ClientsPage() {
           margin: '0 auto',
         }}>
           These are composite organizations built for demonstration purposes. They are not real companies.
-          Data is modelled from real-world patterns in healthcare, financial services, and asset management.
+          Data is modelled from real-world patterns in healthcare and financial services.
           No confidential client data is used.
         </p>
 
