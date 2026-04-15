@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import AbarvaNav from '@/components/AbarvaNav'
 import SolutionLayout from '@/components/SolutionLayout'
 
@@ -46,15 +47,34 @@ const GENOME_FINDINGS = [
     sources: ['Client financials', 'Industry benchmark'] },
 ]
 
+const BORDER = '#1C2D45', CARD = '#0D1520', TEAL2 = '#2DD4C8', MUTED2 = '#94A3B8'
+const MONO2 = 'JetBrains Mono, monospace'
+
 export default function SolutionPDLC() {
   const [input, setInput] = useState('')
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState('')
   const [launched, setLaunched] = useState(false)
+  const { user } = useUser()
+  const clientId = user?.publicMetadata?.clientId as string | undefined
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
+      {clientId && (
+        <div style={{ background: `rgba(45,212,200,0.06)`, borderBottom: `1px solid rgba(45,212,200,0.2)` }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: TEAL2 }} />
+              <span style={{ fontSize: '13px', color: WHITE }}>Your engagement is in progress</span>
+              <span style={{ fontFamily: MONO2, fontSize: '10px', color: MUTED2 }}>· Phase 0 complete</span>
+            </div>
+            <a href={`/engage/${clientId}/pdlc`} style={{ background: TEAL2, color: BG, padding: '8px 18px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+              Continue →
+            </a>
+          </div>
+        </div>
+      )}
       <SolutionLayout
         num="1 of 3" name="AI-Powered PDLC"
         tagline="Cut time to production in half. AI agents alongside your engineering teams — not replacing them. Knowledge stays permanently."

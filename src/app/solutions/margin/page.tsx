@@ -1,17 +1,21 @@
 'use client'
 import { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import AbarvaNav from '@/components/AbarvaNav'
 import SolutionLayout from '@/components/SolutionLayout'
 import { arcturusFinancial } from '@/data/arcturus/index'
 
 const BG = '#060A12', SANS = 'DM Sans, sans-serif', WHITE = '#EFF6FF'
 const TEAL = '#2DD4C8', AMBER = '#F59E0B', GREEN = '#34D399', RED = '#EF4444'
+const BORDER2 = '#1C2D45', MUTED2 = '#94A3B8', MONO2 = 'JetBrains Mono, monospace'
 
 export default function SolutionMargin() {
   const [input, setInput] = useState('')
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState('')
   const [launched, setLaunched] = useState(false)
+  const { user } = useUser()
+  const clientId = user?.publicMetadata?.clientId as string | undefined
 
   const f = arcturusFinancial.financials
   const ci = f.costToIncomeRatio       // 71
@@ -68,6 +72,20 @@ export default function SolutionMargin() {
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
+      {clientId && (
+        <div style={{ background: `rgba(45,212,200,0.06)`, borderBottom: `1px solid rgba(45,212,200,0.2)` }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: TEAL }} />
+              <span style={{ fontSize: '13px', color: WHITE }}>Your engagement is in progress</span>
+              <span style={{ fontFamily: MONO2, fontSize: '10px', color: MUTED2 }}>· Phase 0 complete</span>
+            </div>
+            <a href={`/engage/${clientId}/margin`} style={{ background: TEAL, color: BG, padding: '8px 18px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+              Continue →
+            </a>
+          </div>
+        </div>
+      )}
       <SolutionLayout
         num="2 of 3" name="Margin Optimization"
         tagline="Identify every margin lever — across revenue, cost structure, and AI portfolio — and create a board-ready recovery plan. Fee charged only on verified savings."
