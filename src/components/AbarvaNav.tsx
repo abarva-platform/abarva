@@ -117,7 +117,7 @@ function NavInner({ activePage }: NavProps) {
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
     <div id="abarva-nav" style={{
       height: '60px',
-      background: CARD,
+      background: PAGE_BG,
       borderBottom: showBreadcrumb ? 'none' : `1px solid ${BORDER}`,
       display: 'flex',
       alignItems: 'center',
@@ -309,12 +309,8 @@ function NavInner({ activePage }: NavProps) {
         {/* Maestro — admin + investor: links to client workspace */}
         {signedIn && isElevated && (
           <a href={`/admin/client/${clientId}`} style={{
-            fontSize: '11px', color: TEAL, textDecoration: 'none',
-            padding: '4px 12px',
-            border: `1px solid rgba(45,212,200,0.35)`,
-            background: 'rgba(45,212,200,0.07)',
-            borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
-            letterSpacing: '0.01em',
+            fontSize: '12px', color: TEAL, textDecoration: 'none',
+            padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
           }}>
             Maestro
           </a>
@@ -323,23 +319,17 @@ function NavInner({ activePage }: NavProps) {
         {/* Admin ⟶ — admin only: links to main admin dashboard */}
         {isAdmin && (
           <a href="/admin" style={{
-            fontSize: '11px', color: TEAL, textDecoration: 'none',
-            padding: '4px 12px',
-            border: `1px solid rgba(45,212,200,0.35)`,
-            background: 'rgba(45,212,200,0.07)',
-            borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
-            letterSpacing: '0.01em',
+            fontSize: '12px', color: TEAL, textDecoration: 'none',
+            padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
           }}>
-            Admin ⟶
+            Admin
           </a>
         )}
 
         {/* Platform — always visible */}
         <a href="/platform" style={{
-          fontSize: '11px', color: MUTED, textDecoration: 'none',
-          padding: '4px 12px', border: `1px solid ${BORDER}`,
-          borderRadius: '20px', fontFamily: SANS, flexShrink: 0,
-          letterSpacing: '0.01em',
+          fontSize: '12px', color: MUTED, textDecoration: 'none',
+          padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
         }}>
           Platform
         </a>
