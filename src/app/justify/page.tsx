@@ -65,7 +65,7 @@ function JustifyContent() {
   const [role, setRole] = useState('Maestro')
 
   const clientMeta = ALL_CLIENTS.find(c => c.id === activeClient)
-  const clientName = clientMeta?.name || 'Meridian Health System'
+  const clientName = clientMeta?.name || 'Your Organization'
   const clientIndustry = clientMeta?.vertical || 'Healthcare'
 
   const ROLES = clientIndustry === 'Financial Services'
