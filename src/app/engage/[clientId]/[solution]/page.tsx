@@ -123,8 +123,10 @@ export default function MaestroWorkspace() {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
     const role = user.publicMetadata?.role as string
-    if (role !== 'admin') { router.push('/'); return }
+    if (role !== 'admin' && role !== 'investor') { router.push('/'); return }
   }, [isLoaded, user, router])
+
+  const isReadOnly = (user?.publicMetadata?.role as string) === 'investor'
 
   // Load engagement
   const loadEngagement = useCallback(async () => {
@@ -838,7 +840,7 @@ export default function MaestroWorkspace() {
                   )}
 
                   {/* Approve Phase 0 */}
-                  {activePhase.status === 'in_progress' && phase0Output && (
+                  {!isReadOnly && activePhase.status === 'in_progress' && phase0Output && (
                     <div style={{
                       marginTop: '32px', background: T.surface, border: `1px solid ${T.tealBorder}`,
                       borderRadius: '10px', padding: '20px'
@@ -990,6 +992,12 @@ export default function MaestroWorkspace() {
                   </div>
 
                   {/* Input area */}
+                  {isReadOnly ? (
+                    <div style={{ borderTop: `1px solid ${T.border}`, padding: '12px 20px', background: T.surface, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.50)', letterSpacing: '.10em' }}>INVESTOR VIEW · READ ONLY</span>
+                    </div>
+                  ) : (
                   <div style={{
                     borderTop: `1px solid ${T.border}`, padding: '16px 20px',
                     background: T.surface, flexShrink: 0
@@ -1037,6 +1045,7 @@ export default function MaestroWorkspace() {
                       </button>
                     </div>
                   </div>
+                  )}
                 </div>
               )}
             </>
