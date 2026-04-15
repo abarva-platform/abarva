@@ -622,7 +622,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         default_workstreams: [{
           name: 'Technology Analysis',
           description: 'Automated technology analysis',
-          opening_prompt: 'Analysing technology landscape...'
+          opening_prompt: 'I have analysed your technology datasets. Before we begin Phase 1, I want to show you what the data reveals — and be direct about what it means.\n\nThree things stand out immediately.\n\nFirst: SQL Server DW reached end-of-life in October 2025. It is running today without security patches. This is not a roadmap decision — it is a compliance and security issue that requires action in the next 30 days, regardless of any Bloomberg AIM decision.\n\nSecond: Three Bloomberg AIM modernisation attempts. £32.6M spent across 2009, 2016, and 2021. All three failed for exactly the same reason: no named executive sponsor who survived the programme duration. The CDO is currently vacant — 11 months. The fourth attempt, with the same governance structure, will produce the same result.\n\nThird: 6 of 14 Bloomberg customisations are portable. An API wrapper approach — which has never been tried — reduces dependency without triggering the migration complexity that stopped all three prior attempts.\n\nI have also identified that Charles River IMS and Portfolio Analytics are the proof points: internal capability exists in pockets. Tech modernisation builds on these, not from zero.\n\nWhich track do you want to begin with: Core System Modernization, ERP Selection, or Cloud Architecture?'
         }]
       },
       1: {
@@ -651,6 +651,38 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
             name: 'Data Migration Risk',
             description: 'What is in the systems that cannot easily move',
             opening_prompt: 'Data migration is where technology modernisations most commonly fail — and where Genome pattern F003 (data readiness below threshold, 68%) is triggered. For Bloomberg AIM: 28 years of position history in proprietary format. 14 customisations with no specification documentation. This is what stopped all three prior attempts. I need to understand: is there a data dictionary for the AIM position history — anything that would let us assess migration complexity accurately before committing to a path?'
+          },
+          // Track 2 — ERP Selection & SI Governance
+          {
+            name: 'ERP Readiness Assessment',
+            description: 'Before scoring any ERP product — assess whether the organisation is ready to run this programme',
+            opening_prompt: 'Before we score any ERP product, I want to assess whether you are ready to run this programme. Most ERP implementations fail not because of the technology choice — but because the organisation was not ready. The Genome shows 7 readiness dimensions that predict success. The most important is data quality. What percentage of your master data has been cleansed and validated in the last 12 months?'
+          },
+          {
+            name: 'ERP Product Selection',
+            description: 'ERP products scored against client profile — not a generic RFP',
+            opening_prompt: 'I have scored the relevant ERP products against your specific profile — not a generic RFP. The scoring uses Genome data from comparable implementations across your industry and size. The Genome shows the strongest match against your data readiness, internal capability, regulatory requirements, and migration history. Before I walk through the full scoring, I want to understand your board\'s constraints: is there a preference for a vendor you already have a relationship with — and if so, what is driving that preference?'
+          },
+          {
+            name: 'SI Selection (Genome-Powered)',
+            description: 'SI selection using verified delivery track record — not analyst rankings',
+            opening_prompt: 'SI selection is where most clients get the worst advice — because advisory firms have alliance agreements with the SIs they recommend. AbarVa has no alliances. We score SIs against verified delivery track record from the Genome. For your profile, the Genome shows which SIs have delivered on time in comparable engagements and which have averaged significant budget overruns. Let me show you the full scoring before you make any decisions.'
+          },
+          // Track 3 — Cloud Architecture Advisory
+          {
+            name: 'Use Case Definition',
+            description: 'Architecture starts with the use case, not the technology',
+            opening_prompt: 'Cloud architecture advisory starts with the use case — not the technology. What business problem are you trying to solve? The architecture follows from that, not the other way around. Based on your uploaded data, I can see three potential use cases that would deliver the highest value: prior auth automation (CMS mandate), clinical documentation AI (physician productivity), and data platform for golden record (enables all AI initiatives). Which of these is the highest priority for your board right now?'
+          },
+          {
+            name: 'Architecture Design',
+            description: 'Blueprint designed for the specific use case — components, services, decisions',
+            opening_prompt: 'For the selected use case, I want to walk through the architecture decisions you need to make. The critical choices are: cloud provider (your current estate matters here), build vs buy for specific components, and data residency requirements for regulated data. I have designed blueprints for this pattern across comparable implementations. Let me walk through each decision with the trade-offs before we commit to an approach.'
+          },
+          {
+            name: 'Cloud SI Selection',
+            description: 'Cloud implementation partner scored from the Genome — not marketing',
+            opening_prompt: 'For this architecture, I want to score the cloud implementation partners against verified delivery track record. AbarVa does not build cloud platforms — we design them, select who builds them, and govern the delivery. The SI selection for cloud works the same way as ERP: Genome-scored against verified delivery track record, not marketing materials. Let me show you which vendors have the strongest record for this use case and cloud provider.'
           }
         ]
       },

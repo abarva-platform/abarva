@@ -94,6 +94,9 @@ export default function MaestroWorkspace() {
 
   const [starting, setStarting] = useState(false)
   const [opportunityLevers, setOpportunityLevers] = useState<any[]>([])
+  const [selectedTrack, setSelectedTrack] = useState<string | null>(null)
+  const [runningVendorIntel, setRunningVendorIntel] = useState(false)
+  const [vendorIntelResult, setVendorIntelResult] = useState<any>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -545,6 +548,65 @@ export default function MaestroWorkspace() {
                     </div>
                   )}
 
+                  {/* Tech Track Selector — shown after Phase 0 scorecard */}
+                  {solution === 'tech' && phase0Output?.content && (
+                    <div style={{ marginTop: '24px' }}>
+                      <div style={{
+                        background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px', padding: '24px'
+                      }}>
+                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+                          Select Engagement Track
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '10px' }}>
+                          {[
+                            { id: 'core_system', label: 'Core System Modernization', desc: 'Replace, wrap, or optimise aging systems. Vendor scored against your data.' },
+                            { id: 'erp', label: 'ERP Selection & SI Governance', desc: 'Product + SI scored by Genome. Governance model to prevent the 84% failure pattern.' },
+                            { id: 'cloud_advisory', label: 'Cloud Architecture Advisory', desc: 'Blueprint design and SI governance. AbarVa does not build — we design and govern.' },
+                            { id: 'all', label: 'All Three Tracks', desc: 'Comprehensive assessment across all three. Workstreams run in parallel.' },
+                          ].map(track => (
+                            <button
+                              key={track.id}
+                              onClick={() => setSelectedTrack(selectedTrack === track.id ? null : track.id)}
+                              style={{
+                                background: selectedTrack === track.id ? T.tealDim : T.bg,
+                                border: `1px solid ${selectedTrack === track.id ? T.teal : T.border}`,
+                                borderRadius: '8px', padding: '14px', textAlign: 'left', cursor: 'pointer'
+                              }}
+                            >
+                              <div style={{ fontFamily: T.sans, fontSize: '13px', color: selectedTrack === track.id ? T.teal : T.text, fontWeight: 600, marginBottom: '4px' }}>
+                                {track.label}
+                              </div>
+                              <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, lineHeight: 1.5 }}>
+                                {track.desc}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                        {selectedTrack && (
+                          <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={async () => {
+                                if (!engagement?.id) return
+                                await fetch(`/api/engage/${clientId}/${solution}/select-scope`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ focus_areas: [selectedTrack], selectedBy: user?.fullName })
+                                })
+                              }}
+                              style={{
+                                background: T.teal, color: T.bg, border: 'none', borderRadius: '6px',
+                                padding: '10px 24px', fontFamily: T.mono, fontSize: '11px', fontWeight: 700,
+                                letterSpacing: '.06em', textTransform: 'uppercase', cursor: 'pointer'
+                              }}
+                            >
+                              Confirm Track → Begin Phase 1
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Phase 0 messages */}
                   {phaseWorkstreams.length > 0 && (
                     <div style={{ marginTop: '24px' }}>
@@ -599,6 +661,54 @@ export default function MaestroWorkspace() {
               ) : (
                 // Phases 1-4: Workstream conversation view
                 <div style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column' }}>
+
+                  {/* Vendor Intelligence banner — Phase 2 × Tech only */}
+                  {solution === 'tech' && activePhase?.phase_number === 2 && (
+                    <div style={{
+                      background: 'rgba(129,140,248,0.06)', borderBottom: `1px solid rgba(129,140,248,0.2)`,
+                      padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      flexShrink: 0
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.indigo, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                          Vendor Intelligence
+                        </div>
+                        <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2 }}>
+                          Score vendors against Genome track record — not analyst rankings
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {vendorIntelResult && (
+                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.green, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                            {vendorIntelResult.vendors?.length || 0} vendors scored
+                          </span>
+                        )}
+                        <button
+                          disabled={runningVendorIntel}
+                          onClick={async () => {
+                            setRunningVendorIntel(true)
+                            const res = await fetch(`/api/engage/${clientId}/${solution}/vendor-intelligence`, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ track: selectedTrack || 'core_system', engagementId: engagement?.id })
+                            })
+                            if (res.ok) setVendorIntelResult(await res.json())
+                            setRunningVendorIntel(false)
+                          }}
+                          style={{
+                            background: runningVendorIntel ? T.border : T.indigo,
+                            color: runningVendorIntel ? T.muted : '#fff',
+                            border: 'none', borderRadius: '6px', padding: '7px 16px',
+                            fontFamily: T.mono, fontSize: '10px', fontWeight: 700,
+                            letterSpacing: '.06em', textTransform: 'uppercase',
+                            cursor: runningVendorIntel ? 'not-allowed' : 'pointer'
+                          }}
+                        >
+                          {runningVendorIntel ? 'Running...' : 'Run Vendor Intelligence'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Workstream tabs */}
                   <div style={{
