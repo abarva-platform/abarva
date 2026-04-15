@@ -1,1141 +1,267 @@
 'use client'
-import { useState, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { useSearchParams } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
-import { FAILURE_PATTERNS, MERIDIAN_GENOME_SUMMARY } from '@/data/knowledge/failure-patterns'
 
-// ─── Design Tokens ─────────────────────────────────────────────────────────────
-const T = {
-  bg: '#060A12',
-  surface: '#0D1520',
-  border: '#1C2D45',
-  teal: '#2DD4C8',
-  red: '#EF4444',
-  amber: '#F59E0B',
-  green: '#10B981',
-  indigo: '#6366F1',
-  text: '#EFF6FF',
-  text2: '#94A3B8',
-  mono: "'JetBrains Mono', monospace" as const,
-  serif: "'Fraunces', serif" as const,
-  sans: "'DM Sans', sans-serif" as const,
-}
+const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
+const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = '#94A3B8', DIM = '#475569'
+const AMBER = '#F59E0B', GREEN = '#10B981', INDIGO = '#818CF8'
+const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 
-// ─── Per-Client Data ────────────────────────────────────────────────────────────
-type Bet = {
-  id: string
-  rank: number
-  name: string
-  category: string
-  phase: string
-  wave: string
-  annualValueLow: number
-  annualValueHigh: number
-  confidence: number
-  roi: number
-  timeline: string
-  failureRisk: 'HIGH' | 'MEDIUM' | 'LOW'
-  fromData: string[]
-  fromIndustry: string[]
-  fromGenome: string[]
-  objection?: string
-  response?: string
-  leadDataPoint?: string
-}
-
-type FaultLine = {
-  side1: string
-  side2: string
-  tension: 'HIGH RISK' | 'VALIDATED' | 'MODERATE'
-  tensionColor: string
-  dataPoint: string
-  genomeNote: string
-  talkingPoint?: string
-}
-
-type Opportunity = {
-  id: string
-  name: string
-  value: number
-  complexity: 'low' | 'medium' | 'high'
-  confidence: number
-  wave: 1 | 2 | 3
-  isBet: boolean
-}
-
-type ClientProfile = {
-  name: string
-  tagline: string
-  readiness: { data: number; tech: number; org: number }
-  percentiles: { data: string; tech: string; org: string }
-  gaugeBreakdown: {
-    data: { clientItems: string[]; industryNote: string; genomeNote: string }
-    tech: { clientItems: string[]; industryNote: string; genomeNote: string }
-    org: { clientItems: string[]; industryNote: string; genomeNote: string }
-  }
-  faultLines: FaultLine[]
-  bets: Bet[]
-  opportunities: Opportunity[]
-  wave1Plan: {
-    days1_30: { tasks: string[]; owner: string; investment: string }
-    days31_60: { tasks: string[]; owner: string; investment: string }
-    days61_90: { tasks: string[]; owner: string; investment: string }
-    total: { investment: string; annualValue: string; roi: string }
-  }
-  metrics: { bets: number; analyzed: number; value3yr: string; peers: number; patterns: number; confidence: number }
-  cxo: string
-}
-
-const CLIENT_DATA: Record<string, ClientProfile> = {
-  meridian: {
-    name: 'Meridian Health System',
-    tagline: 'Where should we place our AI bets — and which ones will fail?',
-    readiness: { data: 67, tech: 52, org: 41 },
-    percentiles: { data: '58th', tech: '43rd', org: '31st' },
-    gaugeBreakdown: {
-      data: {
-        clientItems: ['Claims data ✓', 'Epic extract ✓', 'Payer contracts ✓', 'Interview transcripts ✗', 'Workforce data ✗'],
-        industryNote: 'Health systems with 67%+ data readiness successfully pursue 8 of 12 AI opportunity types',
-        genomeNote: 'Organisations with this exact data profile averaged $47M in Year 1 AI value when they prioritised RCM first',
+const PHASES: {
+  label: string
+  color: string
+  desc: string
+  modules: { num: number; name: string; desc: string; path: string }[]
+}[] = [
+  {
+    label: 'DIAGNOSE',
+    color: TEAL,
+    desc: 'What is actually broken — and what is it costing',
+    modules: [
+      {
+        num: 1,
+        name: 'Situation Intelligence',
+        desc: "What's actually broken — and what it costs. Every gap structured by Genome pattern, confidence, and recovery range.",
+        path: '/diagnose',
       },
-      tech: {
-        clientItems: ['Azure Synapse ✓ (partial)', 'Epic native integration ✓', 'MLOps ✗', 'Real-time data pipeline ✗', 'AI governance ✗'],
-        industryNote: 'Health systems at 52% tech readiness can deploy 4 of 5 Wave 1 use cases with existing Epic architecture',
-        genomeNote: 'Absent MLOps is the most common Wave 2 blocker — requires 60-day build before clinical AI scale',
+      {
+        num: 2,
+        name: 'Contradiction Intelligence',
+        desc: 'What leaders told the board vs what the data shows. Contradiction map with source-by-source verification.',
+        path: '/contradictions',
       },
-      org: {
-        clientItems: ['CFO urgency (denial rate) ✓', 'CMIO clinical champion ✓', 'CDO vacant ✗', 'Change capacity limited ✗', 'Prior AI failures ✗'],
-        industryNote: '31st percentile org readiness is manageable for Wave 1 RCM focus — CFO and clinical champions reduce resistance',
-        genomeNote: 'CDO vacancy is the highest-risk org signal — 75% of failures shared this characteristic at go-live',
+      {
+        num: 3,
+        name: 'Data Intelligence',
+        desc: "What your data can and can't support. Completeness scored, gaps flagged, data requests generated.",
+        path: '/data-intelligence',
       },
-    },
-    faultLines: [
-      { side1: 'CFO: "Cost reduction first"', side2: 'CIO: "Clinical AI first"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'Revenue cycle AI delivers 3.5x more value than clinical AI at Meridian\'s data maturity', genomeNote: 'In 23 similar organisations with this fault line unresolved, AI programme ROI was 41% lower', talkingPoint: 'Ask CFO and CIO to agree on a shared ROI metric before vendor selection — this one conversation prevents the most common failure mode' },
-      { side1: 'CIO: "Build on Epic"', side2: 'CMIO: "Buy best-of-breed"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: '3 of 6 proposed Epic AI modules have <40% activation in peer systems', genomeNote: 'CMIO concern is validated by Genome data — best-of-breed beats native for clinical documentation AI by 2.4x ROI', talkingPoint: 'CMIO is right here — lead with the peer activation data and let the evidence validate the clinical perspective' },
-      { side1: 'COO: "Fix travel nurses now"', side2: 'CIO: "Foundation first"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Travel nurse scheduling AI has 34% success rate when CDO is vacant', genomeNote: 'Wave 2 sequencing (after CDO appointed) improves scheduling AI success rate from 34% to 71%', talkingPoint: 'Acknowledge the COO urgency, then show the success-rate data — numbers convert urgency into sequencing buy-in' },
-      { side1: 'CIO: "Prove one thing first"', side2: 'CFO: "Portfolio investment"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Organisations with 1–3 Wave 1 initiatives succeed at 83% vs 44% for >5 initiatives', genomeNote: 'Scope discipline is itself a success predictor; CIO instinct and data are aligned here', talkingPoint: 'CIO instinct is right — the data supports it. Use this to align CFO to a focused Wave 1 portfolio' },
-      { side1: 'CMIO: "Sepsis model is ready"', side2: 'CIO: "No MLOps to deploy it"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'Undeployed validated models have a 19% eventual success rate vs 77% for deployed within 90 days', genomeNote: 'Undeployed validated models signal an MLOps gap that blocks all future AI scale — resolving this unblocks sepsis AND Wave 2', talkingPoint: 'The sepsis model is the proof point — use it to get MLOps investment approved. The model IS ready; the infrastructure is not' },
     ],
-    bets: [
-      { id: 'rcm', rank: 1, name: 'RCM AI Automation', category: 'Revenue Cycle · Middle Office', phase: 'Grow', wave: 'Wave 1 · 90 days', annualValueLow: 28, annualValueHigh: 39, confidence: 82, roi: 7, timeline: '14 months to full value', failureRisk: 'MEDIUM', fromData: ['Denial rate: 18.2%', 'Gap to peer median: 6.8pp', 'IT budget: $504M'], fromIndustry: ['47 deployments analysed', 'Median value: $19M', 'Top quartile: $34M'], fromGenome: ['34% fail rate overall', '3 risk signals present', 'CDO vacancy is key risk'], objection: 'Why RCM AI when we have clinical AI models already validated?', response: 'RCM AI produces CFO wins in 6 months that fund clinical AI in Year 2. Reversing the sequence has 44% lower ROI realisation based on Genome data.', leadDataPoint: '$94M denial write-off — every 1pp improvement is worth $13.8M annually' },
-      { id: 'priorauth', rank: 2, name: 'Prior Auth AI', category: 'Revenue Cycle · Front Office', phase: 'Grow', wave: 'Wave 1 · 90 days', annualValueLow: 18, annualValueHigh: 24, confidence: 78, roi: 6, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['23% payers connected', 'Manual processing: 77%', 'CMS deadline: Jan 2026'], fromIndustry: ['41 deployments analysed', 'Median value: $16M', 'CMS mandate creates urgency'], fromGenome: ['Data gap risk', 'Payer connectivity is key', 'Remediation sprint required'], objection: 'Prior auth AI requires payer connectivity we do not have yet.', response: 'A 30-day data sprint brings you to 55–60% — sufficient for pilot accuracy. CMS deadline creates external urgency that accelerates internal buy-in.', leadDataPoint: 'CMS Jan 2026 deadline — non-compliance is $1.2M in annual penalty exposure' },
-      { id: 'clinicaldoc', rank: 3, name: 'Clinical Documentation AI', category: 'Clinical · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 12, annualValueHigh: 18, confidence: 74, roi: 4, timeline: '12 months to full value', failureRisk: 'LOW', fromData: ['2.1 hrs/day physician doc time', 'Epic native integration ✓', '1 dept pilot succeeded'], fromIndustry: ['38 deployments analysed', 'Median value: $14M', 'Epic-native 2.4x better ROI'], fromGenome: ['Low risk profile', 'CMIO champion present', 'Epic integration path clear'], objection: 'Physicians are already overloaded — adding a new tool increases burden.', response: 'The pilot department showed 68% physician satisfaction increase. The tool reduces burden, not adds to it. CMIO can champion this.', leadDataPoint: '68% physician burnout rate — documentation AI addresses the #1 reported cause' },
-      { id: 'travelnurse', rank: 4, name: 'Travel Nurse Reduction', category: 'Workforce · Middle Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 14, annualValueHigh: 20, confidence: 76, roi: 8, timeline: '6 months to full value', failureRisk: 'LOW', fromData: ['756 travel nurses', '$142M annual cost', 'Kronos data complete'], fromIndustry: ['29 deployments analysed', 'Median savings: $14M', 'Azure ML builds fastest'], fromGenome: ['Low risk — simple time-series', 'No MLOps required', '90-day advance booking key'], objection: 'We have tried scheduling optimisation before and it did not work.', response: 'Previous attempts were scheduling tools, not predictive models. Demand prediction 90 days in advance enables contract negotiation — the source of the savings.', leadDataPoint: '$142M travel nurse spend vs $24M permanent nurse equivalent for same coverage' },
-      { id: 'epicopt', rank: 5, name: 'Epic Optimisation Sprint', category: 'Technology · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 8, annualValueHigh: 12, confidence: 88, roi: 21, timeline: '2 months to full value', failureRisk: 'LOW', fromData: ['340 VMs below 20% utilisation', '$1.8M identified waste', 'Azure Cost Management connected'], fromIndustry: ['24 deployments analysed', 'Median savings: $4.2M', 'Azure native fastest ROI'], fromGenome: ['Highest confidence bet', 'No integration risk', 'Azure Advisor native'], objection: 'IT team is fully allocated to Azure Synapse work.', response: 'Azure Advisor runs autonomously — no IT FTE required for Wave 1. Two-month payback is the fastest ROI in the portfolio.', leadDataPoint: '21x ROI — the highest-confidence, fastest-payback bet in the entire portfolio' },
-    ],
-    opportunities: [
-      { id: 'mo-001', name: 'RCM AI Automation', value: 37600000, complexity: 'medium', confidence: 72, wave: 1, isBet: true },
-      { id: 'fo-001', name: 'Prior Auth AI', value: 28000000, complexity: 'medium', confidence: 68, wave: 1, isBet: true },
-      { id: 'bo-005', name: 'Clinical Documentation AI', value: 42000000, complexity: 'high', confidence: 66, wave: 1, isBet: true },
-      { id: 'mo-004', name: 'Travel Nurse Demand Prediction', value: 14000000, complexity: 'low', confidence: 78, wave: 1, isBet: true },
-      { id: 'bo-003', name: 'Epic Optimisation Sprint', value: 4200000, complexity: 'low', confidence: 92, wave: 1, isBet: true },
-      { id: 'fo-004', name: 'Sepsis AI Scale-up', value: 24000000, complexity: 'low', confidence: 91, wave: 1, isBet: false },
-      { id: 'mo-002', name: 'Coding Accuracy AI', value: 18000000, complexity: 'low', confidence: 82, wave: 1, isBet: false },
-      { id: 'fo-002', name: 'Patient No-Show Prediction', value: 14700000, complexity: 'low', confidence: 84, wave: 1, isBet: false },
-      { id: 'fo-003', name: 'MA Star Rating Optimisation', value: 34000000, complexity: 'high', confidence: 58, wave: 2, isBet: false },
-      { id: 'mo-003', name: 'Nurse Scheduling Optimisation', value: 28000000, complexity: 'medium', confidence: 64, wave: 2, isBet: false },
-      { id: 'bo-004', name: 'AIOps Incident Prediction', value: 8000000, complexity: 'high', confidence: 58, wave: 2, isBet: false },
-      { id: 'mo-005', name: 'Supply Chain Forecasting', value: 8000000, complexity: 'low', confidence: 76, wave: 1, isBet: false },
-    ],
-    wave1Plan: {
-      days1_30: { tasks: ['Baseline locked', 'RCM audit complete', 'CDO interim named'], owner: 'CFO + CRO', investment: '$4M' },
-      days31_60: { tasks: ['Vendor selected', 'Contract signed', 'Data pipeline set'], owner: 'CIO', investment: '$2M' },
-      days61_90: { tasks: ['Pilot live', 'Team trained', 'First results'], owner: 'CDO interim', investment: '$2M' },
-      total: { investment: '$21M', annualValue: '$77M', roi: '3.7x' },
-    },
-    metrics: { bets: 5, analyzed: 12, value3yr: '$864M', peers: 47, patterns: 127, confidence: 87 },
-    cxo: 'Marcus Webb, CIO',
   },
-  firstcapital: {
-    name: 'First Capital Bank',
-    tagline: 'Where should we place our AI bets — and which technology constraints matter?',
-    readiness: { data: 52, tech: 38, org: 44 },
-    percentiles: { data: '42nd', tech: '28th', org: '48th' },
-    gaugeBreakdown: {
-      data: {
-        clientItems: ['Transactional data ✓', 'AML data ✓', 'Customer profiles ✗ (T+1)', 'Real-time data ✗', 'Unified ID ✗'],
-        industryNote: 'Community banks at 52% data readiness can deploy fraud and AML AI with batch scoring — real-time is Wave 2',
-        genomeNote: 'Real-time data gap is the most common Wave 2 blocker for financial services AI — FedNow API layer resolves it',
+  {
+    label: 'PRESCRIBE',
+    color: AMBER,
+    desc: 'The right architecture, vendors, and investment sequenced by Genome',
+    modules: [
+      {
+        num: 4,
+        name: 'Technology Intelligence',
+        desc: 'Every system scored — age, cost, dependency depth, migration risk. Modernisation sequence generated.',
+        path: '/intelligence',
       },
-      tech: {
-        clientItems: ['FIS HORIZON (blocks real-time) ✗', 'SQL Server 2017 EOS ✗', 'Azure Cloud ✓', 'Q2 Digital Platform ✓', 'NICE Actimize ✓'],
-        industryNote: '28th percentile tech readiness is driven entirely by FIS HORIZON constraint — organisation has talent and cloud tools',
-        genomeNote: 'Architecture constraint, not capability gap — 73% of similarly constrained banks succeeded by working within constraints for Wave 1',
+      {
+        num: 5,
+        name: 'Vendor Intelligence',
+        desc: 'Which vendor wins in your specific context — not their deck, your data. Scored against Genome outcomes.',
+        path: '/vendor-intelligence',
       },
-      org: {
-        clientItems: ['Strong CFO sponsorship ✓', 'Regulatory urgency (OCC MRAs) ✓', 'No CDO role ✗', 'COO resistance ✗', 'Budget competition ✗'],
-        industryNote: '48th percentile org readiness is above median for community banks — regulatory pressure is a positive forcing function',
-        genomeNote: 'CFO-sponsored AI programmes have 81% success rate in financial services — this is the key positive signal',
+      {
+        num: 6,
+        name: 'Architecture Intelligence',
+        desc: 'What to build and in what order. Dependencies mapped, sequencing validated against failure patterns.',
+        path: '/architecture',
       },
-    },
-    faultLines: [
-      { side1: 'CTO: "Architecture first"', side2: 'CFO: "AI delivers now"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Wave 1 fraud and AML AI works within FIS HORIZON constraints — architecture is Wave 2 prerequisite, not Wave 1 blocker', genomeNote: 'In 14 similar banks, Wave 1 ROI funded the architecture modernisation — sequencing conflict resolved by data', talkingPoint: 'Show the CFO that Wave 1 ROI funds the architecture — one does not wait for the other' },
-      { side1: 'COO: "Prove one thing"', side2: 'CMO: "Personalisation now"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'Personalisation requires real-time data — impossible without FIS HORIZON modernisation. COO is right for Wave 1', genomeNote: 'T+1 data produces 40% lower personalisation ROI than real-time — CMO urgency is real but sequencing matters', talkingPoint: 'CMO is right about the value; COO is right about the timing — Wave 2 personalisation is the right answer' },
-      { side1: 'CFO: "Compliance cost first"', side2: 'CTO: "Core banking first"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'AML false positive rate 74% — 3 OCC MRAs at risk. Compliance cost 34% of IT budget. CFO has the urgent case', genomeNote: 'Regulatory pressure is the most powerful forcing function for AI investment — use OCC MRA urgency to sequence compliance AI first', talkingPoint: 'The OCC MRAs are not a distraction — they are the reason Wave 1 AI investment is pre-approved' },
-      { side1: 'CMO: "Digital experience"', side2: 'CIO: "Data quality first"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'T+1 balance problem means real-time personalisation is impossible — CIO is right. Mobile rating 3.2 is the symptom', genomeNote: 'Data quality investment in Q1 unlocks 3x the CMO value in Q4 — validated sequence across 11 peers', talkingPoint: 'CMO wants the experience; CIO knows the constraint. Show them the Q4 plan for personalisation after FedNow' },
-      { side1: 'CFO: "Cost-to-income to 55%"', side2: 'COO: "Projects go over budget"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'Cost-to-income 68% vs 55% target — $32M gap. AI in compliance and back office is the fastest path', genomeNote: 'COO resistance is a data point, not a blocker — outcome-based contracts address the root concern directly', talkingPoint: 'Use outcome-based contract structure to address COO concern. AbarVa earns only on verified savings' },
+      {
+        num: 7,
+        name: 'Business Case Intelligence',
+        desc: 'The CFO-grade case the board will approve. Three scenarios, risk-adjusted, Genome-validated ranges.',
+        path: '/justify',
+      },
     ],
-    bets: [
-      { id: 'fraud', rank: 1, name: 'Real-Time Fraud Detection ML', category: 'Compliance · Front Office', phase: 'Protect', wave: 'Wave 1 · 90 days', annualValueLow: 3, annualValueHigh: 5, confidence: 84, roi: 10, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['Fraud losses: $7M', 'Benchmark: $3.2M', 'Excess: $3.8M'], fromIndustry: ['31 deployments analysed', 'FedNow layer required', 'FICO Falcon performs best'], fromGenome: ['Real-time data gap risk', 'FedNow completion required', 'Architecture constraint manageable'], objection: 'FIS HORIZON blocks real-time scoring.', response: 'FedNow API layer completion (60 days) creates a real-time data pathway without changing FIS HORIZON. This is the architectural bridge.', leadDataPoint: '$3.8M annual excess fraud loss vs benchmark — every month of delay is $317K' },
-      { id: 'aml', rank: 2, name: 'AML False Positive Reduction', category: 'Compliance · Middle Office', phase: 'Protect', wave: 'Wave 1 · 90 days', annualValueLow: 4, annualValueHigh: 6, confidence: 78, roi: 7, timeline: '12 months to full value', failureRisk: 'LOW', fromData: ['AML false positives: 74%', 'OCC MRAs: 3 open', 'NICE Actimize: outdated version'], fromIndustry: ['24 deployments analysed', 'NICE upgrade 2.4x improvement', 'Regulatory benefit accelerates ROI'], fromGenome: ['Regulatory forcing function', 'OCC urgency is positive signal', 'Version upgrade is low-risk path'], objection: 'NICE Actimize upgrade will take 18 months.', response: 'Actimize Cloud migration runs parallel to on-premise — 90-day pilot on Cloud instance while maintaining compliance on current system.', leadDataPoint: '3 open OCC MRAs — AML AI directly addresses the root cause regulators cited' },
-      { id: 'underwriting', rank: 3, name: 'Credit Underwriting AI', category: 'Lending · Front Office', phase: 'Grow', wave: 'Wave 1 · 90 days', annualValueLow: 5, annualValueHigh: 8, confidence: 72, roi: 5, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['Manual review: 68% of applications', 'Loss rate above peer median', 'Credit approval gap'], fromIndustry: ['19 deployments analysed', 'ML reduces manual review by 62%', 'Digital channel lift 2.4x'], fromGenome: ['FIS data quality gap', 'Batch scoring viable for underwriting', 'Digital channel is entry point'], objection: 'Credit AI requires real-time data we do not have.', response: 'Credit underwriting is batch, not real-time — T+1 data is sufficient. This is Wave 1 viable without FIS changes.', leadDataPoint: '68% manual review rate — AI brings this to 24%, freeing $2.8M in underwriter capacity annually' },
-      { id: 'chatbot', rank: 4, name: 'Customer Service AI', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 90 days', annualValueLow: 2, annualValueHigh: 3, confidence: 76, roi: 4, timeline: '4 months to full value', failureRisk: 'LOW', fromData: ['Call centre volume: 340K/year', 'Digital adoption: 41%', 'Q2 Platform connected'], fromIndustry: ['28 deployments analysed', 'Q2 chatbot 64% deflection rate', 'Mobile rating improvement 0.6 pts'], fromGenome: ['Low risk — existing Q2 licence', 'Quick win builds CMO credibility', 'Foundation for personalisation'], objection: 'Customers will not trust a chatbot for financial queries.', response: 'Q2 research shows 71% of customers prefer self-service for balance and transaction queries. Escalation to human remains available.', leadDataPoint: '41% digital adoption vs 67% peer benchmark — chatbot is the fastest path to close the gap' },
-      { id: 'contracts', rank: 5, name: 'Contract Analytics AI', category: 'Operations · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 2, annualValueHigh: 3, confidence: 88, roi: 12, timeline: '3 months to full value', failureRisk: 'LOW', fromData: ['SLA penalties available: $3.2M', 'Enforced: $0', 'Vendor contracts: 847'], fromIndustry: ['21 deployments analysed', 'Azure OpenAI builds fastest', 'Median ROI: 10x'], fromGenome: ['Highest confidence bet', 'No integration required', 'CFO credibility builder'], objection: 'Legal will resist AI reviewing contracts.', response: 'AI flags, legal decides. 94% of flagged items are clear SLA breaches — legal time spent on judgement calls, not document review.', leadDataPoint: '$3.2M in available SLA penalties — $0 currently enforced. Pure found money in 90 days.' },
-    ],
-    opportunities: [
-      { id: 'fo-001', name: 'Real-Time Fraud Detection', value: 3800000, complexity: 'medium', confidence: 68, wave: 1, isBet: true },
-      { id: 'mo-001', name: 'AML False Positive Reduction', value: 4800000, complexity: 'medium', confidence: 78, wave: 1, isBet: true },
-      { id: 'fo-003', name: 'Credit Underwriting AI', value: 6000000, complexity: 'medium', confidence: 72, wave: 1, isBet: true },
-      { id: 'fo-004', name: 'Customer Service AI', value: 2400000, complexity: 'low', confidence: 76, wave: 1, isBet: true },
-      { id: 'bo-001', name: 'Contract Analytics AI', value: 2000000, complexity: 'low', confidence: 88, wave: 1, isBet: true },
-      { id: 'fo-002', name: 'Customer Churn Prediction', value: 8400000, complexity: 'medium', confidence: 62, wave: 2, isBet: false },
-      { id: 'fo-005', name: 'Personalised Digital Banking', value: 12000000, complexity: 'high', confidence: 42, wave: 3, isBet: false },
-      { id: 'mo-002', name: 'Document Processing AI', value: 3600000, complexity: 'low', confidence: 82, wave: 1, isBet: false },
-      { id: 'mo-003', name: 'Loan Origination Automation', value: 4200000, complexity: 'medium', confidence: 64, wave: 2, isBet: false },
-      { id: 'bo-002', name: 'Regulatory Reporting AI', value: 2800000, complexity: 'low', confidence: 76, wave: 1, isBet: false },
-      { id: 'bo-003', name: 'Branch Network Optimisation', value: 1800000, complexity: 'high', confidence: 52, wave: 2, isBet: false },
-      { id: 'mo-004', name: 'Collections Optimisation', value: 3200000, complexity: 'medium', confidence: 68, wave: 1, isBet: false },
-    ],
-    wave1Plan: {
-      days1_30: { tasks: ['Baseline locked', 'FedNow API scoped', 'AML vendor shortlisted'], owner: 'CTO + CFO', investment: '$1.5M' },
-      days31_60: { tasks: ['Fraud pilot live (batch)', 'AML vendor selected', 'Contract AI deployed'], owner: 'CTO', investment: '$1.2M' },
-      days61_90: { tasks: ['Real-time scoring live', 'AML false positives measured', 'First CFO report'], owner: 'CDO (new)', investment: '$1.3M' },
-      total: { investment: '$11M', annualValue: '$18M', roi: '1.6x' },
-    },
-    metrics: { bets: 5, analyzed: 12, value3yr: '$128M', peers: 31, patterns: 127, confidence: 81 },
-    cxo: 'James Okafor, CTO',
   },
-  apexretail: {
-    name: 'Apex Retail Group',
-    tagline: 'Where should we place our AI bets — and which ones to activate vs build?',
-    readiness: { data: 54, tech: 48, org: 36 },
-    percentiles: { data: '44th', tech: '51st', org: '24th' },
-    gaugeBreakdown: {
-      data: {
-        clientItems: ['Transactional data ✓', 'Snowflake warehouse ✓', 'Segment CDP ✗ (50% fragmented)', 'SAP-Snowflake pipeline ✗', 'Store operations data ✗'],
-        industryNote: 'Retail at 54% data readiness can activate existing tools (Einstein) and deploy validated models without new data investment',
-        genomeNote: 'Identity resolution sprint (6 weeks) is the highest-ROI data investment — enables 3 of 5 Wave 1 bets immediately',
+  {
+    label: 'EXECUTE & VERIFY',
+    color: GREEN,
+    desc: 'AI to production. Outcomes verified. Fee earned.',
+    modules: [
+      {
+        num: 8,
+        name: 'AI Delivery Intelligence',
+        desc: 'Getting AI from approved spec to production. Bottlenecks mapped, deployment rails designed, MLOps sequenced.',
+        path: '/ai-pdlc',
       },
-      tech: {
-        clientItems: ['Salesforce SFCC ✓', 'Databricks ✓', 'Snowflake ✓', 'SAP ECC (fragmented) ✗', 'CDO role ✗'],
-        industryNote: 'Technology capability above median — tools exist, activation is the gap. Einstein paid for, unactivated.',
-        genomeNote: 'Organisations with existing AI tools unactivated have the highest short-term ROI potential — activation beats build by 15x',
+      {
+        num: 9,
+        name: 'Outcome Intelligence',
+        desc: 'Baseline locked Day 0. Monthly actuals vs baseline. Verified savings. Fee earned only when outcomes move.',
+        path: '/outcome-intelligence',
       },
-      org: {
-        clientItems: ['CEO urgency (revenue) ✓', 'CMO champion ✓', 'CDO vacant ✗', '68% staff turnover ✗', '4 failed pilots ✗'],
-        industryNote: '24th percentile org readiness reflects change fatigue from 4 failed AI promises — CEO involvement is the primary corrective',
-        genomeNote: 'Organisations recovering from failed AI promises succeed when they choose high-visibility quick wins for Wave 1 — Einstein activation is ideal',
-      },
-    },
-    faultLines: [
-      { side1: 'CEO: "Personalisation now"', side2: 'CTO: "Data foundation first"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'Einstein activation requires identity resolution — 6-week sprint unblocks both CEO and CTO simultaneously', genomeNote: 'Data foundation and AI activation are not sequential — in 12 retail cases, concurrent approach delivered 2.1x faster time to value', talkingPoint: 'CTO and CEO are both right — the identity resolution sprint unlocks Einstein AND fixes the data foundation' },
-      { side1: 'CFO: "Complete o9 first"', side2: 'CEO: "New capabilities"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'o9 completion requires SAP integration — 9 months. Einstein activation requires 6 weeks. Both can run in parallel.', genomeNote: 'Organisations that paused all AI for one system completion had 62% programme mortality — parallel tracks prevent this', talkingPoint: 'o9 and Einstein are different teams and budgets — parallel tracks eliminate the CFO concern and the CEO delay' },
-      { side1: 'CMO: "Activate Einstein"', side2: 'CTO: "Segment fragmentation"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: '6-week Segment identity resolution sprint brings fragmentation from 2.8x to 1.1x — Einstein activation follows immediately', genomeNote: 'CMO urgency is the forcing function that gets Segment sprint funded — use it', talkingPoint: 'CMO urgency about Einstein gets the Segment sprint funded — these two want the same thing' },
-      { side1: 'COO: "Store staff turnover"', side2: 'CEO: "Store AI investment"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: '68% annual store staff turnover — AI tools deployed to staff who leave within 6 months have negative ROI on training', genomeNote: 'Store AI in this context has 28% success rate — Wave 1 should be centralised (personalisation, inventory) not store-dependent', talkingPoint: 'COO is right — store AI Wave 1 has poor ROI here. Centralised AI avoids the turnover problem' },
-      { side1: 'CMO: "Loyalty reactivation"', side2: 'CFO: "Inventory first"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Loyalty reactivation Wave 1 value ($124M) is 2.6x inventory optimisation ($48M) — CMO bet produces faster CFO wins', genomeNote: 'Loyalty AI has shorter payback (4 months vs 10 months) — CMO and CFO goals aligned with correct sequencing', talkingPoint: 'Show the CFO the loyalty ROI timeline — 4-month payback vs 10-month for inventory. Same budget, faster returns.' },
     ],
-    bets: [
-      { id: 'einstein', rank: 1, name: 'Einstein Personalisation Activation', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 6 weeks', annualValueLow: 180, annualValueHigh: 248, confidence: 86, roi: 310, timeline: '3 months to full value', failureRisk: 'LOW', fromData: ['18M loyalty members', 'Einstein: paid, unactivated', 'Cart abandonment: 72%'], fromIndustry: ['12 deployments analysed', 'Existing licence = zero software cost', 'Identity resolution is prerequisite'], fromGenome: ['Highest ROI bet in dataset', 'Activation beats build by 15x', 'CDP fragmentation is the only risk'], objection: 'We have been saying we will activate Einstein for 14 months.', response: 'The barrier was Segment fragmentation — now scoped and solvable in 6 weeks. This time the blocker has a known fix and a dedicated team.', leadDataPoint: '$248M opportunity — Einstein licence already paid. Pure activation cost, not software investment.' },
-      { id: 'churn', rank: 2, name: 'Customer Churn Model Deployment', category: 'Digital · Front Office', phase: 'Retain', wave: 'Wave 1 · 8 weeks', annualValueLow: 64, annualValueHigh: 84, confidence: 88, roi: 140, timeline: '2 months to full value', failureRisk: 'LOW', fromData: ['Model built, undeployed 8 months', '18M members, 58% inactive', 'Databricks model validated'], fromIndustry: ['Deployment of existing model', 'No training cost required', 'Activation workflow 6-week build'], fromGenome: ['Built-validated-undeployed = highest risk pattern', 'Activation now or model becomes stale', 'CEO visibility opportunity'], objection: 'Why was this not deployed 8 months ago?', response: 'No activation workflow was built — the model was trained but the last-mile was missing. That is an 8-week build on top of a validated model.', leadDataPoint: 'Model validated 8 months ago — every month of non-deployment cost $7M in unaddressed churn' },
-      { id: 'loyalty', rank: 3, name: 'Loyalty Reactivation AI', category: 'Digital · Front Office', phase: 'Retain', wave: 'Wave 1 · 90 days', annualValueLow: 84, annualValueHigh: 124, confidence: 72, roi: 30, timeline: '4 months to full value', failureRisk: 'MEDIUM', fromData: ['Loyalty active rate: 42%', 'Inactive members: 10.4M', 'Punchh platform connected'], fromIndustry: ['18 deployments analysed', 'Punchh ML outperforms generic email', 'Benchmark active rate: 68%'], fromGenome: ['CDP fragmentation risk', 'Identity sprint prerequisite', 'CEO visible quick win'], objection: 'We have tried loyalty campaigns — they do not work.', response: 'Previous campaigns were generic — same offer to all 18M members. This is ML-personalised by reactivation trigger. The Genome shows 3.8x improvement vs generic campaigns.', leadDataPoint: '10.4M inactive members — if you get 5% back at average spend, that is $620M in recovered revenue' },
-      { id: 'cartabandonment', rank: 4, name: 'Cart Abandonment Recovery AI', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 90 days', annualValueLow: 120, annualValueHigh: 168, confidence: 82, roi: 70, timeline: '4 months to full value', failureRisk: 'LOW', fromData: ['Cart abandonment: 72%', 'Benchmark: 58%', 'Yotpo platform connected'], fromIndustry: ['Klaviyo/Attentive ML', 'Trigger infrastructure exists', 'Benchmark recovery rate: 12–18%'], fromGenome: ['Low risk — infrastructure ready', 'Real-time trigger already available', 'Quick win for CEO'], objection: 'Recovery emails are annoying — customers unsubscribe.', response: 'Triggered at right time with personalised offer, recovery emails convert at 14% with 92% opt-in retention. Generic triggered emails cause unsubscribes — personalised ones do not.', leadDataPoint: '$840M recovery opportunity — at 15% recovery rate, that is $126M annual incremental revenue' },
-      { id: 'o9completion', rank: 5, name: 'o9 Demand Forecasting Completion', category: 'Supply Chain · Middle Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 32, annualValueHigh: 48, confidence: 74, roi: 7, timeline: '10 months to full value', failureRisk: 'MEDIUM', fromData: ['Current accuracy: 62%', 'Benchmark: 84%', 'Excess inventory: $180M'], fromIndustry: ['SAP integration required', 'o9 median improvement: 18pp accuracy', 'CFO balance sheet fix'], fromGenome: ['o9 completion requires SAP sprint', 'CDO needed to own data quality', 'Complete existing tool > new investment'], objection: 'o9 has already failed once — why will it work now?', response: 'o9 failed because SAP was not connected. The SAP integration sprint (9 weeks) is the specific fix — same tool, fixed data feed, proven methodology.', leadDataPoint: '$180M excess inventory on the balance sheet — every 10pp accuracy improvement frees $18M in capital' },
-    ],
-    opportunities: [
-      { id: 'fo-001', name: 'Einstein Personalisation Activation', value: 248000000, complexity: 'low', confidence: 72, wave: 1, isBet: true },
-      { id: 'fo-002', name: 'Customer Churn Model Deployment', value: 84000000, complexity: 'low', confidence: 86, wave: 1, isBet: true },
-      { id: 'fo-003', name: 'Loyalty Reactivation AI', value: 124000000, complexity: 'medium', confidence: 64, wave: 1, isBet: true },
-      { id: 'fo-004', name: 'Cart Abandonment Recovery', value: 168000000, complexity: 'low', confidence: 82, wave: 1, isBet: true },
-      { id: 'mo-001', name: 'o9 Demand Forecasting', value: 48000000, complexity: 'high', confidence: 58, wave: 1, isBet: true },
-      { id: 'fo-005', name: 'Loss Prevention AI', value: 28000000, complexity: 'medium', confidence: 72, wave: 1, isBet: false },
-      { id: 'mo-002', name: 'Store Operations AI', value: 18000000, complexity: 'high', confidence: 44, wave: 2, isBet: false },
-      { id: 'mo-003', name: 'Supplier Contract AI', value: 12000000, complexity: 'low', confidence: 76, wave: 1, isBet: false },
-      { id: 'mo-004', name: 'Workforce Scheduling AI', value: 22000000, complexity: 'high', confidence: 38, wave: 3, isBet: false },
-      { id: 'bo-001', name: 'AP Invoice Automation', value: 8000000, complexity: 'low', confidence: 82, wave: 1, isBet: false },
-      { id: 'bo-002', name: 'Space Planning AI', value: 14000000, complexity: 'medium', confidence: 56, wave: 2, isBet: false },
-      { id: 'bo-003', name: 'Fraud Detection AI', value: 24000000, complexity: 'medium', confidence: 66, wave: 1, isBet: false },
-    ],
-    wave1Plan: {
-      days1_30: { tasks: ['Baseline locked', 'Segment sprint started', 'o9 SAP scope defined'], owner: 'CMO + CTO', investment: '$2M' },
-      days31_60: { tasks: ['Identity resolution complete', 'Einstein pilot live', 'Churn model deployed'], owner: 'CMO', investment: '$1.5M' },
-      days61_90: { tasks: ['Einstein at scale', 'Churn offers live', 'Cart abandonment live'], owner: 'CDO (new)', investment: '$1.5M' },
-      total: { investment: '$18M', annualValue: '$480M', roi: '26.7x' },
-    },
-    metrics: { bets: 5, analyzed: 12, value3yr: '$2.1B', peers: 38, patterns: 127, confidence: 83 },
-    cxo: 'Margaret Chen, CEO',
   },
-  arcturus: {
-    name: 'Arcturus Financial Group',
-    tagline: 'Where should we place our AI bets — and what is blocking the technology we already own?',
-    readiness: { data: 32, tech: 28, org: 35 },
-    percentiles: { data: '28th', tech: '19th', org: '29th' },
-    gaugeBreakdown: {
-      data: {
-        clientItems: ['Bloomberg AIM positions ✓ (siloed)', 'Aladdin risk data ✓ (disconnected)', 'FSC CRM ✓ (44% adoption)', 'Golden record ✗', 'Unified data model ✗'],
-        industryNote: 'Asset managers at 32% data readiness can pursue regulatory compliance AI and stress testing automation — data-intensive AI requires golden record as foundation',
-        genomeNote: '14 siloed systems without golden record — Genome shows 88% of portfolio construction AI programmes fail at this data maturity stage',
-      },
-      tech: {
-        clientItems: ['Azure cloud ✓', 'Salesforce FSC ✓ (44% adoption)', 'Bloomberg AIM (28yr, limited API) ✗', 'No ML platform ✗', 'No MLOps ✗'],
-        industryNote: '19th percentile tech readiness is driven by Bloomberg AIM API constraints — cloud infrastructure exists but AI execution layer is absent',
-        genomeNote: 'Bloomberg AIM API layer is the fastest tech unlocker — resolves 80% of AI data access issues without core migration risk',
-      },
-      org: {
-        clientItems: ['CEO champion ✓', 'CRO urgency (MAS FEAT) ✓', 'CDO vacant 11 months ✗', 'CFO skeptic ✗', 'CRO blocking deployments ✗'],
-        industryNote: '29th percentile org readiness manageable with CEO champion — regulatory pressure is a forcing function for governance AI investment',
-        genomeNote: 'CDO vacancy is highest-risk org signal. Interim CDO appointment reduces programme failure probability by 64% within 30 days',
-      },
-    },
-    faultLines: [
-      { side1: 'CEO: "AI is our strategy"', side2: 'CRO: "Governance first"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'CRO is right — deploying AI without governance creates MAS FEAT liability. CEO goal and CRO constraint are sequential, not opposing', genomeNote: 'Organisations that resolved this by framing governance as enablement (not restriction) deployed 3.2x more AI in Year 2', talkingPoint: 'Reframe for CEO: governance IS the AI strategy in a regulated environment. Every model you govern is a model regulators allow you to use.' },
-      { side1: 'CIO: "Foundation first"', side2: 'CFO: "Show me ROI first"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'Golden record (Wave 1) produces $35M in reporting and data access savings before portfolio construction AI. CFO ROI is Wave 1, not Wave 3', genomeNote: 'In 18 similar asset managers with this fault line unresolved, AI programme ROI was 52% lower over 24 months', talkingPoint: 'Show CFO the Wave 1 ROI from governance + churn remediation + stress testing — $172M annual value without the golden record being complete' },
-      { side1: 'CFO: "Cut the IT budget"', side2: 'CIO: "Investment required"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'IT budget 4.2% of revenue vs 3.1% peer — $178M above benchmark. But cutting without rationalisation removes AI-enabling infrastructure', genomeNote: 'Budget cuts without CDO-led rationalisation reduce AI ROI by 71% — rationalisation first, then cuts', talkingPoint: 'CDO rationalisation delivers $40-60M IT savings while funding AI — the CFO gets the budget reduction as an output of AI investment, not a pre-condition' },
-      { side1: 'CRO: "Freeze all AI"', side2: 'CIO: "Need to deploy AI"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'CRO freeze is legitimate but blocking $94M portfolio and competitive capability. Governance framework resolves the freeze in 6 months', genomeNote: 'CRO freeze with governance pathway resolved in 71% of cases within 6 months — faster than any alternative', talkingPoint: 'CRO freeze is the most important signal — it means the path is governancefirst, not resistance. Present the 6-month framework as the resolution.' },
-      { side1: 'CEO: "CDO search ongoing"', side2: 'CIO: "Need CDO now"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: '11 months is 3x the median CDO search time. Interim appointment in Week 1 costs nothing and unblocks 14 initiatives', genomeNote: 'Interim CDO (3-6 months) succeeds in unlocking AI programme in 84% of cases — preferred to waiting for permanent hire', talkingPoint: 'Appoint interim CDO from existing team this week. Permanent search continues. The cost of another week of vacancy is $5M in unrealised AI value.' },
-    ],
-    bets: [
-      { id: 'governance', rank: 1, name: 'AI Governance and Model Risk Framework', category: 'Compliance · Middle Office', phase: 'Protect', wave: 'Wave 1 · 90 days', annualValueLow: 25, annualValueHigh: 35, confidence: 86, roi: 8, timeline: '6 months to full compliance', failureRisk: 'MEDIUM', fromData: ['0 of 28 AI models governed', 'MAS FEAT overdue 4 months', 'CRO has frozen deployments'], fromIndustry: ['6 governance deployments analysed', 'IBM OpenPages median 8-month implementation', 'Regulatory penalty precedent: $47M for FEAT breach'], fromGenome: ['Governance framework = deployment unlock', 'CRO sign-off restores $94M pipeline', 'CDO vacancy is primary risk'], objection: 'Governance is overhead, not value creation.', response: 'Governance unlocks the CRO freeze on new AI deployments. The $94M stalled portfolio becomes deployable the moment a governance framework exists. This is the master key.', leadDataPoint: 'MAS FEAT overdue 4 months — $2.4B Singapore AUM at regulatory risk right now' },
-      { id: 'goldenrecord', rank: 2, name: 'Golden Record Data Foundation', category: 'Technology · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 28, annualValueHigh: 35, confidence: 74, roi: 2.9, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['14 data silos, no golden record', '3-day reporting lag', '18 of 28 AI initiatives blocked'], fromIndustry: ['9 MDM deployments analysed', 'Informatica median 10-month implementation', '3-day lag → real-time: $12M annual savings'], fromGenome: ['Foundation bet — unlocks 18 AI initiatives', 'Without golden record, Wave 2 and 3 cannot proceed', 'CDO must own this programme'], objection: 'We have tried to unify data before and it failed.', response: 'Previous attempts lacked a CDO owner — every data unification that succeeds has a named executive owner. This is the prerequisite for golden record success, not a technology challenge.', leadDataPoint: '18 of 28 AI initiatives cannot proceed without golden record — this is the single most value-unlocking infrastructure investment available' },
-      { id: 'stresstesting', rank: 3, name: 'Daily Aladdin Stress Testing', category: 'Risk · Back Office', phase: 'Protect', wave: 'Wave 1 · 30 days', annualValueLow: 14, annualValueHigh: 18, confidence: 92, roi: 7.5, timeline: '6 weeks to compliance', failureRisk: 'LOW', fromData: ['SEC requirement: daily', 'Aladdin configured: monthly', 'Configuration-only fix — no new vendor'], fromIndustry: ['Aladdin configuration upgrade: 4-week average', 'No competitive replacement required', 'Direct SEC compliance path'], fromGenome: ['Highest-confidence bet — no integration risk', 'Fastest ROI: 6 weeks to compliance', 'SEC examination risk removed immediately'], objection: 'Our risk team says monthly is adequate.', response: 'SEC stated requirement is daily for AUM above $500B. Monthly is not adequate — it is a compliance gap. This is not a judgement call; it is a documented regulatory requirement.', leadDataPoint: 'SEC daily stress testing requirement — currently monthly. Direct examination risk with no technical complexity to resolve it.' },
-      { id: 'churnremediation', rank: 4, name: 'Client Churn Prediction (Remediated)', category: 'Client Intelligence · Front Office', phase: 'Retain', wave: 'Wave 1 · 90 days', annualValueLow: 64, annualValueHigh: 84, confidence: 72, roi: 26, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['Model exists — 44% data coverage only', '56% of client signals missing', 'FSC at 44% adoption'], fromIndustry: ['9 similar deployments analysed', 'Churn model with 85%+ data coverage: 3.4x better accuracy', 'Retraining sprint: 60 days'], fromGenome: ['Data gap is the single blocker', 'FSC adoption target unlocks full model performance', 'CDO must govern the retraining'], objection: 'The churn model failed — why would a retrained version work?', response: 'The model did not fail — it was trained on incomplete data. 44% adoption means the model only sees 44% of client signals. Remediate the data gap, retrain on complete data, and accuracy reaches peer levels.', leadDataPoint: '$280M in AUM at churn risk — current model misses 56% of at-risk clients due to data gap' },
-      { id: 'esg', rank: 5, name: 'Automated ESG Scoring', category: 'Investment Intelligence · Middle Office', phase: 'Grow', wave: 'Wave 2 · 6 months', annualValueLow: 38, annualValueHigh: 45, confidence: 68, roi: 7, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['ESG mandates: 3 institutional clients', 'No CDO to govern data standards', 'Compliance block on sign-off'], fromIndustry: ['7 ESG AI deployments analysed', 'Clarity AI median: 8 months to production', 'ESG premium AUM: $45M annual uplift'], fromGenome: ['CDO governance prerequisite required', 'Wave 2 — after governance framework live', 'Compliance sign-off requires CDO-governed data standards'], objection: 'ESG data quality is inconsistent — AI scoring will be wrong.', response: 'ESG data inconsistency is the reason you need AI — not the reason to avoid it. ML identifies the most reliable signals and flags inconsistent sources. Clarity AI has done this at 40+ asset managers.', leadDataPoint: '3 institutional clients with ESG mandates at risk. $45M AUM premium from ESG-certified portfolios. CDO governance unlocks this.' },
-    ],
-    opportunities: [
-      { id: 'mo-001', name: 'AI Governance Framework', value: 35000000, complexity: 'medium', confidence: 86, wave: 1, isBet: true },
-      { id: 'bo-001', name: 'Golden Record Infrastructure', value: 35000000, complexity: 'high', confidence: 74, wave: 1, isBet: true },
-      { id: 'bo-002', name: 'Daily Stress Testing', value: 18000000, complexity: 'medium', confidence: 92, wave: 1, isBet: true },
-      { id: 'fo-001', name: 'Client Churn Prediction', value: 84000000, complexity: 'medium', confidence: 72, wave: 1, isBet: true },
-      { id: 'mo-003', name: 'ESG Scoring', value: 45000000, complexity: 'high', confidence: 68, wave: 2, isBet: true },
-      { id: 'fo-002', name: 'Portfolio Construction AI', value: 120000000, complexity: 'high', confidence: 42, wave: 3, isBet: false },
-      { id: 'fo-003', name: 'Client Reporting AI', value: 22000000, complexity: 'medium', confidence: 58, wave: 2, isBet: false },
-      { id: 'mo-002', name: 'Regulatory Change Monitor', value: 15000000, complexity: 'medium', confidence: 64, wave: 2, isBet: false },
-      { id: 'mo-004', name: 'Advisor Productivity', value: 38000000, complexity: 'medium', confidence: 62, wave: 2, isBet: false },
-      { id: 'bo-003', name: 'Bloomberg API Layer', value: 28000000, complexity: 'high', confidence: 52, wave: 2, isBet: false },
-    ],
-    wave1Plan: {
-      days1_30: { tasks: ['Interim CDO appointed', 'MAS FEAT model inventory completed', 'AI governance scope agreed'], owner: 'CRO + CEO', investment: '$2M' },
-      days31_60: { tasks: ['Governance framework live', 'Daily Aladdin stress testing live', 'Churn model data gap analysis'], owner: 'CDO (interim) + CIO', investment: '$4M' },
-      days61_90: { tasks: ['AI portfolio baselines locked', 'Churn model retraining started', 'Golden record vendor selected'], owner: 'CDO + CFO', investment: '$2M' },
-      total: { investment: '$22M', annualValue: '$172M', roi: '7.9x' },
-    },
-    metrics: { bets: 5, analyzed: 10, value3yr: '$1.2B', peers: 42, patterns: 127, confidence: 88 },
-    cxo: 'Victoria Hargreaves, CEO',
-  },
-  nexora: {
-    name: 'Nexora Retail & Consumer',
-    tagline: 'Where should we activate first — and why has built-not-deployed become the pattern?',
-    readiness: { data: 38, tech: 48, org: 42 },
-    percentiles: { data: '32nd', tech: '51st', org: '38th' },
-    gaugeBreakdown: {
-      data: {
-        clientItems: ['SFCC transaction data ✓', 'Loyalty data ✓ (unactivated)', 'Databricks churn model ✓ (not deployed)', '6 ERP regions ✗ (not unified)', 'Supplier data ✗'],
-        industryNote: 'Retailers at 38% data readiness can activate existing tools (Einstein, Klaviyo) and deploy validated models — no new data investment required for Wave 1',
-        genomeNote: 'Identity and loyalty data is available — activation sprint (6 weeks) unlocks 3 of 5 Wave 1 opportunities without new data infrastructure',
-      },
-      tech: {
-        clientItems: ['Salesforce SFCC ✓', 'Einstein licensed ✓ (not activated)', 'Klaviyo + Segment ✓ (not connected)', 'Databricks ✓ (APAC only)', 'o9 Solutions ✓ (40% implemented)'],
-        industryNote: '51st percentile tech readiness — tools exist and are paid for. Activation is the gap, not technology investment.',
-        genomeNote: 'Built-not-deployed pattern: organisations with $148M invested and $12M returned have the highest short-term ROI potential — activation beats build by 30x here',
-      },
-      org: {
-        clientItems: ['CMO champion ✓', 'COO inventory urgency ✓', 'CIO/CMO ownership dispute ✗', 'No CDO ✗', 'CFO mandate (ecom margin) ✗'],
-        industryNote: '38th percentile org readiness driven by CIO/CMO ownership dispute — resolve this one conflict and the programme unlocks',
-        genomeNote: 'Ownership dispute on highest-ROI initiative (Einstein) is the primary stall signal — week-one resolution unlocks $248M',
-      },
-    },
-    faultLines: [
-      { side1: 'CMO: "Einstein activation now"', side2: 'CIO: "Who owns it?"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: '18 months of ownership dispute has cost $252M in foregone Einstein revenue. Resolve this week, not this quarter.', genomeNote: 'Ownership disputes on AI assets resolved by CEO appointment (vs negotiation) succeed in 94% of cases — average 4 days to resolution', talkingPoint: 'CEO needs to appoint a single owner in writing. CMO and CIO have both proven the dispute cannot self-resolve.' },
-      { side1: 'CFO: "No new AI investment"', side2: 'CMO: "Einstein pays for itself"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'Einstein activation cost is $1.2M — license already paid at $14M/yr. 207:1 ROI. CFO will approve $1.2M once the ownership issue is resolved.', genomeNote: 'CMO is right and CFO will agree — the dispute is about ownership, not budget. Resolve ownership first, budget second.', talkingPoint: 'Show CFO the $1.2M activation cost vs $14M/yr already paying — this is not a budget conversation, it is an execution conversation.' },
-      { side1: 'COO: "Finish o9 first"', side2: 'CEO: "New AI capabilities"', tension: 'VALIDATED', tensionColor: T.green, dataPoint: 'o9 completion (9 months) and Einstein activation (8 weeks) run in parallel — different teams, different budgets. Not a sequencing conflict.', genomeNote: 'Parallel track success rate: 84% when initiatives are truly non-dependent. o9 and Einstein share no dependencies.', talkingPoint: 'COO and CEO are both right — show them the parallel track plan. Same budget period, both complete.' },
-      { side1: 'CFO: "Ecom margin first"', side2: 'CEO: "Ecom growth"', tension: 'HIGH RISK', tensionColor: T.red, dataPoint: 'E-commerce at -2.1% margin. Growing this channel at current cost structure destroys blended margin. CFO is correct — margin fix must precede volume growth.', genomeNote: 'Growing negative-margin channels has 78% probability of requiring emergency cost restructuring — CFO urgency is correct', talkingPoint: 'Fulfilment cost reduction and return friction are achievable in 9 months. CFO gets margin positive before the next budget cycle.' },
-      { side1: 'CMO: "Loyalty reactivation"', side2: 'CIO: "Data quality first"', tension: 'MODERATE', tensionColor: T.amber, dataPoint: 'Loyalty data at 45% readiness is sufficient for Einstein personalisation — Wave 1 works at this quality. CIO data concern is Wave 2, not Wave 1.', genomeNote: 'Einstein activation at 45% data readiness achieves 68% of full personalisation value — sufficient for Wave 1 ROI case', talkingPoint: 'CIO data concern is real but Wave 2. Einstein delivers significant value at current data quality — do not wait for perfection.' },
-    ],
-    bets: [
-      { id: 'einstein-act', rank: 1, name: 'Einstein Personalisation Activation', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 8 weeks', annualValueLow: 180, annualValueHigh: 248, confidence: 88, roi: 207, timeline: '8 weeks to first revenue', failureRisk: 'LOW', fromData: ['Einstein: licensed, never activated', '28.4M loyalty members untouched', '$14M/yr license paid for 18 months'], fromIndustry: ['12 Einstein activations analysed', 'Avg activation: 8 weeks', 'Avg Year 1 uplift: $94M at comparable loyalty scale'], fromGenome: ['Highest ROI bet in retail dataset', '207:1 on activation cost', 'Ownership dispute is only risk'], objection: 'We have discussed Einstein activation for 18 months and nothing has happened.', response: 'The barrier was ownership, not technology. Appoint a single executive owner this week. With that resolved, 8 weeks to revenue is achievable and documented in 12 peer activations.', leadDataPoint: '$14M/yr license paid for 18 months — $252M in cumulative lost opportunity. Week 1 owner appointment is the only missing piece.' },
-      { id: 'cart-recovery', rank: 2, name: 'Cart Recovery (Klaviyo + Segment)', category: 'Digital · Front Office', phase: 'Grow', wave: 'Wave 1 · 8 weeks', annualValueLow: 54, annualValueHigh: 68, confidence: 89, roi: 85, timeline: '8 weeks to recovery', failureRisk: 'LOW', fromData: ['Triggers built in Klaviyo', 'Segment connected to SFCC', 'Cart abandonment: 72% vs 58% benchmark'], fromIndustry: ['19 Klaviyo+Segment deployments analysed', 'Avg cart recovery rate: 14-18%', 'Platform activation: 6-8 weeks average'], fromGenome: ['Infrastructure already paid — activation only', '89% success rate for this exact setup', 'Platform team coordination is the only risk'], objection: 'We built this and it did not get deployed.', response: 'Platform teams were not coordinated end-to-end. The fix is a single joint kick-off with Klaviyo, Segment, and SFCC teams — documented in 8 weeks at comparable retailers.', leadDataPoint: '$68M cart recovery opportunity. Infrastructure paid for. Platform team coordination is the only requirement.' },
-      { id: 'o9-complete', rank: 3, name: 'o9 Demand Forecasting Completion', category: 'Supply Chain · Middle Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 120, annualValueHigh: 180, confidence: 78, roi: 50, timeline: '9 months to full value', failureRisk: 'MEDIUM', fromData: ['o9 40% complete after 18 months', '$6.8M invested', '$900M excess inventory'], fromIndustry: ['22 o9 completion engagements analysed', 'Completion success rate: 85%', 'Restart success rate: 58%'], fromGenome: ['Finish vs restart: completion wins in 92% of cases', 'Fixed-fee completion contract required', 'COO ownership is prerequisite'], objection: 'o9 has already failed once — why continue?', response: 'o9 stalled, not failed. 40% is implemented and working in North America. The remaining 60% is a known scope on a proven platform. Completion success rate is 85% vs 58% for restart.', leadDataPoint: '$6.8M already invested and working in NA. $900M inventory excess is the business case for completing what was started.' },
-      { id: 'shrinkage-scale', rank: 4, name: 'Shrinkage AI Detection Scale', category: 'Operations · Middle Office', phase: 'Save', wave: 'Wave 2 · 6 months', annualValueLow: 100, annualValueHigh: 130, confidence: 82, roi: 15, timeline: '12 months to full value', failureRisk: 'MEDIUM', fromData: ['12-store pilot: 34% shrinkage reduction', '$259M excess vs benchmark', 'No executive sponsor named'], fromIndustry: ['14 shrinkage AI scale programmes analysed', 'Median ROI: 14x on scale investment', 'Store rollout: 200 stores/month achievable'], fromGenome: ['Pilot proven — scale decision is the only variable', 'Executive sponsor naming is prerequisite for scale success', 'Wave 2 after Einstein ROI validated'], objection: 'Pilots always look good — scale is different.', response: 'This pilot ran for 6 months across 12 stores. The Genome has 14 comparable scale programmes — all succeeded when: pilot ran >6 months, executive sponsor named, rollout team dedicated. All three conditions are achievable in 30 days.', leadDataPoint: '12-store pilot proven. $130M annual recovery at 2,400 stores. Executive sponsor appointment is the only gate.' },
-      { id: 'fulfilment', rank: 5, name: 'E-Commerce Fulfilment Cost Reduction', category: 'Operations · Back Office', phase: 'Save', wave: 'Wave 1 · 90 days', annualValueLow: 180, annualValueHigh: 269, confidence: 76, roi: 56, timeline: '9 months to margin improvement', failureRisk: 'MEDIUM', fromData: ['Fulfilment: $18.40/order vs $11.20 target', 'Return rate 28% vs 18% industry', '$615M annual drag combined'], fromIndustry: ['18 carrier consolidation programmes analysed', 'Median fulfilment savings: $4.80/order in year 1', 'Return friction ($3-5 charge): 31% return rate reduction'], fromGenome: ['CFO mandate makes this non-optional', 'Carrier consolidation + return friction closes 60% of margin gap', 'Manhattan Associates and Shipbob preferred at this order volume'], objection: 'Return friction will reduce conversion.', response: 'Return friction reduces casual returns by 31% and maintains 94% of purchase conversion at comparable retailers. The customer who buys with intent is not deterred — the chronic returner is.', leadDataPoint: '$615M annual fulfilment + returns drag. CFO has mandated ecom margin positive — this programme is the path.' },
-    ],
-    opportunities: [
-      { id: 'fo-001', name: 'Einstein Activation', value: 248000000, complexity: 'low', confidence: 88, wave: 1, isBet: true },
-      { id: 'fo-002', name: 'Cart Recovery', value: 68000000, complexity: 'low', confidence: 89, wave: 1, isBet: true },
-      { id: 'mo-001', name: 'o9 Completion', value: 180000000, complexity: 'medium', confidence: 78, wave: 1, isBet: true },
-      { id: 'mo-002', name: 'Shrinkage AI Scale', value: 130000000, complexity: 'medium', confidence: 82, wave: 2, isBet: true },
-      { id: 'bo-002', name: 'Fulfilment Cost Reduction', value: 269000000, complexity: 'medium', confidence: 76, wave: 1, isBet: true },
-      { id: 'fo-003', name: 'Loyalty Reactivation', value: 84000000, complexity: 'medium', confidence: 72, wave: 1, isBet: false },
-      { id: 'bo-001', name: 'SAP R/3 Migration', value: 0, complexity: 'high', confidence: 94, wave: 1, isBet: false },
-      { id: 'mo-003', name: 'Store Traffic AI', value: 85000000, complexity: 'high', confidence: 48, wave: 3, isBet: false },
-      { id: 'bo-003', name: 'Supplier Risk Intelligence', value: 45000000, complexity: 'medium', confidence: 62, wave: 2, isBet: false },
-    ],
-    wave1Plan: {
-      days1_30: { tasks: ['CEO appoints Einstein owner', 'Baseline locked', 'o9 fixed-fee contract negotiated'], owner: 'CEO + CMO', investment: '$2M' },
-      days31_60: { tasks: ['Einstein pilot live (5M members)', 'Cart recovery end-to-end activated', 'o9 sprint started'], owner: 'CMO + CIO', investment: '$4M' },
-      days61_90: { tasks: ['Einstein at scale (28.4M)', 'Cart recovery verified', 'Fulfilment vendor shortlisted'], owner: 'CMO + CFO', investment: '$2M' },
-      total: { investment: '$15.6M', annualValue: '$599M', roi: '38.4x' },
-    },
-    metrics: { bets: 5, analyzed: 9, value3yr: '$2.7B', peers: 38, patterns: 127, confidence: 87 },
-    cxo: 'Kirsten Mueller, CFO',
-  },
-}
+]
 
-// ─── SVG Gauge Dial ─────────────────────────────────────────────────────────────
-function GaugeDial({ pct, color, label, percentile }: { pct: number; color: string; label: string; percentile: string }) {
-  const [animPct, setAnimPct] = useState(0)
-  useEffect(() => {
-    const t = setTimeout(() => setAnimPct(pct), 200)
-    return () => clearTimeout(t)
-  }, [pct])
-  const r = 44, cx = 55, cy = 58
-  const circ = Math.PI * r
-  const dashOffset = circ * (1 - animPct / 100)
+export default function AIStrategyPage() {
   return (
-    <div style={{ textAlign: 'center', flex: 1 }}>
-      <svg viewBox="0 0 110 80" style={{ width: '100%', maxWidth: '140px' }}>
-        <path d={`M ${cx - r},${cy} A ${r},${r} 0 0,0 ${cx + r},${cy}`} fill="none" stroke={T.border} strokeWidth={10} strokeLinecap="round" />
-        <path d={`M ${cx - r},${cy} A ${r},${r} 0 0,0 ${cx + r},${cy}`} fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
-          strokeDasharray={`${circ} ${circ}`} strokeDashoffset={dashOffset}
-          style={{ transition: 'stroke-dashoffset 1.4s ease-out' }} />
-        <text x={cx} y={cy - 14} textAnchor="middle" fill={T.text} fontSize={20} fontWeight={700} fontFamily="Fraunces, serif">{pct}%</text>
-        <text x={cx} y={cy + 2} textAnchor="middle" fill={T.text2} fontSize={8} fontFamily="JetBrains Mono, monospace">{percentile} percentile</text>
-      </svg>
-      <div style={{ fontSize: '10px', fontFamily: T.mono, fontWeight: 700, color: T.text, letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '-8px' }}>{label}</div>
-    </div>
-  )
-}
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
+      <AbarvaNav activePage="ai-strategy" />
 
-// ─── Scatter Plot ────────────────────────────────────────────────────────────────
-// [xPct, yPct] — x = complexity (left=low, right=high), y = value (top=high)
-const SCATTER_POS: Record<string, [number, number]> = {
-  'mo-001': [46, 26], 'fo-001': [54, 36], 'bo-005': [82, 16], 'mo-004': [14, 52],
-  'bo-003': [10, 84], 'fo-004': [16, 40], 'mo-002': [20, 48], 'fo-002': [24, 54],
-  'fo-003': [86, 28], 'mo-003': [50, 34], 'bo-004': [84, 76], 'mo-005': [26, 76],
-}
-// First Capital positions
-const SCATTER_POS_FC: Record<string, [number, number]> = {
-  'fo-001': [48, 68], 'mo-001': [50, 62], 'fo-003': [46, 56], 'fo-004': [16, 72],
-  'bo-001': [14, 78], 'fo-002': [54, 46], 'fo-005': [84, 36], 'mo-002': [20, 70],
-  'mo-003': [52, 60], 'bo-002': [22, 74], 'bo-003': [82, 80], 'mo-004': [44, 64],
-}
-// Apex positions
-const SCATTER_POS_APEX: Record<string, [number, number]> = {
-  'fo-001': [16, 8], 'fo-002': [14, 30], 'fo-003': [48, 18], 'fo-004': [18, 12],
-  'mo-001': [84, 34], 'fo-005': [50, 38], 'mo-002': [82, 52], 'mo-003': [20, 54],
-  'mo-004': [84, 42], 'bo-001': [22, 62], 'bo-002': [50, 50], 'bo-003': [54, 40],
-}
-// Arcturus positions
-const SCATTER_POS_ARCTURUS: Record<string, [number, number]> = {
-  'mo-001': [46, 50], 'bo-001': [76, 56], 'bo-002': [50, 78], 'fo-001': [48, 26],
-  'mo-003': [78, 40], 'fo-002': [82, 14], 'fo-003': [44, 72], 'mo-002': [40, 82],
-  'mo-004': [52, 62], 'bo-003': [80, 46],
-}
-// Nexora positions
-const SCATTER_POS_NEXORA: Record<string, [number, number]> = {
-  'fo-001': [14, 8], 'fo-002': [12, 22], 'mo-001': [48, 14], 'mo-002': [52, 28],
-  'bo-002': [46, 32], 'fo-003': [50, 46], 'bo-001': [82, 90], 'mo-003': [80, 44],
-  'bo-003': [54, 68],
-}
-
-function ScatterPlot({ opps, clientKey }: { opps: Opportunity[]; clientKey: string }) {
-  const W = 600, H = 220
-  const posMap = clientKey === 'firstcapital' ? SCATTER_POS_FC : clientKey === 'apexretail' ? SCATTER_POS_APEX : clientKey === 'arcturus' ? SCATTER_POS_ARCTURUS : clientKey === 'nexora' ? SCATTER_POS_NEXORA : SCATTER_POS
-  return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', border: `1px solid ${T.border}`, borderRadius: '8px', background: T.surface }}>
-        <text x={10} y={14} fill={T.text2} fontSize={9} fontFamily="JetBrains Mono, monospace">HIGH VALUE</text>
-        <text x={10} y={H - 6} fill={T.text2} fontSize={9} fontFamily="JetBrains Mono, monospace">LOW VALUE</text>
-        <text x={W / 2 - 80} y={H - 6} fill={T.text2} fontSize={9} fontFamily="JetBrains Mono, monospace">← LOW COMPLEXITY         HIGH COMPLEXITY →</text>
-        <line x1={38} y1={18} x2={38} y2={H - 18} stroke={T.border} strokeWidth={1} strokeDasharray="3,3" />
-        <line x1={38} y1={H - 18} x2={W - 18} y2={H - 18} stroke={T.border} strokeWidth={1} strokeDasharray="3,3" />
-        {opps.map(opp => {
-          const pos = posMap[opp.id]
-          if (!pos) return null
-          const x = 38 + (pos[0] / 100) * (W - 56)
-          const y = 18 + (pos[1] / 100) * (H - 36)
-          const r2 = 4 + (opp.confidence / 100) * 8
-          const col = opp.isBet ? T.teal : opp.wave === 2 ? '#3B82F6' : '#334155'
-          return (
-            <g key={opp.id}>
-              <circle cx={x} cy={y} r={r2} fill={col} fillOpacity={opp.isBet ? 0.9 : 0.55} stroke={col} strokeWidth={1} />
-              {opp.isBet && <circle cx={x} cy={y} r={r2 + 4} fill="none" stroke={T.teal} strokeWidth={1} strokeOpacity={0.35} />}
-            </g>
-          )
-        })}
-      </svg>
-      <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-        {[{ col: T.teal, label: 'Recommended Bet' }, { col: '#3B82F6', label: 'Wave 2' }, { col: '#334155', label: 'Wave 3 / Deprioritised' }].map(l => (
-          <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: l.col }} />
-            <span style={{ fontSize: '11px', color: T.text2, fontFamily: T.mono }}>{l.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── Bet Card ────────────────────────────────────────────────────────────────────
-function BetCard({ bet, onGenome, confirmedBets, removedBets, onConfirm, onRemove, mode }: {
-  bet: Bet; onGenome: () => void; confirmedBets: Set<string>; removedBets: Set<string>
-  onConfirm: (id: string) => void; onRemove: (id: string) => void; mode: 'prep' | 'live'
-}) {
-  const [interaction, setInteraction] = useState<'none' | 'challenge' | 'remove' | 'suggest'>('none')
-  const [suggestText, setSuggestText] = useState('')
-  const isConfirmed = confirmedBets.has(bet.id)
-  const isRemoved = removedBets.has(bet.id)
-  const riskColor = bet.failureRisk === 'HIGH' ? T.red : bet.failureRisk === 'MEDIUM' ? T.amber : T.green
-  const riskIcon = bet.failureRisk === 'HIGH' ? '🔴' : bet.failureRisk === 'MEDIUM' ? '🟡' : '🟢'
-
-  return (
-    <div style={{ minWidth: '340px', background: T.surface, border: `1px solid ${T.border}`, borderTop: `3px solid ${isConfirmed ? T.teal : riskColor}`, borderRadius: '10px', padding: '20px', opacity: isRemoved ? 0.5 : 1, flexShrink: 0, transition: 'opacity 0.3s' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-        <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.08em' }}>⭐ BET {bet.rank} — RECOMMENDED</div>
-        <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text2, background: T.bg, padding: '2px 8px', borderRadius: '4px' }}>{bet.wave}</div>
-      </div>
-      <div style={{ fontSize: '16px', fontWeight: 700, color: T.text, fontFamily: T.sans, marginBottom: '2px' }}>{bet.name}</div>
-      <div style={{ fontSize: '11px', color: T.text2, marginBottom: '14px' }}>{bet.category}</div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '14px' }}>
-        {[
-          { label: 'FROM YOUR DATA', items: bet.fromData, col: T.teal },
-          { label: 'FROM INDUSTRY', items: bet.fromIndustry, col: '#3B82F6' },
-          { label: 'FROM GENOME', items: bet.fromGenome, col: '#A78BFA' },
-        ].map(src => (
-          <div key={src.label} style={{ background: T.bg, borderRadius: '6px', padding: '8px' }}>
-            <div style={{ fontSize: '8px', fontFamily: T.mono, color: src.col, fontWeight: 700, letterSpacing: '0.08em', marginBottom: '6px' }}>{src.label}</div>
-            {src.items.map((item, i) => <div key={i} style={{ fontSize: '10px', color: T.text, lineHeight: 1.5 }}>{item}</div>)}
-          </div>
-        ))}
-      </div>
-
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.06em', marginBottom: '4px' }}>YOUR ESTIMATED VALUE</div>
-        <div style={{ fontSize: '13px', color: T.text }}>
-          <strong style={{ color: T.teal }}>${bet.annualValueLow}–{bet.annualValueHigh}M</strong> annually · {bet.confidence}% confidence · {bet.roi}x ROI · {bet.timeline}
+      {/* ── Hero ──────────────────────────────────────────────────────────── */}
+      <div style={{ padding: '96px 32px 80px', maxWidth: '900px', margin: '0 auto', textAlign: 'center' as const }}>
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.16em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>
+          AI Strategy Engagement · 9 Intelligence modules · One outcome
+        </div>
+        <h1 style={{ fontFamily: SERIF, fontSize: '52px', fontWeight: 500, lineHeight: 1.15, margin: '0 0 24px' }}>
+          The complete AI strategy engagement.<br />
+          <em style={{ color: TEAL }}>9 Intelligence modules. One outcome.</em>
+        </h1>
+        <p style={{ fontSize: '17px', color: MUTED, maxWidth: '640px', margin: '0 auto 16px', lineHeight: 1.7 }}>
+          AbarVa runs all 9 Intelligence modules together. A complete diagnostic and prescription —
+          where to invest, what to cut, what to build, what to govern.
+        </p>
+        <p style={{ fontSize: '14px', color: DIM, maxWidth: '520px', margin: '0 auto 40px', lineHeight: 1.6 }}>
+          Each module is independently useful. Together, they are a complete strategy — from the first gap
+          to verified outcomes, with fee earned only on what moves.
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' as const }}>
+          <a href="/diagnose?client=meridian" style={{
+            background: TEAL, color: BG, padding: '12px 24px',
+            borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
+          }}>
+            Start with a diagnostic →
+          </a>
+          <a href="/solutions" style={{
+            background: 'transparent', color: MUTED,
+            border: `1px solid ${BORDER}`, padding: '12px 24px',
+            borderRadius: '8px', fontSize: '13px', textDecoration: 'none',
+          }}>
+            Start with a Solution instead
+          </a>
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-        <div style={{ fontSize: '11px', color: riskColor }}>FAILURE RISK: {riskIcon} <strong>{bet.failureRisk}</strong></div>
-        <button onClick={onGenome} style={{ fontSize: '10px', color: T.teal, background: 'none', border: `1px solid ${T.teal}`, borderRadius: '4px', padding: '3px 8px', cursor: 'pointer', fontFamily: T.mono }}>View Failure Genome →</button>
-      </div>
+      {/* ── Pipeline ─────────────────────────────────────────────────────── */}
+      <div style={{ padding: '0 32px 80px', maxWidth: '860px', margin: '0 auto' }}>
 
-      {mode === 'prep' && bet.objection && interaction === 'none' && (
-        <div style={{ background: T.bg, border: `1px solid ${T.indigo}40`, borderRadius: '6px', padding: '10px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.indigo, fontWeight: 700, marginBottom: '6px' }}>MAESTRO PREP — LIKELY OBJECTION</div>
-          <div style={{ fontSize: '11px', color: T.text, marginBottom: '6px', fontStyle: 'italic' }}>"{bet.objection}"</div>
-          <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.teal, fontWeight: 700, marginBottom: '4px' }}>SUGGESTED RESPONSE</div>
-          <div style={{ fontSize: '11px', color: T.text, marginBottom: bet.leadDataPoint ? '8px' : '0' }}>{bet.response}</div>
-          {bet.leadDataPoint && <>
-            <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.amber, fontWeight: 700, marginTop: '8px', marginBottom: '4px' }}>DATA POINT TO LEAD WITH</div>
-            <div style={{ fontSize: '11px', color: T.text }}>{bet.leadDataPoint}</div>
-          </>}
-        </div>
-      )}
-
-      {interaction === 'challenge' && (
-        <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', padding: '14px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text, fontWeight: 700, marginBottom: '10px' }}>CHALLENGE: {bet.name.toUpperCase()}</div>
-          <div style={{ fontSize: '11px', color: T.text2, marginBottom: '10px' }}>You questioned this recommendation. Here is the evidence.</div>
-          {[
-            { label: 'FROM YOUR DATA', col: T.teal, text: `${bet.fromData.join(' · ')}. This is the source of the $${bet.annualValueLow}–${bet.annualValueHigh}M estimate.` },
-            { label: 'FROM INDUSTRY', col: '#3B82F6', text: `${bet.fromIndustry.join(' · ')}. Your situation maps closest to the organisations that succeeded.` },
-            { label: 'FROM GENOME', col: '#A78BFA', text: `${bet.fromGenome.join(' · ')}. AbarVa still recommends this. The risks are real but manageable.` },
-          ].map(s => (
-            <div key={s.label} style={{ marginBottom: '10px' }}>
-              <div style={{ fontSize: '9px', fontFamily: T.mono, color: s.col, fontWeight: 700, marginBottom: '4px' }}>{s.label}</div>
-              <div style={{ fontSize: '11px', color: T.text }}>{s.text}</div>
-            </div>
-          ))}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-            <button onClick={() => { setInteraction('none'); onConfirm(bet.id) }} style={{ flex: 1, padding: '8px', background: T.teal, color: T.bg, border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>I understand — keep this bet</button>
-            <button onClick={() => setInteraction('remove')} style={{ padding: '8px 14px', background: 'none', color: T.red, border: `1px solid ${T.red}`, borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: T.sans }}>Still remove it →</button>
-          </div>
-        </div>
-      )}
-
-      {interaction === 'remove' && (
-        <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', padding: '14px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text, fontWeight: 700, marginBottom: '10px' }}>TRADE-OFF ANALYSIS</div>
-          <div style={{ fontSize: '12px', color: T.text, marginBottom: '8px' }}>You removed: <strong>{bet.name}</strong></div>
-          <div style={{ fontSize: '12px', color: T.text, lineHeight: 1.8 }}>
-            · 3-year value drops by <strong style={{ color: T.red }}>–${bet.annualValueLow * 3}M+</strong><br />
-            · Wave 1 ROI reduced significantly<br />
-            · The gap this addresses remains unresolved<br />
-            · Your CXO will likely ask about this at the next review
-          </div>
-          <div style={{ marginTop: '12px', fontSize: '11px', color: T.text2 }}>What would you replace it with?</div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            <button onClick={() => setInteraction('suggest')} style={{ flex: 1, padding: '8px', background: T.teal, color: T.bg, border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>Suggest your own →</button>
-            <button onClick={() => { setInteraction('none'); onRemove(bet.id) }} style={{ padding: '8px 14px', background: 'none', color: T.red, border: `1px solid ${T.red}`, borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: T.sans }}>Confirm remove</button>
-          </div>
-        </div>
-      )}
-
-      {interaction === 'suggest' && (
-        <div style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: '6px', padding: '14px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text, fontWeight: 700, marginBottom: '8px' }}>ASSESS AN ALTERNATIVE</div>
-          <div style={{ fontSize: '11px', color: T.text2, marginBottom: '8px' }}>What initiative would you like to explore?</div>
-          <textarea value={suggestText} onChange={e => setSuggestText(e.target.value)} placeholder="Describe the AI initiative..." style={{ width: '100%', background: T.surface, border: `1px solid ${T.border}`, borderRadius: '6px', padding: '8px', color: T.text, fontSize: '12px', resize: 'none', height: '60px', boxSizing: 'border-box' as const, fontFamily: T.sans }} />
-          <button onClick={() => setInteraction('none')} style={{ marginTop: '8px', width: '100%', padding: '8px', background: T.teal, color: T.bg, border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>Assess this →</button>
-        </div>
-      )}
-
-      {interaction === 'none' && (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={() => onConfirm(bet.id)} style={{ flex: 1, padding: '8px', background: isConfirmed ? T.teal : 'none', color: isConfirmed ? T.bg : T.teal, border: `1px solid ${T.teal}`, borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>
-            {isConfirmed ? '✓ Confirmed' : '✓ Keep this bet'}
-          </button>
-          <button onClick={() => setInteraction('remove')} style={{ padding: '8px 12px', background: 'none', color: T.red, border: `1px solid ${T.red}`, borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: T.sans }}>✗ Remove</button>
-          <button onClick={() => setInteraction('challenge')} style={{ padding: '8px 12px', background: 'none', color: T.text2, border: `1px solid ${T.border}`, borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: T.sans }}>? Challenge</button>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── Failure Genome Drawer ────────────────────────────────────────────────────────
-function GenomeDrawer({ clientKey, onClose }: { clientKey: string; onClose: () => void }) {
-  const summary = MERIDIAN_GENOME_SUMMARY
-  const clientPat = clientKey as 'meridian' | 'firstcapital' | 'apexretail'
-  return (
-    <div style={{ position: 'fixed', top: 0, right: 0, width: '420px', height: '100vh', background: T.surface, borderLeft: `1px solid ${T.border}`, zIndex: 100, overflowY: 'auto', boxShadow: '-8px 0 32px rgba(0,0,0,0.5)' }}>
-      <div style={{ padding: '20px', borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div>
-            <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>FAILURE GENOME</div>
-            <div style={{ fontSize: '13px', color: T.text, fontWeight: 600 }}>RCM AI Automation · {clientKey === 'meridian' ? 'Meridian Health' : clientKey === 'firstcapital' ? 'First Capital Bank' : 'Apex Retail'}</div>
-          </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: T.text2, cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>✕</button>
-        </div>
-      </div>
-      <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}`, background: T.bg }}>
-        <div style={{ fontSize: '11px', color: T.text2, fontFamily: T.mono, marginBottom: '4px' }}>FROM THE GENOME: {summary.totalAnalyzed} deployments analysed</div>
-        <div style={{ fontSize: '12px', color: T.text }}>{summary.succeeded} succeeded ({summary.overallSuccessRate}%) · {summary.failed} failed ({100 - summary.overallSuccessRate}%)</div>
-        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, fontFamily: T.mono, background: '#F59E0B20', color: T.amber, border: `1px solid ${T.amber}` }}>
-            OVERALL RISK: 🟡 {summary.riskRating}
-          </span>
-          <span style={{ fontSize: '11px', color: T.text2 }}>{summary.patternsPresent} of 7 patterns present</span>
-        </div>
-      </div>
-      <div style={{ paddingBottom: '80px' }}>
-        {FAILURE_PATTERNS.map((fp, i) => {
-          const clientData = fp.clients[clientPat] || fp.clients.meridian
-          const riskColor = clientData.riskLevel === 'HIGH' ? T.red : clientData.riskLevel === 'MEDIUM' ? T.amber : T.green
-          const riskIcon = clientData.riskLevel === 'HIGH' ? '🔴' : clientData.riskLevel === 'MEDIUM' ? '🟡' : '🟢'
-          return (
-            <div key={fp.id} style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}` }}>
-              <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '6px' }}>
-                PATTERN {i + 1}: {fp.name.toUpperCase()}
-              </div>
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 700, fontFamily: T.mono, background: riskColor + '20', color: riskColor, border: `1px solid ${riskColor}` }}>
-                  {riskIcon} {clientData.riskLevel === 'NONE' ? 'NOT PRESENT' : clientData.riskLevel} — {clientData.present ? 'PRESENT' : 'NOT PRESENT'}
-                </span>
-              </div>
-              {clientData.present ? (
-                <>
-                  <div style={{ fontSize: '9px', fontFamily: T.mono, color: '#64748B', letterSpacing: '0.08em', marginBottom: '3px' }}>FROM GENOME</div>
-                  <div style={{ fontSize: '11px', color: T.text2, marginBottom: '8px' }}>{fp.inFailures} of {fp.inFailures + fp.inSuccesses} deployments with this pattern failed</div>
-                  <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.teal, letterSpacing: '0.08em', marginBottom: '3px' }}>AT CLIENT</div>
-                  <div style={{ fontSize: '11px', color: T.text, marginBottom: '8px' }}>{clientData.evidence}</div>
-                  <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.amber, letterSpacing: '0.08em', marginBottom: '3px' }}>MITIGATION</div>
-                  <div style={{ fontSize: '11px', color: T.text, marginBottom: '10px' }}>{clientData.mitigation}</div>
-                  <button style={{ fontSize: '10px', color: T.teal, background: 'none', border: `1px solid ${T.teal}`, borderRadius: '4px', padding: '4px 10px', cursor: 'pointer', fontFamily: T.mono }}>
-                    {clientData.specificAction} →
-                  </button>
-                </>
-              ) : (
-                <div style={{ fontSize: '11px', color: T.green }}>✓ {clientData.evidence}</div>
-              )}
-            </div>
-          )
-        })}
-        <div style={{ margin: '16px 20px', padding: '16px', background: T.bg, border: `2px solid ${T.teal}`, borderRadius: '8px' }}>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.08em', marginBottom: '8px' }}>BOTTOM LINE</div>
-          <div style={{ fontSize: '13px', color: T.text, lineHeight: 1.7 }}>{summary.bottomLine}</div>
-          <div style={{ marginTop: '10px', fontSize: '12px', color: T.teal }}>
-            Mitigate 2 patterns → success probability <strong>{summary.adjustedSuccessRate}%</strong> (vs {summary.overallSuccessRate}% baseline)
-          </div>
-          <button style={{ marginTop: '12px', width: '100%', padding: '10px', background: T.teal, color: T.bg, border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>
-            Generate full risk mitigation plan →
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Board Deck Act ───────────────────────────────────────────────────────────────
-const SLIDE_TITLES = ['Executive Summary', 'Your Situation', 'Where Leadership Disagrees', 'The Opportunity Landscape', 'Your Five Bets', 'The Wave 1 Plan', 'The Investment Case', 'Risk Mitigation', 'What We Need to Proceed', 'The Outcome Commitment']
-
-function BoardDeckAct({ profile, clientId, onConfirmOpen }: { profile: ClientProfile; clientId: string; onConfirmOpen: () => void }) {
-  const [selectedSlide, setSelectedSlide] = useState(0)
-  const [editingSlide, setEditingSlide] = useState<number | null>(null)
-  void clientId
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '24px' }}>
-      <div>
-        <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.1em', marginBottom: '12px' }}>10 SLIDES · READY TO PRESENT</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          {SLIDE_TITLES.map((title, i) => (
-            <div key={i} onClick={() => setSelectedSlide(i)} style={{ background: selectedSlide === i ? T.teal + '15' : T.surface, border: `1px solid ${selectedSlide === i ? T.teal : T.border}`, borderRadius: '8px', padding: '14px', cursor: 'pointer', transition: 'all 0.15s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.text2 }}>SLIDE {i + 1}</div>
-                <button onClick={e => { e.stopPropagation(); setEditingSlide(editingSlide === i ? null : i) }} style={{ fontSize: '10px', background: 'none', border: 'none', color: T.text2, cursor: 'pointer', padding: 0 }}>✏</button>
-              </div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: selectedSlide === i ? T.teal : T.text }}>{title}</div>
-              {i === 0 && <div style={{ fontSize: '10px', color: T.text2, marginTop: '3px' }}>5 AI bets · {profile.metrics.value3yr} 3-year value</div>}
-              {i === 4 && <div style={{ fontSize: '10px', color: T.text2, marginTop: '3px', whiteSpace: 'nowrap' as const, overflow: 'hidden', textOverflow: 'ellipsis' }}>{profile.bets.map(b => b.name).join(', ')}</div>}
-              {editingSlide === i && (
-                <div style={{ marginTop: '8px' }} onClick={e => e.stopPropagation()}>
-                  <textarea style={{ width: '100%', background: T.bg, border: `1px solid ${T.border}`, borderRadius: '4px', color: T.text, fontSize: '10px', padding: '4px', resize: 'none', height: '40px', boxSizing: 'border-box' as const }} placeholder="Adjust content..." />
+        {PHASES.map((phase, pi) => (
+          <div key={phase.label}>
+            {/* Phase connector arrow (between phases) */}
+            {pi > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px' }}>
+                  <div style={{ width: '1px', height: '24px', background: BORDER }} />
+                  <div style={{ fontSize: '16px', color: DIM }}>↓</div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div>
-        <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '10px', padding: '24px' }}>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '6px' }}>YOUR BOARD DECK IS READY</div>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: T.text, marginBottom: '2px' }}>{profile.name}</div>
-          <div style={{ fontSize: '12px', color: T.text2, marginBottom: '20px' }}>AI Investment Strategy 2026 · Prepared by AbarVa</div>
-          <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.06em', marginBottom: '10px', borderBottom: `1px solid ${T.border}`, paddingBottom: '8px' }}>DOWNLOAD OPTIONS</div>
-          {[
-            { icon: '📊', label: 'Present Now →', sub: 'Open full-screen. Keyboard navigable. Speaker notes visible to presenter only.' },
-            { icon: '⬇', label: 'Download HTML →', sub: 'Single file. Opens in any browser. Send to board before the meeting.' },
-            { icon: '📈', label: 'Business Case Excel →', sub: 'CFO-ready financial model. 3 scenarios with sensitivity analysis.' },
-            { icon: '🗺', label: 'Technical Roadmap →', sub: 'CIO-ready implementation plan. Wave 1 detail with owners and dates.' },
-          ].map(item => (
-            <button key={item.label} style={{ display: 'block', width: '100%', background: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '12px 14px', marginBottom: '8px', cursor: 'pointer', textAlign: 'left' as const }}>
-              <div style={{ fontSize: '12px', color: T.text, fontWeight: 600, marginBottom: '2px' }}>{item.icon} {item.label}</div>
-              <div style={{ fontSize: '10px', color: T.text2 }}>{item.sub}</div>
-            </button>
-          ))}
-          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${T.border}` }}>
-            <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.indigo, fontWeight: 700, letterSpacing: '0.06em', marginBottom: '8px' }}>MAESTRO PREP PACK</div>
-            {[
-              { label: '📋 Talking Points Doc →', sub: 'One page per bet. Objections and suggested responses.' },
-              { label: '❓ Likely Questions →', sub: 'What the CIO, CFO, and CMIO will ask. Answers with evidence.' },
-            ].map(item => (
-              <button key={item.label} style={{ display: 'block', width: '100%', background: T.bg, border: `1px solid ${T.indigo}40`, borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', cursor: 'pointer', textAlign: 'left' as const }}>
-                <div style={{ fontSize: '12px', color: T.text, fontWeight: 600, marginBottom: '2px' }}>{item.label}</div>
-                <div style={{ fontSize: '10px', color: T.text2 }}>{item.sub}</div>
-              </button>
-            ))}
-          </div>
-          <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${T.border}` }}>
-            <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.06em', marginBottom: '8px' }}>WHAT HAPPENS NEXT</div>
-            {['AbarVa locks the baseline metrics today', 'Wave 1 begins — 90-day clock starts', 'Outcomes tracked monthly in the platform', 'Fee triggers only on verified savings'].map((item, i) => (
-              <div key={i} style={{ fontSize: '11px', color: T.text, marginBottom: '6px' }}>
-                <span style={{ color: T.teal, fontFamily: T.mono, marginRight: '6px' }}>{i + 1}.</span>{item}
-              </div>
-            ))}
-          </div>
-          <button onClick={onConfirmOpen} style={{ marginTop: '16px', width: '100%', padding: '14px', background: T.teal, color: T.bg, border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>
-            Confirm bets and set baseline →
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Confirm Modal ─────────────────────────────────────────────────────────────────
-function ConfirmModal({ profile, clientId, onClose }: { profile: ClientProfile; clientId: string; onClose: () => void }) {
-  const [saving, setSaving] = useState(false)
-  const [done, setDone] = useState(false)
-  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-
-  async function handleConfirm() {
-    setSaving(true)
-    try {
-      await supabase.from('ai_baselines').insert({
-        client_id: clientId,
-        client_name: profile.name,
-        bets: profile.bets.map(b => ({ id: b.id, name: b.name, targetLow: b.annualValueLow, targetHigh: b.annualValueHigh })),
-        total_wave1_target: profile.wave1Plan.total.annualValue,
-        locked_at: new Date().toISOString(),
-        cxo_signer: profile.cxo,
-      })
-    } catch (_) { /* table may not exist in demo */ }
-    setTimeout(() => { setSaving(false); setDone(true) }, 800)
-  }
-
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(6,10,18,0.88)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px', padding: '32px', maxWidth: '540px', width: '100%', margin: '0 20px' }}>
-        {done ? (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '40px', marginBottom: '16px' }}>✅</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: T.teal, fontFamily: T.serif, marginBottom: '8px' }}>Baseline Locked</div>
-            <div style={{ fontSize: '13px', color: T.text2, marginBottom: '24px' }}>{profile.name} now appears in Outcome Intelligence. Wave 1 clock starts today.</div>
-            <button onClick={onClose} style={{ padding: '12px 32px', background: T.teal, color: T.bg, border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', fontFamily: T.sans }}>Continue →</button>
-          </div>
-        ) : (
-          <>
-            <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>CONFIRM YOUR FIVE BETS</div>
-            <div style={{ fontSize: '13px', color: T.text2, marginBottom: '20px' }}>{profile.name} · {today}</div>
-            <div style={{ fontSize: '12px', color: T.text2, marginBottom: '8px' }}>You are confirming:</div>
-            {profile.bets.map((b, i) => (
-              <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${T.border}` }}>
-                <div style={{ fontSize: '13px', color: T.text }}><span style={{ color: T.teal, marginRight: '8px' }}>{i + 1}.</span>{b.name}</div>
-                <div style={{ fontSize: '12px', color: T.teal, fontFamily: T.mono }}>${b.annualValueLow}–{b.annualValueHigh}M</div>
-              </div>
-            ))}
-            <div style={{ marginTop: '14px', padding: '12px', background: T.bg, borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '12px', color: T.text2 }}>Total Wave 1 target</span>
-              <span style={{ fontSize: '16px', color: T.teal, fontWeight: 700, fontFamily: T.mono }}>{profile.wave1Plan.total.annualValue} annual value</span>
-            </div>
-            <div style={{ marginTop: '14px', padding: '14px', background: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px' }}>
-              <div style={{ fontSize: '11px', color: T.text2, lineHeight: 1.7, marginBottom: '10px' }}>
-                AbarVa will: lock today's metrics as baseline · begin monthly outcome tracking · report progress in Outcome Intelligence · fee triggers only when savings are verified
-              </div>
-              <div style={{ fontSize: '14px', fontFamily: T.serif, color: T.text }}>{profile.cxo} confirms this commitment</div>
-              <div style={{ borderBottom: `1px solid ${T.text}`, marginTop: '8px', paddingBottom: '2px', fontSize: '12px', color: T.text2 }}>Signed: _______________</div>
-              <div style={{ fontSize: '11px', color: T.text2, marginTop: '6px' }}>Date: {today}</div>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-              <button onClick={handleConfirm} disabled={saving} style={{ flex: 1, padding: '14px', background: T.teal, color: T.bg, border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: saving ? 'default' : 'pointer', fontFamily: T.sans, opacity: saving ? 0.7 : 1 }}>
-                {saving ? 'Locking baseline...' : 'Confirm and Lock Baseline →'}
-              </button>
-              <button onClick={onClose} style={{ padding: '14px 20px', background: 'none', color: T.text2, border: 'none', borderRadius: '8px', fontSize: '13px', cursor: 'pointer', fontFamily: T.sans }}>
-                Not yet →
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ─── Main Content ─────────────────────────────────────────────────────────────────
-function AiStrategyContent() {
-  const params = useSearchParams()
-  const clientId = params.get('client') || 'meridian'
-  const profile = CLIENT_DATA[clientId] || CLIENT_DATA.meridian
-
-  const [act, setAct] = useState<1 | 2 | 3>(1)
-  const [mode, setMode] = useState<'prep' | 'live'>('prep')
-  const [role, setRole] = useState('CEO')
-  const [showStepNav, setShowStepNav] = useState(false)
-  const [showGenomeDrawer, setShowGenomeDrawer] = useState(false)
-  const [confirmedBets, setConfirmedBets] = useState<Set<string>>(new Set())
-  const [removedBets, setRemovedBets] = useState<Set<string>>(new Set())
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [expandedGauge, setExpandedGauge] = useState<'data' | 'tech' | 'org' | null>(null)
-
-  const bd = profile.gaugeBreakdown
-  const STEPS = ['Ground Truth', 'Executives Disagree', 'Every Opportunity', 'Your Five Bets', 'Wave 1 Plan', 'Business Case', 'Failure Genome', 'Board Deck Ready']
-  const ACT_STEPS: Record<number, number[]> = { 1: [0, 1], 2: [2, 3, 4, 5, 6], 3: [7] }
-
-  const ANIM_CSS = `
-    @keyframes fadein { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .act-fade { animation: fadein 0.3s ease-out; }
-  `
-
-  return (
-    <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
-      <AbarvaNav activePage="ai-strategy" clientId={clientId} />
-      <style dangerouslySetInnerHTML={{ __html: ANIM_CSS }} />
-
-      {/* Product Header */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ padding: '20px 24px' }}>
-          <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.12em', marginBottom: '6px' }}>💡 AI INVESTMENT INTELLIGENCE</div>
-                <div style={{ fontSize: '24px', fontFamily: T.serif, fontWeight: 700, color: T.text, marginBottom: '8px', maxWidth: '600px', lineHeight: 1.3 }}>{profile.tagline}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.bets} recommended bets</span>
-                  <span style={{ color: T.border }}>·</span>
-                  <span style={{ fontSize: '13px', color: T.text }}>{profile.metrics.analyzed} opportunities analysed</span>
-                  <span style={{ color: T.border }}>·</span>
-                  <span style={{ fontSize: '13px', color: T.teal, fontWeight: 600 }}>{profile.metrics.value3yr} 3-year value</span>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '14px', marginTop: '4px', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: T.text2 }}>Knowledge layer: {profile.metrics.peers} peer deployments</span>
-                  <span style={{ color: T.border }}>·</span>
-                  <span style={{ fontSize: '11px', color: T.text2 }}>Genome: {profile.metrics.patterns} patterns</span>
-                  <span style={{ color: T.border }}>·</span>
-                  <span style={{ fontSize: '11px', color: T.text2 }}>Confidence: {profile.metrics.confidence}%</span>
-                </div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-                <div style={{ fontSize: '11px', color: T.text2, fontFamily: T.mono }}>Viewing as: <span style={{ color: T.teal, fontWeight: 700 }}>{role}</span></div>
-                <div style={{ display: 'flex', borderRadius: '8px', overflow: 'hidden', border: `1px solid ${T.border}` }}>
-                  {(['prep', 'live'] as const).map(m => (
-                    <button key={m} onClick={() => setMode(m)} style={{ padding: '8px 16px', background: mode === m ? T.teal : T.bg, color: mode === m ? T.bg : T.text, border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: mode === m ? 700 : 400, fontFamily: T.sans, transition: 'all 0.15s' }}>
-                      {m === 'prep' ? 'Maestro Prep' : 'Live Session'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        {/* Role tabs strip */}
-        {(() => {
-          const isFinServ = ['firstcapital', 'arcturus'].includes(clientId)
-          const isRetail = ['apexretail', 'nexora'].includes(clientId)
-          const roles = isFinServ
-            ? (clientId === 'arcturus' ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro'] : ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro'])
-            : isRetail
-              ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
-              : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
-          return (
-            <div style={{ borderTop: `1px solid ${T.border}`, padding: '8px 24px', display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '9px', fontWeight: 700, color: T.text2, fontFamily: T.mono, letterSpacing: '0.1em', marginRight: '8px', flexShrink: 0 }}>VIEWING AS</span>
-              {roles.map(r => (
-                <button key={r} onClick={() => setRole(r)} style={{ padding: '4px 14px', height: '28px', background: role === r ? T.teal : 'transparent', border: `1px solid ${role === r ? T.teal : 'rgba(239,246,255,0.12)'}`, borderRadius: '20px', fontSize: '11px', fontWeight: role === r ? 700 : 400, color: role === r ? '#060A12' : T.text2, cursor: 'pointer', fontFamily: T.sans, whiteSpace: 'nowrap' as const }}>
-                  {r}
-                </button>
-              ))}
-            </div>
-          )
-        })()}
-      </div>
-
-      {/* Three-Act Navigation */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
-            {([1, 2, 3] as const).map(a => (
-              <button key={a} onClick={() => setAct(a)} style={{ padding: '16px', background: act === a ? T.teal : 'none', color: act === a ? T.bg : T.text, border: 'none', borderRight: a < 3 ? `1px solid ${T.border}` : 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 700, fontFamily: T.sans, transition: 'all 0.15s', letterSpacing: '0.01em' }}>
-                {a === 1 ? 'ACT 1: THE TRUTH' : a === 2 ? 'ACT 2: THE BETS' : 'ACT 3: THE BOARD DECK'}
-              </button>
-            ))}
-          </div>
-          <div style={{ borderTop: `1px solid ${T.border}` }}>
-            <button onClick={() => setShowStepNav(s => !s)} style={{ width: '100%', padding: '8px 24px', background: 'none', border: 'none', color: T.text2, cursor: 'pointer', textAlign: 'left' as const, fontSize: '11px', fontFamily: T.mono, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ transition: 'transform 0.2s', display: 'inline-block', transform: showStepNav ? 'rotate(90deg)' : 'none' }}>▸</span>
-              {showStepNav ? 'Hide steps' : 'Show all 8 steps'}
-            </button>
-            {showStepNav && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '8px 24px 14px' }}>
-                {STEPS.map((step, i) => {
-                  const actForStep = Object.entries(ACT_STEPS).find(([, steps]) => steps.includes(i))
-                  const stepAct = actForStep ? parseInt(actForStep[0]) : 1
-                  return (
-                    <button key={i} onClick={() => setAct(stepAct as 1 | 2 | 3)} style={{ padding: '4px 10px', background: 'none', border: `1px solid ${T.border}`, borderRadius: '4px', color: T.text, fontSize: '11px', cursor: 'pointer', fontFamily: T.mono }}>
-                      {['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧'][i]} {step}
-                    </button>
-                  )
-                })}
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {/* Act Content */}
-      <div style={{ maxWidth: '1480px', margin: '0 auto', padding: '32px 24px' }} className="act-fade">
-
-        {/* ACT 1 */}
-        {act === 1 && (
-          <div>
-          {/* Role lens — changes per selected role */}
-          {(() => {
-            const frontBets = profile.bets.filter((b: any) => /front|digital|client|revenue|loyalty|personaliz/i.test(b.category))
-            const opsBets = profile.bets.filter((b: any) => /operation|supply|inventory|shrinkage|middle/i.test(b.category))
-            const techBets = profile.bets.filter((b: any) => /back|data|risk|governance|compliance|infra|golden/i.test(b.category))
-            const frontVal = frontBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
-            const opsVal = opsBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
-            const techVal = techBets.reduce((s: number, b: any) => s + (b.annualValueHigh || 0), 0)
-            const lensMap: Record<string, { label: string; value: string; sub?: string }[]> = {
-              CIO:   [{ label: 'Tech Readiness', value: `${profile.readiness.tech}%`, sub: `${profile.percentiles.tech} percentile` }, { label: 'Data Readiness', value: `${profile.readiness.data}%`, sub: `${profile.percentiles.data} percentile` }, { label: 'Tech Domain Value', value: `$${techVal}M+/yr`, sub: `${techBets.length || opsBets.length} initiatives in your domain` }],
-              CFO:   [{ label: 'Wave 1 Investment', value: profile.wave1Plan.total.investment, sub: 'Required commitment' }, { label: 'Annual Value', value: profile.wave1Plan.total.annualValue, sub: 'Base case return' }, { label: 'ROI Multiple', value: profile.wave1Plan.total.roi, sub: 'Wave 1 return ratio' }],
-              CMO:   [{ label: 'Front-Office Bets', value: `${frontBets.length || profile.bets.filter((b:any) => b.rank <= 2).length}`, sub: 'Revenue initiatives' }, { label: 'Revenue Potential', value: `$${frontVal || profile.bets.filter((b:any)=>b.rank===1).reduce((s:number,b:any)=>s+(b.annualValueHigh||0),0)}M/yr`, sub: 'Annual upside' }, { label: 'Fastest Win', value: profile.bets[0]?.wave || 'Wave 1 · 8 weeks', sub: profile.bets[0]?.name || '' }],
-              COO:   [{ label: 'Ops Bets', value: `${opsBets.length || 2}`, sub: 'Operations initiatives' }, { label: 'Ops Potential', value: `$${opsVal || (profile.bets[2]?.annualValueHigh || 180)}M/yr`, sub: 'Annual efficiency gain' }, { label: 'Org Readiness', value: `${profile.readiness.org}%`, sub: `${profile.percentiles.org} percentile` }],
-              CRO:   [{ label: 'Risk/Compliance Bets', value: `${techBets.length || 2}`, sub: 'Risk initiatives' }, { label: 'Risk Domain Value', value: `$${techVal || (profile.bets.find((b:any) => /stress|governance|risk/i.test(b.name))?.annualValueHigh || 35)}M/yr`, sub: 'Penalty & risk avoided' }, { label: 'Org Readiness', value: `${profile.readiness.org}%`, sub: 'Change capacity' }],
-              CMIO:  [{ label: 'Clinical AI Bets', value: `${profile.bets.length}`, sub: 'Total initiatives' }, { label: 'Value Potential', value: profile.metrics.value3yr, sub: '3-year upside' }, { label: 'Data Readiness', value: `${profile.readiness.data}%`, sub: `${profile.percentiles.data} percentile` }],
-              CEO:   [{ label: 'Active AI Bets', value: `${profile.metrics.bets}`, sub: 'Recommended' }, { label: '3-Year Value', value: profile.metrics.value3yr, sub: 'Total opportunity' }, { label: 'Confidence', value: `${profile.metrics.confidence}%`, sub: 'Genome-validated' }],
-              Maestro:[{ label: 'Active AI Bets', value: `${profile.metrics.bets}`, sub: 'Recommended' }, { label: '3-Year Value', value: profile.metrics.value3yr, sub: 'Total opportunity' }, { label: 'Confidence', value: `${profile.metrics.confidence}%`, sub: 'Genome-validated' }],
-            }
-            const lens = lensMap[role] || lensMap['CEO']
-            return (
-              <div style={{ background: `${T.teal}08`, border: `1px solid ${T.teal}25`, borderRadius: '8px', padding: '14px 20px', marginBottom: '24px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-                <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', gridColumn: '1/-1', marginBottom: '-8px' }}>{role.toUpperCase()} LENS — KEY METRICS FOR YOUR ROLE</div>
-                {lens.map((item, i) => (
-                  <div key={i}>
-                    <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.text2, letterSpacing: '0.08em', marginBottom: '4px' }}>{item.label}</div>
-                    <div style={{ fontSize: '20px', fontWeight: 700, color: T.text, letterSpacing: '-0.01em', lineHeight: 1.1 }}>{item.value}</div>
-                    {item.sub && <div style={{ fontSize: '10px', color: T.text2, marginTop: '3px' }}>{item.sub}</div>}
-                  </div>
-                ))}
+            {/* Phase header */}
+            <div style={{
+              background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${phase.color}`,
+              borderRadius: '10px', padding: '16px 24px', marginBottom: '2px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: phase.color, letterSpacing: '.14em' }}>
+                  PHASE {pi + 1} — {phase.label}
+                </div>
+                <div style={{ flex: 1, height: '1px', background: BORDER }} />
               </div>
-            )
-          })()}
-          <div style={{ display: 'grid', gridTemplateColumns: '45% 55%', gap: '32px' }}>
-            <div>
-              <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '6px' }}>AI READINESS ASSESSMENT</div>
-              <div style={{ fontSize: '20px', fontFamily: T.serif, color: T.text, marginBottom: '20px' }}>Before placing bets, here is what your data actually shows.</div>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-                <GaugeDial pct={profile.readiness.data} color={T.teal} label="Data Readiness" percentile={profile.percentiles.data} />
-                <GaugeDial pct={profile.readiness.tech} color="#3B82F6" label="Technology" percentile={profile.percentiles.tech} />
-                <GaugeDial pct={profile.readiness.org} color={T.amber} label="Org Readiness" percentile={profile.percentiles.org} />
-              </div>
-              {(['data', 'tech', 'org'] as const).map(g => {
-                const gaugeData = bd[g]
-                const isExpanded = expandedGauge === g
-                const gColor = g === 'data' ? T.teal : g === 'tech' ? '#3B82F6' : T.amber
-                return (
-                  <div key={g} style={{ marginBottom: '8px', border: `1px solid ${T.border}`, borderRadius: '8px', overflow: 'hidden' }}>
-                    <button onClick={() => setExpandedGauge(isExpanded ? null : g)} style={{ width: '100%', padding: '12px 14px', background: T.surface, border: 'none', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ fontSize: '11px', fontFamily: T.mono, fontWeight: 700, color: gColor, letterSpacing: '0.08em' }}>{g.toUpperCase()} READINESS — {profile.readiness[g]}%</div>
-                      <span style={{ color: T.text2, fontSize: '11px' }}>{isExpanded ? '▲' : '▼'}</span>
-                    </button>
-                    {isExpanded && (
-                      <div style={{ padding: '14px', background: T.bg }}>
-                        {[
-                          { label: 'FROM YOUR DATA', col: T.teal, content: gaugeData.clientItems.join(', ') },
-                          { label: 'FROM INDUSTRY', col: '#3B82F6', content: gaugeData.industryNote },
-                          { label: 'FROM GENOME', col: '#A78BFA', content: gaugeData.genomeNote },
-                        ].map(s => (
-                          <div key={s.label} style={{ marginBottom: '10px' }}>
-                            <div style={{ fontSize: '9px', fontFamily: T.mono, color: s.col, fontWeight: 700, letterSpacing: '0.08em', marginBottom: '4px' }}>{s.label}</div>
-                            <div style={{ fontSize: '11px', color: T.text }}>{s.content}</div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
+              <div style={{ fontSize: '13px', color: MUTED, marginTop: '4px' }}>{phase.desc}</div>
             </div>
-            <div>
-              <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '6px' }}>EXECUTIVE FAULT LINES</div>
-              <div style={{ fontSize: '20px', fontFamily: T.serif, color: T.text, marginBottom: '4px' }}>Where your leadership team disagrees</div>
-              <div style={{ fontSize: '12px', color: T.text2, marginBottom: '20px' }}>These fault lines predict which AI initiatives will face internal resistance.</div>
-              {profile.faultLines.map((fl, i) => (
-                <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '10px', padding: '14px', marginBottom: '10px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
-                    <div style={{ fontSize: '11px', color: T.text, fontWeight: 600, padding: '5px 9px', background: T.bg, borderRadius: '6px', border: `1px solid ${T.border}` }}>{fl.side1}</div>
-                    <div style={{ textAlign: 'center' as const }}>
-                      <div style={{ fontSize: '9px', fontFamily: T.mono, color: fl.tensionColor, fontWeight: 700, letterSpacing: '0.05em', padding: '3px 7px', background: fl.tensionColor + '20', borderRadius: '4px', whiteSpace: 'nowrap' as const }}>{fl.tension}</div>
+
+            {/* Modules */}
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1px', marginLeft: '20px', borderLeft: `1px solid ${BORDER}` }}>
+              {phase.modules.map((mod, mi) => (
+                <div key={mod.num} style={{ display: 'flex', alignItems: 'stretch', gap: '0' }}>
+                  {/* Connector nub */}
+                  <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '0', width: '20px', flexShrink: 0 }}>
+                    <div style={{ width: '20px', height: '1px', background: BORDER }} />
+                  </div>
+                  {/* Module card */}
+                  <a href={mod.path} style={{ textDecoration: 'none', flex: 1 }}>
+                    <div style={{
+                      background: CARD, border: `1px solid ${BORDER}`,
+                      borderRadius: '8px', padding: '16px 20px',
+                      margin: '4px 0',
+                      display: 'flex', alignItems: 'center', gap: '20px',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = phase.color)}
+                    onMouseLeave={e => (e.currentTarget.style.borderColor = BORDER)}
+                    >
+                      {/* Number */}
+                      <div style={{
+                        width: '32px', height: '32px', flexShrink: 0,
+                        background: `${phase.color}12`,
+                        border: `1px solid ${phase.color}30`,
+                        borderRadius: '6px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: MONO, fontSize: '10px', color: phase.color, fontWeight: 600,
+                      }}>
+                        {String(mod.num).padStart(2, '0')}
+                      </div>
+                      {/* Text */}
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '4px' }}>{mod.name}</div>
+                        <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{mod.desc}</div>
+                      </div>
+                      {/* Arrow */}
+                      <div style={{ fontSize: '14px', color: DIM, flexShrink: 0 }}>→</div>
                     </div>
-                    <div style={{ fontSize: '11px', color: T.text, fontWeight: 600, padding: '5px 9px', background: T.bg, borderRadius: '6px', border: `1px solid ${T.border}` }}>{fl.side2}</div>
-                  </div>
-                  <div style={{ fontSize: '11px', color: T.text, marginBottom: '6px' }}>
-                    <span style={{ fontSize: '9px', fontFamily: T.mono, color: T.teal, fontWeight: 700 }}>DATA: </span>{fl.dataPoint}
-                  </div>
-                  <div style={{ fontSize: '11px', color: T.text2, paddingTop: '6px', borderTop: `1px solid ${T.border}` }}>
-                    <span style={{ fontSize: '9px', fontFamily: T.mono, color: '#A78BFA', fontWeight: 700 }}>FROM GENOME: </span>{fl.genomeNote}
-                  </div>
-                  {mode === 'prep' && fl.talkingPoint && (
-                    <div style={{ marginTop: '8px', padding: '8px', background: T.indigo + '15', border: `1px solid ${T.indigo}40`, borderRadius: '6px' }}>
-                      <div style={{ fontSize: '9px', fontFamily: T.mono, color: T.indigo, fontWeight: 700, marginBottom: '4px' }}>MAESTRO — TALKING POINT</div>
-                      <div style={{ fontSize: '11px', color: T.text }}>{fl.talkingPoint}</div>
-                    </div>
-                  )}
+                  </a>
                 </div>
               ))}
             </div>
           </div>
-          </div>
-        )}
-
-        {/* ACT 2 */}
-        {act === 2 && (
-          <div>
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                <div>
-                  <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>OPPORTUNITY LANDSCAPE</div>
-                  <div style={{ fontSize: '16px', fontFamily: T.serif, color: T.text }}>Every opportunity as a bubble — high value + low complexity = obvious Wave 1</div>
-                </div>
-                <div style={{ fontSize: '11px', color: T.text2, textAlign: 'right' as const }}>
-                  <div style={{ color: T.text, fontWeight: 600 }}>{profile.metrics.analyzed} opportunities analysed</div>
-                  <div>bubble size = confidence score</div>
-                </div>
-              </div>
-              <ScatterPlot opps={profile.opportunities} clientKey={clientId} />
-            </div>
-
-            <div style={{ marginBottom: '32px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div>
-                  <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '4px' }}>YOUR FIVE BETS</div>
-                  <div style={{ fontSize: '16px', fontFamily: T.serif, color: T.text }}>Five recommended bets with three-source attribution</div>
-                </div>
-                <button style={{ padding: '8px 14px', background: 'none', border: `1px solid ${T.border}`, borderRadius: '6px', color: T.text2, fontSize: '11px', cursor: 'pointer', fontFamily: T.mono }}>Show all {profile.metrics.analyzed} →</button>
-              </div>
-              <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
-                {profile.bets.map(bet => (
-                  <BetCard key={bet.id} bet={bet} onGenome={() => setShowGenomeDrawer(true)} confirmedBets={confirmedBets} removedBets={removedBets} onConfirm={id => setConfirmedBets(prev => new Set([...prev, id]))} onRemove={id => setRemovedBets(prev => new Set([...prev, id]))} mode={mode} />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '12px' }}>WAVE 1 PLAN — STARTS IN 90 DAYS</div>
-              <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '10px', overflow: 'hidden', marginBottom: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', borderBottom: `1px solid ${T.border}` }}>
-                  {(['days1_30', 'days31_60', 'days61_90'] as const).map((phase, i) => {
-                    const p = profile.wave1Plan[phase]
-                    const label = ['DAYS 1–30', 'DAYS 31–60', 'DAYS 61–90'][i]
-                    return (
-                      <div key={phase} style={{ padding: '16px', borderRight: i < 2 ? `1px solid ${T.border}` : 'none' }}>
-                        <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.text, fontWeight: 700, letterSpacing: '0.08em', marginBottom: '10px', paddingBottom: '8px', borderBottom: `2px solid ${T.teal}` }}>{label}</div>
-                        {p.tasks.map((t, j) => <div key={j} style={{ fontSize: '12px', color: T.text, marginBottom: '4px' }}>· {t}</div>)}
-                        <div style={{ marginTop: '10px', fontSize: '10px', color: T.text2 }}>Owner: <span style={{ color: T.text }}>{p.owner}</span></div>
-                        <div style={{ fontSize: '10px', color: T.text2 }}>Investment: <span style={{ color: T.teal }}>{p.investment}</span></div>
-                      </div>
-                    )
-                  })}
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', padding: '16px', gap: '16px' }}>
-                  {[
-                    { label: 'Total Investment', value: profile.wave1Plan.total.investment },
-                    { label: 'Annual Value', value: profile.wave1Plan.total.annualValue },
-                    { label: 'Blended ROI', value: profile.wave1Plan.total.roi },
-                    { label: 'Time to Value', value: '14 months' },
-                  ].map(m => (
-                    <div key={m.label} style={{ textAlign: 'center' as const }}>
-                      <div style={{ fontSize: '18px', fontWeight: 700, color: T.teal, fontFamily: T.mono }}>{m.value}</div>
-                      <div style={{ fontSize: '9px', color: T.text2, fontFamily: T.mono, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>{m.label}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '10px', padding: '20px' }}>
-                <div style={{ fontSize: '10px', fontFamily: T.mono, color: T.teal, fontWeight: 700, letterSpacing: '0.1em', marginBottom: '8px' }}>INDUSTRY CONTEXT</div>
-                <div style={{ fontSize: '13px', color: T.text, lineHeight: 1.7 }}>
-                  Organisations your size that completed this analysis and acted within 90 days achieved <strong style={{ color: T.teal }}>2.3x more value</strong> than those that waited 6 months.<br />
-                  The window for Wave 1 pricing from current vendors closes in approximately 4 months based on market trends.<br />
-                  <span style={{ color: T.text2, fontSize: '12px' }}>Leading advisory firms charge $2–4M and 16 weeks to produce a less data-specific version of this output.</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ACT 3 */}
-        {act === 3 && (
-          <BoardDeckAct profile={profile} clientId={clientId} onConfirmOpen={() => setShowConfirmModal(true)} />
-        )}
+        ))}
       </div>
 
-      {showGenomeDrawer && <GenomeDrawer clientKey={clientId} onClose={() => setShowGenomeDrawer(false)} />}
-      {showConfirmModal && <ConfirmModal profile={profile} clientId={clientId} onClose={() => setShowConfirmModal(false)} />}
+      {/* ── Bottom: Land with a Solution ─────────────────────────────────── */}
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '72px 32px' }}>
+        <div style={{ maxWidth: '860px', margin: '0 auto', textAlign: 'center' as const }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.16em', textTransform: 'uppercase' as const, marginBottom: '16px' }}>
+            How engagements start
+          </div>
+          <h2 style={{ fontFamily: SERIF, fontSize: '38px', fontWeight: 500, lineHeight: 1.2, margin: '0 0 16px' }}>
+            Land with a Solution.<br />
+            <em style={{ color: TEAL }}>Scale to AI Strategy.</em>
+          </h2>
+          <p style={{ fontSize: '15px', color: MUTED, maxWidth: '520px', margin: '0 auto 48px', lineHeight: 1.7 }}>
+            Most engagements start with a specific problem — margin, delivery, or a technology decision.
+            Once the first outcome is verified, the full AI Strategy engagement layers on what comes next.
+          </p>
+
+          {/* Solution pills */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '48px', maxWidth: '700px', margin: '0 auto 48px' }}>
+            {[
+              { name: 'Margin Optimization', path: '/solutions/margin', color: AMBER, modules: 'Modules 1, 2, 7, 9', desc: 'Denial recovery · MA Star · AI portfolio' },
+              { name: 'AI-Powered PDLC', path: '/solutions/pdlc', color: TEAL, modules: 'Modules 1, 3, 4, 8, 9', desc: 'Delivery velocity · AI to production' },
+              { name: 'Technology Modernization', path: '/solutions/tech', color: INDIGO, modules: 'Modules 1, 4, 5, 6, 7', desc: 'System scoring · migration · vendor' },
+            ].map(s => (
+              <a key={s.name} href={s.path} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  background: CARD, border: `1px solid ${BORDER}`, borderTop: `2px solid ${s.color}`,
+                  borderRadius: '10px', padding: '20px',
+                  textAlign: 'left' as const, cursor: 'pointer',
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>{s.name}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: s.color, letterSpacing: '.08em', marginBottom: '8px' }}>{s.modules}</div>
+                  <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{s.desc}</div>
+                  <div style={{ fontSize: '12px', color: s.color, marginTop: '12px' }}>Start here →</div>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <a href="/diagnose?client=meridian" style={{
+            display: 'inline-block',
+            background: TEAL, color: BG, padding: '14px 28px',
+            borderRadius: '8px', fontSize: '14px', fontWeight: 600, textDecoration: 'none',
+          }}>
+            Start with a diagnostic →
+          </a>
+        </div>
+      </div>
+
+      {/* ── Fee model note ───────────────────────────────────────────────── */}
+      <div style={{ padding: '48px 32px', maxWidth: '860px', margin: '0 auto', textAlign: 'center' as const }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN }} />
+          <span style={{ fontSize: '13px', color: MUTED }}>
+            All 9 modules. Outcome-based fee. If the baseline does not move, we do not get paid.
+          </span>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN }} />
+        </div>
+      </div>
     </div>
-  )
-}
-
-// ─── Page Export ──────────────────────────────────────────────────────────────────
-export default function AiStrategyPage() {
-  return (
-    <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: '#2DD4C8', fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>Loading AI Intelligence...</div>
-      </div>
-    }>
-      <AiStrategyContent />
-    </Suspense>
   )
 }

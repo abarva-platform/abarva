@@ -107,6 +107,37 @@ export default function SolutionPDLC() {
         selected={selected} setSelected={setSelected}
         launched={launched} setLaunched={setLaunched}
       />
+
+      {/* Powered by */}
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '40px 32px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' as const }}>
+            <div style={{ fontFamily: MONO2, fontSize: '9px', color: MUTED2, letterSpacing: '.12em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
+              Powered by
+            </div>
+            {[
+              { name: 'Situation Intelligence', path: '/diagnose' },
+              { name: 'Data Intelligence', path: '/data-intelligence' },
+              { name: 'Technology Intelligence', path: '/intelligence' },
+              { name: 'AI Delivery Intelligence', path: '/ai-pdlc' },
+              { name: 'Outcome Intelligence', path: '/outcome-intelligence' },
+            ].map(m => (
+              <a key={m.name} href={m.path} style={{
+                fontFamily: MONO2, fontSize: '10px', color: TEAL2,
+                background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.2)',
+                borderRadius: '4px', padding: '4px 10px', textDecoration: 'none',
+              }}>
+                {m.name}
+              </a>
+            ))}
+            <div style={{ marginLeft: 'auto' }}>
+              <a href="/ai-strategy" style={{ fontSize: '12px', color: MUTED2, textDecoration: 'none' }}>
+                Full AI Strategy engagement →
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

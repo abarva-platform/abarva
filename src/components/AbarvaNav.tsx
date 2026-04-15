@@ -89,32 +89,6 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
         <span style={{ fontFamily: MONO, fontSize: '8px', color: TEXT, letterSpacing: '.04em', opacity: .7 }}>know it. build it. own it.</span>
       </a>
 
-      {/* Intelligence dropdown */}
-      <div style={{ position: 'relative' as const }} onMouseEnter={() => openDrop('intel')} onMouseLeave={startClose}>
-        <button style={{ fontSize: '13px', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
-          Intelligence ▾
-        </button>
-        {open === 'intel' && (
-          <div
-            style={{ position: 'absolute' as const, top: '64px', left: 0, background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 0', minWidth: '320px', zIndex: 300 }}
-            onMouseEnter={cancelClose} onMouseLeave={startClose}
-          >
-            {[
-              { name: 'Situation Intelligence',     path: `/diagnose?client=${cid}`,    desc: "What's actually broken — and what is it costing?" },
-              { name: 'AI Investment Intelligence', path: `/ai-strategy?client=${cid}`, desc: 'Where should we place our AI bets?' },
-              { name: 'Vendor Intelligence',        path: `/select?client=${cid}`,      desc: 'Which vendor actually wins in our situation?' },
-              { name: 'Business Case Intelligence', path: `/justify?client=${cid}`,     desc: 'How do we justify this to the board?' },
-              { name: 'Outcome Intelligence',       path: `/outcomes?client=${cid}`,    desc: 'Did it work — and can we prove it?' },
-            ].map(item => (
-              <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
-                <div style={{ fontSize: '11px', color: MUTED, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Solutions dropdown */}
       <div style={{ position: 'relative' as const }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
         <button style={{ fontSize: '13px', color: MUTED, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS }}>
@@ -142,6 +116,11 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
           </div>
         )}
       </div>
+
+      {/* AI Strategy link */}
+      <a href="/ai-strategy" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
+        AI Strategy
+      </a>
 
       {/* Platform link */}
       <a href="/platform" style={{ fontSize: '13px', color: MUTED, padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0 }}>
