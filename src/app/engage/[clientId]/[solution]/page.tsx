@@ -1178,8 +1178,9 @@ function formatMessageContent(content: string) {
 
 function Phase0Scorecard({ data }: { data: any }) {
   if (!data) return null
-  const score = data.overall_score
-  const verdict = data.overall_verdict
+  const score = data.overall_score ?? data.scorecard?.overall
+  const verdict = data.overall_verdict ?? data.scorecard?.readiness
+  const summary = data.verdict_summary ?? data.scorecard?.summary
   const scoreColor = score >= 70 ? '#34D399' : score >= 40 ? '#F59E0B' : '#EF4444'
 
   return (
@@ -1207,13 +1208,13 @@ function Phase0Scorecard({ data }: { data: any }) {
               {verdict?.toUpperCase()}
             </div>
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, maxWidth: '400px' }}>
-              {data.verdict_summary}
+              {summary}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Dimension scores */}
+      {/* Dimension scores — old schema */}
       {data.dimension_scores && (
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
@@ -1237,6 +1238,34 @@ function Phase0Scorecard({ data }: { data: any }) {
                   </div>
                   <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#475569', marginTop: '6px', lineHeight: 1.5 }}>
                     {d.evidence}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Dimension scores — new schema (scorecard.dimensions array) */}
+      {!data.dimension_scores && data.scorecard?.dimensions && (
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+            Dimension Scores
+          </div>
+          <div style={{ display: 'grid', gap: '8px' }}>
+            {data.scorecard.dimensions.map((dim: any) => {
+              const c = dim.score >= 70 ? '#34D399' : dim.score >= 40 ? '#F59E0B' : '#EF4444'
+              return (
+                <div key={dim.id} style={{ background: '#0D1520', border: '1px solid #1C2D45', borderRadius: '8px', padding: '12px 16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#EFF6FF' }}>{dim.label}</div>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '13px', color: c, fontWeight: 700 }}>{dim.score}</div>
+                  </div>
+                  <div style={{ height: '3px', background: '#1C2D45', borderRadius: '2px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${dim.score}%`, background: c, borderRadius: '2px', transition: 'width 0.8s ease' }} />
+                  </div>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#475569', marginTop: '6px', lineHeight: 1.5 }}>
+                    {dim.detail}
                   </div>
                 </div>
               )
