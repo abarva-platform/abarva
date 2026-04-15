@@ -153,7 +153,7 @@ export default function SolutionTech() {
     return (
       <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
         <AbarvaNav activePage="solutions" />
-        <div style={{ maxWidth: '960px', margin: '0 auto', padding: '96px 24px 80px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '72px 48px 80px' }}>
 
           {/* Header */}
           <div style={{ marginBottom: '40px' }}>
@@ -338,8 +338,8 @@ export default function SolutionTech() {
       />
 
       {/* Powered by */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '40px 32px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '40px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' as const }}>
             <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
               Powered by

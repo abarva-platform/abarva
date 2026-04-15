@@ -121,8 +121,8 @@ export default function SolutionMargin() {
       />
 
       {/* Powered by */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER2}`, padding: '40px 32px' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER2}`, padding: '40px 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' as const }}>
             <div style={{ fontFamily: MONO2, fontSize: '9px', color: MUTED2, letterSpacing: '.12em', textTransform: 'uppercase' as const, flexShrink: 0 }}>
               Powered by
