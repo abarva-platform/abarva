@@ -496,36 +496,40 @@ export default function MaestroWorkspace() {
 
       {/* Header bar */}
       <div style={{
-        position: 'fixed', top: '64px', left: 0, right: 0, zIndex: 90,
+        position: 'fixed', top: '60px', left: 0, right: 0, zIndex: 90,
         background: T.surface, borderBottom: `1px solid ${T.border}`,
-        padding: '12px 20px', display: 'flex', alignItems: 'center', gap: '16px'
+        padding: '0 24px', height: '44px', display: 'flex', alignItems: 'center', gap: '12px'
       }}>
-        <div style={{ fontFamily: T.mono, fontSize: '11px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+        {/* Back to Maestro */}
+        <a href={`/admin/client/${clientId}`} style={{
+          fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: T.teal,
+          textDecoration: 'none', letterSpacing: '.08em', textTransform: 'uppercase',
+          flexShrink: 0, opacity: 0.8,
+        }}>← Maestro</a>
+        <div style={{ width: '1px', height: '16px', background: T.border }} />
+
+        {/* Intelligence name */}
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', flexShrink: 0 }}>
           {solutionConfig.intelligence_name}
         </div>
-        <div style={{ color: T.border }}>·</div>
-        <div style={{ fontFamily: T.sans, fontSize: '14px', color: T.text, fontWeight: 600 }}>
-          {clientName}
-        </div>
-        <div style={{ color: T.border }}>·</div>
-        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text }}>
-          {solutionConfig.name}
-        </div>
+
+        {/* Phase badge — only when there is an active phase */}
         {activePhase && (
           <>
-            <div style={{ color: T.border }}>·</div>
+            <div style={{ width: '1px', height: '16px', background: T.border }} />
             <div style={{
-              fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em',
+              fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', letterSpacing: '.1em',
               color: PHASE_STATUS_COLORS[activePhase.status] || T.muted,
-              textTransform: 'uppercase', padding: '3px 8px',
-              background: `${PHASE_STATUS_COLORS[activePhase.status]}15`,
+              textTransform: 'uppercase', padding: '3px 10px',
+              background: `${PHASE_STATUS_COLORS[activePhase.status]}12`,
               border: `1px solid ${PHASE_STATUS_COLORS[activePhase.status]}30`,
-              borderRadius: '4px'
+              borderRadius: '20px', flexShrink: 0,
             }}>
               Phase {activePhase.phase_number} · {PHASE_STATUS_LABELS[activePhase.status] || activePhase.status}
             </div>
           </>
         )}
+
         <div style={{ flex: 1 }} />
 
         {/* Engagement Switcher */}
@@ -578,66 +582,34 @@ export default function MaestroWorkspace() {
                   {eng.is_active && <span style={{ fontFamily: T.mono, fontSize: '8px', color: T.teal, textTransform: 'uppercase', letterSpacing: '.06em' }}>Active</span>}
                 </button>
               ))}
-              <div style={{ borderTop: `1px solid ${T.border}`, margin: '4px 0' }} />
-              <button
-                onClick={() => { setSwitcherOpen(false); setShowNewModal(true) }}
-                style={{
-                  width: '100%', textAlign: 'left', padding: '8px 14px',
-                  background: 'transparent', border: 'none', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}
-              >
-                <span style={{ color: T.teal, fontSize: '14px', lineHeight: 1 }}>+</span>
-                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal }}>New engagement</span>
-              </button>
-              <button
-                onClick={seedDemo}
-                disabled={seedingDemo}
-                style={{
-                  width: '100%', textAlign: 'left', padding: '8px 14px',
-                  background: 'transparent', border: 'none', cursor: seedingDemo ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}
-              >
-                <span style={{ color: T.indigo, fontSize: '12px', lineHeight: 1 }}>◈</span>
-                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.indigo }}>
-                  {seedingDemo ? 'Loading demo...' : 'Load completed demo'}
-                </span>
-              </button>
-              <button
-                onClick={seedFullDemo}
-                disabled={seedingFullDemo}
-                style={{
-                  width: '100%', textAlign: 'left', padding: '8px 14px',
-                  background: 'transparent', border: 'none', cursor: seedingFullDemo ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}
-              >
-                <span style={{ color: T.amber, fontSize: '12px', lineHeight: 1 }}>◈</span>
-                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.amber }}>
-                  {seedingFullDemo ? 'Loading full demo...' : 'Load Full Demo'}
-                </span>
-              </button>
+              {!isReadOnly && (
+                <>
+                  <div style={{ borderTop: `1px solid ${T.border}`, margin: '4px 0' }} />
+                  <button
+                    onClick={() => { setSwitcherOpen(false); setShowNewModal(true) }}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '8px 14px',
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '8px'
+                    }}
+                  >
+                    <span style={{ color: T.teal, fontSize: '14px', lineHeight: 1 }}>+</span>
+                    <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal }}>New engagement</span>
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
-
-        <a href={`/portal/${solution}?client=${clientId}`} target="_blank" style={{
-          fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase',
-          color: T.text, textDecoration: 'none', padding: '4px 10px',
-          border: `1px solid ${T.border}`, borderRadius: '4px'
-        }}>
-          View Client Portal
-        </a>
       </div>
 
       {/* Main layout: sidebar + content + right panel */}
-      <div style={{ paddingTop: '120px', display: 'flex', minHeight: '100vh' }}>
+      <div style={{ paddingTop: '104px', display: 'flex', minHeight: '100vh' }}>
 
         {/* Left sidebar (240px) */}
         <div style={{
           width: '240px', flexShrink: 0, borderRight: `1px solid ${T.border}`,
-          padding: '20px 0', position: 'fixed', top: '120px', bottom: 0, overflowY: 'auto',
+          padding: '20px 0', position: 'fixed', top: '104px', bottom: 0, overflowY: 'auto',
           background: T.bg
         }}>
           {/* Phase Navigator */}
@@ -1076,7 +1048,7 @@ export default function MaestroWorkspace() {
         {/* Right panel (340px) */}
         <div style={{
           width: '340px', flexShrink: 0, borderLeft: `1px solid ${T.border}`,
-          position: 'fixed', top: '120px', right: 0, bottom: 0, overflowY: 'auto',
+          position: 'fixed', top: '104px', right: 0, bottom: 0, overflowY: 'auto',
           background: T.bg
         }}>
           {/* Right panel tabs */}
