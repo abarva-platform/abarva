@@ -1,7 +1,7 @@
 'use client'
 import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type SI = 'traditional' | 'huronavanade' | 'internal'
@@ -20,9 +20,9 @@ interface MI {
   wave1Investment: number; siSelection: SI
   denialRateTarget: number; priorAuthFTEReduction: number
 }
-interface FCI {
-  fednowLive: boolean; amlToSageMaker: boolean; coreBankingDecision: boolean
-  costToIncomeTarget: number; fednowTimeline: number
+interface ARC {
+  cdoAppointed: boolean; croFramework: boolean; fscActivated: boolean; bloombergModernized: boolean
+  cdoHireWeeks: number; fscAdoptionTarget: number
   wave1Investment: number; siSelection: SI
 }
 interface APXI {
@@ -40,10 +40,10 @@ const M_DEF: MI = {
   wave1Investment: 4.2, siSelection: 'huronavanade',
   denialRateTarget: 12, priorAuthFTEReduction: 11,
 }
-const FC_DEF: FCI = {
-  fednowLive: false, amlToSageMaker: false, coreBankingDecision: false,
-  costToIncomeTarget: 62, fednowTimeline: 3,
-  wave1Investment: 2.2, siSelection: 'huronavanade',
+const ARC_DEF: ARC = {
+  cdoAppointed: false, croFramework: false, fscActivated: false, bloombergModernized: false,
+  cdoHireWeeks: 12, fscAdoptionTarget: 75,
+  wave1Investment: 3.8, siSelection: 'huronavanade',
 }
 const APX_DEF: APXI = {
   segmentFixed: false, einsteinActivated: false, sapDecisionMade: false,
@@ -95,12 +95,13 @@ function calcMeridian(inp: MI): Out {
   }
 }
 
-function calcFC(inp: FCI): Out {
-  const fednowValue = inp.fednowLive ? Math.max(0, 23 * (12 - inp.fednowTimeline) / 12) : 0
-  const amlValue = inp.amlToSageMaker ? 14 : 0
-  const coreValue = inp.coreBankingDecision ? 18 : 0
-  const costValue = Math.max(0, (68 - inp.costToIncomeTarget) * 2)
-  const totalValue = Math.max(0, fednowValue + amlValue + coreValue + costValue)
+function calcArcturus(inp: ARC): Out {
+  const cdoValue = inp.cdoAppointed ? 94 : 0                           // golden record + all 6 data-blocked initiatives
+  const croValue = inp.croFramework ? 101 : 0                          // CRO model freeze lifted
+  const fscValue = inp.fscActivated ? Math.round((inp.fscAdoptionTarget - 44) / 56 * 65) : 0  // advisor AI + churn signals
+  const bloombergValue = inp.bloombergModernized ? 32 : 0              // real-time reporting + AI reporting unblocked
+  const vacancyCost = inp.cdoAppointed ? Math.min(inp.cdoHireWeeks * 5.6, 134) : 134  // weeks × $5.6M/wk cap
+  const totalValue = Math.max(0, cdoValue + croValue + fscValue + bloombergValue - (inp.cdoAppointed ? 0 : vacancyCost * 0.1))
   const investment = inp.wave1Investment + SI_COST[inp.siSelection]
   const abarvaFee = totalValue * 0.15
   const netValue = totalValue - abarvaFee - investment
@@ -108,14 +109,16 @@ function calcFC(inp: FCI): Out {
   const roi = investment > 0 ? totalValue / investment : 0
 
   const risks: Risk[] = []
-  if (!inp.fednowLive) risks.push({ sev: 'red', msg: '68% of peers live on FedNow — 3 commercial clients evaluating alternatives · $23M attrition risk' })
-  if (!inp.amlToSageMaker) risks.push({ sev: 'amber', msg: 'AML false positive rate 78% vs 45% benchmark — 3 FTEs in manual review permanently' })
-  if (!inp.coreBankingDecision) risks.push({ sev: 'amber', msg: 'Core banking decision deferred — OCC MRAs accumulating, digital adoption gap widening' })
-  if (inp.siSelection === 'traditional') risks.push({ sev: 'amber', msg: 'Traditional SI rate: $320–420/hr. Same work, 2x cost. ROI drops significantly.' })
+  if (!inp.cdoAppointed) risks.push({ sev: 'red', msg: `CDO vacant — 14 data silos, no golden record · $${(inp.cdoHireWeeks * 5.6).toFixed(0)}M vacancy cost at ${inp.cdoHireWeeks}wk hire timeline` })
+  if (!inp.croFramework) risks.push({ sev: 'red', msg: 'CRO model freeze — Credit Risk AI ($34M) and 3 others blocked · validation framework needed to lift' })
+  if (!inp.fscActivated) risks.push({ sev: 'amber', msg: `FSC 44% adoption — Salesforce Einstein never activated · ${inp.fscAdoptionTarget - 44}pt target gap = $${fscValue}M value blocked` })
+  if (!inp.bloombergModernized) risks.push({ sev: 'amber', msg: 'Bloomberg legacy API + Advent Geneva 3-day batch lag — AI reporting impossible until modernized' })
+  if (inp.siSelection === 'traditional') risks.push({ sev: 'amber', msg: 'Traditional SI: $320–420/hr. Same work, 2× cost. ROI drops from 6.2× to 3.8×.' })
 
-  let highestROI = 'Activate FedNow via Finzly — 90-day implementation. $23M commercial attrition prevented. Resolves 2 of 3 OCC MRAs.'
-  if (inp.fednowLive && !inp.amlToSageMaker) highestROI = 'Upgrade AML to SageMaker. False positive rate drops from 78% to 35%. Resolves remaining OCC MRAs.'
-  if (inp.fednowLive && inp.amlToSageMaker) highestROI = 'Make the core banking modernization decision. Every quarter of deferral is another quarter of compounding technical debt.'
+  let highestROI = 'Appoint a CDO this quarter. $5.6M in AI value per week of vacancy. Every other initiative depends on this one.'
+  if (inp.cdoAppointed && !inp.croFramework) highestROI = 'Establish CRO model validation framework. Lifts the freeze on $101M in committed AI value — 4 initiatives can go live immediately.'
+  if (inp.cdoAppointed && inp.croFramework && !inp.fscActivated) highestROI = `Fix FSC SSO and activate Salesforce Einstein. Adoption at ${inp.fscAdoptionTarget}% = $${fscValue}M advisor AI value. 6-week implementation.`
+  if (inp.cdoAppointed && inp.croFramework && inp.fscActivated) highestROI = 'Modernize Bloomberg API. Advent Geneva replacement unblocks real-time AI reporting — $32M value and board-facing dashboards.'
 
   return {
     totalValue, abarvaFee, netValue, payback, investment, roi,
@@ -281,21 +284,22 @@ function MeridianPanel({ inp, setInp, onFlash }: { inp: MI; setInp: (v: MI) => v
   )
 }
 
-function FCPanel({ inp, setInp, onFlash }: { inp: FCI; setInp: (v: FCI) => void; onFlash: () => void }) {
-  const set = (k: keyof FCI, v: unknown) => { setInp({ ...inp, [k]: v }); onFlash() }
+function ArcturusPanel({ inp, setInp, onFlash }: { inp: ARC; setInp: (v: ARC) => void; onFlash: () => void }) {
+  const set = (k: keyof ARC, v: unknown) => { setInp({ ...inp, [k]: v }); onFlash() }
   return (
     <div>
       <div style={SLBL}>Leadership Decisions</div>
-      <Toggle label="FedNow live via Finzly" desc="90-day activation · $23M attrition prevented" value={inp.fednowLive} onChange={v => set('fednowLive', v)} />
-      <Toggle label="AML upgrade to SageMaker" desc="False positive 78% → 35% · 3 OCC MRAs resolved" value={inp.amlToSageMaker} onChange={v => set('amlToSageMaker', v)} />
-      <Toggle label="Core banking modernization decision" desc="Modular API layer · digital adoption unblocked" value={inp.coreBankingDecision} onChange={v => set('coreBankingDecision', v)} />
+      <Toggle label="CDO appointed" desc="Unblocks golden record · all 6 data initiatives · $94M value" value={inp.cdoAppointed} onChange={v => set('cdoAppointed', v)} />
+      <Toggle label="CRO model validation framework" desc="Lifts freeze · Credit Risk AI + 3 others can go live" value={inp.croFramework} onChange={v => set('croFramework', v)} />
+      <Toggle label="FSC SSO fixed + Einstein activated" desc="Advisor AI + churn signals · $65M value at full adoption" value={inp.fscActivated} onChange={v => set('fscActivated', v)} />
+      <Toggle label="Bloomberg API modernized" desc="Real-time data · Advent Geneva replacement · $32M reporting" value={inp.bloombergModernized} onChange={v => set('bloombergModernized', v)} />
       <div style={{ marginBottom: '4px' }} />
 
       <div style={{ ...SLBL, marginTop: '20px' }}>Timeline</div>
-      <Slider label="FedNow go-live timeline" min={1} max={12} value={inp.fednowTimeline} onChange={v => set('fednowTimeline', v)} fmt={v => `${v} months`} hint={`Year 1 value: $${Math.max(0, 23 * (12 - inp.fednowTimeline) / 12).toFixed(1)}M · each month delay = $1.9M attrition risk`} />
+      <Slider label="CDO hire timeline" min={4} max={24} step={2} value={inp.cdoHireWeeks} onChange={v => set('cdoHireWeeks', v)} fmt={v => `${v} weeks`} hint={`Vacancy cost: $${(inp.cdoHireWeeks * 5.6).toFixed(0)}M · $5.6M per week of delay`} />
 
       <div style={{ ...SLBL, marginTop: '20px' }}>Investment</div>
-      <Slider label="Wave 1 investment" min={1} max={4} step={0.1} value={inp.wave1Investment} onChange={v => set('wave1Investment', v)} fmt={v => `$${v.toFixed(1)}M`} hint="FedNow integration + AML modernization" />
+      <Slider label="Wave 1 investment" min={2} max={8} step={0.2} value={inp.wave1Investment} onChange={v => set('wave1Investment', v)} fmt={v => `$${v.toFixed(1)}M`} hint="CDO onboarding + data platform + FSC activation" />
       <RadioGroup label="System Integrator" value={inp.siSelection} onChange={v => set('siSelection', v as SI)} options={[
         { id: 'traditional', label: 'Traditional SI', cost: '$9.0M', warn: true },
         { id: 'huronavanade', label: 'Huron + Avanade', cost: '$4.2M' },
@@ -303,7 +307,7 @@ function FCPanel({ inp, setInp, onFlash }: { inp: FCI; setInp: (v: FCI) => void;
       ]} />
 
       <div style={{ ...SLBL, marginTop: '20px' }}>Outcome Targets</div>
-      <Slider label="Cost-to-income target" min={55} max={68} value={inp.costToIncomeTarget} onChange={v => set('costToIncomeTarget', v)} fmt={v => `${v}%`} hint={`${68 - inp.costToIncomeTarget} point improvement = $${((68 - inp.costToIncomeTarget) * 2).toFixed(0)}M value · current: 68%`} />
+      <Slider label="FSC adoption target" min={50} max={95} value={inp.fscAdoptionTarget} onChange={v => set('fscAdoptionTarget', v)} fmt={v => `${v}%`} hint={`${inp.fscAdoptionTarget - 44}pt above current 44% = $${Math.round((inp.fscAdoptionTarget - 44) / 56 * 65)}M advisor AI value`} />
     </div>
   )
 }
@@ -335,27 +339,29 @@ function ApexPanel({ inp, setInp, onFlash }: { inp: APXI; setInp: (v: APXI) => v
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 const CLIENTS = [
-  { id: 'meridian', label: 'Meridian' },
-  { id: 'firstcapital', label: 'First Capital' },
+  { id: 'meridian',   label: 'Meridian' },
+  { id: 'arcturus',   label: 'Arcturus' },
   { id: 'apexretail', label: 'Apex Retail' },
 ]
 
 const CLIENT_NAMES: Record<string, string> = {
-  meridian: 'Meridian Health System',
-  firstcapital: 'First Capital Financial',
+  meridian:   'Meridian Health System',
+  arcturus:   'Arcturus Financial Group',
   apexretail: 'Apex Retail Group',
 }
 
 function ScenariosContent() {
-  const sp = useSearchParams()
-  const [clientId, setClientId] = useState(sp.get('client') || 'meridian')
+  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const [clientId, setClientId] = useState(ctxClientId)
   const [mInp, setMInp] = useState<MI>(M_DEF)
-  const [fcInp, setFCInp] = useState<FCI>(FC_DEF)
+  const [arcInp, setArcInp] = useState<ARC>(ARC_DEF)
   const [apxInp, setApxInp] = useState<APXI>(APX_DEF)
   const [flashGen, setFlashGen] = useState(0)
   const flash = () => setFlashGen(g => g + 1)
 
-  const out: Out = clientId === 'firstcapital' ? calcFC(fcInp)
+  const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
+
+  const out: Out = clientId === 'arcturus' ? calcArcturus(arcInp)
     : clientId === 'apexretail' ? calcApex(apxInp)
     : calcMeridian(mInp)
 
@@ -381,7 +387,7 @@ function ScenariosContent() {
           </h1>
           <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '14px' }}>Change assumptions. See the impact. Make better decisions.</p>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {CLIENTS.map(c => (
+            {visibleClients.map(c => (
               <button key={c.id} onClick={() => { setClientId(c.id); flash() }}
                 style={{ padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', background: clientId === c.id ? '#2563EB' : '#F1F5F9', color: clientId === c.id ? 'white' : '#475569', transition: 'all 0.15s' }}>
                 {c.label}
@@ -397,8 +403,8 @@ function ScenariosContent() {
         {/* Left: Assumptions */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px 22px', position: 'sticky', top: '24px' }}>
           <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginBottom: '18px' }}>Your Assumptions</div>
-          {clientId === 'firstcapital'
-            ? <FCPanel inp={fcInp} setInp={setFCInp} onFlash={flash} />
+          {clientId === 'arcturus'
+            ? <ArcturusPanel inp={arcInp} setInp={setArcInp} onFlash={flash} />
             : clientId === 'apexretail'
             ? <ApexPanel inp={apxInp} setInp={setApxInp} onFlash={flash} />
             : <MeridianPanel inp={mInp} setInp={setMInp} onFlash={flash} />

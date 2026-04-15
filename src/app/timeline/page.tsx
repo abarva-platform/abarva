@@ -1,7 +1,7 @@
 'use client'
 import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 type Sev = 'green' | 'red' | 'amber' | 'gray'
 interface TEvent {
@@ -102,72 +102,72 @@ const MERIDIAN: TEvent[] = [
   },
 ]
 
-const FIRST_CAPITAL: TEvent[] = [
+const ARCTURUS: TEvent[] = [
   {
-    year: 2004, sev: 'gray',
-    title: 'FIS HORIZON Core Banking Deployed',
-    body: 'FIS HORIZON deployed as core banking platform. Industry-standard for regional banks at the time. Contract included a 15-year primary support commitment.',
-    impact: 'Foundation of all banking operations. Now 22 years old — the single largest constraint on digital capability and competitive positioning.',
+    year: 2010, sev: 'gray',
+    title: 'Bloomberg AIM Terminal Deployed — Core Data Hub',
+    body: 'Bloomberg AIM (Asset and Investment Manager) deployed as the central portfolio data system. Connected to trading, risk, and compliance workflows. Became the single source of truth for AUM data across $4.2B portfolio.',
+    impact: 'Now 16 years old. The Bloomberg API is legacy — batch-only, no real-time capability. Every AI initiative that needs live portfolio data is blocked until this is modernized.',
   },
   {
-    year: 2012, sev: 'amber',
-    title: 'Digital Banking Strategy — Q2 Platform Selected',
-    body: 'Digital transformation initiative launched. Q2 Holdings selected as digital banking platform. FIS HORIZON integration scoped as a phase 2 follow-on project.',
-    impact: 'Phase 2 was never completed. Balance display latency — 1.8M customers see yesterday\'s balances — traces directly to this incomplete integration 12 years later.',
+    year: 2012, sev: 'gray',
+    title: 'Advent Geneva Deployed — Portfolio Accounting',
+    body: 'Advent Geneva implemented for portfolio accounting, NAV calculation, and investor reporting. Replaced a spreadsheet-based system. Perceived as a modernization at the time.',
+    impact: 'Now 14 years old. 3-day batch processing cycle creates irreducible lag in all reporting. AI-powered real-time client reporting ($11M invested) is impossible until Geneva is replaced or modernized.',
   },
   {
-    year: 2018, sev: 'red',
-    title: 'Core Modernization Project Cancelled — $12M Spent',
-    body: 'Board approved core banking modernization. Vendor selected. $12M committed over 14 months. Project cancelled due to budget overruns and a CFO change that reset priorities.',
-    impact: 'Cancelled at the point of no return — money spent, systems disrupted, new architecture incomplete. Left FIS HORIZON more fragile than before.',
+    year: 2018, sev: 'amber',
+    title: 'Salesforce FSC Deployed — $14M/yr Contract',
+    body: 'Salesforce Financial Services Cloud deployed as the advisor CRM and client portal. Einstein AI capabilities included in the enterprise license — advisor productivity, churn signals, client 360.',
+    impact: 'Einstein has never been activated. FSC adoption is at 44% — 56% of advisors use workarounds. The SSO integration bug (Q2 2023) was never fixed, blocking all remaining adoption.',
   },
   {
-    year: 2020, sev: 'amber',
-    title: 'NICE Actimize AML Deployed — Never Upgraded',
-    body: 'NICE Actimize AML compliance platform deployed to address OCC examination pressure. Covered expectations at time of deployment. No upgrade lifecycle defined in the implementation.',
-    impact: 'Now two versions behind current. 78% false positive rate vs 45% benchmark. 3 FTEs permanently assigned to manual review — a cost that compounds annually.',
+    year: 2019, sev: 'red',
+    title: 'CDO Appointed — Resigned After 8 Months — Role Never Backfilled',
+    body: 'Chief Data Officer hired to address data governance concerns from the MAS FEAT pre-assessment. Role funded at $400K base. CDO resigned citing lack of mandate and C-suite support. Board decided to defer the backfill.',
+    impact: '14 data silos now operate with no governance authority. No golden record across Bloomberg, Aladdin, FSC, Geneva, Charles River, and Workday. CDO vacancy is the root cause blocking $94M in AI value.',
+  },
+  {
+    year: 2021, sev: 'amber',
+    title: '$94M AI Strategy Approved — 28 Initiatives — 3-Year Roadmap',
+    body: 'Board approved comprehensive AI strategy: $94M across 28 initiatives over 3 years. Initiatives span advisor AI, credit risk, client reporting, and ESG compliance. Celebrated as a bold commitment to AI-led differentiation.',
+    impact: '4 years on: $0 documented ROI. Every initiative that requires data integration or model deployment is blocked by the same 4 root causes that existed before the strategy was approved.',
   },
   {
     year: 2021, sev: 'red',
-    title: 'FedNow Announced — Digital Committee Formed — No Action',
-    body: 'Federal Reserve announced FedNow real-time payment network. First Capital formed a digital committee to evaluate participation. Committee met 6 times. No decision made.',
-    impact: '68% of peer banks are now live on FedNow. Every month without FedNow, commercial clients evaluate alternatives. Estimated 12-month attrition exposure: $23M in annual revenue.',
+    title: 'CRO Model Freeze Imposed — Risk Committee Concern',
+    body: 'After a credit risk model produced a false positive that nearly triggered a $340M hedge, the CRO imposed a freeze on all AI model updates. Risk committee ruling: no model can go live without a formal validation framework.',
+    impact: 'No validation framework was ever built. Freeze is now in its 4th year. Credit Risk AI ($34M invested), Portfolio Risk AI, and 2 other initiatives cannot go live until the freeze is lifted.',
   },
   {
-    year: 2022, sev: 'gray',
-    title: 'Post-COVID Branch Rationalization — 12 Closures',
-    body: '12 branches closed following post-COVID traffic analysis. 340 employees affected. Cost savings: $8.2M annually. Digital adoption expected to absorb displaced customers.',
-    impact: 'Digital adoption is 41% vs 67% benchmark. The transition has not landed. Branch customers who went digital encountered degraded digital experiences.',
+    year: 2022, sev: 'amber',
+    title: 'Charles River IMS Deployed — Disconnected From Everything',
+    body: 'Charles River Investment Management System deployed for order management and compliance. $8M implementation. Positioned as the bridge between Bloomberg AIM and trading.',
+    impact: 'No API integration with Bloomberg AIM or Advent Geneva was completed. Charles River operates as a 15th data silo. $8M investment produces no data value — it is a standalone compliance system.',
   },
   {
     year: 2023, sev: 'red',
-    title: 'OCC Examination — 3 MRAs Issued',
-    body: 'OCC annual examination. Result: 3 Matters Requiring Attention issued — AML model governance, core banking concentration risk, and digital banking integration gap.',
-    impact: 'All 3 MRAs still unresolved in 2026. Each passing quarter without resolution increases probability of a formal enforcement action with public disclosure.',
+    title: 'MAS FEAT Assessment — Model Governance Gaps Identified',
+    body: 'Monetary Authority of Singapore FEAT (Fairness, Ethics, Accountability, Transparency) assessment. Result: significant model governance gaps. AI initiatives must meet FEAT principles before deployment.',
+    impact: 'FEAT gaps compound the CRO freeze. Even if the CRO lifted the freeze, the MAS FEAT deficiencies would prevent live deployment in Singapore-regulated entities — 60% of AUM.',
   },
   {
-    year: 2024, sev: 'amber',
-    title: 'Digital Transformation Strategy — $180M — CFO Blocked',
-    body: 'Board presented with comprehensive digital transformation roadmap. $180M over 3 years to replace FIS HORIZON with a modern cloud core. Board approved in principle. CFO blocked budget citing capital adequacy concerns.',
-    impact: 'Decision deferred to 2025. Still deferred in 2026. Every year of delay compounds technical debt on a platform now in its 22nd year of production.',
-  },
-  {
-    year: 2025, sev: 'red',
-    title: 'FedNow Deadline — 68% of Peers Live — First Capital Still Not',
-    body: 'Informal market expectation: all major regional banks live on FedNow by 2025. First Capital: not live. Finzly integration would take 90 days to activate — decision deferred again in Q3 2024.',
-    impact: '3 commercial banking RFPs received from clients in Q1 2026. Revenue at risk if clients switch: $23M annually. Finzly can still be contracted — 90-day window.',
+    year: 2024, sev: 'red',
+    title: 'Board AI ROI Review — $94M Invested · $0 Documented Return',
+    body: 'Quarterly board review of AI portfolio. For the first time, the board requested a direct ROI mapping. Internal analysis: $94M invested across 28 initiatives. Documented annual value: $0. 6 initiatives live but underperforming.',
+    impact: 'Board mandated an independent assessment within 90 days. Arcturus engaged AbarVa. Root cause analysis identified 4 structural blockers — none of which were technology problems.',
   },
   {
     year: 2025, sev: 'red',
-    title: 'SQL Server 2017 End of Support — Still Running',
-    body: 'Microsoft SQL Server 2017 end of extended support: October 14, 2025. First Capital runs 11 critical databases on SQL Server 2017. No upgrade plan. No extended security update subscription.',
-    impact: 'Every unpatched vulnerability since October 2025 is an open attack surface. Q4 2025 security audit flagged this — no remediation budget allocated.',
+    title: 'Salesforce Einstein SSO Bug — 18 Months Unresolved',
+    body: 'The FSC SSO integration bug blocking 56% of advisors from the system was first reported Q2 2023. Salesforce professional services scoped a 6-week fix. Fix was deprioritized three times due to internal resource constraints.',
+    impact: 'Einstein AI — advisor productivity, churn signals, client 360 — cannot be activated until adoption reaches 85%+. $65M in committed AI value is blocked by an unscheduled 6-week fix.',
   },
   {
     year: 2026, sev: 'green', future: true,
-    title: 'The Inflection Point — If AbarVa Recommendations Are Followed',
-    body: 'FedNow activated via Finzly 90-day implementation. AML upgraded and moved to SageMaker — false positive rate drops from 78% to 35%. Modular API layer deployed over FIS HORIZON. SQL Server patched. OCC MRAs resolved.',
-    impact: 'Cost-to-income ratio moves from 68% toward 55% target. Commercial client attrition risk neutralized. OCC enforcement action avoided.',
+    title: 'The Inflection Point — AbarVa Wave 1 + Wave 2 Complete',
+    body: 'CDO appointed with full C-suite mandate. Golden record deployed across all 6 systems. CRO model validation framework established — freeze lifted. FSC SSO fixed, Einstein activated. Bloomberg API modernized to real-time.',
+    impact: '$292M annual value unlocked. 4 AI initiatives live and delivering: Advisor AI ($29M), Real-time Reporting ($18M), Credit Risk AI ($34M), FSC AI ($11M). Arcturus AI ROI positive for the first time.',
   },
 ]
 
@@ -240,17 +240,17 @@ const APEX: TEvent[] = [
   },
 ]
 
-const DATA: Record<string, TEvent[]> = { meridian: MERIDIAN, firstcapital: FIRST_CAPITAL, apexretail: APEX }
+const DATA: Record<string, TEvent[]> = { meridian: MERIDIAN, arcturus: ARCTURUS, apexretail: APEX }
 const META: Record<string, { title: string; sub: string }> = {
-  meridian:     { title: 'How Meridian Got Here',     sub: 'Every major technology and organizational decision since 2018 — and what it cost' },
-  firstcapital: { title: 'How First Capital Got Here', sub: 'Every major technology and strategic decision since 2004 — and what it cost' },
-  apexretail:   { title: 'How Apex Retail Got Here',   sub: 'Every major technology and operational decision since 2010 — and what it cost' },
+  meridian:   { title: 'How Meridian Got Here',   sub: 'Every major technology and organizational decision since 2018 — and what it cost' },
+  arcturus:   { title: 'How Arcturus Got Here',   sub: 'Every major technology and strategic decision since 2010 — and what it cost' },
+  apexretail: { title: 'How Apex Retail Got Here', sub: 'Every major technology and operational decision since 2010 — and what it cost' },
 }
 
 const CLIENTS = [
-  { id: 'meridian',     label: 'Meridian' },
-  { id: 'firstcapital', label: 'First Capital' },
-  { id: 'apexretail',   label: 'Apex Retail' },
+  { id: 'meridian',   label: 'Meridian' },
+  { id: 'arcturus',   label: 'Arcturus' },
+  { id: 'apexretail', label: 'Apex Retail' },
 ]
 
 function Card({ ev }: { ev: TEvent }) {
@@ -286,9 +286,10 @@ function Card({ ev }: { ev: TEvent }) {
 }
 
 function TimelineContent() {
-  const sp = useSearchParams()
-  const initial = sp.get('client') || 'meridian'
-  const [clientId, setClientId] = useState(initial)
+  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const [clientId, setClientId] = useState(ctxClientId)
+
+  const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
 
   const events = DATA[clientId] || MERIDIAN
   const meta = META[clientId] || META.meridian
@@ -318,7 +319,7 @@ function TimelineContent() {
 
         {/* Client tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '48px' }}>
-          {CLIENTS.map(cl => (
+          {visibleClients.map(cl => (
             <button key={cl.id} onClick={() => setClientId(cl.id)}
               style={{
                 padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
