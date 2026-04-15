@@ -1,41 +1,38 @@
 'use client'
 
-import { useUser } from '@clerk/nextjs'
+import { useUser, SignOutButton } from '@clerk/nextjs'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useCallback, Suspense } from 'react'
-import AbarvaNav from '@/components/AbarvaNav'
 import { SOLUTIONS, SolutionKey, PhaseKey, PhaseConfig } from '@/lib/solutions/solution-config'
 
-const T = {
-  bg: '#060A12',
-  surface: '#0D1520',
-  border: '#1C2D45',
-  teal: '#2DD4C8',
-  tealDim: 'rgba(45,212,200,0.10)',
-  tealBorder: 'rgba(45,212,200,0.25)',
-  text: '#EFF6FF',
-  text2: 'rgba(255,255,255,0.75)',
-  muted: 'rgba(255,255,255,0.6)',
-  red: '#EF4444',
-  redDim: 'rgba(239,68,68,0.10)',
-  amber: '#F59E0B',
-  green: '#34D399',
-  greenDim: 'rgba(52,211,153,0.10)',
-  indigo: '#818CF8',
-  mono: 'JetBrains Mono, Menlo, monospace',
-  sans: 'DM Sans, Inter, system-ui, sans-serif',
-}
+const BG = '#060A12'
+const CARD = '#0D1520'
+const BORDER = '#1C2D45'
+const TEAL = '#2DD4C8'
+const WHITE = '#EFF6FF'
+const MUTED = 'rgba(255,255,255,0.75)'
+const DIM = 'rgba(255,255,255,0.6)'
+const AMBER = '#F59E0B'
+const GREEN = '#22C55E'
+const RED = '#EF4444'
+const SANS = 'DM Sans, sans-serif'
+const MONO = 'JetBrains Mono, monospace'
 
 const PHASE_STATUSES = {
-  locked: { label: 'Upcoming', color: T.muted },
-  in_progress: { label: 'In Progress', color: T.teal },
-  awaiting_maestro_review: { label: 'In Progress', color: T.teal },
-  published_to_client: { label: 'Awaiting Your Review', color: T.amber },
-  awaiting_client_approval: { label: 'Awaiting Your Review', color: T.amber },
-  disputed: { label: 'Under Review', color: T.amber },
-  refining: { label: 'Under Review', color: T.amber },
-  approved: { label: 'Approved', color: T.green },
-  complete: { label: 'Complete', color: T.green },
+  locked: { label: 'Upcoming', color: MUTED },
+  in_progress: { label: 'In Progress', color: TEAL },
+  awaiting_maestro_review: { label: 'In Progress', color: TEAL },
+  published_to_client: { label: 'Awaiting Your Review', color: AMBER },
+  awaiting_client_approval: { label: 'Awaiting Your Review', color: AMBER },
+  disputed: { label: 'Under Review', color: AMBER },
+  refining: { label: 'Under Review', color: AMBER },
+  approved: { label: 'Approved', color: GREEN },
+  complete: { label: 'Complete', color: GREEN },
+}
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function PortalContent() {
@@ -52,18 +49,19 @@ function PortalContent() {
   const [phases, setPhases] = useState<any[]>([])
   const [outputs, setOutputs] = useState<any[]>([])
   const [genomeMatches, setGenomeMatches] = useState<any[]>([])
+  const [findings, setFindings] = useState<any[]>([])
+  const [workstreams, setWorkstreams] = useState<any[]>([])
 
-  const [activePhaseId, setActivePhaseId] = useState<string | null>(null)
-  const [disputeText, setDisputeText] = useState('')
-  const [disputePhaseId, setDisputePhaseId] = useState<string | null>(null)
-  const [commentSection, setCommentSection] = useState<string | null>(null)
-  const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [showApprovalModal, setShowApprovalModal] = useState(false)
+  const [approvalSuccess, setApprovalSuccess] = useState(false)
 
   const [dataRequests, setDataRequests] = useState<any[]>([])
   const [numberEntryId, setNumberEntryId] = useState<string | null>(null)
   const [numberInputs, setNumberInputs] = useState<Record<string, string>>({})
   const [respondingId, setRespondingId] = useState<string | null>(null)
+
+  const [showMessageModal, setShowMessageModal] = useState(false)
 
   const role = user?.publicMetadata?.role as string | undefined
   const clientId = clientIdOverride || user?.publicMetadata?.clientId as string | undefined
@@ -73,14 +71,13 @@ function PortalContent() {
   useEffect(() => {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
-    // client role = portal user, admin can preview with ?client= param
     if (role !== 'client' && role !== 'admin') { router.push('/'); return }
     if (!clientId) { router.push('/sign-in'); return }
   }, [isLoaded, user, router, role, clientId])
 
   const clientName = clientId === 'arcturus' ? 'Arcturus Financial Group' :
     clientId === 'meridian' ? 'Meridian Health System' :
-    clientId?.charAt(0).toUpperCase() + (clientId?.slice(1) || '')
+    clientId ? (clientId.charAt(0).toUpperCase() + clientId.slice(1)) : ''
 
   const loadData = useCallback(async () => {
     if (!clientId || !solution) return
@@ -94,13 +91,10 @@ function PortalContent() {
     if (data.exists) {
       setEngagement(data.engagement)
       setPhases(data.phases || [])
-      // Client portal only sees published outputs
       setOutputs((data.outputs || []).filter((o: any) => o.status === 'published' || o.status === 'approved'))
       setGenomeMatches(data.genomeMatches || [])
-
-      // Set active phase to current engagement phase
-      const current = data.phases?.find((p: any) => p.phase_number === data.engagement.current_phase)
-      if (current) setActivePhaseId(current.id)
+      setFindings(data.findings || [])
+      setWorkstreams(data.workstreams || [])
     }
     setLoading(false)
   }, [clientId, solution])
@@ -152,7 +146,7 @@ function PortalContent() {
     setSubmitting(false)
   }
 
-  const handleDispute = async (phaseId: string) => {
+  const handleDispute = async (phaseId: string, disputeText: string) => {
     if (!disputeText.trim()) return
     setSubmitting(true)
     await fetch(`/api/engage/phase/${phaseId}/approve`, {
@@ -166,16 +160,14 @@ function PortalContent() {
         comment: disputeText
       })
     })
-    setDisputeText('')
-    setDisputePhaseId(null)
     await loadData()
     setSubmitting(false)
   }
 
   if (!isLoaded || loading) {
     return (
-      <div style={{ minHeight: '100vh', background: T.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: T.mono, fontSize: '11px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' }}>
           Loading your engagement...
         </div>
       </div>
@@ -184,29 +176,26 @@ function PortalContent() {
 
   if (!solutionConfig) {
     return (
-      <div style={{ minHeight: '100vh', background: T.bg, paddingTop: '64px' }}>
-        <AbarvaNav />
-        <div style={{ padding: '48px', color: T.red, fontFamily: T.mono }}>Invalid solution: {solution}</div>
+      <div style={{ minHeight: '100vh', background: BG }}>
+        <TopBar clientName={clientName} userName={user?.fullName || ''} />
+        <div style={{ padding: '48px', color: RED, fontFamily: MONO }}>Invalid solution: {solution}</div>
       </div>
     )
   }
 
   if (!engagement) {
     return (
-      <div style={{ minHeight: '100vh', background: T.bg }}>
-        <AbarvaNav />
-        <div style={{
-          paddingTop: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          minHeight: 'calc(100vh - 64px)'
-        }}>
+      <div style={{ minHeight: '100vh', background: BG }}>
+        <TopBar clientName={clientName} userName={user?.fullName || ''} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 56px)' }}>
           <div style={{ textAlign: 'center', maxWidth: '480px', padding: '0 24px' }}>
-            <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
               {solutionConfig.intelligence_name}
             </div>
-            <h1 style={{ fontFamily: T.sans, fontSize: '24px', color: T.text, margin: '0 0 12px', fontWeight: 600 }}>
+            <h1 style={{ fontFamily: SANS, fontSize: '24px', color: WHITE, margin: '0 0 12px', fontWeight: 600 }}>
               {solutionConfig.name}
             </h1>
-            <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text2, margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, margin: 0, lineHeight: 1.6 }}>
               Your engagement is being prepared. You will be notified when your Maestro is ready to begin.
             </p>
           </div>
@@ -215,668 +204,936 @@ function PortalContent() {
     )
   }
 
-  const activePhase = phases.find(p => p.id === activePhaseId)
-  const activePhaseConfig = activePhase ? solutionConfig.phases[activePhase.phase_number as PhaseKey] : null
-  const activeOutput = outputs.find(o => o.phase_id === activePhaseId)
+  // Derived state
+  const currentPhase = phases.find((p: any) => p.phase_number === engagement.current_phase)
+  const isReadyForApproval = currentPhase?.status === 'awaiting_client_approval' || currentPhase?.status === 'published_to_client'
+  const isComplete = engagement.status === 'complete'
+  const isInProgress = !isReadyForApproval && !isComplete
+
+  const completedPhaseCount = phases.filter((p: any) => (p.status === 'approved' || p.status === 'complete') && p.phase_number > 0).length
+
+  const phaseStatusLabel = (() => {
+    if (!currentPhase) return 'IN PROGRESS'
+    const s = currentPhase.status
+    if (s === 'in_progress' || s === 'awaiting_maestro_review') return 'IN PROGRESS'
+    if (s === 'published_to_client' || s === 'awaiting_client_approval') return 'AWAITING APPROVAL'
+    if (s === 'approved' || s === 'complete') return 'COMPLETE'
+    if (s === 'disputed' || s === 'refining') return 'UNDER REVIEW'
+    return 'IN PROGRESS'
+  })()
+
+  const topFindings = findings
+    .filter((f: any) => f.severity !== 'positive' && f.status !== 'removed')
+    .sort((a: any, b: any) => {
+      const order: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
+      return (order[a.severity] ?? 3) - (order[b.severity] ?? 3)
+    })
+    .slice(0, 3)
+
+  const pendingDataRequests = dataRequests.filter((r: any) => r.status === 'pending' || r.status === 'numbers_entered' || r.status === 'uploaded')
+
+  const phaseFindings = (phaseNum: number) => {
+    const phase = phases.find((p: any) => p.phase_number === phaseNum)
+    if (!phase) return []
+    return findings.filter((f: any) => f.phase_id === phase.id)
+  }
+
+  const currentPhaseFindings = currentPhase ? phaseFindings(currentPhase.phase_number) : []
+  const criticalCount = currentPhaseFindings.filter((f: any) => f.severity === 'critical').length
+  const highCount = currentPhaseFindings.filter((f: any) => f.severity === 'high').length
+
+  // Approval modal findings
+  const modalFindings = currentPhaseFindings
+    .filter((f: any) => f.severity === 'critical' || f.severity === 'high')
+    .slice(0, 5)
 
   return (
-    <div style={{ minHeight: '100vh', background: T.bg }}>
-      <AbarvaNav />
-      <div style={{ maxWidth: '900px', margin: '0 auto', padding: '88px 24px 80px' }}>
+    <div style={{ minHeight: '100vh', background: BG }}>
+      {/* Pulse animation */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
+      `}</style>
 
-        {/* Header */}
-        <div style={{ marginBottom: '40px' }}>
-          <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>
-            {solutionConfig.intelligence_name}
-          </div>
-          <h1 style={{ fontFamily: T.sans, fontSize: '28px', color: T.text, margin: '0 0 8px', fontWeight: 600 }}>
-            {clientName}
-          </h1>
-          <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text2, margin: 0 }}>
-            {solutionConfig.name} · AbarVa Engagement Portal
-          </p>
+      {/* 1. CUSTOM TOP BAR */}
+      <TopBar clientName={clientName} userName={user?.fullName || ''} />
+
+      {/* 2. HERO STATUS CARD */}
+      <div style={{
+        background: 'rgba(13,20,32,0.80)',
+        borderBottom: '1px solid rgba(45,212,200,0.15)',
+        padding: '28px 5vw'
+      }}>
+        {/* Row 1 */}
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: '12px' }}>
+          {solutionConfig.intelligence_name} · {clientName.toUpperCase()}
         </div>
 
-        {/* Data Requests (Phase 0 client intake) */}
-        {dataRequests.filter(r => r.status === 'pending' || r.status === 'numbers_entered' || r.status === 'uploaded').length > 0 && (
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '14px' }}>
-              Data Requests · {dataRequests.filter(r => r.status === 'pending').length} Pending
+        {/* Row 2 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ fontFamily: SANS, fontSize: '28px', fontWeight: 700, color: WHITE }}>
+            {solutionConfig.name}
+          </div>
+          {engagement.current_phase != null && (
+            <div style={{
+              border: '1px solid rgba(45,212,200,0.30)',
+              borderRadius: '6px',
+              padding: '6px 14px',
+              fontFamily: MONO,
+              fontSize: '10px',
+              color: TEAL,
+              whiteSpace: 'nowrap'
+            }}>
+              PHASE {engagement.current_phase} · {phaseStatusLabel}
             </div>
-            {dataRequests.map(req => {
-              const isPending = req.status === 'pending'
-              const isDone = req.status === 'numbers_entered' || req.status === 'uploaded'
-              const isExpanded = numberEntryId === req.id
-              return (
-                <div key={req.id} style={{
-                  background: T.surface,
-                  border: `1px solid ${isDone ? T.green + '40' : isExpanded ? T.tealBorder : T.border}`,
-                  borderLeft: `3px solid ${isDone ? T.green : isExpanded ? T.teal : T.amber}`,
-                  borderRadius: '10px', padding: '20px', marginBottom: '10px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, fontWeight: 600 }}>
-                          {req.file_requested}
-                        </div>
-                        {isDone && (
-                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.green, background: T.greenDim, borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                            {req.status === 'numbers_entered' ? 'Numbers provided' : 'Uploaded'}
-                          </span>
-                        )}
-                        {isPending && (
-                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.amber, background: 'rgba(245,158,11,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                            Requested
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, marginBottom: '4px' }}>
-                        {req.why_needed}
-                      </div>
-                      <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal }}>
-                        Unlocks: {req.what_it_unlocks}
-                      </div>
-                    </div>
-                    {isPending && !isExpanded && (
-                      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                        <button
-                          onClick={() => { setNumberEntryId(req.id) }}
-                          style={{
-                            background: 'transparent', color: T.teal, border: `1px solid ${T.tealBorder}`,
-                            borderRadius: '6px', padding: '7px 14px', cursor: 'pointer',
-                            fontFamily: T.mono, fontSize: '10px', letterSpacing: '.04em', whiteSpace: 'nowrap'
-                          }}
-                        >
-                          Enter 3 numbers instead
-                        </button>
-                        <button
-                          style={{
-                            background: T.teal, color: T.bg,
-                            border: 'none', borderRadius: '6px', padding: '7px 16px', cursor: 'pointer',
-                            fontFamily: T.mono, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em', whiteSpace: 'nowrap'
-                          }}
-                        >
-                          Upload file
-                        </button>
-                      </div>
-                    )}
-                  </div>
+          )}
+        </div>
 
-                  {/* 3-numbers entry form */}
-                  {isExpanded && (
-                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${T.border}` }}>
-                      {req.three_number_alternative && (
-                        <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, marginBottom: '12px', fontStyle: 'italic' }}>
-                          {req.three_number_alternative}
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                        {[0, 1, 2].map(i => (
-                          <input
-                            key={i}
-                            type="text"
-                            placeholder={`Number ${i + 1}`}
-                            value={numberInputs[`${req.id}_${i}`] || ''}
-                            onChange={e => setNumberInputs(prev => ({ ...prev, [`${req.id}_${i}`]: e.target.value }))}
-                            style={{
-                              flex: 1, minWidth: '100px', background: T.bg, border: `1px solid ${T.border}`,
-                              borderRadius: '6px', padding: '10px 12px',
-                              fontFamily: T.mono, fontSize: '13px', color: T.text, outline: 'none'
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                          onClick={() => setNumberEntryId(null)}
-                          style={{
-                            background: 'transparent', color: T.text2, border: `1px solid ${T.border}`,
-                            borderRadius: '6px', padding: '8px 16px', cursor: 'pointer',
-                            fontFamily: T.mono, fontSize: '10px', letterSpacing: '.04em'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          disabled={respondingId === req.id}
-                          onClick={() => handleNumberSubmit(req.id)}
-                          style={{
-                            background: T.teal, color: T.bg, border: 'none',
-                            borderRadius: '6px', padding: '8px 20px', cursor: respondingId === req.id ? 'not-allowed' : 'pointer',
-                            fontFamily: T.mono, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em',
-                            opacity: respondingId === req.id ? 0.7 : 1
-                          }}
-                        >
-                          {respondingId === req.id ? 'Submitting...' : 'Submit numbers'}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+        {/* Row 3 — Progress bar */}
+        <div style={{ marginTop: '16px' }}>
+          <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px' }}>
+            <div style={{
+              width: `${Math.max(0, Math.min(100, (completedPhaseCount / 4) * 100))}%`,
+              background: TEAL,
+              height: '4px',
+              borderRadius: '2px',
+              transition: 'width 0.4s ease'
+            }} />
           </div>
-        )}
-
-        {/* Phase Timeline */}
-        <div style={{
-          background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px',
-          padding: '24px', marginBottom: '32px'
-        }}>
-          <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '20px' }}>
-            Engagement Progress
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0', overflowX: 'auto' }}>
-            {phases.filter(p => p.phase_number > 0).map((phase, i, arr) => {
-              const pConfig = solutionConfig.phases[phase.phase_number as PhaseKey]
-              const statusInfo = PHASE_STATUSES[phase.status as keyof typeof PHASE_STATUSES] || { label: 'Locked', color: T.muted }
-              const isActive = phase.id === activePhaseId
-              return (
-                <div key={phase.id} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: '120px' }}>
-                  <div
-                    onClick={() => setActivePhaseId(phase.id)}
-                    style={{ flex: 1, textAlign: 'center', cursor: 'pointer' }}
-                  >
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '50%', margin: '0 auto 8px',
-                      background: isActive ? T.teal : phase.status === 'approved' || phase.status === 'complete' ? T.green : T.surface,
-                      border: `2px solid ${isActive ? T.teal : statusInfo.color}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      transition: 'all 0.2s'
-                    }}>
-                      <span style={{
-                        fontFamily: T.mono, fontSize: '11px', fontWeight: 700,
-                        color: isActive ? T.bg : phase.status === 'approved' || phase.status === 'complete' ? T.bg : statusInfo.color
-                      }}>
-                        {phase.phase_number}
-                      </span>
-                    </div>
-                    <div style={{ fontFamily: T.sans, fontSize: '11px', color: isActive ? T.teal : T.text2, fontWeight: isActive ? 600 : 400, lineHeight: 1.3 }}>
-                      {pConfig.name}
-                    </div>
-                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: statusInfo.color, marginTop: '3px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                      {statusInfo.label}
-                    </div>
-                  </div>
-                  {i < arr.length - 1 && (
-                    <div style={{
-                      width: '32px', height: '2px', flexShrink: 0,
-                      background: phase.status === 'approved' || phase.status === 'complete' ? T.green : T.border
-                    }} />
-                  )}
-                </div>
-              )
-            })}
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.40)', marginTop: '6px' }}>
+            Phase {engagement.current_phase} of 4 · {completedPhaseCount * 25}% complete
           </div>
         </div>
 
-        {/* Active Phase Content */}
-        {activePhase && activePhaseConfig && (
-          <div>
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
-                Phase {activePhase.phase_number} · {activePhaseConfig.name}
-              </div>
-              <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text2, margin: 0, lineHeight: 1.6 }}>
-                {activePhaseConfig.description}
-              </p>
-            </div>
+        {/* Row 4 */}
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.40)', marginTop: '10px' }}>
+          Started: {formatDate(engagement.created_at)} · Engagement: {engagement.engagement_name || '—'}
+        </div>
+      </div>
 
-            {!activeOutput ? (
-              // Nothing published yet
-              <div style={{
-                background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px',
-                padding: '48px 32px', textAlign: 'center'
-              }}>
-                <div style={{ width: '48px', height: '48px', margin: '0 auto 20px', borderRadius: '50%', background: T.tealDim, border: `1px solid ${T.tealBorder}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontFamily: T.mono, fontSize: '18px', color: T.teal }}>◎</div>
-                </div>
-                <div style={{ fontFamily: T.sans, fontSize: '16px', color: T.text, fontWeight: 600, marginBottom: '12px' }}>
-                  Your Maestro is preparing Phase {activePhase.phase_number}
-                </div>
-                <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text2, margin: '0 auto', maxWidth: '400px', lineHeight: 1.6 }}>
-                  You will be notified when the Phase {activePhase.phase_number} {activePhaseConfig.output_title} is ready for your review.
-                </p>
-              </div>
-            ) : (
-              // Output published — show document
-              <div>
-                <div style={{
-                  background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px',
-                  padding: '32px', marginBottom: '24px'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-                    <div>
-                      <h2 style={{ fontFamily: T.sans, fontSize: '20px', color: T.text, margin: '0 0 6px', fontWeight: 600 }}>
-                        {activeOutput.title}
-                      </h2>
-                      <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.muted, letterSpacing: '.06em' }}>
-                        Version {activeOutput.version} · Published {new Date(activeOutput.published_at || activeOutput.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-                      </div>
-                    </div>
-                    {activeOutput.status === 'approved' && (
-                      <div style={{
-                        fontFamily: T.mono, fontSize: '10px', color: T.green,
-                        background: T.greenDim, border: `1px solid ${T.green}30`,
-                        borderRadius: '6px', padding: '6px 12px', letterSpacing: '.08em', textTransform: 'uppercase'
-                      }}>
-                        Approved
-                      </div>
-                    )}
-                  </div>
+      {/* 3. THREE-COLUMN BODY */}
+      <div style={{ padding: '32px 5vw', display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
 
-                  <OutputDocument content={activeOutput.content} outputType={activeOutput.output_type} onComment={(section) => {
-                    setCommentSection(section)
-                    setCommentText('')
-                  }} />
-                </div>
+        {/* LEFT COLUMN */}
+        <div style={{ flex: '0 0 28%', minWidth: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: '14px' }}>
+            ENGAGEMENT PHASES
+          </div>
 
-                {/* Comment form */}
-                {commentSection && (
+          {[1, 2, 3, 4].map((phaseNum, idx) => {
+            const phase = phases.find((p: any) => p.phase_number === phaseNum)
+            const pConfig = solutionConfig.phases[phaseNum as PhaseKey]
+            const status = phase?.status || 'locked'
+            const isApproved = status === 'approved' || status === 'complete'
+            const isActive = status === 'in_progress' || status === 'awaiting_maestro_review' || status === 'published_to_client' || status === 'awaiting_client_approval' || status === 'disputed' || status === 'refining'
+            const isLocked = status === 'locked'
+            const phaseWorkstreams = phase ? workstreams.filter((w: any) => w.phase_id === phase.id) : []
+
+            return (
+              <div key={phaseNum}>
+                {/* Connecting line before (except first) */}
+                {idx > 0 && (
                   <div style={{
-                    background: T.surface, border: `1px solid ${T.tealBorder}`,
-                    borderRadius: '12px', padding: '20px', marginBottom: '24px'
-                  }}>
-                    <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
-                      Comment on: {commentSection}
-                    </div>
-                    <textarea
-                      value={commentText}
-                      onChange={e => setCommentText(e.target.value)}
-                      placeholder="Share your thoughts on this section with your Maestro..."
-                      rows={3}
-                      style={{
-                        width: '100%', background: T.bg, border: `1px solid ${T.border}`,
-                        borderRadius: '8px', padding: '12px', resize: 'vertical',
-                        fontFamily: T.sans, fontSize: '13px', color: T.text,
-                        outline: 'none', lineHeight: 1.5, boxSizing: 'border-box'
-                      }}
-                    />
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
-                      <button
-                        onClick={() => { setCommentSection(null); setCommentText('') }}
-                        style={{
-                          background: 'transparent', color: T.text2, border: `1px solid ${T.border}`,
-                          borderRadius: '6px', padding: '8px 16px', cursor: 'pointer',
-                          fontFamily: T.mono, fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase'
-                        }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        disabled={!commentText.trim() || submitting}
-                        style={{
-                          background: commentText.trim() ? T.teal : T.border,
-                          color: commentText.trim() ? T.bg : T.muted,
-                          border: 'none', borderRadius: '6px', padding: '8px 20px',
-                          cursor: commentText.trim() ? 'pointer' : 'not-allowed',
-                          fontFamily: T.mono, fontSize: '10px', fontWeight: 700,
-                          letterSpacing: '.06em', textTransform: 'uppercase'
-                        }}
-                      >
-                        Send to Maestro
-                      </button>
-                    </div>
-                  </div>
+                    width: '2px',
+                    height: '12px',
+                    background: isApproved || (phases.find((p: any) => p.phase_number === phaseNum - 1)?.status === 'approved' || phases.find((p: any) => p.phase_number === phaseNum - 1)?.status === 'complete') ? TEAL : 'rgba(255,255,255,0.10)',
+                    marginLeft: '9px',
+                    marginBottom: '0px'
+                  }} />
                 )}
 
-                {/* Approval controls */}
-                {activeOutput.status === 'published' && activePhase.status === 'published_to_client' && (() => {
-                  const activePhaseConfig = solutionConfig?.phases[activePhase.phase_number as PhaseKey] as PhaseConfig | undefined
-                  const gateType = activePhaseConfig?.gate_type ?? 'hard'
-                  const isHardGate = gateType !== 'soft'
-                  return (
-                  <div style={{
-                    background: T.surface,
-                    border: `1px solid ${isHardGate ? T.border : 'rgba(45,212,200,0.25)'}`,
-                    borderRadius: '12px', padding: '28px'
-                  }}>
-                    {/* Gate type badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                      <div style={{
-                        fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em',
-                        textTransform: 'uppercase',
-                        color: isHardGate ? T.amber : T.teal,
-                        background: isHardGate ? 'rgba(245,158,11,0.08)' : 'rgba(45,212,200,0.08)',
-                        border: `1px solid ${isHardGate ? 'rgba(245,158,11,0.3)' : 'rgba(45,212,200,0.3)'}`,
-                        borderRadius: '4px', padding: '3px 8px',
-                      }}>
-                        {isHardGate ? '🔒 Hard Gate' : '· Soft Gate'}
-                      </div>
-                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2 }}>
-                        {activePhaseConfig?.gate_description}
-                      </div>
+                {/* Phase card */}
+                <div style={{
+                  borderRadius: '8px',
+                  padding: '14px',
+                  marginBottom: '4px',
+                  background: isApproved ? 'rgba(34,197,94,0.04)' : isActive ? 'rgba(45,212,200,0.06)' : 'transparent',
+                  border: isApproved ? '1px solid rgba(34,197,94,0.30)' : isActive ? '1px solid rgba(45,212,200,0.20)' : '1px solid rgba(255,255,255,0.06)',
+                  borderLeft: isApproved ? '2px solid rgba(34,197,94,0.30)' : isActive ? '3px solid ' + TEAL : '2px solid rgba(255,255,255,0.08)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    {/* Icon */}
+                    <div style={{ flexShrink: 0, marginTop: '1px' }}>
+                      {isApproved ? (
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.40)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '11px', color: GREEN
+                        }}>✓</div>
+                      ) : isActive ? (
+                        <div style={{
+                          width: '8px', height: '8px', borderRadius: '50%',
+                          background: TEAL, marginTop: '6px',
+                          animation: 'pulse 2s infinite'
+                        }} />
+                      ) : (
+                        <div style={{
+                          width: '20px', height: '20px', borderRadius: '50%',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', color: 'rgba(255,255,255,0.20)'
+                        }}>○</div>
+                      )}
                     </div>
-                    <div style={{ fontFamily: T.sans, fontSize: '16px', color: T.text, fontWeight: 600, marginBottom: '8px' }}>
-                      Does this accurately describe your situation?
-                    </div>
-                    <p style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, margin: '0 0 24px', lineHeight: 1.6 }}>
-                      {isHardGate
-                        ? `Your approval unlocks Phase ${activePhase.phase_number + 1}. This is a hard gate — approval is required to proceed. Flag anything that needs revision first.`
-                        : `Your approval moves the engagement to Phase ${activePhase.phase_number + 1}. If something needs to be corrected, flag it and your Maestro will revise.`
-                      }
-                    </p>
 
-                    {disputePhaseId !== activePhase.id ? (
-                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                        <button
-                          onClick={() => handleApprove(activePhase.id)}
-                          disabled={submitting}
-                          style={{
-                            flex: 1, minWidth: '200px', background: T.green,
-                            color: T.bg, border: 'none', borderRadius: '8px',
-                            padding: '14px 24px', cursor: submitting ? 'not-allowed' : 'pointer',
-                            fontFamily: T.sans, fontSize: '14px', fontWeight: 600,
-                            opacity: submitting ? 0.7 : 1
-                          }}
-                        >
-                          Approve — Continue to Phase {activePhase.phase_number + 1}
-                        </button>
-                        <button
-                          onClick={() => setDisputePhaseId(activePhase.id)}
-                          style={{
-                            flex: 1, minWidth: '200px', background: 'transparent',
-                            color: T.text2, border: `1px solid ${T.border}`,
-                            borderRadius: '8px', padding: '14px 24px', cursor: 'pointer',
-                            fontFamily: T.sans, fontSize: '14px'
-                          }}
-                        >
-                          I need to flag something
-                        </button>
+                    {/* Content */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: MONO, fontSize: '9px', color: isApproved ? MUTED : isActive ? TEAL : 'rgba(255,255,255,0.30)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '3px' }}>
+                        Phase {phaseNum}
                       </div>
-                    ) : (
-                      <div>
-                        <textarea
-                          value={disputeText}
-                          onChange={e => setDisputeText(e.target.value)}
-                          placeholder="What needs to be corrected or clarified?"
-                          rows={3}
-                          style={{
-                            width: '100%', background: T.bg, border: `1px solid ${T.border}`,
-                            borderRadius: '8px', padding: '12px', resize: 'vertical',
-                            fontFamily: T.sans, fontSize: '13px', color: T.text,
-                            outline: 'none', lineHeight: 1.5, boxSizing: 'border-box',
-                            marginBottom: '12px'
-                          }}
-                        />
+                      <div style={{ fontFamily: SANS, fontSize: isActive ? '14px' : '13px', fontWeight: isActive ? 700 : 400, color: isLocked ? 'rgba(255,255,255,0.30)' : WHITE, marginBottom: '4px' }}>
+                        {pConfig?.name || `Phase ${phaseNum}`}
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: '9px', color: isApproved ? GREEN : isActive ? TEAL : 'rgba(255,255,255,0.25)' }}>
+                        {isApproved
+                          ? `Approved · ${formatDate(phase?.approved_at)}`
+                          : isActive
+                          ? `In progress · ${phaseWorkstreams.length} workstream${phaseWorkstreams.length !== 1 ? 's' : ''} active`
+                          : 'Locked'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Fee Status Card */}
+          <div style={{
+            background: 'rgba(45,212,200,0.04)',
+            border: '1px solid rgba(45,212,200,0.15)',
+            borderRadius: '10px',
+            padding: '16px',
+            marginTop: '20px'
+          }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+              FEE STATUS
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '24px', fontWeight: 700, color: TEAL, marginBottom: '6px' }}>
+              {engagement.metadata?.verified_savings || '—'}
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: '14px', color: WHITE, marginBottom: '8px' }}>
+              Fee earned: {engagement.metadata?.fee_earned || '$0'}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.50)', marginBottom: '10px' }}>
+              Fee triggered at $10M verified savings
+            </div>
+            <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px' }}>
+              <div style={{ height: '4px', width: '0%', background: TEAL, borderRadius: '2px' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* CENTER COLUMN */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
+          {/* Data Requests — ACTION NEEDED */}
+          {pendingDataRequests.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, textTransform: 'uppercase', letterSpacing: '.12em' }}>
+                  ACTION NEEDED
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.40)' }}>
+                  {dataRequests.filter((r: any) => r.status === 'pending').length} pending data request{dataRequests.filter((r: any) => r.status === 'pending').length !== 1 ? 's' : ''}
+                </div>
+              </div>
+              {dataRequests.map((req: any) => {
+                const isPending = req.status === 'pending'
+                const isDone = req.status === 'numbers_entered' || req.status === 'uploaded'
+                const isExpanded = numberEntryId === req.id
+                return (
+                  <div key={req.id} style={{
+                    background: CARD,
+                    border: `1px solid ${isDone ? 'rgba(34,197,94,0.25)' : isExpanded ? 'rgba(45,212,200,0.25)' : BORDER}`,
+                    borderLeft: `3px solid ${isDone ? GREEN : isExpanded ? TEAL : AMBER}`,
+                    borderRadius: '10px', padding: '20px', marginBottom: '10px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                          <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600 }}>
+                            {req.file_requested}
+                          </div>
+                          {isDone && (
+                            <span style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, background: 'rgba(34,197,94,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                              {req.status === 'numbers_entered' ? 'Numbers provided' : 'Uploaded'}
+                            </span>
+                          )}
+                          {isPending && (
+                            <span style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, background: 'rgba(245,158,11,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                              Requested
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, marginBottom: '4px' }}>
+                          {req.why_needed}
+                        </div>
+                        <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL }}>
+                          Unlocks: {req.what_it_unlocks}
+                        </div>
+                      </div>
+                      {isPending && !isExpanded && (
+                        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                          <button
+                            onClick={() => setNumberEntryId(req.id)}
+                            style={{
+                              background: 'transparent', color: TEAL, border: '1px solid rgba(45,212,200,0.25)',
+                              borderRadius: '6px', padding: '7px 14px', cursor: 'pointer',
+                              fontFamily: MONO, fontSize: '10px', letterSpacing: '.04em', whiteSpace: 'nowrap'
+                            }}
+                          >
+                            Enter 3 numbers instead
+                          </button>
+                          <button
+                            style={{
+                              background: TEAL, color: BG,
+                              border: 'none', borderRadius: '6px', padding: '7px 16px', cursor: 'pointer',
+                              fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em', whiteSpace: 'nowrap'
+                            }}
+                          >
+                            Upload file
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {isExpanded && (
+                      <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${BORDER}` }}>
+                        {req.three_number_alternative && (
+                          <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, marginBottom: '12px', fontStyle: 'italic' }}>
+                            {req.three_number_alternative}
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                          {[0, 1, 2].map(i => (
+                            <input
+                              key={i}
+                              type="text"
+                              placeholder={`Number ${i + 1}`}
+                              value={numberInputs[`${req.id}_${i}`] || ''}
+                              onChange={e => setNumberInputs(prev => ({ ...prev, [`${req.id}_${i}`]: e.target.value }))}
+                              style={{
+                                flex: 1, minWidth: '100px', background: BG, border: `1px solid ${BORDER}`,
+                                borderRadius: '6px', padding: '10px 12px',
+                                fontFamily: MONO, fontSize: '13px', color: WHITE, outline: 'none'
+                              }}
+                            />
+                          ))}
+                        </div>
                         <div style={{ display: 'flex', gap: '8px' }}>
                           <button
-                            onClick={() => { setDisputePhaseId(null); setDisputeText('') }}
+                            onClick={() => setNumberEntryId(null)}
                             style={{
-                              background: 'transparent', color: T.text2, border: `1px solid ${T.border}`,
-                              borderRadius: '6px', padding: '10px 20px', cursor: 'pointer',
-                              fontFamily: T.sans, fontSize: '13px'
+                              background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`,
+                              borderRadius: '6px', padding: '8px 16px', cursor: 'pointer',
+                              fontFamily: MONO, fontSize: '10px', letterSpacing: '.04em'
                             }}
                           >
                             Cancel
                           </button>
                           <button
-                            onClick={() => handleDispute(activePhase.id)}
-                            disabled={!disputeText.trim() || submitting}
+                            disabled={respondingId === req.id}
+                            onClick={() => handleNumberSubmit(req.id)}
                             style={{
-                              background: T.red, color: '#fff', border: 'none',
-                              borderRadius: '6px', padding: '10px 20px',
-                              cursor: !disputeText.trim() || submitting ? 'not-allowed' : 'pointer',
-                              fontFamily: T.sans, fontSize: '13px', fontWeight: 600,
-                              opacity: !disputeText.trim() || submitting ? 0.7 : 1
+                              background: TEAL, color: BG, border: 'none',
+                              borderRadius: '6px', padding: '8px 20px', cursor: respondingId === req.id ? 'not-allowed' : 'pointer',
+                              fontFamily: MONO, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em',
+                              opacity: respondingId === req.id ? 0.7 : 1
                             }}
                           >
-                            {submitting ? 'Sending...' : 'Flag to Maestro'}
+                            {respondingId === req.id ? 'Submitting...' : 'Submit numbers'}
                           </button>
                         </div>
                       </div>
                     )}
                   </div>
-                  )
-                })()}
+                )
+              })}
+            </div>
+          )}
 
-                {activePhase.status === 'disputed' && (
-                  <div style={{
-                    background: T.redDim, border: `1px solid ${T.red}30`, borderRadius: '12px',
-                    padding: '20px', textAlign: 'center'
-                  }}>
-                    <div style={{ fontFamily: T.sans, fontSize: '14px', color: T.text, fontWeight: 600, marginBottom: '6px' }}>
-                      Your feedback has been sent to your Maestro
-                    </div>
-                    <p style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, margin: 0 }}>
-                      They are reviewing your comments and will share a revised document shortly.
-                    </p>
-                  </div>
-                )}
+          {/* LATEST INTELLIGENCE */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em' }}>
+                LATEST INTELLIGENCE
               </div>
+              {findings.length > 0 && (
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, cursor: 'pointer' }}>
+                  View all {findings.length} findings →
+                </div>
+              )}
+            </div>
+
+            {topFindings.length === 0 ? (
+              <div style={{ fontFamily: MONO, fontSize: '11px', color: 'rgba(255,255,255,0.40)', fontStyle: 'italic' }}>
+                AbarVa will publish intelligence as the engagement progresses.
+              </div>
+            ) : (
+              topFindings.map((f: any) => (
+                <FindingCard key={f.id} finding={f} phases={phases} workstreams={workstreams} />
+              ))
             )}
           </div>
-        )}
 
-        {/* Completed phases — collapsible */}
-        {phases.filter(p => p.phase_number > 0 && (p.status === 'approved' || p.status === 'complete') && p.id !== activePhaseId).length > 0 && (
-          <div style={{ marginTop: '40px' }}>
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
-              Completed Phases
+          {/* PUBLISHED OUTPUTS */}
+          <div style={{ marginTop: '24px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: '14px' }}>
+              PUBLISHED OUTPUTS
             </div>
-            {phases
-              .filter(p => p.phase_number > 0 && (p.status === 'approved' || p.status === 'complete') && p.id !== activePhaseId)
-              .map(phase => {
-                const pConfig = solutionConfig.phases[phase.phase_number as PhaseKey]
-                const pOutput = outputs.find(o => o.phase_id === phase.id && (o.status === 'approved' || o.status === 'published'))
+
+            {outputs.length === 0 ? (
+              <div style={{ fontFamily: MONO, fontSize: '11px', color: 'rgba(255,255,255,0.40)', fontStyle: 'italic', textAlign: 'center', padding: '24px 0' }}>
+                AbarVa will publish outputs as each phase is completed.
+              </div>
+            ) : (
+              outputs.map((output: any) => {
+                const phase = phases.find((p: any) => p.id === output.phase_id)
+                const phaseNum = phase?.phase_number
                 return (
-                  <div key={phase.id} style={{
-                    background: T.surface, border: `1px solid ${T.border}`, borderRadius: '10px',
-                    padding: '16px 20px', marginBottom: '8px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between'
+                  <div key={output.id} style={{
+                    display: 'flex', alignItems: 'center', gap: '12px',
+                    padding: '12px 0',
+                    borderBottom: '1px solid rgba(255,255,255,0.05)'
                   }}>
-                    <div>
-                      <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, fontWeight: 600 }}>
-                        Phase {phase.phase_number} · {pConfig.name}
+                    {/* Phase badge */}
+                    {phaseNum != null && (
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: 'rgba(45,212,200,0.10)',
+                        border: '1px solid rgba(45,212,200,0.25)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: MONO, fontSize: '9px', color: TEAL, flexShrink: 0
+                      }}>
+                        P{phaseNum}
                       </div>
-                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.green, marginTop: '4px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
-                        Approved {phase.approved_at ? new Date(phase.approved_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : ''}
-                      </div>
+                    )}
+                    {/* Title */}
+                    <div style={{ flex: 1, fontFamily: SANS, fontSize: '13px', color: WHITE, minWidth: 0 }}>
+                      {output.title}
                     </div>
-                    <button
-                      onClick={() => setActivePhaseId(phase.id)}
-                      style={{
-                        background: 'transparent', color: T.teal, border: `1px solid ${T.tealBorder}`,
-                        borderRadius: '6px', padding: '6px 14px', cursor: 'pointer',
-                        fontFamily: T.mono, fontSize: '10px', letterSpacing: '.06em', textTransform: 'uppercase'
-                      }}
-                    >
+                    {/* Date */}
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, flexShrink: 0 }}>
+                      {formatDate(output.approved_at || output.created_at)}
+                    </div>
+                    {/* View */}
+                    <button style={{
+                      background: 'transparent', color: TEAL,
+                      border: '1px solid rgba(45,212,200,0.25)',
+                      borderRadius: '4px', padding: '4px 10px',
+                      fontFamily: MONO, fontSize: '9px', cursor: 'pointer', flexShrink: 0
+                    }}>
                       View
+                    </button>
+                    {/* Download */}
+                    <button style={{
+                      background: 'transparent', color: WHITE,
+                      border: '1px solid rgba(255,255,255,0.15)',
+                      borderRadius: '4px', padding: '4px 10px',
+                      fontFamily: MONO, fontSize: '9px', cursor: 'pointer', flexShrink: 0
+                    }}>
+                      Download
                     </button>
                   </div>
                 )
               })
-            }
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT COLUMN */}
+        <div style={{ flex: '0 0 260px', position: 'sticky', top: '72px' }}>
+
+          {/* ACTION CARD */}
+          {isReadyForApproval ? (
+            // State A — Ready for approval
+            <div style={{
+              background: 'rgba(45,212,200,0.06)',
+              border: '1px solid rgba(45,212,200,0.30)',
+              borderRadius: '12px',
+              padding: '24px'
+            }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+                YOUR ACTION
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: '16px', fontWeight: 700, color: WHITE, marginBottom: '10px' }}>
+                Phase {currentPhase?.phase_number} is ready for your review
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: '13px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.6, marginBottom: '8px' }}>
+                {solutionConfig.phases[currentPhase?.phase_number as PhaseKey]?.gate_description || 'Review the findings and approve to proceed to the next phase.'}
+              </div>
+              {(criticalCount > 0 || highCount > 0) && (
+                <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, marginBottom: '16px' }}>
+                  {criticalCount > 0 ? `${criticalCount} critical` : ''}{criticalCount > 0 && highCount > 0 ? ' · ' : ''}{highCount > 0 ? `${highCount} high` : ''} findings identified
+                </div>
+              )}
+              <button
+                onClick={() => setShowApprovalModal(true)}
+                style={{
+                  width: '100%', background: TEAL, color: BG,
+                  border: 'none', borderRadius: '8px', padding: '14px',
+                  fontFamily: SANS, fontSize: '14px', fontWeight: 700,
+                  cursor: 'pointer', marginTop: '4px'
+                }}
+              >
+                Review &amp; Approve Phase {currentPhase?.phase_number} →
+              </button>
+              <button style={{
+                width: '100%', background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.20)',
+                color: MUTED, borderRadius: '8px', padding: '12px',
+                fontFamily: SANS, fontSize: '13px', cursor: 'pointer', marginTop: '10px'
+              }}>
+                Download Phase Summary
+              </button>
+            </div>
+          ) : isComplete ? (
+            // State C — Complete
+            <div style={{
+              background: 'rgba(34,197,94,0.06)',
+              border: '1px solid rgba(34,197,94,0.25)',
+              borderRadius: '12px',
+              padding: '24px'
+            }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+                ENGAGEMENT COMPLETE
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: '28px', fontWeight: 700, color: TEAL, marginBottom: '6px' }}>
+                {engagement.metadata?.verified_savings || '—'}
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: '14px', color: WHITE, marginBottom: '20px' }}>
+                {engagement.metadata?.fee_earned || 'Fee calculation pending'}
+              </div>
+              <button style={{
+                width: '100%', background: TEAL, color: BG,
+                border: 'none', borderRadius: '8px', padding: '14px',
+                fontFamily: SANS, fontSize: '14px', fontWeight: 700, cursor: 'pointer'
+              }}>
+                Download Final Report →
+              </button>
+            </div>
+          ) : (
+            // State B — In progress
+            <div style={{
+              background: 'rgba(13,20,32,0.80)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              padding: '24px'
+            }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+                IN PROGRESS
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: '13px', color: 'rgba(255,255,255,0.70)', lineHeight: 1.6 }}>
+                AbarVa is working on Phase {currentPhase?.phase_number}. You will be notified when it is ready for your review.
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.40)', marginTop: '12px' }}>
+                Last activity: {formatDate(engagement.updated_at || engagement.created_at)}
+              </div>
+            </div>
+          )}
+
+          {/* MAESTRO CONTACT CARD */}
+          <div style={{
+            background: 'rgba(13,20,32,0.60)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '10px',
+            padding: '16px',
+            marginTop: '16px'
+          }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.40)', textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+              YOUR MAESTRO
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: WHITE, marginBottom: '4px' }}>
+              Anand Sundaram
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, marginBottom: '12px' }}>
+              AbarVa Lead
+            </div>
+            <div
+              onClick={() => setShowMessageModal(true)}
+              style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, cursor: 'pointer' }}
+            >
+              Send a message →
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. BELOW-FOLD SECTIONS */}
+      <div style={{ padding: '0 5vw 32px' }}>
+
+        {/* ENGAGEMENT OUTPUTS TABLE */}
+        <div style={{ marginBottom: '48px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: '16px' }}>
+            ENGAGEMENT OUTPUTS
+          </div>
+          {outputs.length === 0 ? (
+            <div style={{ fontFamily: MONO, fontSize: '11px', color: MUTED, fontStyle: 'italic', textAlign: 'center', padding: '24px' }}>
+              No outputs published yet.
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0 }}>
+              <thead>
+                <tr>
+                  {['Phase', 'Output Name', 'Published', 'Status', 'Actions'].map(col => (
+                    <th key={col} style={{
+                      fontFamily: MONO, fontSize: '10px', color: TEAL,
+                      padding: '8px 12px', background: 'rgba(45,212,200,0.04)',
+                      borderBottom: `1px solid ${BORDER}`, textAlign: 'left',
+                      fontWeight: 400, letterSpacing: '.06em', textTransform: 'uppercase'
+                    }}>
+                      {col}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {outputs.map((output: any) => {
+                  const phase = phases.find((p: any) => p.id === output.phase_id)
+                  const phaseNum = phase?.phase_number
+                  const isApprovedOut = output.status === 'approved'
+                  return (
+                    <tr key={output.id}>
+                      <td style={{ fontFamily: MONO, fontSize: '13px', color: WHITE, padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        {phaseNum != null ? (
+                          <span style={{
+                            fontFamily: MONO, fontSize: '9px', color: TEAL,
+                            background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.20)',
+                            borderRadius: '3px', padding: '2px 6px'
+                          }}>P{phaseNum}</span>
+                        ) : '—'}
+                      </td>
+                      <td style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        {output.title}
+                      </td>
+                      <td style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        {formatDate(output.approved_at || output.created_at)}
+                      </td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{
+                          fontFamily: MONO, fontSize: '9px',
+                          color: isApprovedOut ? GREEN : TEAL,
+                          background: isApprovedOut ? 'rgba(34,197,94,0.08)' : 'rgba(45,212,200,0.08)',
+                          border: `1px solid ${isApprovedOut ? 'rgba(34,197,94,0.25)' : 'rgba(45,212,200,0.25)'}`,
+                          borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase'
+                        }}>
+                          {isApprovedOut ? 'Approved' : 'Published'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button style={{
+                            background: 'transparent', color: TEAL, border: 'none',
+                            fontFamily: MONO, fontSize: '9px', cursor: 'pointer', padding: 0
+                          }}>View</button>
+                          <button style={{
+                            background: 'transparent', color: TEAL, border: 'none',
+                            fontFamily: MONO, fontSize: '9px', cursor: 'pointer', padding: 0
+                          }}>Download</button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        {/* GENOME PATTERN SUMMARY */}
+        {genomeMatches.length > 0 && (
+          <div style={{ marginBottom: '48px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: '4px' }}>
+              GENOME PATTERN SUMMARY
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: '12px', color: 'rgba(255,255,255,0.60)', marginBottom: '20px' }}>
+              Patterns matched against your engagement data
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+              {genomeMatches.map((gm: any, i: number) => (
+                <div key={i} style={{
+                  background: CARD,
+                  border: `1px solid ${BORDER}`,
+                  borderTop: `2px solid ${TEAL}`,
+                  borderRadius: '10px',
+                  padding: '20px'
+                }}>
+                  <div style={{ fontFamily: MONO, fontSize: '24px', fontWeight: 700, color: TEAL, marginBottom: '8px' }}>
+                    {gm.pattern_code}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>
+                    {gm.pattern_name}
+                  </div>
+                  <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', marginBottom: '8px' }}>
+                    <div style={{
+                      height: '4px',
+                      width: `${Math.min(100, (gm.failure_rate || 0) * 100)}%`,
+                      background: TEAL, borderRadius: '2px'
+                    }} />
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: 'rgba(255,255,255,0.70)', lineHeight: 1.5, marginBottom: '10px' }}>
+                    {gm.evidence ? gm.evidence.slice(0, 100) + (gm.evidence.length > 100 ? '…' : '') : ''}
+                  </div>
+                  <span style={{
+                    fontFamily: MONO, fontSize: '9px',
+                    color: gm.confidence === 'confirmed' ? TEAL : MUTED,
+                    textTransform: 'uppercase', letterSpacing: '.06em'
+                  }}>
+                    {gm.confidence === 'confirmed' ? 'CONFIRMED' : 'PROBABLE'}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
-    </div>
-  )
-}
 
-function OutputDocument({ content, outputType, onComment }: { content: any; outputType: string; onComment: (section: string) => void }) {
-  if (!content) return null
-
-  const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div style={{ marginBottom: '28px', paddingBottom: '24px', borderBottom: `1px solid ${T.border}` }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-        <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>
-          {title}
+      {/* FOOTER */}
+      <div style={{ padding: '32px 5vw', textAlign: 'center', borderTop: `1px solid ${BORDER}` }}>
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.30)' }}>
+          AbarVa · Intelligence. Now act on it.
         </div>
-        <button
-          onClick={() => onComment(title)}
-          style={{
-            background: 'transparent', color: T.muted, border: `1px solid ${T.border}`,
-            borderRadius: '4px', padding: '3px 10px', cursor: 'pointer',
-            fontFamily: T.mono, fontSize: '9px', letterSpacing: '.06em', textTransform: 'uppercase'
-          }}
-        >
-          Comment
-        </button>
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.20)', marginTop: '4px' }}>
+          Confidential — for {clientName} only
+        </div>
       </div>
-      {children}
-    </div>
-  )
 
-  if (outputType === 'readiness_scorecard') {
-    return (
-      <div>
-        {content.verdict_summary && (
-          <Section title="Summary">
-            <div style={{ fontFamily: T.sans, fontSize: '15px', color: T.text, lineHeight: 1.7 }}>
-              {content.verdict_summary}
-            </div>
-          </Section>
-        )}
-        {content.top_findings && (
-          <Section title="Key Findings">
-            {content.top_findings.map((f: any, i: number) => (
-              <FindingItem key={i} finding={f} />
-            ))}
-          </Section>
-        )}
-        {content.recommended_action && (
-          <Section title="Recommended Action">
-            <div style={{
-              background: T.tealDim, border: `1px solid ${T.tealBorder}`,
-              borderRadius: '8px', padding: '16px',
-              fontFamily: T.sans, fontSize: '14px', color: T.text, lineHeight: 1.6
-            }}>
-              {content.recommended_action}
-            </div>
-          </Section>
-        )}
-      </div>
-    )
-  }
-
-  if (outputType === 'situation_brief') {
-    return (
-      <div>
-        {content.headline && (
-          <Section title="Headline Finding">
-            <div style={{ fontFamily: T.sans, fontSize: '16px', color: T.text, lineHeight: 1.5, fontWeight: 600 }}>
-              {content.headline}
-            </div>
-          </Section>
-        )}
-        {content.key_findings && (
-          <Section title="Key Findings">
-            {content.key_findings.map((f: any, i: number) => (
-              <FindingItem key={i} finding={f} />
-            ))}
-          </Section>
-        )}
-        {content.what_is_working && (
-          <Section title="What Is Working">
-            {content.what_is_working.map((w: any, i: number) => (
-              <div key={i} style={{ marginBottom: '12px', padding: '12px', background: T.greenDim, borderRadius: '8px', border: `1px solid ${T.green}20` }}>
-                <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.green, fontWeight: 600, marginBottom: '4px' }}>{w.title}</div>
-                <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2 }}>{w.description}</div>
-              </div>
-            ))}
-          </Section>
-        )}
-        {content.recovery_range && (
-          <Section title="Recovery Range">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-              {['conservative', 'base', 'optimistic'].map(scenario => (
-                <div key={scenario} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '14px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    {scenario}
-                  </div>
-                  <div style={{ fontFamily: T.sans, fontSize: '18px', color: T.teal, fontWeight: 700 }}>
-                    {content.recovery_range[scenario] || '—'}
-                  </div>
+      {/* 4. APPROVAL MODAL */}
+      {showApprovalModal && currentPhase && (
+        <div style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(6,10,18,0.95)',
+          zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{
+            background: CARD,
+            border: '1px solid rgba(45,212,200,0.30)',
+            borderRadius: '14px',
+            padding: '32px',
+            maxWidth: '480px',
+            width: '90%'
+          }}>
+            {approvalSuccess ? (
+              <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: 'rgba(34,197,94,0.15)', border: `1px solid ${GREEN}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 16px',
+                  fontSize: '20px', color: GREEN
+                }}>✓</div>
+                <div style={{ fontFamily: SANS, fontSize: '16px', fontWeight: 700, color: WHITE, marginBottom: '8px' }}>
+                  Phase {currentPhase.phase_number} approved
                 </div>
-              ))}
-            </div>
-          </Section>
-        )}
-        {content.recommended_first_action && (
-          <Section title="First Action">
-            <div style={{ background: T.tealDim, border: `1px solid ${T.tealBorder}`, borderRadius: '8px', padding: '16px', fontFamily: T.sans, fontSize: '14px', color: T.text, lineHeight: 1.6 }}>
-              {content.recommended_first_action}
-            </div>
-          </Section>
-        )}
-      </div>
-    )
-  }
-
-  // Generic fallback for other output types
-  return (
-    <div>
-      {Object.entries(content).map(([key, val]) => {
-        if (typeof val === 'string' && val) {
-          return (
-            <Section key={key} title={key.replace(/_/g, ' ')}>
-              <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, lineHeight: 1.6 }}>
-                {val}
+                <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED }}>
+                  AbarVa will begin Phase {currentPhase.phase_number + 1}.
+                </div>
               </div>
-            </Section>
-          )
-        }
-        if (Array.isArray(val) && val.length > 0) {
-          return (
-            <Section key={key} title={key.replace(/_/g, ' ')}>
-              {val.map((item: any, i: number) => (
-                <div key={i} style={{ background: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px', padding: '12px', marginBottom: '8px' }}>
-                  {typeof item === 'object' ? (
-                    Object.entries(item).map(([k, v]) => (
-                      <div key={k} style={{ marginBottom: '4px' }}>
-                        <span style={{ fontFamily: T.mono, fontSize: '10px', color: T.muted }}>{k}: </span>
-                        <span style={{ fontFamily: T.sans, fontSize: '13px', color: T.text }}>{String(v)}</span>
+            ) : (
+              <>
+                <div style={{ fontFamily: SANS, fontSize: '20px', fontWeight: 700, color: WHITE, marginBottom: '12px' }}>
+                  Approve Phase {currentPhase.phase_number} — {solutionConfig.phases[currentPhase.phase_number as PhaseKey]?.name || ''}
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: '14px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.6, marginTop: '12px' }}>
+                  By approving, you confirm that AbarVa may proceed to Phase {currentPhase.phase_number + 1}.
+                  This approval is logged with your name, role, and timestamp.
+                </div>
+
+                {modalFindings.length > 0 && (
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+                      FINDINGS YOU ARE APPROVING
+                    </div>
+                    {modalFindings.map((f: any) => (
+                      <div key={f.id} style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.6, marginBottom: '6px' }}>
+                        · {f.title}
                       </div>
-                    ))
-                  ) : (
-                    <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2 }}>{String(item)}</div>
-                  )}
-                </div>
-              ))}
-            </Section>
-          )
-        }
-        return null
-      })}
-    </div>
-  )
-}
+                    ))}
+                    {currentPhaseFindings.filter((f: any) => f.severity === 'critical' || f.severity === 'high').length > 5 && (
+                      <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginTop: '6px' }}>
+                        + {currentPhaseFindings.filter((f: any) => f.severity === 'critical' || f.severity === 'high').length - 5} additional findings
+                      </div>
+                    )}
+                  </div>
+                )}
 
-function FindingItem({ finding }: { finding: any }) {
-  const colors: Record<string, string> = { critical: T.red, high: T.amber, medium: T.text2, low: T.muted, positive: T.green }
-  const c = colors[finding.severity] || T.text2
-  return (
-    <div style={{
-      background: T.bg, border: `1px solid ${c}20`, borderLeft: `3px solid ${c}`,
-      borderRadius: '8px', padding: '14px', marginBottom: '10px'
-    }}>
-      <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, fontWeight: 600, marginBottom: '6px', lineHeight: 1.4 }}>
-        {finding.title}
-      </div>
-      {finding.description && (
-        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, lineHeight: 1.6, marginBottom: '8px' }}>
-          {finding.description}
+                <button
+                  disabled={submitting}
+                  onClick={async () => {
+                    setSubmitting(true)
+                    await fetch(`/api/engage/phase/${currentPhase.id}/approve`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        action: 'approved',
+                        actorName: user?.fullName || clientName,
+                        actorRole: role || 'client',
+                        comment: 'Approved via client portal'
+                      })
+                    })
+                    setApprovalSuccess(true)
+                    setTimeout(() => {
+                      setShowApprovalModal(false)
+                      setApprovalSuccess(false)
+                      loadData()
+                    }, 2000)
+                    setSubmitting(false)
+                  }}
+                  style={{
+                    width: '100%', background: submitting ? 'rgba(45,212,200,0.5)' : TEAL,
+                    color: BG, border: 'none', borderRadius: '8px', padding: '14px',
+                    fontFamily: SANS, fontSize: '14px', fontWeight: 700,
+                    cursor: submitting ? 'not-allowed' : 'pointer', marginTop: '20px'
+                  }}
+                >
+                  {submitting ? 'Approving...' : 'Confirm Approval →'}
+                </button>
+                <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                  <button
+                    onClick={() => setShowApprovalModal(false)}
+                    style={{
+                      background: 'transparent', border: 'none',
+                      color: 'rgba(255,255,255,0.60)', fontSize: '13px',
+                      cursor: 'pointer', fontFamily: SANS
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
-      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+    </div>
+  )
+}
+
+// TOP BAR COMPONENT
+function TopBar({ clientName, userName }: { clientName: string; userName: string }) {
+  return (
+    <div style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      height: '56px',
+      background: 'rgba(6,10,18,0.95)',
+      backdropFilter: 'blur(12px)',
+      borderBottom: '1px solid rgba(45,212,200,0.12)',
+      padding: '0 5vw',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    }}>
+      {/* LEFT: AbarVa wordmark */}
+      <div>
+        <span style={{ fontFamily: 'Georgia, serif', fontSize: '17px', fontWeight: 800, color: WHITE }}>Abar</span>
+        <span style={{ fontFamily: MONO, fontSize: '23px', fontWeight: 900, color: TEAL }}>Va</span>
+      </div>
+
+      {/* CENTER: client name */}
+      <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: WHITE }}>
+        {clientName}
+      </div>
+
+      {/* RIGHT: user name + sign out */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <span style={{ fontFamily: SANS, fontSize: '13px', color: MUTED }}>{userName}</span>
+        <SignOutButton>
+          <button style={{
+            background: 'transparent', border: 'none',
+            color: TEAL, fontSize: '13px', cursor: 'pointer',
+            fontFamily: SANS, padding: 0
+          }}>
+            Sign out
+          </button>
+        </SignOutButton>
+      </div>
+    </div>
+  )
+}
+
+// FINDING CARD COMPONENT
+function FindingCard({ finding, phases, workstreams }: { finding: any; phases: any[]; workstreams: any[] }) {
+  const severityColor = finding.severity === 'critical' ? RED
+    : finding.severity === 'high' ? '#F97316'
+    : finding.severity === 'medium' ? AMBER
+    : MUTED
+
+  const severityBg = finding.severity === 'critical' ? 'rgba(239,68,68,0.12)'
+    : finding.severity === 'high' ? 'rgba(249,115,22,0.12)'
+    : finding.severity === 'medium' ? 'rgba(245,158,11,0.12)'
+    : 'rgba(255,255,255,0.06)'
+
+  const phase = phases.find((p: any) => p.id === finding.phase_id)
+  const ws = workstreams.find((w: any) => w.id === finding.workstream_id)
+  const contextLabel = ws?.name || (phase ? `Phase ${phase.phase_number}` : '—')
+
+  return (
+    <div style={{
+      background: CARD,
+      border: '1px solid rgba(45,212,200,0.10)',
+      borderRadius: '10px',
+      padding: '18px 20px',
+      marginBottom: '12px',
+      cursor: 'pointer',
+      transition: 'border-color 0.2s'
+    }}
+      onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.25)')}
+      onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.10)')}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
         <span style={{
-          fontFamily: T.mono, fontSize: '9px', color: c, background: `${c}15`,
-          borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em'
-        }}>{finding.severity}</span>
-        {finding.genome_pattern && (
+          fontFamily: MONO, fontSize: '9px',
+          color: severityColor, background: severityBg,
+          borderRadius: '3px', padding: '2px 6px',
+          letterSpacing: '.06em', textTransform: 'uppercase'
+        }}>
+          {finding.severity?.toUpperCase() || 'FINDING'}
+        </span>
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {finding.genome_pattern && (
+            <span style={{
+              fontFamily: MONO, fontSize: '10px', color: TEAL,
+              border: '1px solid rgba(45,212,200,0.25)',
+              background: 'rgba(45,212,200,0.06)',
+              borderRadius: '3px', padding: '2px 6px'
+            }}>
+              {finding.genome_pattern}
+            </span>
+          )}
           <span style={{
-            fontFamily: T.mono, fontSize: '9px', color: T.red, background: 'rgba(239,68,68,0.10)',
+            fontFamily: MONO, fontSize: '9px',
+            color: 'rgba(45,212,200,0.80)',
+            background: 'rgba(45,212,200,0.08)',
+            border: '1px solid rgba(45,212,200,0.20)',
             borderRadius: '3px', padding: '2px 6px'
-          }}>{finding.genome_pattern}</span>
-        )}
-        {finding.source_files?.map((sf: string) => (
-          <span key={sf} style={{
-            fontFamily: T.mono, fontSize: '9px', color: T.teal, background: T.tealDim,
-            borderRadius: '3px', padding: '2px 6px'
-          }}>{sf}</span>
-        ))}
+          }}>
+            CONFIRMED
+          </span>
+        </div>
+      </div>
+      <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: WHITE, marginTop: '10px' }}>
+        {finding.title}
+      </div>
+      <div style={{
+        fontFamily: SANS, fontSize: '13px', color: 'rgba(255,255,255,0.78)',
+        lineHeight: 1.6, marginTop: '6px',
+        overflow: 'hidden', display: '-webkit-box',
+        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical'
+      } as React.CSSProperties}>
+        {finding.body || finding.description || finding.summary || ''}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)' }}>
+          {contextLabel}
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL }}>
+          View full finding →
+        </div>
       </div>
     </div>
   )
@@ -885,8 +1142,8 @@ function FindingItem({ finding }: { finding: any }) {
 export default function PortalPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', color: '#2DD4C8', letterSpacing: '.1em', textTransform: 'uppercase' }}>
+      <div style={{ minHeight: '100vh', background: BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' }}>
           Loading...
         </div>
       </div>
