@@ -407,7 +407,7 @@ export default function MaestroWorkspace() {
             <h1 style={{ fontFamily: T.sans, fontSize: '28px', color: T.text, margin: '0 0 12px', fontWeight: 600 }}>
               {clientName} × {solutionConfig.name}
             </h1>
-            <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text2, margin: '0 0 32px', lineHeight: 1.6 }}>
+            <p style={{ fontFamily: T.sans, fontSize: '14px', color: T.text, margin: '0 0 32px', lineHeight: 1.6 }}>
               No engagement found. Start a new engagement to begin Phase 0 readiness assessment.
             </p>
             <p style={{ fontFamily: T.mono, fontSize: '11px', color: T.muted, margin: '0 0 24px' }}>
@@ -459,7 +459,7 @@ export default function MaestroWorkspace() {
           {clientName}
         </div>
         <div style={{ color: T.border }}>·</div>
-        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2 }}>
+        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text }}>
           {solutionConfig.name}
         </div>
         {activePhase && (
@@ -503,7 +503,7 @@ export default function MaestroWorkspace() {
               borderRadius: '10px', padding: '6px 0', zIndex: 300, minWidth: '260px',
               boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
             }}>
-              <div style={{ padding: '4px 14px 8px', fontFamily: T.mono, fontSize: '8px', color: T.muted, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+              <div style={{ padding: '4px 14px 8px', fontFamily: T.mono, fontSize: '8px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>
                 Engagement slots
               </div>
               {engagementList.map(eng => (
@@ -522,7 +522,7 @@ export default function MaestroWorkspace() {
                     <div style={{ fontFamily: T.sans, fontSize: '12px', color: eng.is_active ? T.teal : T.text, fontWeight: eng.is_active ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {eng.engagement_name || 'Unnamed'}
                     </div>
-                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, marginTop: '1px' }}>
+                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2, marginTop: '1px' }}>
                       Phase {eng.current_phase} · {eng.status}
                     </div>
                   </div>
@@ -561,7 +561,7 @@ export default function MaestroWorkspace() {
 
         <a href={`/portal/${solution}?client=${clientId}`} target="_blank" style={{
           fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase',
-          color: T.text2, textDecoration: 'none', padding: '4px 10px',
+          color: T.text, textDecoration: 'none', padding: '4px 10px',
           border: `1px solid ${T.border}`, borderRadius: '4px'
         }}>
           View Client Portal
@@ -579,7 +579,7 @@ export default function MaestroWorkspace() {
         }}>
           {/* Phase Navigator */}
           <div style={{ padding: '0 16px', marginBottom: '8px' }}>
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
               Phases
             </div>
             {phases.map(phase => {
@@ -621,7 +621,7 @@ export default function MaestroWorkspace() {
                     {pConfig.name}
                   </div>
                   {isLocked && (
-                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, marginTop: '4px' }}>
+                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2, marginTop: '4px' }}>
                       {pConfig.unlock_condition}
                     </div>
                   )}
@@ -633,7 +633,7 @@ export default function MaestroWorkspace() {
           {/* Genome Matches */}
           {genomeMatches.length > 0 && (
             <div style={{ padding: '0 16px', marginTop: '16px' }}>
-              <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
                 Genome Patterns ({genomeMatches.length})
               </div>
               {genomeMatches.map(gm => (
@@ -649,8 +649,8 @@ export default function MaestroWorkspace() {
                       textTransform: 'uppercase'
                     }}>{gm.confidence}</span>
                   </div>
-                  <div style={{ fontFamily: T.sans, fontSize: '11px', color: T.text2 }}>{gm.pattern_name}</div>
-                  <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, marginTop: '4px' }}>
+                  <div style={{ fontFamily: T.sans, fontSize: '11px', color: T.text }}>{gm.pattern_name}</div>
+                  <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2, marginTop: '4px' }}>
                     {Math.round(gm.failure_rate * 100)}% failure rate
                   </div>
                 </div>
@@ -704,7 +704,7 @@ export default function MaestroWorkspace() {
                       <div style={{
                         background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px', padding: '24px'
                       }}>
-                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
                           Select Engagement Track
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '10px' }}>
@@ -726,7 +726,7 @@ export default function MaestroWorkspace() {
                               <div style={{ fontFamily: T.sans, fontSize: '13px', color: selectedTrack === track.id ? T.teal : T.text, fontWeight: 600, marginBottom: '4px' }}>
                                 {track.label}
                               </div>
-                              <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, lineHeight: 1.5 }}>
+                              <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text, lineHeight: 1.5 }}>
                                 {track.desc}
                               </div>
                             </button>
@@ -760,7 +760,7 @@ export default function MaestroWorkspace() {
                   {/* Phase 0 messages */}
                   {phaseWorkstreams.length > 0 && (
                     <div style={{ marginTop: '24px' }}>
-                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
                         Analysis Notes
                       </div>
                       {messages.map(msg => (
@@ -778,7 +778,7 @@ export default function MaestroWorkspace() {
                       <div style={{ fontFamily: T.sans, fontSize: '14px', color: T.text, marginBottom: '8px', fontWeight: 600 }}>
                         Ready to proceed to Phase 1?
                       </div>
-                      <p style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, margin: '0 0 16px', lineHeight: 1.6 }}>
+                      <p style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, margin: '0 0 16px', lineHeight: 1.6 }}>
                         Review the readiness scorecard above. Approving Phase 0 will unlock Phase 1 —
                         {activePhaseConfig ? ` ${solutionConfig.phases[1].name}` : ''} — and pre-populate the default workstreams with opening prompts.
                       </p>
@@ -823,7 +823,7 @@ export default function MaestroWorkspace() {
                         <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.indigo, letterSpacing: '.1em', textTransform: 'uppercase' }}>
                           Vendor Intelligence
                         </div>
-                        <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2 }}>
+                        <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text }}>
                           Score vendors against Genome track record — not analyst rankings
                         </div>
                       </div>
@@ -887,7 +887,7 @@ export default function MaestroWorkspace() {
                   {/* Chat area */}
                   <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
                     {messagesLoading ? (
-                      <div style={{ color: T.muted, fontFamily: T.mono, fontSize: '11px', textAlign: 'center', paddingTop: '40px' }}>
+                      <div style={{ color: T.text2, fontFamily: T.mono, fontSize: '11px', textAlign: 'center', paddingTop: '40px' }}>
                         Loading...
                       </div>
                     ) : (
@@ -973,7 +973,7 @@ export default function MaestroWorkspace() {
               )}
             </>
           ) : (
-            <div style={{ padding: '48px', textAlign: 'center', color: T.muted, fontFamily: T.mono, fontSize: '12px' }}>
+            <div style={{ padding: '48px', textAlign: 'center', color: T.text2, fontFamily: T.mono, fontSize: '12px' }}>
               Select a phase to begin
             </div>
           )}
@@ -996,7 +996,7 @@ export default function MaestroWorkspace() {
                   borderBottom: `2px solid ${rightPanel === panel ? T.teal : 'transparent'}`,
                   padding: '10px 4px', cursor: 'pointer',
                   fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase',
-                  color: rightPanel === panel ? T.teal : T.muted
+                  color: rightPanel === panel ? T.teal : T.text2
                 }}
               >
                 {panel}
@@ -1058,17 +1058,17 @@ export default function MaestroWorkspace() {
               boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
             }}
           >
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
               Engagement Slots
             </div>
             <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '6px' }}>
               New Engagement
             </div>
-            <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, marginBottom: '24px', lineHeight: 1.6 }}>
+            <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, marginBottom: '24px', lineHeight: 1.6 }}>
               Creates a fresh {solutionConfig?.name || solution} engagement for {clientId}. The current active engagement is preserved and can be switched back at any time.
             </div>
 
-            <label style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+            <label style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
               Engagement Name
             </label>
             <input
@@ -1091,7 +1091,7 @@ export default function MaestroWorkspace() {
                 style={{
                   padding: '9px 18px', borderRadius: '7px', cursor: 'pointer',
                   background: 'transparent', border: `1px solid ${T.border}`,
-                  fontFamily: T.sans, fontSize: '13px', color: T.text2
+                  fontFamily: T.sans, fontSize: '13px', color: T.text
                 }}
               >
                 Cancel
@@ -1136,7 +1136,7 @@ function MessageBubble({ msg, streaming }: { msg: any; streaming?: boolean }) {
           <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: isAI ? '#2DD4C8' : '#818CF8', fontWeight: 600 }}>
             {msg.actor_name}
           </span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569' }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8' }}>
             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
           {streaming && (
@@ -1195,7 +1195,7 @@ function Phase0Scorecard({ data }: { data: any }) {
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '48px', color: scoreColor, fontWeight: 700, lineHeight: 1 }}>
               {score}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
               / 100
             </div>
           </div>
@@ -1207,7 +1207,7 @@ function Phase0Scorecard({ data }: { data: any }) {
             }}>
               {verdict?.toUpperCase()}
             </div>
-            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, maxWidth: '400px' }}>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', lineHeight: 1.6, maxWidth: '400px' }}>
               {summary}
             </div>
           </div>
@@ -1217,7 +1217,7 @@ function Phase0Scorecard({ data }: { data: any }) {
       {/* Dimension scores — old schema */}
       {data.dimension_scores && (
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
             Dimension Scores
           </div>
           <div style={{ display: 'grid', gap: '8px' }}>
@@ -1236,7 +1236,7 @@ function Phase0Scorecard({ data }: { data: any }) {
                   <div style={{ height: '3px', background: '#1C2D45', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${d.score}%`, background: c, borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
-                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#475569', marginTop: '6px', lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#94A3B8', marginTop: '6px', lineHeight: 1.5 }}>
                     {d.evidence}
                   </div>
                 </div>
@@ -1249,7 +1249,7 @@ function Phase0Scorecard({ data }: { data: any }) {
       {/* Dimension scores — new schema (scorecard.dimensions array) */}
       {!data.dimension_scores && data.scorecard?.dimensions && (
         <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
             Dimension Scores
           </div>
           <div style={{ display: 'grid', gap: '8px' }}>
@@ -1264,7 +1264,7 @@ function Phase0Scorecard({ data }: { data: any }) {
                   <div style={{ height: '3px', background: '#1C2D45', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${dim.score}%`, background: c, borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
-                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#475569', marginTop: '6px', lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#94A3B8', marginTop: '6px', lineHeight: 1.5 }}>
                     {dim.detail}
                   </div>
                 </div>
@@ -1277,7 +1277,7 @@ function Phase0Scorecard({ data }: { data: any }) {
       {/* Top findings */}
       {data.top_findings && (
         <div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
             Key Findings
           </div>
           {data.top_findings.map((f: any, i: number) => {
@@ -1294,7 +1294,7 @@ function Phase0Scorecard({ data }: { data: any }) {
                     <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', marginBottom: '4px', fontWeight: 600 }}>
                       {f.title}
                     </div>
-                    <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#94A3B8', lineHeight: 1.5 }}>
+                    <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#EFF6FF', lineHeight: 1.5 }}>
                       {f.description}
                     </div>
                     <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
@@ -1332,14 +1332,14 @@ function Phase0Scorecard({ data }: { data: any }) {
 function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id: string, status: string, isPublished?: boolean) => void }) {
   if (findings.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#475569', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
+      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
         No findings yet.<br />AI will surface findings as the conversation progresses.
       </div>
     )
   }
   return (
     <div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
         Findings ({findings.length})
       </div>
       {findings.map(f => {
@@ -1354,7 +1354,7 @@ function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id:
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#EFF6FF', marginBottom: '6px', fontWeight: 600, lineHeight: 1.4 }}>
               {f.title}
             </div>
-            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#94A3B8', marginBottom: '8px', lineHeight: 1.5 }}>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#EFF6FF', marginBottom: '8px', lineHeight: 1.5 }}>
               {f.description?.slice(0, 120)}{f.description?.length > 120 ? '...' : ''}
             </div>
             <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
@@ -1398,7 +1398,7 @@ function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id:
                 }}>Publish</button>
               )}
               <button onClick={() => onUpdate(f.id, 'removed')} style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: '#475569',
+                fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: '#94A3B8',
                 background: 'transparent', border: '1px solid #1C2D45',
                 borderRadius: '4px', padding: '3px 8px', cursor: 'pointer'
               }}>Remove</button>
@@ -1417,13 +1417,13 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
   if (!phase) return null
   return (
     <div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '16px' }}>
         Output Document
       </div>
 
       {!phaseOutput ? (
         <div>
-          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#94A3B8', marginBottom: '16px', lineHeight: 1.6 }}>
+          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', marginBottom: '16px', lineHeight: 1.6 }}>
             Generate the phase output document once workstream conversations are complete.
             The AI will synthesise all workstream discussions into a structured deliverable.
           </div>
@@ -1448,23 +1448,23 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: '#EFF6FF', fontWeight: 600, marginBottom: '4px' }}>
               {phaseOutput.title}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
               V{phaseOutput.version} · {phaseOutput.status?.toUpperCase()} · {new Date(phaseOutput.created_at).toLocaleDateString()}
             </div>
 
             {/* Show key content fields */}
             {phaseOutput.content?.headline && (
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '12px' }}>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', lineHeight: 1.6, marginBottom: '12px' }}>
                 "{phaseOutput.content.headline}"
               </div>
             )}
             {phaseOutput.content?.verdict_summary && (
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '12px' }}>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', lineHeight: 1.6, marginBottom: '12px' }}>
                 {phaseOutput.content.verdict_summary}
               </div>
             )}
 
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#475569' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#94A3B8' }}>
               {JSON.stringify(phaseOutput.content).length.toLocaleString()} chars of structured content
             </div>
           </div>
@@ -1513,7 +1513,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
             disabled={generatingOutput}
             style={{
               width: '100%', background: 'transparent',
-              color: generatingOutput ? '#475569' : '#94A3B8',
+              color: generatingOutput ? '#475569' : '#EFF6FF',
               border: '1px solid #1C2D45', borderRadius: '8px', padding: '10px',
               fontFamily: 'JetBrains Mono, monospace', fontSize: '10px',
               letterSpacing: '.06em', textTransform: 'uppercase',
@@ -1531,7 +1531,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
 function ActivityPanel({ activity }: { activity: any[] }) {
   if (activity.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#475569', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
+      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
         No activity yet.
       </div>
     )
@@ -1548,7 +1548,7 @@ function ActivityPanel({ activity }: { activity: any[] }) {
   }
   return (
     <div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
         Activity Log
       </div>
       {activity.map(a => (
@@ -1561,7 +1561,7 @@ function ActivityPanel({ activity }: { activity: any[] }) {
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#EFF6FF', lineHeight: 1.4 }}>
               {a.description}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#475569', marginTop: '2px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
               {a.actor_name} · {new Date(a.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>
