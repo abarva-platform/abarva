@@ -9,10 +9,12 @@ import { MERIDIAN_MARGIN_DEMO } from '@/lib/demo-data/meridian-margin-demo'
 import { MERIDIAN_PDLC_DEMO } from '@/lib/demo-data/meridian-pdlc-demo'
 import { ARCTURUS_DELIVERY_FULL_DEMO } from '@/lib/demo-data/arcturus-full-demo'
 import { MERIDIAN_TECH_PARTIAL_DEMO } from '@/lib/demo-data/meridian-tech-partial-demo'
+import { ARCTURUS_PDLC_DEMO } from '@/lib/demo-data/arcturus-pdlc-demo'
 import {
   ARCTURUS_DELIVERY_PHASE0,
   ARCTURUS_MARGIN_PHASE0,
   ARCTURUS_TECH_PHASE0,
+  ARCTURUS_PDLC_PHASE0,
   MERIDIAN_TECH_PHASE0,
 } from '@/lib/dataset-extractor'
 
@@ -26,6 +28,7 @@ function getPhase0Data(clientId: string, solution: string) {
   if (clientId === 'arcturus' && solution === 'delivery') return ARCTURUS_DELIVERY_PHASE0
   if (clientId === 'arcturus' && solution === 'margin') return ARCTURUS_MARGIN_PHASE0
   if (clientId === 'arcturus' && solution === 'tech') return ARCTURUS_TECH_PHASE0
+  if (clientId === 'arcturus' && solution === 'pdlc') return ARCTURUS_PDLC_PHASE0
   if (clientId === 'meridian' && solution === 'tech') return MERIDIAN_TECH_PHASE0
   return null
 }
@@ -38,6 +41,7 @@ function getDemoData(clientId: string, solution: string, fullDemo = false) {
   if (clientId === 'arcturus' && solution === 'delivery') return ARCTURUS_DELIVERY_DEMO
   if (clientId === 'arcturus' && solution === 'margin') return ARCTURUS_MARGIN_DEMO
   if (clientId === 'arcturus' && solution === 'tech') return ARCTURUS_TECH_DEMO
+  if (clientId === 'arcturus' && solution === 'pdlc') return ARCTURUS_PDLC_DEMO
   if (clientId === 'meridian' && solution === 'tech') return MERIDIAN_TECH_DEMO
   if (clientId === 'meridian' && solution === 'margin') return MERIDIAN_MARGIN_DEMO
   if (clientId === 'meridian' && solution === 'pdlc') return MERIDIAN_PDLC_DEMO
