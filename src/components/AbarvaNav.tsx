@@ -97,12 +97,20 @@ function NavInner({ activePage }: NavProps) {
     'diagnose', 'vendor-intelligence',
   ].includes(activePage || '')
 
-  // Show breadcrumb trail for elevated users navigating module pages
-  const MODULE_PAGES = [
-    'diagnose', 'data-intelligence', 'intelligence', 'architecture',
-    'justify', 'ai-pdlc', 'outcome-intelligence', 'contradictions', 'vendor-intelligence',
-  ]
-  const showBreadcrumb = signedIn && isElevated && MODULE_PAGES.includes(activePage || '')
+  // Explorer breadcrumb — maps each module page to its AVR phase context
+  const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
+    'diagnose':             { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Situation Intelligence' },
+    'contradictions':       { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Contradiction Intelligence' },
+    'data-intelligence':    { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Data Intelligence' },
+    'intelligence':         { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Technology Intelligence' },
+    'vendor-intelligence':  { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Vendor Intelligence' },
+    'architecture':         { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Architecture Intelligence' },
+    'justify':              { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Business Case Intelligence' },
+    'ai-pdlc':              { phase: 3, phaseLabel: 'VALUE REALIZATION', phaseColor: '#34D399', moduleName: 'AI Delivery Intelligence' },
+    'outcome-intelligence': { phase: 3, phaseLabel: 'VALUE REALIZATION', phaseColor: '#34D399', moduleName: 'Outcome Intelligence' },
+  }
+  const crumb = MODULE_CRUMBS[activePage || '']
+  const showBreadcrumb = signedIn && isElevated && !!crumb
 
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
@@ -408,22 +416,26 @@ function NavInner({ activePage }: NavProps) {
 
     </div>
 
-    {/* Breadcrumb trail — admin/investor on module pages */}
-    {showBreadcrumb && (
+    {/* Explorer breadcrumb — AI Value Realization › Phase › Module */}
+    {showBreadcrumb && crumb && (
       <div style={{
-        height: '32px', background: PAGE_BG,
+        height: '30px', background: PAGE_BG,
         borderBottom: `1px solid ${BORDER}`,
-        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '6px',
+        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '8px',
       }}>
         <a
-          href={`/admin/client/${clientId}`}
-          style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.08em', opacity: 0.85 }}
+          href={`/ai-strategy?client=${clientId}`}
+          style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.06em', opacity: 0.9 }}
         >
-          ← {currentClient.shortName}
+          AI Value Realization
         </a>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>·</span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>
-          Maestro workspace
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: crumb.phaseColor, letterSpacing: '.06em', opacity: 0.85 }}>
+          Phase {crumb.phase} — {crumb.phaseLabel}
+        </span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em' }}>
+          {crumb.moduleName}
         </span>
       </div>
     )}

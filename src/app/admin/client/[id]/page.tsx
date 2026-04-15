@@ -1372,40 +1372,28 @@ export default function AdminClientPage() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="maestro" />
 
-      {/* Breadcrumb */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <a href="/admin" style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textDecoration: 'none', letterSpacing: '.05em', textTransform: 'uppercase' as const }}>← All clients</a>
-        <div style={{ width: '1px', height: '16px', background: BORDER }} />
-        <span style={{ fontSize: '12px', color: MUTED }}>{data.name}</span>
-      </div>
-
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px 80px' }}>
 
-        {/* Client header */}
-        <div style={{ padding: '20px 0 16px', display: 'flex', alignItems: 'center', gap: '14px', borderBottom: `1px solid ${BORDER}`, marginBottom: '0' }}>
-          <div style={{ width: 12, height: 12, borderRadius: '50%', background: data.color, flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '22px', fontWeight: 500, color: WHITE, lineHeight: 1.2 }}>{data.name}</div>
-            <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>{data.type} · ${data.revenue}B revenue · {data.employees.toLocaleString()} employees · {data.hq}</div>
+        {/* Combined client identity + tab bar */}
+        <div style={{ borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', marginBottom: '28px', height: '48px', gap: '0' }}>
+          {/* Client identity — left */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '24px', borderRight: `1px solid ${BORDER}`, flexShrink: 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: data.color }} />
+            <span style={{ fontSize: '14px', fontWeight: 600, color: WHITE, fontFamily: SANS }}>{data.name}</span>
+            <span
+              onClick={() => { setTab('admin'); setAdminSection('setup') }}
+              title="Go to Admin → Setup"
+              style={{
+                fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '20px',
+                background: data.status === 'Active' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)',
+                color: data.status === 'Active' ? GREEN : AMBER,
+                border: `1px solid ${data.status === 'Active' ? 'rgba(52,211,153,0.2)' : 'rgba(245,158,11,0.2)'}`,
+                letterSpacing: '.06em', cursor: 'pointer',
+              }}
+            >
+              {data.status}
+            </span>
           </div>
-          <span
-            onClick={() => { setTab('admin'); setAdminSection('setup') }}
-            title="Go to Admin → Setup"
-            style={{
-              fontFamily: MONO, fontSize: '10px', padding: '3px 10px', borderRadius: '20px',
-              background: data.status === 'Active' ? 'rgba(52,211,153,0.12)' : 'rgba(245,158,11,0.12)',
-              color: data.status === 'Active' ? GREEN : AMBER,
-              border: `1px solid ${data.status === 'Active' ? 'rgba(52,211,153,0.25)' : 'rgba(245,158,11,0.25)'}`,
-              letterSpacing: '.06em', textTransform: 'uppercase' as const,
-              cursor: 'pointer',
-            }}
-          >
-            {data.status}
-          </span>
-        </div>
-
-        {/* Tab bar */}
-        <div style={{ height: '44px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', marginBottom: '28px', marginTop: '8px' }}>
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               style={{
