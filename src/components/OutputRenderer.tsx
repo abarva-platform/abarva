@@ -40,7 +40,10 @@ export default function OutputRenderer({ outputType, content, clientName, engage
     case 'baseline_agreement':
       return <BaselineAgreementOutput content={content} clientName={clientName} approvedBy={approvedBy} approvedAt={approvedAt} />
     case 'outcome_dashboard':
+    case 'outcome_report':
       return <OutcomeDashboardOutput content={content} clientName={clientName} />
+    case 'ai_readiness_certificate':
+      return <ReadinessScorecardOutput content={content} clientName={clientName} approvedBy={approvedBy} approvedAt={approvedAt} />
     default:
       return <GenericOutput content={content} outputType={outputType} />
   }

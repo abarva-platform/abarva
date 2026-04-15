@@ -1,4 +1,7 @@
 'use client'
+import { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
@@ -151,6 +154,35 @@ const PHASES: {
 ]
 
 export default function AIStrategyPage() {
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const [seeding, setSeeding] = useState(false)
+  const [seeded, setSeeded] = useState(false)
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+  const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
+
+  async function handleSeedDemo() {
+    setSeeding(true)
+    try {
+      const res = await fetch('/api/engage/arcturus/ai-strategy/seed-demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ createdBy: user?.fullName || 'Admin' }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setSeeded(true)
+        setTimeout(() => router.push('/engage/arcturus/ai-strategy'), 800)
+      }
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  const filteredPhases = activeFilter
+    ? PHASES.filter(p => p.label === activeFilter)
+    : PHASES
+
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="ai-strategy" />
@@ -186,16 +218,73 @@ export default function AIStrategyPage() {
           }}>
             Start with a Solution instead
           </a>
+          {isAdmin && (
+            <button
+              onClick={handleSeedDemo}
+              disabled={seeding || seeded}
+              style={{
+                background: seeded ? `${GREEN}20` : 'rgba(45,212,200,0.10)',
+                color: seeded ? GREEN : TEAL,
+                border: `1px solid ${seeded ? GREEN : TEAL}40`,
+                padding: '12px 24px',
+                borderRadius: '8px', fontSize: '13px', cursor: seeding ? 'wait' : 'pointer',
+                fontFamily: SANS,
+              }}
+            >
+              {seeded ? 'Demo loaded — redirecting…' : seeding ? 'Loading demo…' : 'Load AI Strategy Demo →'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Phase Filter Tabs ─────────────────────────────────────────────── */}
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 10,
+        background: BG, borderBottom: `1px solid ${BORDER}`,
+        padding: '0 32px',
+      }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' as const }}>
+          {[
+            { label: 'ALL', color: WHITE },
+            { label: 'DIAGNOSE', color: TEAL },
+            { label: 'PRESCRIBE', color: AMBER },
+            { label: 'EXECUTE & VERIFY', color: GREEN },
+          ].map(tab => {
+            const isActive = tab.label === 'ALL' ? activeFilter === null : activeFilter === tab.label
+            return (
+              <button
+                key={tab.label}
+                onClick={() => setActiveFilter(tab.label === 'ALL' ? null : tab.label)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
+                  padding: '14px 16px',
+                  fontSize: '11px',
+                  fontFamily: MONO,
+                  letterSpacing: '.1em',
+                  color: isActive ? tab.color : DIM,
+                  fontWeight: isActive ? 600 : 400,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap' as const,
+                  transition: 'color 0.15s, border-color 0.15s',
+                  flexShrink: 0,
+                }}
+              >
+                {tab.label}
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* ── Pipeline ─────────────────────────────────────────────────────── */}
-      <div style={{ padding: '0 32px 80px', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ padding: '40px 32px 80px', maxWidth: '900px', margin: '0 auto' }}>
 
-        {PHASES.map((phase, pi) => (
+        {filteredPhases.map((phase, pi) => (
           <div key={phase.label}>
-            {/* Phase connector arrow (between phases) */}
-            {pi > 0 && (
+            {/* Phase connector arrow (between phases, only when showing all) */}
+            {pi > 0 && activeFilter === null && (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '8px 0' }}>
                 <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px' }}>
                   <div style={{ width: '1px', height: '24px', background: BORDER }} />
@@ -211,7 +300,7 @@ export default function AIStrategyPage() {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: phase.color, letterSpacing: '.14em' }}>
-                  PHASE {pi + 1} — {phase.label}
+                  PHASE {PHASES.indexOf(phase) + 1} — {phase.label}
                 </div>
                 <div style={{ flex: 1, height: '1px', background: BORDER }} />
               </div>

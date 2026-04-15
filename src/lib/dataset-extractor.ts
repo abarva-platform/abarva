@@ -600,6 +600,120 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
   recommended_action: 'Three parallel tracks: (1) Begin Epic optimization — prior auth module activation for CMS mandate compliance. (2) Start Cerner data migration planning immediately — 14 months is tight. (3) Accelerate CDO hire — prior auth integration has been stalled 18 months without an accountable owner.'
 }
 
+export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
+  overall_score: 26,
+  overall_verdict: 'partial',
+  verdict_summary: 'Arcturus has significant AI investment but near-zero production maturity. The Genome confirms this profile: F008 (91%) — AI spend with zero verified ROI is the defining pattern. 14 models in production, none monitored, none retrained since deployment. CDO vacant 11 months. 28 active initiatives, 0 in production delivering documented value. The data infrastructure foundation is fragile: SQL Server 2017 EOL, Netezza unsupported since 2019, Informatica developer cliff arriving Q3 2026.',
+  recommended_action: 'Proceed to AI Strategy engagement. Phase 1 priority: Contradiction Intelligence to surface board reporting gap. Wave 1 deployment: AI-023 via AWS Bedrock (58-day path to first production model). CDO appointment is prerequisite for Phase 2.',
+  dimension_scores: {
+    data_readiness: {
+      score: 31,
+      evidence: 'SQL Server 2017 EOL (unpatched), Netezza unsupported 7 years, 4-day analytical lag, 6 of 14 Informatica mappings undocumented, developer cliff Q3 2026',
+      missing_data: 'Real-time pipeline capability, golden record status',
+      what_it_unlocks: 'Readmission model deployment ($4.2M value), 8 AI initiatives currently data-blocked'
+    },
+    ai_maturity: {
+      score: 8,
+      evidence: '14 models in production, 0 monitored, 0 retrained since deployment. No MLOps platform. Excel spreadsheet as model registry. Credit scoring model 2019 vintage, 340 daily decisions, no drift detection.',
+      missing_data: 'Model performance baseline, drift detection capability',
+      what_it_unlocks: 'Full 28-initiative pipeline — all blocked by MLOps gap'
+    },
+    delivery_capability: {
+      score: 38,
+      evidence: 'OMS squad 127-day cycle time vs 94-day benchmark. AI/ML Platform squad: 0 deployments in 12 months on £1.8M spend. Bloomberg AIM release dependency adds 21 days per cycle.',
+      missing_data: 'Squad capacity post-consulting rationalisation',
+      what_it_unlocks: 'Time-to-production reduction from 127 to 21 days (Genome baseline for mature teams)'
+    },
+    governance_coverage: {
+      score: 12,
+      evidence: 'CDO vacant 11 months. 28 AI initiatives, no single executive owner. 3 consulting engagements on AI strategy, all stalled. No AI governance board. Board reporting does not distinguish development from production.',
+      missing_data: 'CDO appointment timeline, interim governance structure',
+      what_it_unlocks: 'F002 resolution — executive sponsor is the single highest-leverage intervention across all Genome patterns'
+    },
+    technology_foundation: {
+      score: 41,
+      evidence: 'Bloomberg AIM 28 years, 14 customisations (8 proprietary). Teradata £4.2M annually, 23% of queries exceeding SLA. Netezza EOL 2019, 87TB, 3 compliance reports no alternative source. Murex 3.1 EOL December 2026.',
+      missing_data: 'Netezza logic documentation, Basel IV compliance timeline',
+      what_it_unlocks: 'Cloud-native architecture (Option B) unlocks the full AI initiative pipeline'
+    }
+  },
+  genome_matches: [
+    {
+      code: 'F008',
+      name: 'AI spend zero verified ROI',
+      failure_rate: 0.91,
+      confidence: 'confirmed',
+      evidence: '£94M AI spend, £0 documented ROI, 14 production models, zero with outcome tracking. Highest confidence pattern match in Genome database.',
+      source_files: ['ARC-T01_AI_Portfolio', 'ARC-C01_Engineering_Organisation']
+    },
+    {
+      code: 'F002',
+      name: 'No named AI executive sponsor',
+      failure_rate: 0.89,
+      confidence: 'confirmed',
+      evidence: 'CDO vacant 11 months. 3 AI strategy consulting engagements, all stalled. 28 initiatives, no single accountable owner. Board reporting written by initiative owners with reporting incentive.',
+      source_files: ['ARC-C03_Leadership_Governance', 'ARC-D01_Consulting_Audit']
+    },
+    {
+      code: 'F001',
+      name: 'No MLOps — models built, never deployed',
+      failure_rate: 0.94,
+      confidence: 'confirmed',
+      evidence: '14 models in production deployed manually from Jupyter notebooks. No model registry (Excel spreadsheet). No monitoring. Credit scoring model 2019, never retrained, 340 daily decisions.',
+      source_files: ['ARC-T01_AI_Portfolio']
+    }
+  ],
+  top_findings: [
+    {
+      title: '£94M AI spend · £0 verifiable ROI · F008 at 91%',
+      description: 'Every initiative is categorised as active in board reporting. None are categorised as failed. The reporting structure produces systematic optimism — no single accountable owner means no one reports the production gap.',
+      severity: 'critical',
+      genome_pattern: 'F008',
+      source_files: ['ARC-T01_AI_Portfolio', 'ARC-C03_Leadership_Governance']
+    },
+    {
+      title: 'CDO vacant 11 months — AI governance breakdown',
+      description: '3 consulting engagements commissioned. All stalled at strategy phase. No deployment. The structural cause is the same across all three: no executive accountable for the gap between strategy and production.',
+      severity: 'critical',
+      genome_pattern: 'F002',
+      source_files: ['ARC-C03_Leadership_Governance']
+    },
+    {
+      title: 'Credit scoring model 2019 — 340 daily decisions — never monitored',
+      description: 'Logistic regression model deployed 2019, never retrained. Powers 340 daily credit decisions. No drift detection, no performance tracking. Bank of England SS1/23 requires model validation processes — this is a supervisory finding.',
+      severity: 'critical',
+      genome_pattern: 'F001',
+      source_files: ['ARC-T01_AI_Portfolio']
+    },
+    {
+      title: 'SQL Server 2017 EOL October 2025 — running unpatched today',
+      description: 'Microsoft ended support October 2025. No security patches. Foundation for Clarity analytics. Every AI initiative that requires internal data depends on this system. Non-negotiable remediation.',
+      severity: 'critical',
+      genome_pattern: null,
+      source_files: ['ARC-T02_Tech_Stack']
+    },
+    {
+      title: 'Netezza 7 years past EOL — 3 compliance reports no alternative source',
+      description: 'IBM PureData support ended 2019. 87TB, 15 years trade history. CCAR, trade surveillance archive, AML baseline — sole data source. If Netezza fails, 3 compliance obligations cannot be met. £6.8M migration budget approved but logic undocumented.',
+      severity: 'critical',
+      genome_pattern: 'F003',
+      source_files: ['ARC-T02_Tech_Stack']
+    }
+  ],
+  missing_data: [
+    {
+      category: 'Netezza logic documentation and compliance report source mapping',
+      what_it_unlocks: 'Migration complexity estimate for Netezza → Azure Synapse — currently unquantifiable',
+      priority: 'blocking'
+    },
+    {
+      category: 'CDO appointment timeline and interim governance structure',
+      what_it_unlocks: 'Phase 2 gate condition — AI Readiness Certificate requires executive sponsor in post',
+      priority: 'important'
+    }
+  ]
+}
+
 
 export async function extractDatasetSummaries(
   clientId: string,

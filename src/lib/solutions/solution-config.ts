@@ -1,4 +1,4 @@
-export type SolutionKey = 'delivery' | 'pdlc' | 'margin' | 'tech'
+export type SolutionKey = 'delivery' | 'pdlc' | 'margin' | 'tech' | 'ai-strategy'
 export type PhaseKey = 0 | 1 | 2 | 3 | 4
 
 export interface SolutionConfig {
@@ -775,6 +775,144 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
             name: 'Capability Tracking',
             description: 'Internal team capability growing — vendor dependency reducing',
             opening_prompt: 'Vendor dependency ratio this month vs baseline.'
+          }
+        ]
+      }
+    }
+  },
+
+  'ai-strategy': {
+    key: 'ai-strategy' as SolutionKey,
+    name: 'AI Strategy Engagement',
+    intelligence_name: 'AI STRATEGY INTELLIGENCE',
+    cxo_question: "How do we go from £0 verifiable AI ROI to a board-ready strategy with every investment justified?",
+    tagline: '9 Intelligence modules. One complete transformation. Fee on verified outcomes only.',
+    genome_patterns: ['F001', 'F002', 'F003', 'F006', 'F008', 'F011'],
+    recovery_fee_pct: { min: 0.15, max: 0.20 },
+    fee_model_description: '15-20% of verified AI investment ROI',
+    phase0_dimensions: ['data_readiness', 'ai_maturity', 'delivery_capability', 'governance_coverage', 'technology_foundation'],
+    baseline_metrics: ['ai_portfolio_roi_m', 'models_in_production', 'time_to_production_weeks', 'executive_sponsor_pct'],
+    datasets: {
+      arcturus: ['ARC-D01_Consulting_Audit', 'ARC-T01_AI_Portfolio', 'ARC-T02_Tech_Stack', 'ARC-C01_Engineering_Organisation'],
+      meridian: ['MER-T01_AI_Initiatives', 'MER-C01_Tech_Landscape', 'MER-D01_Consulting_Audit']
+    },
+    phases: {
+      0: {
+        number: 0 as PhaseKey,
+        name: 'Situation Intelligence',
+        description: 'Automated analysis of uploaded datasets. Score AI readiness across 5 dimensions. Surface Genome matches.',
+        objective: 'Produce a readiness scorecard with Genome-validated findings before the full strategy engagement begins.',
+        output_type: 'readiness_scorecard',
+        output_title: 'AI Readiness Assessment',
+        gate_description: 'Maestro reviews readiness scorecard before strategy begins',
+        gate_approver: 'maestro',
+        gate_type: 'soft' as const,
+        unlock_condition: 'Datasets uploaded and analysed',
+        typical_duration_weeks: { min: 0, max: 1 },
+        default_workstreams: [
+          { name: 'Data Analysis', description: 'Automated analysis of uploaded datasets', opening_prompt: 'Analysing uploaded datasets for AI Strategy readiness...' }
+        ]
+      },
+      1: {
+        number: 1 as PhaseKey,
+        name: 'Diagnose',
+        description: 'Contradiction Intelligence + Data Intelligence — what leadership told the board vs what the data shows, and what your data can support.',
+        objective: 'Produce a Situation Brief surfacing every leadership contradiction and data gap blocking AI investment.',
+        output_type: 'situation_brief',
+        output_title: 'Situation Brief',
+        gate_description: 'CEO reviews and approves Situation Brief',
+        gate_approver: 'client_ceo',
+        unlock_condition: 'Phase 0 approved by Maestro',
+        typical_duration_weeks: { min: 1, max: 2 },
+        default_workstreams: [
+          {
+            name: 'Contradiction Intelligence',
+            description: 'What leadership told the board vs what the data actually shows',
+            opening_prompt: "I have cross-referenced your board presentations against your financial and operational data. I found 7 leadership statements that are directly contradicted by the data. The most material: your CEO stated in Q4 2025 that 'AI investment is delivering strong early returns' — but your AI portfolio shows £94M committed and £0 documented ROI. This is Genome pattern F008 (91% failure rate). Before I walk through each contradiction, I need to understand: is leadership aware of this gap, or is this a reporting blind spot?"
+          },
+          {
+            name: 'Data Intelligence',
+            description: 'What your data can actually support — and what gaps are blocking AI investment',
+            opening_prompt: "I have scored your data estate across 12 dimensions. The overall data readiness score is 31/100 — partial readiness. The most critical gap: your population health analytics layer has a 4-day lag from clinical event to analytical availability, which means AI models trained on this data are systematically stale. Three data gaps are blocking your highest-value AI initiatives directly. Let me walk through each in order of impact. Starting with the readmission prediction model — built in 2021, never deployed. The blocking issue is not the model quality. It is the absence of an MLOps deployment pipeline. Can you describe what 'production' looks like for a clinical model in your environment right now?"
+          }
+        ]
+      },
+      2: {
+        number: 2 as PhaseKey,
+        name: 'Prescribe',
+        description: 'Technology Intelligence + Vendor Intelligence + Architecture Intelligence — which systems to fix first, which vendor wins, what to build.',
+        objective: 'Produce an AI Readiness Certificate with system modernisation sequence, vendor recommendation, and architecture blueprint.',
+        output_type: 'ai_readiness_certificate',
+        output_title: 'AI Readiness Certificate',
+        gate_description: 'CTO and CIO review and approve AI Readiness Certificate',
+        gate_approver: 'client_cto',
+        unlock_condition: 'Situation Brief approved by CEO',
+        typical_duration_weeks: { min: 2, max: 3 },
+        approvers_required: ['cto', 'cio'],
+        default_workstreams: [
+          {
+            name: 'Technology Intelligence',
+            description: 'Every system scored: age, cost, dependency depth, migration risk — modernisation sequence generated',
+            opening_prompt: "Your technology estate has 6 systems at critical risk. I have scored each against four criteria: age relative to peer median, annual maintenance cost, dependency depth (how many other systems break if this one fails), and migration risk (Genome-validated for your specific stack). The highest risk is SQL Server 2017 — EOL October 2025, currently running unpatched. The highest value modernisation is the Teradata EDW — £4.2M annually, 23% of queries exceeding SLA, and the Basel IV deadline in Q1 2027 creates a compliance forcing function. I want to build the modernisation sequence with you. What does your board care more about: regulatory compliance or analytical performance?"
+          },
+          {
+            name: 'Vendor Intelligence',
+            description: 'Which SI will actually deliver in your specific context — scored against Genome outcomes',
+            opening_prompt: "I have evaluated 4 potential SIs against your specific engagement context using the Genome database of comparable FinServ transformations. The scoring criteria: delivery track record (same industry, same stack), AI capability depth, financial services regulatory expertise, price anchor versus market rate, and cultural fit indicators from prior engagements. The results are clear: SI-B scores highest at 87% Genome match. SI-A has stronger delivery track record but weak AI capability. SI-C is the brand-name choice with the worst track record on similar programmes. Before I walk through the vendor scorecard in detail, what is your board's primary risk: vendor capability failure or vendor cost overrun?"
+          },
+          {
+            name: 'Architecture Intelligence',
+            description: 'What to build, in what order — dependencies mapped, Genome-validated against failure patterns',
+            opening_prompt: "Based on the technology audit and vendor evaluation, I have generated 3 architecture options. Each is scored against Genome failure patterns to calculate a probability of successful delivery in your specific context. Option A (cloud-native migration) has a 34% success rate in your peer group — the same approach that failed in your 2021 Clarity migration. Option B (hybrid with abstraction layer) has a 71% success rate — isolates your highest-dependency systems while enabling cloud-native new builds. Option C (lift-and-shift) is the fastest but has a 23% success rate. My recommendation is Option B. The 71% success rate comes from one structural difference: it does not require you to solve the Bloomberg customisation problem before moving everything else forward. Do you want me to walk through the specific sequencing for Option B?"
+          }
+        ]
+      },
+      3: {
+        number: 3 as PhaseKey,
+        name: 'Justify',
+        description: 'Business Case Intelligence + AI Delivery Intelligence — CFO-grade investment case and the execution roadmap.',
+        objective: 'Produce an Investment Committee Package the board will approve, with a locked Execution Baseline.',
+        output_type: 'investment_committee',
+        output_title: 'Investment Committee Package',
+        gate_description: 'CFO and investment committee sign off on IC Package',
+        gate_approver: 'client_cfo',
+        unlock_condition: 'AI Readiness Certificate approved by CTO and CIO',
+        typical_duration_weeks: { min: 1, max: 2 },
+        default_workstreams: [
+          {
+            name: 'Business Case Intelligence',
+            description: 'Three scenarios (Bear/Base/Bull), risk-adjusted IRR, Genome-validated — the CFO-grade case',
+            opening_prompt: "The business case is built from three inputs: your baseline data (from Phase 0 and Phase 1), Genome comparables (3 FinServ transformations with similar AI portfolio profiles), and your risk tolerance (from our Phase 2 conversations). The base case delivers £140M over 3 years on £94M redeployed investment — that is a 34% IRR and 14-month payback. The bear case is £95M, which is still a 1.0x ROI — the floor is break-even. Before I generate the full IC package, I need to validate the baseline numbers with you. The most important: what is the current annual value of your AI portfolio? Not what was committed — what is verifiably delivered?"
+          },
+          {
+            name: 'AI Delivery Intelligence',
+            description: 'Getting AI from approved spec to production — bottlenecks mapped, MLOps sequenced',
+            opening_prompt: "The business case depends on delivery. I have mapped every bottleneck in your current AI delivery path — from approved initiative to production model. There are 6 structural bottlenecks. The most critical: there is no MLOps infrastructure. Every model currently goes from Jupyter notebook to manual deployment. This is why AI-023, your best initiative, has been 'in development' for 9 months. I want to build the delivery roadmap with you — the specific sequence that gets AI-023 to production in 58 days, followed by the MLOps foundation that enables everything else. What does your engineering team's capacity look like for Q2? That determines whether we start with AWS Bedrock or build the internal platform first."
+          }
+        ]
+      },
+      4: {
+        number: 4 as PhaseKey,
+        name: 'Execute & Verify',
+        description: 'Outcome Intelligence — baseline locked Day 0, monthly actuals vs baseline, fee earned only on verified outcomes.',
+        objective: 'Execute the roadmap. Track every metric monthly. Earn the AbarVa fee only when verified savings exceed the baseline.',
+        output_type: 'outcome_report',
+        output_title: 'Monthly Outcome Report',
+        gate_description: 'Quarterly CFO review',
+        gate_approver: 'board',
+        gate_type: 'soft' as const,
+        unlock_condition: 'IC Package approved by CFO',
+        typical_duration_weeks: { min: 52, max: 52 },
+        default_workstreams: [
+          {
+            name: 'Outcome Intelligence',
+            description: 'Monthly actuals vs baseline — AI portfolio ROI, models in production, time to production',
+            opening_prompt: "Month {month} actuals are due. I need current values for each baseline metric: AI portfolio verified ROI, number of models live in production with outcome tracking, average time from approved spec to production (weeks), and executive sponsor coverage across active initiatives. I will calculate variance against baseline, update RAG status, and generate the Monthly Outcome Report. Starting with the most important metric: how many AI models are currently live in production with documented, measurable outcomes?"
+          },
+          {
+            name: 'Fee Tracker',
+            description: 'Track verified savings against baseline and calculate fee earned',
+            opening_prompt: "The fee tracker runs monthly. I need to verify three things: (1) that the documented savings are independently verifiable against the locked baseline, (2) that they are not attributable to market movements or external factors, and (3) that the measurement methodology matches what was agreed in the baseline agreement. Let me start with the largest claimed saving this month. What is it, what is the source document, and how was it calculated?"
           }
         ]
       }
