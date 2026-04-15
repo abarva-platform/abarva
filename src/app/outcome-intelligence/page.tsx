@@ -1,8 +1,8 @@
 'use client'
 
 import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import { calcProgress, calcVariance, calcInitiativeStatus, calcOutcomeFee, calcPortfolioSummary } from '@/lib/outcome-intelligence'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -24,13 +24,7 @@ const T = {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Tab = 'portfolio' | 'deepdive' | 'verification' | 'warning' | 'board'
-type Client = 'meridian' | 'firstcapital' | 'apexretail'
-
-const CLIENT_LABELS: Record<Client, string> = {
-  meridian: 'Meridian Health',
-  firstcapital: 'First Capital Bank',
-  apexretail: 'Apex Retail',
-}
+type Client = 'meridian' | 'arcturus' | 'apexretail'
 
 // ── Meridian initiatives data ─────────────────────────────────────────────────
 const MERIDIAN_INITIATIVES = [
@@ -811,9 +805,8 @@ function BoardReportTab() {
 
 // ── Main page content ─────────────────────────────────────────────────────────
 function OutcomeIntelligenceContent() {
-  const searchParams = useSearchParams()
-  const clientParam = (searchParams.get('client') as Client) || 'meridian'
-  const [client, setClient] = useState<Client>(clientParam)
+  const { clientId, allowedClients } = useClientContext()
+  const [client, setClient] = useState<Client>(clientId as Client)
   const [activeTab, setActiveTab] = useState<Tab>('portfolio')
   const [showClientMenu, setShowClientMenu] = useState(false)
 
@@ -865,7 +858,7 @@ function OutcomeIntelligenceContent() {
                 borderRadius: 8, cursor: 'pointer', fontSize: 13, fontFamily: T.mono,
               }}
             >
-              {CLIENT_LABELS[client]} ▾
+              {ALL_CLIENTS.find(c => c.id === client)?.shortName || client} ▾
             </button>
             {showClientMenu && (
               <div style={{
@@ -873,19 +866,19 @@ function OutcomeIntelligenceContent() {
                 background: T.surface, border: `1px solid ${T.border}`,
                 borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 180,
               }}>
-                {(['meridian', 'firstcapital', 'apexretail'] as Client[]).map(c => (
+                {allowedClients.map(c => (
                   <button
-                    key={c}
-                    onClick={() => { setClient(c); setShowClientMenu(false) }}
+                    key={c.id}
+                    onClick={() => { setClient(c.id as Client); setShowClientMenu(false) }}
                     style={{
                       width: '100%', padding: '10px 16px',
-                      background: c === client ? 'rgba(45,212,200,0.1)' : 'transparent',
-                      color: c === client ? T.teal : T.text,
+                      background: c.id === client ? 'rgba(45,212,200,0.1)' : 'transparent',
+                      color: c.id === client ? T.teal : T.text,
                       border: 'none', cursor: 'pointer',
                       fontSize: 13, fontFamily: T.mono, textAlign: 'left',
                     }}
                   >
-                    {CLIENT_LABELS[c]}
+                    {c.shortName}
                   </button>
                 ))}
               </div>

@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useCallback, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 type Sev = 'CRITICAL' | 'HIGH'
 
@@ -217,9 +217,9 @@ const CLIENT_DATA: Record<string, { nodes: CNode[]; name: string; shortName: str
 }
 
 const CLIENTS = [
-  { id: 'meridian', name: 'Meridian Health', accent: '#4DA3FF' },
-  { id: 'firstcapital', name: 'First Capital', accent: '#FF9900' },
-  { id: 'apexretail', name: 'Apex Retail', accent: '#34A853' },
+  { id: 'meridian',   name: 'Meridian Health',   accent: '#4DA3FF' },
+  { id: 'arcturus',   name: 'Arcturus Financial', accent: '#818CF8' },
+  { id: 'apexretail', name: 'Apex Retail',        accent: '#F59E0B' },
 ]
 
 const SEV_COLOR: Record<Sev, string> = { CRITICAL: '#EF4444', HIGH: '#F59E0B' }
@@ -318,9 +318,10 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
 }
 
 function ContradictionsContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const { clientId, allowedClients } = useClientContext()
   const [selectedClient, setSelectedClient] = useState(clientId)
+
+  const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
 
@@ -366,7 +367,7 @@ function ContradictionsContent() {
 
       {/* Client selector */}
       <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        {CLIENTS.map(c => (
+        {visibleClients.map(c => (
           <button key={c.id} onClick={() => selectClient(c.id)}
             style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selectedClient === c.id ? c.accent : '#6B7280' }}>
             {c.name}
