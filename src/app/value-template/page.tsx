@@ -5,7 +5,7 @@ import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#FFFFFF', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif", color: '#1a1a1a' } as React.CSSProperties,
-  body: { maxWidth: '1200px', margin: '0 auto', padding: '48px 48px 80px' } as React.CSSProperties,
+  body: { maxWidth: '1400px', margin: '0 auto', padding: '48px 48px 80px' } as React.CSSProperties,
   sectionHeader: (accent: string) => ({
     background: '#111827', padding: '14px 20px', borderRadius: '0', marginBottom: '0',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',

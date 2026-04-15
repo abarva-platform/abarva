@@ -84,7 +84,7 @@ export default function SolutionMargin() {
       <AbarvaNav activePage="solutions" />
       {clientId && (
         <div style={{ background: `rgba(45,212,200,0.06)`, borderBottom: `1px solid rgba(45,212,200,0.2)` }}>
-          <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '14px 48px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: TEAL }} />
               <span style={{ fontSize: '13px', color: WHITE }}>Your engagement is in progress</span>

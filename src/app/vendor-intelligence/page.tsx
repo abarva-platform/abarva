@@ -768,7 +768,7 @@ function SelectVendorMode() {
           <div style={{ fontSize: 24, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
             Contract intelligence — Ensemble
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 800 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
             {/* Pricing benchmarks */}
             <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 20 }}>
               <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginBottom: 16 }}>

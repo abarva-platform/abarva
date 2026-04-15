@@ -99,7 +99,7 @@ export default function StatusPage() {
     <div style={S.page}>
       <AbarvaNav />
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 48px' }}>
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>Platform Status</h1>

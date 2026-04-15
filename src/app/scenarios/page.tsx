@@ -381,7 +381,7 @@ function ScenariosContent() {
 
       {/* Header */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '20px 32px' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <h1 style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '2px', letterSpacing: '-0.01em' }}>
             Scenario Modeling — {CLIENT_NAMES[clientId]}
           </h1>
@@ -398,7 +398,7 @@ function ScenariosContent() {
       </div>
 
       {/* Two-column body */}
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '24px 32px', display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '24px', alignItems: 'start' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 48px', display: 'grid', gridTemplateColumns: '2fr 3fr', gap: '24px', alignItems: 'start' }}>
 
         {/* Left: Assumptions */}
         <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px 22px', position: 'sticky', top: '24px' }}>

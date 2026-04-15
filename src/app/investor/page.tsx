@@ -568,7 +568,7 @@ export default function InvestorPage() {
             </div>
           </div>
         ) : (
-          <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '36px 40px 80px' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '36px 48px 80px' }}>
             {panels[activeTab]}
           </div>
         )}

@@ -644,13 +644,9 @@ function SolutionPageContent({ slug }: { slug: string }) {
       <div style={{
         background: T.surface,
         borderBottom: `1px solid ${T.border}`,
-        padding: '48px 0',
-        marginLeft: -28,
-        marginRight: -28,
-        paddingLeft: 28,
-        paddingRight: 28,
+        padding: '48px 48px',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 48, alignItems: 'start' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 48, alignItems: 'start' }}>
 
           {/* Left column — 60% */}
           <div>
@@ -789,7 +785,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
       </div>
 
       {/* SECTION 2 — WORKFLOW */}
-      <div style={{ padding: '48px 0', maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ padding: '48px 48px', maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ fontSize: 26, fontFamily: T.fraunces, color: T.text, marginBottom: 36 }}>
           The {solution.workflow.length}-Step Workflow
         </div>
@@ -859,13 +855,9 @@ function SolutionPageContent({ slug }: { slug: string }) {
         background: T.surface,
         borderTop: `1px solid ${T.border}`,
         borderBottom: `1px solid ${T.border}`,
-        padding: '32px 0',
-        marginLeft: -28,
-        marginRight: -28,
-        paddingLeft: 28,
-        paddingRight: 28,
+        padding: '32px 48px',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 48 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 48 }}>
           {/* Col 1 — Success Rate */}
           <div>
             <div style={{ fontSize: 56, fontFamily: T.mono, color: T.teal, fontWeight: 700, lineHeight: 1 }}>
@@ -908,7 +900,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
       </div>
 
       {/* SECTION 4 — BOTTOM GRID */}
-      <div style={{ padding: '48px 0 64px', maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{ padding: '48px 48px 64px', maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
 
           {/* Left — Products Activated */}

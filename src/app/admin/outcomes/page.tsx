@@ -180,7 +180,7 @@ export default function AdminOutcomes() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px' }}>
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Outcome Tracker</h1>
           <p style={{ fontSize: '14px', color: '#6B7280' }}>Every committed initiative tracked against baseline. AbarVa fees tied to verified results.</p>

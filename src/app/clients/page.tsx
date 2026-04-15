@@ -238,7 +238,7 @@ export default function ClientsPage() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="clients" />
 
-      <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 24px 80px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '72px 48px 80px' }}>
 
         {/* Hero */}
         <div style={{ textAlign: 'center' as const, marginBottom: '64px' }}>
@@ -287,9 +287,7 @@ export default function ClientsPage() {
           display: 'grid',
           gridTemplateColumns: 'repeat(2, 1fr)',
           gap: '24px',
-          marginBottom: '32px',
-          maxWidth: '840px',
-          margin: '0 auto 32px',
+          margin: '0 0 32px',
         }}>
           {CLIENTS.map((client, i) => (
             <ClientCard

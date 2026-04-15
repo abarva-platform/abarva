@@ -28,8 +28,8 @@ export default function Homepage() {
       <AbarvaNav activePage="home" />
 
       {/* HERO */}
-      <div style={{padding:'100px 32px 80px'}}>
-        <div style={{maxWidth:1280,margin:'0 auto',display:'grid',gridTemplateColumns:'45% 50%',gap:'5%',alignItems:'center'}}>
+      <div style={{padding:'100px 48px 80px'}}>
+        <div style={{maxWidth:1400,margin:'0 auto',display:'grid',gridTemplateColumns:'45% 50%',gap:'5%',alignItems:'center'}}>
 
           {/* Left column */}
           <div>
@@ -41,10 +41,10 @@ export default function Homepage() {
               Before the<br />
               <em style={{color:TEAL}}>window closes.</em>
             </h1>
-            <p style={{fontSize:17,color:MUTED,maxWidth:480,lineHeight:1.7,marginBottom:12}}>
+            <p style={{fontSize:17,color:MUTED,lineHeight:1.7,marginBottom:12}}>
               AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, and embeds a small Maestro team to execute — fee tied to your outcomes, not our hours.
             </p>
-            <p style={{fontSize:14,color:'rgba(255,255,255,0.70)',maxWidth:480,lineHeight:1.6,marginBottom:32}}>
+            <p style={{fontSize:14,color:'rgba(255,255,255,0.70)',lineHeight:1.6,marginBottom:32}}>
               Start with a Solution. Scale to full <a href="/ai-strategy" style={{color:TEAL,textDecoration:'none'}}>AI Value Realization</a>.
             </p>
             <div style={{display:'flex',gap:12,flexWrap:'wrap' as const}}>
@@ -100,8 +100,8 @@ export default function Homepage() {
       </div>
 
       {/* PROBLEM BAND */}
-      <div style={{background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`,padding:'40px 32px'}}>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1px 1fr 1px 1fr',gap:0,maxWidth:900,margin:'0 auto'}}>
+      <div style={{background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`,padding:'40px 48px'}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1px 1fr 1px 1fr',gap:0,maxWidth:1400,margin:'0 auto'}}>
           <div style={{padding:'0 32px',textAlign:'center' as const}}>
             <div style={{fontFamily:SERIF,fontSize:42,color:RED,marginBottom:8}}>$94M</div>
             <div style={{fontSize:13,color:MUTED}}>Meridian Health&apos;s AI portfolio — zero with documented ROI</div>
@@ -120,8 +120,8 @@ export default function Homepage() {
       </div>
 
       {/* PRODUCTS */}
-      <div style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1280,margin:'0 auto'}}>
+      <div style={{padding:'80px 48px'}}>
+        <div style={{maxWidth:1400,margin:'0 auto'}}>
           <div style={{fontFamily:MONO,fontSize:10,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.14em',marginBottom:12}}>
             Five products · One intelligence layer
           </div>
@@ -151,8 +151,8 @@ export default function Homepage() {
       </div>
 
       {/* SOLUTIONS */}
-      <div style={{padding:'0 32px 80px'}}>
-        <div style={{maxWidth:1280,margin:'0 auto'}}>
+      <div style={{padding:'0 48px 80px'}}>
+        <div style={{maxWidth:1400,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Diagnosis is just the start. We execute.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:40,lineHeight:1.6}}>
             AbarVa doesn&apos;t hand you a report and leave. Maestros embed. They execute. They track outcomes.
@@ -183,8 +183,8 @@ export default function Homepage() {
       </div>
 
       {/* DEMO */}
-      <div id="demo" style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
-        <div style={{maxWidth:1280,margin:'0 auto'}}>
+      <div id="demo" style={{padding:'80px 48px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
+        <div style={{maxWidth:1400,margin:'0 auto'}}>
           <div style={{fontFamily:MONO,fontSize:10,color:TEAL,letterSpacing:'.14em',textTransform:'uppercase' as const,marginBottom:12}}>
             See it working · No signup required
           </div>
@@ -218,8 +218,8 @@ export default function Homepage() {
       </div>
 
       {/* HOW WE EARN */}
-      <div style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1280,margin:'0 auto'}}>
+      <div style={{padding:'80px 48px'}}>
+        <div style={{maxWidth:1400,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Skin in the game. Fee on outcomes only.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48,lineHeight:1.6}}>
             Four steps. Baseline locked on day 0. Fee tied to your outcomes — not our hours.
@@ -248,8 +248,8 @@ export default function Homepage() {
       </div>
 
       {/* PROOF */}
-      <div style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:24,maxWidth:900,margin:'0 auto'}}>
+      <div style={{padding:'80px 48px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:24,maxWidth:1400,margin:'0 auto'}}>
           {[
             {num:'340', label:'Transformation patterns in the Genome — each with documented failure rates'},
             {num:'89%', label:'Of organizations with regulatory overdue + no plan face enforcement action within 90 days'},
@@ -264,8 +264,8 @@ export default function Homepage() {
       </div>
 
       {/* CONTACT */}
-      <div id="contact" style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1280,margin:'0 auto'}}>
+      <div id="contact" style={{padding:'80px 48px'}}>
+        <div style={{maxWidth:1400,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Ready to see your organization in here?</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48}}>No sales calls. A Maestro responds within 24 hours.</p>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48}}>
@@ -353,7 +353,7 @@ export default function Homepage() {
 
       {/* FOOTER */}
       <div style={{borderTop:`1px solid ${BORDER}`}}>
-        <div style={{padding:'32px',display:'flex',justifyContent:'space-between',alignItems:'center',maxWidth:1280,margin:'0 auto',flexWrap:'wrap' as const,gap:16}}>
+        <div style={{padding:'32px 48px',display:'flex',justifyContent:'space-between',alignItems:'center',maxWidth:1400,margin:'0 auto',flexWrap:'wrap' as const,gap:16}}>
           <div>
             <span style={{fontFamily:SERIF,fontSize:18,fontWeight:500,color:WHITE,letterSpacing:'-0.01em'}}>Abar</span>
             <span style={{fontFamily:MONO,fontSize:14,color:TEAL,letterSpacing:'.04em'}}>Va</span>

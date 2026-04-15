@@ -1056,7 +1056,7 @@ function ArchContent() {
 
       {/* Pattern grid — shown when mode is patterns and no pattern selected */}
       {mode === 'patterns' && !selectedPattern && (
-        <div style={{ padding: '40px 48px', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ padding: '40px 48px', maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ marginBottom: '32px' }}>
             <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
               AbarVa · Reference Architecture Library

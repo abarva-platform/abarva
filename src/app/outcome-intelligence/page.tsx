@@ -506,7 +506,7 @@ function VerificationTab() {
       <div style={{ fontSize: 28, fontFamily: T.fraunces, color: T.text, marginBottom: 24 }}>
         Outcome Verification
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 800 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         {/* Pending */}
         <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 20 }}>
           <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginBottom: 12 }}>PENDING VERIFICATION</div>

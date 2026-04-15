@@ -186,7 +186,7 @@ function FutureOfWorkContent() {
   // ── Step nav bar ──
   const StepNav = () => (
     <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px' }}>
-      <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
         {STEPS.map(s => (
           <button key={s.id} onClick={() => setStep(s.id)}
             style={{ padding: '12px 18px', fontSize: '13px', fontWeight: step === s.id ? 600 : 400, color: step === s.id ? GREEN : step > s.id ? GREEN : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', borderBottom: step === s.id ? `2px solid ${GREEN}` : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
@@ -221,7 +221,7 @@ function FutureOfWorkContent() {
       <Breadcrumb />
       {step > 0 && <StepNav />}
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px' }}>
 
         {/* ═══════════════ STEP 0 — LANDING ═══════════════ */}
         {step === 0 && (

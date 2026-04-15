@@ -610,14 +610,14 @@ function IntelligenceContent() {
       <AbarvaNav activePage="intelligence" />
 
       {/* Header */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 32px' }}>
+      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 48px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Technology Intelligence · {currentClientName} · April 2026
               </div>
-              <h1 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>
+              <h1 style={{ fontFamily: SANS, fontSize: '36px', fontWeight: 700, color: WHITE, margin: 0 }}>
                 Technology Landscape
               </h1>
               <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
@@ -638,7 +638,7 @@ function IntelligenceContent() {
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, display: 'flex', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '24px 32px', gap: '20px' }}>
+      <div style={{ flex: 1, display: 'flex', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '24px 48px', gap: '20px' }}>
 
         {/* LEFT — System list */}
         <div style={{ width: '280px', flexShrink: 0 }}>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import { filterSolutions, buildSolutionUrl, objectiveColor, type SolutionFilter, type SolutionObjective, type SolutionOffice, type SolutionVertical } from '@/lib/solution-library'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
@@ -449,30 +450,34 @@ function SolutionsContent() {
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
+      <AbarvaNav activePage="solutions" />
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
       {/* Page header */}
-      <div style={{ borderBottom: `1px solid ${T.border}`, padding: '40px 0 32px' }}>
-        <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
-          Solution Library
-        </div>
-        <div style={{ fontSize: 40, fontFamily: T.fraunces, color: T.text, marginBottom: 12, lineHeight: 1.1 }}>
-          Find your problem. Run the solution.
-        </div>
-        <div style={{ fontSize: 15, fontFamily: T.sans, color: T.secondary, maxWidth: 580, marginBottom: 24, lineHeight: 1.6 }}>
-          Each solution is a pre-configured path from problem to outcome — combining your data, industry context, and the Transformation Genome.
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          {['5 Solutions', '5 Verticals', 'Avg 76% success rate'].map(stat => (
-            <div key={stat} style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, padding: '5px 14px', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: 20, background: 'rgba(45,212,200,0.06)' }}>
-              {stat}
-            </div>
-          ))}
+      <div style={{ borderBottom: `1px solid ${T.border}`, padding: '40px 48px 32px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>
+            Solution Library
+          </div>
+          <div style={{ fontSize: 52, fontFamily: T.fraunces, color: T.text, marginBottom: 12, lineHeight: 1.1 }}>
+            Find your problem. Run the solution.
+          </div>
+          <div style={{ fontSize: 15, fontFamily: T.sans, color: T.secondary, marginBottom: 24, lineHeight: 1.6 }}>
+            Each solution is a pre-configured path from problem to outcome — combining your data, industry context, and the Transformation Genome.
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {['5 Solutions', '5 Verticals', 'Avg 76% success rate'].map(stat => (
+              <div key={stat} style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, padding: '5px 14px', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: 20, background: 'rgba(45,212,200,0.06)' }}>
+                {stat}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Filter + grid */}
-      <div style={{ padding: '32px 0 64px' }}>
+      <div style={{ padding: '32px 48px 64px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         <FilterBar filter={filter} onChange={setFilter} />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20, animation: 'fadein 0.3s ease-out' }}>
           {filteredSolutions.map(solution => (
@@ -487,6 +492,7 @@ function SolutionsContent() {
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   )

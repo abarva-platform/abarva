@@ -118,7 +118,7 @@ export default function BusinessContext() {
         ))}
       </div>
 
-      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
         {/* Page header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

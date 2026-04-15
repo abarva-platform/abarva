@@ -184,13 +184,13 @@ export default function SolutionLayout({
       )}
 
       {/* ── SECTION 4: Intake flow ── */}
-      <div style={{ padding: '64px 5vw 96px' }}>
-        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+      <div style={{ padding: '64px 48px 96px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
 
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
             Start this solution
           </div>
-          <h2 style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 500, color: WHITE, margin: '0 0 32px' }}>
+          <h2 style={{ fontFamily: SERIF, fontSize: '36px', fontWeight: 500, color: WHITE, margin: '0 0 32px' }}>
             Tell us what you're trying to solve.
           </h2>
 

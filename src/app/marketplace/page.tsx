@@ -579,7 +579,7 @@ function PathRFP({ clientId }: { clientId: string }) {
 
 function EntryScreen({ onSelect }: { onSelect: (path: EntryPath) => void }) {
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 32px' }}>
+    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 48px' }}>
       <div style={{ textAlign: 'center', marginBottom: '48px' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '4px 14px', borderRadius: '20px', background: '#EEF2FF', border: '1px solid #C7D2FE', marginBottom: '20px' }}>
           <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#6366F1', display: 'block' }} />

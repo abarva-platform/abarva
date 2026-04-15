@@ -111,7 +111,7 @@ export default function PlatformPage() {
           <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, marginBottom: '48px' }}>
             Four layers. One platform.
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '3px', maxWidth: '800px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '3px' }}>
             {[
               { label: 'Intelligence Layer', sub: 'Situation · AI Strategy · Vendor · Business Case · Outcome', color: TEAL, desc: 'Five products running on your data — each answering one decision.' },
               { label: 'Solutions Layer', sub: 'PDLC · Margin · Technology Modernisation', color: AMBER, desc: 'Maestros executing against the intelligence — with outcome accountability.' },
@@ -176,7 +176,7 @@ export default function PlatformPage() {
 
       {/* The Genome */}
       <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 48px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'start' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'start' }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: '10px', color: AMBER, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
               The Transformation Genome

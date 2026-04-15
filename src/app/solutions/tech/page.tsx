@@ -160,7 +160,7 @@ export default function SolutionTech() {
             <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>
               Technology Intelligence · Arcturus Financial Group
             </div>
-            <h1 style={{ fontFamily: SANS, fontSize: '32px', color: WHITE, margin: '0 0 12px', fontWeight: 700, lineHeight: 1.2 }}>
+            <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '52px', color: WHITE, margin: '0 0 12px', fontWeight: 500, lineHeight: 1.15 }}>
               Technology Modernization
             </h1>
             <p style={{ fontFamily: SANS, fontSize: '15px', color: MUTED, margin: 0, lineHeight: 1.6 }}>
