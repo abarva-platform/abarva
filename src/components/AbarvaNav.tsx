@@ -33,12 +33,26 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
   const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 200) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
-  // Derive client from URL — only used for the nav label, never for routing
-  const urlClientId = pathname?.split('/admin/client/')?.[1]?.split('/')?.[0] || null
+  // Derive client from URL — admin/client/[id] or engage/[id]/
+  const urlClientId =
+    pathname?.split('/admin/client/')?.[1]?.split('/')?.[0] ||
+    pathname?.split('/engage/')?.[1]?.split('/')?.[0] ||
+    null
   const cid = urlClientId || clientId || 'meridian'
 
   const metaClientId = user?.publicMetadata?.clientId as string | undefined
   const metaRole     = user?.publicMetadata?.role     as string | undefined
+
+  // Active client for engage links: prefer URL client, then metadata, then default
+  const activeClientId = urlClientId || metaClientId || 'arcturus'
+
+  // Compute solution link path based on auth state
+  const solutionPath = (sol: string) => {
+    if (!signedIn) return `/solutions/${sol}`
+    if (metaRole === 'admin') return `/engage/${activeClientId}/${sol}`
+    if (metaClientId) return `/portal/${sol}`
+    return `/solutions/${sol}`
+  }
 
   const signedIn = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Maestro'
@@ -106,10 +120,10 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
             onMouseEnter={cancelClose} onMouseLeave={startClose}
           >
             {[
-              { name: 'AI-Powered PDLC',         path: '/solutions/pdlc',   desc: 'Build products at twice the velocity' },
-              { name: 'Margin Optimization',      path: '/solutions/margin', desc: 'Recover margin across revenue, cost, AI' },
-              { name: 'Technology Modernization', path: '/solutions/tech',   desc: 'Govern the modernization the vendor cannot' },
-            ].map(item => (
+              { name: 'AI-Powered PDLC',         sol: 'pdlc',   desc: 'Build products at twice the velocity' },
+              { name: 'Margin Optimization',      sol: 'margin', desc: 'Recover margin across revenue, cost, AI' },
+              { name: 'Technology Modernization', sol: 'tech',   desc: 'Govern the modernization the vendor cannot' },
+            ].map(item => ({...item, path: solutionPath(item.sol)})).map(item => (
               <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
                 <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
                 <div style={{ fontSize: '11px', color: MUTED, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>

@@ -1,5 +1,7 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import SolutionLayout from '@/components/SolutionLayout'
 
@@ -51,6 +53,16 @@ export default function SolutionDelivery() {
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState('')
   const [launched, setLaunched] = useState(false)
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isLoaded || !user) return
+    const role = user.publicMetadata?.role as string
+    const cid = (user.publicMetadata?.clientId as string) || 'arcturus'
+    if (role === 'admin') { router.replace(`/engage/arcturus/delivery`); return }
+    if (cid) { router.replace(`/portal/delivery`); return }
+  }, [isLoaded, user, router])
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
