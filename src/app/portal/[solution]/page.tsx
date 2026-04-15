@@ -73,8 +73,8 @@ function PortalContent() {
   useEffect(() => {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
-    // maestro role = client portal user, admin can preview with ?client= param
-    if (role !== 'maestro' && role !== 'admin') { router.push('/'); return }
+    // client role = portal user, admin can preview with ?client= param
+    if (role !== 'client' && role !== 'admin') { router.push('/'); return }
     if (!clientId) { router.push('/sign-in'); return }
   }, [isLoaded, user, router, role, clientId])
 
