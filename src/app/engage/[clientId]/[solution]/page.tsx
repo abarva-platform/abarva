@@ -104,6 +104,7 @@ export default function MaestroWorkspace() {
   const [showNewModal, setShowNewModal] = useState(false)
   const [newEngagementName, setNewEngagementName] = useState('')
   const [switching, setSwitching] = useState(false)
+  const [seedingDemo, setSeedingDemo] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -197,6 +198,19 @@ export default function MaestroWorkspace() {
     await loadEngagement()
     await loadEngagementList()
     setStarting(false)
+  }
+
+  const seedDemo = async () => {
+    setSeedingDemo(true)
+    setSwitcherOpen(false)
+    await fetch(`/api/engage/${clientId}/${solution}/seed-demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ createdBy: user?.fullName || 'Anand Sundaram' })
+    })
+    await loadEngagement()
+    await loadEngagementList()
+    setSeedingDemo(false)
   }
 
   // Load opportunity map for margin solution
@@ -477,7 +491,7 @@ export default function MaestroWorkspace() {
             }}
           >
             <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {switching ? 'Switching...' : (engagement?.engagement_name || 'Default')}
+              {seedingDemo ? 'Loading demo...' : switching ? 'Switching...' : (engagement?.engagement_name || 'Default')}
             </span>
             <span style={{ color: T.teal, fontSize: '9px' }}>▾</span>
           </button>
@@ -526,6 +540,20 @@ export default function MaestroWorkspace() {
               >
                 <span style={{ color: T.teal, fontSize: '14px', lineHeight: 1 }}>+</span>
                 <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal }}>New engagement</span>
+              </button>
+              <button
+                onClick={seedDemo}
+                disabled={seedingDemo}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '8px 14px',
+                  background: 'transparent', border: 'none', cursor: seedingDemo ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}
+              >
+                <span style={{ color: T.indigo, fontSize: '12px', lineHeight: 1 }}>◈</span>
+                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.indigo }}>
+                  {seedingDemo ? 'Loading demo...' : 'Load completed demo'}
+                </span>
               </button>
             </div>
           )}
