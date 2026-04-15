@@ -334,45 +334,107 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
       )}
 
       {adminSection === 'data' && (
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Pending approval')}
-            {pendingFiles.length === 0
-              ? <div style={{ fontSize: '12px', color: DIM }}>No files pending approval.</div>
-              : pendingFiles.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: AMBER, flexShrink: 0 }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
+          {/* Left 65%: file management */}
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+            <div style={cardStyle()}>
+              {sectionTitle('Pending approval')}
+              {pendingFiles.length === 0
+                ? <div style={{ fontSize: '12px', color: DIM }}>No files pending approval.</div>
+                : pendingFiles.map((f, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: AMBER, flexShrink: 0 }} />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
+                      <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
+                    </div>
+                    <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: 'pointer', marginRight: '6px' }}>Approve</button>
+                    <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: 'pointer' }}>Reject</button>
+                  </div>
+                ))
+              }
+            </div>
+            <div style={cardStyle()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: uploading ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${uploading ? BORDER : 'rgba(45,212,200,0.3)'}`, color: uploading ? DIM : TEAL, cursor: uploading ? 'default' : 'pointer' }}>
+                  {uploading ? 'Uploading…' : 'Upload files'}
+                </button>
+                <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
+              </div>
+              {activeFiles.map((f, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < activeFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
-                    <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
+                    <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.confidence}% confidence</div>
                   </div>
-                  <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: 'pointer', marginRight: '6px' }}>Approve</button>
-                  <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: 'pointer' }}>Reject</button>
+                  <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: 'pointer' }}>Replace</button>
                 </div>
-              ))
-            }
-          </div>
-          <div style={cardStyle()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: uploading ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${uploading ? BORDER : 'rgba(45,212,200,0.3)'}`, color: uploading ? DIM : TEAL, cursor: uploading ? 'default' : 'pointer' }}>
-                {uploading ? 'Uploading…' : 'Upload files'}
-              </button>
-              <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
+              ))}
             </div>
-            {activeFiles.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < activeFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.confidence}% confidence</div>
+          </div>
+
+          {/* Right 35%: sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+            {/* Quick stats */}
+            <div style={cardStyle()}>
+              {sectionTitle('Data summary')}
+              {[
+                { label: 'Files loaded', value: String(activeFiles.length), color: GREEN },
+                { label: 'Pending approval', value: String(pendingFiles.length), color: AMBER },
+                { label: 'Avg confidence', value: activeFiles.length > 0 ? Math.round(activeFiles.reduce((s, f) => s + f.confidence, 0) / activeFiles.length) + '%' : '—', color: TEAL },
+              ].map((stat, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < 2 ? '10px' : '0' }}>
+                  <span style={{ fontSize: '12px', color: MUTED }}>{stat.label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: '13px', color: stat.color, fontWeight: 600 }}>{stat.value}</span>
                 </div>
-                <button style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: 'pointer' }}>Replace</button>
+              ))}
+            </div>
+
+            {/* Engagement settings */}
+            <div style={cardStyle()}>
+              {sectionTitle('Engagement settings')}
+              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 2 }}>
+                <div><span style={{ color: DIM }}>Fee model:</span> 15% of verified savings</div>
+                <div><span style={{ color: DIM }}>Admin:</span> Anand Sundaram</div>
+                <div><span style={{ color: DIM }}>Start:</span> Apr 2026</div>
               </div>
-            ))}
+            </div>
+
+            {/* Products unlocked */}
+            <div style={cardStyle()}>
+              {sectionTitle('Products unlocked')}
+              {products.map((p, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < products.length - 1 ? '10px' : '0' }}>
+                  <a href={p.href} style={{ fontSize: '12px', color: WHITE, textDecoration: 'none' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEAL }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = WHITE }}>
+                    {p.name}
+                  </a>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: GREEN, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Key client metrics */}
+            <div style={cardStyle()}>
+              {sectionTitle('Client profile')}
+              {[
+                { label: 'Revenue', value: `$${data.revenue}B` },
+                { label: 'Employees', value: data.employees.toLocaleString() },
+                { label: 'Vertical', value: data.type },
+                { label: 'HQ', value: data.hq },
+              ].map((row, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: i < 3 ? '8px' : '0' }}>
+                  <span style={{ fontSize: '12px', color: DIM }}>{row.label}</span>
+                  <span style={{ fontSize: '12px', color: WHITE }}>{row.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
