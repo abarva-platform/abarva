@@ -28,6 +28,12 @@ export default function AuthRedirect() {
       return
     }
 
+    if (role === 'maestro' && clientId) {
+      // Client portal users go to portal (default to delivery solution)
+      router.push(`/portal/delivery`)
+      return
+    }
+
     if (clientId) {
       router.push(`/admin/client/${clientId}`)
       return

@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa Solutions — Final Design</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060A12;--card:#0D1520;--border:#1C2D45;
+  --teal:#2DD4C8;--white:#EFF6FF;--muted:#94A3B8;--dim:#475569;
+  --red:#EF4444;--amber:#F59E0B;--green:#34D399;
+  --sans:'DM Sans',sans-serif;--mono:'DM Mono',monospace;--serif:Georgia,serif;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--white);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+
+nav{position:sticky;top:0;z-index:200;background:rgba(6,10,18,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);height:60px;display:flex;align-items:center;padding:0 28px;gap:0}
+.nav-logo{display:flex;flex-direction:column;text-decoration:none;line-height:1;margin-right:28px;flex-shrink:0}
+.nav-logo-word{display:flex;align-items:baseline}
+.nla{font-family:var(--serif);font-size:16px;font-weight:800;color:var(--white)}
+.nlv{font-family:var(--serif);font-size:21px;font-weight:900;color:var(--teal)}
+.nlt{font-family:var(--mono);font-size:8px;color:var(--white);opacity:.6;letter-spacing:.04em;margin-top:1px}
+.nav-link{font-size:13px;color:var(--muted);text-decoration:none;padding:0 14px;height:60px;display:flex;align-items:center;transition:color .15s}
+.nav-link:hover{color:var(--white)}
+.nav-link.active{color:var(--teal);border-bottom:2px solid var(--teal)}
+.nav-sp{flex:1}
+.nav-btn{background:var(--teal);color:var(--bg);text-decoration:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600}
+
+.sol-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--card);padding:0 28px;overflow-x:auto}
+.sol-tab{font-size:13px;padding:0 20px;height:48px;display:flex;align-items:center;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;flex-shrink:0;background:none;border-top:none;border-left:none;border-right:none;font-family:var(--sans);transition:color .15s}
+.sol-tab:hover{color:var(--white)}
+.sol-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+.sol-page{display:none}
+.sol-page.active{display:block}
+
+.sol-hero{max-width:1200px;margin:0 auto;padding:48px 28px 32px;display:grid;grid-template-columns:1fr 320px;gap:48px;align-items:start}
+.hero-left{}
+.hero-eyebrow{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:.14em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.hero-eyebrow::after{content:'';flex:0 0 40px;height:1px;background:var(--teal);opacity:.3}
+.hero-name{font-family:var(--serif);font-size:36px;font-weight:500;color:var(--white);margin-bottom:12px;line-height:1.2}
+.hero-tagline{font-size:16px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.hero-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px}
+.meta-tag{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid var(--border);color:var(--muted)}
+.hero-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.h-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;border-top:2px solid var(--border)}
+.h-stat.red{border-top-color:var(--red)}
+.h-stat.amber{border-top-color:var(--amber)}
+.h-stat.green{border-top-color:var(--green)}
+.h-stat.teal{border-top-color:var(--teal)}
+.hs-label{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.hs-value{font-size:26px;font-weight:500;font-family:var(--serif);line-height:1;margin-bottom:4px}
+.hs-sub{font-size:11px;color:var(--dim);line-height:1.4}
+
+.sol-body{max-width:1200px;margin:0 auto;padding:0 28px 60px;display:grid;grid-template-columns:1fr 300px;gap:24px}
+
+.phases{margin-bottom:20px}
+.phase-section-label{font-family:var(--mono);font-size:10px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.phase{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--border)}
+.phase:last-child{border-bottom:none}
+.ph-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;margin-top:2px}
+.ph-body{flex:1}
+.ph-title{font-size:14px;font-weight:500;color:var(--white);margin-bottom:5px}
+.ph-desc{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:8px}
+.ph-products{display:flex;gap:5px;flex-wrap:wrap}
+.php{font-size:10px;padding:2px 8px;border-radius:4px;font-weight:500}
+
+.side-stack{display:flex;flex-direction:column;gap:12px}
+.side-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+.sc-label{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.genome-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.genome-item:last-child{border-bottom:none}
+.gi-rate{font-size:20px;font-weight:500;color:var(--red);font-family:var(--serif);line-height:1;flex-shrink:0;min-width:42px}
+.gi-name{font-size:12px;font-weight:500;color:var(--white);margin-bottom:2px}
+.gi-sub{font-size:11px;color:var(--muted);line-height:1.4}
+.del-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--muted)}
+.del-item:last-child{border-bottom:none}
+.del-arrow{color:var(--teal);flex-shrink:0}
+
+.divider-full{height:1px;background:var(--border)}
+
+.intake-section{max-width:1200px;margin:0 auto;padding:32px 28px 48px}
+.intake-header{margin-bottom:24px}
+.intake-label{font-family:var(--mono);font-size:10px;color:var(--teal);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.intake-title{font-size:22px;font-weight:500;color:var(--white);margin-bottom:6px}
+.intake-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:640px}
+
+.intake-card{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.intake-top{padding:20px;background:var(--bg)}
+.step-dots{display:flex;gap:6px;margin-bottom:14px}
+.sd{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background .2s}
+.sd.done{background:var(--teal)}
+.sd.curr{background:var(--teal);box-shadow:0 0 0 3px rgba(45,212,200,.15)}
+
+.ic-step-lbl{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+.ic-q{font-size:16px;font-weight:500;color:var(--white);margin-bottom:5px;line-height:1.4}
+.ic-hint{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+
+textarea{width:100%;min-height:90px;resize:vertical;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;font-family:var(--sans);color:var(--white);line-height:1.5;outline:none;transition:border-color .15s}
+textarea:focus{border-color:var(--teal)}
+textarea::placeholder{color:var(--dim)}
+
+.intake-actions{display:flex;gap:10px;margin-top:10px;align-items:flex-start}
+.btn-match{background:var(--teal);color:var(--bg);border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;font-family:var(--sans);cursor:pointer;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn-match:hover{opacity:.9}
+.intake-note{font-size:11px;color:var(--dim);line-height:1.5;padding-top:4px}
+
+.starters{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.starters-label{font-size:11px;color:var(--dim);margin-bottom:8px}
+.starter-pills{display:flex;gap:6px;flex-wrap:wrap}
+.starter{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:var(--sans);transition:border-color .15s,color .15s}
+.starter:hover{border-color:var(--teal);color:var(--teal)}
+
+.genome-response{background:var(--card);border-top:1px solid var(--border);padding:20px;display:none}
+.gr-label{font-family:var(--mono);font-size:9px;color:var(--teal);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px}
+.finding{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
+.finding:last-of-type{border-bottom:none}
+.f-stripe{width:3px;border-radius:2px;align-self:stretch;flex-shrink:0}
+.f-body{}
+.f-title{font-size:13px;font-weight:500;color:var(--white);margin-bottom:3px;line-height:1.4}
+.f-detail{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:5px}
+.f-pills{display:flex;gap:4px;flex-wrap:wrap}
+.f-pill{font-size:10px;padding:2px 7px;border-radius:10px}
+
+.follow-up{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:16px}
+.fu-label{font-family:var(--mono);font-size:9px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+.fu-q{font-size:14px;font-weight:500;color:var(--white);margin-bottom:5px}
+.fu-hint{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.fu-opts{display:flex;gap:6px;flex-wrap:wrap}
+.fu-opt{font-size:12px;padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-family:var(--sans);transition:all .15s}
+.fu-opt:hover{border-color:var(--teal);color:var(--teal)}
+.fu-opt.sel{border-color:var(--teal);background:rgba(45,212,200,.08);color:var(--teal)}
+
+.launch-bar{display:flex;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);align-items:center;display:none}
+.btn-launch{background:var(--teal);color:var(--bg);border:none;border-radius:8px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.btn-launch:hover{opacity:.9}
+.btn-launch.success{background:var(--green)}
+.btn-reset{background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:11px 16px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+.launch-note{font-size:11px;color:var(--dim);line-height:1.5;flex:1}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">
+    <div class="nav-logo-word"><span class="nla">Abar</span><span class="nlv">Va</span></div>
+    <span class="nlt">know it. build it. own it.</span>
+  </a>
+  <a href="/diagnose" class="nav-link">Intelligence ▾</a>
+  <a href="/solutions" class="nav-link active">Solutions ▾</a>
+  <a href="/admin" class="nav-link">Clients ▾</a>
+  <div class="nav-sp"></div>
+  <span style="font-size:12px;color:var(--muted);margin-right:16px">Anand S. · Arcturus Financial</span>
+  <a href="/admin" class="nav-btn">My projects</a>
+</nav>
+
+<div class="sol-tabs">
+  <button class="sol-tab active" onclick="showSol('pdlc',this)">AI-Powered PDLC</button>
+  <button class="sol-tab" onclick="showSol('delivery',this)">AI-Powered Delivery</button>
+  <button class="sol-tab" onclick="showSol('margin',this)">Margin Optimization</button>
+  <button class="sol-tab" onclick="showSol('tech',this)">Technology Modernization</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SOLUTION 1 — AI-POWERED PDLC
+════════════════════════════════════════ -->
+<div id="sol-pdlc" class="sol-page active">
+  <div class="sol-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Solution 1 of 4</div>
+      <div class="hero-name">AI-Powered PDLC</div>
+      <div class="hero-tagline">Cut time to production in half. AI agents alongside your engineering teams — not replacing them. Maestros embedded to govern the output. Knowledge stays permanently.</div>
+      <div class="hero-meta">
+        <span class="meta-tag">CIO</span>
+        <span class="meta-tag">All verticals</span>
+        <span class="meta-tag">8–16 week delivery</span>
+        <span class="meta-tag">Outcome-fee model</span>
+      </div>
+    </div>
+    <div class="hero-stat-grid">
+      <div class="h-stat red"><div class="hs-label">Avg time to production</div><div class="hs-value" style="color:var(--red)">16mo</div><div class="hs-sub">Enterprise median before AbarVa</div></div>
+      <div class="h-stat teal"><div class="hs-label">After AbarVa</div><div class="hs-value" style="color:var(--teal)">8mo</div><div class="hs-sub">50% reduction — Genome-validated</div></div>
+      <div class="h-stat amber"><div class="hs-label">Consulting spend</div><div class="hs-value" style="color:var(--amber)">$18M</div><div class="hs-sub">Avg annual reduction per engagement</div></div>
+      <div class="h-stat green"><div class="hs-label">Knowledge retained</div><div class="hs-value" style="color:var(--green)">100%</div><div class="hs-sub">Stays inside the org permanently</div></div>
+    </div>
+  </div>
+
+  <div class="sol-body">
+    <div>
+      <div class="phase-section-label">Three phases · what happens</div>
+      <div class="phases">
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(45,212,200,.12);color:var(--teal);border:1px solid rgba(45,212,200,.25)">1</div>
+          <div class="ph-body">
+            <div class="ph-title">Diagnose the delivery bottleneck</div>
+            <div class="ph-desc">AbarVa maps every handoff, every meeting that displaces building, every vendor dependency without internal capability. In 48 hours you know exactly where your 16-month cycle is leaking — and which three interventions recover the most time.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(45,212,200,.1);color:var(--teal)">Situation</span><span class="php" style="background:rgba(45,212,200,.06);color:var(--muted);border:1px solid var(--border)">Data Intelligence</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)">2</div>
+          <div class="ph-body">
+            <div class="ph-title">Embed AI into the build cycle</div>
+            <div class="ph-desc">Maestros embed inside your engineering squads. AI agents handle scaffolding, testing, documentation, and review — the parts that slow humans down. Engineers build the parts that require judgment. Output doubles. Quality improves.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Strategy</span><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Vendor</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)">3</div>
+          <div class="ph-body">
+            <div class="ph-title">Verify delivery improvement · earn the fee</div>
+            <div class="ph-desc">Baseline: cycle time, output per engineer, consulting spend — all locked on Day 0. Monthly actuals tracked. Fee on verified improvement only. If time to production doesn't drop, we don't get paid.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Business Case</span><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Outcomes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="side-stack">
+      <div class="side-card">
+        <div class="sc-label">Genome patterns — why delivery fails</div>
+        <div class="genome-item"><div class="gi-rate">72%</div><div><div class="gi-name">Vendor dependency without internal capability</div><div class="gi-sub">Teams cannot rebuild or recover when the vendor fails</div></div></div>
+        <div class="genome-item"><div class="gi-rate">61%</div><div><div class="gi-name">Change management gap</div><div class="gi-sub">Technology works — adoption fails. Engineers revert to old ways.</div></div></div>
+        <div class="genome-item"><div class="gi-rate">79%</div><div><div class="gi-name">No MLOps infrastructure</div><div class="gi-sub">AI cannot reach production without deployment and monitoring rails</div></div></div>
+      </div>
+      <div class="side-card">
+        <div class="sc-label">What you get</div>
+        <div class="del-item"><span class="del-arrow">→</span>Delivery bottleneck map — every handoff quantified</div>
+        <div class="del-item"><span class="del-arrow">→</span>AI agent integration playbook — squad-level</div>
+        <div class="del-item"><span class="del-arrow">→</span>Vendor selection for tooling — scored against your stack</div>
+        <div class="del-item"><span class="del-arrow">→</span>Baseline + monthly tracking + fee on verified cycle time reduction</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider-full"></div>
+  <div class="intake-section">
+    <div class="intake-header">
+      <div class="intake-label">Start this solution</div>
+      <div class="intake-title">Tell us what you're trying to solve.</div>
+      <div class="intake-sub">One or two sentences. AbarVa matches it to the Genome and surfaces what's already visible in your client's data before asking anything else.</div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-top">
+        <div class="step-dots"><div class="sd curr" id="pdlc-d0"></div><div class="sd" id="pdlc-d1"></div><div class="sd" id="pdlc-d2"></div></div>
+        <div class="ic-step-lbl">Step 1 of 3 · describe the problem</div>
+        <div class="ic-q">What's slowing down your software delivery?</div>
+        <div class="ic-hint">Don't overthink it. "We're spending $300M in capital and time to production is 16 months" is perfect. So is "My engineers are in meetings, not building."</div>
+        <textarea id="pdlc-input" placeholder="Describe what you're trying to solve..."></textarea>
+        <div class="intake-actions">
+          <button class="btn-match" onclick="handleIntake('pdlc')">Match to Genome →</button>
+          <div class="intake-note">AbarVa surfaces what's already visible in your client data before asking anything further.</div>
+        </div>
+        <div class="starters">
+          <div class="starters-label">Common starting points:</div>
+          <div class="starter-pills">
+            <button class="starter" onclick="fill('pdlc-input',this,'Time to production is 16+ months. Engineers spend more time in meetings than building.')">Time to production too long</button>
+            <button class="starter" onclick="fill('pdlc-input',this,'We have 80 consultants on site. 70% of their time is onboarding, not building.')">Too many consultants, too slow</button>
+            <button class="starter" onclick="fill('pdlc-input',this,'We are spending $300M in engineering capital and shipping less than our competitors.')">Engineering capital not converting</button>
+          </div>
+        </div>
+      </div>
+      <div class="genome-response" id="pdlc-response">
+        <div class="gr-label">Genome match — what your client data already shows</div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">$94M AI committed — zero with delivery infrastructure</div><div class="f-detail">28 AI initiatives running. None have MLOps infrastructure. Models cannot reach production. This matches Genome pattern F006 — 79% failure rate without deployment rails.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client data</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome F006 · 79%</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--amber)"></div><div class="f-body"><div class="f-title">Technology spend 4.2% of revenue — 35% above peer median</div><div class="f-detail">Arcturus spends more than peers on technology without proportional delivery output. The cost is high — the velocity is not matching it.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client financials</span><span class="f-pill" style="background:rgba(245,158,11,.1);color:var(--amber)">Industry benchmark</span></div></div></div>
+        <div class="follow-up">
+          <div class="fu-label">Step 2 of 3 · one follow-up question</div>
+          <div class="fu-q">What is the primary bottleneck — speed, quality, or cost?</div>
+          <div class="fu-hint">This determines which of the three PDLC interventions we sequence first and how the Business Case is framed.</div>
+          <div class="fu-opts">
+            <button class="fu-opt" onclick="selectOpt(this,'pdlc')">Speed — time to production</button>
+            <button class="fu-opt" onclick="selectOpt(this,'pdlc')">Cost — consulting and engineering spend</button>
+            <button class="fu-opt" onclick="selectOpt(this,'pdlc')">Quality — rework and post-launch failures</button>
+            <button class="fu-opt" onclick="selectOpt(this,'pdlc')">All three — they compound each other</button>
+          </div>
+        </div>
+        <div class="launch-bar" id="pdlc-launch">
+          <button class="btn-launch" id="pdlc-btn" onclick="launch('pdlc')">Create project and begin →</button>
+          <button class="btn-reset" onclick="reset('pdlc')">Change my answer</button>
+          <div class="launch-note">Creates an AI-Powered PDLC project in your Maestro workspace, pre-loads Situation with CIO lens, queues PDLC Genome patterns.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SOLUTION 2 — AI-POWERED DELIVERY
+════════════════════════════════════════ -->
+<div id="sol-delivery" class="sol-page">
+  <div class="sol-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Solution 2 of 4</div>
+      <div class="hero-name">AI-Powered Transformation Delivery</div>
+      <div class="hero-tagline">Replace 40 consultants with 4 Maestros. Every engagement produces intelligence that stays inside the organisation permanently — not knowledge that walks out every Friday.</div>
+      <div class="hero-meta">
+        <span class="meta-tag">CIO · CTO</span>
+        <span class="meta-tag">All verticals</span>
+        <span class="meta-tag">Full engagement lifecycle</span>
+        <span class="meta-tag">Outcome-fee model</span>
+      </div>
+    </div>
+    <div class="hero-stat-grid">
+      <div class="h-stat red"><div class="hs-label">Typical consulting team</div><div class="hs-value" style="color:var(--red)">40</div><div class="hs-sub">People — 70% time onboarding</div></div>
+      <div class="h-stat teal"><div class="hs-label">AbarVa Maestro team</div><div class="hs-value" style="color:var(--teal)">4</div><div class="hs-sub">Embedded — knowledge stays permanently</div></div>
+      <div class="h-stat amber"><div class="hs-label">Knowledge lost per engagement</div><div class="hs-value" style="color:var(--amber)">100%</div><div class="hs-sub">Traditional consulting model — exits with the team</div></div>
+      <div class="h-stat green"><div class="hs-label">Consulting avoided</div><div class="hs-value" style="color:var(--green)">$42M</div><div class="hs-sub">Avg annual consulting spend replaced</div></div>
+    </div>
+  </div>
+  <div class="sol-body">
+    <div>
+      <div class="phase-section-label">Three phases · what happens</div>
+      <div class="phases">
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(45,212,200,.12);color:var(--teal);border:1px solid rgba(45,212,200,.25)">1</div>
+          <div class="ph-body">
+            <div class="ph-title">Diagnose — what you are actually paying for</div>
+            <div class="ph-desc">AbarVa maps every consulting relationship: what is delivered vs what was promised, what knowledge stays vs what leaves, what is being rebuilt engagement after engagement. The contradictions become visible in 48 hours.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(45,212,200,.1);color:var(--teal)">Situation</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)">2</div>
+          <div class="ph-body">
+            <div class="ph-title">Prescribe — the Maestro model for this engagement</div>
+            <div class="ph-desc">Define exactly which consulting relationships to replace, what the Maestro team does instead, how knowledge is captured and embedded, and what the transition plan looks like. Board-level business case with CFO-grade ROI.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Strategy</span><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Business Case</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)">3</div>
+          <div class="ph-body">
+            <div class="ph-title">Execute — Maestros embed, consulting spend drops</div>
+            <div class="ph-desc">Maestro team replaces the consulting engagement. Fee on verified reduction in consulting spend and verified outcomes delivered. Knowledge does not leave — it compounds with every project.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Vendor</span><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Outcomes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="side-stack">
+      <div class="side-card">
+        <div class="sc-label">Genome patterns</div>
+        <div class="genome-item"><div class="gi-rate">84%</div><div><div class="gi-name">No named executive sponsor</div><div class="gi-sub">Transformation stalls without C-suite ownership</div></div></div>
+        <div class="genome-item"><div class="gi-rate">76%</div><div><div class="gi-name">Pilot purgatory</div><div class="gi-sub">Prior failed engagements create credibility deficit</div></div></div>
+        <div class="genome-item"><div class="gi-rate">61%</div><div><div class="gi-name">Change management gap</div><div class="gi-sub">Technology delivered — adoption fails</div></div></div>
+      </div>
+      <div class="side-card">
+        <div class="sc-label">What you get</div>
+        <div class="del-item"><span class="del-arrow">→</span>Consulting relationship audit — value vs cost</div>
+        <div class="del-item"><span class="del-arrow">→</span>Maestro team design — roles, scope, knowledge model</div>
+        <div class="del-item"><span class="del-arrow">→</span>Transition plan — from consulting to Maestros</div>
+        <div class="del-item"><span class="del-arrow">→</span>Fee on verified consulting spend reduction</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider-full"></div>
+  <div class="intake-section">
+    <div class="intake-header">
+      <div class="intake-label">Start this solution</div>
+      <div class="intake-title">Tell us what you're trying to solve.</div>
+      <div class="intake-sub">One or two sentences. AbarVa matches it to the Genome and surfaces what your client data already shows.</div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-top">
+        <div class="step-dots"><div class="sd curr" id="delivery-d0"></div><div class="sd" id="delivery-d1"></div><div class="sd" id="delivery-d2"></div></div>
+        <div class="ic-step-lbl">Step 1 of 3 · describe the problem</div>
+        <div class="ic-q">What's the consulting or delivery challenge you're working on?</div>
+        <div class="ic-hint">"80 consultants on site, 70% of their time is getting up to speed" is perfect. So is "We've spent $42M on consulting this year and I cannot point to what changed."</div>
+        <textarea id="delivery-input" placeholder="Describe what you're trying to solve..."></textarea>
+        <div class="intake-actions">
+          <button class="btn-match" onclick="handleIntake('delivery')">Match to Genome →</button>
+          <div class="intake-note">AbarVa surfaces what's already visible in Arcturus data before asking anything further.</div>
+        </div>
+        <div class="starters">
+          <div class="starters-label">Common starting points:</div>
+          <div class="starter-pills">
+            <button class="starter" onclick="fill('delivery-input',this,'We have 80 consultants on site and 70% of their time is getting up to speed. Knowledge walks out every Friday.')">Too many consultants, no retention</button>
+            <button class="starter" onclick="fill('delivery-input',this,'We are spending $42M on consulting annually and cannot point to what has permanently changed.')">Consulting spend with no lasting outcome</button>
+            <button class="starter" onclick="fill('delivery-input',this,'Every transformation programme ends and we start the next one from scratch.')">Starting from scratch every engagement</button>
+          </div>
+        </div>
+      </div>
+      <div class="genome-response" id="delivery-response">
+        <div class="gr-label">Genome match — what Arcturus data already shows</div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">$42M consulting spend — no documented knowledge transfer</div><div class="f-detail">Arcturus spends $42M annually on consulting. No knowledge management system. No structured handover process. Each engagement restarts from baseline.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client financials</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome F001 · 72%</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--amber)"></div><div class="f-body"><div class="f-title">CDO vacant 11 months — no executive to own transformation</div><div class="f-detail">Every transformation programme needs a named C-suite owner. Without one, consulting engagements drift without accountability. Matches Genome F002 — 84% failure rate.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client leadership</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome F002 · 84%</span></div></div></div>
+        <div class="follow-up">
+          <div class="fu-label">Step 2 of 3 · one follow-up question</div>
+          <div class="fu-q">What is the primary goal — reduce cost, improve outcome quality, or retain knowledge permanently?</div>
+          <div class="fu-hint">This shapes the Maestro model we design and how we frame the ROI to the CFO.</div>
+          <div class="fu-opts">
+            <button class="fu-opt" onclick="selectOpt(this,'delivery')">Reduce consulting cost</button>
+            <button class="fu-opt" onclick="selectOpt(this,'delivery')">Improve delivery quality and speed</button>
+            <button class="fu-opt" onclick="selectOpt(this,'delivery')">Retain knowledge permanently</button>
+            <button class="fu-opt" onclick="selectOpt(this,'delivery')">All three — they're connected</button>
+          </div>
+        </div>
+        <div class="launch-bar" id="delivery-launch">
+          <button class="btn-launch" id="delivery-btn" onclick="launch('delivery')">Create project and begin →</button>
+          <button class="btn-reset" onclick="reset('delivery')">Change my answer</button>
+          <div class="launch-note">Creates an AI-Powered Delivery project in your Maestro workspace with selected context pre-loaded.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SOLUTION 3 — MARGIN OPTIMIZATION
+════════════════════════════════════════ -->
+<div id="sol-margin" class="sol-page">
+  <div class="sol-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Solution 3 of 4</div>
+      <div class="hero-name">Margin Optimization</div>
+      <div class="hero-tagline">Identify every margin lever — across revenue, cost structure, and AI portfolio — and create a board-ready recovery plan. Fee charged only on verified savings.</div>
+      <div class="hero-meta">
+        <span class="meta-tag">CEO · CFO · COO</span>
+        <span class="meta-tag">Healthcare · FinServ · Retail</span>
+        <span class="meta-tag">6–12 week delivery</span>
+        <span class="meta-tag">15–20% of verified savings</span>
+      </div>
+    </div>
+    <div class="hero-stat-grid">
+      <div class="h-stat red"><div class="hs-label">Arcturus C/I ratio</div><div class="hs-value" style="color:var(--red)">71%</div><div class="hs-sub">vs 58% target — $840M gap</div></div>
+      <div class="h-stat amber"><div class="hs-label">AI spend vs ROI</div><div class="hs-value" style="color:var(--amber)">$94M</div><div class="hs-sub">Committed · zero documented return</div></div>
+      <div class="h-stat teal"><div class="hs-label">Recovery range</div><div class="hs-value" style="color:var(--teal)">$60–120M</div><div class="hs-sub">Annual · Genome-validated</div></div>
+      <div class="h-stat green"><div class="hs-label">Fee model</div><div class="hs-value" style="color:var(--green)">15–20%</div><div class="hs-sub">Of verified savings only</div></div>
+    </div>
+  </div>
+  <div class="sol-body">
+    <div>
+      <div class="phase-section-label">Three phases · what happens</div>
+      <div class="phases">
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(45,212,200,.12);color:var(--teal);border:1px solid rgba(45,212,200,.25)">1</div>
+          <div class="ph-body">
+            <div class="ph-title">Diagnose — where the margin is leaking and why</div>
+            <div class="ph-desc">AbarVa runs financials, cost structure, and AI portfolio through 340 Genome patterns. In 48 hours you have every margin gap structured: which are fixable, which are structural, and in what order to address them.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(45,212,200,.1);color:var(--teal)">Situation</span><span class="php" style="background:rgba(45,212,200,.06);color:var(--muted);border:1px solid var(--border)">Data Intelligence</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)">2</div>
+          <div class="ph-body">
+            <div class="ph-title">Prescribe — the sequenced recovery plan</div>
+            <div class="ph-desc">Three to five specific interventions, sequenced by impact and feasibility. Each with a CFO-grade business case: investment required, savings range, timeline, risk level, and Genome validation from prior engagements at peer organisations.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Strategy</span><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Business Case</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)">3</div>
+          <div class="ph-body">
+            <div class="ph-title">Verify — baseline locked · savings tracked · fee earned</div>
+            <div class="ph-desc">Baseline locked on Day 0. Immutable. Monthly actuals tracked against every metric. Verified savings calculated. AbarVa earns 15–20% of what is actually delivered — not what was promised.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Outcomes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="side-stack">
+      <div class="side-card">
+        <div class="sc-label">Genome patterns — why margin programmes fail</div>
+        <div class="genome-item"><div class="gi-rate">89%</div><div><div class="gi-name">No named executive sponsor</div><div class="gi-sub">Margin programmes without a C-suite owner stall at implementation</div></div></div>
+        <div class="genome-item"><div class="gi-rate">76%</div><div><div class="gi-name">AI spend without verified ROI</div><div class="gi-sub">Technology cost inflating margin — no traceable output</div></div></div>
+        <div class="genome-item"><div class="gi-rate">68%</div><div><div class="gi-name">Cost misattribution</div><div class="gi-sub">Teams optimise visible costs — structural drivers intact</div></div></div>
+      </div>
+      <div class="side-card">
+        <div class="sc-label">What you get</div>
+        <div class="del-item"><span class="del-arrow">→</span>Margin gap analysis — every driver quantified</div>
+        <div class="del-item"><span class="del-arrow">→</span>3–5 prioritised interventions with ROI ranges</div>
+        <div class="del-item"><span class="del-arrow">→</span>CFO-ready business case per intervention</div>
+        <div class="del-item"><span class="del-arrow">→</span>Baseline locked Day 0 · monthly tracking · fee on verified savings</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider-full"></div>
+  <div class="intake-section">
+    <div class="intake-header">
+      <div class="intake-label">Start this solution</div>
+      <div class="intake-title">Tell us what you're trying to solve.</div>
+      <div class="intake-sub">One or two sentences. AbarVa matches it to Arcturus's financials and cost structure immediately — no form to fill.</div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-top">
+        <div class="step-dots"><div class="sd curr" id="margin-d0"></div><div class="sd" id="margin-d1"></div><div class="sd" id="margin-d2"></div></div>
+        <div class="ic-step-lbl">Step 1 of 3 · describe the problem</div>
+        <div class="ic-q">What's the specific margin challenge you're working on?</div>
+        <div class="ic-hint">"The board wants us at 58% C/I by end of 2027 and we're at 71%" is perfect. So is "We're spending $94M on AI and cannot show the board any of it is working."</div>
+        <textarea id="margin-input" placeholder="Describe what you're trying to solve..."></textarea>
+        <div class="intake-actions">
+          <button class="btn-match" onclick="handleIntake('margin')">Match to Genome →</button>
+          <div class="intake-note">AbarVa surfaces what's already visible in Arcturus data before asking anything further.</div>
+        </div>
+        <div class="starters">
+          <div class="starters-label">Based on Arcturus's data — pick what matches:</div>
+          <div class="starter-pills">
+            <button class="starter" onclick="fill('margin-input',this,'C/I ratio is 71% vs 58% peer target. Board wants improvement by Q1 2027. $840M efficiency gap.')">C/I ratio 71% — $840M gap</button>
+            <button class="starter" onclick="fill('margin-input',this,'$94M committed to AI initiatives. Cannot show the board ROI on any of them.')">AI spend with no documented ROI</button>
+            <button class="starter" onclick="fill('margin-input',this,'Technology is 4.2% of revenue — 35% above peer median. We cannot show what it is delivering.')">Technology overspend</button>
+          </div>
+        </div>
+      </div>
+      <div class="genome-response" id="margin-response">
+        <div class="gr-label">Genome match — what Arcturus data already shows</div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">C/I ratio 71% vs 58% target — $840M annual efficiency gap</div><div class="f-detail">Arcturus spends 35% more than peers on technology (4.2% vs 3.1% of revenue) without proportional outcomes. Compensation at 42% of revenue is 4pp above top-quartile peers. The margin gap is structural, not cyclical — it will not self-correct.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client financials</span><span class="f-pill" style="background:rgba(245,158,11,.1);color:var(--amber)">Industry benchmark</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome (14 cases)</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">$94M AI committed — zero with a documented outcome baseline</div><div class="f-detail">Every AI initiative is contributing to cost. None has a measurable return. In 22 prior engagements, this pattern resolved only when the portfolio was rationalized to 3–5 funded initiatives with named owners.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client data</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome F002 · 84%</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--amber)"></div><div class="f-body"><div class="f-title">Client portal $38M invested — 44% adoption, NPS 31</div><div class="f-detail">A primary digital revenue channel is underperforming. Portal recovery has contributed 1.2–2.1pp to operating margin in similar wealth management cases once adoption exceeds 70%.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client technology</span><span class="f-pill" style="background:rgba(245,158,11,.1);color:var(--amber)">Industry benchmark</span></div></div></div>
+        <div class="follow-up">
+          <div class="fu-label">Step 2 of 3 · one follow-up question</div>
+          <div class="fu-q">Who is the executive sponsor — and what outcome do they care most about?</div>
+          <div class="fu-hint">This shapes which margin levers we prioritise first and how the Business Case is framed. CFO and CEO often care about different things even looking at the same gap.</div>
+          <div class="fu-opts">
+            <button class="fu-opt" onclick="selectOpt(this,'margin')">CEO — total margin recovery</button>
+            <button class="fu-opt" onclick="selectOpt(this,'margin')">CFO — cost discipline and ROI accountability</button>
+            <button class="fu-opt" onclick="selectOpt(this,'margin')">CIO — technology cost and AI ROI</button>
+            <button class="fu-opt" onclick="selectOpt(this,'margin')">Board — competitive benchmarking story</button>
+          </div>
+        </div>
+        <div class="launch-bar" id="margin-launch">
+          <button class="btn-launch" id="margin-btn" onclick="launch('margin')">Create project and begin →</button>
+          <button class="btn-reset" onclick="reset('margin')">Change my answer</button>
+          <div class="launch-note">Creates a Margin Optimization project in your Maestro workspace, pre-loads Situation with selected CXO lens, queues the relevant Genome patterns.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     SOLUTION 4 — TECHNOLOGY MODERNIZATION
+════════════════════════════════════════ -->
+<div id="sol-tech" class="sol-page">
+  <div class="sol-hero">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Solution 4 of 4</div>
+      <div class="hero-name">Technology Modernization</div>
+      <div class="hero-tagline">Core systems going end-of-life. Three failed modernization attempts. The business case won't get approved. AbarVa diagnoses which systems actually need replacing, builds the case the CFO will approve, and governs the delivery.</div>
+      <div class="hero-meta">
+        <span class="meta-tag">CIO · CFO</span>
+        <span class="meta-tag">All verticals</span>
+        <span class="meta-tag">SAP · FIS · Bloomberg AIM · Epic</span>
+        <span class="meta-tag">Outcome-fee model</span>
+      </div>
+    </div>
+    <div class="hero-stat-grid">
+      <div class="h-stat red"><div class="hs-label">Prior modernization attempts</div><div class="hs-value" style="color:var(--red)">3</div><div class="hs-sub">Average before engaging AbarVa — each failed</div></div>
+      <div class="h-stat amber"><div class="hs-label">Bloomberg AIM age</div><div class="hs-value" style="color:var(--amber)">28yr</div><div class="hs-sub">Arcturus core OMS — $42M/yr maintenance</div></div>
+      <div class="h-stat teal"><div class="hs-label">Maintenance costs recovered</div><div class="hs-value" style="color:var(--teal)">$42M</div><div class="hs-sub">Annual once migration complete — fee on this</div></div>
+      <div class="h-stat green"><div class="hs-label">Genome success rate</div><div class="hs-value" style="color:var(--green)">71%</div><div class="hs-sub">When business case built correctly from Day 1</div></div>
+    </div>
+  </div>
+  <div class="sol-body">
+    <div>
+      <div class="phase-section-label">Three phases · what happens</div>
+      <div class="phases">
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(45,212,200,.12);color:var(--teal);border:1px solid rgba(45,212,200,.25)">1</div>
+          <div class="ph-body">
+            <div class="ph-title">Diagnose — which systems actually need replacing</div>
+            <div class="ph-desc">Not everything needs modernizing. AbarVa maps every core system: actual vs perceived technical debt, true cost to maintain vs replace, what the business cannot do because of the system, and which vendors actually win in your specific context.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(45,212,200,.1);color:var(--teal)">Situation</span><span class="php" style="background:rgba(45,212,200,.06);color:var(--muted);border:1px solid var(--border)">Data Intelligence</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25)">2</div>
+          <div class="ph-body">
+            <div class="ph-title">Build the case the CFO will actually approve</div>
+            <div class="ph-desc">Three previous attempts failed because the business case was built by the vendor. AbarVa builds it from the client's data, using Genome patterns from prior modernizations at peer organisations. The CFO sees realistic ranges — not vendor promises.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Strategy</span><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Vendor</span><span class="php" style="background:rgba(245,158,11,.1);color:var(--amber)">Business Case</span></div>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="ph-num" style="background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)">3</div>
+          <div class="ph-body">
+            <div class="ph-title">Govern the delivery — Maestros embedded</div>
+            <div class="ph-desc">Once approved, Maestros govern the implementation. They hold the vendor accountable to the business case. They track maintenance cost reduction, system capability gain, and migration milestone against the baseline. Fee on verified outcomes.</div>
+            <div class="ph-products"><span class="php" style="background:rgba(52,211,153,.1);color:var(--green)">Outcomes</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="side-stack">
+      <div class="side-card">
+        <div class="sc-label">Genome patterns — why modernizations fail</div>
+        <div class="genome-item"><div class="gi-rate">72%</div><div><div class="gi-name">Vendor dependency without internal capability</div><div class="gi-sub">Cannot verify what the vendor delivers — or recover if they fail</div></div></div>
+        <div class="genome-item"><div class="gi-rate">68%</div><div><div class="gi-name">Data readiness below threshold</div><div class="gi-sub">Migration starts before data is clean — doubles the cost</div></div></div>
+        <div class="genome-item"><div class="gi-rate">84%</div><div><div class="gi-name">No named executive sponsor</div><div class="gi-sub">Programme drifts without C-suite owner — vendor fills the vacuum</div></div></div>
+      </div>
+      <div class="side-card">
+        <div class="sc-label">What you get</div>
+        <div class="del-item"><span class="del-arrow">→</span>System-by-system modernization assessment</div>
+        <div class="del-item"><span class="del-arrow">→</span>Vendor scored against your data — not analyst opinion</div>
+        <div class="del-item"><span class="del-arrow">→</span>CFO-ready business case with Genome-validated ranges</div>
+        <div class="del-item"><span class="del-arrow">→</span>Delivery governance · milestone tracking · fee on maintenance cost reduction</div>
+      </div>
+    </div>
+  </div>
+  <div class="divider-full"></div>
+  <div class="intake-section">
+    <div class="intake-header">
+      <div class="intake-label">Start this solution</div>
+      <div class="intake-title">Tell us what you're trying to solve.</div>
+      <div class="intake-sub">One or two sentences. AbarVa matches it to Arcturus's technology inventory immediately — 234 systems catalogued, maintenance costs mapped.</div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-top">
+        <div class="step-dots"><div class="sd curr" id="tech-d0"></div><div class="sd" id="tech-d1"></div><div class="sd" id="tech-d2"></div></div>
+        <div class="ic-step-lbl">Step 1 of 3 · describe the problem</div>
+        <div class="ic-q">What's the technology modernization challenge you're working on?</div>
+        <div class="ic-hint">"Our core OMS is 28 years old and we've tried to replace it three times" is perfect. So is "We have a system going end-of-life in 2027 and the CFO won't approve the business case."</div>
+        <textarea id="tech-input" placeholder="Describe what you're trying to solve..."></textarea>
+        <div class="intake-actions">
+          <button class="btn-match" onclick="handleIntake('tech')">Match to Genome →</button>
+          <div class="intake-note">AbarVa maps this to Arcturus's 234-system technology inventory before asking anything further.</div>
+        </div>
+        <div class="starters">
+          <div class="starters-label">Based on Arcturus's technology data — pick what matches:</div>
+          <div class="starter-pills">
+            <button class="starter" onclick="fill('tech-input',this,'Bloomberg AIM is 28 years old. Three failed modernization attempts. $42M annual maintenance. We need to move but cannot get it approved.')">Bloomberg AIM — 28yr OMS</button>
+            <button class="starter" onclick="fill('tech-input',this,'Aladdin Risk only covers liquid assets. Regulator wants daily stress testing. We run monthly. Gap closes 2026.')">Aladdin — regulatory gap</button>
+            <button class="starter" onclick="fill('tech-input',this,'14 data systems. No golden record. 3-day reporting lag. We compete on information advantage and cannot produce real-time data.')">14 systems — no golden record</button>
+          </div>
+        </div>
+      </div>
+      <div class="genome-response" id="tech-response">
+        <div class="gr-label">Genome match — what Arcturus technology data shows</div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">Bloomberg AIM — 28 years old · $42M annual maintenance · 3 failed attempts</div><div class="f-detail">The OMS has been attempted for replacement three times. The business case was built by vendors each time. Genome shows: when the client builds the case from their own data — success rate is 71%. When the vendor builds it — 23%.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client technology</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome (11 cases)</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--red)"></div><div class="f-body"><div class="f-title">14 data systems — no golden record — 3-day reporting lag</div><div class="f-detail">Any OMS modernization will fail if the data architecture problem is not solved first. Genome pattern F003 — data readiness below threshold — is present in 68% of failed modernizations.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client technology</span><span class="f-pill" style="background:rgba(52,211,153,.1);color:var(--green)">Genome F003 · 68%</span></div></div></div>
+        <div class="finding"><div class="f-stripe" style="background:var(--amber)"></div><div class="f-body"><div class="f-title">Aladdin Risk — alternatives not in real-time risk · regulator wants daily</div><div class="f-detail">Regulator requires daily stress testing by mid-2026. Current system runs monthly. This creates a compliance deadline that forces the modernization conversation — and changes the CFO calculation entirely.</div><div class="f-pills"><span class="f-pill" style="background:rgba(45,212,200,.1);color:var(--teal)">Client technology</span><span class="f-pill" style="background:rgba(129,140,248,.1);color:#818CF8">Regulatory deadline</span></div></div></div>
+        <div class="follow-up">
+          <div class="fu-label">Step 2 of 3 · one follow-up question</div>
+          <div class="fu-q">What has stopped the CFO from approving this before?</div>
+          <div class="fu-hint">Understanding why three prior attempts failed shapes exactly how we build the business case this time. The answer is usually one of these four — pick the closest.</div>
+          <div class="fu-opts">
+            <button class="fu-opt" onclick="selectOpt(this,'tech')">Business case built by the vendor — not trusted</button>
+            <button class="fu-opt" onclick="selectOpt(this,'tech')">Risk too high — too many unknowns</button>
+            <button class="fu-opt" onclick="selectOpt(this,'tech')">Cost too high relative to perceived benefit</button>
+            <button class="fu-opt" onclick="selectOpt(this,'tech')">No named executive to own the programme</button>
+          </div>
+        </div>
+        <div class="launch-bar" id="tech-launch">
+          <button class="btn-launch" id="tech-btn" onclick="launch('tech')">Create project and begin →</button>
+          <button class="btn-reset" onclick="reset('tech')">Change my answer</button>
+          <div class="launch-note">Creates a Technology Modernization project in your Maestro workspace, pre-loads Situation with technology lens, queues modernization Genome patterns.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showSol(id, btn) {
+  document.querySelectorAll('.sol-page').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.sol-tab').forEach(t => t.classList.remove('active'))
+  document.getElementById('sol-'+id).classList.add('active')
+  btn.classList.add('active')
+  window.scrollTo({top:0,behavior:'smooth'})
+}
+
+function fill(inputId, btn, text) {
+  document.getElementById(inputId).value = text
+  document.querySelectorAll('.starter').forEach(b => { b.style.borderColor=''; b.style.color='' })
+  btn.style.borderColor = 'var(--teal)'
+  btn.style.color = 'var(--teal)'
+}
+
+function handleIntake(sol) {
+  const val = document.getElementById(sol+'-input').value.trim()
+  if (!val) { document.getElementById(sol+'-input').focus(); return }
+  const resp = document.getElementById(sol+'-response')
+  resp.style.display = 'block'
+  document.getElementById(sol+'-d0').className = 'sd done'
+  document.getElementById(sol+'-d1').className = 'sd curr'
+  resp.scrollIntoView({behavior:'smooth', block:'nearest'})
+}
+
+function selectOpt(btn, sol) {
+  document.querySelectorAll('#'+sol+'-response .fu-opt').forEach(b => b.className='fu-opt')
+  btn.className = 'fu-opt sel'
+  document.getElementById(sol+'-d1').className = 'sd done'
+  document.getElementById(sol+'-d2').className = 'sd curr'
+  const bar = document.getElementById(sol+'-launch')
+  bar.style.display = 'flex'
+  bar.scrollIntoView({behavior:'smooth', block:'nearest'})
+}
+
+function launch(sol) {
+  const btn = document.getElementById(sol+'-btn')
+  btn.textContent = 'Creating project...'
+  btn.style.opacity = '.6'
+  setTimeout(() => {
+    btn.textContent = 'Project created — opening workspace →'
+    btn.style.opacity = '1'
+    btn.className = 'btn-launch success'
+  }, 1100)
+}
+
+function reset(sol) {
+  document.getElementById(sol+'-response').style.display = 'none'
+  document.getElementById(sol+'-launch').style.display = 'none'
+  document.getElementById(sol+'-d0').className = 'sd curr'
+  document.getElementById(sol+'-d1').className = 'sd'
+  document.getElementById(sol+'-d2').className = 'sd'
+  document.querySelectorAll('#sol-'+sol+' .fu-opt').forEach(b => b.className='fu-opt')
+  if (document.getElementById(sol+'-btn')) document.getElementById(sol+'-btn').className='btn-launch'
+}
+</script>
+</body>
+</html>
