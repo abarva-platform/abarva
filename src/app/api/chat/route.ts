@@ -33,7 +33,7 @@ LEADERSHIP INSIGHTS:
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const stream = await client.messages.stream({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 2048,
     system: `You are AbarVa, the world's most experienced enterprise transformation advisor.
 You have deep expertise in healthcare and financial services transformations.

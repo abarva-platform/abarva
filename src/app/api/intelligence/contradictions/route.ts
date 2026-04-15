@@ -32,7 +32,7 @@ Confidence: ${c.confidence}%
 `).join('\n---\n')
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 4096,
     system: `You are AbarVa, the world's most experienced enterprise transformation advisor.
 You have been given a set of contradictions detected by comparing documented commitments against measured actuals in a client's data.

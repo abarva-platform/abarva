@@ -36,7 +36,7 @@ export async function POST(request: Request) {
   ).join('\n')
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1024,
     system: `You are AbarVa, an enterprise transformation advisor. You are looking at ${clientName}'s AI initiative portfolio.
 You have scored each initiative against the Transformation Failure Genome — seven historically validated failure patterns.
