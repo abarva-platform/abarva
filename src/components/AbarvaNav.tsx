@@ -65,7 +65,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div style={{
+    <div id="abarva-nav" style={{
       height: '64px',
       position: 'sticky' as const,
       top: 0,

@@ -153,8 +153,11 @@ const PHASES: {
   },
 ]
 
+type ActiveModule = { name: string; num: number; path: string; color: string }
+
 export default function AIStrategyPage() {
   const [activeFilter, setActiveFilter] = useState<string | null>(null)
+  const [activeModule, setActiveModule] = useState<ActiveModule | null>(null)
   const [seeding, setSeeding] = useState(false)
   const [seeded, setSeeded] = useState(false)
   const { user, isLoaded } = useUser()
@@ -182,6 +185,49 @@ export default function AIStrategyPage() {
   const filteredPhases = activeFilter
     ? PHASES.filter(p => p.label === activeFilter)
     : PHASES
+
+  // ── Embedded module view ────────────────────────────────────────────────────
+  if (activeModule) {
+    return (
+      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
+        <AbarvaNav activePage="ai-strategy" />
+        {/* Compact breadcrumb */}
+        <div style={{
+          background: CARD, borderBottom: `1px solid ${BORDER}`,
+          padding: '0 32px', height: '40px',
+          display: 'flex', alignItems: 'center', gap: '12px',
+        }}>
+          <button
+            onClick={() => setActiveModule(null)}
+            style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.05em', textTransform: 'uppercase' as const, padding: 0 }}
+          >
+            ← AI Strategy
+          </button>
+          <div style={{ width: '1px', height: '16px', background: BORDER }} />
+          <span style={{ fontSize: '12px', color: MUTED }}>{activeModule.name}</span>
+          <div style={{ marginLeft: 'auto' }}>
+            <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: `${activeModule.color}18`, color: activeModule.color, letterSpacing: '.06em' }}>
+              MODULE {String(activeModule.num).padStart(2, '0')}
+            </span>
+          </div>
+        </div>
+        {/* Embedded workspace — nav hidden via injected CSS */}
+        <iframe
+          src={`${activeModule.path}?client=arcturus`}
+          style={{ width: '100%', height: 'calc(100vh - 104px)', border: 'none', display: 'block' }}
+          onLoad={e => {
+            try {
+              const doc = (e.currentTarget as HTMLIFrameElement).contentDocument
+              if (!doc) return
+              const s = doc.createElement('style')
+              s.textContent = '#abarva-nav { display: none !important; }'
+              doc.head.appendChild(s)
+            } catch { /* cross-origin guard */ }
+          }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
@@ -316,7 +362,10 @@ export default function AIStrategyPage() {
                     <div style={{ width: '20px', height: '1px', background: BORDER }} />
                   </div>
                   {/* Module card */}
-                  <a href={mod.path} style={{ textDecoration: 'none', flex: 1 }}>
+                  <div
+                    onClick={() => setActiveModule({ name: mod.name, num: mod.num, path: mod.path, color: phase.color })}
+                    style={{ flex: 1, cursor: 'pointer' }}
+                  >
                     <div style={{
                       background: CARD, border: `1px solid ${BORDER}`,
                       borderRadius: '10px', padding: '20px 24px',
@@ -372,7 +421,7 @@ export default function AIStrategyPage() {
                       {/* Row 4: Arrow */}
                       <div style={{ fontSize: '14px', color: TEAL, textAlign: 'right' as const }}>→</div>
                     </div>
-                  </a>
+                  </div>
                 </div>
               ))}
             </div>
