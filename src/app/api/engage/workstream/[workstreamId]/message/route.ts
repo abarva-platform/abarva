@@ -107,70 +107,56 @@ export async function POST(
         content: m.content as string
       }))
 
-    // Stream response from Claude
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    const apiKey = process.env.ANTHROPIC_API_KEY
+    if (!apiKey) {
+      return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
+    }
 
-    const encoder = new TextEncoder()
-    let fullResponse = ''
+    const anthropic = new Anthropic({ apiKey })
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          const claudeStream = await anthropic.messages.stream({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 4096,
-            system: systemPrompt,
-            messages: claudeMessages.length > 0 ? claudeMessages : [
-              { role: 'user', content: content }
-            ]
-          })
-
-          for await (const chunk of claudeStream) {
-            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-              const text = chunk.delta.text
-              fullResponse += text
-              controller.enqueue(encoder.encode(text))
-            }
-          }
-
-          // Save AI response to DB
-          await supabase
-            .from('workstream_messages')
-            .insert({
-              workstream_id: workstreamId,
-              role: 'maestro_ai',
-              actor_name: 'AbarVa AI',
-              content: fullResponse,
-              is_internal: false,
-              metadata: {
-                output_ready: fullResponse.includes('OUTPUT_READY')
-              }
-            })
-
-          // Log activity
-          await supabase
-            .from('engagement_activity')
-            .insert({
-              engagement_id: engagement.id,
-              phase_id: phase.id,
-              actor_name: actorName || 'Maestro',
-              actor_role: 'maestro',
-              action: 'message_sent',
-              description: `Message in ${workstream.name} workstream`,
-              metadata: { workstream_id: workstreamId }
-            })
-
-          controller.close()
-        } catch (err) {
-          controller.error(err)
-        }
-      }
+    const claudeResponse = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: claudeMessages.length > 0 ? claudeMessages : [
+        { role: 'user', content: content }
+      ]
     })
 
-    return new Response(stream, {
+    const fullResponse = claudeResponse.content[0]?.type === 'text'
+      ? claudeResponse.content[0].text
+      : ''
+
+    // Save AI response to DB
+    await supabase
+      .from('workstream_messages')
+      .insert({
+        workstream_id: workstreamId,
+        role: 'maestro_ai',
+        actor_name: 'AbarVa AI',
+        content: fullResponse,
+        is_internal: false,
+        metadata: {
+          output_ready: fullResponse.includes('OUTPUT_READY')
+        }
+      })
+
+    // Log activity
+    await supabase
+      .from('engagement_activity')
+      .insert({
+        engagement_id: engagement.id,
+        phase_id: phase.id,
+        actor_name: actorName || 'Maestro',
+        actor_role: 'maestro',
+        action: 'message_sent',
+        description: `Message in ${workstream.name} workstream`,
+        metadata: { workstream_id: workstreamId }
+      })
+
+    return new Response(fullResponse, {
       headers: {
         'Content-Type': 'text/plain; charset=utf-8',
-        'Transfer-Encoding': 'chunked',
         'X-User-Message-Id': userMsg?.id || ''
       }
     })
