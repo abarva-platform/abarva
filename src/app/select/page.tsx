@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
   bg: '#060A12', surface: '#0D1520', border: '#1C2D45',
-  teal: '#2DD4C8', text: '#EFF6FF', secondary: '#94A3B8',
+  teal: '#2DD4C8', text: '#EFF6FF', secondary: 'rgba(255,255,255,0.75)',
   red: '#EF4444', amber: '#F59E0B', green: '#10B981', indigo: '#6366F1',
   sans: '"DM Sans", system-ui, sans-serif',
   mono: '"JetBrains Mono", monospace',
@@ -546,9 +546,9 @@ function SelectContent() {
           const isActive = role === r
           return (
             <button key={r} onClick={() => setRole(r)}
-              style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+              style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : 'rgba(255,255,255,0.75)', fontWeight: isActive ? 700 : 400 }}
               onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.75)' }}
             >{r}</button>
           )
         })}
@@ -1042,7 +1042,7 @@ function SelectContent() {
 
 export default function SelectPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", sans-serif', color: '#94A3B8' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", sans-serif', color: 'rgba(255,255,255,0.75)' }}>Loading...</div>}>
       <SelectContent />
     </Suspense>
   )

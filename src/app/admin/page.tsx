@@ -9,7 +9,7 @@ export default function AdminPage() {
   }, [router])
   return (
     <div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ fontFamily: 'DM Sans, sans-serif', color: '#94A3B8', fontSize: '13px' }}>Loading workspace…</div>
+      <div style={{ fontFamily: 'DM Sans, sans-serif', color: 'rgba(255,255,255,0.75)', fontSize: '13px' }}>Loading workspace…</div>
     </div>
   )
 }

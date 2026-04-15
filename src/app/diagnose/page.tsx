@@ -959,7 +959,7 @@ function IssueCard({ issue, expanded, onToggle, onGoToStep }: { issue: Issue; ex
                 </div>
               </div>
             )}
-            <div style={{ fontSize: '13px', color: '#94A3B8', lineHeight: 1.6, marginBottom: '10px' }}>{issue.body}</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, marginBottom: '10px' }}>{issue.body}</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '10px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, background: T.teal + '18', color: T.teal, border: '1px solid ' + T.teal + '40', borderRadius: '12px', padding: '3px 10px' }}>{issue.impact}</span>
               <span style={{ fontSize: '11px', color: T.text3, background: T.surface2, borderRadius: '12px', padding: '3px 10px', border: '1px solid ' + T.border }}>{issue.owner}</span>

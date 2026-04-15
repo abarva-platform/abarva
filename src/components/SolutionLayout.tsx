@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation'
 
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45', TEAL = '#2DD4C8'
-const WHITE = '#EFF6FF', MUTED = '#94A3B8', DIM = '#475569'
+const WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.6)'
 const RED = '#EF4444', AMBER = '#F59E0B', GREEN = '#34D399'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 

@@ -656,7 +656,7 @@ function JustifyContent() {
 
 export default function JustifyPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", sans-serif', color: '#94A3B8' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: '"DM Sans", sans-serif', color: 'rgba(255,255,255,0.75)' }}>Loading...</div>}>
       <JustifyContent />
     </Suspense>
   )

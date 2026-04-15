@@ -48,7 +48,7 @@ const GENOME_FINDINGS = [
     sources: ['Client financials', 'Industry benchmark'] },
 ]
 
-const BORDER = '#1C2D45', CARD = '#0D1520', TEAL2 = '#2DD4C8', MUTED2 = '#94A3B8'
+const BORDER = '#1C2D45', CARD = '#0D1520', TEAL2 = '#2DD4C8', MUTED2 = 'rgba(255,255,255,0.75)'
 const MONO2 = 'JetBrains Mono, monospace'
 
 export default function SolutionPDLC() {

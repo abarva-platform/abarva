@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 const T = {
   bg: '#060A12', surface: '#0D1520', surface2: '#162030',
   border: '#1C2D45', border2: '#2D3748',
-  text: '#EFF6FF', text2: '#94A3B8', text3: '#94A3B8',
+  text: '#EFF6FF', text2: 'rgba(255,255,255,0.75)', text3: 'rgba(255,255,255,0.75)',
   teal: '#2DD4C8', blue: '#6366F1', green: '#10B981',
   amber: '#F59E0B', red: '#EF4444', purple: '#A78BFA',
 }
@@ -609,9 +609,9 @@ function OutcomesContent() {
           const isActive = role === r
           return (
             <button key={r} onClick={() => setRole(r)}
-              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+              style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : 'rgba(255,255,255,0.75)', fontWeight: isActive ? 700 : 400 }}
               onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.75)' }}
             >{r}</button>
           )
         })}
@@ -701,7 +701,7 @@ function OutcomesContent() {
 
 export default function OutcomesPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: '"DM Sans", sans-serif' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.75)', fontFamily: '"DM Sans", sans-serif' }}>Loading...</div>}>
       <OutcomesContent />
     </Suspense>
   )

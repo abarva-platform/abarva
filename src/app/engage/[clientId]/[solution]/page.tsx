@@ -15,8 +15,8 @@ const T = {
   tealDim: 'rgba(45,212,200,0.10)',
   tealBorder: 'rgba(45,212,200,0.25)',
   text: '#EFF6FF',
-  text2: '#94A3B8',
-  muted: '#475569',
+  text2: 'rgba(255,255,255,0.75)',
+  muted: 'rgba(255,255,255,0.6)',
   red: '#EF4444',
   redDim: 'rgba(239,68,68,0.10)',
   amber: '#F59E0B',
@@ -1263,7 +1263,7 @@ function MessageBubble({ msg, streaming }: { msg: any; streaming?: boolean }) {
           <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: isAI ? '#2DD4C8' : '#818CF8', fontWeight: 600 }}>
             {msg.actor_name}
           </span>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8' }}>
+          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.6)' }}>
             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
           {streaming && (
@@ -1322,7 +1322,7 @@ function Phase0Scorecard({ data }: { data: any }) {
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '48px', color: scoreColor, fontWeight: 700, lineHeight: 1 }}>
               {score}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.6)', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
               / 100
             </div>
           </div>
@@ -1363,7 +1363,7 @@ function Phase0Scorecard({ data }: { data: any }) {
                   <div style={{ height: '3px', background: '#1C2D45', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${d.score}%`, background: c, borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
-                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#94A3B8', marginTop: '6px', lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginTop: '6px', lineHeight: 1.5 }}>
                     {d.evidence}
                   </div>
                 </div>
@@ -1391,7 +1391,7 @@ function Phase0Scorecard({ data }: { data: any }) {
                   <div style={{ height: '3px', background: '#1C2D45', borderRadius: '2px', overflow: 'hidden' }}>
                     <div style={{ height: '100%', width: `${dim.score}%`, background: c, borderRadius: '2px', transition: 'width 0.8s ease' }} />
                   </div>
-                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: '#94A3B8', marginTop: '6px', lineHeight: 1.5 }}>
+                  <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '11px', color: 'rgba(255,255,255,0.75)', marginTop: '6px', lineHeight: 1.5 }}>
                     {dim.detail}
                   </div>
                 </div>
@@ -1408,8 +1408,8 @@ function Phase0Scorecard({ data }: { data: any }) {
             Key Findings
           </div>
           {data.top_findings.map((f: any, i: number) => {
-            const colors: Record<string, string> = { critical: '#EF4444', high: '#F59E0B', medium: '#94A3B8', positive: '#34D399' }
-            const c = colors[f.severity] || '#94A3B8'
+            const colors: Record<string, string> = { critical: '#EF4444', high: '#F59E0B', medium: '#F59E0B', positive: '#34D399' }
+            const c = colors[f.severity] || 'rgba(255,255,255,0.75)'
             return (
               <div key={i} style={{
                 background: '#0D1520', border: `1px solid ${c}30`,
@@ -1459,7 +1459,7 @@ function Phase0Scorecard({ data }: { data: any }) {
 function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id: string, status: string, isPublished?: boolean) => void }) {
   if (findings.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
+      <div style={{ textAlign: 'center', padding: '32px 16px', color: 'rgba(255,255,255,0.75)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
         No findings yet.<br />AI will surface findings as the conversation progresses.
       </div>
     )
@@ -1470,8 +1470,8 @@ function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id:
         Findings ({findings.length})
       </div>
       {findings.map(f => {
-        const colors: Record<string, string> = { critical: '#EF4444', high: '#F59E0B', medium: '#94A3B8', low: '#475569', positive: '#34D399' }
-        const c = colors[f.severity] || '#94A3B8'
+        const colors: Record<string, string> = { critical: '#EF4444', high: '#F59E0B', medium: '#F59E0B', low: '#34D399', positive: '#34D399' }
+        const c = colors[f.severity] || 'rgba(255,255,255,0.75)'
         return (
           <div key={f.id} style={{
             background: '#0D1520', border: `1px solid ${c}20`,
@@ -1525,7 +1525,7 @@ function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id:
                 }}>Publish</button>
               )}
               <button onClick={() => onUpdate(f.id, 'removed')} style={{
-                fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: '#94A3B8',
+                fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: 'rgba(255,255,255,0.75)',
                 background: 'transparent', border: '1px solid #1C2D45',
                 borderRadius: '4px', padding: '3px 8px', cursor: 'pointer'
               }}>Remove</button>
@@ -1575,7 +1575,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: '#EFF6FF', fontWeight: 600, marginBottom: '4px' }}>
               {phaseOutput.title}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.6)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
               V{phaseOutput.version} · {phaseOutput.status?.toUpperCase()} · {new Date(phaseOutput.created_at).toLocaleDateString()}
             </div>
 
@@ -1591,7 +1591,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
               </div>
             )}
 
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#94A3B8' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
               {JSON.stringify(phaseOutput.content).length.toLocaleString()} chars of structured content
             </div>
           </div>
@@ -1658,7 +1658,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
 function ActivityPanel({ activity }: { activity: any[] }) {
   if (activity.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 16px', color: '#94A3B8', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
+      <div style={{ textAlign: 'center', padding: '32px 16px', color: 'rgba(255,255,255,0.75)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
         No activity yet.
       </div>
     )
@@ -1688,7 +1688,7 @@ function ActivityPanel({ activity }: { activity: any[] }) {
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '12px', color: '#EFF6FF', lineHeight: 1.4 }}>
               {a.description}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#94A3B8', marginTop: '2px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>
               {a.actor_name} · {new Date(a.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
             </div>
           </div>

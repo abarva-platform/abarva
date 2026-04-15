@@ -8,7 +8,7 @@ import { arcturusFinancial } from '@/data/arcturus/index'
 
 const BG = '#060A12', SANS = 'DM Sans, sans-serif', WHITE = '#EFF6FF'
 const TEAL = '#2DD4C8', AMBER = '#F59E0B', GREEN = '#34D399', RED = '#EF4444'
-const BORDER2 = '#1C2D45', MUTED2 = '#94A3B8', MONO2 = 'JetBrains Mono, monospace'
+const BORDER2 = '#1C2D45', MUTED2 = 'rgba(255,255,255,0.75)', MONO2 = 'JetBrains Mono, monospace'
 
 export default function SolutionMargin() {
   const [input, setInput] = useState('')

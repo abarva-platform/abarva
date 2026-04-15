@@ -4,7 +4,7 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { usePathname, useRouter } from 'next/navigation'
 
 const PAGE_BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const TEAL = '#2DD4C8', TEXT = '#EFF6FF', MUTED = '#94A3B8'
+const TEAL = '#2DD4C8', TEXT = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)'
 const AMBER = '#F59E0B'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 

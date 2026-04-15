@@ -27,7 +27,7 @@ export default function ResponseOptions({ options, onSelect, disabled = false }:
 
   return (
     <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '4px' }}>
         Follow up
       </div>
 

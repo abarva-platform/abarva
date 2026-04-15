@@ -8,7 +8,7 @@ import { arcturusTechnology } from '@/data/arcturus/technology'
 
 const BG = '#060A12', SANS = 'DM Sans, sans-serif', WHITE = '#EFF6FF'
 const TEAL = '#2DD4C8', AMBER = '#F59E0B', GREEN = '#34D399', RED = '#EF4444'
-const BORDER = '#1C2D45', MUTED = '#94A3B8', MONO = 'JetBrains Mono, monospace'
+const BORDER = '#1C2D45', MUTED = 'rgba(255,255,255,0.75)', MONO = 'JetBrains Mono, monospace'
 const SURFACE = '#0D1520', INDIGO = '#818CF8'
 
 const PHASE0_FINDINGS = [

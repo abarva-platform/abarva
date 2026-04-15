@@ -19,7 +19,7 @@ const T = {
   green: '#10B981',
   indigo: '#6366F1',
   text: '#EFF6FF',
-  secondary: '#94A3B8',
+  secondary: 'rgba(255,255,255,0.75)',
   fraunces: 'Fraunces, Georgia, serif',
   mono: '"JetBrains Mono", "Fira Code", monospace',
   sans: '"DM Sans", system-ui, sans-serif',

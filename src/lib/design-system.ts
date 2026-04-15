@@ -24,8 +24,8 @@ export const COLORS = {
 
   // Text — ALL white on dark background
   textPrimary:   '#EFF6FF',  // main text — white
-  textSecondary: '#94A3B8',  // secondary text — light gray (NOT #6B7280)
-  textMuted:     '#475569',  // muted — only for timestamps/metadata
+  textSecondary: 'rgba(255,255,255,0.75)',  // secondary text
+  textMuted:     'rgba(255,255,255,0.6)',   // muted — supporting text
   textDisabled:  '#374151',  // disabled states
 
   // Semantic
