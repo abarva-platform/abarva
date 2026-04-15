@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 import EngagementProgress from '@/components/EngagementProgress'
 import { meridianAI } from '@/data/meridian/ai'
 
@@ -829,9 +829,8 @@ function ResponsibleAITab() {
 // ─── Main page ────────────────────────────────────────────────────────────
 
 function ControlTowerInner() {
-  const params = useSearchParams()
-  const clientParam = params.get('client') ?? 'meridian'
-  const [activeClient, setActiveClient] = useState(clientParam)
+  const { clientId } = useClientContext()
+  const [activeClient, setActiveClient] = useState(clientId)
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
   const clientName = CLIENT_NAMES[activeClient] ?? 'Your Organization'
