@@ -359,7 +359,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: uploading ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${uploading ? BORDER : 'rgba(45,212,200,0.3)'}`, color: uploading ? DIM : TEAL, cursor: uploading ? 'default' : 'pointer' }}>
-                {uploading ? 'Uploading…' : '+ Upload new file'}
+                {uploading ? 'Uploading…' : '+ Upload new files'}
               </button>
               <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
             </div>

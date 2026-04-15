@@ -10,7 +10,9 @@
     "test": "jest",
     "test:behaviors": "jest src/__tests__/behaviors",
     "test:integration": "jest src/__tests__/integration",
-    "test:before-commit": "npm run test:behaviors && npm run test:integration && npm run build"
+    "test:before-commit": "npm run test:behaviors && npm run test:integration && npm run build",
+    "seed": "node scripts/seed-datasets.js",
+    "seed:setup": "node scripts/seed-datasets.js --setup"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
