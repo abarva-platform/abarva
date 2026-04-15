@@ -54,10 +54,8 @@ function NavInner({ activePage }: NavProps) {
   // Module nav links — carry the active client param
   const modulePath = (page: string) => `/${page}?client=${clientId}`
 
-  // Intelligence: admin/investor → maestro workspace, client → data-intelligence
-  const intelligencePath = isElevated
-    ? `/admin/client/${clientId}`
-    : modulePath('data-intelligence')
+  // Intelligence: all signed-in users → data-intelligence hub (Maestro stays separate via the button)
+  const intelligencePath = modulePath('data-intelligence')
 
   // 9 modules organised by phase
   const AVR_PHASES = [
