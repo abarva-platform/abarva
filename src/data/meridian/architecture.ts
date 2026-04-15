@@ -10,6 +10,20 @@ export const meridianArchitecture = {
     estimatedModernizationCost: 340,
     cloudAdoptionPercent: 62,
     onPremisePercent: 38,
+
+    techDebtCostBreakdown: {
+      total: 48, // $M annual
+      components: [
+        { item: 'Cerner dual operation (2 hospitals on legacy EHR)', annual: 8.4, note: '22 months overdue × $380K/month + Oracle pricing increase of $528K/year' },
+        { item: 'Teradata EDW (end of support 2019 — running expired)', annual: 6.2, note: '$2.8M license + $3.4M for 3 DBAs who are sole knowledge holders. Retirement of any one DBA creates a critical incident.' },
+        { item: 'Oracle 11g EDW (end of support 2020)', annual: 4.8, note: '$1.8M license + $3.0M security risk premium (no patches for 3 years, 1,200 undocumented stored procedures)' },
+        { item: 'Point-to-point integrations (1,847 interfaces, 1,224 undocumented)', annual: 9.6, note: 'Estimated cost of unplanned outages and manual reconciliation from undocumented integrations that fail silently' },
+        { item: 'Shadow IT (847 SaaS contracts, 23 ungoverned)', annual: 7.2, note: '$38M verified SaaS spend × estimated 19% waste from duplicates, zombie licenses, and ungoverned contracts' },
+        { item: 'Azure cost overrun (340 VMs under 20% utilization)', annual: 1.8, note: 'Identified waste — no FinOps governance. Azure Synapse running 40% over budget.' },
+        { item: 'Roanoke Data Center (should be decommissioned pending Cerner migration)', annual: 2.8, note: '$2.8M annual operating cost — delay of decommission is a direct tech debt cost' },
+        { item: 'Epic optimization gap (real score 44-47 vs reported 71)', annual: 8.2, note: '34% workaround rate = physician productivity loss + rework labor. 12 of 47 Cogito dashboards deployed.' },
+      ],
+    },
   },
 
   analyticsStack: {
@@ -589,22 +603,72 @@ export const meridianArchitecture = {
         ],
       },
       legacy: {
-        name: "Cerner Millennium",
+        name: "Cerner Millennium (Oracle Health)",
         version: "2021.01",
         hospitals: 2,
+        hospitalNames: ['Blue Ridge East Community Hospital', 'Blue Ridge Valley Medical Center'],
         beds: 600,
         annualLicenseCost: 2400000,
-        migrationStatus: "8 months overdue",
+        migrationStatus: "CRITICAL — 22 months overdue",
         originalGoLiveDate: "June 2023",
-        currentProjectedDate: "Q1 2025",
-        migrationBlockers: [
-          "Interface mapping 60% complete — 340 of 567 interfaces mapped",
-          "Clinical staff training not funded for 2024",
-          "Go-live support team not contracted",
-          "Data migration validation failing — patient record reconciliation issues",
+        revisedTargets: [
+          { date: 'June 2023', reason: 'Original go-live — missed. Interface mapping behind.' },
+          { date: 'November 2023', reason: 'First extension — clinical training not funded.' },
+          { date: 'March 2024', reason: 'Second extension — patient record reconciliation failures discovered.' },
+          { date: 'September 2024', reason: 'Third extension — Oracle Health professional services dispute.' },
+          { date: 'Q2 2026', reason: 'Current projected date — interface mapping now 78% complete but training timeline not approved.' },
         ],
-        riskIfNotMigrated: "Cerner support costs increasing 22% in 2025 — Oracle Health enforcing new pricing",
-        stranded_cost_per_month: 380000,
+        currentProjectedDate: 'Q2 2026',
+        strandedCostPerMonth: 380000,
+        totalStrandedCostToDate: 8360000, // 22 months × $380K
+
+        migrationBlockers: [
+          {
+            blocker: 'Interface mapping incomplete',
+            detail: '443 of 567 interfaces mapped (78% complete). 124 remaining interfaces include high-complexity bi-directional feeds: ADT notifications to 14 downstream systems, lab result routing for 4 non-Epic lab vendors, pharmacy data exchange with regional dispensing network. Each remaining interface requires 2–3 weeks of analyst time.',
+            status: 'In progress — 2 interface analysts assigned full-time',
+            estimatedResolution: '8 weeks',
+          },
+          {
+            blocker: 'Patient record reconciliation failures',
+            detail: '22,847 patient records failed automated reconciliation in the March 2024 data migration test. Root cause: Blue Ridge used Cerner\'s custom demographic matching fields not present in Epic\'s standard MPI (Master Patient Index). 14,200 records had conflicting MRN assignments across the two systems — a patient who visited both a Meridian hospital and a Blue Ridge hospital before the merger now has two active MRNs. Clinical risk if not resolved: duplicate medication orders, missed allergy alerts.',
+            status: 'Manual review in progress — 8,400 records resolved, 14,447 pending',
+            estimatedResolution: '16 weeks at current resolution rate',
+            clinicalRisk: 'CRITICAL — duplicate MRN patients have been identified receiving duplicate medication orders at 2 sites',
+          },
+          {
+            blocker: 'Clinical staff training not approved',
+            detail: '820 clinical staff require Epic go-live training. Training budget of $1.4M not approved by CFO — competing with Epic optimization budget for same pool. Each training week removes a nurse or physician from the schedule — COO has not approved the staffing backfill plan required during training period.',
+            status: 'Awaiting CFO and COO joint approval',
+            estimatedResolution: 'Budget approval by June 2026; training would run July–August 2026',
+          },
+          {
+            blocker: 'Oracle Health professional services dispute',
+            detail: 'Oracle Health billed $1.8M in professional services in Q3 2024 that Meridian disputes — claiming work was out of scope. Oracle\'s response: the scope changes were requested by Meridian\'s clinical informatics team without contract amendment. Dispute in legal review. Oracle has indicated they will not provide go-live support until the invoice is resolved. Legal has estimated resolution in 90 days.',
+            status: 'Legal dispute — 90-day resolution estimate',
+            estimatedResolution: 'Q2 2026 if settled',
+          },
+        ],
+
+        cascadeEffects: [
+          'Sepsis AI cannot be deployed at Blue Ridge East or Blue Ridge Valley until Epic go-live — Cerner data cannot feed the Epic-native sepsis model. Both hospitals excluded from all Wave 1 AI deployments.',
+          'Staff Scheduling AI coverage limited — 2 of 23 hospitals generating scheduling data in Cerner format, incompatible with Kronos + Epic integration.',
+          'Blue Ridge patient portal (84,000 patients) remains on Cerner portal — MyChart migration blocked. 84,000 patients using a portal the firm cannot enhance or improve.',
+          'Roanoke Blue Ridge Data Center ($2.8M annual cost) cannot be decommissioned until Cerner migration completes. 22 months of overrun = $8.4M in avoidable data center costs.',
+          'Splunk SIEM coverage incomplete — Blue Ridge systems not connected. Mean time to detect security incidents at Blue Ridge sites: 28 hours vs 18-hour enterprise average.',
+        ],
+
+        oracleHealthPricing: {
+          currentAnnual: 2400000,
+          newPricingEffective: '2025-01',
+          newAnnual: 2928000, // 22% increase Oracle enforced
+          annualOverrun: 528000,
+          contractTermination: {
+            terminationFee: 1200000,
+            notice: '90 days',
+            recommendation: 'Complete migration rather than terminate — termination fee + migration acceleration likely still cheaper than continued Cerner dual operation.',
+          },
+        },
       },
     },
     imaging: {

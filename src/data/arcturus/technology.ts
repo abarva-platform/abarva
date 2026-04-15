@@ -15,24 +15,86 @@ export const arcturusTechnology = {
     apiCapability: 'limited',
     cloudReady: false,
     note: 'Every AI initiative that requires real-time portfolio data hits this wall.',
+
+    failureHistory: [
+      {
+        phase: 1,
+        year: 2016,
+        codename: 'The Charles River Migration',
+        durationMonths: 14,
+        investmentSunk: 4.2, // $M
+        approach: 'Full OMS replacement — Bloomberg AIM to Charles River Development as primary order management system',
+        failureMode: 'Data reconciliation in month 14 revealed 847 custom Bloomberg BVAL/FLDS formula dependencies embedded across 12 trading desk workflows. No Bloomberg-equivalent formulas existed in Charles River. Bloomberg refused to provide formula equivalency documentation citing IP. 3 months from go-live when abandoned.',
+        rootCause: 'Dependency discovery failure — no inventory of Bloomberg formula customizations existed before migration began. Project assumed OMS functions were standard; they were not.',
+        aftermath: 'Project lead departed. IT credibility deficit vs investment teams began here. Bloomberg used the failed migration to negotiate 3-year contract lock-in at renewal.',
+      },
+      {
+        phase: 2,
+        year: 2019,
+        codename: 'The API Wrapper',
+        durationMonths: 12,
+        investmentSunk: 6.8, // $M
+        approach: 'REST API middleware over Bloomberg AIM to expose position data to downstream systems without core replacement',
+        failureMode: 'Bloomberg Professional Services agreed to participate, then delivered a commercial API SLA with rate limits of 500 calls/hour — 100x below the 50,000 calls/hour required for real-time ML inference. IT built an unofficial screen-scraping layer as workaround. Bloomberg compliance flagged it as Terms of Service violation and threatened termination of 342 Bloomberg Terminal licenses ($28M annual value). Project abandoned under threat.',
+        rootCause: 'Bloomberg deliberately restricts API access to protect terminal revenue model. Official API route is commercially unviable for AI workloads. Unofficial route creates unacceptable termination risk.',
+        aftermath: 'Bloomberg relationship damaged. IT attempted to negotiate API terms at 2021 renewal — Bloomberg refused. Terminal dependency is now the firm\'s most significant single vendor risk.',
+      },
+      {
+        phase: 3,
+        year: '2022–2023',
+        codename: 'Project Aurora (Microservices Wrapper)',
+        durationMonths: 14,
+        investmentSunk: 11.2, // $M
+        approach: 'Microservices architecture fronting Bloomberg AIM — Accenture Financial Services engaged as implementation partner',
+        failureMode: 'Three of 14 trading desks (Emerging Markets, Global Macro, Real Estate) had Bloomberg AIM configurations built without documentation. Custom order routing logic for 2,800 active securities had no written specification — only tribal knowledge in the heads of 4 senior traders. Day one of User Acceptance Testing produced 23 unmatched positions. Project Aurora abandoned in Q3 2023. Accenture contract closed at penalty clause.',
+        rootCause: 'Undocumented operational dependency — same failure mode as Phase 1, never fixed. No Bloomberg AIM configuration audit was completed before Phase 3 began despite Phase 1 having the identical failure.',
+        aftermath: 'Current Head of Technology Michael Santos was the Accenture partner who led Project Aurora before being recruited to fix what he helped build. This is known inside the firm and shapes IT team dynamics. $22M approved for Phase 4 (current) — not yet started.',
+        currentPlan: 'Phase 4 approach: API middleware only — no OMS core migration. Requires Bloomberg cooperation on FIX protocol extensions. CDO hire required before Bloomberg will re-engage on technical discussions. Bloomberg contract auto-renews December 2026 — this is the negotiation window.',
+      },
+    ],
   },
 
   clientPortal: {
     platform: 'Salesforce FSC',
     investedToDate: 38,    // $M
     adoptionRate: 44,      // % active clients
-    targetAdoption: 85,    // %
+    targetAdoption: 85,    // % (CIO privately reset to 70% in November 2025 — not communicated to board)
     npsScore: 31,
     industryNpsMedian: 58,
     goLiveDate: '2024-08',
     mobileAppRating: 2.8,  // out of 5
     selfServiceRate: 28,   // % of queries resolved without advisor
     issues: [
-      'Single sign-on not wired to core banking data',
+      'Single sign-on not wired to Bloomberg AIM positions — core adoption blocker',
       'Performance analytics 72-hour lag vs real-time expectation',
-      'Mobile app missing portfolio rebalancing feature',
-      'Advisor dashboard not connected to Bloomberg AIM positions',
+      'Mobile app missing portfolio rebalancing feature — advisors still need Bloomberg for trades',
+      'Advisor dashboard not connected to Bloomberg AIM positions — creates dual-system cognitive load',
     ],
+
+    adoptionTrajectory: [
+      { date: '2024-08', month: 0,  adoptionPct: 12, note: 'Go-live — UAT participants and early adopters only' },
+      { date: '2024-11', month: 3,  adoptionPct: 28, note: 'Post mandatory training — advisors completed onboarding but not yet embedded' },
+      { date: '2025-02', month: 6,  adoptionPct: 38, note: 'Plateau — advisors who completed training reverting to Bloomberg AIM and legacy CRM' },
+      { date: '2025-05', month: 9,  adoptionPct: 41, note: 'Wealth Centre incentive program ($2,000/quarter bonus for FSC activity) — marginal uptick' },
+      { date: '2025-08', month: 12, adoptionPct: 42, note: 'Flat despite incentive program — root cause not yet identified by IT' },
+      { date: '2025-11', month: 15, adoptionPct: 43, note: 'CIO reset target from 85% to 70% — SSO gap identified as primary blocker. Not communicated to board.' },
+      { date: '2026-02', month: 18, adoptionPct: 44, note: 'Current — SSO still 6 months from delivery. Trajectory effectively flat for 3 quarters.' },
+    ],
+
+    nonAdopterFeedback: {
+      surveyDate: '2026-02',
+      responsesCollected: 218,
+      topReasons: [
+        { reason: 'Bloomberg shows real-time positions, FSC doesn\'t — cannot trust FSC for client meetings', pct: 78 },
+        { reason: 'Two login systems adds friction to every client interaction', pct: 61 },
+        { reason: 'Mobile app cannot execute trades — Bloomberg still required for rebalancing', pct: 44 },
+        { reason: 'FSC dashboard shows yesterday\'s performance — clients ask about today\'s', pct: 37 },
+        { reason: 'My Bloomberg workflow is optimised — FSC adds steps without adding value', pct: 23 },
+      ],
+      keyInsight: 'Adoption is blocked by the Bloomberg AIM data lag, not by Salesforce platform quality or advisor resistance. SSO integration that surfaces real-time Bloomberg positions inside FSC is the single fix that unlocks adoption. Without it, asking advisors to use FSC is asking them to work with stale data.',
+    },
+
+    einsteinAIStatus: 'Licensed — not activated. CRO AI deployment freeze applies. Einstein features dormant across all Salesforce modules.',
   },
 
   dataArchitecture: {

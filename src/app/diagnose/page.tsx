@@ -194,8 +194,8 @@ const ISSUES: Record<ClientId, Issue[]> = {
 function meridianAI_pilotsPurgatory() {
   try {
     // dynamic import would be async — hardcode from the data file
-    return 6
-  } catch { return 6 }
+    return 2
+  } catch { return 2 }
 }
 
 const FINANCIAL_RISKS: Record<ClientId, RiskItem[]> = {

@@ -111,7 +111,7 @@ function getMeridianReadiness(): ClientReadiness {
     cdoVacant: true,                           // explicitly documented — 8 months vacant
     mlopsScore: m.techReadiness.mlops,          // 12/100
     dataReadinessOverall: m.dataReadiness.overall, // 58/100
-    pilotsPurgatory: m.pilotsPurgatory,         // 6
+    pilotsPurgatory: m.pilotsPurgatory,         // 2 (was 6 — Sepsis, Coding AI, Denial AI, Scheduling AI now live)
     changeReadinessOverall: meridianAI.changeReadiness.overall, // 38/100
     hasMLOpsPlatform: m.techReadiness.mlops > 30,
     hasDataPlatform: m.techReadiness.dataPlatform > 40,

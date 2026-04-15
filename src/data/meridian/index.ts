@@ -80,7 +80,12 @@ export const meridianHealth = {
     "CIO hired to drive transformation but CDO role vacant — CIO carrying both jobs",
     "RCM outsourced at $48M per year but vendor missing SLAs with $8M penalties never enforced",
     "Prior auth AI evaluation in progress but Epic module already purchased and only 23% deployed",
-    "Blue Ridge Cerner migration 8 months overdue with no additional budget allocated",
+    "Blue Ridge Cerner migration 22 months overdue — original go-live June 2023 — now Q2 2026 — $8.4M stranded cost, 22,847 patient records with duplicate MRN risk",
+    "Epic optimization score reported as 71/100 in board materials — CIO's own assessment: 44-47/100 — 34% of clinical documentation happening outside Epic in workarounds",
+    "Net collection rate reported as 94.2% (internal methodology) — HFMA-standard calculation: 87.1% — $31M annual gap",
+    "Denial write-off reported as $94M — total economic impact $127M including $33M in rework labor and secondary write-offs",
+    "Coding AI outperforming committed target — but model retrain in Q3 2026 is unmonitored risk, and 28-FTE coder reduction plan may trigger union discussion in NC — neither flagged to CFO",
+    "Sepsis AI described as 'in pilot at 2 hospitals' — now live at 5, failing at 3, blocked at 13 — COO says 18-month scaling timeline but CMIO says technical deployment is 4-6 months",
   ],
   interviewInsights: {
     cio: "Marcus Webb: I inherited a mess. We have 23 hospitals that operate like 23 different companies. I need 6 months just to do a proper assessment.",
