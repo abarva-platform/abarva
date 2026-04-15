@@ -272,6 +272,8 @@ const ARCTURUS_SPEND = {
   total: 680,
   peer: 502,
   excess: 178,
+  revPct: 4.2,
+  peerPct: 3.1,
   categories: [
     { name: 'Software / Licensing', amount: 204, pct: 30 },
     { name: 'IT Staff & Contractors', amount: 170, pct: 25 },
@@ -288,6 +290,179 @@ const CONTRACTS_URGENT = [
   { vendor: 'Charles River IMS', end: 'Sep 2026', leverage: 'Cloud migration unlocks AI compliance', urgencyDays: 150, risk: 'medium' as const },
   { vendor: 'Bloomberg AIM + Terminal', end: 'Dec 2026', leverage: 'API terms as auto-renewal condition', urgencyDays: 240, risk: 'critical' as const },
   { vendor: 'BlackRock Aladdin', end: 'Mar 2027', leverage: 'Daily stress testing SLA + AI features', urgencyDays: 330, risk: 'high' as const },
+]
+
+// ── Meridian system portfolio ──────────────────────────────────────────────────
+const MERIDIAN_SYSTEMS = [
+  {
+    group: 'Clinical Systems',
+    systems: [
+      {
+        id: 'epic-ehr', name: 'Epic EHR', function: 'Electronic Health Record', vendor: 'Epic',
+        health: 'warning' as const, age: 7, annualCost: 18, contractEnd: 'Dec 2028', autoRenew: false,
+        deploymentModel: 'Cloud (Epic Hosting)', aiReady: true, aiReadinessScore: 45,
+        issues: [
+          'Optimization score 58/100 — target 85/100 — 6 of 8 modules dark or underactivated',
+          'Cogito Analytics: 12 of 47 dashboards live — 35 paid, configured, completely unused ($18M/yr idle)',
+          'MyChart patient portal: 34% adoption vs 60% target — patient engagement AI blocked',
+          'Blue Ridge facilities on Epic 2021 — unification 8 months overdue — 424 interface mappings undocumented',
+          'Prior auth module: 23 of 100 payers connected — CMS mandates 100% by Jan 2026 — 8 months',
+        ],
+        contractNote: 'December 2028 renewal. Key action now: force Epic PS team to deliver 30-day Cogito activation plan for top 15 dashboards at no additional cost — this is included in current license. Use Blue Ridge overrun as leverage.',
+        aiBlockerNote: 'Cogito ML features are licensed and ready — 73% of AI analytics capacity is idle. $18M in value recoverable with activation plan only — no new investment required.',
+        action: 'Immediate: Cogito activation plan for 35 idle dashboards (90-day, $0 additional). Parallel: complete Blue Ridge interface mapping. Priority: prior auth expansion from 23 → 100 payers before Jan 2026.',
+        spend: 18, category: 'EHR / Clinical',
+      },
+      {
+        id: 'cerner-blueridge', name: 'Cerner (Blue Ridge)', function: 'Legacy EHR — 2 Hospitals', vendor: 'Oracle Health',
+        health: 'critical' as const, age: 5, annualCost: 2.4, contractEnd: 'Dec 2024', autoRenew: false,
+        deploymentModel: 'On-Premise (Legacy)', aiReady: false, aiReadinessScore: 5,
+        issues: [
+          'Contract expired December 2024 — operating month-to-month at 120% of contract rate',
+          'Epic migration 8 months overdue — original go-live June 2023 — now Q2 2026',
+          '424 interface mappings undocumented — blocks complete Epic unification across 23 hospitals',
+          '$11M of $14M migration budget spent — 0% go-live — $3M stranded if unresolved',
+          '22,847 patient records with duplicate MRN risk — patient safety exposure',
+        ],
+        contractNote: 'CONTRACT EXPIRED December 2024. Operating month-to-month at 120% of contract rate. Negotiate 6-month extension at original rates while completing Epic migration. Do not allow auto-extension at current terms.',
+        aiBlockerNote: 'Cerner data excluded from all AI training sets — 2 hospitals of patient data invisible to ML models. Unified Epic deployment is prerequisite for any enterprise AI initiative.',
+        action: 'URGENT: Negotiate contract extension at original rates immediately. Fund remaining $3M migration budget. Assign dedicated go-live PM. Target: Q3 2026 migration completion.',
+        spend: 2.4, category: 'EHR / Legacy',
+      },
+    ],
+  },
+  {
+    group: 'Revenue Cycle',
+    systems: [
+      {
+        id: 'ensemble-rcm', name: 'Ensemble Health RCM', function: 'Revenue Cycle — Full Outsource', vendor: 'Ensemble Health Partners',
+        health: 'critical' as const, age: 5, annualCost: 48, contractEnd: 'Dec 2026', autoRenew: false,
+        deploymentModel: 'Vendor-Managed Service', aiReady: false, aiReadinessScore: 20,
+        issues: [
+          'Denial rate 18.2% vs 12% SLA — 6.2pp breach across 12 consecutive quarters',
+          '$8M in contractual penalties accrued — never enforced — enforcement trigger never activated',
+          'SLA compliance 67% vs 95% target — most categories in breach simultaneously',
+          'TennCare coverage rule changes Jan 2023 — billing team never notified — ongoing avoidable denials',
+          'Contract prevents deploying competing RCM AI tools — $28M prior auth AI value blocked',
+        ],
+        contractNote: 'December 2026 renewal. Most powerful contract negotiation in Meridian\'s portfolio. Issue cure notice immediately — Ensemble has 30 days to cure. $8M documented penalties is opening bid. Alternatives: R1 RCM (27% lower cost), Nthrive, or selective in-sourcing.',
+        aiBlockerNote: 'Ensemble contract terms restrict competing AI tools in scope. Prior auth AI (Cohere Health integration) requires contract amendment. This dependency blocks $28M in prior auth AI value.',
+        action: 'Immediate: issue cure notice for SLA breach. Begin parallel RFP: Cohere Health for prior auth AI. Negotiate AI data access rights at December 2026 renewal.',
+        spend: 48, category: 'Revenue Cycle',
+      },
+    ],
+  },
+  {
+    group: 'Analytics & Data Platform',
+    systems: [
+      {
+        id: 'azure-synapse', name: 'Azure Synapse Analytics', function: 'Enterprise Data Warehouse / AI Foundation', vendor: 'Microsoft',
+        health: 'warning' as const, age: 2, annualCost: 2.2, contractEnd: 'Dec 2027', autoRenew: false,
+        deploymentModel: 'Cloud (Azure)', aiReady: false, aiReadinessScore: 30,
+        issues: [
+          '40% implemented — stalled since October 2024 — $1.8M of $3.2M budget consumed',
+          '$800K and 90 days needed to complete — CFO blocking remaining budget',
+          'Blocks 6 AI initiatives: sepsis scale, coding AI, prior auth, supply chain, workforce, readmission',
+          '$292M in AI portfolio value blocked until Synapse completion',
+          'No project owner since PM departed September 2024 — Microsoft offering free PS to complete',
+        ],
+        contractNote: 'December 2027 renewal — not urgent. Key action is completion, not renewal management. Accept Microsoft\'s free PS hours offer and assign internal project owner immediately.',
+        aiBlockerNote: 'Single most important infrastructure decision on the AI roadmap. Every initiative above $5M annual value needs this foundation. $800K to unlock $292M — highest-ROI spend available.',
+        action: 'URGENT: Approve $800K completion budget in 14 days. Accept Microsoft free PS support. CIO as executive sponsor. Target: Q3 2026 completion (90 days). Unlocks 6 stalled AI initiatives immediately.',
+        spend: 2.2, category: 'Data Platform',
+      },
+      {
+        id: 'tableau', name: 'Tableau', function: 'Analytics Visualization', vendor: 'Salesforce',
+        health: 'warning' as const, age: 8, annualCost: 0.8, contractEnd: 'Sep 2025', autoRenew: false,
+        deploymentModel: 'Cloud SaaS', aiReady: false, aiReadinessScore: 15,
+        issues: [
+          'Contract expired September 2025 — operating month-to-month',
+          '28-day average report delivery lag — benchmark is <7 days',
+          '340 reports in backlog — analytics cannot keep pace with operational demand',
+          'Cogito (Epic, already licensed) makes Tableau partially redundant for clinical analytics',
+        ],
+        contractNote: 'Contract expired September 2025. Opportunity: migrate clinical reporting to Cogito (already licensed), reduce Tableau scope to financial/operational only — 40% cost reduction. Evaluate Power BI as full replacement post-Synapse completion.',
+        aiBlockerNote: 'No real-time capability — all reporting is batch overnight. Operational AI (staffing, bed management, real-time RCM monitoring) cannot be built on current Tableau architecture.',
+        action: 'Negotiate 1-year extension at 40% reduced scope (remove clinical use cases to Cogito). Evaluate Power BI migration post-Synapse — better Azure integration and lower cost.',
+        spend: 0.8, category: 'Analytics',
+      },
+    ],
+  },
+  {
+    group: 'Enterprise Systems',
+    systems: [
+      {
+        id: 'workday', name: 'Workday', function: 'Human Capital Management / Finance', vendor: 'Workday',
+        health: 'stable' as const, age: 5, annualCost: 4.2, contractEnd: 'Jun 2026', autoRenew: false,
+        deploymentModel: 'Cloud SaaS', aiReady: true, aiReadinessScore: 65,
+        issues: [
+          'Scheduling data not flowing from Kronos to Workday — workforce analytics incomplete',
+          'Workday AI features (forecasting, retention prediction) licensed but not activated — CDO required',
+          'June 2026 renewal — Kronos integration should be required as contract condition',
+        ],
+        contractNote: 'June 2026 renewal. Negotiate Kronos integration as baseline SLA. Activate Workday AI forecasting (included in license) as part of renewal — no additional cost.',
+        aiBlockerNote: 'Workforce optimization AI ($42M potential) blocked by Workday-Kronos data disconnect. AI features are licensed but require CDO sign-off for activation.',
+        action: 'Activate Workday AI features before June 2026 renewal. Require Kronos integration as renewal condition. CDO or interim must approve AI features before renewal.',
+        spend: 4.2, category: 'Enterprise / HCM',
+      },
+      {
+        id: 'kronos', name: 'Kronos (UKG)', function: 'Workforce Scheduling / Time & Attendance', vendor: 'UKG',
+        health: 'warning' as const, age: 6, annualCost: 2.8, contractEnd: 'Aug 2025', autoRenew: false,
+        deploymentModel: 'Cloud SaaS', aiReady: false, aiReadinessScore: 25,
+        issues: [
+          'Contract expired August 2025 — operating month-to-month',
+          'Scheduling data not flowing to Workday or Epic — workforce analytics impossible',
+          'Travel nurse demand prediction AI blocked by Kronos data quality gaps',
+          'Nurse turnover analysis (24% rate, $142M travel nurse cost) cannot be modeled without Kronos-Epic connection',
+        ],
+        contractNote: 'Contract expired August 2025. Negotiate: Workday API integration as contract condition. Evaluate UKG Dimensions upgrade (modernises API — enables scheduling AI). UKG offering migration incentives.',
+        aiBlockerNote: 'Travel nurse demand prediction and workforce optimization both require Kronos scheduling data in analytics. $42M value pathway blocked by a 60-day solvable data integration gap.',
+        action: 'Immediate: negotiate new 2-year contract with Workday API integration requirement. Fund 60-day integration project ($80K). Unlocks travel nurse demand prediction as Wave 1 AI initiative.',
+        spend: 2.8, category: 'Enterprise / Workforce',
+      },
+      {
+        id: 'servicenow', name: 'ServiceNow', function: 'IT Service Management', vendor: 'ServiceNow',
+        health: 'stable' as const, age: 4, annualCost: 1.4, contractEnd: 'Mar 2026', autoRenew: false,
+        deploymentModel: 'Cloud SaaS', aiReady: true, aiReadinessScore: 55,
+        issues: [
+          'Healthcare-specific ITSM workflows not configured — generic ITSM only',
+          'Not integrated with Epic change management — clinical outages require manual escalation',
+          'Now Intelligence (AI for IT operations) licensed but not activated',
+        ],
+        contractNote: 'March 2026 renewal. Activate Now Intelligence at no additional cost — included in license. Negotiate Epic integration as renewal condition.',
+        aiBlockerNote: 'Now Intelligence (predictive incident resolution, AI root cause analysis) is licensed but inactive. $2.4M IT productivity gain available within existing license.',
+        action: 'Activate Now Intelligence before March 2026 renewal. Configure Epic integration for clinical change management. Low effort, high signal for internal AI execution.',
+        spend: 1.4, category: 'Enterprise / ITSM',
+      },
+    ],
+  },
+]
+
+const MERIDIAN_SPEND = {
+  total: 340, peer: 582, excess: -242, revPct: 3.0, peerPct: 5.2,
+  categories: [
+    { name: 'Applications (EHR, RCM)', amount: 124, pct: 36 },
+    { name: 'Infrastructure & Cloud', amount: 98, pct: 29 },
+    { name: 'Security', amount: 34, pct: 10 },
+    { name: 'Projects & Transformation', amount: 84, pct: 25 },
+  ],
+}
+
+const MERIDIAN_CONTRACTS_URGENT = [
+  { vendor: 'Cerner / Oracle Health (Blue Ridge)', end: 'Dec 2024 (EXPIRED)', leverage: 'Migration overdue — month-to-month at 120% rate', urgencyDays: -90, risk: 'critical' as const },
+  { vendor: 'Tableau / Salesforce', end: 'Sep 2025 (EXPIRED)', leverage: 'Migrate clinical scope to Cogito — 40% reduction', urgencyDays: -30, risk: 'high' as const },
+  { vendor: 'Kronos / UKG', end: 'Aug 2025 (EXPIRED)', leverage: 'Workday integration as contract condition', urgencyDays: -45, risk: 'high' as const },
+  { vendor: 'ServiceNow', end: 'Mar 2026', leverage: 'Activate Now Intelligence + Epic integration', urgencyDays: -30, risk: 'medium' as const },
+  { vendor: 'Workday', end: 'Jun 2026', leverage: 'AI features activation + Kronos integration SLA', urgencyDays: 75, risk: 'medium' as const },
+  { vendor: 'Ensemble Health', end: 'Dec 2026', leverage: '$8M unenforced penalties + denial breach cure notice', urgencyDays: 255, risk: 'critical' as const },
+]
+
+const MERIDIAN_PRE_BUILT = [
+  'Ensemble is collecting $48M per year while missing the 12% denial rate SLA for 3 years. We have $8M in documented penalties. What 3 specific demands should I make before the December 2026 renewal?',
+  'Azure Synapse has been 40% complete since October 2024. $800K and 90 days to complete — $292M in AI value is blocked. How do I make this CFO case in one page?',
+  'Blue Ridge Cerner migration is 8 months overdue with 424 undocumented interfaces and 22,847 patient records with duplicate MRN risk. What is the fastest completion path that avoids a patient safety incident?',
+  'Cogito Analytics is licensed and configured but only 12 of 47 dashboards are live. $18M per year in idle licensed capability. What is the 90-day activation plan that costs nothing and requires no board approval?',
+  'CDO role has been vacant 8+ months. CIO is carrying both jobs. What is the minimum AI governance framework that lets us restart 6 stalled AI pilots without waiting for the CDO hire?',
 ]
 
 // ── Utility ────────────────────────────────────────────────────────────────────
@@ -389,35 +564,39 @@ function IntelligenceContent() {
     }
   }
 
+  const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
+
+  // Select data set based on active client
+  const isMeridian = clientId === 'meridian'
+  const systemGroups = isMeridian ? MERIDIAN_SYSTEMS : ARCTURUS_SYSTEMS
+  const currentSpend = isMeridian ? MERIDIAN_SPEND : ARCTURUS_SPEND
+  const currentContracts = isMeridian ? MERIDIAN_CONTRACTS_URGENT : CONTRACTS_URGENT
+  const currentQuestions = isMeridian ? MERIDIAN_PRE_BUILT : PRE_BUILT
+  const currentKeyWindow = isMeridian
+    ? 'Ensemble Health December 2026 renewal is the highest-priority contract. $8M in documented, unenforced penalties and 12 consecutive quarters of SLA breach give extraordinary leverage. Issue a cure notice immediately — this starts the 30-day cure clock and documents breach for renewal negotiations. Three contracts have already expired (Cerner, Kronos, Tableau) — negotiate these immediately to regain normal pricing terms.'
+    : 'Bloomberg December 2026 auto-renewal is the only contract leverage point in 5+ years. API access improvements must be negotiated now. The migration threat (Charles River + Aladdin OMS) is the only credible bargaining chip.'
+
   // Counts
-  const allSystems = ARCTURUS_SYSTEMS.flatMap(g => g.systems as System[])
+  const allSystems = systemGroups.flatMap(g => g.systems as System[])
   const criticalCount = allSystems.filter(s => s.health === 'critical').length
   const warningCount = allSystems.filter(s => s.health === 'warning' || s.health === 'poor').length
-  const contractsExpiring90 = CONTRACTS_URGENT.filter(c => c.urgencyDays <= 90).length
   const aiReadyPct = Math.round(
     allSystems.reduce((sum, s) => sum + s.aiReadinessScore, 0) / allSystems.length
   )
 
-  const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
-
-  // Non-Arcturus client users: show coming-soon state (account isolation)
-  if (clientId !== 'arcturus') {
-    return (
-      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
-        <AbarvaNav activePage="intelligence" />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '60px 24px' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' }}>Technology Intelligence · {currentClientName}</div>
-          <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0, textAlign: 'center' }}>Technology Landscape</h2>
-          <p style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, maxWidth: '480px', textAlign: 'center', lineHeight: 1.6 }}>
-            Your technology intelligence data is being prepared. This module will surface your system portfolio, IT spend analysis, and AI readiness diagnostics.
-          </p>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: `${TEAL}15`, border: `1px solid ${TEAL}35`, borderRadius: '6px', padding: '8px 20px' }}>
-            Coming soon — engagement scoping in progress
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const headerStats = isMeridian
+    ? [
+        { label: 'IT vs Benchmark', value: '-$242M', color: AMBER, sub: '$340M vs $582M benchmark (5.2%)' },
+        { label: 'Contracts Expired', value: '3', color: RED, sub: 'Cerner, Kronos, Tableau overdue' },
+        { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
+        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: AMBER, sub: 'Ensemble renewal Dec 2026' },
+      ]
+    : [
+        { label: 'IT vs Peers', value: '+$178M', color: RED, sub: '$680M vs $502M benchmark' },
+        { label: 'AI Portfolio', value: '$94M', color: AMBER, sub: '$0 documented ROI' },
+        { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
+        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: AMBER, sub: 'Bloomberg auto-renews Dec 2026' },
+      ]
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
@@ -429,22 +608,17 @@ function IntelligenceContent() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div>
               <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Technology Intelligence · Arcturus Financial Group · April 2026
+                Technology Intelligence · {currentClientName} · April 2026
               </div>
               <h1 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>
                 Technology Landscape
               </h1>
               <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
-                {allSystems.length} systems · $680M annual IT spend · {criticalCount} critical · {warningCount} at risk · {aiReadyPct}% AI-ready
+                {allSystems.length} systems · ${currentSpend.total}M annual IT spend · {criticalCount} critical · {warningCount} at risk · {aiReadyPct}% AI-ready
               </p>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {[
-                { label: 'IT vs Peers', value: '+$178M', color: RED, sub: '$680M vs $502M benchmark' },
-                { label: 'AI Portfolio', value: '$94M', color: AMBER, sub: '$0 documented ROI' },
-                { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
-                { label: 'Contracts ≤12mo', value: `${CONTRACTS_URGENT.length}`, color: AMBER, sub: 'Bloomberg auto-renews Dec 2026' },
-              ].map(m => (
+              {headerStats.map(m => (
                 <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
                   <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
@@ -473,7 +647,7 @@ function IntelligenceContent() {
 
           {activeTab === 'portfolio' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {ARCTURUS_SYSTEMS.map(group => (
+              {systemGroups.map(group => (
                 <div key={group.group}>
                   <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase', padding: '10px 10px 6px', marginTop: '6px' }}>
                     {group.group}
@@ -508,11 +682,13 @@ function IntelligenceContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '14px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginBottom: '6px' }}>TOTAL vs PEER</div>
-                <div style={{ fontFamily: MONO, fontSize: '22px', color: WHITE, fontWeight: 700 }}>$680M</div>
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: RED, marginTop: '2px' }}>+$178M above peer ($502M)</div>
-                <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginTop: '6px' }}>4.2% of revenue vs 3.1% peer benchmark</div>
+                <div style={{ fontFamily: MONO, fontSize: '22px', color: WHITE, fontWeight: 700 }}>${currentSpend.total}M</div>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: currentSpend.excess > 0 ? RED : AMBER, marginTop: '2px' }}>
+                  {currentSpend.excess > 0 ? `+$${currentSpend.excess}M above peer ($${currentSpend.peer}M)` : `-$${Math.abs(currentSpend.excess)}M below benchmark ($${currentSpend.peer}M)`}
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginTop: '6px' }}>{currentSpend.revPct}% of revenue vs {currentSpend.peerPct}% peer benchmark</div>
               </div>
-              {ARCTURUS_SPEND.categories.map(c => (
+              {currentSpend.categories.map(c => (
                 <div key={c.name} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '10px 12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED }}>{c.name}</div>
@@ -529,7 +705,7 @@ function IntelligenceContent() {
 
           {activeTab === 'contracts' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {CONTRACTS_URGENT.map(c => (
+              {currentContracts.map(c => (
                 <div key={c.vendor} style={{ background: CARD, border: `1px solid ${riskColor(c.risk)}30`, borderLeft: `3px solid ${riskColor(c.risk)}`, borderRadius: '6px', padding: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, lineHeight: 1.3 }}>{c.vendor}</div>
@@ -540,7 +716,7 @@ function IntelligenceContent() {
               ))}
               <div style={{ marginTop: '8px', background: 'rgba(45,212,200,0.05)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '12px' }}>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, marginBottom: '4px' }}>KEY WINDOW</div>
-                <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>Bloomberg December 2026 auto-renewal is the only contract leverage point in 5+ years. API access improvements must be negotiated now. The migration threat (Charles River + Aladdin OMS) is the only credible bargaining chip.</div>
+                <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{currentKeyWindow}</div>
               </div>
             </div>
           )}
@@ -692,7 +868,7 @@ function IntelligenceContent() {
             {/* Pre-built questions */}
             {chatMessages.length === 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                {PRE_BUILT.map((q, i) => (
+                {currentQuestions.map((q, i) => (
                   <button key={i} onClick={() => sendChat(q)}
                     style={{ textAlign: 'left', fontFamily: SANS, fontSize: '11px', color: MUTED, background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '8px 10px', cursor: 'pointer', lineHeight: 1.4 }}>
                     {q.slice(0, 80)}…

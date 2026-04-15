@@ -14,8 +14,8 @@ const DATA: Record<string, any> = {
         files: ['Meridian_IT_Financial_Model_FY2024.xlsx', 'Enterprise_IT_Financial_Models_All_Clients.xlsx'],
         records: '847 line items across 14 cost centers',
         findings: [
-          { fact: 'IT Budget FY2024', value: '$504M', source: 'IT_Financial_Model_FY2024.xlsx · Sheet: Budget', why: 'Underspending vs 5.2% revenue benchmark — $80M gap blocking transformation' },
-          { fact: 'Transformation budget', value: '$84M of $504M', source: 'IT_Financial_Model_FY2024.xlsx · Sheet: Budget Breakdown', why: 'Board mandated $200M needed — gap of $116M is fatal to 4% margin target' },
+          { fact: 'IT Budget FY2024', value: '$340M', source: 'IT_Financial_Model_FY2024.xlsx · Sheet: Budget', why: '3.0% of $11.2B revenue — below 5.2% healthcare benchmark by $242M — transformation chronically underfunded' },
+          { fact: 'Transformation budget', value: '$84M of $340M', source: 'IT_Financial_Model_FY2024.xlsx · Sheet: Budget Breakdown', why: '25% of IT budget for projects — board mandated $200M needed — gap of $116M is fatal to 4% margin target' },
           { fact: 'Ensemble RCM contract', value: '$48M/year', source: 'IT_Financial_Model_FY2024.xlsx · Sheet: Vendor Contracts', why: 'Vendor missing SLAs — $8M in unenforced penalties identified' },
           { fact: 'Travel nurse cost', value: '$142M FY2023', source: 'Workforce_HR_Analytics.xlsx · Sheet: Labor Cost', why: '756 travel nurses at $188K avg — $74M above benchmark' },
           { fact: 'Denial write-off', value: '$94M FY2023', source: 'Healthcare_Quality_RCM_Data.xlsx · Sheet: Write-offs', why: '$37M above benchmark — root cause is Ensemble SLA failure' },
