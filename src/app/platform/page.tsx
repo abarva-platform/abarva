@@ -102,6 +102,78 @@ export default function PlatformPage() {
         </div>
       </div>
 
+      {/* Layer diagram */}
+      <div style={{ padding: '80px 32px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
+            Platform architecture
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, marginBottom: '48px' }}>
+            Four layers. One platform.
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '3px', maxWidth: '800px' }}>
+            {[
+              { label: 'Intelligence Layer', sub: 'Situation · AI Strategy · Vendor · Business Case · Outcome', color: TEAL, desc: 'Five products running on your data — each answering one decision.' },
+              { label: 'Solutions Layer', sub: 'PDLC · Margin · Technology Modernisation', color: AMBER, desc: 'Maestros executing against the intelligence — with outcome accountability.' },
+              { label: 'Knowledge / Genome Layer', sub: '340 transformation patterns · Failure rates · Peer baselines', color: '#4DA3FF', desc: 'Every recommendation is grounded in what worked — and what failed — across real engagements.' },
+              { label: 'Foundation Layer', sub: 'Your data · Your benchmarks · Your baseline', color: GREEN, desc: 'Client data ingested, contradiction-checked, and locked on Day 0. Never moved. Never adjusted.' },
+            ].map((layer, i, arr) => (
+              <div key={i}>
+                <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${layer.color}`, borderRadius: '8px', padding: '20px 24px', display: 'flex', alignItems: 'center', gap: '24px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>{layer.label}</span>
+                      <span style={{ fontFamily: MONO, fontSize: '10px', color: layer.color, opacity: 0.8 }}>{layer.sub}</span>
+                    </div>
+                    <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{layer.desc}</div>
+                  </div>
+                </div>
+                {i < arr.length - 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', padding: '4px 0' }}>
+                    <div style={{ width: '2px', height: '20px', background: `linear-gradient(to bottom, ${arr[i].color}, ${arr[i+1].color})`, opacity: 0.6 }} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 5-phase engagement timeline */}
+      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 32px' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
+            How an engagement works
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, marginBottom: '48px' }}>
+            Five phases. Gated by client approval.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0', border: `1px solid ${BORDER}`, borderRadius: '12px', overflow: 'hidden' }}>
+            {[
+              { phase: '0', name: 'Situation & Baseline', color: TEAL, time: '48 hrs', what: 'Data ingested. Contradictions surfaced. Genome patterns matched. Baseline locked.', gate: 'CEO signs off on baseline' },
+              { phase: '1', name: 'Diagnosis', color: '#4DA3FF', time: '1–2 wks', what: 'Full situation intelligence produced. Financial risk quantified. Root causes identified.', gate: 'Client approves situation brief' },
+              { phase: '2', name: 'Prescription', color: AMBER, time: '1–2 wks', what: 'Solution design, vendor scorecard, and CFO-ready business case produced from client data.', gate: 'CFO approves business case' },
+              { phase: '3', name: 'Execution', color: GREEN, time: 'Ongoing', what: 'Maestros embed. Vendors held to milestones. Knowledge built internally — not outsourced.', gate: 'Monthly progress review' },
+              { phase: '4', name: 'Verification', color: AMBER, time: 'Quarterly', what: 'Outcome Intelligence measures actuals vs baseline. Fee calculated on verified delta only.', gate: 'Independent outcome audit' },
+            ].map((p, i, arr) => (
+              <div key={p.phase} style={{ padding: '24px 20px', borderRight: i < arr.length - 1 ? `1px solid ${BORDER}` : 'none', background: CARD, display: 'flex', flexDirection: 'column' as const }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                  <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: `${p.color}20`, border: `1px solid ${p.color}60`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: MONO, fontSize: '10px', color: p.color }}>{p.phase}</span>
+                  </div>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{p.time}</span>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: p.color, letterSpacing: '.06em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>{p.name}</div>
+                <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.6, flex: 1, marginBottom: '12px' }}>{p.what}</div>
+                <div style={{ background: `${p.color}0C`, border: `1px solid ${p.color}25`, borderRadius: '6px', padding: '8px 10px', fontSize: '10px', color: p.color, fontFamily: MONO }}>
+                  Gate: {p.gate}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {/* The Genome */}
       <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, borderBottom: `1px solid ${BORDER}`, padding: '80px 32px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'start' }}>
@@ -151,21 +223,40 @@ export default function PlatformPage() {
           <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, marginBottom: '16px' }}>
             We earn when you earn.
           </div>
-          <p style={{ fontSize: '15px', color: MUTED, lineHeight: 1.7, maxWidth: '600px', marginBottom: '40px' }}>
+          <p style={{ fontSize: '15px', color: MUTED, lineHeight: 1.7, maxWidth: '640px', marginBottom: '48px' }}>
             The baseline is locked on Day 0 — every metric, every assumption, verified by the CXO
             and immutable. AbarVa cannot move the goalposts. Neither can you.
+            If outcomes don&apos;t happen, we don&apos;t get paid.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+
+          {/* Visual fee flow */}
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', border: `1px solid ${BORDER}`, borderRadius: '12px', overflow: 'hidden', marginBottom: '32px' }}>
             {[
-              { label: 'Baseline locked', desc: 'Day 0. Immutable. Every metric signed off by the CXO before engagement begins.', color: TEAL },
-              { label: 'Fee on delta only', desc: 'AbarVa earns on the verified difference between baseline and actuals — not on hours or deliverables.', color: GREEN },
-              { label: 'Outcome Intelligence', desc: 'The fifth product tracks actuals against baseline quarterly. The data is yours — not held by the vendor.', color: AMBER },
-            ].map(item => (
-              <div key={item.label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderTop: `2px solid ${item.color}`, borderRadius: '10px', padding: '24px 20px' }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE, marginBottom: '10px' }}>{item.label}</div>
-                <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{item.desc}</div>
+              { step: '1', label: 'Baseline locked Day 0', desc: 'Every metric signed off by CEO/CFO. Written into the engagement contract. Immutable.', color: TEAL },
+              { step: '2', label: 'Monthly tracking', desc: 'Outcome Intelligence measures actuals against baseline each month. Client owns the data.', color: '#4DA3FF' },
+              { step: '3', label: 'Verified saving', desc: 'Delta confirmed by independent audit. Not AbarVa&apos;s calculation — third-party verified.', color: AMBER },
+              { step: '4', label: 'Fee triggered', desc: 'AbarVa invoices on the verified delta only. No outcome — no fee. No exceptions.', color: GREEN },
+            ].map((item, i, arr) => (
+              <div key={i} style={{ flex: 1, background: CARD, padding: '28px 20px', borderRight: i < arr.length - 1 ? `1px solid ${BORDER}` : 'none', position: 'relative' as const }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: `${item.color}18`, border: `1px solid ${item.color}50`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontFamily: MONO, fontSize: '11px', color: item.color, fontWeight: 700 }}>{item.step}</span>
+                  </div>
+                  {i < arr.length - 1 && (
+                    <span style={{ color: MUTED, fontSize: '18px', marginLeft: '4px' }}>→</span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: item.color, marginBottom: '8px' }}>{item.label}</div>
+                <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.6 }}>{item.desc}</div>
               </div>
             ))}
+          </div>
+
+          <div style={{ background: 'rgba(45,212,200,0.04)', border: '1px solid rgba(45,212,200,0.2)', borderRadius: '10px', padding: '20px 28px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: TEAL, flexShrink: 0 }} />
+            <div style={{ fontSize: '14px', color: WHITE, fontStyle: 'italic' }}>
+              "If outcomes don&apos;t happen, we don&apos;t get paid. That&apos;s the entire business model."
+            </div>
           </div>
         </div>
       </div>
@@ -177,7 +268,7 @@ export default function PlatformPage() {
             See it running on real data.
           </div>
           <p style={{ fontSize: '14px', color: MUTED, lineHeight: 1.7, marginBottom: '28px' }}>
-            Three composite organisations across healthcare, financial services, and asset management.
+            Two composite organisations across healthcare and financial services.
             No signup required.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' as const, flexWrap: 'wrap' as const }}>
@@ -185,7 +276,7 @@ export default function PlatformPage() {
               See Meridian Health →
             </a>
             <a href="/clients" style={{ background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`, padding: '12px 24px', borderRadius: '8px', fontSize: '13px', textDecoration: 'none' }}>
-              All three clients
+              Both clients
             </a>
           </div>
         </div>
