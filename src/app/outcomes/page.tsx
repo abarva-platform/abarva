@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { useSearchParams } from 'next/navigation'
+import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 const T = {
   bg: '#060A12', surface: '#0D1520', surface2: '#162030',
@@ -549,13 +549,16 @@ function TabBoard() {
 }
 
 function OutcomesContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const { clientId } = useClientContext()
   const [tab, setTab] = useState<TabId>('portfolio')
   const [role, setRole] = useState('Maestro')
 
-  const clientIndustry = clientId === 'firstcapital' || clientId === 'arcturus' ? 'FinServ'
-    : clientId === 'apexretail' || clientId === 'nexora' ? 'Retail'
+  const clientMeta = ALL_CLIENTS.find(c => c.id === clientId)
+  const clientVertical = clientMeta?.vertical || 'Healthcare'
+  const clientName = clientMeta?.name || 'Meridian Health System'
+
+  const clientIndustry = clientVertical === 'Financial Services' ? 'FinServ'
+    : clientVertical === 'Retail' ? 'Retail'
     : 'Healthcare'
   const ROLES = clientIndustry === 'FinServ'
     ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
@@ -563,14 +566,7 @@ function OutcomesContent() {
     ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
     : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
 
-  const clientName = clientId === 'firstcapital' ? 'First Capital Financial'
-    : clientId === 'apexretail' ? 'Apex Retail Group'
-    : clientId === 'arcturus' ? 'Arcturus Financial Group'
-    : clientId === 'nexora' ? 'Nexora Retail & Consumer'
-    : 'Meridian Health System'
-
   const initiatives: Initiative[] = clientId === 'arcturus' ? ARCTURUS_INITIATIVES
-    : clientId === 'nexora' ? NEXORA_INITIATIVES
     : clientId === 'meridian' ? MERIDIAN_INITIATIVES
     : []
 
