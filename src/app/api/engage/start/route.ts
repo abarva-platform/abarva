@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SOLUTIONS, SolutionKey } from '@/lib/solutions/solution-config'
-import { ARCTURUS_DELIVERY_PHASE0, ARCTURUS_MARGIN_PHASE0, ARCTURUS_TECH_PHASE0, MERIDIAN_TECH_PHASE0, Phase0Output } from '@/lib/dataset-extractor'
+import { ARCTURUS_DELIVERY_PHASE0, ARCTURUS_MARGIN_PHASE0, ARCTURUS_TECH_PHASE0, ARCTURUS_PDLC_PHASE0, MERIDIAN_TECH_PHASE0, Phase0Output } from '@/lib/dataset-extractor'
 
 function getHardcodedPhase0(clientId: string, solution: string): Phase0Output | null {
   if (clientId === 'arcturus') {
     if (solution === 'delivery') return ARCTURUS_DELIVERY_PHASE0
     if (solution === 'margin') return ARCTURUS_MARGIN_PHASE0
     if (solution === 'tech') return ARCTURUS_TECH_PHASE0
+    if (solution === 'pdlc') return ARCTURUS_PDLC_PHASE0
   }
   if (clientId === 'meridian') {
     if (solution === 'tech') return MERIDIAN_TECH_PHASE0
@@ -132,8 +133,11 @@ export async function POST(request: NextRequest) {
             status: 'draft'
           })
 
-        // Store genome matches
-        for (const gm of phase0Data.genome_matches) {
+        const p0 = phase0Data as any
+
+        // Store genome matches — support both schema shapes
+        const genomeList: any[] = p0.genome_matches || []
+        for (const gm of genomeList) {
           await supabase
             .from('genome_matches')
             .upsert({
@@ -148,34 +152,51 @@ export async function POST(request: NextRequest) {
             }, { onConflict: 'engagement_id,pattern_code' })
         }
 
-        // Store Phase 0 dimension scores
-        for (const [dimension, data] of Object.entries(phase0Data.dimension_scores)) {
-          await supabase
-            .from('phase0_scores')
-            .insert({
-              engagement_id: engagement.id,
-              solution,
-              dimension,
-              score: (data as any).score,
-              evidence: (data as any).evidence,
-              missing_data: (data as any).missing_data,
-              what_it_unlocks: (data as any).what_it_unlocks
-            })
+        // Store Phase 0 dimension scores — support both schema shapes
+        if (p0.dimension_scores) {
+          for (const [dimension, data] of Object.entries(p0.dimension_scores)) {
+            await supabase
+              .from('phase0_scores')
+              .insert({
+                engagement_id: engagement.id,
+                solution,
+                dimension,
+                score: (data as any).score,
+                evidence: (data as any).evidence,
+                missing_data: (data as any).missing_data,
+                what_it_unlocks: (data as any).what_it_unlocks
+              })
+          }
+        } else if (p0.scorecard?.dimensions) {
+          for (const dim of p0.scorecard.dimensions) {
+            await supabase
+              .from('phase0_scores')
+              .insert({
+                engagement_id: engagement.id,
+                solution,
+                dimension: dim.id,
+                score: dim.score,
+                evidence: dim.detail,
+                missing_data: null,
+                what_it_unlocks: null
+              })
+          }
         }
 
-        // Store top findings as phase findings
-        for (let i = 0; i < phase0Data.top_findings.length; i++) {
-          const f = phase0Data.top_findings[i]
+        // Store top findings — support both schema shapes
+        const findingsList: any[] = p0.top_findings || p0.findings || []
+        for (let i = 0; i < findingsList.length; i++) {
+          const f = findingsList[i]
           await supabase
             .from('phase_findings')
             .insert({
               phase_id: phase0.id,
               workstream_id: workstream?.id || null,
               title: f.title,
-              description: f.description,
-              source_files: f.source_files,
-              genome_pattern: f.genome_pattern,
-              severity: f.severity,
+              description: f.description || f.body || '',
+              source_files: f.source_files || [],
+              genome_pattern: f.genome_pattern || f.patternId || null,
+              severity: f.severity ? f.severity.toLowerCase() : (f.type ? f.type.toLowerCase() : 'medium'),
               status: 'confirmed',
               is_published: false,
               display_order: i,
@@ -183,14 +204,17 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Add AI opening message
+        // Add AI opening message — use openingMessage field if present (new schema)
+        const openingContent = p0.openingMessage ||
+          `Phase 0 readiness assessment complete for ${clientName} × ${solutionConfig.name}.\n\nOverall score: **${p0.overall_score}/100** — ${p0.overall_verdict?.toUpperCase()}\n\n${p0.verdict_summary}\n\n**${genomeList.length} Genome patterns confirmed:** ${genomeList.map((g: any) => `${g.code} (${Math.round(g.failure_rate * 100)}% failure rate)`).join(', ')}\n\n**Recommended action:** ${p0.recommended_action}`
+
         await supabase
           .from('workstream_messages')
           .insert({
             workstream_id: workstream?.id,
             role: 'maestro_ai',
             actor_name: 'AbarVa AI',
-            content: `Phase 0 readiness assessment complete for ${clientName} × ${solutionConfig.name}.\n\nOverall score: **${phase0Data.overall_score}/100** — ${phase0Data.overall_verdict.toUpperCase()}\n\n${phase0Data.verdict_summary}\n\n**${phase0Data.genome_matches.length} Genome patterns confirmed:** ${phase0Data.genome_matches.map(g => `${g.code} (${Math.round(g.failure_rate * 100)}% failure rate)`).join(', ')}\n\n**Recommended action:** ${phase0Data.recommended_action}`,
+            content: openingContent,
             is_internal: false
           })
       }

@@ -495,6 +495,39 @@ export const MERIDIAN_TECH_PHASE0: Phase0Output = {
   recommended_action: 'Three parallel tracks: (1) Begin Epic optimization — prior auth module activation for CMS mandate compliance. (2) Start Cerner data migration planning immediately — 14 months is tight. (3) Accelerate CDO hire — prior auth integration has been stalled 18 months without an accountable owner.'
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ARCTURUS_PDLC_PHASE0: Phase0Output = {
+  scorecard: {
+    overall: 41,
+    readiness: 'PARTIAL',
+    summary: 'Sufficient data to begin Phase 1. Sprint velocity documented across 6 squads. AI tooling spend mapped — £8.2M annually with no deployment pipeline. Three post-mortems available. Architecture gaps identified around MLOps and model governance.',
+    dimensions: [
+      { id: 'delivery_velocity', label: 'Delivery Velocity', score: 38, detail: '6 squads mapped. Average sprint velocity 127 days for OMS, 94 days for CRM. 14 of 22 programmes missed milestone by 30%+.' },
+      { id: 'data_readiness', label: 'Data Readiness', score: 52, detail: 'Core financial and operational datasets available. 3 critical pipeline gaps: real-time transaction feed, customer behaviour lake, and regulatory reporting mart.' },
+      { id: 'mlops_capability', label: 'MLOps Capability', score: 22, detail: 'No deployment pipeline for AI models. Manual promotion to production. Zero monitoring on 14 live models. Last audit 18 months ago.' },
+      { id: 'internal_engineering', label: 'Internal Engineering', score: 47, detail: '340 engineers. 28% AI-capable by self-assessment. 3 post-mortems show common root: no executive sponsor who survived programme duration.' },
+      { id: 'ai_portfolio_health', label: 'AI Portfolio Health', score: 31, detail: '£8.2M annual AI spend. 14 models in production. 0 with documented ROI. 6 of 14 Bloomberg customisations portable — 8 Bloomberg-only.' },
+    ]
+  },
+  genomeMatches: [
+    { patternId: 'F001', confidence: 92, confirmedAt: new Date().toISOString(), label: 'No deployment pipeline', description: 'AI models built but never deployed at scale. Manual promotion, zero CI/CD for models.', severity: 'CRITICAL' },
+    { patternId: 'F002', confidence: 88, confirmedAt: new Date().toISOString(), label: 'No named executive sponsor', description: 'Programmes without C-suite owner stall at implementation. 84% failure rate across Genome.', severity: 'CRITICAL' },
+    { patternId: 'F006', confidence: 79, confirmedAt: new Date().toISOString(), label: 'Velocity decay without intervention', description: 'Sprint velocity declines >20% after month 4 without structured intervention.', severity: 'HIGH' },
+    { patternId: 'F008', confidence: 71, confirmedAt: new Date().toISOString(), label: 'Shadow AI spend', description: 'Undocumented AI tooling spend averaging 34% above budgeted. Vendor consolidation opportunity.', severity: 'HIGH' },
+    { patternId: 'F009', confidence: 64, confirmedAt: new Date().toISOString(), label: 'Data pipeline debt blocking AI', description: 'Core datasets exist but pipeline gaps prevent model training and deployment.', severity: 'MEDIUM' },
+  ],
+  findings: [
+    { id: 'af-pdlc-f1', type: 'CRITICAL', title: 'Zero MLOps infrastructure — 14 live models unmonitored', body: 'No deployment pipeline exists for AI models. All 14 production models were manually promoted. No monitoring, alerting, or rollback capability. One model failure could cascade.', patternId: 'F001' },
+    { id: 'af-pdlc-f2', type: 'CRITICAL', title: '£8.2M AI spend with no documented ROI', body: 'Annual AI investment of £8.2M across 14 models. Zero have documented ROI or success metrics. Bloomberg AIM contract alone is £3.4M with 8 non-portable customisations.', patternId: 'F008' },
+    { id: 'af-pdlc-f3', type: 'HIGH', title: 'OMS squad velocity at 127-day average — 35% above benchmark', body: 'Order Management System squads averaging 127 days per sprint cycle against a 94-day financial services benchmark. Root cause: scope creep without executive checkpoint gates.', patternId: 'F006' },
+  ],
+  openingMessage: `Arcturus's delivery picture is more fragile than the portfolio suggests. £8.2M in AI spend, 14 models live — and not one has a documented ROI or a monitoring system watching it. The MLOps gap is the immediate risk: a single model failure with no rollback is an operational incident, not a performance note.
+
+The velocity data tells a connected story. OMS squads at 127 days — 35% above benchmark — and three post-mortems all pointing to the same root cause: no executive sponsor who survived the programme. That's not a people problem, that's a governance gap we can close.
+
+Before we go further: do you know which of the 14 live models the business actually depends on day-to-day? That determines where we start.`
+} as unknown as Phase0Output
+
 export async function extractDatasetSummaries(
   clientId: string,
   solution: string,
