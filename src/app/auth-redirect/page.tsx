@@ -28,19 +28,13 @@ export default function AuthRedirect() {
       return
     }
 
-    if (role === 'maestro' && clientId) {
-      // Client portal users go to portal (default to delivery solution)
-      router.push(`/portal/delivery`)
+    if (role === 'client' && clientId) {
+      router.push(`/portal/delivery?client=${clientId}`)
       return
     }
 
-    if (clientId) {
-      router.push(`/admin/client/${clientId}`)
-      return
-    }
-
-    // Default — Arcturus for demo account
-    router.push('/admin/client/arcturus')
+    // Default fallback
+    router.push('/admin')
   }, [isLoaded, user, router])
 
   return (
