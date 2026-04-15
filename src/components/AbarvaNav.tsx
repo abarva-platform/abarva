@@ -50,9 +50,15 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
   const solutionPath = (sol: string) => {
     if (!signedIn) return `/solutions/${sol}`
     if (metaRole === 'admin') return `/engage/${activeClientId}/${sol}`
-    if (metaClientId) return `/portal/${sol}`
+    if (metaRole === 'client' && metaClientId) return `/portal/${sol}?client=${metaClientId}`
     return `/solutions/${sol}`
   }
+
+  const roleLabel =
+    metaRole === 'admin'    ? 'Admin'    :
+    metaRole === 'client'   ? 'Client'   :
+    metaRole === 'investor' ? 'Investor' :
+    null
 
   const signedIn = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'Maestro'
@@ -173,7 +179,7 @@ export default function AbarvaNav({ activePage, clientId }: NavProps) {
               >
                 <div style={{ textAlign: 'right' as const }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{displayName}</div>
-                  <div style={{ fontSize: '10px', color: TEAL, fontFamily: SANS }}>{metaRole === 'admin' ? 'Admin' : 'Maestro'}</div>
+                  {roleLabel && <div style={{ fontSize: '10px', color: TEAL, fontFamily: SANS }}>{roleLabel}</div>}
                 </div>
                 <div style={{
                   width: '30px', height: '30px', borderRadius: '50%',
