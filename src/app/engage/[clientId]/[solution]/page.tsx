@@ -107,6 +107,10 @@ export default function MaestroWorkspace() {
   const [seedingDemo, setSeedingDemo] = useState(false)
   const [seedingFullDemo, setSeedingFullDemo] = useState(false)
 
+  // Admin unlock
+  const [unlockConfirm, setUnlockConfirm] = useState<{ phaseId: string; phaseName: string; phaseNum: number } | null>(null)
+  const [unlocking, setUnlocking] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -230,6 +234,19 @@ export default function MaestroWorkspace() {
     await loadEngagement()
     await loadEngagementList()
     setSeedingFullDemo(false)
+  }
+
+  const adminUnlock = async (phaseId: string) => {
+    setUnlocking(true)
+    await fetch(`/api/engage/phase/${phaseId}/admin-unlock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ actorName: user?.fullName || 'Anand Sundaram' })
+    })
+    setUnlockConfirm(null)
+    await loadEngagement()
+    await loadEngagementList()
+    setUnlocking(false)
   }
 
   // Load opportunity map for margin solution
@@ -654,8 +671,25 @@ export default function MaestroWorkspace() {
                     {pConfig.name}
                   </div>
                   {isLocked && (
-                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2, marginTop: '4px' }}>
-                      {pConfig.unlock_condition}
+                    <div style={{ marginTop: '4px' }}>
+                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2 }}>
+                        {pConfig.unlock_condition}
+                      </div>
+                      {/* Admin bypass — visible only to admin */}
+                      {(user?.publicMetadata?.role as string) === 'admin' && (
+                        <div
+                          onClick={e => { e.stopPropagation(); setUnlockConfirm({ phaseId: phase.id, phaseName: pConfig.name, phaseNum: phase.phase_number }) }}
+                          style={{
+                            marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            fontFamily: T.mono, fontSize: '9px', color: T.amber,
+                            background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)',
+                            borderRadius: '4px', padding: '3px 8px', cursor: 'pointer',
+                            letterSpacing: '.06em', textTransform: 'uppercase'
+                          }}
+                        >
+                          ↑ Unlock
+                        </div>
+                      )}
                     </div>
                   )}
                 </button>
@@ -1072,6 +1106,66 @@ export default function MaestroWorkspace() {
         await fetch(`/api/engage/phase/${activePhaseId}/upload`, { method: 'POST', body: fd })
         await loadEngagement()
       }} />
+
+      {/* Admin Unlock Confirmation Modal */}
+      {unlockConfirm && (
+        <div
+          onClick={() => !unlocking && setUnlockConfirm(null)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(6,10,18,0.85)',
+            backdropFilter: 'blur(4px)', zIndex: 999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: T.surface, border: `1px solid rgba(245,158,11,0.3)`,
+              borderRadius: '14px', padding: '32px', width: '400px',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.amber, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Admin Override
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '8px' }}>
+              Unlock Phase {unlockConfirm.phaseNum}?
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, marginBottom: '6px' }}>
+              <strong>{unlockConfirm.phaseName}</strong>
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, marginBottom: '28px', lineHeight: 1.6 }}>
+              This bypasses the stage gate for <strong style={{ color: T.text }}>{clientName}</strong>. The override will be logged in the activity feed with your name and timestamp.
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setUnlockConfirm(null)}
+                disabled={unlocking}
+                style={{
+                  padding: '9px 18px', borderRadius: '7px', cursor: 'pointer',
+                  background: 'transparent', border: `1px solid ${T.border}`,
+                  fontFamily: T.sans, fontSize: '13px', color: T.text
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => adminUnlock(unlockConfirm.phaseId)}
+                disabled={unlocking}
+                style={{
+                  padding: '9px 20px', borderRadius: '7px',
+                  cursor: unlocking ? 'not-allowed' : 'pointer',
+                  background: T.amber, border: 'none',
+                  fontFamily: T.sans, fontSize: '13px', color: '#060A12', fontWeight: 700,
+                  opacity: unlocking ? 0.7 : 1
+                }}
+              >
+                {unlocking ? 'Unlocking...' : 'Unlock Phase ↑'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New Engagement Modal */}
       {showNewModal && (

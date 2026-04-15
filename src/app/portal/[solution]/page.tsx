@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
+import { SOLUTIONS, SolutionKey, PhaseKey, PhaseConfig } from '@/lib/solutions/solution-config'
 
 const T = {
   bg: '#060A12',
@@ -522,17 +522,40 @@ function PortalContent() {
                 )}
 
                 {/* Approval controls */}
-                {activeOutput.status === 'published' && activePhase.status === 'published_to_client' && (
+                {activeOutput.status === 'published' && activePhase.status === 'published_to_client' && (() => {
+                  const activePhaseConfig = solutionConfig?.phases[activePhase.phase_number as PhaseKey] as PhaseConfig | undefined
+                  const gateType = activePhaseConfig?.gate_type ?? 'hard'
+                  const isHardGate = gateType !== 'soft'
+                  return (
                   <div style={{
-                    background: T.surface, border: `1px solid ${T.border}`, borderRadius: '12px',
-                    padding: '28px'
+                    background: T.surface,
+                    border: `1px solid ${isHardGate ? T.border : 'rgba(45,212,200,0.25)'}`,
+                    borderRadius: '12px', padding: '28px'
                   }}>
+                    {/* Gate type badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+                      <div style={{
+                        fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em',
+                        textTransform: 'uppercase',
+                        color: isHardGate ? T.amber : T.teal,
+                        background: isHardGate ? 'rgba(245,158,11,0.08)' : 'rgba(45,212,200,0.08)',
+                        border: `1px solid ${isHardGate ? 'rgba(245,158,11,0.3)' : 'rgba(45,212,200,0.3)'}`,
+                        borderRadius: '4px', padding: '3px 8px',
+                      }}>
+                        {isHardGate ? '🔒 Hard Gate' : '· Soft Gate'}
+                      </div>
+                      <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.text2 }}>
+                        {activePhaseConfig?.gate_description}
+                      </div>
+                    </div>
                     <div style={{ fontFamily: T.sans, fontSize: '16px', color: T.text, fontWeight: 600, marginBottom: '8px' }}>
                       Does this accurately describe your situation?
                     </div>
                     <p style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, margin: '0 0 24px', lineHeight: 1.6 }}>
-                      Your approval moves the engagement to Phase {activePhase.phase_number + 1}.
-                      If something needs to be corrected, flag it and your Maestro will revise.
+                      {isHardGate
+                        ? `Your approval unlocks Phase ${activePhase.phase_number + 1}. This is a hard gate — approval is required to proceed. Flag anything that needs revision first.`
+                        : `Your approval moves the engagement to Phase ${activePhase.phase_number + 1}. If something needs to be corrected, flag it and your Maestro will revise.`
+                      }
                     </p>
 
                     {disputePhaseId !== activePhase.id ? (
@@ -605,7 +628,8 @@ function PortalContent() {
                       </div>
                     )}
                   </div>
-                )}
+                  )
+                })()}
 
                 {activePhase.status === 'disputed' && (
                   <div style={{

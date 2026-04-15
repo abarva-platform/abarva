@@ -26,6 +26,8 @@ export interface PhaseConfig {
   output_title: string
   gate_description: string
   gate_approver: string
+  gate_type?: 'hard' | 'soft'  // defaults to 'hard' when omitted
+  approvers_required?: string[]  // For multi-approver phases (e.g. CFO + CTO + COO)
   unlock_condition: string
   typical_duration_weeks: { min: number; max: number }
 }
@@ -87,6 +89,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Readiness Assessment',
         gate_description: 'Maestro reviews readiness scorecard',
         gate_approver: 'maestro',
+        gate_type: 'soft',
         unlock_condition: 'Datasets uploaded',
         typical_duration_weeks: { min: 0, max: 1 },
         default_workstreams: [
@@ -193,6 +196,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Monthly Outcome Report',
         gate_description: 'Quarterly board review',
         gate_approver: 'board',
+        gate_type: 'soft',
         unlock_condition: 'Baseline signed by CEO or CFO',
         typical_duration_weeks: { min: 52, max: 52 },
         default_workstreams: [
@@ -266,6 +270,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Delivery Readiness Assessment',
         gate_description: 'Maestro reviews readiness scorecard',
         gate_approver: 'maestro',
+        gate_type: 'soft',
         unlock_condition: 'Datasets uploaded',
         typical_duration_weeks: { min: 0, max: 1 },
         default_workstreams: [{
@@ -370,6 +375,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Monthly Outcome Report',
         gate_description: 'Quarterly board review',
         gate_approver: 'board',
+        gate_type: 'soft',
         unlock_condition: 'Baseline signed',
         typical_duration_weeks: { min: 52, max: 52 },
         default_workstreams: [
@@ -442,6 +448,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Financial Readiness Assessment',
         gate_description: 'Maestro reviews financial readiness',
         gate_approver: 'maestro',
+        gate_type: 'soft',
         unlock_condition: 'Financial datasets uploaded',
         typical_duration_weeks: { min: 0, max: 1 },
         default_workstreams: [{
@@ -546,6 +553,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Monthly Margin Report',
         gate_description: 'Quarterly CFO review',
         gate_approver: 'board',
+        gate_type: 'soft',
         unlock_condition: 'Baseline signed',
         typical_duration_weeks: { min: 52, max: 52 },
         default_workstreams: [
@@ -617,6 +625,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Technology Readiness Assessment',
         gate_description: 'Maestro reviews technology readiness',
         gate_approver: 'maestro',
+        gate_type: 'soft',
         unlock_condition: 'Technology datasets uploaded',
         typical_duration_weeks: { min: 0, max: 1 },
         default_workstreams: [{
@@ -748,6 +757,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         output_title: 'Monthly Modernisation Report',
         gate_description: 'Quarterly board review',
         gate_approver: 'board',
+        gate_type: 'soft',
         unlock_condition: 'Baseline signed',
         typical_duration_weeks: { min: 52, max: 52 },
         default_workstreams: [
