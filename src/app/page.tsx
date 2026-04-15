@@ -29,7 +29,7 @@ export default function Homepage() {
 
       {/* HERO */}
       <div style={{padding:'100px 32px 80px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto',display:'grid',gridTemplateColumns:'1fr 1fr',gap:64,alignItems:'center'}}>
+        <div style={{maxWidth:1280,margin:'0 auto',display:'grid',gridTemplateColumns:'45% 50%',gap:'5%',alignItems:'center'}}>
 
           {/* Left column */}
           <div>
@@ -69,25 +69,25 @@ export default function Homepage() {
               {/* Stat 1 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${RED}`,borderRadius:10,padding:'20px 16px'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Consulting spend wasted</div>
-                <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,lineHeight:1}}>$200B</div>
+                <div style={{fontFamily:SERIF,fontSize:44,color:WHITE,lineHeight:1}}>$200B</div>
                 <div style={{fontSize:11,color:MUTED,marginTop:4}}>Global annual market with no outcome accountability</div>
               </div>
               {/* Stat 2 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${AMBER}`,borderRadius:10,padding:'20px 16px'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Enterprise AI with zero ROI</div>
-                <div style={{fontFamily:SERIF,fontSize:32,color:AMBER,lineHeight:1}}>73%</div>
+                <div style={{fontFamily:SERIF,fontSize:44,color:AMBER,lineHeight:1}}>73%</div>
                 <div style={{fontSize:11,color:MUTED,marginTop:4}}>Of AI investments produce no verified outcome</div>
               </div>
               {/* Stat 3 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${GREEN}`,borderRadius:10,padding:'20px 16px'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>AbarVa model</div>
-                <div style={{fontFamily:SERIF,fontSize:18,color:GREEN,lineHeight:1.2}}>Skin in the game</div>
+                <div style={{fontFamily:SERIF,fontSize:28,color:GREEN,lineHeight:1.2}}>Skin in the game</div>
                 <div style={{fontSize:11,color:MUTED,marginTop:4}}>Fee tied to your outcomes. Not our hours.</div>
               </div>
               {/* Stat 4 */}
               <div style={{background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${TEAL}`,borderRadius:10,padding:'20px 16px'}}>
                 <div style={{fontFamily:MONO,fontSize:9,color:MUTED,textTransform:'uppercase' as const,letterSpacing:'.08em',marginBottom:8}}>Time to first intelligence</div>
-                <div style={{fontFamily:SERIF,fontSize:32,color:TEAL,lineHeight:1}}>48hrs</div>
+                <div style={{fontFamily:SERIF,fontSize:44,color:TEAL,lineHeight:1}}>48hrs</div>
                 <div style={{fontSize:11,color:MUTED,marginTop:4}}>From kickoff to your first Situation brief</div>
               </div>
             </div>
@@ -118,14 +118,14 @@ export default function Homepage() {
 
       {/* PRODUCTS */}
       <div style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
+        <div style={{maxWidth:1280,margin:'0 auto'}}>
           <div style={{fontFamily:MONO,fontSize:10,color:TEAL,textTransform:'uppercase' as const,letterSpacing:'.14em',marginBottom:12}}>
             Five products · One intelligence layer
           </div>
           <div style={{fontFamily:SERIF,fontSize:38,color:WHITE,marginBottom:12}}>
             Intelligence that tells you what to do next.
           </div>
-          <p style={{fontSize:16,color:MUTED,maxWidth:560,marginBottom:48,lineHeight:1.7}}>
+          <p style={{fontSize:16,color:MUTED,marginBottom:48,lineHeight:1.7}}>
             Each product runs on your data, your industry benchmarks, and 340 cross-client patterns from the Transformation Genome. The answer is specific. The source is transparent.
           </p>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(210px,1fr))',gap:16}}>
@@ -149,7 +149,7 @@ export default function Homepage() {
 
       {/* SOLUTIONS */}
       <div style={{padding:'0 32px 80px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
+        <div style={{maxWidth:1280,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Diagnosis is just the start. We execute.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:40,lineHeight:1.6}}>
             AbarVa doesn&apos;t hand you a report and leave. Maestros embed. They execute. They track outcomes.
@@ -181,7 +181,7 @@ export default function Homepage() {
 
       {/* DEMO */}
       <div id="demo" style={{padding:'80px 32px',background:'#08101C',borderTop:`1px solid ${BORDER}`,borderBottom:`1px solid ${BORDER}`}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
+        <div style={{maxWidth:1280,margin:'0 auto'}}>
           <div style={{fontFamily:MONO,fontSize:10,color:TEAL,letterSpacing:'.14em',textTransform:'uppercase' as const,marginBottom:12}}>
             See it working · No signup required
           </div>
@@ -216,7 +216,7 @@ export default function Homepage() {
 
       {/* HOW WE EARN */}
       <div style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
+        <div style={{maxWidth:1280,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Skin in the game. Fee on outcomes only.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48,lineHeight:1.6}}>
             Four steps. Baseline locked on day 0. Fee tied to your outcomes — not our hours.
@@ -262,7 +262,7 @@ export default function Homepage() {
 
       {/* CONTACT */}
       <div id="contact" style={{padding:'80px 32px'}}>
-        <div style={{maxWidth:1200,margin:'0 auto'}}>
+        <div style={{maxWidth:1280,margin:'0 auto'}}>
           <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Ready to see your organization in here?</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:48}}>No sales calls. A Maestro responds within 24 hours.</p>
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48}}>
@@ -350,7 +350,7 @@ export default function Homepage() {
 
       {/* FOOTER */}
       <div style={{borderTop:`1px solid ${BORDER}`}}>
-        <div style={{padding:'32px',display:'flex',justifyContent:'space-between',alignItems:'center',maxWidth:1200,margin:'0 auto',flexWrap:'wrap' as const,gap:16}}>
+        <div style={{padding:'32px',display:'flex',justifyContent:'space-between',alignItems:'center',maxWidth:1280,margin:'0 auto',flexWrap:'wrap' as const,gap:16}}>
           <div>
             <span style={{fontFamily:SERIF,fontSize:18,fontWeight:500,color:WHITE,letterSpacing:'-0.01em'}}>Abar</span>
             <span style={{fontFamily:MONO,fontSize:14,color:TEAL,letterSpacing:'.04em'}}>Va</span>
