@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 
@@ -224,11 +224,105 @@ const CLIENTS = [
 
 const SEV_COLOR: Record<Sev, string> = { CRITICAL: '#EF4444', HIGH: '#F59E0B' }
 
+function ContradictionChat({ client, contradictionTitle, contradictionImpact }: { client: string; contradictionTitle: string; contradictionImpact: string }) {
+  const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [input, setInput] = useState('')
+  const [streaming, setStreaming] = useState('')
+  const [loading, setLoading] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
+  const bottomRef = useRef<HTMLDivElement>(null)
+
+  const send = useCallback(async (text: string) => {
+    if (!text.trim() || loading) return
+    setLoading(true)
+    setInput('')
+    const userMsg = { role: 'user', content: text }
+    const next = messages.length === 0
+      ? [{ role: 'user', content: `Context: I'm looking at the "${contradictionTitle}" contradiction. Impact: ${contradictionImpact}. Question: ${text}` }]
+      : [...messages, userMsg]
+    setMessages(prev => [...prev, userMsg])
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
+    try {
+      const res = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: next, clientId: client, role: 'Maestro' }),
+        signal: ctrl.signal,
+      })
+      if (!res.ok || !res.body) throw new Error('Stream failed')
+      const reader = res.body.getReader()
+      const dec = new TextDecoder()
+      let acc = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        acc += dec.decode(value, { stream: true })
+        setStreaming(acc)
+      }
+      setMessages(m => [...m, { role: 'assistant', content: acc }])
+      setStreaming('')
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    } catch { /* ignore abort */ } finally { setLoading(false) }
+  }, [messages, client, contradictionTitle, contradictionImpact, loading])
+
+  const PURPLE = '#A371F7', TEAL = '#2DD4C8', SURFACE = '#161B22', BORDER = '#21262D', TEXT = '#E6EDF3', DIM = '#6B7280', BG = '#0D1117'
+  const MONO = 'IBM Plex Mono, monospace', SANS = "'IBM Plex Sans', Inter, sans-serif"
+
+  return (
+    <div style={{ borderTop: '1px solid ' + BORDER, marginTop: '16px', paddingTop: '16px' }}>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '10px', fontFamily: MONO }}>
+        ASK ABARVA ABOUT THIS CONTRADICTION
+      </div>
+      <div style={{ background: BG, border: '1px solid ' + BORDER, borderRadius: '8px', overflow: 'hidden' }}>
+        <div style={{ maxHeight: '300px', overflowY: 'auto', padding: '12px' }}>
+          {messages.length === 0 && !streaming && (
+            <div style={{ fontSize: '12px', color: DIM, padding: '8px 0' }}>
+              Ask about the root cause, remediation path, or financial impact…
+            </div>
+          )}
+          {messages.filter(m => m.role !== 'user' || !m.content.startsWith('Context:')).map((m, i) => (
+            <div key={i} style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: m.role === 'user' ? TEAL : PURPLE, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>
+                {m.role === 'user' ? 'YOU' : 'ABARVA'}
+              </div>
+              <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{m.content}</div>
+            </div>
+          ))}
+          {streaming && (
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: PURPLE, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>ABARVA</div>
+              <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{streaming}</div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+        <div style={{ padding: '8px', borderTop: '1px solid ' + BORDER, display: 'flex', gap: '6px' }}>
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send(input))}
+            placeholder="What's the fastest remediation path?"
+            autoFocus
+            style={{ flex: 1, padding: '8px 12px', background: SURFACE, border: '1px solid ' + BORDER, borderRadius: '6px', color: TEXT, fontSize: '12px', fontFamily: SANS, outline: 'none' }}
+          />
+          <button onClick={() => send(input)} disabled={loading || !input.trim()}
+            style={{ padding: '8px 16px', background: loading ? SURFACE : TEAL, color: loading ? DIM : '#0D1117', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
+            {loading ? '…' : '→'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ContradictionsContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
   const [selectedClient, setSelectedClient] = useState(clientId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [chatOpen, setChatOpen] = useState(false)
 
   const cd = CLIENT_DATA[selectedClient] || CLIENT_DATA.meridian
   const selected = cd.nodes.find(n => n.id === selectedId) ?? cd.nodes[0]
@@ -236,6 +330,7 @@ function ContradictionsContent() {
   function selectClient(id: string) {
     setSelectedClient(id)
     setSelectedId(null)
+    setChatOpen(false)
   }
 
   const critCount = cd.nodes.filter(n => n.sev === 'CRITICAL').length
@@ -451,13 +546,23 @@ function ContradictionsContent() {
 
                 {/* CTA */}
                 <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
-                  <a href={'/diagnose?client=' + selectedClient} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(77,163,255,0.1)', color: '#4DA3FF', textDecoration: 'none', fontSize: '12px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(77,163,255,0.25)' }}>
-                    Ask AbarVa about this →
-                  </a>
+                  <button
+                    onClick={() => setChatOpen(o => !o)}
+                    style={{ flex: 1, padding: '10px', borderRadius: '8px', background: chatOpen ? 'rgba(77,163,255,0.2)' : 'rgba(77,163,255,0.1)', color: '#4DA3FF', fontSize: '12px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(77,163,255,0.25)', cursor: 'pointer' }}
+                  >
+                    {chatOpen ? '× Close chat' : 'Ask AbarVa about this →'}
+                  </button>
                   <a href={'/blueprint?client=' + selectedClient} style={{ flex: 1, padding: '10px', borderRadius: '8px', background: 'rgba(45,212,200,0.1)', color: '#2DD4C8', textDecoration: 'none', fontSize: '12px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(45,212,200,0.25)' }}>
                     Solution Blueprint →
                   </a>
                 </div>
+                {chatOpen && (
+                  <ContradictionChat
+                    client={selectedClient}
+                    contradictionTitle={selected.title}
+                    contradictionImpact={selected.impact}
+                  />
+                )}
               </div>
             )
           })()}

@@ -48,62 +48,229 @@ const meridianProfile = {
   priorAuthCoverage: 23,
 }
 
-// Current vendor portfolio for Mode 2
+// Current vendor portfolio for Mode 2 — Meridian Health ($11.2B IDN, 23 hospitals)
+// Total addressable vendor spend: ~$340M technology & services
 const CURRENT_VENDORS = [
+  // ── RCM & Revenue Cycle ───────────────────────────────────────────────────
   {
     name: 'Ensemble Health Partners',
     category: 'RCM Outsourcing',
-    annualSpend: 4_200_000,
+    annualSpend: 48_000_000,
     contractEnd: 'Dec 2027',
     contractedUptime: 99.5,
     actualUptime: 97.1,
-    marketRate: 3_600_000,
+    marketRate: 38_000_000,
     isRenewing: false,
     hasOverlap: false,
+    note: 'SLA compliance 67% vs 95% target — $8M in unenforced penalties',
   },
+  {
+    name: 'Change Healthcare (Optum)',
+    category: 'Claims Clearinghouse',
+    annualSpend: 11_200_000,
+    contractEnd: 'Jun 2026',
+    contractedUptime: 99.8,
+    actualUptime: 99.1,
+    marketRate: 9_400_000,
+    isRenewing: true,
+    hasOverlap: true,
+    note: 'Overlap with Waystar — consolidation opportunity worth $3.8M/yr',
+  },
+  {
+    name: 'Waystar',
+    category: 'Patient Access & Prior Auth',
+    annualSpend: 7_400_000,
+    contractEnd: 'Sep 2026',
+    contractedUptime: 99.5,
+    actualUptime: 98.8,
+    marketRate: 6_800_000,
+    isRenewing: false,
+    hasOverlap: true,
+    note: 'Prior auth coverage only 23% — missing United, Aetna, BCBS',
+  },
+  // ── Clinical Systems ──────────────────────────────────────────────────────
   {
     name: 'Epic Systems',
-    category: 'EHR',
-    annualSpend: 8_400_000,
-    contractEnd: 'Q4 2025',
+    category: 'EHR Platform',
+    annualSpend: 24_000_000,
+    contractEnd: 'Q2 2028',
     contractedUptime: 99.9,
     actualUptime: 99.9,
-    marketRate: 7_100_000,
-    isRenewing: true,
+    marketRate: 20_500_000,
+    isRenewing: false,
     hasOverlap: false,
+    note: '58/100 optimization score — 6 of 8 modules dark or underactivated',
   },
   {
-    name: 'Microsoft Azure',
-    category: 'Cloud Infrastructure',
-    annualSpend: 6_200_000,
-    contractEnd: 'Oct 2025',
-    contractedUptime: 99.9,
-    actualUptime: 99.7,
-    marketRate: 5_400_000,
-    isRenewing: true,
-    hasOverlap: false,
-  },
-  {
-    name: 'Nuance (Dragon)',
-    category: 'Clinical Documentation',
-    annualSpend: 2_800_000,
+    name: 'Nuance / Microsoft DAX',
+    category: 'Clinical Documentation AI',
+    annualSpend: 8_600_000,
     contractEnd: 'Mar 2026',
     contractedUptime: 99.0,
     actualUptime: 98.4,
-    marketRate: 2_800_000,
-    isRenewing: false,
-    hasOverlap: true,
+    marketRate: 7_200_000,
+    isRenewing: true,
+    hasOverlap: false,
+    note: 'Renewal opportunity — DAX Copilot bundle may reduce per-seat cost 22%',
   },
   {
-    name: 'Kronos (UKG)',
-    category: 'Workforce Management',
-    annualSpend: 1_400_000,
-    contractEnd: 'Jun 2026',
+    name: 'Oracle Health (Cerner)',
+    category: 'Legacy EHR (2 hospitals)',
+    annualSpend: 5_800_000,
+    contractEnd: 'Dec 2025',
     contractedUptime: 99.5,
-    actualUptime: 99.6,
-    marketRate: 1_200_000,
+    actualUptime: 99.3,
+    marketRate: 4_200_000,
+    isRenewing: false,
+    hasOverlap: true,
+    note: 'Blue Ridge migration 8 months overdue — $14M cost at risk',
+  },
+  {
+    name: '3M Health Information Systems',
+    category: 'Coding & CDI',
+    annualSpend: 9_100_000,
+    contractEnd: 'Aug 2026',
+    contractedUptime: 99.5,
+    actualUptime: 99.4,
+    marketRate: 8_400_000,
     isRenewing: false,
     hasOverlap: false,
+    note: 'AI coding accuracy 87% — Zynx and Dolbey alternatives showing 93%+',
+  },
+  // ── Infrastructure & Cloud ────────────────────────────────────────────────
+  {
+    name: 'Microsoft Azure',
+    category: 'Cloud Infrastructure',
+    annualSpend: 22_000_000,
+    contractEnd: 'Oct 2026',
+    contractedUptime: 99.9,
+    actualUptime: 99.7,
+    marketRate: 18_500_000,
+    isRenewing: true,
+    hasOverlap: false,
+    note: 'Azure Synapse 40% complete — additional $8M committed to complete by Q3',
+  },
+  {
+    name: 'Leidos Health',
+    category: 'Data Center & Managed IT Ops',
+    annualSpend: 18_400_000,
+    contractEnd: 'Jun 2027',
+    contractedUptime: 99.8,
+    actualUptime: 99.5,
+    marketRate: 16_200_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'Co-location for 3 on-premise data centers — cloud migration would retire $12M',
+  },
+  {
+    name: 'CrowdStrike',
+    category: 'Endpoint Security (EDR)',
+    annualSpend: 5_200_000,
+    contractEnd: 'Nov 2025',
+    contractedUptime: 99.9,
+    actualUptime: 99.9,
+    marketRate: 4_800_000,
+    isRenewing: true,
+    hasOverlap: false,
+    note: 'Renewal 2025 — multi-year lock-in saves est. $620K',
+  },
+  {
+    name: 'Splunk (Cisco)',
+    category: 'Security Operations & SIEM',
+    annualSpend: 4_100_000,
+    contractEnd: 'Feb 2026',
+    contractedUptime: 99.5,
+    actualUptime: 99.8,
+    marketRate: 3_600_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'Microsoft Sentinel migration could reduce cost 35% given Azure commitment',
+  },
+  // ── ERP & Enterprise Systems ──────────────────────────────────────────────
+  {
+    name: 'Workday',
+    category: 'HCM, Finance & Planning',
+    annualSpend: 12_400_000,
+    contractEnd: 'Jan 2028',
+    contractedUptime: 99.7,
+    actualUptime: 99.8,
+    marketRate: 11_600_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'HCM implementation 78% adopted — Planning module licensed but unused',
+  },
+  {
+    name: 'ServiceNow',
+    category: 'IT Service Management',
+    annualSpend: 3_200_000,
+    contractEnd: 'Jul 2026',
+    contractedUptime: 99.9,
+    actualUptime: 99.9,
+    marketRate: 2_900_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'ITSM fully deployed — HRSD module add-on would reduce Workday integration cost',
+  },
+  {
+    name: 'Kronos / UKG Pro',
+    category: 'Workforce Management',
+    annualSpend: 4_400_000,
+    contractEnd: 'Jun 2027',
+    contractedUptime: 99.5,
+    actualUptime: 99.6,
+    marketRate: 3_800_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'Gap: UKG not connected to Epic scheduling — travel nurse cost impact $8M/yr',
+  },
+  // ── SI & Managed Services ─────────────────────────────────────────────────
+  {
+    name: 'Accenture',
+    category: 'Managed IT Services & App Support',
+    annualSpend: 28_000_000,
+    contractEnd: 'Mar 2027',
+    contractedUptime: 99.0,
+    actualUptime: 98.2,
+    marketRate: 22_000_000,
+    isRenewing: false,
+    hasOverlap: false,
+    note: 'Epic module support + Azure migration — T&M model with no outcome clause',
+  },
+  {
+    name: 'Deloitte',
+    category: 'Strategic Advisory & PMO',
+    annualSpend: 14_200_000,
+    contractEnd: 'Dec 2025',
+    contractedUptime: 99.0,
+    actualUptime: 98.7,
+    marketRate: 11_000_000,
+    isRenewing: true,
+    hasOverlap: true,
+    note: 'Overlap with Accenture on Epic programme — consolidation saves est. $4.2M',
+  },
+  {
+    name: 'Cognizant',
+    category: 'IT Staff Augmentation',
+    annualSpend: 31_000_000,
+    contractEnd: 'Rolling',
+    contractedUptime: 99.0,
+    actualUptime: 98.9,
+    marketRate: 24_500_000,
+    isRenewing: false,
+    hasOverlap: true,
+    note: '210 contractors across Epic, infrastructure, and analytics — 38% above market rate',
+  },
+  {
+    name: 'R1 RCM',
+    category: 'Clinical Staff Augmentation',
+    annualSpend: 22_000_000,
+    contractEnd: 'Sep 2026',
+    contractedUptime: 99.0,
+    actualUptime: 99.1,
+    marketRate: 19_000_000,
+    isRenewing: false,
+    hasOverlap: true,
+    note: 'Overlap with Ensemble on denial management — $6M in duplicated scope',
   },
 ]
 
@@ -848,6 +1015,13 @@ function OptimizeVendorsMode() {
               </div>
             </div>
 
+            {/* Intelligence note */}
+            {'note' in vendor && vendor.note && (
+              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.amber, marginBottom: 14, lineHeight: 1.6, padding: '8px 12px', background: 'rgba(245,158,11,0.06)', borderRadius: 6, borderLeft: `2px solid ${T.amber}` }}>
+                ⚑ {vendor.note}
+              </div>
+            )}
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
               {/* SLA Performance */}
               {hasBreach && (
@@ -867,7 +1041,7 @@ function OptimizeVendorsMode() {
               {/* Market rate */}
               {overpaying > 0 && (
                 <div>
-                  <div style={{ fontSize: 9, fontFamily: T.mono, color: T.secondary, marginBottom: 6 }}>MARKET RATE</div>
+                  <div style={{ fontSize: 9, fontFamily: T.mono, color: T.secondary, marginBottom: 6 }}>MARKET RATE DELTA</div>
                   <div style={{ fontSize: 11, fontFamily: T.mono, color: T.text, lineHeight: 1.8 }}>
                     Your rate: ${(vendor.annualSpend / 1e6).toFixed(1)}M/year<br />
                     Market median: ${(vendor.marketRate / 1e6).toFixed(1)}M/year<br />
@@ -879,28 +1053,31 @@ function OptimizeVendorsMode() {
               )}
             </div>
 
-            {(hasBreach || overpaying > 0) && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                {hasBreach && credit > 0 && (
-                  <button style={{
-                    fontSize: 11, fontFamily: T.mono, padding: '6px 14px',
-                    background: T.teal, color: T.bg,
-                    border: 'none', borderRadius: 6, cursor: 'pointer',
-                  }}>
-                    Generate credit claim →
-                  </button>
-                )}
-                {overpaying > 0 && (
-                  <button style={{
-                    fontSize: 11, fontFamily: T.mono, padding: '6px 14px',
-                    background: 'transparent', border: `1px solid ${T.teal}`,
-                    color: T.teal, borderRadius: 6, cursor: 'pointer',
-                  }}>
-                    Negotiation brief →
-                  </button>
-                )}
-              </div>
-            )}
+            <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 8, marginTop: 16 }}>
+              {hasBreach && credit > 0 && (
+                <button style={{ fontSize: 11, fontFamily: T.mono, padding: '6px 14px', background: T.teal, color: T.bg, border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                  Claim ${(credit / 1e6).toFixed(1)}M SLA credit →
+                </button>
+              )}
+              {overpaying > 0 && (
+                <button style={{ fontSize: 11, fontFamily: T.mono, padding: '6px 14px', background: 'transparent', border: `1px solid ${T.teal}`, color: T.teal, borderRadius: 6, cursor: 'pointer' }}>
+                  Negotiation brief →
+                </button>
+              )}
+              {vendor.hasOverlap && (
+                <button style={{ fontSize: 11, fontFamily: T.mono, padding: '6px 14px', background: 'transparent', border: `1px solid #6366F1`, color: '#6366F1', borderRadius: 6, cursor: 'pointer' }}>
+                  Consolidation analysis →
+                </button>
+              )}
+              {vendor.isRenewing && (
+                <button style={{ fontSize: 11, fontFamily: T.mono, padding: '6px 14px', background: 'rgba(45,212,200,0.08)', border: `1px solid ${T.teal}40`, color: T.teal, borderRadius: 6, cursor: 'pointer' }}>
+                  Renewal strategy →
+                </button>
+              )}
+              <button style={{ fontSize: 11, fontFamily: T.mono, padding: '6px 14px', background: 'transparent', border: `1px solid ${T.border}`, color: T.secondary, borderRadius: 6, cursor: 'pointer' }}>
+                Initiate RFP →
+              </button>
+            </div>
           </div>
         )
       })}

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
@@ -163,6 +163,15 @@ export default function AIStrategyPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
+  const savedScrollY = useRef(0)
+  const shouldRestoreScroll = useRef(false)
+
+  useEffect(() => {
+    if (!activeModule && shouldRestoreScroll.current) {
+      shouldRestoreScroll.current = false
+      requestAnimationFrame(() => window.scrollTo({ top: savedScrollY.current, behavior: 'instant' }))
+    }
+  }, [activeModule])
 
   async function handleSeedDemo() {
     setSeeding(true)
@@ -198,7 +207,7 @@ export default function AIStrategyPage() {
           display: 'flex', alignItems: 'center', gap: '12px',
         }}>
           <button
-            onClick={() => setActiveModule(null)}
+            onClick={() => { shouldRestoreScroll.current = true; setActiveModule(null) }}
             style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.05em', textTransform: 'uppercase' as const, padding: 0 }}
           >
             ← AI Strategy
@@ -363,7 +372,7 @@ export default function AIStrategyPage() {
                   </div>
                   {/* Module card */}
                   <div
-                    onClick={() => setActiveModule({ name: mod.name, num: mod.num, path: mod.path, color: phase.color })}
+                    onClick={() => { savedScrollY.current = window.scrollY; setActiveModule({ name: mod.name, num: mod.num, path: mod.path, color: phase.color }) }}
                     style={{ flex: 1, cursor: 'pointer' }}
                   >
                     <div style={{
