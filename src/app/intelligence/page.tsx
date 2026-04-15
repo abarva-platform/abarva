@@ -1,8 +1,8 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusTechnology } from '@/data/arcturus/technology'
+import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 // ── Design System ──────────────────────────────────────────────────────────────
 const BG = '#060A12'
@@ -343,8 +343,7 @@ interface System {
 }
 
 function IntelligenceContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'arcturus'
+  const { clientId } = useClientContext()
   const [selectedSystem, setSelectedSystem] = useState<System | null>(null)
   const [activeTab, setActiveTab] = useState<'portfolio' | 'spend' | 'contracts'>('portfolio')
   const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([])
@@ -398,6 +397,27 @@ function IntelligenceContent() {
   const aiReadyPct = Math.round(
     allSystems.reduce((sum, s) => sum + s.aiReadinessScore, 0) / allSystems.length
   )
+
+  const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
+
+  // Non-Arcturus client users: show coming-soon state (account isolation)
+  if (clientId !== 'arcturus') {
+    return (
+      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
+        <AbarvaNav activePage="intelligence" />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '60px 24px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' }}>Technology Intelligence · {currentClientName}</div>
+          <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0, textAlign: 'center' }}>Technology Landscape</h2>
+          <p style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, maxWidth: '480px', textAlign: 'center', lineHeight: 1.6 }}>
+            Your technology intelligence data is being prepared. This module will surface your system portfolio, IT spend analysis, and AI readiness diagnostics.
+          </p>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: `${TEAL}15`, border: `1px solid ${TEAL}35`, borderRadius: '6px', padding: '8px 20px' }}>
+            Coming soon — engagement scoping in progress
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>

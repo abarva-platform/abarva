@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 // ── Design System ──────────────────────────────────────────────────────────────
 const BG = '#060A12'
@@ -376,8 +376,7 @@ function rootCauseColor(r: RootCause) {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 function AIDeliveryContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'arcturus'
+  const { clientId } = useClientContext()
   const [selectedInit, setSelectedInit] = useState<Initiative | null>(null)
   const [selectedBlocker, setSelectedBlocker] = useState<typeof BLOCKERS[0] | null>(null)
   const [activeTab, setActiveTab] = useState<'initiatives' | 'blockers' | 'roadmap'>('initiatives')
@@ -444,6 +443,27 @@ function AIDeliveryContent() {
   }
 
   const centerIsEmpty = !selectedInit && !selectedBlocker
+
+  const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
+
+  // Non-Arcturus client users: show coming-soon state (account isolation)
+  if (clientId !== 'arcturus') {
+    return (
+      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
+        <AbarvaNav activePage="ai-pdlc" />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px', padding: '60px 24px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' }}>AI Programme Intelligence · {currentClientName}</div>
+          <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0, textAlign: 'center' }}>AI Initiative Portfolio</h2>
+          <p style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, maxWidth: '480px', textAlign: 'center', lineHeight: 1.6 }}>
+            Your AI programme data is being prepared. This module will track your AI initiative portfolio, investment ROI, blockers, and three-wave delivery roadmap.
+          </p>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: `${TEAL}15`, border: `1px solid ${TEAL}35`, borderRadius: '6px', padding: '8px 20px' }}>
+            Coming soon — engagement scoping in progress
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
