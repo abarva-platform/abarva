@@ -1,7 +1,7 @@
 'use client'
 import { Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 const DECKS: Record<string, { client: string, title: string, color: string, slides: Array<{ number: number, title: string, subtitle: string, content: string[] }> }> = {
   meridian: {
@@ -44,8 +44,7 @@ const DECKS: Record<string, { client: string, title: string, color: string, slid
 }
 
 function BoardDeckContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const { clientId } = useClientContext()
   const deck = DECKS[clientId] || DECKS.meridian
 
   return (

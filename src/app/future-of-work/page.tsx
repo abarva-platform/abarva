@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 import EngagementProgress from '@/components/EngagementProgress'
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
@@ -25,9 +25,9 @@ const STEPS = [
 
 // ─── Client-specific config ────────────────────────────────────────────────────
 const CLIENT_CONFIG: Record<string, { name: string; industry: string; completeness: number }> = {
-  meridian: { name: 'Meridian Health System', industry: 'Healthcare', completeness: 84 },
-  firstcapital: { name: 'First Capital Financial', industry: 'Financial Services', completeness: 78 },
-  apexretail: { name: 'Apex Retail Group', industry: 'Retail', completeness: 71 },
+  meridian:   { name: 'Meridian Health System',   industry: 'Healthcare',         completeness: 84 },
+  arcturus:   { name: 'Arcturus Financial Group',  industry: 'Financial Services', completeness: 67 },
+  apexretail: { name: 'Apex Retail Group',         industry: 'Retail',             completeness: 71 },
 }
 
 // ─── Use case data ────────────────────────────────────────────────────────────
@@ -162,8 +162,7 @@ function AgnosticArchitecture() {
 
 // ─── Main content ─────────────────────────────────────────────────────────────
 function FutureOfWorkContent() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const { clientId, allowedClients } = useClientContext()
 
   const [step, setStep] = useState(0)
   const [activeClient, setActiveClient] = useState(clientId)
@@ -241,7 +240,7 @@ function FutureOfWorkContent() {
 
             {/* Data completeness + client cards */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
-              {Object.entries(CLIENT_CONFIG).map(([id, c]) => (
+              {Object.entries(CLIENT_CONFIG).filter(([id]) => allowedClients.find(a => a.id === id)).map(([id, c]) => (
                 <button key={id} onClick={() => setActiveClient(id)}
                   style={{ ...S.card, cursor: 'pointer', textAlign: 'left' as const, border: `2px solid ${activeClient === id ? GREEN : '#E2E8F0'}`, background: activeClient === id ? '#F0FDF4' : '#FFFFFF', transition: 'all 0.15s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>

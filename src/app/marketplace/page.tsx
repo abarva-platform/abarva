@@ -1,7 +1,7 @@
 'use client'
 import { useState, Suspense, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -13,8 +13,8 @@ type EntryPath = 'find' | 'compare' | 'rfp' | null
 type Category = 'rcm' | 'clinical' | 'finance' | 'it' | 'operations' | null
 
 const CLIENT_NAMES: Record<string, string> = {
-  meridian: 'Meridian Health System',
-  firstcapital: 'First Capital Financial',
+  meridian:   'Meridian Health System',
+  arcturus:   'Arcturus Financial Group',
   apexretail: 'Apex Retail Group',
 }
 
@@ -657,9 +657,8 @@ function EntryScreen({ onSelect }: { onSelect: (path: EntryPath) => void }) {
 // ─── Main page ────────────────────────────────────────────────────────────
 
 function MarketplaceInner() {
-  const params = useSearchParams()
-  const clientParam = params.get('client') ?? 'meridian'
-  const [activeClient, setActiveClient] = useState(clientParam)
+  const { clientId } = useClientContext()
+  const [activeClient, setActiveClient] = useState(clientId)
   const [entryPath, setEntryPath] = useState<EntryPath>(null)
 
   return (
