@@ -1,12 +1,10 @@
 'use client'
 import { useState, Suspense, useEffect } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { useSearchParams } from 'next/navigation'
 import { meridianAI } from '@/data/meridian/ai'
-import { firstCapitalAI } from '@/data/firstcapital/ai'
 import { apexRetailAI } from '@/data/apexretail/ai'
 import { arcturusAI } from '@/data/arcturus/ai'
-import { nexoraAI } from '@/data/nexora/ai'
+import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 const T = {
   bg: '#060A12', surface: '#0D1520', border: '#1C2D45',
@@ -60,24 +58,15 @@ function Counter({ target, prefix = '$', suffix = '' }: { target: number; prefix
 }
 
 function JustifyContent() {
-  const searchParams = useSearchParams()
-  const clientParam = searchParams.get('client') || 'meridian'
+  const { clientId: activeClient } = useClientContext()
   const [step, setStep] = useState(1)
-  const [activeClient] = useState(clientParam)
   const [selectedOpp, setSelectedOpp] = useState<any>(null)
   const [scenario, setScenario] = useState<'conservative' | 'base' | 'optimistic'>('base')
   const [role, setRole] = useState('Maestro')
 
-  const clientName = activeClient === 'firstcapital' ? 'First Capital Financial'
-    : activeClient === 'apexretail' ? 'Apex Retail Group'
-    : activeClient === 'arcturus' ? 'Arcturus Financial Group'
-    : activeClient === 'nexora' ? 'Nexora Retail & Consumer'
-    : 'Meridian Health System'
-  const clientIndustry = activeClient === 'firstcapital' ? 'Financial Services'
-    : activeClient === 'apexretail' ? 'Retail'
-    : activeClient === 'arcturus' ? 'Financial Services'
-    : activeClient === 'nexora' ? 'Retail'
-    : 'Healthcare'
+  const clientMeta = ALL_CLIENTS.find(c => c.id === activeClient)
+  const clientName = clientMeta?.name || 'Meridian Health System'
+  const clientIndustry = clientMeta?.vertical || 'Healthcare'
 
   const ROLES = clientIndustry === 'Financial Services'
     ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
@@ -85,10 +74,8 @@ function JustifyContent() {
     ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
     : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
 
-  const ai = activeClient === 'firstcapital' ? firstCapitalAI
-    : activeClient === 'apexretail' ? apexRetailAI
+  const ai = activeClient === 'apexretail' ? apexRetailAI
     : activeClient === 'arcturus' ? arcturusAI
-    : activeClient === 'nexora' ? nexoraAI
     : meridianAI
 
   const allOpps = [

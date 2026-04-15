@@ -1,10 +1,7 @@
 'use client'
 import { Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
-import { meridianHealth } from '@/data/meridian/index'
-import { firstCapital } from '@/data/firstcapital/index'
-import { apexRetail } from '@/data/apexretail/index'
+import { useClientContext } from '@/lib/use-client-context'
 
 const C = {
   bg: '#0D1117',
@@ -21,40 +18,40 @@ const C = {
   green: '#10B981',
 }
 
-type ClientId = 'meridian' | 'firstcapital' | 'apexretail'
+type ClientId = 'meridian' | 'arcturus' | 'apexretail'
 
-function getClientData(clientId: ClientId) {
-  if (clientId === 'firstcapital') return {
-    name: 'First Capital Financial',
+function getClientData(clientId: string) {
+  if (clientId === 'arcturus') return {
+    name: 'Arcturus Financial Group',
     industry: 'Financial Services',
     issues: [
       {
-        title: '$340M deposit at risk — FedNow ultimatum',
-        metric: '3 commercial clients: 90-day deadline issued',
-        implication: 'FedNow live by April 2026 or lose deposits — FIS HORIZON blocks implementation',
+        title: '$94M AI invested — $0 documented ROI',
+        metric: '28 initiatives: 6 live-underperforming, 8 stalled, 4 cancelled',
+        implication: '4 root causes block all ROI: CDO vacant, CRO freeze, FSC 44%, Bloomberg lag',
       },
       {
-        title: 'Cost-to-income 68% vs 55% target',
-        metric: '$84M in excess structural cost annually',
-        implication: 'Peer median 58% — $64M/yr competitive disadvantage on cost structure',
+        title: '14 data silos — no golden record',
+        metric: 'Bloomberg AIM, Aladdin, FSC, Geneva, Charles River all disconnected',
+        implication: 'Real-time AI reporting impossible — $11M invested, cannot deliver',
       },
       {
-        title: '3 open OCC MRAs — examiner returns Q2 2026',
-        metric: 'AML, technology risk, data governance all open',
-        implication: 'Formal enforcement action risk if not closed — $8.5M penalty exposure',
+        title: 'CRO model freeze — 6+ months',
+        metric: '$101M in AI value committed blocked',
+        implication: 'Credit risk AI cannot go live — model validation framework missing',
       },
     ],
     portfolio: {
-      initiatives: 3,
-      governanceScore: 42,
-      valueIdentified: '$198M',
+      initiatives: 28,
+      governanceScore: 24,
+      valueIdentified: '$292M',
     },
     nextMilestone: {
-      action: 'FedNow vendor decision required',
-      deadline: '2026-04-01',
-      urgencyDays: 80,
+      action: 'CDO appointment — board Q2 review',
+      deadline: '2026-06-15',
+      urgencyDays: 61,
     },
-    deepDiveUrl: '/diagnose?client=firstcapital',
+    deepDiveUrl: '/diagnose?client=arcturus',
   }
 
   if (clientId === 'apexretail') return {
@@ -132,8 +129,7 @@ function urgencyColor(days: number) {
 }
 
 function BriefContent() {
-  const params = useSearchParams()
-  const clientId = (params.get('client') || 'meridian') as ClientId
+  const { clientId } = useClientContext()
   const data = getClientData(clientId)
   const now = new Date()
   const timestamp = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
