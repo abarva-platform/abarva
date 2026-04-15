@@ -7,6 +7,7 @@ const CLIENTS = [
   { id: 'meridian', name: 'Meridian Health', cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
   { id: 'firstcapital', name: 'First Capital', cloud: 'AWS', accent: '#F59E0B', cloudBg: '#E8650A' },
   { id: 'apexretail', name: 'Apex Retail', cloud: 'GCP', accent: '#34A853', cloudBg: '#1D9E75' },
+  { id: 'arcturus', name: 'Arcturus Financial', cloud: 'Azure', accent: '#2DD4C8', cloudBg: '#0D7377' },
 ]
 
 const CSS = `
@@ -596,10 +597,297 @@ const APEX_RETAIL_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UT
 <div class="foot">AbarVa Intelligence Platform · Apex Retail Group · GCP Architecture Pattern · April 2026 · Confidential · Built from actual technology inventory data</div>
 </div></body></html>`
 
+// ─────────────────────── ARCTURUS / AZURE ────────────────────────
+const ARCTURUS_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Arcturus Financial — Azure AI Architecture</title><style>:root{--accent:#2DD4C8}${CSS}</style></head><body>
+<div class="cover" style="border-bottom-color:#2DD4C8">
+  <div>
+    <div class="ey" style="color:#2DD4C8">AbarVa · Architecture Intelligence · Azure</div>
+    <div class="ct">Arcturus Financial Group<br>Target AI Architecture — Current State &amp; Path Forward</div>
+    <div class="csub">Built from actual technology inventory · <span>$94M AI spend · $0 documented ROI</span> · April 2026</div>
+  </div>
+  <div class="cmeta">
+    <strong>Client</strong> · Arcturus Financial Group<br>
+    <strong>Industry</strong> · Asset Management · Global<br>
+    <strong>AUM</strong> · $840B · <strong>Revenue</strong> · $16.2B · 13,000 employees<br>
+    <strong>Cloud</strong> · Microsoft Azure West Europe (primary)<br>
+    <strong>Status</strong> · CDO vacant 11mo · CRO AI freeze · 6 stalled initiatives
+  </div>
+</div>
+<div class="wrap">
+
+<div class="fd" style="margin-bottom:10px;padding:10px 14px">
+  <div class="fdl" style="font-size:9px;letter-spacing:1.5px">CURRENT STATE — WHAT IS BROKEN</div>
+  <div class="fdb" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px">
+    <div><span style="color:#EF4444;font-weight:700">14 data silos</span> — no golden record, no unified client or portfolio data across Bloomberg AIM, Aladdin, FSC, Geneva, Charles River, Workday</div>
+    <div><span style="color:#EF4444;font-weight:700">$94M committed · $0 ROI</span> — 6 AI initiatives funded and stalled: portfolio construction, churn prediction, ESG scoring, reporting, advisor assistant, regulatory monitor</div>
+    <div><span style="color:#EF4444;font-weight:700">Governance vacuum</span> — CDO vacant 11 months, CRO AI freeze on new deployments, MAS FEAT overdue, Bloomberg auto-renewing December 2026 with no API terms negotiated</div>
+  </div>
+</div>
+
+<div class="boundary" style="border-color:#2DD4C8">
+  <div class="blabel" style="color:#2DD4C8">Arcturus Azure West Europe — MAS FEAT · FCA · SEC · Bloomberg API boundary · CRO AI freeze active</div>
+
+  <div class="lw" style="border-color:#30363D;margin-bottom:3px">
+    <div class="lh" style="background:#1C2128;color:#9CA3AF">Layer 5 — Entry points &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px;color:#6B7280">Portfolio managers · Advisors · Risk team · Compliance · Clients · Fund accounting</span></div>
+    <table class="colt"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><tr>
+      <td style="background:#091918">
+        <div class="cn" style="color:#2DD4C8">Bloomberg AIM (OMS)</div>
+        <div class="cd">28-year-old OMS · order management · portfolio construction · on-premise · primary PM workflow · 3 failed modernizations ($22.2M sunk)</div>
+        <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">28yr old · $42M/yr · on-prem</span></div>
+        <div class="fd"><div class="fdl">500 API calls/hr — need 50,000</div><div class="fdb">100x below ML requirement. Real-time portfolio AI impossible. December 2026 contract auto-renewal = negotiation window. Do NOT start Phase 4 migration until CDO hired.</div></div>
+      </td>
+      <td style="background:#091918">
+        <div class="cn" style="color:#2DD4C8">BlackRock Aladdin (Risk)</div>
+        <div class="cd">Risk analytics · stress testing · portfolio risk · vendor-hosted (BlackRock cloud) · $38M/yr · AI features licensed but NOT activated</div>
+        <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">$38M/yr · AI idle · monthly stress tests</span></div>
+        <div class="warn"><div class="wl">SEC requires daily stress testing</div><div class="wb">Monthly cadence vs SEC daily requirement. AI features licensed and not activated. Activate Aladdin AI before buying anything new for risk.</div></div>
+      </td>
+      <td style="background:#091918">
+        <div class="cn" style="color:#EF4444">Salesforce FSC (CRM/Portal)</div>
+        <div class="cd">Client relationship management · advisor portal · client-facing portal · $14M/yr · Einstein licensed but NOT activated · 72hr lag to Bloomberg positions</div>
+        <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">44% advisor adoption · flat 3 quarters</span></div>
+        <div class="fd"><div class="fdl">SSO fix = 44% → 70%+ adoption</div><div class="fdb">78% of non-adopters cite Bloomberg position lag as reason. SSO integration is single fix. $38M FSC investment at risk without it. Fix before any Einstein activation.</div></div>
+      </td>
+      <td style="background:#091918">
+        <div class="cn" style="color:#9CA3AF">Charles River IMS (Compliance)</div>
+        <div class="cd">Investment compliance monitoring · trade surveillance · regulatory reporting · $8M/yr · on-premise · no AI compliance capability</div>
+        <div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">No AI monitoring · on-prem</span></div>
+      </td>
+      <td style="background:#091918">
+        <div class="cn" style="color:#9CA3AF">Client Portal / Reporting</div>
+        <div class="cd">Client-facing reporting · NAV reports · performance · currently 3-day lag from Advent Geneva batch processing · AI reporting initiative stalled ($11M invested)</div>
+        <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">3-day lag · AI reporting blocked</span></div>
+      </td>
+    </tr></table>
+    <div class="lb">Order flow · Risk analytics · Client CRM · Compliance monitoring · Client reporting · Fund accounting · Workforce management</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-top:1px solid rgba(255,255,255,0.04)">
+      <div style="padding:2px 0;text-align:center;border-right:1px solid rgba(255,255,255,0.06);font-family:monospace;font-size:8px;font-weight:700;color:#6EE7B7;background:#1C2128">&#11015; structured workflows → Workday / Salesforce FSC / Charles River agents</div>
+      <div style="padding:2px 0;text-align:center;font-family:monospace;font-size:8px;font-weight:700;color:#2DD4C8;background:#1C2128">&#11015; complex reasoning → Claude on Azure AI Foundry · BLOCKED until CDO hired</div>
+    </div>
+  </div>
+
+  <div class="sg" style="grid-template-columns:1fr 1fr;margin-bottom:3px">
+    <div class="lw" style="border-color:#2DD4C8">
+      <div class="lh" style="background:#051614;color:#2DD4C8">Layer 4A — Claude Sonnet · Azure AI Foundry · Meta-orchestrator &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px;color:#2DD4C8;opacity:0.7">TARGET STATE — requires golden record + CDO governance</span></div>
+      <div class="lb" style="color:#2DD4C8;opacity:0.7">All within Azure West Europe · MAS FEAT compliant once CDO framework active · routes to specialist agents</div>
+      <table class="colt"><col style="width:50%"><col style="width:50%"><tr>
+        <td style="background:#041110">
+          <div class="cn" style="color:#2DD4C8">Asset management AI agents</div>
+          <div class="cd">Portfolio construction agent ($18.4M invested · stalled) · Client churn prediction agent (live · 61% accuracy) · ESG scoring agent ($8.6M · CRO blocked) · Regulatory change monitor ($7.8M · legal freeze) · Advisor productivity agent ($14M · FSC 44% adoption)</div>
+          <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">$94M invested · all stalled</span></div>
+          <div class="fd"><div class="fdl">BLOCKED — 3 hard dependencies</div><div class="fdb">1. No golden record (14 silos) — portfolio AI cannot run. 2. Bloomberg API 500/hr limit — real-time ML impossible. 3. CRO AI freeze — no new deployments. All three require CDO to resolve.</div></div>
+        </td>
+        <td style="background:#041110">
+          <div class="cn" style="color:#2DD4C8">Routing and governance logic</div>
+          <div class="cd">Portfolio signals → Bloomberg AIM API middleware (after Phase 4) · Risk data → Aladdin API (after AI activation) · Client signals → FSC Einstein (after SSO fix) · Compliance checks → Charles River · Simple workflows → Workday / Salesforce agents</div>
+          <div class="warn"><div class="wl">CRO AI governance rule</div><div class="wb">No new AI deployments until governance framework exists. CDO hire unblocks: AI governance framework, MAS FEAT compliance, golden record authority, Bloomberg re-engagement. CDO hire unblocks 18 of 28 stalled AI initiatives.</div></div>
+        </td>
+      </tr></table>
+    </div>
+    <div class="lw" style="border-color:#30363D">
+      <div class="lh" style="background:#1C2128;color:#9CA3AF">Layer 4B — Specialized platform agents · <span style="font-weight:400;font-size:8.5px">Most AI features licensed, none activated</span></div>
+      <div class="lb" style="color:#9CA3AF;opacity:0.7">Each platform owns its domain · Claude orchestrates cross-platform workflows · activate owned tools before buying new</div>
+      <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
+        <td style="background:#141920">
+          <div class="cn" style="color:#EF4444">Salesforce Einstein</div>
+          <div class="cd">CRM AI · churn signals · advisor productivity · client 360 · licensed and paid · NOT ACTIVATED</div>
+          <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">Licensed · idle · SSO fix first</span></div>
+        </td>
+        <td style="background:#141920">
+          <div class="cn" style="color:#EF4444">Aladdin AI</div>
+          <div class="cd">Risk AI · stress test automation · portfolio risk signals · BlackRock cloud · licensed but NOT activated</div>
+          <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">Licensed · idle · activate now</span></div>
+        </td>
+        <td style="background:#141920">
+          <div class="cn" style="color:#6EE7B7">Workday AI</div>
+          <div class="cd">HR: 13,000 employees · talent · compensation · workforce planning · AI features not activated</div>
+          <div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">Cloud · AI not activated</span></div>
+        </td>
+        <td style="background:#141920">
+          <div class="cn" style="color:#9CA3AF">Bloomberg API middleware</div>
+          <div class="cd">Phase 4 API layer · $22M approved · raises limit from 500 to 50,000 calls/hr · do not start until CDO hired</div>
+          <div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">$22M approved · not started</span></div>
+        </td>
+      </tr></table>
+      <div class="fd"><div class="fdl">Activate before buying more</div><div class="fdb">Einstein licensed · Aladdin AI licensed · Workday AI not activated. Combined license cost paid. $0 ROI. Activate owned features before committing new AI budget. Every platform has idle AI features.</div></div>
+    </div>
+  </div>
+
+  <div class="lw" style="border-color:#EF4444;margin-bottom:3px">
+    <div class="lh" style="background:#1a0a0a;color:#EF4444">BLOCKING LAYER — What is missing (must be built before AI initiatives can run)</div>
+    <table class="colt"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><col style="width:20%"><tr>
+      <td style="background:#130606">
+        <div style="font-family:monospace;font-size:7.5px;color:#EF4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Blocker 1 — Critical</div>
+        <div class="cn" style="color:#EF4444">No Golden Record</div>
+        <div class="cd">14 data silos · no unified client/portfolio view · Bloomberg AIM, Aladdin, FSC, Geneva, Charles River all disconnected · blocks all 6 AI initiatives</div>
+        <div class="fd"><div class="fdl">BLOCKS ALL AI INITIATIVES</div><div class="fdb">Portfolio construction AI needs unified positions. Churn prediction missing 56% of signals (FSC only 44% adopted). No golden record = no AI accuracy. CDO must own this.</div></div>
+      </td>
+      <td style="background:#130606">
+        <div style="font-family:monospace;font-size:7.5px;color:#EF4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Blocker 2 — Critical</div>
+        <div class="cn" style="color:#EF4444">No ML Platform</div>
+        <div class="cd">No Azure ML · no Databricks · no MLOps pipeline · models cannot be deployed at scale · $18.4M portfolio AI investment has nowhere to run</div>
+        <div class="fd"><div class="fdl">NO AZURE ML · NO DATABRICKS</div><div class="fdb">Cannot deploy, version, monitor, or retrain models without ML platform. All 6 AI initiatives need this. Must be provisioned before any AI development starts.</div></div>
+      </td>
+      <td style="background:#130606">
+        <div style="font-family:monospace;font-size:7.5px;color:#F59E0B;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Blocker 3 — API</div>
+        <div class="cn" style="color:#F59E0B">Bloomberg AIM API Limit</div>
+        <div class="cd">500 calls/hr hard limit vs 50,000 needed for ML · 180ms Bloomberg → Azure latency vs &lt;50ms required for inference · makes real-time portfolio AI impossible today</div>
+        <div class="warn"><div class="wl">December 2026 = negotiation window</div><div class="wb">Bloomberg auto-renews December 2026. Current contract has no API access terms. Must negotiate API terms at renewal. Phase 4 middleware ($22M approved) is the bridge — but do not start without CDO.</div></div>
+      </td>
+      <td style="background:#130606">
+        <div style="font-family:monospace;font-size:7.5px;color:#EF4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Blocker 4 — Latency</div>
+        <div class="cn" style="color:#EF4444">3-Day Reporting Lag</div>
+        <div class="cd">Advent Geneva batch processing causes 3-day delay · 14 years old · $12M/yr · primary cause of reporting lag · AI-powered client reporting ($11M invested) cannot deliver real-time until this is fixed</div>
+        <div class="fd"><div class="fdl">AI REPORTING BLOCKED</div><div class="fdb">Real-time AI client reporting is impossible with 3-day batch lag. Advent Geneva modernization or replacement is prerequisite. Sequence: CDO → golden record → Geneva → reporting AI.</div></div>
+      </td>
+      <td style="background:#130606">
+        <div style="font-family:monospace;font-size:7.5px;color:#EF4444;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Blocker 5 — Governance</div>
+        <div class="cn" style="color:#EF4444">CDO Vacant · CRO Freeze</div>
+        <div class="cd">CDO vacant 11 months · no governance decisions being made · CRO AI freeze: no new deployments until governance framework exists · MAS FEAT overdue · 18 of 28 AI initiatives need CDO to unblock</div>
+        <div class="fd"><div class="fdl">CDO HIRE = SINGLE BIGGEST UNBLOCK</div><div class="fdb">CDO unblocks: golden record authority, AI governance framework (lifts CRO freeze), MAS FEAT compliance path, Bloomberg re-engagement at December 2026 renewal, 18 of 28 AI initiatives. Hire before anything else.</div></div>
+      </td>
+    </tr></table>
+    <div class="arr" style="background:#1a0a0a"><span style="color:#EF4444;font-weight:900">&#11015;</span> <span style="font-size:7.5px;color:#EF4444">to Layer 2 — integration and existing platform layer</span></div>
+  </div>
+
+  <div class="lw" style="border-color:#30363D;margin-bottom:3px">
+    <div class="lh" style="background:#1C2128;color:#9CA3AF">Layer 2 — Integration and Azure platform</div>
+    <table class="colt"><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"><tr>
+      <td style="background:#141920">
+        <div class="cn" style="color:#2DD4C8">Azure West Europe</div>
+        <div class="cd">Live · Salesforce, Workday, new dev hosted here · AI-ready · Azure AI Foundry available · Azure ML not provisioned yet</div>
+        <div><span class="badge" style="background:rgba(45,212,200,0.1);color:#2DD4C8;border-color:rgba(45,212,200,0.25)">Live · foundation ready</span></div>
+      </td>
+      <td style="background:#141920">
+        <div class="cn" style="color:#EF4444">Bloomberg AIM → Azure</div>
+        <div class="cd">On-premise Bloomberg to Azure · 180ms latency · need &lt;50ms for real-time AI inference · current API: 500 calls/hr · Phase 4 middleware approved ($22M) · do not start without CDO</div>
+        <div class="fd"><div class="fdl">180ms latency · 500 API calls/hr</div><div class="fdb">Both metrics make real-time ML impossible. Phase 4 API middleware is the fix. December 2026 renewal window must be used to negotiate API access terms into Bloomberg contract.</div></div>
+      </td>
+      <td style="background:#141920">
+        <div class="cn" style="color:#9CA3AF">Azure AI Search + RAG</div>
+        <div class="cd">To be built · regulatory knowledge base · MAS FEAT documentation · investment policy library · compliance runbooks · needed for regulatory change monitor</div>
+        <div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">To build — Wave 2</span></div>
+      </td>
+      <td style="background:#141920">
+        <div class="cn" style="color:#9CA3AF">Azure Key Vault + Identity</div>
+        <div class="cd">Secrets management · model credentials · Azure Active Directory · MFA enforced · financial services security baseline</div>
+        <div><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">Deploy Week 1 with ML platform</span></div>
+      </td>
+    </tr></table>
+    <div class="arr" style="background:#1C2128"><span style="color:#9CA3AF;font-weight:900">&#11015;</span> <span style="font-size:7.5px;color:#9CA3AF">to Layer 1 — systems of record</span></div>
+  </div>
+
+  <div class="lw" style="border-color:#30363D">
+    <div class="lh" style="background:#1C2128;color:#9CA3AF">Layer 1 — Systems of record &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">API-connected only · no migrations · Bloomberg AIM Phase 4 = middleware not core replacement</span></div>
+    <table class="colt"><col style="width:16%"><col style="width:16%"><col style="width:16%"><col style="width:18%"><col style="width:16%"><col style="width:18%"><tr>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#EF4444;text-align:center">Bloomberg AIM</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">28yr · OMS · on-prem · $42M/yr · 3 failed migrations · API: 500/hr</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">Phase 4 middleware · not migration</span></div>
+      </td>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#F59E0B;text-align:center">BlackRock Aladdin</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">Risk · $38M/yr · vendor-hosted · monthly stress tests · AI licensed, idle</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">Activate AI first</span></div>
+      </td>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#EF4444;text-align:center">Salesforce FSC</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">CRM · $14M/yr · 44% adoption · Einstein idle · 72hr position lag</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">SSO fix → adoption → Einstein</span></div>
+      </td>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#9CA3AF;text-align:center">Charles River IMS</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">Compliance · $8M/yr · on-prem · no AI monitoring capability</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(156,163,175,0.1);color:#9CA3AF;border-color:rgba(156,163,175,0.25)">AI compliance — Phase 3</span></div>
+      </td>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#EF4444;text-align:center">Advent Geneva</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">Fund accounting · $12M/yr · 14yr old · on-prem · causes 3-day reporting lag</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">3-day lag · modernize</span></div>
+      </td>
+      <td style="background:#161B22;text-align:center;padding:8px">
+        <div class="cn" style="color:#6EE7B7;text-align:center">Workday HCM</div>
+        <div style="font-size:8.5px;color:#6B7280;text-align:center">13,000 employees · $4.2M/yr · cloud · well-implemented · AI not activated</div>
+        <div style="margin-top:4px"><span class="badge" style="background:rgba(39,174,96,0.1);color:#27AE60;border-color:rgba(39,174,96,0.25)">Best-run system · activate AI</span></div>
+      </td>
+    </tr></table>
+  </div>
+</div>
+
+<div class="lw" style="border-color:#30363D;margin-top:8px">
+  <div class="lh" style="background:#1C2128;color:#9CA3AF">AI initiatives &amp; investment status &nbsp;·&nbsp; <span style="font-weight:400;font-size:8.5px">$94M total committed · $0 documented ROI · all stalled on same blockers</span></div>
+  <table class="colt"><col style="width:17%"><col style="width:17%"><col style="width:17%"><col style="width:17%"><col style="width:16%"><col style="width:16%"><tr>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#EF4444">Portfolio Construction AI</div>
+      <div class="cd">$18.4M invested · real-time AI-driven portfolio optimization · needs golden record + Bloomberg API &gt;500/hr</div>
+      <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">Stalled — API + golden record</span></div>
+    </td>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#F59E0B">Client Churn Prediction</div>
+      <div class="cd">$12.2M invested · LIVE but 61% accuracy · FSC 44% adoption = 56% of client signals missing · needs SSO fix</div>
+      <div><span class="badge" style="background:rgba(245,158,11,0.1);color:#F59E0B;border-color:rgba(245,158,11,0.25)">Live · 61% accuracy · SSO fix needed</span></div>
+    </td>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#EF4444">Automated ESG Scoring</div>
+      <div class="cd">$8.6M invested · automated ESG rating and monitoring · CRO blocked · no CDO governance framework · stalled</div>
+      <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">CRO blocked · needs CDO</span></div>
+    </td>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#EF4444">AI Client Reporting</div>
+      <div class="cd">$11M invested · real-time AI-generated client reports · impossible with Advent Geneva 3-day lag · no data platform</div>
+      <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">3-day lag blocks real-time</span></div>
+    </td>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#EF4444">Advisor Productivity</div>
+      <div class="cd">$14M invested · AI assistant for advisors · FSC 44% adoption too low · Einstein idle · SSO fix unblocks both</div>
+      <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">44% FSC = AI assistant useless</span></div>
+    </td>
+    <td style="background:#161B22">
+      <div class="cn" style="color:#EF4444">Regulatory Change Monitor</div>
+      <div class="cd">$7.8M invested · AI monitoring of MAS, FCA, SEC rule changes · legal freeze · MAS FEAT itself overdue · CDO required</div>
+      <div><span class="badge" style="background:rgba(239,68,68,0.1);color:#EF4444;border-color:rgba(239,68,68,0.25)">Legal freeze · MAS FEAT overdue</span></div>
+    </td>
+  </tr></table>
+</div>
+
+<div class="decs">
+  <div class="dc">
+    <div class="dl">Decision 1 — Bloomberg AIM</div>
+    <div class="dt">Phase 4 API middleware · not core migration</div>
+    <div class="db">$22M approved. API middleware raises limit from 500 to 50,000 calls/hr. 3 prior migrations failed ($22.2M lost). Do NOT start until CDO hired. December 2026 auto-renewal = negotiation window — get API access terms written into new contract before signing.</div>
+  </div>
+  <div class="dc">
+    <div class="dl">Decision 2 — CDO Hire</div>
+    <div class="dt">Single biggest unblock · hire before anything else</div>
+    <div class="db">CDO unblocks: golden record authority, AI governance framework (lifts CRO freeze), MAS FEAT compliance path, Bloomberg re-engagement at December 2026 renewal, 18 of 28 stalled AI initiatives. Without CDO, every AI dollar spent continues to generate $0 ROI.</div>
+  </div>
+  <div class="dc">
+    <div class="dl">Decision 3 — Salesforce FSC SSO</div>
+    <div class="dt">Single fix · 44% → 70%+ adoption</div>
+    <div class="db">78% of FSC non-adopters cite Bloomberg position lag as reason. SSO integration resolves lag perception and removes login friction. $38M FSC investment at risk without it. Fixes churn prediction accuracy (+15 points). Unblocks Einstein activation. Highest ROI fix available right now.</div>
+  </div>
+</div>
+
+<div class="rvt">
+  <div class="rbox" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)">
+    <div class="rt" style="color:#EF4444">Current state — without this architecture</div>
+    <div class="rb" style="color:#9CA3AF">14 data silos · 3-day reporting lag · 44% FSC adoption · $94M AI spend $0 ROI · MAS FEAT overdue · CRO AI freeze · Bloomberg AIM auto-renewing December 2026 with no API terms · CDO vacant 11 months · CIR 71% and worsening</div>
+  </div>
+  <div class="rarr">→</div>
+  <div class="rbox" style="background:rgba(45,212,200,0.06);border:1px solid rgba(45,212,200,0.2)">
+    <div class="rt" style="color:#2DD4C8">Target state — with this architecture</div>
+    <div class="rb" style="color:#9CA3AF">Golden record live · real-time AI on portfolio data · FSC adoption 80%+ · 18 AI initiatives unlocked · MAS FEAT compliant · AI governance framework active · Bloomberg negotiated at December 2026 window · churn prediction 80%+ accuracy · ESG scoring running</div>
+  </div>
+</div>
+
+<div class="foot">AbarVa Intelligence Platform · Arcturus Financial Group · Azure Architecture Intelligence · April 2026 · Confidential · Built from actual technology inventory and AI investment data</div>
+</div></body></html>`
+
 const HTML_MAP: Record<string, string> = {
   meridian: MERIDIAN_HTML,
   firstcapital: FIRST_CAPITAL_HTML,
   apexretail: APEX_RETAIL_HTML,
+  arcturus: ARCTURUS_HTML,
 }
 
 function ArchContent() {
@@ -637,7 +925,7 @@ function ArchContent() {
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
           <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', color: '#6B7280' }}>
-            5-layer AI orchestration pattern · {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'firstcapital' ? 'Claude on AWS Bedrock' : 'Claude on Vertex AI'}
+            5-layer AI orchestration pattern · {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'firstcapital' ? 'Claude on AWS Bedrock' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · CDO hire required'}
           </span>
         </div>
       </div>

@@ -2,32 +2,356 @@
 import { useState, useRef, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
-import { meridianTechInventory } from '@/data/meridian/technology_inventory'
-import { apexRetailTechInventory } from '@/data/apexretail/technology_inventory'
-import { firstCapitalTechInventory } from '@/data/firstcapital/technology_inventory'
-import { calculateTechScore, getScoreLabel, getCriticalSystems, getSystemsByDomain, getSystemsByUnit, getSystemsByCategory, getTotalAnnualCost } from '@/data/knowledge/scoring'
+import { arcturusTechnology } from '@/data/arcturus/technology'
 
-type View = 'scorecard' | 'functional' | 'technical' | 'byunit'
+// ── Design System ──────────────────────────────────────────────────────────────
+const BG = '#060A12'
+const CARD = '#0D1520'
+const BORDER = '#1C2D45'
+const TEAL = '#2DD4C8'
+const WHITE = '#EFF6FF'
+const MUTED = 'rgba(255,255,255,0.75)'
+const DIM = 'rgba(255,255,255,0.6)'
+const MONO = 'JetBrains Mono, monospace'
+const SANS = 'DM Sans, sans-serif'
+const RED = '#EF4444'
+const AMBER = '#F59E0B'
+const GREEN = '#34D399'
+const INDIGO = '#818CF8'
+
+// ── Arcturus system portfolio (from enriched data) ─────────────────────────────
+const ARCTURUS_SYSTEMS = [
+  {
+    group: 'Investment Management',
+    systems: [
+      {
+        id: 'bloomberg-aim',
+        name: 'Bloomberg AIM',
+        function: 'Order Management System',
+        vendor: 'Bloomberg',
+        health: 'critical' as const,
+        age: 28,
+        annualCost: 42,
+        contractEnd: 'Dec 2026',
+        autoRenew: true,
+        deploymentModel: 'On-Premise',
+        aiReady: false,
+        aiReadinessScore: 0,
+        issues: [
+          '28 years old — 3 failed modernisations — $22.2M sunk in failed attempts',
+          'API rate limit: 500 calls/hr vs 50,000 needed for ML inference',
+          '180ms Bloomberg→Azure latency — AI needs <50ms for real-time inference',
+          'Every AI initiative requiring real-time portfolio data is blocked by this system',
+          'Current Head of Technology (Michael Santos) was Accenture partner who led the failed Phase 3 modernisation',
+        ],
+        contractNote: 'AUTO-RENEWS December 2026. No API modernisation terms in current contract. This is the only negotiation window. Use migration threat (Charles River + Aladdin OMS) as leverage to force API access improvements as contract condition.',
+        aiBlockerNote: '18 of 28 AI initiatives blocked by Bloomberg AIM data architecture. Real-time portfolio positions are not accessible to Azure ML without an API layer.',
+        action: 'Phase 4: API middleware (not core migration). $22M approved. CDO hire required before Bloomberg will re-engage on technical discussions. Negotiate API terms at December 2026 renewal.',
+        spend: 42,
+        category: 'OMS / Data',
+      },
+      {
+        id: 'aladdin',
+        name: 'BlackRock Aladdin',
+        function: 'Risk Analytics / Stress Testing',
+        vendor: 'BlackRock',
+        health: 'warning' as const,
+        age: 8,
+        annualCost: 38,
+        contractEnd: 'Mar 2027',
+        autoRenew: false,
+        deploymentModel: 'Vendor-Hosted (BlackRock)',
+        aiReady: true,
+        aiReadinessScore: 65,
+        issues: [
+          'Stress testing runs MONTHLY — SEC Rule 18f-4 requires DAILY. Direct compliance gap.',
+          'Aladdin AI features (factor modelling, scenario analysis) licensed but NOT activated.',
+          'Aladdin API does not expose attribution calculation data for external ML consumption.',
+          'Aladdin disconnected from Bloomberg AIM — daily risk cadence impossible without integration.',
+        ],
+        contractNote: 'March 2027 renewal. SEC daily stress testing gap gives significant leverage — Aladdin must remediate or provide credit for non-compliance. Negotiate: daily cadence as baseline SLA with penalty clause, plus activation of AI features at no additional cost.',
+        aiBlockerNote: 'Aladdin AI features are licensed and platform-ready but CRO AI freeze prevents activation. Stress testing automation (daily cadence) is approved by CRO — lowest-risk AI initiative.',
+        action: 'Immediate: configure Aladdin for daily stress testing cadence (configuration change only, no migration). Negotiate AI feature activation at March 2027 renewal.',
+        spend: 38,
+        category: 'Risk Platform',
+      },
+    ],
+  },
+  {
+    group: 'Client Management',
+    systems: [
+      {
+        id: 'salesforce-fsc',
+        name: 'Salesforce FSC',
+        function: 'CRM / Client Portal / Advisor Workflow',
+        vendor: 'Salesforce',
+        health: 'warning' as const,
+        age: 2,
+        annualCost: 14,
+        contractEnd: 'Aug 2026',
+        autoRenew: false,
+        deploymentModel: 'Cloud SaaS',
+        aiReady: true,
+        aiReadinessScore: 55,
+        issues: [
+          '44% advisor adoption after 18 months — flat for 3 consecutive quarters',
+          'Adoption target privately reset from 85% to 70% by CIO in November 2025 — board not informed',
+          '$38M invested — NPS 31 vs 58 industry median',
+          'Einstein AI licensed but NOT activated — CRO AI freeze applies',
+          '72-hour data lag to Bloomberg positions — advisors see stale data vs real-time Bloomberg',
+          'SSO integration to Bloomberg AIM not live — primary adoption blocker',
+          'Mobile app missing portfolio rebalancing — advisors still need Bloomberg for trades',
+        ],
+        contractNote: 'August 2026 renewal — use 44% adoption failure as negotiation leverage. $38M implementation already committed creates lock-in pressure. Negotiate: Einstein activation SLAs, adoption targets with penalties for Salesforce delivery gaps, and price reduction for underperformance.',
+        aiBlockerNote: '3 AI initiatives (Client Risk Profiling, Advisor Next Best Action, Advisor Productivity Assistant) blocked by Salesforce FSC adoption ceiling at 44%. Fix: SSO to Bloomberg AIM — this single change unlocks adoption without any advisor behaviour change.',
+        action: 'Prioritise Bloomberg AIM SSO integration (the single fix). August 2026 renewal: negotiate adoption remediation plan and price reduction. Activate Einstein AI after CRO governance framework is established.',
+        spend: 14,
+        category: 'CRM / AI',
+      },
+    ],
+  },
+  {
+    group: 'Compliance & Accounting',
+    systems: [
+      {
+        id: 'charles-river',
+        name: 'Charles River IMS',
+        function: 'Compliance / Trade Order Management',
+        vendor: 'SS&C (Charles River)',
+        health: 'stable' as const,
+        age: 6,
+        annualCost: 8,
+        contractEnd: 'Sep 2026',
+        autoRenew: false,
+        deploymentModel: 'On-Premise',
+        aiReady: false,
+        aiReadinessScore: 22,
+        issues: [
+          'On-premise deployment blocks AI compliance monitoring features',
+          'Not connected to Bloomberg AIM for real-time position compliance',
+          'Charles River Cloud migration required to unlock AI compliance features',
+        ],
+        contractNote: 'September 2026 renewal. Charles River Cloud migration unlocks MAS FEAT-compliant AI monitoring. Add ~$1.2M annually but unlocks compliance AI and removes on-premise infrastructure burden.',
+        aiBlockerNote: 'MAS FEAT compliance monitoring requires AI-readable audit trails. On-premise Charles River cannot expose data in format required for AI governance documentation.',
+        action: 'September 2026 renewal: negotiate Charles River Cloud migration roadmap as contract condition. Cloud migration + compliance AI activation.',
+        spend: 8,
+        category: 'Compliance / IMS',
+      },
+      {
+        id: 'advent-geneva',
+        name: 'Advent Geneva (SS&C)',
+        function: 'Fund Accounting / NAV / Investor Reporting',
+        vendor: 'SS&C',
+        health: 'warning' as const,
+        age: 14,
+        annualCost: 12,
+        contractEnd: 'Jun 2026',
+        autoRenew: false,
+        deploymentModel: 'On-Premise',
+        aiReady: false,
+        aiReadinessScore: 18,
+        issues: [
+          '14 years old — primary cause of the firm-wide 3-day reporting lag',
+          'Batch processing architecture — cannot produce real-time accounting data',
+          'Not cloud-deployable in current configuration',
+          'Blocks all client reporting AI that requires real-time NAV data',
+        ],
+        contractNote: 'June 2026 renewal approaching. SS&C Eze is a viable cloud-native alternative. Evaluate SS&C Eze migration vs Geneva renewal as condition of negotiation. Cloud migration reduces 3-day reporting lag — prerequisite for AI-Powered Client Reporting initiative ($22M annual value).',
+        aiBlockerNote: 'AI-Powered Client Reporting ($11M invested, $22M annual value) is blocked by the 3-day lag that Geneva creates. Real-time reporting requires a cloud-native fund accounting platform.',
+        action: 'June 2026 renewal: negotiate cloud migration roadmap. Evaluate SS&C Eze as competitive alternative to force negotiation.',
+        spend: 12,
+        category: 'Fund Accounting',
+      },
+    ],
+  },
+  {
+    group: 'Data & Analytics',
+    systems: [
+      {
+        id: 'tableau',
+        name: 'Tableau',
+        function: 'Business Intelligence / Management Reporting',
+        vendor: 'Salesforce (Tableau)',
+        health: 'stable' as const,
+        age: 4,
+        annualCost: 1.8,
+        contractEnd: 'Feb 2027',
+        autoRenew: false,
+        deploymentModel: 'Cloud SaaS',
+        aiReady: true,
+        aiReadinessScore: 48,
+        issues: [
+          'Dashboards only as current as source data — 3-day lag from Geneva makes all dashboards stale',
+          'Tableau AI explain features licensed but not used',
+          'Not yet connected to Golden Record (which does not exist yet)',
+        ],
+        contractNote: 'February 2027 renewal. Low urgency — good platform, value limited by source data lag not by Tableau itself.',
+        aiBlockerNote: 'Tableau is AI-ready but the 3-day source data lag means dashboards are always stale. Fix is upstream (Geneva → cloud migration, Golden Record), not Tableau itself.',
+        action: 'Activate Tableau AI explain features. Connect to Golden Record when live.',
+        spend: 1.8,
+        category: 'Analytics',
+      },
+    ],
+  },
+  {
+    group: 'Corporate & Infrastructure',
+    systems: [
+      {
+        id: 'workday',
+        name: 'Workday (HCM + Finance)',
+        function: 'HR / Payroll / Finance / Procurement',
+        vendor: 'Workday',
+        health: 'good' as const,
+        age: 5,
+        annualCost: 4.2,
+        contractEnd: 'Dec 2027',
+        autoRenew: true,
+        deploymentModel: 'Cloud SaaS',
+        aiReady: true,
+        aiReadinessScore: 78,
+        issues: [
+          'Workday Prism Analytics available but not activated',
+          'CRO AI freeze applies — Workday AI features not in scope',
+        ],
+        contractNote: 'December 2027 renewal. Well-implemented. No urgency.',
+        aiBlockerNote: 'Workday AI features (Prism Analytics) are available and platform-ready. Activation pending CRO governance framework.',
+        action: 'Activate Workday Prism Analytics once CRO governance framework is established.',
+        spend: 4.2,
+        category: 'HCM / Finance',
+      },
+      {
+        id: 'azure',
+        name: 'Microsoft Azure (Primary Cloud)',
+        function: 'Cloud Platform / AI Infrastructure',
+        vendor: 'Microsoft',
+        health: 'stable' as const,
+        age: 3,
+        annualCost: 22,
+        contractEnd: 'Ongoing',
+        autoRenew: true,
+        deploymentModel: 'Cloud',
+        aiReady: true,
+        aiReadinessScore: 82,
+        issues: [
+          '31% of infrastructure AI-ready — on-premise Bloomberg AIM and Advent Geneva create the gap',
+          'No ML platform deployed — Azure ML licensed but idle',
+          'No Data Lake — foundational infrastructure for AI not built',
+          '180ms Bloomberg→Azure latency blocks real-time AI inference',
+        ],
+        contractNote: 'Ongoing. Azure AI Foundry, Azure ML, Azure OpenAI all available. Primary gap is deployment — tools exist but are not used.',
+        aiBlockerNote: 'Azure is AI-capable but the AI platform (Azure ML, MLOps pipeline, Data Lake) has not been built. CDO hire is the prerequisite for making these deployment decisions.',
+        action: 'Once CDO hired and governance framework established: deploy Azure ML platform, build MLOps pipeline, implement Informatica MDM for golden record on Azure.',
+        spend: 22,
+        category: 'Cloud Platform',
+      },
+      {
+        id: 'aws-dr',
+        name: 'AWS (Disaster Recovery)',
+        function: 'DR and Backup',
+        vendor: 'Amazon',
+        health: 'good' as const,
+        age: 4,
+        annualCost: 3.8,
+        contractEnd: 'Ongoing',
+        autoRenew: true,
+        deploymentModel: 'Cloud',
+        aiReady: false,
+        aiReadinessScore: 20,
+        issues: ['DR only — not in AI scope'],
+        contractNote: 'Ongoing. No action needed.',
+        aiBlockerNote: 'Not in AI scope — DR function only.',
+        action: 'No near-term action. Evaluate consolidation to Azure when DR contract renews.',
+        spend: 3.8,
+        category: 'Cloud (DR)',
+      },
+    ],
+  },
+]
+
+const ARCTURUS_SPEND = {
+  total: 680,
+  peer: 502,
+  excess: 178,
+  categories: [
+    { name: 'Software / Licensing', amount: 204, pct: 30 },
+    { name: 'IT Staff & Contractors', amount: 170, pct: 25 },
+    { name: 'Infrastructure & Hosting', amount: 136, pct: 20 },
+    { name: 'AI & Data Initiatives', amount: 94, pct: 14 },
+    { name: 'Cybersecurity', amount: 48, pct: 7 },
+    { name: 'Telecom', amount: 28, pct: 4 },
+  ],
+}
+
+const CONTRACTS_URGENT = [
+  { vendor: 'SS&C (Advent Geneva)', end: 'Jun 2026', leverage: 'Cloud migration as renewal condition', urgencyDays: 60, risk: 'medium' as const },
+  { vendor: 'Salesforce FSC', end: 'Aug 2026', leverage: '44% adoption failure = price reduction', urgencyDays: 120, risk: 'high' as const },
+  { vendor: 'Charles River IMS', end: 'Sep 2026', leverage: 'Cloud migration unlocks AI compliance', urgencyDays: 150, risk: 'medium' as const },
+  { vendor: 'Bloomberg AIM + Terminal', end: 'Dec 2026', leverage: 'API terms as auto-renewal condition', urgencyDays: 240, risk: 'critical' as const },
+  { vendor: 'BlackRock Aladdin', end: 'Mar 2027', leverage: 'Daily stress testing SLA + AI features', urgencyDays: 330, risk: 'high' as const },
+]
+
+// ── Utility ────────────────────────────────────────────────────────────────────
+function healthColor(h: string) {
+  if (h === 'critical') return RED
+  if (h === 'warning' || h === 'poor') return AMBER
+  if (h === 'good') return GREEN
+  return MUTED
+}
+
+function healthLabel(h: string) {
+  if (h === 'critical') return 'CRITICAL'
+  if (h === 'warning') return 'AT RISK'
+  if (h === 'good') return 'GOOD'
+  return 'STABLE'
+}
+
+function riskColor(r: string) {
+  if (r === 'critical') return RED
+  if (r === 'high') return AMBER
+  return TEAL
+}
+
+// ── PRE-BUILT QUESTIONS ────────────────────────────────────────────────────────
+const PRE_BUILT = [
+  'Bloomberg auto-renews December 2026 — API access has no terms in the current contract. What 3 specific API commitments should I demand as conditions of renewal?',
+  '3-day reporting lag is blocking 6 AI initiatives. What is the fastest path to real-time data — Geneva cloud migration or something else?',
+  'Salesforce FSC adoption is 44% after 18 months and $38M. 78% of non-adopters cite Bloomberg position lag. What is the exact SSO integration I need to build?',
+  'CRO has frozen all new AI deployments. MAS FEAT is 4 months overdue. What is the minimum viable governance framework that gets the CRO to re-open the door?',
+  '$94M AI portfolio with $0 ROI. Which 3 initiatives can I baseline and start tracking ROI on without the CDO or golden record?',
+]
+
+// ── Main component ─────────────────────────────────────────────────────────────
+interface System {
+  id: string
+  name: string
+  function: string
+  vendor: string
+  health: 'critical' | 'warning' | 'stable' | 'good' | 'poor'
+  age: number
+  annualCost: number
+  contractEnd: string
+  autoRenew: boolean
+  deploymentModel: string
+  aiReady: boolean
+  aiReadinessScore: number
+  issues: string[]
+  contractNote: string
+  aiBlockerNote: string
+  action: string
+  spend: number
+  category: string
+}
 
 function IntelligenceContent() {
   const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
-  const [activeView, setActiveView] = useState<View>('scorecard')
-  const [selectedSystem, setSelectedSystem] = useState<any>(null)
-  const [selectedDomain, setSelectedDomain] = useState<string | null>(null)
-  const [chatMessages, setChatMessages] = useState<Array<{role: string, content: string}>>([])
+  const clientId = searchParams.get('client') || 'arcturus'
+  const [selectedSystem, setSelectedSystem] = useState<System | null>(null)
+  const [activeTab, setActiveTab] = useState<'portfolio' | 'spend' | 'contracts'>('portfolio')
+  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [streamingResponse, setStreamingResponse] = useState('')
   const chatEndRef = useRef<HTMLDivElement>(null)
-
-  const clientName = clientId === 'firstcapital' ? 'First Capital Financial' :
-    clientId === 'apexretail' ? 'Apex Retail Group' : 'Meridian Health System'
-
-  const inventory = clientId === 'apexretail' ? apexRetailTechInventory : clientId === 'firstcapital' ? firstCapitalTechInventory : meridianTechInventory
-  const overallScore = calculateTechScore(inventory)
-  const criticalSystems = getCriticalSystems(inventory)
-  const totalCost = getTotalAnnualCost(inventory)
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -42,393 +366,357 @@ function IntelligenceContent() {
     setChatInput('')
     setChatLoading(true)
     setStreamingResponse('')
-    const res = await fetch('/api/diagnose', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: updated, role: 'CIO', client: clientId })
-    })
-    const reader = res.body?.getReader()
-    const decoder = new TextDecoder()
-    let full = ''
-    if (!reader) return
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      full += decoder.decode(value)
-      setStreamingResponse(full)
+    try {
+      const res = await fetch('/api/diagnose', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: updated, role: 'CIO', clientId }),
+      })
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      let full = ''
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          full += decoder.decode(value)
+          setStreamingResponse(full)
+        }
+      }
+      setChatMessages(prev => [...prev, { role: 'assistant', content: full }])
+    } finally {
+      setStreamingResponse('')
+      setChatLoading(false)
     }
-    setChatMessages(prev => [...prev, { role: 'assistant', content: full }])
-    setStreamingResponse('')
-    setChatLoading(false)
   }
 
-  function healthBadge(health: string) {
-    const map: Record<string, string> = {
-      green: 'bg-green-900 text-green-300 border-green-700',
-      yellow: 'bg-yellow-900 text-yellow-300 border-yellow-700',
-      red: 'bg-red-900 text-red-300 border-red-700',
-    }
-    const label: Record<string, string> = { green: '● Healthy', yellow: '● Issues', red: '● At Risk' }
-    return <span className={`text-xs px-2 py-0.5 rounded border ${map[health] || map.yellow}`}>{label[health] || '● Unknown'}</span>
-  }
-
-  function scoreBar(score: number) {
-    const c = score >= 70 ? 'bg-green-500' : score >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-    return (
-      <div className="w-full bg-gray-800 rounded-full h-1.5">
-        <div className={`h-1.5 rounded-full ${c}`} style={{ width: `${score}%` }} />
-      </div>
-    )
-  }
-
-  const domains = clientId === 'apexretail'
-    ? ['Customer Experience', 'Store Operations', 'Supply Chain', 'Finance and Administration', 'Data and Analytics', 'Infrastructure']
-    : clientId === 'firstcapital'
-    ? ['Digital Banking', 'Core Banking', 'Payments', 'Risk and Compliance', 'Data and Analytics', 'Infrastructure']
-    : ['Patient Care', 'Revenue Cycle', 'Patient Engagement', 'Finance and Administration', 'Supply Chain', 'Data and Analytics', 'Infrastructure', 'Health Plan']
-
-  const businessUnits = clientId === 'apexretail'
-    ? ['Digital', 'Store Operations', 'Marketing', 'Shared Services']
-    : clientId === 'firstcapital'
-    ? ['Retail Banking', 'Commercial Banking', 'Risk and Compliance', 'Shared Services']
-    : ['Provider/Hospitals', 'Blue Ridge Facilities', 'Health Plan', 'Shared Services', 'Critical Access Hospitals']
-
-  const categories = clientId === 'apexretail'
-    ? ['ERP', 'Ecommerce Platform', 'Order Management', 'Supply Chain Planning', 'Warehouse Management', 'Customer Data Platform', 'Loyalty Platform', 'Data and AI Platform', 'Data Warehouse', 'Point of Sale']
-    : clientId === 'firstcapital'
-    ? ['Core Banking', 'Digital Banking', 'Payments', 'AML and Compliance', 'Data Warehouse', 'Cybersecurity']
-    : ['EHR/EMR', 'Revenue Cycle Management', 'Patient Engagement', 'ERP', 'Data Warehouse', 'Business Intelligence', 'Cloud Platform', 'Cybersecurity', 'Integration Engine', 'Imaging/PACS', 'Pharmacy', 'Workforce Management']
+  // Counts
+  const allSystems = ARCTURUS_SYSTEMS.flatMap(g => g.systems as System[])
+  const criticalCount = allSystems.filter(s => s.health === 'critical').length
+  const warningCount = allSystems.filter(s => s.health === 'warning' || s.health === 'poor').length
+  const contractsExpiring90 = CONTRACTS_URGENT.filter(c => c.urgencyDays <= 90).length
+  const aiReadyPct = Math.round(
+    allSystems.reduce((sum, s) => sum + s.aiReadinessScore, 0) / allSystems.length
+  )
 
   return (
-    <div className="min-h-screen flex flex-col" style={{background: "#FAFAFA", color: "#0F172A"}}>
-      <AbarvaNav />
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
+      <AbarvaNav activePage="intelligence" />
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-6" style={{background: "#FAFAFA"}}>
-
-          {selectedSystem && (
+      {/* Header */}
+      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 32px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
             <div>
-              <button onClick={() => setSelectedSystem(null)} className="text-sm text-gray-400 hover:text-white mb-4 transition">Back</button>
-              <div className="grid grid-cols-3 gap-6">
-                <div className="col-span-2 space-y-4">
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-xl font-bold mb-1">{selectedSystem.name}</h2>
-                        <p className="text-gray-400 text-sm">{selectedSystem.vendor} · {selectedSystem.category}</p>
-                      </div>
-                      {healthBadge(selectedSystem.health)}
-                    </div>
-                    <div className="grid grid-cols-4 gap-3 mb-4">
-                      {[
-                        { label: 'Version', value: selectedSystem.version },
-                        { label: 'Annual Cost', value: `$${selectedSystem.annualCost}M` },
-                        { label: 'Contract Expiry', value: selectedSystem.contractExpiry },
-                        { label: 'Completeness', value: `${selectedSystem.completeness}%` },
-                      ].map((m, i) => (
-                        <div key={i} className="bg-gray-800 rounded-lg p-3">
-                          <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-                          <p className="font-semibold text-sm">{m.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                    {selectedSystem.riskReason && (
-                      <div className="bg-red-950 border border-red-800 rounded-lg p-4 mb-4">
-                        <p className="text-xs font-semibold text-red-300 mb-1">Risk</p>
-                        <p className="text-sm text-gray-300">{selectedSystem.riskReason}</p>
-                      </div>
-                    )}
-                    {selectedSystem.businessOwner && (
-                      <div className="text-xs text-gray-500 space-y-1">
-                        <p>Business Owner: <span className="text-gray-300">{selectedSystem.businessOwner}</span></p>
-                        <p>IT Owner: <span className="text-gray-300">{selectedSystem.itOwner}</span></p>
-                      </div>
-                    )}
-                  </div>
-                  {selectedSystem.issues && selectedSystem.issues.length > 0 && (
-                    <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                      <h3 className="text-sm font-semibold mb-3">Known Issues</h3>
-                      <div className="space-y-2">
-                        {selectedSystem.issues.map((issue: string, i: number) => (
-                          <div key={i} className="flex gap-2 text-sm">
-                            <span className="text-red-400 flex-shrink-0">!</span>
-                            <span className="text-gray-300">{issue}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-blue-950 border border-blue-800 rounded-xl p-5">
-                    <h3 className="font-semibold text-blue-300 mb-3">Next Action</h3>
-                    <p className="text-sm text-gray-300 mb-4">{selectedSystem.nextAction}</p>
-                    <button onClick={() => sendChat(`Tell me about ${selectedSystem.name} and what we should do`)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2 rounded-lg transition">
-                      Ask AbarVa
-                    </button>
-                  </div>
-                </div>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Technology Intelligence · Arcturus Financial Group · April 2026
               </div>
+              <h1 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>
+                Technology Landscape
+              </h1>
+              <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
+                {allSystems.length} systems · $680M annual IT spend · {criticalCount} critical · {warningCount} at risk · {aiReadyPct}% AI-ready
+              </p>
             </div>
-          )}
-
-          {!selectedSystem && activeView === 'scorecard' && (
-            <div>
-              <h2 className="text-xl font-bold mb-2">Technology Scorecard</h2>
-              <p className="text-gray-400 text-sm mb-6">{inventory.metadata.totalSystems} systems · ${totalCost.toFixed(1)}M annual spend</p>
-              <div className="grid grid-cols-4 gap-4 mb-8">
-                <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 flex flex-col items-center justify-center">
-                  <p className="text-xs text-gray-500 mb-2">Overall Score</p>
-                  <div className={`text-5xl font-bold mb-1 ${overallScore >= 70 ? 'text-green-400' : 'text-yellow-400'}`}>{overallScore}%</div>
-                  <p className="text-xs text-gray-400 text-center">{getScoreLabel(overallScore)}</p>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'IT vs Peers', value: '+$178M', color: RED, sub: '$680M vs $502M benchmark' },
+                { label: 'AI Portfolio', value: '$94M', color: AMBER, sub: '$0 documented ROI' },
+                { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
+                { label: 'Contracts ≤12mo', value: `${CONTRACTS_URGENT.length}`, color: AMBER, sub: 'Bloomberg auto-renews Dec 2026' },
+              ].map(m => (
+                <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
+                  <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, marginTop: '1px' }}>{m.sub}</div>
                 </div>
-                {[
-                  { label: 'Systems Documented', value: `${inventory.metadata.documentedSystems}/${inventory.metadata.totalSystems}`, sub: `${inventory.metadata.undocumentedSystems} undocumented` },
-                  { label: 'Critical Risk', value: String(criticalSystems.length), sub: 'Require immediate action' },
-                  { label: 'Annual Spend', value: `$${totalCost.toFixed(1)}M`, sub: 'Total technology cost' },
-                ].map((m, i) => (
-                  <div key={i} className="bg-gray-900 border border-gray-800 rounded-xl p-5">
-                    <p className="text-xs text-gray-400 mb-2">{m.label}</p>
-                    <div className="text-2xl font-bold mb-1">{m.value}</div>
-                    <div className="text-xs text-gray-500">{m.sub}</div>
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Score by Domain</h3>
-                  <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 space-y-4">
-                    {inventory.scoringModel.categories.map((cat: any, i: number) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-gray-300">{cat.name}</span>
-                          <span className={`font-bold ${cat.score >= 70 ? 'text-green-400' : cat.score >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{cat.score}%</span>
-                        </div>
-                        {scoreBar(cat.score)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Critical Systems</h3>
-                  <div className="space-y-3">
-                    {criticalSystems.map((sys: any, i: number) => (
-                      <button key={i} onClick={() => setSelectedSystem(sys)}
-                        className="w-full bg-red-950 border border-red-800 rounded-xl p-4 text-left hover:border-red-600 transition">
-                        <div className="flex justify-between mb-1">
-                          <span className="font-medium text-sm">{sys.name}</span>
-                          <span className="text-xs text-red-400">Critical</span>
-                        </div>
-                        <p className="text-xs" style={{color: "#94A3B8"}}>{sys.riskReason?.substring(0, 80)}...</p>
-                      </button>
-                    ))}
-                  </div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-6 mb-3">Architecture Gaps</h3>
-                  <div className="space-y-2">
-                    {inventory.gaps.map((gap: any, i: number) => (
-                      <button key={i} onClick={() => sendChat(`Tell me about the ${gap.area} gap`)}
-                        className="w-full bg-gray-900 border border-gray-800 rounded-xl p-3 text-left hover:border-yellow-600 transition">
-                        <div className="flex justify-between mb-1">
-                          <span className="font-medium text-sm">{gap.area}</span>
-                          <span className="text-xs text-yellow-400">{gap.severity}</span>
-                        </div>
-                        <p className="text-xs" style={{color: "#94A3B8"}}>{gap.businessImpact}</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-          )}
+          </div>
+        </div>
+      </div>
 
-          {!selectedSystem && activeView === 'functional' && (
-            <div>
-              <h2 className="text-xl font-bold mb-6">Technology by Business Function</h2>
-              {!selectedDomain ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {domains.map(domain => {
-                    const systems = getSystemsByDomain(inventory, domain)
-                    const redCount = systems.filter((s: any) => s.health === 'red').length
-                    const domainCost = systems.reduce((sum: number, s: any) => sum + (s.annualCost || 0), 0)
+      {/* Body */}
+      <div style={{ flex: 1, display: 'flex', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '24px 32px', gap: '20px' }}>
+
+        {/* LEFT — System list */}
+        <div style={{ width: '280px', flexShrink: 0 }}>
+          {/* Tab nav */}
+          <div style={{ display: 'flex', gap: '2px', marginBottom: '16px' }}>
+            {([['portfolio', 'Systems'], ['spend', 'IT Spend'], ['contracts', 'Contracts']] as const).map(([id, label]) => (
+              <button key={id} onClick={() => { setActiveTab(id); setSelectedSystem(null) }}
+                style={{ flex: 1, fontFamily: MONO, fontSize: '9px', padding: '6px 4px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '.06em', cursor: 'pointer', border: `1px solid ${activeTab === id ? TEAL : BORDER}`, background: activeTab === id ? 'rgba(45,212,200,0.08)' : BG, color: activeTab === id ? TEAL : MUTED }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'portfolio' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              {ARCTURUS_SYSTEMS.map(group => (
+                <div key={group.group}>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase', padding: '10px 10px 6px', marginTop: '6px' }}>
+                    {group.group}
+                  </div>
+                  {group.systems.map(sys => {
+                    const hc = healthColor(sys.health)
+                    const active = selectedSystem?.id === sys.id
                     return (
-                      <button key={domain} onClick={() => setSelectedDomain(domain)}
-                        className={`p-5 rounded-xl border text-left transition hover:opacity-90 ${redCount > 0 ? 'bg-red-950 border-red-800' : systems.length === 0 ? 'bg-gray-900 border-gray-700' : 'bg-gray-900 border-gray-800'}`}>
-                        <div className="flex justify-between items-start mb-3">
-                          <h3 className="font-semibold">{domain}</h3>
-                          <span className="text-xs" style={{color: "#94A3B8"}}>{systems.length === 0 ? 'No data' : `${systems.length} systems`}</span>
+                      <button key={sys.id} onClick={() => setSelectedSystem(sys)}
+                        style={{ width: '100%', textAlign: 'left', padding: '10px 12px', borderRadius: '6px', cursor: 'pointer', border: `1px solid ${active ? hc + '40' : 'transparent'}`, background: active ? `${hc}08` : 'transparent', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: hc, flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: SANS, fontSize: '13px', color: active ? WHITE : MUTED, fontWeight: active ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {sys.name}
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, marginTop: '1px' }}>
+                            ${sys.annualCost}M · {sys.contractEnd}
+                          </div>
                         </div>
-                        {domainCost > 0 && <p className="text-xs text-gray-500 mb-2">${domainCost.toFixed(1)}M/yr</p>}
-                        <div className="flex flex-wrap gap-1">
-                          {systems.slice(0, 3).map((s: any, i: number) => (
-                            <span key={i} className="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{s.name}</span>
-                          ))}
-                          {systems.length > 3 && <span className="text-xs text-gray-500">+{systems.length - 3} more</span>}
+                        <div style={{ fontFamily: MONO, fontSize: '8px', color: hc, background: `${hc}15`, borderRadius: '3px', padding: '1px 5px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                          {healthLabel(sys.health)}
                         </div>
                       </button>
                     )
                   })}
                 </div>
-              ) : (
-                <div>
-                  <button onClick={() => setSelectedDomain(null)} className="text-sm text-gray-400 hover:text-white mb-4 transition">Back</button>
-                  <h3 className="text-lg font-bold mb-4">{selectedDomain}</h3>
-                  <div className="space-y-3">
-                    {getSystemsByDomain(inventory, selectedDomain).length === 0 ? (
-                      <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 text-center">
-                        <p className="text-gray-400 mb-2">No systems inventoried</p>
-                        <button onClick={() => sendChat(`What systems should we have in ${selectedDomain}?`)} className="text-xs text-blue-400">Ask AbarVa</button>
-                      </div>
-                    ) : getSystemsByDomain(inventory, selectedDomain).map((sys: any, i: number) => (
-                      <button key={i} onClick={() => setSelectedSystem(sys)}
-                        className="w-full bg-gray-900 border border-gray-800 rounded-xl p-4 text-left hover:border-blue-500 transition">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="font-semibold">{sys.name}</h4>
-                            <p className="text-xs" style={{color: "#94A3B8"}}>{sys.vendor}</p>
-                          </div>
-                          <div className="flex gap-2 items-center">
-                            {healthBadge(sys.health)}
-                            <span className="text-sm">${sys.annualCost}M/yr</span>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500">Completeness: {sys.completeness}%</p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {!selectedSystem && activeView === 'technical' && (
-            <div>
-              <h2 className="text-xl font-bold mb-6">Technology by System Category</h2>
-              <div className="space-y-6">
-                {categories.map(cat => {
-                  const systems = getSystemsByCategory(inventory, cat)
-                  if (systems.length === 0) return null
-                  return (
-                    <div key={cat}>
-                      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{cat}</h3>
-                      <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-                        <table className="w-full text-sm">
-                          <thead>
-                            <tr className="border-b border-gray-800">
-                              <th className="text-left p-3 text-gray-500 font-medium text-xs">System</th>
-                              <th className="text-left p-3 text-gray-500 font-medium text-xs">Vendor</th>
-                              <th className="text-left p-3 text-gray-500 font-medium text-xs">Health</th>
-                              <th className="text-left p-3 text-gray-500 font-medium text-xs">Risk</th>
-                              <th className="text-right p-3 text-gray-500 font-medium text-xs">Cost</th>
-                              <th className="text-right p-3 text-gray-500 font-medium text-xs">Expiry</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {systems.map((sys: any, i: number) => (
-                              <tr key={i} onClick={() => setSelectedSystem(sys)}
-                                className="border-b border-gray-800 last:border-0 cursor-pointer hover:bg-gray-800 transition">
-                                <td className="p-3 font-medium">{sys.name}</td>
-                                <td className="p-3 text-gray-400 text-xs">{sys.vendor}</td>
-                                <td className="p-3">{healthBadge(sys.health)}</td>
-                                <td className="p-3 text-xs">
-                                  <span className={sys.riskLevel === 'Critical' ? 'text-red-400' : sys.riskLevel === 'High' ? 'text-orange-400' : 'text-yellow-400'}>
-                                    {sys.riskLevel}
-                                  </span>
-                                </td>
-                                <td className="p-3 text-right text-xs">${sys.annualCost}M</td>
-                                <td className="p-3 text-right text-xs text-gray-400">{sys.contractExpiry?.substring(0, 10)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {!selectedSystem && activeView === 'byunit' && (
-            <div>
-              <h2 className="text-xl font-bold mb-6">Technology by Business Unit</h2>
-              <div className="space-y-6">
-                {businessUnits.map(unit => {
-                  const systems = getSystemsByUnit(inventory, unit)
-                  const unitCost = systems.reduce((sum: number, s: any) => sum + (s.annualCost || 0), 0)
-                  const redCount = systems.filter((s: any) => s.health === 'red').length
-                  return (
-                    <div key={unit}>
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="text-sm font-semibold text-gray-300">{unit}</h3>
-                        <div className="flex gap-4 text-xs text-gray-500">
-                          <span>{systems.length} systems</span>
-                          {unitCost > 0 && <span>${unitCost.toFixed(1)}M/yr</span>}
-                          {redCount > 0 && <span className="text-red-400">{redCount} critical</span>}
-                        </div>
-                      </div>
-                      {systems.length === 0 ? (
-                        <div className="bg-gray-900 border border-gray-700 rounded-xl p-4 text-center">
-                          <p className="text-xs text-gray-500">No systems documented</p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-4 gap-3">
-                          {systems.map((sys: any, i: number) => (
-                            <button key={i} onClick={() => setSelectedSystem(sys)}
-                              className={`p-3 rounded-xl border text-left transition hover:opacity-80 ${sys.health === 'red' ? 'bg-red-950 border-red-800' : sys.health === 'yellow' ? 'bg-yellow-950 border-yellow-800' : 'bg-gray-900 border-gray-800'}`}>
-                              <p className="font-medium text-xs mb-1">{sys.name}</p>
-                              <p className="text-xs text-gray-500">${sys.annualCost}M/yr</p>
-                              <div className="mt-2">{healthBadge(sys.health)}</div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-        </div>
-
-        <div className="w-80 flex flex-col" style={{background: "#FFFFFF", borderLeft: "1px solid #E2E8F0"}}>
-          <div className="p-4" style={{borderBottom: "1px solid #E2E8F0"}}>
-            <h3 className="font-semibold text-sm mb-1" style={{color: "#0F172A"}}>Technology Agent</h3>
-            <p className="text-xs" style={{color: "#94A3B8"}}>Ask anything about the technology landscape</p>
-          </div>
-          {chatMessages.length === 0 && (
-            <div className="p-4 space-y-2">
-              {['What systems are at highest risk?', 'Which contracts expire soon?', 'Where are we overspending?', 'What is our biggest integration risk?'].map((s, i) => (
-                <button key={i} onClick={() => sendChat(s)}
-                  className="w-full text-left text-xs rounded-lg p-3 transition" style={{background: "#F4F6F8", border: "1px solid #E2E8F0", color: "#374151"}}>{s}</button>
               ))}
             </div>
           )}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {chatMessages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs rounded-xl p-3 text-xs leading-relaxed ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-900 border border-gray-800 text-gray-200'}`}>
-                  <div className="whitespace-pre-wrap">{msg.content}</div>
+
+          {activeTab === 'spend' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '14px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginBottom: '6px' }}>TOTAL vs PEER</div>
+                <div style={{ fontFamily: MONO, fontSize: '22px', color: WHITE, fontWeight: 700 }}>$680M</div>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: RED, marginTop: '2px' }}>+$178M above peer ($502M)</div>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginTop: '6px' }}>4.2% of revenue vs 3.1% peer benchmark</div>
+              </div>
+              {ARCTURUS_SPEND.categories.map(c => (
+                <div key={c.name} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '10px 12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED }}>{c.name}</div>
+                    <div style={{ fontFamily: MONO, fontSize: '11px', color: WHITE, fontWeight: 600 }}>${c.amount}M</div>
+                  </div>
+                  <div style={{ height: '4px', background: BORDER, borderRadius: '2px' }}>
+                    <div style={{ height: '4px', background: c.name.includes('AI') ? AMBER : TEAL, borderRadius: '2px', width: `${c.pct}%` }} />
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginTop: '3px' }}>{c.pct}% of total IT</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === 'contracts' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {CONTRACTS_URGENT.map(c => (
+                <div key={c.vendor} style={{ background: CARD, border: `1px solid ${riskColor(c.risk)}30`, borderLeft: `3px solid ${riskColor(c.risk)}`, borderRadius: '6px', padding: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                    <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, lineHeight: 1.3 }}>{c.vendor}</div>
+                    <div style={{ fontFamily: MONO, fontSize: '8px', color: riskColor(c.risk), background: `${riskColor(c.risk)}15`, borderRadius: '3px', padding: '1px 5px', flexShrink: 0, marginLeft: '8px' }}>{c.end}</div>
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.4 }}>{c.leverage}</div>
+                </div>
+              ))}
+              <div style={{ marginTop: '8px', background: 'rgba(45,212,200,0.05)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, marginBottom: '4px' }}>KEY WINDOW</div>
+                <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>Bloomberg December 2026 auto-renewal is the only contract leverage point in 5+ years. API access improvements must be negotiated now. The migration threat (Charles River + Aladdin OMS) is the only credible bargaining chip.</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CENTER — System detail or overview */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {selectedSystem ? (
+            <div>
+              <button onClick={() => setSelectedSystem(null)}
+                style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: 0 }}>
+                ← Back to portfolio
+              </button>
+
+              {/* System header */}
+              <div style={{ background: CARD, border: `1px solid ${healthColor(selectedSystem.health)}30`, borderTop: `3px solid ${healthColor(selectedSystem.health)}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: healthColor(selectedSystem.health), letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                      {healthLabel(selectedSystem.health)} · {selectedSystem.category}
+                    </div>
+                    <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>{selectedSystem.name}</h2>
+                    <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, marginTop: '2px' }}>{selectedSystem.vendor} · {selectedSystem.function}</div>
+                  </div>
+                </div>
+
+                {/* Key metrics */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px' }}>
+                  {[
+                    { label: 'Annual Cost', value: `$${selectedSystem.annualCost}M`, color: selectedSystem.annualCost > 20 ? AMBER : WHITE },
+                    { label: 'System Age', value: `${selectedSystem.age} yrs`, color: selectedSystem.age > 15 ? RED : selectedSystem.age > 8 ? AMBER : GREEN },
+                    { label: 'Deployment', value: selectedSystem.deploymentModel, color: WHITE },
+                    { label: 'Contract', value: selectedSystem.contractEnd, color: selectedSystem.autoRenew ? AMBER : WHITE },
+                    { label: 'AI Readiness', value: `${selectedSystem.aiReadinessScore}/100`, color: selectedSystem.aiReadinessScore < 30 ? RED : selectedSystem.aiReadinessScore < 60 ? AMBER : GREEN },
+                  ].map(m => (
+                    <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '10px 12px' }}>
+                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>{m.label}</div>
+                      <div style={{ fontFamily: MONO, fontSize: '13px', color: m.color, fontWeight: 600 }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {selectedSystem.autoRenew && (
+                  <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.25)`, borderRadius: '6px', fontFamily: MONO, fontSize: '10px', color: AMBER }}>
+                    ⚠ AUTO-RENEWS {selectedSystem.contractEnd} — negotiate before this date or contract locks in automatically
+                  </div>
+                )}
+              </div>
+
+              {/* Issues */}
+              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', marginBottom: '12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '12px' }}>Known Issues</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {selectedSystem.issues.map((issue, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <div style={{ color: RED, fontFamily: MONO, fontSize: '11px', flexShrink: 0, marginTop: '1px' }}>!</div>
+                      <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{issue}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-            {chatLoading && !streamingResponse && <div className="text-xs p-3" style={{color: "#94A3B8"}}>Analyzing...</div>}
-            {streamingResponse && (
-              <div className="flex justify-start">
-                <div className="rounded-xl p-3 text-xs max-w-xs whitespace-pre-wrap" style={{background: "#FFFFFF", border: "1px solid #E2E8F0", color: "#374151"}}>{streamingResponse}</div>
+
+              {/* AI Blocker */}
+              <div style={{ background: 'rgba(239,68,68,0.04)', border: `1px solid rgba(239,68,68,0.2)`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: RED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>AI Impact</div>
+                <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedSystem.aiBlockerNote}</div>
+              </div>
+
+              {/* Contract */}
+              <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Contract Intelligence · {selectedSystem.contractEnd}</div>
+                <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedSystem.contractNote}</div>
+              </div>
+
+              {/* Recommended Action */}
+              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px 20px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Recommended Action</div>
+                <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.6 }}>{selectedSystem.action}</div>
+                <button
+                  onClick={() => sendChat(`Tell me more about ${selectedSystem.name}. ${selectedSystem.contractNote} What should my next 3 moves be?`)}
+                  style={{ marginTop: '12px', fontFamily: MONO, fontSize: '10px', padding: '8px 16px', background: 'rgba(45,212,200,0.1)', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: '6px', color: TEAL, cursor: 'pointer' }}>
+                  Ask AbarVa about {selectedSystem.name} →
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Overview when no system selected */
+            <div>
+              {/* Critical alerts */}
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                  Critical Findings
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {[
+                    { severity: RED, title: 'Bloomberg AIM auto-renews December 2026', body: '3 failed modernisations ($22.2M sunk). API rate limit blocks all real-time AI. December 2026 is the ONLY leverage window in 5+ years — negotiate API access as contract condition or miss this window.' },
+                    { severity: RED, title: 'MAS FEAT overdue 4 months — zero AI models documented', body: '$2.4B Singapore AUM at regulatory risk. CRO has frozen all new AI deployments. MAS governance framework is the unlock — without it, the AI portfolio stays paralysed.' },
+                    { severity: AMBER, title: 'Salesforce FSC: 44% adoption after $38M — flat for 3 quarters', body: 'Einstein AI licensed and idle. 4 AI initiatives blocked by adoption ceiling. Root cause: Bloomberg SSO not built — advisors see stale data in FSC. Fix SSO, unlock adoption.' },
+                    { severity: AMBER, title: '3-day reporting lag from Advent Geneva blocking client AI', body: 'June 2026 renewal is the cloud migration negotiation window. Without cloud Geneva (or SS&C Eze migration), AI-Powered Client Reporting ($22M value) cannot be built.' },
+                  ].map((a, i) => (
+                    <div key={i} style={{ background: CARD, border: `1px solid ${a.severity}25`, borderLeft: `3px solid ${a.severity}`, borderRadius: '8px', padding: '14px 18px' }}>
+                      <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{a.title}</div>
+                      <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{a.body}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* System health grid */}
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                  System Health · Click any system for detail
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {allSystems.map(sys => {
+                    const hc = healthColor(sys.health)
+                    return (
+                      <button key={sys.id} onClick={() => { setSelectedSystem(sys); setActiveTab('portfolio') }}
+                        style={{ textAlign: 'left', background: CARD, border: `1px solid ${hc}25`, borderTop: `2px solid ${hc}`, borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                          <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, lineHeight: 1.3 }}>{sys.name}</div>
+                          <div style={{ fontFamily: MONO, fontSize: '8px', color: hc, background: `${hc}15`, borderRadius: '3px', padding: '1px 5px', flexShrink: 0, marginLeft: '8px' }}>
+                            {healthLabel(sys.health)}
+                          </div>
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginBottom: '8px' }}>{sys.vendor}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>${sys.annualCost}M/yr</div>
+                          <div style={{ fontFamily: MONO, fontSize: '10px', color: sys.aiReadinessScore < 30 ? RED : sys.aiReadinessScore < 60 ? AMBER : GREEN }}>
+                            AI {sys.aiReadinessScore}/100
+                          </div>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT — Chat */}
+        <div style={{ width: '300px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '600px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Technology Advisor · CIO Lens
+            </div>
+
+            {/* Pre-built questions */}
+            {chatMessages.length === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                {PRE_BUILT.map((q, i) => (
+                  <button key={i} onClick={() => sendChat(q)}
+                    style={{ textAlign: 'left', fontFamily: SANS, fontSize: '11px', color: MUTED, background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '8px 10px', cursor: 'pointer', lineHeight: 1.4 }}>
+                    {q.slice(0, 80)}…
+                  </button>
+                ))}
               </div>
             )}
-            <div ref={chatEndRef} />
-          </div>
-          <div className="p-4 flex gap-2" style={{borderTop: "1px solid #E2E8F0"}}>
-            <input className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none" style={{background: "#FFFFFF", border: "1px solid #E2E8F0", color: "#0F172A"}}
-              placeholder="Ask about any system..."
-              value={chatInput}
-              onChange={e => setChatInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') sendChat() }} />
-            <button onClick={() => sendChat()} disabled={chatLoading || !chatInput.trim()}
-              className="disabled:opacity-50 text-xs px-3 py-2 rounded-lg font-medium" style={{background: "#2563EB", color: "#FFFFFF"}}>Send</button>
+
+            {/* Messages */}
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+              {chatMessages.map((m, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: m.role === 'user' ? TEAL : INDIGO, fontWeight: 700 }}>
+                    {m.role === 'user' ? 'YOU' : 'ABARVA'}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.content}</div>
+                </div>
+              ))}
+              {streamingResponse && (
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: INDIGO, fontWeight: 700 }}>ABARVA</div>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{streamingResponse}</div>
+                </div>
+              )}
+              {chatLoading && !streamingResponse && (
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM }}>···</div>
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Input */}
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <input
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() } }}
+                placeholder="Ask about any system…"
+                style={{ flex: 1, background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '8px 10px', fontFamily: SANS, fontSize: '12px', color: WHITE, outline: 'none' }}
+              />
+              <button onClick={() => sendChat()}
+                style={{ fontFamily: MONO, fontSize: '10px', padding: '8px 12px', background: 'rgba(45,212,200,0.12)', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: '6px', color: TEAL, cursor: 'pointer' }}>
+                →
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -438,7 +726,7 @@ function IntelligenceContent() {
 
 export default function IntelligencePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gray-950 text-white flex items-center justify-center text-lg">Loading Intelligence Browser...</div>}>
+    <Suspense fallback={<div style={{ background: BG, minHeight: '100vh' }} />}>
       <IntelligenceContent />
     </Suspense>
   )
