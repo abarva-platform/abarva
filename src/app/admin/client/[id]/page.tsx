@@ -1267,6 +1267,69 @@ function SeedSolutionButton({ clientId, solution }: { clientId: string; solution
 
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
+function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
+  const [open, setOpen] = useState(false)
+  const clientSolutions: string[] = clientId === 'arcturus'
+    ? ['delivery', 'margin', 'tech', 'pdlc', 'ai-strategy']
+    : clientId === 'meridian'
+      ? ['tech', 'margin', 'pdlc']
+      : []
+
+  return (
+    <div style={{ position: 'fixed', bottom: '28px', right: '28px', zIndex: 1000, fontFamily: SANS }}>
+      {/* Expanded panel */}
+      {open && (
+        <div style={{
+          position: 'absolute', bottom: '52px', right: 0,
+          width: '280px', background: CARD, border: `1px solid rgba(45,212,200,0.3)`,
+          borderRadius: '10px', padding: '16px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+        }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
+            Seed Demo Engagements
+          </div>
+
+          {/* Seed all */}
+          <SeedAllDemosButton />
+
+          {/* Per-solution for this client */}
+          {clientSolutions.length > 0 && (
+            <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${BORDER}` }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>
+                This client only:
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
+                {clientSolutions.map(s => (
+                  <SeedSolutionButton key={s} clientId={clientId} solution={s} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* FAB trigger */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          fontFamily: MONO, fontSize: '11px', fontWeight: 700,
+          letterSpacing: '.06em', textTransform: 'uppercase' as const,
+          padding: '10px 18px', borderRadius: '24px',
+          background: open ? 'rgba(45,212,200,0.2)' : 'rgba(45,212,200,0.12)',
+          border: `1px solid ${open ? TEAL : 'rgba(45,212,200,0.4)'}`,
+          color: TEAL, cursor: 'pointer',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+          transition: 'all 0.15s',
+        }}
+      >
+        <span style={{ fontSize: '14px', lineHeight: 1 }}>{open ? '×' : '▶'}</span>
+        Seed Demos
+      </button>
+    </div>
+  )
+}
+
 export default function AdminClientPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
@@ -1377,6 +1440,9 @@ export default function AdminClientPage() {
           <ActivityTab data={data} />
         )}
       </div>
+
+      {/* Floating seed demos menu — accessible from every tab */}
+      <SeedDemosFloatMenu clientId={clientId} />
     </div>
   )
 }
