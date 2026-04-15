@@ -233,15 +233,32 @@ export default function Homepage() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 48 }}>
             {[
-              { name: 'Meridian Health System',   vertical: 'Healthcare',         revenue: '$11.2B', finding: '"$94M AI spend · zero documented ROI"',  dataNote: 'Built from real-world healthcare data', href: '/diagnose?client=meridian' },
-              { name: 'Arcturus Financial Group', vertical: 'Financial Services', revenue: '$16.2B', finding: '"AI spend up. Pilots: zero ROI tracked."', dataNote: 'Built from real-world finserv data',    href: '/diagnose?client=arcturus' },
+              { name: 'Meridian Health System',   initials: 'MH', vertical: 'Healthcare',         revenue: '$11.2B', finding: '"$94M AI spend. Zero with a documented ROI. We are adding to cost, not value."', dataNote: 'Built from real-world healthcare data', href: '/diagnose?client=meridian' },
+              { name: 'Arcturus Financial Group', initials: 'AF', vertical: 'Financial Services', revenue: '$16.2B', finding: '"C/I ratio 71% against a 58% peer target. $840M efficiency gap. AI spend growing — outcomes not."', dataNote: 'Built from real-world finserv data',    href: '/diagnose?client=arcturus' },
             ].map(t => (
-              <a key={t.name} href={t.href} style={{ display: 'block', background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 12, padding: 28, textDecoration: 'none' }}>
-                <div style={{ fontSize: 18, fontWeight: 500, color: DTEXT, marginBottom: 6 }}>{t.name}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE }}>{t.vertical} · {t.revenue}</div>
-                <div style={{ fontSize: 14, color: DBODY, fontStyle: 'italic', marginTop: 20, lineHeight: 1.6 }}>{t.finding}</div>
-                <div style={{ fontSize: 12, color: DMUTE, marginTop: 10 }}>{t.dataNote}</div>
-                <div style={{ marginTop: 24, fontFamily: MONO, fontSize: 11, color: TEAL }}>Explore →</div>
+              <a key={t.name} href={t.href} style={{ display: 'flex', flexDirection: 'column' as const, background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 12, padding: '28px 28px 24px', textDecoration: 'none' }}>
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 22 }}>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 8 }}>{t.vertical} · {t.revenue}</div>
+                    <div style={{ fontFamily: SERIF, fontSize: 22, color: DTEXT, lineHeight: 1.2 }}>{t.name}</div>
+                  </div>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 11, fontWeight: 700, color: TEAL, flexShrink: 0, marginLeft: 16 }}>
+                    {t.initials}
+                  </div>
+                </div>
+                {/* Divider */}
+                <div style={{ height: 1, background: DBDR, marginBottom: 22 }} />
+                {/* Finding */}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>What brought them to AbarVa</div>
+                  <p style={{ fontSize: 14, color: DBODY, fontStyle: 'italic', lineHeight: 1.72, margin: 0 }}>{t.finding}</p>
+                </div>
+                {/* Footer */}
+                <div style={{ marginTop: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: 11, color: DMUTE }}>{t.dataNote}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 12, color: TEAL }}>Explore →</div>
+                </div>
               </a>
             ))}
           </div>
@@ -282,19 +299,36 @@ export default function Homepage() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64 }}>
 
             {/* Left — entry points */}
-            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
-              <a href="/diagnose?client=meridian" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '20px 24px', textDecoration: 'none', display: 'block' }}>
-                <div style={{ fontSize: 15, fontWeight: 500, color: TEAL, marginBottom: 6 }}>See a live demo</div>
-                <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.55 }}>No login required. See real intelligence running on real data.</div>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+
+              {/* Primary: live demo — featured */}
+              <a href="/diagnose?client=meridian" style={{ background: 'rgba(45,212,200,0.05)', border: '1px solid rgba(45,212,200,0.22)', borderRadius: 10, padding: '24px 26px', textDecoration: 'none', display: 'block' }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 10 }}>No login required</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <div style={{ fontSize: 17, fontWeight: 600, color: DTEXT }}>See a live demo</div>
+                  <div style={{ fontFamily: MONO, fontSize: 14, color: TEAL }}>→</div>
+                </div>
+                <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.6 }}>Real intelligence on real data — Meridian Health or Arcturus Financial. No signup. Live now.</div>
               </a>
-              <a href="/sign-in" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '20px 24px', textDecoration: 'none', display: 'block' }}>
-                <div style={{ fontSize: 15, fontWeight: 500, color: DTEXT, marginBottom: 6 }}>Maestro login</div>
-                <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.55 }}>Enter your org email — AbarVa routes you automatically</div>
+
+              {/* Secondary: Maestro login */}
+              <a href="/sign-in" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '18px 24px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: DTEXT, marginBottom: 4 }}>Maestro login</div>
+                  <div style={{ fontSize: 12, color: DBODY }}>Enter your org email — AbarVa routes you automatically</div>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 16, color: DMUTE, marginLeft: 20, flexShrink: 0 }}>→</div>
               </a>
-              <a href="/sign-in" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '20px 24px', textDecoration: 'none', display: 'block' }}>
-                <div style={{ fontSize: 15, fontWeight: 500, color: DTEXT, marginBottom: 6 }}>Investor view</div>
-                <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.55 }}>Secured separately — request access</div>
+
+              {/* Tertiary: Investor view */}
+              <a href="/sign-in" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '18px 24px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 500, color: DTEXT, marginBottom: 4 }}>Investor view</div>
+                  <div style={{ fontSize: 12, color: DBODY }}>Secured separately — request access from a Maestro</div>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 16, color: DMUTE, marginLeft: 20, flexShrink: 0 }}>→</div>
               </a>
+
             </div>
 
             {/* Right — form */}
