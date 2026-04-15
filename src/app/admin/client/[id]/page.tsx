@@ -200,6 +200,24 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
   const [uploadedFiles, setUploadedFiles] = useState<DataFile[]>([])
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [seeding, setSeeding] = useState(false)
+  const [seedResult, setSeedResult] = useState<string | null>(null)
+
+  async function seedClerkMetadata() {
+    setSeeding(true)
+    setSeedResult(null)
+    try {
+      const res = await fetch('/api/admin/seed-clerk-metadata', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setSeedResult(`Error: ${data.error}`); return }
+      const summary = data.results.map((r: any) => `${r.email.split('+')[0]}: ${r.status}`).join(' · ')
+      setSeedResult(summary)
+    } catch (err: any) {
+      setSeedResult(`Error: ${err.message}`)
+    } finally {
+      setSeeding(false)
+    }
+  }
 
   const activeFiles = [...data.files.filter(f => f.type === 'active'), ...uploadedFiles]
   const pendingFiles = data.files.filter(f => f.type === 'pending')
@@ -434,6 +452,33 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                   <span style={{ fontSize: '12px', color: WHITE }}>{row.value}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Dev tools */}
+            <div style={cardStyle()}>
+              {sectionTitle('Dev tools')}
+              <div style={{ fontSize: '12px', color: MUTED, marginBottom: '12px', lineHeight: 1.5 }}>
+                Set Clerk publicMetadata for all demo accounts (role, clientId, preferredSolution).
+              </div>
+              <button
+                onClick={seedClerkMetadata}
+                disabled={seeding}
+                style={{
+                  width: '100%', fontFamily: MONO, fontSize: '10px', fontWeight: 700,
+                  letterSpacing: '.06em', textTransform: 'uppercase' as const,
+                  padding: '9px 0', borderRadius: '6px', cursor: seeding ? 'not-allowed' : 'pointer',
+                  background: seeding ? 'transparent' : 'rgba(45,212,200,0.1)',
+                  border: `1px solid ${seeding ? BORDER : 'rgba(45,212,200,0.3)'}`,
+                  color: seeding ? DIM : TEAL,
+                }}
+              >
+                {seeding ? 'Seeding...' : 'Seed demo user metadata'}
+              </button>
+              {seedResult && (
+                <div style={{ marginTop: '10px', fontFamily: MONO, fontSize: '10px', color: seedResult.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
+                  {seedResult}
+                </div>
+              )}
             </div>
           </div>
         </div>
