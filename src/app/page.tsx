@@ -185,15 +185,14 @@ export default function Homepage() {
           <div style={{fontFamily:MONO,fontSize:10,color:TEAL,letterSpacing:'.14em',textTransform:'uppercase' as const,marginBottom:12}}>
             See it working · No signup required
           </div>
-          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Three composite organizations. Real-world data. Live intelligence.</div>
+          <div style={{fontFamily:SERIF,fontSize:32,color:WHITE,marginBottom:8}}>Two composite organizations. Real-world data. Live intelligence.</div>
           <p style={{fontSize:15,color:MUTED,marginBottom:40,lineHeight:1.6}}>
-            Built from real-world datasets across healthcare, financial services, and retail. Every metric is real. Every problem is one a CXO has faced.
+            Built from real-world datasets across healthcare and financial services. Every metric is real. Every problem is one a CXO has faced.
           </p>
           <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:16,marginBottom:48}}>
             {[
-              {name:'Meridian Health System',  color:TEAL,      vertical:'Healthcare',         revenue:'$11.2B', finding:'"$94M AI spend · zero documented ROI"',        dataNote:'Built from real-world healthcare data',    href:'/diagnose?client=meridian'},
-              {name:'First Capital Financial', color:'#818CF8', vertical:'Financial Services', revenue:'$1.84B', finding:'"41% digital adoption · target 67%"',           dataNote:'Built from real-world finserv data',        href:'/diagnose?client=firstcapital'},
-              {name:'Apex Retail Group',       color:AMBER,     vertical:'Retail',             revenue:'$12.4B', finding:'"$248M Einstein AI idle · 18 months deployed"', dataNote:'Built from real-world retail data',         href:'/diagnose?client=apexretail'},
+              {name:'Meridian Health System',    color:TEAL,      vertical:'Healthcare',         revenue:'$11.2B', finding:'"$94M AI spend · zero documented ROI"',     dataNote:'Built from real-world healthcare data', href:'/diagnose?client=meridian'},
+              {name:'Arcturus Financial Group',  color:'#818CF8', vertical:'Financial Services', revenue:'$16.2B', finding:'"AI spend up. Pilots: zero ROI tracked."',   dataNote:'Built from real-world finserv data',    href:'/diagnose?client=arcturus'},
             ].map(t => (
               <a key={t.name} href={t.href} style={{display:'block',background:CARD,border:`1px solid ${BORDER}`,borderTop:`2px solid ${t.color}`,borderRadius:12,padding:24,textDecoration:'none',cursor:'pointer'}}>
                 <div style={{fontSize:16,fontWeight:500,color:WHITE,marginBottom:4}}>{t.name}</div>
