@@ -162,6 +162,16 @@ export default function MaestroWorkspace() {
     loadEngagement()
   }, [loadEngagement])
 
+  // Auto-seed demo for investors landing on an empty workspace
+  useEffect(() => {
+    if (!isLoaded || !isReadOnly || engagement || loading) return
+    fetch(`/api/engage/${clientId}/${solution}/seed-demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ createdBy: 'investor-view', fullDemo: true })
+    }).then(() => loadEngagement())
+  }, [isLoaded, isReadOnly, engagement, loading, clientId, solution, loadEngagement])
+
   // Load engagement list for switcher
   const loadEngagementList = useCallback(async () => {
     const res = await fetch(`/api/engage/${clientId}/${solution}/list`)
@@ -840,7 +850,7 @@ export default function MaestroWorkspace() {
                   )}
 
                   {/* Approve Phase 0 */}
-                  {!isReadOnly && activePhase.status === 'in_progress' && phase0Output && (
+                  {activePhase.status === 'in_progress' && phase0Output && (
                     <div style={{
                       marginTop: '32px', background: T.surface, border: `1px solid ${T.tealBorder}`,
                       borderRadius: '10px', padding: '20px'
@@ -853,17 +863,24 @@ export default function MaestroWorkspace() {
                         {activePhaseConfig ? ` ${solutionConfig.phases[1].name}` : ''} — and pre-populate the default workstreams with opening prompts.
                       </p>
                       <button
-                        onClick={() => approvePhase(activePhase.id)}
-                        disabled={approving}
+                        onClick={isReadOnly ? undefined : () => approvePhase(activePhase.id)}
+                        disabled={approving || isReadOnly}
                         style={{
-                          background: T.teal, color: T.bg, border: 'none', borderRadius: '8px',
+                          background: isReadOnly ? T.border : T.teal,
+                          color: isReadOnly ? T.muted : T.bg,
+                          border: 'none', borderRadius: '8px',
                           padding: '10px 24px', fontFamily: T.mono, fontSize: '11px', fontWeight: 700,
                           letterSpacing: '.08em', textTransform: 'uppercase',
-                          cursor: approving ? 'not-allowed' : 'pointer', opacity: approving ? 0.7 : 1
+                          cursor: 'not-allowed', opacity: isReadOnly ? 0.45 : (approving ? 0.7 : 1)
                         }}
                       >
                         {approving ? 'Approving...' : 'Approve Phase 0 — Unlock Phase 1'}
                       </button>
+                      {isReadOnly && (
+                        <div style={{ marginTop: '6px', fontFamily: T.mono, fontSize: '9px', color: '#F59E0B', letterSpacing: '.08em' }}>
+                          🔒 ADMIN ONLY
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -991,26 +1008,21 @@ export default function MaestroWorkspace() {
                     )}
                   </div>
 
-                  {/* Input area */}
-                  {isReadOnly ? (
-                    <div style={{ borderTop: `1px solid ${T.border}`, padding: '12px 20px', background: T.surface, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#F59E0B', flexShrink: 0 }} />
-                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.50)', letterSpacing: '.10em' }}>INVESTOR VIEW · READ ONLY</span>
-                    </div>
-                  ) : (
+                  {/* Input area — greyed out for investor, functional for admin */}
                   <div style={{
                     borderTop: `1px solid ${T.border}`, padding: '16px 20px',
                     background: T.surface, flexShrink: 0
                   }}>
-                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end', opacity: isReadOnly ? 0.35 : 1, pointerEvents: isReadOnly ? 'none' : 'auto' }}>
                       <textarea
                         value={inputText}
                         onChange={e => setInputText(e.target.value)}
                         onKeyDown={e => {
                           if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage() }
                         }}
-                        placeholder="Message the AI analyst... (Enter to send, Shift+Enter for new line)"
+                        placeholder={isReadOnly ? 'Investor view — messaging is admin only' : 'Message the AI analyst... (Enter to send, Shift+Enter for new line)'}
                         rows={2}
+                        disabled={isReadOnly}
                         style={{
                           flex: 1, background: T.bg, border: `1px solid ${T.border}`,
                           borderRadius: '8px', padding: '10px 14px', resize: 'none',
@@ -1019,10 +1031,11 @@ export default function MaestroWorkspace() {
                         }}
                       />
                       <button
+                        disabled={isReadOnly}
                         onClick={() => fileInputRef.current?.click()}
                         style={{
                           background: 'transparent', border: `1px solid ${T.border}`,
-                          borderRadius: '8px', padding: '10px 12px', cursor: 'pointer',
+                          borderRadius: '8px', padding: '10px 12px', cursor: isReadOnly ? 'not-allowed' : 'pointer',
                           color: T.text2, fontSize: '14px'
                         }}
                         title="Attach file"
@@ -1031,21 +1044,25 @@ export default function MaestroWorkspace() {
                       </button>
                       <button
                         onClick={sendMessage}
-                        disabled={!inputText.trim() || sending}
+                        disabled={!inputText.trim() || sending || isReadOnly}
                         style={{
-                          background: inputText.trim() && !sending ? T.teal : T.border,
-                          color: inputText.trim() && !sending ? T.bg : T.muted,
+                          background: inputText.trim() && !sending && !isReadOnly ? T.teal : T.border,
+                          color: inputText.trim() && !sending && !isReadOnly ? T.bg : T.muted,
                           border: 'none', borderRadius: '8px', padding: '10px 18px',
                           fontFamily: T.mono, fontSize: '11px', fontWeight: 700,
                           letterSpacing: '.06em', textTransform: 'uppercase',
-                          cursor: !inputText.trim() || sending ? 'not-allowed' : 'pointer'
+                          cursor: 'not-allowed'
                         }}
                       >
                         Send
                       </button>
                     </div>
+                    {isReadOnly && (
+                      <div style={{ marginTop: '6px', fontFamily: T.mono, fontSize: '9px', color: '#F59E0B', letterSpacing: '.08em' }}>
+                        🔒 ADMIN ONLY — investor view is read-only
+                      </div>
+                    )}
                   </div>
-                  )}
                 </div>
               )}
             </>
@@ -1104,6 +1121,7 @@ export default function MaestroWorkspace() {
                 publishing={publishing}
                 onGenerate={generateOutput}
                 onPublish={publishOutput}
+                isReadOnly={isReadOnly}
               />
             )}
             {rightPanel === 'activity' && (
@@ -1555,9 +1573,9 @@ function FindingsPanel({ findings, onUpdate }: { findings: any[]; onUpdate: (id:
   )
 }
 
-function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGenerate, onPublish }: {
+function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGenerate, onPublish, isReadOnly }: {
   phase: any; phaseOutput: any; generatingOutput: boolean; publishing: boolean;
-  onGenerate: () => void; onPublish: (id: string) => void
+  onGenerate: () => void; onPublish: (id: string) => void; isReadOnly?: boolean
 }) {
   if (!phase) return null
   return (
@@ -1573,19 +1591,20 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
             The AI will synthesise all workstream discussions into a structured deliverable.
           </div>
           <button
-            onClick={onGenerate}
-            disabled={generatingOutput}
+            onClick={isReadOnly ? undefined : onGenerate}
+            disabled={generatingOutput || isReadOnly}
             style={{
-              width: '100%', background: generatingOutput ? '#1C2D45' : '#2DD4C8',
-              color: generatingOutput ? '#475569' : '#060A12',
+              width: '100%', background: (generatingOutput || isReadOnly) ? '#1C2D45' : '#2DD4C8',
+              color: (generatingOutput || isReadOnly) ? '#475569' : '#060A12',
               border: 'none', borderRadius: '8px', padding: '12px',
               fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700,
               letterSpacing: '.08em', textTransform: 'uppercase',
-              cursor: generatingOutput ? 'not-allowed' : 'pointer'
+              cursor: 'not-allowed', opacity: isReadOnly ? 0.45 : 1
             }}
           >
             {generatingOutput ? 'Generating...' : 'Generate Draft Output'}
           </button>
+          {isReadOnly && <div style={{ marginTop: '4px', fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#F59E0B', letterSpacing: '.08em' }}>🔒 ADMIN ONLY</div>}
         </div>
       ) : (
         <div>
@@ -1611,20 +1630,23 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
           </div>
 
           {phaseOutput.status !== 'published' && phaseOutput.status !== 'approved' && (
+            <>
             <button
-              onClick={() => onPublish(phaseOutput.id)}
-              disabled={publishing}
+              onClick={isReadOnly ? undefined : () => onPublish(phaseOutput.id)}
+              disabled={publishing || isReadOnly}
               style={{
-                width: '100%', background: publishing ? '#1C2D45' : '#818CF8',
-                color: publishing ? '#475569' : '#060A12',
+                width: '100%', background: (publishing || isReadOnly) ? '#1C2D45' : '#818CF8',
+                color: (publishing || isReadOnly) ? '#475569' : '#060A12',
                 border: 'none', borderRadius: '8px', padding: '12px',
                 fontFamily: 'JetBrains Mono, monospace', fontSize: '11px', fontWeight: 700,
                 letterSpacing: '.08em', textTransform: 'uppercase',
-                cursor: publishing ? 'not-allowed' : 'pointer', marginBottom: '8px'
+                cursor: 'not-allowed', marginBottom: '4px', opacity: isReadOnly ? 0.45 : 1
               }}
             >
               {publishing ? 'Publishing...' : 'Publish to Client'}
             </button>
+            {isReadOnly && <div style={{ marginTop: '2px', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#F59E0B', letterSpacing: '.08em' }}>🔒 ADMIN ONLY</div>}
+            </>
           )}
 
           {phaseOutput.status === 'published' && (

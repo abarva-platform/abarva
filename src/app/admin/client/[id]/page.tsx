@@ -479,6 +479,17 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
                   {seedResult}
                 </div>
               )}
+
+              {/* Seed all demo engagements */}
+              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${BORDER}` }}>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
+                  Seed All Demo Engagements
+                </div>
+                <div style={{ fontSize: '12px', color: MUTED, marginBottom: '12px', lineHeight: 1.5 }}>
+                  Pre-load complete demo engagements for all 8 client × solution pairs. Investors see live data immediately.
+                </div>
+                <SeedAllDemosButton />
+              </div>
             </div>
           </div>
         </div>
@@ -1132,6 +1143,55 @@ function ActivityTab({ data }: { data: ClientData }) {
         </div>
       ))}
     </div>
+  )
+}
+
+// ─── SEED ALL DEMOS BUTTON ───────────────────────────────────────────────────
+
+function SeedAllDemosButton() {
+  const [seeding, setSeeding] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+
+  async function handleSeedAll() {
+    setSeeding(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/admin/seed-all-demos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ createdBy: 'admin' }),
+      })
+      const data = await res.json()
+      setResult(data.summary || data.error || 'Done')
+    } catch (err: any) {
+      setResult(`Error: ${err.message}`)
+    } finally {
+      setSeeding(false)
+    }
+  }
+
+  return (
+    <>
+      <button
+        onClick={handleSeedAll}
+        disabled={seeding}
+        style={{
+          width: '100%', fontFamily: MONO, fontSize: '10px', fontWeight: 700,
+          letterSpacing: '.06em', textTransform: 'uppercase' as const,
+          padding: '9px 0', borderRadius: '6px', cursor: seeding ? 'not-allowed' : 'pointer',
+          background: seeding ? 'transparent' : 'rgba(45,212,200,0.1)',
+          border: `1px solid ${seeding ? BORDER : 'rgba(45,212,200,0.3)'}`,
+          color: seeding ? DIM : TEAL,
+        }}
+      >
+        {seeding ? 'Seeding all demos…' : 'Seed all demo engagements (8 pairs)'}
+      </button>
+      {result && (
+        <div style={{ marginTop: '8px', fontFamily: MONO, fontSize: '10px', color: result.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
+          {result}
+        </div>
+      )}
+    </>
   )
 }
 
