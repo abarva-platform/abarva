@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildSystemPrompt, PromptContext } from '@/lib/prompts/engagement-prompts'
 import { SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
+import { getClientDataset } from '@/lib/knowledge/client-datasets'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -89,6 +90,10 @@ export async function POST(
       .select('*')
       .eq('engagement_id', engagement.id)
 
+    // Load client dataset knowledge (gives Maestro AI specific knowledge of
+    // the client's technology landscape, ETL stack, systems, financials, etc.)
+    const clientDataset = getClientDataset(engagement.client_id, engagement.solution)
+
     // Build context for AI
     const ctx: PromptContext = {
       clientName: engagement.metadata?.client_name || engagement.client_id,
@@ -98,6 +103,7 @@ export async function POST(
       workstreamName: workstream.name,
       phase0Output,
       genomeMatches: genomeMatches || [],
+      datasetSummaries: clientDataset || undefined,
       conversationHistory: history || []
     }
 
