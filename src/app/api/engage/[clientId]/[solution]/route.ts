@@ -15,15 +15,19 @@ export async function GET(
     const { clientId, solution } = await params
     const supabase = getSupabase()
 
-    // Get engagement
+    // Get active engagement
     const { data: engagement, error: engErr } = await supabase
       .from('engagements')
       .select('*')
       .eq('client_id', clientId)
       .eq('solution', solution)
-      .single()
+      .eq('is_active', true)
+      .maybeSingle()
 
-    if (engErr || !engagement) {
+    if (engErr) {
+      return NextResponse.json({ error: engErr.message }, { status: 500 })
+    }
+    if (!engagement) {
       return NextResponse.json({ exists: false }, { status: 404 })
     }
 

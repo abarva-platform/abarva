@@ -23,7 +23,7 @@ function getSupabase() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { clientId, clientName, solution, createdBy } = await request.json()
+    const { clientId, clientName, solution, createdBy, engagementName } = await request.json()
 
     if (!clientId || !solution || !clientName) {
       return NextResponse.json({ error: 'clientId, clientName, solution required' }, { status: 400 })
@@ -36,17 +36,30 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabase()
 
-    // Upsert engagement (idempotent)
+    // Deactivate all existing engagements for this client×solution
+    await supabase
+      .from('engagements')
+      .update({ is_active: false })
+      .eq('client_id', clientId)
+      .eq('solution', solution)
+
+    // Derive a default name if none provided
+    const defaultName = `${clientName} — ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
+    const finalName = engagementName?.trim() || defaultName
+
+    // Always INSERT a new engagement (no upsert — UNIQUE constraint removed)
     const { data: engagement, error: engErr } = await supabase
       .from('engagements')
-      .upsert({
+      .insert({
         client_id: clientId,
         solution,
         status: 'active',
         current_phase: 0,
         created_by: createdBy || 'system',
+        engagement_name: finalName,
+        is_active: true,
         metadata: { client_name: clientName }
-      }, { onConflict: 'client_id,solution' })
+      })
       .select()
       .single()
 

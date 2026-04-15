@@ -98,6 +98,13 @@ export default function MaestroWorkspace() {
   const [runningVendorIntel, setRunningVendorIntel] = useState(false)
   const [vendorIntelResult, setVendorIntelResult] = useState<any>(null)
 
+  // Engagement switcher
+  const [engagementList, setEngagementList] = useState<any[]>([])
+  const [switcherOpen, setSwitcherOpen] = useState(false)
+  const [showNewModal, setShowNewModal] = useState(false)
+  const [newEngagementName, setNewEngagementName] = useState('')
+  const [switching, setSwitching] = useState(false)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -146,6 +153,52 @@ export default function MaestroWorkspace() {
     loadEngagement()
   }, [loadEngagement])
 
+  // Load engagement list for switcher
+  const loadEngagementList = useCallback(async () => {
+    const res = await fetch(`/api/engage/${clientId}/${solution}/list`)
+    if (res.ok) {
+      const data = await res.json()
+      setEngagementList(data.engagements || [])
+    }
+  }, [clientId, solution])
+
+  useEffect(() => {
+    loadEngagementList()
+  }, [loadEngagementList])
+
+  const switchEngagement = async (engagementId: string) => {
+    setSwitching(true)
+    setSwitcherOpen(false)
+    await fetch(`/api/engage/${clientId}/${solution}/switch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ engagementId })
+    })
+    await loadEngagement()
+    await loadEngagementList()
+    setSwitching(false)
+  }
+
+  const startNewEngagement = async () => {
+    if (!newEngagementName.trim()) return
+    setStarting(true)
+    setShowNewModal(false)
+    const clientName = clientId === 'arcturus' ? 'Arcturus Financial Group' : 'Meridian Health System'
+    await fetch('/api/engage/start', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        clientId, clientName, solution,
+        createdBy: user?.fullName || 'Anand Sundaram',
+        engagementName: newEngagementName.trim()
+      })
+    })
+    setNewEngagementName('')
+    await loadEngagement()
+    await loadEngagementList()
+    setStarting(false)
+  }
+
   // Load opportunity map for margin solution
   useEffect(() => {
     if (solution !== 'margin') return
@@ -174,19 +227,21 @@ export default function MaestroWorkspace() {
 
   const startEngagement = async () => {
     setStarting(true)
-    const name = clientId === 'arcturus' ? 'Arcturus Financial Group' : 'Meridian Health System'
+    const clientName = clientId === 'arcturus' ? 'Arcturus Financial Group' : 'Meridian Health System'
     const res = await fetch('/api/engage/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         clientId,
-        clientName: name,
+        clientName,
         solution,
-        createdBy: user?.fullName || 'Anand Sundaram'
+        createdBy: user?.fullName || 'Anand Sundaram',
+        engagementName: `${clientName} — Demo`
       })
     })
     if (res.ok) {
       await loadEngagement()
+      await loadEngagementList()
     }
     setStarting(false)
   }
@@ -409,6 +464,73 @@ export default function MaestroWorkspace() {
           </>
         )}
         <div style={{ flex: 1 }} />
+
+        {/* Engagement Switcher */}
+        <div style={{ position: 'relative' }}>
+          <button
+            onClick={() => setSwitcherOpen(o => !o)}
+            disabled={switching}
+            style={{
+              background: 'rgba(45,212,200,0.06)', border: `1px solid rgba(45,212,200,0.2)`,
+              borderRadius: '6px', padding: '4px 10px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px'
+            }}
+          >
+            <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {switching ? 'Switching...' : (engagement?.engagement_name || 'Default')}
+            </span>
+            <span style={{ color: T.teal, fontSize: '9px' }}>▾</span>
+          </button>
+
+          {switcherOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+              background: T.surface, border: `1px solid ${T.border}`,
+              borderRadius: '10px', padding: '6px 0', zIndex: 300, minWidth: '260px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+            }}>
+              <div style={{ padding: '4px 14px 8px', fontFamily: T.mono, fontSize: '8px', color: T.muted, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                Engagement slots
+              </div>
+              {engagementList.map(eng => (
+                <button
+                  key={eng.id}
+                  onClick={() => eng.id !== engagement?.id && switchEngagement(eng.id)}
+                  style={{
+                    width: '100%', textAlign: 'left', padding: '8px 14px',
+                    background: eng.is_active ? T.tealDim : 'transparent',
+                    border: 'none', cursor: eng.id === engagement?.id ? 'default' : 'pointer',
+                    display: 'flex', alignItems: 'center', gap: '8px'
+                  }}
+                >
+                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0, background: eng.is_active ? T.teal : T.muted }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: T.sans, fontSize: '12px', color: eng.is_active ? T.teal : T.text, fontWeight: eng.is_active ? 600 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {eng.engagement_name || 'Unnamed'}
+                    </div>
+                    <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, marginTop: '1px' }}>
+                      Phase {eng.current_phase} · {eng.status}
+                    </div>
+                  </div>
+                  {eng.is_active && <span style={{ fontFamily: T.mono, fontSize: '8px', color: T.teal, textTransform: 'uppercase', letterSpacing: '.06em' }}>Active</span>}
+                </button>
+              ))}
+              <div style={{ borderTop: `1px solid ${T.border}`, margin: '4px 0' }} />
+              <button
+                onClick={() => { setSwitcherOpen(false); setShowNewModal(true) }}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '8px 14px',
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}
+              >
+                <span style={{ color: T.teal, fontSize: '14px', lineHeight: 1 }}>+</span>
+                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal }}>New engagement</span>
+              </button>
+            </div>
+          )}
+        </div>
+
         <a href={`/portal/${solution}?client=${clientId}`} target="_blank" style={{
           fontFamily: T.mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase',
           color: T.text2, textDecoration: 'none', padding: '4px 10px',
@@ -889,6 +1011,79 @@ export default function MaestroWorkspace() {
         await fetch(`/api/engage/phase/${activePhaseId}/upload`, { method: 'POST', body: fd })
         await loadEngagement()
       }} />
+
+      {/* New Engagement Modal */}
+      {showNewModal && (
+        <div
+          onClick={() => setShowNewModal(false)}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(6,10,18,0.85)',
+            backdropFilter: 'blur(4px)', zIndex: 999,
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: T.surface, border: `1px solid ${T.border}`,
+              borderRadius: '14px', padding: '32px', width: '420px',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Engagement Slots
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '6px' }}>
+              New Engagement
+            </div>
+            <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, marginBottom: '24px', lineHeight: 1.6 }}>
+              Creates a fresh {solutionConfig?.name || solution} engagement for {clientId}. The current active engagement is preserved and can be switched back at any time.
+            </div>
+
+            <label style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.1em', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+              Engagement Name
+            </label>
+            <input
+              autoFocus
+              value={newEngagementName}
+              onChange={e => setNewEngagementName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && newEngagementName.trim()) startNewEngagement() }}
+              placeholder={`e.g. ${clientId === 'arcturus' ? 'Arcturus' : 'Meridian'} — Q3 Demo`}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                background: T.bg, border: `1px solid ${T.border}`, borderRadius: '8px',
+                padding: '10px 14px', fontFamily: T.sans, fontSize: '13px', color: T.text,
+                outline: 'none', marginBottom: '20px'
+              }}
+            />
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowNewModal(false)}
+                style={{
+                  padding: '9px 18px', borderRadius: '7px', cursor: 'pointer',
+                  background: 'transparent', border: `1px solid ${T.border}`,
+                  fontFamily: T.sans, fontSize: '13px', color: T.text2
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={startNewEngagement}
+                disabled={!newEngagementName.trim()}
+                style={{
+                  padding: '9px 20px', borderRadius: '7px', cursor: newEngagementName.trim() ? 'pointer' : 'not-allowed',
+                  background: newEngagementName.trim() ? T.teal : 'rgba(45,212,200,0.15)',
+                  border: 'none', fontFamily: T.sans, fontSize: '13px',
+                  color: newEngagementName.trim() ? '#060A12' : T.teal, fontWeight: 600
+                }}
+              >
+                Start Engagement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
