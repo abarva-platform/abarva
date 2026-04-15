@@ -1334,6 +1334,365 @@ function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
   )
 }
 
+// ─── MODULE PANELS ─────────────────────────────────────────────────────────────
+
+const ARCH_DATA: Record<string, { current: { layer: string; systems: string[] }[]; gaps: string[]; target: string[] }> = {
+  meridian: {
+    current: [
+      { layer: 'Clinical', systems: ['Epic EHR (23 hospitals)', 'Legacy Epic at Blue Ridge', 'Cerner (pre-migration)'] },
+      { layer: 'Revenue Cycle', systems: ['Ensemble Health Partners', 'Experian Health', 'Waystar clearinghouse'] },
+      { layer: 'Analytics', systems: ['12 of 47 Epic Cogito dashboards', 'Tableau (departmental)', 'Excel-based reporting'] },
+      { layer: 'Integration', systems: ['Mulesoft (limited)', '14+ point-to-point interfaces', 'No unified data platform'] },
+    ],
+    gaps: ['No golden patient record across 23 hospitals', 'Blue Ridge on legacy Epic — integration blocked', '34% of clinical documentation outside Epic (workarounds)', 'Prior auth automation only 23% of payers'],
+    target: ['Unified Epic across all 23 hospitals by Q4 2026', 'Real-time RCM with AI denial prevention', 'Centralized analytics hub (all 47 Cogito dashboards)', 'HL7 FHIR-compliant integration layer'],
+  },
+  arcturus: {
+    current: [
+      { layer: 'Portfolio Management', systems: ['Bloomberg AIM (core)', 'Bloomberg Terminal (13 seats)', 'Legacy IBOR systems'] },
+      { layer: 'Client Management', systems: ['Salesforce FSC (44% adoption)', 'Legacy CRM (still live)', 'Manual Excel reporting'] },
+      { layer: 'Data & Analytics', systems: ['14 siloed data systems', 'No golden data record', '3-day reporting lag'] },
+      { layer: 'AI & ML', systems: ['28 AI initiatives (0 with baselines)', 'No MLOps platform', 'Ad-hoc Python in business units'] },
+    ],
+    gaps: ['Bloomberg API rate limits 100x below ML requirements', 'Salesforce FSC and legacy CRM running in parallel (dual data)', 'No unified data platform — 14 siloed systems', 'CDO role vacant 11 months — no AI governance'],
+    target: ['Bloomberg AIM modernised with API-first architecture', 'Salesforce FSC single CRM at 90% adoption', 'Unified cloud data platform with real-time feeds', 'AI governance layer with baselines for all 28 initiatives'],
+  },
+}
+
+const AI_DATA: Record<string, { summary: string; initiatives: { name: string; status: string; blocker?: string; ai_type: string }[] }> = {
+  meridian: {
+    summary: '$84M approved for transformation vs $200M needed. 3 AI pilots active, 1 blocked.',
+    initiatives: [
+      { name: 'Coding AI (Optum360)', status: 'live', ai_type: 'NLP · Code optimization' },
+      { name: 'Sepsis Early Warning', status: 'partial', blocker: 'Live at 5 hospitals, failing at 3, blocked at 13', ai_type: 'Predictive · Clinical' },
+      { name: 'Prior Auth AI', status: 'blocked', blocker: 'Epic module purchased, only 23% deployed across payers', ai_type: 'Workflow · RCM' },
+      { name: 'Unified Data Platform', status: 'planning', blocker: 'Blue Ridge migration must complete first', ai_type: 'Data infrastructure' },
+    ],
+  },
+  arcturus: {
+    summary: '$94M committed across 28 AI initiatives. 0 with baselines. 14 blocked by CDO vacancy.',
+    initiatives: [
+      { name: 'Portfolio AI (Bloomberg)', status: 'blocked', blocker: 'API rate limit 100x below ML requirement', ai_type: 'Portfolio optimization' },
+      { name: 'Client Analytics AI', status: 'blocked', blocker: 'Salesforce FSC at 44% adoption — data incomplete', ai_type: 'Client intelligence' },
+      { name: 'MAS FEAT Compliance AI', status: 'overdue', blocker: '4 months overdue — $2.4B Singapore AUM at risk', ai_type: 'Regulatory · Compliance' },
+      { name: 'Trading Cost Analysis', status: 'blocked', blocker: 'Bloomberg data exports missing 38% of required fields', ai_type: 'Trade analytics' },
+      { name: '24 additional initiatives', status: 'stalled', blocker: 'CDO vacant 11 months — no governance or baseline', ai_type: 'Various' },
+    ],
+  },
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  live: '#34D399', partial: '#F59E0B', blocked: '#EF4444',
+  overdue: '#EF4444', stalled: '#EF4444', planning: '#818CF8',
+}
+
+function PanelHeader({ title, subtitle, color, onClose }: { title: string; subtitle: string; color: string; onClose: () => void }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
+      <div>
+        <div style={{ fontSize: '22px', fontWeight: 500, color: WHITE, fontFamily: SERIF, marginBottom: '4px' }}>{title}</div>
+        <div style={{ fontSize: '12px', color: MUTED, fontFamily: MONO }}>{subtitle}</div>
+      </div>
+      <button onClick={onClose} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '6px 16px', fontSize: '12px', color: MUTED, fontFamily: MONO, cursor: 'pointer', letterSpacing: '.04em', flexShrink: 0 }}>
+        ← Back to Maestro
+      </button>
+    </div>
+  )
+}
+
+function DiagnosePanel({ data, onClose }: { data: ClientData; onClose: () => void }) {
+  const critCount = data.metrics.filter(m => m.status === 'critical').length
+  const warnCount = data.metrics.filter(m => m.status === 'warning').length
+  return (
+    <div>
+      <PanelHeader title="Diagnostic Intelligence" subtitle={`${critCount} critical · ${warnCount} warning · ${data.genomePatternsMatched.length} genome patterns matched`} color={TEAL} onClose={onClose} />
+
+      <div style={{ marginBottom: '28px' }}>
+        {sectionTitle('Situation metrics')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {data.metrics.map((m, i) => (
+            <div key={i} style={cardStyle()}>
+              <div style={labelStyle}>{m.label}</div>
+              <div style={{ fontSize: '22px', fontWeight: 700, color: m.status === 'critical' ? RED : AMBER, fontFamily: MONO, lineHeight: 1 }}>{m.value}</div>
+              <div style={{ fontSize: '11px', color: DIM, fontFamily: MONO, marginTop: '4px' }}>{m.benchmark}</div>
+              <div style={{ fontSize: '11px', color: MUTED, marginTop: '6px' }}>{m.gap}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ marginBottom: '28px' }}>
+        {sectionTitle('Contradiction matrix')}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+          {data.contradictions.map((c, i) => (
+            <div key={i} style={cardStyle({ borderColor: c.severity === 'critical' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)' })}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ fontSize: '10px', color: MUTED, fontFamily: MONO, letterSpacing: '.05em', marginBottom: '6px' }}>CLAIM</div>
+                  <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{c.claim}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '10px', color: RED, fontFamily: MONO, letterSpacing: '.05em', marginBottom: '6px' }}>REALITY</div>
+                  <div style={{ fontSize: '13px', color: WHITE, lineHeight: 1.5 }}>{c.reality}</div>
+                </div>
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: c.severity === 'critical' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)', color: c.severity === 'critical' ? RED : AMBER }}>
+                {c.severity.toUpperCase()}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        {sectionTitle('Genome risk patterns active')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          {data.genomePatternsMatched.map((p, i) => (
+            <div key={i} style={cardStyle({ borderColor: 'rgba(239,68,68,0.2)' })}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: RED }}>{p.code}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE, marginTop: '2px' }}>{p.name}</div>
+                </div>
+                <div style={{ textAlign: 'right' as const }}>
+                  <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: RED }}>{p.failureRate}%</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>fail rate</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{p.mitigation}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TechnologyPanel({ clientId, data, onClose }: { clientId: string; data: ClientData; onClose: () => void }) {
+  const techItems = clientId === 'meridian' ? [
+    { platform: 'Epic EHR', status: 'warning', detail: `Optimization: ${meridianHealth.technology.ehr.optimizationScore}/100 (reported 71, actual 44-47)`, issues: meridianHealth.technology.ehr.knownGaps },
+    { platform: 'Ensemble Health Partners (RCM)', status: 'critical', detail: `$${meridianHealth.technology.rcm.contractValue}M contract · Denial rate ${meridianHealth.technology.rcm.denialRate}%`, issues: [`${meridianHealth.technology.rcm.denialRate}% denial rate vs ${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, 'Prior auth SLA missed — avg 4.2 days vs 1.8 peer', 'Penalties in contract never enforced — $8M uncollected'] },
+  ] : [
+    { platform: 'Bloomberg AIM', status: 'critical', detail: '3 consecutive modernisation failures ($22.2M total)', issues: ['API rate limit 100x below ML inference requirements', 'Data exports missing 38% of trade cost analysis fields', 'Contract auto-renews Dec 2026 with no API improvement terms'] },
+    { platform: 'Salesforce FSC', status: 'critical', detail: '$38M investment · 18 months deployed · 44% adoption', issues: ['Adoption target reset from 85% to 70% without board disclosure', 'NPS 31 vs 58 industry median', '4 AI initiatives blocked by adoption failure'] },
+    { platform: 'Shadow IT', status: 'warning', detail: 'Est. $18M annually — ungoverned SaaS', issues: ['3 business units with direct procurement, no IT review gate', 'IT budget grew 12% vs 2.5% revenue growth', '$178M above peer benchmark annually'] },
+  ]
+
+  return (
+    <div>
+      <PanelHeader title="Technology Intelligence" subtitle="Platform stack · Contracts · Spend analysis" color={PURPLE} onClose={onClose} />
+      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px', marginBottom: '24px' }}>
+        {techItems.map((item, i) => (
+          <div key={i} style={cardStyle({ borderColor: item.status === 'critical' ? 'rgba(239,68,68,0.22)' : 'rgba(245,158,11,0.18)' })}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: WHITE }}>{item.platform}</div>
+                <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px' }}>{item.detail}</div>
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: '9px', padding: '3px 10px', borderRadius: '10px', background: item.status === 'critical' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)', color: item.status === 'critical' ? RED : AMBER, flexShrink: 0, marginLeft: '16px' }}>
+                {item.status.toUpperCase()}
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
+              {item.issues.map((issue, j) => (
+                <div key={j} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span style={{ color: RED, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+                  <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{issue}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={cardStyle()}>
+        {sectionTitle('Spend benchmarks')}
+        {data.industryBenchmarks.map((b, i) => (
+          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: i < data.industryBenchmarks.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+            <div style={{ fontSize: '13px', color: MUTED }}>{b.label}</div>
+            <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: MONO, fontSize: '14px', color: RED }}>{b.ours}{b.unit}</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>ours</div>
+              </div>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: MONO, fontSize: '14px', color: GREEN }}>{b.peer}{b.unit}</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>peer</div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: '11px', color: AMBER, minWidth: '200px', textAlign: 'right' as const }}>{b.gap}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ArchitecturePanel({ clientId, onClose }: { clientId: string; onClose: () => void }) {
+  const arch = ARCH_DATA[clientId] ?? ARCH_DATA.meridian
+  return (
+    <div>
+      <PanelHeader title="Architecture Intelligence" subtitle="Current state · Gap analysis · Target architecture" color={'#4DA3FF'} onClose={onClose} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+        <div style={cardStyle()}>
+          {sectionTitle('Current state')}
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+            {arch.current.map((layer, i) => (
+              <div key={i}>
+                <div style={{ fontSize: '11px', fontWeight: 600, color: MUTED, fontFamily: MONO, marginBottom: '6px', textTransform: 'uppercase' as const, letterSpacing: '.05em' }}>{layer.layer}</div>
+                {layer.systems.map((s, j) => (
+                  <div key={j} style={{ fontSize: '12px', color: WHITE, padding: '5px 0', borderBottom: j < layer.systems.length - 1 ? `1px solid ${BORDER}` : 'none' }}>{s}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+          <div style={cardStyle({ borderColor: 'rgba(239,68,68,0.2)' })}>
+            {sectionTitle('Architecture gaps')}
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '8px' }}>
+              {arch.gaps.map((g, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span style={{ color: RED, fontSize: '10px', marginTop: '3px', flexShrink: 0 }}>▸</span>
+                  <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{g}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={cardStyle({ borderColor: 'rgba(52,211,153,0.18)' })}>
+            {sectionTitle('Target architecture')}
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '8px' }}>
+              {arch.target.map((t, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span style={{ color: GREEN, fontSize: '10px', marginTop: '3px', flexShrink: 0 }}>▸</span>
+                  <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{t}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AIDeliveryPanel({ clientId, data, onClose }: { clientId: string; data: ClientData; onClose: () => void }) {
+  const ai = AI_DATA[clientId] ?? AI_DATA.meridian
+  return (
+    <div>
+      <PanelHeader title="AI Delivery Intelligence" subtitle="Portfolio · Blockers · Genome risk patterns" color={AMBER} onClose={onClose} />
+      <div style={cardStyle({ marginBottom: '24px', background: 'rgba(245,158,11,0.05)', borderColor: 'rgba(245,158,11,0.2)' })}>
+        <div style={{ fontSize: '13px', color: MUTED }}>{ai.summary}</div>
+      </div>
+      <div style={{ marginBottom: '28px' }}>
+        {sectionTitle('AI initiative status')}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '10px' }}>
+          {ai.initiatives.map((item, i) => (
+            <div key={i} style={cardStyle({ borderColor: `${STATUS_COLOR[item.status]}28` })}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: item.blocker ? '8px' : '0' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>{item.name}</div>
+                  <div style={{ fontSize: '11px', color: DIM, fontFamily: MONO, marginTop: '2px' }}>{item.ai_type}</div>
+                </div>
+                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '3px 10px', borderRadius: '10px', background: `${STATUS_COLOR[item.status]}18`, color: STATUS_COLOR[item.status], flexShrink: 0, marginLeft: '16px' }}>
+                  {item.status.toUpperCase()}
+                </span>
+              </div>
+              {item.blocker && (
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span style={{ color: RED, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+                  <span style={{ fontSize: '12px', color: MUTED }}>{item.blocker}</span>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        {sectionTitle('Genome risk patterns — AI delivery')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          {data.genomePatternsMatched.map((p, i) => (
+            <div key={i} style={cardStyle({ borderColor: 'rgba(239,68,68,0.18)' })}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: RED }}>{p.code} · {p.name}</div>
+                <div style={{ fontFamily: MONO, fontSize: '16px', fontWeight: 700, color: RED }}>{p.failureRate}%</div>
+              </div>
+              <div style={{ fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{p.mitigation}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BusinessCasePanel({ data, onClose }: { data: ClientData; onClose: () => void }) {
+  const criticalMetrics = data.metrics.filter(m => m.status === 'critical')
+  return (
+    <div>
+      <PanelHeader title="Business Case Intelligence" subtitle="CFO-grade · Genome-validated value drivers" color={GREEN} onClose={onClose} />
+      <div style={{ marginBottom: '28px' }}>
+        {sectionTitle('Value at stake — benchmark gaps')}
+        <div style={{ border: `1px solid ${BORDER}`, borderRadius: '8px', overflow: 'hidden' }}>
+          {data.industryBenchmarks.map((b, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', background: CARD, borderBottom: i < data.industryBenchmarks.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+              <div style={{ flex: 1, fontSize: '13px', color: MUTED }}>{b.label}</div>
+              <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+                <div style={{ textAlign: 'right' as const }}>
+                  <div style={{ fontFamily: MONO, fontSize: '16px', fontWeight: 700, color: RED }}>{b.ours}{b.unit}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>current</div>
+                </div>
+                <div style={{ textAlign: 'right' as const }}>
+                  <div style={{ fontFamily: MONO, fontSize: '16px', fontWeight: 700, color: GREEN }}>{b.peer}{b.unit}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>peer median</div>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '11px', color: AMBER, minWidth: '220px', textAlign: 'right' as const }}>{b.gap}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom: '28px' }}>
+        {sectionTitle('Critical performance gaps')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '12px' }}>
+          {criticalMetrics.map((m, i) => (
+            <div key={i} style={cardStyle({ borderColor: 'rgba(239,68,68,0.2)' })}>
+              <div style={labelStyle}>{m.label}</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: RED, fontFamily: MONO }}>{m.value}</div>
+              <div style={{ fontSize: '11px', color: DIM, fontFamily: MONO, marginTop: '4px' }}>{m.benchmark}</div>
+              <div style={{ fontSize: '11px', color: MUTED, marginTop: '8px' }}>{m.gap}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={cardStyle({ background: 'rgba(52,211,153,0.04)', borderColor: 'rgba(52,211,153,0.2)' })}>
+        {sectionTitle('AbarVa engagement model')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          {[
+            { label: 'Fee model', value: 'Outcome-linked', desc: 'Fee tied to verified performance improvements only' },
+            { label: 'Genome validation', value: `${data.genomePatternsMatched.length} patterns`, desc: 'Cross-client evidence base — not hypothesis' },
+            { label: 'Assurance', value: 'Maestro', desc: 'Embedded operator holds vendors accountable' },
+          ].map((item, i) => (
+            <div key={i}>
+              <div style={labelStyle}>{item.label}</div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: GREEN, marginBottom: '4px' }}>{item.value}</div>
+              <div style={{ fontSize: '12px', color: MUTED }}>{item.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ModulePanel({ module, data, clientId, onClose }: { module: string; data: ClientData; clientId: string; onClose: () => void }) {
+  if (module === 'diagnose') return <DiagnosePanel data={data} onClose={onClose} />
+  if (module === 'technology') return <TechnologyPanel clientId={clientId} data={data} onClose={onClose} />
+  if (module === 'architecture') return <ArchitecturePanel clientId={clientId} onClose={onClose} />
+  if (module === 'ai-delivery') return <AIDeliveryPanel clientId={clientId} data={data} onClose={onClose} />
+  if (module === 'business-case') return <BusinessCasePanel data={data} onClose={onClose} />
+  return null
+}
+
 export default function AdminClientPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
@@ -1345,6 +1704,7 @@ export default function AdminClientPage() {
   const [diTab, setDiTab] = useState('client')
   const [projView, setProjView] = useState('dashboard')
   const [showNewProject, setShowNewProject] = useState(false)
+  const [activeModule, setActiveModule] = useState<string | null>(null)
 
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
@@ -1410,22 +1770,22 @@ export default function AdminClientPage() {
             Open module →
           </div>
           {[
-            { label: 'Diagnose',              sub: 'Situation · Findings',         href: `/diagnose?client=${clientId}`,          color: TEAL },
-            { label: 'Technology',            sub: 'Stack · Contracts · Spend',    href: `/intelligence?client=${clientId}`,      color: PURPLE },
-            { label: 'Architecture',          sub: 'Current & target state',       href: `/architecture?client=${clientId}`,      color: '#4DA3FF' },
-            { label: 'AI Delivery',           sub: 'Portfolio · Blockers · Roadmap', href: `/ai-pdlc?client=${clientId}`,        color: AMBER },
-            { label: 'Business Case',         sub: 'CFO-grade · Genome-validated', href: `/justify?client=${clientId}`,           color: GREEN },
+            { key: 'diagnose',      label: 'Diagnose',      sub: 'Situation · Findings',           color: TEAL },
+            { key: 'technology',    label: 'Technology',    sub: 'Stack · Contracts · Spend',      color: PURPLE },
+            { key: 'architecture',  label: 'Architecture',  sub: 'Current & target state',         color: '#4DA3FF' },
+            { key: 'ai-delivery',   label: 'AI Delivery',   sub: 'Portfolio · Blockers · Roadmap', color: AMBER },
+            { key: 'business-case', label: 'Business Case', sub: 'CFO-grade · Genome-validated',   color: GREEN },
           ].map(m => (
-            <a key={m.label} href={m.href} style={{
+            <button key={m.key} onClick={() => setActiveModule(activeModule === m.key ? null : m.key)} style={{
               display: 'flex', flexDirection: 'column' as const, gap: '1px',
               padding: '6px 12px', borderRadius: '7px',
-              background: `${m.color}09`,
-              border: `1px solid ${m.color}30`,
-              textDecoration: 'none', flexShrink: 0,
+              background: activeModule === m.key ? `${m.color}18` : `${m.color}09`,
+              border: `1px solid ${activeModule === m.key ? m.color + '80' : m.color + '30'}`,
+              cursor: 'pointer', flexShrink: 0, outline: 'none',
             }}>
               <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: m.color }}>{m.label}</span>
               <span style={{ fontFamily: MONO, fontSize: '8px', color: MUTED }}>{m.sub}</span>
-            </a>
+            </button>
           ))}
         </div>
 
@@ -1452,24 +1812,30 @@ export default function AdminClientPage() {
           ))}
         </div>
 
-        {/* Tab content */}
-        {tab === 'admin' && (
-          <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
-        )}
-        {tab === 'overview' && (
-          <OverviewTab data={data} />
-        )}
-        {tab === 'data' && (
-          <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
-        )}
-        {tab === 'projects' && (
-          <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
-        )}
-        {tab === 'approvals' && (
-          <ApprovalsTab isReadOnly={isReadOnly} />
-        )}
-        {tab === 'activity' && (
-          <ActivityTab data={data} />
+        {/* Tab content — module panels render inline, replacing tab content */}
+        {activeModule ? (
+          <ModulePanel module={activeModule} data={data} clientId={clientId} onClose={() => setActiveModule(null)} />
+        ) : (
+          <>
+            {tab === 'admin' && (
+              <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
+            )}
+            {tab === 'overview' && (
+              <OverviewTab data={data} />
+            )}
+            {tab === 'data' && (
+              <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
+            )}
+            {tab === 'projects' && (
+              <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
+            )}
+            {tab === 'approvals' && (
+              <ApprovalsTab isReadOnly={isReadOnly} />
+            )}
+            {tab === 'activity' && (
+              <ActivityTab data={data} />
+            )}
+          </>
         )}
       </div>
 
