@@ -99,81 +99,88 @@ export async function POST(request: NextRequest) {
     const phase0Data = getHardcodedPhase0(clientId, solution)
     const isHardcoded = !!phase0Data
 
-    // Store Phase 0 output if hardcoded
+    // Store Phase 0 output if hardcoded — check existence first (upsert won't work, no unique on phase_id)
     if (phase0Data) {
-      await supabase
+      const { data: existingOutput } = await supabase
         .from('phase_outputs')
-        .upsert({
-          phase_id: phase0.id,
-          output_type: 'readiness_scorecard',
-          title: phase0Config.output_title,
-          content: phase0Data,
-          version: 1,
-          status: 'draft'
-        }, { onConflict: 'phase_id' })
+        .select('id')
+        .eq('phase_id', phase0.id)
+        .maybeSingle()
 
-      // Store genome matches
-      for (const gm of phase0Data.genome_matches) {
+      if (!existingOutput) {
         await supabase
-          .from('genome_matches')
-          .upsert({
-            engagement_id: engagement.id,
-            pattern_code: gm.code,
-            pattern_name: gm.name,
-            failure_rate: gm.failure_rate,
-            evidence: gm.evidence,
-            confidence: gm.confidence,
-            phase_identified: 0,
-            source_files: gm.source_files
-          }, { onConflict: 'engagement_id,pattern_code' })
-      }
-
-      // Store Phase 0 dimension scores
-      for (const [dimension, data] of Object.entries(phase0Data.dimension_scores)) {
-        await supabase
-          .from('phase0_scores')
-          .insert({
-            engagement_id: engagement.id,
-            solution,
-            dimension,
-            score: (data as any).score,
-            evidence: (data as any).evidence,
-            missing_data: (data as any).missing_data,
-            what_it_unlocks: (data as any).what_it_unlocks
-          })
-          .select()
-      }
-
-      // Store top findings as phase findings
-      for (let i = 0; i < phase0Data.top_findings.length; i++) {
-        const f = phase0Data.top_findings[i]
-        await supabase
-          .from('phase_findings')
+          .from('phase_outputs')
           .insert({
             phase_id: phase0.id,
-            workstream_id: workstream?.id || null,
-            title: f.title,
-            description: f.description,
-            source_files: f.source_files,
-            genome_pattern: f.genome_pattern,
-            severity: f.severity,
-            status: 'confirmed',
-            is_published: false,
-            display_order: i,
-            created_by: 'maestro_ai'
+            output_type: 'readiness_scorecard',
+            title: phase0Config.output_title,
+            content: phase0Data,
+            version: 1,
+            status: 'draft'
+          })
+
+        // Store genome matches
+        for (const gm of phase0Data.genome_matches) {
+          await supabase
+            .from('genome_matches')
+            .upsert({
+              engagement_id: engagement.id,
+              pattern_code: gm.code,
+              pattern_name: gm.name,
+              failure_rate: gm.failure_rate,
+              evidence: gm.evidence,
+              confidence: gm.confidence,
+              phase_identified: 0,
+              source_files: gm.source_files
+            }, { onConflict: 'engagement_id,pattern_code' })
+        }
+
+        // Store Phase 0 dimension scores
+        for (const [dimension, data] of Object.entries(phase0Data.dimension_scores)) {
+          await supabase
+            .from('phase0_scores')
+            .insert({
+              engagement_id: engagement.id,
+              solution,
+              dimension,
+              score: (data as any).score,
+              evidence: (data as any).evidence,
+              missing_data: (data as any).missing_data,
+              what_it_unlocks: (data as any).what_it_unlocks
+            })
+        }
+
+        // Store top findings as phase findings
+        for (let i = 0; i < phase0Data.top_findings.length; i++) {
+          const f = phase0Data.top_findings[i]
+          await supabase
+            .from('phase_findings')
+            .insert({
+              phase_id: phase0.id,
+              workstream_id: workstream?.id || null,
+              title: f.title,
+              description: f.description,
+              source_files: f.source_files,
+              genome_pattern: f.genome_pattern,
+              severity: f.severity,
+              status: 'confirmed',
+              is_published: false,
+              display_order: i,
+              created_by: 'maestro_ai'
+            })
+        }
+
+        // Add AI opening message
+        await supabase
+          .from('workstream_messages')
+          .insert({
+            workstream_id: workstream?.id,
+            role: 'maestro_ai',
+            actor_name: 'AbarVa AI',
+            content: `Phase 0 readiness assessment complete for ${clientName} × ${solutionConfig.name}.\n\nOverall score: **${phase0Data.overall_score}/100** — ${phase0Data.overall_verdict.toUpperCase()}\n\n${phase0Data.verdict_summary}\n\n**${phase0Data.genome_matches.length} Genome patterns confirmed:** ${phase0Data.genome_matches.map(g => `${g.code} (${Math.round(g.failure_rate * 100)}% failure rate)`).join(', ')}\n\n**Recommended action:** ${phase0Data.recommended_action}`,
+            is_internal: false
           })
       }
-
-      // Add AI opening message
-      await supabase
-        .from('workstream_messages')
-        .insert({
-          workstream_id: workstream?.id,
-          role: 'maestro_ai',
-          actor_name: 'AbarVa AI',
-          content: `Phase 0 readiness assessment complete for ${clientName} × ${solutionConfig.name}.\n\nOverall score: **${phase0Data.overall_score}/100** — ${phase0Data.overall_verdict.toUpperCase()}\n\n${phase0Data.verdict_summary}\n\n**${phase0Data.genome_matches.length} Genome patterns confirmed:** ${phase0Data.genome_matches.map(g => `${g.code} (${Math.round(g.failure_rate * 100)}% failure rate)`).join(', ')}\n\n**Recommended action:** ${phase0Data.recommended_action}`,
-          is_internal: false
-        })
     }
 
     // Log activity
