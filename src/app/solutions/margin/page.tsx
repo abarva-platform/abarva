@@ -69,7 +69,7 @@ export default function SolutionMargin() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
       <SolutionLayout
-        num="3 of 4" name="Margin Optimization"
+        num="2 of 3" name="Margin Optimization"
         tagline="Identify every margin lever — across revenue, cost structure, and AI portfolio — and create a board-ready recovery plan. Fee charged only on verified savings."
         meta={['CEO · CFO · COO', 'Healthcare · FinServ · Retail', '6–12 week delivery', '15–20% of verified savings']}
         stats={[

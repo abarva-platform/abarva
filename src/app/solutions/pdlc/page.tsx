@@ -56,7 +56,7 @@ export default function SolutionPDLC() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
       <SolutionLayout
-        num="1 of 4" name="AI-Powered PDLC"
+        num="1 of 3" name="AI-Powered PDLC"
         tagline="Cut time to production in half. AI agents alongside your engineering teams — not replacing them. Knowledge stays permanently."
         meta={['CIO', 'All verticals', '8–16 week delivery', 'Outcome-fee model']}
         stats={[

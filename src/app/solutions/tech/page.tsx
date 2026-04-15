@@ -69,7 +69,7 @@ export default function SolutionTech() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="solutions" />
       <SolutionLayout
-        num="4 of 4" name="Technology Modernization"
+        num="3 of 3" name="Technology Modernization"
         tagline="Core systems going end-of-life. Three failed modernization attempts. The business case won't get approved. AbarVa diagnoses which systems actually need replacing, builds the case the CFO will approve, and governs the delivery."
         meta={['CIO · CFO', 'All verticals', 'SAP · FIS · Bloomberg AIM · Epic', 'Outcome-fee model']}
         stats={[
