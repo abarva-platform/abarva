@@ -256,8 +256,35 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
     { name: 'Outcomes Tracking', href: `/outcomes?client=${clientId}` },
   ]
 
+  const clientSolutions: string[] = clientId === 'arcturus'
+    ? ['delivery', 'margin', 'tech', 'pdlc', 'ai-strategy']
+    : clientId === 'meridian'
+      ? ['tech', 'margin', 'pdlc']
+      : []
+
   return (
     <div>
+      {/* Demo engagements panel — always visible at top of Admin tab */}
+      <div style={{ marginBottom: '20px', padding: '16px 20px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: clientSolutions.length > 0 ? '14px' : '0' }}>
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Demo Engagements</div>
+            <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>Pre-load complete demo data so clients and investors can explore live immediately.</div>
+          </div>
+          <SeedAllDemosButton compact />
+        </div>
+        {clientSolutions.length > 0 && (
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>Seed this client individually:</div>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
+              {clientSolutions.map(solution => (
+                <SeedSolutionButton key={solution} clientId={clientId} solution={solution} />
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Sub-section pills */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
         {pills.map(p => (
@@ -1148,7 +1175,7 @@ function ActivityTab({ data }: { data: ClientData }) {
 
 // ─── SEED ALL DEMOS BUTTON ───────────────────────────────────────────────────
 
-function SeedAllDemosButton() {
+function SeedAllDemosButton({ compact }: { compact?: boolean }) {
   const [seeding, setSeeding] = useState(false)
   const [result, setResult] = useState<string | null>(null)
 
@@ -1171,27 +1198,70 @@ function SeedAllDemosButton() {
   }
 
   return (
-    <>
+    <div style={{ flexShrink: 0 }}>
       <button
         onClick={handleSeedAll}
         disabled={seeding}
         style={{
-          width: '100%', fontFamily: MONO, fontSize: '10px', fontWeight: 700,
+          fontFamily: MONO, fontSize: '10px', fontWeight: 700,
           letterSpacing: '.06em', textTransform: 'uppercase' as const,
-          padding: '9px 0', borderRadius: '6px', cursor: seeding ? 'not-allowed' : 'pointer',
+          padding: compact ? '7px 16px' : '9px 0',
+          width: compact ? 'auto' : '100%',
+          borderRadius: '6px', cursor: seeding ? 'not-allowed' : 'pointer',
           background: seeding ? 'transparent' : 'rgba(45,212,200,0.1)',
           border: `1px solid ${seeding ? BORDER : 'rgba(45,212,200,0.3)'}`,
           color: seeding ? DIM : TEAL,
+          whiteSpace: 'nowrap' as const,
         }}
       >
-        {seeding ? 'Seeding all demos…' : 'Seed all demo engagements (8 pairs)'}
+        {seeding ? 'Seeding…' : compact ? 'Seed all (8 pairs)' : 'Seed all demo engagements (8 pairs)'}
       </button>
       {result && (
-        <div style={{ marginTop: '8px', fontFamily: MONO, fontSize: '10px', color: result.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
+        <div style={{ marginTop: '6px', fontFamily: MONO, fontSize: '10px', color: result.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
           {result}
         </div>
       )}
-    </>
+    </div>
+  )
+}
+
+function SeedSolutionButton({ clientId, solution }: { clientId: string; solution: string }) {
+  const [seeding, setSeeding] = useState(false)
+  const [done, setDone] = useState(false)
+
+  async function handleSeed() {
+    if (done) return
+    setSeeding(true)
+    try {
+      await fetch(`/api/engage/${clientId}/${solution}/seed-demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ createdBy: 'admin', fullDemo: true }),
+      })
+      setDone(true)
+    } catch { /* ignore */ } finally {
+      setSeeding(false)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleSeed}
+      disabled={seeding || done}
+      style={{
+        fontFamily: MONO, fontSize: '10px',
+        padding: '5px 12px', borderRadius: '4px',
+        background: done ? 'rgba(52,211,153,0.1)' : 'rgba(45,212,200,0.07)',
+        border: `1px solid ${done ? 'rgba(52,211,153,0.3)' : BORDER}`,
+        color: done ? GREEN : MUTED,
+        cursor: seeding || done ? 'default' : 'pointer',
+        textTransform: 'uppercase' as const, letterSpacing: '.05em',
+        whiteSpace: 'nowrap' as const,
+        transition: 'all 0.2s',
+      }}
+    >
+      {seeding ? '…' : done ? `✓ ${solution}` : `${solution} →`}
+    </button>
   )
 }
 
@@ -1248,13 +1318,18 @@ export default function AdminClientPage() {
             <div style={{ fontSize: '22px', fontWeight: 500, color: WHITE, lineHeight: 1.2 }}>{data.name}</div>
             <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>{data.type} · ${data.revenue}B revenue · {data.employees.toLocaleString()} employees · {data.hq}</div>
           </div>
-          <span style={{
-            fontFamily: MONO, fontSize: '10px', padding: '3px 10px', borderRadius: '20px',
-            background: data.status === 'Active' ? 'rgba(52,211,153,0.12)' : 'rgba(245,158,11,0.12)',
-            color: data.status === 'Active' ? GREEN : AMBER,
-            border: `1px solid ${data.status === 'Active' ? 'rgba(52,211,153,0.25)' : 'rgba(245,158,11,0.25)'}`,
-            letterSpacing: '.06em', textTransform: 'uppercase' as const,
-          }}>
+          <span
+            onClick={() => { setTab('admin'); setAdminSection('setup') }}
+            title="Go to Admin → Setup"
+            style={{
+              fontFamily: MONO, fontSize: '10px', padding: '3px 10px', borderRadius: '20px',
+              background: data.status === 'Active' ? 'rgba(52,211,153,0.12)' : 'rgba(245,158,11,0.12)',
+              color: data.status === 'Active' ? GREEN : AMBER,
+              border: `1px solid ${data.status === 'Active' ? 'rgba(52,211,153,0.25)' : 'rgba(245,158,11,0.25)'}`,
+              letterSpacing: '.06em', textTransform: 'uppercase' as const,
+              cursor: 'pointer',
+            }}
+          >
             {data.status}
           </span>
         </div>
