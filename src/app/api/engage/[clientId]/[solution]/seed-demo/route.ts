@@ -5,6 +5,8 @@ import { ARCTURUS_DELIVERY_DEMO } from '@/lib/demo-data/arcturus-delivery-demo'
 import { ARCTURUS_MARGIN_DEMO } from '@/lib/demo-data/arcturus-margin-demo'
 import { ARCTURUS_TECH_DEMO } from '@/lib/demo-data/arcturus-tech-demo'
 import { MERIDIAN_TECH_DEMO } from '@/lib/demo-data/meridian-tech-demo'
+import { MERIDIAN_MARGIN_DEMO } from '@/lib/demo-data/meridian-margin-demo'
+import { MERIDIAN_PDLC_DEMO } from '@/lib/demo-data/meridian-pdlc-demo'
 import {
   ARCTURUS_DELIVERY_PHASE0,
   ARCTURUS_MARGIN_PHASE0,
@@ -31,6 +33,8 @@ function getDemoData(clientId: string, solution: string) {
   if (clientId === 'arcturus' && solution === 'margin') return ARCTURUS_MARGIN_DEMO
   if (clientId === 'arcturus' && solution === 'tech') return ARCTURUS_TECH_DEMO
   if (clientId === 'meridian' && solution === 'tech') return MERIDIAN_TECH_DEMO
+  if (clientId === 'meridian' && solution === 'margin') return MERIDIAN_MARGIN_DEMO
+  if (clientId === 'meridian' && solution === 'pdlc') return MERIDIAN_PDLC_DEMO
   return null
 }
 
