@@ -60,6 +60,11 @@ function PortalContent() {
   const [commentText, setCommentText] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  const [dataRequests, setDataRequests] = useState<any[]>([])
+  const [numberEntryId, setNumberEntryId] = useState<string | null>(null)
+  const [numberInputs, setNumberInputs] = useState<Record<string, string>>({})
+  const [respondingId, setRespondingId] = useState<string | null>(null)
+
   const role = user?.publicMetadata?.role as string | undefined
   const clientId = clientIdOverride || user?.publicMetadata?.clientId as string | undefined
   const solutionConfig = SOLUTIONS[solution]
@@ -103,6 +108,32 @@ function PortalContent() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    if (!clientId || !solution) return
+    fetch(`/api/engage/${clientId}/${solution}/data-requests`)
+      .then(r => r.ok ? r.json() : { requests: [] })
+      .then(d => setDataRequests(d.requests || []))
+      .catch(() => {})
+  }, [clientId, solution])
+
+  const handleNumberSubmit = async (requestId: string) => {
+    const vals = [numberInputs[`${requestId}_0`], numberInputs[`${requestId}_1`], numberInputs[`${requestId}_2`]]
+    if (vals.some(v => !v?.trim())) return
+    setRespondingId(requestId)
+    await fetch(`/api/engage/data-request/${requestId}/respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: 'numbers_entered',
+        response_numbers: { n1: vals[0], n2: vals[1], n3: vals[2] },
+        respondedBy: user?.fullName || clientName
+      })
+    })
+    setDataRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'numbers_entered' } : r))
+    setNumberEntryId(null)
+    setRespondingId(null)
+  }
 
   const handleApprove = async (phaseId: string) => {
     setSubmitting(true)
@@ -205,6 +236,128 @@ function PortalContent() {
             {solutionConfig.name} · AbarVa Engagement Portal
           </p>
         </div>
+
+        {/* Data Requests (Phase 0 client intake) */}
+        {dataRequests.filter(r => r.status === 'pending' || r.status === 'numbers_entered' || r.status === 'uploaded').length > 0 && (
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '14px' }}>
+              Data Requests · {dataRequests.filter(r => r.status === 'pending').length} Pending
+            </div>
+            {dataRequests.map(req => {
+              const isPending = req.status === 'pending'
+              const isDone = req.status === 'numbers_entered' || req.status === 'uploaded'
+              const isExpanded = numberEntryId === req.id
+              return (
+                <div key={req.id} style={{
+                  background: T.surface,
+                  border: `1px solid ${isDone ? T.green + '40' : isExpanded ? T.tealBorder : T.border}`,
+                  borderLeft: `3px solid ${isDone ? T.green : isExpanded ? T.teal : T.amber}`,
+                  borderRadius: '10px', padding: '20px', marginBottom: '10px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text, fontWeight: 600 }}>
+                          {req.file_requested}
+                        </div>
+                        {isDone && (
+                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.green, background: T.greenDim, borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                            {req.status === 'numbers_entered' ? 'Numbers provided' : 'Uploaded'}
+                          </span>
+                        )}
+                        {isPending && (
+                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.amber, background: 'rgba(245,158,11,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                            Requested
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, marginBottom: '4px' }}>
+                        {req.why_needed}
+                      </div>
+                      <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal }}>
+                        Unlocks: {req.what_it_unlocks}
+                      </div>
+                    </div>
+                    {isPending && !isExpanded && (
+                      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                        <button
+                          onClick={() => { setNumberEntryId(req.id) }}
+                          style={{
+                            background: 'transparent', color: T.teal, border: `1px solid ${T.tealBorder}`,
+                            borderRadius: '6px', padding: '7px 14px', cursor: 'pointer',
+                            fontFamily: T.mono, fontSize: '10px', letterSpacing: '.04em', whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Enter 3 numbers instead
+                        </button>
+                        <button
+                          style={{
+                            background: T.teal, color: T.bg,
+                            border: 'none', borderRadius: '6px', padding: '7px 16px', cursor: 'pointer',
+                            fontFamily: T.mono, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em', whiteSpace: 'nowrap'
+                          }}
+                        >
+                          Upload file
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3-numbers entry form */}
+                  {isExpanded && (
+                    <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${T.border}` }}>
+                      {req.three_number_alternative && (
+                        <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text2, marginBottom: '12px', fontStyle: 'italic' }}>
+                          {req.three_number_alternative}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        {[0, 1, 2].map(i => (
+                          <input
+                            key={i}
+                            type="text"
+                            placeholder={`Number ${i + 1}`}
+                            value={numberInputs[`${req.id}_${i}`] || ''}
+                            onChange={e => setNumberInputs(prev => ({ ...prev, [`${req.id}_${i}`]: e.target.value }))}
+                            style={{
+                              flex: 1, minWidth: '100px', background: T.bg, border: `1px solid ${T.border}`,
+                              borderRadius: '6px', padding: '10px 12px',
+                              fontFamily: T.mono, fontSize: '13px', color: T.text, outline: 'none'
+                            }}
+                          />
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          onClick={() => setNumberEntryId(null)}
+                          style={{
+                            background: 'transparent', color: T.text2, border: `1px solid ${T.border}`,
+                            borderRadius: '6px', padding: '8px 16px', cursor: 'pointer',
+                            fontFamily: T.mono, fontSize: '10px', letterSpacing: '.04em'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          disabled={respondingId === req.id}
+                          onClick={() => handleNumberSubmit(req.id)}
+                          style={{
+                            background: T.teal, color: T.bg, border: 'none',
+                            borderRadius: '6px', padding: '8px 20px', cursor: respondingId === req.id ? 'not-allowed' : 'pointer',
+                            fontFamily: T.mono, fontSize: '10px', fontWeight: 700, letterSpacing: '.04em',
+                            opacity: respondingId === req.id ? 0.7 : 1
+                          }}
+                        >
+                          {respondingId === req.id ? 'Submitting...' : 'Submit numbers'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Phase Timeline */}
         <div style={{

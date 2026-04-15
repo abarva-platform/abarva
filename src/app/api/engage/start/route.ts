@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SOLUTIONS, SolutionKey } from '@/lib/solutions/solution-config'
-import { ARCTURUS_DELIVERY_PHASE0 } from '@/lib/dataset-extractor'
+import { ARCTURUS_DELIVERY_PHASE0, ARCTURUS_MARGIN_PHASE0 } from '@/lib/dataset-extractor'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -83,9 +83,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: wsErr.message }, { status: 500 })
     }
 
-    // For Arcturus × Delivery: use hardcoded Phase 0 output
-    const isHardcoded = clientId === 'arcturus' && solution === 'delivery'
-    const phase0Data = isHardcoded ? ARCTURUS_DELIVERY_PHASE0 : null
+    // For Arcturus × Delivery or Margin: use hardcoded Phase 0 output
+    const isHardcoded = clientId === 'arcturus' && (solution === 'delivery' || solution === 'margin')
+    const phase0Data = isHardcoded
+      ? (solution === 'margin' ? ARCTURUS_MARGIN_PHASE0 : ARCTURUS_DELIVERY_PHASE0)
+      : null
 
     // Store Phase 0 output if hardcoded
     if (phase0Data) {

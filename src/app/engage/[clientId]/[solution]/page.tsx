@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
+import MarginOpportunityMap from '@/components/engage/MarginOpportunityMap'
 
 const T = {
   bg: '#060A12',
@@ -92,6 +93,7 @@ export default function MaestroWorkspace() {
   const [approving, setApproving] = useState(false)
 
   const [starting, setStarting] = useState(false)
+  const [opportunityLevers, setOpportunityLevers] = useState<any[]>([])
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -140,6 +142,15 @@ export default function MaestroWorkspace() {
   useEffect(() => {
     loadEngagement()
   }, [loadEngagement])
+
+  // Load opportunity map for margin solution
+  useEffect(() => {
+    if (solution !== 'margin') return
+    fetch(`/api/engage/${clientId}/${solution}/opportunity-map`)
+      .then(r => r.json())
+      .then(data => { if (data.levers) setOpportunityLevers(data.levers) })
+      .catch(() => {})
+  }, [clientId, solution])
 
   // Load messages when workstream changes
   useEffect(() => {
@@ -514,6 +525,24 @@ export default function MaestroWorkspace() {
 
                   {phase0Output?.content && (
                     <Phase0Scorecard data={phase0Output.content} />
+                  )}
+
+                  {/* Margin Opportunity Map — shown after scorecard for margin solution */}
+                  {solution === 'margin' && opportunityLevers.length > 0 && (
+                    <div style={{ marginTop: '24px' }}>
+                      <MarginOpportunityMap
+                        clientId={clientId}
+                        engagementId={engagement?.id || ''}
+                        levers={opportunityLevers}
+                        onUploadRequest={(leverId, dataRequired) => {
+                          // Open a focused data request — future: trigger select-scope API
+                          console.log('Upload request for', leverId, dataRequired)
+                        }}
+                        onNumbersEntry={(leverId) => {
+                          console.log('Numbers entry for', leverId)
+                        }}
+                      />
+                    </div>
                   )}
 
                   {/* Phase 0 messages */}

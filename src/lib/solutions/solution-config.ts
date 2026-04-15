@@ -445,9 +445,9 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         unlock_condition: 'Financial datasets uploaded',
         typical_duration_weeks: { min: 0, max: 1 },
         default_workstreams: [{
-          name: 'Financial Data Analysis',
-          description: 'Automated financial analysis',
-          opening_prompt: 'Analysing financial datasets...'
+          name: 'Margin Scoping',
+          description: 'Show what is already analysed. Present full opportunity map. Agree focus areas. Generate data requests.',
+          opening_prompt: 'I have analysed your uploaded datasets. Before we go into Phase 1, I want to show you the full picture of where margin typically leaks for an asset manager your size — and separate what I can already see from what would require additional data.\n\nFrom what is already loaded, I can see three things clearly:\n\nFirst: £94M committed to 28 AI initiatives. £0 verified return. This is not a technology problem — it is a governance problem. The CDO vacancy is the most expensive unfilled role in the firm.\n\nSecond: £42M in consulting spend with an average knowledge transfer score of 24%. Knowledge walks out every Friday.\n\nThird: C/I ratio 71% vs 58% target — a £840M efficiency gap. Your IT spend at 4.2% of revenue vs 3.1% peer adds £178M of structural overspend.\n\nThese three together represent £250–320M of addressable margin — already visible from your data.\n\nBut there are six more areas I have not been able to look at yet: middle office operations, fee yield by strategy, client retention, fund accounting efficiency, regulatory reporting cost, and KYC/AML operations. These typically add another £40–80M for a firm your profile.\n\nI have built a Margin Opportunity Map above showing every lever — what is analysed, what I can estimate from Genome benchmarks, and what requires data uploads to unlock.\n\nWhere would you like to focus first — the areas we already see clearly, or should we gather data on the areas we have not yet examined?'
         }]
       },
       1: {

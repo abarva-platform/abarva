@@ -143,6 +143,123 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
   recommended_action: 'Begin Phase 1 with the Consulting Audit workstream. The data is sufficient to conduct a full audit of all 10 vendor relationships. Request sprint velocity data from CIO before Phase 1 completes.'
 }
 
+export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
+  overall_score: 38,
+  overall_verdict: 'partial',
+  verdict_summary: 'Sufficient data to identify £250–320M in addressable margin across three confirmed areas. Middle office, fee yield, client retention, and operations require additional uploads to unlock the next £40–80M estimate range.',
+
+  dimension_scores: {
+    financial_data_quality: {
+      score: 52,
+      evidence: 'P&L by business unit loaded (ARC-M01). Cost structure loaded (ARC-M03). AI spend tracker loaded (ARC-M02). Financial statements 2022–2024 loaded. C/I ratio 71% clearly visible. Missing: segment-level fee revenue breakdown, fund-level profitability.',
+      missing_data: 'Revenue by strategy (3 years). Fund-level P&L.',
+      what_it_unlocks: 'Fee yield analysis by strategy — typically £8–16M for £840B AUM manager.'
+    },
+    revenue_analysis_readiness: {
+      score: 28,
+      evidence: 'Performance fees declined from £82M (2023) to £48M (2025) — AUM grew. Fee compression visible but not decomposed by strategy. Client AUM flows not loaded.',
+      missing_data: 'Revenue by strategy. Client AUM flows. Fee schedule by tier.',
+      what_it_unlocks: 'Client retention analysis. Fee pricing optimisation.'
+    },
+    cost_structure_visibility: {
+      score: 61,
+      evidence: 'IT budget 4.2% vs 3.1% peer — £178M overspend. Consulting spend £42M at 24% KT score. Bloomberg AIM maintenance £8.4M vs £2.1M peer. C/I ratio 71% vs 58%. Middle office FTE and process data not loaded.',
+      missing_data: 'Settlement failure log. Reconciliation break data. Reporting FTE.',
+      what_it_unlocks: 'Middle office automation opportunity — typically £3–9M.'
+    },
+    ai_roi_tracking: {
+      score: 18,
+      evidence: '28 AI initiatives. £94M committed. £0 verified ROI. No baseline on any initiative. CDO vacant 11 months — governance absent. CRO blocking new deployments.',
+      missing_data: 'Initiative-level detail on blocked vs in-flight. CDO hire timeline.',
+      what_it_unlocks: 'Rationalisation sequence — which 3 to shut, which 5 to fund.'
+    },
+    leadership_accountability: {
+      score: 22,
+      evidence: 'CDO vacant 11 months. CRO blocking AI approvals. Board commitment to 58% CIR by 2027 with no credible cost programme. No named owner for margin recovery programme.',
+      missing_data: 'Board minutes on AI governance. CDO search status.',
+      what_it_unlocks: 'Governance structure for margin recovery programme.'
+    }
+  },
+
+  genome_matches: [
+    {
+      code: 'F002',
+      name: 'No named executive sponsor',
+      failure_rate: 0.84,
+      confidence: 'confirmed',
+      evidence: 'CDO vacant 11 months. £94M AI portfolio has no accountable owner. CRO has blocked further deployments. Board committed to 58% CIR by 2027 — no programme owner to deliver it.',
+      source_files: ['ARC-M02', 'ARC-C03']
+    },
+    {
+      code: 'F010',
+      name: 'Measurement vacuum',
+      failure_rate: 0.79,
+      confidence: 'confirmed',
+      evidence: '£94M committed across 28 AI initiatives. Zero have a documented baseline. Zero have a measurement framework. Cannot prove ROI to the board, to regulators, or internally.',
+      source_files: ['ARC-M02', 'ARC-M01']
+    },
+    {
+      code: 'F012',
+      name: 'Structural cost misattribution',
+      failure_rate: 0.68,
+      confidence: 'probable',
+      evidence: 'IT budget 4.2% vs 3.1% peer — entire overspend treated as strategic investment. Bloomberg AIM maintenance at 4× peer median, classified as core infrastructure. £42M consulting spend classified as necessary — knowledge transfer score 24% suggests most value is not retained.',
+      source_files: ['ARC-M03', 'ARC-D01']
+    }
+  ],
+
+  top_findings: [
+    {
+      title: '£94M in AI spend. £0 verified return. CDO vacancy is the root cause.',
+      description: '28 AI initiatives running. None have a baseline. None have a measurement framework. The CDO vacancy — 11 months — is why: the Governance Council cannot convene, the CRO has blocked new deployments, and no one owns the portfolio. This is not a technology problem. It is a governance problem with a single fix.',
+      severity: 'critical',
+      source_files: ['ARC-M02', 'ARC-C03'],
+      genome_pattern: 'F002'
+    },
+    {
+      title: '£178M structural IT overspend annually vs peers.',
+      description: 'IT budget 4.2% of revenue vs 3.1% peer benchmark. The gap is £178M annually. Driven by: Bloomberg AIM maintenance at 4× peer (£6M recoverable), consulting spend at 24% KT (£16–28M recoverable), and contractor permanence creating no reduction pressure.',
+      severity: 'critical',
+      source_files: ['ARC-M03', 'ARC-D01'],
+      genome_pattern: 'F012'
+    },
+    {
+      title: 'Performance fee compression: £82M → £48M while AUM grew.',
+      description: 'Revenue per AUM is declining as AUM grows. Performance fees dropped 41% in two years. The margin problem is not just cost — the revenue line is compressing too. Fee yield analysis by strategy is the next unlock.',
+      severity: 'high',
+      source_files: ['ARC-M01'],
+      genome_pattern: null
+    },
+    {
+      title: 'Middle office, fee yield, KYC/AML: £40–80M available with data uploads.',
+      description: 'Three areas where Genome benchmarks suggest significant opportunity but client data has not yet been loaded: settlement STP automation (£2–5M), fee yield analysis (£8–16M), KYC/AML automation (estimated £3–8M). Upload data or enter 3 numbers to unlock each analysis.',
+      severity: 'medium',
+      source_files: [],
+      genome_pattern: null
+    }
+  ],
+
+  missing_data: [
+    {
+      category: 'Revenue by strategy (3 years, quarterly)',
+      what_it_unlocks: 'Fee yield analysis and pricing optimisation — typically £8–16M for £840B AUM manager.',
+      priority: 'important'
+    },
+    {
+      category: 'Settlement failure log and reconciliation breaks',
+      what_it_unlocks: 'Middle office STP automation ROI — typically £2–5M.',
+      priority: 'important'
+    },
+    {
+      category: 'Client AUM flows and redemption data',
+      what_it_unlocks: 'Client retention analysis — cannot estimate without data.',
+      priority: 'important'
+    }
+  ],
+
+  recommended_action: 'Review the Margin Opportunity Map. Approve Phase 0 to begin Phase 1 with the three confirmed high-confidence areas: AI portfolio rationalisation, consulting reduction, and IT structural overspend. Simultaneously, request data uploads for middle office and fee yield to unlock Phase 2 analyses.'
+}
+
 export async function extractDatasetSummaries(
   clientId: string,
   solution: string,
