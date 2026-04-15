@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SOLUTIONS, SolutionKey } from '@/lib/solutions/solution-config'
 import { ARCTURUS_DELIVERY_DEMO } from '@/lib/demo-data/arcturus-delivery-demo'
+import { ARCTURUS_MARGIN_DEMO } from '@/lib/demo-data/arcturus-margin-demo'
+import { ARCTURUS_TECH_DEMO } from '@/lib/demo-data/arcturus-tech-demo'
+import { MERIDIAN_TECH_DEMO } from '@/lib/demo-data/meridian-tech-demo'
 import {
   ARCTURUS_DELIVERY_PHASE0,
   ARCTURUS_MARGIN_PHASE0,
@@ -25,6 +28,9 @@ function getPhase0Data(clientId: string, solution: string) {
 
 function getDemoData(clientId: string, solution: string) {
   if (clientId === 'arcturus' && solution === 'delivery') return ARCTURUS_DELIVERY_DEMO
+  if (clientId === 'arcturus' && solution === 'margin') return ARCTURUS_MARGIN_DEMO
+  if (clientId === 'arcturus' && solution === 'tech') return ARCTURUS_TECH_DEMO
+  if (clientId === 'meridian' && solution === 'tech') return MERIDIAN_TECH_DEMO
   return null
 }
 
