@@ -1,477 +1,606 @@
 'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+import { Suspense, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { arcturusFinancial, arcturusTechnology, arcturusIndustry } from '@/data/arcturus/index'
+import { arcturusAI } from '@/data/arcturus/ai'
+import { meridianHealth } from '@/data/meridian/index'
 
+// ─── Theme ────────────────────────────────────────────────────────────────────
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.6)'
-const AMBER = '#F59E0B', GREEN = '#10B981', INDIGO = '#818CF8'
+const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = '#94A3B8', DIM = '#475569'
+const AMBER = '#F59E0B', GREEN = '#34D399', BLUE = '#4DA3FF', RED = '#EF4444', PURPLE = '#818CF8'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 
-const PHASES: {
-  label: string
-  color: string
-  desc: string
-  modules: {
-    num: number
-    name: string
-    cxoQ: string
-    bullets: string[]
-    output: string
-    path: string
-  }[]
-}[] = [
+// ─── Phase / Module map ───────────────────────────────────────────────────────
+const PHASES = [
   {
-    label: 'DIAGNOSE',
-    color: TEAL,
-    desc: 'What is actually broken — and what is it costing',
+    phase: 1, label: 'DIAGNOSE', color: BLUE,
     modules: [
-      {
-        num: 1,
-        name: 'Situation Intelligence',
-        cxoQ: "What's actually broken — and what is it costing right now?",
-        bullets: [
-          '340 Genome patterns run against your cost structure and operations',
-          'Every gap ranked by recovery range, confidence, and time-to-fix',
-          'Addressable vs structural split delivered in 48 hours',
-        ],
-        output: 'SITUATION BRIEF · 48HRS',
-        path: '/diagnose',
-      },
-      {
-        num: 2,
-        name: 'Contradiction Intelligence',
-        cxoQ: 'What did leadership tell the board — and what does the data actually show?',
-        bullets: [
-          'Every leadership statement cross-referenced against financial and operational data',
-          'Source-by-source verification with confidence rating per contradiction',
-          'Contradiction map used to calibrate Phase 2 prescriptions',
-        ],
-        output: 'CONTRADICTION MAP · 72HRS',
-        path: '/contradictions',
-      },
-      {
-        num: 3,
-        name: 'Data Intelligence',
-        cxoQ: "What can your data actually support — and what gaps are blocking AI?",
-        bullets: [
-          'Completeness scored across 12 data dimensions',
-          'Pipeline gaps flagged with specific remediation steps',
-          'Data readiness certificate generated before AI investment approved',
-        ],
-        output: 'DATA READINESS CERTIFICATE · 1 WEEK',
-        path: '/data-intelligence',
-      },
+      { num: 1, key: 'situation',     name: 'Situation Intelligence',     desc: 'What is broken — and what it costs',          output: 'SITUATION BRIEF · 48HRS' },
+      { num: 2, key: 'contradiction', name: 'Contradiction Intelligence', desc: 'What was promised vs what data shows',         output: 'CONTRADICTION MAP · 72HRS' },
+      { num: 3, key: 'data',          name: 'Data Intelligence',          desc: 'Data readiness before AI investment',          output: 'DATA CERTIFICATE · 1 WEEK' },
     ],
   },
   {
-    label: 'PRESCRIBE',
-    color: AMBER,
-    desc: 'The right architecture, vendors, and investment sequenced by Genome',
+    phase: 2, label: 'PRESCRIBE', color: AMBER,
     modules: [
-      {
-        num: 4,
-        name: 'Technology Intelligence',
-        cxoQ: 'Which systems are blocking you — and in what order do you fix them?',
-        bullets: [
-          'Every system scored: age, cost, dependency depth, migration risk',
-          'EOL systems flagged with regulatory and operational exposure',
-          'Modernisation sequence generated and Genome-validated',
-        ],
-        output: 'AI READINESS CERTIFICATE · 1 WEEK',
-        path: '/intelligence',
-      },
-      {
-        num: 5,
-        name: 'Vendor Intelligence',
-        cxoQ: 'Which vendor will actually deliver — in your specific context, not their deck?',
-        bullets: [
-          'Vendors scored against Genome outcomes from comparable engagements',
-          'Contract anchors generated: benchmark rates, key person clauses, IP terms',
-          'Failure probability calculated per vendor based on pattern match',
-        ],
-        output: 'VENDOR SCORECARD · 1 WEEK',
-        path: '/vendor-intelligence',
-      },
-      {
-        num: 6,
-        name: 'Architecture Intelligence',
-        cxoQ: 'What do we build, in what order — and what will fail if we get the sequence wrong?',
-        bullets: [
-          'Architecture options generated with dependency mapping',
-          'Each option validated against Genome failure patterns',
-          'Build sequence optimised for risk and speed-to-value',
-        ],
-        output: 'ARCHITECTURE BLUEPRINT · 2 WEEKS',
-        path: '/architecture',
-      },
-      {
-        num: 7,
-        name: 'Business Case Intelligence',
-        cxoQ: "What is the CFO-grade case — with ranges the board will actually approve?",
-        bullets: [
-          'Three scenarios (Bear/Base/Bull) built from your data and Genome comparables',
-          'Risk-adjusted IRR with sensitivity analysis',
-          'Investment committee package: every objection pre-answered',
-        ],
-        output: 'IC PACKAGE · 1 WEEK',
-        path: '/justify',
-      },
+      { num: 4, key: 'technology',    name: 'Technology Intelligence',    desc: 'Current stack — inventory, spend, contracts',  output: 'AI READINESS CERT · 1 WEEK' },
+      { num: 5, key: 'vendor',        name: 'Vendor Intelligence',        desc: 'Vendors scored against Genome outcomes',       output: 'VENDOR SCORECARD · 1 WEEK' },
+      { num: 6, key: 'architecture',  name: 'Architecture Intelligence',  desc: 'Target state — AI stack blueprint',            output: 'ARCHITECTURE BLUEPRINT · 2WKS' },
+      { num: 7, key: 'business-case', name: 'Business Case Intelligence', desc: 'CFO-grade case with Genome validation',        output: 'IC PACKAGE · 1 WEEK' },
     ],
   },
   {
-    label: 'VALUE REALIZATION',
-    color: GREEN,
-    desc: 'AI in production. Value verified. Fee earned only on what moves.',
+    phase: 3, label: 'VALUE REALIZATION', color: GREEN,
     modules: [
-      {
-        num: 8,
-        name: 'AI Delivery Intelligence',
-        cxoQ: "How do we get AI from approved spec to production — without the usual 18-month slip?",
-        bullets: [
-          'Delivery bottlenecks mapped before programme starts',
-          'MLOps sequence designed for your specific stack',
-          'Deployment rails built to your engineering capacity',
-        ],
-        output: 'EXECUTION BASELINE · 2 WEEKS',
-        path: '/ai-pdlc',
-      },
-      {
-        num: 9,
-        name: 'Outcome Intelligence',
-        cxoQ: "How do we know it worked — and how does AbarVa's fee get earned?",
-        bullets: [
-          'Baseline locked Day 0 — no retroactive adjustment',
-          'Monthly actuals vs baseline tracked in real time',
-          'Fee released only on verified, audited savings',
-        ],
-        output: 'LIVE OUTCOME DASHBOARD · ONGOING',
-        path: '/outcome-intelligence',
-      },
+      { num: 8, key: 'ai-delivery',   name: 'AI Delivery Intelligence',   desc: 'Portfolio, blockers, and delivery roadmap',    output: 'EXECUTION BASELINE · 2WKS' },
+      { num: 9, key: 'outcome',       name: 'Outcome Intelligence',        desc: 'Baseline locked · verified delta · fee earned', output: 'LIVE OUTCOME DASHBOARD' },
     ],
   },
 ]
 
-type ActiveModule = { name: string; num: number; path: string; color: string }
+type ModuleInfo = { num: number; key: string; name: string; desc: string; output: string; phaseLabel: string; phaseColor: string }
 
-export default function AIStrategyPage() {
-  const [activeFilter, setActiveFilter] = useState<string | null>(null)
-  const [activeModule, setActiveModule] = useState<ActiveModule | null>(null)
-  const [seeding, setSeeding] = useState(false)
-  const [seeded, setSeeded] = useState(false)
-  const { user, isLoaded } = useUser()
-  const router = useRouter()
-  const isAdmin = isLoaded && user?.publicMetadata?.role === 'admin'
-  const savedScrollY = useRef(0)
-  const shouldRestoreScroll = useRef(false)
+function allModules(): ModuleInfo[] {
+  return PHASES.flatMap(p => p.modules.map(m => ({ ...m, phaseLabel: p.label, phaseColor: p.color })))
+}
 
-  useEffect(() => {
-    if (!activeModule && shouldRestoreScroll.current) {
-      shouldRestoreScroll.current = false
-      requestAnimationFrame(() => window.scrollTo({ top: savedScrollY.current, behavior: 'instant' }))
-    }
-  }, [activeModule])
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+const card = (extra?: React.CSSProperties): React.CSSProperties => ({
+  background: CARD, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '18px 20px', ...extra,
+})
+const label = (text: string) => (
+  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '8px' }}>{text}</div>
+)
 
-  async function handleSeedDemo() {
-    setSeeding(true)
-    try {
-      const res = await fetch('/api/engage/arcturus/ai-strategy/seed-demo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ createdBy: user?.fullName || 'Admin' }),
-      })
-      const data = await res.json()
-      if (data.success) {
-        setSeeded(true)
-        setTimeout(() => router.push('/engage/arcturus/ai-strategy'), 800)
-      }
-    } finally {
-      setSeeding(false)
-    }
+// ─── Module panels ────────────────────────────────────────────────────────────
+
+function SituationPanel({ clientId }: { clientId: string }) {
+  const metrics = clientId === 'arcturus' ? arcturusFinancial.situationMetrics : [
+    { label: 'Denial Rate', value: `${meridianHealth.technology.rcm.denialRate}%`, benchmark: `${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, status: 'critical' as const, gap: '$94M annual write-off' },
+    { label: 'Operating Margin', value: `${meridianHealth.org.operatingMargin}%`, benchmark: `${meridianHealth.org.targetOperatingMargin}% target`, status: 'critical' as const, gap: '2.2pp to target' },
+    { label: 'Days in AR', value: `${meridianHealth.technology.rcm.daysInAR}`, benchmark: '35 benchmark', status: 'critical' as const, gap: '17 days above benchmark' },
+    { label: 'Prior Auth Avg Days', value: `${meridianHealth.technology.rcm.priorAuthAvgDays}`, benchmark: `${meridianHealth.technology.rcm.priorAuthPeerDays} peer`, status: 'critical' as const, gap: '2.4 days above peer' },
+    { label: 'MyChart Adoption', value: '34%', benchmark: '60% target', status: 'warning' as const, gap: '26pp below target' },
+    { label: 'Epic Optimization', value: `${meridianHealth.technology.ehr.optimizationScore}/100`, benchmark: '80 benchmark', status: 'warning' as const, gap: '22 points below benchmark' },
+    { label: 'MA Star Rating', value: `${meridianHealth.healthPlan.medicareAdvantage.starRating}`, benchmark: '4.0 target', status: 'warning' as const, gap: '0.5 stars to target' },
+    { label: 'Hospital Occupancy', value: `${meridianHealth.hospitals.occupancyRate}%`, benchmark: '76% target', status: 'warning' as const, gap: '5pp below target' },
+  ]
+  const crit = metrics.filter(m => m.status === 'critical').length
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginBottom: '24px' }}>
+        {metrics.map((m, i) => (
+          <div key={i} style={card({ borderColor: m.status === 'critical' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.2)' })}>
+            {label(m.label)}
+            <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: m.status === 'critical' ? RED : AMBER, lineHeight: 1 }}>{m.value}</div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginTop: '4px' }}>{m.benchmark}</div>
+            <div style={{ fontSize: '11px', color: MUTED, marginTop: '6px' }}>{m.gap}</div>
+          </div>
+        ))}
+      </div>
+      <div style={card({ borderColor: 'rgba(239,68,68,0.15)', background: 'rgba(239,68,68,0.03)' })}>
+        {label(`${crit} critical gaps identified by Genome · 340 patterns run`)}
+        <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
+          Every gap above has been cross-referenced against the AbarVa Genome library — 340 patterns from prior transformations. Each metric sits in the bottom quartile of its peer group. The combined economic exposure exceeds what any individual initiative can recover alone.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ContradictionPanel({ clientId }: { clientId: string }) {
+  const contradictions = clientId === 'arcturus' ? arcturusFinancial.contradictions : meridianHealth.contradictions.slice(0, 8).map((c, i) => ({
+    id: `c${i}`, claim: c.split(' — ')[0], reality: c.split(' — ').slice(1).join(' — '), severity: i < 3 ? 'critical' as const : 'high' as const, source: 'AbarVa data cross-reference',
+  }))
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+      {contradictions.map((c: any, i: number) => (
+        <div key={i} style={card({ borderColor: c.severity === 'critical' ? 'rgba(239,68,68,0.25)' : 'rgba(245,158,11,0.18)' })}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '8px' }}>
+            <div>
+              {label('Claim')}
+              <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{c.claim}</div>
+            </div>
+            <div>
+              {label('Reality')}
+              <div style={{ fontSize: '13px', color: WHITE, lineHeight: 1.5 }}>{c.reality}</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: c.severity === 'critical' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)', color: c.severity === 'critical' ? RED : AMBER }}>
+              {(c.severity as string).toUpperCase()}
+            </span>
+            {c.source && <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{c.source}</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DataPanel({ clientId }: { clientId: string }) {
+  const dimensions = clientId === 'arcturus' ? [
+    { dim: 'Portfolio Positions', score: arcturusAI.maturity.dataReadiness.portfolioPositions, note: 'Bloomberg AIM data — siloed, limited API' },
+    { dim: 'Client Relationship', score: arcturusAI.maturity.dataReadiness.clientRelationship, note: 'FSC 44% adoption — 56% of signals missing' },
+    { dim: 'Risk Analytics', score: arcturusAI.maturity.dataReadiness.riskAnalytics, note: 'Aladdin disconnected — monthly vs daily cadence' },
+    { dim: 'Regulatory Compliance', score: arcturusAI.maturity.dataReadiness.regulatory, note: 'Charles River exists — compliance gaps remain' },
+    { dim: 'Finance Reporting', score: arcturusAI.maturity.dataReadiness.financeReporting, note: 'Geneva functional — not AI-connected' },
+    { dim: 'ML Platform Readiness', score: arcturusAI.maturity.techReadiness.mlPlatform, note: 'No ML platform — no Azure ML, no Databricks' },
+    { dim: 'Data Platform', score: arcturusAI.maturity.techReadiness.dataPlatform, note: '14 silos — no unified platform, no golden record' },
+    { dim: 'MLOps', score: arcturusAI.maturity.techReadiness.mlops, note: 'No MLOps — models cannot be deployed at scale' },
+  ] : [
+    { dim: 'EHR Clinical Data', score: meridianHealth.technology.ehr.optimizationScore, note: 'Epic deployed — 34% of docs still in workarounds' },
+    { dim: 'Revenue Cycle Data', score: 72, note: 'Ensemble RCM — denial patterns poorly structured' },
+    { dim: 'Patient Identity', score: 38, note: 'No golden MRN across 23 hospitals' },
+    { dim: 'Prior Auth Data', score: 45, note: 'Only 23% of payers on automation' },
+    { dim: 'Analytics / BI', score: 42, note: 'Only 12 of 47 Cogito dashboards live' },
+    { dim: 'Integration Layer', score: 31, note: '14+ point-to-point interfaces — no unified platform' },
+    { dim: 'AI Readiness', score: 35, note: 'Data too fragmented for reliable ML training' },
+    { dim: 'Data Governance', score: 29, note: 'No CDO equivalent — CIO carrying both roles' },
+  ]
+  return (
+    <div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
+        {dimensions.map((d, i) => {
+          const color = d.score >= 70 ? GREEN : d.score >= 50 ? AMBER : RED
+          return (
+            <div key={i} style={card()}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div style={{ fontSize: '13px', color: WHITE, fontWeight: 500 }}>{d.dim}</div>
+                <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color }}>{d.score}</div>
+              </div>
+              <div style={{ height: '4px', background: BORDER, borderRadius: '2px', marginBottom: '8px' }}>
+                <div style={{ height: '100%', width: `${d.score}%`, background: color, borderRadius: '2px' }} />
+              </div>
+              <div style={{ fontSize: '11px', color: MUTED }}>{d.note}</div>
+            </div>
+          )
+        })}
+      </div>
+      <div style={card({ borderColor: 'rgba(45,212,200,0.2)' })}>
+        {label('Data Readiness Certificate — not yet issuable')}
+        <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
+          A data readiness certificate is issued when all 12 dimensions score above 70. Current state requires remediation before AI investment can be responsibly approved. Specific pipeline gaps and remediation steps are included in the full report.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TechnologyPanel({ clientId }: { clientId: string }) {
+  const items = clientId === 'arcturus' ? [
+    { platform: 'Bloomberg AIM', status: 'critical', detail: '3 consecutive modernisation failures · $22.2M total', issues: ['API rate limit 100x below ML requirements', 'Data exports missing 38% of required fields', 'Contract auto-renews Dec 2026 with no improvement terms'] },
+    { platform: 'Salesforce FSC', status: 'critical', detail: '$38M investment · 44% adoption after 18 months', issues: ['Adoption target reset 85%→70% without board disclosure', 'NPS 31 vs 58 industry median', '4 AI initiatives blocked by adoption failure'] },
+    { platform: 'Shadow IT', status: 'warning', detail: 'Est. $18M annually ungoverned', issues: ['3 BUs with direct procurement — no IT gate', 'IT budget grew 12% vs 2.5% revenue growth', '$178M above peer benchmark annually'] },
+  ] : [
+    { platform: 'Epic EHR', status: 'warning', detail: `Optimization: ${meridianHealth.technology.ehr.optimizationScore}/100 (reported 71, actual 44-47)`, issues: meridianHealth.technology.ehr.knownGaps },
+    { platform: 'Ensemble Health Partners (RCM)', status: 'critical', detail: `$${meridianHealth.technology.rcm.contractValue}M/yr · denial rate ${meridianHealth.technology.rcm.denialRate}%`, issues: [`${meridianHealth.technology.rcm.denialRate}% denial vs ${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, 'Prior auth avg 4.2 days vs 1.8 peer', 'Contract penalties $8M — never enforced'] },
+  ]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '14px' }}>
+      {items.map((item, i) => (
+        <div key={i} style={card({ borderColor: item.status === 'critical' ? 'rgba(239,68,68,0.22)' : 'rgba(245,158,11,0.18)' })}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <div>
+              <div style={{ fontSize: '15px', fontWeight: 600, color: WHITE }}>{item.platform}</div>
+              <div style={{ fontSize: '12px', color: MUTED, marginTop: '3px' }}>{item.detail}</div>
+            </div>
+            <span style={{ fontFamily: MONO, fontSize: '9px', padding: '3px 10px', borderRadius: '10px', background: item.status === 'critical' ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)', color: item.status === 'critical' ? RED : AMBER, marginLeft: '12px', flexShrink: 0 }}>
+              {item.status.toUpperCase()}
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px' }}>
+            {item.issues.map((iss, j) => (
+              <div key={j} style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ color: RED, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+                <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{iss}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function VendorPanel({ clientId }: { clientId: string }) {
+  const vendors = clientId === 'arcturus' ? [
+    { name: 'Salesforce FSC', category: 'CRM / Client Platform', score: 34, risk: 'critical', genomeFail: 68, issue: 'Platform adoption failure pattern active. 44% adoption after 18 months is below the 55% threshold where Genome patterns show recovery is possible without programme reset.' },
+    { name: 'Bloomberg AIM', category: 'Portfolio Management', score: 28, risk: 'critical', genomeFail: 71, issue: '3 failed modernisation attempts. Pattern F008 (vendor lock with technical debt) confirmed. $22.2M spent. Contract auto-renews Dec 2026 — no leverage without immediate action.' },
+    { name: 'Accenture (historical)', category: 'Systems Integrator', score: 22, risk: 'high', genomeFail: 74, issue: 'Head of Technology recruited post-failure of Project Aurora — conflict of interest not surfaced to board. Genome pattern F013 (post-failure hire) present.' },
+  ] : [
+    { name: 'Ensemble Health Partners', category: 'Revenue Cycle Management', score: 41, risk: 'critical', genomeFail: 74, issue: 'SLA breach on denial rate commitment. 18.2% vs 12% contracted. $8M in penalties exist but have never been enforced. Pattern F011 (RCM vendor misalignment) active.' },
+    { name: 'Epic Systems', category: 'EHR', score: 55, risk: 'warning', genomeFail: 69, issue: 'Under-optimization pattern active. 58/100 score reported — actual 44-47. Only 12 of 47 Cogito dashboards live. No accountable owner for optimization programme.' },
+    { name: 'Experian Health', category: 'Patient Access', score: 60, risk: 'low', genomeFail: 42, issue: 'Prior auth automation at 23% of payers only. Module purchased, deployment plan absent. Low failure risk but significant value locked.' },
+  ]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '14px' }}>
+      {vendors.map((v, i) => {
+        const riskColor = v.risk === 'critical' ? RED : v.risk === 'high' ? AMBER : GREEN
+        return (
+          <div key={i} style={card({ borderColor: `${riskColor}25` })}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: WHITE }}>{v.name}</div>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginTop: '2px' }}>{v.category}</div>
+              </div>
+              <div style={{ textAlign: 'right' as const, flexShrink: 0, marginLeft: '16px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: riskColor }}>{v.score}</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>genome score /100</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: RED, marginTop: '2px' }}>{v.genomeFail}% fail rate</div>
+              </div>
+            </div>
+            <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.6 }}>{v.issue}</div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+const ARCH_LAYERS: Record<string, { current: { layer: string; systems: string[] }[]; gaps: string[]; target: string[] }> = {
+  arcturus: {
+    current: [
+      { layer: 'Portfolio', systems: ['Bloomberg AIM', 'Bloomberg Terminal (13 seats)', 'Legacy IBOR'] },
+      { layer: 'Client', systems: ['Salesforce FSC (44%)', 'Legacy CRM (still live)', 'Manual Excel reporting'] },
+      { layer: 'Data', systems: ['14 siloed systems', 'No golden record', '3-day reporting lag'] },
+      { layer: 'AI', systems: ['28 initiatives (0 baselined)', 'No MLOps', 'Ad-hoc Python in BUs'] },
+    ],
+    gaps: ['Bloomberg API 100x below ML requirements', 'Dual CRM running — data split 44/56', 'No unified data platform', 'CDO vacant 11 months — no AI governance'],
+    target: ['Bloomberg AIM modernised with API-first layer', 'Single CRM at 90%+ adoption', 'Unified cloud data platform', 'AI governance with baselines across all 28 initiatives'],
+  },
+  meridian: {
+    current: [
+      { layer: 'Clinical', systems: ['Epic EHR (23 hospitals)', 'Legacy Epic at Blue Ridge', 'Cerner (pre-migration)'] },
+      { layer: 'Revenue', systems: ['Ensemble RCM', 'Experian Health', 'Waystar clearinghouse'] },
+      { layer: 'Analytics', systems: ['12 of 47 Cogito dashboards', 'Tableau (dept)', 'Excel reporting'] },
+      { layer: 'Integration', systems: ['Mulesoft (limited)', '14+ point-to-point', 'No unified platform'] },
+    ],
+    gaps: ['No golden MRN across 23 hospitals', 'Blue Ridge on legacy Epic — blocked', '34% docs outside Epic (workarounds)', 'Prior auth automation 23% of payers only'],
+    target: ['Unified Epic all 23 hospitals by Q4 2026', 'Real-time RCM + AI denial prevention', 'All 47 Cogito dashboards live', 'HL7 FHIR integration layer'],
+  },
+}
+
+function ArchitecturePanel({ clientId }: { clientId: string }) {
+  const arch = ARCH_LAYERS[clientId] ?? ARCH_LAYERS.meridian
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div style={card()}>
+        {label('Current state')}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
+          {arch.current.map((l, i) => (
+            <div key={i}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.07em', marginBottom: '5px' }}>{l.layer}</div>
+              {l.systems.map((s, j) => (
+                <div key={j} style={{ fontSize: '12px', color: WHITE, padding: '4px 0', borderBottom: j < l.systems.length - 1 ? `1px solid ${BORDER}` : 'none' }}>{s}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '14px' }}>
+        <div style={card({ borderColor: 'rgba(239,68,68,0.2)' })}>
+          {label('Architecture gaps')}
+          {arch.gaps.map((g, i) => (
+            <div key={i} style={{ display: 'flex', gap: '8px', padding: '4px 0' }}>
+              <span style={{ color: RED, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+              <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{g}</span>
+            </div>
+          ))}
+        </div>
+        <div style={card({ borderColor: 'rgba(52,211,153,0.18)' })}>
+          {label('Target architecture')}
+          {arch.target.map((t, i) => (
+            <div key={i} style={{ display: 'flex', gap: '8px', padding: '4px 0' }}>
+              <span style={{ color: GREEN, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+              <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{t}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BusinessCasePanel({ clientId }: { clientId: string }) {
+  const benchmarks = clientId === 'arcturus' ? [
+    { metric: 'Cost-to-Income Ratio', ours: '71%', peer: '61%', gap: '$840M efficiency gap', color: RED },
+    { metric: 'AUM per Employee', ours: '$65M', peer: '$185M', gap: '-$120M per employee vs peers', color: RED },
+    { metric: 'AI Maturity Score', ours: '28/100', peer: '54/100', gap: '26 points below peer median', color: RED },
+    { metric: 'Client Portal Adoption', ours: '44%', peer: '78%', gap: '-34pp vs industry median', color: RED },
+  ] : [
+    { metric: 'Denial Rate', ours: '18.2%', peer: '12.0%', gap: '$94M annual write-off', color: RED },
+    { metric: 'Operating Margin', ours: '1.8%', peer: '3.4%', gap: '-1.6pp vs IDN median', color: RED },
+    { metric: 'Days in AR', ours: '52', peer: '35', gap: '+17 days — working capital drag', color: RED },
+    { metric: 'Epic Optimization', ours: '58/100', peer: '78/100', gap: '-20 points below benchmark', color: AMBER },
+  ]
+  return (
+    <div>
+      <div style={{ border: `1px solid ${BORDER}`, borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }}>
+        {benchmarks.map((b, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', background: CARD, borderBottom: i < benchmarks.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+            <div style={{ flex: 1, fontSize: '13px', color: MUTED }}>{b.metric}</div>
+            <div style={{ display: 'flex', gap: '32px', alignItems: 'center' }}>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: MONO, fontSize: '16px', fontWeight: 700, color: b.color }}>{b.ours}</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>current</div>
+              </div>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: MONO, fontSize: '16px', fontWeight: 700, color: GREEN }}>{b.peer}</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>peer median</div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: '11px', color: AMBER, minWidth: '220px', textAlign: 'right' as const }}>{b.gap}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={card({ borderColor: 'rgba(52,211,153,0.2)', background: 'rgba(52,211,153,0.03)' })}>
+        {label('AbarVa engagement model')}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+          {[
+            { k: 'Fee model', v: 'Outcome-linked', d: 'Fee tied to verified performance improvements only' },
+            { k: 'Scenarios', v: 'Bear / Base / Bull', d: 'Three-scenario IC package built from your data + Genome' },
+            { k: 'Assurance', v: 'Maestro', d: 'Embedded operator holds vendors accountable throughout' },
+          ].map((x, i) => (
+            <div key={i}>
+              {label(x.k)}
+              <div style={{ fontSize: '14px', fontWeight: 600, color: GREEN, marginBottom: '4px' }}>{x.v}</div>
+              <div style={{ fontSize: '12px', color: MUTED }}>{x.d}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function AIDeliveryPanel({ clientId }: { clientId: string }) {
+  const initiatives = clientId === 'arcturus'
+    ? arcturusAI.maturity.currentInitiatives.slice(0, 6).map((x: any) => ({
+        name: x.name, status: x.status, type: x.category,
+        blocker: x.blocker || x.rootCause?.slice(0, 100),
+        inv: x.investment ? `$${(x.investment / 1e6).toFixed(1)}M` : undefined,
+      }))
+    : [
+        { name: 'Coding AI (Optum360)', status: 'Live — On Track', type: 'NLP · Code optimization', blocker: undefined, inv: undefined },
+        { name: 'Sepsis Early Warning', status: 'Live — Partial', type: 'Predictive · Clinical', blocker: 'Live 5 hospitals, failing 3, blocked 13', inv: undefined },
+        { name: 'Prior Auth AI', status: 'Blocked', type: 'Workflow · RCM', blocker: 'Epic module purchased, 23% deployed', inv: undefined },
+        { name: 'Unified Data Platform', status: 'Planning', type: 'Data infrastructure', blocker: 'Blue Ridge migration must complete first', inv: '$84M approved' },
+      ]
+
+  const statusColor = (s: string) => {
+    if (s.includes('Track') || s.includes('Live')) return GREEN
+    if (s.includes('Partial') || s.includes('Planning')) return AMBER
+    return RED
   }
 
-  const filteredPhases = activeFilter
-    ? PHASES.filter(p => p.label === activeFilter)
-    : PHASES
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '10px' }}>
+      {initiatives.map((item: any, i: number) => (
+        <div key={i} style={card({ borderColor: `${statusColor(item.status)}25` })}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: item.blocker ? '8px' : 0 }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: WHITE }}>{item.name}</div>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginTop: '2px' }}>{item.type}{item.inv ? ` · ${item.inv}` : ''}</div>
+            </div>
+            <span style={{ fontFamily: MONO, fontSize: '9px', padding: '3px 10px', borderRadius: '10px', background: `${statusColor(item.status)}18`, color: statusColor(item.status), flexShrink: 0, marginLeft: '12px' }}>
+              {item.status.toUpperCase()}
+            </span>
+          </div>
+          {item.blocker && (
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <span style={{ color: RED, fontSize: '10px', marginTop: '2px', flexShrink: 0 }}>▸</span>
+              <span style={{ fontSize: '12px', color: MUTED }}>{item.blocker}</span>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
-  // ── Embedded module view ────────────────────────────────────────────────────
+function OutcomePanel({ clientId }: { clientId: string }) {
+  const outcomes = clientId === 'meridian' ? [
+    { name: 'RCM Denial Rate', baseline: '18.2%', committed: '12.0%', current: '15.4%', trend: 'improving', feeStatus: 'partial', savingsToDate: 14.2 },
+    { name: 'Operating Margin', baseline: '1.8%', committed: '3.2%', current: '2.1%', trend: 'improving', feeStatus: 'partial', savingsToDate: 7.8 },
+    { name: 'Days in AR', baseline: '52 days', committed: '38 days', current: '47 days', trend: 'improving', feeStatus: 'partial', savingsToDate: 4.1 },
+    { name: 'Epic Optimization', baseline: '58/100', committed: '78/100', current: '63/100', trend: 'improving', feeStatus: 'locked', savingsToDate: 0 },
+  ] : [
+    { name: 'AI Initiative ROI', baseline: '$0 verified', committed: '$94M tracked', current: 'In setup', trend: 'locked', feeStatus: 'locked', savingsToDate: 0 },
+    { name: 'Cost-to-Income Ratio', baseline: '71%', committed: '64%', current: 'Baseline phase', trend: 'locked', feeStatus: 'locked', savingsToDate: 0 },
+    { name: 'MAS FEAT Compliance', baseline: 'Overdue 4mo', committed: 'Compliant', current: 'In remediation', trend: 'in-progress', feeStatus: 'locked', savingsToDate: 0 },
+  ]
+  const trendColor = (t: string) => t === 'improving' ? GREEN : t === 'in-progress' ? AMBER : DIM
+  return (
+    <div>
+      <div style={{ border: `1px solid ${BORDER}`, borderRadius: '8px', overflow: 'hidden', marginBottom: '20px' }}>
+        {outcomes.map((o, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 120px', gap: '0', padding: '14px 20px', background: CARD, borderBottom: i < outcomes.length - 1 ? `1px solid ${BORDER}` : 'none', alignItems: 'center' }}>
+            <div style={{ fontSize: '13px', color: WHITE, fontWeight: 500 }}>{o.name}</div>
+            <div>
+              {label('Baseline')}
+              <div style={{ fontFamily: MONO, fontSize: '13px', color: MUTED }}>{o.baseline}</div>
+            </div>
+            <div>
+              {label('Committed')}
+              <div style={{ fontFamily: MONO, fontSize: '13px', color: TEAL }}>{o.committed}</div>
+            </div>
+            <div>
+              {label('Current')}
+              <div style={{ fontFamily: MONO, fontSize: '13px', color: trendColor(o.trend) }}>{o.current}</div>
+            </div>
+            <div style={{ textAlign: 'right' as const }}>
+              {label('Savings')}
+              <div style={{ fontFamily: MONO, fontSize: '13px', color: o.savingsToDate > 0 ? GREEN : DIM }}>
+                {o.savingsToDate > 0 ? `$${o.savingsToDate}M` : '—'}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={card({ borderColor: 'rgba(45,212,200,0.2)' })}>
+        {label('Fee model — outcome-linked only')}
+        <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
+          Baseline locked Day 0. Monthly actuals vs baseline tracked in real time. AbarVa fee released only on verified, audited savings — independently confirmed. Zero fee if baseline does not move.
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ModuleContent({ moduleKey, clientId }: { moduleKey: string; clientId: string }) {
+  switch (moduleKey) {
+    case 'situation':     return <SituationPanel clientId={clientId} />
+    case 'contradiction': return <ContradictionPanel clientId={clientId} />
+    case 'data':          return <DataPanel clientId={clientId} />
+    case 'technology':    return <TechnologyPanel clientId={clientId} />
+    case 'vendor':        return <VendorPanel clientId={clientId} />
+    case 'architecture':  return <ArchitecturePanel clientId={clientId} />
+    case 'business-case': return <BusinessCasePanel clientId={clientId} />
+    case 'ai-delivery':   return <AIDeliveryPanel clientId={clientId} />
+    case 'outcome':       return <OutcomePanel clientId={clientId} />
+    default: return null
+  }
+}
+
+// ─── Main canvas ──────────────────────────────────────────────────────────────
+
+function AVRCanvas() {
+  const searchParams = useSearchParams()
+  const clientId = searchParams.get('client') || 'meridian'
+  const clientName = clientId === 'arcturus' ? 'Arcturus Financial' : 'Meridian Health'
+  const clientColor = clientId === 'arcturus' ? PURPLE : TEAL
+
+  const [phaseFilter, setPhaseFilter] = useState<number | null>(null)
+  const [activeModule, setActiveModule] = useState<ModuleInfo | null>(null)
+
+  const visiblePhases = phaseFilter ? PHASES.filter(p => p.phase === phaseFilter) : PHASES
+
+  // ── Module view ──────────────────────────────────────────────────────────────
   if (activeModule) {
     return (
       <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
-        <AbarvaNav activePage="ai-strategy" />
-        {/* Compact breadcrumb */}
-        <div style={{
-          background: CARD, borderBottom: `1px solid ${BORDER}`,
-          padding: '0 48px', height: '40px',
-          display: 'flex', alignItems: 'center', gap: '12px',
-        }}>
+        <AbarvaNav activePage={activeModule.key} />
+
+        {/* Explorer breadcrumb */}
+        <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, height: '40px', display: 'flex', alignItems: 'center', padding: '0 48px', gap: '10px' }}>
           <button
-            onClick={() => { shouldRestoreScroll.current = true; setActiveModule(null) }}
-            style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.05em', textTransform: 'uppercase' as const, padding: 0 }}
+            onClick={() => setActiveModule(null)}
+            style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.07em', padding: 0 }}
           >
-            ← AI Value Realization
+            AI Value Realization
           </button>
-          <div style={{ width: '1px', height: '16px', background: BORDER }} />
-          <span style={{ fontSize: '12px', color: MUTED }}>{activeModule.name}</span>
-          <div style={{ marginLeft: 'auto' }}>
-            <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: `${activeModule.color}18`, color: activeModule.color, letterSpacing: '.06em' }}>
-              MODULE {String(activeModule.num).padStart(2, '0')}
-            </span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: activeModule.phaseColor, letterSpacing: '.07em' }}>
+            Phase {PHASES.findIndex(p => p.modules.some(m => m.key === activeModule.key)) + 1} — {activeModule.phaseLabel}
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em' }}>{activeModule.name}</span>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: clientColor }} />
+            <span style={{ fontFamily: MONO, fontSize: '9px', color: clientColor }}>{clientName}</span>
           </div>
         </div>
-        {/* Embedded workspace — nav hidden via injected CSS */}
-        <iframe
-          src={`${activeModule.path}?client=arcturus`}
-          style={{ width: '100%', height: 'calc(100vh - 104px)', border: 'none', display: 'block' }}
-          onLoad={e => {
-            try {
-              const doc = (e.currentTarget as HTMLIFrameElement).contentDocument
-              if (!doc) return
-              const s = doc.createElement('style')
-              s.textContent = '#abarva-nav { display: none !important; }'
-              doc.head.appendChild(s)
-            } catch { /* cross-origin guard */ }
-          }}
-        />
+
+        {/* Module content */}
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '36px 48px 80px' }}>
+          <div style={{ marginBottom: '28px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: activeModule.phaseColor, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
+              Module {String(activeModule.num).padStart(2, '0')} · {activeModule.output}
+            </div>
+            <h1 style={{ fontFamily: SERIF, fontSize: '32px', fontWeight: 500, color: WHITE, margin: 0 }}>{activeModule.name}</h1>
+            <p style={{ fontSize: '14px', color: MUTED, marginTop: '8px' }}>{activeModule.desc}</p>
+          </div>
+          <ModuleContent moduleKey={activeModule.key} clientId={clientId} />
+        </div>
       </div>
     )
   }
 
+  // ── Canvas view ──────────────────────────────────────────────────────────────
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
-      <AbarvaNav activePage="ai-strategy" />
+      <AbarvaNav activePage="avr" />
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div style={{ padding: '72px 48px 64px', maxWidth: '1400px', margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '64px', alignItems: 'center' }}>
-
-          {/* Left: Headline + description + CTAs */}
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.16em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>
-              AI Value Realization · 9 Intelligence modules · One outcome
-            </div>
-            <h1 style={{ fontFamily: SERIF, fontSize: '54px', fontWeight: 500, lineHeight: 1.12, margin: '0 0 24px' }}>
-              The complete AI<br />
-              value realization<br />
-              <em style={{ color: TEAL }}>engagement.</em>
-            </h1>
-            <p style={{ fontSize: '17px', color: MUTED, maxWidth: '560px', margin: '0 0 14px', lineHeight: 1.7 }}>
-              AbarVa runs all 9 Intelligence modules together. A complete diagnostic and prescription —
-              where to invest, what to cut, what to build, what to govern.
-            </p>
-            <p style={{ fontSize: '14px', color: DIM, maxWidth: '520px', margin: '0 0 40px', lineHeight: 1.6 }}>
-              Each module is independently useful. Together, they are a complete strategy — from the first gap
-              to verified outcomes, with fee earned only on what moves.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' as const }}>
-              <a href="/diagnose?client=meridian" style={{
-                background: TEAL, color: BG, padding: '12px 24px',
-                borderRadius: '8px', fontSize: '13px', fontWeight: 600, textDecoration: 'none',
-              }}>
-                Start with a diagnostic →
-              </a>
-              <a href="/solutions" style={{
-                background: 'transparent', color: MUTED,
-                border: `1px solid ${BORDER}`, padding: '12px 24px',
-                borderRadius: '8px', fontSize: '13px', textDecoration: 'none',
-              }}>
-                Start with a Solution instead
-              </a>
-              {isAdmin && (
-                <button
-                  onClick={handleSeedDemo}
-                  disabled={seeding || seeded}
-                  style={{
-                    background: seeded ? `${GREEN}20` : 'rgba(45,212,200,0.10)',
-                    color: seeded ? GREEN : TEAL,
-                    border: `1px solid ${seeded ? GREEN : TEAL}40`,
-                    padding: '12px 24px',
-                    borderRadius: '8px', fontSize: '13px', cursor: seeding ? 'wait' : 'pointer',
-                    fontFamily: SANS,
-                  }}
-                >
-                  {seeded ? 'Demo loaded — redirecting…' : seeding ? 'Loading demo…' : 'Load Value Realization Demo →'}
-                </button>
-              )}
-            </div>
+      {/* Canvas header */}
+      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 48px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', height: '52px', gap: '16px' }}>
+          <div style={{ fontFamily: SERIF, fontSize: '18px', fontWeight: 500, color: WHITE }}>AI Value Realization</div>
+          <div style={{ width: 1, height: 20, background: BORDER }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: clientColor }} />
+            <span style={{ fontFamily: MONO, fontSize: '10px', color: clientColor }}>{clientName}</span>
           </div>
-
-          {/* Right: Phase summary + key stats */}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '10px' }}>
-            {PHASES.map((phase, i) => (
-              <div key={phase.label} style={{
-                background: CARD, border: `1px solid ${BORDER}`,
-                borderLeft: `3px solid ${phase.color}`,
-                borderRadius: '10px', padding: '16px 20px',
-              }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: phase.color, letterSpacing: '.14em', marginBottom: '5px' }}>
-                  PHASE {i + 1} — {phase.label}
-                </div>
-                <div style={{ fontSize: '13px', color: WHITE, fontWeight: 500, marginBottom: '4px' }}>{phase.desc}</div>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>
-                  {phase.modules.length} modules · {phase.modules.map(m => m.name.split(' ')[0]).join(', ')}
-                </div>
-              </div>
-            ))}
-            {/* Key stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '4px' }}>
-              {[
-                { v: '340', l: 'Genome patterns' },
-                { v: '9', l: 'Intelligence modules' },
-                { v: '48hr', l: 'First deliverable' },
-                { v: '$0', l: 'Fee if baseline unmoved' },
-              ].map(s => (
-                <div key={s.l} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '12px 16px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '20px', color: TEAL, fontWeight: 700 }}>{s.v}</div>
-                  <div style={{ fontSize: '11px', color: DIM, marginTop: '3px' }}>{s.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* ── Phase Filter Tabs ─────────────────────────────────────────────── */}
-      <div style={{
-        position: 'sticky', top: 0, zIndex: 10,
-        background: BG, borderBottom: `1px solid ${BORDER}`,
-        padding: '0 48px',
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto' as const }}>
-          {[
-            { label: 'ALL', color: WHITE },
-            { label: 'DIAGNOSE', color: TEAL },
-            { label: 'PRESCRIBE', color: AMBER },
-            { label: 'EXECUTE & VERIFY', color: GREEN },
-          ].map(tab => {
-            const isActive = tab.label === 'ALL' ? activeFilter === null : activeFilter === tab.label
-            return (
+          <div style={{ width: 1, height: 20, background: BORDER }} />
+          <span style={{ fontFamily: MONO, fontSize: '10px', color: DIM }}>9 intelligence modules · 3 phases</span>
+          {/* Phase filter tabs — right aligned */}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'stretch', height: '100%' }}>
+            {[
+              { label: 'All', value: null, color: WHITE },
+              { label: 'Phase 1 — DIAGNOSE', value: 1, color: BLUE },
+              { label: 'Phase 2 — PRESCRIBE', value: 2, color: AMBER },
+              { label: 'Phase 3 — VALUE REALIZATION', value: 3, color: GREEN },
+            ].map(tab => (
               <button
                 key={tab.label}
-                onClick={() => setActiveFilter(tab.label === 'ALL' ? null : tab.label)}
+                onClick={() => setPhaseFilter(tab.value)}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: isActive ? `2px solid ${tab.color}` : '2px solid transparent',
-                  padding: '14px 16px',
-                  fontSize: '11px',
-                  fontFamily: MONO,
-                  letterSpacing: '.1em',
-                  color: isActive ? tab.color : DIM,
-                  fontWeight: isActive ? 600 : 400,
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap' as const,
-                  transition: 'color 0.15s, border-color 0.15s',
-                  flexShrink: 0,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: MONO, fontSize: '9px', letterSpacing: '.07em',
+                  color: phaseFilter === tab.value ? tab.color : DIM,
+                  borderBottom: phaseFilter === tab.value ? `2px solid ${tab.color}` : '2px solid transparent',
+                  padding: '0 14px',
+                  transition: 'color 0.15s',
                 }}
               >
                 {tab.label}
               </button>
-            )
-          })}
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Pipeline ─────────────────────────────────────────────────────── */}
-      <div style={{ padding: '48px 48px 80px', maxWidth: '1400px', margin: '0 auto' }}>
+      {/* Module cards */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px 80px' }}>
+        {visiblePhases.map((phase, pi) => (
+          <div key={phase.phase} style={{ marginBottom: '32px' }}>
+            {pi > 0 && <div style={{ height: '1px', background: BORDER, margin: '0 0 32px' }} />}
 
-        {filteredPhases.map((phase, pi) => (
-          <div key={phase.label}>
-            {/* Phase connector arrow (between phases, only when showing all) */}
-            {pi > 0 && activeFilter === null && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0' }}>
-                <div style={{ display: 'flex', flexDirection: 'column' as const, alignItems: 'center', gap: '4px' }}>
-                  <div style={{ width: '1px', height: '24px', background: BORDER }} />
-                  <div style={{ fontSize: '16px', color: DIM }}>↓</div>
-                </div>
+            {/* Phase label */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: phase.color, letterSpacing: '.12em' }}>
+                PHASE {phase.phase} — {phase.label}
               </div>
-            )}
-
-            {/* Phase header */}
-            <div style={{
-              background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${phase.color}`,
-              borderRadius: '10px', padding: '18px 28px', marginBottom: '16px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: phase.color, letterSpacing: '.14em' }}>
-                  PHASE {PHASES.indexOf(phase) + 1} — {phase.label}
-                </div>
-                <div style={{ flex: 1, height: '1px', background: BORDER }} />
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>
-                  {phase.modules.length} module{phase.modules.length !== 1 ? 's' : ''}
-                </div>
-              </div>
-              <div style={{ fontSize: '13px', color: MUTED, marginTop: '5px' }}>{phase.desc}</div>
+              <div style={{ flex: 1, height: 1, background: BORDER }} />
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{phase.modules.length} modules</div>
             </div>
 
-            {/* Modules grid */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))',
-              gap: '12px',
-              marginBottom: '8px',
-            }}>
-              {phase.modules.map((mod) => (
+            {/* Module cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '12px' }}>
+              {phase.modules.map(mod => (
                 <div
-                  key={mod.num}
-                  onClick={() => { savedScrollY.current = window.scrollY; setActiveModule({ name: mod.name, num: mod.num, path: mod.path, color: phase.color }) }}
+                  key={mod.key}
+                  onClick={() => setActiveModule({ ...mod, phaseLabel: phase.label, phaseColor: phase.color })}
                   style={{ cursor: 'pointer' }}
+                  onMouseEnter={e => (e.currentTarget.querySelector('[data-card]') as HTMLElement).style.borderColor = `${phase.color}50`}
+                  onMouseLeave={e => (e.currentTarget.querySelector('[data-card]') as HTMLElement).style.borderColor = BORDER}
                 >
-                  <div style={{
-                    background: CARD, border: `1px solid ${BORDER}`,
-                    borderRadius: '10px', padding: '22px 24px',
-                    height: '100%', boxSizing: 'border-box' as const,
-                    transition: 'border-color 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.35)')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = BORDER)}
-                  >
-                    {/* Row 1: Module name + Output artifact */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '10px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {/* Number badge */}
-                        <div style={{
-                          width: '32px', height: '32px', flexShrink: 0,
-                          background: `${phase.color}12`,
-                          border: `1px solid ${phase.color}30`,
-                          borderRadius: '6px',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontFamily: MONO, fontSize: '10px', color: phase.color, fontWeight: 600,
-                        }}>
+                  <div data-card="" style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px 22px', transition: 'border-color 0.15s' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                        <div style={{ width: 28, height: 28, borderRadius: '6px', background: `${phase.color}12`, border: `1px solid ${phase.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: '10px', color: phase.color, fontWeight: 600, flexShrink: 0 }}>
                           {String(mod.num).padStart(2, '0')}
                         </div>
-                        <div style={{ fontSize: '16px', fontWeight: 600, color: WHITE }}>{mod.name}</div>
+                        <div style={{ fontSize: '15px', fontWeight: 600, color: WHITE }}>{mod.name}</div>
                       </div>
-                      <div style={{
-                        fontFamily: MONO, fontSize: '9px', color: TEAL,
-                        letterSpacing: '.1em', textTransform: 'uppercase' as const,
-                        flexShrink: 0, paddingTop: '2px',
-                        background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.20)',
-                        borderRadius: '4px', padding: '3px 8px',
-                      }}>
+                      <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.18)', borderRadius: '4px', padding: '3px 7px', flexShrink: 0, marginLeft: '8px' }}>
                         {mod.output}
                       </div>
                     </div>
-
-                    {/* Row 2: CXO question */}
-                    <div style={{ fontSize: '13px', fontStyle: 'italic', color: TEAL, marginBottom: '12px', lineHeight: 1.5 }}>
-                      "{mod.cxoQ}"
-                    </div>
-
-                    {/* Row 3: Capability bullets */}
-                    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px', marginBottom: '12px' }}>
-                      {mod.bullets.map((b, bi) => (
-                        <div key={bi} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                          <span style={{ color: TEAL, fontSize: '12px', lineHeight: '1.5', flexShrink: 0 }}>·</span>
-                          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.5 }}>{b}</span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Row 4: Arrow */}
-                    <div style={{ fontSize: '14px', color: TEAL, textAlign: 'right' as const }}>Open module →</div>
+                    <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.6, marginBottom: '12px' }}>{mod.desc}</div>
+                    <div style={{ fontSize: '12px', color: phase.color, textAlign: 'right' as const }}>Open module →</div>
                   </div>
                 </div>
               ))}
@@ -479,69 +608,14 @@ export default function AIStrategyPage() {
           </div>
         ))}
       </div>
-
-      {/* ── Bottom: Land with a Solution ─────────────────────────────────── */}
-      <div style={{ background: '#08101C', borderTop: `1px solid ${BORDER}`, padding: '72px 48px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-
-          {/* Heading row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '64px', alignItems: 'start', marginBottom: '48px' }}>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.16em', textTransform: 'uppercase' as const, marginBottom: '16px' }}>
-                How engagements start
-              </div>
-              <h2 style={{ fontFamily: SERIF, fontSize: '40px', fontWeight: 500, lineHeight: 1.2, margin: '0 0 16px' }}>
-                Land with a Solution.<br />
-                <em style={{ color: TEAL }}>Scale to AI Value Realization.</em>
-              </h2>
-              <p style={{ fontSize: '15px', color: MUTED, lineHeight: 1.7, margin: 0 }}>
-                Most engagements start with a specific problem — margin, delivery, or a technology decision.
-                Once the first outcome is verified, the full AI Value Realization engagement layers on what comes next.
-              </p>
-            </div>
-
-            {/* CTA */}
-            <div style={{ display: 'flex', flexDirection: 'column' as const, justifyContent: 'flex-end', gap: '16px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-                <span style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>
-                  All 9 modules. Outcome-based fee. If the baseline does not move, we do not get paid.
-                </span>
-              </div>
-              <a href="/diagnose?client=meridian" style={{
-                display: 'inline-block',
-                background: TEAL, color: BG, padding: '14px 28px',
-                borderRadius: '8px', fontSize: '14px', fontWeight: 600, textDecoration: 'none',
-                alignSelf: 'flex-start',
-              }}>
-                Start with a diagnostic →
-              </a>
-            </div>
-          </div>
-
-          {/* Solution pills */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
-            {[
-              { name: 'Margin Optimization', path: '/solutions/margin', color: AMBER, modules: 'Modules 1, 2, 7, 9', desc: 'Denial recovery · MA Star · AI portfolio' },
-              { name: 'AI-Powered PDLC', path: '/solutions/pdlc', color: TEAL, modules: 'Modules 1, 3, 4, 8, 9', desc: 'Delivery velocity · AI to production' },
-              { name: 'Technology Modernization', path: '/solutions/tech', color: INDIGO, modules: 'Modules 1, 4, 5, 6, 7', desc: 'System scoring · migration · vendor' },
-            ].map(s => (
-              <a key={s.name} href={s.path} style={{ textDecoration: 'none' }}>
-                <div style={{
-                  background: CARD, border: `1px solid ${BORDER}`, borderTop: `2px solid ${s.color}`,
-                  borderRadius: '10px', padding: '24px',
-                  textAlign: 'left' as const, cursor: 'pointer',
-                }}>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>{s.name}</div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: s.color, letterSpacing: '.08em', marginBottom: '10px' }}>{s.modules}</div>
-                  <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{s.desc}</div>
-                  <div style={{ fontSize: '12px', color: s.color, marginTop: '14px' }}>Start here →</div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </div>
     </div>
+  )
+}
+
+export default function AIStrategyPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12' }} />}>
+      <AVRCanvas />
+    </Suspense>
   )
 }

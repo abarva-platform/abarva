@@ -43,10 +43,8 @@ function NavInner({ activePage }: NavProps) {
   const isElevated = metaRole === 'admin' || metaRole === 'investor'
   const isAdmin    = metaRole === 'admin'
 
-  // Solution link paths — admin sees engage routes, client sees portal routes
+  // Solution link paths — always land on the solution overview page
   const solutionPath = (sol: string) => {
-    if (!signedIn) return `/solutions/${sol}`
-    if (metaRole === 'admin') return `/engage/${clientId}/${sol}`
     if (metaRole === 'client' && metaClientId) return `/portal/${sol}?client=${metaClientId}`
     return `/solutions/${sol}`
   }
@@ -92,9 +90,12 @@ function NavInner({ activePage }: NavProps) {
   ]
 
   const avrActive = [
-    'intelligence', 'architecture', 'ai-pdlc', 'ai-strategy',
+    'intelligence', 'architecture', 'ai-pdlc', 'ai-strategy', 'avr',
     'data-intelligence', 'justify', 'contradictions', 'outcome-intelligence',
     'diagnose', 'vendor-intelligence',
+    // inline canvas module keys
+    'situation', 'contradiction', 'data', 'technology', 'vendor',
+    'business-case', 'ai-delivery', 'outcome',
   ].includes(activePage || '')
 
   // Explorer breadcrumb — maps each module page to its AVR phase context

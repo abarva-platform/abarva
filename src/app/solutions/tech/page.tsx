@@ -89,10 +89,8 @@ export default function SolutionTech() {
 
   useEffect(() => {
     if (!isLoaded || !user) return
-    const role = user.publicMetadata?.role as string
-    const cid = (user.publicMetadata?.clientId as string) || 'arcturus'
-    if (role === 'admin') { router.replace(`/engage/arcturus/tech`); return }
-    if (cid) { router.replace(`/portal/tech`); return }
+    const cid = user.publicMetadata?.clientId as string | undefined
+    if (cid && user.publicMetadata?.role !== 'admin') { router.replace(`/portal/tech`); return }
   }, [isLoaded, user, router])
 
   const cp = arcturusTechnology.corePlatform

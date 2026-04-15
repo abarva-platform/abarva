@@ -62,10 +62,8 @@ export default function SolutionPDLC() {
 
   useEffect(() => {
     if (!isLoaded || !user) return
-    const role = user.publicMetadata?.role as string
-    const cid = (user.publicMetadata?.clientId as string) || 'arcturus'
-    if (role === 'admin') { router.replace(`/engage/arcturus/pdlc`); return }
-    if (cid) { router.replace(`/portal/pdlc`); return }
+    const cid = user.publicMetadata?.clientId as string | undefined
+    if (cid && user.publicMetadata?.role !== 'admin') { router.replace(`/portal/pdlc`); return }
   }, [isLoaded, user, router])
 
   return (
