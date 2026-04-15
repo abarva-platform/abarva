@@ -1,7 +1,27 @@
 #!/usr/bin/env node
 /**
- * AbarVa — Create Demo Users via Clerk Backend API
- * Run: CLERK_SECRET_KEY=sk_live_xxx node create-demo-users.mjs
+ * AbarVa — Create / reset demo users via Clerk Backend API
+ *
+ * Run:
+ *   CLERK_SECRET_KEY=sk_live_xxx node create-demo-users.mjs
+ *
+ * Safe to re-run — existing accounts are skipped (not overwritten).
+ * Active Clerk instance: boss-griffon-61.clerk.accounts.dev
+ *
+ * Live credentials (as of 2026-04-15):
+ *
+ *   Admin (all clients):
+ *     anand+clerk_test@abarva.com        /  AbarVa2026!
+ *     anand.sundaram@thesundaram.com     /  (personal — role patched to admin)
+ *
+ *   Investor:
+ *     investor+clerk_test@abarva.com     /  Demo2026!
+ *
+ *   Arcturus Financial Group:
+ *     af@abarva.com                      /  Demo2026!
+ *
+ *   Meridian Health System:
+ *     mh+clerk_test@abarva.com           /  Demo2026!
  */
 
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY
@@ -12,124 +32,68 @@ if (!CLERK_SECRET_KEY) {
   process.exit(1)
 }
 
-// Simple short emails — first 1-2 letters of client name
 const USERS = [
 
-  // ── ADMIN (Anand) ──────────────────────────────────
+  // ── ADMIN (Anand) ─────────────────────────────────────────────────────
   {
-    email: 'anand@abarva.com',
-    password: 'AbarVa2026!',
+    email:     'anand+clerk_test@abarva.com',
+    password:  'AbarVa2026!',
     firstName: 'Anand',
-    lastName: 'Sundaram',
-    metadata: { role: 'admin', clientId: null }
+    lastName:  'Sundaram',
+    metadata:  { role: 'admin', clientId: null },
   },
 
-  // ── INVESTOR ───────────────────────────────────────
+  // ── INVESTOR ──────────────────────────────────────────────────────────
   {
-    email: 'inv@abarva.com',
-    password: 'Demo2026!',
+    email:     'investor+clerk_test@abarva.com',
+    password:  'Demo2026!',
     firstName: 'Investor',
-    lastName: 'Demo',
-    metadata: { role: 'investor', clientId: null }
+    lastName:  'Demo',
+    metadata:  { role: 'investor', clientId: null },
   },
 
-  // ── EXISTING CLIENT DEMOS ──────────────────────────
-  // a = Arcturus
+  // ── ARCTURUS FINANCIAL GROUP ──────────────────────────────────────────
   {
-    email: 'a@abarva.com',
-    password: 'Demo2026!',
+    email:     'af@abarva.com',
+    password:  'Demo2026!',
     firstName: 'Arcturus',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: 'arcturus',
-      clientName: 'Arcturus Financial Group',
-      accountType: 'demo_existing'
-    }
+    lastName:  'Demo',
+    metadata:  {
+      role:        'maestro',
+      clientId:    'arcturus',
+      clientName:  'Arcturus Financial Group',
+      accountType: 'demo_existing',
+    },
   },
 
-  // m = Meridian
+  // ── MERIDIAN HEALTH SYSTEM ────────────────────────────────────────────
   {
-    email: 'm@abarva.com',
-    password: 'Demo2026!',
+    email:     'mh+clerk_test@abarva.com',
+    password:  'Demo2026!',
     firstName: 'Meridian',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: 'meridian',
-      clientName: 'Meridian Health System',
-      accountType: 'demo_existing'
-    }
+    lastName:  'Demo',
+    metadata:  {
+      role:        'maestro',
+      clientId:    'meridian',
+      clientName:  'Meridian Health System',
+      accountType: 'demo_existing',
+    },
   },
 
-  // fc = First Capital
-  {
-    email: 'fc@abarva.com',
-    password: 'Demo2026!',
-    firstName: 'First Capital',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: 'firstcapital',
-      clientName: 'First Capital Financial',
-      accountType: 'demo_existing'
-    }
-  },
-
-  // ar = Apex Retail
-  {
-    email: 'ar@abarva.com',
-    password: 'Demo2026!',
-    firstName: 'Apex Retail',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: 'apexretail',
-      clientName: 'Apex Retail Group',
-      accountType: 'demo_existing'
-    }
-  },
-
-  // n = Nexora
-  {
-    email: 'n@abarva.com',
-    password: 'Demo2026!',
-    firstName: 'Nexora',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: 'nexora',
-      clientName: 'Nexora Retail & Consumer',
-      accountType: 'demo_existing'
-    }
-  },
-
-  // ── NEW CLIENT SETUP DEMO ──────────────────────────
-  {
-    email: 'new@abarva.com',
-    password: 'Demo2026!',
-    firstName: 'New Client',
-    lastName: 'Demo',
-    metadata: {
-      role: 'maestro',
-      clientId: null,
-      accountType: 'demo_new_setup'
-    }
-  },
 ]
 
-async function createUser(user) {
+async function createUser (user) {
   const res = await fetch('https://api.clerk.com/v1/users', {
-    method: 'POST',
+    method:  'POST',
     headers: {
       'Authorization': `Bearer ${CLERK_SECRET_KEY}`,
-      'Content-Type': 'application/json',
+      'Content-Type':  'application/json',
     },
     body: JSON.stringify({
-      email_address: [user.email],
-      password: user.password,
-      first_name: user.firstName,
-      last_name: user.lastName,
+      email_address:   [user.email],
+      password:        user.password,
+      first_name:      user.firstName,
+      last_name:       user.lastName,
       public_metadata: user.metadata,
     }),
   })
@@ -137,19 +101,19 @@ async function createUser(user) {
   const data = await res.json()
 
   if (res.ok) {
-    console.log(`✓  ${user.email.padEnd(22)} → ${user.metadata.role}${user.metadata.clientId ? ' · ' + user.metadata.clientId : ''}`)
+    console.log(`✓  ${user.email.padEnd(38)} → ${user.metadata.role}${user.metadata.clientId ? ' · ' + user.metadata.clientId : ''}`)
     return { success: true }
   } else {
     if (data.errors?.[0]?.code === 'form_identifier_exists') {
-      console.log(`⚠  ${user.email.padEnd(22)} → already exists, skipped`)
+      console.log(`⚠  ${user.email.padEnd(38)} → already exists, skipped`)
       return { success: true }
     }
-    console.error(`✗  ${user.email.padEnd(22)} → FAILED: ${data.errors?.[0]?.message || JSON.stringify(data)}`)
+    console.error(`✗  ${user.email.padEnd(38)} → FAILED: ${data.errors?.[0]?.message || JSON.stringify(data)}`)
     return { success: false }
   }
 }
 
-async function main() {
+async function main () {
   console.log('\nAbarVa — Creating demo users\n')
 
   for (const user of USERS) {
@@ -158,24 +122,23 @@ async function main() {
   }
 
   console.log(`
-────────────────────────────────────────────
-CREDENTIALS — share before demos
+────────────────────────────────────────────────────────
+CREDENTIALS
 
-  Admin (all clients):
-    anand@abarva.com      /  AbarVa2026!
+  Admin (access all clients):
+    anand+clerk_test@abarva.com          /  AbarVa2026!
+    anand.sundaram@thesundaram.com       /  (personal password)
 
   Investor:
-    inv@abarva.com        /  Demo2026!
+    investor+clerk_test@abarva.com       /  Demo2026!
 
-  Demo accounts (all use Demo2026!):
-    a@abarva.com          →  Arcturus Financial
-    m@abarva.com          →  Meridian Health
-    fc@abarva.com         →  First Capital Financial
-    ar@abarva.com         →  Apex Retail
-    n@abarva.com          →  Nexora Retail
-    new@abarva.com        →  New client setup flow
+  Arcturus Financial Group:
+    af@abarva.com                        /  Demo2026!
 
-────────────────────────────────────────────
+  Meridian Health System:
+    mh+clerk_test@abarva.com             /  Demo2026!
+
+────────────────────────────────────────────────────────
 `)
 }
 
