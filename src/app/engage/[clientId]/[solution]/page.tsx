@@ -105,6 +105,7 @@ export default function MaestroWorkspace() {
   const [newEngagementName, setNewEngagementName] = useState('')
   const [switching, setSwitching] = useState(false)
   const [seedingDemo, setSeedingDemo] = useState(false)
+  const [seedingFullDemo, setSeedingFullDemo] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -211,6 +212,24 @@ export default function MaestroWorkspace() {
     await loadEngagement()
     await loadEngagementList()
     setSeedingDemo(false)
+  }
+
+  const seedFullDemo = async () => {
+    setSeedingFullDemo(true)
+    setSwitcherOpen(false)
+    const cName = clientId === 'arcturus' ? 'Arcturus Financial Group' : 'Meridian Health System'
+    await fetch(`/api/engage/${clientId}/${solution}/seed-demo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        createdBy: user?.fullName || 'Anand Sundaram',
+        fullDemo: true,
+        engagementName: `${cName} — Full Demo`
+      })
+    })
+    await loadEngagement()
+    await loadEngagementList()
+    setSeedingFullDemo(false)
   }
 
   // Load opportunity map for margin solution
@@ -491,7 +510,7 @@ export default function MaestroWorkspace() {
             }}
           >
             <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.teal, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {seedingDemo ? 'Loading demo...' : switching ? 'Switching...' : (engagement?.engagement_name || 'Default')}
+              {seedingFullDemo ? 'Loading full demo...' : seedingDemo ? 'Loading demo...' : switching ? 'Switching...' : (engagement?.engagement_name || 'Default')}
             </span>
             <span style={{ color: T.teal, fontSize: '9px' }}>▾</span>
           </button>
@@ -553,6 +572,20 @@ export default function MaestroWorkspace() {
                 <span style={{ color: T.indigo, fontSize: '12px', lineHeight: 1 }}>◈</span>
                 <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.indigo }}>
                   {seedingDemo ? 'Loading demo...' : 'Load completed demo'}
+                </span>
+              </button>
+              <button
+                onClick={seedFullDemo}
+                disabled={seedingFullDemo}
+                style={{
+                  width: '100%', textAlign: 'left', padding: '8px 14px',
+                  background: 'transparent', border: 'none', cursor: seedingFullDemo ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', gap: '8px'
+                }}
+              >
+                <span style={{ color: T.amber, fontSize: '12px', lineHeight: 1 }}>◈</span>
+                <span style={{ fontFamily: T.sans, fontSize: '12px', color: T.amber }}>
+                  {seedingFullDemo ? 'Loading full demo...' : 'Load Full Demo'}
                 </span>
               </button>
             </div>

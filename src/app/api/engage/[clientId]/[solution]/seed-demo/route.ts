@@ -7,6 +7,8 @@ import { ARCTURUS_TECH_DEMO } from '@/lib/demo-data/arcturus-tech-demo'
 import { MERIDIAN_TECH_DEMO } from '@/lib/demo-data/meridian-tech-demo'
 import { MERIDIAN_MARGIN_DEMO } from '@/lib/demo-data/meridian-margin-demo'
 import { MERIDIAN_PDLC_DEMO } from '@/lib/demo-data/meridian-pdlc-demo'
+import { ARCTURUS_DELIVERY_FULL_DEMO } from '@/lib/demo-data/arcturus-full-demo'
+import { MERIDIAN_TECH_PARTIAL_DEMO } from '@/lib/demo-data/meridian-tech-partial-demo'
 import {
   ARCTURUS_DELIVERY_PHASE0,
   ARCTURUS_MARGIN_PHASE0,
@@ -28,7 +30,11 @@ function getPhase0Data(clientId: string, solution: string) {
   return null
 }
 
-function getDemoData(clientId: string, solution: string) {
+function getDemoData(clientId: string, solution: string, fullDemo = false) {
+  if (fullDemo) {
+    if (clientId === 'arcturus' && solution === 'delivery') return ARCTURUS_DELIVERY_FULL_DEMO as any
+    if (clientId === 'meridian' && solution === 'tech') return MERIDIAN_TECH_PARTIAL_DEMO as any
+  }
   if (clientId === 'arcturus' && solution === 'delivery') return ARCTURUS_DELIVERY_DEMO
   if (clientId === 'arcturus' && solution === 'margin') return ARCTURUS_MARGIN_DEMO
   if (clientId === 'arcturus' && solution === 'tech') return ARCTURUS_TECH_DEMO
@@ -44,17 +50,21 @@ export async function POST(
 ) {
   try {
     const { clientId, solution } = await params
-    const { createdBy } = await request.json().catch(() => ({}))
+    const { createdBy, fullDemo } = await request.json().catch(() => ({}))
 
     const solutionConfig = SOLUTIONS[solution as SolutionKey]
     if (!solutionConfig) {
       return NextResponse.json({ error: 'Invalid solution' }, { status: 400 })
     }
 
-    const demoData = getDemoData(clientId, solution)
+    const demoData = getDemoData(clientId, solution, !!fullDemo)
     if (!demoData) {
       return NextResponse.json({ error: `No demo data available for ${clientId} × ${solution}` }, { status: 400 })
     }
+
+    // Support partial demos (in_progress engagements)
+    const engStatus = (demoData as any).engagement_status ?? 'complete'
+    const engCurrentPhase = (demoData as any).current_phase ?? 4
 
     const phase0Data = getPhase0Data(clientId, solution)
     const supabase = getSupabase()
@@ -77,12 +87,12 @@ export async function POST(
       .insert({
         client_id: clientId,
         solution,
-        status: 'complete',
-        current_phase: 4,
+        status: engStatus,
+        current_phase: engCurrentPhase,
         created_by: createdBy || 'system',
         engagement_name: demoData.engagement_name,
         is_active: true,
-        metadata: { client_name: clientName, is_demo: true }
+        metadata: { client_name: clientName, is_demo: true, is_full_demo: !!fullDemo }
       })
       .select()
       .single()
@@ -93,7 +103,7 @@ export async function POST(
 
     // Create all 5 phases
     const phaseInserts = [0, 1, 2, 3, 4].map(num => {
-      const demoPhase = demoData.phases.find(p => p.phase_number === num)
+      const demoPhase = demoData.phases.find((p: any) => p.phase_number === num)
       const phaseStatus = num === 0 ? 'approved' : (demoPhase?.status || 'locked')
       return {
         engagement_id: engagement.id,
@@ -237,20 +247,60 @@ export async function POST(
         }
       }
 
-      // Create phase output
-      const outputStatus = demoPhase.output.status
-      await supabase.from('phase_outputs').insert({
-        phase_id: dbPhase.id,
-        output_type: demoPhase.output.output_type,
-        title: demoPhase.output.title,
-        content: demoPhase.output.content,
-        version: 1,
-        status: outputStatus,
-        approved_at: outputStatus === 'approved'
-          ? new Date(Date.now() - (4 - demoPhase.phase_number) * 10 * 24 * 60 * 60 * 1000).toISOString()
-          : null,
-        approved_by: outputStatus === 'approved' ? 'Anand Sundaram' : null
-      })
+      // Create phase output (optional — in_progress phases may not have output)
+      if (demoPhase.output) {
+        const outputStatus = demoPhase.output.status
+        await supabase.from('phase_outputs').insert({
+          phase_id: dbPhase.id,
+          output_type: demoPhase.output.output_type,
+          title: demoPhase.output.title,
+          content: demoPhase.output.content,
+          version: 1,
+          status: outputStatus,
+          approved_at: outputStatus === 'approved'
+            ? new Date(Date.now() - (4 - demoPhase.phase_number) * 10 * 24 * 60 * 60 * 1000).toISOString()
+            : null,
+          approved_by: outputStatus === 'approved' ? 'Anand Sundaram' : null
+        })
+      }
+
+      // Seed phase-level findings (for partial/in-progress demos)
+      const phaseFindings = (demoPhase as any).findings as any[] | undefined
+      if (phaseFindings?.length) {
+        for (let i = 0; i < phaseFindings.length; i++) {
+          const f = phaseFindings[i]
+          await supabase.from('phase_findings').insert({
+            phase_id: dbPhase.id,
+            workstream_id: null,
+            title: f.title,
+            description: f.description,
+            source_files: f.source_files,
+            genome_pattern: f.genome_pattern,
+            severity: f.severity,
+            status: 'confirmed',
+            is_published: true,
+            display_order: i,
+            created_by: 'maestro_ai'
+          })
+        }
+      }
+
+      // Seed phase-level genome matches (for partial/in-progress demos)
+      const phaseGenomeMatches = (demoPhase as any).genome_matches as any[] | undefined
+      if (phaseGenomeMatches?.length) {
+        for (const gm of phaseGenomeMatches) {
+          await supabase.from('genome_matches').upsert({
+            engagement_id: engagement.id,
+            pattern_code: gm.code,
+            pattern_name: gm.name,
+            failure_rate: gm.failure_rate,
+            evidence: gm.evidence,
+            confidence: gm.confidence,
+            phase_identified: demoPhase.phase_number,
+            source_files: gm.source_files
+          }, { onConflict: 'engagement_id,pattern_code' })
+        }
+      }
     }
 
     // Log activity
