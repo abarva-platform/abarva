@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { meridianHealth, meridianFinancials, meridianTechnology, meridianClinical, meridianLeadership } from "@/data/meridian/index";
 import { firstCapital } from "@/data/firstcapital/index";
 import { apexRetail } from "@/data/apexretail/index";
+import { arcturusFinancial } from "@/data/arcturus/index";
 import { finservBenchmarks } from "@/data/knowledge/finserv";
 import { retailBenchmarks } from "@/data/knowledge/retail";
 import { crossIndustryKnowledge } from "@/data/knowledge/crossIndustry";
@@ -204,14 +205,64 @@ VENDOR INTELLIGENCE:
 `;
 }
 
+function getArcturusContext() {
+  const a = arcturusFinancial;
+  return `
+CURRENT CLIENT: ARCTURUS FINANCIAL GROUP
+Industry: Asset Management | Type: Global Asset Manager
+AUM: $${a.org.aum}B | Revenue: $${a.org.revenue}B | Employees: ${a.org.employees.toLocaleString()}
+
+FINANCIAL:
+- Cost-to-income ratio: 71% vs 61% peer median — $840M efficiency gap
+- AI spend: $94M committed — 0 initiatives with documented baselines or outcome tracking
+- IT budget: 4.2% of revenue vs 3.1% peer benchmark — $178M above peers annually
+- AI maturity score: 28/100 vs 54 peer median
+
+TECHNOLOGY:
+- Salesforce FSC: 44% adoption vs 78% industry median — $38M invested, NPS 31 vs 58 benchmark
+- 14 siloed systems — no golden record — 3-day reporting lag vs real-time expectation
+- 28 AI initiatives in flight — 0 with documented baselines
+- CDO: VACANT 11 months — 14 of 28 AI initiatives blocked
+
+REGULATORY:
+- MAS FEAT: Overdue 4 months (December 2025 deadline) — zero models with FEAT-compliant documentation
+- $2.4B Singapore AUM at risk from regulatory action
+
+LEADERSHIP:
+- CEO: "We are committed to becoming AI-native" — yet $94M in AI spend with no tracked ROI
+- CFO: "AI spend is up. I cannot tell you what return we are getting on a single dollar."
+- CIO: "AI governance established with 28 initiatives in flight" — CRO has stopped approving new AI deployments
+- CRO: Blocked all new AI deployments pending FEAT compliance resolution
+
+CONTRADICTIONS:
+${a.contradictions.map((c, i) => `${i + 1}. CLAIM: "${c.claim}" — REALITY: ${c.reality} [${c.source}]`).join("\n")}
+
+ACTIVE FAILURE PATTERNS:
+- F001 Vendor Dependency Trap: $38M Salesforce FSC at 44% adoption — no exit clause
+- F002 Pilot Purgatory: 28 AI initiatives, 0 in production with baselines — 3+ years
+- F004 Measurement Vacuum: $94M AI spend — zero ROI tracked
+- F009 Governance Without Accountability: CDO vacant 11 months — CRO blocking progress
+
+INDUSTRY BENCHMARKS (Asset Management):
+- Cost-to-income: Top quartile 55% | Median 61% | Bottom quartile 70%
+- Digital portal adoption: Top quartile 82% | Median 78%
+- AI maturity: Top quartile 72 | Median 54
+- IT budget as % revenue: Top quartile 2.8% | Median 3.1%
+`;
+}
+
 export async function POST(request: Request) {
-  const { messages, role, client: clientId } = await request.json();
+  const body = await request.json();
+  const { messages, role } = body;
+  // Accept both `clientId` (page sends this) and `client` (legacy) for the client identifier
+  const clientId: string = body.clientId || body.client || 'meridian';
 
   if (!process.env.ANTHROPIC_API_KEY) {
     const fallbacks: Record<string, string> = {
       meridian: `The travel nurse dependency at Meridian is one of the clearest financial levers I can see. You're at $142M annually versus a benchmark of $68M — that's $74M in excess cost, and it's almost entirely structural.\n\nThe root cause isn't nurse availability. It's the 28% turnover rate on permanent staff, which creates the dependency on travel nurses in the first place. Marcus Webb flagged this in his first 90 days — "we are treating symptoms, not causes."\n\nThe fastest path: workforce analytics to identify which units have the highest turnover and why. Epic has the data — it's just not connected to your HR system yet.\n\nWhat specific units are driving the highest travel nurse spend? OR and ICU tend to be the most expensive — is that where the pressure is?`,
       firstcapital: `The cost-to-income ratio at 68% is the number the board watches most closely — and right now it's moving the wrong direction.\n\nThe fastest lever isn't cost cutting. It's the AML false positive rate at 78%. You have 6 FTE analysts reviewing transactions that AI should auto-clear. That's approximately $1.8M in direct labor, but the bigger cost is what they're not doing.\n\nNICE Actimize is 2 major versions behind — the ML detection models in 8.2 and 8.3 are specifically designed to reduce false positives. Before any new hire or system purchase, an Actimize upgrade is the right first step.\n\nIs the OCC MRA on the AML system the main pressure to fix this, or is it more the operational cost?`,
       apexretail: `The $248M Einstein opportunity is the most striking finding in your data — 14 months of paid licenses with zero activation. The fee is $1.1M annually. The revenue opportunity is $248M. That ratio doesn't happen often.\n\nThe blocker isn't technical — it's the Segment CDP fragmentation. You have 18M loyalty members counted 2.8 times on average. If Einstein activates against fragmented profiles, it personalizes to ghost customers. The fix takes 2 weeks and costs nothing.\n\nSo the sequence is: fix Segment identity resolution first, then activate Einstein. Six weeks to first revenue at $800K total cost.\n\nWhat's the internal resistance — is it the Salesforce PS engagement cost, or is it that no one owns the Einstein activation?`,
+      arcturus: `The number that should worry everyone is $94M in AI spend with zero documented baselines. Not a single one of the 28 initiatives has a measurable starting point — so there's no way to prove ROI, no way to satisfy MAS FEAT, and no way to defend the budget.\n\nThe CRO has already started blocking new AI deployments. That's the pressure point. The CDO vacancy — 11 months now — means no one is resolving it.\n\nThe fastest path forward: pick the two or three AI initiatives with the clearest potential for compliance documentation and build baselines from existing data. That unblocks the CRO and gives the board something concrete.\n\nWhat's the CFO's current read — is the AI spend freeze coming, or is it already in effect?`,
     }
     const fallback = fallbacks[clientId] || fallbacks.meridian
     const encoder = new TextEncoder()
@@ -235,6 +286,9 @@ export async function POST(request: Request) {
   } else if (clientId === 'apexretail') {
     orgContext = getApexRetailContext();
     clientName = "Apex Retail Group";
+  } else if (clientId === 'arcturus') {
+    orgContext = getArcturusContext();
+    clientName = "Arcturus Financial Group";
   }
 
   const crossIndustryContext = `
