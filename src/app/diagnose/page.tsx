@@ -308,37 +308,134 @@ const ACTIONS: Record<ClientId, Action[]> = {
 
 const PRE_BUILT_QUESTIONS: Record<ClientId, Partial<Record<RoleId, string[]>>> = {
   meridian: {
-    CIO: ['Should we stay with Ensemble or switch RCM vendors?','Where is Epic failing and who owns the fix?','What does the CDO vacancy cost us per month?','Which AI vendor decision is most urgent?'],
-    CFO: ['How much is the RCM gap costing us in cash?','What\'s the ROI if we fix prior auth this quarter?','What\'s the financial impact of the MA Star gap?','Build me a CFO brief for the board meeting'],
-    CMIO: ['What\'s driving the prior auth denial rate?','Which Epic modules are dark and what do they cost?','How does our clinical AI compare to peers?'],
-    CEO: ['What do I tell the board about RCM this quarter?','What is our path to 4% operating margin by FY2026?','How do we position Meridian as the AI leader in Southeast?'],
-    Maestro: ['What data am I missing that would sharpen this picture?','Which finding needs the most urgent CXO attention?','Draft the opening for my CIO briefing','What questions will the CFO ask?'],
+    CIO: [
+      'Ensemble RCM: SLA compliance 67% vs 95% target, $2.3M in unenforced penalties — stay or negotiate a replacement?',
+      'Walk me through the 8 Epic modules — Cogito has only 12 of 47 dashboards live, Blue Ridge is 8 months overdue — which dark modules have the highest ROI to activate first?',
+      'CDO vacancy is now 11 months — what is the real monthly cost to our AI and data programme?',
+      'Azure Synapse is 40% complete with a 340-request reporting backlog — do we accelerate, outsource, or restart?',
+    ],
+    CFO: [
+      'Prior auth denial rate 18.2% vs 12.1% benchmark — $47M annual exposure — what\'s the fastest path to closing that gap this quarter?',
+      'Travel nurse spend $142M vs $68M benchmark — $74M in excess cost — is this a workforce analytics problem or a turnover problem?',
+      'MA Star at 3.2 vs 4.0 threshold — what does each star point mean in CMS reimbursement dollars for Meridian?',
+      'Ensemble contract: $48M/yr, underperforming, SLA breaches never enforced — what are the 3 financial levers in the next renewal?',
+    ],
+    CMIO: [
+      'Prior auth: 4.2 days vs 1.8-day peer median, 3 AI vendors in evaluation — which vendor gets us to compliant fastest?',
+      'Sepsis AI live at 2 hospitals with 84% accuracy, readmission risk at 1 hospital in pilot — what\'s blocking scale across all 23 hospitals?',
+      'Epic\'s Healthy Planet is dark — what does that mean for our population health strategy and value-based contract performance?',
+      'MA Star clinical gap: what are the 2 highest-weight measures where we\'re losing the most points?',
+    ],
+    CEO: [
+      'Operating margin is -0.8% vs 2.1% peer median — what\'s the single highest-leverage path to 4% by FY2026?',
+      'RCM gap: $47M annual exposure, Ensemble contract up for renewal, CDO vacancy at 11 months — what do I tell the board Thursday?',
+      'We have 6 AI pilots stalled at $42M investment — what does "AI leader in the Southeast" actually require us to do next?',
+      'Marcus Webb flagged 28% permanent nursing turnover as the root cause of $74M travel nurse excess — what\'s my 90-day decision?',
+    ],
+    Maestro: [
+      'Which of the 5 zones needs the sharpest data before the CIO briefing — and what\'s the one number I\'m missing?',
+      'Blue Ridge migration 8 months overdue: do I escalate to the board or negotiate a structured recovery plan with the vendor?',
+      'Rank the top 3 findings by: (a) speed to close, (b) CFO visibility, (c) CEO decision required — what\'s the right briefing order?',
+      'What questions will the CRO ask that we haven\'t answered yet?',
+    ],
   },
   firstcapital: {
-    CIO: ['Replace FIS HORIZON or add an API layer?','How do we get FedNow live before we lose commercial clients?','SQL Server 2017 EOS October — what do we do?'],
-    CFO: ['ROI case for core banking modernization?','How do we get cost-to-income from 68% to 55%?','Fraud losses $3.8M above benchmark — fastest fix?'],
-    CEO: ['Strategic risk of keeping FIS HORIZON 3 more years?','How do we position as digital bank without $180M investment?','How long before commercial clients leave without FedNow?'],
-    Maestro: ['What data am I missing that would sharpen this picture?','Which finding needs the most urgent CXO attention?','Draft the CTO briefing for this week'],
+    CIO: [
+      'FIS HORIZON is 12 years old and the core migration team is 3 people short — replace it, add an API layer, or phase the modernisation over 4 years?',
+      'FedNow certification is 6 months out and 3 commercial clients have issued RFPs to competitors — what\'s the minimum viable path to certification?',
+      'SQL Server 2017 EOS is October — we have 14 databases on it — what\'s the risk if we miss the deadline?',
+    ],
+    CFO: [
+      'Cost-to-income at 68% vs 55% peer benchmark — the AML false positive rate at 78% is costing 6 FTE analysts — is that the fastest lever?',
+      'NICE Actimize is 2 major versions behind — the ML detection in 8.2/8.3 reduces false positives — what does the upgrade cost vs the analyst cost?',
+      'Fraud losses $3.8M above benchmark — what\'s the audit finding and the fastest remediation path?',
+    ],
+    CEO: [
+      'FIS HORIZON: 3-year extension costs $12M but risks losing commercial clients — full modernisation is $180M — what does the board need to approve in 60 days?',
+      'OCC MRA on AML system is active — what\'s the remediation timeline and what does non-compliance actually risk?',
+      'FedNow: 3 commercial clients watching our certification timeline — how long before the revenue risk becomes a board-level conversation?',
+    ],
+    Maestro: [
+      'Which finding — AML, FedNow, or core banking — needs CXO attention first and why?',
+      'Draft the 3-line CTO briefing for this week\'s board session',
+      'What data would sharpen the SQL Server EOS risk from "potential" to "quantified"?',
+    ],
   },
   apexretail: {
-    COO: ['18M loyalty members — 42% active vs 68% benchmark — why?','Einstein personalization — why is it not activated?','Cart abandonment 72% — what do we fix first?'],
-    CFO: ['ROI case for SAP migration options?','Inventory turnover 4.2x vs 6.8x — what does that cost us?','How do we get operating margin from 3.8% to 6% in 24 months?'],
-    CEO: ['SAP ECC support ends 2027 — what do I tell the board?','Amazon is taking share — what is the digital strategy?','How do we close the $840M cart abandonment opportunity?'],
-    Maestro: ['What data am I missing?','Which finding needs the most urgent attention?','Draft CEO briefing for the board'],
+    COO: [
+      '18M loyalty members counted 2.8 times on average in Segment CDP — before Einstein activates, what does fixing identity resolution actually require?',
+      'Einstein personalization: $1.1M/yr in paid licenses, $248M revenue opportunity, 14 months unactivated — who owns the activation decision and what\'s blocking it?',
+      'Cart abandonment at 72% vs 54% benchmark — is the fix the Segment fragmentation, the Einstein activation, or something upstream?',
+    ],
+    CFO: [
+      'SAP ECC goes unsupported in 2027 — the 3 migration options are $45M greenfield, $28M lift-and-shift, $12M API bridge — what does each risk profile look like?',
+      'Inventory turnover 4.2x vs 6.8x benchmark — o9 is 40% implemented and directly causing the $180M excess inventory — do we complete it or restart?',
+      'Einstein activation: $800K total cost, $248M revenue opportunity, 6-week timeline — what\'s the CFO objection to proceeding immediately?',
+    ],
+    CEO: [
+      'SAP ECC support ends 2027 — we have 3 migration options, 18 months to decide, and Amazon taking market share — what\'s the board message this quarter?',
+      'David Park\'s loyalty programme has 18M members but 42% active rate vs 68% benchmark — is the problem the data fragmentation or the programme design?',
+      '$840M cart abandonment opportunity — 72% abandonment rate, Einstein not activated, Segment fragmented — what is the 90-day sprint to capture the first $50M?',
+    ],
+    Maestro: [
+      'Which finding — Einstein, Segment, SAP, or o9 — has the highest confidence level and is ready to brief to the CEO today?',
+      'What questions will the CFO ask about the SAP migration decision that we haven\'t answered yet?',
+      'Draft the CEO briefing headline and the 3 numbers that need to land in the first 60 seconds',
+    ],
   },
   arcturus: {
-    CIO: ['Golden record — what will it take and how long?','Bloomberg AIM API layer vs full replacement — what does the Genome say?','CDO interim vs external hire — fastest path to unblocking the AI programme?'],
-    CFO: ['How do I defend the $94M AI spend at the next board meeting?','What is the fastest path to CIR improvement without a CDO?','Model risk governance — what does MAS FEAT actually require us to do?'],
-    CRO: ['Which AI models are live and which have regulatory exposure right now?','FEAT remediation — what are the 3 most urgent actions?','SEC MRA — what is the remediation timeline?'],
-    CEO: ['What is the board message on CDO vacancy?','How do we close the $840M CIR gap in 24 months?','What does an AI-native asset manager actually look like — and how far are we?'],
-    Maestro: ['What data am I missing that would sharpen this picture?','Which finding needs the most urgent CXO attention?','Draft the CRO briefing on FEAT remediation'],
+    CIO: [
+      'Golden record: 14 systems, no single source of truth, 3-day reporting lag, 18 of 28 AI initiatives depend on it — build it internally or buy a data fabric?',
+      'Bloomberg AIM: 28 years old, 3 failed modernisations, 180ms network latency to Azure, auto-renews December 2026 with no API modernisation commitment — API layer vs full replacement?',
+      'CDO vacancy is 11 months — the AI governance programme is blocked, MAS FEAT remediation is stalled — interim CDO or accelerate the external hire?',
+    ],
+    CFO: [
+      'IT spend $680M vs $502M peer benchmark — $178M efficiency gap — break it down: $204M software, $136M infrastructure, $94M AI, $48M cybersecurity — where is the gap concentrated?',
+      'Bloomberg auto-renews December 2026: no API modernisation commitment in current contract, stress testing cadence gap gives negotiation leverage — what are the 3 contract terms I should demand?',
+      '$94M AI spend, zero documented baselines, CRO blocking new deployments — what\'s the board message on Thursday and what do I need from the CDO hire to unblock it?',
+    ],
+    CRO: [
+      'MAS FEAT: $2.4B AUM at regulatory risk, Aladdin configured for monthly stress testing but SEC requires daily, remediation 4 months overdue — what are the 3 actions that satisfy regulators fastest?',
+      'Which of the 28 AI models currently in production have the clearest regulatory exposure under FEAT — and which ones should I be blocking right now?',
+      'Charles River cloud migration unlocks MAS FEAT compliance — the contract renews September 2026 — what are the negotiation terms and the migration timeline?',
+    ],
+    CEO: [
+      'CDO vacancy 11 months: AI programme blocked, FEAT stalled, $94M untracked — what\'s the board message and what does the right CDO profile actually look like?',
+      'CIR at 68.4% vs 61.2% peer benchmark — the $178M IT efficiency gap and $94M AI programme are the two levers — what\'s the 24-month path to close it?',
+      'Salesforce FSC: $6M investment, 44% adoption vs 85% target, NPS 31 vs 58 benchmark, August 2026 renewal — is this a leadership problem, a training problem, or a product fit problem?',
+    ],
+    Maestro: [
+      'Rank the 5 critical findings by: (a) regulatory urgency, (b) CEO visibility, (c) speed to resolve — what\'s the right briefing sequence for the board?',
+      'Bloomberg December 2026 auto-renewal: what negotiation preparation do I need to start now to have leverage in 6 months?',
+      'Draft the CRO briefing on FEAT remediation — what\'s the 3-sentence opening that makes the stakes clear without triggering a freeze?',
+    ],
   },
   nexora: {
-    CIO: ['Einstein — who owns the activation and why has it taken 18 months?','SAP R/3 migration — which SI should we talk to first?','o9 completion vs restart — what does the data say?'],
-    CFO: ['E-commerce margin path to positive — what levers and what timeline?','SAP R/3 migration budget — what am I approving in the next 90 days?','ROI case for Einstein activation — what is the payback period?'],
-    COO: ['o9 completion fixed-fee contract — what terms should I demand?','Inventory turns 4.2x to 6.0x — what is the realistic 18-month roadmap?','Shrinkage AI scale decision — what does the pilot data say about ROI?'],
-    CMO: ['Einstein activation 8-week plan — who does what?','Loyalty active rate 42% to 65% — what is the 12-month programme?','Cart recovery 72% abandonment — what is blocking activation?'],
-    Maestro: ['What data am I missing?','Which finding is most urgent?','Draft the CFO briefing on SAP migration decision'],
+    CIO: [
+      'Einstein personalization: 14 months unactivated, $1.1M/yr in paid licenses — who in the org owns the activation and what is the actual blocker?',
+      'SAP R/3: 2027 support deadline, 3 migration options — which SI has the strongest record in retail transformations of this complexity?',
+      'o9: 40% implemented, causing $180M excess inventory — the question is completion vs restart — what does the contract say about fixed-fee completion?',
+    ],
+    CFO: [
+      'E-commerce margin is negative at -2.3% — the three levers are cart recovery, Einstein activation, and Segment fix — which one has the fastest payback period?',
+      'SAP R/3 migration: $45M greenfield vs $28M lift-and-shift vs $12M API bridge — what am I approving in the next 90 days and what does each option risk?',
+      'Einstein ROI: $800K activation cost vs $248M revenue opportunity — what\'s the payback period and what\'s the CFO objection I haven\'t addressed yet?',
+    ],
+    COO: [
+      'o9 is 40% complete and causing the $180M inventory excess — fixed-fee completion contract: what are the 3 terms I must lock in before we proceed?',
+      'Inventory turns 4.2x vs 6.0x target — the o9 completion and Segment fix both move this number — which one moves it faster and by how much?',
+      'Shrinkage AI pilot reduced losses 31% in 2 stores — scale to all 340 stores requires $4.2M and 6 months — what\'s the ROI case and the decision threshold?',
+    ],
+    CMO: [
+      'Einstein activation: Segment CDP has 50% profile fragmentation, 18M loyalty members counted 2.8x on average — fix identity resolution first, or activate Einstein on fragmented data?',
+      'Loyalty active rate 42% vs 68% benchmark — what are the 3 highest-weight programme changes that move the active rate in 12 months?',
+      '72% cart abandonment with Einstein not activated — what does a realistic 8-week activation sprint look like and who does what?',
+    ],
+    Maestro: [
+      'Which finding — Einstein, Segment, SAP, o9, or shrinkage AI — is ready to brief to the CEO today with the highest confidence data?',
+      'What questions will the CFO ask about the SAP decision that we haven\'t answered yet?',
+      'Draft the CFO briefing headline and the 3 numbers that must land in the first 60 seconds',
+    ],
   },
 }
 
@@ -1267,10 +1364,26 @@ function Zone3({ clientId }: { clientId: ClientId }) {
   )
 }
 
+// ─── Choice extraction ────────────────────────────────────────────────────────
+
+function extractChoices(text: string): { main: string; choices: string[] } {
+  const marker = '[CHOICES]'
+  const idx = text.indexOf(marker)
+  if (idx === -1) return { main: text, choices: [] }
+  const main = text.slice(0, idx).trim()
+  const choices: string[] = []
+  text.slice(idx + marker.length).split('\n').forEach(line => {
+    const m = line.trim().match(/^[A-C]\)\s+.+/)
+    if (m) choices.push(line.trim())
+  })
+  return { main, choices }
+}
+
 // ─── Zone 4 ───────────────────────────────────────────────────────────────────
 
 function Zone4({ clientId, role }: { clientId: ClientId; role: RoleId }) {
   const [messages, setMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [decisions, setDecisions] = useState<string[]>([])
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1322,9 +1435,14 @@ function Zone4({ clientId, role }: { clientId: ClientId; role: RoleId }) {
     }
   }, [messages, clientId, role, loading])
 
+  const sendChoice = useCallback((choice: string) => {
+    setDecisions(d => [...d, choice])
+    send(choice)
+  }, [send])
+
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '20px', minHeight: '500px' }}>
-      {/* Pre-built questions */}
+      {/* Pre-built questions + decision log */}
       <div>
         <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px', fontFamily: T.mono }}>
           {role} QUESTIONS
@@ -1343,29 +1461,77 @@ function Zone4({ clientId, role }: { clientId: ClientId; role: RoleId }) {
             </button>
           ))}
         </div>
+
+        {/* Decision log */}
+        {decisions.length > 0 && (
+          <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid ' + T.border }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: T.text3, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px', fontFamily: T.mono }}>
+              INVESTIGATION LOG
+            </div>
+            {decisions.map((d, i) => (
+              <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'flex-start' }}>
+                <span style={{ color: T.teal, fontFamily: T.mono, fontSize: '9px', flexShrink: 0, marginTop: '3px', lineHeight: 1 }}>✓</span>
+                <span style={{ fontSize: '11px', color: T.text2, lineHeight: 1.5 }}>{d.replace(/^[A-C]\)\s*/, '')}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Chat panel */}
       <div style={{ display: 'flex', flexDirection: 'column', background: T.surface, border: '1px solid ' + T.border, borderRadius: '10px', overflow: 'hidden' }}>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', maxHeight: '420px', minHeight: '320px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px', maxHeight: '520px', minHeight: '380px' }}>
           {messages.length === 0 && !streaming && (
             <div style={{ padding: '32px', textAlign: 'center', color: T.text3 }}>
               <div style={{ fontSize: '14px', marginBottom: '8px' }}>Ask anything about {CLIENT_META[clientId].name}.</div>
-              <div style={{ fontSize: '12px' }}>Every response cites its source.</div>
+              <div style={{ fontSize: '12px', marginBottom: '4px' }}>AbarVa will offer specific investigation paths after each response.</div>
+              <div style={{ fontSize: '11px', color: T.border2 }}>Click a question on the left to start.</div>
             </div>
           )}
-          {messages.map((m, i) => (
-            <div key={i} style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: m.role === 'user' ? T.teal : T.purple, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: T.mono }}>
-                {m.role === 'user' ? role : 'ABARVA'}
+          {messages.map((m, i) => {
+            if (m.role === 'user') {
+              return (
+                <div key={i} style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: T.teal, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: T.mono }}>{role}</div>
+                  <div style={{ fontSize: '14px', color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{m.content}</div>
+                </div>
+              )
+            }
+            const { main, choices } = extractChoices(m.content)
+            return (
+              <div key={i} style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: T.purple, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: T.mono }}>ABARVA</div>
+                <div style={{ fontSize: '14px', color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{main}</div>
+                {choices.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '14px' }}>
+                    <div style={{ fontSize: '10px', color: T.text3, fontFamily: T.mono, letterSpacing: '.06em', marginBottom: '2px' }}>CHOOSE AN INVESTIGATION PATH:</div>
+                    {choices.map((choice, ci) => (
+                      <button
+                        key={ci}
+                        onClick={() => sendChoice(choice)}
+                        disabled={loading}
+                        style={{
+                          padding: '10px 14px', background: 'rgba(45,212,200,0.06)',
+                          border: '1px solid rgba(45,212,200,0.25)', borderRadius: '8px',
+                          fontSize: '13px', color: T.teal, cursor: loading ? 'default' : 'pointer',
+                          fontFamily: T.sans, textAlign: 'left' as const, lineHeight: 1.5,
+                          transition: 'all 120ms',
+                        }}
+                        onMouseEnter={e => { if (!loading) { (e.currentTarget as HTMLElement).style.background = 'rgba(45,212,200,0.13)'; (e.currentTarget as HTMLElement).style.borderColor = T.teal } }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(45,212,200,0.06)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(45,212,200,0.25)' }}
+                      >
+                        {choice}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div style={{ fontSize: '14px', color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{m.content}</div>
-            </div>
-          ))}
+            )
+          })}
           {streaming && (
             <div style={{ marginBottom: '16px' }}>
               <div style={{ fontSize: '10px', fontWeight: 700, color: T.purple, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px', fontFamily: T.mono }}>ABARVA</div>
-              <div style={{ fontSize: '14px', color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{streaming}</div>
+              <div style={{ fontSize: '14px', color: T.text, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{extractChoices(streaming).main}</div>
             </div>
           )}
           <div ref={bottomRef} />
@@ -1375,7 +1541,7 @@ function Zone4({ clientId, role }: { clientId: ClientId; role: RoleId }) {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), send(input))}
-            placeholder="Ask anything about this client…"
+            placeholder="Ask anything, or click a path above…"
             style={{ flex: 1, padding: '10px 14px', background: T.bg, border: '1px solid ' + T.border2, borderRadius: '8px', color: T.text, fontSize: '13px', fontFamily: T.sans, outline: 'none' }}
           />
           <button
