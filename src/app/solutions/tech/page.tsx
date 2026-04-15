@@ -334,6 +334,7 @@ export default function SolutionTech() {
         step={step} setStep={setStep}
         selected={selected} setSelected={setSelected}
         launched={launched} setLaunched={setLaunched}
+        poweredBy={['Situation Intelligence', 'Technology Intelligence', 'Vendor Intelligence']}
       />
 
       {/* Powered by */}

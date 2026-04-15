@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
 import MarginOpportunityMap from '@/components/engage/MarginOpportunityMap'
+import OutputRenderer from '@/components/OutputRenderer'
 
 const T = {
   bg: '#060A12',
@@ -60,7 +61,7 @@ const SEVERITY_COLORS: Record<string, string> = {
   positive: T.green,
 }
 
-type Panel = 'workstreams' | 'findings' | 'output' | 'activity'
+type Panel = 'workstreams' | 'findings' | 'deliverables' | 'output' | 'activity'
 
 export default function MaestroWorkspace() {
   const { user, isLoaded } = useUser()
@@ -1054,7 +1055,7 @@ export default function MaestroWorkspace() {
         }}>
           {/* Right panel tabs */}
           <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}` }}>
-            {(['findings', 'output', 'activity'] as Panel[]).map(panel => (
+            {(['findings', 'deliverables', 'output', 'activity'] as Panel[]).map(panel => (
               <button
                 key={panel}
                 onClick={() => setRightPanel(panel)}
@@ -1076,6 +1077,14 @@ export default function MaestroWorkspace() {
               <FindingsPanel
                 findings={phaseFindings}
                 onUpdate={updateFinding}
+              />
+            )}
+            {rightPanel === 'deliverables' && (
+              <DeliverablesPanel
+                phase={activePhase}
+                workstreams={workstreams}
+                phaseOutput={phaseOutput}
+                solutionConfig={solutionConfig}
               />
             )}
             {rightPanel === 'output' && (
@@ -1579,17 +1588,13 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
               V{phaseOutput.version} · {phaseOutput.status?.toUpperCase()} · {new Date(phaseOutput.created_at).toLocaleDateString()}
             </div>
 
-            {/* Show key content fields */}
-            {phaseOutput.content?.headline && (
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', lineHeight: 1.6, marginBottom: '12px' }}>
-                "{phaseOutput.content.headline}"
-              </div>
-            )}
-            {phaseOutput.content?.verdict_summary && (
-              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '13px', color: '#EFF6FF', lineHeight: 1.6, marginBottom: '12px' }}>
-                {phaseOutput.content.verdict_summary}
-              </div>
-            )}
+            {/* CXO-ready rendered output */}
+            <OutputRenderer
+              outputType={phaseOutput.output_type}
+              content={phaseOutput.content}
+              approvedBy={phaseOutput.approved_by}
+              approvedAt={phaseOutput.approved_at}
+            />
 
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
               {JSON.stringify(phaseOutput.content).length.toLocaleString()} chars of structured content
@@ -1649,6 +1654,121 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
           >
             {generatingOutput ? 'Generating...' : 'Regenerate Draft'}
           </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DeliverablesPanel({ phase, workstreams, phaseOutput, solutionConfig }: {
+  phase: any; workstreams: any[]; phaseOutput: any; solutionConfig: any
+}) {
+  if (!phase) return (
+    <div style={{ textAlign: 'center', padding: '32px 16px', color: 'rgba(255,255,255,0.75)', fontFamily: 'JetBrains Mono, monospace', fontSize: '11px' }}>
+      Select a phase to view deliverables.
+    </div>
+  )
+
+  const phaseNum = phase.phase_number as number
+  const phaseConfig = solutionConfig?.phases?.[phaseNum]
+  const defaultWorkstreams: { name: string; description: string }[] = phaseConfig?.default_workstreams || []
+  const isComplete = phase.status === 'complete' || phase.status === 'approved'
+  const outputApproved = phaseOutput?.status === 'approved' || phaseOutput?.status === 'published'
+
+  // Build deliverable list: each workstream is a deliverable, plus the phase output as master
+  const deliverables = defaultWorkstreams.map((dws, i) => {
+    const dbWs = workstreams.find((w: any) => w.name === dws.name || w.order_index === i)
+    const hasMessages = dbWs // simplified — if workstream exists, it's been touched
+    const status: 'signed_off' | 'ready' | 'in_progress' = isComplete ? 'signed_off' : hasMessages ? 'in_progress' : 'in_progress'
+    return { name: dws.name, status, workstream: dbWs }
+  })
+
+  const statusBadge = (status: string) => {
+    if (status === 'signed_off') return {
+      label: '✓ SIGNED OFF', bg: 'rgba(34,197,94,0.12)', color: '#22C55E', border: '1px solid rgba(34,197,94,0.25)'
+    }
+    if (status === 'ready') return {
+      label: 'READY FOR REVIEW', bg: 'rgba(45,212,200,0.12)', color: '#2DD4C8', border: '1px solid rgba(45,212,200,0.25)'
+    }
+    return {
+      label: 'IN PROGRESS', bg: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.50)', border: '1px solid rgba(255,255,255,0.12)'
+    }
+  }
+
+  return (
+    <div>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+        Deliverables — Phase {phaseNum}
+      </div>
+
+      {deliverables.length === 0 && (
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
+          No deliverables configured for this phase.
+        </div>
+      )}
+
+      {deliverables.map((d, i) => {
+        const badge = statusBadge(d.status)
+        return (
+          <div key={i} style={{
+            background: '#0D1520', border: '1px solid rgba(45,212,200,0.12)',
+            borderRadius: '8px', padding: '14px', marginBottom: '8px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
+              <div style={{ fontSize: '13px', color: '#EFF6FF', fontWeight: 600, lineHeight: 1.4 }}>
+                {d.name}
+              </div>
+              <div style={{
+                fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', letterSpacing: '.08em',
+                background: badge.bg, color: badge.color, border: badge.border,
+                borderRadius: '4px', padding: '3px 7px', flexShrink: 0,
+              }}>
+                {badge.label}
+              </div>
+            </div>
+            {d.status === 'signed_off' && (
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.40)', marginTop: '6px' }}>
+                Anand Sundaram · {new Date(phase.approved_at || Date.now()).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Master Output card */}
+      {(phaseOutput || deliverables.length > 0) && (
+        <div style={{
+          background: '#0D1520', border: `1px solid ${outputApproved ? 'rgba(45,212,200,0.35)' : 'rgba(45,212,200,0.15)'}`,
+          borderLeft: '3px solid #2DD4C8', borderRadius: '8px', padding: '14px', marginTop: '12px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ fontSize: '13px', color: '#EFF6FF', fontWeight: 600 }}>
+              {phaseConfig?.name || `Phase ${phaseNum}`} Output
+            </div>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: '#2DD4C8', background: 'rgba(45,212,200,0.10)', border: '1px solid rgba(45,212,200,0.20)', borderRadius: '3px', padding: '2px 6px' }}>
+              MASTER OUTPUT
+            </div>
+          </div>
+          {!phaseOutput && (
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.60)' }}>
+              Generated after workstreams complete
+            </div>
+          )}
+          {phaseOutput && !outputApproved && (
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: 'rgba(255,255,255,0.50)' }}>
+              {phaseOutput.status?.toUpperCase()} · Awaiting CXO approval
+            </div>
+          )}
+          {outputApproved && (
+            <a href="#output" onClick={e => { e.preventDefault() }} style={{
+              display: 'block', marginTop: '8px',
+              background: '#2DD4C8', color: '#060A12', borderRadius: '6px',
+              padding: '8px 14px', fontSize: '12px', fontWeight: 600, textDecoration: 'none',
+              fontFamily: 'DM Sans, sans-serif', textAlign: 'center',
+            }}>
+              Ready for CXO Approval →
+            </a>
+          )}
         </div>
       )}
     </div>

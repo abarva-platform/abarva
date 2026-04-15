@@ -10,7 +10,14 @@ const PHASES: {
   label: string
   color: string
   desc: string
-  modules: { num: number; name: string; desc: string; path: string }[]
+  modules: {
+    num: number
+    name: string
+    cxoQ: string
+    bullets: string[]
+    output: string
+    path: string
+  }[]
 }[] = [
   {
     label: 'DIAGNOSE',
@@ -20,19 +27,37 @@ const PHASES: {
       {
         num: 1,
         name: 'Situation Intelligence',
-        desc: "What's actually broken — and what it costs. Every gap structured by Genome pattern, confidence, and recovery range.",
+        cxoQ: "What's actually broken — and what is it costing right now?",
+        bullets: [
+          '340 Genome patterns run against your cost structure and operations',
+          'Every gap ranked by recovery range, confidence, and time-to-fix',
+          'Addressable vs structural split delivered in 48 hours',
+        ],
+        output: 'SITUATION BRIEF · 48HRS',
         path: '/diagnose',
       },
       {
         num: 2,
         name: 'Contradiction Intelligence',
-        desc: 'What leaders told the board vs what the data shows. Contradiction map with source-by-source verification.',
+        cxoQ: 'What did leadership tell the board — and what does the data actually show?',
+        bullets: [
+          'Every leadership statement cross-referenced against financial and operational data',
+          'Source-by-source verification with confidence rating per contradiction',
+          'Contradiction map used to calibrate Phase 2 prescriptions',
+        ],
+        output: 'CONTRADICTION MAP · 72HRS',
         path: '/contradictions',
       },
       {
         num: 3,
         name: 'Data Intelligence',
-        desc: "What your data can and can't support. Completeness scored, gaps flagged, data requests generated.",
+        cxoQ: "What can your data actually support — and what gaps are blocking AI?",
+        bullets: [
+          'Completeness scored across 12 data dimensions',
+          'Pipeline gaps flagged with specific remediation steps',
+          'Data readiness certificate generated before AI investment approved',
+        ],
+        output: 'DATA READINESS CERTIFICATE · 1 WEEK',
         path: '/data-intelligence',
       },
     ],
@@ -45,25 +70,49 @@ const PHASES: {
       {
         num: 4,
         name: 'Technology Intelligence',
-        desc: 'Every system scored — age, cost, dependency depth, migration risk. Modernisation sequence generated.',
+        cxoQ: 'Which systems are blocking you — and in what order do you fix them?',
+        bullets: [
+          'Every system scored: age, cost, dependency depth, migration risk',
+          'EOL systems flagged with regulatory and operational exposure',
+          'Modernisation sequence generated and Genome-validated',
+        ],
+        output: 'AI READINESS CERTIFICATE · 1 WEEK',
         path: '/intelligence',
       },
       {
         num: 5,
         name: 'Vendor Intelligence',
-        desc: 'Which vendor wins in your specific context — not their deck, your data. Scored against Genome outcomes.',
+        cxoQ: 'Which vendor will actually deliver — in your specific context, not their deck?',
+        bullets: [
+          'Vendors scored against Genome outcomes from comparable engagements',
+          'Contract anchors generated: benchmark rates, key person clauses, IP terms',
+          'Failure probability calculated per vendor based on pattern match',
+        ],
+        output: 'VENDOR SCORECARD · 1 WEEK',
         path: '/vendor-intelligence',
       },
       {
         num: 6,
         name: 'Architecture Intelligence',
-        desc: 'What to build and in what order. Dependencies mapped, sequencing validated against failure patterns.',
+        cxoQ: 'What do we build, in what order — and what will fail if we get the sequence wrong?',
+        bullets: [
+          'Architecture options generated with dependency mapping',
+          'Each option validated against Genome failure patterns',
+          'Build sequence optimised for risk and speed-to-value',
+        ],
+        output: 'ARCHITECTURE BLUEPRINT · 2 WEEKS',
         path: '/architecture',
       },
       {
         num: 7,
         name: 'Business Case Intelligence',
-        desc: 'The CFO-grade case the board will approve. Three scenarios, risk-adjusted, Genome-validated ranges.',
+        cxoQ: "What is the CFO-grade case — with ranges the board will actually approve?",
+        bullets: [
+          'Three scenarios (Bear/Base/Bull) built from your data and Genome comparables',
+          'Risk-adjusted IRR with sensitivity analysis',
+          'Investment committee package: every objection pre-answered',
+        ],
+        output: 'IC PACKAGE · 1 WEEK',
         path: '/justify',
       },
     ],
@@ -76,13 +125,25 @@ const PHASES: {
       {
         num: 8,
         name: 'AI Delivery Intelligence',
-        desc: 'Getting AI from approved spec to production. Bottlenecks mapped, deployment rails designed, MLOps sequenced.',
+        cxoQ: "How do we get AI from approved spec to production — without the usual 18-month slip?",
+        bullets: [
+          'Delivery bottlenecks mapped before programme starts',
+          'MLOps sequence designed for your specific stack',
+          'Deployment rails built to your engineering capacity',
+        ],
+        output: 'EXECUTION BASELINE · 2 WEEKS',
         path: '/ai-pdlc',
       },
       {
         num: 9,
         name: 'Outcome Intelligence',
-        desc: 'Baseline locked Day 0. Monthly actuals vs baseline. Verified savings. Fee earned only when outcomes move.',
+        cxoQ: "How do we know it worked — and how does AbarVa's fee get earned?",
+        bullets: [
+          'Baseline locked Day 0 — no retroactive adjustment',
+          'Monthly actuals vs baseline tracked in real time',
+          'Fee released only on verified, audited savings',
+        ],
+        output: 'LIVE OUTCOME DASHBOARD · ONGOING',
         path: '/outcome-intelligence',
       },
     ],
@@ -129,7 +190,7 @@ export default function AIStrategyPage() {
       </div>
 
       {/* ── Pipeline ─────────────────────────────────────────────────────── */}
-      <div style={{ padding: '0 32px 80px', maxWidth: '860px', margin: '0 auto' }}>
+      <div style={{ padding: '0 32px 80px', maxWidth: '900px', margin: '0 auto' }}>
 
         {PHASES.map((phase, pi) => (
           <div key={phase.label}>
@@ -159,43 +220,68 @@ export default function AIStrategyPage() {
 
             {/* Modules */}
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '1px', marginLeft: '20px', borderLeft: `1px solid ${BORDER}` }}>
-              {phase.modules.map((mod, mi) => (
+              {phase.modules.map((mod) => (
                 <div key={mod.num} style={{ display: 'flex', alignItems: 'stretch', gap: '0' }}>
                   {/* Connector nub */}
-                  <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '0', width: '20px', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', paddingTop: '28px', width: '20px', flexShrink: 0 }}>
                     <div style={{ width: '20px', height: '1px', background: BORDER }} />
                   </div>
                   {/* Module card */}
                   <a href={mod.path} style={{ textDecoration: 'none', flex: 1 }}>
                     <div style={{
                       background: CARD, border: `1px solid ${BORDER}`,
-                      borderRadius: '8px', padding: '16px 20px',
+                      borderRadius: '10px', padding: '20px 24px',
                       margin: '4px 0',
-                      display: 'flex', alignItems: 'center', gap: '20px',
                       cursor: 'pointer',
                       transition: 'border-color 0.15s',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = phase.color)}
+                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(45,212,200,0.35)')}
                     onMouseLeave={e => (e.currentTarget.style.borderColor = BORDER)}
                     >
-                      {/* Number */}
-                      <div style={{
-                        width: '32px', height: '32px', flexShrink: 0,
-                        background: `${phase.color}12`,
-                        border: `1px solid ${phase.color}30`,
-                        borderRadius: '6px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: MONO, fontSize: '10px', color: phase.color, fontWeight: 600,
-                      }}>
-                        {String(mod.num).padStart(2, '0')}
+                      {/* Row 1: Module name + Output artifact */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          {/* Number badge */}
+                          <div style={{
+                            width: '32px', height: '32px', flexShrink: 0,
+                            background: `${phase.color}12`,
+                            border: `1px solid ${phase.color}30`,
+                            borderRadius: '6px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: MONO, fontSize: '10px', color: phase.color, fontWeight: 600,
+                          }}>
+                            {String(mod.num).padStart(2, '0')}
+                          </div>
+                          <div style={{ fontSize: '16px', fontWeight: 600, color: WHITE }}>{mod.name}</div>
+                        </div>
+                        <div style={{
+                          fontFamily: MONO, fontSize: '9px', color: TEAL,
+                          letterSpacing: '.1em', textTransform: 'uppercase' as const,
+                          flexShrink: 0, paddingTop: '2px',
+                          background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.20)',
+                          borderRadius: '4px', padding: '3px 8px',
+                        }}>
+                          OUTPUT: {mod.output}
+                        </div>
                       </div>
-                      {/* Text */}
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '4px' }}>{mod.name}</div>
-                        <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{mod.desc}</div>
+
+                      {/* Row 2: CXO question */}
+                      <div style={{ fontSize: '13px', fontStyle: 'italic', color: TEAL, marginBottom: '10px', lineHeight: 1.5 }}>
+                        "{mod.cxoQ}"
                       </div>
-                      {/* Arrow */}
-                      <div style={{ fontSize: '14px', color: DIM, flexShrink: 0 }}>→</div>
+
+                      {/* Row 3: Capability bullets */}
+                      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '5px', marginBottom: '10px' }}>
+                        {mod.bullets.map((b, bi) => (
+                          <div key={bi} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                            <span style={{ color: TEAL, fontSize: '12px', lineHeight: '1.5', flexShrink: 0 }}>·</span>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.5 }}>{b}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Row 4: Arrow */}
+                      <div style={{ fontSize: '14px', color: TEAL, textAlign: 'right' as const }}>→</div>
                     </div>
                   </a>
                 </div>
@@ -221,7 +307,7 @@ export default function AIStrategyPage() {
           </p>
 
           {/* Solution pills */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '48px', maxWidth: '700px', margin: '0 auto 48px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', maxWidth: '700px', margin: '0 auto 48px' }}>
             {[
               { name: 'Margin Optimization', path: '/solutions/margin', color: AMBER, modules: 'Modules 1, 2, 7, 9', desc: 'Denial recovery · MA Star · AI portfolio' },
               { name: 'AI-Powered PDLC', path: '/solutions/pdlc', color: TEAL, modules: 'Modules 1, 3, 4, 8, 9', desc: 'Delivery velocity · AI to production' },

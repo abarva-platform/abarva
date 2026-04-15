@@ -106,6 +106,7 @@ export default function SolutionPDLC() {
         step={step} setStep={setStep}
         selected={selected} setSelected={setSelected}
         launched={launched} setLaunched={setLaunched}
+        poweredBy={['Situation Intelligence', 'Delivery Intelligence', 'Technology Intelligence']}
       />
 
       {/* Powered by */}

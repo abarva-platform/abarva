@@ -117,6 +117,7 @@ export default function SolutionMargin() {
         step={step} setStep={setStep}
         selected={selected} setSelected={setSelected}
         launched={launched} setLaunched={setLaunched}
+        poweredBy={['Situation Intelligence', 'Margin Intelligence', 'Contradiction Intelligence']}
       />
 
       {/* Powered by */}

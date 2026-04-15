@@ -27,11 +27,13 @@ interface SolutionLayoutProps {
   setSelected: (v: string) => void
   launched: boolean
   setLaunched: (v: boolean) => void
+  poweredBy?: string[]
 }
 
 export default function SolutionLayout({
   num, name, tagline, meta, stats, phases, genome, deliverables, starters, findings,
   followUpQ, followUpOpts, input, setInput, step, setStep, selected, setSelected, launched, setLaunched,
+  poweredBy,
 }: SolutionLayoutProps) {
   const router = useRouter()
 
@@ -43,23 +45,23 @@ export default function SolutionLayout({
   return (
     <>
       {/* ── SECTION 1: Hero ── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 32px 56px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 400px', gap: '64px', alignItems: 'start' }}>
+      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 5vw 56px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 400px', gap: '64px', alignItems: 'start' }}>
 
           {/* Left: identity */}
           <div>
             <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '14px' }}>
               Solution · {num}
             </div>
-            <h1 style={{ fontFamily: SERIF, fontSize: '36px', fontWeight: 500, color: WHITE, margin: '0 0 16px', lineHeight: 1.2 }}>
+            <h1 style={{ fontFamily: SERIF, fontSize: '52px', fontWeight: 500, color: WHITE, margin: '0 0 16px', lineHeight: 1.2 }}>
               {name}
             </h1>
-            <p style={{ fontSize: '16px', color: MUTED, lineHeight: 1.7, margin: '0 0 24px' }}>
+            <p style={{ fontSize: '18px', color: MUTED, lineHeight: 1.7, margin: '0 0 24px' }}>
               {tagline}
             </p>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
               {meta.map((m, i) => (
-                <span key={i} style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, background: 'rgba(148,163,184,0.1)', border: `1px solid ${BORDER}`, borderRadius: '4px', padding: '4px 10px' }}>
+                <span key={i} style={{ fontFamily: MONO, fontSize: '10px', color: '#EFF6FF', background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.25)', borderRadius: '4px', padding: '4px 10px' }}>
                   {m}
                 </span>
               ))}
@@ -81,28 +83,28 @@ export default function SolutionLayout({
       </div>
 
       {/* ── SECTION 2: Phases + Genome + Deliverables ── */}
-      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 32px' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '64px', alignItems: 'start' }}>
+      <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '64px 5vw' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 380px', gap: '64px', alignItems: 'start' }}>
 
           {/* Left: Three phases */}
           <div>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '36px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '36px' }}>
               Three phases
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '36px' }}>
               {phases.map((phase) => (
                 <div key={phase.num} style={{ display: 'flex', gap: '20px' }}>
                   <div style={{
-                    width: '32px', height: '32px', borderRadius: '50%',
+                    width: '48px', height: '48px', borderRadius: '50%',
                     background: `${phase.color}1A`, border: `1px solid ${phase.color}44`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    flexShrink: 0, fontFamily: MONO, fontSize: '12px', color: phase.color, fontWeight: 700,
+                    flexShrink: 0, fontFamily: MONO, fontSize: '20px', color: phase.color, fontWeight: 700,
                   }}>
                     {phase.num}
                   </div>
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '8px' }}>{phase.title}</div>
-                    <p style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6, margin: '0 0 12px' }}>{phase.desc}</p>
+                    <div style={{ fontSize: '20px', fontWeight: 600, color: WHITE, marginBottom: '8px' }}>{phase.title}</div>
+                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.6, margin: '0 0 12px' }}>{phase.desc}</p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
                       {phase.products.map(p => (
                         <span key={p} style={{
@@ -123,15 +125,15 @@ export default function SolutionLayout({
 
             {/* Genome card */}
             <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '24px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>
                 Genome patterns
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '20px' }}>
                 {genome.map((g, i) => (
                   <div key={i}>
-                    <div style={{ fontFamily: MONO, fontSize: '24px', fontWeight: 700, color: RED, lineHeight: 1, marginBottom: '4px' }}>{g.rate}</div>
-                    <div style={{ fontSize: '13px', color: WHITE, marginBottom: '3px' }}>{g.name}</div>
-                    <div style={{ fontSize: '11px', color: DIM }}>{g.sub}</div>
+                    <div style={{ fontFamily: MONO, fontSize: '24px', fontWeight: 700, color: TEAL, lineHeight: 1, marginBottom: '4px' }}>{g.rate}</div>
+                    <div style={{ fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '3px' }}>{g.name}</div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.80)' }}>{g.sub}</div>
                   </div>
                 ))}
               </div>
@@ -163,8 +165,26 @@ export default function SolutionLayout({
         </div>
       </div>
 
-      {/* ── SECTION 3: Intake flow ── */}
-      <div style={{ padding: '64px 32px 96px' }}>
+      {/* ── SECTION 3: Powered by Intelligence ── */}
+      {poweredBy && poweredBy.length > 0 && (
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '32px 5vw' }}>
+          <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', flexShrink: 0 }}>
+              Powered by
+            </div>
+            {poweredBy.map((mod, i) => (
+              <span key={i} style={{
+                fontFamily: MONO, fontSize: '10px', color: TEAL,
+                background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.25)',
+                borderRadius: '20px', padding: '4px 12px',
+              }}>{mod}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── SECTION 4: Intake flow ── */}
+      <div style={{ padding: '64px 5vw 96px' }}>
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
           <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '12px' }}>
@@ -326,7 +346,7 @@ export default function SolutionLayout({
                         padding: '13px 28px', fontSize: '14px', fontWeight: 600, fontFamily: SANS, cursor: 'pointer',
                       }}
                     >
-                      Create project and begin →
+                      Start engagement →
                     </button>
                     <button
                       onClick={() => setStep(1)}

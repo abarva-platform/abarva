@@ -44,8 +44,8 @@ export default function Homepage() {
             <p style={{fontSize:17,color:MUTED,maxWidth:480,lineHeight:1.7,marginBottom:12}}>
               AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, and embeds a small Maestro team to execute — fee tied to your outcomes, not our hours.
             </p>
-            <p style={{fontSize:14,color:DIM,maxWidth:480,lineHeight:1.6,marginBottom:32}}>
-              Start with Margin, PDLC, or Technology. Scale to a full <a href="/ai-strategy" style={{color:TEAL,textDecoration:'none'}}>AI Strategy engagement</a>.
+            <p style={{fontSize:14,color:'rgba(255,255,255,0.70)',maxWidth:480,lineHeight:1.6,marginBottom:32}}>
+              Start with a Solution. Scale to a full <a href="/ai-strategy" style={{color:TEAL,textDecoration:'none'}}>AI Strategy engagement</a>.
             </p>
             <div style={{display:'flex',gap:12,flexWrap:'wrap' as const}}>
               <a href="/diagnose?client=meridian" style={{background:TEAL,color:BG,padding:'12px 22px',borderRadius:8,fontSize:13,fontWeight:600,textDecoration:'none',cursor:'pointer'}}>
