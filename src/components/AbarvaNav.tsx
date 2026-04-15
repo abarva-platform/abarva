@@ -9,11 +9,8 @@ const AMBER = '#F59E0B'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 
 const CLIENT_NAMES: Record<string, string> = {
-  meridian:     'Meridian Health',
-  firstcapital: 'First Capital',
-  apexretail:   'Apex Retail',
-  arcturus:     'Arcturus Financial',
-  nexora:       'Nexora Retail',
+  meridian:  'Meridian Health',
+  arcturus:  'Arcturus Financial',
 }
 
 interface NavProps {

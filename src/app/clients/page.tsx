@@ -5,7 +5,6 @@ import AbarvaNav from '@/components/AbarvaNav'
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
 const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = '#94A3B8'
 const AMBER = '#F59E0B', RED = '#EF4444', GREEN = '#34D399'
-const INDIGO = '#818CF8'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 
 interface Metric {
@@ -40,21 +39,6 @@ const CLIENTS: Client[] = [
       { label: 'Operating margin',   value: '1.8%',   sub: '4.0% target',        flag: true  },
       { label: 'Prior auth lag',     value: '4.2 days', sub: '1.8 days peer',    flag: true  },
       { label: 'MyChart adoption',   value: '34%',    sub: '60% peer average',   flag: true  },
-    ],
-  },
-  {
-    id: 'firstcapital',
-    name: 'First Capital',
-    sector: 'Financial Services · 8,200 employees',
-    hq: 'Singapore',
-    employees: '8,200',
-    accentColor: INDIGO,
-    painQuote: '"Cost-to-income at 68% — 13 points above target. Digital adoption is 41% while peers are at 67%."',
-    metrics: [
-      { label: 'Cost-to-income',     value: '68%',    sub: '55% target',         flag: true  },
-      { label: 'Digital adoption',   value: '41%',    sub: '67% peer average',   flag: true  },
-      { label: 'AML automation',     value: '34%',    sub: 'Manual review risk',  flag: true  },
-      { label: 'Core banking age',   value: '22 yrs', sub: 'End-of-life risk',    flag: true  },
     ],
   },
   {

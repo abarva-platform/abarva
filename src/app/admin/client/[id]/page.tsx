@@ -1,13 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useParams, useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusFinancial, arcturusFinancials, arcturusTechnology, arcturusLeadership, arcturusRegulatory, arcturusIndustry } from '@/data/arcturus/index'
 import { meridianHealth } from '@/data/meridian/index'
-import { firstCapital } from '@/data/firstcapital/index'
-import { apexRetail } from '@/data/apexretail/index'
-import { nexoraRetail } from '@/data/nexora/index'
 
 const BG='#060A12', CARD='#0D1520', BORDER='#1C2D45'
 const TEAL='#2DD4C8', WHITE='#EFF6FF', MUTED='#94A3B8', DIM='#475569'
@@ -161,145 +158,6 @@ function getClientData(id: string): ClientData | null {
     }
   }
 
-  if (id === 'firstcapital') {
-    return {
-      name: firstCapital.org.name,
-      type: 'Regional Bank',
-      revenue: firstCapital.org.revenue,
-      employees: firstCapital.org.employees,
-      hq: firstCapital.org.headquarters,
-      status: 'Active',
-      color: '#6366F1',
-      metrics: [
-        { label: 'Cost-to-Income Ratio', value: `${firstCapital.org.costToIncomeRatio}%`, benchmark: `${firstCapital.org.targetCostToIncomeRatio}% target`, status: 'critical', gap: '13pp to target' },
-        { label: 'Digital Adoption', value: `${firstCapital.org.digitalAdoption}%`, benchmark: '67% benchmark', status: 'critical', gap: '26pp below peers' },
-        { label: 'Core Banking Age', value: `${firstCapital.org.coreBankingAge} years`, benchmark: '8 years (peers)', status: 'critical', gap: 'FIS EOL 2027' },
-        { label: 'AML Automation', value: `${firstCapital.technology.aml.automationRate}%`, benchmark: `${firstCapital.technology.aml.benchmarkAutomationRate}% benchmark`, status: 'critical', gap: '38pp below peers' },
-        { label: 'Mobile App Rating', value: `${firstCapital.technology.digital.mobileAppRating}`, benchmark: '3.8 threshold', status: 'warning', gap: '0.6 below competitive threshold' },
-        { label: 'Fraud Losses', value: `$${firstCapital.financials.fraudLosses2023}M`, benchmark: `$${firstCapital.financials.benchmarkFraudLosses}M benchmark`, status: 'warning', gap: '$3.8M annual excess' },
-        { label: 'Return on Assets', value: `${firstCapital.financials.returnOnAssets}%`, benchmark: '1.1% peer median', status: 'warning', gap: '0.28pp below peers' },
-        { label: 'Account Opening Abandonment', value: `${firstCapital.technology.digital.accountOpeningAbandonmentRate}%`, benchmark: `${firstCapital.technology.digital.benchmarkAbandonmentRate}% benchmark`, status: 'warning', gap: '32pp above benchmark' },
-      ],
-      contradictions: [
-        { id: 'c1', claim: 'Board demanding digital transformation', reality: 'IT budget at 9.2% — below 12% needed for digital leadership. Mobile app rating 3.2.', severity: 'high' },
-        { id: 'c2', claim: 'FedNow and real-time payments as strategic priority', reality: 'FedNow not live. 68% of peer banks already on FedNow. $180M commercial deposit risk.', severity: 'critical' },
-        { id: 'c3', claim: 'CDO role created to drive data strategy', reality: 'CDO reporting to CRO not CEO — signals compliance focus, not growth focus.', severity: 'medium' },
-      ],
-      genomePatternsMatched: [
-        { code: 'F002', name: 'Cost Transformation Stall', failureRate: 84, present: true, mitigation: 'Core banking decision Q3, API layer as interim, CIR reduction programme' },
-        { code: 'F008', name: 'Digital Adoption Lag', failureRate: 73, present: true, mitigation: 'UX improvement roadmap, account opening abandonment fix within 90 days' },
-        { code: 'F012', name: 'Regulatory Technology Debt', failureRate: 68, present: true, mitigation: 'NICE Actimize upgrade to current version, FedNow go-live within 6 months' },
-        { code: 'F006', name: 'Platform EOL Paralysis', failureRate: 71, present: true, mitigation: 'Force core banking decision by Q3 2026 — paralysis is the worst outcome' },
-      ],
-      files: [
-        { name: 'FFIEC Financial Performance', uploader: 'Robert Martinez (CFO)', date: '2026-03-10', confidence: 88, type: 'active' },
-        { name: 'Technology System Inventory', uploader: 'James Okafor (CTO)', date: '2026-03-12', confidence: 82, type: 'active' },
-        { name: 'Compliance & Exam Findings', uploader: 'CRO Office', date: '2026-03-15', confidence: 78, type: 'active' },
-        { name: 'Leadership Intelligence', uploader: 'AbarVa Research', date: '2026-03-18', confidence: 80, type: 'active' },
-        { name: 'Vendor Contracts', uploader: 'CTO Office', date: '2026-03-22', confidence: 42, type: 'pending' },
-        { name: 'Customer Analytics', uploader: 'CDO Office', date: 'Pending approval', confidence: 0, type: 'pending' },
-      ],
-      industryBenchmarks: [
-        { label: 'Cost-to-Income Ratio', ours: 68, peer: 55, unit: '%', gap: '+13pp vs target' },
-        { label: 'Digital Adoption', ours: 41, peer: 67, unit: '%', gap: '-26pp below peers' },
-        { label: 'AML Automation', ours: 34, peer: 72, unit: '%', gap: '-38pp below benchmark' },
-        { label: 'Mobile App Rating', ours: 3.2, peer: 4.1, unit: '/5', gap: '-0.9 below peers' },
-      ],
-    }
-  }
-
-  if (id === 'apexretail') {
-    return {
-      name: apexRetail.org.name,
-      type: 'Retailer',
-      revenue: apexRetail.org.revenue,
-      employees: apexRetail.org.employees,
-      hq: apexRetail.org.headquarters,
-      status: 'Active',
-      color: AMBER,
-      metrics: [
-        { label: 'Operating Margin', value: `${apexRetail.org.operatingMargin}%`, benchmark: `${apexRetail.org.targetOperatingMargin}% target`, status: 'critical', gap: '2.2pp to target' },
-        { label: 'E-Commerce Mix', value: `${apexRetail.org.ecommercePercent}%`, benchmark: `${apexRetail.org.targetEcommercePercent}% target`, status: 'critical', gap: '17pp below target' },
-        { label: 'Gross Margin', value: `${apexRetail.financials.grossMargin2023}%`, benchmark: '38% peers', status: 'warning', gap: '3.8pp below peers' },
-        { label: 'Store Count', value: `${apexRetail.org.stores}`, benchmark: '850 peers avg', status: 'warning', gap: '50 below peers' },
-        { label: 'Digital Revenue Growth', value: 'Below target', benchmark: '18% industry', status: 'critical', gap: 'E-comm margin negative' },
-        { label: 'IT Modernization', value: 'In progress', benchmark: 'Complete (peers)', status: 'warning', gap: 'Legacy systems slowing speed' },
-        { label: 'Revenue Growth YoY', value: `${((apexRetail.financials.revenue2023 - apexRetail.financials.revenue2022) / apexRetail.financials.revenue2022 * 100).toFixed(1)}%`, benchmark: '4.2% peers', status: 'warning', gap: 'Below peer median' },
-        { label: 'Target Margin Gap', value: `${apexRetail.org.targetOperatingMargin - apexRetail.org.operatingMargin}pp`, benchmark: 'Target met (peers)', status: 'critical', gap: `~$280M annual gap` },
-      ],
-      contradictions: [
-        { id: 'c1', claim: 'E-commerce as growth engine', reality: 'E-commerce margin is negative. Growing the channel destroys blended margin.', severity: 'critical' },
-        { id: 'c2', claim: 'Omnichannel strategy delivering results', reality: 'Digital at 28% vs 45% target. Physical-digital integration incomplete.', severity: 'high' },
-        { id: 'c3', claim: 'Cost reduction initiatives underway', reality: 'Operating margin stuck at 3.8% vs 6.0% target. No credible reduction programme.', severity: 'high' },
-      ],
-      genomePatternsMatched: [
-        { code: 'F005', name: 'Digital-Physical Integration Failure', failureRate: 78, present: true, mitigation: 'Unified commerce platform, store-fulfilment economics remodel' },
-        { code: 'F013', name: 'E-Commerce Margin Trap', failureRate: 72, present: true, mitigation: 'Contribution margin analysis by channel, selective growth strategy' },
-        { code: 'F004', name: 'Inventory Optimization Gap', failureRate: 67, present: true, mitigation: 'Demand forecasting AI, markdown automation' },
-        { code: 'F010', name: 'Cost Structure Rigidity', failureRate: 69, present: true, mitigation: 'Zero-based budgeting, workforce flexibility programme' },
-      ],
-      files: [
-        { name: 'Financial Statements 2023', uploader: 'CFO Office', date: '2026-03-08', confidence: 86, type: 'active' },
-        { name: 'Technology Assessment', uploader: 'CTO Office', date: '2026-03-10', confidence: 79, type: 'active' },
-        { name: 'Store Operations Data', uploader: 'COO Office', date: '2026-03-14', confidence: 83, type: 'active' },
-        { name: 'E-Commerce P&L', uploader: 'CFO Office', date: '2026-03-18', confidence: 88, type: 'active' },
-        { name: 'Competitor Benchmarks', uploader: 'AbarVa Research', date: '2026-03-25', confidence: 74, type: 'pending' },
-        { name: 'Customer Analytics', uploader: 'CMO Office', date: 'Pending', confidence: 55, type: 'pending' },
-      ],
-      industryBenchmarks: [
-        { label: 'Operating Margin', ours: 3.8, peer: 5.8, unit: '%', gap: '-2pp vs peers' },
-        { label: 'E-Commerce Mix', ours: 28, peer: 38, unit: '%', gap: '-10pp below industry' },
-        { label: 'Gross Margin', ours: 34.2, peer: 38.0, unit: '%', gap: '-3.8pp vs peers' },
-        { label: 'Inventory Turns', ours: 5.1, peer: 6.4, unit: 'x', gap: '-1.3x below peers' },
-      ],
-    }
-  }
-
-  if (id === 'nexora') {
-    return {
-      name: nexoraRetail.org.name,
-      type: 'Retailer',
-      revenue: nexoraRetail.org.revenue,
-      employees: 58000,
-      hq: 'Amsterdam, NL',
-      status: 'Setup',
-      color: '#F472B6',
-      metrics: nexoraRetail.situationMetrics.map(m => ({
-        label: m.label,
-        value: m.value,
-        benchmark: m.benchmark,
-        status: m.status,
-        gap: m.gap,
-      })),
-      contradictions: nexoraRetail.contradictions.map(c => ({
-        id: c.id,
-        claim: c.claim,
-        reality: c.reality,
-        severity: c.severity,
-      })),
-      genomePatternsMatched: [
-        { code: 'F003', name: 'AI Investment Without Return', failureRate: 79, present: true, mitigation: 'Baseline all 8 AI initiatives, Einstein AI activation in 90 days' },
-        { code: 'F006', name: 'ERP EOL Paralysis', failureRate: 71, present: true, mitigation: 'SAP S/4HANA migration programme start Q2 2026, SI selection by June' },
-        { code: 'F013', name: 'E-Commerce Margin Trap', failureRate: 72, present: true, mitigation: 'Contribution margin remodel, selective channel investment' },
-        { code: 'F004', name: 'Inventory Optimization Gap', failureRate: 67, present: true, mitigation: 'o9 acceleration — full deployment by Q4 2026' },
-      ],
-      files: [
-        { name: 'Financial Statements 2025', uploader: 'CFO Office', date: '2026-04-05', confidence: 84, type: 'active' },
-        { name: 'Technology Landscape', uploader: 'CIO Office', date: '2026-04-06', confidence: 79, type: 'active' },
-        { name: 'Operations Overview', uploader: 'COO Office', date: '2026-04-07', confidence: 81, type: 'active' },
-        { name: 'Industry Benchmarks', uploader: 'AbarVa Research', date: '2026-04-08', confidence: 77, type: 'active' },
-        { name: 'AI Initiative Inventory', uploader: 'CIO Office', date: '2026-04-10', confidence: 63, type: 'pending' },
-        { name: 'SAP Contracts & Licensing', uploader: 'CTO Office', date: 'Pending', confidence: 0, type: 'pending' },
-      ],
-      industryBenchmarks: [
-        { label: 'Operating Margin', ours: '3.2%', peer: '5.1%', unit: '%', gap: '-1.9pp vs peer median' },
-        { label: 'E-Commerce Margin', ours: '-2.1%', peer: '+2.8%', unit: '%', gap: '-4.9pp below peers' },
-        { label: 'Inventory Turns', ours: 4.2, peer: 6.8, unit: 'x', gap: '-2.6x — $900M trapped capital' },
-        { label: 'AI ROI', ours: '8%', peer: '38%', unit: '%', gap: '-30pp below peer median' },
-      ],
-    }
-  }
-
   return null
 }
 
@@ -339,8 +197,38 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
     { key: 'users', label: 'Maestro users' },
     { key: 'security', label: 'Security' },
   ]
-  const activeFiles = data.files.filter(f => f.type === 'active')
+  const [uploadedFiles, setUploadedFiles] = useState<DataFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const activeFiles = [...data.files.filter(f => f.type === 'active'), ...uploadedFiles]
   const pendingFiles = data.files.filter(f => f.type === 'pending')
+
+  async function handleUpload(files: FileList) {
+    setUploading(true)
+    const added: DataFile[] = []
+    for (const file of Array.from(files)) {
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('clientId', clientId)
+      fd.append('documentName', file.name.replace(/\.[^.]+$/, ''))
+      try {
+        const res = await fetch('/api/admin/upload-dataset', { method: 'POST', body: fd })
+        if (res.ok) {
+          const json = await res.json()
+          added.push({
+            name: json.documentName,
+            uploader: json.uploader,
+            date: json.date,
+            confidence: json.confidence,
+            type: 'active',
+          })
+        }
+      } catch { /* ignore individual file errors */ }
+    }
+    setUploadedFiles(prev => [...prev, ...added])
+    setUploading(false)
+  }
 
   const products = [
     { name: 'Situation Diagnosis', href: `/diagnose?client=${clientId}` },
@@ -465,7 +353,16 @@ function AdminTab({ clientId, data, adminSection, setAdminSection }: {
             }
           </div>
           <div style={cardStyle()}>
-            {sectionTitle('Approved files')}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: uploading ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${uploading ? BORDER : 'rgba(45,212,200,0.3)'}`, color: uploading ? DIM : TEAL, cursor: uploading ? 'default' : 'pointer' }}>
+                {uploading ? 'Uploading…' : '+ Upload new file'}
+              </button>
+              <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
+            </div>
             {activeFiles.map((f, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < activeFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />

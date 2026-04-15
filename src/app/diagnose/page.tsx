@@ -1616,7 +1616,7 @@ function DiagnoseContent() {
                   Data confidence: <span style={{ fontWeight: 700, color: confidence >= meta.confidence ? meta.color : T.amber }}>{confidence}%</span>
                 </span>
                 <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
-                  {(Object.keys(CLIENT_META) as ClientId[]).map(c => (
+                  {(['meridian', 'arcturus'] as ClientId[]).map(c => (
                     <button
                       key={c}
                       onClick={() => { setActiveClient(c); setStep(1); setCompletedSteps(new Set([1])); setRole('Maestro') }}
