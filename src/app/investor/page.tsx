@@ -1,554 +1,577 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 
-const BG    = '#060A12'
-const CARD  = '#0D1520'
-const EDGE  = '#1C2D45'
-const TEAL  = '#2DD4C8'
-const WHITE = '#EFF6FF'
-const MUTED = '#94A3B8'
-const DIM   = '#475569'
-const MONO  = '"JetBrains Mono", monospace'
-const SERIF = 'Georgia, serif'
-const SANS  = '"DM Sans", sans-serif'
-const RED   = '#EF4444'
-const AMBER = '#F59E0B'
-const GREEN = '#34D399'
-
-const SECTIONS = [
-  { id: 'problem',    label: 'The Problem'         },
-  { id: 'platform',  label: 'The Platform'         },
-  { id: 'solutions', label: 'Solutions'            },
-  { id: 'clients',   label: 'Client Economics'     },
-  { id: 'model',     label: 'Revenue Model'        },
-  { id: 'moat',      label: 'The Moat'             },
-  { id: 'round',     label: 'Seed Round'           },
-]
-
-const CLIENTS = [
-  {
-    id: 'meridian', name: 'Meridian Health System',
-    vertical: 'Healthcare · 23 Hospitals', revenue: '$11.2B',
-    color: TEAL,
-    finding: 'The RCM vendor contract guarantees a 12% denial rate. Actual rate: 18.2%. That is $8M in contractual penalties — never once enforced in three years.',
-    wow: '"How did it know about the penalty clause before the first meeting?"',
-    platformFee: 850000, outcomeFee: 4200000, consulting: 31000000, savings: 28000000,
-    metrics: [
-      { label: 'Operating Margin', value: '1.8%',   target: 'Target: 4.0%',              red: true  },
-      { label: 'RCM Denial Rate',  value: '18.2%',  target: 'Contract SLA: 12% — $8M gap', red: true  },
-      { label: 'AI Pilots Scaled', value: '0 of 6', target: '$42M committed, stalled',   red: true  },
-      { label: 'Prior Auth',       value: '23%',    target: 'CMS requires 100% by 2026', red: true  },
-      { label: 'Epic Score',       value: '58/100', target: 'Target: 85/100',            red: false },
-      { label: 'Travel Nurses',    value: '$48M',   target: 'Benchmark: $28M',           red: true  },
-    ],
-  },
-  {
-    id: 'firstcapital', name: 'First Capital Financial',
-    vertical: 'Financial Services · Regional Bank', revenue: '$1.84B',
-    color: '#6366F1',
-    finding: 'Real-time payments infrastructure is not live. 68% of peer institutions are live. Three commercial clients have formally inquired about alternatives in the past 90 days.',
-    wow: '"It found the three clients at risk before our relationship managers did."',
-    platformFee: 850000, outcomeFee: 2100000, consulting: 18000000, savings: 14000000,
-    metrics: [
-      { label: 'Digital Adoption',   value: '41%',    target: 'Benchmark: 67%',     red: true  },
-      { label: 'FedNow Live',        value: 'No',     target: '68% of peers live',  red: true  },
-      { label: 'Core Banking Age',   value: '22 yrs', target: 'Critical: 20yr',     red: true  },
-      { label: 'C/I Ratio',         value: '68%',    target: 'Benchmark: 61%',     red: true  },
-      { label: 'AML False Positives', value: '78%',  target: 'Benchmark: 25%',     red: true  },
-      { label: 'Mobile Rating',      value: '3.2★',  target: 'Switch risk: <3.5',  red: true  },
-    ],
-  },
-  {
-    id: 'apexretail', name: 'Apex Retail Group',
-    vertical: 'Retail · 1,200 Stores', revenue: '$12.4B',
-    color: AMBER,
-    finding: 'The personalization engine has been in the existing software license for 14 months. Never activated. $248M annual revenue opportunity. Activation cost: $800K. Time to value: 6 weeks.',
-    wow: '"It quantified the cost of inaction. Nobody had ever done that before."',
-    platformFee: 850000, outcomeFee: 3100000, consulting: 22000000, savings: 21000000,
-    metrics: [
-      { label: 'Einstein Activated', value: 'No',    target: '$248M opportunity idle', red: true  },
-      { label: 'Operating Margin',   value: '3.8%',  target: 'Target: 6.0%',          red: true  },
-      { label: 'Inventory Turns',    value: '4.2x',  target: 'Benchmark: 6.8x',       red: true  },
-      { label: 'Cart Abandonment',   value: '72%',   target: 'Benchmark: 58%',        red: true  },
-      { label: 'Forecast Accuracy',  value: '62%',   target: 'Benchmark: 84%',        red: false },
-      { label: 'Loyalty Active',     value: '42%',   target: 'Benchmark: 68%',        red: true  },
-    ],
-  },
-]
-
-function fmt(n: number) {
-  if (n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B'
-  if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M'
-  if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K'
-  return '$' + n
+const C = {
+  bg: '#060A12',
+  surface: '#0D1520',
+  featured: '#091828',
+  border: '#1C2D45',
+  teal: '#2DD4C8',
+  white: '#ffffff',
+  red: '#EF4444',
+  amber: '#F59E0B',
+  green: '#00E676',
+  mono: 'JetBrains Mono, Menlo, monospace',
+  sans: 'DM Sans, Inter, system-ui, sans-serif',
 }
 
-function Eyebrow({ children, color = TEAL }: { children: string; color?: string }) {
-  return <div style={{ fontFamily: MONO, fontSize: '10px', color, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '14px' }}>{children}</div>
+const TABS = ['Overview', 'Vision', 'Revenue Model', 'The Ask', 'Team', 'Live Platform']
+
+// ─── primitives ─────────────────────────────────────────────────────────────
+
+function Eyebrow({ label, color = C.teal }: { label: string; color?: string }) {
+  return <div style={{ fontFamily: C.mono, fontSize: '10px', color, letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: '18px' }}>{label}</div>
 }
 
-function H({ children }: { children: React.ReactNode }) {
-  return <h2 style={{ fontFamily: SERIF, fontSize: '38px', fontWeight: 500, color: WHITE, lineHeight: 1.2, marginBottom: '14px' }}>{children}</h2>
+function H1({ children }: { children: React.ReactNode }) {
+  return <h1 style={{ fontFamily: C.sans, fontSize: '38px', fontWeight: 800, color: C.white, margin: '0 0 20px', lineHeight: 1.2, letterSpacing: '-0.5px' }}>{children}</h1>
 }
 
-function Sub({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: '16px', color: MUTED, lineHeight: 1.75, maxWidth: '580px', marginBottom: '36px' }}>{children}</p>
+function Body({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
+  return <p style={{ fontFamily: C.sans, fontSize: '13px', color: C.white, lineHeight: 1.7, margin: '0 0 32px', ...style }}>{children}</p>
 }
 
-function Card({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return <div style={{ background: CARD, border: `1px solid ${EDGE}`, borderRadius: '12px', padding: '24px', ...style }}>{children}</div>
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontFamily: C.sans, fontSize: '22px', fontWeight: 700, color: C.white, margin: '40px 0 20px' }}>{children}</div>
 }
 
-export default function InvestorPage() {
-  const [section, setSection] = useState('problem')
-  const [clientIdx, setClientIdx] = useState(0)
-  const [counts, setCounts] = useState([0, 0, 0, 0])
-  const animated = useRef(false)
-  const client = CLIENTS[clientIdx]
+function Card({ children, featured = false, style }: { children: React.ReactNode; featured?: boolean; style?: React.CSSProperties }) {
+  return (
+    <div style={{ background: featured ? C.featured : C.surface, border: `1px solid ${featured ? C.teal : C.border}`, borderRadius: '10px', padding: '20px', ...style }}>
+      {children}
+    </div>
+  )
+}
 
-  useEffect(() => { document.title = 'AbarVa — Investor Overview · Confidential' }, [])
+function TealDot() {
+  return <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: C.teal, marginRight: '10px', flexShrink: 0, marginTop: '6px' }} />
+}
 
-  useEffect(() => {
-    if (animated.current) return
-    animated.current = true
-    const targets = [800, 500, 8, 20]
-    let step = 0
-    const timer = setInterval(() => {
-      step++
-      const p = 1 - Math.pow(1 - step / 60, 3)
-      setCounts(targets.map(v => Math.round(v * p)))
-      if (step >= 60) clearInterval(timer)
-    }, 25)
-    return () => clearInterval(timer)
-  }, [])
+function WhiteDot() {
+  return <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: C.white, marginRight: '10px', flexShrink: 0, marginTop: '6px' }} />
+}
 
-  const sectionContent: Record<string, React.ReactNode> = {
+function Bullet({ dot, children }: { dot: 'teal' | 'white'; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '10px', fontFamily: C.sans, fontSize: '13px', color: C.white, lineHeight: 1.6 }}>
+      {dot === 'teal' ? <TealDot /> : <WhiteDot />}
+      <span>{children}</span>
+    </div>
+  )
+}
 
-    problem: (
-      <div>
-        <Eyebrow>The problem</Eyebrow>
-        <H>Enterprise transformation is broken.<br />AI makes it worse.</H>
-        <Sub>Large consulting firms charge $40M to diagnose problems that take 18 months to surface and produce recommendations that gather dust. Then AI arrived — and organizations spent billions on pilots that never scaled.</Sub>
+function T({ children }: { children: React.ReactNode }) {
+  return <strong style={{ color: C.teal, fontWeight: 600 }}>{children}</strong>
+}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '40px' }}>
+function Avatar({ label, bg = C.teal, size = 40 }: { label: string; bg?: string; size?: number }) {
+  return (
+    <div style={{ width: size, height: size, borderRadius: '50%', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: C.mono, fontSize: size > 44 ? '16px' : '11px', fontWeight: 800, color: C.bg, flexShrink: 0 }}>
+      {label}
+    </div>
+  )
+}
+
+// ─── TAB 1: Overview ────────────────────────────────────────────────────────
+
+function TabOverview() {
+  return (
+    <div>
+      <Eyebrow label="SEED ROUND · APRIL 2026" />
+      <H1>
+        The $800B enterprise transformation<br />
+        market has no intelligence layer.<br />
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>Until now.</em>
+      </H1>
+      <Body>
+        Palantir built an $80B company embedding AI analysts inside government and enterprise operations.
+        ServiceNow built $200B automating enterprise workflow. Neither touched transformation itself —
+        the $800B market where boards spend, consultants deliver decks, and accountability is zero.
+        AbarVa is that category.
+      </Body>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '40px' }}>
+        {[
+          { val: '$800B', c: C.teal, sub: 'Annual enterprise transformation spend. No outcome accountability today.' },
+          { val: '$80B', c: C.white, sub: 'AI + human operator + enterprise data. Same structure. Different category.' },
+          { val: '73%', c: C.teal, sub: 'Of enterprise AI programmes produce no verified outcome. AbarVa fixes this.' },
+          { val: '0%', c: C.red, sub: 'Fee tied to outcomes at any leading advisory firm today.' },
+        ].map((s, i) => (
+          <Card key={i}>
+            <div style={{ fontFamily: C.mono, fontSize: '32px', fontWeight: 800, color: s.c, marginBottom: '8px' }}>{s.val}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6 }}>{s.sub}</div>
+          </Card>
+        ))}
+      </div>
+
+      <SectionTitle>The structural opportunity</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', border: `1px solid ${C.border}` }}>
+        <div style={{ background: C.surface, padding: '24px' }}>
+          <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '16px' }}>HOW ADVISORY FIRMS WORK TODAY</div>
+          {['CXO pays £2–8M per engagement', 'Consultants spend weeks 1–4 learning the client', 'Deliverable is a PowerPoint deck', 'Knowledge walks out with the team', 'No accountability for outcomes', 'Same firm, same process, 2 years later'].map((item, i) => <Bullet key={i} dot="white">{item}</Bullet>)}
+        </div>
+        <div style={{ background: C.featured, borderLeft: `3px solid ${C.teal}`, padding: '24px' }}>
+          <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '16px' }}>HOW ABARVA WORKS</div>
           {[
-            { v: `$${counts[0]}B`,  l: 'Spent on enterprise transformation annually', color: RED   },
-            { v: `${counts[1]}%`,   l: 'Of AI pilots that never reach production',    color: RED   },
-            { v: `${counts[2]}×`,   l: 'Longer than projected for average program',   color: AMBER },
-            { v: `${counts[3]}%`,   l: 'Of CXOs who say consulting ROI is unclear',   color: AMBER },
-          ].map((s, i) => (
-            <Card key={i}>
-              <div style={{ fontFamily: SERIF, fontSize: '42px', fontWeight: 500, color: s.color, lineHeight: 1, marginBottom: '8px' }}>{s.v}</div>
-              <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{s.l}</div>
-            </Card>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-          <Card style={{ borderLeft: `4px solid ${RED}`, borderRadius: '0 12px 12px 0' }}>
-            <Eyebrow color={RED}>The consulting problem</Eyebrow>
-            <div style={{ fontSize: '15px', color: WHITE, fontWeight: 500, marginBottom: '8px' }}>Large teams. Long timelines. Knowledge walks out the door.</div>
-            <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>A typical enterprise transformation engagement: 40-80 consultants, 18-36 months, $20-40M in fees. When they leave, the knowledge leaves with them. The next engagement starts from zero.</div>
-          </Card>
-          <Card style={{ borderLeft: `4px solid ${AMBER}`, borderRadius: '0 12px 12px 0' }}>
-            <Eyebrow color={AMBER}>The AI problem</Eyebrow>
-            <div style={{ fontSize: '15px', color: WHITE, fontWeight: 500, marginBottom: '8px' }}>Pilots everywhere. Value nowhere.</div>
-            <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>Only 14% of CFOs report clear measurable ROI from AI investments. The median enterprise has 42 AI initiatives running simultaneously. Zero have a verified outcome baseline. Zero are tracking delivery against commitment.</div>
-          </Card>
-        </div>
-
-        <div style={{ marginTop: '24px', background: 'rgba(45,212,200,0.05)', border: `1px solid rgba(45,212,200,0.2)`, borderRadius: '12px', padding: '24px 28px' }}>
-          <Eyebrow>Harvey AI is the proof of concept</Eyebrow>
-          <div style={{ fontSize: '15px', color: WHITE, lineHeight: 1.6 }}>Harvey AI is $11B doing for legal what AbarVa does for enterprise transformation. Same structure. Legal professional services market: $500B. Enterprise transformation market: <span style={{ color: TEAL, fontWeight: 500 }}>$800B</span>. Nobody has touched it with a platform built for it. Until now.</div>
+            <span key={0}>Data ingested before first meeting. <T>Phase 0 runs in 48 hours.</T></span>,
+            <span key={1}>Maestro arrives knowing <T>every gap, every failure pattern</T></span>,
+            <span key={2}>Deliverable is <T>structured data</T> — feeds every next phase</span>,
+            <span key={3}>Knowledge stays in the <T>platform permanently</T></span>,
+            <span key={4}><T>Baseline locked Day 0</T> — accountability built in from the start</span>,
+            <span key={5}><T>Genome compounds</T> — every engagement makes the next better</span>,
+          ].map((item, i) => <Bullet key={i} dot="teal">{item}</Bullet>)}
         </div>
       </div>
-    ),
 
-    platform: (
-      <div>
-        <Eyebrow>The platform</Eyebrow>
-        <H>Five products.<br />One intelligence engine.</H>
-        <Sub>Each product answers the question a CXO is actually asking. Together they replace the full engagement lifecycle — strategy, diagnostics, vendor selection, business case, and outcome tracking.</Sub>
+      <div style={{ height: '1px', background: C.border, margin: '8px 0 40px' }} />
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '10px', marginBottom: '32px' }}>
-          {[
-            { name: 'Situation',      q: '"What\'s actually broken?"',       color: RED,    icon: '01' },
-            { name: 'Strategy',       q: '"Where should we bet?"',           color: '#6366F1', icon: '02' },
-            { name: 'Vendor',         q: '"Which vendor wins here?"',        color: AMBER,  icon: '03' },
-            { name: 'Business Case',  q: '"How do we justify this?"',        color: GREEN,  icon: '04' },
-            { name: 'Outcomes',       q: '"Did it work — can we prove it?"', color: TEAL,   icon: '05' },
-          ].map(p => (
-            <div key={p.name} style={{ background: CARD, border: `1px solid ${EDGE}`, borderTop: `3px solid ${p.color}`, borderRadius: '0 0 10px 10px', padding: '16px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, marginBottom: '8px' }}>{p.icon}</div>
-              <div style={{ fontFamily: MONO, fontSize: '11px', color: p.color, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: '8px' }}>{p.name}</div>
-              <div style={{ fontSize: '11px', color: MUTED, fontStyle: 'italic', lineHeight: 1.4 }}>{p.q}</div>
+      <SectionTitle>The four compounding advantages</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        {[
+          { num: '01', label: 'GENOME', title: 'Cross-client intelligence no firm can share', body: 'Patterns from real transformations. Failure rates. Recovery ranges. Vendor track records. Every engagement makes it smarter. Advisory firms have this in partners\' heads — walks out when they retire. Ours compounds permanently.' },
+          { num: '02', label: 'DATA FIRST', title: 'Week 4 insight in 48 hours', body: 'Client uploads data. Phase 0 runs. Every gap quantified, every pattern matched before the first Maestro meeting.' },
+          { num: '03', label: 'MAESTROS EMBEDDED', title: 'Operators, not advisors', body: 'Maestros govern delivery from inside the client. They hold vendors accountable. Knowledge transfers to the client team — not back to us.' },
+          { num: '04', label: 'PLATFORM NOT PEOPLE', title: 'Scales without headcount', body: 'One Maestro runs 3–4 engagements simultaneously. AI does the analysis. Same team handles 10x the engagements of a traditional consulting model.' },
+        ].map((c, i) => (
+          <Card key={i}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>{c.num} · {c.label}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '8px', lineHeight: 1.4 }}>{c.title}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.7 }}>{c.body}</div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── TAB 2: Vision ──────────────────────────────────────────────────────────
+
+function TabVision() {
+  return (
+    <div>
+      <Eyebrow label="5-YEAR VISION" />
+      <H1>The operating system<br />for enterprise transformation.</H1>
+      <Body>
+        Today: a platform that makes Maestros 10x more effective. In 5 years: the platform that every board mandates before approving any transformation programme. The Genome becomes the most valuable dataset in enterprise transformation — more verified outcome data than any entity on earth.
+      </Body>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '40px' }}>
+        {[
+          { stage: 'TODAY · SEED', title: 'Platform + Maestro engagements', body: 'Phase-gated engagement engine. Maestros embedded. Platform license + engagement fees. Healthcare IT + FinServ beachhead. Genome seeded from research + founder experience.', arr: '$0 → $5M', arrLabel: 'ARR target at Series A trigger', featured: true },
+          { stage: 'YEAR 2 · SERIES A', title: 'Genome becomes the product', body: '30+ real engagements feeding live pattern data. AbarVa predicts outcomes before programmes begin. "94% confidence — based on 12 similar engagements." No advisory firm can say that.', arr: '$20–30M', arrLabel: 'ARR', featured: false },
+          { stage: 'YEAR 3–4 · SERIES B', title: 'Outcome accountability layer', body: 'Baseline methodology proven. Outcome fees introduced on top of base. 15–20% of verified savings above baseline. The category-defining move — earned through delivery first.', arr: '$50–80M', arrLabel: 'ARR', featured: false },
+          { stage: 'YEAR 5 · MARKET LEADERSHIP', title: 'Category defined and owned', body: 'CFOs mandate AbarVa before approving transformation spend. Genome licensed to advisory firms. "Has AbarVa assessed this?" becomes the standard board question.', arr: '$150M+', arrLabel: 'ARR', featured: false },
+        ].map((c, i) => (
+          <div key={i} style={{ background: c.featured ? C.featured : C.surface, border: `1px solid ${c.featured ? C.teal : C.border}`, borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>{c.stage}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '8px', lineHeight: 1.4 }}>{c.title}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.7, flex: 1 }}>{c.body}</div>
+            <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${C.border}` }}>
+              <div style={{ fontFamily: C.mono, fontSize: '24px', fontWeight: 800, color: C.teal }}>{c.arr}</div>
+              <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, marginTop: '2px' }}>{c.arrLabel}</div>
             </div>
-          ))}
+          </div>
+        ))}
+      </div>
+
+      <SectionTitle>Why now — three converging forces</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '40px' }}>
+        {[
+          { num: '01', label: 'AI CAPABILITY', title: 'The technical prerequisite just became available', body: 'Claude, GPT-4, Gemini can now genuinely analyse enterprise data and produce board-quality output. This was not true 24 months ago. AbarVa\'s core capability became technically feasible in 2024. The window to define the category is open now.' },
+          { num: '02', label: 'ACCOUNTABILITY CRISIS', title: 'Boards are asking what £40M actually bought them', body: 'Post-COVID transformation spend exploded. Results didn\'t follow. Boards are demanding ROI on advisory spend for the first time. The market is ready for a firm that builds accountability in from Day 0 — not as a differentiator, as a baseline expectation.' },
+          { num: '03', label: 'AI DISILLUSIONMENT', title: '73% of enterprise AI produces no verified outcome', body: '$94M AI spend, zero ROI — this is not one company. It is most enterprise AI programmes. Boards are demanding accountability on AI investment specifically. AbarVa diagnoses why AI isn\'t working and creates the governance structure to fix it.' },
+        ].map((c, i) => (
+          <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.teal}`, borderRadius: '0 8px 8px 0', padding: '20px' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>{c.num} · {c.label}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '8px', lineHeight: 1.4 }}>{c.title}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.7 }}>{c.body}</div>
+          </div>
+        ))}
+      </div>
+
+      <Card featured>
+        <div style={{ fontFamily: C.sans, fontSize: '15px', fontWeight: 700, color: C.white, marginBottom: '20px' }}>
+          The Genome compounds. Here is where it stands today vs where it goes.
+        </div>
+        {[
+          { label: 'Today — Seeded', val: '40+ patterns', desc: 'Built from published research, public case studies, Everest Group / KLAS / Gartner data, and 15 years of founder engagement experience' },
+          { label: 'After 10 engagements', val: '80–100 patterns', desc: 'First live data. Recovery ranges start updating from actual outcomes. Vendor track records verified.' },
+          { label: 'After 30 engagements', val: '200–340 patterns', desc: 'Cross-client intelligence live. Predictive capability emerges.' },
+          { label: 'After 100 engagements', val: '1,000+ patterns', desc: 'The most comprehensive verified transformation outcome dataset in existence.' },
+        ].map((row, i, arr) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '160px 140px 1fr', gap: '16px', alignItems: 'center', padding: '14px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, fontWeight: 600 }}>{row.label}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '14px', fontWeight: 800, color: C.teal }}>{row.val}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.6 }}>{row.desc}</div>
+          </div>
+        ))}
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: `1px solid ${C.border}`, fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.7 }}>
+          Third-party data sources feeding the Genome: KLAS Research · Everest Group PEAK Matrix · Gartner Magic Quadrant · IDC transformation studies · Forrester TEI reports · Public ERP vendor case studies · SEC earnings disclosures
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// ─── TAB 3: Revenue Model ───────────────────────────────────────────────────
+
+function TabRevenue() {
+  return (
+    <div>
+      <Eyebrow label="REVENUE MODEL" />
+      <H1>
+        Platform + services today.<br />
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>Outcome fees in Phase 2.</em>
+      </H1>
+      <Body>
+        Seed stage: predictable platform license + Maestro engagement fees. Series A: outcome accountability layer added on top of base fees. Series B: pure outcome model for anchor clients. We earn the right to outcome fees through delivery first — not as a starting position.
+      </Body>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+        {/* Tier 1 */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+          <div style={{ height: '3px', background: '#445566' }} />
+          <div style={{ padding: '20px' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>TIER 1 · INTELLIGENCE PLATFORM</div>
+            <div style={{ fontFamily: C.mono, fontSize: '22px', fontWeight: 800, color: C.teal, marginBottom: '4px' }}>$80K–200K</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, marginBottom: '16px' }}>annually · platform license</div>
+            {['5 Intelligence products — full access', 'Phase 0 + Phase 1 diagnostic only', 'No embedded Maestro', 'Client executes internally with AbarVa intelligence'].map((f, i) => <Bullet key={i} dot="teal">{f}</Bullet>)}
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`, fontFamily: C.sans, fontSize: '11px', color: C.white }}>
+              Target: 50 clients · <span style={{ color: C.teal }}>$150K</span> avg = <span style={{ color: C.teal }}>$7.5M ARR</span>
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-          <Card>
-            <Eyebrow>Transformation Genome</Eyebrow>
-            <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>500+ outcome patterns from real engagements. Every finding grounded in what worked and what failed in organizations like yours. The Genome compounds with every client — becoming more accurate over time.</div>
-          </Card>
-          <Card>
-            <Eyebrow>Three-source attribution</Eyebrow>
-            <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>Every recommendation shows three sources: your data, industry benchmarks, and Genome outcomes. No black boxes. Every number traceable. Every recommendation defensible in a board meeting.</div>
-          </Card>
-          <Card>
-            <Eyebrow>Knowledge layer</Eyebrow>
-            <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>Every engagement ingests the client environment into a permanent, client-owned knowledge base. New team members onboard in days. Knowledge never walks out the door. The client owns it permanently.</div>
-          </Card>
+        {/* Tier 2 — Featured */}
+        <div style={{ background: C.featured, border: `1px solid ${C.teal}`, borderRadius: '10px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ height: '3px', background: C.teal }} />
+          <div style={{ padding: '20px' }}>
+            <div style={{ position: 'absolute', top: '16px', right: '16px', background: C.teal, color: C.bg, fontFamily: C.mono, fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '3px', letterSpacing: '.06em' }}>Most common</div>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>TIER 2 · MAESTRO-ASSISTED</div>
+            <div style={{ fontFamily: C.mono, fontSize: '22px', fontWeight: 800, color: C.teal, marginBottom: '4px' }}>$400K–1.2M</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, marginBottom: '16px' }}>per engagement · fixed fee per phase</div>
+            {['Platform + part-time Maestro (2–3 days/week)', 'Full Phase 0 through Phase 4', 'Fixed fee per phase — predictable for client', 'Baseline agreement from Phase 3 (outcome layer ready when Phase 2 arrives)'].map((f, i) => <Bullet key={i} dot="teal">{f}</Bullet>)}
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`, fontFamily: C.sans, fontSize: '11px', color: C.white }}>
+              Target: 20 clients · <span style={{ color: C.teal }}>$800K</span> avg = <span style={{ color: C.teal }}>$16M ARR</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tier 3 */}
+        <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '10px', overflow: 'hidden' }}>
+          <div style={{ height: '3px', background: C.teal }} />
+          <div style={{ padding: '20px' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>TIER 3 · FULL PROGRAMME</div>
+            <div style={{ fontFamily: C.mono, fontSize: '22px', fontWeight: 800, color: C.teal, marginBottom: '4px' }}>$1.5M–4M</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, marginBottom: '16px' }}>per programme · 12–18 months</div>
+            {['Platform + full-time senior Maestro on-site', 'Multi-solution engagement simultaneously', 'Fixed fee base + outcome bonus (Phase 2 model)', 'Anchor client relationships — Maestro brings their network'].map((f, i) => <Bullet key={i} dot="teal">{f}</Bullet>)}
+            <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: `1px solid ${C.border}`, fontFamily: C.sans, fontSize: '11px', color: C.white }}>
+              Target: 10 clients · <span style={{ color: C.teal }}>$2M</span> avg = <span style={{ color: C.teal }}>$20M ARR</span>
+            </div>
+          </div>
         </div>
       </div>
-    ),
 
-    solutions: (
-      <div>
-        <Eyebrow>Solutions</Eyebrow>
-        <H>Three solutions.<br />Full lifecycle coverage.</H>
-        <Sub>Each solution prescribes the architecture, tools, and Maestro team. Each earns its fee only on verified outcomes.</Sub>
+      <Card featured style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, marginBottom: '8px' }}>Total at scale — 80 clients across 3 tiers</div>
+        <div style={{ fontFamily: C.mono, fontSize: '28px', fontWeight: 800, color: C.teal }}>$43.5M ARR</div>
+        <div style={{ fontFamily: C.sans, fontSize: '14px', color: C.white, marginTop: '6px' }}>· $7.5M + $16M + $20M · before outcome fees kick in</div>
+      </Card>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '32px' }}>
-          {[
-            {
-              name: 'AI-Powered PDLC', owner: 'CIO · All verticals', color: '#6366F1',
-              problem: '"We\'re spending $300M in capital. Average time to production is 16 months. My engineers spend 60% of their time not building."',
-              outcome: '16mo → 8mo delivery · $18M consulting reduction per engagement',
-              team: '6 embedded Maestros replace 40 consultants',
-            },
-            {
-              name: 'AI-Powered Delivery', owner: 'CIO · CTO · All verticals', color: TEAL,
-              problem: '"80 consultants on site. 70% of their time getting up to speed. Knowledge walks out every Friday."',
-              outcome: '40% consulting cost reduction · Knowledge stays permanently',
-              team: '4 embedded Maestros replace 60-80 consultants',
-            },
-            {
-              name: 'Margin Optimization', owner: 'CEO · CFO · COO', color: AMBER,
-              problem: '"Operating margin 1.8% against a 4% target. We don\'t know exactly where the leak is."',
-              outcome: '$60-120M annual margin recovery (Meridian baseline)',
-              team: '3-5 Maestros per unlock activated',
-            },
-          ].map(s => (
-            <div key={s.name} style={{ background: CARD, border: `1px solid ${EDGE}`, borderLeft: `4px solid ${s.color}`, borderRadius: '0 12px 12px 0', padding: '20px 24px', display: 'grid', gridTemplateColumns: '180px 1fr 1fr', gap: '24px', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '4px' }}>{s.name}</div>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.05em', textTransform: 'uppercase' }}>{s.owner}</div>
-              </div>
-              <div style={{ fontSize: '12px', color: MUTED, fontStyle: 'italic', lineHeight: 1.5 }}>{s.problem}</div>
-              <div>
-                <div style={{ fontSize: '12px', color: s.color, lineHeight: 1.5, marginBottom: '4px' }}>{s.outcome}</div>
-                <div style={{ fontSize: '11px', color: DIM }}>{s.team}</div>
-              </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+        {[
+          { period: 'Month 0–6', arr: '$0', desc: '3 design partners. Proving the model.', featured: false },
+          { period: 'Month 6–12', arr: '$3.2M', desc: '6 clients. 3 converted DPs + 3 new.', featured: false },
+          { period: 'Month 12–18', arr: '$9.6M', desc: '12 clients. Series A trigger.', featured: false },
+          { period: 'Month 18–30', arr: '$28M', desc: 'Post Series A. Outcome layer introduced.', featured: false },
+          { period: 'Month 30–42', arr: '$54M', desc: '40 clients. Outcome fees compound.', featured: true },
+        ].map((cell, i) => (
+          <div key={i} style={{ background: cell.featured ? C.featured : C.surface, border: `1px solid ${cell.featured ? C.teal : C.border}`, borderRadius: '8px', padding: '14px', textAlign: 'center' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>{cell.period}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '18px', fontWeight: 800, color: cell.featured ? C.teal : C.white, marginBottom: '6px' }}>{cell.arr}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.5 }}>{cell.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── TAB 4: The Ask ──────────────────────────────────────────────────────────
+
+function TabAsk() {
+  return (
+    <div>
+      <Eyebrow label="THE ASK" color={C.amber} />
+
+      <div style={{ background: C.featured, border: `1px solid ${C.teal}`, borderRadius: '12px', overflow: 'hidden', marginBottom: '40px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr' }}>
+          <div style={{ padding: '32px', borderRight: `1px solid ${C.border}` }}>
+            <div style={{ fontFamily: C.mono, fontSize: '52px', fontWeight: 800, color: C.white, lineHeight: 1, marginBottom: '8px' }}>$8M</div>
+            <div style={{ fontFamily: C.mono, fontSize: '20px', fontWeight: 700, color: C.teal, marginBottom: '20px' }}>seed · $25M cap · SAFE MFN</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.7, marginBottom: '24px' }}>
+              Category-creation round. The product is built and working. The model is validated on paper. This money buys the team and the first real engagements that validate it in practice.
+              <br /><br />
+              Primary target: Anthropic Anthology Fund. Strategic angels who have built and exited professional services + AI businesses. Small number of high-conviction investors preferred over a large syndicate.
+              <br /><br />
+              Series A trigger: $5M ARR. At that point, the Genome has live data from 10+ engagements. Outcome layer is being introduced. Pre-money: $100M.
             </div>
-          ))}
-        </div>
-
-        <Card>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <a href="mailto:invest@abarva.ai" style={{ background: C.teal, color: C.bg, borderRadius: '7px', padding: '11px 22px', fontFamily: C.mono, fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textDecoration: 'none', textTransform: 'uppercase' }}>
+                Request briefing →
+              </a>
+              <a href="https://nexus-vert-kappa.vercel.app" target="_blank" rel="noopener noreferrer" style={{ background: 'transparent', color: C.white, border: `1px solid ${C.white}`, borderRadius: '7px', padding: '11px 22px', fontFamily: C.mono, fontSize: '11px', fontWeight: 700, letterSpacing: '.06em', textDecoration: 'none', textTransform: 'uppercase' }}>
+                See the platform
+              </a>
+            </div>
+          </div>
+          <div style={{ padding: '32px' }}>
             {[
-              { label: 'Agents handle', items: ['Requirements synthesis', 'Code generation', 'Test writing', 'Documentation', 'Benchmarking', 'Deployment'], color: DIM },
-              { label: 'Maestros handle', items: ['Architecture judgment', 'Stakeholder alignment', 'Quality decisions', 'Outcome accountability'], color: TEAL },
-              { label: 'Client gets', items: ['Outcome commitment locked', 'Knowledge owned permanently', 'No outcome = no fee', 'Compounding intelligence'], color: GREEN },
-              { label: 'AbarVa earns', items: ['Platform license fee', '15-20% of verified savings', 'Referral fees (disclosed)', 'Outcome fee at Series A'], color: AMBER },
-            ].map(col => (
-              <div key={col.label}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: col.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>{col.label}</div>
-                {col.items.map(item => (
-                  <div key={item} style={{ fontSize: '12px', color: MUTED, marginBottom: '6px', paddingLeft: '8px', borderLeft: `2px solid ${EDGE}` }}>{item}</div>
-                ))}
+              { label: 'Round size', val: '$8M', teal: true },
+              { label: 'Valuation cap', val: '$25M', teal: true },
+              { label: 'Structure', val: 'SAFE — MFN', teal: false },
+              { label: 'Use of funds', val: 'Team 55% · Product 25% · GTM 12% · Ops 8%', teal: false },
+              { label: 'Series A trigger', val: '$5M ARR', teal: true },
+              { label: 'Series A pre-money', val: '$100M', teal: true },
+              { label: 'Target close', val: 'Q2 2026', teal: false },
+            ].map((row, i, arr) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '12px 0', borderBottom: i < arr.length - 1 ? `1px solid ${C.border}` : 'none', gap: '16px' }}>
+                <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, flexShrink: 0 }}>{row.label}</div>
+                <div style={{ fontFamily: C.mono, fontSize: '12px', fontWeight: 700, color: row.teal ? C.teal : C.white, textAlign: 'right' }}>{row.val}</div>
               </div>
             ))}
           </div>
-        </Card>
-      </div>
-    ),
-
-    clients: (
-      <div>
-        <Eyebrow>Client economics</Eyebrow>
-        <H>Three clients. Live data. Real numbers.</H>
-        <Sub>Each client is fully loaded in the platform right now. These are not projections. These are the situations AbarVa diagnosed before the first meeting.</Sub>
-
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-          {CLIENTS.map((c, i) => (
-            <button key={c.id} onClick={() => setClientIdx(i)} style={{ padding: '9px 18px', borderRadius: '8px', cursor: 'pointer', border: `1px solid ${clientIdx === i ? c.color : EDGE}`, background: clientIdx === i ? 'rgba(45,212,200,0.06)' : CARD, color: clientIdx === i ? c.color : MUTED, fontFamily: MONO, fontSize: '11px', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-              {c.name}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px', marginBottom: '16px' }}>
-          {client.metrics.map(m => (
-            <div key={m.label} style={{ background: CARD, border: `1px solid ${EDGE}`, borderTop: `2px solid ${m.red ? RED : AMBER}`, borderRadius: '0 0 10px 10px', padding: '12px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
-              <div style={{ fontFamily: SERIF, fontSize: '20px', color: m.red ? RED : AMBER, lineHeight: 1, marginBottom: '4px' }}>{m.value}</div>
-              <div style={{ fontSize: '10px', color: DIM, lineHeight: 1.3 }}>{m.target}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
-          <Card style={{ borderLeft: `4px solid ${client.color}`, borderRadius: '0 12px 12px 0' }}>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>What AbarVa found first</div>
-            <div style={{ fontSize: '14px', color: WHITE, lineHeight: 1.6, marginBottom: '12px' }}>{client.finding}</div>
-            <div style={{ fontSize: '13px', color: MUTED, fontStyle: 'italic' }}>{client.wow}</div>
-          </Card>
-          <Card>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Economics — Year 1</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {[
-                { label: 'Platform license', value: fmt(client.platformFee), color: TEAL  },
-                { label: 'Outcome fee (15%)', value: fmt(client.outcomeFee), color: GREEN },
-                { label: 'Consulting avoided', value: fmt(client.consulting), color: MUTED },
-                { label: 'Client verified savings', value: fmt(client.savings), color: WHITE },
-              ].map(r => (
-                <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '10px', borderBottom: `1px solid ${EDGE}` }}>
-                  <span style={{ fontSize: '12px', color: MUTED }}>{r.label}</span>
-                  <span style={{ fontFamily: SERIF, fontSize: '16px', color: r.color, fontWeight: 500 }}>{r.value}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
         </div>
       </div>
-    ),
 
-    model: (
-      <div>
-        <Eyebrow>Revenue model</Eyebrow>
-        <H>Three streams.<br />Two at seed. One unlocks at Series A.</H>
-        <Sub>The outcome fee is deferred. Platform license and referral fees fund the seed stage. The outcome fee becomes real when we have the client history to make it contractually enforceable.</Sub>
+      <SectionTitle>Use of funds — what $8M specifically buys</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        {[
+          { pct: '55%', label: 'Team · $4.4M', detail: 'CTO ($280K). Head of Product ($200K). 3 engineers ($180K avg). 5 Maestros ($235K avg + delivery bonus). Founder ($200K). Recruiting + benefits.' },
+          { pct: '25%', label: 'Product · $2M', detail: 'AWS Bedrock + cloud infrastructure. Third-party data licensing (KLAS, Everest Group, Gartner). Engagement engine productisation. Genome automation pipeline build.' },
+          { pct: '12%', label: 'GTM · $960K', detail: 'HIMSS + ViVE (healthcare). Sibos + FIS (FinServ). Genome Insights published as research. 3 design partners converted to paying clients.' },
+          { pct: '8%', label: 'Operations · $640K', detail: 'Legal, compliance, D&O insurance. Office + equipment. Advisory board equity grants. Contingency.' },
+        ].map((c, i) => (
+          <Card key={i}>
+            <div style={{ fontFamily: C.mono, fontSize: '32px', fontWeight: 800, color: C.teal, marginBottom: '6px' }}>{c.pct}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '10px' }}>{c.label}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.7 }}>{c.detail}</div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  )
+}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '32px' }}>
-          {[
-            {
-              name: 'Platform License', stage: 'Seed — Active', color: TEAL,
-              desc: 'Annual enterprise license. Flat fee. No per-seat pricing.',
-              tiers: [
-                { tier: 'Intelligence Essentials', price: '$350K/yr', what: '3 products · 1 solution · 48 Maestro hrs/yr' },
-                { tier: 'Intelligence Suite', price: '$850K/yr', what: 'All 5 products · 3 solutions · 120 Maestro hrs/yr' },
-                { tier: 'Intelligence Enterprise', price: '$1.4M/yr', what: 'Full platform · Custom solutions · Unlimited Maestro' },
-              ],
-            },
-            {
-              name: 'Referral & Marketplace', stage: 'Seed — Active', color: AMBER,
-              desc: 'Referral fees from vendors recommended through AbarVa. Disclosed on every recommendation.',
-              tiers: [
-                { tier: 'Vendor referral fee', price: '10-20% Y1',   what: 'Paid by vendor when deal closes' },
-                { tier: 'Contract intelligence', price: '$25-50K',   what: 'Negotiation brief + benchmark data' },
-                { tier: 'Marketplace attach',   price: 'Per service', what: 'Implementation services attach' },
-              ],
-            },
-            {
-              name: 'Outcome Fee', stage: 'Series A — Deferred', color: DIM,
-              desc: 'The most powerful stream. 15-20% of verified savings above baseline. Unlocks at Series A when we have 30+ clients with verified outcomes.',
-              tiers: [
-                { tier: 'Verified savings share',  price: '15-20%',     what: 'Of audited client savings only' },
-                { tier: 'Per engagement (Meridian)', price: '$4.2M',    what: 'At $28M verified savings' },
-                { tier: 'Revenue multiple',        price: '20-30×',     what: 'Outcome fee commands premium' },
-              ],
-            },
-          ].map(stream => (
-            <Card key={stream.name} style={{ borderTop: `3px solid ${stream.color}`, borderRadius: '0 0 12px 12px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: stream.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>{stream.stage}</div>
-              <div style={{ fontSize: '15px', fontWeight: 500, color: WHITE, marginBottom: '10px' }}>{stream.name}</div>
-              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5, marginBottom: '16px' }}>{stream.desc}</div>
-              {stream.tiers.map(t => (
-                <div key={t.tier} style={{ paddingBottom: '10px', marginBottom: '10px', borderBottom: `1px solid ${EDGE}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
-                    <span style={{ fontSize: '12px', color: WHITE }}>{t.tier}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: stream.color }}>{t.price}</span>
-                  </div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{t.what}</div>
-                </div>
-              ))}
-            </Card>
-          ))}
-        </div>
+// ─── TAB 5: Team ─────────────────────────────────────────────────────────────
 
-        <Card>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Seed stage model — 10 clients by Month 18</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
-            {[
-              { label: 'Platform ARR', value: '$5.1M',  color: TEAL,  note: '6 Suite + 4 Essentials' },
-              { label: 'Referral fees', value: '$1.8M', color: AMBER, note: 'Avg $180K per client'    },
-              { label: 'Total Year 2',  value: '$6.9M', color: WHITE, note: 'Combined streams'        },
-              { label: 'Series A trigger', value: '$5M', color: GREEN, note: 'ARR at $100M pre-money' },
-            ].map(m => (
-              <div key={m.label}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: '6px' }}>{m.label}</div>
-                <div style={{ fontFamily: SERIF, fontSize: '28px', color: m.color, lineHeight: 1, marginBottom: '4px' }}>{m.value}</div>
-                <div style={{ fontSize: '11px', color: DIM }}>{m.note}</div>
-              </div>
-            ))}
+function TabTeam() {
+  return (
+    <div>
+      <Eyebrow label="THE TEAM" />
+      <H1>
+        11 people.<br />
+        Every one has done<br />
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>this from the inside.</em>
+      </H1>
+      <Body>
+        The Maestros are not just delivery. They sell. Every senior Maestro comes with their client relationships — their prior clients become AbarVa&apos;s first design partners. This is the GTM strategy: hire the right Maestros, their network walks in with them.
+      </Body>
+
+      <Card featured style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '24px', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <Avatar label="AS" size={52} />
+        <div>
+          <div style={{ fontFamily: C.sans, fontSize: '20px', fontWeight: 800, color: C.white, marginBottom: '4px' }}>Anand Sundaram</div>
+          <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>FOUNDER · CEO</div>
+          <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.7 }}>
+            Former Managing Director and Data & AI NA Growth Lead at a top consulting firm. Sold and delivered the exact engagements AbarVa replaces — for Fortune 500 clients across healthcare IT and financial services.{' '}
+            <T>Watched £4M decks walk out the door with the knowledge.</T> Built the platform to fix it.
+            <br /><br />
+            <T>Why this founder:</T> Knows exactly what advisory firms charge, how they deliver, where they fail, and what CXOs actually need. <T>The product is built from the inside</T> — not by someone guessing at the market.
           </div>
-        </Card>
-      </div>
-    ),
-
-    moat: (
-      <div>
-        <Eyebrow>The moat</Eyebrow>
-        <H>Four compounding assets.<br />Each one harder to replicate.</H>
-        <Sub>The Transformation Genome is not a feature. It is the product. Every engagement makes it more accurate. Every outcome makes the next recommendation more defensible.</Sub>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '32px' }}>
-          {[
-            {
-              name: 'Transformation Genome', color: TEAL,
-              headline: 'Every engagement adds patterns others can\'t replicate',
-              body: '500+ outcome patterns at seed. 5,000+ at Series A. Cross-client learning that is anonymized, aggregated, and impossible to access without running real engagements. A competitor entering today starts with zero patterns.',
-            },
-            {
-              name: 'Adaptive Strategy Intelligence', color: '#6366F1',
-              headline: 'Situation-specific, not generic',
-              body: 'Every recommendation scored against the specific client\'s data, their stack, their team capability, their failure signals. Not a best practice list. A prescription that changes when the client changes. Impossible to replicate without the underlying data.',
-            },
-            {
-              name: 'Outcome Interpretability Layer', color: AMBER,
-              headline: 'Every number is auditable',
-              body: 'Three-source attribution on every finding: client data, industry benchmark, Genome outcome. Not a black box. A CXO can trace any recommendation to its source. This is what makes the outcome fee contractually enforceable.',
-            },
-            {
-              name: 'Research Publication Program', color: GREEN,
-              headline: 'Academic credibility as a moat',
-              body: 'AbarVa publishes Genome findings as research — anonymized, peer-reviewed. This builds academic credibility, attracts talent, and makes the Genome a trusted data source rather than a vendor claim. McKinsey spends $100M/year on thought leadership. AbarVa does it with data.',
-            },
-          ].map(m => (
-            <Card key={m.name} style={{ borderLeft: `4px solid ${m.color}`, borderRadius: '0 12px 12px 0' }}>
-              <Eyebrow color={m.color}>{m.name}</Eyebrow>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '8px' }}>{m.headline}</div>
-              <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{m.body}</div>
-            </Card>
-          ))}
         </div>
+      </Card>
 
-        <Card style={{ border: `1px solid rgba(45,212,200,0.25)`, background: 'rgba(45,212,200,0.04)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '32px' }}>
-            {[
-              { stage: 'Today · Seed', items: ['Working workflow engine', 'Meridian demo with real intelligence', '7 Genome patterns manually seeded', 'Outcome accountability contractually real'] },
-              { stage: 'Seed funds · 12 months', items: ['3 Maestros hired', '3 design partners engaged', 'Automated benchmark feeds', '50+ Genome patterns', 'Referral relationships established'] },
-              { stage: 'Series A · 30 clients', items: ['Cross-client intelligence live', 'Outcome fee contractually enforced', 'Predictive failure flags', '$5M ARR trigger at $100M pre-money'] },
-            ].map(stage => (
-              <div key={stage.stage}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '12px' }}>{stage.stage}</div>
-                {stage.items.map(item => (
-                  <div key={item} style={{ fontSize: '12px', color: MUTED, marginBottom: '8px', paddingLeft: '10px', borderLeft: `2px solid ${EDGE}` }}>{item}</div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </Card>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+        {[
+          { avatar: 'CTO', avatarBg: C.teal, title: 'Chief Technology Officer', comp: '$260–300K + 2–3% equity', from: 'Engineering lead at Palantir, C3.ai, Veeva, or enterprise AI platform. Or VP Engineering from consulting firm\'s AI arm.', delivers: 'All engineering, cloud architecture, Bedrock knowledge layer, platform scalability. Most critical hire.' },
+          { avatar: 'HP', avatarBg: C.green, title: 'Head of Product', comp: '$190–220K + 1–1.5% equity', from: 'Senior PM at Palantir, ServiceNow, or enterprise SaaS.', delivers: 'Product roadmap, engagement engine UX, client portal, Genome product experience.' },
+          { avatar: 'ENG', avatarBg: C.white, title: '3 Engineers', comp: '$170–190K avg + equity-heavy', from: '2 senior full-stack. 1 AI/ML (Bedrock/RAG specialist).', delivers: 'S3 → Bedrock → RAG → Genome automation pipeline.' },
+        ].map((m, i) => (
+          <Card key={i}>
+            <Avatar label={m.avatar} bg={m.avatarBg} />
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginTop: '10px', marginBottom: '4px' }}>{m.title}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, marginBottom: '12px' }}>{m.comp}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6, marginBottom: '8px' }}><T>From:</T> {m.from}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6 }}><T>Delivers:</T> {m.delivers}</div>
+          </Card>
+        ))}
       </div>
-    ),
 
-    round: (
-      <div>
-        <Eyebrow>Seed round</Eyebrow>
-        <H>$8M at $25M cap.<br />12 months to Series A trigger.</H>
-        <Sub>First institutional capital. Targeting Anthropic Anthology Fund as lead. Building the proof that enterprise transformation can be done by a small team with AI — and that clients will pay for verified outcomes.</Sub>
+      <SectionTitle>Maestro team — they also sell</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        {[
+          { avatar: 'M1', title: 'Head of Delivery + Maestro Lead', comp: '$260K + 1.5% equity + 25–30% delivery bonus', from: 'Big 4 Partner or senior transformation exec.', delivers: 'Owns delivery methodology. Trains future Maestros. Runs Tier 3 engagements. Brings 3–5 warm CXO relationships day 1.', featured: true },
+          { avatar: 'M2', title: 'Healthcare IT Maestro × 2', comp: '$230–250K + equity + delivery bonus', from: 'Big 4 health practice lead, Epic implementation director, or CMO/CIO from major health system.', delivers: 'Each brings 2–3 warm healthcare relationships. Prior clients become first design partners.', featured: false },
+          { avatar: 'M3', title: 'Financial Services Maestro × 2', comp: '$230–250K + equity + delivery bonus', from: 'Top consulting MD in asset management/banking or CDO/CIO from major financial services firm.', delivers: 'Each brings 2–3 warm FinServ relationships.', featured: false },
+        ].map((m, i) => (
+          <div key={i} style={{ background: m.featured ? C.featured : C.surface, border: `1px solid ${m.featured ? C.teal : C.border}`, borderRadius: '10px', padding: '20px' }}>
+            <Avatar label={m.avatar} />
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginTop: '10px', marginBottom: '4px' }}>{m.title}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, marginBottom: '12px' }}>{m.comp}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6, marginBottom: '8px' }}><T>From:</T> {m.from}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6 }}><T>Delivers:</T> {m.delivers}</div>
+          </div>
+        ))}
+      </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          <Card>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>Use of capital</div>
-            {[
-              { label: 'Maestro hiring (3)',         pct: 45, value: '$3.6M', color: TEAL  },
-              { label: 'Platform development',       pct: 25, value: '$2.0M', color: '#6366F1' },
-              { label: 'Design partner acquisition', pct: 15, value: '$1.2M', color: AMBER },
-              { label: 'Operations & infrastructure',pct: 15, value: '$1.2M', color: DIM  },
-            ].map(item => (
-              <div key={item.label} style={{ marginBottom: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '12px', color: MUTED }}>{item.label}</span>
-                  <span style={{ fontFamily: MONO, fontSize: '11px', color: item.color }}>{item.value} · {item.pct}%</span>
-                </div>
-                <div style={{ height: '4px', background: EDGE, borderRadius: '2px', overflow: 'hidden' }}>
-                  <div style={{ width: `${item.pct}%`, height: '100%', background: item.color, borderRadius: '2px' }} />
-                </div>
-              </div>
-            ))}
-          </Card>
-
-          <Card>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '16px' }}>12-month milestones</div>
-            {[
-              { m: 'Month 3',  text: '3 design partners signed. Meridian, First Capital, Apex formalized.', color: TEAL  },
-              { m: 'Month 6',  text: 'First verified outcome delivered. Outcome fee model tested.', color: GREEN },
-              { m: 'Month 9',  text: '3 Maestros hired. Genome automated. 50+ patterns seeded.', color: AMBER },
-              { m: 'Month 12', text: '$5M ARR. Series A at $100M pre-money. 10 clients.', color: WHITE },
-            ].map(m => (
-              <div key={m.m} style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: m.color, whiteSpace: 'nowrap', marginTop: '2px', minWidth: '64px' }}>{m.m}</div>
-                <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{m.text}</div>
-              </div>
-            ))}
-          </Card>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '14px 20px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+        <TealDot />
+        <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.6 }}>
+          <T>Advisory board (equity only):</T> Former Fortune 100 CIO — Healthcare · Former Fortune 100 CFO — FinServ · AI/ML architect (Bedrock/cloud)
         </div>
-
-        <Card style={{ border: `1px solid rgba(45,212,200,0.25)`, background: 'rgba(45,212,200,0.04)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '32px', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>The ask</div>
-              <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, lineHeight: 1.1, marginBottom: '8px' }}>$8M</div>
-              <div style={{ fontSize: '13px', color: MUTED }}>SAFE · $25M cap · No discount</div>
-            </div>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Primary target</div>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>Anthropic Anthology Fund</div>
-              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>AbarVa is built on Claude. Every Maestro runs on Claude. The Genome is powered by Claude. This is the right structural home.</div>
-            </div>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>The founder</div>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>Former Managing Director & Data/AI Growth Lead</div>
-              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>Top consulting firm. Designed and delivered the knowledge layer architecture now powering AbarVa. Built this for a major health system — now building it as a platform.</div>
-            </div>
-          </div>
-        </Card>
       </div>
-    ),
-  }
+    </div>
+  )
+}
+
+// ─── TAB 6: Live Platform ────────────────────────────────────────────────────
+
+function TabLivePlatform() {
+  const [hovered, setHovered] = useState<number | null>(null)
+
+  const cards = [
+    { vert: 'HEALTHCARE · $11.2B IDN · 42,000 EMPLOYEES', name: 'Meridian Health System', stat: '$94M AI portfolio · $0 verified ROI · 18.2% denial rate', desc: '18.2% denial rate vs 12% benchmark. $94M in AI with zero verified return. Epic score 58/100 vs 80 benchmark. CMS mandate 14 months away. Diagnosed from uploaded datasets before first meeting.', cta: '→ See live diagnosis', href: '/diagnose?client=meridian' },
+    { vert: 'ASSET MANAGEMENT · £16.2B REVENUE · £840B AUM', name: 'Arcturus Financial Group', stat: 'C/I 71% · target 58% · £840M gap · 28 AI initiatives · 0 live', desc: '28 AI initiatives. None in production. £94M committed. Bloomberg AIM 28yr — 3 failed modernisations at £32.6M total. CDO vacant 11 months. Everything visible before first meeting.', cta: '→ See live diagnosis', href: '/diagnose?client=arcturus' },
+    { vert: 'MAESTRO WORKSPACE · PHASE-GATED · ADMIN VIEW', name: 'Maestro Admin Workspace', stat: 'Data uploaded · Phase 0 scored · Engagement active', desc: 'Upload datasets, review Phase 0 findings, manage engagement lifecycle, publish outputs to client portal. What a Maestro sees every day.', cta: '→ See the workspace', href: '/admin/client/arcturus' },
+    { vert: 'SOLUTIONS · 3 BUILT · MARGIN · PDLC · TECH', name: 'Solution Pages', stat: 'Margin Optimization · AI-Powered PDLC · Tech Modernization', desc: 'Three solution pages with Genome patterns and real client data. When logged in, AbarVa speaks first from uploaded datasets before any conversation begins.', cta: '→ See Margin Optimization', href: '/solutions/margin' },
+  ]
 
   return (
-    <div style={{ background: BG, minHeight: '100vh', fontFamily: SANS, color: WHITE }}>
-      <AbarvaNav activePage="investor" />
+    <div>
+      <Eyebrow label="LIVE PLATFORM" />
+      <H1>
+        Not a prototype.<br />
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>A working product.</em>
+      </H1>
+      <Body>
+        Deployed April 2026. Two composite clients loaded with real-world datasets. Engagement engine built. Phase-gated from data upload to board-ready output. Login credentials below — see it yourself in 5 minutes.
+      </Body>
 
-      {/* INVESTOR HEADER */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${EDGE}`, padding: '20px 40px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '4px' }}>Investor overview · Confidential</div>
-            <div style={{ fontFamily: SERIF, fontSize: '20px', color: WHITE }}>AbarVa — Seed Round · $8M at $25M cap</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '24px' }}>
+        {cards.map((card, i) => (
+          <div
+            key={i}
+            onClick={() => window.open(card.href, '_blank')}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(null)}
+            style={{ background: C.surface, border: `1px solid ${hovered === i ? C.teal : C.border}`, borderRadius: '10px', padding: '20px', cursor: 'pointer', transition: 'border-color 0.15s' }}
+          >
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '10px' }}>{card.vert}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '16px', fontWeight: 700, color: C.white, marginBottom: '6px' }}>{card.name}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, marginBottom: '12px', lineHeight: 1.6 }}>{card.stat}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.7, marginBottom: '14px' }}>{card.desc}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', fontWeight: 700, color: C.teal }}>{card.cta}</div>
           </div>
-          <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, letterSpacing: '.06em' }}>
-            SAFE · No discount · Anthropic Anthology Fund target
+        ))}
+      </div>
+
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: '8px', padding: '16px 20px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+          <TealDot />
+          <div style={{ fontFamily: C.mono, fontSize: '11px', color: C.white, lineHeight: 1.9 }}>
+            Login: <span style={{ color: C.teal }}>investor+clerk_test@abarva.com</span> / <span style={{ color: C.teal }}>Demo2026!</span>
+            &nbsp;· Verification: <span style={{ color: C.teal }}>424242</span>
+            &nbsp;· Admin: <span style={{ color: C.teal }}>anand+clerk_test@abarva.com</span> / <span style={{ color: C.teal }}>AbarVa2026!</span>
+            <br />
+            Confidential. Do not distribute. Composite clients built from real-world datasets — not live client information.
           </div>
         </div>
       </div>
+    </div>
+  )
+}
 
-      {/* SECTION NAV */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${EDGE}`, padding: '0 40px', position: 'sticky', top: '64px', zIndex: 80 }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', gap: '0', overflowX: 'auto' }}>
-          {SECTIONS.map(s => (
-            <button key={s.id} onClick={() => setSection(s.id)} style={{ padding: '0 20px', height: '48px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: '11px', letterSpacing: '.06em', textTransform: 'uppercase', color: section === s.id ? TEAL : MUTED, borderBottom: section === s.id ? `2px solid ${TEAL}` : '2px solid transparent', whiteSpace: 'nowrap' }}>
-              {s.label}
-            </button>
-          ))}
+// ─── Main Page ───────────────────────────────────────────────────────────────
+
+export default function InvestorPage() {
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+  const [activeTab, setActiveTab] = useState(0)
+
+  const role = user?.publicMetadata?.role as string | undefined
+  const isAuthorized = role === 'investor' || role === 'admin'
+
+  useEffect(() => {
+    if (!isLoaded || !user) return
+    if (role === 'maestro') router.push('/admin')
+    else if (role === 'client' || role === 'maestro_client') router.push('/portal/pdlc')
+  }, [isLoaded, user, role, router])
+
+  const panels = [
+    <TabOverview key="ov" />,
+    <TabVision key="vi" />,
+    <TabRevenue key="rev" />,
+    <TabAsk key="ask" />,
+    <TabTeam key="team" />,
+    <TabLivePlatform key="live" />,
+  ]
+
+  return (
+    <div style={{ minHeight: '100vh', background: C.bg, fontFamily: C.sans, color: C.white }}>
+      <AbarvaNav />
+
+      {/* Confidential badge bar */}
+      <div style={{ position: 'fixed', top: '64px', left: 0, right: 0, zIndex: 80, background: C.bg, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '0 32px', height: '36px' }}>
+        <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', border: `1px solid ${C.teal}`, borderRadius: '4px', padding: '3px 10px', textTransform: 'uppercase' }}>
+          INVESTOR VIEW · CONFIDENTIAL · SEED 2026
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '48px 40px 80px' }}>
-        {sectionContent[section]}
+      {/* Tab bar */}
+      <div style={{ position: 'fixed', top: '100px', left: 0, right: 0, zIndex: 80, background: C.bg, borderBottom: `1px solid ${C.border}`, display: 'flex', padding: '0 40px' }}>
+        {TABS.map((tab, i) => (
+          <button key={tab} onClick={() => setActiveTab(i)} style={{ background: 'transparent', border: 'none', borderBottom: `2px solid ${activeTab === i ? C.teal : 'transparent'}`, padding: '14px 20px', cursor: 'pointer', fontFamily: C.sans, fontSize: '13px', fontWeight: activeTab === i ? 600 : 400, color: activeTab === i ? C.teal : 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', transition: 'color 0.15s' }}>
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* BOTTOM NAV */}
-      <div style={{ background: CARD, borderTop: `1px solid ${EDGE}`, padding: '10px 40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <a href="/" style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none' }}>← Home</a>
-        <div style={{ flex: 1 }} />
-        <a href="/diagnose?client=meridian" style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none' }}>Open Meridian demo →</a>
-        <a href="/admin" style={{ background: TEAL, color: BG, padding: '7px 16px', borderRadius: '6px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', textDecoration: 'none' }}>Maestro</a>
+      {/* Content */}
+      <div style={{ paddingTop: '152px' }}>
+        {!isLoaded ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 152px)' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '11px', color: C.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>Loading...</div>
+          </div>
+        ) : !isAuthorized ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 152px)', padding: '40px 24px' }}>
+            <div style={{ background: C.featured, border: `1px solid ${C.teal}`, borderRadius: '12px', padding: '48px', textAlign: 'center', maxWidth: '480px', width: '100%' }}>
+              <div style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: '20px' }}>INVESTOR ACCESS REQUIRED</div>
+              <div style={{ fontFamily: C.sans, fontSize: '22px', fontWeight: 700, color: C.white, marginBottom: '12px' }}>AbarVa Seed 2026</div>
+              <div style={{ fontFamily: C.sans, fontSize: '13px', color: C.white, lineHeight: 1.7, marginBottom: '24px' }}>
+                This page contains confidential investment information. Investor access is required to view.
+              </div>
+              <a href="mailto:invest@abarva.ai" style={{ display: 'inline-block', background: C.teal, color: C.bg, borderRadius: '7px', padding: '12px 28px', fontFamily: C.mono, fontSize: '11px', fontWeight: 700, letterSpacing: '.08em', textTransform: 'uppercase', textDecoration: 'none' }}>
+                Request access → invest@abarva.ai
+              </a>
+              {!user && (
+                <div style={{ marginTop: '16px' }}>
+                  <a href="/sign-in" style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, textDecoration: 'underline', letterSpacing: '.06em' }}>
+                    Already have access? Sign in →
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div style={{ maxWidth: '1080px', margin: '0 auto', padding: '36px 40px 80px' }}>
+            {panels[activeTab]}
+          </div>
+        )}
       </div>
     </div>
   )
