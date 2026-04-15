@@ -16,7 +16,9 @@ export async function POST(
 ) {
   try {
     const { workstreamId } = await params
+    console.log('[message] POST start — workstreamId:', workstreamId)
     const { content, actorName, actorId, isInternal } = await request.json()
+    console.log('[message] body parsed — content length:', content?.length)
 
     if (!content) {
       return NextResponse.json({ error: 'content required' }, { status: 400 })
@@ -32,8 +34,10 @@ export async function POST(
       .single()
 
     if (wsErr || !workstream) {
+      console.error('[message] workstream fetch error:', wsErr)
       return NextResponse.json({ error: 'Workstream not found' }, { status: 404 })
     }
+    console.log('[message] workstream loaded — phase_number:', (workstream.engagement_phases as any)?.phase_number)
 
     const phase = workstream.engagement_phases as any
     const engagement = phase.engagements as any
@@ -107,6 +111,7 @@ export async function POST(
         content: m.content as string
       }))
 
+    console.log('[message] context built — calling Anthropic')
     const apiKey = process.env.ANTHROPIC_API_KEY
     if (!apiKey) {
       return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 })
@@ -161,7 +166,8 @@ export async function POST(
       }
     })
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[message] CAUGHT ERROR:', err)
+    return NextResponse.json({ error: err.message, stack: err.stack }, { status: 500 })
   }
 }
 
