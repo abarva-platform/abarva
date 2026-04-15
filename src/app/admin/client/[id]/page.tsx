@@ -1374,7 +1374,7 @@ export default function AdminClientPage() {
 
       {/* Breadcrumb */}
       <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <a href={user?.publicMetadata?.role === 'admin' ? '/admin' : `/admin/client/${user?.publicMetadata?.clientId || clientId}`} style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textDecoration: 'none', letterSpacing: '.05em', textTransform: 'uppercase' as const, cursor: 'pointer' }}>← All engagements</a>
+        <a href="/admin" style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textDecoration: 'none', letterSpacing: '.05em', textTransform: 'uppercase' as const }}>← All clients</a>
         <div style={{ width: '1px', height: '16px', background: BORDER }} />
         <span style={{ fontSize: '12px', color: MUTED }}>{data.name}</span>
       </div>

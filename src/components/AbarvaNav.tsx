@@ -99,14 +99,19 @@ function NavInner({ activePage }: NavProps) {
     'diagnose', 'vendor-intelligence',
   ].includes(activePage || '')
 
+  // Show breadcrumb trail for elevated users navigating module pages
+  const MODULE_PAGES = [
+    'diagnose', 'data-intelligence', 'intelligence', 'architecture',
+    'justify', 'ai-pdlc', 'outcome-intelligence', 'contradictions', 'vendor-intelligence',
+  ]
+  const showBreadcrumb = signedIn && isElevated && MODULE_PAGES.includes(activePage || '')
+
   return (
+    <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
     <div id="abarva-nav" style={{
       height: '60px',
-      position: 'sticky',
-      top: 0,
-      zIndex: 200,
       background: CARD,
-      borderBottom: `1px solid ${BORDER}`,
+      borderBottom: showBreadcrumb ? 'none' : `1px solid ${BORDER}`,
       display: 'flex',
       alignItems: 'center',
       padding: '0 24px',
@@ -403,6 +408,27 @@ function NavInner({ activePage }: NavProps) {
         )}
       </div>
 
+    </div>
+
+    {/* Breadcrumb trail — admin/investor on module pages */}
+    {showBreadcrumb && (
+      <div style={{
+        height: '32px', background: PAGE_BG,
+        borderBottom: `1px solid ${BORDER}`,
+        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '6px',
+      }}>
+        <a
+          href={`/admin/client/${clientId}`}
+          style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.08em', opacity: 0.85 }}
+        >
+          ← {currentClient.shortName}
+        </a>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>·</span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>
+          Maestro workspace
+        </span>
+      </div>
+    )}
     </div>
   )
 }
