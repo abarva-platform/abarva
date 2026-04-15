@@ -449,7 +449,7 @@ function FinalScreen() {
         <div style={{ fontSize: '13px', color: T.text3, marginBottom: '16px' }}>Or explore the platform yourself:</div>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <a href="/diagnose?client=meridian" style={{ padding: '10px 20px', background: T.surface, border: '1px solid ' + T.teal + '50', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: T.teal, textDecoration: 'none' }}>Open Meridian →</a>
-          <a href="/diagnose?client=firstcapital" style={{ padding: '10px 20px', background: T.surface, border: '1px solid ' + T.blue + '50', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: T.blue, textDecoration: 'none' }}>Open First Capital →</a>
+          <a href="/diagnose?client=arcturus" style={{ padding: '10px 20px', background: T.surface, border: '1px solid ' + T.blue + '50', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: T.blue, textDecoration: 'none' }}>Open Arcturus →</a>
           <a href="/diagnose?client=apexretail" style={{ padding: '10px 20px', background: T.surface, border: '1px solid ' + T.amber + '50', borderRadius: '8px', fontSize: '12px', fontWeight: 600, color: T.amber, textDecoration: 'none' }}>Open Apex Retail →</a>
         </div>
       </div>
