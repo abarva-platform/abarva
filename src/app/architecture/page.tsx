@@ -2,6 +2,13 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import {
+  ARCTURUS_TARGET_HTML,
+  PATTERN_LANDING_ZONE_HTML,
+  PATTERN_AGENTIC_HTML,
+  PATTERN_DATA_PLATFORM_HTML,
+  PATTERN_MLOPS_HTML,
+} from './generated-html'
 
 const CLIENTS = [
   { id: 'meridian', name: 'Meridian Health', cloud: 'Azure', accent: '#4DA3FF', cloudBg: '#1B4FD8' },
@@ -883,29 +890,97 @@ const ARCTURUS_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8
 <div class="foot">AbarVa Intelligence Platform · Arcturus Financial Group · Azure Architecture Intelligence · April 2026 · Confidential · Built from actual technology inventory and AI investment data</div>
 </div></body></html>`
 
-const HTML_MAP: Record<string, string> = {
+const CURRENT_HTML_MAP: Record<string, string> = {
   meridian: MERIDIAN_HTML,
   firstcapital: FIRST_CAPITAL_HTML,
   apexretail: APEX_RETAIL_HTML,
   arcturus: ARCTURUS_HTML,
 }
 
+const TARGET_HTML_MAP: Record<string, string | null> = {
+  arcturus: ARCTURUS_TARGET_HTML,
+  meridian: null,
+  firstcapital: null,
+  apexretail: null,
+}
+
+const PATTERNS = [
+  {
+    id: 'landing-zone',
+    title: 'Azure Landing Zone → Production',
+    subtitle: 'Enterprise-grade Azure setup for AI and data workloads',
+    tags: ['Infrastructure', 'Azure', 'Foundation'],
+    accent: '#4DA3FF',
+    relevance: 'Apply when: client needs greenfield Azure setup or has no ML platform',
+    html: PATTERN_LANDING_ZONE_HTML,
+  },
+  {
+    id: 'agentic',
+    title: 'Agentic AI Architecture',
+    subtitle: 'Multi-agent orchestration on Azure AI Foundry with Claude as orchestrator',
+    tags: ['AI', 'Agents', 'Orchestration'],
+    accent: '#A855F7',
+    relevance: 'Apply when: complex reasoning + action workflows, multi-step AI decisions',
+    html: PATTERN_AGENTIC_HTML,
+  },
+  {
+    id: 'data-platform',
+    title: 'Modern Data Platform — Medallion',
+    subtitle: 'Bronze → Silver → Gold lakehouse architecture with real-time + batch ingestion',
+    tags: ['Data', 'Lakehouse', 'Foundation'],
+    accent: '#F59E0B',
+    relevance: 'Apply when: client has data silo problem, needs golden record, or AI data readiness < 60%',
+    html: PATTERN_DATA_PLATFORM_HTML,
+  },
+  {
+    id: 'mlops',
+    title: 'MLOps Pipeline',
+    subtitle: 'Experiment → Training → Validation → Registry → Staging → Production → Monitor',
+    tags: ['MLOps', 'Governance', 'Compliance'],
+    accent: '#6EE7B7',
+    relevance: 'Apply when: client deploying ML models to production, MAS FEAT / SEC model risk compliance needed',
+    html: PATTERN_MLOPS_HTML,
+  },
+]
+
+type Mode = 'current' | 'target' | 'patterns'
+
 function ArchContent() {
   const searchParams = useSearchParams()
   const clientId = searchParams.get('client') || 'meridian'
   const [selected, setSelected] = useState(clientId)
+  const [mode, setMode] = useState<Mode>('current')
+  const [selectedPattern, setSelectedPattern] = useState<string | null>(null)
 
   const client = CLIENTS.find(c => c.id === selected) || CLIENTS[0]
 
   useEffect(() => { document.title = 'Architecture — ' + client.name + ' | AbarVa' }, [client.name])
 
+  const MONO = 'IBM Plex Mono, monospace'
+  const SANS = 'IBM Plex Sans, sans-serif'
+
+  function getActiveHtml(): string {
+    if (mode === 'current') return CURRENT_HTML_MAP[selected] || ''
+    if (mode === 'target') return TARGET_HTML_MAP[selected] || ''
+    if (mode === 'patterns' && selectedPattern) {
+      return PATTERNS.find(p => p.id === selectedPattern)?.html || ''
+    }
+    return ''
+  }
+
+  const activeHtml = getActiveHtml()
+  const hasTargetState = TARGET_HTML_MAP[selected] !== null
+
+  const iframeHeight = mode === 'patterns' && !selectedPattern
+    ? '0' : 'calc(100vh - 96px)'
+
   function handleDownload() {
-    const html = HTML_MAP[selected]
-    const blob = new Blob([html], { type: 'text/html' })
+    if (!activeHtml) return
+    const blob = new Blob([activeHtml], { type: 'text/html' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = selected + '-ai-architecture.html'
+    a.download = `${mode === 'patterns' ? selectedPattern + '-pattern' : selected + '-' + mode}-architecture.html`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -914,29 +989,168 @@ function ArchContent() {
     <div style={{ background: '#0D1117', minHeight: '100vh' }}>
       <AbarvaNav />
 
-      {/* Client selector */}
-      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', gap: '4px' }}>
-        {CLIENTS.map(c => (
-          <button key={c.id} onClick={() => setSelected(c.id)}
-            style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selected === c.id ? c.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.15s' }}>
-            <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#21262D', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
-            {c.name}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', color: '#6B7280' }}>
-            5-layer AI orchestration pattern · {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'firstcapital' ? 'Claude on AWS Bedrock' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · CDO hire required'}
-          </span>
+      {/* Mode toggle + Client selector row */}
+      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D' }}>
+
+        {/* Mode toggle */}
+        <div style={{ padding: '0 24px', display: 'flex', gap: '0', borderBottom: '1px solid #21262D' }}>
+          {([
+            ['current', 'Current State', 'What exists today — tech debt, blockers, contradictions'],
+            ['target', 'Target State', 'Post-engagement architecture — what we\'re building toward'],
+            ['patterns', 'Pattern Library', 'Reference architectures: Landing Zone, Agentic AI, Data Platform, MLOps'],
+          ] as const).map(([id, label, desc]) => (
+            <button key={id} onClick={() => { setMode(id); setSelectedPattern(null) }}
+              style={{
+                padding: '10px 24px', fontFamily: MONO, fontSize: '11px', fontWeight: 600,
+                cursor: 'pointer', border: 'none',
+                borderBottom: mode === id ? '2px solid #2DD4C8' : '2px solid transparent',
+                background: 'transparent',
+                color: mode === id ? '#2DD4C8' : '#6B7280',
+                display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left',
+              }}>
+              {label}
+              <span style={{ fontFamily: SANS, fontSize: '9px', fontWeight: 400, color: mode === id ? 'rgba(45,212,200,0.7)' : '#404850', textTransform: 'none', letterSpacing: 0, lineHeight: 1.3 }}>
+                {desc}
+              </span>
+            </button>
+          ))}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {activeHtml && (
+              <button onClick={handleDownload}
+                style={{ fontFamily: MONO, fontSize: '9px', padding: '5px 12px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.3)', borderRadius: '4px', color: '#2DD4C8', cursor: 'pointer' }}>
+                Export HTML ↓
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Client selector — hidden in pattern library mode */}
+        {mode !== 'patterns' && (
+          <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
+            {CLIENTS.map(c => (
+              <button key={c.id} onClick={() => setSelected(c.id)}
+                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selected === c.id ? c.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#21262D', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
+                {c.name}
+              </button>
+            ))}
+            {mode === 'target' && !hasTargetState && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#6B7280', padding: '0 8px' }}>
+                Target state for {client.name} — in development
+              </div>
+            )}
+            {mode === 'target' && hasTargetState && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', padding: '0 8px' }}>
+                Post-engagement · Wave 1+2 complete · $292M annual value unlocked
+              </div>
+            )}
+            {mode === 'current' && (
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#6B7280', padding: '0 8px' }}>
+                {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'firstcapital' ? 'Claude on AWS Bedrock' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · 4 root causes'}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Architecture iframe */}
-      <iframe
-        key={selected}
-        srcDoc={HTML_MAP[selected]}
-        style={{ width: '100%', height: 'calc(100vh - 96px)', border: 'none' }}
-        title={client.name + ' AI Architecture Pattern'}
-      />
+      {/* Pattern grid — shown when mode is patterns and no pattern selected */}
+      {mode === 'patterns' && !selectedPattern && (
+        <div style={{ padding: '40px 48px', maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
+              AbarVa · Reference Architecture Library
+            </div>
+            <h1 style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 600, color: '#E6EDF3', margin: '0 0 8px' }}>
+              Pattern Library
+            </h1>
+            <p style={{ fontFamily: SANS, fontSize: '13px', color: '#8B949E', lineHeight: 1.6, maxWidth: '640px' }}>
+              Pre-built reference architectures for AI and data programmes. Each pattern maps to a specific engagement need. Apply to a client engagement to generate a client-specific target state architecture.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {PATTERNS.map(p => (
+              <button key={p.id} onClick={() => setSelectedPattern(p.id)}
+                style={{
+                  textAlign: 'left', background: '#161B22', border: `1px solid ${p.accent}25`,
+                  borderTop: `3px solid ${p.accent}`, borderRadius: '10px', padding: '24px',
+                  cursor: 'pointer', transition: 'border-color 0.15s',
+                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {p.tags.map(t => (
+                      <span key={t} style={{ fontFamily: MONO, fontSize: '8px', padding: '1px 6px', borderRadius: '3px', background: `${p.accent}18`, border: `1px solid ${p.accent}30`, color: p.accent }}>
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  <span style={{ fontFamily: MONO, fontSize: '10px', color: p.accent }}>→</span>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#E6EDF3', marginBottom: '6px', lineHeight: 1.3 }}>
+                  {p.title}
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8B949E', marginBottom: '14px', lineHeight: 1.5 }}>
+                  {p.subtitle}
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: `${p.accent}cc`, background: `${p.accent}08`, border: `1px solid ${p.accent}20`, borderRadius: '6px', padding: '8px 10px', lineHeight: 1.4 }}>
+                  {p.relevance}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '32px', padding: '20px 24px', background: '#161B22', border: '1px solid #21262D', borderRadius: '10px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', marginBottom: '8px', letterSpacing: '1px' }}>HOW TO USE PATTERNS</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+              {[
+                { step: '01', label: 'Identify the pattern', body: 'Match the client\'s primary gap to a pattern — data silos → Medallion, no ML platform → MLOps, greenfield Azure → Landing Zone.' },
+                { step: '02', label: 'Apply to engagement', body: 'The pattern becomes the structural backbone of the Target State architecture — adapted to the client\'s specific vendors and constraints.' },
+                { step: '03', label: 'Generate target state', body: 'Combine 1–3 patterns to produce the client\'s specific Target State diagram — the deliverable that shows what we\'re building.' },
+              ].map(s => (
+                <div key={s.step}>
+                  <div style={{ fontFamily: MONO, fontSize: '18px', color: '#30363D', marginBottom: '4px' }}>{s.step}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 600, color: '#C9D1D9', marginBottom: '4px' }}>{s.label}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8B949E', lineHeight: 1.5 }}>{s.body}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Selected pattern or target/current state — show iframe */}
+      {(mode !== 'patterns' || selectedPattern) && (
+        <div>
+          {mode === 'patterns' && selectedPattern && (
+            <div style={{ padding: '8px 24px', background: '#0D1117', borderBottom: '1px solid #21262D', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button onClick={() => setSelectedPattern(null)}
+                style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                ← Pattern Library
+              </button>
+              <span style={{ fontFamily: MONO, fontSize: '10px', color: '#8B949E' }}>
+                {PATTERNS.find(p => p.id === selectedPattern)?.title}
+              </span>
+            </div>
+          )}
+
+          {mode === 'target' && !hasTargetState ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 140px)', color: '#8B949E', fontFamily: MONO, fontSize: '13px', gap: '12px' }}>
+              <div style={{ fontSize: '11px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase' }}>In Development</div>
+              <div style={{ color: '#C9D1D9', fontSize: '15px', fontWeight: 600 }}>Target State — {client.name}</div>
+              <div style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center', maxWidth: '400px', lineHeight: 1.6, fontFamily: 'IBM Plex Sans, sans-serif' }}>
+                Target state architecture for {client.name} will be generated as part of the AI strategy engagement deliverables. Available after engagement scoping is complete.
+              </div>
+            </div>
+          ) : (
+            <iframe
+              key={`${selected}-${mode}-${selectedPattern}`}
+              srcDoc={activeHtml}
+              style={{ width: '100%', height: `calc(100vh - ${mode === 'patterns' && selectedPattern ? '120px' : '96px'})`, border: 'none' }}
+              title={(mode === 'patterns' ? selectedPattern + ' pattern' : client.name + ' ' + mode + ' architecture')}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }
