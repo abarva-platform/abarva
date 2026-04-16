@@ -314,7 +314,7 @@ function TabRevenue() {
       <Eyebrow label="REVENUE MODEL" />
       <H1>
         We earn the right to outcome fees.<br />
-        <em style={{ color: C.teal, fontStyle: 'italic' }}>Here is how.</em>
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>Here&apos;s how.</em>
       </H1>
       <Body>
         Seed stage: predictable platform license + Maestro engagement fees. Series A: outcome accountability layer added on top of base fees. Series B: pure outcome model for anchor clients. We earn the right to outcome fees through delivery first — not as a starting position.

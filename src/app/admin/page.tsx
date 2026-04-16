@@ -645,13 +645,39 @@ function deriveName(domain: Domain): string {
   return 'Strategic Engagement — Meridian Health'
 }
 
+const SOLUTION_SLUG_MAP: Record<string, { name: string; domain: Domain; prompt: string }> = {
+  'revenue-cycle-intelligence':         { name: 'Revenue Cycle Intelligence',      domain: 'rcm',          prompt: 'Revenue Cycle Intelligence engagement selected.\n\nWhat is the revenue cycle directive from leadership? Describe it exactly as it was given to you.' },
+  'analytics-modernization-intelligence': { name: 'Analytics Modernization Intelligence', domain: 'ai_tech', prompt: 'Analytics Modernization engagement selected.\n\nWhat is the analytics or data platform directive from leadership? Describe it exactly as it was given to you.' },
+  'it-spend-optimization-intelligence': { name: 'IT Spend Optimization Intelligence', domain: 'supply_chain', prompt: 'IT Spend Optimization engagement selected.\n\nWhat is the IT spend or vendor directive from leadership? Describe it exactly as it was given to you.' },
+  'digital-banking-transformation':     { name: 'Digital Banking Transformation',  domain: 'generic',     prompt: 'Digital Banking Transformation engagement selected.\n\nWhat is the digital banking directive from leadership? Describe it exactly as it was given to you.' },
+  'ai-portfolio-accountability':        { name: 'AI Portfolio Accountability',     domain: 'ai_tech',     prompt: 'AI Portfolio Accountability engagement selected.\n\nWhat is the AI accountability directive from leadership? Describe it exactly as it was given to you.' },
+  'pdlc':                               { name: 'AI-Powered PDLC',                domain: 'ai_tech',     prompt: 'AI-Powered PDLC engagement selected.\n\nWhat is the CTO\'s mandate for product delivery transformation? Describe it exactly as it was given to you.' },
+  'delivery':                           { name: 'AI-Powered Transformation Delivery', domain: 'generic',  prompt: 'AI-Powered Transformation Delivery engagement selected.\n\nWhat is the delivery model directive from leadership? Describe it exactly as it was given to you.' },
+  'margin':                             { name: 'Margin Optimization',             domain: 'generic',     prompt: 'Margin Optimization engagement selected.\n\nWhat is the margin directive from leadership? Describe it exactly as it was given to you.' },
+}
+
 function EngagementsSection() {
-  const [addMode, setAddMode]         = useState(false)
-  const [chatStep, setChatStep]       = useState(0)
-  const [canvasItems, setCanvasItems] = useState<Record<number, CanvasItem>>({})
+  const params = useSearchParams()
+  const solutionSlug = params.get('solution') ?? ''
+  const solutionPreload = SOLUTION_SLUG_MAP[solutionSlug] ?? null
+
+  const getInitialMessages = (): ChatMsg[] => {
+    if (solutionPreload) {
+      return [
+        { type: 'ai', content: `${solutionPreload.name} engagement selected for this client.\n\n${solutionPreload.prompt}` },
+      ]
+    }
+    return [{ type: 'ai', content: CHAT_QUESTIONS[0].ai }]
+  }
+
+  const [addMode, setAddMode]         = useState(!!solutionPreload)
+  const [chatStep, setChatStep]       = useState(solutionPreload ? 0 : 0)
+  const [canvasItems, setCanvasItems] = useState<Record<number, CanvasItem>>(
+    solutionPreload ? { [-1]: { value: solutionPreload.name, confirmedAt: Date.now() } } : {}
+  )
   const [userInput, setUserInput]     = useState('')
-  const [messages, setMessages]       = useState<ChatMsg[]>([{ type: 'ai', content: CHAT_QUESTIONS[0].ai }])
-  const [domain, setDomain]           = useState<Domain>('generic')
+  const [messages, setMessages]       = useState<ChatMsg[]>(getInitialMessages)
+  const [domain, setDomain]           = useState<Domain>(solutionPreload?.domain ?? 'generic')
   const [dynamicQ2, setDynamicQ2]     = useState<{ ai: string; options: Array<{ letter: string; text: string }> } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
@@ -815,6 +841,16 @@ function EngagementsSection() {
                 {engagementName}
               </div>
             </div>
+
+            {solutionPreload && (
+              <div style={{ background: CARD, border: `1px solid ${BDR}`, borderLeft: `3px solid ${TEAL}`, borderRadius: 8, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>SOLUTION TYPE</div>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>✓ pre-selected</span>
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT }}>{solutionPreload.name}</div>
+              </div>
+            )}
 
             {CANVAS_LABELS.map((label, idx) => {
               const item = canvasItems[idx]
@@ -1276,7 +1312,9 @@ function AdminPortalInner() {
   const router   = useRouter()
   const params   = useSearchParams()
   const { clientId, currentClient } = useClientContext()
-  const [section, setSection] = useState<Section>((params.get('section') as Section) ?? 'program')
+  const rawSection = params.get('section')
+  const initialSection: Section = (rawSection === 'engagement-setup' ? 'engagements' : rawSection) as Section ?? 'program'
+  const [section, setSection] = useState<Section>(initialSection)
 
   useEffect(() => {
     if (!isLoaded) return

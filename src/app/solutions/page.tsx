@@ -284,7 +284,6 @@ function FilterPanel({ filter, onChange }: { filter: SolutionFilter; onChange: (
 function SolutionCard({ solution, client }: { solution: typeof ALL_SOLUTIONS[0]; client: Client }) {
   const insights = SOLUTION_CLIENT_DATA[solution.code]?.[client] ?? []
   const href = `/solutions/${solution.slug}?client=${client}`
-  const runUrl = buildSolutionUrl(client, solution.code)
   const objColor = objectiveColor(solution.objective)
 
   return (
@@ -344,27 +343,17 @@ function SolutionCard({ solution, client }: { solution: typeof ALL_SOLUTIONS[0];
         </div>
       </div>
 
-      {/* Footer CTAs */}
-      <div style={{ borderTop: `1px solid ${DBDR}`, padding: '14px 24px', display: 'flex', gap: 10 }}>
-        <a
-          href={runUrl}
-          style={{
-            flex: 1, padding: '9px 0', background: TEAL, color: DBG,
-            borderRadius: 7, fontSize: 12, fontFamily: MONO, fontWeight: 700,
-            textDecoration: 'none', textAlign: 'center' as const, display: 'block',
-          }}
-        >
-          Start this solution →
-        </a>
+      {/* Footer CTA */}
+      <div style={{ borderTop: `1px solid ${DBDR}`, padding: '14px 24px' }}>
         <a
           href={href}
           style={{
-            padding: '9px 16px', background: 'transparent',
+            display: 'block', padding: '9px 0', background: 'transparent',
             border: `1px solid ${DBDR}`, color: DMUTE, borderRadius: 7,
-            fontSize: 12, fontFamily: MONO, textDecoration: 'none',
+            fontSize: 12, fontFamily: MONO, textDecoration: 'none', textAlign: 'center' as const,
           }}
         >
-          Details
+          Learn more →
         </a>
       </div>
     </div>

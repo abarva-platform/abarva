@@ -1,11 +1,9 @@
 'use client'
 
-import { Suspense, use, useState, useEffect } from 'react'
-import { useSearchParams, notFound, useRouter } from 'next/navigation'
+import { Suspense, use } from 'react'
+import { notFound } from 'next/navigation'
 import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
-import { buildSolutionUrl, objectiveColor } from '@/lib/solution-library'
-import { supabase } from '@/lib/supabase'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
@@ -622,87 +620,9 @@ const CLIENT_METRICS: Record<string, Partial<Record<Client, Array<{ icon: string
   },
 }
 
-// ── Engagement creation constants ─────────────────────────────────────────────
-
-const BUSINESS_FUNCTION: Record<string, string> = {
-  'HC-01': 'Revenue Cycle', 'AI-01': 'Technology', 'IT-01': 'Technology',
-  'AM-01': 'Technology', 'FS-01': 'Strategy',
-}
-const PL_IMPACT: Record<string, string> = {
-  'HC-01': 'Revenue protection', 'AI-01': 'OpEx reduction', 'IT-01': 'OpEx reduction',
-  'AM-01': 'OpEx reduction', 'FS-01': 'Revenue growth',
-}
-const SPONSOR_TITLES: Record<string, string[]> = {
-  'HC-01': ['Chief Financial Officer', 'Chief Medical Officer', 'Chief Executive Officer', 'Chief Operations Officer'],
-  'AI-01': ['Chief Technology Officer', 'Chief Information Officer', 'Chief Executive Officer'],
-  'IT-01': ['Chief Financial Officer', 'Chief Technology Officer', 'Chief Information Officer'],
-  'AM-01': ['Chief Technology Officer', 'Chief Data Officer', 'Chief Information Officer'],
-  'FS-01': ['Chief Executive Officer', 'Chief Financial Officer', 'Chief Operations Officer'],
-}
-// Baseline metrics to lock per solution × client
-const BASELINE_METRICS: Record<string, Partial<Record<Client, Array<{name: string; label: string; value: string; target: string; method: string}>>>> = {
-  'HC-01': {
-    meridian: [
-      { name: 'denial_rate', label: 'Denial Rate', value: '18.2', target: '11.4', method: 'Claims extract — Ensemble Health Partners' },
-      { name: 'prior_auth_pct', label: 'Prior Auth Automation', value: '23', target: '62', method: 'Payer connection audit' },
-      { name: 'rcm_gap_$m', label: 'Annual Revenue Gap', value: '94', target: '0', method: 'Denial rate × revenue per denial point' },
-    ],
-  },
-  'AI-01': {
-    meridian: [
-      { name: 'pilots_delivering', label: 'AI Pilots Delivering', value: '0', target: '4', method: 'Pilot status audit' },
-      { name: 'ai_spend_$m', label: 'AI Portfolio Spend', value: '42', target: '42', method: 'AI investment register' },
-      { name: 'rai_score', label: 'Responsible AI Score', value: '52', target: '80', method: 'AI governance audit' },
-    ],
-    firstcapital: [
-      { name: 'pilots_delivering', label: 'AI Pilots Delivering', value: '0', target: '2', method: 'Pilot status audit' },
-      { name: 'ai_spend_$m', label: 'AI Portfolio Spend', value: '4', target: '4', method: 'AI investment register' },
-    ],
-    apexretail: [
-      { name: 'pilots_delivering', label: 'AI Pilots Delivering', value: '0', target: '3', method: 'Pilot status audit' },
-      { name: 'ai_spend_$m', label: 'AI Portfolio Spend', value: '8', target: '8', method: 'AI investment register' },
-    ],
-  },
-  'IT-01': {
-    meridian: [
-      { name: 'it_pct_revenue', label: 'IT Spend % Revenue', value: '4.5', target: '3.8', method: 'Financial ledger' },
-      { name: 'sla_credits_$m', label: 'Unclaimed SLA Credits', value: '2.1', target: '0', method: 'Contract review' },
-      { name: 'contracts_renewing', label: 'Contracts Renewing 90d', value: '3', target: '0', method: 'Contract calendar' },
-    ],
-    firstcapital: [
-      { name: 'it_pct_revenue', label: 'IT Spend % Revenue', value: '3.8', target: '3.2', method: 'Financial ledger' },
-      { name: 'sla_credits_$m', label: 'Unclaimed SLA Credits', value: '0.8', target: '0', method: 'Contract review' },
-    ],
-    apexretail: [
-      { name: 'it_pct_revenue', label: 'IT Spend % Revenue', value: '2.8', target: '2.4', method: 'Financial ledger' },
-    ],
-  },
-  'AM-01': {
-    meridian: [
-      { name: 'app_count', label: 'Application Inventory', value: '312', target: '180', method: 'IT audit' },
-      { name: 'shadow_it_$m', label: 'Shadow IT Spend', value: '38', target: '10', method: 'SaaS audit' },
-      { name: 'bi_platforms', label: 'BI Platforms', value: '3', target: '1', method: 'License inventory' },
-    ],
-    firstcapital: [
-      { name: 'app_count', label: 'Application Inventory', value: '180', target: '110', method: 'IT audit' },
-      { name: 'shadow_it_$m', label: 'Shadow IT Spend', value: '22', target: '8', method: 'SaaS audit' },
-    ],
-    apexretail: [
-      { name: 'app_count', label: 'Application Inventory', value: '420', target: '250', method: 'IT audit' },
-      { name: 'shadow_it_$m', label: 'Shadow IT Spend', value: '28', target: '10', method: 'SaaS audit' },
-    ],
-  },
-  'FS-01': {
-    firstcapital: [
-      { name: 'digital_adoption_pct', label: 'Digital Adoption', value: '41', target: '67', method: 'Channel analytics' },
-      { name: 'revenue_gap_$m', label: 'Revenue Gap', value: '48', target: '0', method: 'Revenue analytics' },
-    ],
-  },
-}
 
 // ── Individual solution page content ─────────────────────────────────────────
 function SolutionPageContent({ slug }: { slug: string }) {
-  const searchParams = useSearchParams()
   const clientParam = useActiveClient() as Client
   const solution = SOLUTIONS[slug as keyof typeof SOLUTIONS]
 
@@ -712,84 +632,9 @@ function SolutionPageContent({ slug }: { slug: string }) {
 
   // Map arcturus → firstcapital for metrics lookup (same financial services dataset)
   const defaultClient: Client = clientParam === 'arcturus' ? 'firstcapital' : clientParam
-  const runUrl = buildSolutionUrl(defaultClient, solution.code)
   const clientMetrics = CLIENT_METRICS[solution.code]?.[defaultClient] ?? solution.metrics
   const { genomeData } = solution
   const clientLabel = CLIENT_LABELS[defaultClient]
-
-  // ── Engagement creation state ──────────────────────────────────────────────
-  const router = useRouter()
-  const [modalOpen, setModalOpen] = useState(false)
-  const [modalStep, setModalStep] = useState(1)
-  const [existingEng, setExistingEng] = useState<{ id: string; current_phase: number; engagement_name: string } | null>(null)
-  const [engCheckDone, setEngCheckDone] = useState(false)
-  const [checkedProblems, setCheckedProblems] = useState<string[]>([])
-  const [sponsorName, setSponsorName] = useState('')
-  const [sponsorTitle, setSponsorTitle] = useState(SPONSOR_TITLES[solution.code]?.[0] ?? '')
-  const [selectedTimeline, setSelectedTimeline] = useState('')
-  const [creating, setCreating] = useState(false)
-
-  useEffect(() => {
-    supabase.from('engagements')
-      .select('id, current_phase, engagement_name')
-      .eq('client_id', defaultClient)
-      .eq('solution', solution.code)
-      .eq('is_active', true)
-      .maybeSingle()
-      .then(({ data }: { data: { id: string; current_phase: number; engagement_name: string } | null }) => { setExistingEng(data); setEngCheckDone(true) })
-  }, [defaultClient, solution.code])
-
-  function openModal() {
-    setCheckedProblems(clientMetrics.slice(0, 3).map(m => m.text))
-    setSponsorName('')
-    setSponsorTitle(SPONSOR_TITLES[solution.code]?.[0] ?? '')
-    setSelectedTimeline('')
-    setModalStep(1)
-    setModalOpen(true)
-  }
-
-  async function createEngagement() {
-    setCreating(true)
-    try {
-      const { data: eng, error } = await supabase.from('engagements').insert({
-        client_id: defaultClient,
-        solution: solution.code,
-        engagement_name: solution.name,
-        status: 'active',
-        current_phase: 1,
-        is_active: true,
-        cxo_sponsor_name: sponsorName,
-        cxo_sponsor_title: sponsorTitle,
-        business_function: BUSINESS_FUNCTION[solution.code] ?? '',
-        pl_impact_category: PL_IMPACT[solution.code] ?? '',
-        metadata: {
-          created_from: 'solutions_page',
-          confirmed_problems: checkedProblems,
-          timeline: selectedTimeline,
-        },
-      }).select('id').single()
-      if (error) throw error
-      const baselines = BASELINE_METRICS[solution.code]?.[defaultClient] ?? []
-      if (baselines.length > 0) {
-        await supabase.from('engagement_baseline').insert(
-          baselines.map(b => ({
-            engagement_id: eng.id,
-            metric_name: b.name,
-            metric_label: b.label,
-            baseline_value: b.value,
-            target_value: b.target,
-            baseline_source: 'FROM YOUR DATA',
-            measurement_method: b.method,
-            is_locked: true,
-            locked_at: new Date().toISOString(),
-          }))
-        )
-      }
-      router.push(`/diagnose?client=${defaultClient}&solution=${solution.code}&engagement_id=${eng.id}`)
-    } catch {
-      setCreating(false)
-    }
-  }
 
   return (
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
@@ -889,41 +734,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
               </div>
             </div>
 
-            {/* CTA button */}
-            {engCheckDone && existingEng ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <button
-                  onClick={() => router.push(`/diagnose?client=${defaultClient}&solution=${solution.code}&engagement_id=${existingEng.id}`)}
-                  style={{
-                    padding: '14px 32px',
-                    background: T.teal, color: T.bg,
-                    border: 'none', borderRadius: 8,
-                    fontSize: 16, fontFamily: T.mono, fontWeight: 700,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Continue Engagement →
-                </button>
-                <span style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
-                  Phase {existingEng.current_phase} in progress
-                </span>
-              </div>
-            ) : (
-              <button
-                onClick={openModal}
-                disabled={!engCheckDone}
-                style={{
-                  padding: '14px 32px',
-                  background: engCheckDone ? T.teal : 'rgba(45,212,200,0.3)',
-                  color: T.bg,
-                  border: 'none', borderRadius: 8,
-                  fontSize: 16, fontFamily: T.mono, fontWeight: 700,
-                  cursor: engCheckDone ? 'pointer' : 'wait',
-                }}
-              >
-                Start this Solution →
-              </button>
-            )}
+            {/* CTA lives at the bottom of the page — see dark CTA section below */}
           </div>
 
           {/* Right column — 40% */}
@@ -1146,222 +957,56 @@ function SolutionPageContent({ slug }: { slug: string }) {
         </div>
       </div>
 
-      {/* ── 3-step engagement creation modal ─────────────────────────────── */}
-      {modalOpen && (
-        <div
-          onClick={() => setModalOpen(false)}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(6,10,18,0.85)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 9000,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#FFFFFF',
-              borderRadius: 12,
-              width: '100%', maxWidth: 560,
-              padding: '32px 36px',
-              fontFamily: T.sans,
-            }}
-          >
-            {/* Modal header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-              <div>
-                <div style={{ fontSize: 11, color: '#6B7280', marginBottom: 4 }}>
-                  {solution.code} · Step {modalStep} of 3
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#0C0C0C' }}>
-                  {modalStep === 1 ? 'Confirm the problems we\'re solving'
-                    : modalStep === 2 ? 'Who is the CXO sponsor?'
-                    : 'Set the engagement timeline'}
-                </div>
-              </div>
-              <button
-                onClick={() => setModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9CA3AF', padding: 0 }}
-              >
-                ×
-              </button>
+      {/* SECTION 5 — DARK CTA */}
+      <div style={{ background: '#060A12', padding: '64px 48px' }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+          <div>
+            <div style={{ fontFamily: T.mono, fontSize: 11, color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 20 }}>
+              READY TO RUN THIS SOLUTION
             </div>
-
-            {/* Step progress bar */}
-            <div style={{ display: 'flex', gap: 4, marginBottom: 28 }}>
-              {[1, 2, 3].map(s => (
-                <div key={s} style={{
-                  flex: 1, height: 3, borderRadius: 2,
-                  background: s <= modalStep ? '#2DD4C8' : '#E5E7EB',
-                }} />
-              ))}
+            <div style={{ fontFamily: 'Georgia, serif', fontSize: 36, color: '#EFF6FF', lineHeight: 1.2, marginBottom: 16 }}>
+              Create a {solution.name} engagement for {clientLabel}.
             </div>
-
-            {/* Step 1 — Problem checkboxes */}
-            {modalStep === 1 && (
-              <div>
-                <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>
-                  Select the problems you want this engagement to solve. We&apos;ve pre-selected the highest priority based on your data.
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {clientMetrics.map(m => (
-                    <label
-                      key={m.text}
-                      style={{
-                        display: 'flex', alignItems: 'flex-start', gap: 10,
-                        padding: '10px 12px',
-                        border: `1px solid ${checkedProblems.includes(m.text) ? '#2DD4C8' : '#E5E7EB'}`,
-                        borderRadius: 8, cursor: 'pointer',
-                        background: checkedProblems.includes(m.text) ? 'rgba(45,212,200,0.05)' : '#FFFFFF',
-                      }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checkedProblems.includes(m.text)}
-                        onChange={e => {
-                          if (e.target.checked) setCheckedProblems(prev => [...prev, m.text])
-                          else setCheckedProblems(prev => prev.filter(p => p !== m.text))
-                        }}
-                        style={{ marginTop: 2, accentColor: '#2DD4C8' }}
-                      />
-                      <div>
-                        <div style={{ fontSize: 9, color: m.source === 'FROM YOUR DATA' ? '#2DD4C8' : m.source === 'FROM INDUSTRY' ? '#6366F1' : '#F472B6', marginBottom: 3 }}>
-                          {m.source}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#0C0C0C', lineHeight: 1.4 }}>{m.text}</div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2 — Sponsor */}
-            {modalStep === 2 && (
-              <div>
-                <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>
-                  CXO engagements succeed 3× more often when a named executive is accountable from day one.
-                </div>
-                <div style={{ marginBottom: 16 }}>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                    Sponsor Name
-                  </label>
-                  <input
-                    type="text"
-                    value={sponsorName}
-                    onChange={e => setSponsorName(e.target.value)}
-                    placeholder="e.g. Sarah Chen"
-                    style={{
-                      width: '100%', padding: '10px 12px',
-                      border: '1px solid #D1D5DB', borderRadius: 8,
-                      fontSize: 14, color: '#0C0C0C',
-                      outline: 'none', boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
-                    Title
-                  </label>
-                  <select
-                    value={sponsorTitle}
-                    onChange={e => setSponsorTitle(e.target.value)}
-                    style={{
-                      width: '100%', padding: '10px 12px',
-                      border: '1px solid #D1D5DB', borderRadius: 8,
-                      fontSize: 14, color: '#0C0C0C',
-                      outline: 'none', background: '#FFFFFF',
-                    }}
-                  >
-                    {(SPONSOR_TITLES[solution.code] ?? []).map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3 — Timeline */}
-            {modalStep === 3 && (
-              <div>
-                <div style={{ fontSize: 13, color: '#6B7280', marginBottom: 16 }}>
-                  Select the engagement horizon. This sets the outcome measurement window and fee trigger schedule.
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {['90 days — Quick wins sprint', '6 months — Standard engagement', '12 months — Full programme', '18 months — Multi-phase transformation'].map(opt => (
-                    <label
-                      key={opt}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        padding: '12px 14px',
-                        border: `1px solid ${selectedTimeline === opt ? '#2DD4C8' : '#E5E7EB'}`,
-                        borderRadius: 8, cursor: 'pointer',
-                        background: selectedTimeline === opt ? 'rgba(45,212,200,0.05)' : '#FFFFFF',
-                      }}
-                    >
-                      <input
-                        type="radio"
-                        name="timeline"
-                        value={opt}
-                        checked={selectedTimeline === opt}
-                        onChange={() => setSelectedTimeline(opt)}
-                        style={{ accentColor: '#2DD4C8' }}
-                      />
-                      <span style={{ fontSize: 13, color: '#0C0C0C' }}>{opt}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Modal footer */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 28 }}>
-              <button
-                onClick={() => modalStep > 1 ? setModalStep(s => s - 1) : setModalOpen(false)}
-                style={{
-                  padding: '10px 20px',
-                  background: 'none', border: '1px solid #D1D5DB', borderRadius: 8,
-                  fontSize: 13, fontWeight: 600, color: '#6B7280', cursor: 'pointer',
-                }}
-              >
-                {modalStep > 1 ? '← Back' : 'Cancel'}
-              </button>
-
-              {modalStep < 3 ? (
-                <button
-                  onClick={() => setModalStep(s => s + 1)}
-                  disabled={modalStep === 1 && checkedProblems.length === 0}
-                  style={{
-                    padding: '10px 24px',
-                    background: (modalStep === 1 && checkedProblems.length === 0) ? '#E5E7EB' : '#2DD4C8',
-                    color: (modalStep === 1 && checkedProblems.length === 0) ? '#9CA3AF' : '#060A12',
-                    border: 'none', borderRadius: 8,
-                    fontSize: 13, fontWeight: 700, cursor: (modalStep === 1 && checkedProblems.length === 0) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  Next →
-                </button>
-              ) : (
-                <button
-                  onClick={createEngagement}
-                  disabled={creating || !selectedTimeline}
-                  style={{
-                    padding: '10px 24px',
-                    background: (creating || !selectedTimeline) ? '#E5E7EB' : '#2DD4C8',
-                    color: (creating || !selectedTimeline) ? '#9CA3AF' : '#060A12',
-                    border: 'none', borderRadius: 8,
-                    fontSize: 13, fontWeight: 700,
-                    cursor: (creating || !selectedTimeline) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {creating ? 'Creating engagement…' : 'Lock Day 0 Baseline & Start →'}
-                </button>
-              )}
+            <div style={{ fontSize: 16, color: '#9CA3AF', lineHeight: 1.65, marginBottom: 32 }}>
+              Engagement creation happens in Admin. The setup chat will pre-load with {solution.name} already selected.
             </div>
+            <a
+              href={`/admin?section=engagement-setup&solution=${slug}`}
+              style={{
+                display: 'inline-block',
+                padding: '14px 32px',
+                background: '#2DD4C8', color: '#0C0C0C',
+                borderRadius: 8, fontSize: 16, fontFamily: T.sans, fontWeight: 700,
+                textDecoration: 'none',
+              }}
+            >
+              Create Engagement in Admin →
+            </a>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            {[
+              { label: 'Solution pre-selected', desc: `${solution.name} locked in before the first question` },
+              { label: 'Genome patterns loaded', desc: `${genomeData.sampleSize} comparable engagements inform every recommendation` },
+              { label: 'Your data already present', desc: `${clientLabel} data — no re-upload needed` },
+              { label: 'Outcome baseline set at Day 0', desc: 'Fee triggers only on verified outcomes — locked before work starts' },
+            ].map(item => (
+              <div key={item.label} style={{
+                padding: '16px 20px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+              }}>
+                <div style={{ fontSize: 13, fontFamily: T.sans, fontWeight: 600, color: '#EFF6FF', marginBottom: 4 }}>
+                  ✓ {item.label}
+                </div>
+                <div style={{ fontSize: 12, fontFamily: T.sans, color: '#9CA3AF', lineHeight: 1.5 }}>
+                  {item.desc}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }

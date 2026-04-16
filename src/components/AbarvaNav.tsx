@@ -248,40 +248,17 @@ function NavInner({ activePage }: NavProps) {
           </a>
         )}
 
-        {/* ── Solutions ▾ ──────────────────────────────────────────────────── */}
-        <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
-          <button style={{
-            fontSize: '13px', color: activePage === 'solutions' ? TEAL : NAV_TEXT,
-            background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS,
+        {/* ── Solutions — plain link ───────────────────────────────────────── */}
+        <a
+          href="/solutions"
+          style={{
+            fontSize: '13px',
+            color: activePage === 'solutions' ? TEAL : NAV_TEXT,
+            padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
             borderBottom: activePage === 'solutions' ? `2px solid ${TEAL}` : '2px solid transparent',
           }}>
-            Solutions ▾
-          </button>
-          {open === 'solutions' && (
-            <div style={{ ...dropPanel, minWidth: '300px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
-              {[
-                { name: 'AI-Powered PDLC',         sol: 'pdlc',   desc: 'Build products at twice the velocity' },
-                { name: 'Margin Optimization',      sol: 'margin', desc: 'Recover margin across revenue, cost, AI' },
-                { name: 'Technology Modernization', sol: 'tech',   desc: 'Govern the modernization the vendor cannot' },
-              ].map(item => (
-                <a key={item.name} href={solutionPath(item.sol)} onClick={() => setOpen(null)}
-                  style={{ display: 'block', padding: '10px 20px', textDecoration: 'none', borderRadius: '8px', margin: '0 4px' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.name}</div>
-                  <div style={{ fontSize: '11px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
-                </a>
-              ))}
-              <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />
-              <a href="/solutions" onClick={() => setOpen(null)}
-                style={{ display: 'block', padding: '9px 20px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: '#1D4ED8', fontWeight: 500, borderRadius: '8px', margin: '0 4px' }}
-                onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                View all solutions →
-              </a>
-            </div>
-          )}
-        </div>
+          Solutions
+        </a>
 
         {/* ── Start Here ▾ — mega menu ─────────────────────────────────────── */}
         <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>

@@ -62,7 +62,7 @@ export default function Homepage() {
               closes.
             </h1>
             <p style={{ fontSize: 20, color: LBODY, lineHeight: 1.65, margin: '0 0 40px', maxWidth: 560 }}>
-              AbarVa is the intelligence layer that didn&apos;t exist. Your data. Your benchmarks. 340+ transformation patterns. A Maestro who stays through execution and shares the outcome.
+              Consulting firms deliver decks. Vendors demo features. Nobody owns the outcome. AbarVa is the first platform that does — with your data, 340+ patterns, and a Maestro who shares the outcome.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const, alignItems: 'center' }}>
               <a href="/diagnose?client=meridian" style={{ background: LTEXT, color: '#FFF', padding: '14px 28px', borderRadius: 8, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}>
@@ -79,7 +79,7 @@ export default function Homepage() {
             {[
               { label: 'Consulting spend wasted',    value: '$200B',       note: 'Global annual market with no outcome accountability' },
               { label: 'Enterprise AI with zero ROI', value: '73%',        note: 'Of AI investments produce no verified outcome' },
-              { label: 'Outcome-accountable',         value: 'Skin in the game', note: 'Platform + engagement fee. We earn more when outcomes are verified.' },
+              { label: '0% fee until outcomes verified', value: '0%',            note: 'No retainer. No hourly. Fee on what we actually deliver.' },
               { label: 'Time to first intelligence',  value: '48hrs',      note: 'From kickoff to your first Situation brief' },
             ].map(s => (
               <div key={s.label} style={{ background: LCARD, border: `1px solid ${LBDR}`, borderRadius: 10, padding: '22px 20px' }}>

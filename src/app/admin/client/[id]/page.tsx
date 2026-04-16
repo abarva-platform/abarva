@@ -495,89 +495,166 @@ function SeedSolutionButton({ clientId, solution }: { clientId: string; solution
 
 // ─── DASHBOARD COMPONENTS ──────────────────────────────────────────────────────
 
-function PreEngagementModal({ engagementName, clientId, targetSlug, onClose }: {
-  engagementName: string
+const MAESTRO_SOLUTIONS = [
+  { slug: 'rcm',     name: 'Revenue Cycle Intelligence' },
+  { slug: 'margin',  name: 'Margin Optimization' },
+  { slug: 'tech',    name: 'Technology Modernization' },
+  { slug: 'pdlc',    name: 'AI-Powered PDLC' },
+  { slug: 'ai-pdlc', name: 'AI Portfolio Accountability' },
+  { slug: 'delivery',name: 'Transformation Delivery' },
+]
+
+function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: {
   clientId: string
-  targetSlug: string
+  clientName: string
+  initSolution: string | null
   onClose: () => void
 }) {
-  const router = useRouter()
-  const isMeridian = clientId === 'meridian'
+  type Step = 0 | 1 | 2 | 'done'
+  const [step, setStep] = useState<Step>(initSolution ? 1 : 0)
+  const [directive, setDirective] = useState('')
+  const [solution, setSolution] = useState(initSolution ?? '')
+  const [sponsor, setSponsor] = useState('')
+  const [input, setInput] = useState('')
 
-  type Check = { ok: boolean; label: string; detail: string; blocking?: boolean }
-
-  const checks: Check[] = isMeridian ? [
-    { ok: true,  label: 'Use case defined',          detail: 'Revenue Cycle AI — Denial Prevention (Phase 1)' },
-    { ok: true,  label: 'Target outcome confirmed',  detail: 'Denial rate → below 14% by Q4 2026 ($94M gap)' },
-    { ok: true,  label: 'Deadline anchored',         detail: 'Epic go-live Q3 2026 — 14-month window confirmed' },
-    { ok: true,  label: 'Data confidence avg',       detail: '88% across 3 approved files' },
-    { ok: false, label: 'Payer Contract Analysis',   detail: 'Missing. Phase 1 SLA intelligence will be limited. Request from CFO before Phase 2.', blocking: false },
-    { ok: false, label: 'Genome F011 active',        detail: 'Epic EHR go-live pattern — 71% failure rate without 12-month AI runway. Must start now.', blocking: false },
-    { ok: true,  label: 'CEO briefing',              detail: 'Phase 0 — not yet required' },
-  ] : [
-    { ok: true,  label: 'Use case defined',          detail: 'Cost-to-income reduction programme' },
-    { ok: true,  label: 'Data confidence avg',       detail: '81% across approved files' },
-    { ok: false, label: 'MAS FEAT gap analysis',     detail: 'Regulatory deadline overdue. Complete before proceeding with any AI deployment.', blocking: true },
-  ]
-
-  const hasBlocker = checks.some(c => !c.ok && c.blocking)
-  const warnings = checks.filter(c => !c.ok && !c.blocking)
+  const initSolName = MAESTRO_SOLUTIONS.find(s => s.slug === initSolution)?.name ?? initSolution ?? ''
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(6,10,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 6 }}>Pre-Engagement Check</div>
-        <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: WHITE, margin: '0 0 20px', lineHeight: 1.2 }}>
-          Before you start — {engagementName}
-        </h2>
+    <div style={{ background: '#060A12', borderBottom: '1px solid #1C2D45' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
 
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 7, marginBottom: 20 }}>
-          {checks.map((c, i) => (
-            <div key={i} style={{
-              display: 'flex', gap: 10, alignItems: 'flex-start', padding: '8px 10px',
-              background: c.ok ? 'transparent' : c.blocking ? `${RED}08` : `${AMBER}08`,
-              border: `1px solid ${c.ok ? BORDER : c.blocking ? RED + '40' : AMBER + '40'}`,
-              borderRadius: 6,
-            }}>
-              <span style={{ fontSize: 13, color: c.ok ? GREEN : c.blocking ? RED : AMBER, flexShrink: 0, marginTop: 1 }}>
-                {c.ok ? '✓' : c.blocking ? '✕' : '⚠'}
-              </span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: c.ok ? MUTED : WHITE, fontFamily: SANS }}>{c.label}</div>
-                <div style={{ fontSize: 11, color: DIM, fontFamily: SANS, marginTop: 2, lineHeight: 1.5 }}>{c.detail}</div>
+        {/* Left — Chat */}
+        <div>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 20 }}>
+            New Engagement · {clientName}
+          </div>
+
+          {step === 0 && (
+            <div>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+                What is the leadership directive?
               </div>
-              {!c.ok && (
-                <span style={{ fontFamily: MONO, fontSize: 8, color: c.blocking ? RED : AMBER, background: c.blocking ? `${RED}15` : `${AMBER}15`, padding: '2px 5px', borderRadius: 3, flexShrink: 0, marginTop: 2 }}>
-                  {c.blocking ? 'BLOCKING' : 'ADVISORY'}
-                </span>
+              <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
+                Describe it exactly as it was given to you. Don&apos;t filter it.
+              </p>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder="e.g. The board wants our denial rate below 14% before Epic goes live in Q3..."
+                rows={4}
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: WHITE, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
+              />
+              <button
+                onClick={() => { if (input.trim()) { setDirective(input.trim()); setInput(''); setStep(1) } }}
+                disabled={!input.trim()}
+                style={{ marginTop: 12, padding: '12px 28px', background: input.trim() ? WHITE : '#1C2D45', color: input.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed' }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+
+          {step === 1 && (
+            <div>
+              {directive && (
+                <div style={{ background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontFamily: SANS, fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' }}>
+                  &ldquo;{directive}&rdquo;
+                </div>
               )}
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+                Which solution aligns to this?
+              </div>
+              {initSolName && (
+                <div style={{ background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontFamily: SANS, fontSize: 14, color: TEAL }}>
+                  ✓ Pre-selected: {initSolName}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+                {MAESTRO_SOLUTIONS.map(s => (
+                  <button
+                    key={s.slug}
+                    onClick={() => setSolution(s.slug)}
+                    style={{ textAlign: 'left' as const, padding: '12px 16px', background: solution === s.slug ? 'rgba(45,212,200,0.1)' : '#0D1520', border: `1px solid ${solution === s.slug ? 'rgba(45,212,200,0.5)' : '#1C2D45'}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: solution === s.slug ? TEAL : WHITE, cursor: 'pointer' }}
+                  >
+                    {solution === s.slug ? '✓ ' : ''}{s.name}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => { if (solution) setStep(2) }}
+                disabled={!solution}
+                style={{ marginTop: 16, padding: '12px 28px', background: solution ? WHITE : '#1C2D45', color: solution ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: solution ? 'pointer' : 'not-allowed' }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+                Who is the executive sponsor?
+              </div>
+              <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
+                The named CXO who owns outcomes and has budget authority.
+              </p>
+              <input
+                type="text"
+                value={sponsor}
+                onChange={e => setSponsor(e.target.value)}
+                placeholder="e.g. Sarah Chen, CMO"
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: WHITE, outline: 'none', boxSizing: 'border-box' as const }}
+              />
+              <button
+                onClick={() => { if (sponsor.trim()) setStep('done') }}
+                disabled={!sponsor.trim()}
+                style={{ marginTop: 12, padding: '12px 28px', background: sponsor.trim() ? TEAL : '#1C2D45', color: sponsor.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: sponsor.trim() ? 'pointer' : 'not-allowed' }}
+              >
+                Create Engagement →
+              </button>
+            </div>
+          )}
+
+          {step === 'done' && (
+            <div>
+              <div style={{ fontFamily: SERIF, fontSize: 28, color: WHITE, marginBottom: 16, lineHeight: 1.2 }}>
+                Engagement created.
+              </div>
+              <p style={{ fontFamily: SANS, fontSize: 15, color: '#9CA3AF', lineHeight: 1.65, marginBottom: 24 }}>
+                The engagement context has been captured. Your Admin portal has been notified and the engagement will appear in the Active Engagements list below.
+              </p>
+              <button onClick={onClose} style={{ padding: '12px 28px', background: WHITE, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+                View Active Engagements
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right — Canvas */}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 4 }}>Engagement Canvas</div>
+          {[
+            { label: 'CLIENT', value: clientName, locked: true },
+            { label: 'SOLUTION TYPE', value: MAESTRO_SOLUTIONS.find(s => s.slug === solution)?.name ?? (solution || null), locked: !!initSolution },
+            { label: 'DIRECTIVE', value: directive || null, locked: false },
+            { label: 'EXECUTIVE SPONSOR', value: step === 'done' ? sponsor : null, locked: false },
+          ].map((item, i) => (
+            <div key={i} style={{ background: item.value ? '#0D1520' : 'transparent', border: item.value ? '1px solid #1C2D45' : '1px dashed #1C2D45', borderLeft: item.value ? `3px solid ${TEAL}` : '1px dashed #1C2D45', borderRadius: 8, padding: '12px 14px', opacity: item.value ? 1 : 0.4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{item.label}</div>
+                {item.value && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>{item.locked ? '✓ pre-selected' : '✓ confirmed'}</span>}
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: item.value ? WHITE : '#475569', fontStyle: item.label === 'DIRECTIVE' && item.value ? 'italic' : 'normal' }}>
+                {item.value ? (item.label === 'DIRECTIVE' ? `"${item.value}"` : item.value) : 'Awaiting your answer...'}
+              </div>
             </div>
           ))}
-        </div>
 
-        {(hasBlocker || warnings.length > 0) && (
-          <div style={{ background: hasBlocker ? `${RED}10` : `${AMBER}10`, border: `1px solid ${hasBlocker ? RED : AMBER}40`, borderRadius: 8, padding: '10px 14px', marginBottom: 20 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: hasBlocker ? RED : AMBER, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
-              {hasBlocker ? 'Blocking issue — complete setup before proceeding' : `${warnings.length} advisory gap${warnings.length > 1 ? 's' : ''} — non-blocking, proceed with awareness`}
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={() => { onClose(); window.location.href = '/admin?section=data' }}
-            style={{ flex: 1, padding: '10px 0', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, fontFamily: SANS, fontSize: 13, color: MUTED, cursor: 'pointer' }}
-          >
-            Address gaps first
-          </button>
-          <button
-            onClick={() => { if (!hasBlocker) { onClose(); router.push(targetSlug) } }}
-            disabled={hasBlocker}
-            style={{ flex: 2, padding: '10px 0', background: hasBlocker ? '#1C2D45' : TEAL, border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 13, fontWeight: 700, color: hasBlocker ? '#475569' : '#060A12', cursor: hasBlocker ? 'not-allowed' : 'pointer' }}
-          >
-            {hasBlocker ? 'Resolve blocker first' : 'Proceed with noted gaps →'}
+          <button onClick={onClose} style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: SANS, fontSize: 13, color: '#475569', cursor: 'pointer', textAlign: 'left' as const }}>
+            ← Cancel
           </button>
         </div>
+
       </div>
     </div>
   )
@@ -1037,12 +1114,12 @@ const INSIGHT_DATA: Record<string, InsightRecord[]> = {
   ],
 }
 
-function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
+function BriefTab({ data, clientId, onCreateEngagement }: { data: ClientData; clientId: string; onCreateEngagement: (slug: string) => void }) {
   const finding = data.heroFindings[0]
+  const [showAllSignals, setShowAllSignals] = useState(false)
   const sponsors = CLIENT_SPONSORS[clientId] ?? ['Executive Sponsor', 'Executive Sponsor', 'Executive Sponsor']
   const readinessScore = CLIENT_READINESS[clientId] ?? 65
   const missingFiles = CLIENT_MISSING[clientId] ?? []
-  const [engModal, setEngModal] = useState<{ name: string; slug: string } | null>(null)
 
   // Extract big stat from addressable string
   const statParts = finding.addressable.split(' ')
@@ -1068,10 +1145,10 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
             </p>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' as const }}>
               <button
-                onClick={() => setEngModal({ name: data.heroFindings[0].headline.replace(/"/g, ''), slug: `/engage/${clientId}/${finding.solutionSlug}` })}
+                onClick={() => onCreateEngagement(finding.solutionSlug)}
                 style={{ padding: '12px 24px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
-                {finding.primaryCta}
+                Create Engagement →
               </button>
               <a href={`/diagnose?client=${clientId}`} style={{ padding: '12px 24px', border: '1px solid rgba(255,255,255,0.35)', color: '#FFFFFF', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
                 {finding.secondaryCta}
@@ -1095,21 +1172,55 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
           </div>
         </div>
 
-        {/* See all link */}
+        {/* See all signals — inline toggle */}
         <div style={{ marginTop: 24, textAlign: 'right' as const }}>
-          <a href={`/intelligence?client=${clientId}`} style={{ fontFamily: SANS, fontSize: 13, color: TEAL, textDecoration: 'none' }}>
-            See all {data.heroFindings.length} signals →
-          </a>
+          <button onClick={() => setShowAllSignals(s => !s)} style={{ fontFamily: SANS, fontSize: 13, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>
+            {showAllSignals ? 'Hide signals' : `See all ${data.heroFindings.length} signals →`}
+          </button>
         </div>
       </section>
+
+      {/* ── ALL SIGNALS (expanded) ───────────────────────────────────── */}
+      {showAllSignals && (
+        <section style={{ background: '#0D1520', padding: '32px 48px', borderTop: '1px solid #1C2D45' }}>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 20 }}>
+            All Signals · {data.name}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
+            {data.heroFindings.map((f, i) => {
+              const fParts = f.addressable.split(' ')
+              const fStat = fParts[0].replace('/yr', '')
+              const fLabel = fParts.slice(1).join(' ') || 'exposure'
+              return (
+                <div key={i} style={{ background: '#060A12', border: '1px solid #1C2D45', borderLeft: `4px solid ${f.severity === 'critical' ? '#EF4444' : f.severity === 'high' ? '#F59E0B' : TEAL}`, borderRadius: 8, padding: '24px 28px', display: 'grid', gridTemplateColumns: '1fr auto', gap: 32, alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: f.severity === 'critical' ? '#EF4444' : f.severity === 'high' ? '#F59E0B' : TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 8 }}>
+                      {f.code} · {f.severity.toUpperCase()} · {f.rate}% Genome failure rate
+                    </div>
+                    <div style={{ fontFamily: SERIF, fontSize: 20, color: '#FFFFFF', marginBottom: 8, lineHeight: 1.3 }}>{f.headline.replace(/"/g, '')}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', lineHeight: 1.65 }}>{f.detail}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: TEAL, marginBottom: 4 }}>{fStat}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF', marginBottom: 16 }}>{fLabel}</div>
+                    <button onClick={() => onCreateEngagement(f.solutionSlug)} style={{ padding: '9px 20px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                      Create Engagement →
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ── SECTION 2 — ACTIVE ENGAGEMENTS ───────────────────────────── */}
       <section style={{ background: BG, padding: '40px 48px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
           <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 600, color: WHITE }}>Active Engagements</div>
-          <a href="/admin?section=engagements" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: WHITE, border: 'none', borderRadius: 6, padding: '10px 20px', cursor: 'pointer', textDecoration: 'none' }}>
+          <button onClick={() => onCreateEngagement('')} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: WHITE, border: 'none', borderRadius: 6, padding: '10px 20px', cursor: 'pointer' }}>
             + New Engagement
-          </a>
+          </button>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -1155,12 +1266,13 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
                 </div>
 
                 {/* ONE CTA */}
-                <button
-                  onClick={() => setEngModal({ name: s.fullName, slug: `/engage/${clientId}/${s.slug}` })}
-                  style={{ width: '100%', padding: '12px', background: btnBg, color: '#FFFFFF', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const }}
+                <a
+                  href={isActive ? `/engage/${clientId}/${s.slug}` : '#'}
+                  onClick={isBacklog ? (e) => { e.preventDefault(); onCreateEngagement(s.slug) } : undefined}
+                  style={{ display: 'block', width: '100%', padding: '12px', background: btnBg, color: '#FFFFFF', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const, textDecoration: 'none', boxSizing: 'border-box' as const }}
                 >
                   {btnLabel}
-                </button>
+                </a>
               </div>
             )
           })}
@@ -1206,29 +1318,32 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
         </div>
       </section>
 
-      {engModal && (
-        <PreEngagementModal
-          engagementName={engModal.name}
-          clientId={clientId}
-          targetSlug={engModal.slug}
-          onClose={() => setEngModal(null)}
-        />
-      )}
     </div>
   )
 }
 
 
 // ─── ENGAGEMENTS TAB ─────────────────────────────────────────────────────────
-function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: string }) {
+function NewEngagementsTab({ data, clientId, initSolution }: { data: ClientData; clientId: string; initSolution?: string | null }) {
   const engagements = ENGAGEMENT_DATA[clientId] ?? []
   const activeCount = engagements.filter(e => e.status === 'In Progress').length
+  const [createMode, setCreateMode] = useState(!!initSolution)
+  const [createSolution, setCreateSolution] = useState<string | null>(initSolution ?? null)
   const totalValue = clientId === 'arcturus' ? '$840M+' : clientId === 'apexretail' ? '$120M' : '$160M'
   const PCOLOR: Record<string, string> = { Critical: RED, High: AMBER, Normal: DIM }
   const SCOLOR: Record<string, string> = { 'In Progress': TEAL, 'Assigned': AMBER, 'Backlog': DIM, 'Complete': GREEN }
 
   return (
     <div>
+      {/* Inline engagement creation chat */}
+      {createMode && (
+        <MaestroEngagementChat
+          clientId={clientId}
+          clientName={data.name}
+          initSolution={createSolution}
+          onClose={() => { setCreateMode(false); setCreateSolution(null) }}
+        />
+      )}
       {/* Dark hero */}
       <section style={{ background: '#060A12', padding: '40px 48px' }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
@@ -1238,9 +1353,9 @@ function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: str
           <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: 0, lineHeight: 1.15 }}>
             {engagements.length} engagement{engagements.length !== 1 ? 's' : ''}.<br />{activeCount} in flight.
           </h2>
-          <a href="/admin?section=engagements" style={{ padding: '12px 24px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}>
+          <button onClick={() => { setCreateMode(true); setCreateSolution(null) }} style={{ padding: '12px 24px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
             + New Engagement
-          </a>
+          </button>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
@@ -1297,7 +1412,7 @@ function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: str
                   <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{e.value}</div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 16 }}>Value at stake</div>
                   <a
-                    href={e.status === 'In Progress' ? `/engage/${clientId}/${e.slug}` : '/admin?section=engagements'}
+                    href={e.status === 'In Progress' ? `/engage/${clientId}/${e.slug}` : '#'}
                     style={{ display: 'block', padding: '9px 16px', background: e.status === 'In Progress' ? WHITE : 'transparent', color: e.status === 'In Progress' ? BG : WHITE, border: `1px solid ${WHITE}`, borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', textAlign: 'center' as const, textDecoration: 'none', boxSizing: 'border-box' as const }}
                   >
                     {e.status === 'In Progress' ? 'Open Workspace →' : e.status === 'Backlog' ? 'Set Up →' : 'View →'}
@@ -1578,6 +1693,7 @@ export default function AdminClientPage() {
   const clientId = params.id as string
 
   const [activeTab, setActiveTab] = useState<'brief' | 'engagements' | 'data' | 'insights'>('brief')
+  const [engInitSolution, setEngInitSolution] = useState<string | null>(null)
 
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
@@ -1629,8 +1745,8 @@ export default function AdminClientPage() {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'brief'       && <BriefTab data={data} clientId={clientId} />}
-      {activeTab === 'engagements' && <NewEngagementsTab data={data} clientId={clientId} />}
+      {activeTab === 'brief'       && <BriefTab data={data} clientId={clientId} onCreateEngagement={(slug) => { setEngInitSolution(slug); setActiveTab('engagements') }} />}
+      {activeTab === 'engagements' && <NewEngagementsTab data={data} clientId={clientId} initSolution={engInitSolution} />}
       {activeTab === 'data'        && <DataTab clientId={clientId} />}
       {activeTab === 'insights'    && <InsightsTab data={data} clientId={clientId} />}
 
