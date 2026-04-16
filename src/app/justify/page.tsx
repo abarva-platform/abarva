@@ -105,14 +105,30 @@ function JustifyContent() {
 
       {/* ── Sticky module header ─────────────────────────────────────────────── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 40, background: T.surface, borderBottom: `1px solid ${T.border}` }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 32px 0' }}>
-          <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
-            Business Case Intelligence · {clientName}
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 32px 0' }}>
+          {/* Label + role selector on one line */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const }}>
+              Business Case Intelligence · {clientName}
+            </div>
+            {/* Role tabs — above the question so you pick your lens first */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+              {ROLES.map(r => {
+                const isActive = role === r
+                return (
+                  <button key={r} onClick={() => setRole(r)}
+                    style={{ fontFamily: T.mono, fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '5px 12px', borderRadius: '5px', border: 'none', cursor: 'pointer', background: isActive ? T.teal : 'rgba(255,255,255,0.05)', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
+                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+                  >{r}</button>
+                )
+              })}
+            </div>
           </div>
-          <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+          <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 14px', lineHeight: 1.3, maxWidth: '680px' }}>
             &ldquo;How do we justify this to the board — with numbers they can defend?&rdquo;
           </h1>
-          <div style={{ display: 'flex', gap: '40px', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', gap: '40px', paddingBottom: '14px' }}>
             {[
               { label: 'Initiatives', value: String(allOpps.length) },
               { label: 'Total Opportunity (3yr)', value: fmt(allOpps.reduce((s: number, o: any) => s + (o.annualValue || 0), 0) * 3) },
@@ -123,22 +139,6 @@ function JustifyContent() {
                 <div style={{ fontFamily: T.mono, fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{m.label}</div>
               </div>
             ))}
-          </div>
-          {/* Role tabs */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', borderTop: `1px solid ${T.border}`, paddingTop: '4px' }}>
-            {ROLES.map(r => {
-              const isActive = role === r
-              return (
-                <button key={r} onClick={() => setRole(r)}
-                  style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '6px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
-                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
-                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
-                >{r}</button>
-              )
-            })}
-            <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-              Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
-            </div>
           </div>
         </div>
       </div>
@@ -183,22 +183,6 @@ function JustifyContent() {
             ))
           })()}
         </div>
-      </div>
-
-      {/* ── Journey strip ──────────────────────────────────────────────────── */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px', display: 'flex', alignItems: 'center', height: '36px', overflowX: 'auto' }}>
-        {[
-          { label: 'Diagnose', href: '/diagnose?client=' + activeClient },
-          { label: 'AI Strategy', href: '/ai-strategy?client=' + activeClient },
-          { label: 'Business Case', href: '/justify?client=' + activeClient, active: true },
-          { label: 'Vendor', href: '/vendor-intelligence?client=' + activeClient },
-          { label: 'Blueprint', href: '/blueprint?client=' + activeClient },
-        ].map((s, i) => (
-          <a key={i} href={s.href} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0 12px', height: '36px', fontSize: '11px', fontWeight: (s as any).active ? 700 : 500, color: (s as any).active ? T.teal : T.text2, textDecoration: 'none', borderBottom: (s as any).active ? `2px solid ${T.teal}` : '2px solid transparent', whiteSpace: 'nowrap', boxSizing: 'border-box' }}>
-            {(s as any).active && <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: T.teal, display: 'block' }} />}
-            {s.label}
-          </a>
-        ))}
       </div>
 
       {/* ── Step nav ───────────────────────────────────────────────────────── */}
