@@ -128,25 +128,25 @@ function Tag({ label, color, bg }: { label: string; color: string; bg: string })
 }
 
 function complexityColor(c: string) {
-  if (c === 'Low') return { color: GREEN, bg: '#ECFDF5' }
-  if (c === 'Medium') return { color: '#D97706', bg: '#FFFBEB' }
-  return { color: '#DC2626', bg: '#FEF2F2' }
+  if (c === 'Low') return { color: '#374151', bg: '#ECFDF5' }
+  if (c === 'Medium') return { color: '#374151', bg: '#FFFBEB' }
+  return { color: '#374151', bg: '#FEF2F2' }
 }
 
 function waveColor(w: number) {
-  if (w === 1) return { color: GREEN, bg: '#ECFDF5' }
-  if (w === 2) return { color: '#2563EB', bg: '#EFF6FF' }
-  return { color: '#7C3AED', bg: '#F5F3FF' }
+  if (w === 1) return { color: '#374151', bg: '#ECFDF5' }
+  if (w === 2) return { color: '#374151', bg: '#EFF6FF' }
+  return { color: '#374151', bg: '#F5F3FF' }
 }
 
 // ─── Architecture Agnostic Layers ─────────────────────────────────────────────
 function AgnosticArchitecture() {
   const layers = [
-    { label: 'User Interface Layer', desc: 'Web apps, mobile, EHR embedded widgets, Teams/Slack bots', color: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
-    { label: 'AI Orchestration Layer', desc: 'Prompt routing, agent orchestration, workflow automation, RAG pipelines', color: '#F5F3FF', border: '#DDD6FE', text: '#7C3AED' },
-    { label: 'Model Layer', desc: 'Foundation models (clinical, general), fine-tuned specialty models, embeddings', color: '#ECFDF5', border: '#A7F3D0', text: GREEN },
-    { label: 'Data & Integration Layer', desc: 'EHR connectors (Epic/Cerner), FHIR APIs, data lake, vector store, audit log', color: '#FFFBEB', border: '#FDE68A', text: '#D97706' },
-    { label: 'Security & Compliance Layer', desc: 'HIPAA controls, PHI masking, access governance, encryption, audit trail', color: '#FEF2F2', border: '#FECACA', text: '#DC2626' },
+    { label: 'User Interface Layer', desc: 'Web apps, mobile, EHR embedded widgets, Teams/Slack bots', color: '#EFF6FF', border: '#BFDBFE', text: '#374151' },
+    { label: 'AI Orchestration Layer', desc: 'Prompt routing, agent orchestration, workflow automation, RAG pipelines', color: '#F5F3FF', border: '#DDD6FE', text: '#374151' },
+    { label: 'Model Layer', desc: 'Foundation models (clinical, general), fine-tuned specialty models, embeddings', color: '#ECFDF5', border: '#A7F3D0', text: '#374151' },
+    { label: 'Data & Integration Layer', desc: 'EHR connectors (Epic/Cerner), FHIR APIs, data lake, vector store, audit log', color: '#FFFBEB', border: '#FDE68A', text: '#374151' },
+    { label: 'Security & Compliance Layer', desc: 'HIPAA controls, PHI masking, access governance, encryption, audit trail', color: '#FEF2F2', border: '#FECACA', text: '#374151' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -230,7 +230,7 @@ function FutureOfWorkContent() {
             <div style={{ marginBottom: '40px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                 <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>👥</div>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: GREEN, textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>Workforce Intelligence</div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.1em' }}>Workforce Intelligence</div>
               </div>
               <h1 style={{ fontSize: '36px', fontWeight: 800, color: '#0F172A', marginBottom: '12px', lineHeight: 1.2 }}>Future of Work</h1>
               <p style={{ fontSize: '16px', color: '#475569', lineHeight: 1.7, maxWidth: '680px', marginBottom: '0' }}>
@@ -252,7 +252,7 @@ function FutureOfWorkContent() {
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Data completeness</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: GREEN }}>{c.completeness}%</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{c.completeness}%</span>
                   </div>
                   <ProgressBar value={c.completeness} color={activeClient === id ? GREEN : '#94A3B8'} />
                 </button>
@@ -298,7 +298,7 @@ function FutureOfWorkContent() {
             {/* Headline */}
             <div style={{ ...S.card, marginBottom: '24px', background: '#F0FDF4', border: `1px solid #A7F3D0` }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ fontSize: '36px', fontWeight: 800, color: GREEN }}>$104M</div>
+                <div style={{ fontSize: '36px', fontWeight: 800, color: '#0F172A' }}>$104M</div>
                 <div>
                   <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A' }}>in workforce capacity not yet realized</div>
                   <div style={{ fontSize: '13px', color: '#6B7280' }}>{isMeridian ? 'Meridian Health System' : cfg.name} · Based on FTE analysis and benchmark comparison</div>
@@ -312,22 +312,22 @@ function FutureOfWorkContent() {
               <div style={S.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={S.label}>ADMINISTRATIVE BURDEN</div>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: GREEN }}>$62M</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>$62M</span>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Current: non-clinical admin</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#DC2626' }}>38%</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>38%</span>
                   </div>
                   <ProgressBar value={38} color="#DC2626" />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Benchmark</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: GREEN }}>22%</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>22%</span>
                   </div>
                   <ProgressBar value={22} color={GREEN} />
                 </div>
                 <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626', marginBottom: '2px' }}>16pt gap above benchmark</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '2px' }}>16pt gap above benchmark</div>
                   <div style={{ fontSize: '11px', color: '#6B7280' }}>Equivalent to $62M FTE capacity across total staff</div>
                 </div>
               </div>
@@ -336,22 +336,22 @@ function FutureOfWorkContent() {
               <div style={S.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={S.label}>CLINICAL DOCUMENTATION</div>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: GREEN }}>$18M</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>$18M</span>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Physicians: docs per day</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#DC2626' }}>3.1 hrs</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>3.1 hrs</span>
                   </div>
                   <ProgressBar value={63} color="#DC2626" />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Benchmark</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: GREEN }}>1.4 hrs</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>1.4 hrs</span>
                   </div>
                   <ProgressBar value={29} color={GREEN} />
                 </div>
                 <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626', marginBottom: '2px' }}>820 physicians × 1.7 hrs/day recoverable</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '2px' }}>820 physicians × 1.7 hrs/day recoverable</div>
                   <div style={{ fontSize: '11px', color: '#6B7280' }}>$18M annual opportunity via ambient documentation AI</div>
                 </div>
               </div>
@@ -360,22 +360,22 @@ function FutureOfWorkContent() {
               <div style={S.card}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div style={S.label}>PROCESS AUTOMATION</div>
-                  <span style={{ fontSize: '18px', fontWeight: 800, color: GREEN }}>$24M</span>
+                  <span style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>$24M</span>
                 </div>
                 <div style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Back-office manual processes</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#DC2626' }}>67%</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>67%</span>
                   </div>
                   <ProgressBar value={67} color="#DC2626" />
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px', marginBottom: '4px' }}>
                     <span style={{ fontSize: '12px', color: '#6B7280' }}>Benchmark</span>
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: GREEN }}>31%</span>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>31%</span>
                   </div>
                   <ProgressBar value={31} color={GREEN} />
                 </div>
                 <div style={{ padding: '10px 12px', borderRadius: '8px', background: '#FEF2F2', border: '1px solid #FECACA' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#DC2626', marginBottom: '2px' }}>36pt gap vs benchmark</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '2px' }}>36pt gap vs benchmark</div>
                   <div style={{ fontSize: '11px', color: '#6B7280' }}>$24M potential from back-office automation and AI workflows</div>
                 </div>
               </div>
@@ -400,12 +400,12 @@ function FutureOfWorkContent() {
                   const wx = waveColor(uc.wave)
                   return (
                     <div key={i} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 80px 90px 80px 70px', gap: '12px', alignItems: 'center', padding: '14px 0', borderBottom: i < 4 ? '1px solid #F1F5F9' : 'none' }}>
-                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#F0FDF4', border: `1px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: GREEN }}>{uc.rank}</div>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#F0FDF4', border: `1px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>{uc.rank}</div>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 600, color: '#0F172A' }}>{uc.name}</div>
                       </div>
                       <div style={{ textAlign: 'right' as const }}>
-                        <div style={{ fontSize: '15px', fontWeight: 700, color: GREEN }}>${uc.value}M</div>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A' }}>${uc.value}M</div>
                         <div style={{ fontSize: '10px', color: '#94A3B8' }}>annual value</div>
                       </div>
                       <div>
@@ -414,7 +414,7 @@ function FutureOfWorkContent() {
                           <div style={{ flex: 1, height: '4px', background: '#F1F5F9', borderRadius: '2px' }}>
                             <div style={{ height: '4px', width: `${uc.readiness}%`, background: GREEN, borderRadius: '2px' }} />
                           </div>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: GREEN }}>{uc.readiness}%</span>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: '#0F172A' }}>{uc.readiness}%</span>
                         </div>
                       </div>
                       <Tag label={uc.complexity} color={cx.color} bg={cx.bg} />
@@ -478,7 +478,7 @@ function FutureOfWorkContent() {
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-end' }}>
                     {PLATFORMS[platform].recommended && (
-                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', background: '#F0FDF4', color: GREEN, border: `1px solid ${GREEN}` }}>★ Best fit — Meridian</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', background: '#F0FDF4', color: '#374151', border: `1px solid ${GREEN}` }}>★ Best fit — Meridian</span>
                     )}
                     {PLATFORMS[platform].referral && (
                       <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>★ AbarVa referral partner — disclosed</span>
@@ -496,7 +496,7 @@ function FutureOfWorkContent() {
                         <div key={key}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                             <span style={{ fontSize: '13px', color: '#475569' }}>{SCORE_LABELS[key]}</span>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: c }}>{val}/100</span>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{val}/100</span>
                           </div>
                           <ProgressBar value={val} color={c} />
                         </div>
@@ -597,7 +597,7 @@ function FutureOfWorkContent() {
                     { type: 'Financial AI', access: 'Claims, cost, contract data — no patient identifiers', color: '#2563EB', bg: '#EFF6FF', border: '#BFDBFE' },
                   ].map((d, i) => (
                     <div key={i} style={{ padding: '12px 14px', borderRadius: '8px', background: d.bg, border: `1px solid ${d.border}` }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: d.color, marginBottom: '4px' }}>{d.type}</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>{d.type}</div>
                       <div style={{ fontSize: '11px', color: '#475569', lineHeight: 1.5 }}>{d.access}</div>
                     </div>
                   ))}
@@ -738,7 +738,7 @@ function FutureOfWorkContent() {
                         <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>{r.modules}</div>
                       </div>
                       <div style={{ textAlign: 'right' as const }}>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: GREEN }}>{r.hours}</div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>{r.hours}</div>
                         <div style={{ fontSize: '10px', color: '#94A3B8' }}>{r.staff} staff</div>
                       </div>
                     </div>
@@ -756,7 +756,7 @@ function FutureOfWorkContent() {
                   </div>
                 </div>
                 <div style={{ padding: '16px', borderRadius: '10px', background: '#FFFBEB', border: '1px solid #FDE68A', marginBottom: '12px', textAlign: 'center' as const }}>
-                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#D97706' }}>42</div>
+                  <div style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A' }}>42</div>
                   <div style={{ fontSize: '13px', color: '#92400E' }}>champions needed · 1 per 50 staff</div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -767,7 +767,7 @@ function FutureOfWorkContent() {
                     'Recognized in performance reviews',
                   ].map((item, i) => (
                     <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: '#D97706', flexShrink: 0, marginTop: '1px' }}>{i + 1}</div>
+                      <div style={{ width: '16px', height: '16px', borderRadius: '50%', background: '#FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', fontWeight: 700, color: '#374151', flexShrink: 0, marginTop: '1px' }}>{i + 1}</div>
                       <span style={{ fontSize: '12px', color: '#475569', lineHeight: 1.4 }}>{item}</span>
                     </div>
                   ))}
@@ -791,7 +791,7 @@ function FutureOfWorkContent() {
                     { label: 'Champion Coverage', value: '100%', sub: 'of departments' },
                   ].map((m, i) => (
                     <div key={i} style={{ padding: '12px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0', textAlign: 'center' as const }}>
-                      <div style={{ fontSize: '22px', fontWeight: 800, color: GREEN }}>{m.value}</div>
+                      <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A' }}>{m.value}</div>
                       <div style={{ fontSize: '11px', fontWeight: 600, color: '#374151' }}>{m.label}</div>
                       <div style={{ fontSize: '10px', color: '#94A3B8' }}>{m.sub}</div>
                     </div>
@@ -826,7 +826,7 @@ function FutureOfWorkContent() {
                     </div>
                     <div>
                       <div style={{ fontSize: '11px', color: '#94A3B8' }}>Annual Value</div>
-                      <div style={{ fontSize: '18px', fontWeight: 800, color: s.color }}>${s.value}M</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#0F172A' }}>${s.value}M</div>
                     </div>
                     <div>
                       <div style={{ fontSize: '11px', color: '#94A3B8' }}>ROI</div>
@@ -850,7 +850,7 @@ function FutureOfWorkContent() {
                   const isActive = scenario === s.key
                   return (
                     <div key={s.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: isActive ? s.color : '#94A3B8' }}>${s.value}M</div>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A' }}>${s.value}M</div>
                       <div style={{ width: '100%', height: `${(s.value / maxVal) * 90}px`, background: isActive ? s.color : '#E2E8F0', borderRadius: '4px 4px 0 0', transition: 'all 0.3s' }} />
                       <div style={{ fontSize: '12px', color: '#6B7280' }}>{s.label}</div>
                     </div>
@@ -881,7 +881,7 @@ function FutureOfWorkContent() {
                   },
                 ].map((ph, i) => (
                   <div key={i} style={{ padding: '18px', borderRadius: '10px', background: ph.bg, border: `1px solid ${ph.border}` }}>
-                    <div style={{ fontSize: '14px', fontWeight: 800, color: ph.color, marginBottom: '2px' }}>{ph.phase}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 800, color: '#0F172A', marginBottom: '2px' }}>{ph.phase}</div>
                     <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '12px' }}>{ph.range}</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
                       {ph.items.map((item, j) => (
@@ -891,7 +891,7 @@ function FutureOfWorkContent() {
                         </div>
                       ))}
                     </div>
-                    <div style={{ fontSize: '12px', fontWeight: 700, color: ph.color }}>{ph.value}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#374151' }}>{ph.value}</div>
                   </div>
                 ))}
               </div>
@@ -928,7 +928,7 @@ function FutureOfWorkContent() {
                     <div style={{ fontSize: '24px', marginBottom: '8px' }}>{artifact.icon}</div>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{artifact.title}</div>
                     <div style={{ fontSize: '10px', color: '#6B7280', lineHeight: 1.4, marginBottom: '10px' }}>{artifact.desc}</div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: GREEN }}>↓ Export</div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#0F172A' }}>↓ Export</div>
                   </button>
                 ))}
               </div>
