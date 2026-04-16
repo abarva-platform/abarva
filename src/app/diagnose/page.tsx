@@ -8,8 +8,10 @@ import { apexRetail } from '@/data/apexretail/index'
 
 // ─── Theme — matches homepage exactly ────────────────────────────────────────
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.6)'
-const TEAL = '#2DD4C8', RED = '#EF4444', AMBER = '#F59E0B', GREEN = '#34D399'
+const WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.46)'
+const TEAL = '#2DD4C8'
+// Status dot colors — for dots only, never for text
+const DOT_RED = '#EF4444', DOT_AMBER = '#F59E0B'
 const MONO = 'JetBrains Mono, monospace', SANS = 'DM Sans, sans-serif', SERIF = 'Georgia, serif'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -28,7 +30,8 @@ interface Action {
   impact: string; effort: string; risk: string
 }
 
-const SEV_COLOR: Record<Severity, string> = { critical: RED, warning: AMBER, watch: DIM }
+// Severity dot colors — for dot indicators only
+const SEV_COLOR: Record<Severity, string> = { critical: DOT_RED, warning: DOT_AMBER, watch: DIM }
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 function meridianAI_pilotsPurgatory() { return 2 }
@@ -338,14 +341,20 @@ function DiagnoseContent() {
         {visibleClients.map(c => (
           <button key={c.id} onClick={() => { setActiveClient(c.id); setSelectedId(null) }}
             style={{ padding: '11px 20px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
-              borderBottom: activeClient === c.id ? `2px solid ${c.accent}` : '2px solid transparent',
-              background: 'transparent', color: activeClient === c.id ? c.accent : MUTED, transition: 'color 0.12s' }}>
+              borderBottom: activeClient === c.id ? `2px solid ${TEAL}` : '2px solid transparent',
+              background: 'transparent', color: activeClient === c.id ? WHITE : MUTED, transition: 'color 0.12s' }}>
             {c.name}
           </button>
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px', fontFamily: MONO, fontSize: '9px', letterSpacing: '.08em' }}>
-          <span style={{ color: RED }}>{critCount} CRITICAL</span>
-          <span style={{ color: AMBER }}>{warnCount} WARNING</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: MUTED }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DOT_RED, display: 'inline-block' }} />
+            {critCount} CRITICAL
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: MUTED }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DOT_AMBER, display: 'inline-block' }} />
+            {warnCount} WARNING
+          </span>
           <span style={{ color: MUTED }}>${totalRisk.toLocaleString()}M AT RISK</span>
         </div>
       </div>
@@ -382,7 +391,7 @@ function DiagnoseContent() {
                   padding: '16px 20px',
                   borderBottom: `1px solid ${BORDER}`,
                   background: isSelected ? CARD : 'transparent',
-                  borderLeft: isSelected ? `3px solid ${color}` : '3px solid transparent',
+                  borderLeft: isSelected ? `3px solid ${TEAL}` : '3px solid transparent',
                   cursor: 'pointer',
                 }}
               >
@@ -397,7 +406,7 @@ function DiagnoseContent() {
                       <div className="si-warn-ring" style={{ position: 'absolute', inset: -3, borderRadius: '50%', border: `1px solid ${color}`, opacity: 0 }} />
                     )}
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 700, color, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 600, color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
                     {issue.severity}
                   </span>
                 </div>
@@ -408,7 +417,7 @@ function DiagnoseContent() {
                 </div>
 
                 {/* Impact */}
-                <div style={{ fontFamily: MONO, fontSize: '10px', color, fontWeight: 600 }}>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: WHITE, fontWeight: 600 }}>
                   {issue.impact}
                 </div>
               </div>
@@ -429,16 +438,18 @@ function DiagnoseContent() {
                 {/* Severity pill + title */}
                 <div style={{ marginBottom: '28px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 700, padding: '4px 10px', borderRadius: '4px', background: color + '20', color, border: `1px solid ${color}55`, letterSpacing: '.12em', textTransform: 'uppercase' as const }}>
-                      {selected.severity}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: color }} />
+                      <span style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 600, color: MUTED, letterSpacing: '.12em', textTransform: 'uppercase' as const }}>{selected.severity}</span>
                     </span>
                   </div>
                   <h2 style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 500, color: WHITE, lineHeight: 1.3, margin: '0 0 16px' }}>
                     {selected.title}
                   </h2>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '7px 16px', borderRadius: '8px', background: `${RED}18`, border: `1px solid ${RED}40` }}>
-                    <span style={{ fontFamily: MONO, fontSize: '9px', color: RED, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>Financial Exposure</span>
-                    <span style={{ fontFamily: SERIF, fontSize: '16px', color: RED, fontWeight: 400 }}>{selected.impact}</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '7px 16px', borderRadius: '8px', background: 'rgba(239,68,68,0.06)', border: `1px solid ${BORDER}` }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: DOT_RED, flexShrink: 0 }} />
+                    <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, fontWeight: 600, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>Financial Exposure</span>
+                    <span style={{ fontFamily: SERIF, fontSize: '16px', color: WHITE, fontWeight: 400 }}>{selected.impact}</span>
                   </div>
                 </div>
 
@@ -447,8 +458,11 @@ function DiagnoseContent() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', marginBottom: '24px', background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', overflow: 'hidden' }}>
                     <div style={{ padding: '18px 20px' }}>
                       <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '8px' }}>Current</div>
-                      <div style={{ fontFamily: SERIF, fontSize: '28px', color, lineHeight: 1 }}>{metric.current}</div>
-                      {metric.gap && <div style={{ fontFamily: MONO, fontSize: '10px', color, marginTop: '6px', fontWeight: 600 }}>{metric.gap}</div>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                        <div style={{ fontFamily: SERIF, fontSize: '28px', color: WHITE, lineHeight: 1 }}>{metric.current}</div>
+                      </div>
+                      {metric.gap && <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginTop: '6px', fontWeight: 600 }}>{metric.gap}</div>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', borderLeft: `1px solid ${BORDER}`, borderRight: `1px solid ${BORDER}` }}>
                       <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>vs</span>
@@ -462,9 +476,9 @@ function DiagnoseContent() {
 
                 {/* 4 cards — top-border style matching homepage stat cards */}
                 {[
-                  { label: 'What we found',         text: selected.body,              topColor: GREEN },
-                  { label: 'Genome pattern',         text: selected.sources.genome,    topColor: AMBER },
-                  { label: 'Evidence basis',         text: selected.sources.data + (selected.sources.industry ? ' · ' + selected.sources.industry : ''), topColor: MUTED },
+                  { label: 'What we found',         text: selected.body,              topColor: TEAL },
+                  { label: 'Genome pattern',         text: selected.sources.genome,    topColor: BORDER },
+                  { label: 'Evidence basis',         text: selected.sources.data + (selected.sources.industry ? ' · ' + selected.sources.industry : ''), topColor: BORDER },
                   ...(action ? [{ label: 'AbarVa recommendation', text: `${action.title} · ${action.rationale} Owner: ${action.owner}. Effort: ${action.effort}. Expected impact: ${action.impact}.`, topColor: TEAL }] : []),
                 ].map((section, i) => (
                   <div key={i} style={{ marginBottom: '12px', padding: '18px 20px', borderRadius: '10px', background: CARD, border: `1px solid ${BORDER}`, borderTop: `2px solid ${section.topColor}` }}>
@@ -486,11 +500,12 @@ function DiagnoseContent() {
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginBottom: '12px', letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Other issues</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px' }}>
                     {sortedIssues.filter(i => i.id !== selected.id).map(issue => {
-                      const c = SEV_COLOR[issue.severity]
+                      const dotColor = SEV_COLOR[issue.severity]
                       const short = issue.title.split(' — ')[0].split(' · ')[0].split(' ').slice(0, 4).join(' ')
                       return (
                         <button key={issue.id} onClick={() => setSelectedId(issue.id)}
-                          style={{ padding: '5px 12px', borderRadius: '20px', fontFamily: MONO, fontSize: '9px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: c, border: `1px solid ${c}55` }}>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: MONO, fontSize: '9px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: MUTED, border: `1px solid ${BORDER}` }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
                           {short}
                         </button>
                       )
