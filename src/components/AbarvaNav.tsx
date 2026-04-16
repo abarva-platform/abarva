@@ -64,7 +64,8 @@ function NavInner({ activePage }: NavProps) {
 
   const modulePath = (page: string) => `/${page}?client=${clientId}`
 
-  const intelligencePath = modulePath('data-intelligence')
+  // Intelligence → AI Strategy overview (not a specific module — that avoids double-highlight with AVR)
+  const intelligencePath = modulePath('ai-strategy')
 
   // 9 modules organised by phase
   const AVR_PHASES = [
@@ -109,11 +110,15 @@ function NavInner({ activePage }: NavProps) {
     { label: 'Demo Data',         path: '/admin/data-guide', desc: 'Install and reset demo datasets' },
   ]
 
+  // AVR active: all 9 module pages — but NOT ai-strategy (that's the Intelligence overview)
   const avrActive = [
-    'intelligence', 'architecture', 'ai-pdlc', 'ai-strategy', 'avr',
+    'intelligence', 'architecture', 'ai-pdlc', 'avr',
     'data-intelligence', 'justify', 'contradictions', 'outcome-intelligence',
     'diagnose', 'vendor-intelligence',
   ].includes(activePage || '')
+
+  // Intelligence link active: only when on the AI strategy overview or a generic hub page
+  const intelligenceActive = ['ai-strategy', 'intelligence-hub'].includes(activePage || '')
 
   const adminActive = (activePage || '').startsWith('admin')
 
@@ -239,9 +244,9 @@ function NavInner({ activePage }: NavProps) {
             href={intelligencePath}
             style={{
               fontSize: '13px',
-              color: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? TEAL : NAV_TEXT,
+              color: intelligenceActive ? TEAL : NAV_TEXT,
               padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-              borderBottom: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? `2px solid ${TEAL}` : '2px solid transparent',
+              borderBottom: intelligenceActive ? `2px solid ${TEAL}` : '2px solid transparent',
             }}>
             Intelligence
           </a>
@@ -385,8 +390,8 @@ function NavInner({ activePage }: NavProps) {
           {/* Maestro — admin + investor: client workspace */}
           {signedIn && isElevated && (
             <a href={`/admin/client/${clientId}`} style={{
-              fontSize: '12px', color: TEAL, textDecoration: 'none',
-              padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
+              fontSize: '12px', color: activePage === 'maestro' ? TEAL : NAV_MUTE,
+              textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
             }}>
               Maestro
             </a>
