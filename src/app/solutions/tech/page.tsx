@@ -183,11 +183,11 @@ export default function SolutionTech() {
                   <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1 }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: MONO, fontSize: '9px', color: c, background: `${c}15`, borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                        <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: `${c}15`, borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                           {f.severity}
                         </span>
                         {f.code && (
-                          <span style={{ fontFamily: MONO, fontSize: '9px', color: RED, background: 'rgba(239,68,68,0.10)', borderRadius: '3px', padding: '2px 6px' }}>
+                          <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: 'rgba(239,68,68,0.10)', borderRadius: '3px', padding: '2px 6px' }}>
                             {f.code}
                           </span>
                         )}
@@ -235,7 +235,7 @@ export default function SolutionTech() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                    <div style={{ fontFamily: MONO, fontSize: '9px', color: track.color, textTransform: 'uppercase', letterSpacing: '.1em' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase', letterSpacing: '.1em' }}>
                       {track.sub}
                     </div>
                     {track.relevant && (
@@ -244,7 +244,7 @@ export default function SolutionTech() {
                       </span>
                     )}
                   </div>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: selectedTrack === track.id ? track.color : WHITE, fontWeight: 600, marginBottom: '4px' }}>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: selectedTrack === track.id ? TEAL : WHITE, fontWeight: 600, marginBottom: '4px' }}>
                     {track.label}
                   </div>
                   <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5, marginBottom: '6px' }}>
@@ -286,12 +286,15 @@ export default function SolutionTech() {
               ].map(g => (
                 <div key={g.code} style={{ background: SURFACE, border: `1px solid rgba(239,68,68,0.2)`, borderRadius: '8px', padding: '14px' }}>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: RED, fontWeight: 700 }}>{g.code}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '9px', color: RED, background: 'rgba(239,68,68,0.1)', borderRadius: '3px', padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                    <span style={{ fontFamily: MONO, fontSize: '11px', color: MUTED, fontWeight: 700 }}>{g.code}</span>
+                    <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: 'rgba(239,68,68,0.1)', borderRadius: '3px', padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                       {g.status}
                     </span>
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: '18px', color: RED, fontWeight: 700, marginBottom: '4px' }}>{g.rate}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '4px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
+                    <div style={{ fontFamily: MONO, fontSize: '18px', color: WHITE, fontWeight: 700 }}>{g.rate}</div>
+                  </div>
                   <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{g.name}</div>
                 </div>
               ))}
