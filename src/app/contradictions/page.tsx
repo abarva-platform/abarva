@@ -267,7 +267,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
     } catch { /* ignore abort */ } finally { setLoading(false) }
   }, [messages, client, contradictionTitle, contradictionImpact, loading])
 
-  const PURPLE = '#A371F7', TEAL = '#2DD4C8', SURFACE = '#161B22', BORDER = '#21262D', TEXT = '#E6EDF3', DIM = '#6B7280', BG = '#0D1117'
+  const TEAL = '#2DD4C8', SURFACE = '#161B22', BORDER = '#21262D', TEXT = '#E6EDF3', DIM = '#6B7280', BG = '#0D1117'
   const MONO = 'IBM Plex Mono, monospace', SANS = "'IBM Plex Sans', Inter, sans-serif"
 
   return (
@@ -284,7 +284,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
           )}
           {messages.filter(m => m.role !== 'user' || !m.content.startsWith('Context:')).map((m, i) => (
             <div key={i} style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: m.role === 'user' ? TEAL : PURPLE, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: m.role === 'user' ? DIM : TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>
                 {m.role === 'user' ? 'YOU' : 'ABARVA'}
               </div>
               <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{m.content}</div>
@@ -292,7 +292,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
           ))}
           {streaming && (
             <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: PURPLE, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>ABARVA</div>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: MONO }}>ABARVA</div>
               <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, whiteSpace: 'pre-wrap' as const }}>{streaming}</div>
             </div>
           )}
@@ -369,7 +369,7 @@ function ContradictionsContent() {
       <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
         {visibleClients.map(c => (
           <button key={c.id} onClick={() => selectClient(c.id)}
-            style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selectedClient === c.id ? c.accent : '#6B7280' }}>
+            style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selectedClient === c.id ? '#EFF6FF' : '#6B7280' }}>
             {c.name}
           </button>
         ))}
@@ -501,30 +501,27 @@ function ContradictionsContent() {
               <div>
                 {/* Header */}
                 <div style={{ marginBottom: '24px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '4px', background: color + '20', color, border: '1px solid ' + color + '55', letterSpacing: '0.12em' }}>
-                      {selected.sev}
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em' }}>{selected.sev}</span>
                   </div>
                   <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#E6EDF3', lineHeight: 1.35, marginBottom: '12px', fontFamily: "'Georgia', serif" }}>{selected.title}</h2>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
-                    <span style={{ fontSize: '10px', color: '#EF4444', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 700, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
-                    <span style={{ fontSize: '13px', color: '#FCA5A5', fontWeight: 700 }}>{selected.impact}</span>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.06)', border: '1px solid #21262D' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444', flexShrink: 0 }} />
+                    <span style={{ fontSize: '10px', color: '#94A3B8', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 600, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
+                    <span style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 700 }}>{selected.impact}</span>
                   </div>
                 </div>
 
                 {/* 4 sections — left-border card style, high contrast */}
                 {[
-                  { label: 'WHAT WAS COMMITTED', text: selected.committed,    accent: '#34D399', border: '#34D399', icon: '✓' },
-                  { label: 'WHAT ACTUALLY HAPPENED', text: selected.actual,   accent: '#F87171', border: '#EF4444', icon: '✗' },
-                  { label: 'ROOT CAUSE',          text: selected.rootCause,   accent: '#FBBF24', border: '#F59E0B', icon: '●' },
-                  { label: 'AbarVa RECOMMENDATION', text: selected.recommendation, accent: '#60A5FA', border: '#3B82F6', icon: '→' },
+                  { label: 'WHAT WAS COMMITTED',    text: selected.committed,       leftBorder: '#1C2D45' },
+                  { label: 'WHAT ACTUALLY HAPPENED', text: selected.actual,          leftBorder: '#EF4444' },
+                  { label: 'ROOT CAUSE',              text: selected.rootCause,       leftBorder: '#1C2D45' },
+                  { label: 'AbarVa RECOMMENDATION',   text: selected.recommendation,  leftBorder: '#2DD4C8' },
                 ].map((section, i) => (
-                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#161B22', borderLeft: '3px solid ' + section.border, border: '1px solid #21262D', borderLeftWidth: '3px', borderLeftColor: section.border }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px' }}>
-                      <span style={{ fontSize: '13px', color: section.accent, fontWeight: 700, lineHeight: 1 }}>{section.icon}</span>
-                      <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 700, color: section.accent, letterSpacing: '0.12em' }}>{section.label}</span>
-                    </div>
+                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#161B22', border: '1px solid #21262D', borderLeft: '3px solid ' + section.leftBorder }}>
+                    <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.12em', marginBottom: '10px' }}>{section.label}</div>
                     <p style={{ fontSize: '14px', color: '#E6EDF3', lineHeight: 1.7, margin: 0 }}>{section.text}</p>
                   </div>
                 ))}
@@ -534,10 +531,11 @@ function ContradictionsContent() {
                   <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', color: '#6B7280', marginBottom: '12px', letterSpacing: '0.1em' }}>OTHER CONTRADICTIONS</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px' }}>
                     {cd.nodes.filter(n => n.id !== selected.id).map(n => {
-                      const c = SEV_COLOR[n.sev]
+                      const dotColor = SEV_COLOR[n.sev]
                       return (
                         <button key={n.id} onClick={() => setSelectedId(n.id)}
-                          style={{ padding: '5px 12px', borderRadius: '20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: c, border: '1px solid ' + c + '66' }}>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: '#94A3B8', border: '1px solid #21262D' }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
                           {n.l1} {n.l2}
                         </button>
                       )
@@ -549,7 +547,7 @@ function ContradictionsContent() {
                 <div style={{ marginTop: '20px', display: 'flex', gap: '8px' }}>
                   <button
                     onClick={() => setChatOpen(o => !o)}
-                    style={{ flex: 1, padding: '12px', borderRadius: '8px', background: chatOpen ? 'rgba(77,163,255,0.2)' : 'rgba(77,163,255,0.1)', color: '#60A5FA', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(77,163,255,0.3)', cursor: 'pointer' }}
+                    style={{ flex: 1, padding: '12px', borderRadius: '8px', background: chatOpen ? 'rgba(45,212,200,0.12)' : 'transparent', color: '#2DD4C8', fontSize: '13px', fontWeight: 600, textAlign: 'center' as const, border: '1px solid rgba(45,212,200,0.3)', cursor: 'pointer' }}
                   >
                     {chatOpen ? '× Close chat' : 'Ask AbarVa about this →'}
                   </button>
@@ -576,7 +574,7 @@ function ContradictionsContent() {
 export default function ContradictionsPage() {
   return (
     <Suspense fallback={
-      <div style={{ background: '#0D1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px' }}>
+      <div style={{ background: '#0D1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px' }}>
         Loading contradiction network...
       </div>
     }>
