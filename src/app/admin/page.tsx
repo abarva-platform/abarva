@@ -143,60 +143,71 @@ function ProgrammeDashboard() {
   const router = useRouter()
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Admin Console · Programme Dashboard</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px', lineHeight: 1.15 }}>
-        Everything in motion.<br />Everything tracked.
-      </h1>
+      {/* Page header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT, marginBottom: 3 }}>Programme Dashboard</div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>Last updated: Today at 14:23 · 2 active clients</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>+ New Engagement</button>
+          <button style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, background: CARD, border: `1px solid ${BDR}`, borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>Export Report ↓</button>
+        </div>
+      </div>
 
-      {/* 4 stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+      {/* 4 compact stat cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'ACTIVE ENGAGEMENTS', value: '2', color: TEXT },
-          { label: 'TOTAL VALUE TRACKED', value: '$960M+', color: TEXT },
-          { label: 'PHASES APPROVED', value: '3', color: GRN },
-          { label: 'FEE EARNED TO DATE', value: '$0', color: TEAL, sub: 'Fee activates on verified outcomes' },
+          { label: 'ACTIVE ENGAGEMENTS', value: '2', color: TEXT, sub: 'Across 2 clients' },
+          { label: 'TOTAL VALUE TRACKED', value: '$960M+', color: TEXT, sub: 'Pipeline value at stake' },
+          { label: 'PHASES APPROVED', value: '3', color: GRN, sub: 'Gate-locked delivery' },
+          { label: 'FEE EARNED TO DATE', value: '$0', color: TEAL, sub: 'Activates on verified outcomes' },
         ].map((m, i) => (
-          <div key={i} style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 32 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 72, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 10 }}>{m.value}</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{m.label}</div>
-            {m.sub && <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF', marginTop: 6 }}>{m.sub}</div>}
+          <div key={i} style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 8 }}>{m.label}</div>
+            <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 4 }}>{m.value}</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF' }}>{m.sub}</div>
           </div>
         ))}
       </div>
 
       {/* All Engagements table */}
-      <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, marginBottom: 24, overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}` }}>
-          <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: TEXT }}>All Engagements</div>
+      <div style={{ background: CARD, border: `1px solid ${BDR}`, borderTop: `3px solid ${BDR}`, borderRadius: 8, marginBottom: 20, overflow: 'hidden' }}>
+        <div style={{ padding: '14px 20px', borderBottom: `1px solid ${BDR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>All Engagements</div>
+          <span style={{ fontFamily: SANS, fontSize: 13, color: TEAL, cursor: 'pointer' }}>Show all {ENGAGEMENTS.length} →</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
           <thead>
-            <tr style={{ background: '#FAFAFA', borderBottom: `1px solid ${BDR}` }}>
+            <tr style={{ background: PAGE, height: 40 }}>
               {['Client', 'Engagement', 'Sponsor', 'Function', 'Phase', 'Status', 'Maestro', 'Value', 'Priority'].map(h => (
-                <th key={h} style={{ padding: '10px 20px', textAlign: 'left' as const, fontFamily: SANS, fontSize: 12, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
+                <th key={h} style={{ padding: '0 16px', textAlign: 'left' as const, fontFamily: SANS, fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em', borderBottom: `1px solid ${BDR}` }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {ENGAGEMENTS.map((e, i) => (
-              <tr key={e.id} style={{ borderTop: `1px solid ${BDR}`, background: i % 2 === 0 ? CARD : PAGE }}>
-                <td style={{ padding: '14px 20px', fontFamily: SANS, fontSize: 15, color: TEXT2 }}>{e.client}</td>
-                <td style={{ padding: '14px 20px' }}>
-                  <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: TEXT }}>{e.name}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED, marginTop: 2 }}>{e.type === 'AI Value Realization' ? 'AVR' : 'SOL'}</div>
+              <tr key={e.id} style={{ borderTop: `1px solid ${BDR}`, height: 52, borderLeft: e.priority === 'Critical' ? `3px solid ${RED}` : e.priority === 'High' ? `3px solid ${ORG}` : '3px solid transparent' }}
+                onMouseEnter={ev => (ev.currentTarget as HTMLTableRowElement).style.background = PAGE}
+                onMouseLeave={ev => (ev.currentTarget as HTMLTableRowElement).style.background = CARD}
+              >
+                <td style={{ padding: '0 16px', fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{e.client}</td>
+                <td style={{ padding: '0 16px' }}>
+                  <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{e.name}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: MUTED }}>{e.type === 'AI Value Realization' ? 'AVR' : 'SOL'}</div>
                 </td>
-                <td style={{ padding: '14px 20px', fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{e.sponsor}</td>
-                <td style={{ padding: '14px 20px', fontFamily: MONO, fontSize: 11, color: TEAL }}>{e.function}</td>
-                <td style={{ padding: '14px 20px', fontFamily: MONO, fontSize: 13, color: MUTED }}>Ph {e.phase}</td>
-                <td style={{ padding: '14px 20px' }}>
-                  <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: STATUS_COLOR[e.status] ?? MUTED, background: STATUS_BG[e.status] ?? '#F3F4F6', padding: '4px 10px', borderRadius: 4 }}>
+                <td style={{ padding: '0 16px', fontFamily: SANS, fontSize: 12, color: TEXT2 }}>{e.sponsor}</td>
+                <td style={{ padding: '0 16px', fontFamily: MONO, fontSize: 10, color: TEAL }}>{e.function}</td>
+                <td style={{ padding: '0 16px', fontFamily: MONO, fontSize: 12, color: MUTED }}>Ph {e.phase}</td>
+                <td style={{ padding: '0 16px' }}>
+                  <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: STATUS_COLOR[e.status] ?? MUTED, background: STATUS_BG[e.status] ?? '#F3F4F6', padding: '3px 8px', borderRadius: 4 }}>
                     {e.status}
                   </span>
                 </td>
-                <td style={{ padding: '14px 20px', fontFamily: SANS, fontSize: 15, color: TEXT2 }}>{e.maestro}</td>
-                <td style={{ padding: '14px 20px', fontFamily: SERIF, fontSize: 15, color: TEXT }}>{e.value}</td>
-                <td style={{ padding: '14px 20px' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 11, color: PRIORITY_COLOR[e.priority] ?? MUTED }}>● {e.priority}</span>
+                <td style={{ padding: '0 16px', fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{e.maestro}</td>
+                <td style={{ padding: '0 16px', fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{e.value}</td>
+                <td style={{ padding: '0 16px' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: PRIORITY_COLOR[e.priority] ?? MUTED }}>● {e.priority}</span>
                 </td>
               </tr>
             ))}
@@ -205,45 +216,47 @@ function ProgrammeDashboard() {
       </div>
 
       {/* Bottom 2 cols */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         {/* Approval Queue */}
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8 }}>
-          <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}` }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT }}>Approval Queue</div>
+          <div style={{ padding: '12px 20px', borderBottom: `1px solid ${BDR}` }}>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Approval Queue</div>
           </div>
           {APPROVALS.map((a, i) => (
-            <div key={i} style={{ padding: '20px 24px', borderBottom: i < APPROVALS.length - 1 ? `1px solid ${BDR}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-                <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: TEXT }}>{a.doc}</div>
-                <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: a.status === 'overdue' ? RED : ORG, background: a.status === 'overdue' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', padding: '3px 8px', borderRadius: 4, flexShrink: 0, marginLeft: 8 }}>
+            <div key={i} style={{ padding: '10px 20px', borderBottom: i < APPROVALS.length - 1 ? `1px solid ${BDR}` : 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 52 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{a.doc}</div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED }}>{a.from}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginLeft: 12 }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: a.status === 'overdue' ? RED : ORG, background: a.status === 'overdue' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', padding: '2px 6px', borderRadius: 3 }}>
                   {a.status === 'overdue' ? 'OVERDUE' : 'PENDING'}
                 </span>
+                <button style={{ fontFamily: SANS, fontSize: 12, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Review →</button>
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 14, color: MUTED, marginBottom: 12 }}>{a.engagement} · From: {a.from}</div>
-              <button style={{ fontFamily: SANS, fontSize: 14, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Review →</button>
             </div>
           ))}
         </div>
 
         {/* Data Health */}
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, cursor: 'pointer' }} onClick={() => router.push('/admin?section=data')}>
-          <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT }}>Data Health</div>
-            <span style={{ fontFamily: SANS, fontSize: 13, color: TEAL }}>View all →</span>
+          <div style={{ padding: '12px 20px', borderBottom: `1px solid ${BDR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Data Health</div>
+            <span style={{ fontFamily: SANS, fontSize: 12, color: TEAL }}>View all →</span>
           </div>
           {[
-            { client: 'Meridian Health System', score: 42, sub: '2 files missing' },
-            { client: 'Arcturus Financial', score: 68, sub: 'All files present' },
+            { client: 'Meridian Health System', score: 42, sub: '2 files missing · Below deployment threshold' },
+            { client: 'Arcturus Financial', score: 68, sub: 'All files present · Ready for deployment' },
           ].map((c, i) => (
-            <div key={i} style={{ padding: '20px 24px', borderBottom: i === 0 ? `1px solid ${BDR}` : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: TEXT }}>{c.client}</div>
-                <div style={{ fontFamily: SANS, fontSize: 48, fontWeight: 700, color: c.score < 60 ? RED : c.score < 80 ? ORG : GRN, lineHeight: 1 }}>{c.score}</div>
+            <div key={i} style={{ padding: '12px 20px', borderBottom: i === 0 ? `1px solid ${BDR}` : 'none' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{c.client}</div>
+                <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 700, color: c.score < 60 ? RED : c.score < 80 ? ORG : GRN }}>{c.score}</div>
               </div>
-              <div style={{ height: 6, background: BDR, borderRadius: 3, marginBottom: 8 }}>
-                <div style={{ height: 6, borderRadius: 3, width: `${c.score}%`, background: c.score < 60 ? RED : c.score < 80 ? ORG : TEAL }} />
+              <div style={{ height: 4, background: BDR, borderRadius: 2, marginBottom: 5 }}>
+                <div style={{ height: 4, borderRadius: 2, width: `${c.score}%`, background: c.score < 60 ? RED : c.score < 80 ? ORG : TEAL }} />
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF' }}>AI Readiness Score · {c.sub}</div>
+              <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF' }}>{c.sub}</div>
             </div>
           ))}
         </div>
@@ -258,13 +271,17 @@ function SetupSection() {
   const lblStyle: React.CSSProperties  = { display: 'block', fontFamily: SANS, fontSize: 12, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 6 }
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Setup & Configuration</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 8px' }}>Client Profile</h1>
-      <div style={{ fontFamily: SANS, fontSize: 17, color: TEXT2, marginBottom: 40 }}>Step 1 of 4 setup steps</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Setup & Configuration</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Client Profile</div>
+        </div>
+        <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>Save Changes</button>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 40 }}>
-          <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT, marginBottom: 28 }}>Organisation Details</div>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, marginBottom: 20 }}>Organisation Details</div>
           {[
             { label: 'Client Name', value: 'Meridian Health System' },
             { label: 'Vertical', value: 'Healthcare — IDN' },
@@ -282,7 +299,7 @@ function SetupSection() {
 
         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 20 }}>
           <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 40 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT, marginBottom: 24 }}>Fee Model</div>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, marginBottom: 16 }}>Fee Model</div>
             {[
               { label: 'Platform fee (monthly)', value: '$25,000' },
               { label: 'Engagement fee (per phase)', value: '$150,000' },
@@ -295,7 +312,7 @@ function SetupSection() {
             ))}
           </div>
           <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 40 }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT, marginBottom: 24 }}>Primary Contact</div>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, marginBottom: 16 }}>Primary Contact</div>
             {[
               { label: 'Name', value: 'Dr. Sarah Chen' },
               { label: 'Title', value: 'Chief Medical Officer' },
@@ -325,28 +342,35 @@ function DataSection() {
   const avgConf  = Math.round(approved.reduce((a, b) => a + b.confidence, 0) / approved.length)
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Setup & Configuration</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 32px' }}>Data Uploads</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Setup & Configuration</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Data Uploads</div>
+        </div>
+        <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>Upload Files</button>
+      </div>
 
       {/* Dark readiness banner */}
-      <div style={{ background: '#0C0C0C', borderRadius: 8, padding: 40, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48 }}>
-        <div>
-          <div style={{ fontFamily: SERIF, fontSize: 96, fontWeight: 700, color: TEAL, lineHeight: 1 }}>42</div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 14 }}>/ 100 · AI Readiness Score</div>
-          <div style={{ height: 6, background: '#1A1A1A', borderRadius: 3, marginBottom: 12 }}>
-            <div style={{ height: 6, borderRadius: 3, width: '42%', background: TEAL }} />
+      <div style={{ background: '#0C0C0C', borderRadius: 8, padding: '20px 28px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 32 }}>
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
+            <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: TEAL, lineHeight: 1 }}>42</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>/100 · AI Readiness</div>
           </div>
-          <div style={{ fontFamily: SANS, fontSize: 16, color: '#FFFFFF' }}>Below 60-point deployment threshold</div>
+          <div style={{ height: 4, background: '#1A1A1A', borderRadius: 2, width: 160, marginBottom: 6 }}>
+            <div style={{ height: 4, borderRadius: 2, width: '42%', background: TEAL }} />
+          </div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: '#6B7280' }}>Below 60-point deployment threshold</div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' as const, justifyContent: 'center', gap: 20 }}>
+        <div style={{ display: 'flex', gap: 28 }}>
           {[
             { value: `${avgConf}%`, label: 'AVG CONFIDENCE', color: '#FFFFFF' },
             { value: '3 / 5', label: 'FILES APPROVED', color: GRN },
             { value: '2', label: 'MISSING', color: RED },
           ].map((s, i) => (
-            <div key={i}>
-              <div style={{ fontFamily: SANS, fontSize: 48, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+            <div key={i} style={{ borderLeft: '1px solid #1F2937', paddingLeft: 24 }}>
+              <div style={{ fontFamily: SANS, fontSize: 28, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -375,7 +399,7 @@ function DataSection() {
       {/* File table */}
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}` }}>
-          <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT }}>Meridian Health System · Uploaded Files</div>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Meridian Health System · Uploaded Files</div>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
           <thead>
@@ -575,27 +599,31 @@ function EngagementsSection() {
     const showLaunch  = chatStep >= CHAT_QUESTIONS.length
 
     return (
-      <div>
-        <button onClick={resetChat} style={{ fontFamily: SANS, fontSize: 15, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          ← Back to Engagements
-        </button>
-
-        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Setup & Configuration</div>
-        <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 8px' }}>Define the engagement.</h1>
-        <div style={{ fontFamily: SANS, fontSize: 17, color: TEXT2, marginBottom: 32 }}>
-          Tell me what your leadership wants to solve. I'll help you frame it into a structured engagement with clear outcomes and a Genome-validated success framework.
+      <div style={{ margin: '-48px -48px -80px', height: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' }}>
+        {/* Breadcrumb bar */}
+        <div style={{ height: 40, background: PAGE, borderBottom: `1px solid ${BDR}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
+          <button onClick={resetChat} style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            ← Back to Engagements
+          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>New Engagement · Step {Math.min(chatStep + 1, CHAT_QUESTIONS.length)} of {CHAT_QUESTIONS.length}</span>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {CHAT_QUESTIONS.map((_, i) => (
+                <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: i < chatStep ? TEAL : i === chatStep ? TEXT : BDR }} />
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '55fr 45fr', gap: 20, minHeight: 640 }}>
+        {/* Two panels */}
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '55fr 45fr', overflow: 'hidden' }}>
           {/* LEFT — Chat */}
-          <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, display: 'flex', flexDirection: 'column' as const, overflow: 'hidden', minHeight: 640 }}>
-            {/* Context banner */}
-            <div style={{ background: PAGE, borderBottom: `1px solid ${BDR}`, padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ borderRight: `1px solid ${BDR}`, display: 'flex', flexDirection: 'column' as const, overflow: 'hidden', background: CARD }}>
+            <div style={{ background: PAGE, borderBottom: `1px solid ${BDR}`, padding: '8px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
               <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Engagement Assistant</div>
-              <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2 }}>Meridian Health · 5 files loaded · AI Readiness 42/100</div>
+              <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2 }}>Meridian Health · 5 files loaded · AI Readiness 42/100</div>
             </div>
 
-            {/* Messages */}
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               {messages.map((m, i) => (
                 <div key={i} style={{ marginBottom: 20 }}>
@@ -606,7 +634,6 @@ function EngagementsSection() {
                           <p key={pi} style={{ fontFamily: SANS, fontSize: 16, color: TEXT, margin: pi === 0 ? 0 : '10px 0 0', lineHeight: 1.6 }}>{para}</p>
                         ))}
                       </div>
-                      {/* Options on last AI message */}
                       {i === messages.length - 1 && showOpts && (
                         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
                           {currentOptions().map(opt => (
@@ -634,9 +661,8 @@ function EngagementsSection() {
               <div ref={chatEndRef} />
             </div>
 
-            {/* Text input (always visible, primary for Q1) */}
             {!showLaunch && (
-              <div style={{ borderTop: `1px solid ${BDR}`, padding: '12px 20px', display: 'flex', gap: 10, flexShrink: 0 }}>
+              <div style={{ borderTop: `1px solid ${BDR}`, padding: '12px 20px', display: 'flex', gap: 10, flexShrink: 0, background: CARD }}>
                 <input value={userInput} onChange={e => setUserInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendFreeText()}
                   placeholder={chatStep === 0 ? 'Describe the project in your own words...' : 'Or describe in your own words...'}
@@ -648,59 +674,58 @@ function EngagementsSection() {
           </div>
 
           {/* RIGHT — Canvas */}
-          <div style={{ background: PAGE, border: `1px solid ${BDR}`, borderRadius: 8, padding: 24, display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
+          <div style={{ background: PAGE, overflowY: 'auto', padding: 24, display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 8 }}>Engagement Being Defined</div>
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: TEXT, lineHeight: 1.3 }}>{engagementName}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 8 }}>Engagement Canvas</div>
+              <div style={{ fontFamily: SERIF, fontSize: 20, color: Object.keys(canvasItems).length === 0 ? MUTED : TEXT, lineHeight: 1.3, fontStyle: Object.keys(canvasItems).length === 0 ? 'italic' : 'normal' }}>
+                {engagementName}
+              </div>
             </div>
 
-            {/* Canvas items */}
             {CANVAS_LABELS.map((label, idx) => {
               const item = canvasItems[idx]
               const isDirective = idx === 0
               return (
-                <div key={idx} style={{ background: item ? CARD : 'transparent', border: item ? `1px solid ${BDR}` : `1px dashed ${BDR}`, borderLeft: item ? `3px solid ${TEAL}` : `1px dashed ${BDR}`, borderRadius: 8, padding: '14px 16px', opacity: item ? 1 : 0.45, transition: 'all 0.3s' }}>
+                <div key={idx} style={{ background: item ? CARD : 'transparent', border: item ? `1px solid ${BDR}` : `1px dashed ${BDR}`, borderLeft: item ? `3px solid ${TEAL}` : `1px dashed ${BDR}`, borderRadius: 8, padding: '12px 14px', opacity: item ? 1 : 0.45, transition: 'all 0.3s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                     <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{label}</div>
                     {item && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>✓ confirmed</span>}
                   </div>
-                  <div style={{ fontFamily: SANS, fontSize: 15, color: item ? TEXT : MUTED, fontStyle: isDirective && item ? 'italic' : 'normal' }}>
+                  <div style={{ fontFamily: SANS, fontSize: 14, color: item ? TEXT : MUTED, fontStyle: isDirective && item ? 'italic' : 'normal' }}>
                     {item ? (isDirective ? `"${item.value}"` : item.value) : 'Awaiting your answer...'}
                   </div>
                 </div>
               )
             })}
 
-            {/* Genome validation — updates based on detected domain */}
-            <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 16 }}>
+            <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Genome Validation</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>Genome Validation</div>
                 <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const }}>
-                  {domain === 'rcm' ? '31 Comparable Engagements' : domain === 'ai_tech' ? '18 Comparable Engagements' : '23 Comparable Engagements'}
+                  {domain === 'rcm' ? '31 Engagements' : domain === 'ai_tech' ? '18 Engagements' : '23 Engagements'}
                 </div>
               </div>
               {GENOME_BY_DOMAIN[domain].map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `1px solid ${BDR}` }}>
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '7px 0', borderTop: `1px solid ${BDR}` }}>
                   <div>
-                    <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL }}>{p.code}</div>
-                    <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT2 }}>{p.label}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL }}>{p.code}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{p.label}</div>
                   </div>
-                  <div style={{ fontFamily: SANS, fontSize: 13, color: RED }}>{p.rate} failure rate</div>
+                  <div style={{ fontFamily: SANS, fontSize: 12, color: RED }}>{p.rate} failure</div>
                 </div>
               ))}
-              <div style={{ borderTop: `1px solid ${BDR}`, paddingTop: 10, marginTop: 4 }}>
-                <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, marginBottom: 6 }}>{domain === 'rcm' ? 74 : 68}% success rate for this type</div>
-                <div style={{ height: 6, background: BDR, borderRadius: 3 }}>
-                  <div style={{ height: 6, borderRadius: 3, width: `${domain === 'rcm' ? 74 : 68}%`, background: TEAL }} />
+              <div style={{ borderTop: `1px solid ${BDR}`, paddingTop: 8, marginTop: 4 }}>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2, marginBottom: 5 }}>{domain === 'rcm' ? 74 : 68}% success rate for this type</div>
+                <div style={{ height: 4, background: BDR, borderRadius: 2 }}>
+                  <div style={{ height: 4, borderRadius: 2, width: `${domain === 'rcm' ? 74 : 68}%`, background: TEAL }} />
                 </div>
               </div>
             </div>
 
-            {/* Launch CTA */}
             {showLaunch && (
               <div>
                 <button onClick={handleLaunch}
-                  style={{ width: '100%', background: TEXT, color: '#FFFFFF', fontFamily: SANS, fontSize: 16, fontWeight: 600, height: 52, border: 'none', borderRadius: 8, cursor: 'pointer' }}>
+                  style={{ width: '100%', background: TEXT, color: '#FFFFFF', fontFamily: SANS, fontSize: 15, fontWeight: 600, height: 48, border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   SAVE & LAUNCH ENGAGEMENT →
                 </button>
                 <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, textAlign: 'center' as const, marginTop: 8 }}>
@@ -718,14 +743,15 @@ function EngagementsSection() {
   const columns = ['Backlog', 'Assigned', 'In Progress', 'Complete']
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Setup & Configuration</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-        <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: 0 }}>Engagement Setup</h1>
-        <button onClick={() => setAddMode(true)} style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 44, padding: '0 20px', cursor: 'pointer' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Setup & Configuration</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Engagement Setup</div>
+        </div>
+        <button onClick={() => setAddMode(true)} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>
           + Add Engagement
         </button>
       </div>
-      <div style={{ fontFamily: SANS, fontSize: 17, color: TEXT2, marginBottom: 32 }}>Define what you need to solve. The AI will help you frame it properly.</div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {columns.map(col => (
@@ -771,10 +797,12 @@ function UsersSection() {
                         { bg: '#F3F4F6', color: MUTED }
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>People & Access</div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 40 }}>
-        <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: 0 }}>Users & Roles</h1>
-        <button style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 44, padding: '0 20px', cursor: 'pointer' }}>+ Invite User</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>People & Access</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Users & Roles</div>
+        </div>
+        <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>+ Invite User</button>
       </div>
 
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
@@ -840,13 +868,17 @@ function UsersSection() {
 function SecuritySection() {
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>People & Access</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>Security & Access</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>People & Access</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Security & Access</div>
+        </div>
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
-          <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}` }}>
-            <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT }}>Audit Log</div>
+          <div style={{ padding: '12px 20px', borderBottom: `1px solid ${BDR}` }}>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Audit Log</div>
           </div>
           <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
             <thead>
@@ -870,7 +902,7 @@ function SecuritySection() {
         </div>
 
         <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 32 }}>
-          <div style={{ fontFamily: SERIF, fontSize: 24, color: TEXT, marginBottom: 20 }}>API Access</div>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, marginBottom: 16 }}>API Access</div>
           <div style={{ fontFamily: SANS, fontSize: 17, color: TEXT2, marginBottom: 24, lineHeight: 1.6 }}>
             Programmatic access to AbarVa data via authenticated API endpoints. Use for external dashboards, data pipelines, and integrations.
           </div>
@@ -903,8 +935,12 @@ function BacklogSection() {
 
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Workload Management</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 32px' }}>Engagement Backlog</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Workload Management</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Engagement Backlog</div>
+        </div>
+      </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
         <select style={selStyle} value={filterClient} onChange={e => setFilterClient(e.target.value)}>
@@ -970,8 +1006,12 @@ function BacklogSection() {
 function AssignSection() {
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Workload Management</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>Assignment</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Workload Management</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Assignment</div>
+        </div>
+      </div>
 
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 40, marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
@@ -979,7 +1019,7 @@ function AssignSection() {
             <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Maestro</div>
             <div style={{ fontFamily: SERIF, fontSize: 32, color: TEXT }}>Anand Sundaram</div>
           </div>
-          <div style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: ORG, lineHeight: 1 }}>72%</div>
+          <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: ORG, lineHeight: 1 }}>72%</div>
         </div>
         <div style={{ height: 8, background: BDR, borderRadius: 4, marginBottom: 10 }}>
           <div style={{ height: 8, borderRadius: 4, width: '72%', background: ORG }} />
@@ -1021,8 +1061,12 @@ function CapacitySection() {
   const active   = ENGAGEMENTS.filter(e => e.status === 'In Progress' && e.maestro === 'Anand S.')
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Workload Management</div>
-      <h1 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>Maestro Capacity</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+        <div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 3 }}>Workload Management</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT }}>Maestro Capacity</div>
+        </div>
+      </div>
 
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 48, marginBottom: 20 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -1030,7 +1074,7 @@ function CapacitySection() {
             <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Maestro</div>
             <div style={{ fontFamily: SERIF, fontSize: 32, color: TEXT }}>Anand Sundaram</div>
           </div>
-          <div style={{ fontFamily: SERIF, fontSize: 96, fontWeight: 700, color: ORG, lineHeight: 1 }}>{capacity}%</div>
+          <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: ORG, lineHeight: 1 }}>{capacity}%</div>
         </div>
         <div style={{ height: 12, background: BDR, borderRadius: 6, marginBottom: 12 }}>
           <div style={{ height: 12, borderRadius: 6, width: `${capacity}%`, background: ORG }} />
@@ -1120,9 +1164,8 @@ function AdminPortalInner() {
       <div style={{ display: 'flex', height: 'calc(100vh - 60px)' }}>
         {/* ── Dark sidebar ── */}
         <div style={{ width: 220, flexShrink: 0, background: SB, display: 'flex', flexDirection: 'column' as const, overflowY: 'auto' }}>
-          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 4 }}>AbarVa</div>
-            <div style={{ fontFamily: SERIF, fontSize: 16, fontWeight: 700, color: '#FFFFFF' }}>Admin Portal</div>
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: '#FFFFFF' }}>Admin Portal</div>
           </div>
 
           <div style={{ padding: '12px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -1142,13 +1185,13 @@ function AdminPortalInner() {
           <div style={{ flex: 1, padding: '8px 0 20px' }}>
             {NAV_GROUPS.map(group => (
               <div key={group.label} style={{ marginBottom: 4 }}>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '10px 18px 6px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '10px 18px 5px' }}>
                   {group.label}
                 </div>
                 {group.items.map(item => (
                   <button key={item.key} onClick={() => setSection(item.key)} style={{
                     width: '100%', textAlign: 'left' as const, display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '8px 18px', background: section === item.key ? 'rgba(45,212,200,0.08)' : 'none',
+                    height: 32, padding: '0 18px', background: section === item.key ? 'rgba(45,212,200,0.08)' : 'none',
                     border: 'none', borderLeft: section === item.key ? `3px solid ${TEAL}` : '3px solid transparent', cursor: 'pointer',
                   }}>
                     <span style={{ fontSize: 13, color: section === item.key ? TEAL : 'rgba(255,255,255,0.35)', width: 18, flexShrink: 0 }}>{item.icon}</span>
