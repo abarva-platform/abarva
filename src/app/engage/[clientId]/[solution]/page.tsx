@@ -124,7 +124,12 @@ export default function MaestroWorkspace() {
     if (!user) { router.push('/sign-in'); return }
     const role = user.publicMetadata?.role as string
     if (role !== 'admin' && role !== 'investor') { router.push('/'); return }
-  }, [isLoaded, user, router])
+    // Investors are scoped to their assigned clientId — prevent URL-param spoofing
+    if (role === 'investor') {
+      const assignedClient = user.publicMetadata?.clientId as string | undefined
+      if (assignedClient && assignedClient !== clientId) { router.push('/'); return }
+    }
+  }, [isLoaded, user, router, clientId])
 
   const isReadOnly = (user?.publicMetadata?.role as string) === 'investor'
 

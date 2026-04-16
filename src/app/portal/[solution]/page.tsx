@@ -64,7 +64,11 @@ function PortalContent() {
   const [showMessageModal, setShowMessageModal] = useState(false)
 
   const role = user?.publicMetadata?.role as string | undefined
-  const clientId = clientIdOverride || user?.publicMetadata?.clientId as string | undefined
+  // Only admins may override clientId via query param (for previewing client portal)
+  // Client users are always scoped to their own clientId from verified server metadata
+  const clientId = (role === 'admin' && clientIdOverride)
+    ? clientIdOverride
+    : user?.publicMetadata?.clientId as string | undefined
   const solutionConfig = SOLUTIONS[solution]
 
   // Auth
