@@ -260,13 +260,16 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '40px' }}>
         {[
           { label: 'Data Confidence', value: `${d.confidence}%`, color: TEAL, sub: `Updated ${d.updated}` },
-          { label: 'Critical Findings', value: String(criticalCount), color: RED, sub: 'Require immediate action' },
-          { label: 'Total Findings', value: String(totalFindings), color: AMBER, sub: `Across ${d.categories.length} data categories` },
-          { label: 'Genome Patterns', value: String(d.genomePatterns.length), color: INDIGO, sub: 'Matched to your situation' },
+          { label: 'Critical Findings', value: String(criticalCount), color: RED,   sub: 'Require immediate action' },
+          { label: 'Total Findings', value: String(totalFindings), color: AMBER,  sub: `Across ${d.categories.length} data categories` },
+          { label: 'Genome Patterns', value: String(d.genomePatterns.length), color: TEAL, sub: 'Matched to your situation' },
         ].map(m => (
           <div key={m.label} style={{ background: CARD, border: `1px solid ${BORDER}`, borderTop: `2px solid ${m.color}`, borderRadius: '10px', padding: '18px' }}>
             <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '8px' }}>{m.label}</div>
-            <div style={{ fontFamily: SERIF, fontSize: '36px', color: m.color, lineHeight: 1, marginBottom: '4px' }}>{m.value}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.color, flexShrink: 0 }} />
+              <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE, lineHeight: 1 }}>{m.value}</div>
+            </div>
             <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM }}>{m.sub}</div>
           </div>
         ))}
@@ -296,7 +299,12 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
                     <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE }}>{cat.label}</div>
                     <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{cat.confidence}% confidence</div>
                   </div>
-                  {critical > 0 && <span style={{ fontFamily: MONO, fontSize: '9px', color: RED }}>{critical} critical</span>}
+                  {critical > 0 && (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: MONO, fontSize: '9px', color: MUTED }}>
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: RED }} />
+                      {critical}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -309,7 +317,7 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
         {/* Dim 2: Industry */}
         <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', overflow: 'hidden' }}>
           <div style={{ background: 'rgba(245,158,11,0.06)', borderBottom: `1px solid ${BORDER}`, padding: '14px 20px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '8px', color: AMBER, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '4px' }}>Dimension 2</div>
+            <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '4px' }}>Dimension 2</div>
             <div style={{ fontFamily: SERIF, fontSize: '18px', color: WHITE }}>Industry Intelligence</div>
             <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, marginTop: '2px' }}>{d.industryBenchmarks.length} benchmarks vs {d.vertical} peers</div>
           </div>
@@ -319,7 +327,10 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
                 style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
                   <span style={{ fontFamily: SANS, fontSize: '12px', color: WHITE }}>{b.metric}</span>
-                  <span style={{ fontFamily: MONO, fontSize: '10px', color: RED }}>{b.gap}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: MONO, fontSize: '10px', color: WHITE }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: RED, flexShrink: 0 }} />
+                    {b.gap}
+                  </span>
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{b.ours} vs {b.peer} peer</div>
               </button>
@@ -342,10 +353,10 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
               <button key={p.code} onClick={() => setTab('genome')}
                 style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', color: p.color, background: `${p.color}15`, padding: '1px 5px', borderRadius: '3px' }}>{p.code}</span>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: `rgba(255,255,255,0.05)`, padding: '1px 5px', borderRadius: '3px', border: `1px solid ${BORDER}` }}>{p.code}</span>
                   <span style={{ fontFamily: SANS, fontSize: '12px', color: WHITE }}>{p.name}</span>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: p.color }}>{p.failureRate}% failure rate in similar situations</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{p.failureRate}% failure rate in similar situations</div>
               </button>
             ))}
             <button onClick={() => setTab('genome')} style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '10px 0 0', fontFamily: MONO, fontSize: '9px', color: TEAL }}>
@@ -373,7 +384,7 @@ function OverviewTab({ d, setTab, setCatId }: { d: any; setTab: (t: string) => v
               <div key={r.dimension}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                   <span style={{ fontFamily: SANS, fontSize: '11px', color: MUTED }}>{r.dimension}</span>
-                  <span style={{ fontFamily: MONO, fontSize: '11px', color: c }}>{r.score}</span>
+                  <span style={{ fontFamily: MONO, fontSize: '11px', color: WHITE }}>{r.score}</span>
                 </div>
                 <DimBar value={r.score} benchmark={r.benchmark} color={c} />
               </div>
@@ -404,8 +415,8 @@ function DataTab({ d, catId, setCatId }: { d: any; catId: string; setCatId: (id:
                 border: isActive ? `1px solid ${cat.color}40` : '1px solid transparent',
                 borderRadius: '8px', padding: '10px 12px', cursor: 'pointer', marginBottom: '4px', display: 'block',
               }}>
-              <div style={{ fontFamily: SANS, fontSize: '12px', color: isActive ? cat.color : MUTED, fontWeight: isActive ? 600 : 400 }}>{cat.label}</div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: isActive ? cat.color : 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+              <div style={{ fontFamily: SANS, fontSize: '12px', color: isActive ? WHITE : MUTED, fontWeight: isActive ? 600 : 400 }}>{cat.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>
                 {cat.confidence}% · {critical > 0 ? `${critical} critical` : 'no critical'}
               </div>
             </button>
@@ -418,7 +429,7 @@ function DataTab({ d, catId, setCatId }: { d: any; catId: string; setCatId: (id:
         <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '20px', marginBottom: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
             <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE }}>{active.label}</div>
-            <span style={{ fontFamily: MONO, fontSize: '10px', color: active.color, background: `${active.color}10`, border: `1px solid ${active.color}30`, borderRadius: '4px', padding: '3px 10px' }}>
+            <span style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.2)', borderRadius: '4px', padding: '3px 10px' }}>
               {active.confidence}% confidence
             </span>
           </div>
@@ -443,7 +454,10 @@ function DataTab({ d, catId, setCatId }: { d: any; catId: string; setCatId: (id:
                 <SeverityBadge severity={f.severity} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: WHITE }}>{f.fact}</div>
-                  <div style={{ fontFamily: SERIF, fontSize: '20px', color: f.severity === 'critical' ? RED : AMBER, lineHeight: 1.1, marginTop: '4px' }}>{f.value}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: f.severity === 'critical' ? RED : AMBER, flexShrink: 0 }} />
+                    <div style={{ fontFamily: SERIF, fontSize: '20px', color: WHITE, lineHeight: 1.1 }}>{f.value}</div>
+                  </div>
                 </div>
               </div>
               <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.6, marginBottom: '8px' }}>{f.why}</div>
@@ -461,7 +475,7 @@ function IndustryTab({ d }: { d: any }) {
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '8px' }}>Industry Intelligence · {d.vertical} Peer Benchmarks</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '8px' }}>Industry Intelligence · {d.vertical} Peer Benchmarks</div>
         <div style={{ fontFamily: SERIF, fontSize: '32px', color: WHITE, marginBottom: '8px' }}>How you compare to peers.</div>
         <div style={{ fontFamily: SANS, fontSize: '14px', color: MUTED }}>Every benchmark sourced from {d.vertical} peer data — not analyst estimates.</div>
       </div>
@@ -482,14 +496,17 @@ function IndustryTab({ d }: { d: any }) {
               </div>
               <div style={{ textAlign: 'center' as const }}>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, textTransform: 'uppercase' as const, marginBottom: '2px' }}>Yours</div>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: c }}>{b.ours}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: c, flexShrink: 0 }} />
+                  <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE }}>{b.ours}</div>
+                </div>
               </div>
               <div style={{ textAlign: 'center' as const }}>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, textTransform: 'uppercase' as const, marginBottom: '2px' }}>Peer Median</div>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: GREEN }}>{b.peer}</div>
+                <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE }}>{b.peer}</div>
               </div>
               <div style={{ textAlign: 'right' as const }}>
-                <span style={{ fontFamily: MONO, fontSize: '13px', fontWeight: 700, color: c, background: `${c}10`, border: `1px solid ${c}30`, borderRadius: '6px', padding: '4px 12px' }}>
+                <span style={{ fontFamily: MONO, fontSize: '13px', fontWeight: 700, color: WHITE, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '4px 12px' }}>
                   {b.gap}
                 </span>
               </div>
@@ -506,7 +523,7 @@ function GenomeTab({ d }: { d: any }) {
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: INDIGO, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '8px' }}>Genome Intelligence · Knowledge Layer</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '8px' }}>Genome Intelligence · Knowledge Layer</div>
         <div style={{ fontFamily: SERIF, fontSize: '32px', color: WHITE, marginBottom: '8px' }}>What 340 transformations predict for yours.</div>
         <div style={{ fontFamily: SANS, fontSize: '14px', color: MUTED, lineHeight: 1.7 }}>
           The Transformation Genome contains 340 cross-client patterns — each tied to a real transformation with a documented outcome.
@@ -528,8 +545,11 @@ function GenomeTab({ d }: { d: any }) {
           }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
               <div style={{ flexShrink: 0, textAlign: 'center' as const, minWidth: '80px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '11px', color: p.color, background: `${p.color}10`, border: `1px solid ${p.color}30`, borderRadius: '4px', padding: '3px 8px', marginBottom: '8px', display: 'inline-block' }}>{p.code}</div>
-                <div style={{ fontFamily: SERIF, fontSize: '28px', color: p.color, lineHeight: 1 }}>{p.failureRate}%</div>
+                <div style={{ fontFamily: MONO, fontSize: '11px', color: MUTED, background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}`, borderRadius: '4px', padding: '3px 8px', marginBottom: '8px', display: 'inline-block' }}>{p.code}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.color, flexShrink: 0 }} />
+                  <div style={{ fontFamily: SERIF, fontSize: '28px', color: WHITE, lineHeight: 1 }}>{p.failureRate}%</div>
+                </div>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>failure rate</div>
               </div>
               <div style={{ flex: 1 }}>
@@ -577,7 +597,7 @@ function ReadinessTab({ d }: { d: any }) {
       <div style={{ marginBottom: '32px' }}>
         <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '8px' }}>AI Readiness Assessment</div>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: '16px', marginBottom: '8px' }}>
-          <div style={{ fontFamily: SERIF, fontSize: '64px', color: c, lineHeight: 1 }}>{overall}</div>
+          <div style={{ fontFamily: SERIF, fontSize: '64px', color: WHITE, lineHeight: 1 }}>{overall}</div>
           <div>
             <div style={{ fontFamily: SERIF, fontSize: '24px', color: MUTED }}>/100</div>
             <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED }}>Overall readiness score</div>
@@ -595,12 +615,15 @@ function ReadinessTab({ d }: { d: any }) {
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: SERIF, fontSize: '17px', color: WHITE, marginBottom: '4px' }}>{r.dimension}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '12px', color: RED, lineHeight: 1.5 }}>{r.blocker}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{r.blocker}</div>
                 </div>
                 <div style={{ textAlign: 'right' as const, flexShrink: 0 }}>
-                  <div style={{ fontFamily: SERIF, fontSize: '32px', color: rc, lineHeight: 1 }}>{r.score}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: rc, flexShrink: 0 }} />
+                    <div style={{ fontFamily: SERIF, fontSize: '32px', color: WHITE, lineHeight: 1 }}>{r.score}</div>
+                  </div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>benchmark: {r.benchmark}</div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: pct >= 85 ? GREEN : pct >= 60 ? AMBER : RED }}>{pct}% of benchmark</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{pct}% of benchmark</div>
                 </div>
               </div>
               <div style={{ position: 'relative', height: '6px', background: BORDER, borderRadius: '3px' }}>
@@ -608,7 +631,7 @@ function ReadinessTab({ d }: { d: any }) {
                 <div style={{ position: 'absolute', top: '-4px', left: `${r.benchmark}%`, width: '2px', height: '14px', background: 'rgba(255,255,255,0.3)' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
-                <span style={{ fontFamily: MONO, fontSize: '8px', color: rc }}>Your score: {r.score}</span>
+                <span style={{ fontFamily: MONO, fontSize: '8px', color: MUTED }}>Your score: {r.score}</span>
                 <span style={{ fontFamily: MONO, fontSize: '8px', color: MUTED }}>Benchmark: {r.benchmark}</span>
               </div>
             </div>
@@ -684,7 +707,7 @@ function DataContent() {
       {/* Page header */}
       <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '28px 48px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: d.color, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
             Intelligence Hub · {d.client} · {d.vertical}
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
@@ -697,13 +720,16 @@ function DataContent() {
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>data confidence</div>
               </div>
               <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: RED, lineHeight: 1 }}>
-                  {d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
+                  <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1 }}>
+                    {d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)}
+                  </div>
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>critical findings</div>
               </div>
               <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: INDIGO, lineHeight: 1 }}>{d.genomePatterns.length}</div>
+                <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1 }}>{d.genomePatterns.length}</div>
                 <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>genome patterns</div>
               </div>
             </div>
