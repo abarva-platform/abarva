@@ -42,7 +42,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'C/I ratio **71% vs 58% target** is an **£840M gap**. But the gap must be split structural vs addressable. Structural (compensation, premises, regulatory) = **£620M** — not reduceable without a strategy change. Addressable: **£220M** across IT overspend, consulting, AI portfolio, and Bloomberg AIM. That £220M is where this programme operates.',
+                'C/I ratio **71% vs 58% target** is an **$840M gap**. But the gap must be split structural vs addressable. Structural (compensation, premises, regulatory) = **$620M** — not reduceable without a strategy change. Addressable: **$220M** across IT overspend, consulting, AI portfolio, and Bloomberg AIM. That $220M is where this programme operates.',
             },
             {
               role: 'admin',
@@ -54,7 +54,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Three data points. (1) Bloomberg AIM maintenance **£8.4M vs £2.1M peer median** — this is not a technology premium, it\'s a negotiation failure. (2) Consulting spend **£42M at 24% KT** — firms that exit consulting dependency to Maestros recover **£16–28M**. (3) IT headcount has grown **34% in 3 years** while IT output (as measured by story points and AI initiatives in production) is **flat**. These aren\'t structural — they\'re governance failures masquerading as fixed costs.',
+                'Three data points. (1) Bloomberg AIM maintenance **$8.4M vs $2.1M peer median** — this is not a technology premium, it\'s a negotiation failure. (2) Consulting spend **$42M at 24% KT** — firms that exit consulting dependency to Maestros recover **$16–28M**. (3) IT headcount has grown **34% in 3 years** while IT output (as measured by story points and AI initiatives in production) is **flat**. These aren\'t structural — they\'re governance failures masquerading as fixed costs.',
             },
             {
               role: 'admin',
@@ -66,7 +66,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'High confidence (>65% Genome interval): **£72–96M**. Medium confidence: additional **£40–60M**. Conservative total: **£72M**. Base case: **£112M**. Optimistic: **£156M**. The range widens because the AI portfolio recovery depends on execution — if CDO is appointed and governance works, the AI value is in the upper range. If governance fails again (F002), the AI contribution is near zero.',
+                'High confidence (>65% Genome interval): **$72–96M**. Medium confidence: additional **$40–60M**. Conservative total: **$72M**. Base case: **$112M**. Optimistic: **$156M**. The range widens because the AI portfolio recovery depends on execution — if CDO is appointed and governance works, the AI value is in the upper range. If governance fails again (F002), the AI contribution is near zero.',
             },
             {
               role: 'admin',
@@ -77,7 +77,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Correct. **F002 is the meta-risk.** All other interventions depend on governance working. The CDO appointment is not an HR decision — it\'s the single action that unlocks or blocks **£94M in AI value**, controls the consulting reduction programme, and owns the IT rationalisation. Without it, no other intervention compounds. The recommendation is: name the CDO before Day 1, not as a prerequisite to Phase 1 — but as the first action in the execution programme.',
+                'Correct. **F002 is the meta-risk.** All other interventions depend on governance working. The CDO appointment is not an HR decision — it\'s the single action that unlocks or blocks **$94M in AI value**, controls the consulting reduction programme, and owns the IT rationalisation. Without it, no other intervention compounds. The recommendation is: name the CDO before Day 1, not as a prerequisite to Phase 1 — but as the first action in the execution programme.',
             },
           ],
         },
@@ -88,7 +88,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Revenue per AUM declining — performance fees from **£82M to £48M** while AUM grew. This isn\'t just a cost problem. Two drivers: (1) market conditions hitting performance (partly structural), (2) fee yield by strategy is unanalysed — some strategies may be underpriced.',
+                'Revenue per AUM declining — performance fees from **$82M to $48M** while AUM grew. This isn\'t just a cost problem. Two drivers: (1) market conditions hitting performance (partly structural), (2) fee yield by strategy is unanalysed — some strategies may be underpriced.',
             },
             {
               role: 'admin',
@@ -100,7 +100,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Can\'t confirm without strategy-level revenue data (not uploaded). But Genome from **47 similar asset managers** shows: **60%** of fee compression at this profile is market-driven (structural), **40%** is pricing and mix (addressable). For a £840B AUM manager, that 40% is typically **£12–18M/yr**. The fee yield analysis is the next unlock — requires revenue by strategy upload.',
+                'Can\'t confirm without strategy-level revenue data (not uploaded). But Genome from **47 similar asset managers** shows: **60%** of fee compression at this profile is market-driven (structural), **40%** is pricing and mix (addressable). For a $840B AUM manager, that 40% is typically **$12–18M/yr**. The fee yield analysis is the next unlock — requires revenue by strategy upload.',
             },
             {
               role: 'admin',
@@ -111,7 +111,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Client retention risk. AUM data shows **2 institutional clients** representing **£84B AUM** have reduced allocations 18 months running. The pattern matches F010: no measurement framework means the relationship team doesn\'t have early warning signals. A client health dashboard — built from existing CRM data — would flag this earlier. No additional data upload required; can be built from ARC-M01.',
+                'Client retention risk. AUM data shows **2 institutional clients** representing **$84B AUM** have reduced allocations 18 months running. The pattern matches F010: no measurement framework means the relationship team doesn\'t have early warning signals. A client health dashboard — built from existing CRM data — would flag this earlier. No additional data upload required; can be built from ARC-M01.',
             },
           ],
         },
@@ -122,7 +122,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**£94M committed, 28 initiatives, £0 verified ROI.** The CDO vacancy (11 months) means no governance council, which means no initiative baseline, which means ROI cannot be calculated. This is F010 at **79% failure rate**.',
+                '**$94M committed, 28 initiatives, $0 verified ROI.** The CDO vacancy (11 months) means no governance council, which means no initiative baseline, which means ROI cannot be calculated. This is F010 at **79% failure rate**.',
             },
             {
               role: 'admin',
@@ -133,7 +133,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '5 candidates for immediate termination: (1) AI-007 (internal comms routing, **£2.1M**, never had executive sponsor), (2) AI-011 (regulatory reporting automation, **£4.8M**, 3 failed handoffs to engineering), (3) AI-014 (sentiment analytics, **£1.6M**, use case disputed by trading desk), (4) AI-019 (counterparty risk model, **£5.2M**, data dependencies unresolved 2 years), (5) AI-022 (ESG scoring, **£3.9M**, vendor-built with no internal ownership). Total: **£17.6M freed** for reallocation.',
+                '5 candidates for immediate termination: (1) AI-007 (internal comms routing, **$2.1M**, never had executive sponsor), (2) AI-011 (regulatory reporting automation, **$4.8M**, 3 failed handoffs to engineering), (3) AI-014 (sentiment analytics, **$1.6M**, use case disputed by trading desk), (4) AI-019 (counterparty risk model, **$5.2M**, data dependencies unresolved 2 years), (5) AI-022 (ESG scoring, **$3.9M**, vendor-built with no internal ownership). Total: **$17.6M freed** for reallocation.',
             },
             {
               role: 'admin',
@@ -155,7 +155,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Three candidates for acceleration: AI-023 (Investment Research, AWS Bedrock access configured, external data source — no golden record needed, **45 days to production**), AI-026 (Earnings Call Analysis, same infrastructure, **30 days**), AI-031 (Counterparty Exposure Dashboard, Charles River data pipe already built, **60 days**). Total additional investment needed: **£1.4M**. Expected ROI by month 6 (fee savings + analyst capacity): **£8–12M**.',
+                'Three candidates for acceleration: AI-023 (Investment Research, AWS Bedrock access configured, external data source — no golden record needed, **45 days to production**), AI-026 (Earnings Call Analysis, same infrastructure, **30 days**), AI-031 (Counterparty Exposure Dashboard, Charles River data pipe already built, **60 days**). Total additional investment needed: **$1.4M**. Expected ROI by month 6 (fee savings + analyst capacity): **$8–12M**.',
             },
           ],
         },
@@ -166,7 +166,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**8 board-level commitments 2023–2024.** Building the contradiction map: committed vs what data shows. Most striking: "AI leadership by 2025" committed in March 2023. Current state: **0 of 28** AI initiatives in production, CDO vacant 11 months, **£0 verified ROI**.',
+                '**8 board-level commitments 2023–2024.** Building the contradiction map: committed vs what data shows. Most striking: "AI leadership by 2025" committed in March 2023. Current state: **0 of 28** AI initiatives in production, CDO vacant 11 months, **$0 verified ROI**.',
             },
             {
               role: 'admin',
@@ -177,7 +177,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Correct — and this is the diagnostic. The strategic commitment documents describe an AI-forward organisation. The data shows the opposite. The gap isn\'t intent — it\'s measurement. No one has been able to show the board what **£94M** has produced because there\'s no measurement framework (F010). The contradiction map becomes the CEO\'s conversation with the board: here is what we said, here is what the data shows, here is what needs to change.',
+                'Correct — and this is the diagnostic. The strategic commitment documents describe an AI-forward organisation. The data shows the opposite. The gap isn\'t intent — it\'s measurement. No one has been able to show the board what **$94M** has produced because there\'s no measurement framework (F010). The contradiction map becomes the CEO\'s conversation with the board: here is what we said, here is what the data shows, here is what needs to change.',
             },
             {
               role: 'admin',
@@ -199,7 +199,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
         status: 'approved',
         content: {
           executive_summary:
-            'Arcturus Financial Group has an £840M efficiency gap versus the 58% C/I target committed to the board in 2023. The gap has three addressable components: £220M in IT and consulting structural overspend, £94M in AI spend with zero verified return, and an unquantified but material revenue side compression from declining fee yield. Genome patterns F002, F010, and F012 are confirmed. All three are governance failures, not market conditions. The CDO vacancy — 11 months — is the common root cause blocking recovery across all three components.',
+            'Arcturus Financial Group has an $840M efficiency gap versus the 58% C/I target committed to the board in 2023. The gap has three addressable components: $220M in IT and consulting structural overspend, $94M in AI spend with zero verified return, and an unquantified but material revenue side compression from declining fee yield. Genome patterns F002, F010, and F012 are confirmed. All three are governance failures, not market conditions. The CDO vacancy — 11 months — is the common root cause blocking recovery across all three components.',
           ci_ratio: { current: 71, target: 58, gap_bps: 1300, gap_value_m: 840 },
           addressable_margin: {
             high_confidence_m: 96,
@@ -241,7 +241,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
             },
           ],
           genome_summary:
-            'F002 (no exec sponsor, 84% failure rate) is confirmed and is the meta-risk across all interventions. F010 (measurement vacuum, 79%) explains why £94M has produced £0 verifiable ROI. F012 (structural cost misattribution, 68%) explains why IT overspend has been treated as strategic investment for 3 years.',
+            'F002 (no exec sponsor, 84% failure rate) is confirmed and is the meta-risk across all interventions. F010 (measurement vacuum, 79%) explains why $94M has produced $0 verifiable ROI. F012 (structural cost misattribution, 68%) explains why IT overspend has been treated as strategic investment for 3 years.',
           ai_portfolio: {
             total_initiatives: 28,
             committed_spend_m: 94,
@@ -267,7 +267,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Genome sequencing. The CDO appointment comes first — not because it is most valuable but because without it, every other intervention is at risk of repeating F002. Second: AI portfolio reorientation — kill 5, free **£17.6M**, accelerate 3. Third: consulting reduction via Maestro programme. Fourth: Bloomberg AIM renegotiation. This is Genome sequencing, not intuition.',
+                'Genome sequencing. The CDO appointment comes first — not because it is most valuable but because without it, every other intervention is at risk of repeating F002. Second: AI portfolio reorientation — kill 5, free **$17.6M**, accelerate 3. Third: consulting reduction via Maestro programme. Fourth: Bloomberg AIM renegotiation. This is Genome sequencing, not intuition.',
             },
             {
               role: 'admin',
@@ -312,7 +312,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Building **3 scenarios**. Conservative assumes CDO appointment at day 60, Bloomberg renegotiation takes 6 months, 3 of 5 killed initiatives have political friction. Base: CDO at day 30, Bloomberg at 4 months, all 5 kill decisions accepted. Optimistic: CDO day 15, Bloomberg at 3 months, fee yield analysis unlocks additional **£14M**.',
+                'Building **3 scenarios**. Conservative assumes CDO appointment at day 60, Bloomberg renegotiation takes 6 months, 3 of 5 killed initiatives have political friction. Base: CDO at day 30, Bloomberg at 4 months, all 5 kill decisions accepted. Optimistic: CDO day 15, Bloomberg at 3 months, fee yield analysis unlocks additional **$14M**.',
             },
             {
               role: 'admin',
@@ -323,7 +323,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Year 1 cash impact. Conservative: **£42M** (AI portfolio savings immediate + Bloomberg renegotiation partial + first Maestro contracts). Base: **£68M**. Optimistic: **£84M**. These are verified savings — cash that doesn\'t leave the firm. Not estimated; not projected. Fee on verified only.',
+                'Year 1 cash impact. Conservative: **$42M** (AI portfolio savings immediate + Bloomberg renegotiation partial + first Maestro contracts). Base: **$68M**. Optimistic: **$84M**. These are verified savings — cash that doesn\'t leave the firm. Not estimated; not projected. Fee on verified only.',
             },
             {
               role: 'admin',
@@ -335,7 +335,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'By category — **Base case year 1:** AI portfolio rationalisation **£22M** (stopped spend + 3 initiatives in production generating measurable analyst productivity), Bloomberg AIM renegotiation **£6.3M**, consulting Maestro programme Phase 1 savings **£18M**, IT structural overspend **£12M** (SQL DW migration + contract renegotiations), revenue uplift from fee yield analysis **£8M** (requires data upload in Month 1). Total: **£66.3M base case**. Year 2 adds further £30–45M as AI portfolio compounds.',
+                'By category — **Base case year 1:** AI portfolio rationalisation **$22M** (stopped spend + 3 initiatives in production generating measurable analyst productivity), Bloomberg AIM renegotiation **$6.3M**, consulting Maestro programme Phase 1 savings **$18M**, IT structural overspend **$12M** (SQL DW migration + contract renegotiations), revenue uplift from fee yield analysis **$8M** (requires data upload in Month 1). Total: **$66.3M base case**. Year 2 adds further $30–45M as AI portfolio compounds.',
             },
             {
               role: 'admin',
@@ -346,7 +346,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'AbarVa fee at base case: **17.5% of £66.3M = £11.6M**. Fee only on verified savings, post-verification. Four triggers over 12 months. If verified savings are **£42M** (conservative), fee is **£7.35M**. If optimistic (**£84M**), fee is **£14.7M**. No verified saving → no fee. CFO sees the fee only after the cash lands.',
+                'AbarVa fee at base case: **17.5% of $66.3M = $11.6M**. Fee only on verified savings, post-verification. Four triggers over 12 months. If verified savings are **$42M** (conservative), fee is **$7.35M**. If optimistic (**$84M**), fee is **$14.7M**. No verified saving → no fee. CFO sees the fee only after the cash lands.',
             },
           ],
         },
@@ -357,7 +357,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Of 28 initiatives, recommendation: **kill 5, accelerate 3, reshape 8, pause 12**. Kill list confirmed (**£17.6M freed**). Accelerate: AI-023, AI-026, AI-031. Reshape: 8 initiatives that need the golden record — viable but require MLOps foundation first.',
+                'Of 28 initiatives, recommendation: **kill 5, accelerate 3, reshape 8, pause 12**. Kill list confirmed (**$17.6M freed**). Accelerate: AI-023, AI-026, AI-031. Reshape: 8 initiatives that need the golden record — viable but require MLOps foundation first.',
             },
             {
               role: 'admin',
@@ -480,7 +480,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Locked. Metric 2: AI spend with verified ROI. Current: **£94M committed, £0 verified**. Source: ARC-M02. Metric 3: Consulting spend: **£42M**. Metric 4: Bloomberg AIM annual maintenance: **£8.4M**. Metric 5: Performance fee yield: **£48M/yr**. All five locked. Day 0 baseline document generated. CEO signature required.',
+                'Locked. Metric 2: AI spend with verified ROI. Current: **$94M committed, $0 verified**. Source: ARC-M02. Metric 3: Consulting spend: **$42M**. Metric 4: Bloomberg AIM annual maintenance: **$8.4M**. Metric 5: Performance fee yield: **$48M/yr**. All five locked. Day 0 baseline document generated. CEO signature required.',
             },
             {
               role: 'admin',
@@ -525,7 +525,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Wave 2 (days 91–180) gates: (1) CDO operational and AI governance council holding monthly sessions, (2) First verified saving **≥ £5M** documented and audited, (3) Bloomberg AIM renegotiation term sheet signed, (4) AI-023 in production. All four must be met to proceed to Wave 3 funding. Wave 2 failure condition: if CDO appointment slides past day 60, Wave 2 is restructured with interim governance.',
+                'Wave 2 (days 91–180) gates: (1) CDO operational and AI governance council holding monthly sessions, (2) First verified saving **≥ $5M** documented and audited, (3) Bloomberg AIM renegotiation term sheet signed, (4) AI-023 in production. All four must be met to proceed to Wave 3 funding. Wave 2 failure condition: if CDO appointment slides past day 60, Wave 2 is restructured with interim governance.',
             },
             {
               role: 'admin',
@@ -536,7 +536,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Wave 3 (days 181–365): compound recovery. Full Maestro programme executing, Bloomberg AIM renegotiation live (first billing cycle reduced), fee yield analysis unlocked (requires data upload by month 5). AI portfolio: **6 initiatives in production** with documented ROI. Full C/I ratio improvement measurable. Year-end board review: verified savings vs **£66.3M base case**.',
+                'Wave 3 (days 181–365): compound recovery. Full Maestro programme executing, Bloomberg AIM renegotiation live (first billing cycle reduced), fee yield analysis unlocked (requires data upload by month 5). AI portfolio: **6 initiatives in production** with documented ROI. Full C/I ratio improvement measurable. Year-end board review: verified savings vs **$66.3M base case**.',
             },
           ],
         },
@@ -555,27 +555,27 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
             },
             {
               metric: 'AI spend with verified ROI',
-              baseline: '£0M of £94M',
+              baseline: '$0M of $94M',
               source: 'ARC-M02',
-              target: '£28M by month 12',
+              target: '$28M by month 12',
             },
             {
               metric: 'Annual consulting spend',
-              baseline: '£42M',
+              baseline: '$42M',
               source: 'ARC-D01',
-              target: '£24M by month 12',
+              target: '$24M by month 12',
             },
             {
               metric: 'Bloomberg AIM maintenance',
-              baseline: '£8.4M',
+              baseline: '$8.4M',
               source: 'ARC-M03',
-              target: '£4.2M by month 9',
+              target: '$4.2M by month 9',
             },
             {
               metric: 'Performance fee yield',
-              baseline: '£48M',
+              baseline: '$48M',
               source: 'ARC-M01',
-              target: '£56M by month 12 (requires data upload)',
+              target: '$56M by month 12 (requires data upload)',
             },
           ],
           wave_plan: [
@@ -590,7 +590,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
                 'AI-026 in production (day 45)',
                 'Bloomberg AIM renegotiation kick-off (day 30)',
               ],
-              gate: 'First verified saving ≥ £5M',
+              gate: 'First verified saving ≥ $5M',
             },
             {
               wave: 2,
@@ -611,16 +611,16 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               theme: 'Compound',
               milestones: [
                 '6 AI initiatives in production',
-                'Consulting spend at £28M',
+                'Consulting spend at $28M',
                 'C/I ratio at 64%',
                 'Year-end board review',
               ],
-              gate: 'Annual verified savings vs £66.3M base case',
+              gate: 'Annual verified savings vs $66.3M base case',
             },
           ],
           fee_schedule: [
             {
-              trigger: 'Month 3 — first verified saving ≥ £5M',
+              trigger: 'Month 3 — first verified saving ≥ $5M',
               fee_m: 0.875,
               invoice: 'ARC-M-FEE-001',
             },
@@ -656,7 +656,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 3 margin actuals. C/I ratio: **69.1%** (from **71.2%** baseline). Improvement: **210bps**. Annualised value: £147M × 2.1% = £30.9M, but only the verified portion counts for fee: **£22.4M** (consulting reduction + AI portfolio kills verified by KPMG).',
+                'Month 3 margin actuals. C/I ratio: **69.1%** (from **71.2%** baseline). Improvement: **210bps**. Annualised value: $147M × 2.1% = $30.9M, but only the verified portion counts for fee: **$22.4M** (consulting reduction + AI portfolio kills verified by KPMG).',
             },
             {
               role: 'admin',
@@ -667,7 +667,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'AI-026 in production since Day 42. Verified ROI: **£4.1M** (analyst capacity freed — 6 analysts × £340K each + direct research cost reduction). AI-023 in production since Day 58. Verified ROI: **£3.8M** (same methodology). AI-031 delayed — Charles River data pipe issue (expected Month 4). Total verified AI ROI: **£7.9M vs £0 baseline**. F010 pattern broken: measurement framework operational.',
+                'AI-026 in production since Day 42. Verified ROI: **$4.1M** (analyst capacity freed — 6 analysts × $340K each + direct research cost reduction). AI-023 in production since Day 58. Verified ROI: **$3.8M** (same methodology). AI-031 delayed — Charles River data pipe issue (expected Month 4). Total verified AI ROI: **$7.9M vs $0 baseline**. F010 pattern broken: measurement framework operational.',
             },
             {
               role: 'admin',
@@ -678,7 +678,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Bloomberg term sheet signed Month 2. New annual maintenance: **£5.1M** (from **£8.4M** baseline). First billing cycle at new rate begins Month 4. Annualised saving: **£3.3M**. Verified at Month 4 billing. Bloomberg relationship improved — new account team assigned after CTO escalation in Month 1.',
+                'Bloomberg term sheet signed Month 2. New annual maintenance: **$5.1M** (from **$8.4M** baseline). First billing cycle at new rate begins Month 4. Annualised saving: **$3.3M**. Verified at Month 4 billing. Bloomberg relationship improved — new account team assigned after CTO escalation in Month 1.',
             },
           ],
         },
@@ -689,7 +689,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 3 AI ROI log. AI-026 Earnings Call Analysis: **£4.1M verified** (6 analyst roles redeployed, confirmed by HR and finance). AI-023 Investment Research: **£3.8M verified** (external research cost reduction confirmed by CFO office). Total: **£7.9M**. Baseline was **£0**. CDO Dr. Sarah Chen (appointed Day 28) has signed off all ROI verifications.',
+                'Month 3 AI ROI log. AI-026 Earnings Call Analysis: **$4.1M verified** (6 analyst roles redeployed, confirmed by HR and finance). AI-023 Investment Research: **$3.8M verified** (external research cost reduction confirmed by CFO office). Total: **$7.9M**. Baseline was **$0**. CDO Dr. Sarah Chen (appointed Day 28) has signed off all ROI verifications.',
             },
             {
               role: 'admin',
@@ -700,7 +700,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Correct — **Day 28 vs day 30 plan**. Dr. Sarah Chen previously CDO at Fidelity UK. AI governance council first session was Day 35. 5-initiative kill approved unanimously at Day 48 board sub-committee. The **£17.6M freed** capital has been reallocated: **£4M** to AI-023/026/031 acceleration, **£13.6M** returned to CFO for reallocation. F002 pattern broken.',
+                'Correct — **Day 28 vs day 30 plan**. Dr. Sarah Chen previously CDO at Fidelity UK. AI governance council first session was Day 35. 5-initiative kill approved unanimously at Day 48 board sub-committee. The **$17.6M freed** capital has been reallocated: **$4M** to AI-023/026/031 acceleration, **$13.6M** returned to CFO for reallocation. F002 pattern broken.',
             },
             {
               role: 'admin',
@@ -711,7 +711,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 4 forecast: AI-031 in production (**£2.1M verified ROI** from counterparty monitoring cost reduction). Bloomberg first billing at reduced rate. Total verified savings by Month 4: **£25.2M annualised**. On track for base case of **£66.3M by Month 12**.',
+                'Month 4 forecast: AI-031 in production (**$2.1M verified ROI** from counterparty monitoring cost reduction). Bloomberg first billing at reduced rate. Total verified savings by Month 4: **$25.2M annualised**. On track for base case of **$66.3M by Month 12**.',
             },
           ],
         },
@@ -722,7 +722,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 3 fee trigger review. Trigger 1: first verified saving ≥ £5M. Actual: **£22.4M verified**. Trigger met — exceeded. Fee due: 17.5% × £22.4M = **£3.92M**.',
+                'Month 3 fee trigger review. Trigger 1: first verified saving ≥ $5M. Actual: **$22.4M verified**. Trigger met — exceeded. Fee due: 17.5% × $22.4M = **$3.92M**.',
             },
             {
               role: 'admin',
@@ -733,7 +733,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'It is. The trigger was set at ≥ £5M, which was conservative. The actual verified saving of **£22.4M** reflects: (1) faster CDO appointment than modelled, (2) Bloomberg renegotiation closing in Month 2 vs Month 4, (3) AI-026 and AI-023 both in production with verified ROI. The fee is proportional to verified delivery. KPMG has audited the **£22.4M**. Invoice ARC-M-FEE-001 issued for **£3.92M**.',
+                'It is. The trigger was set at ≥ $5M, which was conservative. The actual verified saving of **$22.4M** reflects: (1) faster CDO appointment than modelled, (2) Bloomberg renegotiation closing in Month 2 vs Month 4, (3) AI-026 and AI-023 both in production with verified ROI. The fee is proportional to verified delivery. KPMG has audited the **$22.4M**. Invoice ARC-M-FEE-001 issued for **$3.92M**.',
             },
             {
               role: 'admin',
@@ -744,7 +744,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 6 trigger: Bloomberg renegotiation first full billing cycle verified + Wave 2 gate (C/I improvement ≥ 2 percentage points). Current trajectory: Bloomberg at **£5.1M annual** (verified Month 4), C/I at **69.1%** (210bps improvement). Both triggers on track. Month 6 fee estimate: **£1.1M additional**. Total to date by Month 6: **£5.02M**. Base case total by Month 12: **£11.6M**.',
+                'Month 6 trigger: Bloomberg renegotiation first full billing cycle verified + Wave 2 gate (C/I improvement ≥ 2 percentage points). Current trajectory: Bloomberg at **$5.1M annual** (verified Month 4), C/I at **69.1%** (210bps improvement). Both triggers on track. Month 6 fee estimate: **$1.1M additional**. Total to date by Month 6: **$5.02M**. Base case total by Month 12: **$11.6M**.',
             },
           ],
         },
@@ -801,7 +801,7 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
             verified_from: 'Month 4',
           },
           fee_trigger: {
-            trigger: 'Month 3 first verified saving ≥ £5M',
+            trigger: 'Month 3 first verified saving ≥ $5M',
             actual_verified_m: 22.4,
             fee_due_m: 3.92,
             invoice: 'ARC-M-FEE-001',
@@ -848,9 +848,9 @@ export const ARCTURUS_MARGIN_DEMO: DemoEngagement = {
           board_notes: [
             'Month 3 overall RAG: GREEN. All Wave 1 gates met.',
             'CDO Dr. Sarah Chen appointed Day 28 — 2 days ahead of plan. F002 pattern broken.',
-            '£22.4M verified savings in Month 3 — exceeds £5M trigger. KPMG audited. Invoice raised.',
+            '$22.4M verified savings in Month 3 — exceeds $5M trigger. KPMG audited. Invoice raised.',
             'AI-026 and AI-023 in production with documented ROI. 11-month drought ended.',
-            'Bloomberg AIM renegotiation complete — £3.3M annualised saving from Month 4.',
+            'Bloomberg AIM renegotiation complete — $3.3M annualised saving from Month 4.',
             'AI-031 AMBER — data pipe issue. Month 4 resolution expected.',
           ],
         },

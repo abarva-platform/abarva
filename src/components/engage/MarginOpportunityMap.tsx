@@ -39,8 +39,8 @@ const CATEGORIES = ['All', 'AI Portfolio', 'IT Cost', 'Middle Office', 'Revenue'
 
 function formatRange(min: number | null, max: number | null): string {
   if (min === null || max === null) return '—'
-  if (min === max) return `£${min}M`
-  return `£${min}–${max}M`
+  if (min === max) return `$${min}M`
+  return `$${min}–${max}M`
 }
 
 function ConfidenceBar({ confidence, status }: { confidence: number | null; status: MarginLever['status'] }) {
@@ -382,14 +382,14 @@ export default function MarginOpportunityMap({
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: SANS, fontSize: 13, color: WHITE }}>
               <span style={{ fontFamily: MONO }}>
-                £{analysedMinTotal}–{analysedMaxTotal}M
+                ${analysedMinTotal}–{analysedMaxTotal}M
               </span>{' '}
               already analysed
             </span>
             <span style={{ color: MUTED }}>·</span>
             <span style={{ fontFamily: SANS, fontSize: 13, color: WHITE }}>
               <span style={{ fontFamily: MONO }}>
-                £{estimateMinTotal}–{estimateMaxTotal}M
+                ${estimateMinTotal}–{estimateMaxTotal}M
               </span>{' '}
               available with data
             </span>

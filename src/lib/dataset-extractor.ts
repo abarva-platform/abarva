@@ -40,7 +40,7 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
   dimension_scores: {
     consulting_dependency: {
       score: 22,
-      evidence: '10 active consulting relationships. £42M annual spend. Average KT score 24%. Wipro KT 15%, Bloomberg LP KT 8%, Google PSO KT 5% (engagement ended with no handover).',
+      evidence: '10 active consulting relationships. $42M annual spend. Average KT score 24%. Wipro KT 15%, Bloomberg LP KT 8%, Google PSO KT 5% (engagement ended with no handover).',
       missing_data: 'Detailed vendor SLA performance actuals',
       what_it_unlocks: 'Precise SLA penalty calculations and renegotiation leverage'
     },
@@ -99,15 +99,15 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
 
   top_findings: [
     {
-      title: '£42M consulting spend. Average KT score 24%. Knowledge leaves every Friday.',
-      description: '10 consulting relationships at £42M annually. The average knowledge transfer score across all vendors is 24% — meaning 76% of what they know walks out when the contract ends. Wipro (KT 15%) and Bloomberg LP (KT 8%) are the most critical.',
+      title: '$42M consulting spend. Average KT score 24%. Knowledge leaves every Friday.',
+      description: '10 consulting relationships at $42M annually. The average knowledge transfer score across all vendors is 24% — meaning 76% of what they know walks out when the contract ends. Wipro (KT 15%) and Bloomberg LP (KT 8%) are the most critical.',
       severity: 'critical',
       source_files: ['ARC-D01', 'ARC-D02'],
       genome_pattern: 'F001'
     },
     {
       title: 'Google PSO engagement ended. MLOps design has no internal owner.',
-      description: '£3.5M spent. 22% of scope delivered. The AI/ML platform knowledge — what was designed, what decisions were made, what was built — has no internal owner. The AI/ML Platform squad cannot proceed without rebuilding this context from scratch.',
+      description: '$3.5M spent. 22% of scope delivered. The AI/ML platform knowledge — what was designed, what decisions were made, what was built — has no internal owner. The AI/ML Platform squad cannot proceed without rebuilding this context from scratch.',
       severity: 'critical',
       source_files: ['ARC-D01', 'ARC-D02'],
       genome_pattern: 'F001'
@@ -147,30 +147,30 @@ export const ARCTURUS_DELIVERY_PHASE0: Phase0Output = {
 export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
   overall_score: 38,
   overall_verdict: 'partial',
-  verdict_summary: 'Sufficient data to identify £250–320M in addressable margin across three confirmed areas. Middle office, fee yield, client retention, and operations require additional uploads to unlock the next £40–80M estimate range.',
+  verdict_summary: 'Sufficient data to identify $250–320M in addressable margin across three confirmed areas. Middle office, fee yield, client retention, and operations require additional uploads to unlock the next $40–80M estimate range.',
 
   dimension_scores: {
     financial_data_quality: {
       score: 52,
       evidence: 'P&L by business unit loaded (ARC-M01). Cost structure loaded (ARC-M03). AI spend tracker loaded (ARC-M02). Financial statements 2022–2024 loaded. C/I ratio 71% clearly visible. Missing: segment-level fee revenue breakdown, fund-level profitability.',
       missing_data: 'Revenue by strategy (3 years). Fund-level P&L.',
-      what_it_unlocks: 'Fee yield analysis by strategy — typically £8–16M for £840B AUM manager.'
+      what_it_unlocks: 'Fee yield analysis by strategy — typically $8–16M for $840B AUM manager.'
     },
     revenue_analysis_readiness: {
       score: 28,
-      evidence: 'Performance fees declined from £82M (2023) to £48M (2025) — AUM grew. Fee compression visible but not decomposed by strategy. Client AUM flows not loaded.',
+      evidence: 'Performance fees declined from $82M (2023) to $48M (2025) — AUM grew. Fee compression visible but not decomposed by strategy. Client AUM flows not loaded.',
       missing_data: 'Revenue by strategy. Client AUM flows. Fee schedule by tier.',
       what_it_unlocks: 'Client retention analysis. Fee pricing optimisation.'
     },
     cost_structure_visibility: {
       score: 61,
-      evidence: 'IT budget 4.2% vs 3.1% peer — £178M overspend. Consulting spend £42M at 24% KT score. Bloomberg AIM maintenance £8.4M vs £2.1M peer. C/I ratio 71% vs 58%. Middle office FTE and process data not loaded.',
+      evidence: 'IT budget 4.2% vs 3.1% peer — $178M overspend. Consulting spend $42M at 24% KT score. Bloomberg AIM maintenance $8.4M vs $2.1M peer. C/I ratio 71% vs 58%. Middle office FTE and process data not loaded.',
       missing_data: 'Settlement failure log. Reconciliation break data. Reporting FTE.',
-      what_it_unlocks: 'Middle office automation opportunity — typically £3–9M.'
+      what_it_unlocks: 'Middle office automation opportunity — typically $3–9M.'
     },
     ai_roi_tracking: {
       score: 18,
-      evidence: '28 AI initiatives. £94M committed. £0 verified ROI. No baseline on any initiative. CDO vacant 11 months — governance absent. CRO blocking new deployments.',
+      evidence: '28 AI initiatives. $94M committed. $0 verified ROI. No baseline on any initiative. CDO vacant 11 months — governance absent. CRO blocking new deployments.',
       missing_data: 'Initiative-level detail on blocked vs in-flight. CDO hire timeline.',
       what_it_unlocks: 'Rationalisation sequence — which 3 to shut, which 5 to fund.'
     },
@@ -188,7 +188,7 @@ export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
       name: 'No named executive sponsor',
       failure_rate: 0.84,
       confidence: 'confirmed',
-      evidence: 'CDO vacant 11 months. £94M AI portfolio has no accountable owner. CRO has blocked further deployments. Board committed to 58% CIR by 2027 — no programme owner to deliver it.',
+      evidence: 'CDO vacant 11 months. $94M AI portfolio has no accountable owner. CRO has blocked further deployments. Board committed to 58% CIR by 2027 — no programme owner to deliver it.',
       source_files: ['ARC-M02', 'ARC-C03']
     },
     {
@@ -196,7 +196,7 @@ export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
       name: 'Measurement vacuum',
       failure_rate: 0.79,
       confidence: 'confirmed',
-      evidence: '£94M committed across 28 AI initiatives. Zero have a documented baseline. Zero have a measurement framework. Cannot prove ROI to the board, to regulators, or internally.',
+      evidence: '$94M committed across 28 AI initiatives. Zero have a documented baseline. Zero have a measurement framework. Cannot prove ROI to the board, to regulators, or internally.',
       source_files: ['ARC-M02', 'ARC-M01']
     },
     {
@@ -204,36 +204,36 @@ export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
       name: 'Structural cost misattribution',
       failure_rate: 0.68,
       confidence: 'probable',
-      evidence: 'IT budget 4.2% vs 3.1% peer — entire overspend treated as strategic investment. Bloomberg AIM maintenance at 4× peer median, classified as core infrastructure. £42M consulting spend classified as necessary — knowledge transfer score 24% suggests most value is not retained.',
+      evidence: 'IT budget 4.2% vs 3.1% peer — entire overspend treated as strategic investment. Bloomberg AIM maintenance at 4× peer median, classified as core infrastructure. $42M consulting spend classified as necessary — knowledge transfer score 24% suggests most value is not retained.',
       source_files: ['ARC-M03', 'ARC-D01']
     }
   ],
 
   top_findings: [
     {
-      title: '£94M in AI spend. £0 verified return. CDO vacancy is the root cause.',
+      title: '$94M in AI spend. $0 verified return. CDO vacancy is the root cause.',
       description: '28 AI initiatives running. None have a baseline. None have a measurement framework. The CDO vacancy — 11 months — is why: the Governance Council cannot convene, the CRO has blocked new deployments, and no one owns the portfolio. This is not a technology problem. It is a governance problem with a single fix.',
       severity: 'critical',
       source_files: ['ARC-M02', 'ARC-C03'],
       genome_pattern: 'F002'
     },
     {
-      title: '£178M structural IT overspend annually vs peers.',
-      description: 'IT budget 4.2% of revenue vs 3.1% peer benchmark. The gap is £178M annually. Driven by: Bloomberg AIM maintenance at 4× peer (£6M recoverable), consulting spend at 24% KT (£16–28M recoverable), and contractor permanence creating no reduction pressure.',
+      title: '$178M structural IT overspend annually vs peers.',
+      description: 'IT budget 4.2% of revenue vs 3.1% peer benchmark. The gap is $178M annually. Driven by: Bloomberg AIM maintenance at 4× peer ($6M recoverable), consulting spend at 24% KT ($16–28M recoverable), and contractor permanence creating no reduction pressure.',
       severity: 'critical',
       source_files: ['ARC-M03', 'ARC-D01'],
       genome_pattern: 'F012'
     },
     {
-      title: 'Performance fee compression: £82M → £48M while AUM grew.',
+      title: 'Performance fee compression: $82M → $48M while AUM grew.',
       description: 'Revenue per AUM is declining as AUM grows. Performance fees dropped 41% in two years. The margin problem is not just cost — the revenue line is compressing too. Fee yield analysis by strategy is the next unlock.',
       severity: 'high',
       source_files: ['ARC-M01'],
       genome_pattern: null
     },
     {
-      title: 'Middle office, fee yield, KYC/AML: £40–80M available with data uploads.',
-      description: 'Three areas where Genome benchmarks suggest significant opportunity but client data has not yet been loaded: settlement STP automation (£2–5M), fee yield analysis (£8–16M), KYC/AML automation (estimated £3–8M). Upload data or enter 3 numbers to unlock each analysis.',
+      title: 'Middle office, fee yield, KYC/AML: $40–80M available with data uploads.',
+      description: 'Three areas where Genome benchmarks suggest significant opportunity but client data has not yet been loaded: settlement STP automation ($2–5M), fee yield analysis ($8–16M), KYC/AML automation (estimated $3–8M). Upload data or enter 3 numbers to unlock each analysis.',
       severity: 'medium',
       source_files: [],
       genome_pattern: null
@@ -243,12 +243,12 @@ export const ARCTURUS_MARGIN_PHASE0: Phase0Output = {
   missing_data: [
     {
       category: 'Revenue by strategy (3 years, quarterly)',
-      what_it_unlocks: 'Fee yield analysis and pricing optimisation — typically £8–16M for £840B AUM manager.',
+      what_it_unlocks: 'Fee yield analysis and pricing optimisation — typically $8–16M for $840B AUM manager.',
       priority: 'important'
     },
     {
       category: 'Settlement failure log and reconciliation breaks',
-      what_it_unlocks: 'Middle office STP automation ROI — typically £2–5M.',
+      what_it_unlocks: 'Middle office STP automation ROI — typically $2–5M.',
       priority: 'important'
     },
     {
@@ -269,13 +269,13 @@ export const ARCTURUS_TECH_PHASE0: Phase0Output = {
   dimension_scores: {
     system_inventory: {
       score: 72,
-      evidence: '13 systems mapped. Ages 4-28 years. Total annual cost £37M. SQL Server DW: EOL October 2025 — already passed. Bloomberg AIM: 28 years, £8.4M annually, 14 customisations.',
+      evidence: '13 systems mapped. Ages 4-28 years. Total annual cost $37M. SQL Server DW: EOL October 2025 — already passed. Bloomberg AIM: 28 years, $8.4M annually, 14 customisations.',
       missing_data: 'Dependency mapping between systems incomplete',
       what_it_unlocks: 'Precise migration sequencing — which system breaks if another is removed first'
     },
     modernization_history: {
       score: 88,
-      evidence: '3 Bloomberg AIM modernisation attempts fully documented. Total cost £32.6M. All 3 failed. Root cause identical in all 3: F002 — no named executive sponsor who survived programme duration. 2009 TCS: £8.2M. 2016 Accenture: £14.6M. 2021 Infosys: £9.8M.',
+      evidence: '3 Bloomberg AIM modernisation attempts fully documented. Total cost $32.6M. All 3 failed. Root cause identical in all 3: F002 — no named executive sponsor who survived programme duration. 2009 TCS: $8.2M. 2016 Accenture: $14.6M. 2021 Infosys: $9.8M.',
       missing_data: 'Nothing — post-mortems are complete',
       what_it_unlocks: 'Already fully unlocked'
     },
@@ -335,14 +335,14 @@ export const ARCTURUS_TECH_PHASE0: Phase0Output = {
   top_findings: [
     {
       title: 'SQL Server DW: EOL passed. Running without security patches today.',
-      description: 'Microsoft ended support for SQL Server 2017 in October 2025. Every day this system runs is a security and regulatory risk. Azure SQL migration is a 4-month project at £1.2M. This requires immediate action regardless of Bloomberg AIM decision.',
+      description: 'Microsoft ended support for SQL Server 2017 in October 2025. Every day this system runs is a security and regulatory risk. Azure SQL migration is a 4-month project at $1.2M. This requires immediate action regardless of Bloomberg AIM decision.',
       severity: 'critical',
       source_files: ['ARC-C04'],
       genome_pattern: null,
       immediate_action: 'Commission Azure SQL migration within 30 days'
     },
     {
-      title: '3 Bloomberg AIM modernisation failures. £32.6M spent. All failed for the same reason.',
+      title: '3 Bloomberg AIM modernisation failures. $32.6M spent. All failed for the same reason.',
       description: 'F002 — no named executive sponsor who survived the programme duration. 2009: CDO-equivalent absent. 2016: Programme director resigned month 18. 2021: CDO appointed, resigned 4 months. The technology was never the problem. Governance was. Attempt 4 with the same structure will produce the same result.',
       severity: 'critical',
       source_files: ['ARC-P04'],
@@ -390,7 +390,7 @@ export const ARCTURUS_PDLC_PHASE0: Phase0Output = {
   dimension_scores: {
     delivery_velocity: {
       score: 28,
-      evidence: 'OMS squads: 127-day average cycle time against 94-day FinServ benchmark. AI/ML Platform: 0 story points to production in 12 months on £1.8M annual spend. Bloomberg release windows add 21 days per OMS release cycle.',
+      evidence: 'OMS squads: 127-day average cycle time against 94-day FinServ benchmark. AI/ML Platform: 0 story points to production in 12 months on $1.8M annual spend. Bloomberg release windows add 21 days per OMS release cycle.',
       missing_data: 'DORA metrics (deployment frequency, change failure rate) across all squads',
       what_it_unlocks: 'Precise velocity baseline for DORA benchmarking against FinServ peers'
     },
@@ -414,7 +414,7 @@ export const ARCTURUS_PDLC_PHASE0: Phase0Output = {
     },
     ai_portfolio_health: {
       score: 3,
-      evidence: '28 AI initiatives, 0 in production. £94M annual spend. £0 documented ROI. Credit scoring model powers 340 daily credit decisions — never retrained since 2019. Excel model registry. CDO vacancy 11 months. F008 confirmed at 91% — highest pattern match in Genome.',
+      evidence: '28 AI initiatives, 0 in production. $94M annual spend. $0 documented ROI. Credit scoring model powers 340 daily credit decisions — never retrained since 2019. Excel model registry. CDO vacancy 11 months. F008 confirmed at 91% — highest pattern match in Genome.',
       missing_data: 'Per-initiative business case documentation',
       what_it_unlocks: 'Precise ROI calculation per initiative for kill/accelerate/reshape classification'
     }
@@ -442,15 +442,15 @@ export const ARCTURUS_PDLC_PHASE0: Phase0Output = {
       name: 'AI spend without verified ROI',
       failure_rate: 0.91,
       confidence: 'confirmed',
-      evidence: '£94M annual AI spend. £0 documented ROI across all 28 initiatives. Bloomberg AIM £8.4M, vendor AI tools £31M, internal team £12M, consulting £42M — none with traceable production output.',
+      evidence: '$94M annual AI spend. $0 documented ROI across all 28 initiatives. Bloomberg AIM $8.4M, vendor AI tools $31M, internal team $12M, consulting $42M — none with traceable production output.',
       source_files: ['ARC-P01', 'ARC-M02']
     }
   ],
 
   top_findings: [
     {
-      title: '£94M AI spend, 0 in production — Genome F008 confirmed at 91%',
-      description: '28 AI initiatives, £94M annual spend, £0 verified ROI. 26 of 28 blocked by missing MLOps infrastructure. This is the highest-confidence F008 match in the Genome dataset.',
+      title: '$94M AI spend, 0 in production — Genome F008 confirmed at 91%',
+      description: '28 AI initiatives, $94M annual spend, $0 verified ROI. 26 of 28 blocked by missing MLOps infrastructure. This is the highest-confidence F008 match in the Genome dataset.',
       severity: 'critical',
       source_files: ['ARC-P01', 'ARC-P03'],
       genome_pattern: 'F008'
@@ -620,7 +620,7 @@ export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
     },
     delivery_capability: {
       score: 38,
-      evidence: 'OMS squad 127-day cycle time vs 94-day benchmark. AI/ML Platform squad: 0 deployments in 12 months on £1.8M spend. Bloomberg AIM release dependency adds 21 days per cycle.',
+      evidence: 'OMS squad 127-day cycle time vs 94-day benchmark. AI/ML Platform squad: 0 deployments in 12 months on $1.8M spend. Bloomberg AIM release dependency adds 21 days per cycle.',
       missing_data: 'Squad capacity post-consulting rationalisation',
       what_it_unlocks: 'Time-to-production reduction from 127 to 21 days (Genome baseline for mature teams)'
     },
@@ -632,7 +632,7 @@ export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
     },
     technology_foundation: {
       score: 41,
-      evidence: 'Bloomberg AIM 28 years, 14 customisations (8 proprietary). Teradata £4.2M annually, 23% of queries exceeding SLA. Netezza EOL 2019, 87TB, 3 compliance reports no alternative source. Murex 3.1 EOL December 2026.',
+      evidence: 'Bloomberg AIM 28 years, 14 customisations (8 proprietary). Teradata $4.2M annually, 23% of queries exceeding SLA. Netezza EOL 2019, 87TB, 3 compliance reports no alternative source. Murex 3.1 EOL December 2026.',
       missing_data: 'Netezza logic documentation, Basel IV compliance timeline',
       what_it_unlocks: 'Cloud-native architecture (Option B) unlocks the full AI initiative pipeline'
     }
@@ -643,7 +643,7 @@ export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
       name: 'AI spend zero verified ROI',
       failure_rate: 0.91,
       confidence: 'confirmed',
-      evidence: '£94M AI spend, £0 documented ROI, 14 production models, zero with outcome tracking. Highest confidence pattern match in Genome database.',
+      evidence: '$94M AI spend, $0 documented ROI, 14 production models, zero with outcome tracking. Highest confidence pattern match in Genome database.',
       source_files: ['ARC-T01_AI_Portfolio', 'ARC-C01_Engineering_Organisation']
     },
     {
@@ -665,7 +665,7 @@ export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
   ],
   top_findings: [
     {
-      title: '£94M AI spend · £0 verifiable ROI · F008 at 91%',
+      title: '$94M AI spend · $0 verifiable ROI · F008 at 91%',
       description: 'Every initiative is categorised as active in board reporting. None are categorised as failed. The reporting structure produces systematic optimism — no single accountable owner means no one reports the production gap.',
       severity: 'critical',
       genome_pattern: 'F008',
@@ -694,7 +694,7 @@ export const ARCTURUS_AI_STRATEGY_PHASE0: Phase0Output = {
     },
     {
       title: 'Netezza 7 years past EOL — 3 compliance reports no alternative source',
-      description: 'IBM PureData support ended 2019. 87TB, 15 years trade history. CCAR, trade surveillance archive, AML baseline — sole data source. If Netezza fails, 3 compliance obligations cannot be met. £6.8M migration budget approved but logic undocumented.',
+      description: 'IBM PureData support ended 2019. 87TB, 15 years trade history. CCAR, trade surveillance archive, AML baseline — sole data source. If Netezza fails, 3 compliance obligations cannot be met. $6.8M migration budget approved but logic undocumented.',
       severity: 'critical',
       genome_pattern: 'F003',
       source_files: ['ARC-T02_Tech_Stack']

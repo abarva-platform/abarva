@@ -81,7 +81,7 @@ CONVERSATION GUIDELINES:
 9. Internal analysis (marked [INTERNAL]) is visible only to the Maestro, not the client.
 
 TONE: Senior consultant. Direct. Evidence-based. Specific.
-No generic advice. Every statement should be worth £500/hour.
+No generic advice. Every statement should be worth $500/hour.
 `
 }
 
@@ -190,12 +190,12 @@ export function buildOutputGenerationPrompt(
   "what_is_at_risk": {
     "if_nothing_changes": "<specific consequence, quantified>",
     "timeline": "<when the risk materialises>",
-    "financial_exposure": "<£/$ amount>"
+    "financial_exposure": "<$/$ amount>"
   },
   "recovery_range": {
-    "conservative": "<£/$ pa>",
-    "base": "<£/$ pa>",
-    "optimistic": "<£/$ pa>",
+    "conservative": "<$/$ pa>",
+    "base": "<$/$ pa>",
+    "optimistic": "<$/$ pa>",
     "confidence": "<% — Genome validated>",
     "methodology": "<how calculated>"
   },
@@ -236,7 +236,7 @@ export function buildOutputGenerationPrompt(
       "role": "<Maestro role name>",
       "scope": "<what they own>",
       "replaces": "<who/what they replace>",
-      "annual_cost_replaced": "<£/$M>",
+      "annual_cost_replaced": "<$/$M>",
       "wave": 1,
       "success_metric": "<how we know this Maestro is delivering>"
     }
@@ -263,7 +263,7 @@ export function buildOutputGenerationPrompt(
           "milestone": "<specific, measurable>",
           "owner": "<Maestro role>",
           "due": "<specific date or day>",
-          "fee_trigger": "<£/$ if applicable>"
+          "fee_trigger": "<$/$ if applicable>"
         }
       ],
       "gate": "<what must be true to begin Wave 2>"
@@ -273,7 +273,7 @@ export function buildOutputGenerationPrompt(
     {
       "trigger": "<milestone description>",
       "condition": "<verified by whom, how>",
-      "amount": "<£/$>",
+      "amount": "<$/$>",
       "estimated_date": "<month>"
     }
   ],
@@ -308,10 +308,10 @@ export function buildOutputGenerationPrompt(
     "behind_schedule": [{ "milestone": "", "delay": "", "revised_date": "", "impact": "" }]
   },
   "fee_calculation": {
-    "savings_verified_this_month": "<£/$>",
-    "fee_triggered_this_month": "<£/$>",
-    "cumulative_fee_to_date": "<£/$>",
-    "remaining_potential": "<£/$>"
+    "savings_verified_this_month": "<$/$>",
+    "fee_triggered_this_month": "<$/$>",
+    "cumulative_fee_to_date": "<$/$>",
+    "remaining_potential": "<$/$>"
   },
   "knowledge_transfer": [
     { "domain": "", "capability_transferred": "", "internal_team_score": "" }

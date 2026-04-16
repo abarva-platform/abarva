@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 import { filterSolutions, buildSolutionUrl, objectiveColor, type SolutionFilter, type SolutionObjective, type SolutionOffice, type SolutionVertical } from '@/lib/solution-library'
 
@@ -373,7 +374,7 @@ function SolutionCard({ solution, client }: { solution: typeof ALL_SOLUTIONS[0];
 // ── Main content ──────────────────────────────────────────────────────────────
 function SolutionsContent() {
   const searchParams = useSearchParams()
-  const client = (searchParams.get('client') as Client) || 'meridian'
+  const client = useActiveClient() as Client
   const [filter, setFilter] = useState<SolutionFilter>({})
 
   const filteredSolutions = filterSolutions(
@@ -401,7 +402,7 @@ function SolutionsContent() {
             {[
               { value: '5', label: 'Solutions' },
               { value: '76%', label: 'Avg success rate' },
-              { value: '176', label: 'Genome engagements' },
+              { value: '340+', label: 'Genome patterns · 3 active engagements' },
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontFamily: SERIF, fontSize: 28, color: LTEXT, lineHeight: 1 }}>{s.value}</div>
@@ -451,7 +452,7 @@ function SolutionsContent() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
             {[
               { step: '01', title: 'Your data mapped', desc: 'AbarVa reads every system, benchmark, and gap in your situation. No surveys. No guesses.' },
-              { step: '02', title: 'Genome finds the pattern', desc: '176 Genome engagements surface what moved outcomes in comparable situations. Matched to yours.' },
+              { step: '02', title: 'Genome finds the pattern', desc: '340+ Genome patterns surface what moved outcomes in comparable situations. Live validation from design partners.' },
               { step: '03', title: 'Maestros hold delivery', desc: 'Embedded operators hold vendors accountable. Fee tied to verified outcomes only.' },
             ].map(item => (
               <div key={item.step} style={{ background: '#FFFFFF', border: `1px solid ${LBDR}`, borderRadius: 12, padding: 28 }}>

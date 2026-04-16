@@ -16,14 +16,14 @@ const PHASE0_FINDINGS = [
     severity: 'critical',
     code: null,
     title: 'SQL Server DW: EOL October 2025 — already passed. Running without security patches today.',
-    desc: 'Microsoft ended support for SQL Server 2017 in October 2025. Every day this system runs is a security and regulatory risk. Azure SQL migration is a 4-month project at £1.2M. Non-negotiable regardless of Bloomberg AIM decision.',
+    desc: 'Microsoft ended support for SQL Server 2017 in October 2025. Every day this system runs is a security and regulatory risk. Azure SQL migration is a 4-month project at $1.2M. Non-negotiable regardless of Bloomberg AIM decision.',
     sources: ['ARC-C04'],
     action: 'Commission Azure SQL migration within 30 days'
   },
   {
     severity: 'critical',
     code: 'F002',
-    title: '3 Bloomberg AIM modernisation failures. £32.6M spent. All failed for the same reason.',
+    title: '3 Bloomberg AIM modernisation failures. $32.6M spent. All failed for the same reason.',
     desc: 'No named executive sponsor who survived the programme duration. 2009, 2016, 2021. CDO currently vacant 11 months — same structural gap. Attempt 4 with the same governance structure will produce the same result.',
     sources: ['ARC-P04'],
     action: 'Name executive sponsor before scoping any modernisation approach'
@@ -124,14 +124,14 @@ export default function SolutionTech() {
   ]
 
   const starters = [
-    `Bloomberg AIM is ${age} years old. ${att} failed modernization attempts. £${maint}M annual maintenance.`,
+    `Bloomberg AIM is ${age} years old. ${att} failed modernization attempts. $${maint}M annual maintenance.`,
     'SQL Server DW reached end-of-life. Running without security patches.',
     '14 data systems. No golden record. 3-day reporting lag. We compete on information advantage.',
   ]
 
   const findings = [
     { severity: 'critical' as const,
-      title: `Bloomberg AIM — ${age} years old · £${maint}M maintenance · ${att} failed attempts`,
+      title: `Bloomberg AIM — ${age} years old · $${maint}M maintenance · ${att} failed attempts`,
       detail: 'The business case was built by the vendor each time. When the client builds it from their own data — success rate is 71%. Vendor-built: 23%.',
       sources: ['Client technology', 'Genome (11 cases)'] },
     { severity: 'critical' as const,
@@ -315,7 +315,7 @@ export default function SolutionTech() {
         meta={['CIO · CFO', 'All verticals', 'SAP · FIS · Bloomberg AIM · Epic', 'Outcome-fee model']}
         stats={[
           { label: 'Average ERP overrun', value: '34%', color: RED, sub: 'Genome validated — not vendor estimate' },
-          { label: 'Failed migrations cost', value: '£32M', color: AMBER, sub: '3 attempts, same root cause' },
+          { label: 'Failed migrations cost', value: '$32M', color: AMBER, sub: '3 attempts, same root cause' },
           { label: 'Systems at EOL today', value: '42%', color: TEAL, sub: 'Of enterprise systems Genome-tracked' },
           { label: 'SI selection wrong', value: '68%', color: GREEN, sub: 'When based on analyst rankings alone' },
         ]}

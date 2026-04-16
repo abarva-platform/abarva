@@ -60,7 +60,7 @@ export default function Homepage() {
               window closes.
             </h1>
             <p style={{ fontSize: 18, color: LBODY, lineHeight: 1.72, margin: '0 0 14px' }}>
-              AbarVa diagnoses what&apos;s broken, prescribes the right architecture and vendors, and embeds a small Maestro team to execute — fee tied to your outcomes, not our hours.
+              Consulting firms deliver decks and leave. Vendors demo and disappear. Nobody owns the outcome. AbarVa is the intelligence layer that didn&apos;t exist — data before the first meeting, a Maestro embedded through execution, fee on verified results only.
             </p>
             <p style={{ fontSize: 14, color: LMUTE, lineHeight: 1.6, margin: '0 0 40px' }}>
               Start with a Solution. Scale to full{' '}
@@ -73,6 +73,9 @@ export default function Homepage() {
               <a href="#demo" style={{ background: 'transparent', color: LBODY, border: `1px solid ${LBDR}`, padding: '13px 26px', borderRadius: 8, fontSize: 14, textDecoration: 'none' }}>
                 Watch a demo
               </a>
+              <a href="/investor" style={{ background: 'transparent', color: LBODY, border: `1px solid ${LBDR}`, padding: '13px 26px', borderRadius: 8, fontSize: 14, textDecoration: 'none' }}>
+                Investor View
+              </a>
               <a href="#contact" style={{ color: LMUTE, fontSize: 14, textDecoration: 'none', padding: '13px 8px' }}>
                 Contact us
               </a>
@@ -84,7 +87,7 @@ export default function Homepage() {
             {[
               { label: 'Consulting spend wasted', value: '$200B', note: 'Global annual market with no outcome accountability' },
               { label: 'Enterprise AI with zero ROI', value: '73%', note: 'Of AI investments produce no verified outcome' },
-              { label: 'AbarVa model', value: 'Skin in\nthe game', note: 'Fee tied to your outcomes. Not our hours.' },
+              { label: 'Fee on outcomes only', value: '0%', note: 'No retainer. No hourly. Fee on verified results only.' },
               { label: 'Time to first intelligence', value: '48hrs', note: 'From kickoff to your first Situation brief' },
             ].map(s => (
               <div key={s.label} style={{ background: LCARD, border: `1px solid ${LBDR}`, borderRadius: 10, padding: '22px 20px' }}>
@@ -131,9 +134,12 @@ export default function Homepage() {
           <h2 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 400, color: LTEXT, margin: '0 0 18px' }}>
             Intelligence that tells you what to do next.
           </h2>
-          <p style={{ fontSize: 16, color: LBODY, marginBottom: 56, lineHeight: 1.72, maxWidth: 660 }}>
-            Each product runs on your data, your industry benchmarks, and 340 cross-client patterns from the Transformation Genome. The answer is specific. The source is transparent.
+          <p style={{ fontSize: 16, color: LBODY, marginBottom: 40, lineHeight: 1.72, maxWidth: 660 }}>
+            Each product runs on your data, your industry benchmarks, and 340+ patterns from the Transformation Genome. The answer is specific. The source is transparent.
           </p>
+          <div style={{ fontFamily: SERIF, fontSize: 22, color: LTEXT, marginBottom: 20, lineHeight: 1.3 }}>
+            Five intelligences. Every CXO question answered before the board asks it.
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
             {[
               { id: 'diagnose',    intel: 'Situation Intelligence',     q: "What's actually broken — and what is it costing?", impact: 'Uncover the real cost of what\'s broken' },
@@ -233,8 +239,8 @@ export default function Homepage() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 48 }}>
             {[
-              { name: 'Meridian Health System',   initials: 'MH', vertical: 'Healthcare',         revenue: '$11.2B', finding: '"$94M AI spend. Zero with a documented ROI. We are adding to cost, not value."', dataNote: 'Built from real-world healthcare data', href: '/diagnose?client=meridian' },
-              { name: 'Arcturus Financial Group', initials: 'AF', vertical: 'Financial Services', revenue: '$16.2B', finding: '"C/I ratio 71% against a 58% peer target. $840M efficiency gap. AI spend growing — outcomes not."', dataNote: 'Built from real-world finserv data',    href: '/diagnose?client=arcturus' },
+              { name: 'Meridian Health System',   initials: 'MH', vertical: 'Healthcare',         revenue: '$11.2B', finding: '"$94M AI spend. Zero with a documented ROI. We are adding to cost, not value."', dataNote: 'Built from real-world healthcare data', href: '/admin/client/meridian' },
+              { name: 'Arcturus Financial Group', initials: 'AF', vertical: 'Financial Services', revenue: '$16.2B', finding: '"C/I ratio 71% against a 58% peer target. $840M efficiency gap. AI spend growing — outcomes not."', dataNote: 'Built from real-world finserv data',    href: '/admin/client/arcturus' },
             ].map(t => (
               <a key={t.name} href={t.href} style={{ display: 'flex', flexDirection: 'column' as const, background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 12, padding: '28px 28px 24px', textDecoration: 'none' }}>
                 {/* Header */}
@@ -277,7 +283,7 @@ export default function Homepage() {
       <div style={{ background: LBG, padding: '96px 64px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
           {[
-            { num: '340',  label: 'Transformation patterns in the Genome — each with documented failure rates and recovery paths' },
+            { num: '340+', label: 'Genome patterns seeded from published research, KLAS, Everest Group, Gartner, and 15 years of founder engagement experience. Live validation begins with design partners.' },
             { num: '89%',  label: 'Of organizations with regulatory issues and no remediation plan face enforcement action within 90 days' },
             { num: '79%',  label: 'Of CDO vacancies at AI governance crunch points result in programme failure' },
           ].map(c => (
@@ -321,10 +327,10 @@ export default function Homepage() {
               </a>
 
               {/* Tertiary: Investor view */}
-              <a href="/sign-in" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '18px 24px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <a href="/investor" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '18px 24px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 500, color: DTEXT, marginBottom: 4 }}>Investor view</div>
-                  <div style={{ fontSize: 12, color: DBODY }}>Secured separately — request access from a Maestro</div>
+                  <div style={{ fontSize: 12, color: DBODY }}>Overview, vision, revenue model, and the ask</div>
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: 16, color: DMUTE, marginLeft: 20, flexShrink: 0 }}>→</div>
               </a>

@@ -112,7 +112,7 @@ function TabOverview() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: '8px', overflow: 'hidden', marginBottom: '40px', border: `1px solid ${C.border}` }}>
         <div style={{ background: C.surface, padding: '24px' }}>
           <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '16px' }}>HOW ADVISORY FIRMS WORK TODAY</div>
-          {['CXO pays £2–8M per engagement', 'Consultants spend weeks 1–4 learning the client', 'Deliverable is a PowerPoint deck', 'Knowledge walks out with the team', 'No accountability for outcomes', 'Same firm, same process, 2 years later'].map((item, i) => <Bullet key={i} dot="white">{item}</Bullet>)}
+          {['CXO pays $2–8M per engagement', 'Consultants spend weeks 1–4 learning the client', 'Deliverable is a PowerPoint deck', 'Knowledge walks out with the team', 'No accountability for outcomes', 'Same firm, same process, 2 years later'].map((item, i) => <Bullet key={i} dot="white">{item}</Bullet>)}
         </div>
         <div style={{ background: C.featured, borderLeft: `3px solid ${C.teal}`, padding: '24px' }}>
           <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '16px' }}>HOW ABARVA WORKS</div>
@@ -182,7 +182,7 @@ function TabVision() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '40px' }}>
         {[
           { num: '01', label: 'AI CAPABILITY', title: 'The technical prerequisite just became available', body: 'Claude, GPT-4, Gemini can now genuinely analyse enterprise data and produce board-quality output. This was not true 24 months ago. AbarVa\'s core capability became technically feasible in 2024. The window to define the category is open now.' },
-          { num: '02', label: 'ACCOUNTABILITY CRISIS', title: 'Boards are asking what £40M actually bought them', body: 'Post-COVID transformation spend exploded. Results didn\'t follow. Boards are demanding ROI on advisory spend for the first time. The market is ready for a firm that builds accountability in from Day 0 — not as a differentiator, as a baseline expectation.' },
+          { num: '02', label: 'ACCOUNTABILITY CRISIS', title: 'Boards are asking what $40M actually bought them', body: 'Post-COVID transformation spend exploded. Results didn\'t follow. Boards are demanding ROI on advisory spend for the first time. The market is ready for a firm that builds accountability in from Day 0 — not as a differentiator, as a baseline expectation.' },
           { num: '03', label: 'AI DISILLUSIONMENT', title: '73% of enterprise AI produces no verified outcome', body: '$94M AI spend, zero ROI — this is not one company. It is most enterprise AI programmes. Boards are demanding accountability on AI investment specifically. AbarVa diagnoses why AI isn\'t working and creates the governance structure to fix it.' },
         ].map((c, i) => (
           <div key={i} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.teal}`, borderRadius: '0 8px 8px 0', padding: '20px' }}>
@@ -198,7 +198,7 @@ function TabVision() {
           The Genome compounds. Here is where it stands today vs where it goes.
         </div>
         {[
-          { label: 'Today — Seeded', val: '40+ patterns', desc: 'Built from published research, public case studies, Everest Group / KLAS / Gartner data, and 15 years of founder engagement experience' },
+          { label: 'Today — Seeded', val: '340+ patterns', desc: 'Built from published research, KLAS, Everest Group PEAK Matrix, Gartner, and 15 years of founder engagement experience. Live validation begins with design partners.' },
           { label: 'After 10 engagements', val: '80–100 patterns', desc: 'First live data. Recovery ranges start updating from actual outcomes. Vendor track records verified.' },
           { label: 'After 30 engagements', val: '200–340 patterns', desc: 'Cross-client intelligence live. Predictive capability emerges.' },
           { label: 'After 100 engagements', val: '1,000+ patterns', desc: 'The most comprehensive verified transformation outcome dataset in existence.' },
@@ -224,8 +224,8 @@ function TabRevenue() {
     <div>
       <Eyebrow label="REVENUE MODEL" />
       <H1>
-        Platform + services today.<br />
-        <em style={{ color: C.teal, fontStyle: 'italic' }}>Outcome fees in Phase 2.</em>
+        We earn the right to outcome fees.<br />
+        <em style={{ color: C.teal, fontStyle: 'italic' }}>Here is how.</em>
       </H1>
       <Body>
         Seed stage: predictable platform license + Maestro engagement fees. Series A: outcome accountability layer added on top of base fees. Series B: pure outcome model for anchor clients. We earn the right to outcome fees through delivery first — not as a starting position.
@@ -287,7 +287,7 @@ function TabRevenue() {
           { period: 'Month 0–6', arr: '$0', desc: '3 design partners. Proving the model.', featured: false },
           { period: 'Month 6–12', arr: '$3.2M', desc: '6 clients. 3 converted DPs + 3 new.', featured: false },
           { period: 'Month 12–18', arr: '$9.6M', desc: '12 clients. Series A trigger.', featured: false },
-          { period: 'Month 18–30', arr: '$28M', desc: 'Post Series A. Outcome layer introduced.', featured: false },
+          { period: 'Month 18–30', arr: '$28M', desc: 'Post Series A. GTM lead hired. Outcome fees active on first 3 engagements. 3 design partners converted to paying clients.', featured: false },
           { period: 'Month 30–42', arr: '$54M', desc: '40 clients. Outcome fees compound.', featured: true },
         ].map((cell, i) => (
           <div key={i} style={{ background: cell.featured ? C.featured : C.surface, border: `1px solid ${cell.featured ? C.teal : C.border}`, borderRadius: '8px', padding: '14px', textAlign: 'center' }}>
@@ -374,8 +374,8 @@ function TabTeam() {
     <div>
       <Eyebrow label="THE TEAM" />
       <H1>
-        11 people.<br />
-        Every one has done<br />
+        The founding team.<br />
+        Every hire has done<br />
         <em style={{ color: C.teal, fontStyle: 'italic' }}>this from the inside.</em>
       </H1>
       <Body>
@@ -389,14 +389,14 @@ function TabTeam() {
           <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '12px' }}>FOUNDER · CEO</div>
           <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.7 }}>
             Former Managing Director and Data & AI NA Growth Lead at a top consulting firm. Sold and delivered the exact engagements AbarVa replaces — for Fortune 500 clients across healthcare IT and financial services.{' '}
-            <T>Watched £4M decks walk out the door with the knowledge.</T> Built the platform to fix it.
+            <T>Watched $4M decks walk out the door with the knowledge.</T> Built the platform to fix it.
             <br /><br />
             <T>Why this founder:</T> Knows exactly what advisory firms charge, how they deliver, where they fail, and what CXOs actually need. <T>The product is built from the inside</T> — not by someone guessing at the market.
           </div>
         </div>
       </Card>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '12px' }}>
         {[
           { avatar: 'CTO', avatarBg: C.teal, title: 'Chief Technology Officer', comp: '$260–300K + 2–3% equity', from: 'Engineering lead at Palantir, C3.ai, Veeva, or enterprise AI platform. Or VP Engineering from consulting firm\'s AI arm.', delivers: 'All engineering, cloud architecture, Bedrock knowledge layer, platform scalability. Most critical hire.' },
           { avatar: 'HP', avatarBg: C.green, title: 'Head of Product', comp: '$190–220K + 1–1.5% equity', from: 'Senior PM at Palantir, ServiceNow, or enterprise SaaS.', delivers: 'Product roadmap, engagement engine UX, client portal, Genome product experience.' },
@@ -410,6 +410,9 @@ function TabTeam() {
             <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6 }}><T>Delivers:</T> {m.delivers}</div>
           </Card>
         ))}
+      </div>
+      <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: '32px', paddingLeft: '2px' }}>
+        Key hires — actively recruiting
       </div>
 
       <SectionTitle>Maestro team — they also sell</SectionTitle>
@@ -446,7 +449,7 @@ function TabLivePlatform() {
 
   const cards = [
     { vert: 'HEALTHCARE · $11.2B IDN · 42,000 EMPLOYEES', name: 'Meridian Health System', stat: '$94M AI portfolio · $0 verified ROI · 18.2% denial rate', desc: '18.2% denial rate vs 12% benchmark. $94M in AI with zero verified return. Epic score 58/100 vs 80 benchmark. CMS mandate 14 months away. Diagnosed from uploaded datasets before first meeting.', cta: '→ See live engagement', href: '/engage/meridian/margin' },
-    { vert: 'ASSET MANAGEMENT · £16.2B REVENUE · £840B AUM', name: 'Arcturus Financial Group', stat: 'C/I 71% · target 58% · £840M gap · 28 AI initiatives · 0 live', desc: '28 AI initiatives. None in production. £94M committed. Bloomberg AIM 28yr — 3 failed modernisations at £32.6M total. CDO vacant 11 months. Everything visible before first meeting.', cta: '→ See live engagement', href: '/engage/arcturus/ai-strategy' },
+    { vert: 'ASSET MANAGEMENT · $16.2B REVENUE · $840B AUM', name: 'Arcturus Financial Group', stat: 'C/I 71% · target 58% · $840M gap · 28 AI initiatives · 0 live', desc: '28 AI initiatives. None in production. $94M committed. Bloomberg AIM 28yr — 3 failed modernisations at $32.6M total. CDO vacant 11 months. Everything visible before first meeting.', cta: '→ See live engagement', href: '/engage/arcturus/ai-strategy' },
     { vert: 'MAESTRO WORKSPACE · PHASE-GATED · ADMIN VIEW', name: 'Maestro Admin Workspace', stat: 'Data uploaded · Phase 0 scored · Engagement active', desc: 'Upload datasets, review Phase 0 findings, manage engagement lifecycle, publish outputs to client portal. What a Maestro sees every day.', cta: '→ See the workspace', href: '/admin/client/arcturus' },
     { vert: 'SOLUTIONS · 3 BUILT · MARGIN · PDLC · TECH', name: 'Solution Pages', stat: 'Margin Optimization · AI-Powered PDLC · Tech Modernization', desc: 'Three solution pages with Genome patterns and real client data. When logged in, AbarVa speaks first from uploaded datasets before any conversation begins.', cta: '→ See Margin Optimization', href: '/solutions/margin' },
   ]

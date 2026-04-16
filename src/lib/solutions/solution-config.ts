@@ -154,7 +154,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Business Case',
             description: 'CFO-grade recovery ranges, three scenarios, Genome-validated',
-            opening_prompt: "The recovery range from your consulting footprint is £16-28M annually, based on Genome pattern F001 validated across 47 similar asset management engagements. I want to build a business case your CFO will approve — which means three scenarios (conservative, base, optimistic) with every assumption traceable. Before I generate the model, I need to understand your CFO's primary concern: is it the size of the recovery, the confidence interval, or the timeline to first verified saving?"
+            opening_prompt: "The recovery range from your consulting footprint is $16-28M annually, based on Genome pattern F001 validated across 47 similar asset management engagements. I want to build a business case your CFO will approve — which means three scenarios (conservative, base, optimistic) with every assumption traceable. Before I generate the model, I need to understand your CFO's primary concern: is it the size of the recovery, the confidence interval, or the timeline to first verified saving?"
           }
         ]
       },
@@ -173,7 +173,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Baseline Agreement',
             description: 'Lock every metric. Source every number. Agree measurement methodology.',
-            opening_prompt: 'The baseline agreement is the most important document in the engagement. Every metric we track must be locked here before Day 1 — source, value, methodology, and verification method. Nothing in the baseline can change after signature without board approval. I want to walk through each metric carefully. Starting with the most important: annual consulting spend. Your ARC-D01 file shows £42M. Is that the right number to lock — or is there a more current figure we should use?'
+            opening_prompt: 'The baseline agreement is the most important document in the engagement. Every metric we track must be locked here before Day 1 — source, value, methodology, and verification method. Nothing in the baseline can change after signature without board approval. I want to walk through each metric carefully. Starting with the most important: annual consulting spend. Your ARC-D01 file shows $42M. Is that the right number to lock — or is there a more current figure we should use?'
           },
           {
             name: 'Wave Plan',
@@ -299,12 +299,12 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'AI Initiative Blockers',
             description: 'Why 28 AI initiatives are stuck in pilot — initiative by initiative',
-            opening_prompt: 'You have 28 AI initiatives. None are in production. £94M committed. That is not bad luck — it is a structural problem. I can see three root causes in your data, each affecting a different group of initiatives. The first — no MLOps infrastructure — affects 26 of the 28. Even if everything else was perfect, there is no way to get a model to production. The second — CDO vacancy — blocks 14 specifically. The third — data quality — affects 22. Before we go through each initiative, I want to understand: is the board aware that 0 of 28 are in production?'
+            opening_prompt: 'You have 28 AI initiatives. None are in production. $94M committed. That is not bad luck — it is a structural problem. I can see three root causes in your data, each affecting a different group of initiatives. The first — no MLOps infrastructure — affects 26 of the 28. Even if everything else was perfect, there is no way to get a model to production. The second — CDO vacancy — blocks 14 specifically. The third — data quality — affects 22. Before we go through each initiative, I want to understand: is the board aware that 0 of 28 are in production?'
           },
           {
             name: 'Engineering Cost vs Output',
             description: 'What does delivery actually cost per story point — and why',
-            opening_prompt: 'Your engineering cost breakdown shows significant variation in cost-per-story-point across squads. Portfolio Analytics delivers at benchmark. AI/ML Platform delivers at infinite cost — zero story points to production in 12 months while spending £1.8M. This is the clearest quantification of the problem. Before I walk through the full cost analysis, can you help me understand: does your CFO currently see this breakdown — cost per squad, cost per story point?'
+            opening_prompt: 'Your engineering cost breakdown shows significant variation in cost-per-story-point across squads. Portfolio Analytics delivers at benchmark. AI/ML Platform delivers at infinite cost — zero story points to production in 12 months while spending $1.8M. This is the clearest quantification of the problem. Before I walk through the full cost analysis, can you help me understand: does your CFO currently see this breakdown — cost per squad, cost per story point?'
           }
         ]
       },
@@ -362,7 +362,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Fee Structure',
             description: 'Outcome-based — cycle time reduction and AI in production milestones',
-            opening_prompt: "For PDLC, the fee triggers are different from the Delivery solution. We track two things: AI initiatives reaching production (£X per initiative verified), and cycle time reduction (% of verified reduction × annual value). The first fee trigger is at month 3: first AI initiative in production with documented baseline. What should that first trigger be worth to make the programme feel real to your CFO?"
+            opening_prompt: "For PDLC, the fee triggers are different from the Delivery solution. We track two things: AI initiatives reaching production ($X per initiative verified), and cycle time reduction (% of verified reduction × annual value). The first fee trigger is at month 3: first AI initiative in production with documented baseline. What should that first trigger be worth to make the programme feel real to your CFO?"
           }
         ]
       },
@@ -454,7 +454,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         default_workstreams: [{
           name: 'Margin Scoping',
           description: 'Show what is already analysed. Present full opportunity map. Agree focus areas. Generate data requests.',
-          opening_prompt: 'I have analysed your uploaded datasets. Before we go into Phase 1, I want to show you the full picture of where margin typically leaks for an asset manager your size — and separate what I can already see from what would require additional data.\n\nFrom what is already loaded, I can see three things clearly:\n\nFirst: £94M committed to 28 AI initiatives. £0 verified return. This is not a technology problem — it is a governance problem. The CDO vacancy is the most expensive unfilled role in the firm.\n\nSecond: £42M in consulting spend with an average knowledge transfer score of 24%. Knowledge walks out every Friday.\n\nThird: C/I ratio 71% vs 58% target — a £840M efficiency gap. Your IT spend at 4.2% of revenue vs 3.1% peer adds £178M of structural overspend.\n\nThese three together represent £250–320M of addressable margin — already visible from your data.\n\nBut there are six more areas I have not been able to look at yet: middle office operations, fee yield by strategy, client retention, fund accounting efficiency, regulatory reporting cost, and KYC/AML operations. These typically add another £40–80M for a firm your profile.\n\nI have built a Margin Opportunity Map above showing every lever — what is analysed, what I can estimate from Genome benchmarks, and what requires data uploads to unlock.\n\nWhere would you like to focus first — the areas we already see clearly, or should we gather data on the areas we have not yet examined?'
+          opening_prompt: 'I have analysed your uploaded datasets. Before we go into Phase 1, I want to show you the full picture of where margin typically leaks for an asset manager your size — and separate what I can already see from what would require additional data.\n\nFrom what is already loaded, I can see three things clearly:\n\nFirst: $94M committed to 28 AI initiatives. $0 verified return. This is not a technology problem — it is a governance problem. The CDO vacancy is the most expensive unfilled role in the firm.\n\nSecond: $42M in consulting spend with an average knowledge transfer score of 24%. Knowledge walks out every Friday.\n\nThird: C/I ratio 71% vs 58% target — a $840M efficiency gap. Your IT spend at 4.2% of revenue vs 3.1% peer adds $178M of structural overspend.\n\nThese three together represent $250–320M of addressable margin — already visible from your data.\n\nBut there are six more areas I have not been able to look at yet: middle office operations, fee yield by strategy, client retention, fund accounting efficiency, regulatory reporting cost, and KYC/AML operations. These typically add another $40–80M for a firm your profile.\n\nI have built a Margin Opportunity Map above showing every lever — what is analysed, what I can estimate from Genome benchmarks, and what requires data uploads to unlock.\n\nWhere would you like to focus first — the areas we already see clearly, or should we gather data on the areas we have not yet examined?'
         }]
       },
       1: {
@@ -472,17 +472,17 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Margin Decomposition',
             description: 'Every driver of the margin gap — revenue and cost side',
-            opening_prompt: 'Your C/I ratio is 71% against a 58% target — a £840M gap at current revenue scale. Before we go line by line, I want to do something most consultants skip: separate the structural costs from the addressable ones. Structural costs — compensation for investment professionals, premises, regulatory — these do not reduce without a strategy change. Addressable costs — consulting spend, AI portfolio with zero ROI, Bloomberg AIM overpay, IT overspend — these are recoverable with the right programme. Do you have a sense of how your CFO thinks about that split?'
+            opening_prompt: 'Your C/I ratio is 71% against a 58% target — a $840M gap at current revenue scale. Before we go line by line, I want to do something most consultants skip: separate the structural costs from the addressable ones. Structural costs — compensation for investment professionals, premises, regulatory — these do not reduce without a strategy change. Addressable costs — consulting spend, AI portfolio with zero ROI, Bloomberg AIM overpay, IT overspend — these are recoverable with the right programme. Do you have a sense of how your CFO thinks about that split?'
           },
           {
             name: 'Revenue Side Analysis',
             description: 'Fee compression, AUM mix, performance fees, client attrition',
-            opening_prompt: 'The margin problem is not just cost. Your revenue per AUM is declining — performance fees dropped from £82M in 2023 to £48M in 2025 while AUM grew. That compression is not in your cost reduction programmes. I want to understand the revenue side before we fix the cost side — because some of your best margin interventions are on the revenue line, not the cost line. What is driving the performance fee decline?'
+            opening_prompt: 'The margin problem is not just cost. Your revenue per AUM is declining — performance fees dropped from $82M in 2023 to $48M in 2025 while AUM grew. That compression is not in your cost reduction programmes. I want to understand the revenue side before we fix the cost side — because some of your best margin interventions are on the revenue line, not the cost line. What is driving the performance fee decline?'
           },
           {
             name: 'AI Spend vs ROI',
-            description: '£94M committed, £0 verified — this alone is a margin programme',
-            opening_prompt: 'Your AI spend tracker shows £94M committed across 28 initiatives. Verified ROI: £0. I need to be direct about what this means for your margin: you are spending 12% of your annual revenue on AI that is delivering nothing to the P&L. This is not a technology problem — it is a governance problem. The CDO vacancy is the single most expensive unfilled role in the firm. Would you like me to quantify the cost of the CDO vacancy to the margin before we go further?'
+            description: '$94M committed, $0 verified — this alone is a margin programme',
+            opening_prompt: 'Your AI spend tracker shows $94M committed across 28 initiatives. Verified ROI: $0. I need to be direct about what this means for your margin: you are spending 12% of your annual revenue on AI that is delivering nothing to the P&L. This is not a technology problem — it is a governance problem. The CDO vacancy is the single most expensive unfilled role in the firm. Would you like me to quantify the cost of the CDO vacancy to the margin before we go further?'
           },
           {
             name: 'Contradiction Map',
@@ -506,7 +506,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Intervention Sequencing',
             description: 'Genome decides the order — not instinct, not politics',
-            opening_prompt: 'The Genome data from 47 asset management margin engagements tells us something important about sequencing: the interventions that feel most urgent to a CFO (IT cost reduction, headcount restructuring) are often not the highest-confidence ones. The highest-confidence first intervention for your profile — CDO vacant, AI spend untracked, F002 confirmed — is the CDO appointment. It costs nothing to hire. It unblocks £94M in AI value. It re-establishes governance. Without it, every other intervention risks the same fate as the 28 stalled AI initiatives. Does the board understand the cost of the vacancy in margin terms?'
+            opening_prompt: 'The Genome data from 47 asset management margin engagements tells us something important about sequencing: the interventions that feel most urgent to a CFO (IT cost reduction, headcount restructuring) are often not the highest-confidence ones. The highest-confidence first intervention for your profile — CDO vacant, AI spend untracked, F002 confirmed — is the CDO appointment. It costs nothing to hire. It unblocks $94M in AI value. It re-establishes governance. Without it, every other intervention risks the same fate as the 28 stalled AI initiatives. Does the board understand the cost of the vacancy in margin terms?'
           },
           {
             name: 'Business Case Construction',
@@ -535,12 +535,12 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Baseline Lock',
             description: 'C/I ratio, AI ROI, consulting spend — every metric with source',
-            opening_prompt: 'The margin baseline requires precision. C/I ratio 71% — source: FY2025 P&L. AI spend £94M, verified ROI £0 — source: ARC-M02. Annual consulting spend £42M — source: ARC-D01. These are the numbers locked on Day 0. Every month we will measure actual vs these baselines. If the C/I ratio improves, we calculate the saving and trigger the fee. If it does not, we earn nothing. Are these the right numbers — or is there a more current figure for any of them?'
+            opening_prompt: 'The margin baseline requires precision. C/I ratio 71% — source: FY2025 P&L. AI spend $94M, verified ROI $0 — source: ARC-M02. Annual consulting spend $42M — source: ARC-D01. These are the numbers locked on Day 0. Every month we will measure actual vs these baselines. If the C/I ratio improves, we calculate the saving and trigger the fee. If it does not, we earn nothing. Are these the right numbers — or is there a more current figure for any of them?'
           },
           {
             name: 'Wave Plan',
             description: 'CDO hire → AI governance → first interventions → scale',
-            opening_prompt: 'Wave 1 for Margin Optimization is different from other solutions: it is almost entirely governance. CDO appointed (or interim named), AI governance council constituted, AI portfolio review completed, 3-5 initiatives killed and capital reallocated. These are decisions, not builds. They are the fastest path to margin impact because they stop the bleeding — £94M being spent with £0 return. Wave 1 gate: AI governance council operational and portfolio reviewed. Timeline: 90 days. What would need to be true for the CDO appointment to happen in 30 days?'
+            opening_prompt: 'Wave 1 for Margin Optimization is different from other solutions: it is almost entirely governance. CDO appointed (or interim named), AI governance council constituted, AI portfolio review completed, 3-5 initiatives killed and capital reallocated. These are decisions, not builds. They are the fastest path to margin impact because they stop the bleeding — $94M being spent with $0 return. Wave 1 gate: AI governance council operational and portfolio reviewed. Timeline: 90 days. What would need to be true for the CDO appointment to happen in 30 days?'
           }
         ]
       },
@@ -631,7 +631,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
         default_workstreams: [{
           name: 'Technology Analysis',
           description: 'Automated technology analysis',
-          opening_prompt: 'I have analysed your technology datasets. Before we begin Phase 1, I want to show you what the data reveals — and be direct about what it means.\n\nThree things stand out immediately.\n\nFirst: SQL Server DW reached end-of-life in October 2025. It is running today without security patches. This is not a roadmap decision — it is a compliance and security issue that requires action in the next 30 days, regardless of any Bloomberg AIM decision.\n\nSecond: Three Bloomberg AIM modernisation attempts. £32.6M spent across 2009, 2016, and 2021. All three failed for exactly the same reason: no named executive sponsor who survived the programme duration. The CDO is currently vacant — 11 months. The fourth attempt, with the same governance structure, will produce the same result.\n\nThird: 6 of 14 Bloomberg customisations are portable. An API wrapper approach — which has never been tried — reduces dependency without triggering the migration complexity that stopped all three prior attempts.\n\nI have also identified that Charles River IMS and Portfolio Analytics are the proof points: internal capability exists in pockets. Tech modernisation builds on these, not from zero.\n\nWhich track do you want to begin with: Core System Modernization, ERP Selection, or Cloud Architecture?'
+          opening_prompt: 'I have analysed your technology datasets. Before we begin Phase 1, I want to show you what the data reveals — and be direct about what it means.\n\nThree things stand out immediately.\n\nFirst: SQL Server DW reached end-of-life in October 2025. It is running today without security patches. This is not a roadmap decision — it is a compliance and security issue that requires action in the next 30 days, regardless of any Bloomberg AIM decision.\n\nSecond: Three Bloomberg AIM modernisation attempts. $32.6M spent across 2009, 2016, and 2021. All three failed for exactly the same reason: no named executive sponsor who survived the programme duration. The CDO is currently vacant — 11 months. The fourth attempt, with the same governance structure, will produce the same result.\n\nThird: 6 of 14 Bloomberg customisations are portable. An API wrapper approach — which has never been tried — reduces dependency without triggering the migration complexity that stopped all three prior attempts.\n\nI have also identified that Charles River IMS and Portfolio Analytics are the proof points: internal capability exists in pockets. Tech modernisation builds on these, not from zero.\n\nWhich track do you want to begin with: Core System Modernization, ERP Selection, or Cloud Architecture?'
         }]
       },
       1: {
@@ -649,7 +649,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Failure Pattern Analysis',
             description: 'Why 3 Bloomberg AIM modernisations failed — root cause, not symptoms',
-            opening_prompt: 'Three Bloomberg AIM modernisation attempts. Total cost: £32.6M. All three failed. Before we discuss what to do next, I want to understand why — because if we repeat the same approach, we will get the same result. Looking at the post-mortem data, all three failures have Genome pattern F002 in common: no named executive sponsor who survived the duration of the programme. The first attempt: CDO-equivalent role absent. Second: Programme director left at month 18. Third: CDO appointed, resigned after 4 months. Is that consistent with how you understand what happened?'
+            opening_prompt: 'Three Bloomberg AIM modernisation attempts. Total cost: $32.6M. All three failed. Before we discuss what to do next, I want to understand why — because if we repeat the same approach, we will get the same result. Looking at the post-mortem data, all three failures have Genome pattern F002 in common: no named executive sponsor who survived the duration of the programme. The first attempt: CDO-equivalent role absent. Second: Programme director left at month 18. Third: CDO appointed, resigned after 4 months. Is that consistent with how you understand what happened?'
           },
           {
             name: 'System Assessment',
@@ -720,7 +720,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Business Case',
             description: 'Maintenance cost reduction + capability gain — three scenarios',
-            opening_prompt: 'The business case for technology modernisation is different from the other solutions — the primary value is not a direct saving but a reduction in risk and an unlock of capability. Bloomberg AIM API wrapper: maintenance cost reduction £2-4M annually, migration risk eliminated, internal capability built over 24 months. Capability unlocked: 26 AI initiatives that currently cannot reach production because of AIM data latency. The question for the CFO is not just "what does this cost" but "what does it unlock" — because the AI portfolio value is the bigger number. Shall I build the business case with both the direct saving and the unlocked AI value?'
+            opening_prompt: 'The business case for technology modernisation is different from the other solutions — the primary value is not a direct saving but a reduction in risk and an unlock of capability. Bloomberg AIM API wrapper: maintenance cost reduction $2-4M annually, migration risk eliminated, internal capability built over 24 months. Capability unlocked: 26 AI initiatives that currently cannot reach production because of AIM data latency. The question for the CFO is not just "what does this cost" but "what does it unlock" — because the AI portfolio value is the bigger number. Shall I build the business case with both the direct saving and the unlocked AI value?'
           }
         ]
       },
@@ -739,7 +739,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Baseline Lock',
             description: 'Annual maintenance cost, system ages, migration history — locked Day 0',
-            opening_prompt: 'The technology modernisation baseline locks four metrics. Annual maintenance cost: £8.4M Bloomberg AIM + £0.4M SQL Server DW + adjacent costs. Migration risk score: calculated from the 14 customisations and 28-year data age. Vendor dependency ratio: percentage of technology changes requiring vendor approval. Data pipeline lag: 3-day lag from the manual SQL Server DW process. These are the starting points. If maintenance costs reduce, we calculate the saving against this baseline and trigger the fee. Are these the right metrics — or are there technology costs not captured in these files?'
+            opening_prompt: 'The technology modernisation baseline locks four metrics. Annual maintenance cost: $8.4M Bloomberg AIM + $0.4M SQL Server DW + adjacent costs. Migration risk score: calculated from the 14 customisations and 28-year data age. Vendor dependency ratio: percentage of technology changes requiring vendor approval. Data pipeline lag: 3-day lag from the manual SQL Server DW process. These are the starting points. If maintenance costs reduce, we calculate the saving against this baseline and trigger the fee. Are these the right metrics — or are there technology costs not captured in these files?'
           },
           {
             name: 'Governance Model',
@@ -785,7 +785,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
     key: 'ai-strategy' as SolutionKey,
     name: 'AI Strategy Engagement',
     intelligence_name: 'AI STRATEGY INTELLIGENCE',
-    cxo_question: "How do we go from £0 verifiable AI ROI to a board-ready strategy with every investment justified?",
+    cxo_question: "How do we go from $0 verifiable AI ROI to a board-ready strategy with every investment justified?",
     tagline: '9 Intelligence modules. One complete transformation. Fee on verified outcomes only.',
     genome_patterns: ['F001', 'F002', 'F003', 'F006', 'F008', 'F011'],
     recovery_fee_pct: { min: 0.15, max: 0.20 },
@@ -828,7 +828,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Contradiction Intelligence',
             description: 'What leadership told the board vs what the data actually shows',
-            opening_prompt: "I have cross-referenced your board presentations against your financial and operational data. I found 7 leadership statements that are directly contradicted by the data. The most material: your CEO stated in Q4 2025 that 'AI investment is delivering strong early returns' — but your AI portfolio shows £94M committed and £0 documented ROI. This is Genome pattern F008 (91% failure rate). Before I walk through each contradiction, I need to understand: is leadership aware of this gap, or is this a reporting blind spot?"
+            opening_prompt: "I have cross-referenced your board presentations against your financial and operational data. I found 7 leadership statements that are directly contradicted by the data. The most material: your CEO stated in Q4 2025 that 'AI investment is delivering strong early returns' — but your AI portfolio shows $94M committed and $0 documented ROI. This is Genome pattern F008 (91% failure rate). Before I walk through each contradiction, I need to understand: is leadership aware of this gap, or is this a reporting blind spot?"
           },
           {
             name: 'Data Intelligence',
@@ -853,7 +853,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Technology Intelligence',
             description: 'Every system scored: age, cost, dependency depth, migration risk — modernisation sequence generated',
-            opening_prompt: "Your technology estate has 6 systems at critical risk. I have scored each against four criteria: age relative to peer median, annual maintenance cost, dependency depth (how many other systems break if this one fails), and migration risk (Genome-validated for your specific stack). The highest risk is SQL Server 2017 — EOL October 2025, currently running unpatched. The highest value modernisation is the Teradata EDW — £4.2M annually, 23% of queries exceeding SLA, and the Basel IV deadline in Q1 2027 creates a compliance forcing function. I want to build the modernisation sequence with you. What does your board care more about: regulatory compliance or analytical performance?"
+            opening_prompt: "Your technology estate has 6 systems at critical risk. I have scored each against four criteria: age relative to peer median, annual maintenance cost, dependency depth (how many other systems break if this one fails), and migration risk (Genome-validated for your specific stack). The highest risk is SQL Server 2017 — EOL October 2025, currently running unpatched. The highest value modernisation is the Teradata EDW — $4.2M annually, 23% of queries exceeding SLA, and the Basel IV deadline in Q1 2027 creates a compliance forcing function. I want to build the modernisation sequence with you. What does your board care more about: regulatory compliance or analytical performance?"
           },
           {
             name: 'Vendor Intelligence',
@@ -882,7 +882,7 @@ export const SOLUTIONS: Record<SolutionKey, SolutionConfig> = {
           {
             name: 'Business Case Intelligence',
             description: 'Three scenarios (Bear/Base/Bull), risk-adjusted IRR, Genome-validated — the CFO-grade case',
-            opening_prompt: "The business case is built from three inputs: your baseline data (from Phase 0 and Phase 1), Genome comparables (3 FinServ transformations with similar AI portfolio profiles), and your risk tolerance (from our Phase 2 conversations). The base case delivers £140M over 3 years on £94M redeployed investment — that is a 34% IRR and 14-month payback. The bear case is £95M, which is still a 1.0x ROI — the floor is break-even. Before I generate the full IC package, I need to validate the baseline numbers with you. The most important: what is the current annual value of your AI portfolio? Not what was committed — what is verifiably delivered?"
+            opening_prompt: "The business case is built from three inputs: your baseline data (from Phase 0 and Phase 1), Genome comparables (3 FinServ transformations with similar AI portfolio profiles), and your risk tolerance (from our Phase 2 conversations). The base case delivers $140M over 3 years on $94M redeployed investment — that is a 34% IRR and 14-month payback. The bear case is $95M, which is still a 1.0x ROI — the floor is break-even. Before I generate the full IC package, I need to validate the baseline numbers with you. The most important: what is the current annual value of your AI portfolio? Not what was committed — what is verifiably delivered?"
           },
           {
             name: 'AI Delivery Intelligence',

@@ -41,7 +41,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Opening with the anchor finding from ARC-D01. **Wipro is your largest vendor at £18M/yr** — and also your highest-risk. Genome analysis gives them a **KT score of 15/100**, which places them in the bottom 3% of asset management vendors in our dataset. Against a contracted delivery velocity of 100%, they are delivering **58%** — meaning you are paying for work that is either not happening or happening in ways that don't transfer knowledge back to the internal team. At the current trajectory, every 12 months Wipro is on contract, the cost of extracting and rebuilding that knowledge grows by an estimated **£2.1M**. The dependency isn't a performance problem; it's a structural ownership problem.",
+                "Opening with the anchor finding from ARC-D01. **Wipro is your largest vendor at $18M/yr** — and also your highest-risk. Genome analysis gives them a **KT score of 15/100**, which places them in the bottom 3% of asset management vendors in our dataset. Against a contracted delivery velocity of 100%, they are delivering **58%** — meaning you are paying for work that is either not happening or happening in ways that don't transfer knowledge back to the internal team. At the current trajectory, every 12 months Wipro is on contract, the cost of extracting and rebuilding that knowledge grows by an estimated **$2.1M**. The dependency isn't a performance problem; it's a structural ownership problem.",
             },
             {
               role: 'admin',
@@ -52,7 +52,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Quantifying it precisely. If Wipro's contract ended today without a structured KT programme, the rebuild cost is **£6–9M** over an **18-month** recovery timeline. That range accounts for: (1) Domain knowledge reconstruction across FSC Platform, OMS Core, and Settlement Engine — estimated **£3.2M** in internal engineering time and specialist contractor hours. (2) Lost velocity during transition — **£1.8–3.5M** in deferred delivery capacity. (3) Incident risk premium during the gap — FSC Platform had **3 P1 incidents in the last 6 months**, all resolved by Wipro engineers with no internal shadow. A fourth P1 during transition would add an unbudgeted £500K–£1.2M. The **15% KT score** means only 15% of the procedural knowledge needed to operate Wipro-owned systems is currently documented or held internally. That is the exposure number.",
+                "Quantifying it precisely. If Wipro's contract ended today without a structured KT programme, the rebuild cost is **$6–9M** over an **18-month** recovery timeline. That range accounts for: (1) Domain knowledge reconstruction across FSC Platform, OMS Core, and Settlement Engine — estimated **$3.2M** in internal engineering time and specialist contractor hours. (2) Lost velocity during transition — **$1.8–3.5M** in deferred delivery capacity. (3) Incident risk premium during the gap — FSC Platform had **3 P1 incidents in the last 6 months**, all resolved by Wipro engineers with no internal shadow. A fourth P1 during transition would add an unbudgeted $500K–$1.2M. The **15% KT score** means only 15% of the procedural knowledge needed to operate Wipro-owned systems is currently documented or held internally. That is the exposure number.",
             },
             {
               role: 'admin',
@@ -87,7 +87,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Full replacement would take **18–24 months** and cost **£8–12M** — and that estimate assumes a clean handover, which Bloomberg has no contractual obligation to provide. The harder problem is regulatory: three of the 14 customisations map directly to FCA compliance rules. If Bloomberg withdraws support and those rules break, Arcturus has a live regulatory exposure, not just an operational one. The recommendation is not rip-and-replace. The **API wrapper approach** creates an internal governance layer around AIM — a translation layer that Arcturus owns, which abstracts the Bloomberg-specific logic into documented, testable rules. This doesn't require leaving Bloomberg; it creates sovereignty over the logic regardless of what Bloomberg does. The alternative — waiting until a contract dispute forces the issue — is a risk that pricing models don't capture.",
+                "Full replacement would take **18–24 months** and cost **$8–12M** — and that estimate assumes a clean handover, which Bloomberg has no contractual obligation to provide. The harder problem is regulatory: three of the 14 customisations map directly to FCA compliance rules. If Bloomberg withdraws support and those rules break, Arcturus has a live regulatory exposure, not just an operational one. The recommendation is not rip-and-replace. The **API wrapper approach** creates an internal governance layer around AIM — a translation layer that Arcturus owns, which abstracts the Bloomberg-specific logic into documented, testable rules. This doesn't require leaving Bloomberg; it creates sovereignty over the logic regardless of what Bloomberg does. The alternative — waiting until a contract dispute forces the issue — is a risk that pricing models don't capture.",
             },
             {
               role: 'admin',
@@ -144,7 +144,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
         status: 'approved',
         content: {
           executive_summary:
-            'Arcturus Financial Group is carrying £42M in annual consulting spend against a knowledge transfer posture that has created three critical dependency risks: Wipro (£18M/yr, KT score 15/100), Google PSO (engagement closed without handover, 26 AI initiatives blocked), and Bloomberg AIM (14 custom integrations entirely vendor-owned, KT score 8/100). The 47% contractor/consulting ratio is above sector norms and concentrated in high-risk domains. Genome pattern analysis confirms F001, F002, and F008 across the portfolio. Recovery range is £16–28M annually through structured exit, renegotiation, and internal capability transfer. Recommended: 6 Maestros replacing 40 consultants.',
+            'Arcturus Financial Group is carrying $42M in annual consulting spend against a knowledge transfer posture that has created three critical dependency risks: Wipro ($18M/yr, KT score 15/100), Google PSO (engagement closed without handover, 26 AI initiatives blocked), and Bloomberg AIM (14 custom integrations entirely vendor-owned, KT score 8/100). The 47% contractor/consulting ratio is above sector norms and concentrated in high-risk domains. Genome pattern analysis confirms F001, F002, and F008 across the portfolio. Recovery range is $16–28M annually through structured exit, renegotiation, and internal capability transfer. Recommended: 6 Maestros replacing 40 consultants.',
           total_consulting_spend: 42000000,
           vendor_breakdown: [
             {
@@ -236,7 +236,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               kt_score: 8,
               description:
                 '14 custom integrations entirely vendor-owned. FCA compliance dependency on 3 integrations. No internal documentation.',
-              financial_exposure: '£8–12M replacement cost',
+              financial_exposure: '$8–12M replacement cost',
             },
             {
               domain: 'Google MLOps Architecture',
@@ -244,7 +244,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               kt_score: 12,
               description:
                 'PSO engagement closed without handover. 26 AI initiatives blocked. Architecture in ex-PSO engineer heads.',
-              financial_exposure: '£4–6M to reconstruct; £15M+ in blocked AI initiative value',
+              financial_exposure: '$4–6M to reconstruct; $15M+ in blocked AI initiative value',
             },
             {
               domain: 'Enterprise Architecture (Contractor EA)',
@@ -252,13 +252,13 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               kt_score: 11,
               description:
                 'Single contractor holds all architectural decision records. No succession plan. No documentation.',
-              financial_exposure: '£2–3M to reconstruct; governance exposure',
+              financial_exposure: '$2–3M to reconstruct; governance exposure',
             },
           ],
           capability_gap_assessment:
             'Portfolio Analytics (KT 91/100) demonstrates that internal capability is achievable at Arcturus. The gap is structural, not cultural — squads founded on outsourced codebases (OMS Core, FSC Platform) have inherited vendor dependency that cannot be self-corrected without structured transition. Internal/external ratio at 53/47 against a sector benchmark of 72/28 for comparable asset managers.',
           recommended_action:
-            'Deploy 6 Maestros in 3 waves over 12 months. Wave 1: Delivery Maestro (Data & AI) + Knowledge Risk Maestro, targeting Wipro KT programme and Google PSO knowledge recovery. Projected annual recovery: £16–28M. Fee: 15–20% of verified savings, post-verification only.',
+            'Deploy 6 Maestros in 3 waves over 12 months. Wave 1: Delivery Maestro (Data & AI) + Knowledge Risk Maestro, targeting Wipro KT programme and Google PSO knowledge recovery. Projected annual recovery: $16–28M. Fee: 15–20% of verified savings, post-verification only.',
           genome_validation:
             'F001 confirmed: consulting spend concentration risk (Wipro = 43% of total spend). F002 confirmed: KT score below 20 in largest vendor. F008 confirmed: post-engagement knowledge gap (Google PSO). F009 confirmed: vendor-owned IP in regulated compliance domain (Bloomberg AIM).',
         },
@@ -277,7 +277,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Proposing **6 Maestros** across 3 waves. I'll start with the highest-leverage placement: **Delivery Maestro: Data & AI**. This role directly replaces the functional gap left by Google PSO's exit and the data platform components of Wipro's engagement. The individual we have in mind has 12 years in MLOps architecture at HSBC Global Markets and Deutsche Bank, with specific Bloomberg AIM integration experience. They are not a generalist — they know the exact problem domain. Against Google PSO at **£6M/yr** and the relevant Wipro components at approximately **£4M/yr**, this single Maestro placement addresses **£10M of the £18M critical-vendor spend**. Wave 1 cost for this role: £320K/yr all-in.",
+                "Proposing **6 Maestros** across 3 waves. I'll start with the highest-leverage placement: **Delivery Maestro: Data & AI**. This role directly replaces the functional gap left by Google PSO's exit and the data platform components of Wipro's engagement. The individual we have in mind has 12 years in MLOps architecture at HSBC Global Markets and Deutsche Bank, with specific Bloomberg AIM integration experience. They are not a generalist — they know the exact problem domain. Against Google PSO at **$6M/yr** and the relevant Wipro components at approximately **$4M/yr**, this single Maestro placement addresses **$10M of the $18M critical-vendor spend**. Wave 1 cost for this role: $320K/yr all-in.",
             },
             {
               role: 'admin',
@@ -288,7 +288,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "All 6 Maestros with replacement rationale. **(1) Delivery Maestro: Data & AI** — £320K/yr, replaces Google PSO + Wipro data platform (£10M/yr). Wave 1. **(2) Knowledge Risk Maestro** — £280K/yr, owns Bloomberg AIM governance programme and Contractor EA documentation. Wave 1. **(3) Delivery Maestro: FSC Platform** — £300K/yr, replaces Wipro FSC Platform team; takes over as internal lead. Wave 2. **(4) Delivery Maestro: OMS Core** — £295K/yr, replaces Wipro OMS Core; manages structured parallel-running programme. Wave 2. **(5) Architecture Maestro** — £340K/yr, replaces Contractor EA; owns enterprise architecture documentation and decision records going forward. Wave 2. **(6) Vendor Intelligence Maestro** — £260K/yr, manages ongoing vendor performance, KT score monitoring, and renegotiation execution. Wave 3. **Total Maestro cost: £1.795M/yr** versus **£42M consulting spend**. The metric is not headcount reduction — it is verified recovery delivered per pound of Maestro cost.",
+                "All 6 Maestros with replacement rationale. **(1) Delivery Maestro: Data & AI** — $320K/yr, replaces Google PSO + Wipro data platform ($10M/yr). Wave 1. **(2) Knowledge Risk Maestro** — $280K/yr, owns Bloomberg AIM governance programme and Contractor EA documentation. Wave 1. **(3) Delivery Maestro: FSC Platform** — $300K/yr, replaces Wipro FSC Platform team; takes over as internal lead. Wave 2. **(4) Delivery Maestro: OMS Core** — $295K/yr, replaces Wipro OMS Core; manages structured parallel-running programme. Wave 2. **(5) Architecture Maestro** — $340K/yr, replaces Contractor EA; owns enterprise architecture documentation and decision records going forward. Wave 2. **(6) Vendor Intelligence Maestro** — $260K/yr, manages ongoing vendor performance, KT score monitoring, and renegotiation execution. Wave 3. **Total Maestro cost: $1.795M/yr** versus **$42M consulting spend**. The metric is not headcount reduction — it is verified recovery delivered per pound of Maestro cost.",
             },
             {
               role: 'admin',
@@ -332,7 +332,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**6-month structured exit** in 3 phases. **Months 1–2 (KT Programme Mandatory):** Every domain documented. Every decision tree mapped. Wipro engineers required to produce handover documentation as a contract deliverable — we invoke the existing IP clause in the SoW which requires source documentation on request. Internal engineers assigned as shadows on every FSC Platform task; Wipro cannot close a ticket without an internal engineer co-present. **Months 3–4 (Parallel Running):** Internal engineers shadow-to-lead transition. Every Wipro action requires internal engineer sign-off before execution. Contract spend reduces by 30% at month 3 as advisory-only scope is priced. **Months 5–6 (Wipro Advisory Only):** Internal team leads all FSC, OMS, Settlement tasks. Wipro available for 40 hrs/month advisory. Contract reduces to advisory rate. Month 6: contract close or renegotiated to specialist advisory only. **Net saving from exit: £12–14M/yr** depending on residual advisory arrangement.",
+                "**6-month structured exit** in 3 phases. **Months 1–2 (KT Programme Mandatory):** Every domain documented. Every decision tree mapped. Wipro engineers required to produce handover documentation as a contract deliverable — we invoke the existing IP clause in the SoW which requires source documentation on request. Internal engineers assigned as shadows on every FSC Platform task; Wipro cannot close a ticket without an internal engineer co-present. **Months 3–4 (Parallel Running):** Internal engineers shadow-to-lead transition. Every Wipro action requires internal engineer sign-off before execution. Contract spend reduces by 30% at month 3 as advisory-only scope is priced. **Months 5–6 (Wipro Advisory Only):** Internal team leads all FSC, OMS, Settlement tasks. Wipro available for 40 hrs/month advisory. Contract reduces to advisory rate. Month 6: contract close or renegotiated to specialist advisory only. **Net saving from exit: $12–14M/yr** depending on residual advisory arrangement.",
             },
             {
               role: 'admin',
@@ -354,7 +354,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Retain verdicts with renegotiation targets. **Accenture (£4M):** Infrastructure delivery, KT score 62% — acceptable but improvable. Retain; renegotiate 10% reduction on advisory components. **McKinsey (£2M):** Strategy advisory only, no executable dependency, no KT risk. Retain unchanged — this is appropriate use of external advisory. **ThoughtWorks (£3.5M):** Agile coaching, KT score 71%, strong practice transfer model. Retain; they are already doing what Maestros do for their domain. **CapGemini (£3M):** Data engineering, KT score 58% — below threshold. Retain on **improvement condition**: KT score must reach 70 within 90 days or contract moves to exit track. **Deloitte (£2.5M):** Governance audit, KT score 88%, no operational dependency. Retain unchanged. **Total retain spend: £15M.** Renegotiation target: **£15M → £12.75M** (15% reduction). Combined with Wipro exit and Contractor EA exit, total vendor portfolio reduces from £42M to an optimised **£14.5M** at steady state.",
+                "Retain verdicts with renegotiation targets. **Accenture ($4M):** Infrastructure delivery, KT score 62% — acceptable but improvable. Retain; renegotiate 10% reduction on advisory components. **McKinsey ($2M):** Strategy advisory only, no executable dependency, no KT risk. Retain unchanged — this is appropriate use of external advisory. **ThoughtWorks ($3.5M):** Agile coaching, KT score 71%, strong practice transfer model. Retain; they are already doing what Maestros do for their domain. **CapGemini ($3M):** Data engineering, KT score 58% — below threshold. Retain on **improvement condition**: KT score must reach 70 within 90 days or contract moves to exit track. **Deloitte ($2.5M):** Governance audit, KT score 88%, no operational dependency. Retain unchanged. **Total retain spend: $15M.** Renegotiation target: **$15M → $12.75M** (15% reduction). Combined with Wipro exit and Contractor EA exit, total vendor portfolio reduces from $42M to an optimised **$14.5M** at steady state.",
             },
           ],
         },
@@ -365,7 +365,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "The recovery range is **£16–28M annually**, with a base case of **£22M**. This is not a projection — it is drawn from **47 engagements with comparable Genome patterns** (F001, F002, F008, F009) in asset management and financial services. Those 47 engagements produced a median recovery of £22.3M against a median consulting spend of £39M. The Arcturus base case is deliberately conservative relative to that median because of two factors: Wipro's transition complexity is above average (58% delivered velocity is worse than the median in our dataset), and Bloomberg AIM's KT score of 8/100 is an outlier that will take longer to address than a typical vendor.",
+                "The recovery range is **$16–28M annually**, with a base case of **$22M**. This is not a projection — it is drawn from **47 engagements with comparable Genome patterns** (F001, F002, F008, F009) in asset management and financial services. Those 47 engagements produced a median recovery of $22.3M against a median consulting spend of $39M. The Arcturus base case is deliberately conservative relative to that median because of two factors: Wipro's transition complexity is above average (58% delivered velocity is worse than the median in our dataset), and Bloomberg AIM's KT score of 8/100 is an outlier that will take longer to address than a typical vendor.",
             },
             {
               role: 'admin',
@@ -376,7 +376,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Three scenarios, all verified against Genome F001 baseline from 47 engagements. **Conservative (£16M):** Wipro 6-month exit completes, Google PSO knowledge 70% recovered, 3 of 5 renegotiations hit target (Accenture, CapGemini, one other). Internal/external ratio reaches 62/38. Bloomberg AIM risk reduces but programme not complete. This scenario assumes Wipro KT programme takes the full 6 months and one renegotiation fails. **Base Case (£22M):** All of the above plus Contractor EA exit completed cleanly, all 5 renegotiations hit 15% reduction target, Google PSO knowledge 90% recovered. Internal/external ratio reaches 68/32. Bloomberg AIM programme running, risk at HIGH. **Optimistic (£28M):** All of the above plus internal capability reaches 70/30, Bloomberg AIM risk reduced to LOW via API wrapper completion, full Maestro team embedded and operating independently. This requires no major transition stalls and the CDO appointment within 60 days. **All three scenarios verified against Genome F001. All three produce positive ROI on Maestro fees.**",
+                "Three scenarios, all verified against Genome F001 baseline from 47 engagements. **Conservative ($16M):** Wipro 6-month exit completes, Google PSO knowledge 70% recovered, 3 of 5 renegotiations hit target (Accenture, CapGemini, one other). Internal/external ratio reaches 62/38. Bloomberg AIM risk reduces but programme not complete. This scenario assumes Wipro KT programme takes the full 6 months and one renegotiation fails. **Base Case ($22M):** All of the above plus Contractor EA exit completed cleanly, all 5 renegotiations hit 15% reduction target, Google PSO knowledge 90% recovered. Internal/external ratio reaches 68/32. Bloomberg AIM programme running, risk at HIGH. **Optimistic ($28M):** All of the above plus internal capability reaches 70/30, Bloomberg AIM risk reduced to LOW via API wrapper completion, full Maestro team embedded and operating independently. This requires no major transition stalls and the CDO appointment within 60 days. **All three scenarios verified against Genome F001. All three produce positive ROI on Maestro fees.**",
             },
             {
               role: 'admin',
@@ -387,7 +387,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**68% confidence on £22M base case**, based on 47 engagements in the Genome dataset with matching pattern profiles. The 80% confidence interval is **£19–25M** — meaning 8 out of 10 similar engagements land in that range. The variance is driven primarily by **Wipro transition speed**: if the KT programme takes 9 months instead of 6 (most common delay cause: internal engineering resource availability for shadowing), the base case drops to approximately **£18M** as month 7–9 savings are deferred. Secondary variance driver: Bloomberg AIM programme — if Bloomberg LP delays documentation access beyond the contractual obligation, the knowledge risk programme extends and the risk-adjusted savings from that domain reduce in year 1. The £22M figure is the mean of the distribution, not the ceiling. We present the £19–25M range to the CFO as the planning range.",
+                "**68% confidence on $22M base case**, based on 47 engagements in the Genome dataset with matching pattern profiles. The 80% confidence interval is **$19–25M** — meaning 8 out of 10 similar engagements land in that range. The variance is driven primarily by **Wipro transition speed**: if the KT programme takes 9 months instead of 6 (most common delay cause: internal engineering resource availability for shadowing), the base case drops to approximately **$18M** as month 7–9 savings are deferred. Secondary variance driver: Bloomberg AIM programme — if Bloomberg LP delays documentation access beyond the contractual obligation, the knowledge risk programme extends and the risk-adjusted savings from that domain reduce in year 1. The $22M figure is the mean of the distribution, not the ceiling. We present the $19–25M range to the CFO as the planning range.",
             },
             {
               role: 'admin',
@@ -398,7 +398,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**17.5% of £22M = £3.85M total fee** at base case. The structure is outcome-triggered: AbarVa receives no fee until a verified saving is confirmed by the client's auditor. **First trigger at Month 3**: first verified saving of £500K or greater (this will be the Wipro first contract reduction — already visible in month 2 as the parallel-running phase prices down). Month 3 fee: **£87.5K**. This is the only fee paid in the first quarter. Subsequent triggers at months 6, 9, and 12 as verified savings compound. **Total at base case: £3.85M over 12 months.** The CFO sees fee invoices only after the cash from savings has landed. If savings underperform, fees scale down proportionally — the fee is a percentage of verified savings, not a fixed project fee. No verified saving = no fee. This is the structure the CFO should present to the board.",
+                "**17.5% of $22M = $3.85M total fee** at base case. The structure is outcome-triggered: AbarVa receives no fee until a verified saving is confirmed by the client's auditor. **First trigger at Month 3**: first verified saving of $500K or greater (this will be the Wipro first contract reduction — already visible in month 2 as the parallel-running phase prices down). Month 3 fee: **$87.5K**. This is the only fee paid in the first quarter. Subsequent triggers at months 6, 9, and 12 as verified savings compound. **Total at base case: $3.85M over 12 months.** The CFO sees fee invoices only after the cash from savings has landed. If savings underperform, fees scale down proportionally — the fee is a percentage of verified savings, not a fixed project fee. No verified saving = no fee. This is the structure the CFO should present to the board.",
             },
           ],
         },
@@ -413,7 +413,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               wave: 1,
               title: 'Delivery Maestro: Data & AI',
               annual_cost: 320000,
-              replaces: ['Google PSO (£6M/yr)', 'Wipro Data Platform components (£4M/yr)'],
+              replaces: ['Google PSO ($6M/yr)', 'Wipro Data Platform components ($4M/yr)'],
               placement_timeline_days: 45,
               primary_deliverable: 'MLOps architecture recovery and data platform KT programme',
             },
@@ -421,7 +421,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               wave: 1,
               title: 'Knowledge Risk Maestro',
               annual_cost: 280000,
-              replaces: ['Contractor EA (£1.5M/yr)', 'Bloomberg AIM governance gap'],
+              replaces: ['Contractor EA ($1.5M/yr)', 'Bloomberg AIM governance gap'],
               placement_timeline_days: 45,
               primary_deliverable:
                 'Bloomberg AIM KT programme, enterprise architecture documentation, API wrapper design',
@@ -430,7 +430,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               wave: 2,
               title: 'Delivery Maestro: FSC Platform',
               annual_cost: 300000,
-              replaces: ['Wipro FSC Platform (£5M/yr component)'],
+              replaces: ['Wipro FSC Platform ($5M/yr component)'],
               placement_timeline_days: 75,
               primary_deliverable: 'FSC Platform internal ownership, Wipro shadow-to-lead transition',
             },
@@ -438,7 +438,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               wave: 2,
               title: 'Delivery Maestro: OMS Core',
               annual_cost: 295000,
-              replaces: ['Wipro OMS Core (£5M/yr component)'],
+              replaces: ['Wipro OMS Core ($5M/yr component)'],
               placement_timeline_days: 80,
               primary_deliverable: 'OMS Core parallel-running programme, Settlement Engine handover',
             },
@@ -446,7 +446,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               wave: 2,
               title: 'Architecture Maestro',
               annual_cost: 340000,
-              replaces: ['Contractor EA architecture function (£1.5M/yr)'],
+              replaces: ['Contractor EA architecture function ($1.5M/yr)'],
               placement_timeline_days: 85,
               primary_deliverable: 'Enterprise architecture documentation, ADR programme, future-state design',
             },
@@ -565,19 +565,19 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Locking 5 baseline metrics today — these become the zero-point against which every verified saving is measured, audited, and fee-triggered. Starting with the most important. **Metric 1: Annual consulting spend.** Source document ARC-D01 — statement-of-work invoice compilation, last 12 months. Figure: **£42,000,000**. This includes all 10 vendors on all active SoWs. It excludes Bloomberg subscription fees (Bloomberg terminal costs are product spend, not consulting), FCA filing costs, and internal payroll. Is this the right perimeter?",
+                "Locking 5 baseline metrics today — these become the zero-point against which every verified saving is measured, audited, and fee-triggered. Starting with the most important. **Metric 1: Annual consulting spend.** Source document ARC-D01 — statement-of-work invoice compilation, last 12 months. Figure: **$42,000,000**. This includes all 10 vendors on all active SoWs. It excludes Bloomberg subscription fees (Bloomberg terminal costs are product spend, not consulting), FCA filing costs, and internal payroll. Is this the right perimeter?",
             },
             {
               role: 'admin',
               actor_name: 'Anand Sundaram',
               content:
-                "Yes, £42M is correct. It includes all statement-of-work invoices from the last 12 months.",
+                "Yes, $42M is correct. It includes all statement-of-work invoices from the last 12 months.",
             },
             {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**Metric 1 locked: £42,000,000.** Moving to Metric 2: **Average KT Score**. Current weighted average across all 10 vendors: **31/100**. Source: ARC-D02. Methodology: internal engineer self-assessment combined with handover document completeness scoring (0–100 scale). Weighting is proportional to vendor spend — Wipro's 15/100 pulls the average down significantly given its 43% spend share. The 31/100 figure has been reviewed by your internal engineering leads and confirmed as accurate. Bloomberg at 8/100 and Contractor EA at 11/100 are the floor. Portfolio Analytics at 91/100 (internal, not a vendor) is excluded from vendor scoring. Shall I lock at 31?",
+                "**Metric 1 locked: $42,000,000.** Moving to Metric 2: **Average KT Score**. Current weighted average across all 10 vendors: **31/100**. Source: ARC-D02. Methodology: internal engineer self-assessment combined with handover document completeness scoring (0–100 scale). Weighting is proportional to vendor spend — Wipro's 15/100 pulls the average down significantly given its 43% spend share. The 31/100 figure has been reviewed by your internal engineering leads and confirmed as accurate. Bloomberg at 8/100 and Contractor EA at 11/100 are the floor. Portfolio Analytics at 91/100 (internal, not a vendor) is excluded from vendor scoring. Shall I lock at 31?",
             },
             {
               role: 'admin',
@@ -588,7 +588,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**All 5 metrics now locked.** Metric 1: Consulting spend **£42,000,000** (source: ARC-D01). Metric 2: Average KT score **31/100** (source: ARC-D02). Metric 3: Internal/external ratio **53/47** (source: ARC-D03, headcount and billing analysis). Metric 4: Vendor dependency ratio **73%** — percentage of delivery tasks where a vendor is the primary executor (source: ARC-D04, task-level delivery log). Metric 5: Knowledge risk score **82/100** — composite of KT scores, vendor concentration, and undocumented critical domains (source: Genome model output). Baseline document generated as ARC-BASELINE-001. This document requires **CEO or CFO signature before Day 1** — the signature locks the measurement framework and initiates the fee eligibility clock. No signature = no Day 1 = no fee exposure for Arcturus.",
+                "**All 5 metrics now locked.** Metric 1: Consulting spend **$42,000,000** (source: ARC-D01). Metric 2: Average KT score **31/100** (source: ARC-D02). Metric 3: Internal/external ratio **53/47** (source: ARC-D03, headcount and billing analysis). Metric 4: Vendor dependency ratio **73%** — percentage of delivery tasks where a vendor is the primary executor (source: ARC-D04, task-level delivery log). Metric 5: Knowledge risk score **82/100** — composite of KT scores, vendor concentration, and undocumented critical domains (source: Genome model output). Baseline document generated as ARC-BASELINE-001. This document requires **CEO or CFO signature before Day 1** — the signature locks the measurement framework and initiates the fee eligibility clock. No signature = no Day 1 = no fee exposure for Arcturus.",
             },
           ],
         },
@@ -621,7 +621,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**Wave 2 (Days 91–180)** has three gates that must be met before Wave 2 Maestros are placed. **Gate 1: First verified saving documented and audited** — this triggers the first fee payment (£87.5K) and confirms the measurement framework is working. **Gate 2: Wipro KT score improved from 15 to 40** — this is the proof point that the KT programme is functioning. At 40/100, the internal team can operate FSC Platform at 80% autonomy. **Gate 3: Internal capability baseline re-measured** — the 53/47 ratio must show movement (target 56/44 by day 90). If all three gates pass, Wave 2 Maestros — FSC Platform, OMS Core, Architecture — are placed. If Wipro KT programme stalls (Gate 2 fails), Wave 2 is paused and the Wipro break clause is invoked, which accelerates the exit and changes the Wave 2 timeline but not the savings trajectory.",
+                "**Wave 2 (Days 91–180)** has three gates that must be met before Wave 2 Maestros are placed. **Gate 1: First verified saving documented and audited** — this triggers the first fee payment ($87.5K) and confirms the measurement framework is working. **Gate 2: Wipro KT score improved from 15 to 40** — this is the proof point that the KT programme is functioning. At 40/100, the internal team can operate FSC Platform at 80% autonomy. **Gate 3: Internal capability baseline re-measured** — the 53/47 ratio must show movement (target 56/44 by day 90). If all three gates pass, Wave 2 Maestros — FSC Platform, OMS Core, Architecture — are placed. If Wipro KT programme stalls (Gate 2 fails), Wave 2 is paused and the Wipro break clause is invoked, which accelerates the exit and changes the Wave 2 timeline but not the savings trajectory.",
             },
             {
               role: 'admin',
@@ -643,7 +643,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Outcome-based fee across **4 triggers**. All triggers are post-verification — AbarVa invoices only after the saving has been confirmed by Arcturus's auditor (KPMG, per your standing audit arrangement). **Trigger 1 (Month 3):** First verified saving of **£500K or greater** = AbarVa fee of **£87.5K** (17.5% of £500K minimum threshold). This trigger is designed to be conservative — £500K is achievable from the first Wipro contract reduction alone. Expected actual saving at Month 3: **£3.8M annualised**, which would proportionally trigger a larger fee — but we cap Month 3 at 17.5% of verified saving not yet fully audited. Full Month 3 fee calculated after audit.",
+                "Outcome-based fee across **4 triggers**. All triggers are post-verification — AbarVa invoices only after the saving has been confirmed by Arcturus's auditor (KPMG, per your standing audit arrangement). **Trigger 1 (Month 3):** First verified saving of **$500K or greater** = AbarVa fee of **$87.5K** (17.5% of $500K minimum threshold). This trigger is designed to be conservative — $500K is achievable from the first Wipro contract reduction alone. Expected actual saving at Month 3: **$3.8M annualised**, which would proportionally trigger a larger fee — but we cap Month 3 at 17.5% of verified saving not yet fully audited. Full Month 3 fee calculated after audit.",
             },
             {
               role: 'admin',
@@ -654,7 +654,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Four triggers across 12 months at base case. **Month 3: £87.5K** — first verified saving confirmed, Wipro first contract reduction audited. **Month 6: £500K** — Wipro parallel-running phase complete, full contract reduction confirmed and annualised, Wave 2 Gate 1 passed. **Month 9: £875K** — Wave 2 complete, OMS Core and FSC Platform transitions confirmed, all renegotiations audited. **Month 12: Final reconciliation** — total verified savings against £22M base case, remaining fee balance settled. At base case: total 12-month fee **£3.85M**, paid in four tranches across the year. **All paid post-verification. All auditable against ARC-BASELINE-001.** If total verified savings at month 12 land at £19M (lower confidence interval), total fee is **£3.325M**. If they land at £25M (upper), total fee is **£4.375M**. Fee scales with outcome.",
+                "Four triggers across 12 months at base case. **Month 3: $87.5K** — first verified saving confirmed, Wipro first contract reduction audited. **Month 6: $500K** — Wipro parallel-running phase complete, full contract reduction confirmed and annualised, Wave 2 Gate 1 passed. **Month 9: $875K** — Wave 2 complete, OMS Core and FSC Platform transitions confirmed, all renegotiations audited. **Month 12: Final reconciliation** — total verified savings against $22M base case, remaining fee balance settled. At base case: total 12-month fee **$3.85M**, paid in four tranches across the year. **All paid post-verification. All auditable against ARC-BASELINE-001.** If total verified savings at month 12 land at $19M (lower confidence interval), total fee is **$3.325M**. If they land at $25M (upper), total fee is **$4.375M**. Fee scales with outcome.",
             },
             {
               role: 'admin',
@@ -725,7 +725,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
                 'First baseline re-measurement at Day 45',
               ],
               gate_to_wave_2: [
-                'First verified saving documented and audited (≥ £500K)',
+                'First verified saving documented and audited (≥ $500K)',
                 'Wipro KT score improved from 15 to 40',
                 'Internal/external ratio shows movement to 56/44',
               ],
@@ -772,7 +772,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
           fee_schedule: [
             {
               trigger_month: 3,
-              trigger_condition: 'First verified saving ≥ £500K, audited by KPMG',
+              trigger_condition: 'First verified saving ≥ $500K, audited by KPMG',
               fee_amount: 87500,
               expected_verified_saving: 3800000,
             },
@@ -814,7 +814,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**Month 3 actuals against ARC-BASELINE-001.** Consulting spend (annualised from month 3 run rate): **£38.2M** — down from £42M baseline, a **£3.8M annualised reduction**. Composition: Wipro first contract reduction (parallel-running pricing applied) = **£2.3M annualised**. Google PSO contract formally closed (was still on a residual retainer from the original engagement) = **£1.5M annualised**. Total Month 3 verified saving: **£3.8M annualised** — **exceeds the Month 3 gate target** of £500K minimum. The Month 3 fee trigger of £87.5K is now eligible for invoicing. KPMG have confirmed the saving calculation against ARC-D01 source invoices.",
+                "**Month 3 actuals against ARC-BASELINE-001.** Consulting spend (annualised from month 3 run rate): **$38.2M** — down from $42M baseline, a **$3.8M annualised reduction**. Composition: Wipro first contract reduction (parallel-running pricing applied) = **$2.3M annualised**. Google PSO contract formally closed (was still on a residual retainer from the original engagement) = **$1.5M annualised**. Total Month 3 verified saving: **$3.8M annualised** — **exceeds the Month 3 gate target** of $500K minimum. The Month 3 fee trigger of $87.5K is now eligible for invoicing. KPMG have confirmed the saving calculation against ARC-D01 source invoices.",
             },
             {
               role: 'admin',
@@ -847,7 +847,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "**Month 3 milestone status across Wave 1 plan.** **(1) CDO appointment — COMPLETE:** James Park appointed as Chief Data Officer, Day 42. Reporting line confirmed: CDO reports to CEO, Maestro programme sponsored by CDO. First CDO-Maestro strategy session held Day 45. **(2) Wipro KT programme — IN PROGRESS (GREEN):** 9 of 14 domains documented. Week 10 of 24. On track for Gate 2 (KT score 40 by day 90). Wipro is cooperating — the audit findings plus the remediation clause invocation reset the engagement dynamic. **(3) First verified saving — COMPLETE:** £3.8M annualised, confirmed by KPMG against ARC-D01. Exceeds gate minimum. **Month 3 fee trigger eligible: £87.5K.**",
+                "**Month 3 milestone status across Wave 1 plan.** **(1) CDO appointment — COMPLETE:** James Park appointed as Chief Data Officer, Day 42. Reporting line confirmed: CDO reports to CEO, Maestro programme sponsored by CDO. First CDO-Maestro strategy session held Day 45. **(2) Wipro KT programme — IN PROGRESS (GREEN):** 9 of 14 domains documented. Week 10 of 24. On track for Gate 2 (KT score 40 by day 90). Wipro is cooperating — the audit findings plus the remediation clause invocation reset the engagement dynamic. **(3) First verified saving — COMPLETE:** $3.8M annualised, confirmed by KPMG against ARC-D01. Exceeds gate minimum. **Month 3 fee trigger eligible: $87.5K.**",
             },
             {
               role: 'admin',
@@ -869,7 +869,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "Escalation logged against milestone BL-KT-01. Board report updated with the following entry: *'Bloomberg AIM KT programme — AMBER. Documentation access delayed 45 days beyond SLA. CTO escalation initiated. Contractual clause 8.3 invoked. Maya Singh independent mapping at 40% provides partial mitigation. Programme start deferred by estimated 2–3 weeks. Not on critical path at current date. Monitoring weekly.'* **Month 3 overall RAG status: GREEN.** All three Wave 1 gates are either complete or on track. Bloomberg AMBER is the only flag and is managed. **First fee trigger of £87.5K invoiced to Arcturus Financial Group today.** Invoice reference ARC-FEE-001.",
+                "Escalation logged against milestone BL-KT-01. Board report updated with the following entry: *'Bloomberg AIM KT programme — AMBER. Documentation access delayed 45 days beyond SLA. CTO escalation initiated. Contractual clause 8.3 invoked. Maya Singh independent mapping at 40% provides partial mitigation. Programme start deferred by estimated 2–3 weeks. Not on critical path at current date. Monitoring weekly.'* **Month 3 overall RAG status: GREEN.** All three Wave 1 gates are either complete or on track. Bloomberg AMBER is the only flag and is managed. **First fee trigger of $87.5K invoiced to Arcturus Financial Group today.** Invoice reference ARC-FEE-001.",
             },
           ],
         },
@@ -994,7 +994,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
             {
               milestone: 'First Verified Saving',
               status: 'COMPLETE',
-              detail: '£3.8M annualised, KPMG confirmed',
+              detail: '$3.8M annualised, KPMG confirmed',
               rag: 'GREEN',
             },
             {
@@ -1026,7 +1026,7 @@ export const ARCTURUS_DELIVERY_DEMO: DemoEngagement = {
             'FSC Platform: 80% internal execution achieved (from 0% at baseline). Runbook ARC-KT-03 published.',
             'Google PSO: 70% knowledge recovered. AI-023 remaining gap to be closed Month 4.',
             'Wave 2 Maestro placements to proceed as planned from Day 91.',
-            'First AbarVa fee (£87,500) invoiced and payable per contract terms.',
+            'First AbarVa fee ($87,500) invoiced and payable per contract terms.',
           ],
         },
       },

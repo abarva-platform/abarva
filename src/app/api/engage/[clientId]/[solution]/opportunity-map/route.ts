@@ -10,14 +10,14 @@ const ARCTURUS_MARGIN_LEVERS = [
   {
     id: 'ai_portfolio',
     category: 'AI Portfolio',
-    lever: 'AI portfolio reorientation — £94M committed, £0 ROI',
+    lever: 'AI portfolio reorientation — $94M committed, $0 ROI',
     opportunity_min_m: 94,
     opportunity_max_m: 94,
     genome_confidence: 0.89,
     status: 'analysed',
     data_required: [],
     key_finding:
-      '£94M committed. 28 initiatives. Zero verified return. CDO vacancy is the governance failure.',
+      '$94M committed. 28 initiatives. Zero verified return. CDO vacancy is the governance failure.',
     wave: 1,
   },
   {
@@ -30,13 +30,13 @@ const ARCTURUS_MARGIN_LEVERS = [
     status: 'analysed',
     data_required: [],
     key_finding:
-      'Single hire. Highest leverage decision. Unblocks £18–32M of stalled AI value.',
+      'Single hire. Highest leverage decision. Unblocks $18–32M of stalled AI value.',
     wave: 1,
   },
   {
     id: 'consulting_spend',
     category: 'IT Cost',
-    lever: 'Consulting spend reduction — £42M, 24% KT score',
+    lever: 'Consulting spend reduction — $42M, 24% KT score',
     opportunity_min_m: 16,
     opportunity_max_m: 28,
     genome_confidence: 0.84,
@@ -49,7 +49,7 @@ const ARCTURUS_MARGIN_LEVERS = [
   {
     id: 'bloomberg_aim',
     category: 'IT Cost',
-    lever: 'Bloomberg AIM overpay — £8.4M vs £2.1M peer median',
+    lever: 'Bloomberg AIM overpay — $8.4M vs $2.1M peer median',
     opportunity_min_m: 4,
     opportunity_max_m: 8,
     genome_confidence: 0.78,
@@ -69,7 +69,7 @@ const ARCTURUS_MARGIN_LEVERS = [
     status: 'analysed',
     data_required: [],
     key_finding:
-      '£178M above peer benchmark annually. Driven by vendor contracts not renegotiated and contractor permanence.',
+      '$178M above peer benchmark annually. Driven by vendor contracts not renegotiated and contractor permanence.',
     wave: 2,
   },
   {

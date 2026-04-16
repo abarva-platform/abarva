@@ -1,13 +1,14 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useParams, useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusFinancial, arcturusFinancials, arcturusTechnology, arcturusLeadership, arcturusRegulatory, arcturusIndustry } from '@/data/arcturus/index'
 import { meridianHealth } from '@/data/meridian/index'
+import { apexRetail } from '@/data/apexretail/index'
 
-const BG='#060A12', CARD='#0D1520', BORDER='#1C2D45'
-const TEAL='#2DD4C8', WHITE='#EFF6FF', MUTED='#94A3B8', DIM='#475569'
+const BG='#F8F7F4', CARD='#FFFFFF', BORDER='#E2E1DC'
+const TEAL='#2DD4C8', WHITE='#0C0C0C', MUTED='#3C3C3C', DIM='#888888'
 const RED='#EF4444', AMBER='#F59E0B', GREEN='#34D399', PURPLE='#818CF8'
 const SANS='DM Sans, sans-serif', MONO='JetBrains Mono, monospace', SERIF='Georgia, serif'
 
@@ -50,6 +51,36 @@ interface IndustryBenchmark {
   gap: string
 }
 
+interface HeroNumber {
+  value: string
+  label: string
+  sub: string
+  color: string
+}
+
+interface HeroFinding {
+  code: string
+  rate: number
+  severity: 'critical' | 'high' | 'medium'
+  headline: string
+  detail: string
+  addressable: string
+  primaryCta: string
+  secondaryCta: string
+  solutionSlug: string
+}
+
+interface SolutionProgress {
+  name: string
+  fullName: string
+  phase: number
+  complete: boolean
+  progress: number
+  outcome: string
+  cta: string
+  slug: string
+}
+
 interface ClientData {
   name: string
   type: string
@@ -58,6 +89,15 @@ interface ClientData {
   hq: string
   status: 'Active' | 'Setup'
   color: string
+  hero: {
+    welcome: string
+    statement: string
+    numbers: HeroNumber[]
+  }
+  heroFindings: HeroFinding[]
+  solutionProgress: SolutionProgress[]
+  activeEngagement: string
+  updatedAgo: string
   metrics: Metric[]
   contradictions: Contradiction[]
   genomePatternsMatched: GenomePattern[]
@@ -75,6 +115,48 @@ function getClientData(id: string): ClientData | null {
       hq: 'Global',
       status: 'Setup',
       color: '#818CF8',
+      hero: {
+        welcome: 'Welcome to your AbarVa workspace, Arcturus.',
+        statement: '71% cost-to-income ratio. Your peers are at 58%. There is $840M sitting in that gap.',
+        numbers: [
+          { value: '$840M', label: 'Efficiency gap', sub: 'vs peer median cost-to-income', color: RED },
+          { value: '0 of 28', label: 'AI initiatives', sub: 'with a tracked ROI baseline', color: RED },
+          { value: '71%', label: 'Cost-to-income', sub: 'Peer median 58% · gap is $840M', color: AMBER },
+        ],
+      },
+      heroFindings: [
+        {
+          code: 'F008', rate: 94, severity: 'critical',
+          headline: '"$94M in AI spend. Zero verified return."',
+          detail: '28 initiatives. 0 baselines. CDO vacancy 11 months. No programme has a documented outcome baseline.',
+          addressable: '$60–120M recoverable',
+          primaryCta: 'Start Margin →', secondaryCta: 'View Analysis →',
+          solutionSlug: 'margin',
+        },
+        {
+          code: 'F002', rate: 89, severity: 'critical',
+          headline: '"71% cost-to-income. Peers are at 58%."',
+          detail: '$840M efficiency gap. No transformation programme accountable for closure. CEO aware, no owner.',
+          addressable: '$840M efficiency gap',
+          primaryCta: 'Build Case →', secondaryCta: 'View Intelligence →',
+          solutionSlug: 'tech',
+        },
+        {
+          code: 'F009', rate: 71, severity: 'high',
+          headline: '"MAS FEAT non-compliant. FCA review pending Q3."',
+          detail: 'Regulatory debt accruing quarterly. No dedicated remediation squad in place. Deadline at risk.',
+          addressable: 'Regulatory exposure',
+          primaryCta: 'View Remediation →', secondaryCta: 'View Detail →',
+          solutionSlug: 'pdlc',
+        },
+      ],
+      solutionProgress: [
+        { name: 'MARGIN OPT', fullName: 'Margin Optimization', phase: 1, complete: false, progress: 40, outcome: '$60–120M', cta: 'Continue →', slug: 'margin' },
+        { name: 'AI PDLC', fullName: 'AI-Powered PDLC', phase: 0, complete: true, progress: 100, outcome: '+40%', cta: 'View Ph1 →', slug: 'pdlc' },
+        { name: 'TECHNOLOGY', fullName: 'Technology Modernization', phase: 0, complete: false, progress: 60, outcome: '34/100', cta: 'Start →', slug: 'tech' },
+      ],
+      activeEngagement: 'Margin Phase 1 active',
+      updatedAgo: '2hrs ago',
       metrics: arcturusFinancial.situationMetrics.map(m => ({
         label: m.label,
         value: m.value,
@@ -120,6 +202,48 @@ function getClientData(id: string): ClientData | null {
       hq: meridianHealth.org.headquarters,
       status: 'Active',
       color: TEAL,
+      hero: {
+        welcome: 'Welcome back, Meridian Health.',
+        statement: 'You committed $94M to AI. Zero initiatives have a documented baseline. We found out why.',
+        numbers: [
+          { value: '$94M', label: 'AI spend', sub: 'No ROI tracked on any initiative', color: RED },
+          { value: '18.2%', label: 'Denial rate', sub: 'Benchmark 12% · $94M/yr gap', color: RED },
+          { value: '1.8%', label: 'Operating margin', sub: 'Target 4.0% · $220M shortfall', color: AMBER },
+        ],
+      },
+      heroFindings: [
+        {
+          code: 'F011', rate: 74, severity: 'critical',
+          headline: '"RCM outsourced at $48M/yr. Denial rate still 18.2%."',
+          detail: '$94M annual write-off. Ensemble SLA penalties never enforced. Board does not know.',
+          addressable: '$94M/yr write-off',
+          primaryCta: 'Start RCM Solution →', secondaryCta: 'View Intelligence →',
+          solutionSlug: 'tech',
+        },
+        {
+          code: 'F007', rate: 77, severity: 'critical',
+          headline: '"Board target 4.0% margin. Current reality 1.8%."',
+          detail: 'Only $84M transformation budget approved vs $200M needed. $220M shortfall with no path to close.',
+          addressable: '$220M shortfall',
+          primaryCta: 'Start Margin →', secondaryCta: 'View Analysis →',
+          solutionSlug: 'margin',
+        },
+        {
+          code: 'F003', rate: 69, severity: 'high',
+          headline: '"Epic fully deployed." 12 of 47 dashboards live."',
+          detail: 'Blue Ridge still on legacy EHR. CMIO mandate not enforced. $48M EHR investment underperforming.',
+          addressable: 'Epic ROI at risk',
+          primaryCta: 'View Blueprint →', secondaryCta: 'View Detail →',
+          solutionSlug: 'pdlc',
+        },
+      ],
+      solutionProgress: [
+        { name: 'TECH MOD', fullName: 'Technology Modernization', phase: 1, complete: false, progress: 65, outcome: '$94M/yr', cta: 'Continue →', slug: 'tech' },
+        { name: 'MARGIN', fullName: 'Margin Optimization', phase: 0, complete: false, progress: 30, outcome: '$220M', cta: 'Start →', slug: 'margin' },
+        { name: 'AI PDLC', fullName: 'AI-Powered PDLC', phase: 0, complete: false, progress: 20, outcome: '85%', cta: 'Start →', slug: 'pdlc' },
+      ],
+      activeEngagement: 'Tech Modernization Phase 1 active',
+      updatedAgo: '4hrs ago',
       metrics: [
         { label: 'Denial Rate', value: `${meridianHealth.technology.rcm.denialRate}%`, benchmark: `${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, status: 'critical', gap: `$94M annual write-off` },
         { label: 'Operating Margin', value: `${meridianHealth.org.operatingMargin}%`, benchmark: `${meridianHealth.org.targetOperatingMargin}% target`, status: 'critical', gap: '2.2pp to target' },
@@ -154,6 +278,98 @@ function getClientData(id: string): ClientData | null {
         { label: 'Operating Margin', ours: 1.8, peer: 3.4, unit: '%', gap: '-1.6pp vs IDN median' },
         { label: 'Days in AR', ours: 52, peer: 35, unit: 'days', gap: '+17 days above benchmark' },
         { label: 'Epic Optimization', ours: 58, peer: 78, unit: '/100', gap: '-20 points below benchmark' },
+      ],
+    }
+  }
+
+  if (id === 'apexretail') {
+    return {
+      name: apexRetail.org.name,
+      type: 'Omnichannel Retailer',
+      revenue: apexRetail.org.revenue,
+      employees: apexRetail.org.employees,
+      hq: apexRetail.org.headquarters,
+      status: 'Setup',
+      color: '#F59E0B',
+      hero: {
+        welcome: 'Welcome to your AbarVa workspace, Apex Retail.',
+        statement: '800 stores. A website that does not talk to them. $496M in supply chain waste sitting in the gap.',
+        numbers: [
+          { value: '$496M', label: 'Supply chain waste', sub: 'Excess cost vs optimised peers', color: RED },
+          { value: '2.8%', label: 'E-commerce conversion', sub: 'Benchmark 4.2% · $248M revenue gap', color: RED },
+          { value: '3.8%', label: 'Operating margin', sub: 'Target 6.0% · $272M shortfall', color: AMBER },
+        ],
+      },
+      heroFindings: [
+        {
+          code: 'F016', rate: 81, severity: 'critical',
+          headline: '"800 stores. A website that does not talk to them."',
+          detail: 'CEO mandate is digital-first. IT budget is 2.3% of revenue. Digital-native competitors spend 6–8%.',
+          addressable: '$248M e-commerce revenue gap',
+          primaryCta: 'Start Digital →', secondaryCta: 'View Analysis →',
+          solutionSlug: 'tech',
+        },
+        {
+          code: 'F012', rate: 76, severity: 'critical',
+          headline: '"SAP ECC end-of-life 2027. No decision made."',
+          detail: 'CFO blocking $180M investment. Board demanding Q3 decision. 8,400 customizations complicate migration.',
+          addressable: '$180M migration risk',
+          primaryCta: 'Build Business Case →', secondaryCta: 'View Intelligence →',
+          solutionSlug: 'margin',
+        },
+        {
+          code: 'F004', rate: 72, severity: 'high',
+          headline: '"Demand forecasting at 62%. Benchmark is 84%."',
+          detail: '$180M excess inventory from poor forecasting. o9 implementation 40% complete, adoption at 48%.',
+          addressable: '$180M inventory savings',
+          primaryCta: 'View Remediation →', secondaryCta: 'View Detail →',
+          solutionSlug: 'pdlc',
+        },
+      ],
+      solutionProgress: [
+        { name: 'TECH MOD', fullName: 'Technology Modernization', phase: 0, complete: false, progress: 15, outcome: '$248M', cta: 'Start →', slug: 'tech' },
+        { name: 'MARGIN OPT', fullName: 'Margin Optimization', phase: 0, complete: false, progress: 0, outcome: '$272M', cta: 'Start →', slug: 'margin' },
+        { name: 'AI PDLC', fullName: 'AI-Powered PDLC', phase: 0, complete: false, progress: 0, outcome: '+40%', cta: 'Start →', slug: 'pdlc' },
+      ],
+      activeEngagement: 'Setup in progress',
+      updatedAgo: '1hr ago',
+      metrics: [
+        { label: 'E-com Conversion Rate', value: '2.8%', benchmark: '4.2% benchmark', status: 'critical', gap: '$248M annual revenue gap' },
+        { label: 'Operating Margin', value: `${apexRetail.org.operatingMargin}%`, benchmark: `${apexRetail.org.targetOperatingMargin}% target`, status: 'critical', gap: '$272M shortfall' },
+        { label: 'Demand Forecast Accuracy', value: '62%', benchmark: '84% benchmark', status: 'critical', gap: '$180M excess inventory' },
+        { label: 'Cart Abandonment', value: '72%', benchmark: '58% benchmark', status: 'critical', gap: '14pp above benchmark' },
+        { label: 'Inventory Accuracy', value: '84%', benchmark: '95% benchmark', status: 'warning', gap: '11pp below benchmark' },
+        { label: 'Loyalty Active Rate', value: '42%', benchmark: '68% target', status: 'warning', gap: '26pp below target' },
+        { label: 'On-time Store Delivery', value: '82%', benchmark: '95% benchmark', status: 'warning', gap: '13pp below benchmark' },
+        { label: 'SAP ECC Age', value: '14 yrs', benchmark: '7 yr typical', status: 'critical', gap: 'EOL 2027 — decision pending' },
+      ],
+      contradictions: apexRetail.contradictions.map((c: string, i: number) => {
+        const parts = c.split(' but ')
+        return {
+          id: `c${i + 1}`,
+          claim: parts[0] || c,
+          reality: parts[1] ? `But: ${parts[1]}` : c,
+          severity: i < 2 ? 'critical' : i < 4 ? 'high' : 'medium',
+        }
+      }),
+      genomePatternsMatched: [
+        { code: 'F016', name: 'Digital-Physical Integration Failure', failureRate: 81, present: true, mitigation: 'Unified commerce platform — connect store + digital inventory with real-time sync' },
+        { code: 'F012', name: 'ERP End-of-Life Paralysis', failureRate: 76, present: true, mitigation: 'Independent SAP assessment with CFO-aligned business case; Q3 board decision framework' },
+        { code: 'F004', name: 'Analytics-to-Action Gap', failureRate: 72, present: true, mitigation: 'Complete o9 implementation, activate customer churn model, deploy personalization engine' },
+        { code: 'F019', name: 'Loyalty Programme Disconnection', failureRate: 68, present: true, mitigation: 'Connect 18M loyalty members to e-commerce checkout — 26pp activation gap is recoverable' },
+      ],
+      files: apexRetail.dataInventory.map((d: { category: string; confidence: number; status: string; source: string }) => ({
+        name: d.category,
+        uploader: d.source,
+        date: '2026-04-01',
+        confidence: d.confidence,
+        type: d.status === 'loaded' ? 'active' as const : 'pending' as const,
+      })),
+      industryBenchmarks: [
+        { label: 'E-com Conversion Rate', ours: 2.8, peer: 4.2, unit: '%', gap: '-1.4pp — $248M revenue gap' },
+        { label: 'Operating Margin', ours: 3.8, peer: 5.2, unit: '%', gap: '-1.4pp vs retail median' },
+        { label: 'Demand Forecast Accuracy', ours: 62, peer: 84, unit: '%', gap: '-22pp — $180M excess inventory' },
+        { label: 'IT Spend (% Revenue)', ours: 2.3, peer: 6.0, unit: '%', gap: '-3.7pp vs digital-native peers' },
       ],
     }
   }
@@ -597,105 +813,76 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
 // ─── OVERVIEW TAB ──────────────────────────────────────────────────────────────
 
 function OverviewTab({ data }: { data: ClientData }) {
-  const metrics8 = data.metrics.slice(0, 8)
+  const top4 = data.metrics.slice(0, 4)
+  const topContradiction = data.contradictions[0]
   return (
     <div>
-      {/* 8 metric cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '12px', marginBottom: '24px' }}>
-        {metrics8.map((m, i) => (
-          <div key={i} style={{ ...cardStyle({ borderLeft: `3px solid ${m.status === 'critical' ? RED : AMBER}`, padding: '16px 20px' }) }}>
-            <div style={labelStyle}>{m.label}</div>
-            <div style={{ fontFamily: SERIF, fontSize: '22px', color: m.status === 'critical' ? RED : AMBER, marginBottom: '6px' }}>{m.value}</div>
-            <div style={{ fontSize: '11px', color: DIM, marginBottom: '4px' }}>{m.benchmark}</div>
-            <div style={{ fontSize: '11px', fontWeight: 500, color: m.status === 'critical' ? RED : AMBER }}>{m.gap}</div>
+      {/* 4 large situation cards — 2×2 grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px' }}>
+        {top4.map((m, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '32px 28px', borderLeft: `4px solid ${m.status === 'critical' ? RED : AMBER}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.status === 'critical' ? RED : AMBER, flexShrink: 0, display: 'inline-block' }} />
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em' }}>{m.label}</div>
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: '52px', lineHeight: 1, color: WHITE, marginBottom: '14px' }}>{m.value}</div>
+            <div style={{ fontSize: '13px', color: DIM, marginBottom: '4px' }}>{m.benchmark}</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: m.status === 'critical' ? RED : AMBER }}>{m.gap}</div>
           </div>
         ))}
       </div>
 
       {/* Two-column body */}
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'start' }}>
-        {/* Left */}
+      <div style={{ display: 'flex', gap: '28px', alignItems: 'start' }}>
+        {/* Left — key finding + next actions */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-          {/* Key findings */}
-          <div style={cardStyle()}>
-            {sectionTitle('Key findings')}
-            {data.contradictions.slice(0, 3).map((c, i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px', marginBottom: i < 2 ? '16px' : '0', paddingBottom: i < 2 ? '16px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ width: '3px', borderRadius: '2px', background: c.severity === 'critical' ? RED : c.severity === 'high' ? AMBER : '#F97316', flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', color: MUTED, fontStyle: 'italic', marginBottom: '4px' }}>{c.claim}</div>
-                  <div style={{ fontSize: '12px', color: WHITE }}>{c.reality}</div>
-                </div>
+
+          {/* Top contradiction — full prominence */}
+          {topContradiction && (
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${topContradiction.severity === 'critical' ? RED : AMBER}`, borderRadius: '10px', padding: '32px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: topContradiction.severity === 'critical' ? RED : AMBER, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '16px' }}>
+                {topContradiction.severity === 'critical' ? '● Critical finding' : '● High priority'}
               </div>
-            ))}
-          </div>
+              <div style={{ fontFamily: SERIF, fontSize: '18px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6, marginBottom: '16px' }}>
+                "{topContradiction.claim}"
+              </div>
+              <div style={{ fontSize: '15px', color: WHITE, fontWeight: 500, lineHeight: 1.7 }}>
+                {topContradiction.reality}
+              </div>
+            </div>
+          )}
 
           {/* Next actions */}
-          <div style={cardStyle()}>
-            {sectionTitle('Next actions')}
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '20px' }}>Next actions</div>
             {[
               `Lock baseline metrics with ${data.type === 'Asset Manager' ? 'Victoria Hargreaves (CEO)' : 'executive team'}`,
               'Complete data confidence review — upload missing files',
               'Schedule Situation Diagnosis walkthrough with client stakeholders',
             ].map((action, i) => (
-              <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: i < 2 ? '12px' : '0' }}>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(45,212,200,0.1)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: MONO, fontSize: '10px', color: TEAL }}>{i + 1}</div>
-                <div style={{ fontSize: '13px', color: WHITE, lineHeight: 1.5 }}>{action}</div>
+              <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: i < 2 ? '16px' : '0', marginBottom: i < 2 ? '16px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(45,212,200,0.08)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: MONO, fontSize: '10px', color: TEAL, marginTop: '2px' }}>{i + 1}</div>
+                <div style={{ fontSize: '14px', color: WHITE, lineHeight: 1.65 }}>{action}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Right sidebar */}
-        <div style={{ width: '260px', display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-          {/* Genome patterns */}
-          <div style={cardStyle()}>
-            {sectionTitle('Genome patterns')}
+        {/* Right sidebar — genome patterns */}
+        <div style={{ width: '300px', flexShrink: 0 }}>
+          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '24px' }}>Genome patterns</div>
             {data.genomePatternsMatched.slice(0, 3).map((p, i) => (
-              <div key={i} style={{ marginBottom: i < 2 ? '14px' : '0', paddingBottom: i < 2 ? '14px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '2px' }}>
+              <div key={i} style={{ paddingBottom: i < 2 ? '20px' : '0', marginBottom: i < 2 ? '20px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
-                  <div style={{ fontFamily: SERIF, fontSize: '18px', color: WHITE }}>{p.failureRate}%</div>
+                  <div style={{ fontFamily: SERIF, fontSize: '26px', color: WHITE }}>{p.failureRate}%</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: RED, letterSpacing: '.06em' }}>failure rate</div>
                 </div>
-                <div style={{ fontSize: '12px', color: WHITE, marginBottom: '4px' }}>{p.code} — {p.name}</div>
-                <div style={{ fontSize: '11px', color: DIM }}>{p.mitigation}</div>
+                <div style={{ fontSize: '13px', color: WHITE, fontWeight: 500, marginBottom: '5px' }}>{p.code} · {p.name}</div>
+                <div style={{ fontSize: '12px', color: DIM, lineHeight: 1.55 }}>{p.mitigation}</div>
               </div>
             ))}
-          </div>
-
-          {/* Recent activity */}
-          <div style={cardStyle()}>
-            {sectionTitle('Recent activity')}
-            {[
-              { time: '2h ago', text: 'Data file reviewed', actor: 'Anand S.' },
-              { time: '5h ago', text: 'Baseline interview scheduled', actor: 'System' },
-              { time: '1d ago', text: 'File approved', actor: 'Anand S.' },
-              { time: '2d ago', text: 'New file uploaded', actor: 'Client' },
-              { time: '3d ago', text: 'Engagement opened', actor: 'System' },
-            ].map((a, i) => (
-              <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: i < 4 ? '10px' : '0' }}>
-                <span style={{ fontFamily: MONO, fontSize: '10px', color: DIM, flexShrink: 0, paddingTop: '1px' }}>{a.time}</span>
-                <div>
-                  <div style={{ fontSize: '12px', color: WHITE }}>{a.text}</div>
-                  <div style={{ fontSize: '10px', color: DIM }}>{a.actor}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Pending approvals */}
-          <div style={cardStyle()}>
-            {sectionTitle('Pending approvals')}
-            {[
-              'AI Initiative Inventory',
-              'SAP Contract Details',
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: i === 0 ? '10px' : '4px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: AMBER, flexShrink: 0 }} />
-                <span style={{ fontSize: '12px', color: WHITE }}>{item}</span>
-              </div>
-            ))}
-            <a href="#" style={{ fontSize: '11px', color: TEAL, textDecoration: 'none', display: 'block', marginTop: '10px' }}>Review all →</a>
           </div>
         </div>
       </div>
@@ -1284,6 +1471,273 @@ function SeedSolutionButton({ clientId, solution }: { clientId: string; solution
   )
 }
 
+// ─── DASHBOARD COMPONENTS ──────────────────────────────────────────────────────
+
+function BreadcrumbBar({ data }: { data: ClientData }) {
+  return (
+    <div style={{ background: TEAL, height: '30px', display: 'flex', alignItems: 'center' }}>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '0 28px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: MONO, fontSize: '10px', color: '#060A12', letterSpacing: '.06em' }}>
+        <span>Home</span>
+        <span style={{ opacity: 0.45 }}>·</span>
+        <span style={{ fontWeight: 700 }}>{data.name}</span>
+        <span style={{ opacity: 0.45 }}>·</span>
+        <span>Live Intelligence</span>
+      </div>
+    </div>
+  )
+}
+
+function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSection, setAdminSection }: {
+  data: ClientData
+  clientId: string
+  centerView: string
+  setCenterView: (v: string) => void
+  isAdmin: boolean
+  adminSection: string
+  setAdminSection: (s: string) => void
+}) {
+  const navLinks = [
+    { key: 'dashboard', icon: '⬡', label: 'Intel Feed' },
+    { key: 'engagements', icon: '◈', label: 'Engagements' },
+    { key: 'findings', icon: '◎', label: 'Findings' },
+    { key: 'data', icon: '⊞', label: 'Outputs' },
+    { key: 'genome', icon: '⬖', label: 'Genome' },
+  ]
+  const solColor = (s: SolutionProgress) => s.complete ? GREEN : s.progress > 50 ? TEAL : AMBER
+
+  return (
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
+      {/* Client */}
+      <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Client Context</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '18px' }}>
+        <span style={{ width: 8, height: 8, borderRadius: '50%', background: data.color, flexShrink: 0, display: 'inline-block' }} />
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: WHITE, lineHeight: 1.25 }}>
+            {data.name.split(' ').slice(0, -1).join(' ')}
+          </div>
+          <div style={{ fontSize: '11px', color: DIM }}>{data.name.split(' ').slice(-1)[0]}</div>
+        </div>
+      </div>
+
+      {/* Solutions */}
+      <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '14px', marginBottom: '14px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Active Solutions</div>
+        {data.solutionProgress.map((s, i) => (
+          <div key={i} style={{ marginBottom: i < data.solutionProgress.length - 1 ? '12px' : '0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: WHITE }}>{s.name}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>Ph{s.phase}</span>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: solColor(s), display: 'inline-block' }} />
+              </div>
+            </div>
+            <div style={{ height: '3px', background: BORDER, borderRadius: '2px', marginBottom: '2px' }}>
+              <div style={{ height: '3px', borderRadius: '2px', width: `${s.progress}%`, background: solColor(s), transition: 'width 0.3s' }} />
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{s.progress}%</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Nav links */}
+      <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '12px' }}>
+        {navLinks.map(n => (
+          <button key={n.key} onClick={() => setCenterView(n.key)}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}>
+            <span style={{ fontSize: '13px', color: centerView === n.key ? TEAL : DIM, width: '16px', flexShrink: 0 }}>{n.icon}</span>
+            <span style={{ fontSize: '12px', color: centerView === n.key ? TEAL : MUTED, fontFamily: SANS, fontWeight: centerView === n.key ? 600 : 400 }}>{n.label}</span>
+          </button>
+        ))}
+        {isAdmin && (
+          <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: '6px', paddingTop: '10px' }}>
+            <button
+              onClick={() => setCenterView('admin')}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '5px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}
+            >
+              <span style={{ fontSize: '12px', color: centerView === 'admin' ? TEAL : DIM }}>⚙</span>
+              <span style={{ fontSize: '12px', color: centerView === 'admin' ? TEAL : MUTED, fontFamily: SANS, fontWeight: 600 }}>Admin</span>
+            </button>
+            {[
+              { key: 'setup',    label: 'Setup & engagement' },
+              { key: 'data',     label: 'Data & approvals'   },
+              { key: 'users',    label: 'Maestro users'      },
+              { key: 'security', label: 'Security'           },
+            ].map(sub => (
+              <button
+                key={sub.key}
+                onClick={() => { setCenterView('admin'); setAdminSection(sub.key) }}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '4px 0 4px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}
+              >
+                <span style={{ fontSize: '11px', color: (centerView === 'admin' && adminSection === sub.key) ? TEAL : DIM, fontFamily: SANS }}>
+                  {sub.label}
+                </span>
+              </button>
+            ))}
+            <button
+              onClick={() => { setCenterView('admin'); setAdminSection('data') }}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '8px', padding: '7px 8px', background: 'rgba(45,212,200,0.07)', border: `1px solid rgba(45,212,200,0.25)`, borderRadius: '6px', cursor: 'pointer' }}
+            >
+              <span style={{ fontSize: '10px', fontFamily: MONO, color: TEAL, letterSpacing: '.04em' }}>↑ Upload Demo Data</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function HeroCarousel({ data }: { data: ClientData }) {
+  const [idx, setIdx] = useState(0)
+  useEffect(() => {
+    const t = setInterval(() => setIdx(i => (i + 1) % data.heroFindings.length), 6000)
+    return () => clearInterval(t)
+  }, [data.heroFindings.length])
+  const f = data.heroFindings[idx]
+  const sevColor = f.severity === 'critical' ? RED : f.severity === 'high' ? AMBER : PURPLE
+
+  return (
+    <div style={{ background: '#0C0C0C', borderRadius: '12px', padding: '32px 36px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: sevColor, letterSpacing: '.1em' }}>{f.code} · {f.rate}%</span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '20px', background: `${sevColor}25`, color: sevColor, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>{f.severity}</span>
+      </div>
+      <div style={{ fontFamily: SERIF, fontSize: '26px', color: '#EFF6FF', lineHeight: 1.35, marginBottom: '14px' }}>{f.headline}</div>
+      <div style={{ fontSize: '14px', color: 'rgba(239,246,255,0.60)', lineHeight: 1.7, marginBottom: '18px' }}>{f.detail}</div>
+      <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '.08em', marginBottom: '28px' }}>Addressable: {f.addressable}</div>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '26px' }}>
+        <button style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 700, padding: '9px 20px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer' }}>{f.primaryCta}</button>
+        <button style={{ fontFamily: MONO, fontSize: '11px', padding: '9px 20px', borderRadius: '6px', background: 'transparent', color: 'rgba(239,246,255,0.65)', border: '1px solid rgba(239,246,255,0.15)', cursor: 'pointer' }}>{f.secondaryCta}</button>
+      </div>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+        {data.heroFindings.map((_, i) => (
+          <button key={i} onClick={() => setIdx(i)}
+            style={{ width: i === idx ? '22px' : '6px', height: '6px', borderRadius: '3px', background: i === idx ? TEAL : 'rgba(239,246,255,0.18)', border: 'none', cursor: 'pointer', transition: 'all 0.25s', padding: 0 }} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function SolutionEntryCards({ data, clientId }: { data: ClientData, clientId: string }) {
+  const router = useRouter()
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+      {data.solutionProgress.map((s, i) => {
+        const statusColor = s.complete ? GREEN : s.progress > 50 ? TEAL : AMBER
+        return (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', borderTop: `3px solid ${statusColor}` }}>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '4px' }}>{s.name}</div>
+            <div style={{ fontSize: '11px', color: DIM, marginBottom: '14px' }}>Phase {s.phase}{s.complete ? ' · Complete ✓' : ` · ${s.progress}%`}</div>
+            <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1, marginBottom: '3px' }}>{s.outcome}</div>
+            <div style={{ fontSize: '11px', color: DIM, marginBottom: '16px' }}>addressable</div>
+            <button onClick={() => router.push(`/engage/${clientId}/${s.slug}?client=${clientId}`)}
+              style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: `1px solid ${TEAL}`, borderRadius: '4px', padding: '5px 12px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
+              {s.cta}
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function FindingsFeed({ data }: { data: ClientData }) {
+  const sevColor = (s: string) => s === 'critical' ? RED : s === 'high' ? AMBER : PURPLE
+  return (
+    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px' }}>
+      <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Recent Findings</div>
+      {data.contradictions.slice(0, 3).map((c, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: i < 2 ? '12px' : '0', marginBottom: i < 2 ? '12px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor(c.severity), flexShrink: 0, marginTop: '4px', display: 'inline-block' }} />
+          <div style={{ flex: 1 }}>
+            <span style={{ fontFamily: MONO, fontSize: '9px', color: sevColor(c.severity), letterSpacing: '.08em', marginRight: '8px', textTransform: 'uppercase' as const }}>{c.severity}</span>
+            <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{c.claim.slice(0, 80)}{c.claim.length > 80 ? '…' : ''}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function RightPanel({ data, isReadOnly }: { data: ClientData, isReadOnly: boolean }) {
+  const criticalCount = data.contradictions.filter(c => c.severity === 'critical' || c.severity === 'high').length
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+      {/* Genome signals */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Genome Signals</div>
+        {data.genomePatternsMatched.slice(0, 5).map((p, i) => (
+          <div key={i} style={{ marginBottom: i < 4 ? '10px' : '0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{p.code}</span>
+              <span style={{ fontFamily: MONO, fontSize: '9px', color: RED, fontWeight: 600 }}>{p.failureRate}%</span>
+            </div>
+            <div style={{ height: '3px', background: BORDER, borderRadius: '2px' }}>
+              <div style={{ height: '3px', borderRadius: '2px', width: `${p.failureRate}%`, background: `linear-gradient(90deg, ${RED}, ${AMBER})` }} />
+            </div>
+          </div>
+        ))}
+        <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, marginTop: '12px', cursor: 'pointer' }}>View all {data.genomePatternsMatched.length} →</div>
+      </div>
+
+      {/* Action */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>Phase 1 ready for review</div>
+        <div style={{ fontSize: '12px', color: MUTED, marginBottom: '3px' }}>{data.contradictions.length} findings</div>
+        <div style={{ fontSize: '12px', color: RED, marginBottom: '16px' }}>{criticalCount} CRITICAL</div>
+        {!isReadOnly && (
+          <button style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 14px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
+            Approve Phase 1 →
+          </button>
+        )}
+      </div>
+
+      {/* Platform stats */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Platform Stats</div>
+        {[
+          { value: '340', label: 'Genome patterns' },
+          { value: '9', label: 'Intel modules' },
+          { value: '$167M', label: 'Gap identified' },
+          { value: '$0', label: 'Fee until move' },
+        ].map((s, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: i < 3 ? '8px' : '0' }}>
+            <span style={{ fontFamily: SERIF, fontSize: '20px', color: WHITE, lineHeight: 1 }}>{s.value}</span>
+            <span style={{ fontSize: '11px', color: DIM }}>{s.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function BottomBar({ data, user }: { data: ClientData, user: { firstName?: string | null, lastName?: string | null } | null }) {
+  const maestroName = user?.firstName && user?.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user?.firstName || 'Anand Sundaram'
+  return (
+    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#060A12', borderTop: '1px solid #1C2D45', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', zIndex: 900 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.5)', letterSpacing: '.06em' }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, display: 'inline-block' }} />
+        <span style={{ color: GREEN }}>LIVE</span>
+        <span>·</span>
+        <span style={{ color: 'rgba(239,246,255,0.75)' }}>{data.name}</span>
+        <span>·</span>
+        <span>{data.activeEngagement}</span>
+        <span>·</span>
+        <span>Updated {data.updatedAgo}</span>
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(239,246,255,0.28)', letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
+        AbarVa Intelligence Platform
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.5)', letterSpacing: '.06em' }}>
+        Maestro: {maestroName} · Active
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
@@ -1355,7 +1809,7 @@ export default function AdminClientPage() {
   const params = useParams()
   const clientId = params.id as string
 
-  const [tab, setTab] = useState('overview')
+  const [centerView, setCenterView] = useState('dashboard')
   const [adminSection, setAdminSection] = useState('setup')
   const [diTab, setDiTab] = useState('client')
   const [projView, setProjView] = useState('dashboard')
@@ -1366,6 +1820,7 @@ export default function AdminClientPage() {
 
   const metaRole = user.publicMetadata?.role as string | undefined
   const isReadOnly = metaRole !== 'admin'
+  const isAdmin = metaRole === 'admin'
 
   const data = getClientData(clientId)
   if (!data) return (
@@ -1374,84 +1829,57 @@ export default function AdminClientPage() {
     </div>
   )
 
-  const tabs = [
-    { key: 'admin', label: 'Admin' },
-    { key: 'overview', label: 'Overview' },
-    { key: 'data', label: 'Data Intelligence' },
-    { key: 'projects', label: 'Projects' },
-    { key: 'approvals', label: 'Approvals', badge: '2' },
-    { key: 'activity', label: 'Activity' },
-  ]
+  const renderCenter = () => {
+    if (centerView === 'admin')
+      return <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
+    if (centerView === 'data')
+      return <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
+    if (centerView === 'engagements')
+      return <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
+    if (centerView === 'findings')
+      return <OverviewTab data={data} />
+    if (centerView === 'genome')
+      return <DataIntelligenceTab data={data} diTab="genome" setDiTab={setDiTab} />
+    return (
+      <>
+        <HeroCarousel data={data} />
+        <SolutionEntryCards data={data} clientId={clientId} />
+        <FindingsFeed data={data} />
+      </>
+    )
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, paddingBottom: '34px' }}>
       <AbarvaNav activePage="maestro" />
+      <BreadcrumbBar data={data} />
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 28px 80px' }}>
-
-        {/* Combined client identity + tab bar */}
-        <div style={{ borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'stretch', marginBottom: '28px', height: '48px', gap: '0' }}>
-          {/* Client identity — left */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', paddingRight: '24px', borderRight: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: data.color }} />
-            <span style={{ fontSize: '14px', fontWeight: 600, color: WHITE, fontFamily: SANS }}>{data.name}</span>
-            <span
-              onClick={() => { setTab('admin'); setAdminSection('setup') }}
-              title="Go to Admin → Setup"
-              style={{
-                fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '20px',
-                background: data.status === 'Active' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)',
-                color: data.status === 'Active' ? GREEN : AMBER,
-                border: `1px solid ${data.status === 'Active' ? 'rgba(52,211,153,0.2)' : 'rgba(245,158,11,0.2)'}`,
-                letterSpacing: '.06em', cursor: 'pointer',
-              }}
-            >
-              {data.status}
-            </span>
-          </div>
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              style={{
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: SANS, fontSize: '13px',
-                color: tab === t.key ? TEAL : MUTED,
-                borderBottom: tab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
-                padding: '0 18px',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                whiteSpace: 'nowrap' as const,
-              }}>
-              {t.label}
-              {t.badge && (
-                <span style={{ fontFamily: MONO, fontSize: '9px', background: 'rgba(239,68,68,0.15)', color: MUTED, padding: '1px 5px', borderRadius: '10px' }}>
-                  {t.badge}
-                </span>
-              )}
-            </button>
-          ))}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 28px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+        {/* Left panel */}
+        <div style={{ width: '220px', flexShrink: 0 }}>
+          <LeftPanel
+            data={data}
+            clientId={clientId}
+            centerView={centerView}
+            setCenterView={setCenterView}
+            isAdmin={isAdmin}
+            adminSection={adminSection}
+            setAdminSection={setAdminSection}
+          />
         </div>
 
-        {/* Tab content */}
-        {tab === 'admin' && (
-          <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
-        )}
-        {tab === 'overview' && (
-          <OverviewTab data={data} />
-        )}
-        {tab === 'data' && (
-          <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
-        )}
-        {tab === 'projects' && (
-          <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
-        )}
-        {tab === 'approvals' && (
-          <ApprovalsTab isReadOnly={isReadOnly} />
-        )}
-        {tab === 'activity' && (
-          <ActivityTab data={data} />
-        )}
+        {/* Center */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '12px', minWidth: 0 }}>
+          {renderCenter()}
+        </div>
+
+        {/* Right panel */}
+        <div style={{ width: '280px', flexShrink: 0 }}>
+          <RightPanel data={data} isReadOnly={isReadOnly} />
+        </div>
       </div>
 
-      {/* Floating seed demos menu — admin only */}
+      <BottomBar data={data} user={user} />
       {!isReadOnly && <SeedDemosFloatMenu clientId={clientId} />}
     </div>
   )

@@ -17,7 +17,7 @@ const SERIF    = 'Georgia, serif'
 // ── Dropdown tokens (white panel, black text — Snowflake style) ───────────────
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
-const DROP_HEAD = '#111827'   // primary item label
+const DROP_HEAD = '#0C0C0C'   // primary item label
 const DROP_DESC = '#6B7280'   // secondary description
 const DROP_CAT  = '#9CA3AF'   // category / phase header
 const DROP_HOVER = '#F9FAFB'
@@ -366,7 +366,7 @@ function NavInner({ activePage }: NavProps) {
           {/* Maestro — all signed-in users: links to client workspace */}
           {signedIn && (
             <a href={`/admin/client/${clientId}`} style={{
-              fontSize: '12px', color: activePage === 'maestro' ? TEAL : NAV_MUTE,
+              fontSize: '12px', color: activePage === 'maestro' ? TEAL : NAV_TEXT,
               textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
             }}>
               Maestro

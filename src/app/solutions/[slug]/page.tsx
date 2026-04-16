@@ -2,6 +2,7 @@
 
 import { Suspense, use } from 'react'
 import { useSearchParams, notFound } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 import { buildSolutionUrl, objectiveColor } from '@/lib/solution-library'
 
@@ -22,11 +23,12 @@ const T = {
   sans: '"DM Sans", system-ui, sans-serif',
 }
 
-type Client = 'meridian' | 'firstcapital' | 'apexretail'
+type Client = 'meridian' | 'firstcapital' | 'arcturus' | 'apexretail'
 
 const CLIENT_LABELS: Record<Client, string> = {
   meridian: 'Meridian Health',
-  firstcapital: 'First Capital Bank',
+  firstcapital: 'Arcturus Financial',
+  arcturus: 'Arcturus Financial',
   apexretail: 'Apex Retail',
 }
 
@@ -622,14 +624,15 @@ const CLIENT_METRICS: Record<string, Partial<Record<Client, Array<{ icon: string
 // ── Individual solution page content ─────────────────────────────────────────
 function SolutionPageContent({ slug }: { slug: string }) {
   const searchParams = useSearchParams()
-  const clientParam = (searchParams.get('client') as Client) || 'meridian'
+  const clientParam = useActiveClient() as Client
   const solution = SOLUTIONS[slug as keyof typeof SOLUTIONS]
 
   if (!solution) {
     notFound()
   }
 
-  const defaultClient: Client = solution.vertical === 'Financial Services' ? 'firstcapital' : clientParam
+  // Map arcturus → firstcapital for metrics lookup (same financial services dataset)
+  const defaultClient: Client = clientParam === 'arcturus' ? 'firstcapital' : clientParam
   const runUrl = buildSolutionUrl(defaultClient, solution.code)
   const clientMetrics = CLIENT_METRICS[solution.code]?.[defaultClient] ?? solution.metrics
   const { genomeData } = solution
@@ -682,7 +685,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
 
             {/* Problem quote */}
             <div style={{
-              fontSize: 18, fontFamily: T.sans, color: T.secondary,
+              fontSize: 18, fontFamily: T.sans, color: 'rgba(239,246,255,0.88)',
               fontStyle: 'italic', maxWidth: 560,
               borderLeft: `3px solid ${T.teal}`,
               paddingLeft: 16, marginBottom: 28, lineHeight: 1.6,
@@ -812,7 +815,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
               <div style={{ fontSize: 18, fontFamily: T.sans, fontWeight: 700, color: T.text, marginBottom: 4 }}>
                 {step.name}
               </div>
-              <div style={{ fontSize: 13, fontFamily: T.sans, color: T.secondary, marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontFamily: T.sans, color: 'rgba(239,246,255,0.78)', marginBottom: 16 }}>
                 {step.what}
               </div>
 
@@ -892,7 +895,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
             <div style={{ fontSize: 13, fontFamily: T.sans, color: T.text, marginBottom: 8, lineHeight: 1.5 }}>
               {genomeData.failurePattern}
             </div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, lineHeight: 1.5 }}>
+            <div style={{ fontSize: 11, fontFamily: T.mono, color: 'rgba(239,246,255,0.75)', lineHeight: 1.5 }}>
               {genomeData.avoidance}
             </div>
           </div>
@@ -922,7 +925,7 @@ function SolutionPageContent({ slug }: { slug: string }) {
                   <div style={{ fontSize: 13, fontFamily: T.sans, fontWeight: 700, color: T.teal, marginBottom: 4 }}>
                     {product.name}
                   </div>
-                  <div style={{ fontSize: 11, fontFamily: T.sans, color: T.secondary }}>
+                  <div style={{ fontSize: 11, fontFamily: T.sans, color: 'rgba(239,246,255,0.70)' }}>
                     {product.role}
                   </div>
                 </a>

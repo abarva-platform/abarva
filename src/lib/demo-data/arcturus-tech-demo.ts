@@ -42,7 +42,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Opening with the Bloomberg AIM failure history. **3 modernisation attempts, £32.6M spent, all failed for F002** — no named executive sponsor who survived the programme duration. Walking through each. **2009 (TCS, £8.2M):** The CDO-equivalent role was vacant at programme start. The programme ran without executive accountability — no single named owner who could be held responsible for delivery. When scope disputes arose at month 14, there was no executive to resolve them. Programme collapsed. **2016 (Accenture, £14.6M):** Accenture brought in a programme director. At month 18, the programme director left Accenture. The programme collapsed within 6 weeks — the institutional knowledge of the programme structure left with the director. No internal owner, no recovery. **2021 (Infosys, £9.8M):** CDO appointed specifically for this programme. CDO resigned 4 months in — personal reasons. Same collapse as 2016. Programme board had no successor plan. The pattern is identical across all three attempts. The technology was never the problem.',
+                'Opening with the Bloomberg AIM failure history. **3 modernisation attempts, $32.6M spent, all failed for F002** — no named executive sponsor who survived the programme duration. Walking through each. **2009 (TCS, $8.2M):** The CDO-equivalent role was vacant at programme start. The programme ran without executive accountability — no single named owner who could be held responsible for delivery. When scope disputes arose at month 14, there was no executive to resolve them. Programme collapsed. **2016 (Accenture, $14.6M):** Accenture brought in a programme director. At month 18, the programme director left Accenture. The programme collapsed within 6 weeks — the institutional knowledge of the programme structure left with the director. No internal owner, no recovery. **2021 (Infosys, $9.8M):** CDO appointed specifically for this programme. CDO resigned 4 months in — personal reasons. Same collapse as 2016. Programme board had no successor plan. The pattern is identical across all three attempts. The technology was never the problem.',
             },
             {
               role: 'admin',
@@ -53,7 +53,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Two things must be different. First: the executive sponsor must have skin in the game — their performance review must be tied to the modernisation outcome, not the programme launch. A CDO who owns the programme budget but not the outcome has an incentive to launch, not to deliver. Second: the approach must change. All three prior attempts were full replacement — a £30M+ programme every time. The API wrapper approach hasn\'t been tried. **6 of 14 customisations are portable without full replacement.** Start there. The API wrapper builds internal capability progressively — each wrapper delivered is institutional knowledge that stays inside Arcturus regardless of what happens at senior level. F002 can\'t collapse a programme where the knowledge is distributed across internal engineers, not concentrated in one executive.',
+                'Two things must be different. First: the executive sponsor must have skin in the game — their performance review must be tied to the modernisation outcome, not the programme launch. A CDO who owns the programme budget but not the outcome has an incentive to launch, not to deliver. Second: the approach must change. All three prior attempts were full replacement — a $30M+ programme every time. The API wrapper approach hasn\'t been tried. **6 of 14 customisations are portable without full replacement.** Start there. The API wrapper builds internal capability progressively — each wrapper delivered is institutional knowledge that stays inside Arcturus regardless of what happens at senior level. F002 can\'t collapse a programme where the knowledge is distributed across internal engineers, not concentrated in one executive.',
             },
             {
               role: 'admin',
@@ -98,7 +98,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                "The Genome says no — at this point in time. Here's the data: **three replacement attempts have failed at a combined cost of £32.6M**. The organisation does not currently have the data readiness (**0 golden records**), the internal capability (**CDO vacant 11 months**), or the executive continuity (**F002 pattern confirmed**) to execute a successful full replacement. A fourth attempt with the same governance gaps would be the fourth failure. The Genome success rate for full replacement under current conditions is **28%** — that's not a programme, that's a gamble. The API wrapper approach builds internal capability while reducing dependency. Full replacement remains an option in **3-5 years**, once the CDO is established, golden records are in place, and internal engineers understand the Bloomberg data model through wrapper delivery.",
+                "The Genome says no — at this point in time. Here's the data: **three replacement attempts have failed at a combined cost of $32.6M**. The organisation does not currently have the data readiness (**0 golden records**), the internal capability (**CDO vacant 11 months**), or the executive continuity (**F002 pattern confirmed**) to execute a successful full replacement. A fourth attempt with the same governance gaps would be the fourth failure. The Genome success rate for full replacement under current conditions is **28%** — that's not a programme, that's a gamble. The API wrapper approach builds internal capability while reducing dependency. Full replacement remains an option in **3-5 years**, once the CDO is established, golden records are in place, and internal engineers understand the Bloomberg data model through wrapper delivery.",
             },
             {
               role: 'admin',
@@ -109,7 +109,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'SQL Server DW is the most urgent decision in the estate. **EOL passed October 2025.** Every day it runs is a security and regulatory risk — no security patches, no vendor support. Migration to **Azure SQL Managed Instance: £1.2M, 4-month project**, team of 3 internal engineers + 1 DBA contractor. Charles River already connects to Azure — the pipeline exists and reduces infrastructure setup time significantly. This is the lowest-risk modernisation project in the estate. It should begin in the next **30 days** regardless of any Bloomberg AIM decision. The two programmes are independent.',
+                'SQL Server DW is the most urgent decision in the estate. **EOL passed October 2025.** Every day it runs is a security and regulatory risk — no security patches, no vendor support. Migration to **Azure SQL Managed Instance: $1.2M, 4-month project**, team of 3 internal engineers + 1 DBA contractor. Charles River already connects to Azure — the pipeline exists and reduces infrastructure setup time significantly. This is the lowest-risk modernisation project in the estate. It should begin in the next **30 days** regardless of any Bloomberg AIM decision. The two programmes are independent.',
             },
             {
               role: 'admin',
@@ -120,7 +120,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Azure SQL migration scoped. Logging as Wave 1 action. **Project brief:** migrate SQL Server DW to Azure SQL Managed Instance. **Budget:** £1.2M. **Timeline:** 4 months. **Owner:** VP Data Engineering (internal). **Governance:** CTO sign-off. **Start date:** immediate. Bloomberg AIM API wrapper begins in parallel — Phase 1 (Geneva + ESG) start Month 2 to allow the SQL DW team to be stood up first. The two programmes share no dependencies and can run concurrently.',
+                'Azure SQL migration scoped. Logging as Wave 1 action. **Project brief:** migrate SQL Server DW to Azure SQL Managed Instance. **Budget:** $1.2M. **Timeline:** 4 months. **Owner:** VP Data Engineering (internal). **Governance:** CTO sign-off. **Start date:** immediate. Bloomberg AIM API wrapper begins in parallel — Phase 1 (Geneva + ESG) start Month 2 to allow the SQL DW team to be stood up first. The two programmes share no dependencies and can run concurrently.',
             },
           ],
         },
@@ -142,7 +142,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**SQL Server DW: 8 years of financial reporting data**, £0.4M annual maintenance, **3-day reporting lag** due to manual extraction from 6 source systems. The migration is technically straightforward: Azure Data Factory handles the extraction, Azure SQL handles the transformation. The complexity is the manual processes that currently run around it — **4 scheduled jobs** and **2 analyst-maintained Excel bridges**. These need to be replaced as part of the migration. That\'s where the £1.2M is spent — mostly process re-engineering, not technology.',
+                '**SQL Server DW: 8 years of financial reporting data**, $0.4M annual maintenance, **3-day reporting lag** due to manual extraction from 6 source systems. The migration is technically straightforward: Azure Data Factory handles the extraction, Azure SQL handles the transformation. The complexity is the manual processes that currently run around it — **4 scheduled jobs** and **2 analyst-maintained Excel bridges**. These need to be replaced as part of the migration. That\'s where the $1.2M is spent — mostly process re-engineering, not technology.',
             },
             {
               role: 'admin',
@@ -175,14 +175,14 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
         status: 'approved',
         content: {
           executive_summary:
-            'Arcturus has spent £32.6M on three Bloomberg AIM modernisation attempts. All three failed for the same reason: F002 — no named executive sponsor who survived the programme duration. The fourth attempt, with the same governance gaps, will produce the same result. The prescription is different this time: API wrapper approach for 6 portable customisations, immediate Azure SQL migration for the EOL SQL Server DW, and a governance model that prevents F002 from repeating. Total maintenance cost reduction opportunity: £12-18M annually.',
+            'Arcturus has spent $32.6M on three Bloomberg AIM modernisation attempts. All three failed for the same reason: F002 — no named executive sponsor who survived the programme duration. The fourth attempt, with the same governance gaps, will produce the same result. The prescription is different this time: API wrapper approach for 6 portable customisations, immediate Azure SQL migration for the EOL SQL Server DW, and a governance model that prevents F002 from repeating. Total maintenance cost reduction opportunity: $12-18M annually.',
           systems_assessed: [
             {
               system: 'SQL Server DW',
               age_years: 8,
               annual_cost_m: 0.4,
               verdict: 'immediate_migration',
-              recommendation: 'Azure SQL Managed Instance — £1.2M, 4 months',
+              recommendation: 'Azure SQL Managed Instance — $1.2M, 4 months',
               urgency: 'critical',
             },
             {
@@ -200,7 +200,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               annual_cost_m: 3.2,
               verdict: 'optimise',
               recommendation:
-                'Adoption programme — 44% to 80% adoption unlocks £2.1M workflow savings',
+                'Adoption programme — 44% to 80% adoption unlocks $2.1M workflow savings',
               urgency: 'medium',
             },
             {
@@ -271,7 +271,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Salesforce FSC adoption at **44% vs 80% benchmark**. The technology is fine — the problem is change management (F008). Two root causes from the data: **(1)** the compliance team never received workflow training post-implementation — they were given system access but no process enablement. **(2)** The broker relationship module was never configured for UK regulatory requirements — so the team built workarounds outside the system. Fix: **90-day adoption programme.** 3 weeks training (not another rollout — genuine workflow enablement), 2 weeks UK regulatory configuration, 6 weeks reinforcement with usage metrics. **Cost: £180K. Value: £2.1M workflow savings annually.**',
+                'Salesforce FSC adoption at **44% vs 80% benchmark**. The technology is fine — the problem is change management (F008). Two root causes from the data: **(1)** the compliance team never received workflow training post-implementation — they were given system access but no process enablement. **(2)** The broker relationship module was never configured for UK regulatory requirements — so the team built workarounds outside the system. Fix: **90-day adoption programme.** 3 weeks training (not another rollout — genuine workflow enablement), 2 weeks UK regulatory configuration, 6 weeks reinforcement with usage metrics. **Cost: $180K. Value: $2.1M workflow savings annually.**',
             },
             {
               role: 'admin',
@@ -283,7 +283,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'The answer is in the data. Salesforce FSC was implemented by Capgemini (£3.2M programme) with a **6-week go-live sprint**. The implementation plan allocated **2 days** to change management training. Genome shows that FSC implementations with fewer than 3 weeks of change management training have a **78% chance of sub-60% adoption at 12 months**. This was a predictable outcome — the Genome flags it as a leading indicator. The prescription is the same as for every F008 situation: the technology was correctly chosen; the implementation shortcut caused the adoption failure. The board question is fair. The answer is: the implementation methodology was deficient, not the platform decision.',
+                'The answer is in the data. Salesforce FSC was implemented by Capgemini ($3.2M programme) with a **6-week go-live sprint**. The implementation plan allocated **2 days** to change management training. Genome shows that FSC implementations with fewer than 3 weeks of change management training have a **78% chance of sub-60% adoption at 12 months**. This was a predictable outcome — the Genome flags it as a leading indicator. The prescription is the same as for every F008 situation: the technology was correctly chosen; the implementation shortcut caused the adoption failure. The board question is fair. The answer is: the implementation methodology was deficient, not the platform decision.',
             },
           ],
         },
@@ -329,7 +329,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Yes. Greenfield Technology is the strongest backup. Smaller firm, **lower day rate (£1,100/day vs ThoughtWorks £1,400/day)**, and their two Bloomberg wrapper engagements are directly comparable to your customisation set — Geneva connector in both cases, ESG overlay in one. The risk is capacity — they\'re a team of **12** and would need to dedicate 4 for 18 months. That\'s a significant commitment for a firm of their size. Recommend **engaging them in parallel with the Infosys conversation** — run both tracks, select on the basis of who can confirm a credible Bloomberg wrapper team.',
+                'Yes. Greenfield Technology is the strongest backup. Smaller firm, **lower day rate ($1,100/day vs ThoughtWorks $1,400/day)**, and their two Bloomberg wrapper engagements are directly comparable to your customisation set — Geneva connector in both cases, ESG overlay in one. The risk is capacity — they\'re a team of **12** and would need to dedicate 4 for 18 months. That\'s a significant commitment for a firm of their size. Recommend **engaging them in parallel with the Infosys conversation** — run both tracks, select on the basis of who can confirm a credible Bloomberg wrapper team.',
             },
           ],
         },
@@ -340,7 +340,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Business case for technology modernisation. Primary value levers: maintenance cost reduction, risk elimination, and capability unlock. **Bloomberg AIM API wrapper:** maintenance reduction **£2-4M annually** from renegotiated Bloomberg contract (year 2-3 — once wrappers reduce Bloomberg\'s leverage), migration risk eliminated (£32.6M in failed attempts avoided as a future liability), **AI portfolio unlocked** (26 of 28 AI initiatives currently blocked by Bloomberg data latency — resolved in year 2 when Geneva connector is live). **SQL Server DW migration:** regulatory risk eliminated, reporting lag from 72 hours to same-day, direct value £0.4M annually.',
+                'Business case for technology modernisation. Primary value levers: maintenance cost reduction, risk elimination, and capability unlock. **Bloomberg AIM API wrapper:** maintenance reduction **$2-4M annually** from renegotiated Bloomberg contract (year 2-3 — once wrappers reduce Bloomberg\'s leverage), migration risk eliminated ($32.6M in failed attempts avoided as a future liability), **AI portfolio unlocked** (26 of 28 AI initiatives currently blocked by Bloomberg data latency — resolved in year 2 when Geneva connector is live). **SQL Server DW migration:** regulatory risk eliminated, reporting lag from 72 hours to same-day, direct value $0.4M annually.',
             },
             {
               role: 'admin',
@@ -351,7 +351,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**CFO-grade business case.** Year 1: Azure SQL migration (£1.2M cost, regulatory risk eliminated, 3-day reporting lag reduced to same-day — value £0.4M direct). Year 2: Bloomberg API Phase 1 complete, renegotiation leverage increases (Bloomberg maintenance reduces to **£6.2M from £8.4M** — saving **£2.2M**). Year 3: Bloomberg API Phase 2 complete, AI data latency resolved, 10-12 AI initiatives unblocked. The AI value is the larger number — 10 AI initiatives producing £3-4M ROI each = **£30-40M annualised by year 3**. This is where the tech modernisation case becomes a margin case, not a cost reduction case.',
+                '**CFO-grade business case.** Year 1: Azure SQL migration ($1.2M cost, regulatory risk eliminated, 3-day reporting lag reduced to same-day — value $0.4M direct). Year 2: Bloomberg API Phase 1 complete, renegotiation leverage increases (Bloomberg maintenance reduces to **$6.2M from $8.4M** — saving **$2.2M**). Year 3: Bloomberg API Phase 2 complete, AI data latency resolved, 10-12 AI initiatives unblocked. The AI value is the larger number — 10 AI initiatives producing $3-4M ROI each = **$30-40M annualised by year 3**. This is where the tech modernisation case becomes a margin case, not a cost reduction case.',
             },
             {
               role: 'admin',
@@ -362,7 +362,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**Conservative: £14M by year 3** (direct maintenance savings only, AI value excluded). That\'s the guaranteed case regardless of AI execution — Bloomberg renegotiation plus SQL DW plus FSC adoption savings plus minor decommissions. **Base case: £14M + £20M AI** (half the AI portfolio delivering) = **£34M by year 3**. **Optimistic: £14M + £40M AI** = **£54M by year 3**. The range is wide because AI delivery depends on the broader governance programme. The tech modernisation is a prerequisite — it unlocks the option, but the option value depends on what AI delivers. The CFO conservative number is £14M. That\'s the floor.',
+                '**Conservative: $14M by year 3** (direct maintenance savings only, AI value excluded). That\'s the guaranteed case regardless of AI execution — Bloomberg renegotiation plus SQL DW plus FSC adoption savings plus minor decommissions. **Base case: $14M + $20M AI** (half the AI portfolio delivering) = **$34M by year 3**. **Optimistic: $14M + $40M AI** = **$54M by year 3**. The range is wide because AI delivery depends on the broader governance programme. The tech modernisation is a prerequisite — it unlocks the option, but the option value depends on what AI delivers. The CFO conservative number is $14M. That\'s the floor.',
             },
           ],
         },
@@ -438,12 +438,12 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '5 baseline metrics, each with a verified source. **Metric 1: Annual maintenance cost — £37M total** (all 13 systems). Source: ARC-C04. This is the number we measure against throughout the programme. Bloomberg AIM specifically: £8.4M. SQL Server DW: £0.4M. Is £37M correct for total including licences?',
+                '5 baseline metrics, each with a verified source. **Metric 1: Annual maintenance cost — $37M total** (all 13 systems). Source: ARC-C04. This is the number we measure against throughout the programme. Bloomberg AIM specifically: $8.4M. SQL Server DW: $0.4M. Is $37M correct for total including licences?',
             },
             {
               role: 'admin',
               actor_name: 'Anand Sundaram',
-              content: '£37M is correct for all systems including licences.',
+              content: '$37M is correct for all systems including licences.',
             },
             {
               role: 'maestro_ai',
@@ -572,7 +572,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
                 'Reporting feed wrapper live (month 24)',
                 'Full internal capability on 6 customisations',
                 'AI portfolio data latency resolved — initiatives unblocked',
-                'Year 2 Bloomberg renegotiation — maintenance at £5.8M',
+                'Year 2 Bloomberg renegotiation — maintenance at $5.8M',
               ],
               gate: 'All 6 customisations wrapped, internal capability score 80/100',
             },
@@ -629,7 +629,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'It is. VP Data Engineering ran a tight programme — **8-week delivery vs 16-week plan**. The schedule compression came from two things: **(1)** Charles River Azure pipeline already existed, reducing infrastructure setup from 4 weeks to 1 week. **(2)** The 2-week parallel-system period was reduced to **1 week** after data reconciliation validated a clean migration on day 3. The **£1.2M budget was delivered at £0.94M — £260K under budget**. This is the proof point for the board: when governance is right and scope is correct, Arcturus delivers on time and under budget.',
+                'It is. VP Data Engineering ran a tight programme — **8-week delivery vs 16-week plan**. The schedule compression came from two things: **(1)** Charles River Azure pipeline already existed, reducing infrastructure setup from 4 weeks to 1 week. **(2)** The 2-week parallel-system period was reduced to **1 week** after data reconciliation validated a clean migration on day 3. The **$1.2M budget was delivered at $0.94M — $260K under budget**. This is the proof point for the board: when governance is right and scope is correct, Arcturus delivers on time and under budget.',
             },
             {
               role: 'admin',
@@ -651,7 +651,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Month 3 maintenance cost vs baseline. **Total estate: £35.8M** (from £37M baseline). **Reduction: £1.2M.** Source: SQL Server DW licence terminated (£0.4M annualised), Salesforce FSC renegotiated terms on consolidated licence (£0.4M), and 2 minor system decommissions (£0.4M combined).',
+                'Month 3 maintenance cost vs baseline. **Total estate: $35.8M** (from $37M baseline). **Reduction: $1.2M.** Source: SQL Server DW licence terminated ($0.4M annualised), Salesforce FSC renegotiated terms on consolidated licence ($0.4M), and 2 minor system decommissions ($0.4M combined).',
             },
             {
               role: 'admin',
@@ -662,7 +662,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                'Bloomberg AIM maintenance unchanged at **£8.4M** — no billing change until renegotiation leverage increases at Month 9 (when Geneva connector goes live). The wrapper approach changes the negotiating position: once internal engineers can govern the Geneva connector independently, Bloomberg LP\'s leverage on that customisation drops significantly. **Projected renegotiation outcome at Month 9: £1.5-2.2M reduction** on the Geneva-related maintenance line. Full renegotiation at Month 18.',
+                'Bloomberg AIM maintenance unchanged at **$8.4M** — no billing change until renegotiation leverage increases at Month 9 (when Geneva connector goes live). The wrapper approach changes the negotiating position: once internal engineers can govern the Geneva connector independently, Bloomberg LP\'s leverage on that customisation drops significantly. **Projected renegotiation outcome at Month 9: $1.5-2.2M reduction** on the Geneva-related maintenance line. Full renegotiation at Month 18.',
             },
             {
               role: 'admin',
@@ -673,7 +673,7 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
               role: 'maestro_ai',
               actor_name: 'AbarVa AI',
               content:
-                '**Year-end maintenance forecast: £34.2M** (from £37M baseline). **Reduction: £2.8M year 1.** Breakdown: SQL DW licence gone (£0.4M), FSC renegotiation (£0.4M), minor decommissions (£0.4M), Bloomberg partial renegotiation at Month 9 (£1.6M). **Year 2 forecast with Phase 1+2 complete: £30.1M** — Bloomberg full renegotiation adds £2.6M more. On track against the conservative £14M year-3 case.',
+                '**Year-end maintenance forecast: $34.2M** (from $37M baseline). **Reduction: $2.8M year 1.** Breakdown: SQL DW licence gone ($0.4M), FSC renegotiation ($0.4M), minor decommissions ($0.4M), Bloomberg partial renegotiation at Month 9 ($1.6M). **Year 2 forecast with Phase 1+2 complete: $30.1M** — Bloomberg full renegotiation adds $2.6M more. On track against the conservative $14M year-3 case.',
             },
           ],
         },
@@ -775,19 +775,19 @@ export const ARCTURUS_TECH_DEMO: DemoEngagement = {
           },
           fee_status: {
             month4_trigger:
-              'Azure SQL migration complete — £0.12M fee pending Month 4 verification',
-            month9_trigger: 'Geneva connector live — £0.8M fee pending',
+              'Azure SQL migration complete — $0.12M fee pending Month 4 verification',
+            month9_trigger: 'Geneva connector live — $0.8M fee pending',
             board_note:
-              'Month 4 fee trigger (£120K) to be invoiced on SQL DW lag verification (currently 47 min vs 4hr threshold)',
+              'Month 4 fee trigger ($120K) to be invoiced on SQL DW lag verification (currently 47 min vs 4hr threshold)',
           },
           board_notes: [
             'Month 3 overall RAG: GREEN. All milestones on or ahead of schedule.',
-            'Azure SQL migration complete 6 weeks early, £260K under budget — proof of internal delivery capability.',
+            'Azure SQL migration complete 6 weeks early, $260K under budget — proof of internal delivery capability.',
             'CDO Dr. Marcus Webb appointed Day 52 — first exec sponsor with direct Bloomberg AIM experience. F002 structurally addressed.',
             'Bloomberg LP new account team in place — documentation obstruction resolved.',
             'Salesforce FSC adoption 44% → 71% — F008 remediation underway, 80% target Month 4.',
             'ThoughtWorks Bloomberg API Phase 1 scoping complete. Development Month 4. Geneva connector Month 9 on track.',
-            'Month 4 fee trigger: £120K on SQL DW lag verification. On track.',
+            'Month 4 fee trigger: $120K on SQL DW lag verification. On track.',
           ],
         },
       },
