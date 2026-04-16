@@ -1069,11 +1069,11 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' as const }}>
               <button
                 onClick={() => setEngModal({ name: data.heroFindings[0].headline.replace(/"/g, ''), slug: `/engage/${clientId}/${finding.solutionSlug}` })}
-                style={{ padding: '12px 24px', background: TEAL, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '12px 24px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
               >
                 {finding.primaryCta}
               </button>
-              <a href={`/diagnose?client=${clientId}`} style={{ padding: '12px 24px', border: '1px solid rgba(255,255,255,0.18)', color: '#9CA3AF', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+              <a href={`/diagnose?client=${clientId}`} style={{ padding: '12px 24px', border: '1px solid rgba(255,255,255,0.35)', color: '#FFFFFF', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
                 {finding.secondaryCta}
               </a>
             </div>
@@ -1107,7 +1107,7 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
       <section style={{ background: BG, padding: '40px 48px', overflow: 'hidden' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
           <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 600, color: WHITE }}>Active Engagements</div>
-          <a href={`/solutions?client=${clientId}`} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: WHITE, border: 'none', borderRadius: 6, padding: '10px 20px', cursor: 'pointer', textDecoration: 'none' }}>
+          <a href="/admin?section=engagements" style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: WHITE, border: 'none', borderRadius: 6, padding: '10px 20px', cursor: 'pointer', textDecoration: 'none' }}>
             + New Engagement
           </a>
         </div>
@@ -1221,7 +1221,6 @@ function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
 
 // ─── ENGAGEMENTS TAB ─────────────────────────────────────────────────────────
 function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: string }) {
-  const [modal, setModal] = useState<{ name: string; slug: string } | null>(null)
   const engagements = ENGAGEMENT_DATA[clientId] ?? []
   const activeCount = engagements.filter(e => e.status === 'In Progress').length
   const totalValue = clientId === 'arcturus' ? '$840M+' : clientId === 'apexretail' ? '$120M' : '$160M'
@@ -1239,10 +1238,9 @@ function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: str
           <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: 0, lineHeight: 1.15 }}>
             {engagements.length} engagement{engagements.length !== 1 ? 's' : ''}.<br />{activeCount} in flight.
           </h2>
-          <button
-            onClick={() => setModal({ name: 'New Engagement', slug: `/engage/${clientId}/margin` })}
-            style={{ padding: '12px 24px', background: TEAL, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
-          >+ Start Engagement</button>
+          <a href="/admin?section=engagements" style={{ padding: '12px 24px', background: '#FFFFFF', color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer', flexShrink: 0, textDecoration: 'none' }}>
+            + New Engagement
+          </a>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
           {[
@@ -1298,12 +1296,12 @@ function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: str
                 <div style={{ flex: '0 0 140px', textAlign: 'right' as const }}>
                   <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{e.value}</div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 16 }}>Value at stake</div>
-                  <button
-                    onClick={() => setModal({ name: e.name, slug: `/engage/${clientId}/${e.slug}` })}
-                    style={{ padding: '9px 16px', background: e.status === 'In Progress' ? WHITE : 'transparent', color: e.status === 'In Progress' ? BG : TEAL, border: `1px solid ${e.status === 'In Progress' ? WHITE : TEAL}`, borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%' }}
+                  <a
+                    href={e.status === 'In Progress' ? `/engage/${clientId}/${e.slug}` : '/admin?section=engagements'}
+                    style={{ display: 'block', padding: '9px 16px', background: e.status === 'In Progress' ? WHITE : 'transparent', color: e.status === 'In Progress' ? BG : WHITE, border: `1px solid ${WHITE}`, borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, cursor: 'pointer', width: '100%', textAlign: 'center' as const, textDecoration: 'none', boxSizing: 'border-box' as const }}
                   >
-                    {e.status === 'In Progress' ? 'Open Workspace →' : e.status === 'Backlog' ? 'Start →' : 'View →'}
-                  </button>
+                    {e.status === 'In Progress' ? 'Open Workspace →' : e.status === 'Backlog' ? 'Set Up →' : 'View →'}
+                  </a>
                 </div>
               </div>
             </div>
@@ -1311,9 +1309,6 @@ function NewEngagementsTab({ data, clientId }: { data: ClientData; clientId: str
         </div>
       </section>
 
-      {modal && (
-        <PreEngagementModal engagementName={modal.name} clientId={clientId} targetSlug={modal.slug} onClose={() => setModal(null)} />
-      )}
     </div>
   )
 }
