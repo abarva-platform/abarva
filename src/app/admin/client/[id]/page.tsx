@@ -1895,7 +1895,7 @@ function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
           {/* Per-solution for this client */}
           {clientSolutions.length > 0 && (
             <div style={{ marginTop: '14px', paddingTop: '14px', borderTop: `1px solid ${BORDER}` }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>
                 This client only:
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}>
@@ -1990,7 +1990,7 @@ function ValueDashboard({ clientId }: { clientId: string }) {
           {statCards.map((s, i) => (
             <div key={i} style={{ background: DARK2, border: '1px solid #1F2937', borderRadius: 8, padding: 24 }}>
               <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 8 }}>{s.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{s.label}</div>
               <div style={{ fontFamily: SANS, fontSize: 12, color: '#4B5563' }}>{s.sub}</div>
             </div>
           ))}

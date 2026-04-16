@@ -1172,7 +1172,7 @@ function AdminPortalInner() {
           </div>
 
           <div style={{ padding: '12px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Active Clients</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Active Clients</div>
             {[
               { id: 'meridian', name: 'Meridian Health', color: '#4DA3FF', status: 'Active' },
               { id: 'arcturus', name: 'Arcturus',         color: '#818CF8', status: 'Setup' },
@@ -1188,7 +1188,7 @@ function AdminPortalInner() {
           <div style={{ flex: 1, padding: '8px 0 20px' }}>
             {NAV_GROUPS.map(group => (
               <div key={group.label} style={{ marginBottom: 4 }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '10px 18px 5px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '10px 18px 5px' }}>
                   {group.label}
                 </div>
                 {group.items.map(item => (

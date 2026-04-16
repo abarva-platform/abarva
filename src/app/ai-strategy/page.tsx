@@ -634,7 +634,7 @@ function OutcomesPanel({ outcomes, phaseStatuses }: { outcomes: OutcomeItem[]; p
 
       {outcomes.length >= 3 && (
         <div style={{ marginTop: 8, border: `1px solid ${BD}`, borderRadius: 8, padding: 16, background: '#fff' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>
             Deliverable Progress
           </div>
           <div style={{ fontFamily: SERIF, fontSize: 15, color: TX, marginBottom: 10 }}>
@@ -1068,7 +1068,7 @@ function AIStrategyInner() {
           {/* Footer */}
           <div style={{ height: FOOTER_H, flexShrink: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, textTransform: 'uppercase', letterSpacing: '.08em' }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase', letterSpacing: '.08em' }}>
                 {stepDef ? `${activeStep} — ${stepDef.label}` : ''}
               </div>
             </div>
