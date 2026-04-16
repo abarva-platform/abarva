@@ -304,10 +304,334 @@ function getActionForIssue(clientId: ClientId, issueId: string): Action | undefi
   return idx !== undefined ? actions[Math.min(idx, actions.length - 1)] : actions[0]
 }
 
+// ─── Solution Phase View ──────────────────────────────────────────────────────
+const PHASE_DEFS = [
+  { id: 0, label: 'Phase 0', name: 'Diagnose',  steps: [] as string[], deliverables: ['Situation Intelligence Report', 'Financial Risk Register', 'Baseline Data Pack'] },
+  { id: 1, label: 'Phase 1', name: 'Prescribe', steps: ['1.1','1.2','1.3','1.4'], deliverables: ['Top Situation Findings', 'Contradiction Analysis', 'Benchmark Gap Report', 'Data Readiness Assessment'] },
+  { id: 2, label: 'Phase 2', name: 'Design',    steps: ['2.1','2.2','2.3','2.4'], deliverables: ['Priority AI Use Case', 'Technology Direction', 'Architecture Pattern', 'Business Case Anchor'] },
+  { id: 3, label: 'Phase 3', name: 'Deliver',   steps: ['3.1','3.2','3.3','4.1','4.2'], deliverables: ['Value Potential Model', 'KPI Framework', 'First Milestone Plan', '90-Day Sprint', 'Governance Model'] },
+  { id: 4, label: 'Phase 4', name: 'Verify',    steps: [] as string[], deliverables: ['Baseline Lock', 'Outcome Verification Report', 'Board Pack'] },
+]
+
+const STEP_LABELS: Record<string, string> = {
+  '1.1': 'Situation Findings', '1.2': 'Contradiction Map', '1.3': 'Benchmark Gap', '1.4': 'Data Readiness',
+  '2.1': 'Priority Use Case',  '2.2': 'Technology Direction', '2.3': 'Architecture Pattern', '2.4': 'Business Case Anchor',
+  '3.1': 'Value Potential',    '3.2': 'KPI Framework', '3.3': 'First Milestone', '4.1': '90-Day Sprint', '4.2': 'Governance Model',
+}
+
+type ChatMessage = { role: 'ai' | 'user'; text: string; options?: string[] }
+type OutcomeItem = { label: string; value: string }
+
+function SolutionPhaseView({ engagementId, clientId, solutionCode }: { engagementId: string; clientId: ClientId; solutionCode: string }) {
+  const [currentPhase, setCurrentPhase] = useState(0)
+  const [engName, setEngName] = useState('')
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [outcomeItems, setOutcomeItems] = useState<OutcomeItem[]>([])
+  const [stepsCompleted, setStepsCompleted] = useState<string[]>([])
+  const [currentStep, setCurrentStep] = useState('')
+  const [streaming, setStreaming] = useState(false)
+  const [streamText, setStreamText] = useState('')
+  const [options, setOptions] = useState<string[]>([])
+  const [advanceLoading, setAdvanceLoading] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const meta = CLIENT_META[clientId] ?? { name: clientId, shortName: clientId, confidence: 80, accent: TEAL }
+
+  useEffect(() => {
+    supabase.from('engagements').select('current_phase,engagement_name').eq('id', engagementId).single()
+      .then(({ data }: { data: { current_phase: number; engagement_name: string } | null }) => {
+        if (!data) return
+        setCurrentPhase(data.current_phase ?? 0)
+        setEngName(data.engagement_name ?? '')
+      })
+  }, [engagementId])
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  }, [messages, streamText])
+
+  const phase = PHASE_DEFS[currentPhase] ?? PHASE_DEFS[0]
+  const phaseSteps = phase.steps
+  const allStepsDone = phaseSteps.length === 0 || phaseSteps.every(s => stepsCompleted.includes(s))
+
+  async function kickoffStep(stepId: string) {
+    setCurrentStep(stepId)
+    setStreaming(true)
+    setStreamText('')
+    setOptions([])
+    try {
+      const res = await fetch('/api/chat/step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stepId, clientId, selectedOption: 'A', isKickoff: true,
+          priorStepsSummary: outcomeItems.map(o => `${o.label}: ${o.value}`).join('\n') || 'Session starting.',
+          clientContext: { name: meta.name, vertical: solutionCode },
+        }),
+      })
+      const reader = res.body!.getReader()
+      const dec = new TextDecoder()
+      let full = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const lines = dec.decode(value).split('\n').filter(l => l.startsWith('data: '))
+        for (const line of lines) {
+          try {
+            const obj = JSON.parse(line.slice(6))
+            if (obj.type === 'text') { full += obj.chunk; setStreamText(full) }
+            if (obj.type === 'done') { setOptions(obj.options ?? []); if (obj.outcomeItem) setOutcomeItems(p => [...p, obj.outcomeItem]) }
+          } catch { /* partial line */ }
+        }
+      }
+      setMessages(p => [...p, { role: 'ai', text: full }])
+      setStreamText('')
+    } finally { setStreaming(false) }
+  }
+
+  async function pickOption(option: string) {
+    if (streaming || !currentStep) return
+    setMessages(p => [...p, { role: 'user', text: option, options: undefined }])
+    setOptions([])
+    setStreaming(true)
+    setStreamText('')
+    try {
+      const res = await fetch('/api/chat/step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          stepId: currentStep, clientId, selectedOption: option.charAt(0),
+          priorStepsSummary: outcomeItems.map(o => `${o.label}: ${o.value}`).join('\n'),
+          clientContext: { name: meta.name, vertical: solutionCode },
+        }),
+      })
+      const reader = res.body!.getReader()
+      const dec = new TextDecoder()
+      let full = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const lines = dec.decode(value).split('\n').filter(l => l.startsWith('data: '))
+        for (const line of lines) {
+          try {
+            const obj = JSON.parse(line.slice(6))
+            if (obj.type === 'text') { full += obj.chunk; setStreamText(full) }
+            if (obj.type === 'done') {
+              setOptions(obj.options ?? [])
+              if (obj.outcomeItem) setOutcomeItems(p => [...p, obj.outcomeItem])
+              setStepsCompleted(p => p.includes(currentStep) ? p : [...p, currentStep])
+              const stepIdx = phaseSteps.indexOf(currentStep)
+              if (stepIdx >= 0 && stepIdx < phaseSteps.length - 1) {
+                setTimeout(() => kickoffStep(phaseSteps[stepIdx + 1]), 600)
+              }
+            }
+          } catch { /* partial */ }
+        }
+      }
+      setMessages(p => [...p, { role: 'ai', text: full }])
+      setStreamText('')
+    } finally { setStreaming(false) }
+  }
+
+  async function advancePhase() {
+    if (currentPhase >= 4) return
+    setAdvanceLoading(true)
+    const next = currentPhase + 1
+    await supabase.from('engagements').update({ current_phase: next }).eq('id', engagementId)
+    setCurrentPhase(next)
+    setMessages([])
+    setStepsCompleted([])
+    setOutcomeItems([])
+    setOptions([])
+    setCurrentStep('')
+    setAdvanceLoading(false)
+    if (PHASE_DEFS[next]?.steps?.length) setTimeout(() => kickoffStep(PHASE_DEFS[next].steps[0]), 300)
+  }
+
+  function startPhase() {
+    if (phaseSteps.length) kickoffStep(phaseSteps[0])
+  }
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 260px', height: 'calc(100vh - 96px)', background: BG }}>
+
+      {/* LEFT — Phase sidebar */}
+      <div style={{ borderRight: `1px solid ${BORDER}`, overflowY: 'auto' as const, background: CARD }}>
+        <div style={{ padding: '20px 16px 12px', borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 6 }}>Engagement</div>
+          <div style={{ fontFamily: SERIF, fontSize: 15, color: WHITE, lineHeight: 1.3 }}>{engName || solutionCode}</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, marginTop: 4 }}>{meta.shortName}</div>
+        </div>
+        {PHASE_DEFS.map(p => {
+          const isActive = p.id === currentPhase
+          const isDone = p.id < currentPhase
+          return (
+            <div key={p.id} style={{ padding: '14px 16px', borderBottom: `1px solid ${BORDER}`, borderLeft: isActive ? `3px solid ${TEAL}` : '3px solid transparent', background: isActive ? `rgba(45,212,200,0.04)` : 'transparent' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', flexShrink: 0, background: isDone ? TEAL : isActive ? 'transparent' : BORDER, border: isActive ? `2px solid ${TEAL}` : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isDone && <span style={{ color: BG, fontSize: 10, fontWeight: 700 }}>✓</span>}
+                  {isActive && <div style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL }} />}
+                </div>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: isDone ? TEAL : isActive ? TEAL : DIM, letterSpacing: '.08em' }}>{p.label}</div>
+                  <div style={{ fontFamily: SANS, fontSize: 13, color: isActive ? WHITE : isDone ? MUTED : DIM, fontWeight: isActive ? 600 : 400 }}>{p.name}</div>
+                </div>
+              </div>
+              {isActive && p.steps.length > 0 && (
+                <div style={{ marginTop: 10, paddingLeft: 26, display: 'flex', flexDirection: 'column' as const, gap: 4 }}>
+                  {p.steps.map(s => (
+                    <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: stepsCompleted.includes(s) ? TEAL : s === currentStep ? '#F59E0B' : BORDER }} />
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: stepsCompleted.includes(s) ? TEAL : s === currentStep ? '#F59E0B' : DIM }}>{STEP_LABELS[s]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* CENTER — Chat or Phase 0 overview */}
+      <div style={{ display: 'flex', flexDirection: 'column' as const, overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${BORDER}`, background: CARD, flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>{phase.label} · {phase.name}</div>
+          <div style={{ fontFamily: SERIF, fontSize: 18, color: WHITE, marginTop: 2 }}>
+            {currentPhase === 0 ? `Situation confirmed — ${meta.shortName}` : currentPhase === 4 ? 'Outcome verification' : `${phase.name} session`}
+          </div>
+        </div>
+
+        {/* Phase 0: show top issues */}
+        {currentPhase === 0 && (
+          <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto' as const, padding: '24px' }}>
+            <div style={{ maxWidth: 640 }}>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: MUTED, lineHeight: 1.7, marginBottom: 20 }}>
+                The Situation Intelligence report for {meta.shortName} has identified the following issues. Review and confirm to advance to Phase 1: Prescribe.
+              </div>
+              {(ISSUES[clientId] ?? []).slice(0, 3).map(issue => (
+                <div key={issue.id} style={{ marginBottom: 12, padding: '16px 20px', background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${SEV_COLOR[issue.severity]}`, borderRadius: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: SEV_COLOR[issue.severity] }} />
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.1em' }}>{issue.severity}</span>
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 14, color: WHITE, fontWeight: 600, marginBottom: 4 }}>{issue.title}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL }}>{issue.impact}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Phase 4: verify */}
+        {currentPhase === 4 && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+            <div style={{ textAlign: 'center' as const }}>
+              <div style={{ fontFamily: SERIF, fontSize: 32, color: WHITE, marginBottom: 12 }}>Outcome Verification</div>
+              <div style={{ fontFamily: SANS, fontSize: 15, color: MUTED, marginBottom: 24, maxWidth: 400, lineHeight: 1.7 }}>
+                Phase 4 locks the verified outcomes against the baseline. Proceed to Outcome Intelligence to complete verification.
+              </div>
+              <a href="/outcome-intelligence" style={{ display: 'inline-block', padding: '12px 28px', background: TEAL, color: BG, borderRadius: 8, fontFamily: SANS, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                Go to Outcome Intelligence →
+              </a>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 1-3: Chat */}
+        {currentPhase > 0 && currentPhase < 4 && (
+          <>
+            <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto' as const, padding: '24px', display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
+              {messages.length === 0 && !streaming && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 }}>
+                  <button onClick={startPhase} style={{ padding: '14px 32px', background: TEAL, color: BG, border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+                    Begin {phase.name} →
+                  </button>
+                </div>
+              )}
+              {messages.map((m, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' as const : 'flex-start' as const }}>
+                  <div style={{ maxWidth: '72%', padding: '12px 16px', borderRadius: 10, background: m.role === 'user' ? TEAL : CARD, border: m.role === 'ai' ? `1px solid ${BORDER}` : 'none' }}>
+                    <div style={{ fontFamily: SANS, fontSize: 14, color: m.role === 'user' ? BG : WHITE, lineHeight: 1.7, whiteSpace: 'pre-wrap' as const }}>{m.text}</div>
+                  </div>
+                </div>
+              ))}
+              {streaming && streamText && (
+                <div style={{ display: 'flex', justifyContent: 'flex-start' as const }}>
+                  <div style={{ maxWidth: '72%', padding: '12px 16px', borderRadius: 10, background: CARD, border: `1px solid ${BORDER}` }}>
+                    <div style={{ fontFamily: SANS, fontSize: 14, color: WHITE, lineHeight: 1.7, whiteSpace: 'pre-wrap' as const }}>{streamText}<span style={{ display: 'inline-block', width: 6, height: 14, background: TEAL, marginLeft: 2, animation: 'blink 1s infinite' }} /></div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Options / advance */}
+            {!streaming && options.length > 0 && (
+              <div style={{ padding: '12px 24px', borderTop: `1px solid ${BORDER}`, background: CARD, flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+                  {options.map((opt, i) => (
+                    <button key={i} onClick={() => pickOption(opt)} style={{ width: '100%', padding: '10px 16px', textAlign: 'left' as const, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, fontFamily: SANS, fontSize: 13, color: WHITE, cursor: 'pointer' }}>
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Advance phase button */}
+        {(allStepsDone || currentPhase === 0) && currentPhase < 4 && !streaming && (
+          <div style={{ padding: '12px 24px', borderTop: `1px solid ${BORDER}`, background: BG, flexShrink: 0, display: 'flex', justifyContent: 'flex-end' as const }}>
+            <button onClick={advancePhase} disabled={advanceLoading} style={{ padding: '10px 24px', background: TEAL, color: BG, border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 14, fontWeight: 600, cursor: advanceLoading ? 'not-allowed' : 'pointer', opacity: advanceLoading ? 0.6 : 1 }}>
+              {advanceLoading ? 'Advancing…' : `Advance to Phase ${currentPhase + 1} →`}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* RIGHT — Deliverables + outcomes */}
+      <div style={{ borderLeft: `1px solid ${BORDER}`, overflowY: 'auto' as const, background: CARD }}>
+        <div style={{ padding: '16px', borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 8 }}>Deliverables</div>
+          {phase.deliverables.map((d, i) => {
+            const captured = outcomeItems.find(o => o.label.toLowerCase().includes(d.split(' ')[0].toLowerCase()))
+            return (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
+                <div style={{ width: 14, height: 14, borderRadius: 3, border: `1px solid ${captured ? TEAL : BORDER}`, background: captured ? TEAL : 'transparent', flexShrink: 0, marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {captured && <span style={{ color: BG, fontSize: 9, fontWeight: 700 }}>✓</span>}
+                </div>
+                <div>
+                  <div style={{ fontFamily: SANS, fontSize: 12, color: captured ? WHITE : MUTED }}>{d}</div>
+                  {captured && <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, marginTop: 2 }}>{captured.value}</div>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {outcomeItems.length > 0 && (
+          <div style={{ padding: '16px' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 10 }}>Captured Insights</div>
+            {outcomeItems.map((o, i) => (
+              <div key={i} style={{ marginBottom: 10, padding: '10px 12px', background: `rgba(45,212,200,0.05)`, border: `1px solid rgba(45,212,200,0.15)`, borderRadius: 6 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, marginBottom: 3 }}>{o.label}</div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: WHITE }}>{o.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 function DiagnoseContent() {
   const { clientId: ctxClientId, allowedClients, isAdmin } = useClientContext()
   const clientId = ctxClientId as ClientId
+  const searchParams = useSearchParams()
+  const engagementId = searchParams.get('engagement_id')
+  const solutionCode = searchParams.get('solution') ?? ''
   const [activeClient, setActiveClient] = useState<ClientId>(clientId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -357,7 +681,15 @@ function DiagnoseContent() {
         padding="20px 32px 0"
       />
 
-      {/* Two-panel layout */}
+      {/* Engagement mode — 3-panel phase view */}
+      {engagementId ? (
+        <SolutionPhaseView
+          engagementId={engagementId}
+          clientId={activeClient}
+          solutionCode={solutionCode}
+        />
+      ) : (
+      <>{/* Two-panel layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', height: 'calc(100vh - 96px)' }}>
 
         {/* LEFT: Issue list */}
@@ -527,6 +859,7 @@ function DiagnoseContent() {
           })()}
         </div>
       </div>
+      </>)}
     </div>
   )
 }
