@@ -704,55 +704,50 @@ function DataContent() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="data-intelligence" />
 
-      {/* Page header */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '28px 48px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
-            Intelligence Hub · {d.client} · {d.vertical}
+      {/* ── Sticky header: label + question + stats + tab nav ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 48px 0' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '10px' }}>
+            Data Intelligence · {d.client}
           </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px' }}>
-            <h1 style={{ fontFamily: SERIF, fontSize: '40px', fontWeight: 500, color: WHITE, margin: 0, lineHeight: 1.1 }}>
-              What your data tells us.
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', marginBottom: '20px' }}>
+            <h1 style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.25, maxWidth: '540px' }}>
+              &ldquo;What your data tells us — and what it costs you.&rdquo;
             </h1>
-            <div style={{ display: 'flex', gap: '12px', flexShrink: 0 }}>
-              <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: TEAL, lineHeight: 1 }}>{d.confidence}%</div>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>data confidence</div>
-              </div>
-              <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'center' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0 }} />
-                  <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1 }}>
-                    {d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)}
+            <div style={{ display: 'flex', gap: '32px', flexShrink: 0 }}>
+              {[
+                { label: 'Data Confidence', value: `${d.confidence}%`, dot: TEAL },
+                { label: 'Critical Findings', value: String(d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)), dot: RED },
+                { label: 'Genome Patterns', value: String(d.genomePatterns.length), dot: AMBER },
+                { label: 'Categories', value: String(d.categories.length) },
+              ].map(s => (
+                <div key={s.label}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {s.dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />}
+                    <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: WHITE }}>{s.value}</div>
                   </div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>{s.label}</div>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>critical findings</div>
-              </div>
-              <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '8px 16px', textAlign: 'center' as const }}>
-                <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1 }}>{d.genomePatterns.length}</div>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '2px' }}>genome patterns</div>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Sub-navigation */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '0 48px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', gap: '0' }}>
-          {tabs.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer',
-                fontFamily: SANS, fontSize: '13px',
-                color: tab === t.key ? TEAL : MUTED,
-                padding: '14px 20px',
-                borderBottom: tab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
-                whiteSpace: 'nowrap' as const,
-              }}>
-              {t.label}
-            </button>
-          ))}
+          <div style={{ display: 'flex', gap: 0 }}>
+            {tabs.map(t => (
+              <button key={t.key} onClick={() => setTab(t.key)}
+                style={{
+                  padding: '12px 24px', fontFamily: MONO, fontSize: '10px', fontWeight: 600,
+                  letterSpacing: '.06em', textTransform: 'uppercase' as const,
+                  cursor: 'pointer', border: 'none',
+                  borderBottom: tab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
+                  background: 'transparent',
+                  color: tab === t.key ? WHITE : MUTED,
+                  transition: 'color 0.12s',
+                  whiteSpace: 'nowrap' as const,
+                }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
