@@ -363,19 +363,41 @@ function ContradictionsContent() {
         .active-line { animation: drawLine 0.55s ease-out forwards; }
       ` }} />
 
-      <AbarvaNav />
+      <AbarvaNav activePage="contradictions" />
 
-      {/* Client selector — admin only; investors use the top nav */}
-      <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        {isAdmin && visibleClients.map(c => (
-          <button key={c.id} onClick={() => selectClient(c.id)}
-            style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selectedClient === c.id ? '#EFF6FF' : '#6B7280' }}>
-            {c.name}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', color: '#6B7280' }}>
-          Click any node to see the full contradiction
+      {/* ── Module header ──────────────────────────────────────────────────── */}
+      <div style={{ background: '#0D1520', borderBottom: '1px solid #1C2D45', padding: '20px 32px 0' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
+          Contradiction Intelligence · {cd.shortName}
         </div>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: '#EFF6FF', margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+          &ldquo;What was promised — and what actually exists?&rdquo;
+        </h1>
+        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
+          {[
+            { label: 'Contradictions', value: String(cd.nodes.length) },
+            { label: 'Critical', value: String(critCount) },
+            { label: 'High Severity', value: String(highCount) },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '20px', fontWeight: 700, color: '#EFF6FF' }}>{s.value}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        {/* Client tabs — admin only */}
+        {isAdmin && (
+          <div style={{ display: 'flex', marginTop: '4px' }}>
+            {visibleClients.map(c => (
+              <button key={c.id} onClick={() => selectClient(c.id)}
+                style={{ padding: '8px 18px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
+                  borderBottom: selectedClient === c.id ? '2px solid #2DD4C8' : '2px solid transparent',
+                  background: 'transparent', color: selectedClient === c.id ? '#EFF6FF' : 'rgba(255,255,255,0.55)', transition: 'color 0.12s' }}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Main content */}

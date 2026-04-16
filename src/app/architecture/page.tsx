@@ -988,7 +988,29 @@ function ArchContent() {
 
   return (
     <div style={{ background: '#0D1117', minHeight: '100vh' }}>
-      <AbarvaNav />
+      <AbarvaNav activePage="architecture" />
+
+      {/* ── Module header ──────────────────────────────────────────────────── */}
+      <div style={{ background: '#0D1520', borderBottom: '1px solid #1C2D45', padding: '20px 32px 0' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
+          Architecture Intelligence · {client.name}
+        </div>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: '#EFF6FF', margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+          &ldquo;What AI architecture fits your cloud, data, and AI maturity?&rdquo;
+        </h1>
+        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
+          {[
+            { label: 'Current State', value: String(visibleClients.length) + ' client' + (visibleClients.length !== 1 ? 's' : '') },
+            { label: 'Cloud', value: client.cloud },
+            { label: 'Reference Patterns', value: '3' },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '20px', fontWeight: 700, color: '#EFF6FF' }}>{s.value}</div>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Mode toggle + Client selector row */}
       <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D' }}>

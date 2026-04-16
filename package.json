@@ -8,9 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "test": "jest",
+    "test:nav": "jest tests/unit/nav-active-state",
     "test:behaviors": "jest src/__tests__/behaviors",
     "test:integration": "jest src/__tests__/integration",
-    "test:before-commit": "npm run test:behaviors && npm run test:integration && npm run build",
+    "test:e2e": "playwright test",
+    "test:e2e:prod": "BASE_URL=https://nexus-vert-kappa.vercel.app playwright test",
+    "test:before-commit": "npm run test:nav && npm run test:behaviors && npm run test:integration && npm run build",
     "seed": "node scripts/seed-datasets.js",
     "seed:setup": "node scripts/seed-datasets.js --setup"
   },
@@ -24,6 +27,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

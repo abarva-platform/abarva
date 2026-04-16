@@ -176,23 +176,15 @@ function NavInner({ activePage }: NavProps) {
             <button
               onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
               style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                background: `${currentClient.color}10`,
-                border: `1px solid ${currentClient.color}35`,
-                borderRadius: '7px', padding: '5px 10px 5px 8px',
+                display: 'flex', alignItems: 'center', gap: '7px',
+                background: 'none', border: 'none', padding: '4px 8px 4px 0',
                 cursor: canSwitch ? 'pointer' : 'default',
               }}
             >
               <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-              <div style={{ textAlign: 'left' }}>
-                <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, color: NAV_TEXT, lineHeight: 1.2 }}>
-                  {currentClient.shortName}
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: currentClient.color, lineHeight: 1 }}>
-                  {currentClient.vertical}
-                </div>
-              </div>
-              {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE, marginLeft: '2px' }}>▾</span>}
+              <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
+              <span style={{ fontFamily: MONO, fontSize: '8px', color: NAV_MUTE }}>{currentClient.vertical}</span>
+              {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>}
             </button>
 
             {canSwitch && clientToggleOpen && (
@@ -399,7 +391,7 @@ function NavInner({ activePage }: NavProps) {
 
           {/* Platform */}
           <a href="/platform" style={{
-            fontSize: '12px', color: NAV_MUTE, textDecoration: 'none',
+            fontSize: '12px', color: NAV_TEXT, textDecoration: 'none',
             padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
           }}>
             Platform
@@ -411,8 +403,8 @@ function NavInner({ activePage }: NavProps) {
                 onClick={() => setUserMenuOpen(o => !o)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  background: 'rgba(45,212,200,0.06)', border: '1px solid rgba(45,212,200,0.2)',
-                  borderRadius: '8px', padding: '5px 10px', cursor: 'pointer',
+                  background: 'none', border: 'none', padding: '4px 0',
+                  cursor: 'pointer',
                 }}
               >
                 <div style={{ textAlign: 'right' }}>
@@ -420,8 +412,8 @@ function NavInner({ activePage }: NavProps) {
                   {roleLabel && <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>{roleLabel}</div>}
                 </div>
                 <div style={{
-                  width: '28px', height: '28px', borderRadius: '50%',
-                  background: 'rgba(45,212,200,0.15)', border: '1px solid rgba(45,212,200,0.3)',
+                  width: '30px', height: '30px', borderRadius: '50%',
+                  background: 'rgba(45,212,200,0.18)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0,
                 }}>
@@ -465,10 +457,10 @@ function NavInner({ activePage }: NavProps) {
           ) : (
             <>
               <a href="/investor" style={{
-                fontSize: '12px', color: NAV_MUTE, textDecoration: 'none',
-                padding: '5px 10px', border: `1px solid ${NAV_BORD}`, borderRadius: '6px', fontFamily: SANS,
+                fontSize: '12px', color: NAV_TEXT, textDecoration: 'none',
+                padding: '6px 10px', fontFamily: SANS,
               }}>
-                Investor view
+                Investor
               </a>
               <a href="/sign-in" style={{
                 background: TEAL, color: '#060A12', fontSize: '13px', fontWeight: 600,

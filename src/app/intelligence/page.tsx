@@ -609,33 +609,27 @@ function IntelligenceContent() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
       <AbarvaNav activePage="intelligence" />
 
-      {/* Header */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 48px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                Technology Intelligence · {currentClientName} · April 2026
+      {/* ── Sticky module header ──────────────────────────────────────────── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 48px 0' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Technology Intelligence · {currentClientName}
+          </div>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: WHITE, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+            &ldquo;What technology do you have — and what does it actually cost you?&rdquo;
+          </h1>
+          <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
+            {[
+              { label: 'Systems', value: String(allSystems.length) },
+              { label: 'IT Spend / yr', value: `$${currentSpend.total}M` },
+              { label: 'Critical', value: String(criticalCount) },
+              { label: 'AI-Ready', value: `${aiReadyPct}%` },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 700, color: WHITE }}>{s.value}</div>
+                <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
               </div>
-              <h1 style={{ fontFamily: SANS, fontSize: '36px', fontWeight: 700, color: WHITE, margin: 0 }}>
-                Technology Landscape
-              </h1>
-              <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
-                {allSystems.length} systems · ${currentSpend.total}M annual IT spend · {criticalCount} critical · {warningCount} at risk · {aiReadyPct}% AI-ready
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {headerStats.map(m => (
-                <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                    {(m as any).dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: (m as any).dot, flexShrink: 0 }} />}
-                    <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, marginTop: '1px' }}>{m.sub}</div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>

@@ -103,46 +103,43 @@ function JustifyContent() {
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
       <AbarvaNav activePage="justify" />
 
-      {/* ── Product header ─────────────────────────────────────────────────── */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '24px 32px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: T.teal, fontFamily: T.mono, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Business Case Intelligence
-            </div>
-            <div style={{ fontSize: '20px', fontFamily: T.serif, color: T.text, fontWeight: 500, lineHeight: 1.3, maxWidth: '560px' }}>
-              &ldquo;How do we justify this to the board — with numbers they can defend?&rdquo;
-            </div>
+      {/* ── Sticky module header ─────────────────────────────────────────────── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: T.surface, borderBottom: `1px solid ${T.border}` }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 32px 0' }}>
+          <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
+            Business Case Intelligence · {clientName}
           </div>
-          <div style={{ display: 'flex', gap: '32px', flexShrink: 0 }}>
+          <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+            &ldquo;How do we justify this to the board — with numbers they can defend?&rdquo;
+          </h1>
+          <div style={{ display: 'flex', gap: '40px', paddingBottom: '12px' }}>
             {[
-              { label: 'Initiatives Available', value: String(allOpps.length) },
-              { label: 'Total Opportunity', value: fmt(allOpps.reduce((s: number, o: any) => s + (o.annualValue || 0), 0) * 3) },
+              { label: 'Initiatives', value: String(allOpps.length) },
+              { label: 'Total Opportunity (3yr)', value: fmt(allOpps.reduce((s: number, o: any) => s + (o.annualValue || 0), 0) * 3) },
               { label: 'Median Payback', value: '14 mo' },
             ].map((m, i) => (
               <div key={i}>
-                <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>{m.label}</div>
-                <div style={{ fontSize: '18px', fontWeight: 700, color: T.text, fontFamily: T.serif }}>{m.value}</div>
+                <div style={{ fontFamily: T.mono, fontSize: '20px', fontWeight: 700, color: T.text }}>{m.value}</div>
+                <div style={{ fontFamily: T.mono, fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{m.label}</div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* ── Role tabs strip ────────────────────────────────────────────────── */}
-      <div style={{ background: '#060E18', borderBottom: `1px solid ${T.border}`, padding: '0 32px', display: 'flex', alignItems: 'center', gap: '2px', height: '38px' }}>
-        {ROLES.map(r => {
-          const isActive = role === r
-          return (
-            <button key={r} onClick={() => setRole(r)}
-              style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '4px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', height: '28px', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
-              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
-              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
-            >{r}</button>
-          )
-        })}
-        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-          Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
+          {/* Role tabs */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '2px', borderTop: `1px solid ${T.border}`, paddingTop: '4px' }}>
+            {ROLES.map(r => {
+              const isActive = role === r
+              return (
+                <button key={r} onClick={() => setRole(r)}
+                  style={{ fontFamily: T.mono, fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '6px 14px', borderRadius: '5px', border: 'none', cursor: 'pointer', background: isActive ? T.teal : 'transparent', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
+                  onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
+                  onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
+                >{r}</button>
+              )
+            })}
+            <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+              Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
+            </div>
+          </div>
         </div>
       </div>
 

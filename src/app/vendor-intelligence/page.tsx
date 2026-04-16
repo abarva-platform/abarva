@@ -1108,39 +1108,68 @@ function VendorIntelligenceContent() {
     }}>
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
-      <AbarvaNav activePage="select" />
+      <AbarvaNav activePage="vendor-intelligence" />
 
-      {/* Header */}
+      {/* ── Sticky module header ──────────────────────────────────────────── */}
       <div style={{
         borderBottom: `1px solid ${T.border}`,
-        padding: '20px 32px',
-        position: 'sticky', top: 0, zIndex: 10,
-        background: T.bg,
+        position: 'sticky', top: 0, zIndex: 40,
+        background: '#0D1520',
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', marginBottom: 4 }}>
-              VENDOR INTELLIGENCE
-            </div>
-            <div style={{ fontSize: 20, fontFamily: T.fraunces, color: T.text, maxWidth: 560 }}>
-              &ldquo;Which vendor should we choose — and what does the contract need to say?&rdquo;
-            </div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginTop: 8 }}>
-              Vendors assessed: 47 &nbsp;·&nbsp; Genome matches: {topVendorCount} &nbsp;·&nbsp; Confidence: 87%
-            </div>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 32px 0' }}>
+          <div style={{ fontSize: 9, fontFamily: T.mono, color: T.teal, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: 8 }}>
+            Vendor Intelligence
+          </div>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: T.text, margin: '0 0 16px', lineHeight: 1.3, maxWidth: 680 }}>
+            &ldquo;Which vendor should we choose — and what does the contract need to say?&rdquo;
+          </h1>
+          <div style={{ display: 'flex', gap: 40, paddingBottom: 16 }}>
+            {[
+              { label: 'Vendors Assessed', value: '47' },
+              { label: 'Genome Matches', value: String(topVendorCount) },
+              { label: 'Confidence', value: '87%' },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ fontFamily: T.mono, fontSize: 20, fontWeight: 700, color: T.text }}>{s.value}</div>
+                <div style={{ fontFamily: T.mono, fontSize: 8, color: T.secondary, marginTop: 3, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Mode switcher + client selector */}
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {(['select', 'optimize'] as Mode[]).map(m => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                style={{
+                  padding: '6px 18px',
+                  background: mode === m ? T.teal : 'transparent',
+                  color: mode === m ? T.bg : T.secondary,
+                  border: `1px solid ${mode === m ? T.teal : T.border}`,
+                  borderRadius: 20,
+                  cursor: 'pointer',
+                  fontSize: 11,
+                  fontFamily: T.mono,
+                }}
+              >
+                {m === 'select' ? 'Select a Vendor' : 'Optimize Current'}
+              </button>
+            ))}
           </div>
           {/* Client selector */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowClientMenu(m => !m)}
               style={{
-                padding: '8px 16px',
-                background: T.surface,
+                padding: '6px 14px',
+                background: 'transparent',
                 border: `1px solid ${T.border}`,
                 color: T.text,
-                borderRadius: 8,
+                borderRadius: 6,
                 cursor: 'pointer',
-                fontSize: 13,
+                fontSize: 12,
                 fontFamily: T.mono,
               }}
             >
@@ -1161,7 +1190,7 @@ function VendorIntelligenceContent() {
                       background: c === client ? 'rgba(45,212,200,0.1)' : 'transparent',
                       color: c === client ? T.teal : T.text,
                       border: 'none', cursor: 'pointer',
-                      fontSize: 13, fontFamily: T.mono,
+                      fontSize: 12, fontFamily: T.mono,
                       textAlign: 'left',
                     }}
                   >
@@ -1171,28 +1200,6 @@ function VendorIntelligenceContent() {
               </div>
             )}
           </div>
-        </div>
-
-        {/* Mode switcher */}
-        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          {(['select', 'optimize'] as Mode[]).map(m => (
-            <button
-              key={m}
-              onClick={() => setMode(m)}
-              style={{
-                padding: '8px 20px',
-                background: mode === m ? T.teal : 'transparent',
-                color: mode === m ? T.bg : T.secondary,
-                border: `1px solid ${mode === m ? T.teal : T.border}`,
-                borderRadius: 20,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontFamily: T.mono,
-              }}
-            >
-              {m === 'select' ? 'Select a Vendor' : 'Optimize Current Vendors'}
-            </button>
-          ))}
         </div>
       </div>
 

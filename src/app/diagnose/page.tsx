@@ -336,27 +336,40 @@ function DiagnoseContent() {
 
       <AbarvaNav activePage="diagnose" />
 
-      {/* Client tabs + summary bar — tabs only for admins; investors switch via nav */}
-      <div style={{ background: '#08101C', borderBottom: `1px solid ${BORDER}`, padding: '0 32px', display: 'flex', alignItems: 'center' }}>
-        {isAdmin && visibleClients.map(c => (
-          <button key={c.id} onClick={() => { setActiveClient(c.id); setSelectedId(null) }}
-            style={{ padding: '11px 20px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
-              borderBottom: activeClient === c.id ? `2px solid ${TEAL}` : '2px solid transparent',
-              background: 'transparent', color: activeClient === c.id ? WHITE : MUTED, transition: 'color 0.12s' }}>
-            {c.name}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '20px', fontFamily: MONO, fontSize: '9px', letterSpacing: '.08em' }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: MUTED }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DOT_RED, display: 'inline-block' }} />
-            {critCount} CRITICAL
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: MUTED }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: DOT_AMBER, display: 'inline-block' }} />
-            {warnCount} WARNING
-          </span>
-          <span style={{ color: MUTED }}>${totalRisk.toLocaleString()}M AT RISK</span>
+      {/* ── Module header ──────────────────────────────────────────────────── */}
+      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 32px 0' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
+          Situation Intelligence · {meta.shortName}
         </div>
+        <h1 style={{ fontFamily: SERIF, fontSize: '24px', fontWeight: 700, color: WHITE, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
+          &ldquo;What is broken in your organization — and what does it cost you?&rdquo;
+        </h1>
+        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
+          {[
+            { label: 'Critical Issues', value: String(critCount) },
+            { label: 'Warnings', value: String(warnCount) },
+            { label: 'At Risk', value: `$${totalRisk}M` },
+            { label: 'Data Confidence', value: `${meta.confidence}%` },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 700, color: WHITE }}>{s.value}</div>
+              <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        {/* Client tabs — admin only */}
+        {isAdmin && (
+          <div style={{ display: 'flex', marginTop: '4px' }}>
+            {visibleClients.map(c => (
+              <button key={c.id} onClick={() => { setActiveClient(c.id); setSelectedId(null) }}
+                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
+                  borderBottom: activeClient === c.id ? `2px solid ${TEAL}` : '2px solid transparent',
+                  background: 'transparent', color: activeClient === c.id ? WHITE : MUTED, transition: 'color 0.12s' }}>
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Two-panel layout */}
