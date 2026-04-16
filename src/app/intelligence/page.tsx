@@ -251,7 +251,7 @@ function CompanySection({ intel, isMeridian }: { intel: ClientIntelligence; isMe
           ).map((s, i) => (
             <div key={i} style={{ background: LBG, padding: '36px 40px' }}>
               <div style={{ fontFamily: SERIF, fontSize: 64, color: LTEXT, lineHeight: 1, marginBottom: 12 }}>{s.num}</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, letterSpacing: '.1em' }}>{s.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.1em' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -263,7 +263,7 @@ function CompanySection({ intel, isMeridian }: { intel: ClientIntelligence; isMe
             <OrgDiagram nodes={intel.company.orgNodes} lines={intel.company.orgLines} />
           </div>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, letterSpacing: '.1em', marginBottom: 20 }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.1em', marginBottom: 20 }}>
               {intel.company.mixLabel || 'REVENUE MIX · PAYOR BREAKDOWN'}
             </div>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -559,7 +559,7 @@ function SituationSection({ findings: libFindings, isMeridian }: { findings: Sit
 
               {/* Root cause */}
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', marginBottom: 8 }}>ROOT CAUSE</div>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', marginBottom: 8 }}>ROOT CAUSE</div>
                 <p style={{ fontFamily: SANS, fontSize: 16, color: LBODY, lineHeight: 1.65, margin: 0 }}>{f.rootCause}</p>
               </div>
 
@@ -572,7 +572,7 @@ function SituationSection({ findings: libFindings, isMeridian }: { findings: Sit
               {/* Trend chart */}
               {f.trendData.length > 0 && (
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', marginBottom: 12 }}>TREND — {f.trendMetric.toUpperCase()}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', marginBottom: 12 }}>TREND — {f.trendMetric.toUpperCase()}</div>
                   <ResponsiveContainer width="100%" height={140}>
                     <LineChart data={f.trendData} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
                       <XAxis dataKey="q" tick={{ fontFamily: MONO, fontSize: 9, fill: LMUTE }} axisLine={false} tickLine={false} />
@@ -598,7 +598,7 @@ function SituationSection({ findings: libFindings, isMeridian }: { findings: Sit
               {/* Genome */}
               {f.genome && (
                 <div style={{ background: LBG, borderRadius: 6, padding: '12px 16px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', marginBottom: 4 }}>GENOME SIGNAL</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', marginBottom: 4 }}>GENOME SIGNAL</div>
                   <div style={{ fontFamily: SANS, fontSize: 14, color: LBODY }}>{f.genome}</div>
                 </div>
               )}
@@ -645,7 +645,7 @@ function ContradictionsSection({ intel, isMeridian }: { intel: ClientIntelligenc
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 280px', minHeight: 0 }}>
                 {/* Stated */}
                 <div style={{ padding: '32px 36px', borderRight: `1px solid ${DBDR}` }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', marginBottom: 14 }}>STATED</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', marginBottom: 14 }}>STATED</div>
                   <p style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: 18, color: DBODY, lineHeight: 1.6, margin: '0 0 12px' }}>{c.stated}</p>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE }}>{c.statedSource}</div>
                 </div>
@@ -657,7 +657,7 @@ function ContradictionsSection({ intel, isMeridian }: { intel: ClientIntelligenc
                 </div>
                 {/* Gap + consequence */}
                 <div style={{ padding: '32px 28px', background: '#0A0F1C' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', marginBottom: 10 }}>{c.topic}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', marginBottom: 10 }}>{c.topic}</div>
                   <div style={{ fontFamily: SANS, fontSize: 15, color: RED, fontWeight: 700, marginBottom: 16, lineHeight: 1.3 }}>THE GAP<br />{c.gap}</div>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: RED, letterSpacing: '.08em', marginBottom: 8 }}>THE CONSEQUENCE</div>
                   <div style={{ fontFamily: SANS, fontSize: 13, color: DBODY, lineHeight: 1.6 }}>{c.consequence}</div>
@@ -721,7 +721,7 @@ function MarketSection({ intel, isMeridian }: { intel: ClientIntelligence; isMer
         <div style={{ background: '#fff', border: `1px solid ${LBDR}`, borderLeft: `6px solid ${RED}`, borderRadius: 10, padding: '36px 48px', marginBottom: 56, display: 'flex', alignItems: 'center', gap: 48 }}>
           <div>
             <div style={{ fontFamily: SANS, fontSize: 80, fontWeight: 700, color: RED, lineHeight: 1 }}>{exposure}</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, letterSpacing: '.1em', marginTop: 8 }}>TOTAL IDENTIFIED EXPOSURE</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.1em', marginTop: 8 }}>TOTAL IDENTIFIED EXPOSURE</div>
           </div>
           <div>
             <p style={{ fontFamily: SANS, fontSize: 18, color: LBODY, lineHeight: 1.65, margin: 0, maxWidth: 600 }}>
@@ -744,7 +744,7 @@ function MarketSection({ intel, isMeridian }: { intel: ClientIntelligence; isMer
               <div key={i} style={{ background: '#fff', border: `1px solid ${LBDR}`, borderRadius: i === 0 ? '10px 10px 0 0' : i === benchmarks.length - 1 ? '0 0 10px 10px' : 0, padding: '28px 36px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 48, marginBottom: 12 }}>
                   <div style={{ minWidth: 240 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, letterSpacing: '.1em', marginBottom: 6 }}>{b.label}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.1em', marginBottom: 6 }}>{b.label}</div>
                     <div style={{ fontFamily: SANS, fontSize: 48, fontWeight: 700, color: merIsBad ? RED : '#34D399', lineHeight: 1 }}>
                       {b.gap}
                     </div>
@@ -762,7 +762,7 @@ function MarketSection({ intel, isMeridian }: { intel: ClientIntelligence; isMer
                     </ResponsiveContainer>
                   </div>
                   <div style={{ minWidth: 100, textAlign: 'right' }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: LMUTE, marginBottom: 4 }}>SOURCE</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, marginBottom: 4 }}>SOURCE</div>
                     <div style={{ fontFamily: MONO, fontSize: 10, color: LBODY, fontStyle: 'italic' }}>{b.source}</div>
                   </div>
                 </div>
@@ -895,7 +895,7 @@ function GenomeSection({ intel, isMeridian }: { intel: ClientIntelligence; isMer
               <div style={{ fontFamily: MONO, fontSize: 10, color: p.color, letterSpacing: '.1em', marginBottom: 16 }}>FAILURE RATE</div>
               <div style={{ fontFamily: SANS, fontSize: 20, fontWeight: 700, color: DTEXT, marginBottom: 20, lineHeight: 1.3 }}>{p.name}</div>
               <div style={{ fontFamily: SANS, fontSize: 15, color: DBODY, lineHeight: 1.65, marginBottom: 20 }}>{p.forClient}</div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: '#6B7280', letterSpacing: '.08em', marginBottom: 8 }}>IN PRIOR ENGAGEMENTS</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.08em', marginBottom: 8 }}>IN PRIOR ENGAGEMENTS</div>
               <div style={{ fontFamily: SANS, fontSize: 14, color: DMUTE, lineHeight: 1.6, marginBottom: 20 }}>{p.priorEngagements}</div>
               <div style={{ borderTop: `1px solid ${DBDR}`, paddingTop: 16 }}>
                 <span style={{ fontFamily: SANS, fontSize: 14, color: TEAL }}>Recovery: {p.recovery}</span>
@@ -1004,16 +1004,16 @@ function UseCardGrid({ cards, dark }: { cards: typeof MER_FRONT_OFFICE; dark: bo
             <div style={{ fontFamily: SANS, fontSize: 13, color: isNow ? TEAL : AMBER }}>{c.connection}</div>
             <div style={{ fontFamily: SANS, fontSize: 20, fontWeight: 700, color: titleColor, lineHeight: 1.25 }}>{c.title}</div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: dark ? '#6B7280' : LMUTE, letterSpacing: '.08em', marginBottom: 4 }}>THE PROBLEM</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.08em', marginBottom: 4 }}>THE PROBLEM</div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: bodyColor, lineHeight: 1.6, margin: 0 }}>{c.problem}</p>
             </div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: dark ? '#6B7280' : LMUTE, letterSpacing: '.08em', marginBottom: 4 }}>THE AI SOLUTION</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.08em', marginBottom: 4 }}>THE AI SOLUTION</div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: bodyColor, lineHeight: 1.6, margin: 0 }}>{c.solution}</p>
             </div>
             <div style={{ fontFamily: SANS, fontSize: 32, fontWeight: 700, color: TEAL }}>{c.value}</div>
             <div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: dark ? '#6B7280' : LMUTE, letterSpacing: '.08em', marginBottom: 2 }}>DATA REQUIRED</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.08em', marginBottom: 2 }}>DATA REQUIRED</div>
               <div style={{ fontFamily: MONO, fontSize: 11, color: dark ? '#6B7280' : LMUTE }}>{c.data}</div>
             </div>
             <div style={{ fontFamily: SANS, fontSize: 13, color: dark ? DMUTE : LMUTE, marginTop: 'auto' }}>{c.timeline}</div>
@@ -1083,7 +1083,7 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
         {/* Strategic alignment table — Meridian only */}
         {isMeridian && (
           <div style={{ marginBottom: 64 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, letterSpacing: '.12em', marginBottom: 24 }}>HOW AI MAPS TO MERIDIAN'S STATED 2026 PRIORITIES</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', marginBottom: 24 }}>HOW AI MAPS TO MERIDIAN'S STATED 2026 PRIORITIES</div>
             <div style={{ border: `1px solid ${LBDR}`, borderRadius: 10, overflow: 'hidden' }}>
               {/* Headers */}
               <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 1fr', background: LALT, padding: '12px 20px', borderBottom: `1px solid ${LBDR}` }}>

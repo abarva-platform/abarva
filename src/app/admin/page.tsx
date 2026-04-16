@@ -355,7 +355,7 @@ function DataSection() {
         <div style={{ flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
             <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: TEAL, lineHeight: 1 }}>42</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>/100 · AI Readiness</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>/100 · AI Readiness</div>
           </div>
           <div style={{ height: 4, background: '#1A1A1A', borderRadius: 2, width: 160, marginBottom: 6 }}>
             <div style={{ height: 4, borderRadius: 2, width: '42%', background: TEAL }} />
@@ -370,7 +370,7 @@ function DataSection() {
           ].map((s, i) => (
             <div key={i} style={{ borderLeft: '1px solid #1F2937', paddingLeft: 24 }}>
               <div style={{ fontFamily: SANS, fontSize: 28, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -691,7 +691,7 @@ function EngagementsSection() {
               return (
                 <div key={idx} style={{ background: item ? CARD : 'transparent', border: item ? `1px solid ${BDR}` : `1px dashed ${BDR}`, borderLeft: item ? `3px solid ${TEAL}` : `1px dashed ${BDR}`, borderRadius: 8, padding: '12px 14px', opacity: item ? 1 : 0.45, transition: 'all 0.3s' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{label}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{label}</div>
                     {item && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>✓ confirmed</span>}
                   </div>
                   <div style={{ fontFamily: SANS, fontSize: 14, color: item ? TEXT : MUTED, fontStyle: isDirective && item ? 'italic' : 'normal' }}>
@@ -1029,7 +1029,7 @@ function AssignSection() {
         </div>
         <div style={{ fontFamily: SANS, fontSize: 15, color: MUTED, marginBottom: 32 }}>72% · 2 slots available</div>
 
-        <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 14 }}>Active Engagements</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 14 }}>Active Engagements</div>
         {ENGAGEMENTS.filter(e => e.maestro === 'Anand S.' && e.status === 'In Progress').map((e, i) => (
           <div key={i} style={{ background: PAGE, border: `1px solid ${BDR}`, borderRadius: 8, padding: 16, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -1040,7 +1040,7 @@ function AssignSection() {
           </div>
         ))}
 
-        <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginTop: 28, marginBottom: 14 }}>Unassigned — Drag to Assign</div>
+        <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginTop: 28, marginBottom: 14 }}>Unassigned — Drag to Assign</div>
         {ENGAGEMENTS.filter(e => e.maestro === '—' || e.maestro === 'TBD').map((e, i) => (
           <div key={i} style={{ background: CARD, border: `2px dashed ${BDR}`, borderRadius: 8, padding: 16, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'grab' }}>
             <div>
@@ -1084,7 +1084,7 @@ function CapacitySection() {
         </div>
         <div style={{ fontFamily: SANS, fontSize: 15, color: MUTED, marginBottom: 32 }}>Capacity utilization · {100 - capacity}% headroom remaining</div>
 
-        <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 14 }}>Active Engagements</div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 14 }}>Active Engagements</div>
         {active.map((e, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: PAGE, borderRadius: 8, border: `1px solid ${BDR}`, marginBottom: 10 }}>
             <div style={{ width: 8, height: 8, borderRadius: '50%', background: TEAL, flexShrink: 0 }} />

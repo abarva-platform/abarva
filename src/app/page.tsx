@@ -83,7 +83,7 @@ export default function Homepage() {
               { label: 'Time to first intelligence',  value: '48hrs',      note: 'From kickoff to your first Situation brief' },
             ].map(s => (
               <div key={s.label} style={{ background: LCARD, border: `1px solid ${LBDR}`, borderRadius: 10, padding: '22px 20px' }}>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: LMUTE, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 12 }}>{s.label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 12 }}>{s.label}</div>
                 <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: LTEXT, lineHeight: 1.1, marginBottom: 10 }}>{s.value}</div>
                 <div style={{ fontSize: 12, color: LMUTE, lineHeight: 1.55 }}>{s.note}</div>
               </div>

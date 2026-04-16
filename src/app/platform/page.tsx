@@ -11,9 +11,9 @@ export default function PlatformPage() {
       <AbarvaNav activePage="platform" />
 
       {/* ── HERO ─ light ─────────────────────────────────────────────────────── */}
-      <div style={{ background: LBG, padding: '96px 64px 88px' }}>
+      <div style={{ background: LBG, padding: '96px 64px 88px', overflow: 'hidden' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: 24 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: 24 }}>
             How AbarVa works
           </div>
           <h1 style={{ fontFamily: SERIF, fontSize: 60, fontWeight: 400, lineHeight: 1.08, color: LTEXT, margin: '0 0 28px', maxWidth: 760 }}>
@@ -34,9 +34,9 @@ export default function PlatformPage() {
       </div>
 
       {/* ── THREE LAYERS ─ dark ───────────────────────────────────────────────── */}
-      <div style={{ background: DBG, padding: '88px 64px' }}>
+      <div style={{ background: DBG, padding: '88px 64px', overflow: 'hidden' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
             Three layers · One platform
           </div>
           <h2 style={{ fontFamily: SERIF, fontSize: 42, fontWeight: 400, color: DTEXT, margin: '0 0 52px' }}>
@@ -77,7 +77,7 @@ export default function PlatformPage() {
       {/* ── HOW A PROJECT WORKS ─ light ───────────────────────────────────────── */}
       <div style={{ background: LBG, padding: '96px 64px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
             How a project works
           </div>
           <h2 style={{ fontFamily: SERIF, fontSize: 42, fontWeight: 400, color: LTEXT, margin: '0 0 52px' }}>
@@ -134,7 +134,7 @@ export default function PlatformPage() {
       <div style={{ background: LBG, padding: '96px 64px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 72, alignItems: 'start' }}>
           <div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 14 }}>
               The Transformation Genome
             </div>
             <h2 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: LTEXT, margin: '0 0 22px', lineHeight: 1.2 }}>

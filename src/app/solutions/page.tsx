@@ -389,7 +389,7 @@ function SolutionsContent() {
       {/* ── HERO ─ light ───────────────────────────────────────────────────── */}
       <div style={{ background: LBG, padding: '88px 64px 72px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 18 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 18 }}>
             Solution Library
           </div>
           <h1 style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 400, color: LTEXT, margin: '0 0 20px', lineHeight: 1.1 }}>
@@ -406,7 +406,7 @@ function SolutionsContent() {
             ].map(s => (
               <div key={s.label}>
                 <div style={{ fontFamily: SERIF, fontSize: 28, color: LTEXT, lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.06em', marginTop: 4 }}>{s.label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.06em', marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -445,7 +445,7 @@ function SolutionsContent() {
       {/* ── HOW SOLUTIONS WORK ─ light ──────────────────────────────────────── */}
       <div style={{ background: LBG, padding: '88px 64px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>How it works</div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 16 }}>How it works</div>
           <div style={{ fontFamily: SERIF, fontSize: 36, color: LTEXT, marginBottom: 48, lineHeight: 1.2 }}>
             A solution isn&apos;t a report.<br />It&apos;s a path from problem to verified outcome.
           </div>

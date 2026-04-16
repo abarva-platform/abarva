@@ -389,14 +389,14 @@ const cardStyle = (extra?: React.CSSProperties): React.CSSProperties => ({
 const labelStyle: React.CSSProperties = {
   fontFamily: MONO,
   fontSize: '10px',
-  color: DIM,
+  color: TEAL,
   textTransform: 'uppercase' as const,
   letterSpacing: '.06em',
   marginBottom: '6px',
 }
 
 const sectionTitle = (text: string) => (
-  <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '14px' }}>{text}</div>
+  <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '14px' }}>{text}</div>
 )
 
 // ─── ADMIN TAB ─────────────────────────────────────────────────────────────────
@@ -492,7 +492,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
         </div>
         {clientSolutions.length > 0 && (
           <div>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>Seed this client individually:</div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>Seed this client individually:</div>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
               {clientSolutions.map(solution => (
                 <SeedSolutionButton key={solution} clientId={clientId} solution={solution} />
@@ -618,7 +618,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
             </div>
             <div style={cardStyle()}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
                 <button
                   onClick={() => !isReadOnly && fileInputRef.current?.click()}
                   disabled={uploading || isReadOnly}
@@ -823,7 +823,7 @@ function OverviewTab({ data }: { data: ClientData }) {
           <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '32px 28px', borderLeft: `4px solid ${m.status === 'critical' ? RED : AMBER}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.status === 'critical' ? RED : AMBER, flexShrink: 0, display: 'inline-block' }} />
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em' }}>{m.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em' }}>{m.label}</div>
             </div>
             <div style={{ fontFamily: SERIF, fontSize: '52px', lineHeight: 1, color: WHITE, marginBottom: '14px' }}>{m.value}</div>
             <div style={{ fontSize: '13px', color: DIM, marginBottom: '4px' }}>{m.benchmark}</div>
@@ -854,7 +854,7 @@ function OverviewTab({ data }: { data: ClientData }) {
 
           {/* Next actions */}
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '20px' }}>Next actions</div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '20px' }}>Next actions</div>
             {[
               `Lock baseline metrics with ${data.type === 'Asset Manager' ? 'Victoria Hargreaves (CEO)' : 'executive team'}`,
               'Complete data confidence review — upload missing files',
@@ -871,7 +871,7 @@ function OverviewTab({ data }: { data: ClientData }) {
         {/* Right sidebar — genome patterns */}
         <div style={{ width: '300px', flexShrink: 0 }}>
           <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '24px' }}>Genome patterns</div>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '24px' }}>Genome patterns</div>
             {data.genomePatternsMatched.slice(0, 3).map((p, i) => (
               <div key={i} style={{ paddingBottom: i < 2 ? '20px' : '0', marginBottom: i < 2 ? '20px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -935,7 +935,7 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
             ))}
             {pendingFiles.length > 0 && (
               <>
-                <div style={{ marginTop: '16px', marginBottom: '8px', fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Pending / missing</div>
+                <div style={{ marginTop: '16px', marginBottom: '8px', fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Pending / missing</div>
                 {pendingFiles.map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none', opacity: 0.6 }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', border: `2px solid ${AMBER}`, flexShrink: 0 }} />
@@ -1164,7 +1164,7 @@ function ProjectsTab({ clientId, data, projView, setProjView, showNewProject, se
               style={{ ...cardStyle({ borderTop: `3px solid ${statusColor}`, cursor: 'pointer' }), transition: 'border-color 0.2s' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '3px' }}>{p.id}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '3px' }}>{p.id}</div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE }}>{p.name}</div>
                 </div>
                 <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: p.status === 'Active' ? 'rgba(45,212,200,0.1)' : p.status === 'Complete' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)', color: statusColor }}>{p.status}</span>
@@ -1287,7 +1287,7 @@ function ActivityTab({ data }: { data: ClientData }) {
           <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
             <thead>
               <tr>{['Time', 'Actor', 'Action', 'Type'].map(h => (
-                <th key={h} style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textAlign: 'left' as const, padding: '0 12px 10px 0', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
+                <th key={h} style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textAlign: 'left' as const, padding: '0 12px 10px 0', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
@@ -1442,7 +1442,7 @@ function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSe
   return (
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
       {/* Client */}
-      <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Client Context</div>
+      <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Client Context</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '18px' }}>
         <span style={{ width: 8, height: 8, borderRadius: '50%', background: data.color, flexShrink: 0, display: 'inline-block' }} />
         <div>
@@ -1455,7 +1455,7 @@ function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSe
 
       {/* Solutions */}
       <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '14px', marginBottom: '14px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Active Solutions</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Active Solutions</div>
         {data.solutionProgress.map((s, i) => (
           <div key={i} style={{ marginBottom: i < data.solutionProgress.length - 1 ? '12px' : '0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
@@ -1553,7 +1553,7 @@ function SolutionEntryCards({ data, clientId }: { data: ClientData, clientId: st
         const statusColor = s.complete ? GREEN : s.progress > 50 ? TEAL : AMBER
         return (
           <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', borderTop: `3px solid ${statusColor}` }}>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '4px' }}>{s.name}</div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '4px' }}>{s.name}</div>
             <div style={{ fontSize: '11px', color: DIM, marginBottom: '14px' }}>Phase {s.phase}{s.complete ? ' · Complete ✓' : ` · ${s.progress}%`}</div>
             <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1, marginBottom: '3px' }}>{s.outcome}</div>
             <div style={{ fontSize: '11px', color: DIM, marginBottom: '16px' }}>addressable</div>
@@ -1572,7 +1572,7 @@ function FindingsFeed({ data }: { data: ClientData }) {
   const sevColor = (s: string) => s === 'critical' ? RED : s === 'high' ? AMBER : PURPLE
   return (
     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px' }}>
-      <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Recent Findings</div>
+      <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Recent Findings</div>
       {data.contradictions.slice(0, 3).map((c, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: i < 2 ? '12px' : '0', marginBottom: i < 2 ? '12px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor(c.severity), flexShrink: 0, marginTop: '4px', display: 'inline-block' }} />
@@ -1728,9 +1728,9 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
 
       {/* Readiness Status */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Readiness Status</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Readiness Status</div>
 
-        <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '6px' }}>Data</div>
+        <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '6px' }}>Data</div>
         {readiness.data.map((d, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
             <span style={{ fontSize: '10px', color: d.ok ? GREEN : AMBER }}>{d.ok ? '✓' : '⚠'}</span>
@@ -1739,7 +1739,7 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
           </div>
         ))}
 
-        <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', margin: '12px 0 6px' }}>Engagement</div>
+        <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', margin: '12px 0 6px' }}>Engagement</div>
         {readiness.engagement.map((e, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
             <span style={{ fontSize: '10px', color: e.ok ? GREEN : DIM }}>{e.ok ? '✓' : '○'}</span>
@@ -1757,7 +1757,7 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
 
       {/* Action */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
         <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>Phase 1 ready for review</div>
         <div style={{ fontSize: '12px', color: MUTED, marginBottom: '3px' }}>{data.contradictions.length} findings</div>
         <div style={{ fontSize: '12px', color: RED, marginBottom: '16px' }}>{criticalCount} CRITICAL</div>
@@ -1772,7 +1772,7 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
 
       {/* Your Engagements */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Your Engagements</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Your Engagements</div>
         {myEngagements.map((e, i) => (
           <div key={i} style={{ marginBottom: i < myEngagements.length - 1 ? '10px' : '0', paddingBottom: i < myEngagements.length - 1 ? '10px' : '0', borderBottom: i < myEngagements.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
@@ -1796,7 +1796,7 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
 
       {/* Genome signals */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Genome Signals</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Genome Signals</div>
         {data.genomePatternsMatched.slice(0, 5).map((p, i) => (
           <div key={i} style={{ marginBottom: i < 4 ? '10px' : '0' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
@@ -1813,7 +1813,7 @@ function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId
 
       {/* Platform stats */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Platform Stats</div>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Platform Stats</div>
         {[
           { value: '340', label: 'Genome patterns' },
           { value: '9', label: 'Intel modules' },

@@ -52,7 +52,7 @@ export default function ClientViewPage() {
       <AbarvaNav activePage="client-view" />
 
       {/* ── HEADER — dark ─────────────────────────────────────────────────── */}
-      <section style={{ background: DARK, padding: '56px 48px' }}>
+      <section style={{ background: DARK, padding: '56px 48px', overflow: 'hidden' }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 14 }}>
           Arcturus Financial · AbarVa Engagement Summary
         </div>
@@ -73,7 +73,7 @@ export default function ClientViewPage() {
           ].map((s, i) => (
             <div key={i} style={{ background: DARK2, border: '1px solid #1F2937', borderRadius: 8, padding: 28 }}>
               <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 8 }}>{s.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{s.label}</div>
               <div style={{ fontFamily: SANS, fontSize: 12, color: '#4B5563' }}>{s.sub}</div>
             </div>
           ))}
@@ -81,7 +81,7 @@ export default function ClientViewPage() {
       </section>
 
       {/* ── ENGAGEMENT SUMMARY ────────────────────────────────────────────── */}
-      <section style={{ padding: '56px 48px', background: PAGE }}>
+      <section style={{ padding: '56px 48px', background: PAGE, overflow: 'hidden' }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>Active Engagements</div>
         <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>What AbarVa is solving.</h2>
 
@@ -109,7 +109,7 @@ export default function ClientViewPage() {
       </section>
 
       {/* ── VERIFIED OUTCOMES — dark ──────────────────────────────────────── */}
-      <section style={{ background: DARK, padding: '56px 48px' }}>
+      <section style={{ background: DARK, padding: '56px 48px', overflow: 'hidden' }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>Outcomes</div>
         <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: '#FFFFFF', margin: '0 0 40px' }}>What has been verified.</h2>
 
@@ -134,7 +134,7 @@ export default function ClientViewPage() {
       </section>
 
       {/* ── WHAT'S NEXT ───────────────────────────────────────────────────── */}
-      <section style={{ padding: '56px 48px', background: PAGE }}>
+      <section style={{ padding: '56px 48px', background: PAGE, overflow: 'hidden' }}>
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>Recommended</div>
         <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>What comes next.</h2>
 

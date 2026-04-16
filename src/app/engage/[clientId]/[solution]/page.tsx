@@ -894,7 +894,7 @@ export default function MaestroWorkspace() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {vendorIntelResult && (
-                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, textTransform: 'uppercase', letterSpacing: '.06em' }}>
                             {vendorIntelResult.vendors?.length || 0} vendors scored
                           </span>
                         )}
@@ -1137,7 +1137,7 @@ export default function MaestroWorkspace() {
               boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
             }}
           >
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
               Admin Override
             </div>
             <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '8px' }}>
@@ -1334,7 +1334,7 @@ function Phase0Scorecard({ data }: { data: any }) {
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '48px', color: scoreColor, fontWeight: 700, lineHeight: 1 }}>
               {score}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#888888', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.1em', textTransform: 'uppercase', marginTop: '4px' }}>
               / 100
             </div>
           </div>
@@ -1588,7 +1588,7 @@ function OutputPanel({ phase, phaseOutput, generatingOutput, publishing, onGener
             <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '14px', color: '#0C0C0C', fontWeight: 600, marginBottom: '4px' }}>
               {phaseOutput.title}
             </div>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#888888', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em' }}>
               V{phaseOutput.version} · {phaseOutput.status?.toUpperCase()} · {new Date(phaseOutput.created_at).toLocaleDateString()}
             </div>
 
@@ -1762,7 +1762,7 @@ function DeliverablesPanel({ phase, workstreams, phaseOutput, solutionConfig }: 
             </div>
           )}
           {phaseOutput && !outputApproved && (
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#888888' }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8' }}>
               {phaseOutput.status?.toUpperCase()} · Awaiting CXO approval
             </div>
           )}
