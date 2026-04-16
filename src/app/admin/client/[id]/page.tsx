@@ -377,13 +377,9 @@ function getClientData(id: string): ClientData | null {
   return null
 }
 
-// ─── Shared card style ─────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────────
 const cardStyle = (extra?: React.CSSProperties): React.CSSProperties => ({
-  background: CARD,
-  border: `1px solid ${BORDER}`,
-  borderRadius: '8px',
-  padding: '20px',
-  ...extra,
+  background: CARD, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '20px', ...extra,
 })
 
 const labelStyle: React.CSSProperties = {
@@ -395,919 +391,7 @@ const labelStyle: React.CSSProperties = {
   marginBottom: '6px',
 }
 
-const sectionTitle = (text: string) => (
-  <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '14px' }}>{text}</div>
-)
-
-// ─── ADMIN TAB ─────────────────────────────────────────────────────────────────
-
-function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }: {
-  clientId: string
-  data: ClientData
-  adminSection: string
-  setAdminSection: (s: string) => void
-  isReadOnly: boolean
-}) {
-  const pills = [
-    { key: 'setup', label: 'Setup & engagement' },
-    { key: 'data', label: 'Data & approvals' },
-    { key: 'users', label: 'Maestro users' },
-    { key: 'security', label: 'Security' },
-  ]
-  const [uploadedFiles, setUploadedFiles] = useState<DataFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [seeding, setSeeding] = useState(false)
-  const [seedResult, setSeedResult] = useState<string | null>(null)
-
-  async function seedClerkMetadata() {
-    setSeeding(true)
-    setSeedResult(null)
-    try {
-      const res = await fetch('/api/admin/seed-clerk-metadata', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) { setSeedResult(`Error: ${data.error}`); return }
-      const summary = data.results.map((r: any) => `${r.email.split('+')[0]}: ${r.status}`).join(' · ')
-      setSeedResult(summary)
-    } catch (err: any) {
-      setSeedResult(`Error: ${err.message}`)
-    } finally {
-      setSeeding(false)
-    }
-  }
-
-  const activeFiles = [...data.files.filter(f => f.type === 'active'), ...uploadedFiles]
-  const pendingFiles = data.files.filter(f => f.type === 'pending')
-
-  async function handleUpload(files: FileList) {
-    setUploading(true)
-    const added: DataFile[] = []
-    for (const file of Array.from(files)) {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('clientId', clientId)
-      fd.append('documentName', file.name.replace(/\.[^.]+$/, ''))
-      try {
-        const res = await fetch('/api/admin/upload-dataset', { method: 'POST', body: fd })
-        if (res.ok) {
-          const json = await res.json()
-          added.push({
-            name: json.documentName,
-            uploader: json.uploader,
-            date: json.date,
-            confidence: json.confidence,
-            type: 'active',
-          })
-        }
-      } catch { /* ignore individual file errors */ }
-    }
-    setUploadedFiles(prev => [...prev, ...added])
-    setUploading(false)
-  }
-
-  const products = [
-    { name: 'Situation Diagnosis', href: `/diagnose?client=${clientId}` },
-    { name: 'AI Value Realization', href: `/ai-strategy?client=${clientId}` },
-    { name: 'Vendor Selection', href: `/select?client=${clientId}` },
-    { name: 'Business Case', href: `/justify?client=${clientId}` },
-    { name: 'Outcomes Tracking', href: `/outcomes?client=${clientId}` },
-  ]
-
-  const clientSolutions: string[] = clientId === 'arcturus'
-    ? ['delivery', 'margin', 'tech', 'pdlc', 'ai-strategy']
-    : clientId === 'meridian'
-      ? ['tech', 'margin', 'pdlc']
-      : []
-
-  return (
-    <div>
-      {/* Demo engagements panel — admin only */}
-      {!isReadOnly && <div style={{ marginBottom: '20px', padding: '16px 20px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px', marginBottom: clientSolutions.length > 0 ? '14px' : '0' }}>
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Demo Engagements</div>
-            <div style={{ fontSize: '12px', color: MUTED, marginTop: '4px' }}>Pre-load complete demo data so clients and investors can explore live immediately.</div>
-          </div>
-          <SeedAllDemosButton compact />
-        </div>
-        {clientSolutions.length > 0 && (
-          <div>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: '8px' }}>Seed this client individually:</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
-              {clientSolutions.map(solution => (
-                <SeedSolutionButton key={solution} clientId={clientId} solution={solution} />
-              ))}
-            </div>
-          </div>
-        )}
-      </div>}
-
-      {/* Sub-section pills */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' as const }}>
-        {pills.map(p => (
-          <button key={p.key} onClick={() => setAdminSection(p.key)}
-            style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 14px', borderRadius: '20px', border: `1px solid ${adminSection === p.key ? TEAL : BORDER}`, background: adminSection === p.key ? 'rgba(45,212,200,0.1)' : 'transparent', color: adminSection === p.key ? TEAL : MUTED, cursor: 'pointer' }}>
-            {p.label}
-          </button>
-        ))}
-      </div>
-
-      {adminSection === 'setup' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
-          {/* Left: steps */}
-          <div>
-            {[
-              {
-                n: 1, done: true,
-                title: 'Organization confirmed',
-                body: <span style={{ fontSize: '12px', color: MUTED }}>{data.name} · {data.type} · ${data.revenue}B revenue</span>,
-              },
-              {
-                n: 2, done: activeFiles.length >= 4,
-                title: 'Foundation data uploaded',
-                body: (
-                  <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '6px' }}>
-                    {activeFiles.slice(0, 4).map((f, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-                        <span style={{ fontSize: '12px', color: WHITE }}>{f.name}</span>
-                        <span style={{ fontSize: '11px', color: DIM }}>· {f.uploader} · {f.date} · {f.confidence}%</span>
-                      </div>
-                    ))}
-                  </div>
-                ),
-              },
-              {
-                n: 3, done: true,
-                title: 'Maestro users set up',
-                body: <span style={{ fontSize: '12px', color: MUTED }}>2 Maestros active · 1 client stakeholder invited</span>,
-              },
-              {
-                n: 4, done: clientId === 'arcturus',
-                title: 'Baseline locked',
-                body: <span style={{ fontSize: '12px', color: MUTED }}>
-                  {clientId === 'arcturus'
-                    ? 'Apr 14, 2026 · Confirmed by Victoria Hargreaves (CEO)'
-                    : 'Pending baseline interview'}
-                </span>,
-              },
-            ].map((step, i) => (
-              <div key={i} style={{ ...cardStyle({ marginBottom: '12px', display: 'flex', gap: '16px' }), border: `1px solid ${step.done ? 'rgba(52,211,153,0.3)' : BORDER}` }}>
-                <div style={{ width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step.done ? 'rgba(52,211,153,0.15)' : 'rgba(45,212,200,0.08)', border: `1px solid ${step.done ? GREEN : TEAL}` }}>
-                  {step.done
-                    ? <span style={{ color: GREEN, fontSize: '12px' }}>✓</span>
-                    : <span style={{ fontFamily: MONO, fontSize: '10px', color: TEAL }}>{step.n}</span>}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>{step.title}</div>
-                  {step.body}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Right: cards */}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-            {/* Engagement settings */}
-            <div style={cardStyle()}>
-              {sectionTitle('Engagement settings')}
-              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 2 }}>
-                <div><span style={{ color: DIM }}>Fee model:</span> 15% of verified savings</div>
-                <div><span style={{ color: DIM }}>Admin:</span> Anand Sundaram</div>
-                <div><span style={{ color: DIM }}>Start:</span> Apr 2026</div>
-              </div>
-            </div>
-            {/* Products unlocked */}
-            <div style={cardStyle()}>
-              {sectionTitle('Products unlocked')}
-              {products.map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < products.length - 1 ? '10px' : '0' }}>
-                  <a href={p.href} style={{ fontSize: '12px', color: WHITE, textDecoration: 'none' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEAL }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = WHITE }}>
-                    {p.name}
-                  </a>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {adminSection === 'data' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '24px', alignItems: 'start' }}>
-          {/* Left 65%: file management */}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-            <div style={cardStyle()}>
-              {sectionTitle('Pending approval')}
-              {pendingFiles.length === 0
-                ? <div style={{ fontSize: '12px', color: DIM }}>No files pending approval.</div>
-                : pendingFiles.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: AMBER, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
-                      <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
-                    </div>
-                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: TEAL, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1, marginRight: '6px' }}>Approve</button>
-                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
-                  </div>
-                ))
-              }
-            </div>
-            <div style={cardStyle()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Approved files</div>
-                <button
-                  onClick={() => !isReadOnly && fileInputRef.current?.click()}
-                  disabled={uploading || isReadOnly}
-                  style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: (uploading || isReadOnly) ? 'transparent' : 'rgba(45,212,200,0.1)', border: `1px solid ${(uploading || isReadOnly) ? BORDER : 'rgba(45,212,200,0.3)'}`, color: (uploading || isReadOnly) ? DIM : TEAL, cursor: (uploading || isReadOnly) ? 'default' : 'pointer', opacity: isReadOnly ? 0.5 : 1 }}>
-                  {uploading ? 'Uploading…' : 'Upload files'}
-                </button>
-                <input ref={fileInputRef} type="file" multiple style={{ display: 'none' }} onChange={e => { if (e.target.files?.length) handleUpload(e.target.files); e.target.value = '' }} />
-              </div>
-              {activeFiles.map((f, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < activeFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
-                    <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.confidence}% confidence</div>
-                  </div>
-                  <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Replace</button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Right 35%: sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-            {/* Quick stats */}
-            <div style={cardStyle()}>
-              {sectionTitle('Data summary')}
-              {[
-                { label: 'Files loaded', value: String(activeFiles.length), color: WHITE, dot: GREEN },
-                { label: 'Pending approval', value: String(pendingFiles.length), color: WHITE, dot: AMBER },
-                { label: 'Avg confidence', value: activeFiles.length > 0 ? Math.round(activeFiles.reduce((s, f) => s + f.confidence, 0) / activeFiles.length) + '%' : '—', color: WHITE, dot: TEAL },
-              ].map((stat, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < 2 ? '10px' : '0' }}>
-                  <span style={{ fontSize: '12px', color: MUTED }}>{stat.label}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    {(stat as any).dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: (stat as any).dot, flexShrink: 0, display: 'inline-block' }} />}
-                    <span style={{ fontFamily: MONO, fontSize: '13px', color: stat.color, fontWeight: 600 }}>{stat.value}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Engagement settings */}
-            <div style={cardStyle()}>
-              {sectionTitle('Engagement settings')}
-              <div style={{ fontSize: '12px', color: MUTED, lineHeight: 2 }}>
-                <div><span style={{ color: DIM }}>Fee model:</span> 15% of verified savings</div>
-                <div><span style={{ color: DIM }}>Admin:</span> Anand Sundaram</div>
-                <div><span style={{ color: DIM }}>Start:</span> Apr 2026</div>
-              </div>
-            </div>
-
-            {/* Products unlocked */}
-            <div style={cardStyle()}>
-              {sectionTitle('Products unlocked')}
-              {products.map((p, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < products.length - 1 ? '10px' : '0' }}>
-                  <a href={p.href} style={{ fontSize: '12px', color: WHITE, textDecoration: 'none' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = TEAL }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = WHITE }}>
-                    {p.name}
-                  </a>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Key client metrics */}
-            <div style={cardStyle()}>
-              {sectionTitle('Client profile')}
-              {[
-                { label: 'Revenue', value: `$${data.revenue}B` },
-                { label: 'Employees', value: data.employees.toLocaleString() },
-                { label: 'Vertical', value: data.type },
-                { label: 'HQ', value: data.hq },
-              ].map((row, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: i < 3 ? '8px' : '0' }}>
-                  <span style={{ fontSize: '12px', color: DIM }}>{row.label}</span>
-                  <span style={{ fontSize: '12px', color: WHITE }}>{row.value}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Dev tools — admin only */}
-            {!isReadOnly && <div style={cardStyle()}>
-              {sectionTitle('Dev tools')}
-              <div style={{ fontSize: '12px', color: MUTED, marginBottom: '12px', lineHeight: 1.5 }}>
-                Set Clerk publicMetadata for all demo accounts (role, clientId, preferredSolution).
-              </div>
-              <button
-                onClick={seedClerkMetadata}
-                disabled={seeding}
-                style={{
-                  width: '100%', fontFamily: MONO, fontSize: '10px', fontWeight: 700,
-                  letterSpacing: '.06em', textTransform: 'uppercase' as const,
-                  padding: '9px 0', borderRadius: '6px', cursor: seeding ? 'not-allowed' : 'pointer',
-                  background: seeding ? 'transparent' : 'rgba(45,212,200,0.1)',
-                  border: `1px solid ${seeding ? BORDER : 'rgba(45,212,200,0.3)'}`,
-                  color: seeding ? DIM : TEAL,
-                }}
-              >
-                {seeding ? 'Seeding...' : 'Seed demo user metadata'}
-              </button>
-              {seedResult && (
-                <div style={{ marginTop: '10px', fontFamily: MONO, fontSize: '10px', color: seedResult.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
-                  {seedResult}
-                </div>
-              )}
-
-              {/* Seed all demo engagements */}
-              <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: `1px solid ${BORDER}` }}>
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>
-                  Seed All Demo Engagements
-                </div>
-                <div style={{ fontSize: '12px', color: MUTED, marginBottom: '12px', lineHeight: 1.5 }}>
-                  Pre-load complete demo engagements for all 8 client × solution pairs. Investors see live data immediately.
-                </div>
-                <SeedAllDemosButton />
-              </div>
-            </div>}
-          </div>
-        </div>
-      )}
-
-      {adminSection === 'users' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Maestros')}
-            {[
-              { initials: 'AS', name: 'Anand Sundaram', role: 'Lead Maestro', status: 'Active' },
-              { initials: 'VK', name: 'Vikram Kapoor', role: 'Associate Maestro', status: 'Active' },
-            ].map((u, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: i === 0 ? '12px' : '0' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(45,212,200,0.15)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: '11px', color: TEAL, flexShrink: 0 }}>{u.initials}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: WHITE }}>{u.name}</div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{u.role}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED }}>{u.status}</span>
-              </div>
-            ))}
-          </div>
-          <div style={cardStyle()}>
-            {sectionTitle('Client stakeholders')}
-            {[
-              { initials: 'VH', name: 'Victoria Hargreaves', role: 'CEO', status: 'Invited' },
-              { initials: 'TK', name: 'Thomas Kellner', role: 'CFO', status: 'Active' },
-              { initials: 'RM', name: 'Raj Malhotra', role: 'CIO', status: 'Invited' },
-            ].map((u, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: i < 2 ? '12px' : '0' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(45,212,200,0.1)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: '11px', color: TEAL, flexShrink: 0 }}>{u.initials}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: WHITE }}>{u.name}</div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{u.role}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: u.status === 'Active' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)', color: u.status === 'Active' ? GREEN : AMBER }}>{u.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {adminSection === 'security' && (
-        <div style={cardStyle()}>
-          {sectionTitle('Security & compliance')}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '14px' }}>
-            {[
-              { label: 'Two-factor authentication', on: true },
-              { label: 'Data encryption at rest', on: true },
-              { label: 'Audit logging', on: true },
-              { label: 'Client portal access controls', on: true },
-              { label: 'IP allowlist enforcement', on: false },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '13px', color: WHITE }}>{item.label}</span>
-                <div style={{ width: '36px', height: '20px', borderRadius: '10px', background: item.on ? 'rgba(52,211,153,0.3)' : BORDER, border: `1px solid ${item.on ? GREEN : BORDER}`, position: 'relative' as const, cursor: 'pointer' }}>
-                  <div style={{ width: '14px', height: '14px', borderRadius: '50%', background: item.on ? GREEN : DIM, position: 'absolute', top: '2px', left: item.on ? '18px' : '2px', transition: 'left 0.2s' }} />
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' as const }}>
-            {['SOC 2 Type II', 'ISO 27001', 'GDPR Compliant'].map((badge, i) => (
-              <span key={i} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '20px', border: `1px solid rgba(52,211,153,0.3)`, color: MUTED, background: 'rgba(52,211,153,0.06)' }}>{badge}</span>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── OVERVIEW TAB ──────────────────────────────────────────────────────────────
-
-function OverviewTab({ data }: { data: ClientData }) {
-  const top4 = data.metrics.slice(0, 4)
-  const topContradiction = data.contradictions[0]
-  return (
-    <div>
-      {/* 4 large situation cards — 2×2 grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px', marginBottom: '40px' }}>
-        {top4.map((m, i) => (
-          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '32px 28px', borderLeft: `4px solid ${m.status === 'critical' ? RED : AMBER}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.status === 'critical' ? RED : AMBER, flexShrink: 0, display: 'inline-block' }} />
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em' }}>{m.label}</div>
-            </div>
-            <div style={{ fontFamily: SERIF, fontSize: '52px', lineHeight: 1, color: WHITE, marginBottom: '14px' }}>{m.value}</div>
-            <div style={{ fontSize: '13px', color: DIM, marginBottom: '4px' }}>{m.benchmark}</div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: m.status === 'critical' ? RED : AMBER }}>{m.gap}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Two-column body */}
-      <div style={{ display: 'flex', gap: '28px', alignItems: 'start' }}>
-        {/* Left — key finding + next actions */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-
-          {/* Top contradiction — full prominence */}
-          {topContradiction && (
-            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `4px solid ${topContradiction.severity === 'critical' ? RED : AMBER}`, borderRadius: '10px', padding: '32px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '10px', color: topContradiction.severity === 'critical' ? RED : AMBER, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '16px' }}>
-                {topContradiction.severity === 'critical' ? '● Critical finding' : '● High priority'}
-              </div>
-              <div style={{ fontFamily: SERIF, fontSize: '18px', color: MUTED, fontStyle: 'italic', lineHeight: 1.6, marginBottom: '16px' }}>
-                "{topContradiction.claim}"
-              </div>
-              <div style={{ fontSize: '15px', color: WHITE, fontWeight: 500, lineHeight: 1.7 }}>
-                {topContradiction.reality}
-              </div>
-            </div>
-          )}
-
-          {/* Next actions */}
-          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '20px' }}>Next actions</div>
-            {[
-              `Lock baseline metrics with ${data.type === 'Asset Manager' ? 'Victoria Hargreaves (CEO)' : 'executive team'}`,
-              'Complete data confidence review — upload missing files',
-              'Schedule Situation Diagnosis walkthrough with client stakeholders',
-            ].map((action, i) => (
-              <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: i < 2 ? '16px' : '0', marginBottom: i < 2 ? '16px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(45,212,200,0.08)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: MONO, fontSize: '10px', color: TEAL, marginTop: '2px' }}>{i + 1}</div>
-                <div style={{ fontSize: '14px', color: WHITE, lineHeight: 1.65 }}>{action}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right sidebar — genome patterns */}
-        <div style={{ width: '300px', flexShrink: 0 }}>
-          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '28px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '24px' }}>Genome patterns</div>
-            {data.genomePatternsMatched.slice(0, 3).map((p, i) => (
-              <div key={i} style={{ paddingBottom: i < 2 ? '20px' : '0', marginBottom: i < 2 ? '20px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
-                  <div style={{ fontFamily: SERIF, fontSize: '26px', color: WHITE }}>{p.failureRate}%</div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: RED, letterSpacing: '.06em' }}>failure rate</div>
-                </div>
-                <div style={{ fontSize: '13px', color: WHITE, fontWeight: 500, marginBottom: '5px' }}>{p.code} · {p.name}</div>
-                <div style={{ fontSize: '12px', color: DIM, lineHeight: 1.55 }}>{p.mitigation}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── DATA INTELLIGENCE TAB ─────────────────────────────────────────────────────
-
-function DataIntelligenceTab({ data, diTab, setDiTab }: {
-  data: ClientData
-  diTab: string
-  setDiTab: (t: string) => void
-}) {
-  const subTabs = [
-    { key: 'client', label: 'Client data' },
-    { key: 'industry', label: 'Industry' },
-    { key: 'public', label: 'Public data' },
-    { key: 'genome', label: 'Genome patterns' },
-  ]
-
-  const activeFiles = data.files.filter(f => f.type === 'active')
-  const pendingFiles = data.files.filter(f => f.type === 'pending')
-
-  return (
-    <div>
-      {/* Sub-tab pills */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
-        {subTabs.map(t => (
-          <button key={t.key} onClick={() => setDiTab(t.key)}
-            style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 14px', borderRadius: '20px', border: `1px solid ${diTab === t.key ? TEAL : BORDER}`, background: diTab === t.key ? 'rgba(45,212,200,0.1)' : 'transparent', color: diTab === t.key ? TEAL : MUTED, cursor: 'pointer' }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {diTab === 'client' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Uploaded files')}
-            {activeFiles.map((f, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i < activeFiles.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ color: TEAL, fontSize: '16px', flexShrink: 0 }}>⬡</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: WHITE }}>{f.name}</div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: '11px', color: WHITE }}>{f.confidence}%</span>
-              </div>
-            ))}
-            {pendingFiles.length > 0 && (
-              <>
-                <div style={{ marginTop: '16px', marginBottom: '8px', fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Pending / missing</div>
-                {pendingFiles.map((f, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none', opacity: 0.6 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', border: `2px solid ${AMBER}`, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '12px', color: MUTED }}>{f.name}</div>
-                      <div style={{ fontSize: '11px', color: DIM }}>{f.uploader}</div>
-                    </div>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: MUTED }}>{f.confidence > 0 ? `${f.confidence}%` : 'Missing'}</span>
-                  </div>
-                ))}
-              </>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-            <div style={cardStyle()}>
-              {sectionTitle('Data confidence')}
-              {activeFiles.map((f, i) => (
-                <div key={i} style={{ marginBottom: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '11px', color: MUTED }}>{f.name.split(' ').slice(0, 2).join(' ')}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: WHITE }}>{f.confidence}%</span>
-                  </div>
-                  <div style={{ height: '4px', background: BORDER, borderRadius: '2px' }}>
-                    <div style={{ height: '4px', borderRadius: '2px', width: `${f.confidence}%`, background: f.confidence >= 85 ? GREEN : AMBER }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={cardStyle()}>
-              {sectionTitle('Critical findings')}
-              {data.contradictions.slice(0, 2).map((c, i) => (
-                <div key={i} style={{ fontSize: '12px', color: MUTED, marginBottom: i === 0 ? '10px' : '0', paddingBottom: i === 0 ? '10px' : '0', borderBottom: i === 0 ? `1px solid ${BORDER}` : 'none' }}>{c.reality.slice(0, 80)}…</div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {diTab === 'industry' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Industry benchmarks')}
-            {data.industryBenchmarks.map((b, i) => (
-              <div key={i} style={{ padding: '14px 0', borderBottom: i < data.industryBenchmarks.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', color: WHITE }}>{b.label}</span>
-                  <div style={{ display: 'flex', gap: '16px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '12px', color: WHITE }}>{b.ours}{b.unit}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '12px', color: MUTED }}>{b.peer}{b.unit}</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: '11px', color: DIM }}>{b.gap}</div>
-              </div>
-            ))}
-          </div>
-          <div style={cardStyle()}>
-            {sectionTitle('Top 3 gaps')}
-            {data.industryBenchmarks.slice(0, 3).map((b, i) => (
-              <div key={i} style={{ marginBottom: i < 2 ? '14px' : '0', paddingBottom: i < 2 ? '14px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ fontSize: '12px', color: WHITE, marginBottom: '4px' }}>{b.label}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
-                  <div style={{ fontFamily: SERIF, fontSize: '16px', color: WHITE }}>{b.gap.split(' ')[0]}</div>
-                </div>
-                <div style={{ fontSize: '11px', color: DIM, marginTop: '2px' }}>{b.gap}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {diTab === 'public' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Public data sources')}
-            {[
-              { name: data.name + ' Annual Report', status: 'Ingested', date: '2026-03-01' },
-              { name: 'SEC ADV Filing', status: 'Ingested', date: '2026-03-10' },
-              { name: 'MAS FEAT Registry', status: 'Ingested', date: '2026-03-15' },
-              { name: 'FCA Register', status: 'Ingested', date: '2026-03-15' },
-              { name: 'News monitoring (90d)', status: 'Live', date: '2026-04-14' },
-              { name: 'Analyst coverage', status: 'Partial', date: '2026-03-28' },
-            ].map((s, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < 5 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.status === 'Live' ? GREEN : s.status === 'Ingested' ? TEAL : AMBER, flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', color: WHITE }}>{s.name}</div>
-                  <div style={{ fontSize: '11px', color: DIM }}>{s.date}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: '10px', color: s.status === 'Live' ? GREEN : s.status === 'Ingested' ? TEAL : AMBER }}>{s.status}</span>
-              </div>
-            ))}
-          </div>
-          <div style={cardStyle()}>
-            {sectionTitle('Critical findings from public data')}
-            {data.contradictions.slice(0, 3).map((c, i) => (
-              <div key={i} style={{ marginBottom: i < 2 ? '14px' : '0', paddingBottom: i < 2 ? '14px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: c.severity === 'critical' ? RED : AMBER, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '4px' }}>{c.severity}</div>
-                <div style={{ fontSize: '12px', color: WHITE }}>{c.claim.slice(0, 80)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {diTab === 'genome' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: '24px' }}>
-          <div style={cardStyle()}>
-            {sectionTitle('Genome patterns matched')}
-            {data.genomePatternsMatched.map((p, i) => (
-              <div key={i} style={{ padding: '16px 0', borderBottom: i < data.genomePatternsMatched.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginBottom: '2px' }}>{p.code}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
-                      <div style={{ fontFamily: SERIF, fontSize: '24px', color: WHITE }}>{p.failureRate}%</div>
-                    </div>
-                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>failure rate</div>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>{p.name}</div>
-                    <div style={{ fontSize: '12px', color: DIM }}>{p.mitigation}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
-            <div style={cardStyle()}>
-              {sectionTitle('All patterns present')}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '4px' }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
-                <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE }}>{data.genomePatternsMatched.filter(p => p.present).length}</div>
-              </div>
-              <div style={{ fontSize: '12px', color: MUTED }}>patterns matched in this engagement — requires immediate programme design.</div>
-            </div>
-            <div style={cardStyle()}>
-              {sectionTitle('Positive signals')}
-              {[
-                'CEO actively engaged and funding available',
-                'CIO with relevant market experience',
-                'Regulatory pressure creating urgency',
-              ].map((s, i) => (
-                <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: i < 2 ? '10px' : '0' }}>
-                  <div style={{ color: TEAL, flexShrink: 0 }}>+</div>
-                  <div style={{ fontSize: '12px', color: MUTED }}>{s}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── PROJECTS TAB ──────────────────────────────────────────────────────────────
-
-function ProjectsTab({ clientId, data, projView, setProjView, showNewProject, setShowNewProject, isReadOnly }: {
-  clientId: string
-  data: ClientData
-  projView: string
-  setProjView: (v: string) => void
-  showNewProject: boolean
-  setShowNewProject: (v: boolean) => void
-  isReadOnly: boolean
-}) {
-  const router = useRouter()
-  const projects = data.solutionProgress.map((s, i) => ({
-    id: `P00${i + 1}`,
-    name: s.fullName,
-    status: s.complete ? 'Complete' : s.progress > 0 ? 'Active' : 'Pending',
-    progress: s.progress,
-    phase: s.phase,
-    slug: s.slug,
-    cta: s.cta,
-  }))
-
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {[
-            { key: 'dashboard', label: 'Dashboard' },
-            { key: 'table', label: 'All projects' },
-          ].map(v => (
-            <button key={v.key} onClick={() => setProjView(v.key)}
-              style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 14px', borderRadius: '20px', border: `1px solid ${projView === v.key ? TEAL : BORDER}`, background: projView === v.key ? 'rgba(45,212,200,0.1)' : 'transparent', color: projView === v.key ? TEAL : MUTED, cursor: 'pointer' }}>
-              {v.label}
-            </button>
-          ))}
-        </div>
-        {!isReadOnly && (
-          <button onClick={() => setShowNewProject(!showNewProject)}
-            style={{ fontFamily: MONO, fontSize: '11px', padding: '6px 16px', borderRadius: '6px', border: `1px solid ${TEAL}`, background: 'rgba(45,212,200,0.1)', color: TEAL, cursor: 'pointer' }}>
-            + New project
-          </button>
-        )}
-      </div>
-
-      {showNewProject && (
-        <div style={{ ...cardStyle({ marginBottom: '24px', borderColor: TEAL }) }}>
-          {sectionTitle('New project')}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            {['Project name', 'Product', 'Maestro'].map((label, i) => (
-              <div key={i}>
-                <div style={{ fontSize: '11px', color: DIM, marginBottom: '6px' }}>{label}</div>
-                <input style={{ width: '100%', background: BG, border: `1px solid ${BORDER}`, borderRadius: '4px', padding: '8px 12px', color: WHITE, fontSize: '13px', fontFamily: SANS, boxSizing: 'border-box' as const }} placeholder={`Enter ${label.toLowerCase()}`} />
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button style={{ fontFamily: MONO, fontSize: '11px', padding: '8px 20px', borderRadius: '6px', background: 'rgba(45,212,200,0.15)', border: `1px solid ${TEAL}`, color: TEAL, cursor: 'pointer' }}>Create project</button>
-            <button onClick={() => setShowNewProject(false)} style={{ fontFamily: MONO, fontSize: '11px', padding: '8px 20px', borderRadius: '6px', background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, cursor: 'pointer' }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Solution engagement cards — always visible, both views */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '24px' }}>
-        {projects.map((p, i) => {
-          const statusColor = p.status === 'Complete' ? GREEN : p.progress > 0 ? TEAL : AMBER
-          return (
-            <div key={i} onClick={() => router.push(`/engage/${clientId}/${p.slug}`)}
-              style={{ ...cardStyle({ borderTop: `3px solid ${statusColor}`, cursor: 'pointer' }), transition: 'border-color 0.2s' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '3px' }}>{p.id}</div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE }}>{p.name}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: p.status === 'Active' ? 'rgba(45,212,200,0.1)' : p.status === 'Complete' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)', color: statusColor }}>{p.status}</span>
-              </div>
-              <div style={{ fontSize: '11px', color: DIM, marginBottom: '10px' }}>Phase {p.phase}{p.status === 'Complete' ? ' · Complete ✓' : ` · ${p.progress}%`}</div>
-              <div style={{ height: '3px', background: BORDER, borderRadius: '2px', marginBottom: '12px' }}>
-                <div style={{ height: '3px', borderRadius: '2px', width: `${p.progress}%`, background: statusColor }} />
-              </div>
-              <button onClick={e => { e.stopPropagation(); router.push(`/engage/${clientId}/${p.slug}`) }}
-                style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: `1px solid ${TEAL}`, borderRadius: '4px', padding: '5px 12px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
-                {p.cta}
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ─── APPROVALS TAB ─────────────────────────────────────────────────────────────
-
-function ApprovalsTab({ isReadOnly }: { isReadOnly: boolean }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '24px' }}>
-      {/* Pending */}
-      <div style={cardStyle()}>
-        {sectionTitle('Pending approval')}
-        {[
-          { name: 'AI Initiative Inventory', uploader: 'Raj Malhotra (CIO)', date: '2026-04-05', size: '2.1 MB' },
-          { name: 'SAP Contract Details', uploader: 'Thomas Kellner (CFO)', date: '2026-04-08', size: '840 KB' },
-        ].map((f, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0', borderBottom: i === 0 ? `1px solid ${BORDER}` : 'none' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: AMBER, flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '13px', color: WHITE }}>{f.name}</div>
-              <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.size}</div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: TEAL, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Approve</button>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Restrict</button>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Sent to client */}
-      <div style={cardStyle()}>
-        {sectionTitle('Sent to client')}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 0' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: TEAL, flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '13px', color: WHITE }}>Situation Analysis — Draft v1</div>
-            <div style={{ fontSize: '11px', color: DIM }}>Sent to Victoria Hargreaves · 2026-04-10 · Awaiting review</div>
-          </div>
-          <span style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>Awaiting</span>
-        </div>
-      </div>
-
-      {/* Resolved */}
-      <div style={cardStyle()}>
-        {sectionTitle('Resolved')}
-        {[
-          { name: 'Financial Statements 2024', outcome: 'Approved', by: 'Anand Sundaram', date: '2026-03-30' },
-          { name: 'Regulatory Register', outcome: 'Approved', by: 'Anand Sundaram', date: '2026-04-01' },
-        ].map((r, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i === 0 ? `1px solid ${BORDER}` : 'none' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: GREEN, flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '12px', color: MUTED }}>{r.name}</div>
-              <div style={{ fontSize: '11px', color: DIM }}>{r.by} · {r.date}</div>
-            </div>
-            <span style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>{r.outcome}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─── ACTIVITY TAB ──────────────────────────────────────────────────────────────
-
-function ActivityTab({ data }: { data: ClientData }) {
-  const activityProjects = [
-    {
-      name: 'Situation Diagnosis',
-      rows: [
-        { time: 'Apr 14, 10:22', actor: 'Anand Sundaram', action: 'Reviewed genome pattern F005 match', type: 'Analysis' },
-        { time: 'Apr 13, 16:40', actor: 'Raj Malhotra', action: 'Added comment on AI maturity score', type: 'Comment' },
-        { time: 'Apr 12, 14:15', actor: 'Anand Sundaram', action: 'Updated situation metrics', type: 'Data' },
-        { time: 'Apr 11, 09:00', actor: 'System', action: 'Industry benchmarks refreshed', type: 'System' },
-      ],
-    },
-    {
-      name: 'MAS FEAT Remediation',
-      rows: [
-        { time: 'Apr 14, 08:30', actor: 'Vikram Kapoor', action: 'Created remediation workplan v1', type: 'Document' },
-        { time: 'Apr 13, 11:20', actor: 'Anand Sundaram', action: 'Assigned to Vikram Kapoor', type: 'Admin' },
-        { time: 'Apr 10, 15:45', actor: 'System', action: 'Regulatory deadline alert triggered', type: 'Alert' },
-        { time: 'Apr 08, 12:00', actor: 'Anand Sundaram', action: 'Project created', type: 'Admin' },
-      ],
-    },
-  ]
-
-  const typeColor = (type: string) => {
-    if (type === 'Analysis') return PURPLE
-    if (type === 'Comment') return TEAL
-    if (type === 'Data') return GREEN
-    if (type === 'Document') return '#F472B6'
-    if (type === 'Alert') return RED
-    return DIM
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '24px' }}>
-      {activityProjects.map((proj, pi) => (
-        <div key={pi} style={cardStyle()}>
-          <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '16px' }}>{proj.name}</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
-            <thead>
-              <tr>{['Time', 'Actor', 'Action', 'Type'].map(h => (
-                <th key={h} style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textAlign: 'left' as const, padding: '0 12px 10px 0', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {proj.rows.map((r, i) => (
-                <tr key={i} style={{ borderTop: `1px solid ${BORDER}` }}>
-                  <td style={{ fontFamily: MONO, fontSize: '11px', color: DIM, padding: '10px 12px 10px 0', whiteSpace: 'nowrap' as const }}>{r.time}</td>
-                  <td style={{ fontSize: '12px', color: MUTED, padding: '10px 12px 10px 0' }}>{r.actor}</td>
-                  <td style={{ fontSize: '12px', color: WHITE, padding: '10px 12px 10px 0' }}>{r.action}</td>
-                  <td style={{ padding: '10px 0' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: `${typeColor(r.type)}15`, color: typeColor(r.type), border: `1px solid ${typeColor(r.type)}30` }}>{r.type}</span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ))}
-    </div>
-  )
-}
+// ─── SEED HELPERS (admin utility, FAB bottom-right) ───────────────────────────
 
 // ─── SEED ALL DEMOS BUTTON ───────────────────────────────────────────────────
 
@@ -1411,182 +495,6 @@ function SeedSolutionButton({ clientId, solution }: { clientId: string; solution
 
 // ─── DASHBOARD COMPONENTS ──────────────────────────────────────────────────────
 
-function BreadcrumbBar({ data }: { data: ClientData }) {
-  return (
-    <div style={{ padding: '8px 0 8px 24px' }}>
-      <span style={{ fontFamily: MONO, fontSize: '12px', color: '#9CA3AF', letterSpacing: '.04em' }}>
-        Maestro · {data.name}
-      </span>
-    </div>
-  )
-}
-
-function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSection, setAdminSection }: {
-  data: ClientData
-  clientId: string
-  centerView: string
-  setCenterView: (v: string) => void
-  isAdmin: boolean
-  adminSection: string
-  setAdminSection: (s: string) => void
-}) {
-  const navLinks = [
-    { key: 'dashboard', icon: '⬡', label: 'Intel Feed' },
-    { key: 'engagements', icon: '◈', label: 'Engagements' },
-    { key: 'findings', icon: '◎', label: 'Findings' },
-    { key: 'data', icon: '⊞', label: 'Outputs' },
-    { key: 'genome', icon: '⬖', label: 'Genome' },
-  ]
-  const solColor = (s: SolutionProgress) => s.complete ? GREEN : s.progress > 50 ? TEAL : AMBER
-
-  return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-      {/* Client */}
-      <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Client Context</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '18px' }}>
-        <span style={{ width: 8, height: 8, borderRadius: '50%', background: data.color, flexShrink: 0, display: 'inline-block' }} />
-        <div>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: WHITE, lineHeight: 1.25 }}>
-            {data.name.split(' ').slice(0, -1).join(' ')}
-          </div>
-          <div style={{ fontSize: '11px', color: DIM }}>{data.name.split(' ').slice(-1)[0]}</div>
-        </div>
-      </div>
-
-      {/* Solutions */}
-      <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '14px', marginBottom: '14px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Active Solutions</div>
-        {data.solutionProgress.map((s, i) => (
-          <div key={i} style={{ marginBottom: i < data.solutionProgress.length - 1 ? '12px' : '0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: WHITE }}>{s.name}</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>Ph{s.phase}</span>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: solColor(s), display: 'inline-block' }} />
-              </div>
-            </div>
-            <div style={{ height: '3px', background: BORDER, borderRadius: '2px', marginBottom: '2px' }}>
-              <div style={{ height: '3px', borderRadius: '2px', width: `${s.progress}%`, background: solColor(s), transition: 'width 0.3s' }} />
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{s.progress}%</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Nav links */}
-      <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: '12px' }}>
-        {navLinks.map(n => (
-          <button key={n.key} onClick={() => setCenterView(n.key)}
-            style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}>
-            <span style={{ fontSize: '13px', color: centerView === n.key ? TEAL : DIM, width: '16px', flexShrink: 0 }}>{n.icon}</span>
-            <span style={{ fontSize: '12px', color: centerView === n.key ? TEAL : MUTED, fontFamily: SANS, fontWeight: centerView === n.key ? 600 : 400 }}>{n.label}</span>
-          </button>
-        ))}
-        {isAdmin && (
-          <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: '6px', paddingTop: '10px' }}>
-            <a
-              href="/admin"
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 0', textDecoration: 'none' }}
-            >
-              <span style={{ fontSize: '11px', color: TEAL }}>⚙</span>
-              <span style={{ fontSize: '11px', color: MUTED, fontFamily: SANS }}>Admin Portal →</span>
-            </a>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function HeroCarousel({ data, clientId }: { data: ClientData, clientId: string }) {
-  const router = useRouter()
-  const [idx, setIdx] = useState(0)
-  const [hoverSecondary, setHoverSecondary] = useState(false)
-  useEffect(() => {
-    const t = setInterval(() => setIdx(i => (i + 1) % data.heroFindings.length), 6000)
-    return () => clearInterval(t)
-  }, [data.heroFindings.length])
-  const f = data.heroFindings[idx]
-  const sevColor = f.severity === 'critical' ? RED : f.severity === 'high' ? AMBER : PURPLE
-
-  return (
-    <div style={{ background: '#0C0C0C', borderRadius: '12px', padding: '32px 36px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '22px' }}>
-        <span style={{ fontFamily: MONO, fontSize: '10px', color: sevColor, letterSpacing: '.1em' }}>{f.code} · {f.rate}%</span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '20px', background: `${sevColor}25`, color: sevColor, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>{f.severity}</span>
-      </div>
-      <div style={{ fontFamily: SERIF, fontSize: '26px', color: '#EFF6FF', lineHeight: 1.35, marginBottom: '14px' }}>{f.headline}</div>
-      <div style={{ fontSize: '14px', color: 'rgba(239,246,255,0.60)', lineHeight: 1.7, marginBottom: '18px' }}>{f.detail}</div>
-      <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '.08em', marginBottom: '28px' }}>Addressable: {f.addressable}</div>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '26px' }}>
-        <button
-          onClick={() => router.push(`/engage/${clientId}/${f.solutionSlug}`)}
-          style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 700, padding: '9px 20px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer' }}>{f.primaryCta}</button>
-        <div style={{ position: 'relative' as const, display: 'inline-block' }}>
-          <button
-            onMouseEnter={() => setHoverSecondary(true)}
-            onMouseLeave={() => setHoverSecondary(false)}
-            style={{ fontFamily: MONO, fontSize: '11px', padding: '9px 20px', borderRadius: '6px', background: 'transparent', color: 'rgba(239,246,255,0.30)', border: '1px solid rgba(239,246,255,0.08)', cursor: 'default', opacity: 0.5 }}>{f.secondaryCta}</button>
-          {hoverSecondary && (
-            <div style={{ position: 'absolute' as const, bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' as const, background: '#1C2D45', border: '1px solid rgba(239,246,255,0.12)', borderRadius: '6px', padding: '5px 10px', fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.65)', pointerEvents: 'none' as const, zIndex: 10 }}>
-              In development
-              <div style={{ position: 'absolute' as const, top: '100%', left: '50%', transform: 'translateX(-50%)', border: '5px solid transparent', borderTopColor: '#1C2D45' }} />
-            </div>
-          )}
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-        {data.heroFindings.map((_, i) => (
-          <button key={i} onClick={() => setIdx(i)}
-            style={{ width: i === idx ? '22px' : '6px', height: '6px', borderRadius: '3px', background: i === idx ? TEAL : 'rgba(239,246,255,0.18)', border: 'none', cursor: 'pointer', transition: 'all 0.25s', padding: 0 }} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function SolutionEntryCards({ data, clientId }: { data: ClientData, clientId: string }) {
-  const router = useRouter()
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-      {data.solutionProgress.map((s, i) => {
-        const statusColor = s.complete ? GREEN : s.progress > 50 ? TEAL : AMBER
-        return (
-          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', borderTop: `3px solid ${statusColor}` }}>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: '4px' }}>{s.name}</div>
-            <div style={{ fontSize: '11px', color: DIM, marginBottom: '14px' }}>Phase {s.phase}{s.complete ? ' · Complete ✓' : ` · ${s.progress}%`}</div>
-            <div style={{ fontFamily: SERIF, fontSize: '22px', color: WHITE, lineHeight: 1, marginBottom: '3px' }}>{s.outcome}</div>
-            <div style={{ fontSize: '11px', color: DIM, marginBottom: '16px' }}>addressable</div>
-            <button onClick={() => router.push(`/engage/${clientId}/${s.slug}?client=${clientId}`)}
-              style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: `1px solid ${TEAL}`, borderRadius: '4px', padding: '5px 12px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
-              {s.cta}
-            </button>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function FindingsFeed({ data }: { data: ClientData }) {
-  const sevColor = (s: string) => s === 'critical' ? RED : s === 'high' ? AMBER : PURPLE
-  return (
-    <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px' }}>
-      <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Recent Findings</div>
-      {data.contradictions.slice(0, 3).map((c, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingBottom: i < 2 ? '12px' : '0', marginBottom: i < 2 ? '12px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor(c.severity), flexShrink: 0, marginTop: '4px', display: 'inline-block' }} />
-          <div style={{ flex: 1 }}>
-            <span style={{ fontFamily: MONO, fontSize: '9px', color: sevColor(c.severity), letterSpacing: '.08em', marginRight: '8px', textTransform: 'uppercase' as const }}>{c.severity}</span>
-            <span style={{ fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{c.claim.slice(0, 80)}{c.claim.length > 80 ? '…' : ''}</span>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ── Pre-engagement gap check modal ───────────────────────────────────────────
 function PreEngagementModal({ engagementName, clientId, targetSlug, onClose }: {
   engagementName: string
   clientId: string
@@ -1674,198 +582,6 @@ function PreEngagementModal({ engagementName, clientId, targetSlug, onClose }: {
     </div>
   )
 }
-
-function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId: string, isReadOnly: boolean }) {
-  const router = useRouter()
-  const [gapModal, setGapModal] = useState<{ name: string; slug: string } | null>(null)
-  const criticalCount = data.contradictions.filter(c => c.severity === 'critical' || c.severity === 'high').length
-  const activeEngagement = data.solutionProgress.find(s => s.progress > 0 && !s.complete) || data.solutionProgress[0]
-
-  const isMeridian = clientId === 'meridian'
-
-  // Readiness checks
-  const readiness = isMeridian ? {
-    data: [
-      { ok: true,  label: 'Financial Statements', pct: '96%' },
-      { ok: true,  label: 'Technology Landscape', pct: '88%' },
-      { ok: false, label: 'Payer Contract Analysis', pct: 'MISSING' },
-      { ok: false, label: 'CDO Profile', pct: 'MISSING' },
-    ],
-    engagement: [
-      { ok: true,  label: 'Client profile complete' },
-      { ok: true,  label: 'Fee model confirmed' },
-      { ok: true,  label: 'Use case defined' },
-      { ok: false, label: 'CEO briefed (pending)' },
-    ],
-    overall: 'amber' as 'green' | 'amber' | 'red',
-    summary: 'PARTIALLY READY — 2 data gaps noted',
-  } : {
-    data: [
-      { ok: true,  label: 'Annual Report 2025', pct: '94%' },
-      { ok: false, label: 'MAS FEAT Gap Analysis', pct: '72% (pending)' },
-    ],
-    engagement: [
-      { ok: true,  label: 'Client profile complete' },
-      { ok: false, label: 'Regulatory timeline locked' },
-    ],
-    overall: 'amber' as 'green' | 'amber' | 'red',
-    summary: 'PARTIALLY READY — complete setup',
-  }
-
-  const overallColor = readiness.overall === 'green' ? GREEN : readiness.overall === 'amber' ? AMBER : RED
-
-  // Engagement queue for this Maestro
-  const myEngagements = isMeridian ? [
-    { name: 'RCM AI — Denial Prevention', phase: 1, status: 'In Progress', type: 'avr', slug: `/ai-strategy?client=${clientId}` },
-    { name: 'Tech Modernization', phase: 2, status: 'In Progress', type: 'sol', slug: `/engage/${clientId}/tech?client=${clientId}` },
-    { name: 'Margin Optimization', phase: 0, status: 'Not Started', type: 'sol', slug: `/engage/${clientId}/margin?client=${clientId}` },
-  ] : [
-    { name: 'Cost-to-Income Reduction', phase: 0, status: 'Not Started', type: 'avr', slug: `/ai-strategy?client=${clientId}` },
-  ]
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
-
-      {/* Readiness Status */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Readiness Status</div>
-
-        <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '6px' }}>Data</div>
-        {readiness.data.map((d, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
-            <span style={{ fontSize: '10px', color: d.ok ? GREEN : AMBER }}>{d.ok ? '✓' : '⚠'}</span>
-            <span style={{ fontSize: '11px', color: d.ok ? MUTED : WHITE, fontFamily: SANS, flex: 1 }}>{d.label}</span>
-            <span style={{ fontFamily: MONO, fontSize: '9px', color: d.ok ? GREEN : AMBER }}>{d.pct}</span>
-          </div>
-        ))}
-
-        <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', margin: '12px 0 6px' }}>Engagement</div>
-        {readiness.engagement.map((e, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '10px', color: e.ok ? GREEN : DIM }}>{e.ok ? '✓' : '○'}</span>
-            <span style={{ fontSize: '11px', color: MUTED, fontFamily: SANS }}>{e.label}</span>
-          </div>
-        ))}
-
-        <div style={{ marginTop: '12px', padding: '7px 10px', background: `${overallColor}12`, border: `1px solid ${overallColor}40`, borderRadius: '6px' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: overallColor }}>{readiness.summary}</div>
-        </div>
-        <a href="/admin?section=data" style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, display: 'block', marginTop: '8px', textDecoration: 'none' }}>
-          Go to Admin Setup →
-        </a>
-      </div>
-
-      {/* Action */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>Phase 1 ready for review</div>
-        <div style={{ fontSize: '12px', color: MUTED, marginBottom: '3px' }}>{data.contradictions.length} findings</div>
-        <div style={{ fontSize: '12px', color: RED, marginBottom: '16px' }}>{criticalCount} CRITICAL</div>
-        {!isReadOnly && (
-          <button
-            onClick={() => setGapModal({ name: activeEngagement?.fullName ?? activeEngagement?.name ?? 'Engagement', slug: `/engage/${clientId}/${activeEngagement?.slug || data.solutionProgress[0].slug}` })}
-            style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 14px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
-            Open Engagement →
-          </button>
-        )}
-      </div>
-
-      {/* Your Engagements */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Your Engagements</div>
-        {myEngagements.map((e, i) => (
-          <div key={i} style={{ marginBottom: i < myEngagements.length - 1 ? '10px' : '0', paddingBottom: i < myEngagements.length - 1 ? '10px' : '0', borderBottom: i < myEngagements.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: WHITE, fontFamily: SANS, flex: 1, paddingRight: 6, lineHeight: 1.3 }}>{e.name}</div>
-              <span style={{ fontFamily: MONO, fontSize: '8px', color: e.type === 'avr' ? TEAL : PURPLE, background: e.type === 'avr' ? 'rgba(45,212,200,0.12)' : 'rgba(129,140,248,0.12)', padding: '2px 5px', borderRadius: '3px', flexShrink: 0 }}>
-                {e.type === 'avr' ? 'AVR' : 'SOL'}
-              </span>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, marginBottom: '6px' }}>Ph {e.phase} · {e.status}</div>
-            {!isReadOnly && (
-              <button
-                onClick={() => setGapModal({ name: e.name, slug: e.slug })}
-                style={{ fontFamily: MONO, fontSize: '9px', color: e.status === 'Not Started' ? AMBER : TEAL, background: 'none', border: `1px solid ${e.status === 'Not Started' ? AMBER : TEAL}`, borderRadius: '4px', padding: '4px 10px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}
-              >
-                {e.status === 'Not Started' ? 'Start via ' : 'Continue in '}{e.type === 'avr' ? 'AI Value Realization' : 'Solutions'} →
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Genome signals */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Genome Signals</div>
-        {data.genomePatternsMatched.slice(0, 5).map((p, i) => (
-          <div key={i} style={{ marginBottom: i < 4 ? '10px' : '0' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{p.code}</span>
-              <span style={{ fontFamily: MONO, fontSize: '9px', color: RED, fontWeight: 600 }}>{p.failureRate}%</span>
-            </div>
-            <div style={{ height: '3px', background: BORDER, borderRadius: '2px' }}>
-              <div style={{ height: '3px', borderRadius: '2px', width: `${p.failureRate}%`, background: `linear-gradient(90deg, ${RED}, ${AMBER})` }} />
-            </div>
-          </div>
-        ))}
-        <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, marginTop: '12px', cursor: 'pointer' }}>View all {data.genomePatternsMatched.length} →</div>
-      </div>
-
-      {/* Platform stats */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Platform Stats</div>
-        {[
-          { value: '340', label: 'Genome patterns' },
-          { value: '9', label: 'Intel modules' },
-          { value: '$167M', label: 'Gap identified' },
-          { value: '$0', label: 'Fee until move' },
-        ].map((s, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: i < 3 ? '8px' : '0' }}>
-            <span style={{ fontFamily: SERIF, fontSize: '20px', color: WHITE, lineHeight: 1 }}>{s.value}</span>
-            <span style={{ fontSize: '11px', color: DIM }}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {gapModal && (
-        <PreEngagementModal
-          engagementName={gapModal.name}
-          clientId={clientId}
-          targetSlug={gapModal.slug}
-          onClose={() => setGapModal(null)}
-        />
-      )}
-    </div>
-  )
-}
-
-function BottomBar({ data, user }: { data: ClientData, user: { firstName?: string | null, lastName?: string | null } | null }) {
-  const maestroName = user?.firstName && user?.lastName
-    ? `${user.firstName} ${user.lastName}`
-    : user?.firstName || 'Anand Sundaram'
-  return (
-    <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#060A12', borderTop: '1px solid #1C2D45', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', zIndex: 900 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.5)', letterSpacing: '.06em' }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN, display: 'inline-block' }} />
-        <span style={{ color: GREEN }}>LIVE</span>
-        <span>·</span>
-        <span style={{ color: 'rgba(239,246,255,0.75)' }}>{data.name}</span>
-        <span>·</span>
-        <span>{data.activeEngagement}</span>
-        <span>·</span>
-        <span>Updated {data.updatedAgo}</span>
-      </div>
-      <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(239,246,255,0.28)', letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
-        AbarVa Intelligence Platform
-      </div>
-      <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.5)', letterSpacing: '.06em' }}>
-        Maestro: {maestroName} · Active
-      </div>
-    </div>
-  )
-}
-
-// ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false)
@@ -2193,26 +909,221 @@ function EngagementsTab({ data, clientId }: { data: ClientData; clientId: string
   )
 }
 
+
+// ─── BRIEF TAB ─────────────────────────────────────────────────────────────────
+
+const CLIENT_SPONSORS: Record<string, string[]> = {
+  meridian:     ['Marcus Webb · CIO',           'Dr. Sarah Chen · CMO',       'Dr. Sarah Chen · CMO'],
+  arcturus:     ['Victoria Hargreaves · CEO',   'Raj Malhotra · CIO',         'Thomas Kellner · CFO'],
+  apexretail:   ['CMO · Digital',               'CFO · Finance',               'COO · Operations'],
+}
+
+const CLIENT_READINESS: Record<string, number> = {
+  meridian: 72, arcturus: 81, apexretail: 58,
+}
+
+const CLIENT_MISSING: Record<string, string[]> = {
+  meridian:   ['Payer Contract Analysis', 'CDO Profile + Org Chart'],
+  arcturus:   ['Stress Testing Config Audit', 'CDO Hire Status Update'],
+  apexretail: ['CDO Vacancy Profile', 'Digital P&L Detail'],
+}
+
+function BriefTab({ data, clientId }: { data: ClientData; clientId: string }) {
+  const finding = data.heroFindings[0]
+  const sponsors = CLIENT_SPONSORS[clientId] ?? ['Executive Sponsor', 'Executive Sponsor', 'Executive Sponsor']
+  const readinessScore = CLIENT_READINESS[clientId] ?? 65
+  const missingFiles = CLIENT_MISSING[clientId] ?? []
+  const [engModal, setEngModal] = useState<{ name: string; slug: string } | null>(null)
+
+  // Extract big stat from addressable string
+  const statParts = finding.addressable.split(' ')
+  const bigStat = statParts[0].replace('/yr', '')
+  const statLabel = statParts.slice(1).join(' ') || 'annual exposure'
+
+  return (
+    <div>
+      {/* ── SECTION 1 — THE SIGNAL ───────────────────────────────────── */}
+      <section style={{ background: '#060A12', padding: '40px 48px', overflow: 'hidden' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '60fr 40fr', gap: 64, alignItems: 'center' }}>
+
+          {/* Left */}
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 16 }}>
+              MOST URGENT · {data.name.toUpperCase()}
+            </div>
+            <h2 style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: '#FFFFFF', lineHeight: 1.2, margin: '0 0 16px' }}>
+              {finding.headline.replace(/"/g, '')}
+            </h2>
+            <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', lineHeight: 1.75, margin: '0 0 28px' }}>
+              {finding.detail}
+            </p>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' as const }}>
+              <button
+                onClick={() => setEngModal({ name: data.heroFindings[0].headline.replace(/"/g, ''), slug: `/engage/${clientId}/${finding.solutionSlug}` })}
+                style={{ padding: '12px 24px', background: TEAL, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}
+              >
+                {finding.primaryCta}
+              </button>
+              <a href={`/diagnose?client=${clientId}`} style={{ padding: '12px 24px', border: '1px solid rgba(255,255,255,0.18)', color: '#9CA3AF', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                {finding.secondaryCta}
+              </a>
+            </div>
+          </div>
+
+          {/* Right */}
+          <div style={{ textAlign: 'right' as const }}>
+            <div style={{ fontFamily: SERIF, fontSize: 80, fontWeight: 700, color: TEAL, lineHeight: 1, marginBottom: 8 }}>
+              {bigStat}
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', marginBottom: 20 }}>
+              {statLabel}
+            </div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6 }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: '#EF4444' }}>
+                {finding.code} · {finding.rate}% Genome failure rate
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* See all link */}
+        <div style={{ marginTop: 24, textAlign: 'right' as const }}>
+          <a href={`/intelligence?client=${clientId}`} style={{ fontFamily: SANS, fontSize: 13, color: TEAL, textDecoration: 'none' }}>
+            See all {data.heroFindings.length} signals →
+          </a>
+        </div>
+      </section>
+
+      {/* ── SECTION 2 — ACTIVE ENGAGEMENTS ───────────────────────────── */}
+      <section style={{ background: BG, padding: '40px 48px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 600, color: WHITE }}>Active Engagements</div>
+          <a href={`/solutions?client=${clientId}`} style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: WHITE, border: 'none', borderRadius: 6, padding: '10px 20px', cursor: 'pointer', textDecoration: 'none' }}>
+            + New Engagement
+          </a>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          {data.solutionProgress.slice(0, 3).map((s, i) => {
+            const isActive  = s.progress > 0 && !s.complete
+            const isBacklog = s.phase === 0 && s.progress === 0
+            const topColor  = s.complete ? GREEN : isActive ? TEAL : AMBER
+            const priority  = i === 0 ? 'Critical' : i === 1 ? 'High' : 'Normal'
+            const pColor    = priority === 'Critical' ? RED : priority === 'High' ? AMBER : MUTED
+            const pBg       = priority === 'Critical' ? 'rgba(239,68,68,0.08)' : priority === 'High' ? 'rgba(245,158,11,0.08)' : '#F3F4F6'
+            const btnLabel  = s.complete ? 'View Outcomes →' : s.progress > 0 ? 'Continue Engagement →' : 'Start →'
+            const btnBg     = isBacklog ? '#9CA3AF' : isActive ? WHITE : AMBER
+
+            return (
+              <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderTop: `3px solid ${topColor}`, borderRadius: 8, padding: 24, display: 'flex', flexDirection: 'column' as const }}>
+                {/* Phase + priority */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
+                    Phase {s.phase} · {s.complete ? 'Complete' : isActive ? 'Active' : 'Backlog'}
+                  </span>
+                  <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: pColor, background: pBg, padding: '3px 8px', borderRadius: 4 }}>
+                    {priority}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 600, color: WHITE, marginBottom: 6, flex: '0 0 auto' }}>{s.fullName}</div>
+
+                {/* Sponsor */}
+                <div style={{ fontFamily: SANS, fontSize: 14, color: TEAL, marginBottom: 16 }}>{sponsors[i]}</div>
+
+                {/* Progress */}
+                <div style={{ height: 3, background: BORDER, borderRadius: 2, marginBottom: 6 }}>
+                  <div style={{ height: 3, borderRadius: 2, width: `${s.progress}%`, background: topColor }} />
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 16 }}>
+                  Phase {s.phase} · {s.progress}% complete
+                </div>
+
+                {/* Value */}
+                <div style={{ fontFamily: SANS, fontSize: 20, fontWeight: 600, color: WHITE, marginBottom: 20, flex: 1 }}>
+                  {s.outcome} at stake
+                </div>
+
+                {/* ONE CTA */}
+                <button
+                  onClick={() => setEngModal({ name: s.fullName, slug: `/engage/${clientId}/${s.slug}` })}
+                  style={{ width: '100%', padding: '12px', background: btnBg, color: '#FFFFFF', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, cursor: 'pointer', textAlign: 'center' as const }}
+                >
+                  {btnLabel}
+                </button>
+              </div>
+            )
+          })}
+        </div>
+
+        {data.solutionProgress.length > 3 && (
+          <div style={{ marginTop: 16, textAlign: 'center' as const }}>
+            <a href="#" style={{ fontFamily: SANS, fontSize: 14, color: TEAL, textDecoration: 'none' }}>
+              View all {data.solutionProgress.length} engagements →
+            </a>
+          </div>
+        )}
+      </section>
+
+      {/* ── SECTION 3 — DATA READINESS ────────────────────────────────── */}
+      <section style={{ padding: '0 48px 40px', overflow: 'hidden' }}>
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '24px 32px', display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap' as const }}>
+          {/* Label */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: WHITE, marginBottom: 2 }}>Data Readiness</div>
+            <div style={{ fontFamily: SANS, fontSize: 14, color: MUTED }}>{data.name}</div>
+          </div>
+
+          {/* Score */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: AMBER, lineHeight: 1 }}>{readinessScore} / 100</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginTop: 2 }}>AI Readiness Score</div>
+          </div>
+
+          {/* Missing files */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' as const }}>
+            {missingFiles.map((f, i) => (
+              <span key={i} style={{ fontFamily: SANS, fontSize: 13, color: AMBER, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', padding: '6px 14px', borderRadius: 20, whiteSpace: 'nowrap' as const }}>
+                ○ {f} — MISSING
+              </span>
+            ))}
+          </div>
+
+          {/* Link */}
+          <a href="/admin" style={{ flexShrink: 0, fontFamily: SANS, fontSize: 14, color: TEAL, textDecoration: 'none', whiteSpace: 'nowrap' as const }}>
+            Go to Data Uploads →
+          </a>
+        </div>
+      </section>
+
+      {engModal && (
+        <PreEngagementModal
+          engagementName={engModal.name}
+          clientId={clientId}
+          targetSlug={engModal.slug}
+          onClose={() => setEngModal(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
+
 export default function AdminClientPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const params = useParams()
   const clientId = params.id as string
 
-  const [masterTab, setMasterTab]     = useState<'intel' | 'value' | 'engagements'>('intel')
-  const [centerView, setCenterView] = useState('dashboard')
-  const [adminSection, setAdminSection] = useState('setup')
-  const [diTab, setDiTab] = useState('client')
-  const [projView, setProjView] = useState('dashboard')
-  const [showNewProject, setShowNewProject] = useState(false)
+  const [activeTab, setActiveTab] = useState<'brief' | 'engagements' | 'value'>('brief')
 
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
 
   const metaRole = user.publicMetadata?.role as string | undefined
-  const isMaestro = metaRole === 'admin' || metaRole === 'investor'
-  const isReadOnly = !isMaestro
-  const isAdmin = isMaestro  // investors play Maestro role — full dashboard access
+  const isAdmin  = metaRole === 'admin' || metaRole === 'investor'
 
   const data = getClientData(clientId)
   if (!data) return (
@@ -2221,85 +1132,51 @@ export default function AdminClientPage() {
     </div>
   )
 
-  const renderCenter = () => {
-    if (centerView === 'admin')
-      return <AdminTab clientId={clientId} data={data} adminSection={adminSection} setAdminSection={setAdminSection} isReadOnly={isReadOnly} />
-    if (centerView === 'data')
-      return <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
-    if (centerView === 'engagements')
-      return <ProjectsTab clientId={clientId} data={data} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
-    if (centerView === 'findings')
-      return <OverviewTab data={data} />
-    if (centerView === 'genome')
-      return <DataIntelligenceTab data={data} diTab="genome" setDiTab={setDiTab} />
-    return (
-      <>
-        <HeroCarousel data={data} clientId={clientId} />
-        <SolutionEntryCards data={data} clientId={clientId} />
-        <FindingsFeed data={data} />
-      </>
-    )
-  }
+  const now = new Date()
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
 
-  const TAB_BAR_TABS = [
-    { key: 'intel' as const,       label: 'Intel Feed' },
-    { key: 'value' as const,       label: 'Value Dashboard' },
+  const tabs = [
+    { key: 'brief' as const,       label: 'Brief' },
     { key: 'engagements' as const, label: 'Engagements' },
+    { key: 'value' as const,       label: 'Value Dashboard' },
   ]
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, paddingBottom: '34px' }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="maestro" />
-      <BreadcrumbBar data={data} />
 
-      {/* Top-level tab bar */}
+      {/* Breadcrumb */}
+      <div style={{ height: 40, background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px' }}>
+        <div style={{ fontFamily: SANS, fontSize: 14, color: '#6B7280' }}>
+          Maestro · {data.name}
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF' }}>
+          Last updated: Today {timeStr}
+        </div>
+      </div>
+
+      {/* Tab bar */}
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', height: 44, display: 'flex', alignItems: 'center', padding: '0 48px', gap: 0 }}>
-        {TAB_BAR_TABS.map(t => (
-          <button key={t.key} onClick={() => setMasterTab(t.key)} style={{
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
             fontFamily: SANS, fontSize: 14, fontWeight: 600,
-            color: masterTab === t.key ? '#0C0C0C' : '#6B7280',
+            color: activeTab === t.key ? '#0C0C0C' : '#6B7280',
             background: 'none', border: 'none',
-            borderBottom: masterTab === t.key ? '2px solid #2DD4C8' : '2px solid transparent',
+            borderBottom: activeTab === t.key ? '2px solid #2DD4C8' : '2px solid transparent',
             height: 44, padding: '0 20px', cursor: 'pointer',
-            transition: 'all 0.15s',
+            transition: 'color 0.15s',
           }}>
             {t.label}
           </button>
         ))}
       </div>
 
-      {masterTab === 'value' && <ValueDashboard clientId={clientId} />}
-      {masterTab === 'engagements' && <EngagementsTab data={data} clientId={clientId} />}
+      {/* Tab content */}
+      {activeTab === 'brief'       && <BriefTab data={data} clientId={clientId} />}
+      {activeTab === 'engagements' && <EngagementsTab data={data} clientId={clientId} />}
+      {activeTab === 'value'       && <ValueDashboard clientId={clientId} />}
 
-      {masterTab === 'intel' && (
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 28px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-          {/* Left panel */}
-          <div style={{ width: '220px', flexShrink: 0 }}>
-            <LeftPanel
-              data={data}
-              clientId={clientId}
-              centerView={centerView}
-              setCenterView={setCenterView}
-              isAdmin={isAdmin}
-              adminSection={adminSection}
-              setAdminSection={setAdminSection}
-            />
-          </div>
-
-          {/* Center */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '12px', minWidth: 0 }}>
-            {renderCenter()}
-          </div>
-
-          {/* Right panel */}
-          <div style={{ width: '280px', flexShrink: 0 }}>
-            <RightPanel data={data} clientId={clientId} isReadOnly={isReadOnly} />
-          </div>
-        </div>
-      )}
-
-      <BottomBar data={data} user={user} />
-      {!isReadOnly && <SeedDemosFloatMenu clientId={clientId} />}
+      {isAdmin && <SeedDemosFloatMenu clientId={clientId} />}
     </div>
   )
 }
