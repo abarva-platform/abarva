@@ -1,9 +1,9 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { useClientContext } from '@/lib/use-client-context'
 
-export default function MaestroHome() {
+function MaestroRedirect() {
   const router = useRouter()
   const { clientId, isLoaded } = useClientContext()
 
@@ -14,4 +14,12 @@ export default function MaestroHome() {
   }, [isLoaded, clientId, router])
 
   return <div style={{ minHeight: '100vh', background: '#060A12' }} />
+}
+
+export default function MaestroHome() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12' }} />}>
+      <MaestroRedirect />
+    </Suspense>
+  )
 }
