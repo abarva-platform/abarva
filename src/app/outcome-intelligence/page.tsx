@@ -426,7 +426,7 @@ function DeepDiveTab() {
               {m.current && !m.done && <span style={{ color: T.amber, fontSize: 8 }}>●</span>}
             </div>
             <div>
-              <span style={{ fontSize: 12, fontFamily: T.sans, color: m.done ? T.text : m.current ? T.amber : T.secondary }}>
+              <span style={{ fontSize: 12, fontFamily: T.sans, color: m.done ? T.text : T.secondary }}>
                 {m.label}
               </span>
               {'note' in m && m.note && (
@@ -438,7 +438,7 @@ function DeepDiveTab() {
                 {m.date}
               </span>
               {m.current && !m.done && (
-                <span style={{ fontSize: 10, fontFamily: T.mono, color: T.amber, marginLeft: 8 }}>← NEXT</span>
+                <span style={{ fontSize: 10, fontFamily: T.mono, color: T.teal, marginLeft: 8 }}>← NEXT</span>
               )}
             </div>
           </div>
@@ -460,7 +460,7 @@ function DeepDiveTab() {
             ? `$${(ini.currentValue / 1e6).toFixed(1)}M`
             : `${ini.baselineValue}${ini.metricUnit} → ${ini.currentValue}${ini.metricUnit}`
           }<br />
-          Variance: <span style={{ color: variance.ahead ? T.teal : T.amber }}>
+          Variance: <span style={{ color: T.text }}>
             {Math.abs(variance.variancePP).toFixed(1)}{ini.metricUnit === '%' ? 'pp' : ''} {variance.ahead ? 'AHEAD' : 'BEHIND'} of expected trajectory {variance.ahead ? '✓' : '⚠'}
           </span>
         </div>
@@ -595,10 +595,11 @@ function EarlyWarningTab() {
       </div>
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 8,
-        padding: '4px 12px', background: 'rgba(245,158,11,0.1)',
-        border: `1px solid ${T.amber}`, borderRadius: 20,
-        marginBottom: 24, fontSize: 11, fontFamily: T.mono, color: T.amber,
+        padding: '4px 12px', background: 'rgba(245,158,11,0.06)',
+        border: `1px solid ${T.border}`, borderRadius: 20,
+        marginBottom: 24, fontSize: 11, fontFamily: T.mono, color: T.secondary,
       }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: T.amber, flexShrink: 0 }} />
         ACTIVE FLAGS: 1 warning
       </div>
 
@@ -618,7 +619,7 @@ function EarlyWarningTab() {
           Pattern detected: User adoption plateaued at 67% in month 3.
         </div>
         <div style={{ padding: '10px 14px', background: T.bg, borderRadius: 6, marginBottom: 12 }}>
-          <div style={{ fontSize: 9, fontFamily: T.mono, color: T.amber, marginBottom: 4 }}>FROM GENOME</div>
+          <div style={{ fontSize: 9, fontFamily: T.mono, color: T.secondary, marginBottom: 4 }}>FROM GENOME</div>
           <div style={{ fontSize: 12, fontFamily: T.sans, color: T.text, lineHeight: 1.6 }}>
             9 of 16 failures showed this same adoption plateau pattern.<br />
             The 7 that recovered: all had executive champion re-engagement.

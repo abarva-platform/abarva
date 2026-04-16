@@ -433,7 +433,7 @@ function JustifyContent() {
                 ].map((m, i) => (
                   <div key={i} style={{ background: T.bg, border: `1px solid ${T.border}`, borderTop: `3px solid ${m.color}`, borderRadius: '0 0 10px 10px', padding: '16px' }}>
                     <div style={{ fontSize: '9px', fontWeight: 700, color: T.text2, fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>{m.label}</div>
-                    <div style={{ fontSize: '24px', fontWeight: 700, color: m.color, fontFamily: T.serif, lineHeight: 1 }}>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: T.text, fontFamily: T.serif, lineHeight: 1 }}>
                       <Counter target={m.value} prefix={(m as any).noSign ? '' : '$'} suffix={(m as any).noSign ? ' mo' : ''} />
                     </div>
                     <div style={{ fontSize: '10px', color: T.text2, marginTop: '4px' }}>{m.note}</div>
@@ -463,7 +463,7 @@ function JustifyContent() {
                       <tr key={ri}>
                         <td style={{ padding: '10px 0', fontSize: '12px', fontWeight: 500, color: T.text2, borderBottom: `1px solid ${T.border}` }}>{row.label}</td>
                         {[row.y1, row.y2, row.y3].map((val, ci) => (
-                          <td key={ci} style={{ padding: '10px 0', fontSize: '13px', fontWeight: 700, fontFamily: T.mono, color: row.label === 'Net Benefit' ? (val < 0 ? T.red : T.green) : row.color || T.text, textAlign: 'right', borderBottom: `1px solid ${T.border}` }}>
+                          <td key={ci} style={{ padding: '10px 0', fontSize: '13px', fontWeight: 700, fontFamily: T.mono, color: T.text, textAlign: 'right', borderBottom: `1px solid ${T.border}` }}>
                             {val < 0 ? '-' + fmt(Math.abs(val)) : fmt(val)}
                           </td>
                         ))}
@@ -613,9 +613,9 @@ function JustifyContent() {
                 <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderTop: `3px solid ${exp.color}`, borderRadius: '0 0 12px 12px', padding: '20px' }}>
                   <div style={{ fontSize: '18px', marginBottom: '8px' }}>{exp.icon}</div>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: T.text, marginBottom: '4px' }}>{exp.title}</div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, fontFamily: T.mono, color: exp.color, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{exp.format}</div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, fontFamily: T.mono, color: T.text2, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{exp.format}</div>
                   <div style={{ fontSize: '11px', color: T.text2, lineHeight: 1.5, marginBottom: '16px' }}>{exp.desc}</div>
-                  <button style={{ width: '100%', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: `1px solid ${exp.color}40`, background: `${exp.color}12`, color: exp.color, fontFamily: T.sans }}>
+                  <button style={{ width: '100%', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', border: `1px solid ${T.border}`, background: 'transparent', color: T.teal, fontFamily: T.sans }}>
                     Download {exp.format} →
                   </button>
                 </div>
@@ -625,7 +625,7 @@ function JustifyContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <button onClick={() => setStep(4)} style={{ padding: '12px 24px', borderRadius: '10px', background: T.surface, color: T.text2, border: `1px solid ${T.border}`, fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: T.sans }}>← Back</button>
               <div style={{ display: 'flex', gap: '12px' }}>
-                <a href={`/vendor-intelligence?client=${activeClient}`} style={{ padding: '12px 24px', borderRadius: '10px', background: `${T.indigo}15`, color: T.indigo, textDecoration: 'none', fontSize: '13px', fontWeight: 600, border: `1px solid ${T.indigo}30`, fontFamily: T.sans }}>
+                <a href={`/vendor-intelligence?client=${activeClient}`} style={{ padding: '12px 24px', borderRadius: '10px', background: 'transparent', color: T.teal, textDecoration: 'none', fontSize: '13px', fontWeight: 600, border: `1px solid ${T.border}`, fontFamily: T.sans }}>
                   Select Vendor →
                 </a>
                 <a href="/" style={{ padding: '12px 24px', borderRadius: '10px', background: T.teal, color: T.bg, textDecoration: 'none', fontSize: '14px', fontWeight: 600, fontFamily: T.sans }}>
