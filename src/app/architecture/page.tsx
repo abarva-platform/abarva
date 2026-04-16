@@ -1030,7 +1030,7 @@ function ArchContent() {
           <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
             {visibleClients.map(c => (
               <button key={c.id} onClick={() => setSelected(c.id)}
-                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid ' + c.accent : '2px solid transparent', background: 'transparent', color: selected === c.id ? c.accent : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selected === c.id ? '#E6EDF3' : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#21262D', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
                 {c.name}
               </button>
@@ -1080,12 +1080,12 @@ function ArchContent() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                     {p.tags.map(t => (
-                      <span key={t} style={{ fontFamily: MONO, fontSize: '8px', padding: '1px 6px', borderRadius: '3px', background: `${p.accent}18`, border: `1px solid ${p.accent}30`, color: p.accent }}>
+                      <span key={t} style={{ fontFamily: MONO, fontSize: '8px', padding: '1px 6px', borderRadius: '3px', background: `${p.accent}18`, border: `1px solid ${p.accent}30`, color: '#8B949E' }}>
                         {t}
                       </span>
                     ))}
                   </div>
-                  <span style={{ fontFamily: MONO, fontSize: '10px', color: p.accent }}>→</span>
+                  <span style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8' }}>→</span>
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#E6EDF3', marginBottom: '6px', lineHeight: 1.3 }}>
                   {p.title}
@@ -1093,7 +1093,7 @@ function ArchContent() {
                 <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8B949E', marginBottom: '14px', lineHeight: 1.5 }}>
                   {p.subtitle}
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: '11px', color: `${p.accent}cc`, background: `${p.accent}08`, border: `1px solid ${p.accent}20`, borderRadius: '6px', padding: '8px 10px', lineHeight: 1.4 }}>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8B949E', background: `${p.accent}08`, border: `1px solid ${p.accent}20`, borderRadius: '6px', padding: '8px 10px', lineHeight: 1.4 }}>
                   {p.relevance}
                 </div>
               </button>
