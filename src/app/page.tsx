@@ -60,7 +60,7 @@ export default function Homepage() {
               window closes.
             </h1>
             <p style={{ fontSize: 18, color: LBODY, lineHeight: 1.72, margin: '0 0 14px' }}>
-              Consulting firms deliver decks and leave. Vendors demo and disappear. Nobody owns the outcome. AbarVa is the intelligence layer that didn&apos;t exist — data before the first meeting, a Maestro embedded through execution, fee on verified results only.
+              Consulting firms deliver decks and leave. Vendors demo and disappear. Nobody owns the outcome. AbarVa is the intelligence layer that didn&apos;t exist — data before the first meeting, a Maestro embedded through execution, with a share of every verified outcome.
             </p>
             <p style={{ fontSize: 14, color: LMUTE, lineHeight: 1.6, margin: '0 0 40px' }}>
               Start with a Solution. Scale to full{' '}
@@ -87,7 +87,7 @@ export default function Homepage() {
             {[
               { label: 'Consulting spend wasted', value: '$200B', note: 'Global annual market with no outcome accountability' },
               { label: 'Enterprise AI with zero ROI', value: '73%', note: 'Of AI investments produce no verified outcome' },
-              { label: 'Fee on outcomes only', value: '0%', note: 'No retainer. No hourly. Fee on verified results only.' },
+              { label: 'Outcome-accountable', value: 'Skin in\nthe game', note: 'Platform fee + engagement fee. We earn more when outcomes are verified.' },
               { label: 'Time to first intelligence', value: '48hrs', note: 'From kickoff to your first Situation brief' },
             ].map(s => (
               <div key={s.label} style={{ background: LCARD, border: `1px solid ${LBDR}`, borderRadius: 10, padding: '22px 20px' }}>
@@ -197,17 +197,17 @@ export default function Homepage() {
       <div style={{ background: LBG, padding: '96px 64px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <h2 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: LTEXT, margin: '0 0 14px' }}>
-            Skin in the game. Fee on outcomes only.
+            Skin in the game. We earn on outcomes.
           </h2>
           <p style={{ fontSize: 16, color: LBODY, marginBottom: 56, lineHeight: 1.65 }}>
-            Four steps. Baseline locked on day 0. Fee tied to your outcomes — not our hours.
+            Platform fee. Engagement fee. 15–20% of verified savings above baseline.
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: `1px solid ${LBDR}`, borderRadius: 12, overflow: 'hidden', marginBottom: 28 }}>
             {[
               { num: '01', name: 'DIAGNOSE',  desc: 'Situation product · 48hrs · your data' },
               { num: '02', name: 'PRESCRIBE', desc: 'Strategy + Vendor + Business Case' },
               { num: '03', name: 'EXECUTE',   desc: 'Maestro team embeds · knowledge stays' },
-              { num: '04', name: 'VERIFY',    desc: 'Baseline vs actuals · fee on outcomes only' },
+              { num: '04', name: 'VERIFY',    desc: 'Baseline vs actuals · outcome share earned' },
             ].map((step, i, arr) => (
               <div key={step.num} style={{ background: LCARD, padding: '28px 24px', borderRight: i < arr.length - 1 ? `1px solid ${LBDR}` : 'none' }}>
                 <div style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, marginBottom: 20 }}>{step.num}</div>

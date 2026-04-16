@@ -17,7 +17,7 @@ export default function PlatformPage() {
             How AbarVa works
           </div>
           <h1 style={{ fontFamily: SERIF, fontSize: 60, fontWeight: 400, lineHeight: 1.08, color: LTEXT, margin: '0 0 28px', maxWidth: 760 }}>
-            Intelligence. Then execution.<br />Fee on outcomes only.
+            Intelligence. Then execution.<br />Outcome-accountable fees.
           </h1>
           <p style={{ fontSize: 18, color: LBODY, lineHeight: 1.72, margin: '0 0 40px', maxWidth: 620 }}>
             AbarVa is not a consulting firm. It is an intelligence platform with embedded operators — Maestros — who own delivery and earn only when outcomes are verified.
@@ -52,7 +52,7 @@ export default function PlatformPage() {
                 items: ['340 cross-client transformation patterns', 'Failure rates by industry, system, and vendor', 'Baseline ranges from peer organisations', 'Contradiction detection against your own data', 'Updated continuously from active engagements'] },
               { num: '03', name: 'Maestro Model',
                 desc: 'Small teams of embedded operators who govern delivery, hold vendors accountable, and earn on verified outcomes.',
-                items: ['4 Maestros replace 40 consultants', 'Knowledge stays — no dependency created', 'Vendor held to milestone-based contracts', 'Baseline locked on Day 0 — immutable', 'Fee on verified outcome delta only'] },
+                items: ['4 Maestros replace 40 consultants', 'Knowledge stays — no dependency created', 'Vendor held to milestone-based contracts', 'Baseline locked on Day 0 — immutable', '15–20% outcome share on verified savings above baseline'] },
             ].map(layer => (
               <div key={layer.num} style={{ background: DCARD, padding: '32px 28px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>

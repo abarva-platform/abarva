@@ -39,7 +39,7 @@ export default function SolutionMargin() {
       desc: '3–5 specific interventions, sequenced by impact and feasibility. Each with a CFO-grade business case: investment required, savings range, timeline, risk, Genome validation.',
       products: ['Strategy', 'Business Case'] },
     { num: 3, color: GREEN, title: 'Value Realization — baseline locked · savings tracked · fee earned',
-      desc: 'Baseline locked Day 0. Immutable. Monthly actuals tracked. Fee 15–20% of what is actually delivered — not what was promised.',
+      desc: 'Baseline locked Day 0. Immutable. Monthly actuals tracked. Outcome share: 15–20% of verified savings above the locked Day 0 baseline.',
       products: ['Outcomes'] },
   ]
 
@@ -53,7 +53,7 @@ export default function SolutionMargin() {
     'Margin gap analysis — every driver quantified',
     '3–5 prioritised interventions with ROI ranges',
     'CFO-ready business case per intervention',
-    'Baseline locked Day 0 · monthly tracking · fee on verified savings',
+    'Baseline locked Day 0 · monthly tracking · 15–20% outcome share on verified savings',
   ]
 
   const starters = [
@@ -96,13 +96,13 @@ export default function SolutionMargin() {
       )}
       <SolutionLayout
         num="2 of 3" name="Margin Optimization"
-        tagline="Identify every margin lever — across revenue, cost structure, and AI portfolio — and create a board-ready recovery plan. Fee charged only on verified savings."
+        tagline="Identify every margin lever — across revenue, cost structure, and AI portfolio — and create a board-ready recovery plan. 15–20% of verified savings above baseline."
         meta={['CEO · CFO · COO', 'Healthcare · FinServ · Retail', '6–12 week delivery', '15–20% of verified savings']}
         stats={[
           { label: 'C/I ratio — Arcturus', value: `${ci}%`, color: RED, sub: `vs ${target}% target · $${gap}M gap` },
           { label: 'AI spend committed', value: `$${ai}M`, color: AMBER, sub: 'Zero with documented ROI' },
           { label: 'Recovery range', value: '$60–120M', color: TEAL, sub: 'Annual · Genome-validated' },
-          { label: 'Fee model', value: '15–20%', color: GREEN, sub: 'Of verified savings only' },
+          { label: 'Fee model', value: '15–20%', color: GREEN, sub: 'Of verified savings above baseline' },
         ]}
         phases={phases}
         genome={genome}
