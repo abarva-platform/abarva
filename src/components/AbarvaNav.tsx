@@ -169,12 +169,16 @@ function NavInner({ activePage }: NavProps) {
       }}>
 
         {/* ── Wordmark ──────────────────────────────────────────────────────── */}
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: '3px', marginRight: '20px', flexShrink: 0 }}>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '14px', marginRight: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '20px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-.01em' }}>Abar</span>
-            <span style={{ fontFamily: SERIF, fontSize: '24px', fontWeight: 900, color: TEAL, letterSpacing: '-.01em' }}>Va</span>
+            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(239,246,255,0.82)', letterSpacing: '.18em', textTransform: 'uppercase' as const }}>Know It · Build It · Own It</span>
+          <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.14)', flexShrink: 0 }} />
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '2px' }}>
+            <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: '#FFFFFF', letterSpacing: '.02em', lineHeight: 1 }}>Know It. Build It.</span>
+            <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: TEAL, letterSpacing: '.02em', lineHeight: 1 }}>Own It.</span>
+          </div>
         </a>
 
         {/* ── Client toggle — admin + investor only ─────────────────────────── */}
