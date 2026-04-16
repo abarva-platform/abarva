@@ -1622,7 +1622,7 @@ export default function AdminClientPage() {
           <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
             height: 44, padding: '0 20px', background: 'none', border: 'none', cursor: 'pointer',
             fontFamily: SANS, fontSize: 14, fontWeight: activeTab === t.key ? 600 : 400,
-            color: activeTab === t.key ? WHITE : '#9CA3AF',
+            color: activeTab === t.key ? WHITE : '#3C3C3C',
             borderBottom: activeTab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
           }}>{t.label}</button>
         ))}

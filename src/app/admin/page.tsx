@@ -1320,8 +1320,8 @@ function AdminPortalInner() {
                     height: 32, padding: '0 18px', background: section === item.key ? 'rgba(45,212,200,0.08)' : 'none',
                     border: 'none', borderLeft: section === item.key ? `3px solid ${TEAL}` : '3px solid transparent', cursor: 'pointer',
                   }}>
-                    <span style={{ fontSize: 13, color: section === item.key ? TEAL : 'rgba(255,255,255,0.35)', width: 18, flexShrink: 0 }}>{item.icon}</span>
-                    <span style={{ fontFamily: SANS, fontSize: 13, color: section === item.key ? '#FFFFFF' : 'rgba(255,255,255,0.55)', fontWeight: section === item.key ? 600 : 400 }}>
+                    <span style={{ fontSize: 13, color: section === item.key ? TEAL : 'rgba(255,255,255,0.75)', width: 18, flexShrink: 0 }}>{item.icon}</span>
+                    <span style={{ fontFamily: SANS, fontSize: 13, color: section === item.key ? '#FFFFFF' : 'rgba(255,255,255,0.85)', fontWeight: section === item.key ? 600 : 400 }}>
                       {item.label}
                     </span>
                   </button>

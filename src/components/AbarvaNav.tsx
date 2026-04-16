@@ -9,7 +9,7 @@ const NAV_BG   = '#060A12'   // dark bar background
 const NAV_BORD = '#1C2D45'   // bar bottom border
 const TEAL     = '#2DD4C8'
 const NAV_TEXT = '#EFF6FF'   // primary text on dark bar
-const NAV_MUTE = 'rgba(239,246,255,0.55)'  // secondary text on dark bar
+const NAV_MUTE = 'rgba(239,246,255,0.85)'  // secondary text on dark bar
 const SANS     = 'DM Sans, sans-serif'
 const MONO     = 'JetBrains Mono, monospace'
 const SERIF    = 'Georgia, serif'
@@ -18,8 +18,8 @@ const SERIF    = 'Georgia, serif'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'   // primary item label
-const DROP_DESC = '#6B7280'   // secondary description
-const DROP_CAT  = '#9CA3AF'   // category / phase header
+const DROP_DESC = '#3C3C3C'   // secondary description
+const DROP_CAT  = '#2DD4C8'   // category / phase header
 const DROP_HOVER = '#F9FAFB'
 
 interface NavProps {
