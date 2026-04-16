@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
@@ -393,17 +393,22 @@ function PlaceholderSection({ title, sub }: { title: string; sub: string }) {
   )
 }
 
-// ── Admin portal inner ─────────────────────────────────────────────────────────
+// ── Admin portal ──────────────────────────────────────────────────────────────
 function AdminPortalInner() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const [section, setSection] = useState<Section>('dashboard')
 
-  if (!isLoaded) return <div style={{ minHeight: '100vh', background: DARK }} />
-  if (!user) { router.push('/sign-in'); return null }
+  const metaRole = user?.publicMetadata?.role as string | undefined
 
-  const metaRole = user.publicMetadata?.role as string | undefined
-  if (metaRole !== 'admin' && metaRole !== 'investor') { router.push('/maestro'); return null }
+  useEffect(() => {
+    if (!isLoaded) return
+    if (!user) { router.push('/sign-in'); return }
+    if (metaRole !== 'admin' && metaRole !== 'investor') { router.push('/maestro') }
+  }, [isLoaded, user, metaRole, router])
+
+  if (!isLoaded || !user) return <div style={{ minHeight: '100vh', background: DARK }} />
+  if (metaRole !== 'admin' && metaRole !== 'investor') return <div style={{ minHeight: '100vh', background: DARK }} />
 
   const renderSection = () => {
     if (section === 'dashboard')      return <Dashboard />
@@ -501,9 +506,5 @@ function AdminPortalInner() {
 }
 
 export default function AdminPage() {
-  return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#060A12' }} />}>
-      <AdminPortalInner />
-    </Suspense>
-  )
+  return <AdminPortalInner />
 }
