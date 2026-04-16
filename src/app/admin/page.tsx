@@ -403,7 +403,7 @@ function AdminPortalInner() {
   if (!user) { router.push('/sign-in'); return null }
 
   const metaRole = user.publicMetadata?.role as string | undefined
-  if (metaRole !== 'admin') { router.push('/maestro'); return null }
+  if (metaRole !== 'admin' && metaRole !== 'investor') { router.push('/maestro'); return null }
 
   const renderSection = () => {
     if (section === 'dashboard')      return <Dashboard />

@@ -143,46 +143,8 @@ function NavInner({ activePage }: NavProps) {
           </div>
         </a>
 
-        {/* ── ADMIN ROLE: thin nav — only admin portal ───────────────────────── */}
-        {signedIn && isAdmin && (
-          <>
-            {/* Client switcher */}
-            <div style={{ position: 'relative', marginRight: '16px' }}>
-              <button
-                onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
-                style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: canSwitch ? 'pointer' : 'default' }}
-              >
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-                <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
-                {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>}
-              </button>
-              {canSwitch && clientToggleOpen && (
-                <div onMouseLeave={() => setClientToggleOpen(false)} style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: DROP_BG, border: `1px solid ${DROP_BORD}`, borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>Switch Account</div>
-                  {ALL_CLIENTS.map(c => {
-                    const isActive  = c.id === clientId
-                    const isAllowed = !!allowedClients.find(a => a.id === c.id)
-                    return (
-                      <button key={c.id} onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
-                        style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '7px', border: 'none', background: isActive ? `${c.color}12` : 'transparent', cursor: isAllowed ? 'pointer' : 'default', opacity: isAllowed ? 1 : 0.35 }}
-                      >
-                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                        <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>{c.shortName}</div>
-                        {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color, marginLeft: 'auto' }}>✓</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {navLink('Admin', '/admin', adminActive)}
-            {navLink('Maestro', '/maestro', maestroActive)}
-          </>
-        )}
-
-        {/* ── MAESTRO / INVESTOR ROLE: full operational nav ───────────────────── */}
-        {signedIn && !isAdmin && isMaestro && (
+        {/* ── ELEVATED (admin + investor): client switcher + full Maestro nav ─── */}
+        {signedIn && isMaestro && (
           <>
             {/* Client switcher */}
             <div style={{ position: 'relative', marginRight: '16px' }}>
@@ -264,6 +226,9 @@ function NavInner({ activePage }: NavProps) {
                 </div>
               )}
             </div>
+
+            {/* Admin link — admin role only */}
+            {isAdmin && navLink('Admin', '/admin', adminActive)}
           </>
         )}
 
