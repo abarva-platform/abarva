@@ -2,6 +2,7 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
@@ -704,52 +705,17 @@ function DataContent() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="data-intelligence" />
 
-      {/* ── Sticky header: label + question + stats + tab nav ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '24px 48px 0' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '10px' }}>
-            Data Intelligence · {d.client}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '24px', marginBottom: '20px' }}>
-            <h1 style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 700, color: WHITE, margin: 0, lineHeight: 1.25, maxWidth: '540px' }}>
-              &ldquo;What your data tells us — and what it costs you.&rdquo;
-            </h1>
-            <div style={{ display: 'flex', gap: '32px', flexShrink: 0 }}>
-              {[
-                { label: 'Data Confidence', value: `${d.confidence}%`, dot: TEAL },
-                { label: 'Critical Findings', value: String(d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)), dot: RED },
-                { label: 'Genome Patterns', value: String(d.genomePatterns.length), dot: AMBER },
-                { label: 'Categories', value: String(d.categories.length) },
-              ].map(s => (
-                <div key={s.label}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {s.dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />}
-                    <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: WHITE }}>{s.value}</div>
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>{s.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 0 }}>
-            {tabs.map(t => (
-              <button key={t.key} onClick={() => setTab(t.key)}
-                style={{
-                  padding: '12px 24px', fontFamily: MONO, fontSize: '10px', fontWeight: 600,
-                  letterSpacing: '.06em', textTransform: 'uppercase' as const,
-                  cursor: 'pointer', border: 'none',
-                  borderBottom: tab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
-                  background: 'transparent',
-                  color: tab === t.key ? WHITE : MUTED,
-                  transition: 'color 0.12s',
-                  whiteSpace: 'nowrap' as const,
-                }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ModuleHeader
+        label={`Data Intelligence · ${d.client}`}
+        question="What your data tells us — and what it costs you."
+        stats={[
+          { value: `${d.confidence}%`, label: 'Data Confidence', dot: TEAL },
+          { value: String(d.categories.reduce((n: number, c: any) => n + c.findings.filter((f: any) => f.severity === 'critical').length, 0)), label: 'Critical Findings', dot: RED },
+          { value: String(d.genomePatterns.length), label: 'Genome Patterns', dot: AMBER },
+          { value: String(d.categories.length), label: 'Categories' },
+        ]}
+        tabs={tabs.map(t => ({ id: t.key, label: t.label, active: tab === t.key, onClick: () => setTab(t.key) }))}
+      />
 
       {/* Content */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '40px 48px 80px' }}>

@@ -2,6 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import { calcProgress, calcVariance, calcInitiativeStatus, calcOutcomeFee, calcPortfolioSummary } from '@/lib/outcome-intelligence'
 
@@ -826,96 +827,44 @@ function OutcomeIntelligenceContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: T.bg, color: T.text, fontFamily: T.sans }}>
-      <AbarvaNav />
+      <AbarvaNav activePage="outcome-intelligence" />
       <style dangerouslySetInnerHTML={{ __html: `@keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }` }} />
 
-      {/* Header */}
-      <div style={{
-        borderBottom: `1px solid ${T.border}`, padding: '20px 32px',
-        position: 'sticky', top: 0, zIndex: 10, background: T.bg,
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.teal, letterSpacing: '0.12em', marginBottom: 4 }}>
-              OUTCOME INTELLIGENCE
-            </div>
-            <div style={{ fontSize: 20, fontFamily: T.fraunces, color: T.text, maxWidth: 560 }}>
-              &ldquo;Are our AI investments delivering — and can we prove it to the board?&rdquo;
-            </div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginTop: 8 }}>
-              Portfolio: {MERIDIAN_INITIATIVES.length} initiatives &nbsp;·&nbsp; Value committed: ${(summary.totalCommitted / 1e6).toFixed(0)}M &nbsp;·&nbsp; Verified: ${(summary.totalVerified / 1e6).toFixed(1)}M
-            </div>
-            <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginTop: 2 }}>
-              Outcome fees triggered: ${(calcOutcomeFee(summary.totalVerified, 0.15) / 1e6).toFixed(1)}M &nbsp;·&nbsp; Fees projected: ${(calcOutcomeFee(summary.totalCommitted, 0.175) / 1e6).toFixed(1)}M
-            </div>
-          </div>
-          {/* Client selector — admin only */}
-          {isAdmin && <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setShowClientMenu(m => !m)}
-              style={{
-                padding: '8px 16px', background: T.surface,
-                border: `1px solid ${T.border}`, color: T.text,
-                borderRadius: 8, cursor: 'pointer', fontSize: 13, fontFamily: T.mono,
-              }}
-            >
+      <ModuleHeader
+        label={`Outcome Intelligence · ${ALL_CLIENTS.find(c => c.id === client)?.shortName || 'Meridian'}`}
+        question="Are our AI investments delivering — and can we prove it to the board?"
+        stats={[
+          { value: String(MERIDIAN_INITIATIVES.length), label: 'Initiatives' },
+          { value: `$${(summary.totalCommitted / 1e6).toFixed(0)}M`, label: 'Value Committed' },
+          { value: `$${(summary.totalVerified / 1e6).toFixed(1)}M`, label: 'Verified', dot: '#2DD4C8' },
+          { value: `$${(calcOutcomeFee(summary.totalVerified, 0.15) / 1e6).toFixed(1)}M`, label: 'Fees Triggered', dot: '#10B981' },
+        ]}
+        tabs={tabs.map(tab => ({
+          id: tab.id,
+          label: tab.label,
+          active: activeTab === tab.id,
+          onClick: () => setActiveTab(tab.id),
+        }))}
+        right={isAdmin ? (
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setShowClientMenu(m => !m)}
+              style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #1C2D45', color: '#EFF6FF', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}>
               {ALL_CLIENTS.find(c => c.id === client)?.shortName || client} ▾
             </button>
             {showClientMenu && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 4,
-                background: T.surface, border: `1px solid ${T.border}`,
-                borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 180,
-              }}>
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, overflow: 'hidden', zIndex: 50, minWidth: 160 }}>
                 {allowedClients.map(c => (
-                  <button
-                    key={c.id}
-                    onClick={() => { setClient(c.id as Client); setShowClientMenu(false) }}
-                    style={{
-                      width: '100%', padding: '10px 16px',
-                      background: c.id === client ? 'rgba(45,212,200,0.1)' : 'transparent',
-                      color: c.id === client ? T.teal : T.text,
-                      border: 'none', cursor: 'pointer',
-                      fontSize: 13, fontFamily: T.mono, textAlign: 'left',
-                    }}
-                  >
+                  <button key={c.id} onClick={() => { setClient(c.id as Client); setShowClientMenu(false) }}
+                    style={{ width: '100%', padding: '10px 16px', background: c.id === client ? 'rgba(45,212,200,0.1)' : 'transparent', color: c.id === client ? '#2DD4C8' : '#EFF6FF', border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'JetBrains Mono, monospace', textAlign: 'left' }}>
                     {c.shortName}
                   </button>
                 ))}
               </div>
             )}
-          </div>}
-        </div>
-
-        {/* Tab navigation */}
-        <div style={{ display: 'flex', gap: 0, marginTop: 16, overflowX: 'auto', borderBottom: `1px solid ${T.border}`, paddingBottom: 0 }}>
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              style={{
-                padding: '10px 20px',
-                background: 'transparent',
-                color: activeTab === tab.id ? T.teal : T.secondary,
-                border: 'none',
-                borderBottom: activeTab === tab.id ? `2px solid ${T.teal}` : '2px solid transparent',
-                cursor: 'pointer',
-                fontSize: 12, fontFamily: T.mono,
-                whiteSpace: 'nowrap',
-                marginBottom: -1,
-              }}
-            >
-              {tab.label}
-              {tab.id === 'warning' && (
-                <span style={{
-                  marginLeft: 6, fontSize: 9, padding: '1px 5px',
-                  background: T.amber, color: T.bg, borderRadius: 8,
-                }}>1</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
+          </div>
+        ) : undefined}
+        padding="20px 32px 0"
+      />
 
       {/* Content */}
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 48px 64px', animation: 'fadein 0.3s ease-out' }}>

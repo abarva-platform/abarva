@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 // ── Design System ──────────────────────────────────────────────────────────────
@@ -628,48 +629,24 @@ function AIDeliveryContent() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="ai-pdlc" />
 
-      {/* ── Sticky header ── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '28px 48px 0' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Delivery Intelligence · {currentClientName}
-          </div>
-          <h1 style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 700, color: WHITE, margin: '0 0 20px', lineHeight: 1.25, maxWidth: '720px' }}>
-            &ldquo;Are our AI initiatives actually being delivered — and what&rsquo;s blocking the ones that aren&rsquo;t?&rdquo;
-          </h1>
-          <div style={{ display: 'flex', gap: '40px', marginBottom: '24px', flexWrap: 'wrap' }}>
-            {[
-              { label: 'Total Invested', value: `$${Math.round(totalInvested)}M` },
-              { label: 'Live', value: String(live.length), dot: TEAL },
-              { label: 'Stalled', value: String(stalled.length), dot: RED },
-              { label: 'Value Locked', value: `$${stalledValue}M`, dot: AMBER },
-              { label: 'Root Causes', value: String(currentBlockers.length), dot: INDIGO },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {s.dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />}
-                  <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: WHITE }}>{s.value}</div>
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px', letterSpacing: '.06em', textTransform: 'uppercase' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 0 }}>
-            {([
-              ['overview', 'Portfolio Overview'],
-              ['initiatives', 'Initiative Detail'],
-              ['blockers', 'Root Causes'],
-              ['roadmap', 'Roadmap'],
-              ['chat', 'Ask Maestro'],
-            ] as const).map(([id, label]) => (
-              <button key={id} onClick={() => handleTabChange(id)}
-                style={{ padding: '12px 24px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', borderBottom: activeTab === id ? `2px solid ${TEAL}` : '2px solid transparent', background: 'transparent', color: activeTab === id ? WHITE : MUTED, transition: 'color 0.12s' }}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ModuleHeader
+        label={`Delivery Intelligence · ${currentClientName}`}
+        question="Are our AI initiatives actually being delivered — and what's blocking the ones that aren't?"
+        stats={[
+          { value: `$${Math.round(totalInvested)}M`, label: 'Total Invested' },
+          { value: String(live.length), label: 'Live', dot: TEAL },
+          { value: String(stalled.length), label: 'Stalled', dot: RED },
+          { value: `$${stalledValue}M`, label: 'Value Locked', dot: AMBER },
+          { value: String(currentBlockers.length), label: 'Root Causes', dot: INDIGO },
+        ]}
+        tabs={([
+          ['overview', 'Portfolio Overview'],
+          ['initiatives', 'Initiative Detail'],
+          ['blockers', 'Root Causes'],
+          ['roadmap', 'Roadmap'],
+          ['chat', 'Ask Maestro'],
+        ] as const).map(([id, label]) => ({ id, label, active: activeTab === id, onClick: () => handleTabChange(id) }))}
+      />
 
       {/* ── Content ── */}
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px 80px', width: '100%' }}>

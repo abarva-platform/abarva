@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext } from '@/lib/use-client-context'
 import { meridianHealth } from '@/data/meridian/index'
 import { firstCapital } from '@/data/firstcapital/index'
@@ -336,41 +337,23 @@ function DiagnoseContent() {
 
       <AbarvaNav activePage="diagnose" />
 
-      {/* ── Module header ──────────────────────────────────────────────────── */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 32px 0' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
-          Situation Intelligence · {meta.shortName}
-        </div>
-        <h1 style={{ fontFamily: SERIF, fontSize: '24px', fontWeight: 700, color: WHITE, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
-          &ldquo;What is broken in your organization — and what does it cost you?&rdquo;
-        </h1>
-        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
-          {[
-            { label: 'Critical Issues', value: String(critCount) },
-            { label: 'Warnings', value: String(warnCount) },
-            { label: 'At Risk', value: `$${totalRisk}M` },
-            { label: 'Data Confidence', value: `${meta.confidence}%` },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 700, color: WHITE }}>{s.value}</div>
-              <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-        {/* Client tabs — admin only */}
-        {isAdmin && (
-          <div style={{ display: 'flex', marginTop: '4px' }}>
-            {visibleClients.map(c => (
-              <button key={c.id} onClick={() => { setActiveClient(c.id); setSelectedId(null) }}
-                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
-                  borderBottom: activeClient === c.id ? `2px solid ${TEAL}` : '2px solid transparent',
-                  background: 'transparent', color: activeClient === c.id ? WHITE : MUTED, transition: 'color 0.12s' }}>
-                {c.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <ModuleHeader
+        label={`Situation Intelligence · ${meta.shortName}`}
+        question="What is broken in your organization — and what does it cost you?"
+        stats={[
+          { value: String(critCount), label: 'Critical Issues', dot: '#EF4444' },
+          { value: String(warnCount), label: 'Warnings', dot: '#F59E0B' },
+          { value: `$${totalRisk}M`, label: 'At Risk' },
+          { value: `${meta.confidence}%`, label: 'Data Confidence', dot: '#2DD4C8' },
+        ]}
+        tabs={isAdmin ? visibleClients.map(c => ({
+          id: c.id,
+          label: c.name,
+          active: activeClient === c.id,
+          onClick: () => { setActiveClient(c.id as ClientId); setSelectedId(null) },
+        })) : undefined}
+        padding="20px 32px 0"
+      />
 
       {/* Two-panel layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', height: 'calc(100vh - 96px)' }}>

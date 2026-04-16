@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useCallback, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext } from '@/lib/use-client-context'
 
 type Sev = 'CRITICAL' | 'HIGH'
@@ -267,8 +268,8 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
     } catch { /* ignore abort */ } finally { setLoading(false) }
   }, [messages, client, contradictionTitle, contradictionImpact, loading])
 
-  const TEAL = '#2DD4C8', SURFACE = '#161B22', BORDER = '#21262D', TEXT = '#E6EDF3', DIM = '#6B7280', BG = '#0D1117'
-  const MONO = 'IBM Plex Mono, monospace', SANS = "'IBM Plex Sans', Inter, sans-serif"
+  const TEAL = '#2DD4C8', SURFACE = '#0D1520', BORDER = '#1C2D45', TEXT = '#EFF6FF', DIM = 'rgba(255,255,255,0.45)', BG = '#060A12'
+  const MONO = 'JetBrains Mono, monospace', SANS = 'DM Sans, sans-serif'
 
   return (
     <div style={{ borderTop: '1px solid ' + BORDER, marginTop: '16px', paddingTop: '16px' }}>
@@ -308,7 +309,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
             style={{ flex: 1, padding: '8px 12px', background: SURFACE, border: '1px solid ' + BORDER, borderRadius: '6px', color: TEXT, fontSize: '12px', fontFamily: SANS, outline: 'none' }}
           />
           <button onClick={() => send(input)} disabled={loading || !input.trim()}
-            style={{ padding: '8px 16px', background: loading ? SURFACE : TEAL, color: loading ? DIM : '#0D1117', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
+            style={{ padding: '8px 16px', background: loading ? SURFACE : TEAL, color: loading ? DIM : '#060A12', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: loading ? 'default' : 'pointer' }}>
             {loading ? '…' : '→'}
           </button>
         </div>
@@ -338,7 +339,7 @@ function ContradictionsContent() {
   const highCount = cd.nodes.filter(n => n.sev === 'HIGH').length
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D1117', fontFamily: "'IBM Plex Sans', Inter, sans-serif", color: '#E6EDF3' }}>
+    <div style={{ minHeight: '100vh', background: '#060A12', fontFamily: 'DM Sans, sans-serif', color: '#EFF6FF' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes critPulse {
           0% { opacity: 0.8; transform: scale(1); }
@@ -365,51 +366,33 @@ function ContradictionsContent() {
 
       <AbarvaNav activePage="contradictions" />
 
-      {/* ── Module header ──────────────────────────────────────────────────── */}
-      <div style={{ background: '#0D1520', borderBottom: '1px solid #1C2D45', padding: '20px 32px 0' }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
-          Contradiction Intelligence · {cd.shortName}
-        </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: '#EFF6FF', margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
-          &ldquo;What was promised — and what actually exists?&rdquo;
-        </h1>
-        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
-          {[
-            { label: 'Contradictions', value: String(cd.nodes.length) },
-            { label: 'Critical', value: String(critCount) },
-            { label: 'High Severity', value: String(highCount) },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '20px', fontWeight: 700, color: '#EFF6FF' }}>{s.value}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-        {/* Client tabs — admin only */}
-        {isAdmin && (
-          <div style={{ display: 'flex', marginTop: '4px' }}>
-            {visibleClients.map(c => (
-              <button key={c.id} onClick={() => selectClient(c.id)}
-                style={{ padding: '8px 18px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
-                  borderBottom: selectedClient === c.id ? '2px solid #2DD4C8' : '2px solid transparent',
-                  background: 'transparent', color: selectedClient === c.id ? '#EFF6FF' : 'rgba(255,255,255,0.55)', transition: 'color 0.12s' }}>
-                {c.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <ModuleHeader
+        label={`Contradiction Intelligence · ${cd.shortName}`}
+        question="What was promised — and what actually exists?"
+        stats={[
+          { value: String(cd.nodes.length), label: 'Contradictions' },
+          { value: String(critCount), label: 'Critical', dot: '#EF4444' },
+          { value: String(highCount), label: 'High Severity', dot: '#F59E0B' },
+        ]}
+        tabs={isAdmin ? visibleClients.map(c => ({
+          id: c.id,
+          label: c.name,
+          active: selectedClient === c.id,
+          onClick: () => selectClient(c.id),
+        })) : undefined}
+        padding="20px 32px 0"
+      />
 
       {/* Main content */}
       <div style={{ display: 'grid', gridTemplateColumns: '60% 40%', height: 'calc(100vh - 96px)' }}>
 
         {/* SVG Network */}
-        <div style={{ background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', borderRight: '1px solid #21262D' }}>
+        <div style={{ background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', borderRight: '1px solid #1C2D45' }}>
           <svg viewBox="0 0 580 540" style={{ width: '100%', maxWidth: '580px', height: '100%', maxHeight: '540px' }}>
             {/* Grid dots for atmosphere */}
             <defs>
               <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                <circle cx="12" cy="12" r="0.8" fill="#1C2128" />
+                <circle cx="12" cy="12" r="0.8" fill="#0D1520" />
               </pattern>
             </defs>
             <rect width="580" height="540" fill="url(#grid)" />
@@ -429,7 +412,7 @@ function ContradictionsContent() {
               ) : (
                 <line key={node.id + '-line'}
                   x1={CX} y1={CY} x2={p.x} y2={p.y}
-                  stroke="#21262D" strokeWidth={1} strokeDasharray="4 4"
+                  stroke="#1C2D45" strokeWidth={1} strokeDasharray="4 4"
                 />
               )
             })}
@@ -460,7 +443,7 @@ function ContradictionsContent() {
                   )}
                   {/* Main circle */}
                   <circle cx={x} cy={y} r={NODE_R}
-                    fill={isActive ? color : '#161B22'}
+                    fill={isActive ? color : '#0D1520'}
                     stroke={color}
                     strokeWidth={isActive ? 0 : 1.5}
                   />
@@ -468,20 +451,20 @@ function ContradictionsContent() {
                   <text x={x} y={y - 7} textAnchor="middle" dominantBaseline="middle"
                     fill={isActive ? 'white' : color}
                     fontSize={10.5} fontWeight="700"
-                    fontFamily="IBM Plex Mono, monospace">
+                    fontFamily="JetBrains Mono, monospace">
                     {node.l1}
                   </text>
                   <text x={x} y={y + 9} textAnchor="middle" dominantBaseline="middle"
                     fill={isActive ? 'white' : color}
                     fontSize={10.5} fontWeight="700"
-                    fontFamily="IBM Plex Mono, monospace">
+                    fontFamily="JetBrains Mono, monospace">
                     {node.l2}
                   </text>
                   {/* Metric label outside */}
                   <text x={x} y={metricY} textAnchor="middle"
                     fill={isActive ? color : '#6B7280'}
                     fontSize={8.5}
-                    fontFamily="IBM Plex Mono, monospace">
+                    fontFamily="JetBrains Mono, monospace">
                     {node.metric}
                   </text>
                 </g>
@@ -489,34 +472,34 @@ function ContradictionsContent() {
             })}
 
             {/* Center node */}
-            <circle cx={CX} cy={CY} r={52} fill="#161B22" stroke="#2DD4C8" strokeWidth={1.5} />
+            <circle cx={CX} cy={CY} r={52} fill="#0D1520" stroke="#2DD4C8" strokeWidth={1.5} />
             <circle cx={CX} cy={CY} r={48} fill="#0D1117" stroke="#2DD4C8" strokeWidth={0.5} opacity={0.4} />
             <text x={CX} y={CY - 10} textAnchor="middle" fill="#2DD4C8" fontSize={11} fontWeight="700"
-              fontFamily="IBM Plex Mono, monospace">
+              fontFamily="JetBrains Mono, monospace">
               {cd.shortName.split(' ')[0]}
             </text>
             <text x={CX} y={CY + 7} textAnchor="middle" fill="#2DD4C8" fontSize={10} fontWeight="600"
-              fontFamily="IBM Plex Mono, monospace">
+              fontFamily="JetBrains Mono, monospace">
               {cd.shortName.split(' ').slice(1).join(' ')}
             </text>
             <text x={CX} y={CY + 23} textAnchor="middle" fill="#8B949E" fontSize={8.5}
-              fontFamily="IBM Plex Mono, monospace">
+              fontFamily="JetBrains Mono, monospace">
               {cd.nodes.length} contradictions
             </text>
 
             {/* Legend */}
             <g transform="translate(16, 490)">
               <circle cx={6} cy={6} r={6} fill="none" stroke="#EF4444" strokeWidth={1.5} />
-              <text x={16} y={10} fill="#6B7280" fontSize={8.5} fontFamily="IBM Plex Mono, monospace">CRITICAL</text>
+              <text x={16} y={10} fill="#6B7280" fontSize={8.5} fontFamily="JetBrains Mono, monospace">CRITICAL</text>
               <circle cx={70} cy={6} r={6} fill="none" stroke="#F59E0B" strokeWidth={1.5} />
-              <text x={80} y={10} fill="#6B7280" fontSize={8.5} fontFamily="IBM Plex Mono, monospace">HIGH</text>
-              <text x={130} y={10} fill="#30363D" fontSize={8} fontFamily="IBM Plex Mono, monospace">· Click node to explore</text>
+              <text x={80} y={10} fill="#6B7280" fontSize={8.5} fontFamily="JetBrains Mono, monospace">HIGH</text>
+              <text x={130} y={10} fill="#1C2D45" fontSize={8} fontFamily="JetBrains Mono, monospace">· Click node to explore</text>
             </g>
           </svg>
         </div>
 
         {/* Detail panel */}
-        <div style={{ overflowY: 'auto' as const, padding: '28px 28px', background: '#0D1117' }}>
+        <div style={{ overflowY: 'auto' as const, padding: '28px 28px', background: '#060A12' }}>
           {selected && (() => {
             const color = SEV_COLOR[selected.sev]
             return (
@@ -525,12 +508,12 @@ function ContradictionsContent() {
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 600, color: '#94A3B8', letterSpacing: '0.12em' }}>{selected.sev}</span>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.12em' }}>{selected.sev}</span>
                   </div>
                   <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#E6EDF3', lineHeight: 1.35, marginBottom: '12px', fontFamily: "'Georgia', serif" }}>{selected.title}</h2>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.06)', border: '1px solid #21262D' }}>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.06)', border: '1px solid #1C2D45' }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444', flexShrink: 0 }} />
-                    <span style={{ fontSize: '10px', color: '#94A3B8', fontFamily: 'IBM Plex Mono, monospace', fontWeight: 600, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
+                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
                     <span style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 700 }}>{selected.impact}</span>
                   </div>
                 </div>
@@ -542,21 +525,21 @@ function ContradictionsContent() {
                   { label: 'ROOT CAUSE',              text: selected.rootCause,       leftBorder: '#1C2D45' },
                   { label: 'AbarVa RECOMMENDATION',   text: selected.recommendation,  leftBorder: '#2DD4C8' },
                 ].map((section, i) => (
-                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#161B22', border: '1px solid #21262D', borderLeft: '3px solid ' + section.leftBorder }}>
-                    <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.12em', marginBottom: '10px' }}>{section.label}</div>
+                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#0D1520', border: '1px solid #1C2D45', borderLeft: '3px solid ' + section.leftBorder }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.12em', marginBottom: '10px' }}>{section.label}</div>
                     <p style={{ fontSize: '14px', color: '#E6EDF3', lineHeight: 1.7, margin: 0 }}>{section.text}</p>
                   </div>
                 ))}
 
                 {/* Navigation between nodes */}
-                <div style={{ marginTop: '24px', borderTop: '1px solid #21262D', paddingTop: '18px' }}>
-                  <div style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', color: '#6B7280', marginBottom: '12px', letterSpacing: '0.1em' }}>OTHER CONTRADICTIONS</div>
+                <div style={{ marginTop: '24px', borderTop: '1px solid #1C2D45', paddingTop: '18px' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#6B7280', marginBottom: '12px', letterSpacing: '0.1em' }}>OTHER CONTRADICTIONS</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px' }}>
                     {cd.nodes.filter(n => n.id !== selected.id).map(n => {
                       const dotColor = SEV_COLOR[n.sev]
                       return (
                         <button key={n.id} onClick={() => setSelectedId(n.id)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: '#94A3B8', border: '1px solid #21262D' }}>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.55)', border: '1px solid #1C2D45' }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
                           {n.l1} {n.l2}
                         </button>
@@ -596,7 +579,7 @@ function ContradictionsContent() {
 export default function ContradictionsPage() {
   return (
     <Suspense fallback={
-      <div style={{ background: '#0D1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94A3B8', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px' }}>
+      <div style={{ background: '#060A12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.55)', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
         Loading contradiction network...
       </div>
     }>

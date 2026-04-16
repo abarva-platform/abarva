@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { arcturusTechnology } from '@/data/arcturus/technology'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
@@ -610,30 +611,16 @@ function IntelligenceContent() {
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
       <AbarvaNav activePage="intelligence" />
 
-      {/* ── Sticky module header ──────────────────────────────────────────── */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 48px 0' }}>
-          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Technology Intelligence · {currentClientName}
-          </div>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: WHITE, margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
-            &ldquo;What technology do you have — and what does it actually cost you?&rdquo;
-          </h1>
-          <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
-            {[
-              { label: 'Systems', value: String(allSystems.length) },
-              { label: 'IT Spend / yr', value: `$${currentSpend.total}M` },
-              { label: 'Critical', value: String(criticalCount) },
-              { label: 'AI-Ready', value: `${aiReadyPct}%` },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 700, color: WHITE }}>{s.value}</div>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <ModuleHeader
+        label={`Technology Intelligence · ${currentClientName}`}
+        question="What technology do you have — and what does it actually cost you?"
+        stats={[
+          { value: String(allSystems.length), label: 'Systems' },
+          { value: `$${currentSpend.total}M`, label: 'IT Spend / yr' },
+          { value: String(criticalCount), label: 'Critical', dot: '#EF4444' },
+          { value: `${aiReadyPct}%`, label: 'AI-Ready', dot: '#2DD4C8' },
+        ]}
+      />
 
       {/* Body */}
       <div style={{ flex: 1, display: 'flex', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '24px 48px', gap: '20px' }}>

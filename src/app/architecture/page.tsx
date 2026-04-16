@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext } from '@/lib/use-client-context'
 import {
   ARCTURUS_TARGET_HTML,
@@ -19,7 +20,7 @@ const CLIENTS = [
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0D1117;--surface:#161B22;--s2:#1C2128;--border:#21262D;--b2:#30363D;--blue:#4DA3FF;--teal:#2DD4C8;--green:#27AE60;--glt:#6EE7B7;--purple:#A855F7;--amber:#F59E0B;--red:#EF4444;--gray:#9CA3AF;--text:#E6EDF3;--t2:#C9D1D9;--t3:#8B949E;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
+:root{--bg:#0D1117;--surface:#161B22;--s2:#1C2128;--border:#21262D;--b2:#30363D;--blue:#4DA3FF;--teal:#2DD4C8;--green:#27AE60;--glt:#6EE7B7;--purple:#A855F7;--amber:#F59E0B;--red:#EF4444;--gray:#9CA3AF;--text:#E6EDF3;--t2:#C9D1D9;--t3:#8B949E;--mono:'JetBrains Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;padding:0;min-width:900px}
 .cover{border-bottom:3px solid var(--accent,#4DA3FF);padding:28px 40px 22px;display:flex;justify-content:space-between;align-items:flex-end;background:linear-gradient(135deg,#0a1120 0%,#0D1117 70%)}
 .ey{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:2px;color:var(--accent,#4DA3FF);text-transform:uppercase;margin-bottom:6px}
@@ -957,8 +958,8 @@ function ArchContent() {
 
   useEffect(() => { document.title = 'Architecture — ' + client.name + ' | AbarVa' }, [client.name])
 
-  const MONO = 'IBM Plex Mono, monospace'
-  const SANS = 'IBM Plex Sans, sans-serif'
+  const MONO = 'JetBrains Mono, monospace'
+  const SANS = 'DM Sans, sans-serif'
 
   function getActiveHtml(): string {
     if (mode === 'current') return CURRENT_HTML_MAP[selected] || ''
@@ -987,33 +988,22 @@ function ArchContent() {
   }
 
   return (
-    <div style={{ background: '#0D1117', minHeight: '100vh' }}>
+    <div style={{ background: '#060A12', minHeight: '100vh' }}>
       <AbarvaNav activePage="architecture" />
 
-      {/* ── Module header ──────────────────────────────────────────────────── */}
-      <div style={{ background: '#0D1520', borderBottom: '1px solid #1C2D45', padding: '20px 32px 0' }}>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: '8px' }}>
-          Architecture Intelligence · {client.name}
-        </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', fontWeight: 700, color: '#EFF6FF', margin: '0 0 16px', lineHeight: 1.3, maxWidth: '680px' }}>
-          &ldquo;What AI architecture fits your cloud, data, and AI maturity?&rdquo;
-        </h1>
-        <div style={{ display: 'flex', gap: '40px', paddingBottom: '16px' }}>
-          {[
-            { label: 'Current State', value: String(visibleClients.length) + ' client' + (visibleClients.length !== 1 ? 's' : '') },
-            { label: 'Cloud', value: client.cloud },
-            { label: 'Reference Patterns', value: '3' },
-          ].map(s => (
-            <div key={s.label}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '20px', fontWeight: 700, color: '#EFF6FF' }}>{s.value}</div>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <ModuleHeader
+        label={`Architecture Intelligence · ${client.name}`}
+        question="What AI architecture fits your cloud, data, and AI maturity?"
+        stats={[
+          { value: String(visibleClients.length) + (visibleClients.length !== 1 ? ' Clients' : ' Client'), label: 'Scope' },
+          { value: client.cloud, label: 'Cloud' },
+          { value: '3', label: 'Reference Patterns' },
+        ]}
+        padding="20px 32px 0"
+      />
 
       {/* Mode toggle + Client selector row */}
-      <div style={{ background: '#0D1117', borderBottom: '1px solid #21262D' }}>
+      <div style={{ background: '#060A12', borderBottom: '1px solid #1C2D45' }}>
 
         {/* Mode toggle */}
         <div style={{ padding: '0 24px', display: 'flex', gap: '0', borderBottom: '1px solid #21262D' }}>
@@ -1028,7 +1018,7 @@ function ArchContent() {
                 cursor: 'pointer', border: 'none',
                 borderBottom: mode === id ? '2px solid #2DD4C8' : '2px solid transparent',
                 background: 'transparent',
-                color: mode === id ? '#2DD4C8' : '#6B7280',
+                color: mode === id ? '#2DD4C8' : "rgba(255,255,255,0.45)",
                 display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left',
               }}>
               {label}
@@ -1052,13 +1042,13 @@ function ArchContent() {
           <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
             {visibleClients.map(c => (
               <button key={c.id} onClick={() => setSelected(c.id)}
-                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selected === c.id ? '#E6EDF3' : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#21262D', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
+                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selected === c.id ? '#EFF6FF' : "rgba(255,255,255,0.45)", display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#1C2D45', color: selected === c.id ? 'white' : "rgba(255,255,255,0.45)", fontWeight: 700 }}>{c.cloud}</span>
                 {c.name}
               </button>
             ))}
             {mode === 'target' && !hasTargetState && (
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#6B7280', padding: '0 8px' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: "rgba(255,255,255,0.45)", padding: '0 8px' }}>
                 Target state for {client.name} — in development
               </div>
             )}
@@ -1068,7 +1058,7 @@ function ArchContent() {
               </div>
             )}
             {mode === 'current' && (
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#6B7280', padding: '0 8px' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: "rgba(255,255,255,0.45)", padding: '0 8px' }}>
                 {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · 4 root causes'}
               </div>
             )}
@@ -1083,7 +1073,7 @@ function ArchContent() {
             <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
               AbarVa · Reference Architecture Library
             </div>
-            <h1 style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 600, color: '#E6EDF3', margin: '0 0 8px' }}>
+            <h1 style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 600, color: '#EFF6FF', margin: '0 0 8px' }}>
               Pattern Library
             </h1>
             <p style={{ fontFamily: SANS, fontSize: '13px', color: '#8B949E', lineHeight: 1.6, maxWidth: '640px' }}>
@@ -1095,7 +1085,7 @@ function ArchContent() {
             {PATTERNS.map(p => (
               <button key={p.id} onClick={() => setSelectedPattern(p.id)}
                 style={{
-                  textAlign: 'left', background: '#161B22', border: `1px solid ${p.accent}25`,
+                  textAlign: 'left', background: '#0D1520', border: `1px solid ${p.accent}25`,
                   borderTop: `3px solid ${p.accent}`, borderRadius: '10px', padding: '24px',
                   cursor: 'pointer', transition: 'border-color 0.15s',
                 }}>
@@ -1109,7 +1099,7 @@ function ArchContent() {
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8' }}>→</span>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#E6EDF3', marginBottom: '6px', lineHeight: 1.3 }}>
+                <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#EFF6FF', marginBottom: '6px', lineHeight: 1.3 }}>
                   {p.title}
                 </div>
                 <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8B949E', marginBottom: '14px', lineHeight: 1.5 }}>
@@ -1122,7 +1112,7 @@ function ArchContent() {
             ))}
           </div>
 
-          <div style={{ marginTop: '32px', padding: '20px 24px', background: '#161B22', border: '1px solid #21262D', borderRadius: '10px' }}>
+          <div style={{ marginTop: '32px', padding: '20px 24px', background: '#0D1520', border: '1px solid #21262D', borderRadius: '10px' }}>
             <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', marginBottom: '8px', letterSpacing: '1px' }}>HOW TO USE PATTERNS</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               {[
@@ -1145,7 +1135,7 @@ function ArchContent() {
       {(mode !== 'patterns' || selectedPattern) && (
         <div>
           {mode === 'patterns' && selectedPattern && (
-            <div style={{ padding: '8px 24px', background: '#0D1117', borderBottom: '1px solid #21262D', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ padding: '8px 24px', background: '#060A12', borderBottom: '1px solid #21262D', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button onClick={() => setSelectedPattern(null)}
                 style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                 ← Pattern Library
@@ -1160,7 +1150,7 @@ function ArchContent() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 140px)', color: '#8B949E', fontFamily: MONO, fontSize: '13px', gap: '12px' }}>
               <div style={{ fontSize: '11px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase' }}>In Development</div>
               <div style={{ color: '#C9D1D9', fontSize: '15px', fontWeight: 600 }}>Target State — {client.name}</div>
-              <div style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center', maxWidth: '400px', lineHeight: 1.6, fontFamily: 'IBM Plex Sans, sans-serif' }}>
+              <div style={{ fontSize: '11px', color: "rgba(255,255,255,0.45)", textAlign: 'center', maxWidth: '400px', lineHeight: 1.6, fontFamily: 'DM Sans, sans-serif' }}>
                 Target state architecture for {client.name} will be generated as part of the AI strategy engagement deliverables. Available after engagement scoping is complete.
               </div>
             </div>
@@ -1181,7 +1171,7 @@ function ArchContent() {
 export default function ArchitecturePage() {
   return (
     <Suspense fallback={
-      <div style={{ background: '#0D1117', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4C8', fontFamily: 'IBM Plex Mono, monospace', fontSize: '13px' }}>
+      <div style={{ background: '#060A12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
         Loading architecture...
       </div>
     }>

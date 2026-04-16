@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import ModuleHeader from '@/components/ModuleHeader'
 import { MERIDIAN_RCM_VENDORS, ENSEMBLE_REFERENCE_OUTCOMES } from '@/data/knowledge/vendor-outcomes'
 import { MERIDIAN_CONTRACT_BENCHMARKS, MERIDIAN_NEGOTIATION_SEQUENCE } from '@/data/knowledge/contract-benchmarks'
 import { scoreVendorFit, vendorColorBucket } from '@/lib/vendor-intelligence'
@@ -1110,98 +1111,40 @@ function VendorIntelligenceContent() {
 
       <AbarvaNav activePage="vendor-intelligence" />
 
-      {/* ── Sticky module header ──────────────────────────────────────────── */}
-      <div style={{
-        borderBottom: `1px solid ${T.border}`,
-        position: 'sticky', top: 0, zIndex: 40,
-        background: '#0D1520',
-      }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '20px 32px 0' }}>
-          <div style={{ fontSize: 9, fontFamily: T.mono, color: T.teal, letterSpacing: '.14em', textTransform: 'uppercase' as const, marginBottom: 8 }}>
-            Vendor Intelligence
-          </div>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 24, fontWeight: 700, color: T.text, margin: '0 0 16px', lineHeight: 1.3, maxWidth: 680 }}>
-            &ldquo;Which vendor should we choose — and what does the contract need to say?&rdquo;
-          </h1>
-          <div style={{ display: 'flex', gap: 40, paddingBottom: 16 }}>
-            {[
-              { label: 'Vendors Assessed', value: '47' },
-              { label: 'Genome Matches', value: String(topVendorCount) },
-              { label: 'Confidence', value: '87%' },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ fontFamily: T.mono, fontSize: 20, fontWeight: 700, color: T.text }}>{s.value}</div>
-                <div style={{ fontFamily: T.mono, fontSize: 8, color: T.secondary, marginTop: 3, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* Mode switcher + client selector */}
-        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 32px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            {(['select', 'optimize'] as Mode[]).map(m => (
-              <button
-                key={m}
-                onClick={() => setMode(m)}
-                style={{
-                  padding: '6px 18px',
-                  background: mode === m ? T.teal : 'transparent',
-                  color: mode === m ? T.bg : T.secondary,
-                  border: `1px solid ${mode === m ? T.teal : T.border}`,
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  fontSize: 11,
-                  fontFamily: T.mono,
-                }}
-              >
-                {m === 'select' ? 'Select a Vendor' : 'Optimize Current'}
-              </button>
-            ))}
-          </div>
-          {/* Client selector */}
+      <ModuleHeader
+        label={`Vendor Intelligence · ${CLIENT_LABELS[client]}`}
+        question="Which vendor should we choose — and what does the contract need to say?"
+        stats={[
+          { value: '47', label: 'Vendors Assessed' },
+          { value: String(topVendorCount), label: 'Genome Matches', dot: T.teal },
+          { value: '87%', label: 'Confidence', dot: T.teal },
+        ]}
+        tabs={([
+          ['select', 'Select a Vendor'],
+          ['optimize', 'Optimize Current'],
+        ] as const).map(([id, label]) => ({ id, label, active: mode === id, onClick: () => setMode(id as Mode) }))}
+        right={
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowClientMenu(m => !m)}
-              style={{
-                padding: '6px 14px',
-                background: 'transparent',
-                border: `1px solid ${T.border}`,
-                color: T.text,
-                borderRadius: 6,
-                cursor: 'pointer',
-                fontSize: 12,
-                fontFamily: T.mono,
-              }}
+              style={{ padding: '5px 12px', background: 'transparent', border: `1px solid #1C2D45`, color: '#EFF6FF', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontFamily: 'JetBrains Mono, monospace' }}
             >
               {CLIENT_LABELS[client]} ▾
             </button>
             {showClientMenu && (
-              <div style={{
-                position: 'absolute', right: 0, top: '100%', marginTop: 4,
-                background: T.surface, border: `1px solid ${T.border}`,
-                borderRadius: 8, overflow: 'hidden', zIndex: 20, minWidth: 180,
-              }}>
+              <div style={{ position: 'absolute', right: 0, top: '100%', marginTop: 4, background: '#0D1520', border: `1px solid #1C2D45`, borderRadius: 8, overflow: 'hidden', zIndex: 50, minWidth: 180 }}>
                 {CLIENTS.map(c => (
-                  <button
-                    key={c}
-                    onClick={() => { setClient(c); setShowClientMenu(false) }}
-                    style={{
-                      width: '100%', padding: '10px 16px',
-                      background: c === client ? 'rgba(45,212,200,0.1)' : 'transparent',
-                      color: c === client ? T.teal : T.text,
-                      border: 'none', cursor: 'pointer',
-                      fontSize: 12, fontFamily: T.mono,
-                      textAlign: 'left',
-                    }}
-                  >
+                  <button key={c} onClick={() => { setClient(c); setShowClientMenu(false) }}
+                    style={{ width: '100%', padding: '10px 16px', background: c === client ? 'rgba(45,212,200,0.1)' : 'transparent', color: c === client ? '#2DD4C8' : '#EFF6FF', border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'JetBrains Mono, monospace', textAlign: 'left' }}>
                     {CLIENT_LABELS[c]}
                   </button>
                 ))}
               </div>
             )}
           </div>
-        </div>
-      </div>
+        }
+        padding="20px 32px 0"
+      />
 
       {/* Main content */}
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 48px 64px' }}>
