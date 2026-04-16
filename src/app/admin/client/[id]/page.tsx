@@ -138,8 +138,8 @@ function getClientData(id: string): ClientData | null {
           headline: '"71% cost-to-income. Peers are at 58%."',
           detail: '$840M efficiency gap. No transformation programme accountable for closure. CEO aware, no owner.',
           addressable: '$840M efficiency gap',
-          primaryCta: 'Build Case →', secondaryCta: 'View Intelligence →',
-          solutionSlug: 'tech',
+          primaryCta: 'Start Margin →', secondaryCta: 'View Intelligence →',
+          solutionSlug: 'margin',
         },
         {
           code: 'F009', rate: 71, severity: 'high',
@@ -1095,19 +1095,25 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
 
 // ─── PROJECTS TAB ──────────────────────────────────────────────────────────────
 
-function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowNewProject, isReadOnly }: {
+function ProjectsTab({ clientId, data, projView, setProjView, showNewProject, setShowNewProject, isReadOnly }: {
   clientId: string
+  data: ClientData
   projView: string
   setProjView: (v: string) => void
   showNewProject: boolean
   setShowNewProject: (v: boolean) => void
   isReadOnly: boolean
 }) {
-  const projects = [
-    { id: 'P001', name: 'Situation Diagnosis', status: 'Active', maestro: 'Anand S.', updated: '2026-04-12', progress: 65 },
-    { id: 'P002', name: 'AI Strategy Blueprint', status: 'Pending', maestro: 'Vikram K.', updated: '2026-04-08', progress: 20 },
-    { id: 'P003', name: 'MAS FEAT Remediation', status: 'Active', maestro: 'Anand S.', updated: '2026-04-10', progress: 40 },
-  ]
+  const router = useRouter()
+  const projects = data.solutionProgress.map((s, i) => ({
+    id: `P00${i + 1}`,
+    name: s.fullName,
+    status: s.complete ? 'Complete' : s.progress > 0 ? 'Active' : 'Pending',
+    progress: s.progress,
+    phase: s.phase,
+    slug: s.slug,
+    cta: s.cta,
+  }))
 
   return (
     <div>
@@ -1149,108 +1155,32 @@ function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowN
         </div>
       )}
 
-      {projView === 'dashboard' && (
-        <div>
-          {/* Stats strip */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: '12px', marginBottom: '24px' }}>
-            {[
-              { label: 'Total projects', value: '3' },
-              { label: 'Active', value: '2' },
-              { label: 'Pending', value: '1' },
-              { label: 'Maestros', value: '2' },
-              { label: 'Avg progress', value: '42%' },
-            ].map((s, i) => (
-              <div key={i} style={cardStyle({ textAlign: 'center' as const, padding: '16px' })}>
-                <div style={{ fontFamily: SERIF, fontSize: '24px', color: TEAL, marginBottom: '4px' }}>{s.value}</div>
-                <div style={labelStyle}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Maestro usage */}
-          <div style={{ ...cardStyle({ marginBottom: '24px' }) }}>
-            {sectionTitle('Maestro usage')}
-            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
-              <thead>
-                <tr>{['Maestro', 'Projects', 'Hours (30d)', 'Status'].map(h => (
-                  <th key={h} style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textAlign: 'left' as const, padding: '0 12px 10px 0', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
-                ))}</tr>
-              </thead>
-              <tbody>
-                {[
-                  { name: 'Anand Sundaram', projects: 2, hours: 42, status: 'Active' },
-                  { name: 'Vikram Kapoor', projects: 1, hours: 18, status: 'Active' },
-                ].map((r, i) => (
-                  <tr key={i}>
-                    <td style={{ fontSize: '13px', color: WHITE, padding: '10px 12px 10px 0' }}>{r.name}</td>
-                    <td style={{ fontFamily: MONO, fontSize: '12px', color: TEAL, padding: '10px 12px 10px 0' }}>{r.projects}</td>
-                    <td style={{ fontFamily: MONO, fontSize: '12px', color: MUTED, padding: '10px 12px 10px 0' }}>{r.hours}h</td>
-                    <td style={{ padding: '10px 0' }}><span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED }}>{r.status}</span></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Active projects quick view */}
-          <div style={cardStyle()}>
-            {sectionTitle('Active projects')}
-            {projects.filter(p => p.status === 'Active').map((p, i) => (
-              <div key={i} style={{ padding: '12px 0', borderBottom: i === 0 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <div>
-                    <span style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginRight: '8px' }}>{p.id}</span>
-                    <span style={{ fontSize: '13px', color: WHITE }}>{p.name}</span>
-                  </div>
-                  <span style={{ fontSize: '11px', color: DIM }}>{p.maestro}</span>
+      {/* Solution engagement cards — always visible, both views */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px', marginBottom: '24px' }}>
+        {projects.map((p, i) => {
+          const statusColor = p.status === 'Complete' ? GREEN : p.progress > 0 ? TEAL : AMBER
+          return (
+            <div key={i} onClick={() => router.push(`/engage/${clientId}/${p.slug}`)}
+              style={{ ...cardStyle({ borderTop: `3px solid ${statusColor}`, cursor: 'pointer' }), transition: 'border-color 0.2s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '3px' }}>{p.id}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE }}>{p.name}</div>
                 </div>
-                <div style={{ height: '4px', background: BORDER, borderRadius: '2px' }}>
-                  <div style={{ height: '4px', borderRadius: '2px', width: `${p.progress}%`, background: TEAL }} />
-                </div>
+                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: p.status === 'Active' ? 'rgba(45,212,200,0.1)' : p.status === 'Complete' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)', color: statusColor }}>{p.status}</span>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {projView === 'table' && (
-        <div style={cardStyle()}>
-          {/* Filter bar */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-            {['All', 'Active', 'Pending', 'Complete'].map((f, i) => (
-              <button key={i} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '20px', border: `1px solid ${i === 0 ? TEAL : BORDER}`, background: i === 0 ? 'rgba(45,212,200,0.1)' : 'transparent', color: i === 0 ? TEAL : MUTED, cursor: 'pointer' }}>{f}</button>
-            ))}
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
-            <thead>
-              <tr>{['ID', 'Project', 'Status', 'Maestro', 'Progress', 'Last updated'].map(h => (
-                <th key={h} style={{ fontFamily: MONO, fontSize: '10px', color: DIM, textAlign: 'left' as const, padding: '0 12px 12px 0', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
-              ))}</tr>
-            </thead>
-            <tbody>
-              {projects.map((p, i) => (
-                <tr key={i} style={{ borderTop: `1px solid ${BORDER}` }}>
-                  <td style={{ fontFamily: MONO, fontSize: '11px', color: DIM, padding: '12px 12px 12px 0' }}>{p.id}</td>
-                  <td style={{ fontSize: '13px', color: WHITE, padding: '12px 12px 12px 0' }}>{p.name}</td>
-                  <td style={{ padding: '12px 12px 12px 0' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: p.status === 'Active' ? 'rgba(52,211,153,0.1)' : 'rgba(245,158,11,0.1)', color: p.status === 'Active' ? GREEN : AMBER }}>{p.status}</span>
-                  </td>
-                  <td style={{ fontSize: '12px', color: MUTED, padding: '12px 12px 12px 0' }}>{p.maestro}</td>
-                  <td style={{ padding: '12px 12px 12px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '80px', height: '4px', background: BORDER, borderRadius: '2px' }}>
-                        <div style={{ height: '4px', borderRadius: '2px', width: `${p.progress}%`, background: TEAL }} />
-                      </div>
-                      <span style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>{p.progress}%</span>
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '11px', color: DIM, padding: '12px 0' }}>{p.updated}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              <div style={{ fontSize: '11px', color: DIM, marginBottom: '10px' }}>Phase {p.phase}{p.status === 'Complete' ? ' · Complete ✓' : ` · ${p.progress}%`}</div>
+              <div style={{ height: '3px', background: BORDER, borderRadius: '2px', marginBottom: '12px' }}>
+                <div style={{ height: '3px', borderRadius: '2px', width: `${p.progress}%`, background: statusColor }} />
+              </div>
+              <button onClick={e => { e.stopPropagation(); router.push(`/engage/${clientId}/${p.slug}`) }}
+                style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: `1px solid ${TEAL}`, borderRadius: '4px', padding: '5px 12px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
+                {p.cta}
+              </button>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -1384,10 +1314,12 @@ function ActivityTab({ data }: { data: ClientData }) {
 function SeedAllDemosButton({ compact }: { compact?: boolean }) {
   const [seeding, setSeeding] = useState(false)
   const [result, setResult] = useState<string | null>(null)
+  const [details, setDetails] = useState<{ client: string; solution: string; status: string; message?: string }[]>([])
 
   async function handleSeedAll() {
     setSeeding(true)
     setResult(null)
+    setDetails([])
     try {
       const res = await fetch('/api/admin/seed-all-demos', {
         method: 'POST',
@@ -1396,6 +1328,7 @@ function SeedAllDemosButton({ compact }: { compact?: boolean }) {
       })
       const data = await res.json()
       setResult(data.summary || data.error || 'Done')
+      if (data.results) setDetails(data.results)
     } catch (err: any) {
       setResult(`Error: ${err.message}`)
     } finally {
@@ -1423,10 +1356,15 @@ function SeedAllDemosButton({ compact }: { compact?: boolean }) {
         {seeding ? 'Seeding…' : compact ? 'Seed all (8 pairs)' : 'Seed all demo engagements (8 pairs)'}
       </button>
       {result && (
-        <div style={{ marginTop: '6px', fontFamily: MONO, fontSize: '10px', color: result.startsWith('Error') ? RED : GREEN, lineHeight: 1.6 }}>
+        <div style={{ marginTop: '6px', fontFamily: MONO, fontSize: '10px', color: result.includes('error') ? RED : GREEN, lineHeight: 1.6 }}>
           {result}
         </div>
       )}
+      {details.filter(d => d.status === 'error').map((d, i) => (
+        <div key={i} style={{ marginTop: '4px', fontFamily: MONO, fontSize: '9px', color: RED, lineHeight: 1.5 }}>
+          ✗ {d.client}/{d.solution}: {d.message}
+        </div>
+      ))}
     </div>
   )
 }
@@ -1475,14 +1413,10 @@ function SeedSolutionButton({ clientId, solution }: { clientId: string; solution
 
 function BreadcrumbBar({ data }: { data: ClientData }) {
   return (
-    <div style={{ background: TEAL, height: '30px', display: 'flex', alignItems: 'center' }}>
-      <div style={{ maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '0 28px', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: MONO, fontSize: '10px', color: '#060A12', letterSpacing: '.06em' }}>
-        <span>Home</span>
-        <span style={{ opacity: 0.45 }}>·</span>
-        <span style={{ fontWeight: 700 }}>{data.name}</span>
-        <span style={{ opacity: 0.45 }}>·</span>
-        <span>Live Intelligence</span>
-      </div>
+    <div style={{ padding: '8px 0 8px 24px' }}>
+      <span style={{ fontFamily: MONO, fontSize: '12px', color: '#9CA3AF', letterSpacing: '.04em' }}>
+        Maestro · {data.name}
+      </span>
     </div>
   )
 }
@@ -1550,35 +1484,13 @@ function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSe
         ))}
         {isAdmin && (
           <div style={{ borderTop: `1px solid ${BORDER}`, marginTop: '6px', paddingTop: '10px' }}>
-            <button
-              onClick={() => setCenterView('admin')}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '5px 0', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}
+            <a
+              href="/admin"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 0', textDecoration: 'none' }}
             >
-              <span style={{ fontSize: '12px', color: centerView === 'admin' ? TEAL : DIM }}>⚙</span>
-              <span style={{ fontSize: '12px', color: centerView === 'admin' ? TEAL : MUTED, fontFamily: SANS, fontWeight: 600 }}>Admin</span>
-            </button>
-            {[
-              { key: 'setup',    label: 'Setup & engagement' },
-              { key: 'data',     label: 'Data & approvals'   },
-              { key: 'users',    label: 'Maestro users'      },
-              { key: 'security', label: 'Security'           },
-            ].map(sub => (
-              <button
-                key={sub.key}
-                onClick={() => { setCenterView('admin'); setAdminSection(sub.key) }}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '4px 0 4px 20px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' as const }}
-              >
-                <span style={{ fontSize: '11px', color: (centerView === 'admin' && adminSection === sub.key) ? TEAL : DIM, fontFamily: SANS }}>
-                  {sub.label}
-                </span>
-              </button>
-            ))}
-            <button
-              onClick={() => { setCenterView('admin'); setAdminSection('data') }}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: '100%', marginTop: '8px', padding: '7px 8px', background: 'rgba(45,212,200,0.07)', border: `1px solid rgba(45,212,200,0.25)`, borderRadius: '6px', cursor: 'pointer' }}
-            >
-              <span style={{ fontSize: '10px', fontFamily: MONO, color: TEAL, letterSpacing: '.04em' }}>↑ Upload Demo Data</span>
-            </button>
+              <span style={{ fontSize: '11px', color: TEAL }}>⚙</span>
+              <span style={{ fontSize: '11px', color: MUTED, fontFamily: SANS }}>Admin Portal →</span>
+            </a>
           </div>
         )}
       </div>
@@ -1586,8 +1498,10 @@ function LeftPanel({ data, clientId, centerView, setCenterView, isAdmin, adminSe
   )
 }
 
-function HeroCarousel({ data }: { data: ClientData }) {
+function HeroCarousel({ data, clientId }: { data: ClientData, clientId: string }) {
+  const router = useRouter()
   const [idx, setIdx] = useState(0)
+  const [hoverSecondary, setHoverSecondary] = useState(false)
   useEffect(() => {
     const t = setInterval(() => setIdx(i => (i + 1) % data.heroFindings.length), 6000)
     return () => clearInterval(t)
@@ -1605,8 +1519,21 @@ function HeroCarousel({ data }: { data: ClientData }) {
       <div style={{ fontSize: '14px', color: 'rgba(239,246,255,0.60)', lineHeight: 1.7, marginBottom: '18px' }}>{f.detail}</div>
       <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '.08em', marginBottom: '28px' }}>Addressable: {f.addressable}</div>
       <div style={{ display: 'flex', gap: '10px', marginBottom: '26px' }}>
-        <button style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 700, padding: '9px 20px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer' }}>{f.primaryCta}</button>
-        <button style={{ fontFamily: MONO, fontSize: '11px', padding: '9px 20px', borderRadius: '6px', background: 'transparent', color: 'rgba(239,246,255,0.65)', border: '1px solid rgba(239,246,255,0.15)', cursor: 'pointer' }}>{f.secondaryCta}</button>
+        <button
+          onClick={() => router.push(`/engage/${clientId}/${f.solutionSlug}`)}
+          style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 700, padding: '9px 20px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer' }}>{f.primaryCta}</button>
+        <div style={{ position: 'relative' as const, display: 'inline-block' }}>
+          <button
+            onMouseEnter={() => setHoverSecondary(true)}
+            onMouseLeave={() => setHoverSecondary(false)}
+            style={{ fontFamily: MONO, fontSize: '11px', padding: '9px 20px', borderRadius: '6px', background: 'transparent', color: 'rgba(239,246,255,0.30)', border: '1px solid rgba(239,246,255,0.08)', cursor: 'default', opacity: 0.5 }}>{f.secondaryCta}</button>
+          {hoverSecondary && (
+            <div style={{ position: 'absolute' as const, bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' as const, background: '#1C2D45', border: '1px solid rgba(239,246,255,0.12)', borderRadius: '6px', padding: '5px 10px', fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.65)', pointerEvents: 'none' as const, zIndex: 10 }}>
+              In development
+              <div style={{ position: 'absolute' as const, top: '100%', left: '50%', transform: 'translateX(-50%)', border: '5px solid transparent', borderTopColor: '#1C2D45' }} />
+            </div>
+          )}
+        </div>
       </div>
       <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
         {data.heroFindings.map((_, i) => (
@@ -1659,10 +1586,214 @@ function FindingsFeed({ data }: { data: ClientData }) {
   )
 }
 
-function RightPanel({ data, isReadOnly }: { data: ClientData, isReadOnly: boolean }) {
+// ── Pre-engagement gap check modal ───────────────────────────────────────────
+function PreEngagementModal({ engagementName, clientId, targetSlug, onClose }: {
+  engagementName: string
+  clientId: string
+  targetSlug: string
+  onClose: () => void
+}) {
+  const router = useRouter()
+  const isMeridian = clientId === 'meridian'
+
+  type Check = { ok: boolean; label: string; detail: string; blocking?: boolean }
+
+  const checks: Check[] = isMeridian ? [
+    { ok: true,  label: 'Use case defined',          detail: 'Revenue Cycle AI — Denial Prevention (Phase 1)' },
+    { ok: true,  label: 'Target outcome confirmed',  detail: 'Denial rate → below 14% by Q4 2026 ($94M gap)' },
+    { ok: true,  label: 'Deadline anchored',         detail: 'Epic go-live Q3 2026 — 14-month window confirmed' },
+    { ok: true,  label: 'Data confidence avg',       detail: '88% across 3 approved files' },
+    { ok: false, label: 'Payer Contract Analysis',   detail: 'Missing. Phase 1 SLA intelligence will be limited. Request from CFO before Phase 2.', blocking: false },
+    { ok: false, label: 'Genome F011 active',        detail: 'Epic EHR go-live pattern — 71% failure rate without 12-month AI runway. Must start now.', blocking: false },
+    { ok: true,  label: 'CEO briefing',              detail: 'Phase 0 — not yet required' },
+  ] : [
+    { ok: true,  label: 'Use case defined',          detail: 'Cost-to-income reduction programme' },
+    { ok: true,  label: 'Data confidence avg',       detail: '81% across approved files' },
+    { ok: false, label: 'MAS FEAT gap analysis',     detail: 'Regulatory deadline overdue. Complete before proceeding with any AI deployment.', blocking: true },
+  ]
+
+  const hasBlocker = checks.some(c => !c.ok && c.blocking)
+  const warnings = checks.filter(c => !c.ok && !c.blocking)
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(6,10,18,0.82)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 32, maxWidth: 520, width: '90%', boxShadow: '0 24px 64px rgba(0,0,0,0.5)' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 6 }}>Pre-Engagement Check</div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: WHITE, margin: '0 0 20px', lineHeight: 1.2 }}>
+          Before you start — {engagementName}
+        </h2>
+
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 7, marginBottom: 20 }}>
+          {checks.map((c, i) => (
+            <div key={i} style={{
+              display: 'flex', gap: 10, alignItems: 'flex-start', padding: '8px 10px',
+              background: c.ok ? 'transparent' : c.blocking ? `${RED}08` : `${AMBER}08`,
+              border: `1px solid ${c.ok ? BORDER : c.blocking ? RED + '40' : AMBER + '40'}`,
+              borderRadius: 6,
+            }}>
+              <span style={{ fontSize: 13, color: c.ok ? GREEN : c.blocking ? RED : AMBER, flexShrink: 0, marginTop: 1 }}>
+                {c.ok ? '✓' : c.blocking ? '✕' : '⚠'}
+              </span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: c.ok ? MUTED : WHITE, fontFamily: SANS }}>{c.label}</div>
+                <div style={{ fontSize: 11, color: DIM, fontFamily: SANS, marginTop: 2, lineHeight: 1.5 }}>{c.detail}</div>
+              </div>
+              {!c.ok && (
+                <span style={{ fontFamily: MONO, fontSize: 8, color: c.blocking ? RED : AMBER, background: c.blocking ? `${RED}15` : `${AMBER}15`, padding: '2px 5px', borderRadius: 3, flexShrink: 0, marginTop: 2 }}>
+                  {c.blocking ? 'BLOCKING' : 'ADVISORY'}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {(hasBlocker || warnings.length > 0) && (
+          <div style={{ background: hasBlocker ? `${RED}10` : `${AMBER}10`, border: `1px solid ${hasBlocker ? RED : AMBER}40`, borderRadius: 8, padding: '10px 14px', marginBottom: 20 }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: hasBlocker ? RED : AMBER, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
+              {hasBlocker ? 'Blocking issue — complete setup before proceeding' : `${warnings.length} advisory gap${warnings.length > 1 ? 's' : ''} — non-blocking, proceed with awareness`}
+            </div>
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => { onClose(); window.location.href = '/admin?section=data' }}
+            style={{ flex: 1, padding: '10px 0', background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, fontFamily: SANS, fontSize: 13, color: MUTED, cursor: 'pointer' }}
+          >
+            Address gaps first
+          </button>
+          <button
+            onClick={() => { if (!hasBlocker) { onClose(); router.push(targetSlug) } }}
+            disabled={hasBlocker}
+            style={{ flex: 2, padding: '10px 0', background: hasBlocker ? '#1C2D45' : TEAL, border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 13, fontWeight: 700, color: hasBlocker ? '#475569' : '#060A12', cursor: hasBlocker ? 'not-allowed' : 'pointer' }}
+          >
+            {hasBlocker ? 'Resolve blocker first' : 'Proceed with noted gaps →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RightPanel({ data, clientId, isReadOnly }: { data: ClientData, clientId: string, isReadOnly: boolean }) {
+  const router = useRouter()
+  const [gapModal, setGapModal] = useState<{ name: string; slug: string } | null>(null)
   const criticalCount = data.contradictions.filter(c => c.severity === 'critical' || c.severity === 'high').length
+  const activeEngagement = data.solutionProgress.find(s => s.progress > 0 && !s.complete) || data.solutionProgress[0]
+
+  const isMeridian = clientId === 'meridian'
+
+  // Readiness checks
+  const readiness = isMeridian ? {
+    data: [
+      { ok: true,  label: 'Financial Statements', pct: '96%' },
+      { ok: true,  label: 'Technology Landscape', pct: '88%' },
+      { ok: false, label: 'Payer Contract Analysis', pct: 'MISSING' },
+      { ok: false, label: 'CDO Profile', pct: 'MISSING' },
+    ],
+    engagement: [
+      { ok: true,  label: 'Client profile complete' },
+      { ok: true,  label: 'Fee model confirmed' },
+      { ok: true,  label: 'Use case defined' },
+      { ok: false, label: 'CEO briefed (pending)' },
+    ],
+    overall: 'amber' as 'green' | 'amber' | 'red',
+    summary: 'PARTIALLY READY — 2 data gaps noted',
+  } : {
+    data: [
+      { ok: true,  label: 'Annual Report 2025', pct: '94%' },
+      { ok: false, label: 'MAS FEAT Gap Analysis', pct: '72% (pending)' },
+    ],
+    engagement: [
+      { ok: true,  label: 'Client profile complete' },
+      { ok: false, label: 'Regulatory timeline locked' },
+    ],
+    overall: 'amber' as 'green' | 'amber' | 'red',
+    summary: 'PARTIALLY READY — complete setup',
+  }
+
+  const overallColor = readiness.overall === 'green' ? GREEN : readiness.overall === 'amber' ? AMBER : RED
+
+  // Engagement queue for this Maestro
+  const myEngagements = isMeridian ? [
+    { name: 'RCM AI — Denial Prevention', phase: 1, status: 'In Progress', type: 'avr', slug: `/ai-strategy?client=${clientId}` },
+    { name: 'Tech Modernization', phase: 2, status: 'In Progress', type: 'sol', slug: `/engage/${clientId}/tech?client=${clientId}` },
+    { name: 'Margin Optimization', phase: 0, status: 'Not Started', type: 'sol', slug: `/engage/${clientId}/margin?client=${clientId}` },
+  ] : [
+    { name: 'Cost-to-Income Reduction', phase: 0, status: 'Not Started', type: 'avr', slug: `/ai-strategy?client=${clientId}` },
+  ]
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '12px' }}>
+
+      {/* Readiness Status */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Readiness Status</div>
+
+        <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: '6px' }}>Data</div>
+        {readiness.data.map((d, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '5px' }}>
+            <span style={{ fontSize: '10px', color: d.ok ? GREEN : AMBER }}>{d.ok ? '✓' : '⚠'}</span>
+            <span style={{ fontSize: '11px', color: d.ok ? MUTED : WHITE, fontFamily: SANS, flex: 1 }}>{d.label}</span>
+            <span style={{ fontFamily: MONO, fontSize: '9px', color: d.ok ? GREEN : AMBER }}>{d.pct}</span>
+          </div>
+        ))}
+
+        <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em', margin: '12px 0 6px' }}>Engagement</div>
+        {readiness.engagement.map((e, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '10px', color: e.ok ? GREEN : DIM }}>{e.ok ? '✓' : '○'}</span>
+            <span style={{ fontSize: '11px', color: MUTED, fontFamily: SANS }}>{e.label}</span>
+          </div>
+        ))}
+
+        <div style={{ marginTop: '12px', padding: '7px 10px', background: `${overallColor}12`, border: `1px solid ${overallColor}40`, borderRadius: '6px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: overallColor }}>{readiness.summary}</div>
+        </div>
+        <a href="/admin?section=data" style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, display: 'block', marginTop: '8px', textDecoration: 'none' }}>
+          Go to Admin Setup →
+        </a>
+      </div>
+
+      {/* Action */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>Phase 1 ready for review</div>
+        <div style={{ fontSize: '12px', color: MUTED, marginBottom: '3px' }}>{data.contradictions.length} findings</div>
+        <div style={{ fontSize: '12px', color: RED, marginBottom: '16px' }}>{criticalCount} CRITICAL</div>
+        {!isReadOnly && (
+          <button
+            onClick={() => setGapModal({ name: activeEngagement?.fullName ?? activeEngagement?.name ?? 'Engagement', slug: `/engage/${clientId}/${activeEngagement?.slug || data.solutionProgress[0].slug}` })}
+            style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 14px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
+            Open Engagement →
+          </button>
+        )}
+      </div>
+
+      {/* Your Engagements */}
+      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
+        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '12px' }}>Your Engagements</div>
+        {myEngagements.map((e, i) => (
+          <div key={i} style={{ marginBottom: i < myEngagements.length - 1 ? '10px' : '0', paddingBottom: i < myEngagements.length - 1 ? '10px' : '0', borderBottom: i < myEngagements.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: WHITE, fontFamily: SANS, flex: 1, paddingRight: 6, lineHeight: 1.3 }}>{e.name}</div>
+              <span style={{ fontFamily: MONO, fontSize: '8px', color: e.type === 'avr' ? TEAL : PURPLE, background: e.type === 'avr' ? 'rgba(45,212,200,0.12)' : 'rgba(129,140,248,0.12)', padding: '2px 5px', borderRadius: '3px', flexShrink: 0 }}>
+                {e.type === 'avr' ? 'AVR' : 'SOL'}
+              </span>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, marginBottom: '6px' }}>Ph {e.phase} · {e.status}</div>
+            {!isReadOnly && (
+              <button
+                onClick={() => setGapModal({ name: e.name, slug: e.slug })}
+                style={{ fontFamily: MONO, fontSize: '9px', color: e.status === 'Not Started' ? AMBER : TEAL, background: 'none', border: `1px solid ${e.status === 'Not Started' ? AMBER : TEAL}`, borderRadius: '4px', padding: '4px 10px', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}
+              >
+                {e.status === 'Not Started' ? 'Start via ' : 'Continue in '}{e.type === 'avr' ? 'AI Value Realization' : 'Solutions'} →
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* Genome signals */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
         <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Genome Signals</div>
@@ -1680,19 +1811,6 @@ function RightPanel({ data, isReadOnly }: { data: ClientData, isReadOnly: boolea
         <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, marginTop: '12px', cursor: 'pointer' }}>View all {data.genomePatternsMatched.length} →</div>
       </div>
 
-      {/* Action */}
-      <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '10px', padding: '18px' }}>
-        <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '10px' }}>Your Action</div>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: WHITE, marginBottom: '6px' }}>Phase 1 ready for review</div>
-        <div style={{ fontSize: '12px', color: MUTED, marginBottom: '3px' }}>{data.contradictions.length} findings</div>
-        <div style={{ fontSize: '12px', color: RED, marginBottom: '16px' }}>{criticalCount} CRITICAL</div>
-        {!isReadOnly && (
-          <button style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 14px', borderRadius: '6px', background: TEAL, color: '#060A12', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'center' as const }}>
-            Approve Phase 1 →
-          </button>
-        )}
-      </div>
-
       {/* Platform stats */}
       <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '18px' }}>
         <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: '14px' }}>Platform Stats</div>
@@ -1708,6 +1826,15 @@ function RightPanel({ data, isReadOnly }: { data: ClientData, isReadOnly: boolea
           </div>
         ))}
       </div>
+
+      {gapModal && (
+        <PreEngagementModal
+          engagementName={gapModal.name}
+          clientId={clientId}
+          targetSlug={gapModal.slug}
+          onClose={() => setGapModal(null)}
+        />
+      )}
     </div>
   )
 }
@@ -1803,12 +1930,276 @@ function SeedDemosFloatMenu({ clientId }: { clientId: string }) {
   )
 }
 
+// ── Value Dashboard ────────────────────────────────────────────────────────────
+function ValueDashboard({ clientId }: { clientId: string }) {
+  const isMeridian = clientId === 'meridian'
+  const PAGE  = '#F8F7F4', CARD = '#FFFFFF', BDR = '#E5E7EB'
+  const TEXT = '#0C0C0C', TEXT2 = '#3C3C3C', MUTED = '#6B7280'
+  const DARK = '#060A12', DARK2 = '#0D1520'
+
+  const statCards = isMeridian ? [
+    { value: '$22.4M', label: 'VERIFIED SAVINGS TO DATE', sub: 'Audited by KPMG · Month 3', color: TEAL },
+    { value: '$3.92M', label: 'FEE EARNED BY ABARVA', sub: 'Invoice MER-FEE-001', color: GREEN },
+    { value: '5.7x', label: 'ROI ON ABARVA FEE', sub: '$22.4M ÷ $3.92M fee', color: WHITE },
+    { value: '210bps', label: 'MARGIN IMPROVEMENT', sub: 'C/I: 71.2% → 69.1%', color: TEAL },
+  ] : [
+    { value: '$19.1M', label: 'VERIFIED SAVINGS', sub: 'OpEx reduction confirmed', color: TEAL },
+    { value: '$2.8M', label: 'FEE EARNED', sub: 'Invoice ARC-FEE-001', color: GREEN },
+    { value: '6.8x', label: 'ROI ON FEE', sub: '$19.1M ÷ $2.8M', color: WHITE },
+    { value: '-1.3pp', label: 'C/I IMPROVEMENT', sub: '71.2% → 69.9%', color: TEAL },
+  ]
+
+  const plCards = [
+    {
+      label: 'OPEX IMPACT', value: '$19.1M', color: TEAL, bdColor: TEAL,
+      items: ['Bloomberg contract: $3.3M/yr', 'Consulting reduction: $8.4M freed', 'AI ROI verified: $7.4M'],
+      progress: 31, target: '$60M Year 1 target',
+    },
+    {
+      label: 'CAPEX AVOIDANCE', value: '$6.2M', color: '#F59E0B', bdColor: '#F59E0B',
+      items: ['AI pilots killed: $3.8M avoided', 'Infrastructure deferred: $2.4M'],
+      progress: 52, target: '$12M Year 1 target',
+    },
+    {
+      label: 'REVENUE PROTECTED', value: '$2.4B', color: GREEN, bdColor: GREEN,
+      items: ['MAS FEAT compliance: active', 'FCA review preparation: in progress'],
+      progress: 100, target: 'Regulatory risk cleared',
+    },
+  ]
+
+  const nextActions = [
+    { urgency: 'URGENT', bdColor: RED, title: 'Ensemble contract — Dec 2026', value: '$14M termination fee avoided if SLA enforced now', cta: 'Start →' },
+    { urgency: 'HIGH VALUE', bdColor: TEAL, title: 'MA Star Rating — $34M bonus', value: '$34M CMS performance bonus at 4.0 stars', cta: 'Start →' },
+    { urgency: 'FOUNDATION', bdColor: MUTED, title: 'CDO + AI governance — $220M', value: 'Baseline 28 AI initiatives. Every untracked dollar is risk.', cta: 'Explore →' },
+  ]
+
+  return (
+    <div style={{ background: PAGE, minHeight: '100vh' }}>
+      {/* Hero dark section */}
+      <div style={{ background: DARK, padding: '56px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          {isMeridian ? 'Meridian Health System' : 'Arcturus Financial'} · Value Delivered
+        </div>
+        <h1 style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 700, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.1 }}>
+          {isMeridian ? '$25.3M verified.\n$11.6M projected by Month 12.' : '$21.9M verified.\n$9.4M projected by Month 12.'}
+        </h1>
+        <p style={{ fontFamily: SANS, fontSize: 18, color: '#9CA3AF', margin: '0 0 40px' }}>
+          Across {isMeridian ? 2 : 2} active engagements. Baseline locked Day 0. Every number auditable.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+          {statCards.map((s, i) => (
+            <div key={i} style={{ background: DARK2, border: '1px solid #1F2937', borderRadius: 8, padding: 24 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 8 }}>{s.value}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontFamily: SANS, fontSize: 12, color: '#4B5563' }}>{s.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* P&L Impact */}
+      <div style={{ padding: '56px 48px', background: PAGE }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>How This Maps to Your P&L</div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEXT, margin: '0 0 40px' }}>Every engagement maps to a line on your P&L.</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+          {plCards.map((p, i) => (
+            <div key={i} style={{ background: CARD, border: `1px solid ${BDR}`, borderLeft: `6px solid ${p.bdColor}`, borderRadius: 8, padding: 32 }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: p.color, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 10 }}>{p.label}</div>
+              <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 700, color: TEXT, lineHeight: 1, marginBottom: 16 }}>{p.value}</div>
+              {p.items.map((item, j) => (
+                <div key={j} style={{ fontFamily: SANS, fontSize: 15, color: TEXT2, marginBottom: 6 }}>• {item}</div>
+              ))}
+              <div style={{ marginTop: 20 }}>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, marginBottom: 6 }}>{p.progress}% of {p.target}</div>
+                <div style={{ height: 6, background: BDR, borderRadius: 3 }}>
+                  <div style={{ height: 6, borderRadius: 3, width: `${p.progress}%`, background: p.bdColor }} />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Monthly Review */}
+      <div style={{ padding: '0 48px 56px' }}>
+        <div style={{ background: CARD, borderTop: `4px solid ${TEAL}`, border: `1px solid ${BDR}`, borderRadius: 8, padding: 36 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h3 style={{ fontFamily: SERIF, fontSize: 24, color: TEXT, margin: '0 0 8px' }}>Monthly Review</h3>
+              <p style={{ fontFamily: SANS, fontSize: 15, color: TEXT2, margin: '0 0 20px', maxWidth: 500 }}>Auto-generated on the 1st of each month from verified actuals.</p>
+              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8, marginBottom: 24 }}>
+                {['$22.4M verified to date', 'Phase 3 milestone hit — Month 3', 'Next: Bloomberg billing verification Month 4'].map((b, i) => (
+                  <div key={i} style={{ fontFamily: SANS, fontSize: 16, color: TEXT2 }}>• {b}</div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button style={{ background: TEXT, color: '#FFFFFF', fontFamily: SANS, fontSize: 15, fontWeight: 600, height: 44, padding: '0 24px', border: 'none', borderRadius: 6, cursor: 'pointer' }}>
+                  Download April Review →
+                </button>
+                <button style={{ background: 'transparent', color: TEAL, fontFamily: SANS, fontSize: 15, border: 'none', cursor: 'pointer', padding: 0 }}>
+                  View all monthly reviews →
+                </button>
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' as const }}>
+              <div style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: TEAL, lineHeight: 1 }}>April</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED, marginTop: 4 }}>MONTHLY REVIEW READY</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* What's next */}
+      <div style={{ background: DARK, padding: '56px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>Next 90 Days</div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: '#FFFFFF', margin: '0 0 40px' }}>The window still open.</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+          {nextActions.map((a, i) => (
+            <div key={i} style={{ background: DARK2, border: '1px solid #1F2937', borderLeft: `6px solid ${a.bdColor}`, borderRadius: 8, padding: 28 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: a.bdColor, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>{a.urgency}</div>
+              <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 600, color: '#FFFFFF', marginBottom: 10 }}>{a.title}</div>
+              <div style={{ fontFamily: SANS, fontSize: 15, color: '#9CA3AF', marginBottom: 24, lineHeight: 1.6 }}>{a.value}</div>
+              <button style={{ background: 'transparent', color: TEAL, fontFamily: SANS, fontSize: 15, border: `1px solid rgba(45,212,200,0.3)`, borderRadius: 6, padding: '8px 16px', cursor: 'pointer' }}>{a.cta}</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Engagements Tab ────────────────────────────────────────────────────────────
+function EngagementsTab({ data, clientId }: { data: ClientData; clientId: string }) {
+  const [selectedIdx, setSelectedIdx] = useState(0)
+  const PAGE  = '#F8F7F4', CARD = '#FFFFFF', BDR = '#E5E7EB'
+  const TEXT = '#0C0C0C', TEXT2 = '#3C3C3C', MUTED = '#6B7280'
+
+  const engagements = data.solutionProgress.map((s, i) => ({
+    id: `P00${i + 1}`,
+    name: s.fullName,
+    sponsor: i === 0 ? 'Victoria Hargreaves · CEO' : i === 1 ? 'Raj Malhotra · CIO' : 'Thomas Kellner · CFO',
+    function: i === 0 ? 'Finance' : i === 1 ? 'Technology' : 'Operations',
+    status: s.complete ? 'Complete' : s.progress > 0 ? 'In Progress' : 'Backlog',
+    phase: s.phase,
+    value: s.outcome,
+    progress: s.progress,
+    slug: s.slug,
+    problem: i === 0 ? '$840M efficiency gap. 71% C/I vs 58% peer median. No transformation programme with a named owner.'
+      : i === 1 ? 'MAS FEAT non-compliant. FCA review pending Q3 2026. No dedicated remediation squad.'
+      : 'AI spend untracked. 28 initiatives, zero baselines. CDO vacancy 11 months.',
+  }))
+
+  const sel = engagements[selectedIdx]
+
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '35fr 65fr', gap: 0, minHeight: 600, background: PAGE }}>
+      {/* Left — list */}
+      <div style={{ background: CARD, borderRight: `1px solid ${BDR}`, padding: 24 }}>
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, fontWeight: 700, color: TEXT, margin: '0 0 20px' }}>All Engagements</h2>
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
+          {engagements.map((e, i) => {
+            const active = i === selectedIdx
+            const sc = e.status === 'In Progress' ? TEAL : e.status === 'Complete' ? '#34D399' : '#F59E0B'
+            return (
+              <button key={i} onClick={() => setSelectedIdx(i)} style={{
+                display: 'block', width: '100%', textAlign: 'left' as const,
+                background: active ? 'rgba(45,212,200,0.06)' : 'transparent',
+                border: `1px solid ${active ? TEAL : BDR}`,
+                borderLeft: `4px solid ${sc}`, borderRadius: 8, padding: '16px 16px', cursor: 'pointer',
+              }}>
+                <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16, fontWeight: 600, color: TEXT, marginBottom: 4 }}>{e.name}</div>
+                <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 13, color: TEAL, marginBottom: 6 }}>{e.sponsor}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: sc, background: `${sc}18`, padding: '2px 8px', borderRadius: 4 }}>{e.status}</span>
+                  <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 14, color: TEAL, fontWeight: 700 }}>{e.value}</span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Right — detail */}
+      <div style={{ overflowY: 'auto' as const, background: PAGE }}>
+        {/* Dark header */}
+        <div style={{ background: '#060A12', padding: '32px 36px', marginBottom: 0 }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 8 }}>
+            {sel.function} · Phase {sel.phase}
+          </div>
+          <h3 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 700, color: '#FFFFFF', margin: '0 0 10px' }}>{sel.name}</h3>
+          <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16, color: '#9CA3AF', margin: '0 0 16px', lineHeight: 1.6 }}>{sel.problem}</p>
+          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16, color: '#FFFFFF' }}>Executive Sponsor: <span style={{ color: TEAL }}>{sel.sponsor}</span></div>
+        </div>
+
+        {/* Detail sections */}
+        <div style={{ padding: '24px 36px', display: 'flex', flexDirection: 'column' as const, gap: 20 }}>
+
+          {/* Problem */}
+          <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 28 }}>
+            <h4 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: TEXT, margin: '0 0 16px' }}>What the data showed.</h4>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16, color: TEXT2, lineHeight: 1.6 }}>{sel.problem}</div>
+          </div>
+
+          {/* Success metrics */}
+          <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 28 }}>
+            <h4 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: TEXT, margin: '0 0 16px' }}>What We're Measuring</h4>
+            <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+              <thead>
+                <tr style={{ background: PAGE, borderBottom: `1px solid ${BDR}` }}>
+                  {['Metric', 'Baseline', 'Target', 'Status'].map(h => (
+                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left' as const, fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { metric: 'C/I Ratio', baseline: '71.2%', target: '63%', status: 'On track' },
+                  { metric: 'AI Initiative ROI', baseline: '$0 tracked', target: '$60M', status: 'In progress' },
+                  { metric: 'Bloomberg cost', baseline: '$8.4M/yr', target: '$5.1M/yr', status: 'Verified' },
+                ].map((r, i) => (
+                  <tr key={i} style={{ borderTop: `1px solid ${BDR}` }}>
+                    <td style={{ padding: '14px 16px', fontFamily: 'DM Sans, sans-serif', fontSize: 15, color: TEXT, fontWeight: 600 }}>{r.metric}</td>
+                    <td style={{ padding: '14px 16px', fontFamily: 'DM Sans, sans-serif', fontSize: 15, color: TEXT2 }}>{r.baseline}</td>
+                    <td style={{ padding: '14px 16px', fontFamily: 'DM Sans, sans-serif', fontSize: 15, color: TEXT2 }}>{r.target}</td>
+                    <td style={{ padding: '14px 16px' }}>
+                      <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 4, color: r.status === 'Verified' ? '#34D399' : r.status === 'On track' ? TEAL : '#F59E0B', background: r.status === 'Verified' ? 'rgba(52,211,153,0.12)' : r.status === 'On track' ? 'rgba(45,212,200,0.12)' : 'rgba(245,158,11,0.1)' }}>
+                        {r.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Execution progress */}
+          <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 28 }}>
+            <h4 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: TEXT, margin: '0 0 16px' }}>Execution Progress</h4>
+            <div style={{ height: 8, background: BDR, borderRadius: 4, marginBottom: 10 }}>
+              <div style={{ height: 8, borderRadius: 4, width: `${sel.progress}%`, background: TEAL }} />
+            </div>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 15, color: MUTED }}>{sel.progress}% complete · Phase {sel.phase}</div>
+          </div>
+
+          {/* Fee summary */}
+          <div style={{ background: CARD, border: `1px solid ${BDR}`, borderTop: `4px solid ${TEAL}`, borderRadius: 8, padding: 28 }}>
+            <h4 style={{ fontFamily: 'Georgia, serif', fontSize: 22, color: TEXT, margin: '0 0 8px' }}>Fee Summary</h4>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 32, fontWeight: 700, color: TEAL, marginBottom: 8 }}>$3.92M earned</div>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 15, color: TEXT2, fontStyle: 'italic' }}>15% of $22.4M verified savings · Invoice MER-FEE-001</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminClientPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const params = useParams()
   const clientId = params.id as string
 
+  const [masterTab, setMasterTab]     = useState<'intel' | 'value' | 'engagements'>('intel')
   const [centerView, setCenterView] = useState('dashboard')
   const [adminSection, setAdminSection] = useState('setup')
   const [diTab, setDiTab] = useState('client')
@@ -1819,8 +2210,9 @@ export default function AdminClientPage() {
   if (!user) { router.push('/sign-in'); return null }
 
   const metaRole = user.publicMetadata?.role as string | undefined
-  const isReadOnly = metaRole !== 'admin'
-  const isAdmin = metaRole === 'admin'
+  const isMaestro = metaRole === 'admin' || metaRole === 'investor'
+  const isReadOnly = !isMaestro
+  const isAdmin = isMaestro  // investors play Maestro role — full dashboard access
 
   const data = getClientData(clientId)
   if (!data) return (
@@ -1835,49 +2227,76 @@ export default function AdminClientPage() {
     if (centerView === 'data')
       return <DataIntelligenceTab data={data} diTab={diTab} setDiTab={setDiTab} />
     if (centerView === 'engagements')
-      return <ProjectsTab clientId={clientId} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
+      return <ProjectsTab clientId={clientId} data={data} projView={projView} setProjView={setProjView} showNewProject={showNewProject} setShowNewProject={setShowNewProject} isReadOnly={isReadOnly} />
     if (centerView === 'findings')
       return <OverviewTab data={data} />
     if (centerView === 'genome')
       return <DataIntelligenceTab data={data} diTab="genome" setDiTab={setDiTab} />
     return (
       <>
-        <HeroCarousel data={data} />
+        <HeroCarousel data={data} clientId={clientId} />
         <SolutionEntryCards data={data} clientId={clientId} />
         <FindingsFeed data={data} />
       </>
     )
   }
 
+  const TAB_BAR_TABS = [
+    { key: 'intel' as const,       label: 'Intel Feed' },
+    { key: 'value' as const,       label: 'Value Dashboard' },
+    { key: 'engagements' as const, label: 'Engagements' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, paddingBottom: '34px' }}>
       <AbarvaNav activePage="maestro" />
       <BreadcrumbBar data={data} />
 
-      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 28px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-        {/* Left panel */}
-        <div style={{ width: '220px', flexShrink: 0 }}>
-          <LeftPanel
-            data={data}
-            clientId={clientId}
-            centerView={centerView}
-            setCenterView={setCenterView}
-            isAdmin={isAdmin}
-            adminSection={adminSection}
-            setAdminSection={setAdminSection}
-          />
-        </div>
-
-        {/* Center */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '12px', minWidth: 0 }}>
-          {renderCenter()}
-        </div>
-
-        {/* Right panel */}
-        <div style={{ width: '280px', flexShrink: 0 }}>
-          <RightPanel data={data} isReadOnly={isReadOnly} />
-        </div>
+      {/* Top-level tab bar */}
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', height: 44, display: 'flex', alignItems: 'center', padding: '0 48px', gap: 0 }}>
+        {TAB_BAR_TABS.map(t => (
+          <button key={t.key} onClick={() => setMasterTab(t.key)} style={{
+            fontFamily: SANS, fontSize: 14, fontWeight: 600,
+            color: masterTab === t.key ? '#0C0C0C' : '#6B7280',
+            background: 'none', border: 'none',
+            borderBottom: masterTab === t.key ? '2px solid #2DD4C8' : '2px solid transparent',
+            height: 44, padding: '0 20px', cursor: 'pointer',
+            transition: 'all 0.15s',
+          }}>
+            {t.label}
+          </button>
+        ))}
       </div>
+
+      {masterTab === 'value' && <ValueDashboard clientId={clientId} />}
+      {masterTab === 'engagements' && <EngagementsTab data={data} clientId={clientId} />}
+
+      {masterTab === 'intel' && (
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 28px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+          {/* Left panel */}
+          <div style={{ width: '220px', flexShrink: 0 }}>
+            <LeftPanel
+              data={data}
+              clientId={clientId}
+              centerView={centerView}
+              setCenterView={setCenterView}
+              isAdmin={isAdmin}
+              adminSection={adminSection}
+              setAdminSection={setAdminSection}
+            />
+          </div>
+
+          {/* Center */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column' as const, gap: '12px', minWidth: 0 }}>
+            {renderCenter()}
+          </div>
+
+          {/* Right panel */}
+          <div style={{ width: '280px', flexShrink: 0 }}>
+            <RightPanel data={data} clientId={clientId} isReadOnly={isReadOnly} />
+          </div>
+        </div>
+      )}
 
       <BottomBar data={data} user={user} />
       {!isReadOnly && <SeedDemosFloatMenu clientId={clientId} />}
