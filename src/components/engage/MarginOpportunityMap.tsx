@@ -111,13 +111,15 @@ function CategoryCompleteness({ levers }: { levers: MarginLever[] }) {
           key={l.id}
           title={l.lever}
           style={{
-            fontSize: 10,
-            color: l.status === 'analysed' ? TEAL : l.status === 'genome_estimate' ? AMBER : MUTED,
-            lineHeight: 1,
+            display: 'inline-block',
+            width: 7,
+            height: 7,
+            borderRadius: '50%',
+            background: l.status === 'analysed' ? TEAL : l.status === 'genome_estimate' ? AMBER : 'transparent',
+            border: l.status !== 'analysed' ? `1.5px solid ${MUTED}` : undefined,
+            flexShrink: 0,
           }}
-        >
-          {l.status === 'analysed' ? '●' : '○'}
-        </span>
+        />
       ))}
     </div>
   )
@@ -169,7 +171,7 @@ function LeverCard({
                 style={{
                   fontFamily: MONO,
                   fontSize: 13,
-                  color: TEAL,
+                  color: WHITE,
                   marginTop: 4,
                 }}
               >
@@ -199,7 +201,7 @@ function LeverCard({
                 style={{
                   fontFamily: MONO,
                   fontSize: 13,
-                  color: AMBER,
+                  color: WHITE,
                   marginTop: 4,
                 }}
               >
@@ -211,9 +213,9 @@ function LeverCard({
                   onClick={() => onUploadRequest?.(lever.id, lever.data_required)}
                   style={{
                     background: 'transparent',
-                    border: `1px solid ${AMBER}`,
+                    border: `1px solid ${TEAL}`,
                     borderRadius: 4,
-                    color: AMBER,
+                    color: TEAL,
                     fontFamily: SANS,
                     fontSize: 12,
                     padding: '5px 10px',
@@ -379,14 +381,14 @@ export default function MarginOpportunityMap({
           </div>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: SANS, fontSize: 13, color: WHITE }}>
-              <span style={{ color: TEAL, fontFamily: MONO }}>
+              <span style={{ fontFamily: MONO }}>
                 £{analysedMinTotal}–{analysedMaxTotal}M
               </span>{' '}
               already analysed
             </span>
             <span style={{ color: MUTED }}>·</span>
             <span style={{ fontFamily: SANS, fontSize: 13, color: WHITE }}>
-              <span style={{ color: AMBER, fontFamily: MONO }}>
+              <span style={{ fontFamily: MONO }}>
                 £{estimateMinTotal}–{estimateMaxTotal}M
               </span>{' '}
               available with data
