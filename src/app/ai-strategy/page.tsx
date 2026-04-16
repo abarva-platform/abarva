@@ -1029,7 +1029,9 @@ function AIStrategyInner() {
 
             {/* Chat — white background, 55% */}
             <div style={{ width: '55%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${BD}`, background: '#fff' }}>
-              <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 8px' }}>
+              <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: '24px 24px 8px' }}>
+              <div style={{ flex: 1 }} />
                 {msgs.map((msg, i) => (
                   <ChatBubble
                     key={i} msg={msg} isLast={i === msgs.length - 1}
@@ -1053,6 +1055,7 @@ function AIStrategyInner() {
                   </div>
                 )}
                 <div ref={chatEndRef} />
+              </div>
               </div>
             </div>
 

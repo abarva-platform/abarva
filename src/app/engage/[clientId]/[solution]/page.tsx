@@ -950,7 +950,9 @@ export default function MaestroWorkspace() {
                   </div>
 
                   {/* Chat area */}
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+                  <div style={{ flex: 1, overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', padding: '20px' }}>
+                  <div style={{ flex: 1 }} />
                     {messagesLoading ? (
                       <div style={{ color: T.text2, fontFamily: T.mono, fontSize: '11px', textAlign: 'center', paddingTop: '40px' }}>
                         Loading...
@@ -984,6 +986,7 @@ export default function MaestroWorkspace() {
                         <div ref={messagesEndRef} />
                       </>
                     )}
+                  </div>
                   </div>
 
                   {/* Input area — greyed out for investor, functional for admin */}

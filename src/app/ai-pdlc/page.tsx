@@ -969,7 +969,9 @@ function AIDeliveryContent() {
                   ))}
                 </div>
               )}
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ flex: 1, overflowY: 'auto', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', gap: '12px' }}>
+              <div style={{ flex: 1 }} />
                 {chatMessages.map((m, i) => (
                   <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                     <div style={{ maxWidth: '85%', padding: '12px 16px', borderRadius: m.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: m.role === 'user' ? 'rgba(45,212,200,0.12)' : BG, border: `1px solid ${m.role === 'user' ? 'rgba(45,212,200,0.25)' : BORDER}`, fontFamily: SANS, fontSize: '13px', color: m.role === 'user' ? TEAL : MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
@@ -985,6 +987,7 @@ function AIDeliveryContent() {
                   </div>
                 )}
                 <div ref={chatEndRef} />
+              </div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChat()} placeholder="Ask about any initiative…" disabled={chatLoading} style={{ flex: 1, background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 14px', color: WHITE, fontFamily: SANS, fontSize: '13px', outline: 'none' }} />
