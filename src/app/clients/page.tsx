@@ -115,7 +115,7 @@ function ClientCard({ client, scanDelay, trigger }: { client: Client; scanDelay:
             <><span style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL, display: 'inline-block' }} />Scanning...</>
           ) : <span style={{ color: 'transparent' }}>—</span>}
         </div>
-        <a href={`/sign-in?redirect=/admin/client/${client.id}`} style={{ fontSize: 13, fontWeight: 500, color: TEAL, textDecoration: 'none', fontFamily: SANS }}>
+        <a href={`/sign-in?redirect=/maestro/${client.id}`} style={{ fontSize: 13, fontWeight: 500, color: TEAL, textDecoration: 'none', fontFamily: SANS }}>
           See full intelligence →
         </a>
       </div>

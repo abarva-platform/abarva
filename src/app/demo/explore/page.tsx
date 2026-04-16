@@ -129,13 +129,13 @@ export default function DemoExplorePage() {
             Every engagement is pre-loaded with real client data. Walk the full Maestro workflow — from readiness assessment to verified outcome.
           </p>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-            <a href="/admin/client/arcturus" style={{ fontFamily: MONO, fontSize: '12px', fontWeight: 700, padding: '10px 20px', borderRadius: '8px', background: TEAL, color: DARK, textDecoration: 'none' }}>
+            <a href="/maestro/arcturus" style={{ fontFamily: MONO, fontSize: '12px', fontWeight: 700, padding: '10px 20px', borderRadius: '8px', background: TEAL, color: DARK, textDecoration: 'none' }}>
               Open Maestro — Arcturus →
             </a>
-            <a href="/admin/client/meridian" style={{ fontFamily: MONO, fontSize: '12px', padding: '10px 20px', borderRadius: '8px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.3)', color: TEAL, textDecoration: 'none' }}>
+            <a href="/maestro/meridian" style={{ fontFamily: MONO, fontSize: '12px', padding: '10px 20px', borderRadius: '8px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.3)', color: TEAL, textDecoration: 'none' }}>
               Meridian Health →
             </a>
-            <a href="/admin/client/apexretail" style={{ fontFamily: MONO, fontSize: '12px', padding: '10px 20px', borderRadius: '8px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', color: AMBER, textDecoration: 'none' }}>
+            <a href="/maestro/apexretail" style={{ fontFamily: MONO, fontSize: '12px', padding: '10px 20px', borderRadius: '8px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', color: AMBER, textDecoration: 'none' }}>
               Apex Retail →
             </a>
           </div>
@@ -177,7 +177,7 @@ export default function DemoExplorePage() {
                     <span key={t} style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 7px', borderRadius: '3px', background: `${c.color}18`, color: c.color, border: `1px solid ${c.color}30` }}>{t}</span>
                   ))}
                 </div>
-                <a href={`/admin/client/${c.id}`} style={{ display: 'block', fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 0', borderRadius: '6px', background: `${c.color}15`, border: `1px solid ${c.color}40`, color: c.color, textDecoration: 'none', textAlign: 'center' as const }}>
+                <a href={`/maestro/${c.id}`} style={{ display: 'block', fontFamily: MONO, fontSize: '10px', fontWeight: 700, padding: '9px 0', borderRadius: '6px', background: `${c.color}15`, border: `1px solid ${c.color}40`, color: c.color, textDecoration: 'none', textAlign: 'center' as const }}>
                   Open in Maestro →
                 </a>
               </div>
@@ -265,7 +265,7 @@ export default function DemoExplorePage() {
               })}
             </div>
             <div style={{ marginTop: '16px', display: 'flex', gap: '10px' }}>
-              <a href={`/admin/client/${client.id}`} style={{ fontFamily: MONO, fontSize: '11px', padding: '8px 20px', borderRadius: '6px', background: `${client.color}15`, border: `1px solid ${client.color}40`, color: client.color, textDecoration: 'none' }}>
+              <a href={`/maestro/${client.id}`} style={{ fontFamily: MONO, fontSize: '11px', padding: '8px 20px', borderRadius: '6px', background: `${client.color}15`, border: `1px solid ${client.color}40`, color: client.color, textDecoration: 'none' }}>
                 Open {client.short} in Maestro →
               </a>
               <a href={`/engage/${client.id}/${client.solutions[0].slug}`} style={{ fontFamily: MONO, fontSize: '11px', padding: '8px 20px', borderRadius: '6px', background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.2)', color: TEAL, textDecoration: 'none' }}>
@@ -329,9 +329,9 @@ export default function DemoExplorePage() {
       <div style={{ background: DARK, padding: '36px 48px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap' as const, gap: '10px', justifyContent: 'center' }}>
           {[
-            { label: 'Arcturus Maestro', href: '/admin/client/arcturus', color: '#818CF8' },
-            { label: 'Meridian Maestro', href: '/admin/client/meridian', color: TEAL },
-            { label: 'Apex Retail Maestro', href: '/admin/client/apexretail', color: AMBER },
+            { label: 'Arcturus Maestro', href: '/maestro/arcturus', color: '#818CF8' },
+            { label: 'Meridian Maestro', href: '/maestro/meridian', color: TEAL },
+            { label: 'Apex Retail Maestro', href: '/maestro/apexretail', color: AMBER },
             { label: 'Situation Intelligence', href: '/diagnose', color: '#4DA3FF' },
             { label: 'Contradiction Intelligence', href: '/contradictions', color: '#4DA3FF' },
             { label: 'Data Intelligence', href: '/data-intelligence', color: '#4DA3FF' },

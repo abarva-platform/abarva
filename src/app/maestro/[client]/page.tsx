@@ -1686,11 +1686,11 @@ function InsightsTab({ data, clientId }: { data: ClientData; clientId: string })
 
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
-export default function AdminClientPage() {
+export default function MaestroClientPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const params = useParams()
-  const clientId = params.id as string
+  const clientId = params.client as string
 
   const [activeTab, setActiveTab] = useState<'brief' | 'engagements' | 'data' | 'insights'>('brief')
   const [engInitSolution, setEngInitSolution] = useState<string | null>(null)
@@ -1724,8 +1724,10 @@ export default function AdminClientPage() {
 
       {/* Breadcrumb */}
       <div style={{ height: 40, background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px' }}>
-        <div style={{ fontFamily: SANS, fontSize: 14, color: '#6B7280' }}>
-          Maestro · {data.name}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <a href="/maestro" style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textDecoration: 'none', letterSpacing: '.06em' }}>← ALL CLIENTS</a>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: '#D1D5DB' }}>·</span>
+          <span style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', fontWeight: 600 }}>{data.name}</span>
         </div>
         <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF' }}>
           Last updated: Today {timeStr}

@@ -122,7 +122,7 @@ const SCREENS: Screen[] = [
       'Readiness status — 2 data gaps flagged before deployment',
       'YOUR ACTION — Phase 1 ready for Maestro review',
     ],
-    url: '/admin/client/meridian',
+    url: '/maestro/meridian',
   },
   {
     id: 8,
@@ -163,7 +163,7 @@ const SCREENS: Screen[] = [
       'Monthly Review Package — board-ready, one click',
       'Next $34M opportunity surfaced — window still open',
     ],
-    url: '/admin/client/meridian',
+    url: '/maestro/meridian',
   },
   {
     id: 11,
@@ -177,7 +177,7 @@ const SCREENS: Screen[] = [
       'Different industry — identical confidence level and platform experience',
       'F005: 82% / F002: 84% — same Genome, new patterns applied',
     ],
-    url: '/admin/client/arcturus',
+    url: '/maestro/arcturus',
   },
   {
     id: 12,

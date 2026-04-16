@@ -24,8 +24,6 @@ const isPublicRoute = createRouteMatcher([
   '/board-deck(.*)',
   '/outcomes(.*)',
   '/search(.*)',
-  '/admin(.*)',
-  '/admin/client(.*)',
   '/demo(.*)',
   '/solutions(.*)',
   '/control-tower(.*)',
@@ -43,9 +41,9 @@ const isPublicRoute = createRouteMatcher([
   '/api/admin/seed-all-demos(.*)',
 ])
 
-// Routes that require admin/maestro role — viewer/client → /client-view
-const adminOnlyRoutes = createRouteMatcher([
-  '/admin(.*)',
+// Maestro workspace — requires any authenticated Maestro/Admin/Investor session
+const maestroRoutes = createRouteMatcher([
+  '/maestro(.*)',
   '/engage/(.*)',
   '/ai-strategy(.*)',
   '/ai-pdlc(.*)',
@@ -54,9 +52,15 @@ const adminOnlyRoutes = createRouteMatcher([
   '/vendor-intelligence(.*)',
 ])
 
+// Admin portal — requires admin role only
+const adminRoutes = createRouteMatcher([
+  '/admin(.*)',
+])
+
 // Routes that require any authenticated session
 const authRequiredRoutes = createRouteMatcher([
   '/admin(.*)',
+  '/maestro(.*)',
   '/engage/(.*)',
   '/ai-strategy(.*)',
   '/ai-pdlc(.*)',
@@ -67,12 +71,22 @@ export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
 
-  // Admin/maestro-only routes
-  if (adminOnlyRoutes(request)) {
+  // Admin-only routes — require admin role
+  if (adminRoutes(request)) {
     if (!userId) {
       return NextResponse.redirect(new URL('/sign-in', request.url))
     }
-    if (role === 'viewer' || role === 'client' || role === 'investor') {
+    if (role !== 'admin') {
+      return NextResponse.redirect(new URL('/maestro', request.url))
+    }
+  }
+
+  // Maestro routes — require authenticated Maestro/Admin/Investor
+  if (maestroRoutes(request)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL('/sign-in', request.url))
+    }
+    if (role === 'client') {
       return NextResponse.redirect(new URL('/client-view', request.url))
     }
   }

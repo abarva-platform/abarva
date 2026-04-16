@@ -507,7 +507,7 @@ export default function MaestroWorkspace() {
         padding: '0 24px', height: '44px', display: 'flex', alignItems: 'center', gap: '12px'
       }}>
         {/* Back to Maestro */}
-        <a href={`/admin/client/${clientId}`} style={{
+        <a href={`/maestro/${clientId}`} style={{
           fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: T.teal,
           textDecoration: 'none', letterSpacing: '.08em', textTransform: 'uppercase',
           flexShrink: 0, opacity: 0.8,
