@@ -1302,11 +1302,10 @@ function AdminPortalInner() {
 
           <div style={{ padding: '12px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Active Client</div>
-            <a href={`/admin/client/${clientId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, textDecoration: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px' }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
               <span style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{currentClient.shortName}</span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, marginLeft: 'auto' }}>Open →</span>
-            </a>
+            </div>
           </div>
 
           <div style={{ flex: 1, padding: '8px 0 20px' }}>
