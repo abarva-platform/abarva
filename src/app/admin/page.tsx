@@ -624,7 +624,9 @@ function EngagementsSection() {
               <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2 }}>Meridian Health · 5 files loaded · AI Readiness 42/100</div>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' as const, minHeight: '100%', padding: 24 }}>
+              <div style={{ flex: 1 }} />
               {messages.map((m, i) => (
                 <div key={i} style={{ marginBottom: 20 }}>
                   {m.type === 'ai' ? (
@@ -659,6 +661,7 @@ function EngagementsSection() {
                 </div>
               ))}
               <div ref={chatEndRef} />
+              </div>
             </div>
 
             {!showLaunch && (
