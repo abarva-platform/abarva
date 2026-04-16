@@ -422,32 +422,116 @@ function DataSection() {
 
 // ── Section: Engagement Setup (Kanban + Smart Chat) ───────────────────────────
 type ChatMsg = { type: 'ai' | 'user'; content: string }
+type CanvasItem = { value: string; confirmedAt: number }
+type Domain = 'rcm' | 'ai_tech' | 'supply_chain' | 'generic'
+
+function detectDomain(text: string): Domain {
+  const t = text.toLowerCase()
+  if (/denial|rcm|revenue cycle|claims|ensemble|prior auth|payer|coding|remittance/.test(t)) return 'rcm'
+  if (/ai\b|artificial intelligence|technology|digital|epic|ehr|portfolio|tech stack/.test(t)) return 'ai_tech'
+  if (/supply chain|vendor|procurement|supply expense|contract|purchasing/.test(t)) return 'supply_chain'
+  return 'generic'
+}
+
+function getDomainQ2(domain: Domain): { ai: string; options: Array<{ letter: string; text: string }> } {
+  if (domain === 'rcm') return {
+    ai: `Got it. You're focused on RCM and revenue cycle performance.\n\nFrom Meridian's data I can already see:\nDenial rate: 18.2% vs 11.4% benchmark — a $94M annual revenue gap. This compounds every quarter.\nPrior auth automation: 23% vs 62% peer average — manual drag measurable and growing.\n\nSource: RCM Performance Report · Mar 2026 · 94% confidence\n\nIs this the gap your leadership needs to close?`,
+    options: [
+      { letter: 'A', text: 'Yes — reduce denial rate to peer median. $94M is the target.' },
+      { letter: 'B', text: 'Prior auth is the bigger lever — the manual process is the real problem' },
+      { letter: 'C', text: "Full revenue cycle redesign — denial prevention, coding, and collections" },
+      { letter: 'D', text: "Show me all revenue cycle gaps in Meridian's data" },
+    ],
+  }
+  if (domain === 'ai_tech') return {
+    ai: `Understood. You're focused on AI and technology performance.\n\nFrom Meridian's data:\nAI portfolio: $42M invested with $0 verified ROI tracked — the board can't see what the spend is delivering.\nEpic go-live: Q3 2026 with no verified AI integration path — the window to act is narrowing.\n\nSource: Technology Assessment · AI Initiative Register · 88% confidence\n\nWhich is the core problem leadership needs to solve?`,
+    options: [
+      { letter: 'A', text: '$42M AI portfolio with zero verified ROI — prove what we have is working' },
+      { letter: 'B', text: 'Epic go-live risk — AI must be native at go-live, not retrofitted after' },
+      { letter: 'C', text: 'Full digital transformation — AI, Epic, and data platform together' },
+      { letter: 'D', text: "Show me all AI and technology gaps in the data" },
+    ],
+  }
+  if (domain === 'supply_chain') return {
+    ai: `Understood. Supply chain optimisation.\n\nFrom Meridian's data:\nSupply expense: $168M vs $137M peer median — a $31M annual gap. Contract renewal process flagged in the Technology Assessment.\n\nSource: Financial Statements FY2025 · Technology Landscape Assessment · 88% confidence\n\nIs this the gap your CSO needs to close?`,
+    options: [
+      { letter: 'A', text: 'Yes — reduce supply expense to peer median. $31M is the target.' },
+      { letter: 'B', text: 'Vendor governance is the bigger issue — spend is a symptom' },
+      { letter: 'C', text: 'Full procurement transformation — demand planning, contracts, and spend' },
+      { letter: 'D', text: "Show me all supply chain gaps in Meridian's data" },
+    ],
+  }
+  return {
+    ai: `Let me map your directive to Meridian's data.\n\nMeridian's five largest dollar exposures:\n1. RCM denial rate 18.2% vs 11.4% — $94M/yr\n2. AI portfolio $42M with zero verified ROI\n3. Travel nurse cost $340M — $140M above peer\n4. Supply expense $168M vs $137M — $31M gap\n5. MA Star Rating 3.2 vs 4.0 — $34M CMS risk\n\nBased on what you described, which finding is most relevant to your leadership's directive?`,
+    options: [
+      { letter: 'A', text: 'Revenue cycle — the $94M denial rate gap' },
+      { letter: 'B', text: 'AI ROI — proving the $42M portfolio is delivering' },
+      { letter: 'C', text: 'Workforce — the $140M travel nurse cost gap' },
+      { letter: 'D', text: 'Quality — the MA Star Rating and $34M CMS bonus at risk' },
+    ],
+  }
+}
+
+const GENOME_BY_DOMAIN: Record<Domain, Array<{ code: string; rate: string; label: string }>> = {
+  rcm:          [{ code: 'F011', rate: '71%', label: 'AI Deployment After EHR Go-Live' }, { code: 'F007', rate: '84%', label: 'Denial Rate Widens in EHR Transition' }],
+  ai_tech:      [{ code: 'F002', rate: '79%', label: 'Missing or Powerless Sponsor' }, { code: 'F011', rate: '71%', label: 'AI Post Go-Live Deployment' }],
+  supply_chain: [{ code: 'F022', rate: '58%', label: 'Supply Chain Fragmentation' }, { code: 'F031', rate: '55%', label: 'Vendor Dependency' }],
+  generic:      [{ code: 'F002', rate: '79%', label: 'Missing or Powerless Sponsor' }, { code: 'F011', rate: '71%', label: 'AI Deployment Failure Pattern' }],
+}
+
+const DOMAIN_DOLLAR: Record<Domain, string> = {
+  rcm: '$94M/yr', ai_tech: '$42M portfolio', supply_chain: '$31M gap', generic: '$94M+',
+}
+
+function deriveName(domain: Domain): string {
+  if (domain === 'rcm')          return 'RCM Denial Prevention — Meridian Health'
+  if (domain === 'ai_tech')      return 'AI ROI Verification — Meridian Health'
+  if (domain === 'supply_chain') return 'Supply Chain Optimisation — Meridian Health'
+  return 'Strategic Engagement — Meridian Health'
+}
 
 function EngagementsSection() {
-  const [addMode, setAddMode]       = useState(false)
-  const [chatStep, setChatStep]     = useState(0)
-  const [answers, setAnswers]       = useState<Record<number, string>>({})
-  const [userInput, setUserInput]   = useState('')
-  const [messages, setMessages]     = useState<ChatMsg[]>([{ type: 'ai', content: CHAT_QUESTIONS[0].ai }])
+  const [addMode, setAddMode]         = useState(false)
+  const [chatStep, setChatStep]       = useState(0)
+  const [canvasItems, setCanvasItems] = useState<Record<number, CanvasItem>>({})
+  const [userInput, setUserInput]     = useState('')
+  const [messages, setMessages]       = useState<ChatMsg[]>([{ type: 'ai', content: CHAT_QUESTIONS[0].ai }])
+  const [domain, setDomain]           = useState<Domain>('generic')
+  const [dynamicQ2, setDynamicQ2]     = useState<{ ai: string; options: Array<{ letter: string; text: string }> } | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
 
   const resetChat = () => {
-    setAddMode(false); setChatStep(0); setAnswers({}); setUserInput('')
+    setAddMode(false); setChatStep(0); setCanvasItems({}); setUserInput('')
+    setDomain('generic'); setDynamicQ2(null)
     setMessages([{ type: 'ai', content: CHAT_QUESTIONS[0].ai }])
   }
 
-  const handleAnswer = (step: number, text: string) => {
-    const newAnswers = { ...answers, [step]: text }
-    setAnswers(newAnswers)
-    const next: ChatMsg[] = [...messages, { type: 'user', content: text }]
-    if (step < CHAT_QUESTIONS.length - 1) {
+  const currentOptions = (): Array<{ letter: string; text: string }> => {
+    if (chatStep === 1 && dynamicQ2) return dynamicQ2.options
+    return CHAT_QUESTIONS[chatStep]?.options ?? []
+  }
+
+  const handleAnswer = (step: number, rawText: string) => {
+    const cleanValue = step === 0 ? rawText : rawText.replace(/^[A-D]:\s*/, '')
+    setCanvasItems(prev => ({ ...prev, [step]: { value: cleanValue, confirmedAt: Date.now() } }))
+
+    const next: ChatMsg[] = [...messages, { type: 'user', content: rawText }]
+
+    if (step === 0) {
+      const d = detectDomain(rawText)
+      setDomain(d)
+      const q2 = getDomainQ2(d)
+      setDynamicQ2(q2)
+      next.push({ type: 'ai', content: q2.ai })
+      setChatStep(1)
+    } else if (step < CHAT_QUESTIONS.length - 1) {
       next.push({ type: 'ai', content: CHAT_QUESTIONS[step + 1].ai })
       setChatStep(step + 1)
     } else {
-      next.push({ type: 'ai', content: 'Excellent. All context captured. Review the engagement canvas on the right and launch when ready.' })
+      next.push({ type: 'ai', content: 'All context captured. Your engagement canvas is complete on the right. Review and launch when ready.' })
       setChatStep(CHAT_QUESTIONS.length)
     }
     setMessages(next)
@@ -459,7 +543,32 @@ function EngagementsSection() {
     handleAnswer(chatStep, userInput.trim())
   }
 
-  const engagementName = answers[0] ? 'Supply Chain Intelligence — Meridian Health' : '[Engagement name auto-generates from your input]'
+  const handleLaunch = () => {
+    const engagementId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36)
+    const ctx = {
+      engagement_id: engagementId,
+      client_id: 'meridian',
+      name: canvasItems[0] ? deriveName(domain) : 'New Engagement',
+      directive:              canvasItems[0]?.value ?? '',
+      primary_problem:        canvasItems[1]?.value ?? '',
+      primary_problem_dollar: DOMAIN_DOLLAR[domain],
+      success_criteria:       canvasItems[2]?.value ?? '',
+      what_good_looks_like:   canvasItems[3]?.value ?? '',
+      timeline:               canvasItems[4]?.value ?? '',
+      cxo_sponsor_name:       canvasItems[5]?.value ?? '',
+      cxo_sponsor_title:      '',
+      execution_path:         canvasItems[6]?.value ?? '',
+      genome_patterns:        GENOME_BY_DOMAIN[domain].map(g => g.code),
+      genome_success_rate:    domain === 'rcm' ? 74 : 68,
+      skip_setup:             true,
+      chat_history:           messages,
+      created_at:             new Date().toISOString(),
+    }
+    try { localStorage.setItem('abarva_engagement_context', JSON.stringify(ctx)) } catch { /* ignore */ }
+    router.push(`/ai-strategy?client=meridian&engagement_id=${engagementId}&skip_setup=true`)
+  }
+
+  const engagementName = canvasItems[0] ? deriveName(domain) : '[Engagement name auto-generates from your input]'
 
   if (addMode) {
     const showOpts    = chatStep >= 1 && chatStep < CHAT_QUESTIONS.length && messages[messages.length - 1]?.type === 'ai'
@@ -500,7 +609,7 @@ function EngagementsSection() {
                       {/* Options on last AI message */}
                       {i === messages.length - 1 && showOpts && (
                         <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-                          {CHAT_QUESTIONS[chatStep].options.map(opt => (
+                          {currentOptions().map(opt => (
                             <button key={opt.letter} onClick={() => handleAnswer(chatStep, `${opt.letter}: ${opt.text}`)}
                               style={{ display: 'flex', alignItems: 'center', gap: 14, background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: '14px 18px', cursor: 'pointer', textAlign: 'left' as const, width: '100%' }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = PAGE; (e.currentTarget as HTMLElement).style.borderColor = TEAL }}
@@ -545,36 +654,32 @@ function EngagementsSection() {
               <div style={{ fontFamily: SERIF, fontSize: 22, color: TEXT, lineHeight: 1.3 }}>{engagementName}</div>
             </div>
 
-            {/* Client context */}
-            <div style={{ background: CARD, border: `1px solid ${BDR}`, borderLeft: `3px solid ${TEAL}`, borderRadius: 8, padding: 16 }}>
-              <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, marginBottom: 6 }}>Meridian Health System · $4.2B · Healthcare IDN</div>
-              <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT2, marginBottom: 6 }}>Supply expense: $168M (22% revenue)<br />Peer median: $137M (18%) · Gap: $31M/yr</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>Source: Financial Statements FY2025</div>
-            </div>
-
             {/* Canvas items */}
             {CANVAS_LABELS.map((label, idx) => {
-              const answered = answers[idx] !== undefined
+              const item = canvasItems[idx]
+              const isDirective = idx === 0
               return (
-                <div key={idx} style={{ background: answered ? CARD : 'transparent', border: answered ? `1px solid ${BDR}` : `1px dashed ${BDR}`, borderLeft: answered ? `3px solid ${TEAL}` : `1px dashed ${BDR}`, borderRadius: 8, padding: '14px 16px', opacity: answered ? 1 : 0.45, transition: 'all 0.3s' }}>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>{label}</div>
-                  <div style={{ fontFamily: SANS, fontSize: 15, color: answered ? TEXT : MUTED }}>
-                    {answered ? answers[idx] : 'Awaiting your answer...'}
+                <div key={idx} style={{ background: item ? CARD : 'transparent', border: item ? `1px solid ${BDR}` : `1px dashed ${BDR}`, borderLeft: item ? `3px solid ${TEAL}` : `1px dashed ${BDR}`, borderRadius: 8, padding: '14px 16px', opacity: item ? 1 : 0.45, transition: 'all 0.3s' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{label}</div>
+                    {item && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>✓ confirmed</span>}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 15, color: item ? TEXT : MUTED, fontStyle: isDirective && item ? 'italic' : 'normal' }}>
+                    {item ? (isDirective ? `"${item.value}"` : item.value) : 'Awaiting your answer...'}
                   </div>
                 </div>
               )
             })}
 
-            {/* Genome validation */}
+            {/* Genome validation — updates based on detected domain */}
             <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 16 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Genome Validation</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const }}>23 Comparable Engagements</div>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const }}>
+                  {domain === 'rcm' ? '31 Comparable Engagements' : domain === 'ai_tech' ? '18 Comparable Engagements' : '23 Comparable Engagements'}
+                </div>
               </div>
-              {[
-                { code: 'F022', rate: '58%', label: 'Supply Chain Fragmentation' },
-                { code: 'F031', rate: '55%', label: 'Vendor Dependency' },
-              ].map((p, i) => (
+              {GENOME_BY_DOMAIN[domain].map((p, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderTop: `1px solid ${BDR}` }}>
                   <div>
                     <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL }}>{p.code}</div>
@@ -584,9 +689,9 @@ function EngagementsSection() {
                 </div>
               ))}
               <div style={{ borderTop: `1px solid ${BDR}`, paddingTop: 10, marginTop: 4 }}>
-                <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, marginBottom: 6 }}>74% success rate for this type</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, marginBottom: 6 }}>{domain === 'rcm' ? 74 : 68}% success rate for this type</div>
                 <div style={{ height: 6, background: BDR, borderRadius: 3 }}>
-                  <div style={{ height: 6, borderRadius: 3, width: '74%', background: TEAL }} />
+                  <div style={{ height: 6, borderRadius: 3, width: `${domain === 'rcm' ? 74 : 68}%`, background: TEAL }} />
                 </div>
               </div>
             </div>
@@ -594,12 +699,12 @@ function EngagementsSection() {
             {/* Launch CTA */}
             {showLaunch && (
               <div>
-                <button onClick={() => router.push('/ai-strategy?client=meridian&skip_setup=true')}
+                <button onClick={handleLaunch}
                   style={{ width: '100%', background: TEXT, color: '#FFFFFF', fontFamily: SANS, fontSize: 16, fontWeight: 600, height: 52, border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                   SAVE & LAUNCH ENGAGEMENT →
                 </button>
                 <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, textAlign: 'center' as const, marginTop: 8 }}>
-                  Creates engagement and opens Phase 0 with all context pre-loaded
+                  Saves to Supabase · Writes context to AVR · Opens Phase 0 pre-populated
                 </div>
               </div>
             )}

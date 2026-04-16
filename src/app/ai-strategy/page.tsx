@@ -27,7 +27,7 @@ const NAV_W    = 240
 const FOOTER_H = 56
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type StepStatus  = 'locked' | 'pending' | 'active' | 'complete'
+type StepStatus  = 'locked' | 'pending' | 'active' | 'complete' | 'pre-confirmed'
 type PhaseStatus = 'locked' | 'active' | 'approved'
 
 interface StepDef  { id: string; label: string }
@@ -42,6 +42,24 @@ interface ChatMessage {
 }
 
 interface OutcomeItem { stepId: string; label: string; value: string }
+
+interface EngagementContext {
+  engagement_id:         string
+  client_id:             string
+  name:                  string
+  directive:             string
+  primary_problem:       string
+  primary_problem_dollar: string
+  success_criteria:      string
+  what_good_looks_like:  string
+  timeline:              string
+  cxo_sponsor_name:      string
+  cxo_sponsor_title:     string
+  execution_path:        string
+  genome_patterns:       string[]
+  genome_success_rate:   number
+  skip_setup:            boolean
+}
 
 interface SavedState {
   phaseStatuses:  Record<number, PhaseStatus>
@@ -163,12 +181,21 @@ function phase0Script(
   name: string,
   vertical: string,
   clientId: string,
+  engCtx?: EngagementContext | null,
 ): { text: string; options: string[] } {
   const isMeridian = clientId === 'meridian'
 
   const scripts: Record<string, { text: string; options: string[] }> = {
 
-    '0.1': isMeridian ? {
+    '0.1': (engCtx && stepId === '0.1') ? {
+      text: `I have your engagement context from Setup.\n\nDIRECTIVE: "${engCtx.directive}"\n\nPRIMARY PROBLEM:\n${engCtx.primary_problem} — ${engCtx.primary_problem_dollar}\n\nCXO SPONSOR: ${engCtx.cxo_sponsor_name}${engCtx.cxo_sponsor_title ? ' · ' + engCtx.cxo_sponsor_title : ''}\n\nSUCCESS CRITERIA: ${engCtx.success_criteria || 'To be confirmed'}\n\nThis is already confirmed from Setup. What I need from you now to complete Phase 0:\n\n1. Data readiness — I'll verify your uploaded files match this use case\n2. Genome validation — confirm the matched failure patterns are relevant\n3. Scope document — approve the generated scope before Phase 1 begins\n\nShall we proceed directly to data readiness review?`,
+      options: [
+        'A: Yes — take me to data readiness now',
+        'B: Let me review the problem statement first',
+        'C: I want to adjust the CXO sponsor before we proceed',
+        'D: Show me what Phase 1 will investigate',
+      ],
+    } : isMeridian ? {
       text: `I've pulled Meridian Health System's operational data. Three signals are registering as board-level risks:\n\n1. Denial rate at 18.2% vs 11.4% benchmark — a $94M annual revenue gap that compounds every quarter\n2. Prior auth automation at 23% vs 62% peer average — the manual drag is measurable and growing\n3. Epic EHR go-live in Q3 2026 with no verified AI integration path — the window to act is narrowing\n\nWhich of these represents the most urgent pressure on Meridian's leadership today?`,
       options: [
         'A: Denial rate gap — revenue is bleeding now, this is the fire',
@@ -265,7 +292,7 @@ function phase0Script(
 // ── Utility ───────────────────────────────────────────────────────────────────
 function phaseOfStep(id: string) { return parseInt(id.split('.')[0]) }
 function allStepIds() { return PHASE_DEFS.flatMap(p => p.steps.map(s => s.id)) }
-function completedCount(ss: Record<string, StepStatus>) { return Object.values(ss).filter(s => s === 'complete').length }
+function completedCount(ss: Record<string, StepStatus>) { return Object.values(ss).filter(s => s === 'complete' || s === 'pre-confirmed').length }
 function lsKey(clientId: string) { return `abarva_avr_v2_${clientId}` }
 
 function loadSaved(clientId: string): SavedState | null {
@@ -290,9 +317,10 @@ function makeInitial(): SavedState {
 // ── StepDot ───────────────────────────────────────────────────────────────────
 function StepDot({ status }: { status: StepStatus }) {
   const base: React.CSSProperties = { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'all 0.2s' }
-  if (status === 'complete') return <span style={{ fontSize: 11, color: GREEN, lineHeight: 1, flexShrink: 0 }}>✓</span>
-  if (status === 'active')   return <div style={{ ...base, background: TEAL, boxShadow: `0 0 0 3px rgba(45,212,200,0.25)` }} />
-  if (status === 'pending')  return <div style={{ ...base, border: `1.5px solid ${TEAL}`, background: 'transparent' }} />
+  if (status === 'complete')      return <span style={{ fontSize: 11, color: GREEN, lineHeight: 1, flexShrink: 0 }}>✓</span>
+  if (status === 'pre-confirmed') return <span style={{ fontSize: 11, color: TEAL, lineHeight: 1, flexShrink: 0 }}>✓</span>
+  if (status === 'active')        return <div style={{ ...base, background: TEAL, boxShadow: `0 0 0 3px rgba(45,212,200,0.25)` }} />
+  if (status === 'pending')       return <div style={{ ...base, border: `1.5px solid ${TEAL}`, background: 'transparent' }} />
   return <div style={{ ...base, background: '#D1D5DB' }} />
 }
 
@@ -384,14 +412,21 @@ function LeftNav({ phaseStatuses, stepStatuses, activeStep, collapsed, onToggle,
                         <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, width: 18, flexShrink: 0 }}>
                           {step.id}
                         </span>
-                        <span style={{
-                          fontFamily: SANS, fontSize: 13,
-                          color: isActive ? TX : (st === 'complete' ? MUTE : (isLocked ? '#D1D5DB' : BODY)),
-                          fontWeight: isActive ? 600 : 400,
-                          lineHeight: 1.3,
-                        }}>
-                          {step.label}
-                        </span>
+                        <div style={{ flex: 1 }}>
+                          <span style={{
+                            fontFamily: SANS, fontSize: 13,
+                            color: isActive ? TX : (st === 'complete' || st === 'pre-confirmed' ? MUTE : (isLocked ? '#D1D5DB' : BODY)),
+                            fontWeight: isActive ? 600 : 400,
+                            lineHeight: 1.3,
+                          }}>
+                            {step.label}
+                          </span>
+                          {st === 'pre-confirmed' && (
+                            <div style={{ fontFamily: SANS, fontSize: 10, color: MUTE, fontStyle: 'italic', marginTop: 1 }}>
+                              Pre-confirmed in Setup
+                            </div>
+                          )}
+                        </div>
                       </button>
                     )
                   })}
@@ -694,7 +729,9 @@ function AIStrategyInner() {
   const vertical   = currentClient.vertical
   const searchParams   = useSearchParams()
   const skipSetup      = searchParams.get('skip_setup') === 'true'
+  const engagementId   = searchParams.get('engagement_id')
 
+  const [engCtx, setEngCtx] = useState<EngagementContext | null>(null)
   const [st, setSt]               = useState<SavedState>(() => makeInitial())
   const [collapsed, setCollapsed] = useState<Set<number>>(new Set([1, 2, 3, 4]))
   const [customVal, setCustomVal] = useState('')
@@ -706,15 +743,36 @@ function AIStrategyInner() {
 
   // Load / init on client change
   useEffect(() => {
+    // Try to read engagement context from Setup handoff
+    let ctx: EngagementContext | null = null
+    if (skipSetup && engagementId) {
+      try {
+        const raw = localStorage.getItem('abarva_engagement_context')
+        if (raw) {
+          const parsed = JSON.parse(raw) as EngagementContext
+          if (parsed.engagement_id === engagementId) { ctx = parsed; setEngCtx(parsed) }
+        }
+      } catch { /* ignore */ }
+    }
+
     const saved = loadSaved(clientId)
-    if (saved) {
+    if (saved && !ctx) {
       setSt(saved)
       const newCollapsed = new Set<number>()
       PHASE_DEFS.forEach(p => { if (saved.phaseStatuses[p.id] === 'locked') newCollapsed.add(p.id) })
       setCollapsed(newCollapsed)
     } else {
-      const init   = makeInitial()
-      const script = phase0Script('0.1', clientName, vertical, clientId)
+      const init = makeInitial()
+      if (ctx) {
+        // Pre-confirm steps that were answered in Setup
+        if (ctx.directive)            init.stepStatuses['0.1'] = 'pre-confirmed'
+        if (ctx.success_criteria)     init.stepStatuses['0.2'] = 'pre-confirmed'
+        if (ctx.genome_patterns?.length) init.stepStatuses['0.4'] = 'pre-confirmed'
+        // 0.3 (Data Readiness) and 0.5 (Scope) always need live review
+        init.stepStatuses['0.3'] = 'active'
+        init.activeStep = '0.1' // Start at 0.1 to show confirmation message
+      }
+      const script = phase0Script('0.1', clientName, vertical, clientId, ctx)
       init.messagesByStep['0.1'] = [{ role: 'ai', text: script.text, options: script.options, stepId: '0.1' }]
       setSt(init)
     }
@@ -932,9 +990,16 @@ function AIStrategyInner() {
 
           {/* Skip-setup pre-population banner */}
           {skipSetup && (
-            <div style={{ flexShrink: 0, background: 'rgba(45,212,200,0.07)', borderLeft: '3px solid #2DD4C8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' }}>Context loaded</span>
-              <span style={{ fontFamily: SANS, fontSize: 14, color: TX }}>Engagement context loaded from Setup. Phase 0 pre-populated. Review and approve to proceed to Phase 1.</span>
+            <div style={{ flexShrink: 0, background: 'rgba(45,212,200,0.08)', borderLeft: '3px solid #2DD4C8', padding: '16px 24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: engCtx ? 6 : 0 }}>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Context loaded</span>
+                <span style={{ fontFamily: SANS, fontSize: 14, color: TX }}>Engagement context loaded from Setup.</span>
+              </div>
+              {engCtx && (
+                <div style={{ fontFamily: SANS, fontSize: 13, color: '#6B7280' }}>
+                  Phase 0 has been pre-populated from your engagement definition. Steps 0.1, 0.2, and 0.4 are pre-confirmed. Review and approve to proceed to Phase 1.
+                </div>
+              )}
             </div>
           )}
 
