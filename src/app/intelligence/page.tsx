@@ -528,6 +528,7 @@ function IntelligenceContent() {
   const chatEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (chatMessages.length === 0 && !streamingResponse) return
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatMessages, streamingResponse])
 
