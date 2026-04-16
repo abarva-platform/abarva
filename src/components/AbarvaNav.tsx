@@ -169,15 +169,10 @@ function NavInner({ activePage }: NavProps) {
       }}>
 
         {/* ── Wordmark ──────────────────────────────────────────────────────── */}
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '14px', marginRight: '24px', flexShrink: 0 }}>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
             <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
-          </div>
-          <div style={{ width: '1px', height: '30px', background: 'rgba(255,255,255,0.14)', flexShrink: 0 }} />
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '2px' }}>
-            <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: '#FFFFFF', letterSpacing: '.02em', lineHeight: 1 }}>Know It. Build It.</span>
-            <span style={{ fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: TEAL, letterSpacing: '.02em', lineHeight: 1 }}>Own It.</span>
           </div>
         </a>
 

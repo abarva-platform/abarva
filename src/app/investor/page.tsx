@@ -130,7 +130,7 @@ function TabOverview() {
       <div style={{ height: '1px', background: C.border, margin: '8px 0 40px' }} />
 
       <SectionTitle>The four compounding advantages</SectionTitle>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '40px' }}>
         {[
           { num: '01', label: 'GENOME', title: 'Cross-client intelligence no firm can share', body: 'Patterns from real transformations. Failure rates. Recovery ranges. Vendor track records. Every engagement makes it smarter. Advisory firms have this in partners\' heads — walks out when they retire. Ours compounds permanently.' },
           { num: '02', label: 'DATA FIRST', title: 'Week 4 insight in 48 hours', body: 'Client uploads data. Phase 0 runs. Every gap quantified, every pattern matched before the first Maestro meeting.' },
@@ -144,6 +144,47 @@ function TabOverview() {
           </Card>
         ))}
       </div>
+
+      {/* ── GROWTH FLYWHEEL ─────────────────────────────────────────────────── */}
+      <div style={{ height: '1px', background: C.border, margin: '8px 0 40px' }} />
+      <div style={{ fontFamily: C.mono, fontSize: '10px', color: C.teal, letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: '18px' }}>The compounding engine</div>
+      <div style={{ fontFamily: C.sans, fontSize: '40px', fontWeight: 800, color: C.white, lineHeight: 1.15, marginBottom: '24px', letterSpacing: '-0.5px' }}>
+        Every client makes the<br />next engagement better.
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '32px', alignItems: 'center', marginBottom: '40px' }}>
+        <div>
+          <p style={{ fontFamily: C.sans, fontSize: '14px', color: C.white, lineHeight: 1.75, margin: '0 0 16px' }}>
+            This is the moat. Advisory firms can copy our process but they cannot copy the Genome. Every engagement we run adds patterns. Every pattern makes the next engagement faster, cheaper, and more likely to deliver.
+          </p>
+          <p style={{ fontFamily: C.sans, fontSize: '14px', color: C.white, lineHeight: 1.75, margin: 0 }}>
+            We are the only firm where being the 50th client is better than being the first. The Genome compounds permanently — it doesn&apos;t retire, doesn&apos;t leave for a competitor, and doesn&apos;t walk out on a Friday.
+          </p>
+        </div>
+        {/* Flywheel diagram */}
+        <div style={{ background: C.featured, border: `1px solid ${C.teal}`, borderRadius: '12px', padding: '24px' }}>
+          {[
+            'CLIENT DATA →',
+            'GENOME PATTERNS →',
+            'BETTER INTELLIGENCE →',
+            'MORE CLIENTS →',
+            'MORE DATA →',
+            'STRONGER GENOME →',
+          ].map((step, i) => (
+            <div key={step} style={{
+              fontFamily: C.mono, fontSize: '11px', fontWeight: 700,
+              color: i % 2 === 0 ? C.teal : C.white,
+              padding: '8px 0',
+              borderBottom: i < 5 ? `1px solid ${C.border}` : 'none',
+              letterSpacing: '.08em',
+            }}>
+              {step}
+            </div>
+          ))}
+          <div style={{ fontFamily: C.sans, fontSize: '10px', color: C.white, marginTop: '12px', fontStyle: 'italic' }}>
+            ↩ loops back to CLIENT DATA
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -153,6 +194,54 @@ function TabOverview() {
 function TabVision() {
   return (
     <div>
+      {/* ── PRODUCT ROADMAP ─────────────────────────────────────────────────── */}
+      <Eyebrow label="PRODUCT ROADMAP" />
+      <div style={{ fontFamily: C.sans, fontSize: '38px', fontWeight: 800, color: C.white, margin: '0 0 20px', lineHeight: 1.2, letterSpacing: '-0.5px' }}>
+        From beachhead to<br />category definition.
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '48px' }}>
+        {[
+          {
+            phase: 'PHASE 1 — NOW', date: 'Q2 2026', title: 'Beachhead: Healthcare + Financial Services',
+            featured: true,
+            items: ['✓ Platform live — app.abarva.ai', '✓ Meridian + Arcturus demo clients', '✓ 5 Solutions + AI Value Realization', '✓ Maestro, Admin, Value Dashboard', '✓ Genome: 340+ patterns seeded'],
+            target: '3 design partners → $3M ARR',
+          },
+          {
+            phase: 'PHASE 2', date: 'Q3–Q4 2026', title: 'Seed deployed: Maestros + design partners',
+            featured: false,
+            items: ['→ 3 paying design partners live', '→ 50+ Genome patterns from real data', '→ Monthly actuals write path automated', '→ Automated benchmark feeds (KLAS, Gartner)', '→ Retail vertical added (Apex)'],
+            target: '$5M ARR',
+          },
+          {
+            phase: 'PHASE 3', date: '2027', title: 'Series A trigger: $5M ARR, 30 clients',
+            featured: false,
+            items: ['→ Cross-client Genome intelligence live', '→ 100+ clients across 3 verticals', '→ Maestro marketplace (external Maestros)', '→ API for client data integration'],
+            target: '$20M ARR · ~$100M pre-money',
+          },
+          {
+            phase: 'PHASE 4', date: '2028+', title: 'Category definition: The OS for enterprise transformation',
+            featured: false,
+            items: ['→ International expansion', '→ Platform for third-party Maestros', '→ Genome as standalone product', '→ AbarVa as the default layer for any enterprise transformation'],
+            target: '$100M ARR',
+          },
+        ].map((phase, i) => (
+          <div key={phase.phase} style={{ background: phase.featured ? C.featured : C.surface, border: `1px solid ${phase.featured ? C.teal : C.border}`, borderRadius: '10px', padding: '20px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '4px' }}>{phase.phase}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginBottom: '12px' }}>{phase.date}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '14px', lineHeight: 1.4 }}>{phase.title}</div>
+            <div style={{ flex: 1 }}>
+              {phase.items.map(item => (
+                <div key={item} style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6, marginBottom: '6px' }}>{item}</div>
+              ))}
+            </div>
+            <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: `1px solid ${C.border}`, fontFamily: C.mono, fontSize: '10px', color: C.teal }}>{phase.target}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ height: '1px', background: C.border, margin: '8px 0 40px' }} />
       <Eyebrow label="5-YEAR VISION" />
       <H1>The operating system<br />for enterprise transformation.</H1>
       <Body>
@@ -282,6 +371,55 @@ function TabRevenue() {
         <div style={{ fontFamily: C.sans, fontSize: '14px', color: C.white, marginTop: '6px' }}>· $7.5M + $16M + $20M · before outcome fees kick in</div>
       </Card>
 
+      {/* ── THREE REVENUE STREAMS ───────────────────────────────────────────── */}
+      <div style={{ height: '1px', background: C.border, margin: '8px 0 32px' }} />
+      <SectionTitle>Three revenue streams — how they stack</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+        {[
+          { num: '01', name: 'PLATFORM FEE', amount: '$80K–200K/yr', desc: 'Recurring. Covers Intelligence access, Genome matching, Admin + Maestro platform. Predictable base.' },
+          { num: '02', name: 'ENGAGEMENT FEE', amount: '$400K–1.2M/engagement', desc: 'Covers Maestro time per engagement phase. Fixed per phase — not variable. Predictable and defensible.' },
+          { num: '03', name: 'OUTCOME SHARE', amount: '15–20% of verified savings', desc: 'Only activates on verified outcomes above the Day 0 locked baseline. This is the moat. No other advisory firm on earth does this.' },
+        ].map((s, i) => (
+          <div key={s.num} style={{ background: i === 2 ? C.featured : C.surface, border: `1px solid ${i === 2 ? C.teal : C.border}`, borderRadius: '10px', padding: '20px' }}>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>{s.num} · {s.name}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '18px', fontWeight: 800, color: C.teal, marginBottom: '10px' }}>{s.amount}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '12px', color: C.white, lineHeight: 1.65 }}>{s.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Unit economics table */}
+      <Card featured style={{ marginBottom: '32px' }}>
+        <div style={{ fontFamily: C.sans, fontSize: '14px', fontWeight: 700, color: C.white, marginBottom: '20px' }}>Unit economics per client</div>
+        <div style={{ overflowX: 'auto' as const }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontFamily: C.sans, fontSize: '12px' }}>
+            <thead>
+              <tr>
+                {['Metric', 'Year 1', 'Year 2', 'Year 3'].map(col => (
+                  <th key={col} style={{ textAlign: 'left' as const, padding: '8px 12px', borderBottom: `1px solid ${C.border}`, color: C.teal, fontFamily: C.mono, fontSize: '9px', letterSpacing: '.1em', textTransform: 'uppercase' as const }}>{col}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Clients', '3', '15', '50'],
+                ['Avg engagement value', '$2M', '$3M', '$4M'],
+                ['Platform + engagement fee', '$400K', '$600K', '$800K'],
+                ['Outcome share (15% of $2M)', '$300K', '$450K', '$600K'],
+                ['Revenue per client', '$700K', '$1.05M', '$1.4M'],
+                ['Total ARR', '$2.1M', '$15.75M', '$70M'],
+              ].map((row, i) => (
+                <tr key={row[0]} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent' }}>
+                  {row.map((cell, j) => (
+                    <td key={j} style={{ padding: '10px 12px', color: j === 0 ? 'rgba(255,255,255,0.7)' : C.white, fontWeight: j > 0 ? 600 : 400, borderBottom: `1px solid ${C.border}` }}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
         {[
           { period: 'Month 0–6', arr: '$0', desc: '3 design partners. Proving the model.', featured: false },
@@ -346,6 +484,38 @@ function TabAsk() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* ── WHY NOW ─────────────────────────────────────────────────────────── */}
+      <SectionTitle>Why now — the window is open today</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '32px' }}>
+        {[
+          { label: 'Platform is live', detail: 'app.abarva.ai is deployed and demo-ready with two composite clients loaded. Not a prototype — a working product.' },
+          { label: 'Design partners identified', detail: 'Three healthcare IT and financial services CXOs briefed. First design partner conversion Q2 2026.' },
+          { label: 'Enterprise AI accountability', detail: 'Board-level AI spend accountability is a NOW issue. 73% of AI spend has no verified outcome. Boards are demanding answers.' },
+        ].map(item => (
+          <div key={item.label} style={{ background: C.surface, border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.teal}`, borderRadius: '0 8px 8px 0', padding: '18px' }}>
+            <div style={{ fontFamily: C.sans, fontSize: '13px', fontWeight: 700, color: C.white, marginBottom: '8px' }}>{item.label}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.65 }}>{item.detail}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── SERIES A TRIGGER ────────────────────────────────────────────────── */}
+      <SectionTitle>Series A trigger</SectionTitle>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '32px' }}>
+        {[
+          { label: 'ARR trigger', val: '$5M', desc: 'Platform + engagement fees from 10+ live clients.' },
+          { label: 'Clients at trigger', val: '30', desc: 'Across Healthcare IT + Financial Services + Retail.' },
+          { label: 'Genome at trigger', val: '100+ patterns', desc: 'Live data from real engagements feeding predictive capability.' },
+          { label: 'Pre-money at A', val: '~$100M', desc: 'Harvey AI comp at $11B validates category scale potential.' },
+        ].map(s => (
+          <Card key={s.label} featured>
+            <div style={{ fontFamily: C.mono, fontSize: '9px', color: C.teal, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '8px' }}>{s.label}</div>
+            <div style={{ fontFamily: C.mono, fontSize: '22px', fontWeight: 800, color: C.teal, marginBottom: '8px' }}>{s.val}</div>
+            <div style={{ fontFamily: C.sans, fontSize: '11px', color: C.white, lineHeight: 1.6 }}>{s.desc}</div>
+          </Card>
+        ))}
       </div>
 
       <SectionTitle>Use of funds — what $8M specifically buys</SectionTitle>
