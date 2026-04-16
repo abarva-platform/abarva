@@ -136,7 +136,7 @@ function NavInner({ activePage }: NavProps) {
       }}>
 
         {/* ── Wordmark ────────────────────────────────────────────────────────── */}
-        <a href={signedIn && isMaestro ? '/maestro' : '/'} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
             <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
@@ -242,6 +242,11 @@ function NavInner({ activePage }: NavProps) {
         {/* ── Right side ──────────────────────────────────────────────────────── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
 
+          {/* Investor — always visible */}
+          <a href="/investor" style={{ fontSize: '12px', color: activePage === 'investor' ? TEAL : NAV_TEXT, textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0 }}>
+            Investor
+          </a>
+
           {/* Demo — always visible */}
           <a href="/demo" style={{ fontSize: '12px', color: activePage === 'demo' ? TEAL : NAV_TEXT, textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0 }}>
             Demo
@@ -298,14 +303,9 @@ function NavInner({ activePage }: NavProps) {
               )}
             </div>
           ) : (
-            <>
-              <a href="/investor" style={{ fontSize: '12px', color: NAV_TEXT, textDecoration: 'none', padding: '6px 10px', fontFamily: SANS }}>
-                Investor
-              </a>
-              <a href="/sign-in" style={{ background: TEAL, color: '#060A12', fontSize: '13px', fontWeight: 600, textDecoration: 'none', padding: '7px 18px', borderRadius: '8px', flexShrink: 0, fontFamily: SANS }}>
-                Login →
-              </a>
-            </>
+            <a href="/sign-in" style={{ background: TEAL, color: '#060A12', fontSize: '13px', fontWeight: 600, textDecoration: 'none', padding: '7px 18px', borderRadius: '8px', flexShrink: 0, fontFamily: SANS }}>
+              Login →
+            </a>
           )}
         </div>
 
