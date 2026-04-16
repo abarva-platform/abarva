@@ -4,9 +4,23 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
-const PAGE_BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const TEAL = '#2DD4C8', TEXT = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)'
-const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
+// ── Nav tokens ────────────────────────────────────────────────────────────────
+const NAV_BG   = '#060A12'   // dark bar background
+const NAV_BORD = '#1C2D45'   // bar bottom border
+const TEAL     = '#2DD4C8'
+const NAV_TEXT = '#EFF6FF'   // primary text on dark bar
+const NAV_MUTE = 'rgba(239,246,255,0.55)'  // secondary text on dark bar
+const SANS     = 'DM Sans, sans-serif'
+const MONO     = 'JetBrains Mono, monospace'
+const SERIF    = 'Georgia, serif'
+
+// ── Dropdown tokens (white panel, black text — Snowflake style) ───────────────
+const DROP_BG   = '#FFFFFF'
+const DROP_BORD = '#E5E7EB'
+const DROP_HEAD = '#111827'   // primary item label
+const DROP_DESC = '#6B7280'   // secondary description
+const DROP_CAT  = '#9CA3AF'   // category / phase header
+const DROP_HOVER = '#F9FAFB'
 
 interface NavProps {
   activePage?: string
@@ -25,7 +39,7 @@ function NavInner({ activePage }: NavProps) {
   const { clientId, currentClient, allowedClients, canSwitch, switchClient } = useClientContext()
 
   const openDrop = (id: string) => { clearTimeout(closeTimer.current); setOpen(id) }
-  const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 200) }
+  const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 180) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
   const metaClientId = user?.publicMetadata?.clientId as string | undefined
@@ -43,16 +57,13 @@ function NavInner({ activePage }: NavProps) {
   const isElevated = metaRole === 'admin' || metaRole === 'investor'
   const isAdmin    = metaRole === 'admin'
 
-  // Solution link paths — always land on the solution overview page
   const solutionPath = (sol: string) => {
     if (metaRole === 'client' && metaClientId) return `/portal/${sol}?client=${metaClientId}`
     return `/solutions/${sol}`
   }
 
-  // Module nav links — carry the active client param
   const modulePath = (page: string) => `/${page}?client=${clientId}`
 
-  // Intelligence: all signed-in users → data-intelligence hub (Maestro stays separate via the button)
   const intelligencePath = modulePath('data-intelligence')
 
   // 9 modules organised by phase
@@ -89,16 +100,24 @@ function NavInner({ activePage }: NavProps) {
     },
   ]
 
+  // Admin sub-menu items
+  const ADMIN_ITEMS = [
+    { label: 'Setup',             path: '/admin/context',    desc: 'Client onboarding and configuration' },
+    { label: 'Data / Approvals',  path: '/admin/approvals',  desc: 'Data governance and sign-offs' },
+    { label: 'Users',             path: '/admin/new-client', desc: 'Manage users and permissions' },
+    { label: 'Security',          path: '/admin',            desc: 'Access control and audit logs' },
+    { label: 'Demo Data',         path: '/admin/data-guide', desc: 'Install and reset demo datasets' },
+  ]
+
   const avrActive = [
     'intelligence', 'architecture', 'ai-pdlc', 'ai-strategy', 'avr',
     'data-intelligence', 'justify', 'contradictions', 'outcome-intelligence',
     'diagnose', 'vendor-intelligence',
-    // inline canvas module keys
-    'situation', 'contradiction', 'data', 'technology', 'vendor',
-    'business-case', 'ai-delivery', 'outcome',
   ].includes(activePage || '')
 
-  // Explorer breadcrumb — maps each module page to its AVR phase context
+  const adminActive = (activePage || '').startsWith('admin')
+
+  // Breadcrumb
   const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
     'diagnose':             { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Situation Intelligence' },
     'contradictions':       { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Contradiction Intelligence' },
@@ -113,328 +132,378 @@ function NavInner({ activePage }: NavProps) {
   const crumb = MODULE_CRUMBS[activePage || '']
   const showBreadcrumb = signedIn && isElevated && !!crumb
 
+  // Shared dropdown panel style (white, Snowflake-inspired)
+  const dropPanel: React.CSSProperties = {
+    position: 'absolute', top: '58px', left: 0,
+    background: DROP_BG,
+    border: `1px solid ${DROP_BORD}`,
+    borderRadius: '12px',
+    padding: '8px 0',
+    zIndex: 300,
+    boxShadow: '0 4px 32px rgba(0,0,0,0.18)',
+  }
+
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
-    <div id="abarva-nav" style={{
-      height: '60px',
-      background: PAGE_BG,
-      borderBottom: showBreadcrumb ? 'none' : `1px solid ${BORDER}`,
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 24px',
-      gap: '2px',
-      boxSizing: 'border-box',
-    }}>
+      <div id="abarva-nav" style={{
+        height: '60px',
+        background: NAV_BG,
+        borderBottom: showBreadcrumb ? 'none' : `1px solid ${NAV_BORD}`,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 24px',
+        gap: '2px',
+        boxSizing: 'border-box',
+      }}>
 
-      {/* Wordmark */}
-      <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', lineHeight: 1, marginRight: '20px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline' }}>
-          <span style={{ fontFamily: SERIF, fontSize: '17px', fontWeight: 800, color: TEXT }}>Abar</span>
-          <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 900, color: TEAL }}>Va</span>
-        </div>
-        <span style={{ fontFamily: MONO, fontSize: '7.5px', color: TEXT, letterSpacing: '.04em', opacity: .6 }}>know it. build it. own it.</span>
-      </a>
-
-      {/* ── Client toggle — admin + investor only ───────────────────────────── */}
-      {signedIn && isElevated && (
-        <div style={{ position: 'relative', marginRight: '16px' }}>
-          <button
-            onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              background: `${currentClient.color}10`,
-              border: `1px solid ${currentClient.color}35`,
-              borderRadius: '7px', padding: '5px 10px 5px 8px',
-              cursor: canSwitch ? 'pointer' : 'default',
-            }}
-          >
-            <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, color: TEXT, lineHeight: 1.2 }}>
-                {currentClient.shortName}
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: '8px', color: currentClient.color, lineHeight: 1 }}>
-                {currentClient.vertical}
-              </div>
-            </div>
-            {canSwitch && (
-              <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginLeft: '2px' }}>▾</span>
-            )}
-          </button>
-
-          {canSwitch && clientToggleOpen && (
-            <div
-              onMouseLeave={() => setClientToggleOpen(false)}
-              style={{
-                position: 'absolute', top: 'calc(100% + 6px)', left: 0,
-                background: PAGE_BG, border: `1px solid ${BORDER}`,
-                borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-              }}>
-              <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>
-                Switch Account
-              </div>
-              {ALL_CLIENTS.map(c => {
-                const isActive  = c.id === clientId
-                const isAllowed = !!allowedClients.find(a => a.id === c.id)
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
-                    style={{
-                      width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px',
-                      padding: '9px 10px', borderRadius: '7px', border: 'none',
-                      background: isActive ? `${c.color}12` : 'transparent',
-                      cursor: isAllowed ? 'pointer' : 'default',
-                      opacity: isAllowed ? 1 : 0.35,
-                    }}
-                  >
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : TEXT }}>
-                        {c.shortName}
-                      </div>
-                      <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>{c.vertical}</div>
-                    </div>
-                    {isActive && (
-                      <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color }}>✓</span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Nav links: INTELLIGENCE | SOLUTIONS ▾ | AI VALUE REALIZATION ▾ ─── */}
-
-      {/* Intelligence — signed-in users only */}
-      {signedIn && (
-        <a
-          href={intelligencePath}
-          style={{
-            fontSize: '13px',
-            color: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? TEAL : TEXT,
-            padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-            borderBottom: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? `2px solid ${TEAL}` : '2px solid transparent',
-          }}>
-          Intelligence
-        </a>
-      )}
-
-      {/* Solutions ▾ */}
-      <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
-        <button style={{
-          fontSize: '13px', color: activePage === 'solutions' ? TEAL : TEXT,
-          background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS,
-          borderBottom: activePage === 'solutions' ? `2px solid ${TEAL}` : '2px solid transparent',
-        }}>
-          Solutions ▾
-        </button>
-        {open === 'solutions' && (
-          <div
-            style={{ position: 'absolute', top: '60px', left: 0, background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 0', minWidth: '320px', zIndex: 300 }}
-            onMouseEnter={cancelClose} onMouseLeave={startClose}
-          >
-            {[
-              { name: 'AI-Powered PDLC',         sol: 'pdlc',   desc: 'Build products at twice the velocity' },
-              { name: 'Margin Optimization',      sol: 'margin', desc: 'Recover margin across revenue, cost, AI' },
-              { name: 'Technology Modernization', sol: 'tech',   desc: 'Govern the modernization the vendor cannot' },
-            ].map(item => (
-              <a key={item.name} href={solutionPath(item.sol)} onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
-                <div style={{ fontSize: '13px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
-                <div style={{ fontSize: '11px', color: MUTED, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
-              </a>
-            ))}
-            <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />
-            <a href="/solutions" onClick={() => setOpen(null)} style={{ display: 'block', padding: '10px 20px', textDecoration: 'none' }}>
-              <div style={{ fontSize: '13px', color: TEAL, fontFamily: SANS }}>View all solutions →</div>
-            </a>
+        {/* ── Wordmark ──────────────────────────────────────────────────────── */}
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', lineHeight: 1, marginRight: '20px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline' }}>
+            <span style={{ fontFamily: SERIF, fontSize: '17px', fontWeight: 800, color: NAV_TEXT }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
-        )}
-      </div>
-
-      {/* AI Value Realization ▾ — dropdown (signed-in) or plain link (public) */}
-      {signedIn ? (
-        <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
-          <button style={{
-            fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
-            color: avrActive ? TEAL : TEXT,
-            borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
-          }}>
-            AI Value Realization ▾
-          </button>
-          {open === 'avr' && (
-            <div
-              style={{ position: 'absolute', top: '60px', left: 0, background: CARD, border: `1px solid ${BORDER}`, borderRadius: '12px', padding: '8px 0', minWidth: '340px', zIndex: 300 }}
-              onMouseEnter={cancelClose} onMouseLeave={startClose}
-            >
-              {AVR_PHASES.map((phase, pi) => (
-                <div key={phase.phase}>
-                  {pi > 0 && <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />}
-                  <div style={{ padding: '6px 20px 4px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '7.5px', color: phase.color, letterSpacing: '.12em', textTransform: 'uppercase' as const }}>
-                      Phase {phase.phase} — {phase.label}
-                    </span>
-                  </div>
-                  {phase.modules.map(item => (
-                    <a key={item.name} href={item.path} onClick={() => setOpen(null)} style={{ display: 'block', padding: '7px 20px 7px 28px', textDecoration: 'none' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{item.name}</div>
-                      <div style={{ fontSize: '10px', color: MUTED, fontFamily: SANS, marginTop: '1px' }}>{item.desc}</div>
-                    </a>
-                  ))}
-                </div>
-              ))}
-              <div style={{ borderTop: `1px solid ${BORDER}`, margin: '4px 0' }} />
-              <a href="/ai-strategy" onClick={() => setOpen(null)} style={{ display: 'block', padding: '8px 20px', textDecoration: 'none' }}>
-                <div style={{ fontSize: '12px', color: TEAL, fontFamily: SANS }}>View all 9 modules →</div>
-              </a>
-            </div>
-          )}
-        </div>
-      ) : (
-        <a href="/ai-strategy" style={{
-          fontSize: '13px', color: avrActive ? TEAL : TEXT, padding: '8px 10px',
-          fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-          borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
-        }}>
-          AI Value Realization
+          <span style={{ fontFamily: MONO, fontSize: '7.5px', color: NAV_TEXT, letterSpacing: '.04em', opacity: .6 }}>know it. build it. own it.</span>
         </a>
-      )}
 
-      {/* ── Right side ─────────────────────────────────────────────────────── */}
-      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-
-        {/* Maestro — admin + investor: links to client workspace */}
+        {/* ── Client toggle — admin + investor only ─────────────────────────── */}
         {signedIn && isElevated && (
-          <a href={`/admin/client/${clientId}`} style={{
-            fontSize: '12px', color: TEAL, textDecoration: 'none',
-            padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
-          }}>
-            Maestro
-          </a>
-        )}
-
-        {/* Admin ⟶ — admin only: links to main admin dashboard */}
-        {isAdmin && (
-          <a href="/admin" style={{
-            fontSize: '12px', color: TEAL, textDecoration: 'none',
-            padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
-          }}>
-            Admin
-          </a>
-        )}
-
-        {/* Platform — always visible */}
-        <a href="/platform" style={{
-          fontSize: '12px', color: MUTED, textDecoration: 'none',
-          padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
-        }}>
-          Platform
-        </a>
-
-        {signedIn ? (
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', marginRight: '16px' }}>
             <button
-              onClick={() => setUserMenuOpen(o => !o)}
+              onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
-                background: 'rgba(45,212,200,0.06)', border: '1px solid rgba(45,212,200,0.2)',
-                borderRadius: '8px', padding: '5px 10px', cursor: 'pointer',
+                background: `${currentClient.color}10`,
+                border: `1px solid ${currentClient.color}35`,
+                borderRadius: '7px', padding: '5px 10px 5px 8px',
+                cursor: canSwitch ? 'pointer' : 'default',
               }}
             >
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: '12px', fontWeight: 500, color: TEXT, fontFamily: SANS }}>{displayName}</div>
-                {roleLabel && <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>{roleLabel}</div>}
+              <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
+              <div style={{ textAlign: 'left' }}>
+                <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, color: NAV_TEXT, lineHeight: 1.2 }}>
+                  {currentClient.shortName}
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '8px', color: currentClient.color, lineHeight: 1 }}>
+                  {currentClient.vertical}
+                </div>
               </div>
-              <div style={{
-                width: '28px', height: '28px', borderRadius: '50%',
-                background: 'rgba(45,212,200,0.15)', border: '1px solid rgba(45,212,200,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0,
-              }}>
-                {initials}
-              </div>
+              {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE, marginLeft: '2px' }}>▾</span>}
             </button>
 
-            {userMenuOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: PAGE_BG, border: `1px solid ${BORDER}`, borderRadius: '10px',
-                padding: '6px 0', zIndex: 400, minWidth: '160px',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-              }}>
-                <div style={{ padding: '8px 14px 6px', borderBottom: `1px solid ${BORDER}`, marginBottom: '4px' }}>
-                  <div style={{ fontFamily: SANS, fontSize: '12px', color: TEXT, fontWeight: 500 }}>{displayName}</div>
-                  {roleLabel && <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, marginTop: '2px' }}>{roleLabel}</div>}
+            {canSwitch && clientToggleOpen && (
+              <div
+                onMouseLeave={() => setClientToggleOpen(false)}
+                style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', left: 0,
+                  background: DROP_BG, border: `1px solid ${DROP_BORD}`,
+                  borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                }}>
+                <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>
+                  Switch Account
                 </div>
-                {isAdmin && (
-                  <a href="/admin" style={{ display: 'block', padding: '8px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '12px', color: MUTED }}>
-                    Admin Dashboard
-                  </a>
-                )}
-                <button
-                  onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
-                  style={{
-                    width: '100%', textAlign: 'left', padding: '8px 14px',
-                    fontSize: '12px', color: TEXT, background: 'transparent',
-                    border: 'none', cursor: 'pointer', fontFamily: SANS,
-                  }}
-                >
-                  Sign out
-                </button>
+                {ALL_CLIENTS.map(c => {
+                  const isActive  = c.id === clientId
+                  const isAllowed = !!allowedClients.find(a => a.id === c.id)
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
+                      style={{
+                        width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '9px 10px', borderRadius: '7px', border: 'none',
+                        background: isActive ? `${c.color}12` : 'transparent',
+                        cursor: isAllowed ? 'pointer' : 'default',
+                        opacity: isAllowed ? 1 : 0.35,
+                      }}
+                    >
+                      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>
+                          {c.shortName}
+                        </div>
+                        <div style={{ fontFamily: MONO, fontSize: '9px', color: DROP_DESC }}>{c.vertical}</div>
+                      </div>
+                      {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color }}>✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Intelligence — signed-in only ────────────────────────────────── */}
+        {signedIn && (
+          <a
+            href={intelligencePath}
+            style={{
+              fontSize: '13px',
+              color: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? TEAL : NAV_TEXT,
+              padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+              borderBottom: (activePage === 'intelligence-hub' || activePage === 'data-intelligence') ? `2px solid ${TEAL}` : '2px solid transparent',
+            }}>
+            Intelligence
+          </a>
+        )}
+
+        {/* ── Solutions ▾ ──────────────────────────────────────────────────── */}
+        <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('solutions')} onMouseLeave={startClose}>
+          <button style={{
+            fontSize: '13px', color: activePage === 'solutions' ? TEAL : NAV_TEXT,
+            background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', fontFamily: SANS,
+            borderBottom: activePage === 'solutions' ? `2px solid ${TEAL}` : '2px solid transparent',
+          }}>
+            Solutions ▾
+          </button>
+          {open === 'solutions' && (
+            <div style={{ ...dropPanel, minWidth: '300px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
+              {[
+                { name: 'AI-Powered PDLC',         sol: 'pdlc',   desc: 'Build products at twice the velocity' },
+                { name: 'Margin Optimization',      sol: 'margin', desc: 'Recover margin across revenue, cost, AI' },
+                { name: 'Technology Modernization', sol: 'tech',   desc: 'Govern the modernization the vendor cannot' },
+              ].map(item => (
+                <a key={item.name} href={solutionPath(item.sol)} onClick={() => setOpen(null)}
+                  style={{ display: 'block', padding: '10px 20px', textDecoration: 'none', borderRadius: '8px', margin: '0 4px' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.name}</div>
+                  <div style={{ fontSize: '11px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
+                </a>
+              ))}
+              <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />
+              <a href="/solutions" onClick={() => setOpen(null)}
+                style={{ display: 'block', padding: '9px 20px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: '#1D4ED8', fontWeight: 500, borderRadius: '8px', margin: '0 4px' }}
+                onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                View all solutions →
+              </a>
+            </div>
+          )}
+        </div>
+
+        {/* ── AI Value Realization ▾ ────────────────────────────────────────── */}
+        {signedIn ? (
+          <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
+            <button style={{
+              fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
+              color: avrActive ? TEAL : NAV_TEXT,
+              borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
+            }}>
+              AI Value Realization ▾
+            </button>
+            {open === 'avr' && (
+              <div style={{ ...dropPanel, minWidth: '340px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
+                {AVR_PHASES.map((phase, pi) => (
+                  <div key={phase.phase}>
+                    {pi > 0 && <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />}
+                    <div style={{ padding: '6px 20px 4px' }}>
+                      <span style={{ fontFamily: MONO, fontSize: '7.5px', color: phase.color, letterSpacing: '.12em', textTransform: 'uppercase' as const, fontWeight: 700 }}>
+                        Phase {phase.phase} — {phase.label}
+                      </span>
+                    </div>
+                    {phase.modules.map(item => (
+                      <a key={item.name} href={item.path} onClick={() => setOpen(null)}
+                        style={{ display: 'block', padding: '8px 20px 8px 28px', textDecoration: 'none', borderRadius: '8px', margin: '0 4px' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.name}</div>
+                        <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '1px' }}>{item.desc}</div>
+                      </a>
+                    ))}
+                  </div>
+                ))}
+                <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />
+                <a href="/ai-strategy" onClick={() => setOpen(null)}
+                  style={{ display: 'block', padding: '9px 20px', textDecoration: 'none', fontFamily: SANS, fontSize: '12px', color: '#1D4ED8', fontWeight: 500, borderRadius: '8px', margin: '0 4px' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  View all 9 modules →
+                </a>
               </div>
             )}
           </div>
         ) : (
-          <>
-            <a href="/investor" style={{
-              fontSize: '12px', color: MUTED, textDecoration: 'none',
-              padding: '5px 10px', border: `1px solid ${BORDER}`, borderRadius: '6px', fontFamily: SANS,
-            }}>
-              Investor view
-            </a>
-            <a href="/sign-in" style={{
-              background: TEAL, color: PAGE_BG, fontSize: '13px', fontWeight: 600,
-              textDecoration: 'none', padding: '7px 18px', borderRadius: '8px', flexShrink: 0, fontFamily: SANS,
-            }}>
-              Login →
-            </a>
-          </>
+          <a href="/ai-strategy" style={{
+            fontSize: '13px', color: avrActive ? TEAL : NAV_TEXT, padding: '8px 10px',
+            fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+            borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
+          }}>
+            AI Value Realization
+          </a>
         )}
+
+        {/* ── Admin ▾ — visible all signed-in; greyed + disabled for non-admins */}
+        {signedIn && (
+          <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('admin')} onMouseLeave={startClose}>
+            <button style={{
+              fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
+              color: !isAdmin ? 'rgba(239,246,255,0.35)' : adminActive ? TEAL : NAV_TEXT,
+              borderBottom: adminActive ? `2px solid ${TEAL}` : '2px solid transparent',
+            }}>
+              Admin ▾
+            </button>
+            {open === 'admin' && (
+              <div style={{ ...dropPanel, minWidth: '260px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
+                {/* Header row */}
+                <div style={{ padding: '8px 16px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
+                    {isAdmin ? 'Admin Console' : 'Admin Console — Restricted'}
+                  </span>
+                  {!isAdmin && (
+                    <span style={{ fontFamily: MONO, fontSize: '8px', color: '#EF4444', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', padding: '1px 6px' }}>
+                      Admin only
+                    </span>
+                  )}
+                </div>
+                {ADMIN_ITEMS.map(item => (
+                  <a
+                    key={item.label}
+                    href={isAdmin ? item.path : undefined}
+                    onClick={e => { if (!isAdmin) { e.preventDefault(); return } setOpen(null) }}
+                    style={{
+                      display: 'block', padding: '9px 16px', textDecoration: 'none',
+                      borderRadius: '8px', margin: '0 4px',
+                      opacity: isAdmin ? 1 : 0.38,
+                      cursor: isAdmin ? 'pointer' : 'not-allowed',
+                    }}
+                    onMouseEnter={e => { if (isAdmin) e.currentTarget.style.background = DROP_HOVER }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  >
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.label}</div>
+                    <div style={{ fontSize: '11px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Right side ─────────────────────────────────────────────────────── */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+
+          {/* Maestro — admin + investor: client workspace */}
+          {signedIn && isElevated && (
+            <a href={`/admin/client/${clientId}`} style={{
+              fontSize: '12px', color: TEAL, textDecoration: 'none',
+              padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
+            }}>
+              Maestro
+            </a>
+          )}
+
+          {/* Platform */}
+          <a href="/platform" style={{
+            fontSize: '12px', color: NAV_MUTE, textDecoration: 'none',
+            padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
+          }}>
+            Platform
+          </a>
+
+          {signedIn ? (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setUserMenuOpen(o => !o)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  background: 'rgba(45,212,200,0.06)', border: '1px solid rgba(45,212,200,0.2)',
+                  borderRadius: '8px', padding: '5px 10px', cursor: 'pointer',
+                }}
+              >
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{displayName}</div>
+                  {roleLabel && <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>{roleLabel}</div>}
+                </div>
+                <div style={{
+                  width: '28px', height: '28px', borderRadius: '50%',
+                  background: 'rgba(45,212,200,0.15)', border: '1px solid rgba(45,212,200,0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0,
+                }}>
+                  {initials}
+                </div>
+              </button>
+
+              {userMenuOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                  background: DROP_BG, border: `1px solid ${DROP_BORD}`, borderRadius: '10px',
+                  padding: '6px 0', zIndex: 400, minWidth: '180px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+                }}>
+                  <div style={{ padding: '8px 14px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '4px' }}>
+                    <div style={{ fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, fontWeight: 600 }}>{displayName}</div>
+                    {roleLabel && <div style={{ fontFamily: MONO, fontSize: '9px', color: DROP_DESC, marginTop: '2px' }}>{roleLabel}</div>}
+                  </div>
+                  {isAdmin && (
+                    <a href="/admin" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      Admin Dashboard
+                    </a>
+                  )}
+                  <button
+                    onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
+                    style={{
+                      width: '100%', textAlign: 'left', padding: '9px 14px',
+                      fontSize: '13px', color: DROP_HEAD, background: 'transparent',
+                      border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <a href="/investor" style={{
+                fontSize: '12px', color: NAV_MUTE, textDecoration: 'none',
+                padding: '5px 10px', border: `1px solid ${NAV_BORD}`, borderRadius: '6px', fontFamily: SANS,
+              }}>
+                Investor view
+              </a>
+              <a href="/sign-in" style={{
+                background: TEAL, color: '#060A12', fontSize: '13px', fontWeight: 600,
+                textDecoration: 'none', padding: '7px 18px', borderRadius: '8px', flexShrink: 0, fontFamily: SANS,
+              }}>
+                Login →
+              </a>
+            </>
+          )}
+        </div>
+
       </div>
 
-    </div>
-
-    {/* Explorer breadcrumb — AI Value Realization › Phase › Module */}
-    {showBreadcrumb && crumb && (
-      <div style={{
-        height: '30px', background: PAGE_BG,
-        borderBottom: `1px solid ${BORDER}`,
-        display: 'flex', alignItems: 'center', padding: '0 24px', gap: '8px',
-      }}>
-        <a
-          href={`/ai-strategy?client=${clientId}`}
-          style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.06em', opacity: 0.9 }}
-        >
-          AI Value Realization
-        </a>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: crumb.phaseColor, letterSpacing: '.06em', opacity: 0.85 }}>
-          Phase {crumb.phase} — {crumb.phaseLabel}
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: BORDER }}>›</span>
-        <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em' }}>
-          {crumb.moduleName}
-        </span>
-      </div>
-    )}
+      {/* ── Explorer breadcrumb ───────────────────────────────────────────────── */}
+      {showBreadcrumb && crumb && (
+        <div style={{
+          height: '30px', background: NAV_BG,
+          borderBottom: `1px solid ${NAV_BORD}`,
+          display: 'flex', alignItems: 'center', padding: '0 24px', gap: '8px',
+        }}>
+          <a
+            href={`/ai-strategy?client=${clientId}`}
+            style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.06em', opacity: 0.9 }}
+          >
+            AI Value Realization
+          </a>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_BORD }}>›</span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: crumb.phaseColor, letterSpacing: '.06em', opacity: 0.85 }}>
+            Phase {crumb.phase} — {crumb.phaseLabel}
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_BORD }}>›</span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em' }}>
+            {crumb.moduleName}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
 
-// Suspense wrapper required because useClientContext uses useSearchParams
 export default function AbarvaNav(props: NavProps) {
   return (
     <Suspense fallback={
