@@ -646,17 +646,20 @@ function AIDeliveryContent() {
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {(isMeridian ? [
                 { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: `Across ${currentInitiatives.length} AI initiatives` },
-                { label: 'Denial Rate', value: '18.2%', color: RED, sub: 'vs 12% SLA target — $74M/yr gap' },
-                { label: 'Stalled Value', value: `$${stalledValue}M`, color: AMBER, sub: `${stalled.length} initiatives — blocked` },
-                { label: 'Immediate Action', value: 'CDO Hire', color: GREEN, sub: 'Unlocks all 4 root causes' },
+                { label: 'Denial Rate', value: '18.2%', color: WHITE, dot: RED, sub: 'vs 12% SLA target — $74M/yr gap' },
+                { label: 'Stalled Value', value: `$${stalledValue}M`, color: WHITE, dot: AMBER, sub: `${stalled.length} initiatives — blocked` },
+                { label: 'Immediate Action', value: 'CDO Hire', color: WHITE, dot: TEAL, sub: 'Unlocks all 4 root causes' },
               ] : [
                 { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: 'Committed to AI since 2021' },
-                { label: 'Actual ROI', value: `${roiPct}%`, color: RED, sub: `$${totalActual}M of $${Math.round(totalCommitted)}M committed` },
-                { label: 'Stalled Value', value: `$${stalledValue}M`, color: AMBER, sub: `${stalled.length} initiatives — no progress` },
-                { label: 'Immediate Action', value: 'Day 1', color: GREEN, sub: 'Daily Stress Testing — CRO approved' },
+                { label: 'Actual ROI', value: `${roiPct}%`, color: WHITE, dot: RED, sub: `$${totalActual}M of $${Math.round(totalCommitted)}M committed` },
+                { label: 'Stalled Value', value: `$${stalledValue}M`, color: WHITE, dot: AMBER, sub: `${stalled.length} initiatives — no progress` },
+                { label: 'Immediate Action', value: 'Day 1', color: WHITE, dot: TEAL, sub: 'Daily Stress Testing — CRO approved' },
               ]).map(m => (
                 <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                  {(m as any).dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: (m as any).dot, flexShrink: 0 }} />}
                   <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
+                </div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
                   <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, marginTop: '1px' }}>{m.sub}</div>
                 </div>
@@ -710,7 +713,7 @@ function AIDeliveryContent() {
                           </div>
                         </div>
                         {init.rootCause !== 'none' && (
-                          <div style={{ fontFamily: MONO, fontSize: '7px', color: rootCauseColor(init.rootCause), background: `${rootCauseColor(init.rootCause)}15`, borderRadius: '3px', padding: '1px 4px', flexShrink: 0 }}>
+                          <div style={{ fontFamily: MONO, fontSize: '7px', color: MUTED, background: 'rgba(255,255,255,0.06)', borderRadius: '3px', padding: '1px 4px', flexShrink: 0, border: `1px solid ${BORDER}` }}>
                             {rootCauseLabel(init.rootCause, clientId).split(' ')[0]}
                           </div>
                         )}
@@ -733,9 +736,9 @@ function AIDeliveryContent() {
                   style={{ textAlign: 'left', background: selectedBlocker?.id === b.id ? `${b.color}08` : CARD, border: `1px solid ${selectedBlocker?.id === b.id ? b.color + '50' : b.color + '20'}`, borderLeft: `3px solid ${b.color}`, borderRadius: '6px', padding: '12px', cursor: 'pointer' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, lineHeight: 1.3, flex: 1, marginRight: '8px' }}>{b.label}</div>
-                    <div style={{ fontFamily: MONO, fontSize: '8px', color: b.color, background: `${b.color}15`, borderRadius: '3px', padding: '1px 5px', flexShrink: 0 }}>{b.count} init</div>
+                    <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, background: BORDER, borderRadius: '3px', padding: '1px 5px', flexShrink: 0 }}>{b.count} init</div>
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: b.color }}>${b.lockedValue}M locked</div>
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>${b.lockedValue}M locked</div>
                 </button>
               ))}
               <div style={{ marginTop: '4px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '10px 12px' }}>
@@ -750,7 +753,7 @@ function AIDeliveryContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {currentRoadmap.map(w => (
                 <div key={w.wave} style={{ background: CARD, border: `1px solid ${w.color}25`, borderLeft: `3px solid ${w.color}`, borderRadius: '8px', padding: '12px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: w.color, marginBottom: '4px' }}>WAVE {w.wave} · {w.months} MONTHS</div>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginBottom: '4px' }}>WAVE {w.wave} · {w.months} MONTHS</div>
                   <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{w.name}</div>
                   <div style={{ display: 'flex', gap: '12px', marginBottom: '6px' }}>
                     <div>
@@ -758,7 +761,7 @@ function AIDeliveryContent() {
                       <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>invested</div>
                     </div>
                     <div>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: w.color }}>${w.annualValue}M</div>
+                      <div style={{ fontFamily: MONO, fontSize: '10px', color: WHITE }}>${w.annualValue}M</div>
                       <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>annual value</div>
                     </div>
                   </div>
@@ -795,7 +798,7 @@ function AIDeliveryContent() {
                     <div style={{ background: CARD, border: `1px solid ${sc.color}30`, borderTop: `3px solid ${sc.color}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
                         <div>
-                          <div style={{ fontFamily: MONO, fontSize: '9px', color: sc.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                          <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
                             {sc.label} · {selectedInit.category}
                           </div>
                           <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>{selectedInit.name}</h2>
@@ -812,12 +815,15 @@ function AIDeliveryContent() {
                         {[
                           { label: 'Invested', value: `$${selectedInit.investment}M`, color: WHITE },
                           { label: 'Committed Value', value: selectedInit.valueCommitted > 0 ? `$${selectedInit.valueCommitted}M/yr` : 'N/A', color: MUTED },
-                          { label: 'Actual Value', value: selectedInit.valueActual > 0 ? `$${selectedInit.valueActual}M/yr` : '$0', color: selectedInit.valueActual > 0 ? TEAL : RED },
-                          { label: 'Performance', value: selectedInit.valueCommitted > 0 ? `${performancePct}%` : '—', color: performancePct === 0 ? RED : performancePct < 50 ? AMBER : GREEN },
+                          { label: 'Actual Value', value: selectedInit.valueActual > 0 ? `$${selectedInit.valueActual}M/yr` : '$0', color: WHITE, dot: selectedInit.valueActual > 0 ? TEAL : RED },
+                          { label: 'Performance', value: selectedInit.valueCommitted > 0 ? `${performancePct}%` : '—', color: WHITE, dot: performancePct === 0 ? RED : performancePct < 50 ? AMBER : GREEN },
                         ].map(m => (
                           <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '10px 12px' }}>
                             <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>{m.label}</div>
-                            <div style={{ fontFamily: MONO, fontSize: '13px', color: m.color, fontWeight: 600 }}>{m.value}</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              {(m as any).dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: (m as any).dot, flexShrink: 0 }} />}
+                              <div style={{ fontFamily: MONO, fontSize: '13px', color: m.color, fontWeight: 600 }}>{m.value}</div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -832,7 +838,7 @@ function AIDeliveryContent() {
                     {/* Blocker */}
                     {selectedInit.rootCause !== 'none' && (
                       <div style={{ background: `${rcColor}06`, border: `1px solid ${rcColor}25`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
-                        <div style={{ fontFamily: MONO, fontSize: '9px', color: rcColor, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
                           Root Cause · {rootCauseLabel(selectedInit.rootCause, clientId)}
                         </div>
                         <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedInit.blocker}</div>
@@ -864,17 +870,20 @@ function AIDeliveryContent() {
               </button>
 
               <div style={{ background: CARD, border: `1px solid ${selectedBlocker.color}30`, borderTop: `3px solid ${selectedBlocker.color}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: selectedBlocker.color, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Root Cause Analysis</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Root Cause Analysis</div>
                 <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: '0 0 16px' }}>{selectedBlocker.label}</h2>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   {[
-                    { label: 'Blocked Initiatives', value: `${selectedBlocker.count}`, color: selectedBlocker.color },
-                    { label: 'Locked Annual Value', value: `$${selectedBlocker.lockedValue}M`, color: selectedBlocker.color },
+                    { label: 'Blocked Initiatives', value: `${selectedBlocker.count}` },
+                    { label: 'Locked Annual Value', value: `$${selectedBlocker.lockedValue}M` },
                   ].map(m => (
                     <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '12px 16px' }}>
                       <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>{m.label}</div>
-                      <div style={{ fontFamily: MONO, fontSize: '20px', color: m.color, fontWeight: 700 }}>{m.value}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: selectedBlocker.color, flexShrink: 0 }} />
+                        <div style={{ fontFamily: MONO, fontSize: '20px', color: WHITE, fontWeight: 700 }}>{m.value}</div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -989,9 +998,12 @@ function AIDeliveryContent() {
                     <div key={group.label} style={{ background: CARD, border: `1px solid ${group.color}25`, borderTop: `2px solid ${group.color}`, borderRadius: '8px', padding: '14px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600 }}>{group.label}</div>
-                        <div style={{ fontFamily: MONO, fontSize: '18px', color: group.color, fontWeight: 700 }}>{group.count}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: group.color, flexShrink: 0 }} />
+                          <div style={{ fontFamily: MONO, fontSize: '18px', color: WHITE, fontWeight: 700 }}>{group.count}</div>
+                        </div>
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: group.color, marginBottom: '10px' }}>{group.value}</div>
+                      <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginBottom: '10px' }}>{group.value}</div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         {group.items.slice(0, 3).map(init => (
                           <button key={init.id} onClick={() => { setSelectedInit(init); setActiveTab('initiatives') }}
@@ -1020,7 +1032,10 @@ function AIDeliveryContent() {
                     <button key={b.id} onClick={() => { setSelectedBlocker(b); setActiveTab('blockers') }}
                       style={{ textAlign: 'left', background: CARD, border: `1px solid ${b.color}25`, borderTop: `2px solid ${b.color}`, borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
                       <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, marginBottom: '4px', lineHeight: 1.3 }}>{b.label.split(' — ')[0]}</div>
-                      <div style={{ fontFamily: MONO, fontSize: '16px', color: b.color, fontWeight: 700, marginBottom: '2px' }}>${b.lockedValue}M</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '2px' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
+                        <div style={{ fontFamily: MONO, fontSize: '16px', color: WHITE, fontWeight: 700 }}>${b.lockedValue}M</div>
+                      </div>
                       <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{b.count} initiatives blocked</div>
                     </button>
                   ))}
