@@ -62,14 +62,18 @@ export function useClientContext() {
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  const isAdmin = isLoaded && !!user && role === 'admin'
+
   return {
     clientId,
     currentClient,
     allowedClients,          // what the user is permitted to see and switch to
     canSwitch: isElevated && ALL_CLIENTS.length > 1,
+    canSwitchInline: isAdmin, // only admins get inline page-level tab strips; investors use the nav
     switchClient,
     isLoaded,
     role,
     isElevated,
+    isAdmin,
   }
 }

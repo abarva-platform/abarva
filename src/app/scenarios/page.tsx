@@ -351,7 +351,7 @@ const CLIENT_NAMES: Record<string, string> = {
 }
 
 function ScenariosContent() {
-  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const { clientId: ctxClientId, allowedClients, isAdmin } = useClientContext()
   const [clientId, setClientId] = useState(ctxClientId)
   const [mInp, setMInp] = useState<MI>(M_DEF)
   const [arcInp, setArcInp] = useState<ARC>(ARC_DEF)
@@ -387,7 +387,7 @@ function ScenariosContent() {
           </h1>
           <p style={{ fontSize: '13px', color: '#64748B', marginBottom: '14px' }}>Change assumptions. See the impact. Make better decisions.</p>
           <div style={{ display: 'flex', gap: '8px' }}>
-            {visibleClients.map(c => (
+            {isAdmin && visibleClients.map(c => (
               <button key={c.id} onClick={() => { setClientId(c.id); flash() }}
                 style={{ padding: '6px 16px', borderRadius: '20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', background: clientId === c.id ? '#2563EB' : '#F1F5F9', color: clientId === c.id ? 'white' : '#475569', transition: 'all 0.15s' }}>
                 {c.label}

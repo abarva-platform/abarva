@@ -286,7 +286,7 @@ function Card({ ev }: { ev: TEvent }) {
 }
 
 function TimelineContent() {
-  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const { clientId: ctxClientId, allowedClients, isAdmin } = useClientContext()
   const [clientId, setClientId] = useState(ctxClientId)
 
   const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
@@ -317,9 +317,9 @@ function TimelineContent() {
           </p>
         </div>
 
-        {/* Client tabs */}
+        {/* Client tabs — admin only */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '48px' }}>
-          {visibleClients.map(cl => (
+          {isAdmin && visibleClients.map(cl => (
             <button key={cl.id} onClick={() => setClientId(cl.id)}
               style={{
                 padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,

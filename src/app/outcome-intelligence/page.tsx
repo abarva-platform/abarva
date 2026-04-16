@@ -806,7 +806,7 @@ function BoardReportTab() {
 
 // ── Main page content ─────────────────────────────────────────────────────────
 function OutcomeIntelligenceContent() {
-  const { clientId, allowedClients } = useClientContext()
+  const { clientId, allowedClients, isAdmin } = useClientContext()
   const [client, setClient] = useState<Client>(clientId as Client)
   const [activeTab, setActiveTab] = useState<Tab>('portfolio')
   const [showClientMenu, setShowClientMenu] = useState(false)
@@ -849,8 +849,8 @@ function OutcomeIntelligenceContent() {
               Outcome fees triggered: ${(calcOutcomeFee(summary.totalVerified, 0.15) / 1e6).toFixed(1)}M &nbsp;·&nbsp; Fees projected: ${(calcOutcomeFee(summary.totalCommitted, 0.175) / 1e6).toFixed(1)}M
             </div>
           </div>
-          {/* Client selector */}
-          <div style={{ position: 'relative' }}>
+          {/* Client selector — admin only */}
+          {isAdmin && <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowClientMenu(m => !m)}
               style={{
@@ -884,7 +884,7 @@ function OutcomeIntelligenceContent() {
                 ))}
               </div>
             )}
-          </div>
+          </div>}
         </div>
 
         {/* Tab navigation */}

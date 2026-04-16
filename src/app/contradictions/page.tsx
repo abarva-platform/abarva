@@ -318,7 +318,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
 }
 
 function ContradictionsContent() {
-  const { clientId, allowedClients } = useClientContext()
+  const { clientId, allowedClients, isAdmin } = useClientContext()
   const [selectedClient, setSelectedClient] = useState(clientId)
 
   const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
@@ -365,9 +365,9 @@ function ContradictionsContent() {
 
       <AbarvaNav />
 
-      {/* Client selector */}
+      {/* Client selector — admin only; investors use the top nav */}
       <div style={{ background: '#161B22', borderBottom: '1px solid #21262D', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-        {visibleClients.map(c => (
+        {isAdmin && visibleClients.map(c => (
           <button key={c.id} onClick={() => selectClient(c.id)}
             style={{ padding: '10px 20px', fontFamily: 'IBM Plex Mono, monospace', fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selectedClient === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selectedClient === c.id ? '#EFF6FF' : '#6B7280' }}>
             {c.name}

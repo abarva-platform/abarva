@@ -943,7 +943,7 @@ const PATTERNS = [
 type Mode = 'current' | 'target' | 'patterns'
 
 function ArchContent() {
-  const { clientId, allowedClients } = useClientContext()
+  const { clientId, allowedClients, isAdmin } = useClientContext()
   const [selected, setSelected] = useState(clientId)
   const [mode, setMode] = useState<Mode>('current')
   const [selectedPattern, setSelectedPattern] = useState<string | null>(null)
@@ -1025,8 +1025,8 @@ function ArchContent() {
           </div>
         </div>
 
-        {/* Client selector — hidden in pattern library mode */}
-        {mode !== 'patterns' && (
+        {/* Client selector — admin only and hidden in pattern library mode */}
+        {isAdmin && mode !== 'patterns' && (
           <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
             {visibleClients.map(c => (
               <button key={c.id} onClick={() => setSelected(c.id)}

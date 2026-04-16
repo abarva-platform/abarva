@@ -303,7 +303,7 @@ function getActionForIssue(clientId: ClientId, issueId: string): Action | undefi
 
 // ─── Main component ───────────────────────────────────────────────────────────
 function DiagnoseContent() {
-  const { clientId: ctxClientId, allowedClients } = useClientContext()
+  const { clientId: ctxClientId, allowedClients, isAdmin } = useClientContext()
   const clientId = ctxClientId as ClientId
   const [activeClient, setActiveClient] = useState<ClientId>(clientId)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -336,9 +336,9 @@ function DiagnoseContent() {
 
       <AbarvaNav activePage="diagnose" />
 
-      {/* Client tabs + summary bar */}
+      {/* Client tabs + summary bar — tabs only for admins; investors switch via nav */}
       <div style={{ background: '#08101C', borderBottom: `1px solid ${BORDER}`, padding: '0 32px', display: 'flex', alignItems: 'center' }}>
-        {visibleClients.map(c => (
+        {isAdmin && visibleClients.map(c => (
           <button key={c.id} onClick={() => { setActiveClient(c.id); setSelectedId(null) }}
             style={{ padding: '11px 20px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, cursor: 'pointer', border: 'none',
               borderBottom: activeClient === c.id ? `2px solid ${TEAL}` : '2px solid transparent',

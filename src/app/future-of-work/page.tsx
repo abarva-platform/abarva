@@ -162,7 +162,7 @@ function AgnosticArchitecture() {
 
 // ─── Main content ─────────────────────────────────────────────────────────────
 function FutureOfWorkContent() {
-  const { clientId, allowedClients } = useClientContext()
+  const { clientId, allowedClients, isAdmin } = useClientContext()
 
   const [step, setStep] = useState(0)
   const [activeClient, setActiveClient] = useState(clientId)
@@ -238,8 +238,8 @@ function FutureOfWorkContent() {
               </p>
             </div>
 
-            {/* Data completeness + client cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
+            {/* Data completeness + client cards — admin only */}
+            {isAdmin && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
               {Object.entries(CLIENT_CONFIG).filter(([id]) => allowedClients.find(a => a.id === id)).map(([id, c]) => (
                 <button key={id} onClick={() => setActiveClient(id)}
                   style={{ ...S.card, cursor: 'pointer', textAlign: 'left' as const, border: `2px solid ${activeClient === id ? GREEN : '#E2E8F0'}`, background: activeClient === id ? '#F0FDF4' : '#FFFFFF', transition: 'all 0.15s' }}>
@@ -257,7 +257,7 @@ function FutureOfWorkContent() {
                   <ProgressBar value={c.completeness} color={activeClient === id ? GREEN : '#94A3B8'} />
                 </button>
               ))}
-            </div>
+            </div>}
 
             {/* What you will get */}
             <div style={{ ...S.card, marginBottom: '32px' }}>
