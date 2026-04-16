@@ -103,15 +103,6 @@ function JustifyContent() {
     <div style={{minHeight:'100vh',background:'#060A12',fontFamily:'"DM Sans",sans-serif',color:'#EFF6FF'}}>
       <AbarvaNav activePage="justify" />
 
-      {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <a href="/" style={{ fontSize: '12px', color: T.text2, textDecoration: 'none' }}>Home</a>
-        <span style={{ color: T.border }}>›</span>
-        <span style={{ fontSize: '12px', color: T.text, fontWeight: 500 }}>Business Case</span>
-        <span style={{ color: T.border }}>›</span>
-        <span style={{ fontSize: '12px', color: T.text2 }}>{clientName} · {clientIndustry}</span>
-      </div>
-
       {/* ── Product header ─────────────────────────────────────────────────── */}
       <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '24px 32px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
