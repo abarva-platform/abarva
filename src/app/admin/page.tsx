@@ -1275,6 +1275,7 @@ function AdminPortalInner() {
   const { user, isLoaded } = useUser()
   const router   = useRouter()
   const params   = useSearchParams()
+  const { clientId, currentClient } = useClientContext()
   const [section, setSection] = useState<Section>((params.get('section') as Section) ?? 'program')
 
   useEffect(() => {
@@ -1300,17 +1301,12 @@ function AdminPortalInner() {
           </div>
 
           <div style={{ padding: '12px 12px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Active Clients</div>
-            {[
-              { id: 'meridian', name: 'Meridian Health', color: '#4DA3FF', status: 'Active' },
-              { id: 'arcturus', name: 'Arcturus',         color: '#818CF8', status: 'Setup' },
-            ].map(c => (
-              <a key={c.id} href={`/admin/client/${c.id}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, marginBottom: 2, textDecoration: 'none' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                <span style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{c.name}</span>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.28)', marginLeft: 'auto' }}>{c.status}</span>
-              </a>
-            ))}
+            <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Active Client</div>
+            <a href={`/admin/client/${clientId}`} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 6, textDecoration: 'none' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
+              <span style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(255,255,255,0.85)' }}>{currentClient.shortName}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, marginLeft: 'auto' }}>Open →</span>
+            </a>
           </div>
 
           <div style={{ flex: 1, padding: '8px 0 20px' }}>
