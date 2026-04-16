@@ -13,6 +13,7 @@ const MUTED = 'rgba(255,255,255,0.75)'
 const DIM = 'rgba(255,255,255,0.6)'
 const MONO = 'JetBrains Mono, monospace'
 const SANS = 'DM Sans, sans-serif'
+const SERIF = 'Georgia, serif'
 const RED = '#EF4444'
 const AMBER = '#F59E0B'
 const GREEN = '#34D399'
@@ -543,7 +544,7 @@ function AIDeliveryContent() {
   const { clientId } = useClientContext()
   const [selectedInit, setSelectedInit] = useState<Initiative | null>(null)
   const [selectedBlocker, setSelectedBlocker] = useState<typeof BLOCKERS[0] | null>(null)
-  const [activeTab, setActiveTab] = useState<'initiatives' | 'blockers' | 'roadmap'>('initiatives')
+  const [activeTab, setActiveTab] = useState<'overview' | 'initiatives' | 'blockers' | 'roadmap' | 'chat'>('overview')
   const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([])
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
@@ -559,7 +560,7 @@ function AIDeliveryContent() {
   useEffect(() => {
     setSelectedInit(null)
     setSelectedBlocker(null)
-    setActiveTab('initiatives')
+    setActiveTab('overview')
     setChatMessages([])
   }, [clientId])
 
@@ -610,8 +611,6 @@ function AIDeliveryContent() {
   const totalInvested = currentInitiatives.reduce((s, i) => s + i.investment, 0)
   const totalActual = currentInitiatives.reduce((s, i) => s + i.valueActual, 0)
   const totalCommitted = currentInitiatives.reduce((s, i) => s + i.valueCommitted, 0)
-  const roiPct = Math.round((totalActual / totalInvested) * 100)
-
   const stalledValue = stalled.reduce((s, i) => s + i.valueCommitted, 0)
   const planningValue = planning.reduce((s, i) => s + i.valueCommitted, 0)
 
@@ -626,67 +625,125 @@ function AIDeliveryContent() {
   const currentClientName = ALL_CLIENTS.find(c => c.id === clientId)?.name || 'your account'
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE, display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
       <AbarvaNav activePage="ai-pdlc" />
 
-      {/* Header */}
-      <div style={{ background: CARD, borderBottom: `1px solid ${BORDER}`, padding: '20px 32px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                AI Programme Intelligence · {currentClientName} · April 2026
-              </div>
-              <h1 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>
-                AI Initiative Portfolio
-              </h1>
-              <p style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, margin: '4px 0 0', lineHeight: 1.5 }}>
-                {currentInitiatives.length} initiatives · ${Math.round(totalInvested)}M invested · {live.length} live · {stalled.length} stalled · {planning.length} in planning · ${Math.round(totalActual * 10) / 10}M actual annual value
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {(isMeridian ? [
-                { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: `Across ${currentInitiatives.length} AI initiatives` },
-                { label: 'Denial Rate', value: '18.2%', color: WHITE, dot: RED, sub: 'vs 12% SLA target — $74M/yr gap' },
-                { label: 'Stalled Value', value: `$${stalledValue}M`, color: WHITE, dot: AMBER, sub: `${stalled.length} initiatives — blocked` },
-                { label: 'Immediate Action', value: 'CDO Hire', color: WHITE, dot: TEAL, sub: 'Unlocks all 4 root causes' },
-              ] : [
-                { label: 'Total Invested', value: `$${Math.round(totalInvested)}M`, color: WHITE, sub: 'Committed to AI since 2021' },
-                { label: 'Actual ROI', value: `${roiPct}%`, color: WHITE, dot: RED, sub: `$${totalActual}M of $${Math.round(totalCommitted)}M committed` },
-                { label: 'Stalled Value', value: `$${stalledValue}M`, color: WHITE, dot: AMBER, sub: `${stalled.length} initiatives — no progress` },
-                { label: 'Immediate Action', value: 'Day 1', color: WHITE, dot: TEAL, sub: 'Daily Stress Testing — CRO approved' },
-              ]).map(m => (
-                <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                  {(m as any).dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: (m as any).dot, flexShrink: 0 }} />}
-                  <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
-                </div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, marginTop: '1px' }}>{m.sub}</div>
-                </div>
-              ))}
-            </div>
+      {/* ── Sticky header ── */}
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, background: CARD, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '28px 48px 0' }}>
+          <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.14em', textTransform: 'uppercase', marginBottom: '10px' }}>
+            Delivery Intelligence · {currentClientName}
           </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ flex: 1, display: 'flex', maxWidth: '1400px', margin: '0 auto', width: '100%', padding: '24px 32px', gap: '20px' }}>
-
-        {/* LEFT — Navigation panel */}
-        <div style={{ width: '280px', flexShrink: 0 }}>
-          {/* Tab nav */}
-          <div style={{ display: 'flex', gap: '2px', marginBottom: '16px' }}>
-            {([['initiatives', 'Initiatives'], ['blockers', 'Root Causes'], ['roadmap', 'Roadmap']] as const).map(([id, label]) => (
+          <h1 style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 700, color: WHITE, margin: '0 0 20px', lineHeight: 1.25, maxWidth: '720px' }}>
+            &ldquo;Are our AI initiatives actually being delivered — and what&rsquo;s blocking the ones that aren&rsquo;t?&rdquo;
+          </h1>
+          <div style={{ display: 'flex', gap: '40px', marginBottom: '24px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Total Invested', value: `$${Math.round(totalInvested)}M` },
+              { label: 'Live', value: String(live.length), dot: TEAL },
+              { label: 'Stalled', value: String(stalled.length), dot: RED },
+              { label: 'Value Locked', value: `$${stalledValue}M`, dot: AMBER },
+              { label: 'Root Causes', value: String(currentBlockers.length), dot: INDIGO },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {s.dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.dot, flexShrink: 0 }} />}
+                  <div style={{ fontFamily: MONO, fontSize: '22px', fontWeight: 700, color: WHITE }}>{s.value}</div>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px', letterSpacing: '.06em', textTransform: 'uppercase' }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 0 }}>
+            {([
+              ['overview', 'Portfolio Overview'],
+              ['initiatives', 'Initiative Detail'],
+              ['blockers', 'Root Causes'],
+              ['roadmap', 'Roadmap'],
+              ['chat', 'Ask Maestro'],
+            ] as const).map(([id, label]) => (
               <button key={id} onClick={() => handleTabChange(id)}
-                style={{ flex: 1, fontFamily: MONO, fontSize: '9px', padding: '6px 4px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '.06em', cursor: 'pointer', border: `1px solid ${activeTab === id ? TEAL : BORDER}`, background: activeTab === id ? 'rgba(45,212,200,0.08)' : BG, color: activeTab === id ? TEAL : MUTED }}>
+                style={{ padding: '12px 24px', fontFamily: MONO, fontSize: '10px', fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', cursor: 'pointer', border: 'none', borderBottom: activeTab === id ? `2px solid ${TEAL}` : '2px solid transparent', background: 'transparent', color: activeTab === id ? WHITE : MUTED, transition: 'color 0.12s' }}>
                 {label}
               </button>
             ))}
           </div>
+        </div>
+      </div>
 
-          {/* INITIATIVES TAB */}
-          {activeTab === 'initiatives' && (
+      {/* ── Content ── */}
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px 80px', width: '100%' }}>
+
+        {/* ── PORTFOLIO OVERVIEW ── */}
+        {activeTab === 'overview' && (
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '28px' }}>
+              {(isMeridian ? [
+                { severity: RED, title: '$23M invested — 3 of 10 initiatives live, $66M stalled value, 4 root causes blocking the portfolio', body: 'CDO vacancy blocks Azure Synapse and governance. MLOps absence prevents Sepsis AI from scaling. Ensemble contract blocks prior auth. These form a dependency chain — CDO hire resolves the first blocker, which unlocks the rest.' },
+                { severity: GREEN, title: 'Clinical Coding AI is the only outperformer — $17.2M vs $16M committed. ICD-11 upgrade required by October 2026.', body: '$1.8M upgrade, 8-month implementation, October 2026 hard deadline. Missing this deadline puts $17.2M annual value at risk. This is the one action that protects existing portfolio value. Start immediately.' },
+                { severity: AMBER, title: 'Ensemble October 2026 renewal is the portfolio\'s only negotiation window for 5+ years.', body: '$46M in locked value depends on this single negotiation. Demand workflow automation API access and elimination of prior auth exclusivity. CDO must lead — start preparation now, 6 months before October 2026 renewal date.' },
+                { severity: INDIGO, title: 'CDO hire is the critical path — the single decision with the largest downstream impact.', body: 'CDO vacancy blocks Azure Synapse completion, AI governance framework, and Ensemble negotiation authority. All 4 root causes trace back to CDO vacancy. Every month of delay: $3.1M in compounding locked value across the portfolio.' },
+              ] : [
+                { severity: RED, title: '$94M invested, $35M actual value — 63% programme shortfall', body: '14 stalled initiatives, 2 cancelled. 4 root causes are blocking the entire portfolio: CDO vacancy, CRO governance freeze, FSC 44% adoption, Bloomberg data restrictions. These are not separate problems — they form a dependency chain.' },
+                { severity: GREEN, title: 'One initiative has NO blocker and CRO has approved: Daily Stress Testing', body: '$2.4M investment, $18M annual value, 6-month timeline, Aladdin configuration change only — no migration, no CDO needed, no governance framework needed. This starts TODAY.' },
+                { severity: AMBER, title: 'FSC SSO is the single fix that unlocks $156M in locked value', body: '4 AI initiatives share the identical root cause: Salesforce FSC 44% adoption. Bloomberg→FSC SSO integration is one infrastructure change. It does not require behaviour change from advisors. It unlocks all 4 initiatives simultaneously.' },
+                { severity: INDIGO, title: 'CDO hire is the critical path — it unblocks everything else', body: 'CDO vacancy enables the AI Governance Framework (CRO unblock), Golden Record (data foundation), and Bloomberg Phase 4 (API negotiations). CDO hire is the single decision that has the largest downstream impact on portfolio value.' },
+              ]).map((a, i) => (
+                <div key={i} style={{ background: CARD, border: `1px solid ${a.severity}25`, borderLeft: `3px solid ${a.severity}`, borderRadius: '8px', padding: '14px 18px' }}>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{a.title}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{a.body}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Portfolio by Status · Click any initiative for detail</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '28px' }}>
+              {[
+                { label: 'Live', count: live.length, value: `$${totalActual}M actual`, color: TEAL, items: live },
+                { label: 'Stalled', count: stalled.length, value: `$${stalledValue}M locked`, color: RED, items: stalled },
+                { label: 'In Planning', count: planning.length, value: `$${planningValue}M planned`, color: INDIGO, items: planning },
+                { label: 'Cancelled', count: cancelled.length, value: `$${Math.round(cancelled.reduce((s,i)=>s+i.investment,0))}M written off`, color: MUTED, items: cancelled },
+              ].map(group => (
+                <div key={group.label} style={{ background: CARD, border: `1px solid ${group.color}25`, borderTop: `2px solid ${group.color}`, borderRadius: '8px', padding: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                    <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600 }}>{group.label}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: group.color, flexShrink: 0 }} />
+                      <div style={{ fontFamily: MONO, fontSize: '18px', color: WHITE, fontWeight: 700 }}>{group.count}</div>
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginBottom: '10px' }}>{group.value}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    {group.items.slice(0, 3).map(init => (
+                      <button key={init.id} onClick={() => { setSelectedInit(init); setActiveTab('initiatives') }}
+                        style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
+                        <div style={{ fontFamily: SANS, fontSize: '10px', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{init.name}</div>
+                      </button>
+                    ))}
+                    {group.items.length > 3 && <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>+{group.items.length - 3} more</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Root Cause Map · Click for detail</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+              {currentBlockers.map(b => (
+                <button key={b.id} onClick={() => { setSelectedBlocker(b); setActiveTab('blockers') }}
+                  style={{ textAlign: 'left', background: CARD, border: `1px solid ${b.color}25`, borderTop: `2px solid ${b.color}`, borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
+                  <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, marginBottom: '4px', lineHeight: 1.3 }}>{b.label.split(' — ')[0]}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '2px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
+                    <div style={{ fontFamily: MONO, fontSize: '16px', color: WHITE, fontWeight: 700 }}>${b.lockedValue}M</div>
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{b.count} initiatives blocked</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── INITIATIVE DETAIL ── */}
+        {activeTab === 'initiatives' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {[
                 { label: 'Live', items: live },
@@ -724,95 +781,19 @@ function AIDeliveryContent() {
                 </div>
               ))}
             </div>
-          )}
-
-          {/* BLOCKERS TAB */}
-          {activeTab === 'blockers' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginBottom: '4px', lineHeight: 1.5 }}>
-                {isMeridian ? '4 root causes constrain 9 of 10 initiatives. Fix these in sequence and the portfolio unlocks.' : '4 root causes block 25 of 28 initiatives. Fix these in sequence and the portfolio unlocks.'}
-              </div>
-              {currentBlockers.map(b => (
-                <button key={b.id} onClick={() => { setSelectedBlocker(b); setSelectedInit(null) }}
-                  style={{ textAlign: 'left', background: selectedBlocker?.id === b.id ? `${b.color}08` : CARD, border: `1px solid ${selectedBlocker?.id === b.id ? b.color + '50' : b.color + '20'}`, borderLeft: `3px solid ${b.color}`, borderRadius: '6px', padding: '12px', cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                    <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, lineHeight: 1.3, flex: 1, marginRight: '8px' }}>{b.label}</div>
-                    <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, background: BORDER, borderRadius: '3px', padding: '1px 5px', flexShrink: 0 }}>{b.count} init</div>
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>${b.lockedValue}M locked</div>
-                </button>
-              ))}
-              <div style={{ marginTop: '4px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '10px 12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, marginBottom: '4px' }}>CRITICAL PATH</div>
-                <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{isMeridian ? 'CDO hire unblocks everything else. CDO → Azure Synapse completes (data foundation) → MLOps deployment rails → Ensemble negotiation at October 2026 renewal. This is the only sequence that works.' : 'CDO hire unblocks everything else. Fix CDO → governance framework resolves CRO → SSO fixes FSC → Bloomberg negotiation follows. This is the only sequence that works.'}</div>
-              </div>
-            </div>
-          )}
-
-          {/* ROADMAP TAB */}
-          {activeTab === 'roadmap' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {currentRoadmap.map(w => (
-                <div key={w.wave} style={{ background: CARD, border: `1px solid ${w.color}25`, borderLeft: `3px solid ${w.color}`, borderRadius: '8px', padding: '12px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, marginBottom: '4px' }}>WAVE {w.wave} · {w.months} MONTHS</div>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{w.name}</div>
-                  <div style={{ display: 'flex', gap: '12px', marginBottom: '6px' }}>
-                    <div>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: WHITE }}>${w.investment}M</div>
-                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>invested</div>
-                    </div>
-                    <div>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: WHITE }}>${w.annualValue}M</div>
-                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>annual value</div>
-                    </div>
-                  </div>
-                  <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, lineHeight: 1.4 }}>{w.prerequisite}</div>
-                </div>
-              ))}
-              <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, marginBottom: '4px' }}>PROGRAMME TOTAL</div>
-                <div style={{ fontFamily: MONO, fontSize: '14px', color: WHITE, marginBottom: '2px' }}>{isMeridian ? '$18.8M → $170M/yr' : '$66M → $412M/yr'}</div>
-                <div style={{ fontFamily: SANS, fontSize: '10px', color: MUTED }}>{isMeridian ? 'Waves 1–3 over 30 months. 9.0× annual value on investment.' : 'Waves 1–3 over 30 months. 6.2× annual value on investment.'}</div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* CENTER — Detail or Overview */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-
-          {/* INITIATIVE DETAIL */}
-          {selectedInit && (
+            {/* Right: detail or prompt */}
             <div>
-              <button onClick={() => setSelectedInit(null)}
-                style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: 0 }}>
-                ← Back to portfolio
-              </button>
-
-              {/* Header */}
-              {(() => {
+              {selectedInit ? (() => {
                 const sc = statusConfig(selectedInit.status)
                 const performancePct = selectedInit.valueCommitted > 0 ? Math.round((selectedInit.valueActual / selectedInit.valueCommitted) * 100) : 0
                 const rcColor = rootCauseColor(selectedInit.rootCause)
                 return (
                   <div>
                     <div style={{ background: CARD, border: `1px solid ${sc.color}30`, borderTop: `3px solid ${sc.color}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
-                        <div>
-                          <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                            {sc.label} · {selectedInit.category}
-                          </div>
-                          <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: 0 }}>{selectedInit.name}</h2>
-                          {selectedInit.monthsStuck > 0 && (
-                            <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginTop: '4px' }}>
-                              {selectedInit.monthsStuck} months stalled · ${selectedInit.investment}M invested
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Metrics */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                      <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '4px' }}>{sc.label} · {selectedInit.category}</div>
+                      <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: '0 0 4px' }}>{selectedInit.name}</h2>
+                      {selectedInit.monthsStuck > 0 && <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginBottom: '16px' }}>{selectedInit.monthsStuck} months stalled · ${selectedInit.investment}M invested</div>}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', marginTop: '16px' }}>
                         {[
                           { label: 'Invested', value: `$${selectedInit.investment}M`, color: WHITE },
                           { label: 'Committed Value', value: selectedInit.valueCommitted > 0 ? `$${selectedInit.valueCommitted}M/yr` : 'N/A', color: MUTED },
@@ -829,287 +810,213 @@ function AIDeliveryContent() {
                         ))}
                       </div>
                     </div>
-
-                    {/* Outcome */}
                     <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', marginBottom: '12px' }}>
                       <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Current Status</div>
                       <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.65 }}>{selectedInit.outcome}</div>
                     </div>
-
-                    {/* Blocker */}
                     {selectedInit.rootCause !== 'none' && (
                       <div style={{ background: `${rcColor}06`, border: `1px solid ${rcColor}25`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
-                        <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
-                          Root Cause · {rootCauseLabel(selectedInit.rootCause, clientId)}
-                        </div>
+                        <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Root Cause · {rootCauseLabel(selectedInit.rootCause, clientId)}</div>
                         <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedInit.blocker}</div>
                       </div>
                     )}
-
-                    {/* Recommendation */}
                     <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.2)`, borderRadius: '10px', padding: '16px 20px' }}>
                       <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Recommended Action</div>
                       <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.65 }}>{selectedInit.recommendation}</div>
                       <button
-                        onClick={() => sendChat(`I need a detailed action plan for ${selectedInit.name}. Current status: ${selectedInit.outcome} The specific blocker is: ${selectedInit.blocker} What are my next 3 moves to unblock this initiative?`)}
+                        onClick={() => { sendChat(`I need a detailed action plan for ${selectedInit!.name}. Current status: ${selectedInit!.outcome} The specific blocker is: ${selectedInit!.blocker} What are my next 3 moves to unblock this initiative?`); setActiveTab('chat') }}
                         style={{ marginTop: '12px', fontFamily: MONO, fontSize: '10px', padding: '8px 16px', background: 'rgba(45,212,200,0.1)', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: '6px', color: TEAL, cursor: 'pointer' }}>
                         Build action plan for {selectedInit.name} →
                       </button>
                     </div>
                   </div>
                 )
-              })()}
+              })() : (
+                <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '40px', textAlign: 'center' as const }}>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Select an initiative</div>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED }}>Click any initiative from the list to see its status, root cause, and recommended action.</div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* BLOCKER DETAIL */}
-          {selectedBlocker && (
-            <div>
-              <button onClick={() => setSelectedBlocker(null)}
-                style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, background: 'none', border: 'none', cursor: 'pointer', marginBottom: '16px', padding: 0 }}>
-                ← Back to root causes
-              </button>
-
-              <div style={{ background: CARD, border: `1px solid ${selectedBlocker.color}30`, borderTop: `3px solid ${selectedBlocker.color}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Root Cause Analysis</div>
-                <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: '0 0 16px' }}>{selectedBlocker.label}</h2>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {[
-                    { label: 'Blocked Initiatives', value: `${selectedBlocker.count}` },
-                    { label: 'Locked Annual Value', value: `$${selectedBlocker.lockedValue}M` },
-                  ].map(m => (
-                    <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '12px 16px' }}>
-                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>{m.label}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: selectedBlocker.color, flexShrink: 0 }} />
-                        <div style={{ fontFamily: MONO, fontSize: '20px', color: WHITE, fontWeight: 700 }}>{m.value}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+        {/* ── ROOT CAUSES ── */}
+        {activeTab === 'blockers' && (
+          <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', alignItems: 'start' }}>
+            {/* Left: blocker list */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginBottom: '4px', lineHeight: 1.5 }}>
+                {isMeridian ? '4 root causes constrain 9 of 10 initiatives. Fix these in sequence and the portfolio unlocks.' : '4 root causes block 25 of 28 initiatives. Fix these in sequence and the portfolio unlocks.'}
               </div>
-
-              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', marginBottom: '12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>What Is Blocking Progress</div>
-                <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.65 }}>{selectedBlocker.description}</div>
-              </div>
-
-              <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Affected Initiatives</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {selectedBlocker.initiatives.map((name, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: selectedBlocker.color, flexShrink: 0 }} />
-                      <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED }}>{name}</div>
-                    </div>
-                  ))}
-                </div>
-                {selectedBlocker.secondaryImpact && (
-                  <div style={{ marginTop: '12px', padding: '10px 12px', background: `${selectedBlocker.color}08`, border: `1px solid ${selectedBlocker.color}20`, borderRadius: '6px', fontFamily: SANS, fontSize: '11px', color: DIM, lineHeight: 1.5 }}>
-                    Secondary impact: {selectedBlocker.secondaryImpact}
+              {currentBlockers.map(b => (
+                <button key={b.id} onClick={() => setSelectedBlocker(b)}
+                  style={{ textAlign: 'left', background: selectedBlocker?.id === b.id ? `${b.color}08` : CARD, border: `1px solid ${selectedBlocker?.id === b.id ? b.color + '50' : b.color + '20'}`, borderLeft: `3px solid ${b.color}`, borderRadius: '6px', padding: '12px', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                    <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, lineHeight: 1.3, flex: 1, marginRight: '8px' }}>{b.label}</div>
+                    <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, background: BORDER, borderRadius: '3px', padding: '1px 5px', flexShrink: 0 }}>{b.count} init</div>
                   </div>
-                )}
-              </div>
-
-              <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.2)`, borderRadius: '10px', padding: '16px 20px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>How to Fix</div>
-                <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.65 }}>{selectedBlocker.fix}</div>
-                <button
-                  onClick={() => sendChat(`I need a detailed action plan to resolve the "${selectedBlocker.label}" blocker. It is blocking ${selectedBlocker.count} AI initiatives and locking $${selectedBlocker.lockedValue}M in annual value. ${selectedBlocker.description} What are the exact steps I need to take in the next 90 days?`)}
-                  style={{ marginTop: '12px', fontFamily: MONO, fontSize: '10px', padding: '8px 16px', background: 'rgba(45,212,200,0.1)', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: '6px', color: TEAL, cursor: 'pointer' }}>
-                  90-day unblock plan for {selectedBlocker.label} →
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>${b.lockedValue}M locked</div>
                 </button>
+              ))}
+              <div style={{ marginTop: '4px', background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '8px', padding: '10px 12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, marginBottom: '4px' }}>CRITICAL PATH</div>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{isMeridian ? 'CDO hire unblocks everything else. CDO → Azure Synapse completes (data foundation) → MLOps deployment rails → Ensemble negotiation at October 2026 renewal. This is the only sequence that works.' : 'CDO hire unblocks everything else. Fix CDO → governance framework resolves CRO → SSO fixes FSC → Bloomberg negotiation follows. This is the only sequence that works.'}</div>
               </div>
             </div>
-          )}
-
-          {/* OVERVIEW */}
-          {centerIsEmpty && (
+            {/* Right: blocker detail or prompt */}
             <div>
-              {/* Programme scorecard */}
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  AI Programme State · {currentClientName}
-                </div>
-
-                {/* Headline alerts */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
-                  {(isMeridian ? [
-                    {
-                      severity: RED,
-                      title: '$23M invested — 3 of 10 initiatives live, $66M stalled value, 4 root causes blocking the portfolio',
-                      body: 'CDO vacancy blocks Azure Synapse and governance. MLOps absence prevents Sepsis AI from scaling. Ensemble contract blocks prior auth. These form a dependency chain — CDO hire resolves the first blocker, which unlocks the rest.',
-                    },
-                    {
-                      severity: GREEN,
-                      title: 'Clinical Coding AI is the only outperformer — $17.2M vs $16M committed. ICD-11 upgrade required by October 2026.',
-                      body: '$1.8M upgrade, 8-month implementation, October 2026 hard deadline. Missing this deadline puts $17.2M annual value at risk. This is the one action that protects existing portfolio value. Start immediately.',
-                    },
-                    {
-                      severity: AMBER,
-                      title: 'Ensemble October 2026 renewal is the portfolio\'s only negotiation window for 5+ years.',
-                      body: '$46M in locked value depends on this single negotiation. Demand workflow automation API access and elimination of prior auth exclusivity. CDO must lead — start preparation now, 6 months before October 2026 renewal date.',
-                    },
-                    {
-                      severity: INDIGO,
-                      title: 'CDO hire is the critical path — the single decision with the largest downstream impact.',
-                      body: 'CDO vacancy blocks Azure Synapse completion, AI governance framework, and Ensemble negotiation authority. All 4 root causes trace back to CDO vacancy. Every month of delay: $3.1M in compounding locked value across the portfolio.',
-                    },
-                  ] : [
-                    {
-                      severity: RED,
-                      title: '$94M invested, $35M actual value — 63% programme shortfall',
-                      body: '14 stalled initiatives, 2 cancelled. 4 root causes are blocking the entire portfolio: CDO vacancy, CRO governance freeze, FSC 44% adoption, Bloomberg data restrictions. These are not separate problems — they form a dependency chain.',
-                    },
-                    {
-                      severity: GREEN,
-                      title: 'One initiative has NO blocker and CRO has approved: Daily Stress Testing',
-                      body: '$2.4M investment, $18M annual value, 6-month timeline, Aladdin configuration change only — no migration, no CDO needed, no governance framework needed. This starts TODAY.',
-                    },
-                    {
-                      severity: AMBER,
-                      title: 'FSC SSO is the single fix that unlocks $156M in locked value',
-                      body: '4 AI initiatives share the identical root cause: Salesforce FSC 44% adoption. Bloomberg→FSC SSO integration is one infrastructure change. It does not require behaviour change from advisors. It unlocks all 4 initiatives simultaneously.',
-                    },
-                    {
-                      severity: INDIGO,
-                      title: 'CDO hire is the critical path — it unblocks everything else',
-                      body: 'CDO vacancy enables the AI Governance Framework (CRO unblock), Golden Record (data foundation), and Bloomberg Phase 4 (API negotiations). CDO hire is the single decision that has the largest downstream impact on portfolio value.',
-                    },
-                  ]).map((a, i) => (
-                    <div key={i} style={{ background: CARD, border: `1px solid ${a.severity}25`, borderLeft: `3px solid ${a.severity}`, borderRadius: '8px', padding: '14px 18px' }}>
-                      <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600, marginBottom: '4px' }}>{a.title}</div>
-                      <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>{a.body}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Initiative breakdown grid */}
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  Portfolio by Status · Click any initiative for detail
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {[
-                    { label: 'Live', count: live.length, value: `$${totalActual}M actual`, color: TEAL, items: live },
-                    { label: 'Stalled', count: stalled.length, value: `$${stalledValue}M locked`, color: RED, items: stalled },
-                    { label: 'In Planning', count: planning.length, value: `$${planningValue}M planned`, color: INDIGO, items: planning },
-                    { label: 'Cancelled', count: cancelled.length, value: `$${Math.round(cancelled.reduce((s,i)=>s+i.investment,0))}M written off`, color: MUTED, items: cancelled },
-                  ].map(group => (
-                    <div key={group.label} style={{ background: CARD, border: `1px solid ${group.color}25`, borderTop: `2px solid ${group.color}`, borderRadius: '8px', padding: '14px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, fontWeight: 600 }}>{group.label}</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: group.color, flexShrink: 0 }} />
-                          <div style={{ fontFamily: MONO, fontSize: '18px', color: WHITE, fontWeight: 700 }}>{group.count}</div>
+              {selectedBlocker ? (
+                <div>
+                  <div style={{ background: CARD, border: `1px solid ${selectedBlocker.color}30`, borderTop: `3px solid ${selectedBlocker.color}`, borderRadius: '10px', padding: '24px', marginBottom: '16px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Root Cause Analysis</div>
+                    <h2 style={{ fontFamily: SANS, fontSize: '22px', fontWeight: 700, color: WHITE, margin: '0 0 16px' }}>{selectedBlocker.label}</h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                      {[
+                        { label: 'Blocked Initiatives', value: `${selectedBlocker.count}` },
+                        { label: 'Locked Annual Value', value: `$${selectedBlocker.lockedValue}M` },
+                      ].map(m => (
+                        <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '12px 16px' }}>
+                          <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>{m.label}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: selectedBlocker.color, flexShrink: 0 }} />
+                            <div style={{ fontFamily: MONO, fontSize: '20px', color: WHITE, fontWeight: 700 }}>{m.value}</div>
+                          </div>
                         </div>
-                      </div>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, marginBottom: '10px' }}>{group.value}</div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                        {group.items.slice(0, 3).map(init => (
-                          <button key={init.id} onClick={() => { setSelectedInit(init); setActiveTab('initiatives') }}
-                            style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 0' }}>
-                            <div style={{ fontFamily: SANS, fontSize: '10px', color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {init.name}
-                            </div>
-                          </button>
-                        ))}
-                        {group.items.length > 3 && (
-                          <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>+{group.items.length - 3} more</div>
-                        )}
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Root cause summary */}
-              <div style={{ marginTop: '4px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                  Root Cause Map · Click for detail
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
-                  {currentBlockers.map(b => (
-                    <button key={b.id} onClick={() => { setSelectedBlocker(b); setActiveTab('blockers') }}
-                      style={{ textAlign: 'left', background: CARD, border: `1px solid ${b.color}25`, borderTop: `2px solid ${b.color}`, borderRadius: '8px', padding: '14px', cursor: 'pointer' }}>
-                      <div style={{ fontFamily: SANS, fontSize: '12px', color: WHITE, fontWeight: 600, marginBottom: '4px', lineHeight: 1.3 }}>{b.label.split(' — ')[0]}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '2px' }}>
-                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.color, flexShrink: 0 }} />
-                        <div style={{ fontFamily: MONO, fontSize: '16px', color: WHITE, fontWeight: 700 }}>${b.lockedValue}M</div>
+                  </div>
+                  <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '20px', marginBottom: '12px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>What Is Blocking Progress</div>
+                    <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.65 }}>{selectedBlocker.description}</div>
+                  </div>
+                  <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '8px' }}>Affected Initiatives</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {selectedBlocker.initiatives.map((name, i) => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: selectedBlocker.color, flexShrink: 0 }} />
+                          <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED }}>{name}</div>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedBlocker.secondaryImpact && (
+                      <div style={{ marginTop: '12px', padding: '10px 12px', background: `${selectedBlocker.color}08`, border: `1px solid ${selectedBlocker.color}20`, borderRadius: '6px', fontFamily: SANS, fontSize: '11px', color: DIM, lineHeight: 1.5 }}>
+                        Secondary impact: {selectedBlocker.secondaryImpact}
                       </div>
-                      <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM }}>{b.count} initiatives blocked</div>
+                    )}
+                  </div>
+                  <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.2)`, borderRadius: '10px', padding: '16px 20px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>How to Fix</div>
+                    <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.65 }}>{selectedBlocker.fix}</div>
+                    <button
+                      onClick={() => { sendChat(`I need a detailed action plan to resolve the "${selectedBlocker!.label}" blocker. It is blocking ${selectedBlocker!.count} AI initiatives and locking $${selectedBlocker!.lockedValue}M in annual value. ${selectedBlocker!.description} What are the exact steps I need to take in the next 90 days?`); setActiveTab('chat') }}
+                      style={{ marginTop: '12px', fontFamily: MONO, fontSize: '10px', padding: '8px 16px', background: 'rgba(45,212,200,0.1)', border: `1px solid rgba(45,212,200,0.3)`, borderRadius: '6px', color: TEAL, cursor: 'pointer' }}>
+                      90-day unblock plan for {selectedBlocker.label} →
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '40px', textAlign: 'center' as const }}>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: DIM, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Select a root cause</div>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED }}>Click any root cause from the list to see what is blocking progress and how to fix it.</div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* RIGHT — Chat */}
-        <div style={{ width: '300px', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', minHeight: '600px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '4px' }}>
-              Programme Intelligence
-            </div>
-            <div style={{ fontFamily: SANS, fontSize: '11px', color: DIM, marginBottom: '12px', lineHeight: 1.4 }}>
-              Ask about specific initiatives, unblock sequences, board narratives, or ROI baselines.
-            </div>
-
-            {/* Pre-built questions */}
-            {chatMessages.length === 0 && (
-              <div style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {currentPreBuilt.map((q, i) => (
-                  <button key={i} onClick={() => sendChat(q)}
-                    style={{ textAlign: 'left', background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '9px 10px', cursor: 'pointer', fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.4 }}>
-                    {q.length > 90 ? q.slice(0, 90) + '…' : q}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Messages */}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '12px' }}>
-              {chatMessages.map((m, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div style={{
-                    maxWidth: '90%', padding: '10px 12px', borderRadius: m.role === 'user' ? '10px 10px 2px 10px' : '10px 10px 10px 2px',
-                    background: m.role === 'user' ? 'rgba(45,212,200,0.12)' : CARD,
-                    border: `1px solid ${m.role === 'user' ? 'rgba(45,212,200,0.25)' : BORDER}`,
-                    fontFamily: SANS, fontSize: '12px', color: m.role === 'user' ? TEAL : MUTED, lineHeight: 1.55, whiteSpace: 'pre-wrap',
-                  }}>
-                    {m.content}
+        {/* ── ROADMAP ── */}
+        {activeTab === 'roadmap' && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '20px' }}>
+              {currentRoadmap.map(w => (
+                <div key={w.wave} style={{ background: CARD, border: `1px solid ${w.color}25`, borderTop: `3px solid ${w.color}`, borderRadius: '10px', padding: '20px' }}>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>WAVE {w.wave} · MONTHS {w.months}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '18px', fontWeight: 700, color: WHITE, marginBottom: '12px' }}>{w.name}</div>
+                  <div style={{ display: 'flex', gap: '20px', marginBottom: '12px' }}>
+                    <div>
+                      <div style={{ fontFamily: MONO, fontSize: '14px', color: WHITE, fontWeight: 600 }}>${w.investment}M</div>
+                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>INVESTED</div>
+                    </div>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: w.color, flexShrink: 0 }} />
+                        <div style={{ fontFamily: MONO, fontSize: '14px', color: WHITE, fontWeight: 600 }}>${w.annualValue}M/yr</div>
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM }}>ANNUAL VALUE</div>
+                    </div>
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginBottom: '10px' }}>PREREQUISITE: {w.prerequisite}</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '12px' }}>
+                    {w.initiatives.map((init, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: w.color, flexShrink: 0 }} />
+                        <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED }}>{init}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '10px', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: MONO, fontSize: '8px', color: DIM, marginBottom: '4px' }}>OUTCOME</div>
+                    <div style={{ fontFamily: SANS, fontSize: '11px', color: MUTED, lineHeight: 1.5 }}>{w.outcome}</div>
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, lineHeight: 1.4 }}>
+                    <span style={{ color: TEAL }}>Unlocks: </span>{w.unlocks}
                   </div>
                 </div>
               ))}
-              {(chatLoading || streamingResponse) && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <div style={{ maxWidth: '90%', padding: '10px 12px', borderRadius: '10px 10px 10px 2px', background: CARD, border: `1px solid ${BORDER}`, fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
-                    {streamingResponse || '…'}
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef} />
             </div>
-
-            {/* Input */}
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <input
-                value={chatInput}
-                onChange={e => setChatInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChat()}
-                placeholder="Ask about any initiative…"
-                disabled={chatLoading}
-                style={{ flex: 1, background: BG, border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '8px 10px', color: WHITE, fontFamily: SANS, fontSize: '12px', outline: 'none' }}
-              />
-              <button onClick={() => sendChat()}
-                disabled={chatLoading || !chatInput.trim()}
-                style={{ background: chatLoading ? BORDER : TEAL, color: chatLoading ? DIM : BG, border: 'none', borderRadius: '6px', padding: '8px 12px', fontFamily: MONO, fontSize: '10px', cursor: chatLoading ? 'default' : 'pointer', fontWeight: 700 }}>
-                →
-              </button>
+            <div style={{ background: 'rgba(45,212,200,0.04)', border: `1px solid rgba(45,212,200,0.15)`, borderRadius: '10px', padding: '20px 28px', display: 'flex', alignItems: 'center', gap: '40px' }}>
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>PROGRAMME TOTAL</div>
+                <div style={{ fontFamily: MONO, fontSize: '26px', color: WHITE, fontWeight: 700 }}>{isMeridian ? '$18.8M → $170M/yr' : '$66M → $412M/yr'}</div>
+              </div>
+              <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.65 }}>{isMeridian ? 'Waves 1–3 over 30 months. 9.0× annual value on investment. CDO hire on day 1 is the critical path — every month of CDO vacancy compounds across the entire portfolio.' : 'Waves 1–3 over 30 months. 6.2× annual value on investment. CDO hire on day 1 is the critical path — every month of CDO vacancy compounds across the entire portfolio.'}</div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* ── ASK MAESTRO ── */}
+        {activeTab === 'chat' && (
+          <div style={{ maxWidth: '760px', margin: '0 auto' }}>
+            <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '24px', display: 'flex', flexDirection: 'column', minHeight: '600px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '4px' }}>Programme Intelligence</div>
+              <div style={{ fontFamily: SANS, fontSize: '13px', color: DIM, marginBottom: '20px', lineHeight: 1.5 }}>Ask about specific initiatives, unblock sequences, board narratives, or ROI baselines.</div>
+              {chatMessages.length === 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                  {currentPreBuilt.map((q, i) => (
+                    <button key={i} onClick={() => sendChat(q)}
+                      style={{ textAlign: 'left', background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '12px 14px', cursor: 'pointer', fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.5 }}>
+                      {q.length > 120 ? q.slice(0, 120) + '…' : q}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                {chatMessages.map((m, i) => (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', padding: '12px 16px', borderRadius: m.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px', background: m.role === 'user' ? 'rgba(45,212,200,0.12)' : BG, border: `1px solid ${m.role === 'user' ? 'rgba(45,212,200,0.25)' : BORDER}`, fontFamily: SANS, fontSize: '13px', color: m.role === 'user' ? TEAL : MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+                {(chatLoading || streamingResponse) && (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                    <div style={{ maxWidth: '85%', padding: '12px 16px', borderRadius: '12px 12px 12px 2px', background: BG, border: `1px solid ${BORDER}`, fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {streamingResponse || '…'}
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendChat()} placeholder="Ask about any initiative…" disabled={chatLoading} style={{ flex: 1, background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 14px', color: WHITE, fontFamily: SANS, fontSize: '13px', outline: 'none' }} />
+                <button onClick={() => sendChat()} disabled={chatLoading || !chatInput.trim()} style={{ background: chatLoading ? BORDER : TEAL, color: chatLoading ? DIM : BG, border: 'none', borderRadius: '8px', padding: '10px 16px', fontFamily: MONO, fontSize: '12px', cursor: chatLoading ? 'default' : 'pointer', fontWeight: 700 }}>→</button>
+              </div>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )
