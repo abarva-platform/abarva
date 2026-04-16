@@ -169,12 +169,12 @@ function NavInner({ activePage }: NavProps) {
       }}>
 
         {/* ── Wordmark ──────────────────────────────────────────────────────── */}
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', lineHeight: 1, marginRight: '20px', flexShrink: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'baseline' }}>
-            <span style={{ fontFamily: SERIF, fontSize: '17px', fontWeight: 800, color: NAV_TEXT }}>Abar</span>
-            <span style={{ fontFamily: SERIF, fontSize: '22px', fontWeight: 900, color: TEAL }}>Va</span>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', gap: '3px', marginRight: '20px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+            <span style={{ fontFamily: SERIF, fontSize: '20px', fontWeight: 700, color: '#FFFFFF', letterSpacing: '-.01em' }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '24px', fontWeight: 900, color: TEAL, letterSpacing: '-.01em' }}>Va</span>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: '7.5px', color: NAV_TEXT, letterSpacing: '.04em', opacity: .6 }}>know it. build it. own it.</span>
+          <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(239,246,255,0.82)', letterSpacing: '.18em', textTransform: 'uppercase' as const }}>Know It · Build It · Own It</span>
         </a>
 
         {/* ── Client toggle — admin + investor only ─────────────────────────── */}
