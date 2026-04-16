@@ -593,16 +593,16 @@ function IntelligenceContent() {
 
   const headerStats = isMeridian
     ? [
-        { label: 'IT vs Benchmark', value: '-$242M', color: AMBER, sub: '$340M vs $582M benchmark (5.2%)' },
-        { label: 'Contracts Expired', value: '3', color: RED, sub: 'Cerner, Kronos, Tableau overdue' },
-        { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
-        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: AMBER, sub: 'Ensemble renewal Dec 2026' },
+        { label: 'IT vs Benchmark', value: '-$242M', color: WHITE, dot: AMBER, sub: '$340M vs $582M benchmark (5.2%)' },
+        { label: 'Contracts Expired', value: '3', color: WHITE, dot: RED, sub: 'Cerner, Kronos, Tableau overdue' },
+        { label: 'Critical Systems', value: `${criticalCount}`, color: WHITE, dot: RED, sub: 'Requiring immediate action' },
+        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: WHITE, dot: AMBER, sub: 'Ensemble renewal Dec 2026' },
       ]
     : [
-        { label: 'IT vs Peers', value: '+$178M', color: RED, sub: '$680M vs $502M benchmark' },
-        { label: 'AI Portfolio', value: '$94M', color: AMBER, sub: '$0 documented ROI' },
-        { label: 'Critical Systems', value: `${criticalCount}`, color: RED, sub: 'Requiring immediate action' },
-        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: AMBER, sub: 'Bloomberg auto-renews Dec 2026' },
+        { label: 'IT vs Peers', value: '+$178M', color: WHITE, dot: RED, sub: '$680M vs $502M benchmark' },
+        { label: 'AI Portfolio', value: '$94M', color: WHITE, dot: AMBER, sub: '$0 documented ROI' },
+        { label: 'Critical Systems', value: `${criticalCount}`, color: WHITE, dot: RED, sub: 'Requiring immediate action' },
+        { label: 'Contracts ≤12mo', value: `${currentContracts.length}`, color: WHITE, dot: AMBER, sub: 'Bloomberg auto-renews Dec 2026' },
       ]
 
   return (
@@ -627,7 +627,10 @@ function IntelligenceContent() {
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {headerStats.map(m => (
                 <div key={m.label} style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '10px 16px', textAlign: 'right', minWidth: '140px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+                    {(m as any).dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: (m as any).dot, flexShrink: 0 }} />}
+                    <div style={{ fontFamily: MONO, fontSize: '18px', fontWeight: 700, color: m.color }}>{m.value}</div>
+                  </div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, marginTop: '2px' }}>{m.label}</div>
                   <div style={{ fontFamily: SANS, fontSize: '10px', color: DIM, marginTop: '1px' }}>{m.sub}</div>
                 </div>
@@ -767,7 +770,7 @@ function IntelligenceContent() {
                 </div>
 
                 {selectedSystem.autoRenew && (
-                  <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.25)`, borderRadius: '6px', fontFamily: MONO, fontSize: '10px', color: AMBER }}>
+                  <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.25)`, borderRadius: '6px', fontFamily: MONO, fontSize: '10px', color: MUTED }}>
                     ⚠ AUTO-RENEWS {selectedSystem.contractEnd} — negotiate before this date or contract locks in automatically
                   </div>
                 )}
@@ -779,7 +782,7 @@ function IntelligenceContent() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {selectedSystem.issues.map((issue, i) => (
                     <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <div style={{ color: RED, fontFamily: MONO, fontSize: '11px', flexShrink: 0, marginTop: '1px' }}>!</div>
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: RED, flexShrink: 0, marginTop: '5px', display: 'inline-block' }} />
                       <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{issue}</div>
                     </div>
                   ))}
@@ -788,7 +791,7 @@ function IntelligenceContent() {
 
               {/* AI Blocker */}
               <div style={{ background: 'rgba(239,68,68,0.04)', border: `1px solid rgba(239,68,68,0.2)`, borderRadius: '10px', padding: '16px 20px', marginBottom: '12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: RED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>AI Impact</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>AI Impact</div>
                 <div style={{ fontFamily: SANS, fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{selectedSystem.aiBlockerNote}</div>
               </div>
 
@@ -800,7 +803,7 @@ function IntelligenceContent() {
 
               {/* Recommended Action */}
               <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: '10px', padding: '16px 20px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Recommended Action</div>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '6px' }}>Recommended Action</div>
                 <div style={{ fontFamily: SANS, fontSize: '13px', color: WHITE, lineHeight: 1.6 }}>{selectedSystem.action}</div>
                 <button
                   onClick={() => sendChat(`Tell me more about ${selectedSystem.name}. ${selectedSystem.contractNote} What should my next 3 moves be?`)}
@@ -888,7 +891,7 @@ function IntelligenceContent() {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
               {chatMessages.map((m, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: m.role === 'user' ? TEAL : INDIGO, fontWeight: 700 }}>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: m.role === 'user' ? DIM : TEAL, fontWeight: 700 }}>
                     {m.role === 'user' ? 'YOU' : 'ABARVA'}
                   </div>
                   <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.content}</div>
@@ -896,7 +899,7 @@ function IntelligenceContent() {
               ))}
               {streamingResponse && (
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: INDIGO, fontWeight: 700 }}>ABARVA</div>
+                  <div style={{ fontFamily: MONO, fontSize: '8px', color: TEAL, fontWeight: 700 }}>ABARVA</div>
                   <div style={{ fontFamily: SANS, fontSize: '12px', color: MUTED, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{streamingResponse}</div>
                 </div>
               )}
