@@ -444,7 +444,7 @@ function VendorCard({ vendor, rank }: { vendor: typeof MERIDIAN_RCM_VENDORS[0]; 
           padding: '8px 12px',
           marginBottom: 12,
         }}>
-          <div style={{ fontSize: 10, fontFamily: T.mono, color: T.amber, marginBottom: 4 }}>🟡 RISK FLAG — MEDIUM</div>
+          <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: T.amber, flexShrink: 0, display: 'inline-block' }} />RISK FLAG — MEDIUM</div>
           <div style={{ fontSize: 11, color: T.text, fontFamily: T.sans }}>{vendor.genomeRisk}</div>
         </div>
       )}
@@ -592,7 +592,7 @@ function SelectVendorMode() {
           <div style={{
             background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.3)`,
             borderRadius: 6, padding: '6px 12px', marginBottom: 24,
-            fontSize: 10, fontFamily: T.mono, color: T.amber,
+            fontSize: 10, fontFamily: T.mono, color: T.secondary,
           }}>
             Demo data — illustrative only. Live client data is private.
           </div>
@@ -617,7 +617,7 @@ function SelectVendorMode() {
                   Implementation: {hoveredDetails.implementationMonthsAvg} months avg
                 </div>
                 {hoveredDetails.genomeRisk && (
-                  <div style={{ marginTop: 12, fontSize: 11, fontFamily: T.mono, color: T.amber }}>
+                  <div style={{ marginTop: 12, fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
                     FROM GENOME: {hoveredDetails.genomeRisk}
                   </div>
                 )}
@@ -723,7 +723,7 @@ function SelectVendorMode() {
                     Denial: {ref.baselineDenial}% → {ref.finalDenial}% · Time to value: {ref.timeToValueMonths}mo · Savings: ${(ref.annualSavings / 1e6).toFixed(0)}M annual
                   </div>
                 ) : (
-                  <div style={{ fontSize: 11, fontFamily: T.mono, color: T.red }}>
+                  <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary }}>
                     Reason: {ref.keyFactor}
                   </div>
                 )}
@@ -806,10 +806,10 @@ function SelectVendorMode() {
 
             {/* Watch for */}
             <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, padding: 20 }}>
-              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.amber, marginBottom: 12 }}>⚠ WATCH FOR</div>
+              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginBottom: 12 }}>WATCH FOR</div>
               {benchmark.watchForClauses.map(clause => (
                 <div key={clause} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'flex-start' }}>
-                  <span style={{ color: T.amber, fontSize: 12, flexShrink: 0 }}>⚠</span>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: T.amber, flexShrink: 0, marginTop: 4, display: 'inline-block' }} />
                   <span style={{ fontSize: 11, fontFamily: T.sans, color: T.text }}>{clause}</span>
                 </div>
               ))}
@@ -965,7 +965,7 @@ function OptimizeVendorsMode() {
             { color: T.red, count: vendorsOverMarket.length, label: 'vendors: above market rate', note: 'Renegotiate' },
           ].map(({ color, count, label, note }) => (
             <div key={label} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ color, fontSize: 14, flexShrink: 0 }}>●</span>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0, marginTop: 3, display: 'inline-block' }} />
               <div>
                 <span style={{ fontSize: 12, fontFamily: T.sans, color: T.text }}>{count} {label}</span>
                 <div style={{ fontSize: 10, fontFamily: T.mono, color: T.secondary }}>{note}</div>
@@ -1009,7 +1009,7 @@ function OptimizeVendorsMode() {
                   <div style={{
                     fontSize: 9, fontFamily: T.mono, padding: '2px 8px',
                     background: 'rgba(245,158,11,0.1)', border: `1px solid ${T.amber}`,
-                    color: T.amber, borderRadius: 4,
+                    color: T.secondary, borderRadius: 4,
                   }}>SLA BREACH</div>
                 )}
               </div>
@@ -1017,7 +1017,7 @@ function OptimizeVendorsMode() {
 
             {/* Intelligence note */}
             {'note' in vendor && vendor.note && (
-              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.amber, marginBottom: 14, lineHeight: 1.6, padding: '8px 12px', background: 'rgba(245,158,11,0.06)', borderRadius: 6, borderLeft: `2px solid ${T.amber}` }}>
+              <div style={{ fontSize: 11, fontFamily: T.mono, color: T.secondary, marginBottom: 14, lineHeight: 1.6, padding: '8px 12px', background: 'rgba(245,158,11,0.06)', borderRadius: 6, borderLeft: `2px solid ${T.amber}` }}>
                 ⚑ {vendor.note}
               </div>
             )}
@@ -1029,11 +1029,9 @@ function OptimizeVendorsMode() {
                   <div style={{ fontSize: 9, fontFamily: T.mono, color: T.secondary, marginBottom: 6 }}>SLA PERFORMANCE</div>
                   <div style={{ fontSize: 11, fontFamily: T.mono, color: T.text, lineHeight: 1.8 }}>
                     Contracted: {vendor.contractedUptime}% uptime<br />
-                    Actual: <span style={{ color: T.amber }}>{vendor.actualUptime}% uptime</span><br />
+                    Actual: {vendor.actualUptime}% uptime<br />
                     Gap: {(vendor.contractedUptime - vendor.actualUptime).toFixed(1)}pp<br />
-                    <span style={{ color: T.red }}>
-                      Credits owed: ${(credit / 1e6).toFixed(2)}M (NOT YET CLAIMED)
-                    </span>
+                    Credits owed: ${(credit / 1e6).toFixed(2)}M (NOT YET CLAIMED)
                   </div>
                 </div>
               )}
@@ -1045,9 +1043,7 @@ function OptimizeVendorsMode() {
                   <div style={{ fontSize: 11, fontFamily: T.mono, color: T.text, lineHeight: 1.8 }}>
                     Your rate: ${(vendor.annualSpend / 1e6).toFixed(1)}M/year<br />
                     Market median: ${(vendor.marketRate / 1e6).toFixed(1)}M/year<br />
-                    <span style={{ color: T.amber }}>
-                      Overpaying: ~${(overpaying / 1e6).toFixed(1)}M/year
-                    </span>
+                    Overpaying: ~${(overpaying / 1e6).toFixed(1)}M/year
                   </div>
                 </div>
               )}
