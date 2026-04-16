@@ -183,7 +183,6 @@ function NavInner({ activePage }: NavProps) {
             >
               <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
               <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
-              <span style={{ fontFamily: MONO, fontSize: '8px', color: NAV_MUTE }}>{currentClient.vertical}</span>
               {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>}
             </button>
 
@@ -219,7 +218,6 @@ function NavInner({ activePage }: NavProps) {
                         <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>
                           {c.shortName}
                         </div>
-                        <div style={{ fontFamily: MONO, fontSize: '9px', color: DROP_DESC }}>{c.vertical}</div>
                       </div>
                       {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color }}>✓</span>}
                     </button>
@@ -330,42 +328,28 @@ function NavInner({ activePage }: NavProps) {
           </a>
         )}
 
-        {/* ── Admin ▾ — visible all signed-in; greyed + disabled for non-admins */}
-        {signedIn && (
+        {/* ── Admin ▾ — admin role only ─────────────────────────────────────── */}
+        {signedIn && isAdmin && (
           <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('admin')} onMouseLeave={startClose}>
             <button style={{
               fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
-              color: !isAdmin ? 'rgba(239,246,255,0.35)' : adminActive ? TEAL : NAV_TEXT,
+              color: adminActive ? TEAL : NAV_TEXT,
               borderBottom: adminActive ? `2px solid ${TEAL}` : '2px solid transparent',
             }}>
               Admin ▾
             </button>
             {open === 'admin' && (
               <div style={{ ...dropPanel, minWidth: '260px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
-                {/* Header row */}
-                <div style={{ padding: '8px 16px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ padding: '8px 16px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '6px' }}>
                   <span style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
-                    {isAdmin ? 'Admin Console' : 'Admin Console — Restricted'}
+                    Admin Console
                   </span>
-                  {!isAdmin && (
-                    <span style={{ fontFamily: MONO, fontSize: '8px', color: '#EF4444', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '4px', padding: '1px 6px' }}>
-                      Admin only
-                    </span>
-                  )}
                 </div>
                 {ADMIN_ITEMS.map(item => (
-                  <a
-                    key={item.label}
-                    href={isAdmin ? item.path : undefined}
-                    onClick={e => { if (!isAdmin) { e.preventDefault(); return } setOpen(null) }}
-                    style={{
-                      display: 'block', padding: '9px 16px', textDecoration: 'none',
-                      borderRadius: '8px', margin: '0 4px',
-                      opacity: isAdmin ? 1 : 0.38,
-                      cursor: isAdmin ? 'pointer' : 'not-allowed',
-                    }}
-                    onMouseEnter={e => { if (isAdmin) e.currentTarget.style.background = DROP_HOVER }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                  <a key={item.label} href={item.path} onClick={() => setOpen(null)}
+                    style={{ display: 'block', padding: '9px 16px', textDecoration: 'none', borderRadius: '8px', margin: '0 4px' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     <div style={{ fontSize: '13px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.label}</div>
                     <div style={{ fontSize: '11px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px' }}>{item.desc}</div>
@@ -379,8 +363,8 @@ function NavInner({ activePage }: NavProps) {
         {/* ── Right side ─────────────────────────────────────────────────────── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
 
-          {/* Maestro — admin + investor: client workspace */}
-          {signedIn && isElevated && (
+          {/* Maestro — all signed-in users: links to client workspace */}
+          {signedIn && (
             <a href={`/admin/client/${clientId}`} style={{
               fontSize: '12px', color: activePage === 'maestro' ? TEAL : NAV_MUTE,
               textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
