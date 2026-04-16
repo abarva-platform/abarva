@@ -43,7 +43,45 @@ const isPublicRoute = createRouteMatcher([
   '/api/admin/seed-all-demos(.*)',
 ])
 
+// Routes that require admin/maestro role — viewer/client → /client-view
+const adminOnlyRoutes = createRouteMatcher([
+  '/admin(.*)',
+  '/engage/(.*)',
+  '/ai-strategy(.*)',
+  '/ai-pdlc(.*)',
+  '/ai-unlock(.*)',
+  '/outcome-intelligence(.*)',
+  '/vendor-intelligence(.*)',
+])
+
+// Routes that require any authenticated session
+const authRequiredRoutes = createRouteMatcher([
+  '/admin(.*)',
+  '/engage/(.*)',
+  '/ai-strategy(.*)',
+  '/ai-pdlc(.*)',
+  '/client-view(.*)',
+])
+
 export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
+  const { userId, sessionClaims } = await auth()
+  const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
+
+  // Admin/maestro-only routes
+  if (adminOnlyRoutes(request)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL('/sign-in', request.url))
+    }
+    if (role === 'viewer' || role === 'client') {
+      return NextResponse.redirect(new URL('/client-view', request.url))
+    }
+  }
+
+  // Auth-required routes (any role)
+  if (authRequiredRoutes(request) && !userId) {
+    return NextResponse.redirect(new URL('/sign-in', request.url))
+  }
+
   if (!isPublicRoute(request)) {
     await auth.protect()
   }
