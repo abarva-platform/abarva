@@ -438,7 +438,7 @@ export default function MaestroWorkspace() {
     return (
       <div style={{ minHeight: '100vh', background: T.bg, paddingTop: '64px' }}>
         <AbarvaNav />
-        <div style={{ padding: '48px', color: T.red, fontFamily: T.mono }}>Invalid solution: {solution}</div>
+        <div style={{ padding: '48px', color: T.muted, fontFamily: T.mono }}>Invalid solution: {solution}</div>
       </div>
     )
   }
@@ -666,7 +666,7 @@ export default function MaestroWorkspace() {
                           onClick={e => { e.stopPropagation(); setUnlockConfirm({ phaseId: phase.id, phaseName: pConfig.name, phaseNum: phase.phase_number }) }}
                           style={{
                             marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            fontFamily: T.mono, fontSize: '9px', color: T.amber,
+                            fontFamily: T.mono, fontSize: '9px', color: T.muted,
                             background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)',
                             borderRadius: '4px', padding: '3px 8px', cursor: 'pointer',
                             letterSpacing: '.06em', textTransform: 'uppercase'
@@ -694,7 +694,7 @@ export default function MaestroWorkspace() {
                   padding: '10px 12px', marginBottom: '6px'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                    <span style={{ fontFamily: T.mono, fontSize: '10px', color: T.red, fontWeight: 700 }}>{gm.pattern_code}</span>
+                    <span style={{ fontFamily: T.mono, fontSize: '10px', color: T.muted, fontWeight: 700 }}>{gm.pattern_code}</span>
                     <span style={{
                       fontFamily: T.mono, fontSize: '8px', letterSpacing: '.08em',
                       color: gm.confidence === 'confirmed' ? T.red : gm.confidence === 'probable' ? T.amber : T.text2,
@@ -860,7 +860,7 @@ export default function MaestroWorkspace() {
                     <div style={{
                       marginTop: '24px', background: T.greenDim, border: `1px solid ${T.green}30`,
                       borderRadius: '8px', padding: '12px 16px',
-                      fontFamily: T.mono, fontSize: '11px', color: T.green, letterSpacing: '.06em'
+                      fontFamily: T.mono, fontSize: '11px', color: T.teal, letterSpacing: '.06em'
                     }}>
                       PHASE 0 APPROVED — Phase 1 is now active
                     </div>
@@ -879,7 +879,7 @@ export default function MaestroWorkspace() {
                       flexShrink: 0
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.indigo, letterSpacing: '.1em', textTransform: 'uppercase' }}>
+                        <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '.1em', textTransform: 'uppercase' }}>
                           Vendor Intelligence
                         </div>
                         <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text }}>
@@ -888,7 +888,7 @@ export default function MaestroWorkspace() {
                       </div>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {vendorIntelResult && (
-                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.green, textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                          <span style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, textTransform: 'uppercase', letterSpacing: '.06em' }}>
                             {vendorIntelResult.vendors?.length || 0} vendors scored
                           </span>
                         )}
@@ -1133,7 +1133,7 @@ export default function MaestroWorkspace() {
               boxShadow: '0 24px 64px rgba(0,0,0,0.5)'
             }}
           >
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.amber, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.muted, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
               Admin Override
             </div>
             <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '8px' }}>

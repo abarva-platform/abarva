@@ -371,7 +371,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = WHITE }}>
                     {p.name}
                   </a>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: GREEN, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
                 </div>
               ))}
             </div>
@@ -394,8 +394,8 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
                       <div style={{ fontSize: '12px', color: WHITE }}>{f.name}</div>
                       <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
                     </div>
-                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1, marginRight: '6px' }}>Approve</button>
-                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
+                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: TEAL, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1, marginRight: '6px' }}>Approve</button>
+                    <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 10px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
                   </div>
                 ))
               }
@@ -430,13 +430,16 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
             <div style={cardStyle()}>
               {sectionTitle('Data summary')}
               {[
-                { label: 'Files loaded', value: String(activeFiles.length), color: GREEN },
-                { label: 'Pending approval', value: String(pendingFiles.length), color: AMBER },
-                { label: 'Avg confidence', value: activeFiles.length > 0 ? Math.round(activeFiles.reduce((s, f) => s + f.confidence, 0) / activeFiles.length) + '%' : '—', color: TEAL },
+                { label: 'Files loaded', value: String(activeFiles.length), color: WHITE, dot: GREEN },
+                { label: 'Pending approval', value: String(pendingFiles.length), color: WHITE, dot: AMBER },
+                { label: 'Avg confidence', value: activeFiles.length > 0 ? Math.round(activeFiles.reduce((s, f) => s + f.confidence, 0) / activeFiles.length) + '%' : '—', color: WHITE, dot: TEAL },
               ].map((stat, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < 2 ? '10px' : '0' }}>
                   <span style={{ fontSize: '12px', color: MUTED }}>{stat.label}</span>
-                  <span style={{ fontFamily: MONO, fontSize: '13px', color: stat.color, fontWeight: 600 }}>{stat.value}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    {(stat as any).dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: (stat as any).dot, flexShrink: 0, display: 'inline-block' }} />}
+                    <span style={{ fontFamily: MONO, fontSize: '13px', color: stat.color, fontWeight: 600 }}>{stat.value}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -461,7 +464,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = WHITE }}>
                     {p.name}
                   </a>
-                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: GREEN, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
+                  <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED, border: '1px solid rgba(52,211,153,0.2)' }}>Active</span>
                 </div>
               ))}
             </div>
@@ -537,7 +540,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
                   <div style={{ fontSize: '13px', color: WHITE }}>{u.name}</div>
                   <div style={{ fontSize: '11px', color: DIM }}>{u.role}</div>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: GREEN }}>{u.status}</span>
+                <span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED }}>{u.status}</span>
               </div>
             ))}
           </div>
@@ -549,7 +552,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
               { initials: 'RM', name: 'Raj Malhotra', role: 'CIO', status: 'Invited' },
             ].map((u, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: i < 2 ? '12px' : '0' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(129,140,248,0.15)', border: `1px solid ${PURPLE}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: '11px', color: PURPLE, flexShrink: 0 }}>{u.initials}</div>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(45,212,200,0.1)', border: `1px solid ${TEAL}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: '11px', color: TEAL, flexShrink: 0 }}>{u.initials}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '13px', color: WHITE }}>{u.name}</div>
                   <div style={{ fontSize: '11px', color: DIM }}>{u.role}</div>
@@ -582,7 +585,7 @@ function AdminTab({ clientId, data, adminSection, setAdminSection, isReadOnly }:
           </div>
           <div style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' as const }}>
             {['SOC 2 Type II', 'ISO 27001', 'GDPR Compliant'].map((badge, i) => (
-              <span key={i} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '20px', border: `1px solid rgba(52,211,153,0.3)`, color: GREEN, background: 'rgba(52,211,153,0.06)' }}>{badge}</span>
+              <span key={i} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '20px', border: `1px solid rgba(52,211,153,0.3)`, color: MUTED, background: 'rgba(52,211,153,0.06)' }}>{badge}</span>
             ))}
           </div>
         </div>
@@ -650,7 +653,10 @@ function OverviewTab({ data }: { data: ClientData }) {
             {sectionTitle('Genome patterns')}
             {data.genomePatternsMatched.slice(0, 3).map((p, i) => (
               <div key={i} style={{ marginBottom: i < 2 ? '14px' : '0', paddingBottom: i < 2 ? '14px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
-                <div style={{ fontFamily: SERIF, fontSize: '18px', color: RED, marginBottom: '2px' }}>{p.failureRate}%</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: '2px' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
+                  <div style={{ fontFamily: SERIF, fontSize: '18px', color: WHITE }}>{p.failureRate}%</div>
+                </div>
                 <div style={{ fontSize: '12px', color: WHITE, marginBottom: '4px' }}>{p.code} — {p.name}</div>
                 <div style={{ fontSize: '11px', color: DIM }}>{p.mitigation}</div>
               </div>
@@ -737,7 +743,7 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                   <div style={{ fontSize: '13px', color: WHITE }}>{f.name}</div>
                   <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date}</div>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: '11px', color: f.confidence >= 85 ? GREEN : AMBER }}>{f.confidence}%</span>
+                <span style={{ fontFamily: MONO, fontSize: '11px', color: WHITE }}>{f.confidence}%</span>
               </div>
             ))}
             {pendingFiles.length > 0 && (
@@ -745,12 +751,12 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                 <div style={{ marginTop: '16px', marginBottom: '8px', fontFamily: MONO, fontSize: '10px', color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Pending / missing</div>
                 {pendingFiles.map((f, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: i < pendingFiles.length - 1 ? `1px solid ${BORDER}` : 'none', opacity: 0.6 }}>
-                    <div style={{ color: AMBER, fontSize: '16px', flexShrink: 0 }}>○</div>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', border: `2px solid ${AMBER}`, flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '12px', color: MUTED }}>{f.name}</div>
                       <div style={{ fontSize: '11px', color: DIM }}>{f.uploader}</div>
                     </div>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: f.confidence > 0 ? AMBER : RED }}>{f.confidence > 0 ? `${f.confidence}%` : 'Missing'}</span>
+                    <span style={{ fontFamily: MONO, fontSize: '11px', color: MUTED }}>{f.confidence > 0 ? `${f.confidence}%` : 'Missing'}</span>
                   </div>
                 ))}
               </>
@@ -763,7 +769,7 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                 <div key={i} style={{ marginBottom: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span style={{ fontSize: '11px', color: MUTED }}>{f.name.split(' ').slice(0, 2).join(' ')}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '11px', color: f.confidence >= 85 ? GREEN : AMBER }}>{f.confidence}%</span>
+                    <span style={{ fontFamily: MONO, fontSize: '11px', color: WHITE }}>{f.confidence}%</span>
                   </div>
                   <div style={{ height: '4px', background: BORDER, borderRadius: '2px' }}>
                     <div style={{ height: '4px', borderRadius: '2px', width: `${f.confidence}%`, background: f.confidence >= 85 ? GREEN : AMBER }} />
@@ -790,8 +796,8 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <span style={{ fontSize: '13px', color: WHITE }}>{b.label}</span>
                   <div style={{ display: 'flex', gap: '16px' }}>
-                    <span style={{ fontFamily: MONO, fontSize: '12px', color: RED }}>{b.ours}{b.unit}</span>
-                    <span style={{ fontFamily: MONO, fontSize: '12px', color: GREEN }}>{b.peer}{b.unit}</span>
+                    <span style={{ fontFamily: MONO, fontSize: '12px', color: WHITE }}>{b.ours}{b.unit}</span>
+                    <span style={{ fontFamily: MONO, fontSize: '12px', color: MUTED }}>{b.peer}{b.unit}</span>
                   </div>
                 </div>
                 <div style={{ fontSize: '11px', color: DIM }}>{b.gap}</div>
@@ -803,7 +809,10 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
             {data.industryBenchmarks.slice(0, 3).map((b, i) => (
               <div key={i} style={{ marginBottom: i < 2 ? '14px' : '0', paddingBottom: i < 2 ? '14px' : '0', borderBottom: i < 2 ? `1px solid ${BORDER}` : 'none' }}>
                 <div style={{ fontSize: '12px', color: WHITE, marginBottom: '4px' }}>{b.label}</div>
-                <div style={{ fontFamily: SERIF, fontSize: '16px', color: RED }}>{b.gap.split(' ')[0]}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
+                  <div style={{ fontFamily: SERIF, fontSize: '16px', color: WHITE }}>{b.gap.split(' ')[0]}</div>
+                </div>
                 <div style={{ fontSize: '11px', color: DIM, marginTop: '2px' }}>{b.gap}</div>
               </div>
             ))}
@@ -854,8 +863,11 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
                   <div>
                     <div style={{ fontFamily: MONO, fontSize: '10px', color: DIM, marginBottom: '2px' }}>{p.code}</div>
-                    <div style={{ fontFamily: SERIF, fontSize: '24px', color: RED }}>{p.failureRate}%</div>
-                    <div style={{ fontFamily: MONO, fontSize: '9px', color: RED }}>failure rate</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
+                      <div style={{ fontFamily: SERIF, fontSize: '24px', color: WHITE }}>{p.failureRate}%</div>
+                    </div>
+                    <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED }}>failure rate</div>
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '14px', fontWeight: 500, color: WHITE, marginBottom: '6px' }}>{p.name}</div>
@@ -868,7 +880,10 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
           <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '16px' }}>
             <div style={cardStyle()}>
               {sectionTitle('All patterns present')}
-              <div style={{ fontFamily: SERIF, fontSize: '36px', color: RED, marginBottom: '4px' }}>{data.genomePatternsMatched.filter(p => p.present).length}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: '4px' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: RED, flexShrink: 0, display: 'inline-block' }} />
+                <div style={{ fontFamily: SERIF, fontSize: '36px', color: WHITE }}>{data.genomePatternsMatched.filter(p => p.present).length}</div>
+              </div>
               <div style={{ fontSize: '12px', color: MUTED }}>patterns matched in this engagement — requires immediate programme design.</div>
             </div>
             <div style={cardStyle()}>
@@ -879,7 +894,7 @@ function DataIntelligenceTab({ data, diTab, setDiTab }: {
                 'Regulatory pressure creating urgency',
               ].map((s, i) => (
                 <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: i < 2 ? '10px' : '0' }}>
-                  <div style={{ color: GREEN, flexShrink: 0 }}>+</div>
+                  <div style={{ color: TEAL, flexShrink: 0 }}>+</div>
                   <div style={{ fontSize: '12px', color: MUTED }}>{s}</div>
                 </div>
               ))}
@@ -983,7 +998,7 @@ function ProjectsTab({ clientId, projView, setProjView, showNewProject, setShowN
                     <td style={{ fontSize: '13px', color: WHITE, padding: '10px 12px 10px 0' }}>{r.name}</td>
                     <td style={{ fontFamily: MONO, fontSize: '12px', color: TEAL, padding: '10px 12px 10px 0' }}>{r.projects}</td>
                     <td style={{ fontFamily: MONO, fontSize: '12px', color: MUTED, padding: '10px 12px 10px 0' }}>{r.hours}h</td>
-                    <td style={{ padding: '10px 0' }}><span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: GREEN }}>{r.status}</span></td>
+                    <td style={{ padding: '10px 0' }}><span style={{ fontFamily: MONO, fontSize: '9px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(52,211,153,0.1)', color: MUTED }}>{r.status}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -1072,9 +1087,9 @@ function ApprovalsTab({ isReadOnly }: { isReadOnly: boolean }) {
               <div style={{ fontSize: '11px', color: DIM }}>{f.uploader} · {f.date} · {f.size}</div>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: GREEN, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Approve</button>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: AMBER, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Restrict</button>
-              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: RED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.25)', color: TEAL, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Approve</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Restrict</button>
+              <button disabled={isReadOnly} style={{ fontFamily: MONO, fontSize: '10px', padding: '4px 12px', borderRadius: '4px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: MUTED, cursor: isReadOnly ? 'default' : 'pointer', opacity: isReadOnly ? 0.4 : 1 }}>Reject</button>
             </div>
           </div>
         ))}
@@ -1089,7 +1104,7 @@ function ApprovalsTab({ isReadOnly }: { isReadOnly: boolean }) {
             <div style={{ fontSize: '13px', color: WHITE }}>Situation Analysis — Draft v1</div>
             <div style={{ fontSize: '11px', color: DIM }}>Sent to Victoria Hargreaves · 2026-04-10 · Awaiting review</div>
           </div>
-          <span style={{ fontFamily: MONO, fontSize: '10px', color: AMBER }}>Awaiting</span>
+          <span style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>Awaiting</span>
         </div>
       </div>
 
@@ -1106,7 +1121,7 @@ function ApprovalsTab({ isReadOnly }: { isReadOnly: boolean }) {
               <div style={{ fontSize: '12px', color: MUTED }}>{r.name}</div>
               <div style={{ fontSize: '11px', color: DIM }}>{r.by} · {r.date}</div>
             </div>
-            <span style={{ fontFamily: MONO, fontSize: '10px', color: GREEN }}>{r.outcome}</span>
+            <span style={{ fontFamily: MONO, fontSize: '10px', color: MUTED }}>{r.outcome}</span>
           </div>
         ))}
       </div>
@@ -1407,7 +1422,7 @@ export default function AdminClientPage() {
               }}>
               {t.label}
               {t.badge && (
-                <span style={{ fontFamily: MONO, fontSize: '9px', background: 'rgba(239,68,68,0.15)', color: RED, padding: '1px 5px', borderRadius: '10px' }}>
+                <span style={{ fontFamily: MONO, fontSize: '9px', background: 'rgba(239,68,68,0.15)', color: MUTED, padding: '1px 5px', borderRadius: '10px' }}>
                   {t.badge}
                 </span>
               )}

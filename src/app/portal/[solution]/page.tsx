@@ -178,7 +178,7 @@ function PortalContent() {
     return (
       <div style={{ minHeight: '100vh', background: BG }}>
         <TopBar clientName={clientName} userName={user?.fullName || ''} />
-        <div style={{ padding: '48px', color: RED, fontFamily: MONO }}>Invalid solution: {solution}</div>
+        <div style={{ padding: '48px', color: MUTED, fontFamily: MONO }}>Invalid solution: {solution}</div>
       </div>
     )
   }
@@ -434,7 +434,7 @@ function PortalContent() {
           {pendingDataRequests.length > 0 && (
             <div style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-                <div style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, textTransform: 'uppercase', letterSpacing: '.12em' }}>
+                <div style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, textTransform: 'uppercase', letterSpacing: '.12em' }}>
                   ACTION NEEDED
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.40)' }}>
@@ -459,12 +459,12 @@ function PortalContent() {
                             {req.file_requested}
                           </div>
                           {isDone && (
-                            <span style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, background: 'rgba(34,197,94,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                            <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: 'rgba(34,197,94,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                               {req.status === 'numbers_entered' ? 'Numbers provided' : 'Uploaded'}
                             </span>
                           )}
                           {isPending && (
-                            <span style={{ fontFamily: MONO, fontSize: '9px', color: AMBER, background: 'rgba(245,158,11,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
+                            <span style={{ fontFamily: MONO, fontSize: '9px', color: MUTED, background: 'rgba(245,158,11,0.10)', borderRadius: '3px', padding: '2px 6px', textTransform: 'uppercase', letterSpacing: '.06em' }}>
                               Requested
                             </span>
                           )}
@@ -699,7 +699,7 @@ function PortalContent() {
               borderRadius: '12px',
               padding: '24px'
             }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', color: GREEN, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
+              <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textTransform: 'uppercase', letterSpacing: '.10em', marginBottom: '10px' }}>
                 ENGAGEMENT COMPLETE
               </div>
               <div style={{ fontFamily: MONO, fontSize: '28px', fontWeight: 700, color: TEAL, marginBottom: '6px' }}>
@@ -925,7 +925,7 @@ function PortalContent() {
                   background: 'rgba(34,197,94,0.15)', border: `1px solid ${GREEN}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   margin: '0 auto 16px',
-                  fontSize: '20px', color: GREEN
+                  fontSize: '20px', color: TEAL
                 }}>✓</div>
                 <div style={{ fontFamily: SANS, fontSize: '16px', fontWeight: 700, color: WHITE, marginBottom: '8px' }}>
                   Phase {currentPhase.phase_number} approved

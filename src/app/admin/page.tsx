@@ -109,7 +109,7 @@ export default function AdminPage() {
                     {c.phase}
                   </div>
                   <div style={{
-                    fontSize: '11px', color: AMBER,
+                    fontSize: '11px', color: MUTED,
                     background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)',
                     borderRadius: '4px', padding: '3px 10px', flexShrink: 0,
                   }}>
