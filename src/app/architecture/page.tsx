@@ -5,6 +5,8 @@ import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext } from '@/lib/use-client-context'
 import {
   ARCTURUS_TARGET_HTML,
+  MERIDIAN_TARGET_HTML,
+  APEX_RETAIL_TARGET_HTML,
   PATTERN_LANDING_ZONE_HTML,
   PATTERN_AGENTIC_HTML,
   PATTERN_DATA_PLATFORM_HTML,
@@ -898,8 +900,8 @@ const CURRENT_HTML_MAP: Record<string, string> = {
 
 const TARGET_HTML_MAP: Record<string, string | null> = {
   arcturus:   ARCTURUS_TARGET_HTML,
-  meridian:   null,
-  apexretail: null,
+  meridian:   MERIDIAN_TARGET_HTML,
+  apexretail: APEX_RETAIL_TARGET_HTML,
 }
 
 const PATTERNS = [
@@ -988,7 +990,7 @@ function ArchContent() {
   }
 
   return (
-    <div style={{ background: '#060A12', minHeight: '100vh' }}>
+    <div style={{ background: '#F8F7F4', minHeight: '100vh' }}>
       <AbarvaNav activePage="architecture" />
 
       <ModuleHeader
@@ -1003,10 +1005,10 @@ function ArchContent() {
       />
 
       {/* Mode toggle + Client selector row */}
-      <div style={{ background: '#060A12', borderBottom: '1px solid #1C2D45' }}>
+      <div style={{ background: '#F8F7F4', borderBottom: '1px solid #E2E1DC' }}>
 
         {/* Mode toggle */}
-        <div style={{ padding: '0 24px', display: 'flex', gap: '0', borderBottom: '1px solid #21262D' }}>
+        <div style={{ padding: '0 24px', display: 'flex', gap: '0', borderBottom: '1px solid #E2E1DC' }}>
           {([
             ['current', 'Current State', 'What exists today — tech debt, blockers, contradictions'],
             ['target', 'Target State', 'Post-engagement architecture — what we\'re building toward'],
@@ -1018,11 +1020,11 @@ function ArchContent() {
                 cursor: 'pointer', border: 'none',
                 borderBottom: mode === id ? '2px solid #2DD4C8' : '2px solid transparent',
                 background: 'transparent',
-                color: mode === id ? '#2DD4C8' : "rgba(255,255,255,0.45)",
+                color: mode === id ? '#2DD4C8' : '#6B7280',
                 display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left',
               }}>
               {label}
-              <span style={{ fontFamily: SANS, fontSize: '9px', fontWeight: 400, color: mode === id ? 'rgba(45,212,200,0.7)' : '#404850', textTransform: 'none', letterSpacing: 0, lineHeight: 1.3 }}>
+              <span style={{ fontFamily: SANS, fontSize: '9px', fontWeight: 400, color: mode === id ? 'rgba(45,212,200,0.7)' : '#9CA3AF', textTransform: 'none', letterSpacing: 0, lineHeight: 1.3 }}>
                 {desc}
               </span>
             </button>
@@ -1042,13 +1044,13 @@ function ArchContent() {
           <div style={{ padding: '0 24px', display: 'flex', gap: '4px' }}>
             {visibleClients.map(c => (
               <button key={c.id} onClick={() => setSelected(c.id)}
-                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selected === c.id ? '#EFF6FF' : "rgba(255,255,255,0.45)", display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#1C2D45', color: selected === c.id ? 'white' : "rgba(255,255,255,0.45)", fontWeight: 700 }}>{c.cloud}</span>
+                style={{ padding: '8px 18px', fontFamily: MONO, fontSize: '11px', fontWeight: 600, cursor: 'pointer', border: 'none', borderBottom: selected === c.id ? '2px solid #2DD4C8' : '2px solid transparent', background: 'transparent', color: selected === c.id ? '#0C0C0C' : '#6B7280', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '3px', background: selected === c.id ? c.cloudBg + 'aa' : '#E2E1DC', color: selected === c.id ? 'white' : '#6B7280', fontWeight: 700 }}>{c.cloud}</span>
                 {c.name}
               </button>
             ))}
             {mode === 'target' && !hasTargetState && (
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: "rgba(255,255,255,0.45)", padding: '0 8px' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#9CA3AF', padding: '0 8px' }}>
                 Target state for {client.name} — in development
               </div>
             )}
@@ -1058,7 +1060,7 @@ function ArchContent() {
               </div>
             )}
             {mode === 'current' && (
-              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: "rgba(255,255,255,0.45)", padding: '0 8px' }}>
+              <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: '9px', color: '#9CA3AF', padding: '0 8px' }}>
                 {selected === 'meridian' ? 'Claude on Azure AI Foundry' : selected === 'apexretail' ? 'Claude on Vertex AI' : 'Arcturus · $94M AI · $0 ROI · 4 root causes'}
               </div>
             )}
@@ -1073,10 +1075,10 @@ function ArchContent() {
             <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '8px' }}>
               AbarVa · Reference Architecture Library
             </div>
-            <h1 style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 600, color: '#EFF6FF', margin: '0 0 8px' }}>
+            <h1 style={{ fontFamily: MONO, fontSize: '20px', fontWeight: 600, color: '#0C0C0C', margin: '0 0 8px' }}>
               Pattern Library
             </h1>
-            <p style={{ fontFamily: SANS, fontSize: '13px', color: '#8B949E', lineHeight: 1.6, maxWidth: '640px' }}>
+            <p style={{ fontFamily: SANS, fontSize: '13px', color: '#6B7280', lineHeight: 1.6, maxWidth: '640px' }}>
               Pre-built reference architectures for AI and data programmes. Each pattern maps to a specific engagement need. Apply to a client engagement to generate a client-specific target state architecture.
             </p>
           </div>
@@ -1085,7 +1087,7 @@ function ArchContent() {
             {PATTERNS.map(p => (
               <button key={p.id} onClick={() => setSelectedPattern(p.id)}
                 style={{
-                  textAlign: 'left', background: '#0D1520', border: `1px solid ${p.accent}25`,
+                  textAlign: 'left', background: '#FFFFFF', border: `1px solid ${p.accent}25`,
                   borderTop: `3px solid ${p.accent}`, borderRadius: '10px', padding: '24px',
                   cursor: 'pointer', transition: 'border-color 0.15s',
                 }}>
@@ -1099,20 +1101,20 @@ function ArchContent() {
                   </div>
                   <span style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8' }}>→</span>
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#EFF6FF', marginBottom: '6px', lineHeight: 1.3 }}>
+                <div style={{ fontFamily: MONO, fontSize: '14px', fontWeight: 600, color: '#0C0C0C', marginBottom: '6px', lineHeight: 1.3 }}>
                   {p.title}
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: '12px', color: '#8B949E', marginBottom: '14px', lineHeight: 1.5 }}>
+                <div style={{ fontFamily: SANS, fontSize: '12px', color: '#6B7280', marginBottom: '14px', lineHeight: 1.5 }}>
                   {p.subtitle}
                 </div>
-                <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8B949E', background: `${p.accent}08`, border: `1px solid ${p.accent}20`, borderRadius: '6px', padding: '8px 10px', lineHeight: 1.4 }}>
+                <div style={{ fontFamily: SANS, fontSize: '11px', color: '#6B7280', background: `${p.accent}08`, border: `1px solid ${p.accent}20`, borderRadius: '6px', padding: '8px 10px', lineHeight: 1.4 }}>
                   {p.relevance}
                 </div>
               </button>
             ))}
           </div>
 
-          <div style={{ marginTop: '32px', padding: '20px 24px', background: '#0D1520', border: '1px solid #21262D', borderRadius: '10px' }}>
+          <div style={{ marginTop: '32px', padding: '20px 24px', background: '#FFFFFF', border: '1px solid #E2E1DC', borderRadius: '10px' }}>
             <div style={{ fontFamily: MONO, fontSize: '9px', color: '#2DD4C8', marginBottom: '8px', letterSpacing: '1px' }}>HOW TO USE PATTERNS</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
               {[
@@ -1121,9 +1123,9 @@ function ArchContent() {
                 { step: '03', label: 'Generate target state', body: 'Combine 1–3 patterns to produce the client\'s specific Target State diagram — the deliverable that shows what we\'re building.' },
               ].map(s => (
                 <div key={s.step}>
-                  <div style={{ fontFamily: MONO, fontSize: '18px', color: '#30363D', marginBottom: '4px' }}>{s.step}</div>
-                  <div style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 600, color: '#C9D1D9', marginBottom: '4px' }}>{s.label}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#8B949E', lineHeight: 1.5 }}>{s.body}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '18px', color: '#E2E1DC', marginBottom: '4px' }}>{s.step}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '11px', fontWeight: 600, color: '#0C0C0C', marginBottom: '4px' }}>{s.label}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#6B7280', lineHeight: 1.5 }}>{s.body}</div>
                 </div>
               ))}
             </div>
@@ -1135,22 +1137,22 @@ function ArchContent() {
       {(mode !== 'patterns' || selectedPattern) && (
         <div>
           {mode === 'patterns' && selectedPattern && (
-            <div style={{ padding: '8px 24px', background: '#060A12', borderBottom: '1px solid #21262D', display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ padding: '8px 24px', background: '#F8F7F4', borderBottom: '1px solid #E2E1DC', display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button onClick={() => setSelectedPattern(null)}
                 style={{ fontFamily: MONO, fontSize: '10px', color: '#2DD4C8', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                 ← Pattern Library
               </button>
-              <span style={{ fontFamily: MONO, fontSize: '10px', color: '#8B949E' }}>
+              <span style={{ fontFamily: MONO, fontSize: '10px', color: '#6B7280' }}>
                 {PATTERNS.find(p => p.id === selectedPattern)?.title}
               </span>
             </div>
           )}
 
           {mode === 'target' && !hasTargetState ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 140px)', color: '#8B949E', fontFamily: MONO, fontSize: '13px', gap: '12px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 'calc(100vh - 140px)', color: '#6B7280', fontFamily: MONO, fontSize: '13px', gap: '12px' }}>
               <div style={{ fontSize: '11px', color: '#2DD4C8', letterSpacing: '2px', textTransform: 'uppercase' }}>In Development</div>
-              <div style={{ color: '#C9D1D9', fontSize: '15px', fontWeight: 600 }}>Target State — {client.name}</div>
-              <div style={{ fontSize: '11px', color: "rgba(255,255,255,0.45)", textAlign: 'center', maxWidth: '400px', lineHeight: 1.6, fontFamily: 'DM Sans, sans-serif' }}>
+              <div style={{ color: '#0C0C0C', fontSize: '15px', fontWeight: 600 }}>Target State — {client.name}</div>
+              <div style={{ fontSize: '11px', color: '#6B7280', textAlign: 'center', maxWidth: '400px', lineHeight: 1.6, fontFamily: 'DM Sans, sans-serif' }}>
                 Target state architecture for {client.name} will be generated as part of the AI strategy engagement deliverables. Available after engagement scoping is complete.
               </div>
             </div>
@@ -1171,7 +1173,7 @@ function ArchContent() {
 export default function ArchitecturePage() {
   return (
     <Suspense fallback={
-      <div style={{ background: '#060A12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
+      <div style={{ background: '#F8F7F4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
         Loading architecture...
       </div>
     }>

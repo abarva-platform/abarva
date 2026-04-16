@@ -8,16 +8,16 @@ import { calcProgress, calcVariance, calcInitiativeStatus, calcOutcomeFee, calcP
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const T = {
-  bg: '#060A12',
-  surface: '#0D1520',
-  border: '#1C2D45',
+  bg: '#F8F7F4',
+  surface: '#FFFFFF',
+  border: '#E2E1DC',
   teal: '#2DD4C8',
   red: '#EF4444',
   amber: '#F59E0B',
   green: '#10B981',
   indigo: '#6366F1',
-  text: '#EFF6FF',
-  secondary: '#94A3B8',
+  text: '#0C0C0C',
+  secondary: '#3C3C3C',
   fraunces: 'Fraunces, Georgia, serif',
   mono: '"JetBrains Mono", "Fira Code", monospace',
   sans: '"DM Sans", system-ui, sans-serif',

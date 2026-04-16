@@ -5,6 +5,8 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
   const [blocked, setBlocked] = useState(false)
 
   useEffect(() => {
+    // Don't block when embedded in an iframe (e.g. demo guided walkthrough)
+    if (window.self !== window.top) return
     const check = () => setBlocked(window.innerWidth < 1024)
     check()
     window.addEventListener('resize', check)

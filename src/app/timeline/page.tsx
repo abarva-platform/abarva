@@ -279,7 +279,7 @@ function Card({ ev }: { ev: TEvent }) {
       </div>
       <div style={{ background: c.bg, borderRadius: '6px', padding: '10px 12px' }}>
         <div style={{ fontSize: '9px', fontWeight: 700, color: c.accent, letterSpacing: '0.1em', textTransform: 'uppercase' as const, marginBottom: '4px', fontFamily: "'IBM Plex Mono', monospace" }}>→ Impact</div>
-        <div style={{ fontSize: '11px', color: '#374151', lineHeight: 1.6 }}>{ev.impact}</div>
+        <div style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.6 }}>{ev.impact}</div>
       </div>
     </div>
   )
@@ -403,7 +403,7 @@ function TimelineContent() {
 
         {/* The Pattern */}
         <div style={{
-          background: '#111827',
+          background: '#0C0C0C',
           borderRadius: '16px',
           padding: '48px 52px',
           marginTop: '64px',
@@ -430,12 +430,12 @@ function TimelineContent() {
             ].map((p, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '16px 14px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: '#E6EDF3', marginBottom: '6px', lineHeight: 1.4 }}>{p.line}</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.5 }}>{p.sub}</div>
+                <div style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.5 }}>{p.sub}</div>
               </div>
             ))}
           </div>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '28px' }}>
-            <div style={{ fontSize: '14px', color: '#8B949E', lineHeight: 1.8, marginBottom: '16px', maxWidth: '680px' }}>
+            <div style={{ fontSize: '14px', color: '#888888', lineHeight: 1.8, marginBottom: '16px', maxWidth: '680px' }}>
               This is not bad strategy. This is the execution gap that consulting firms profit from — and never fix.
             </div>
             <div style={{ fontSize: '17px', fontWeight: 700, color: '#2DD4C8', fontFamily: "'IBM Plex Mono', monospace", letterSpacing: '-0.01em' }}>
@@ -451,7 +451,7 @@ function TimelineContent() {
 
 export default function TimelinePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#3C3C3C' }}>Loading...</div>}>
       <TimelineContent />
     </Suspense>
   )

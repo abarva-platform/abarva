@@ -8,8 +8,8 @@ import { firstCapital } from '@/data/firstcapital/index'
 import { apexRetail } from '@/data/apexretail/index'
 
 // ─── Theme — matches homepage exactly ────────────────────────────────────────
-const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.46)'
+const BG = '#F8F7F4', CARD = '#FFFFFF', BORDER = '#E2E1DC'
+const WHITE = '#0C0C0C', MUTED = '#3C3C3C', DIM = '#888888'
 const TEAL = '#2DD4C8'
 // Status dot colors — for dots only, never for text
 const DOT_RED = '#EF4444', DOT_AMBER = '#F59E0B'

@@ -1,6 +1,7 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const DOMAINS = [
@@ -198,7 +199,7 @@ const READINESS_COLOR: Record<string, { bg: string; color: string }> = {
 
 function DomainStrategyContent() {
   const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const clientId = useActiveClient()
   const [activeClient, setActiveClient] = useState(clientId)
   const [domainId, setDomainId] = useState('rcm')
 
@@ -206,17 +207,17 @@ function DomainStrategyContent() {
   const data = DOMAIN_DATA[domainId]
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Inter, -apple-system, sans-serif' }}>
       <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap');" }} />
       <AbarvaNav activePage="select" />
 
       {/* Domain Selector — dark header */}
-      <div style={{ background: '#111827', padding: '28px 32px' }}>
+      <div style={{ background: '#0C0C0C', padding: '28px 32px' }}>
         <div style={{ maxWidth: '1480px', margin: '0 auto' }}>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Domain AI Strategy</div>
             <div style={{ fontSize: '20px', fontWeight: 700, color: '#F9FAFB', marginBottom: '4px' }}>Meridian Health System</div>
-            <div style={{ fontSize: '13px', color: '#6B7280' }}>Select a domain to generate a focused AI strategy with use cases, architecture, and roadmap</div>
+            <div style={{ fontSize: '13px', color: '#9CA3AF' }}>Select a domain to generate a focused AI strategy with use cases, architecture, and roadmap</div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '10px' }}>
@@ -231,7 +232,7 @@ function DomainStrategyContent() {
                   outlineOffset: '2px', transition: 'all 0.15s',
                 }}>
                 <div style={{ fontSize: '22px', marginBottom: '6px' }}>{d.icon}</div>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: domainId === d.id ? '#FFFFFF' : '#9CA3AF', lineHeight: 1.3, marginBottom: '4px' }}>{d.label}</div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: domainId === d.id ? '#FFFFFF' : '#D1D5DB', lineHeight: 1.3, marginBottom: '4px' }}>{d.label}</div>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: domainId === d.id ? 'rgba(255,255,255,0.85)' : d.color }}>{d.value}</div>
               </button>
             ))}
@@ -244,9 +245,9 @@ function DomainStrategyContent() {
 
         {/* Breadcrumb */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '28px' }}>
-          <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
+          <a href="/" style={{ fontSize: '13px', color: '#3C3C3C', textDecoration: 'none' }}>Home</a>
           <span style={{ color: '#D1D5DB' }}>›</span>
-          <a href={'/ai-strategy?client=' + activeClient} style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>AI Strategy</a>
+          <a href={'/ai-strategy?client=' + activeClient} style={{ fontSize: '13px', color: '#3C3C3C', textDecoration: 'none' }}>AI Strategy</a>
           <span style={{ color: '#D1D5DB' }}>›</span>
           <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Domain Strategy</span>
           <span style={{ color: '#D1D5DB' }}>›</span>
@@ -255,15 +256,15 @@ function DomainStrategyContent() {
 
         {/* Section 1 — Domain Snapshot */}
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Domain Snapshot</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Domain Snapshot</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {data.metrics.map((m, i) => {
               const sc: Record<string, string> = { red: '#DC2626', yellow: '#D97706', green: '#059669' }
               return (
                 <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '20px', borderTop: '3px solid ' + sc[m.status] }}>
-                  <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '6px' }}>{m.label}</div>
+                  <div style={{ fontSize: '12px', color: '#3C3C3C', marginBottom: '6px' }}>{m.label}</div>
                   <div style={{ fontSize: '28px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{m.value}</div>
-                  <div style={{ fontSize: '11px', color: '#94A3B8', lineHeight: 1.4 }}>{m.sub}</div>
+                  <div style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.4 }}>{m.sub}</div>
                 </div>
               )
             })}
@@ -272,13 +273,13 @@ function DomainStrategyContent() {
 
         {/* Section 2 — AI Opportunity Map */}
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>AI Opportunity Map</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>AI Opportunity Map</div>
           <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
               <thead>
                 <tr style={{ background: '#F8FAFC' }}>
                   {['Use Case', 'Annual Value', 'Data Readiness', 'Timeline', 'Approach'].map((h, i) => (
-                    <th key={i} style={{ padding: '11px 16px', textAlign: i === 0 ? 'left' as const : 'center' as const, fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>{h}</th>
+                    <th key={i} style={{ padding: '11px 16px', textAlign: i === 0 ? 'left' as const : 'center' as const, fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.06em', borderBottom: '1px solid #E2E8F0' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -292,8 +293,8 @@ function DomainStrategyContent() {
                       <td style={{ padding: '12px 16px', textAlign: 'center' as const }}>
                         <span style={{ fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: r.bg, color: r.color }}>{uc.readiness}</span>
                       </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' as const, fontSize: '12px', color: '#374151' }}>{uc.timeline}</td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' as const, fontSize: '12px', color: '#374151' }}>{uc.approach}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' as const, fontSize: '12px', color: '#3C3C3C' }}>{uc.timeline}</td>
+                      <td style={{ padding: '12px 16px', textAlign: 'center' as const, fontSize: '12px', color: '#3C3C3C' }}>{uc.approach}</td>
                     </tr>
                   )
                 })}
@@ -304,7 +305,7 @@ function DomainStrategyContent() {
 
         {/* Section 3 — Target State Architecture */}
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Target State Architecture</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Target State Architecture</div>
           <div style={{ background: '#0D1117', borderRadius: '12px', padding: '24px 28px', border: '1px solid #21262D' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2DD4C8' }} />
@@ -318,7 +319,7 @@ function DomainStrategyContent() {
 
         {/* Section 4 — Domain Roadmap */}
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Domain Roadmap</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Domain Roadmap</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {data.phases.map((phase, i) => {
               const phaseColors = ['#2563EB', '#7C3AED', '#059669']
@@ -336,7 +337,7 @@ function DomainStrategyContent() {
                   {phase.items.map((item, ii) => (
                     <div key={ii} style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
                       <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: c, flexShrink: 0, marginTop: '5px' }} />
-                      <span style={{ fontSize: '12px', color: '#374151', lineHeight: 1.4 }}>{item}</span>
+                      <span style={{ fontSize: '12px', color: '#3C3C3C', lineHeight: 1.4 }}>{item}</span>
                     </div>
                   ))}
                 </div>
@@ -347,7 +348,7 @@ function DomainStrategyContent() {
 
         {/* Section 5 — Investment Summary */}
         <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Investment Summary</div>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' }}>Investment Summary</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
               { label: 'Total Investment', value: data.totalInvest, sub: 'Over 18 months', color: '#2563EB', bg: '#EFF6FF' },
@@ -357,7 +358,7 @@ function DomainStrategyContent() {
               <div key={i} style={{ background: card.bg, borderRadius: '12px', padding: '20px 24px', border: `1px solid ${card.color}30` }}>
                 <div style={{ fontSize: '11px', fontWeight: 700, color: card.color, textTransform: 'uppercase' as const, letterSpacing: '0.06em', marginBottom: '8px' }}>{card.label}</div>
                 <div style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A', letterSpacing: '-0.02em', marginBottom: '4px' }}>{card.value}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280' }}>{card.sub}</div>
+                <div style={{ fontSize: '12px', color: '#3C3C3C' }}>{card.sub}</div>
               </div>
             ))}
           </div>
@@ -377,7 +378,7 @@ function DomainStrategyContent() {
 
 export default function DomainStrategyPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8F7F4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#3C3C3C' }}>Loading...</div>}>
       <DomainStrategyContent />
     </Suspense>
   )

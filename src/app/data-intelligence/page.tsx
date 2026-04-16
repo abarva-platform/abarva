@@ -1,12 +1,13 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 import ModuleHeader from '@/components/ModuleHeader'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
-const BG = '#060A12', CARD = '#0D1520', BORDER = '#1C2D45'
-const TEAL = '#2DD4C8', WHITE = '#EFF6FF', MUTED = 'rgba(255,255,255,0.75)', DIM = 'rgba(255,255,255,0.5)'
+const BG = '#F8F7F4', CARD = '#FFFFFF', BORDER = '#E2E1DC'
+const TEAL = '#2DD4C8', WHITE = '#0C0C0C', MUTED = '#3C3C3C', DIM = '#888888'
 const RED = '#EF4444', AMBER = '#F59E0B', GREEN = '#34D399', INDIGO = '#818CF8'
 const SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
 
@@ -686,7 +687,7 @@ function SourcesTab({ d }: { d: any }) {
 // ── Main page ──────────────────────────────────────────────────────────────────
 function DataContent() {
   const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const clientId = useActiveClient()
   const [tab, setTab] = useState('overview')
   const [catId, setCatId] = useState('financial')
 

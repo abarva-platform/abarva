@@ -4,7 +4,7 @@ import AbarvaNav from '@/components/AbarvaNav'
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
+  label: { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
 }
 
 const TRUST_SECTIONS = [
@@ -113,7 +113,7 @@ export default function TrustPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {section.items.map((item, i) => (
                   <div key={i} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '16px', paddingBottom: i < section.items.length - 1 ? '16px' : 0, borderBottom: i < section.items.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#374151' }}>{item.label}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#3C3C3C' }}>{item.label}</div>
                     <div style={{ fontSize: '13px', color: '#64748B', lineHeight: 1.6 }}>{item.value}</div>
                   </div>
                 ))}
@@ -124,7 +124,7 @@ export default function TrustPage() {
 
         {/* Footer */}
         <div style={{ marginTop: '48px', textAlign: 'center' }}>
-          <p style={{ fontSize: '13px', color: '#9CA3AF' }}>
+          <p style={{ fontSize: '13px', color: '#888888' }}>
             Questions about data handling or security? <a href="mailto:security@abarva.ai" style={{ color: '#4DA3FF', textDecoration: 'none' }}>security@abarva.ai</a>
           </p>
           <p style={{ fontSize: '12px', color: '#CBD5E1', marginTop: '8px' }}>Last updated: April 2026</p>

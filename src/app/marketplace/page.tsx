@@ -6,7 +6,7 @@ import { useClientContext } from '@/lib/use-client-context'
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
+  label: { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
 }
 
 type EntryPath = 'find' | 'compare' | 'rfp' | null
@@ -179,7 +179,7 @@ function ScoreBar({ score, label }: { score: number; label: string }) {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '3px' }}>
-        <span style={{ fontSize: '11px', color: '#6B7280' }}>{label}</span>
+        <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{label}</span>
         <span style={{ fontSize: '11px', fontWeight: 700, color }}>{score}</span>
       </div>
       <div style={{ height: '4px', background: '#F1F5F9', borderRadius: '2px' }}>
@@ -195,7 +195,7 @@ function OverallScore({ vendor }: { vendor: Vendor }) {
   return (
     <div style={{ textAlign: 'center' }}>
       <div style={{ fontSize: '32px', fontWeight: 800, color }}>{avg}</div>
-      <div style={{ fontSize: '10px', color: '#6B7280', textTransform: 'uppercase' }}>Overall Fit</div>
+      <div style={{ fontSize: '10px', color: '#3C3C3C', textTransform: 'uppercase' }}>Overall Fit</div>
     </div>
   )
 }
@@ -247,7 +247,7 @@ function PathFind({ clientId }: { clientId: string }) {
           >
             <div style={{ fontSize: '20px', marginBottom: '6px' }}>{cat.icon}</div>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#1E293B', marginBottom: '3px' }}>{cat.label}</div>
-            <div style={{ fontSize: '11px', color: '#6B7280' }}>{cat.count} tools</div>
+            <div style={{ fontSize: '11px', color: '#3C3C3C' }}>{cat.count} tools</div>
           </button>
         ))}
       </div>
@@ -265,7 +265,7 @@ function PathFind({ clientId }: { clientId: string }) {
                   padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                   background: requirements.includes(req) ? '#F0FDF4' : '#F8FAFC',
                   border: requirements.includes(req) ? '1px solid #2DD4C8' : '1px solid #E2E8F0',
-                  color: requirements.includes(req) ? '#065F46' : '#374151',
+                  color: requirements.includes(req) ? '#065F46' : '#3C3C3C',
                 }}
               >
                 {requirements.includes(req) ? '✓ ' : ''}{req}
@@ -273,7 +273,7 @@ function PathFind({ clientId }: { clientId: string }) {
             ))}
           </div>
           {requirements.length > 0 && (
-            <div style={{ marginTop: '10px', fontSize: '12px', color: '#6B7280' }}>
+            <div style={{ marginTop: '10px', fontSize: '12px', color: '#3C3C3C' }}>
               {requirements.length} filter{requirements.length > 1 ? 's' : ''} active · showing {filteredVendors.length} of {catVendors.length} tools
             </div>
           )}
@@ -321,15 +321,15 @@ function PathFind({ clientId }: { clientId: string }) {
 
                       {/* Meridian-specific fit */}
                       <div style={{ padding: '10px', background: '#F8FAFC', borderRadius: '8px', marginBottom: '12px' }}>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: '4px' }}>AbarVa Analysis for {CLIENT_NAMES[clientId] ?? 'your org'}</div>
-                        <div style={{ fontSize: '13px', color: '#374151' }}>{vendor.meridianFit}</div>
+                        <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', marginBottom: '4px' }}>AbarVa Analysis for {CLIENT_NAMES[clientId] ?? 'your org'}</div>
+                        <div style={{ fontSize: '13px', color: '#3C3C3C' }}>{vendor.meridianFit}</div>
                       </div>
 
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         {vendor.integrations.slice(0, 4).map(i => (
                           <span key={i} style={{ fontSize: '11px', background: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '6px' }}>{i}</span>
                         ))}
-                        <span style={{ fontSize: '11px', color: '#6B7280' }}>{vendor.pricing}</span>
+                        <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{vendor.pricing}</span>
                       </div>
                     </div>
                   </div>
@@ -340,7 +340,7 @@ function PathFind({ clientId }: { clientId: string }) {
       )}
 
       {!category && (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#9CA3AF', fontSize: '14px' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: '#888888', fontSize: '14px' }}>
           Select a category above to see your scored shortlist
         </div>
       )}
@@ -418,7 +418,7 @@ function PathCompare({ clientId }: { clientId: string }) {
       {/* Category tabs */}
       <div style={{ display: 'flex', gap: '4px', borderBottom: '2px solid #E2E8F0', marginBottom: '20px', overflowX: 'auto' }}>
         {CATEGORIES.map(cat => (
-          <button key={cat.id} onClick={() => { setCategory(cat.id); setSelectedIds([]) }} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', background: 'none', color: category === cat.id ? '#0F172A' : '#6B7280', borderBottom: category === cat.id ? '2px solid #2DD4C8' : '2px solid transparent', marginBottom: '-2px', whiteSpace: 'nowrap' }}>
+          <button key={cat.id} onClick={() => { setCategory(cat.id); setSelectedIds([]) }} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', border: 'none', background: 'none', color: category === cat.id ? '#0F172A' : '#3C3C3C', borderBottom: category === cat.id ? '2px solid #2DD4C8' : '2px solid transparent', marginBottom: '-2px', whiteSpace: 'nowrap' }}>
             {cat.label}
           </button>
         ))}
@@ -446,7 +446,7 @@ function PathCompare({ clientId }: { clientId: string }) {
           )
         })}
       </div>
-      <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '20px' }}>{selectedIds.length}/3 selected</div>
+      <div style={{ fontSize: '12px', color: '#3C3C3C', marginBottom: '20px' }}>{selectedIds.length}/3 selected</div>
 
       {/* Comparison matrix */}
       {selectedVendors.length >= 2 && (
@@ -454,7 +454,7 @@ function PathCompare({ clientId }: { clientId: string }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', minWidth: '500px' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
-                <th style={{ textAlign: 'left', padding: '10px 12px', width: '180px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>Dimension</th>
+                <th style={{ textAlign: 'left', padding: '10px 12px', width: '180px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>Dimension</th>
                 {selectedVendors.map(v => (
                   <th key={v.id} style={{ textAlign: 'center', padding: '10px 12px', color: '#0F172A', fontWeight: 700 }}>
                     {v.name}
@@ -466,7 +466,7 @@ function PathCompare({ clientId }: { clientId: string }) {
             <tbody>
               {(Object.keys(SCORE_LABELS) as Array<keyof Vendor['scores']>).map(key => (
                 <tr key={key} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                  <td style={{ padding: '10px 12px', color: '#6B7280', fontSize: '12px', fontWeight: 600 }}>{SCORE_LABELS[key]}</td>
+                  <td style={{ padding: '10px 12px', color: '#3C3C3C', fontSize: '12px', fontWeight: 600 }}>{SCORE_LABELS[key]}</td>
                   {selectedVendors.map(v => {
                     const score = v.scores[key]
                     const color = score >= 85 ? '#059669' : score >= 70 ? '#D97706' : '#DC2626'
@@ -487,16 +487,16 @@ function PathCompare({ clientId }: { clientId: string }) {
                   const maxAvg = Math.max(...selectedVendors.map(x => Math.round(Object.values(x.scores).reduce((s, v) => s + v, 0) / 4)))
                   return (
                     <td key={v.id} style={{ padding: '10px 12px', textAlign: 'center' }}>
-                      <span style={{ fontWeight: 800, fontSize: '18px', color: avg === maxAvg ? '#059669' : '#374151' }}>{avg}</span>
+                      <span style={{ fontWeight: 800, fontSize: '18px', color: avg === maxAvg ? '#059669' : '#3C3C3C' }}>{avg}</span>
                       {avg === maxAvg && <div style={{ fontSize: '10px', fontWeight: 700, color: '#059669' }}>Top pick</div>}
                     </td>
                   )
                 })}
               </tr>
               <tr>
-                <td style={{ padding: '10px 12px', color: '#6B7280', fontSize: '12px', fontWeight: 600 }}>Pricing</td>
+                <td style={{ padding: '10px 12px', color: '#3C3C3C', fontSize: '12px', fontWeight: 600 }}>Pricing</td>
                 {selectedVendors.map(v => (
-                  <td key={v.id} style={{ padding: '10px 12px', textAlign: 'center', fontSize: '12px', color: '#374151' }}>{v.pricing}</td>
+                  <td key={v.id} style={{ padding: '10px 12px', textAlign: 'center', fontSize: '12px', color: '#3C3C3C' }}>{v.pricing}</td>
                 ))}
               </tr>
             </tbody>
@@ -520,12 +520,12 @@ function PathCompare({ clientId }: { clientId: string }) {
       {recommendation && (
         <div style={{ ...S.card, borderLeft: '4px solid #2DD4C8' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#2DD4C8', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>AbarVa Analysis · {CLIENT_NAMES[clientId] ?? 'Your Organization'}</div>
-          <div style={{ fontSize: '14px', color: '#374151', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{recommendation}{streaming && <span style={{ opacity: 0.5 }}>▌</span>}</div>
+          <div style={{ fontSize: '14px', color: '#3C3C3C', lineHeight: 1.7, whiteSpace: 'pre-line' }}>{recommendation}{streaming && <span style={{ opacity: 0.5 }}>▌</span>}</div>
         </div>
       )}
 
       {selectedVendors.length < 2 && (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#9CA3AF', fontSize: '14px' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: '#888888', fontSize: '14px' }}>
           Select 2 or 3 tools above to begin comparison
         </div>
       )}
@@ -548,7 +548,7 @@ function PathRFP({ clientId }: { clientId: string }) {
           <a key={cat.id} href={`/select?client=${clientId}&category=${cat.id}&mode=rfp`} style={{ ...S.card, textDecoration: 'none', display: 'block', cursor: 'pointer', transition: 'border 150ms' }}>
             <div style={{ fontSize: '24px', marginBottom: '10px' }}>{cat.icon}</div>
             <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{cat.label} RFP</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '14px' }}>{cat.desc}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginBottom: '14px' }}>{cat.desc}</div>
             <div style={{ fontSize: '12px', fontWeight: 600, color: '#2DD4C8' }}>Build RFP → Vendor Intelligence</div>
           </a>
         ))}
@@ -646,7 +646,7 @@ function EntryScreen({ onSelect }: { onSelect: (path: EntryPath) => void }) {
         ].map(s => (
           <div key={s.label} style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A' }}>{s.value}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280' }}>{s.label}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -671,12 +671,12 @@ function MarketplaceInner() {
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 24px' }}>
           {/* Back + page header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '28px' }}>
-            <button onClick={() => setEntryPath(null)} style={{ fontSize: '13px', color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>← Marketplace</button>
+            <button onClick={() => setEntryPath(null)} style={{ fontSize: '13px', color: '#3C3C3C', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>← Marketplace</button>
             <span style={{ color: '#E2E8F0' }}>|</span>
-            <span style={{ fontSize: '13px', color: '#374151', fontWeight: 600 }}>{CLIENT_NAMES[activeClient] ?? 'Your Organization'}</span>
+            <span style={{ fontSize: '13px', color: '#3C3C3C', fontWeight: 600 }}>{CLIENT_NAMES[activeClient] ?? 'Your Organization'}</span>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '8px' }}>
               {(['find', 'compare', 'rfp'] as EntryPath[]).map(p => (
-                <button key={p} onClick={() => setEntryPath(p)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '6px', border: '1px solid #E2E8F0', background: entryPath === p ? '#F0FDF4' : '#FFFFFF', color: entryPath === p ? '#059669' : '#374151', borderColor: entryPath === p ? '#2DD4C8' : '#E2E8F0' }}>
+                <button key={p} onClick={() => setEntryPath(p)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', borderRadius: '6px', border: '1px solid #E2E8F0', background: entryPath === p ? '#F0FDF4' : '#FFFFFF', color: entryPath === p ? '#059669' : '#3C3C3C', borderColor: entryPath === p ? '#2DD4C8' : '#E2E8F0' }}>
                   {p === 'find' ? 'Find' : p === 'compare' ? 'Compare' : 'Build RFP'}
                 </button>
               ))}
@@ -694,7 +694,7 @@ function MarketplaceInner() {
 
 export default function MarketplacePage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#6B7280' }}>Loading Marketplace...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#3C3C3C' }}>Loading Marketplace...</div>}>
       <MarketplaceInner />
     </Suspense>
   )

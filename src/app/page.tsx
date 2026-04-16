@@ -70,7 +70,7 @@ export default function Homepage() {
               <a href="/diagnose?client=meridian" style={{ background: LTEXT, color: '#FFF', padding: '13px 26px', borderRadius: 8, fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
                 See it with Meridian Health →
               </a>
-              <a href="#demo" style={{ background: 'transparent', color: LBODY, border: `1px solid ${LBDR}`, padding: '13px 26px', borderRadius: 8, fontSize: 14, textDecoration: 'none' }}>
+              <a href="/demo" style={{ background: 'transparent', color: LBODY, border: `1px solid ${LBDR}`, padding: '13px 26px', borderRadius: 8, fontSize: 14, textDecoration: 'none' }}>
                 Watch a demo
               </a>
               <a href="/investor" style={{ background: 'transparent', color: LBODY, border: `1px solid ${LBDR}`, padding: '13px 26px', borderRadius: 8, fontSize: 14, textDecoration: 'none' }}>

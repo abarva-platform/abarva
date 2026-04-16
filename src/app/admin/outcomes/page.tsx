@@ -5,7 +5,7 @@ import AbarvaNav from '@/components/AbarvaNav'
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
+  label: { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
 }
 
 const LINKS = [
@@ -183,13 +183,13 @@ export default function AdminOutcomes() {
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 48px' }}>
         <div style={{ marginBottom: '28px' }}>
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Outcome Tracker</h1>
-          <p style={{ fontSize: '14px', color: '#6B7280' }}>Every committed initiative tracked against baseline. AbarVa fees tied to verified results.</p>
+          <p style={{ fontSize: '14px', color: '#3C3C3C' }}>Every committed initiative tracked against baseline. AbarVa fees tied to verified results.</p>
         </div>
 
         {/* Summary scorecards */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '28px' }}>
           {[
-            { label: 'Total Fee at Outcome', value: '$' + (totalFeeAtRisk / 1000000).toFixed(1) + 'M', sub: 'Across all active initiatives', color: '#374151' },
+            { label: 'Total Fee at Outcome', value: '$' + (totalFeeAtRisk / 1000000).toFixed(1) + 'M', sub: 'Across all active initiatives', color: '#3C3C3C' },
             { label: 'Fees Earned (Partial)', value: '$' + ((feeLocked * 0.3) / 1000000).toFixed(1) + 'M', sub: 'From green-status outcomes', color: '#059669' },
             { label: 'On Track', value: greenCount + ' of ' + OUTCOME_METRICS.length, sub: 'Initiatives meeting trajectory', color: '#059669' },
             { label: 'At Risk', value: redCount + ' of ' + OUTCOME_METRICS.length, sub: 'Requires action', color: '#DC2626' },
@@ -197,7 +197,7 @@ export default function AdminOutcomes() {
             <div key={m.label} style={S.card}>
               <div style={S.label}>{m.label}</div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: m.color }}>{m.value}</div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{m.sub}</div>
+              <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>{m.sub}</div>
             </div>
           ))}
         </div>
@@ -205,7 +205,7 @@ export default function AdminOutcomes() {
         {/* Client filter */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {['all', ...clients].map(c => (
-            <button key={c} onClick={() => setClientFilter(c)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, borderRadius: '20px', border: '1px solid #E2E8F0', cursor: 'pointer', background: clientFilter === c ? '#F0FDF4' : '#FFFFFF', color: clientFilter === c ? '#059669' : '#374151', borderColor: clientFilter === c ? '#2DD4C8' : '#E2E8F0' }}>
+            <button key={c} onClick={() => setClientFilter(c)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, borderRadius: '20px', border: '1px solid #E2E8F0', cursor: 'pointer', background: clientFilter === c ? '#F0FDF4' : '#FFFFFF', color: clientFilter === c ? '#059669' : '#3C3C3C', borderColor: clientFilter === c ? '#2DD4C8' : '#E2E8F0' }}>
               {c === 'all' ? 'All Clients' : c.split(' ').slice(0, 2).join(' ')}
             </button>
           ))}
@@ -217,7 +217,7 @@ export default function AdminOutcomes() {
             <thead>
               <tr style={{ borderBottom: '2px solid #E2E8F0' }}>
                 {['', 'Initiative', 'Metric', 'Baseline', 'Current', 'Target', 'Change', 'Trend', 'Status', 'Attribution', 'Fee at Outcome'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '10px 8px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                  <th key={h} style={{ textAlign: 'left', padding: '10px 8px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -233,19 +233,19 @@ export default function AdminOutcomes() {
                 return [
                   <tr key={m.id} onClick={() => setExpandedId(isExpanded ? null : m.id)} style={{ borderBottom: isExpanded ? 'none' : '1px solid #F1F5F9', cursor: 'pointer' }}>
                     <td style={{ padding: '12px 8px', width: '20px' }}>
-                      <span style={{ fontSize: '10px', color: '#9CA3AF' }}>{isExpanded ? '▼' : '▶'}</span>
+                      <span style={{ fontSize: '10px', color: '#888888' }}>{isExpanded ? '▼' : '▶'}</span>
                     </td>
                     <td style={{ padding: '12px 8px' }}>
-                      <div style={{ fontSize: '12px', color: '#94A3B8' }}>{m.client.split(' ').slice(0, 2).join(' ')}</div>
+                      <div style={{ fontSize: '12px', color: '#3C3C3C' }}>{m.client.split(' ').slice(0, 2).join(' ')}</div>
                       <div style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{m.initiative}</div>
                     </td>
-                    <td style={{ padding: '12px 8px', color: '#374151' }}>{m.metric}</td>
-                    <td style={{ padding: '12px 8px', color: '#6B7280' }}>{m.baseline}</td>
+                    <td style={{ padding: '12px 8px', color: '#3C3C3C' }}>{m.metric}</td>
+                    <td style={{ padding: '12px 8px', color: '#3C3C3C' }}>{m.baseline}</td>
                     <td style={{ padding: '12px 8px', fontWeight: 700, color: '#1E293B' }}>{m.current}</td>
-                    <td style={{ padding: '12px 8px', color: '#6B7280' }}>{m.target}</td>
+                    <td style={{ padding: '12px 8px', color: '#3C3C3C' }}>{m.target}</td>
                     <td style={{ padding: '12px 8px' }}>
                       {change === 0 ? (
-                        <span style={{ fontSize: '12px', color: '#9CA3AF' }}>No change</span>
+                        <span style={{ fontSize: '12px', color: '#888888' }}>No change</span>
                       ) : (
                         <span style={{ fontSize: '13px', fontWeight: 700, color: improving ? '#059669' : '#DC2626' }}>
                           {improving ? '↓' : '→'} {changePct}%
@@ -265,11 +265,11 @@ export default function AdminOutcomes() {
                       <td colSpan={10} style={{ padding: '16px 8px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                           <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: '6px' }}>Commentary</div>
-                            <div style={{ fontSize: '13px', color: '#374151', lineHeight: 1.5 }}>{m.commentary}</div>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', marginBottom: '6px' }}>Commentary</div>
+                            <div style={{ fontSize: '13px', color: '#3C3C3C', lineHeight: 1.5 }}>{m.commentary}</div>
                           </div>
                           <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: '6px' }}>Monthly Trend</div>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', marginBottom: '6px' }}>Monthly Trend</div>
                             <div style={{ display: 'flex', gap: '8px' }}>
                               {MONTHS.map((mo, i) => (
                                 <div key={mo} style={{ textAlign: 'center', flex: 1 }}>
@@ -277,16 +277,16 @@ export default function AdminOutcomes() {
                                     {typeof m.history[i] === 'number' && m.history[i] >= 1000000 ? '$' + (m.history[i] / 1000000).toFixed(1) + 'M' : m.history[i]}
                                     {m.unit === '%' ? '%' : ''}
                                   </div>
-                                  <div style={{ fontSize: '10px', color: '#9CA3AF' }}>{mo}</div>
+                                  <div style={{ fontSize: '10px', color: '#888888' }}>{mo}</div>
                                 </div>
                               ))}
                             </div>
                           </div>
                           <div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: '6px' }}>Measurement</div>
-                            <div style={{ fontSize: '13px', color: '#374151', marginBottom: '8px' }}>{m.measurementSource}</div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', marginBottom: '4px' }}>Attribution Note</div>
-                            <div style={{ fontSize: '12px', color: '#6B7280' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', marginBottom: '6px' }}>Measurement</div>
+                            <div style={{ fontSize: '13px', color: '#3C3C3C', marginBottom: '8px' }}>{m.measurementSource}</div>
+                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', marginBottom: '4px' }}>Attribution Note</div>
+                            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>
                               {m.attributionConfidence === 'High' ? 'Direct causal link confirmed. No significant confounding factors.' : m.attributionConfidence === 'Medium' ? 'Likely attribution. Partial confounding from external factors.' : 'Causal link unconfirmed. Multiple factors in play. Monitoring only.'}
                             </div>
                           </div>
@@ -304,18 +304,18 @@ export default function AdminOutcomes() {
         <div style={S.card}>
           <div style={{ marginBottom: '16px' }}>
             <div style={S.label}>Outcome Fee Projection</div>
-            <div style={{ fontSize: '13px', color: '#6B7280' }}>Series A activation trigger: 3 documented outcomes with verified baselines</div>
+            <div style={{ fontSize: '13px', color: '#3C3C3C' }}>Series A activation trigger: 3 documented outcomes with verified baselines</div>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
-              { label: 'Total Fee Potential', value: '$' + (totalFeeAtRisk / 1000000).toFixed(1) + 'M', sub: 'Across all 7 tracked initiatives', color: '#374151' },
+              { label: 'Total Fee Potential', value: '$' + (totalFeeAtRisk / 1000000).toFixed(1) + 'M', sub: 'Across all 7 tracked initiatives', color: '#3C3C3C' },
               { label: 'Docs Required for Series A', value: '2 more', sub: 'AP Automation + Azure Cost fully documented', color: '#4DA3FF' },
               { label: 'Projected Q3 2026 Fee', value: '$1.5M', sub: 'Two green outcomes × 15% fee rate', color: '#059669' },
             ].map(m => (
               <div key={m.label} style={{ padding: '16px', background: '#F8FAFC', borderRadius: '10px', border: '1px solid #E2E8F0' }}>
                 <div style={S.label}>{m.label}</div>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: m.color }}>{m.value}</div>
-                <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{m.sub}</div>
+                <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>{m.sub}</div>
               </div>
             ))}
           </div>

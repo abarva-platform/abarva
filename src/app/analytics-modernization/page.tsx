@@ -21,7 +21,7 @@ const S = {
   label: {
     fontSize: '11px',
     fontWeight: 700,
-    color: '#6B7280',
+    color: '#3C3C3C',
     textTransform: 'uppercase' as const,
     letterSpacing: '0.08em',
     marginBottom: '12px',
@@ -64,27 +64,27 @@ function Step1EstateInventory({ onNext, onPrev }: { onNext: () => void; onPrev?:
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Estate Inventory</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Every analytics object — catalogued, classified, and assessed.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>Every analytics object — catalogued, classified, and assessed.</p>
 
       {/* Summary bar */}
       <div style={{ ...S.card, marginBottom: '20px', background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
         <div style={{ display: 'flex', gap: '40px', alignItems: 'center', flexWrap: 'wrap' as const }}>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: ACCENT }}>3,773</div>
-            <div style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>Total analytics objects</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', fontWeight: 600 }}>Total analytics objects</div>
           </div>
           <div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: '#DC2626' }}>2,723</div>
-            <div style={{ fontSize: '12px', color: '#374151', fontWeight: 600 }}>Rationalization candidates (72%)</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', fontWeight: 600 }}>Rationalization candidates (72%)</div>
           </div>
           <div style={{ flex: 1, minWidth: '200px' }}>
             <div style={{ height: '10px', background: '#BFDBFE', borderRadius: '5px', overflow: 'hidden' }}>
               <div style={{ height: '10px', width: '72%', background: '#DC2626', borderRadius: '5px' }} />
             </div>
-            <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px' }}>72% rationalization rate</div>
+            <div style={{ fontSize: '11px', color: '#3C3C3C', marginTop: '4px' }}>72% rationalization rate</div>
           </div>
         </div>
-        <div style={{ marginTop: '12px', fontSize: '13px', color: '#374151', fontWeight: 500, borderTop: '1px solid #BFDBFE', paddingTop: '12px' }}>
+        <div style={{ marginTop: '12px', fontSize: '13px', color: '#3C3C3C', fontWeight: 500, borderTop: '1px solid #BFDBFE', paddingTop: '12px' }}>
           This estate costs <strong>$4.2M/year</strong> to maintain and blocks modern AI use cases.
         </div>
       </div>
@@ -95,7 +95,7 @@ function Step1EstateInventory({ onNext, onPrev }: { onNext: () => void; onPrev?:
           <thead>
             <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
               {['System', 'Type', 'Count', 'Age', 'Owner', 'Status'].map(h => (
-                <th key={h} style={{ padding: '12px 16px', textAlign: 'left' as const, fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
+                <th key={h} style={{ padding: '12px 16px', textAlign: 'left' as const, fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.06em' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -105,7 +105,7 @@ function Step1EstateInventory({ onNext, onPrev }: { onNext: () => void; onPrev?:
                 <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 600, color: '#0F172A' }}>{r.system}</td>
                 <td style={{ padding: '12px 16px', fontSize: '12px', color: '#475569' }}>{r.type}</td>
                 <td style={{ padding: '12px 16px', fontSize: '13px', fontWeight: 700, color: ACCENT }}>{r.count}</td>
-                <td style={{ padding: '12px 16px', fontSize: '12px', color: '#6B7280' }}>{r.age}</td>
+                <td style={{ padding: '12px 16px', fontSize: '12px', color: '#3C3C3C' }}>{r.age}</td>
                 <td style={{ padding: '12px 16px', fontSize: '12px', color: '#475569' }}>{r.owner}</td>
                 <td style={{ padding: '12px 16px' }}>
                   <span style={{ fontSize: '11px', fontWeight: 600, color: r.statusColor, background: r.bg, border: `1px solid ${r.border}`, borderRadius: '6px', padding: '3px 8px', whiteSpace: 'nowrap' as const }}>{r.status}</span>
@@ -141,7 +141,7 @@ function Step2Lineage({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
   const layerLabel: React.CSSProperties = {
     fontSize: '10px',
     fontWeight: 700,
-    color: '#6B7280',
+    color: '#3C3C3C',
     textTransform: 'uppercase',
     letterSpacing: '0.08em',
     marginBottom: '8px',
@@ -152,7 +152,7 @@ function Step2Lineage({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    color: '#94A3B8',
+    color: '#3C3C3C',
     fontSize: '20px',
     padding: '0 4px',
     flexShrink: 0,
@@ -197,7 +197,7 @@ function Step2Lineage({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Lineage and Dependency Map</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>How data flows — and where it gets stuck.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>How data flows — and where it gets stuck.</p>
 
       {/* Architecture flow */}
       <div style={{ ...S.card, marginBottom: '20px', overflowX: 'auto' as const }}>
@@ -281,7 +281,7 @@ function Step2Lineage({ onNext, onPrev }: { onNext: () => void; onPrev: () => vo
                   <span style={blockedBadge}>{path.blocked}</span>
                 </div>
               </div>
-              <div style={{ fontSize: '13px', color: '#374151', lineHeight: 1.6 }}>{path.impact}</div>
+              <div style={{ fontSize: '13px', color: '#3C3C3C', lineHeight: 1.6 }}>{path.impact}</div>
             </div>
           ))}
         </div>
@@ -342,7 +342,7 @@ function Step3Rationalization({ onNext, onPrev }: { onNext: () => void; onPrev: 
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Rationalization</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Every object classified. Nothing deferred without a reason.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>Every object classified. Nothing deferred without a reason.</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {columns.map((col) => (
@@ -356,7 +356,7 @@ function Step3Rationalization({ onNext, onPrev }: { onNext: () => void; onPrev: 
                 <div key={i} style={{ background: 'white', borderRadius: '8px', padding: '12px', border: `1px solid ${col.border}` }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>{item.name}</div>
                   <div style={{ fontSize: '12px', color: col.color, fontWeight: 600 }}>{item.action}</div>
-                  {item.note && <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '4px', fontWeight: 600 }}>{item.note}</div>}
+                  {item.note && <div style={{ fontSize: '11px', color: '#3C3C3C', marginTop: '4px', fontWeight: 600 }}>{item.note}</div>}
                 </div>
               ))}
             </div>
@@ -370,15 +370,15 @@ function Step3Rationalization({ onNext, onPrev }: { onNext: () => void; onPrev: 
         <div style={{ display: 'flex', gap: '32px', flexWrap: 'wrap' as const }}>
           <div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: '#DC2626' }}>2,723</div>
-            <div style={{ fontSize: '12px', color: '#374151' }}>Objects rationalized</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>Objects rationalized</div>
           </div>
           <div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: '#059669' }}>312</div>
-            <div style={{ fontSize: '12px', color: '#374151' }}>Objects modernized</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>Objects modernized</div>
           </div>
           <div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: ACCENT }}>$3.1M</div>
-            <div style={{ fontSize: '12px', color: '#374151' }}>Annual cost reduction</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>Annual cost reduction</div>
           </div>
         </div>
       </div>
@@ -442,7 +442,7 @@ function Step4MigrationPlaybook({ onNext, onPrev }: { onNext: () => void; onPrev
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Migration Playbook</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Step-by-step execution guide for each critical migration.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>Step-by-step execution guide for each critical migration.</p>
 
       <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '20px', marginBottom: '24px' }}>
         {migrations.map((m) => {
@@ -462,16 +462,16 @@ function Step4MigrationPlaybook({ onNext, onPrev }: { onNext: () => void; onPrev
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Dependencies</div>
-                  <div style={{ fontSize: '13px', color: '#374151' }}>{m.dependencies}</div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Dependencies</div>
+                  <div style={{ fontSize: '13px', color: '#3C3C3C' }}>{m.dependencies}</div>
                 </div>
                 <div style={{ padding: '12px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Approach</div>
-                  <div style={{ fontSize: '13px', color: '#374151' }}>{m.approach}</div>
+                  <div style={{ fontSize: '10px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Approach</div>
+                  <div style={{ fontSize: '13px', color: '#3C3C3C' }}>{m.approach}</div>
                 </div>
                 <div style={{ padding: '12px', borderRadius: '8px', background: rc.bg, border: `1px solid ${rc.border}`, gridColumn: '1 / -1' }}>
                   <div style={{ fontSize: '10px', fontWeight: 700, color: rc.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>Risk — {m.riskLevel.toUpperCase()}</div>
-                  <div style={{ fontSize: '13px', color: '#374151' }}>
+                  <div style={{ fontSize: '13px', color: '#3C3C3C' }}>
                     <strong>{m.risk}</strong>{m.mitigation !== 'No mitigation — must complete' ? ` — mitigate: ${m.mitigation}` : <span style={{ color: rc.color }}> — {m.mitigation}</span>}
                   </div>
                 </div>
@@ -548,13 +548,13 @@ function Step5TargetArchitecture({ onNext, onPrev }: { onNext: () => void; onPre
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Target State Architecture</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Choose the platform that fits — or see the agnostic logical model.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>Choose the platform that fits — or see the agnostic logical model.</p>
 
       {/* Toggle */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
         {(['agnostic', 'platform'] as PlatformView[]).map(v => (
           <button key={v} onClick={() => setView(v)}
-            style={{ padding: '8px 20px', borderRadius: '8px', border: '1px solid ' + (view === v ? ACCENT : '#E2E8F0'), background: view === v ? ACCENT : 'white', color: view === v ? 'white' : '#374151', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+            style={{ padding: '8px 20px', borderRadius: '8px', border: '1px solid ' + (view === v ? ACCENT : '#E2E8F0'), background: view === v ? ACCENT : 'white', color: view === v ? 'white' : '#3C3C3C', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
             {v === 'agnostic' ? 'Platform Agnostic' : 'Platform Comparison'}
           </button>
         ))}
@@ -571,13 +571,13 @@ function Step5TargetArchitecture({ onNext, onPrev }: { onNext: () => void; onPre
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' as const }}>
                   {layer.items.map((item, j) => (
-                    <span key={j} style={{ padding: '3px 10px', borderRadius: '6px', background: 'white', border: `1px solid ${layer.color}40`, fontSize: '12px', color: '#374151', fontWeight: 500 }}>{item}</span>
+                    <span key={j} style={{ padding: '3px 10px', borderRadius: '6px', background: 'white', border: `1px solid ${layer.color}40`, fontSize: '12px', color: '#3C3C3C', fontWeight: 500 }}>{item}</span>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ marginTop: '16px', padding: '12px 14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '13px', color: '#374151' }}>
+          <div style={{ marginTop: '16px', padding: '12px 14px', background: '#F8FAFC', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '13px', color: '#3C3C3C' }}>
             This logical architecture is implementable on Databricks, Snowflake, BigQuery, or Microsoft Fabric. Platform selection depends on existing enterprise agreements, team skills, and AI/ML workload mix.
           </div>
         </div>
@@ -596,11 +596,11 @@ function Step5TargetArchitecture({ onNext, onPrev }: { onNext: () => void; onPre
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                     <div>
                       <div style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', marginBottom: '2px' }}>{p.name}</div>
-                      <div style={{ fontSize: '12px', color: '#6B7280' }}>{p.tagline}</div>
+                      <div style={{ fontSize: '12px', color: '#3C3C3C' }}>{p.tagline}</div>
                     </div>
                     <div style={{ textAlign: 'right' as const }}>
                       <div style={{ fontSize: '26px', fontWeight: 800, color: avg >= 80 ? '#059669' : avg >= 70 ? ACCENT : '#D97706' }}>{avg}</div>
-                      <div style={{ fontSize: '10px', color: '#6B7280' }}>avg score</div>
+                      <div style={{ fontSize: '10px', color: '#3C3C3C' }}>avg score</div>
                     </div>
                   </div>
 
@@ -631,7 +631,7 @@ function Step5TargetArchitecture({ onNext, onPrev }: { onNext: () => void; onPre
           </div>
 
           <div style={{ marginTop: '16px', ...S.card, background: '#EFF6FF', border: '1px solid #BFDBFE' }}>
-            <div style={{ fontSize: '13px', color: '#374151' }}>
+            <div style={{ fontSize: '13px', color: '#3C3C3C' }}>
               Need help selecting the right platform for your environment?{' '}
               <a href="/marketplace" style={{ color: ACCENT, fontWeight: 600, textDecoration: 'none' }}>Find the right platform in Marketplace →</a>
             </div>
@@ -715,19 +715,19 @@ function Step6BusinessCase({ onPrev }: { onPrev: () => void }) {
   return (
     <div>
       <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Business Case + 18-Month Roadmap</h1>
-      <p style={{ fontSize: '14px', color: '#6B7280', marginBottom: '24px' }}>Three investment scenarios. One clear path forward.</p>
+      <p style={{ fontSize: '14px', color: '#3C3C3C', marginBottom: '24px' }}>Three investment scenarios. One clear path forward.</p>
 
       {/* Scenario selector */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' as const }}>
         {(Object.entries(scenarios) as [ScenarioKey, typeof scenarios[ScenarioKey]][]).map(([key, val]) => (
           <button key={key} onClick={() => setScenario(key)}
             style={{ flex: 1, minWidth: '180px', padding: '16px', borderRadius: '10px', border: `2px solid ${scenario === key ? val.color : '#E2E8F0'}`, background: scenario === key ? val.bg : 'white', cursor: 'pointer', textAlign: 'left' as const, fontFamily: 'inherit' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: scenario === key ? val.color : '#6B7280', textTransform: 'uppercase' as const, marginBottom: '6px', letterSpacing: '0.05em' }}>{key}</div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: scenario === key ? val.color : '#3C3C3C', textTransform: 'uppercase' as const, marginBottom: '6px', letterSpacing: '0.05em' }}>{key}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: '#0F172A', marginBottom: '2px' }}>{val.investment}</div>
-            <div style={{ fontSize: '12px', color: '#374151' }}>{val.savings} annual savings</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>{val.savings} annual savings</div>
             <div style={{ marginTop: '8px', display: 'flex', gap: '12px' }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: val.color }}>{val.roi} ROI</span>
-              <span style={{ fontSize: '11px', color: '#6B7280' }}>{val.payback} payback</span>
+              <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{val.payback} payback</span>
             </div>
           </button>
         ))}
@@ -744,11 +744,11 @@ function Step6BusinessCase({ onPrev }: { onPrev: () => void }) {
           ].map((m, i) => (
             <div key={i} style={{ textAlign: 'center' as const }}>
               <div style={{ fontSize: '26px', fontWeight: 800, color: s.color }}>{m.value}</div>
-              <div style={{ fontSize: '12px', color: '#374151', fontWeight: 500, marginTop: '2px' }}>{m.label}</div>
+              <div style={{ fontSize: '12px', color: '#3C3C3C', fontWeight: 500, marginTop: '2px' }}>{m.label}</div>
             </div>
           ))}
         </div>
-        <div style={{ marginTop: '12px', borderTop: '1px solid ' + s.border, paddingTop: '12px', fontSize: '12px', color: '#6B7280', textAlign: 'center' as const }}>
+        <div style={{ marginTop: '12px', borderTop: '1px solid ' + s.border, paddingTop: '12px', fontSize: '12px', color: '#3C3C3C', textAlign: 'center' as const }}>
           Savings breakdown: $3.1M maintenance reduction + velocity unlock from AI enablement
         </div>
       </div>
@@ -761,13 +761,13 @@ function Step6BusinessCase({ onPrev }: { onPrev: () => void }) {
             <div key={i} style={{ borderRadius: '10px', border: `1px solid ${phase.border}`, background: phase.bg, padding: '16px', display: 'flex', gap: '16px' }}>
               <div style={{ flexShrink: 0, width: '120px' }}>
                 <div style={{ fontSize: '13px', fontWeight: 800, color: phase.color }}>{phase.label}</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>{phase.range}</div>
+                <div style={{ fontSize: '11px', color: '#3C3C3C', marginTop: '2px' }}>{phase.range}</div>
                 <span style={{ display: 'inline-block', marginTop: '6px', padding: '2px 8px', borderRadius: '4px', background: 'white', border: `1px solid ${phase.border}`, fontSize: '10px', fontWeight: 700, color: phase.color }}>{phase.tag}</span>
               </div>
               <div style={{ flex: 1 }}>
                 <ul style={{ margin: 0, paddingLeft: '16px' }}>
                   {phase.items.map((item, j) => (
-                    <li key={j} style={{ fontSize: '13px', color: '#374151', marginBottom: '6px', lineHeight: 1.5 }}>{item}</li>
+                    <li key={j} style={{ fontSize: '13px', color: '#3C3C3C', marginBottom: '6px', lineHeight: 1.5 }}>{item}</li>
                   ))}
                 </ul>
               </div>
@@ -779,7 +779,7 @@ function Step6BusinessCase({ onPrev }: { onPrev: () => void }) {
       {/* Export / artifacts */}
       <div style={{ ...S.card, background: '#0F172A', border: '1px solid #1E293B', marginBottom: '24px' }}>
         <div style={{ fontSize: '16px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>Export 5 Deliverables</div>
-        <div style={{ fontSize: '13px', color: '#94A3B8', marginBottom: '16px' }}>What McKinsey charges $2.4M and 12 weeks to produce.</div>
+        <div style={{ fontSize: '13px', color: '#3C3C3C', marginBottom: '16px' }}>What McKinsey charges $2.4M and 12 weeks to produce.</div>
         <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '10px', marginBottom: '16px' }}>
           {artifacts.map((a, i) => (
             <button key={i}
@@ -812,11 +812,11 @@ function AnalyticsModernizationContent() {
 
   const Breadcrumb = () => (
     <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E8F0', padding: '0 32px', height: '40px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <a href="/" style={{ fontSize: '13px', color: '#6B7280', textDecoration: 'none' }}>Home</a>
+      <a href="/" style={{ fontSize: '13px', color: '#3C3C3C', textDecoration: 'none' }}>Home</a>
       <span style={{ color: '#D1D5DB' }}>›</span>
       <span style={{ fontSize: '13px', color: '#0F172A', fontWeight: 500 }}>Analytics Modernization</span>
       <span style={{ color: '#D1D5DB' }}>›</span>
-      <span style={{ fontSize: '13px', color: '#6B7280' }}>{meta.name} · {meta.industry}</span>
+      <span style={{ fontSize: '13px', color: '#3C3C3C' }}>{meta.name} · {meta.industry}</span>
     </div>
   )
 
@@ -825,8 +825,8 @@ function AnalyticsModernizationContent() {
       <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', overflowX: 'auto' as const }}>
         {STEPS.map(s => (
           <button key={s.id} onClick={() => setStep(s.id)}
-            style={{ padding: '12px 18px', fontSize: '13px', fontWeight: step === s.id ? 600 : 400, color: step === s.id ? ACCENT : step > s.id ? '#059669' : '#94A3B8', background: 'none', border: 'none', cursor: 'pointer', borderBottom: step === s.id ? `2px solid ${ACCENT}` : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' as const, fontFamily: 'inherit' }}>
-            <span style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === s.id ? ACCENT : step > s.id ? '#059669' : '#F1F5F9', color: step === s.id || step > s.id ? 'white' : '#94A3B8', flexShrink: 0 }}>
+            style={{ padding: '12px 18px', fontSize: '13px', fontWeight: step === s.id ? 600 : 400, color: step === s.id ? ACCENT : step > s.id ? '#059669' : '#3C3C3C', background: 'none', border: 'none', cursor: 'pointer', borderBottom: step === s.id ? `2px solid ${ACCENT}` : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' as const, fontFamily: 'inherit' }}>
+            <span style={{ width: '20px', height: '20px', borderRadius: '50%', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === s.id ? ACCENT : step > s.id ? '#059669' : '#F1F5F9', color: step === s.id || step > s.id ? 'white' : '#3C3C3C', flexShrink: 0 }}>
               {step > s.id ? '✓' : s.id}
             </span>
             {s.name}
@@ -885,7 +885,7 @@ function AnalyticsModernizationContent() {
                 {['Estate inventory', 'Rationalization map', 'Migration playbook', 'Target architecture', 'Business case'].map((o, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', borderRadius: '8px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
                     <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: ACCENT, display: 'block', flexShrink: 0 }} />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151' }}>{o}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#3C3C3C' }}>{o}</span>
                   </div>
                 ))}
               </div>
@@ -917,7 +917,7 @@ export default function AnalyticsModernizationPage() {
   return (
     <Suspense fallback={
       <div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontSize: '14px', color: '#6B7280' }}>Loading...</div>
+        <div style={{ fontSize: '14px', color: '#3C3C3C' }}>Loading...</div>
       </div>
     }>
       <AnalyticsModernizationContent />

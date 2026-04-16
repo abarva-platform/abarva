@@ -7,8 +7,8 @@ import { arcturusAI } from '@/data/arcturus/ai'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
 const T = {
-  bg: '#060A12', surface: '#0D1520', border: '#1C2D45',
-  teal: '#2DD4C8', text: '#EFF6FF', text2: '#94A3B8',
+  bg: '#F8F7F4', surface: '#FFFFFF', border: '#E2E1DC',
+  teal: '#2DD4C8', text: '#0C0C0C', text2: '#3C3C3C',
   green: '#10B981', amber: '#F59E0B', red: '#EF4444', indigo: '#6366F1',
   sans: '"DM Sans", system-ui, sans-serif',
   mono: '"JetBrains Mono", monospace',
@@ -62,17 +62,9 @@ function JustifyContent() {
   const [step, setStep] = useState(1)
   const [selectedOpp, setSelectedOpp] = useState<any>(null)
   const [scenario, setScenario] = useState<'conservative' | 'base' | 'optimistic'>('base')
-  const [role, setRole] = useState('Maestro')
 
   const clientMeta = ALL_CLIENTS.find(c => c.id === activeClient)
   const clientName = clientMeta?.name || 'Your Organization'
-  const clientIndustry = clientMeta?.vertical || 'Healthcare'
-
-  const ROLES = clientIndustry === 'Financial Services'
-    ? ['CIO', 'CFO', 'CRO', 'CEO', 'Maestro']
-    : clientIndustry === 'Retail'
-    ? ['CIO', 'CFO', 'CMO', 'COO', 'CEO', 'Maestro']
-    : ['CIO', 'CFO', 'CMIO', 'COO', 'CEO', 'Maestro']
 
   const ai = activeClient === 'apexretail' ? apexRetailAI
     : activeClient === 'arcturus' ? arcturusAI
@@ -106,23 +98,9 @@ function JustifyContent() {
       {/* ── Sticky module header ─────────────────────────────────────────────── */}
       <div style={{ position: 'sticky', top: 0, zIndex: 40, background: T.surface, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 32px 0' }}>
-          {/* Label + role selector on one line */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const }}>
-              Business Case Intelligence · {clientName}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-              {ROLES.map(r => {
-                const isActive = role === r
-                return (
-                  <button key={r} onClick={() => setRole(r)}
-                    style={{ fontFamily: T.mono, fontSize: '9px', letterSpacing: '0.06em', textTransform: 'uppercase' as const, padding: '5px 12px', borderRadius: '5px', border: 'none', cursor: 'pointer', background: isActive ? T.teal : 'rgba(255,255,255,0.05)', color: isActive ? T.bg : '#94A3B8', fontWeight: isActive ? 700 : 400 }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = T.text }}
-                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
-                  >{r}</button>
-                )
-              })}
-            </div>
+          {/* Label */}
+          <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const, marginBottom: '10px' }}>
+            Business Case Intelligence · {clientName}
           </div>
           <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 12px', lineHeight: 1.3, maxWidth: '680px' }}>
             &ldquo;How do we justify this to the board — with numbers they can defend?&rdquo;

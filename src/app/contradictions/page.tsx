@@ -209,7 +209,11 @@ const CLIENT_DATA: Record<string, { nodes: CNode[]; name: string; shortName: str
   },
   firstcapital: {
     nodes: FIRST_CAPITAL, name: 'First Capital Financial', shortName: 'First Capital',
-    accent: '#FF9900', critCount: 2, highCount: 4,
+    accent: '#818CF8', critCount: 2, highCount: 4,
+  },
+  arcturus: {
+    nodes: FIRST_CAPITAL, name: 'Arcturus Financial Group', shortName: 'Arcturus',
+    accent: '#818CF8', critCount: 2, highCount: 4,
   },
   apexretail: {
     nodes: APEX, name: 'Apex Retail Group', shortName: 'Apex Retail',
@@ -268,7 +272,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
     } catch { /* ignore abort */ } finally { setLoading(false) }
   }, [messages, client, contradictionTitle, contradictionImpact, loading])
 
-  const TEAL = '#2DD4C8', SURFACE = '#0D1520', BORDER = '#1C2D45', TEXT = '#EFF6FF', DIM = 'rgba(255,255,255,0.45)', BG = '#060A12'
+  const TEAL = '#2DD4C8', SURFACE = '#FFFFFF', BORDER = '#E2E1DC', TEXT = '#0C0C0C', DIM = '#888888', BG = '#F8F7F4'
   const MONO = 'JetBrains Mono, monospace', SANS = 'DM Sans, sans-serif'
 
   return (
@@ -339,7 +343,7 @@ function ContradictionsContent() {
   const highCount = cd.nodes.filter(n => n.sev === 'HIGH').length
 
   return (
-    <div style={{ minHeight: '100vh', background: '#060A12', fontFamily: 'DM Sans, sans-serif', color: '#EFF6FF' }}>
+    <div style={{ minHeight: '100vh', background: '#F8F7F4', fontFamily: 'DM Sans, sans-serif', color: '#0C0C0C' }}>
       <style dangerouslySetInnerHTML={{ __html: `
         @keyframes critPulse {
           0% { opacity: 0.8; transform: scale(1); }
@@ -387,12 +391,12 @@ function ContradictionsContent() {
       <div style={{ display: 'grid', gridTemplateColumns: '60% 40%', height: 'calc(100vh - 96px)' }}>
 
         {/* SVG Network */}
-        <div style={{ background: '#060A12', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', borderRight: '1px solid #1C2D45' }}>
+        <div style={{ background: '#F8F7F4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px', borderRight: '1px solid #E2E1DC' }}>
           <svg viewBox="0 0 580 540" style={{ width: '100%', maxWidth: '580px', height: '100%', maxHeight: '540px' }}>
             {/* Grid dots for atmosphere */}
             <defs>
               <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                <circle cx="12" cy="12" r="0.8" fill="#0D1520" />
+                <circle cx="12" cy="12" r="0.8" fill="#E2E1DC" />
               </pattern>
             </defs>
             <rect width="580" height="540" fill="url(#grid)" />
@@ -412,7 +416,7 @@ function ContradictionsContent() {
               ) : (
                 <line key={node.id + '-line'}
                   x1={CX} y1={CY} x2={p.x} y2={p.y}
-                  stroke="#1C2D45" strokeWidth={1} strokeDasharray="4 4"
+                  stroke="#E2E1DC" strokeWidth={1} strokeDasharray="4 4"
                 />
               )
             })}
@@ -443,7 +447,7 @@ function ContradictionsContent() {
                   )}
                   {/* Main circle */}
                   <circle cx={x} cy={y} r={NODE_R}
-                    fill={isActive ? color : '#0D1520'}
+                    fill={isActive ? color : '#FFFFFF'}
                     stroke={color}
                     strokeWidth={isActive ? 0 : 1.5}
                   />
@@ -462,7 +466,7 @@ function ContradictionsContent() {
                   </text>
                   {/* Metric label outside */}
                   <text x={x} y={metricY} textAnchor="middle"
-                    fill={isActive ? color : '#6B7280'}
+                    fill={isActive ? color : '#3C3C3C'}
                     fontSize={8.5}
                     fontFamily="JetBrains Mono, monospace">
                     {node.metric}
@@ -472,8 +476,8 @@ function ContradictionsContent() {
             })}
 
             {/* Center node */}
-            <circle cx={CX} cy={CY} r={52} fill="#0D1520" stroke="#2DD4C8" strokeWidth={1.5} />
-            <circle cx={CX} cy={CY} r={48} fill="#0D1117" stroke="#2DD4C8" strokeWidth={0.5} opacity={0.4} />
+            <circle cx={CX} cy={CY} r={52} fill="#FFFFFF" stroke="#2DD4C8" strokeWidth={1.5} />
+            <circle cx={CX} cy={CY} r={48} fill="#F8F7F4" stroke="#2DD4C8" strokeWidth={0.5} opacity={0.4} />
             <text x={CX} y={CY - 10} textAnchor="middle" fill="#2DD4C8" fontSize={11} fontWeight="700"
               fontFamily="JetBrains Mono, monospace">
               {cd.shortName.split(' ')[0]}
@@ -493,13 +497,13 @@ function ContradictionsContent() {
               <text x={16} y={10} fill="#6B7280" fontSize={8.5} fontFamily="JetBrains Mono, monospace">CRITICAL</text>
               <circle cx={70} cy={6} r={6} fill="none" stroke="#F59E0B" strokeWidth={1.5} />
               <text x={80} y={10} fill="#6B7280" fontSize={8.5} fontFamily="JetBrains Mono, monospace">HIGH</text>
-              <text x={130} y={10} fill="#1C2D45" fontSize={8} fontFamily="JetBrains Mono, monospace">· Click node to explore</text>
+              <text x={130} y={10} fill="#9CA3AF" fontSize={8} fontFamily="JetBrains Mono, monospace">· Click node to explore</text>
             </g>
           </svg>
         </div>
 
         {/* Detail panel */}
-        <div style={{ overflowY: 'auto' as const, padding: '28px 28px', background: '#060A12' }}>
+        <div style={{ overflowY: 'auto' as const, padding: '28px 28px', background: '#F8F7F4' }}>
           {selected && (() => {
             const color = SEV_COLOR[selected.sev]
             return (
@@ -508,38 +512,38 @@ function ContradictionsContent() {
                 <div style={{ marginBottom: '24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.12em' }}>{selected.sev}</span>
+                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, color: '#3C3C3C', letterSpacing: '0.12em' }}>{selected.sev}</span>
                   </div>
-                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#E6EDF3', lineHeight: 1.35, marginBottom: '12px', fontFamily: "'Georgia', serif" }}>{selected.title}</h2>
-                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.06)', border: '1px solid #1C2D45' }}>
+                  <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0C0C0C', lineHeight: 1.35, marginBottom: '12px', fontFamily: "'Georgia', serif" }}>{selected.title}</h2>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '6px', background: 'rgba(239,68,68,0.06)', border: '1px solid #E2E1DC' }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#EF4444', flexShrink: 0 }} />
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.55)', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
-                    <span style={{ fontSize: '13px', color: '#E6EDF3', fontWeight: 700 }}>{selected.impact}</span>
+                    <span style={{ fontSize: '10px', color: '#3C3C3C', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, letterSpacing: '0.08em' }}>FINANCIAL IMPACT</span>
+                    <span style={{ fontSize: '13px', color: '#0C0C0C', fontWeight: 700 }}>{selected.impact}</span>
                   </div>
                 </div>
 
                 {/* 4 sections — left-border card style, high contrast */}
                 {[
-                  { label: 'WHAT WAS COMMITTED',    text: selected.committed,       leftBorder: '#1C2D45' },
+                  { label: 'WHAT WAS COMMITTED',    text: selected.committed,       leftBorder: '#E2E1DC' },
                   { label: 'WHAT ACTUALLY HAPPENED', text: selected.actual,          leftBorder: '#EF4444' },
-                  { label: 'ROOT CAUSE',              text: selected.rootCause,       leftBorder: '#1C2D45' },
+                  { label: 'ROOT CAUSE',              text: selected.rootCause,       leftBorder: '#E2E1DC' },
                   { label: 'AbarVa RECOMMENDATION',   text: selected.recommendation,  leftBorder: '#2DD4C8' },
                 ].map((section, i) => (
-                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#0D1520', border: '1px solid #1C2D45', borderLeft: '3px solid ' + section.leftBorder }}>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', fontWeight: 600, color: '#6B7280', letterSpacing: '0.12em', marginBottom: '10px' }}>{section.label}</div>
-                    <p style={{ fontSize: '14px', color: '#E6EDF3', lineHeight: 1.7, margin: 0 }}>{section.text}</p>
+                  <div key={i} style={{ marginBottom: '12px', padding: '16px 18px', borderRadius: '8px', background: '#FFFFFF', border: '1px solid #E2E1DC', borderLeft: '3px solid ' + section.leftBorder }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', fontWeight: 600, color: '#3C3C3C', letterSpacing: '0.12em', marginBottom: '10px' }}>{section.label}</div>
+                    <p style={{ fontSize: '14px', color: '#0C0C0C', lineHeight: 1.7, margin: 0 }}>{section.text}</p>
                   </div>
                 ))}
 
                 {/* Navigation between nodes */}
-                <div style={{ marginTop: '24px', borderTop: '1px solid #1C2D45', paddingTop: '18px' }}>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#6B7280', marginBottom: '12px', letterSpacing: '0.1em' }}>OTHER CONTRADICTIONS</div>
+                <div style={{ marginTop: '24px', borderTop: '1px solid #E2E1DC', paddingTop: '18px' }}>
+                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', color: '#3C3C3C', marginBottom: '12px', letterSpacing: '0.1em' }}>OTHER CONTRADICTIONS</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px' }}>
                     {cd.nodes.filter(n => n.id !== selected.id).map(n => {
                       const dotColor = SEV_COLOR[n.sev]
                       return (
                         <button key={n.id} onClick={() => setSelectedId(n.id)}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: 'rgba(255,255,255,0.55)', border: '1px solid #1C2D45' }}>
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 12px', borderRadius: '20px', fontFamily: 'JetBrains Mono, monospace', fontSize: '10px', fontWeight: 600, cursor: 'pointer', background: 'transparent', color: '#3C3C3C', border: '1px solid #E2E1DC' }}>
                           <span style={{ width: 5, height: 5, borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
                           {n.l1} {n.l2}
                         </button>
@@ -579,7 +583,7 @@ function ContradictionsContent() {
 export default function ContradictionsPage() {
   return (
     <Suspense fallback={
-      <div style={{ background: '#060A12', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.55)', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
+      <div style={{ background: '#F8F7F4', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3C3C3C', fontFamily: 'JetBrains Mono, monospace', fontSize: '13px' }}>
         Loading contradiction network...
       </div>
     }>

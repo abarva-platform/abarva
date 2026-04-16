@@ -611,7 +611,7 @@ function OutcomesContent() {
             >{r}</button>
           )
         })}
-        <div style={{ marginLeft: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        <div style={{ marginLeft: 'auto', fontFamily: '"JetBrains Mono", monospace', fontSize: '9px', color: '#3C3C3C', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
           Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
         </div>
       </div>

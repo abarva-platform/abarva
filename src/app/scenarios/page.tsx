@@ -158,14 +158,14 @@ function calcApex(inp: APXI): Out {
 }
 
 // ─── Shared UI components ─────────────────────────────────────────────────────
-const SLBL: React.CSSProperties = { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }
+const SLBL: React.CSSProperties = { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }
 
 function Toggle({ label, desc, value, onChange }: { label: string; desc: string; value: boolean; onChange: (v: boolean) => void }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 0', borderBottom: '1px solid #F1F5F9' }}>
       <div>
         <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{label}</div>
-        <div style={{ fontSize: '11px', color: value ? '#059669' : '#94A3B8', transition: 'color 0.2s' }}>{desc}</div>
+        <div style={{ fontSize: '11px', color: value ? '#059669' : '#3C3C3C', transition: 'color 0.2s' }}>{desc}</div>
       </div>
       <button onClick={() => onChange(!value)} style={{ width: '44px', height: '24px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: value ? '#2563EB' : '#E2E8F0', position: 'relative', transition: 'background 0.2s', flexShrink: 0, marginLeft: '12px' }}>
         <div style={{ width: '18px', height: '18px', borderRadius: '50%', background: 'white', position: 'absolute', top: '3px', left: value ? '23px' : '3px', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
@@ -187,7 +187,7 @@ function Slider({ label, min, max, step = 1, value, onChange, fmt, hint }: {
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => onChange(Number(e.target.value))}
         style={{ width: '100%', accentColor: '#2563EB', cursor: 'pointer' }} />
-      <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px', lineHeight: 1.4 }}>{hint}</div>
+      <div style={{ fontSize: '11px', color: '#3C3C3C', marginTop: '4px', lineHeight: 1.4 }}>{hint}</div>
     </div>
   )
 }
@@ -216,9 +216,9 @@ function RadioGroup({ label, value, onChange, options }: {
 function BigMetric({ label, value, sub, color, flashGen, id }: { label: string; value: string; sub?: string; color: string; flashGen: number; id: string }) {
   return (
     <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '16px 18px' }}>
-      <div style={{ fontSize: '10px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>{label}</div>
+      <div style={{ fontSize: '10px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '6px' }}>{label}</div>
       <div key={`${id}-${flashGen}`} className="numflash" style={{ fontSize: '26px', fontWeight: 800, color, letterSpacing: '-0.02em', lineHeight: 1.1 }}>{value}</div>
-      {sub && <div style={{ fontSize: '10px', color: '#94A3B8', marginTop: '4px' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: '10px', color: '#3C3C3C', marginTop: '4px' }}>{sub}</div>}
     </div>
   )
 }
@@ -235,7 +235,7 @@ function ScenCol({ label, data, color, flashGen, id }: { label: string; data: Sc
         { k: 'fee', l: 'AbarVa fee', v: `$${data.fee.toFixed(1)}M` },
       ] as const).map(r => (
         <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '7px' }}>
-          <span style={{ fontSize: '11px', color: '#6B7280' }}>{r.l}</span>
+          <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{r.l}</span>
           <span key={`${id}-${r.k}-${flashGen}`} className="numflash" style={{ fontSize: '12px', fontWeight: 700, color: '#0F172A', fontFamily: "'IBM Plex Mono', monospace" }}>{r.v}</span>
         </div>
       ))}
@@ -248,7 +248,7 @@ function RiskBadge({ sev, msg }: { sev: 'red' | 'amber'; msg: string }) {
   return (
     <div style={{ display: 'flex', gap: '10px', padding: '9px 12px', borderRadius: '8px', marginBottom: '7px', background: red ? '#FEF2F2' : '#FFFBEB', border: '1px solid ' + (red ? '#FECACA' : '#FDE68A') }}>
       <span style={{ color: red ? '#DC2626' : '#D97706', fontSize: '11px', flexShrink: 0, marginTop: '1px' }}>{red ? '⚠' : '△'}</span>
-      <span style={{ fontSize: '11px', color: '#374151', lineHeight: 1.5 }}>{msg}</span>
+      <span style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.5 }}>{msg}</span>
     </div>
   )
 }
@@ -431,7 +431,7 @@ function ScenariosContent() {
           {/* Risk indicators */}
           {out.risks.length > 0 && (
             <div style={{ background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '14px 16px', marginBottom: '16px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '10px' }}>Risk Indicators</div>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '10px' }}>Risk Indicators</div>
               {out.risks.map((r, i) => <RiskBadge key={i} sev={r.sev} msg={r.msg} />)}
             </div>
           )}
@@ -444,7 +444,7 @@ function ScenariosContent() {
             </div>
             <div style={{ marginTop: '16px', paddingTop: '14px', borderTop: '1px solid rgba(255,255,255,0.08)', display: 'flex', gap: '10px' }}>
               <a href={`/blueprint?client=${clientId}`} style={{ fontSize: '12px', fontWeight: 600, color: '#2DD4C8', textDecoration: 'none', padding: '6px 14px', borderRadius: '6px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.25)' }}>Solution Blueprint →</a>
-              <a href={`/justify?client=${clientId}`} style={{ fontSize: '12px', fontWeight: 600, color: '#8B949E', textDecoration: 'none', padding: '6px 14px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Build Business Case →</a>
+              <a href={`/justify?client=${clientId}`} style={{ fontSize: '12px', fontWeight: 600, color: '#888888', textDecoration: 'none', padding: '6px 14px', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Build Business Case →</a>
             </div>
           </div>
         </div>
@@ -456,7 +456,7 @@ function ScenariosContent() {
 
 export default function ScenariosPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#6B7280' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', color: '#3C3C3C' }}>Loading...</div>}>
       <ScenariosContent />
     </Suspense>
   )

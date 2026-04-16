@@ -84,7 +84,7 @@ export default function PlatformEvaluator({ platforms, clientName, context }: Pl
                   <td style={{ padding: '10px 12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontWeight: isBest ? 700 : 500, color: isBest ? '#0F172A' : '#374151' }}>
+                        <span style={{ fontWeight: isBest ? 700 : 500, color: isBest ? '#0F172A' : '#3C3C3C' }}>
                           {platform.name}
                         </span>
                         {platform.isReferralPartner && (
@@ -108,7 +108,7 @@ export default function PlatformEvaluator({ platforms, clientName, context }: Pl
                     <span style={{
                       fontSize: '14px',
                       fontWeight: 700,
-                      color: isBest ? '#059669' : '#374151',
+                      color: isBest ? '#059669' : '#3C3C3C',
                     }}>
                       {totalScore(platform)}/25
                     </span>

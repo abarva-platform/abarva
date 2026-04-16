@@ -1,18 +1,19 @@
 'use client'
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#FFFFFF', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif", color: '#1a1a1a' } as React.CSSProperties,
   body: { maxWidth: '1400px', margin: '0 auto', padding: '48px 48px 80px' } as React.CSSProperties,
   sectionHeader: (accent: string) => ({
-    background: '#111827', padding: '14px 20px', borderRadius: '0', marginBottom: '0',
+    background: '#0C0C0C', padding: '14px 20px', borderRadius: '0', marginBottom: '0',
     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
     borderLeft: `4px solid ${accent}`,
   } as React.CSSProperties),
   th: { padding: '10px 14px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.07em', color: '#475569', background: '#F8FAFC', textAlign: 'left' as const, borderBottom: '1px solid #E2E8F0' } as React.CSSProperties,
-  td: { padding: '12px 14px', fontSize: '13px', color: '#374151', verticalAlign: 'top' as const, borderBottom: '1px solid #F1F5F9', lineHeight: 1.5 } as React.CSSProperties,
+  td: { padding: '12px 14px', fontSize: '13px', color: '#3C3C3C', verticalAlign: 'top' as const, borderBottom: '1px solid #F1F5F9', lineHeight: 1.5 } as React.CSSProperties,
   input: { width: '72px', padding: '5px 8px', border: '1.5px solid #2563EB', borderRadius: '6px', fontSize: '13px', fontFamily: 'Inter, -apple-system, sans-serif', color: '#0F172A', textAlign: 'right' as const, background: '#EFF6FF' } as React.CSSProperties,
   inputWide: { width: '200px', padding: '5px 8px', border: '1.5px solid #2563EB', borderRadius: '6px', fontSize: '12px', fontFamily: 'Inter, -apple-system, sans-serif', color: '#0F172A', background: '#EFF6FF' } as React.CSSProperties,
   calc: { fontSize: '13px', fontWeight: 700, color: '#059669' } as React.CSSProperties,
@@ -25,7 +26,7 @@ function fmt(n: number) {
 
 function ValueTemplateContent() {
   const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const clientId = useActiveClient()
   void clientId
 
   // Editable state
@@ -112,7 +113,7 @@ function ValueTemplateContent() {
 
         {/* Intro paragraph */}
         <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px 24px', marginBottom: '40px' }}>
-          <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#374151', margin: 0, fontStyle: 'italic' }}>
+          <p style={{ fontSize: '14px', lineHeight: 1.8, color: '#3C3C3C', margin: 0, fontStyle: 'italic' }}>
             "This framework is designed around one question: if administrative burden were meaningfully reduced, what would your teams focus on instead — and what would that be worth to Meridian Health System's mission?"
           </p>
           <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid #E2E8F0', display: 'flex', gap: '32px' }}>
@@ -170,7 +171,7 @@ function ValueTemplateContent() {
                     <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px', fontFamily: 'Inter, sans-serif' }}>% reduction in admin friction</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <input type="number" min={0} max={100} value={workforcePct} onChange={e => setWorkforcePct(Number(e.target.value))} style={S.input} />
-                      <span style={{ fontSize: '13px', color: '#374151' }}>%</span>
+                      <span style={{ fontSize: '13px', color: '#3C3C3C' }}>%</span>
                     </div>
                   </div>
                   <div style={{ marginBottom: '10px', paddingTop: '8px', borderTop: '1px solid #BFDBFE' }}>
@@ -232,7 +233,7 @@ function ValueTemplateContent() {
                     <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>% L1/L2 resolved via AI</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <input type="number" min={0} max={100} value={itPct} onChange={e => setItPct(Number(e.target.value))} style={S.input} />
-                      <span style={{ fontSize: '13px', color: '#374151' }}>%</span>
+                      <span style={{ fontSize: '13px', color: '#3C3C3C' }}>%</span>
                     </div>
                   </div>
                   <div style={{ marginBottom: '10px', paddingTop: '8px', borderTop: '1px solid #BFDBFE' }}>
@@ -243,7 +244,7 @@ function ValueTemplateContent() {
                     <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>% IT effort shifted to transformation</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <input type="number" min={0} max={100} value={itShiftPct} onChange={e => setItShiftPct(Number(e.target.value))} style={S.input} />
-                      <span style={{ fontSize: '13px', color: '#374151' }}>%</span>
+                      <span style={{ fontSize: '13px', color: '#3C3C3C' }}>%</span>
                     </div>
                   </div>
                 </td>
@@ -297,7 +298,7 @@ function ValueTemplateContent() {
                     <div style={{ fontSize: '11px', color: '#64748B', marginBottom: '4px' }}>Denial rate target (current: 18.2%)</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <input type="number" min={0} max={18} step={0.1} value={denialTarget} onChange={e => setDenialTarget(Number(e.target.value))} style={{ ...S.input, borderColor: '#059669', background: '#F0FDF4' }} />
-                      <span style={{ fontSize: '13px', color: '#374151' }}>%</span>
+                      <span style={{ fontSize: '13px', color: '#3C3C3C' }}>%</span>
                     </div>
                     <div style={{ fontSize: '11px', color: '#059669', marginTop: '4px' }}>→ Denial reduction saves <strong>{fmt(denialValue)}</strong></div>
                   </div>
@@ -327,7 +328,7 @@ function ValueTemplateContent() {
         {/* ─────────────────────────────────────────── */}
         {/* TOTAL SUMMARY */}
         {/* ─────────────────────────────────────────── */}
-        <div style={{ background: '#111827', borderRadius: '10px', padding: '28px 32px', marginBottom: '36px' }}>
+        <div style={{ background: '#0C0C0C', borderRadius: '10px', padding: '28px 32px', marginBottom: '36px' }}>
           <div style={{ fontFamily: 'Inter, sans-serif', fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '20px' }}>Total Value Summary — Based on Your Inputs</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '24px', marginBottom: '24px' }}>

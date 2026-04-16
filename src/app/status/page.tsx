@@ -103,7 +103,7 @@ export default function StatusPage() {
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '32px', fontWeight: 800, color: '#0F172A', margin: '0 0 8px' }}>Platform Status</h1>
-          {now && <p style={{ fontSize: '13px', color: '#9CA3AF', margin: 0 }}>Updated: {now}</p>}
+          {now && <p style={{ fontSize: '13px', color: '#888888', margin: 0 }}>Updated: {now}</p>}
         </div>
 
         {/* Overall status banner */}
@@ -127,12 +127,12 @@ export default function StatusPage() {
               <div key={svc.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 0', borderBottom: i < SERVICES.length - 1 ? '1px solid #F1F5F9' : 'none', gap: '12px' }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#1E293B' }}>{svc.name}</div>
-                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>{svc.description}</div>
+                  <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '2px' }}>{svc.description}</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexShrink: 0 }}>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A' }}>{svc.uptimePct}%</div>
-                    <div style={{ fontSize: '11px', color: '#9CA3AF' }}>30-day uptime</div>
+                    <div style={{ fontSize: '11px', color: '#888888' }}>30-day uptime</div>
                   </div>
                   <StatusBadge status={svc.status} />
                 </div>
@@ -152,7 +152,7 @@ export default function StatusPage() {
                 <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', height: '80px', justifyContent: 'flex-end' }}>
                   <div style={{ fontSize: '10px', fontWeight: 600, color }}>{m.pct}%</div>
                   <div style={{ width: '100%', height: height + 'px', background: color, borderRadius: '4px 4px 0 0' }} />
-                  <div style={{ fontSize: '10px', color: '#9CA3AF', whiteSpace: 'nowrap' }}>{m.month}</div>
+                  <div style={{ fontSize: '10px', color: '#888888', whiteSpace: 'nowrap' }}>{m.month}</div>
                 </div>
               )
             })}
@@ -163,7 +163,7 @@ export default function StatusPage() {
         <div style={S.card}>
           <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A', marginBottom: '16px' }}>Incident History</div>
           {INCIDENTS.length === 0 ? (
-            <div style={{ fontSize: '13px', color: '#9CA3AF', padding: '16px 0' }}>No incidents in the past 90 days.</div>
+            <div style={{ fontSize: '13px', color: '#888888', padding: '16px 0' }}>No incidents in the past 90 days.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {INCIDENTS.map(inc => (
@@ -173,12 +173,12 @@ export default function StatusPage() {
                       <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{inc.title}</span>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#059669', background: '#F0FDF4', padding: '1px 7px', borderRadius: '8px', border: '1px solid #A7F3D0' }}>Resolved</span>
                     </div>
-                    <span style={{ fontSize: '12px', color: '#9CA3AF' }}>{inc.date}</span>
+                    <span style={{ fontSize: '12px', color: '#888888' }}>{inc.date}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '16px', marginBottom: '8px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Service: <strong style={{ color: '#374151' }}>{inc.service}</strong></span>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Impact: <strong style={{ color: '#374151' }}>{inc.impact}</strong></span>
-                    <span style={{ fontSize: '12px', color: '#6B7280' }}>Duration: <strong style={{ color: '#374151' }}>{inc.duration}</strong></span>
+                    <span style={{ fontSize: '12px', color: '#3C3C3C' }}>Service: <strong style={{ color: '#3C3C3C' }}>{inc.service}</strong></span>
+                    <span style={{ fontSize: '12px', color: '#3C3C3C' }}>Impact: <strong style={{ color: '#3C3C3C' }}>{inc.impact}</strong></span>
+                    <span style={{ fontSize: '12px', color: '#3C3C3C' }}>Duration: <strong style={{ color: '#3C3C3C' }}>{inc.duration}</strong></span>
                   </div>
                   <div style={{ fontSize: '13px', color: '#64748B', lineHeight: 1.5 }}>{inc.summary}</div>
                 </div>

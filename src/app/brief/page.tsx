@@ -4,11 +4,11 @@ import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 
 const C = {
-  bg: '#0D1117',
-  surface: '#161B22',
-  border: '#21262D',
-  text: '#E6EDF3',
-  text2: '#8B949E',
+  bg: '#F8F7F4',
+  surface: '#FFFFFF',
+  border: '#E2E1DC',
+  text: '#0C0C0C',
+  text2: '#3C3C3C',
   red: '#EF4444',
   redBg: 'rgba(239,68,68,0.08)',
   teal: '#2DD4C8',
@@ -151,10 +151,10 @@ function BriefContent() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: '16px', fontWeight: 700, color: '#0C0C0C' }}>Abar</span>
             <span style={{ fontFamily: 'Georgia, serif', fontSize: '21px', fontWeight: 900, color: '#2DD4C8' }}>Va</span>
           </div>
-          <span style={{ fontSize: '11px', color: C.text2, background: C.border, border: '1px solid #30363D', borderRadius: '4px', padding: '2px 8px' }}>
+          <span style={{ fontSize: '11px', color: C.text2, background: C.border, border: '1px solid #E2E1DC', borderRadius: '4px', padding: '2px 8px' }}>
             {data.industry}
           </span>
         </div>
@@ -209,7 +209,7 @@ function BriefContent() {
               <div style={{ fontSize: '11px', color: C.text2 }}>AI governance score</div>
             </div>
             <div style={{ gridColumn: '1 / -1', borderTop: '1px solid ' + C.border, paddingTop: '12px' }}>
-              <div style={{ fontSize: '28px', fontWeight: 700, color: '#FFFFFF' }}>{data.portfolio.valueIdentified}</div>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#0C0C0C' }}>{data.portfolio.valueIdentified}</div>
               <div style={{ fontSize: '11px', color: C.text2 }}>Identified value — AI investment intelligence</div>
             </div>
           </div>
@@ -221,7 +221,7 @@ function BriefContent() {
             <span>●</span> Next Milestone
           </div>
           <div style={{
-            background: 'rgba(255,255,255,0.03)',
+            background: '#FFFFFF',
             border: '1px solid ' + C.border,
             borderLeft: '3px solid ' + urgencyColor(data.nextMilestone.urgencyDays),
             borderRadius: '8px',
@@ -253,7 +253,7 @@ function BriefContent() {
           style={{
             display: 'block',
             background: C.teal,
-            color: '#0D1117',
+            color: '#0C0C0C',
             textDecoration: 'none',
             borderRadius: '10px',
             padding: '14px 20px',
@@ -277,8 +277,8 @@ function BriefContent() {
 export default function BriefPage() {
   return (
     <Suspense fallback={
-      <div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <span style={{ color: '#8B949E', fontSize: '14px' }}>Loading brief...</span>
+      <div style={{ minHeight: '100vh', background: '#F8F7F4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: '#3C3C3C', fontSize: '14px' }}>Loading brief...</span>
       </div>
     }>
       <BriefContent />

@@ -2,6 +2,7 @@
 import { useState, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const T = {
@@ -422,7 +423,7 @@ const GENOME_PATTERNS: Record<string, { name: string; desc: string; mitigation: 
 // ── Page component ─────────────────────────────────────────────────────────────
 function SelectContent() {
   const searchParams = useSearchParams()
-  const urlClient = (searchParams.get('client') || 'meridian') as ClientId
+  const urlClient = useActiveClient() as ClientId
   const urlDecision = searchParams.get('decision') || null
 
   const [client, setClient] = useState<ClientId>(urlClient)
@@ -552,7 +553,7 @@ function SelectContent() {
             >{r}</button>
           )
         })}
-        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#374151', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+        <div style={{ marginLeft: 'auto', fontFamily: T.mono, fontSize: '9px', color: '#3C3C3C', letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
           Viewing as <span style={{ color: T.teal, fontWeight: 600 }}>{role}</span>
         </div>
       </div>

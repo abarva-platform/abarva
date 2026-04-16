@@ -111,6 +111,254 @@ h3{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;col
   </div>
 </div></body></html>`
 
+export const MERIDIAN_TARGET_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Meridian — Target State Architecture</title><style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0D1117;--surface:#161B22;--s2:#1C2128;--border:#21262D;--b2:#30363D;--blue:#4DA3FF;--teal:#2DD4C8;--green:#27AE60;--glt:#6EE7B7;--purple:#A855F7;--amber:#F59E0B;--red:#EF4444;--gray:#9CA3AF;--text:#E6EDF3;--t2:#C9D1D9;--t3:#8B949E;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--accent:#4DA3FF}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;padding:0;min-width:900px}
+.cover{border-bottom:3px solid var(--accent);padding:28px 40px 22px;display:flex;justify-content:space-between;align-items:flex-end;background:linear-gradient(135deg,#061020 0%,#0D1117 70%)}
+.ey{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.ct{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:3px}
+.csub{font-size:11px;color:var(--t3);margin-top:3px}.csub span{color:var(--glt)}
+.cmeta{text-align:right;font-family:var(--mono);font-size:9.5px;color:var(--t3);line-height:2}.cmeta strong{color:var(--t2)}
+.wrap{padding:16px 40px 40px}
+.boundary{border:2px dashed var(--accent);border-radius:10px;padding:12px;margin-bottom:8px}
+.blabel{font-family:var(--mono);font-size:8.5px;font-weight:600;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.lw{border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;background:var(--surface)}
+.lh{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.ln{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)}
+.lt{font-size:10px;color:var(--t3)}
+h3{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--t2);text-transform:uppercase;margin:18px 0 8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+.tag{display:inline-block;font-family:var(--mono);font-size:8px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+.ok{color:var(--glt);background:rgba(110,231,183,0.1)}.warn{color:var(--amber);background:rgba(245,158,11,0.1)}.bad{color:var(--red);background:rgba(239,68,68,0.1)}.info{color:var(--blue);background:rgba(77,163,255,0.1)}
+.metric{font-family:var(--mono);font-size:22px;font-weight:600}
+.mlabel{font-size:10px;color:var(--t3);margin-top:2px}
+.sub{font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4}
+.resolve{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px}
+.resolve:last-child{border-bottom:none}
+.dot-ok{width:8px;height:8px;border-radius:50%;background:var(--glt);flex-shrink:0}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text)}
+.rvt{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:20px 0 8px}
+.rbox{border-radius:8px;padding:14px 16px}
+.rt{font-family:var(--mono);font-size:10px;font-weight:700;margin-bottom:5px}
+.rb{font-size:11px;line-height:1.5}
+.rarr{font-size:28px;color:var(--t3);text-align:center}
+.foot{font-family:var(--mono);font-size:8px;color:var(--t3);padding:14px 40px;border-top:1px solid var(--border);margin-top:20px}
+</style></head><body>
+<div class="cover">
+  <div><div class="ey">AbarVa Intelligence Platform · Meridian Health System</div><div class="ct">Target State Architecture — Post-Engagement</div><div class="csub">Wave 1 + Wave 2 complete · All root causes resolved · <span>$180–220M annual gap closed</span></div></div>
+  <div class="cmeta"><strong>CLIENT</strong> Meridian Health System<br><strong>STATUS</strong> Target State<br><strong>DATE</strong> Q2 2026</div>
+</div>
+<div class="wrap">
+  <h3>Root Cause Resolution</h3>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="resolve"><div class="dot-ok"></div><strong>CDO Appointed</strong> — Data governance live, unified data platform across all 23 hospitals</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>Epic Fully Deployed</strong> — All 47 Cogito dashboards live, MyChart 60%+ adoption</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>Prior Auth AI Active</strong> — Epic module 100% deployed, AI overturn rate 85%+</div>
+    </div>
+    <div class="card">
+      <div class="resolve"><div class="dot-ok"></div><strong>Ensemble SLAs Enforced</strong> — $8M penalty clause activated, denial rate 8.4% vs 18.2%</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>Blue Ridge Integration Complete</strong> — All facilities on unified Epic, reporting unified</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>MA Star 4.0 Achieved</strong> — Quality bonus unlocked, $34M annual benefit</div>
+    </div>
+  </div>
+
+  <h3>Unified Clinical Data Platform — Databricks on Azure</h3>
+  <div class="boundary">
+    <div class="blabel">Azure Health Data Services · HIPAA BAA Active · All 23 Hospitals</div>
+    <div class="flow" style="margin-bottom:10px">
+      <div class="box">Epic EHR<br><span style="color:var(--glt);font-size:9px">All 23 sites ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">Workday HR<br><span style="color:var(--glt);font-size:9px">42,000 staff ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">Ensemble RCM<br><span style="color:var(--glt);font-size:9px">SLAs enforced ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">Claims &amp; Payers<br><span style="color:var(--glt);font-size:9px">Real-time ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box" style="border-color:var(--accent);color:var(--accent)">Databricks Lakehouse<br><span style="font-size:9px">Medallion · PHI-safe</span></div>
+    </div>
+    <div class="grid3">
+      <div class="card" style="border-color:rgba(77,163,255,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--blue);margin-bottom:6px">Clinical AI — Epic Cogito</div>
+        <div style="font-size:11px;color:var(--t3)">All 47 dashboards live. Nurse scheduling, OR utilization, length-of-stay prediction. Physicians interact via Epic — no separate tool.</div>
+        <div style="margin-top:8px"><span class="tag ok">47/47 live</span></div>
+      </div>
+      <div class="card" style="border-color:rgba(168,85,247,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--purple);margin-bottom:6px">Prior Auth AI — Claude on Azure</div>
+        <div style="font-size:11px;color:var(--t3)">Claude Sonnet processes prior auth requests. 85%+ auto-approval rate. All payer rules embedded. Human review at &lt;90% confidence. PHI stays in Azure tenant.</div>
+        <div style="margin-top:8px"><span class="tag ok">85%+ auto-approval</span></div>
+      </div>
+      <div class="card" style="border-color:rgba(110,231,183,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--glt);margin-bottom:6px">RCM Recovery — Denial AI</div>
+        <div style="font-size:11px;color:var(--t3)">Ensemble denial feed into Databricks. AI predicts denials before submission, auto-generates appeals. Denial rate 8.4% — from 18.2% baseline.</div>
+        <div style="margin-top:8px"><span class="tag ok">8.4% denial rate</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Outcome Metrics — Post-Engagement</h3>
+  <div class="grid4" style="margin-bottom:16px">
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--glt)">8.4%</div>
+      <div class="mlabel">Denial rate (from 18.2%)</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--blue)">47/47</div>
+      <div class="mlabel">Cogito dashboards live</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--purple)">4.0★</div>
+      <div class="mlabel">MA Star rating</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--amber)">3.8%</div>
+      <div class="mlabel">Operating margin (from 1.8%)</div>
+    </div>
+  </div>
+
+  <div class="rvt">
+    <div class="rbox" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)">
+      <div class="rt" style="color:#EF4444">Current state — without this architecture</div>
+      <div class="rb" style="color:#9CA3AF">18.2% denial rate · $94M write-offs · 12 of 47 Cogito live · Prior auth AI 23% deployed · Blue Ridge overdue · MA Star 3.5 · MyChart 34% adoption · CDO vacant · 1.8% operating margin</div>
+    </div>
+    <div class="rarr">→</div>
+    <div class="rbox" style="background:rgba(45,212,200,0.06);border:1px solid rgba(45,212,200,0.2)">
+      <div class="rt" style="color:#2DD4C8">Target state — with this architecture</div>
+      <div class="rb" style="color:#9CA3AF">Denial rate 8.4% · $94M recovered · All 47 Cogito live · Prior auth AI 85%+ auto-approval · Blue Ridge integrated · MA Star 4.0 · MyChart 60%+ · CDO in seat · 3.8%+ operating margin</div>
+    </div>
+  </div>
+</div>
+<div class="foot">AbarVa Intelligence Platform · Meridian Health System · Azure Architecture Intelligence · April 2026 · Confidential · Built from actual technology inventory and clinical operations data</div>
+</div></body></html>`
+
+export const APEX_RETAIL_TARGET_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Apex Retail — Target State Architecture</title><style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0D1117;--surface:#161B22;--s2:#1C2128;--border:#21262D;--b2:#30363D;--blue:#4DA3FF;--teal:#2DD4C8;--green:#34A853;--glt:#6EE7B7;--purple:#A855F7;--amber:#F59E0B;--red:#EF4444;--gray:#9CA3AF;--text:#E6EDF3;--t2:#C9D1D9;--t3:#8B949E;--mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--accent:#34A853}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;line-height:1.6;padding:0;min-width:900px}
+.cover{border-bottom:3px solid var(--accent);padding:28px 40px 22px;display:flex;justify-content:space-between;align-items:flex-end;background:linear-gradient(135deg,#060e0a 0%,#0D1117 70%)}
+.ey{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:2px;color:var(--accent);text-transform:uppercase;margin-bottom:6px}
+.ct{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text);line-height:1.2;margin-bottom:3px}
+.csub{font-size:11px;color:var(--t3);margin-top:3px}.csub span{color:var(--glt)}
+.cmeta{text-align:right;font-family:var(--mono);font-size:9.5px;color:var(--t3);line-height:2}.cmeta strong{color:var(--t2)}
+.wrap{padding:16px 40px 40px}
+.boundary{border:2px dashed var(--accent);border-radius:10px;padding:12px;margin-bottom:8px}
+.blabel{font-family:var(--mono);font-size:8.5px;font-weight:600;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px}
+.lw{border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:6px;background:var(--surface)}
+h3{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:1px;color:var(--t2);text-transform:uppercase;margin:18px 0 8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px}
+.tag{display:inline-block;font-family:var(--mono);font-size:8px;font-weight:700;padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:1px;margin-right:4px}
+.ok{color:var(--glt);background:rgba(110,231,183,0.1)}.warn{color:var(--amber);background:rgba(245,158,11,0.1)}.bad{color:var(--red);background:rgba(239,68,68,0.1)}
+.metric{font-family:var(--mono);font-size:22px;font-weight:600}
+.mlabel{font-size:10px;color:var(--t3);margin-top:2px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.box{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 14px;font-family:var(--mono);font-size:10px;font-weight:600;color:var(--text)}
+.resolve{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);font-size:11px}
+.resolve:last-child{border-bottom:none}
+.dot-ok{width:8px;height:8px;border-radius:50%;background:var(--glt);flex-shrink:0}
+.rvt{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin:20px 0 8px}
+.rbox{border-radius:8px;padding:14px 16px}
+.rt{font-family:var(--mono);font-size:10px;font-weight:700;margin-bottom:5px}
+.rb{font-size:11px;line-height:1.5}
+.rarr{font-size:28px;color:var(--t3);text-align:center}
+.foot{font-family:var(--mono);font-size:8px;color:var(--t3);padding:14px 40px;border-top:1px solid var(--border);margin-top:20px}
+</style></head><body>
+<div class="cover">
+  <div><div class="ey">AbarVa Intelligence Platform · Apex Retail Group</div><div class="ct">Target State Architecture — Post-Engagement</div><div class="csub">Wave 1 + Wave 2 complete · Omnichannel unified · <span>3.8% → 5.8% operating margin</span></div></div>
+  <div class="cmeta"><strong>CLIENT</strong> Apex Retail Group<br><strong>STATUS</strong> Target State<br><strong>DATE</strong> Q2 2026</div>
+</div>
+<div class="wrap">
+  <h3>Root Cause Resolution</h3>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="resolve"><div class="dot-ok"></div><strong>SAP S/4HANA Migrated</strong> — ECC 6.0 retired before 2027 support end, 8,400 customizations rationalized to 2,100</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>o9 Fully Deployed</strong> — Demand planning 100% live, forecast accuracy 62% → 84%, $180M excess inventory released</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>Inventory Accuracy 98%</strong> — RFID across 800 stores, unified inventory visible to commerce and stores</div>
+    </div>
+    <div class="card">
+      <div class="resolve"><div class="dot-ok"></div><strong>Omnichannel Unified</strong> — Salesforce CC connected to S/4HANA, BOPIS live, conversion 2.8% → 4.1%</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>AI Demand Sensing</strong> — GCP Vertex AI on unified data, markdown optimization, shrinkage prediction live</div>
+      <div class="resolve"><div class="dot-ok"></div><strong>China Sourcing Diversified</strong> — 48% → 30%, Vietnam/Mexico corridors live, tariff exposure reduced</div>
+    </div>
+  </div>
+
+  <h3>Unified Commerce &amp; Supply Chain Platform — GCP</h3>
+  <div class="boundary">
+    <div class="blabel">Google Cloud Platform · Unified Retail Data Mesh · 800 Stores + Digital</div>
+    <div class="flow" style="margin-bottom:10px">
+      <div class="box">SAP S/4HANA<br><span style="color:var(--glt);font-size:9px">Migrated ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">o9 Demand<br><span style="color:var(--glt);font-size:9px">100% live ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">Salesforce CC<br><span style="color:var(--glt);font-size:9px">Conversion 4.1% ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box">800 Stores<br><span style="color:var(--glt);font-size:9px">RFID · BOPIS ✓</span></div>
+      <div style="color:var(--t3)">→</div>
+      <div class="box" style="border-color:var(--accent);color:var(--accent)">GCP BigQuery<br><span style="font-size:9px">Unified data mesh</span></div>
+    </div>
+    <div class="grid3">
+      <div class="card" style="border-color:rgba(52,168,83,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--green);margin-bottom:6px">Supply Chain AI — Vertex AI</div>
+        <div style="font-size:11px;color:var(--t3)">Demand sensing on unified store+digital+supplier data. Markdown optimization. Shrinkage prediction by store/SKU. Forecast accuracy 84%.</div>
+        <div style="margin-top:8px"><span class="tag ok">84% forecast accuracy</span></div>
+      </div>
+      <div class="card" style="border-color:rgba(77,163,255,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--blue);margin-bottom:6px">Commerce AI — Salesforce + Claude</div>
+        <div style="font-size:11px;color:var(--t3)">Personalization engine on GCP. Cart abandonment down from 72% to 54%. Real-time inventory available to digital. BOPIS live in all 800 stores.</div>
+        <div style="margin-top:8px"><span class="tag ok">4.1% conversion</span></div>
+      </div>
+      <div class="card" style="border-color:rgba(245,158,11,0.3)">
+        <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--amber);margin-bottom:6px">Loyalty &amp; Pricing AI</div>
+        <div style="font-size:11px;color:var(--t3)">42% → 58% loyalty enrollment. Dynamic pricing on seasonal and perishable SKUs. Loyalty data feeds demand signal. Churn prediction live.</div>
+        <div style="margin-top:8px"><span class="tag ok">58% loyalty</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Outcome Metrics — Post-Engagement</h3>
+  <div class="grid4" style="margin-bottom:16px">
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--glt)">5.8%</div>
+      <div class="mlabel">Operating margin (from 3.8%)</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--blue)">4.1%</div>
+      <div class="mlabel">eCommerce conversion (from 2.8%)</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--green)">84%</div>
+      <div class="mlabel">Forecast accuracy (from 62%)</div>
+    </div>
+    <div class="card" style="text-align:center">
+      <div class="metric" style="color:var(--amber)">$180M</div>
+      <div class="mlabel">Excess inventory released</div>
+    </div>
+  </div>
+
+  <div class="rvt">
+    <div class="rbox" style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2)">
+      <div class="rt" style="color:#EF4444">Current state — without this architecture</div>
+      <div class="rb" style="color:#9CA3AF">SAP ECC 6.0 support ending 2027 · o9 40% live · 62% forecast accuracy · $180M excess inventory · 2.8% conversion · 72% cart abandonment · 84% store inventory accuracy · 48% China sourcing · 3.8% operating margin</div>
+    </div>
+    <div class="rarr">→</div>
+    <div class="rbox" style="background:rgba(45,212,200,0.06);border:1px solid rgba(45,212,200,0.2)">
+      <div class="rt" style="color:#2DD4C8">Target state — with this architecture</div>
+      <div class="rb" style="color:#9CA3AF">SAP S/4HANA live · o9 100% deployed · 84% forecast accuracy · $180M released · 4.1% conversion · 54% cart abandonment · 98% inventory accuracy · 30% China sourcing · 5.8% operating margin</div>
+    </div>
+  </div>
+</div>
+<div class="foot">AbarVa Intelligence Platform · Apex Retail Group · GCP Architecture Intelligence · April 2026 · Confidential · Built from actual technology inventory and supply chain data</div>
+</div></body></html>`
+
 export const PATTERN_LANDING_ZONE_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Azure Landing Zone Pattern</title><style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}

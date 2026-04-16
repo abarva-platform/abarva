@@ -8,7 +8,7 @@ import { meridianAI } from '@/data/meridian/ai'
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
+  label: { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' } as React.CSSProperties,
 }
 
 type TabId = 'overview' | 'portfolio' | 'adoption' | 'value' | 'risk' | 'cost' | 'responsible'
@@ -153,7 +153,7 @@ function TrafficLight({ rate, greenMax = 15, amberMax = 25 }: { rate: number; gr
       </div>
       <div>
         <div style={{ fontSize: '22px', fontWeight: 800, color: isRed ? '#DC2626' : isAmber ? '#D97706' : '#059669' }}>{rate}%</div>
-        <div style={{ fontSize: '11px', color: '#6B7280' }}>Override Rate</div>
+        <div style={{ fontSize: '11px', color: '#3C3C3C' }}>Override Rate</div>
       </div>
     </div>
   )
@@ -175,8 +175,8 @@ function RiskBadge({ level }: { level: string }) {
 }
 
 function StatusDot({ status }: { status: string }) {
-  const colors: Record<string, string> = { Scaled: '#059669', Pilot: '#D97706', Validated: '#4DA3FF', Development: '#9CA3AF', Retired: '#EF4444' }
-  const color = colors[status] ?? '#9CA3AF'
+  const colors: Record<string, string> = { Scaled: '#059669', Pilot: '#D97706', Validated: '#4DA3FF', Development: '#888888', Retired: '#EF4444' }
+  const color = colors[status] ?? '#888888'
   return (
     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color }}>
       <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: color, display: 'inline-block' }} />
@@ -232,7 +232,7 @@ function OverviewTab({ clientId }: { clientId: string }) {
           <div key={c.label} style={{ ...S.card, padding: '20px', background: c.bg, border: '1px solid ' + c.bg.replace('F0', 'A7').replace('FF', 'BB') + '' }}>
             <div style={S.label}>{c.label}</div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: c.color, lineHeight: 1.1 }}>{c.value}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px' }}>{c.sub}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '6px' }}>{c.sub}</div>
           </div>
         ))}
       </div>
@@ -249,7 +249,7 @@ function OverviewTab({ clientId }: { clientId: string }) {
           ].map(d => (
             <div key={d.label} style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                <span style={{ fontSize: '13px', color: '#374151' }}>{d.label}</span>
+                <span style={{ fontSize: '13px', color: '#3C3C3C' }}>{d.label}</span>
                 <span style={{ fontSize: '13px', fontWeight: 700, color: d.score >= 60 ? '#059669' : d.score >= 40 ? '#D97706' : '#DC2626' }}>{d.score}</span>
               </div>
               <div style={{ height: '6px', background: '#F1F5F9', borderRadius: '3px' }}>
@@ -269,9 +269,9 @@ function OverviewTab({ clientId }: { clientId: string }) {
                 <div key={stage} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <StatusDot status={stage} />
                   <div style={{ flex: 1, height: '8px', background: '#F1F5F9', borderRadius: '4px' }}>
-                    <div style={{ height: '8px', borderRadius: '4px', width: pct + '%', background: stage === 'Scaled' ? '#059669' : stage === 'Pilot' ? '#D97706' : stage === 'Validated' ? '#4DA3FF' : '#9CA3AF' }} />
+                    <div style={{ height: '8px', borderRadius: '4px', width: pct + '%', background: stage === 'Scaled' ? '#059669' : stage === 'Pilot' ? '#D97706' : stage === 'Validated' ? '#4DA3FF' : '#888888' }} />
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151', minWidth: '28px' }}>{count}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#3C3C3C', minWidth: '28px' }}>{count}</span>
                 </div>
               )
             })}
@@ -298,7 +298,7 @@ function OverviewTab({ clientId }: { clientId: string }) {
               <RiskBadge level={a.priority} />
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '13px', color: '#1E293B' }}>{a.action}</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Owner: {a.owner}</div>
+                <div style={{ fontSize: '11px', color: '#3C3C3C', marginTop: '2px' }}>Owner: {a.owner}</div>
               </div>
             </div>
           ))}
@@ -342,16 +342,16 @@ function PortfolioTab() {
               {SHADOW_TOOLS.map(t => (
                 <tr key={t.id} style={{ borderBottom: '1px solid #FEE2E2' }}>
                   <td style={{ padding: '8px', fontWeight: 600, color: '#1E293B' }}>{t.name}</td>
-                  <td style={{ padding: '8px', color: '#6B7280' }}>{t.discoveredBy}</td>
+                  <td style={{ padding: '8px', color: '#3C3C3C' }}>{t.discoveredBy}</td>
                   <td style={{ padding: '8px', fontWeight: 700, color: '#DC2626' }}>{t.users}</td>
-                  <td style={{ padding: '8px', color: '#374151' }}>{t.department}</td>
+                  <td style={{ padding: '8px', color: '#3C3C3C' }}>{t.department}</td>
                   <td style={{ padding: '8px' }}>
                     {t.phiRisk
                       ? <span style={{ fontSize: '11px', fontWeight: 700, color: '#DC2626', background: '#FEF2F2', padding: '2px 6px', borderRadius: '6px', border: '1px solid #FECACA' }}>PHI Risk</span>
-                      : <span style={{ fontSize: '11px', color: '#6B7280' }}>Low</span>}
+                      : <span style={{ fontSize: '11px', color: '#3C3C3C' }}>Low</span>}
                   </td>
                   <td style={{ padding: '8px' }}><RiskBadge level={t.riskLevel} /></td>
-                  <td style={{ padding: '8px', color: '#6B7280' }}>{t.lastSeen}</td>
+                  <td style={{ padding: '8px', color: '#3C3C3C' }}>{t.lastSeen}</td>
                 </tr>
               ))}
             </tbody>
@@ -363,13 +363,13 @@ function PortfolioTab() {
       <div style={S.card}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <div style={S.label}>Registered AI Inventory</div>
-          <span style={{ fontSize: '12px', color: '#6B7280' }}>6 tools · Last updated today</span>
+          <span style={{ fontSize: '12px', color: '#3C3C3C' }}>6 tools · Last updated today</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
               {['Tool', 'Owner', 'Platform', 'Stage', 'Risk Tier', 'Value Status', 'MAU', 'Override %'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -377,16 +377,16 @@ function PortfolioTab() {
             {REGISTERED_TOOLS.map(t => (
               <tr key={t.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
                 <td style={{ padding: '10px 8px', fontWeight: 600, color: '#1E293B' }}>{t.name}</td>
-                <td style={{ padding: '10px 8px', color: '#374151' }}>{t.owner}</td>
-                <td style={{ padding: '10px 8px', color: '#6B7280' }}>{t.platform}</td>
+                <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{t.owner}</td>
+                <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{t.platform}</td>
                 <td style={{ padding: '10px 8px' }}><StatusDot status={t.stage} /></td>
                 <td style={{ padding: '10px 8px' }}><RiskBadge level={t.riskTier} /></td>
-                <td style={{ padding: '10px 8px', color: '#374151', fontSize: '12px' }}>{t.valueStatus}</td>
-                <td style={{ padding: '10px 8px', fontWeight: t.monthlyUsers > 0 ? 600 : 400, color: t.monthlyUsers > 0 ? '#1E293B' : '#9CA3AF' }}>{t.monthlyUsers > 0 ? t.monthlyUsers : '—'}</td>
+                <td style={{ padding: '10px 8px', color: '#3C3C3C', fontSize: '12px' }}>{t.valueStatus}</td>
+                <td style={{ padding: '10px 8px', fontWeight: t.monthlyUsers > 0 ? 600 : 400, color: t.monthlyUsers > 0 ? '#1E293B' : '#888888' }}>{t.monthlyUsers > 0 ? t.monthlyUsers : '—'}</td>
                 <td style={{ padding: '10px 8px' }}>
                   {t.overrideRate > 0
                     ? <span style={{ fontWeight: 700, color: t.overrideRate >= 25 ? '#DC2626' : t.overrideRate >= 15 ? '#D97706' : '#059669' }}>{t.overrideRate}%</span>
-                    : <span style={{ color: '#9CA3AF' }}>—</span>}
+                    : <span style={{ color: '#888888' }}>—</span>}
                 </td>
               </tr>
             ))}
@@ -416,7 +416,7 @@ function AdoptionTab() {
           <div key={m.label} style={S.card}>
             <div style={S.label}>{m.label}</div>
             <div style={{ fontSize: '28px', fontWeight: 800, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{m.sub}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -425,13 +425,13 @@ function AdoptionTab() {
         {/* Override rate traffic lights */}
         <div style={S.card}>
           <div style={S.label}>Override Rate by Tool</div>
-          <div style={{ fontSize: '12px', color: '#6B7280', marginBottom: '16px' }}>Green &lt;15% · Amber 15–25% · Red &gt;25%</div>
+          <div style={{ fontSize: '12px', color: '#3C3C3C', marginBottom: '16px' }}>Green &lt;15% · Amber 15–25% · Red &gt;25%</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {REGISTERED_TOOLS.filter(t => t.overrideRate > 0).map(t => (
               <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>{t.name}</div>
-                  <div style={{ fontSize: '11px', color: '#6B7280' }}>MAU: {t.monthlyUsers}</div>
+                  <div style={{ fontSize: '11px', color: '#3C3C3C' }}>MAU: {t.monthlyUsers}</div>
                 </div>
                 <TrafficLight rate={t.overrideRate} />
               </div>
@@ -457,13 +457,13 @@ function AdoptionTab() {
                   <div style={{ flex: 1, background: '#FCA5A5', borderRadius: '3px 3px 0 0', height: ((sepsisMAU[i] / 160) * 90) + 'px' }} />
                   <div style={{ flex: 1, background: '#93C5FD', borderRadius: '3px 3px 0 0', height: ((dacMAU[i] / 160) * 90) + 'px' }} />
                 </div>
-                <div style={{ fontSize: '10px', color: '#9CA3AF' }}>{month}</div>
+                <div style={{ fontSize: '10px', color: '#888888' }}>{month}</div>
               </div>
             ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-            <span style={{ fontSize: '11px', color: '#6B7280' }}>Sepsis: {sepsisMAU[0]} → {sepsisMAU[sepsisMAU.length - 1]} MAU</span>
-            <span style={{ fontSize: '11px', color: '#6B7280' }}>Doc AI: {dacMAU[0]} → {dacMAU[dacMAU.length - 1]} MAU</span>
+            <span style={{ fontSize: '11px', color: '#3C3C3C' }}>Sepsis: {sepsisMAU[0]} → {sepsisMAU[sepsisMAU.length - 1]} MAU</span>
+            <span style={{ fontSize: '11px', color: '#3C3C3C' }}>Doc AI: {dacMAU[0]} → {dacMAU[dacMAU.length - 1]} MAU</span>
           </div>
         </div>
       </div>
@@ -481,10 +481,10 @@ function AdoptionTab() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                 <RiskBadge level={g.severity} />
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{g.tool}</span>
-                <span style={{ fontSize: '12px', color: '#6B7280' }}>— {g.status}</span>
+                <span style={{ fontSize: '12px', color: '#3C3C3C' }}>— {g.status}</span>
               </div>
-              <div style={{ fontSize: '13px', color: '#374151', marginBottom: '4px' }}>{g.gap}</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: '#374151' }}>→ {g.action}</div>
+              <div style={{ fontSize: '13px', color: '#3C3C3C', marginBottom: '4px' }}>{g.gap}</div>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#3C3C3C' }}>→ {g.action}</div>
             </div>
           ))}
         </div>
@@ -509,7 +509,7 @@ function ValueTab() {
           <div key={m.label} style={S.card}>
             <div style={S.label}>{m.label}</div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{m.sub}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -524,7 +524,7 @@ function ValueTab() {
           <thead>
             <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
               {['Tool', 'Metric', 'Baseline', 'Current', 'Improvement', 'Annualized Savings', 'ROI Status'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -537,15 +537,15 @@ function ValueTab() {
               { tool: 'Denial Prediction Model', metric: 'Denial Rate', baseline: '18.2%', current: '18.2%', improvement: 'No change', savings: '$0 (not deployed)', roiStatus: 'Not Deployed' },
               { tool: 'Readmission Risk', metric: 'Readmission Rate', baseline: 'TBD', current: 'TBD', improvement: 'Unmeasured', savings: 'Unmeasured', roiStatus: 'In Development' },
             ].map((r, i) => {
-              const roiColor = r.roiStatus === 'Positive' ? '#059669' : r.roiStatus === 'Pilot Only' ? '#D97706' : r.roiStatus === 'Not Deployed' ? '#DC2626' : '#9CA3AF'
+              const roiColor = r.roiStatus === 'Positive' ? '#059669' : r.roiStatus === 'Pilot Only' ? '#D97706' : r.roiStatus === 'Not Deployed' ? '#DC2626' : '#888888'
               return (
                 <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '10px 8px', fontWeight: 600, color: '#1E293B' }}>{r.tool}</td>
-                  <td style={{ padding: '10px 8px', color: '#6B7280' }}>{r.metric}</td>
-                  <td style={{ padding: '10px 8px', color: '#374151' }}>{r.baseline}</td>
-                  <td style={{ padding: '10px 8px', color: '#374151' }}>{r.current}</td>
-                  <td style={{ padding: '10px 8px', fontWeight: 700, color: r.improvement.startsWith('−') ? '#059669' : '#9CA3AF' }}>{r.improvement}</td>
-                  <td style={{ padding: '10px 8px', color: '#374151' }}>{r.savings}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{r.metric}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{r.baseline}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{r.current}</td>
+                  <td style={{ padding: '10px 8px', fontWeight: 700, color: r.improvement.startsWith('−') ? '#059669' : '#888888' }}>{r.improvement}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{r.savings}</td>
                   <td style={{ padding: '10px 8px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: roiColor }}>{r.roiStatus}</span>
                   </td>
@@ -603,10 +603,10 @@ function RiskTab() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
                 <RiskBadge level={a.severity} />
                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#1E293B' }}>{a.tool}</span>
-                <span style={{ fontSize: '11px', color: '#6B7280' }}>{a.type} · Detected {a.detected}</span>
+                <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{a.type} · Detected {a.detected}</span>
                 <span style={{ marginLeft: 'auto', fontSize: '11px', fontWeight: 600, color: a.status === 'Open' ? '#DC2626' : '#D97706' }}>{a.status}</span>
               </div>
-              <div style={{ fontSize: '13px', color: '#374151' }}>{a.description}</div>
+              <div style={{ fontSize: '13px', color: '#3C3C3C' }}>{a.description}</div>
             </div>
           ))}
         </div>
@@ -619,7 +619,7 @@ function RiskTab() {
           <thead>
             <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
               {['Tool', 'HIPAA', 'HITRUST Ready', 'FDA Classification', 'EU AI Act', 'Bias Assessed'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -629,8 +629,8 @@ function RiskTab() {
                 <td style={{ padding: '10px 8px', fontWeight: 600, color: '#1E293B' }}>{r.tool}</td>
                 <td style={{ padding: '10px 8px' }}><CheckOrX val={r.hipaa} /></td>
                 <td style={{ padding: '10px 8px' }}><CheckOrX val={r.hitrustReady} /></td>
-                <td style={{ padding: '10px 8px', fontSize: '12px', color: '#374151' }}>{r.fdaStatus}</td>
-                <td style={{ padding: '10px 8px', fontSize: '12px', color: '#374151' }}>{r.euAiAct}</td>
+                <td style={{ padding: '10px 8px', fontSize: '12px', color: '#3C3C3C' }}>{r.fdaStatus}</td>
+                <td style={{ padding: '10px 8px', fontSize: '12px', color: '#3C3C3C' }}>{r.euAiAct}</td>
                 <td style={{ padding: '10px 8px' }}><CheckOrX val={r.biasAssessed} /></td>
               </tr>
             ))}
@@ -654,14 +654,14 @@ function CostTab() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '24px' }}>
         {[
           { label: 'Total Monthly Spend', value: '$' + (TOTAL_MONTHLY_SPEND / 1000).toFixed(0) + 'K', sub: 'Across 6 registered tools', color: '#4DA3FF' },
-          { label: 'Annual Run Rate', value: '$' + (TOTAL_MONTHLY_SPEND * 12 / 1000).toFixed(0) + 'K', sub: 'Excl. shadow AI', color: '#374151' },
+          { label: 'Annual Run Rate', value: '$' + (TOTAL_MONTHLY_SPEND * 12 / 1000).toFixed(0) + 'K', sub: 'Excl. shadow AI', color: '#3C3C3C' },
           { label: 'Azure Concentration', value: AZURE_PCT + '%', sub: AZURE_PCT > 60 ? 'Flag: >60% single vendor' : 'Within acceptable range', color: AZURE_PCT > 60 ? '#DC2626' : '#059669' },
           { label: 'Retirement Candidates', value: '1', sub: 'Denial model — $4.2K/mo, 0 users', color: '#D97706' },
         ].map(m => (
           <div key={m.label} style={S.card}>
             <div style={S.label}>{m.label}</div>
             <div style={{ fontSize: '26px', fontWeight: 800, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>{m.sub}</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>{m.sub}</div>
           </div>
         ))}
       </div>
@@ -681,7 +681,7 @@ function CostTab() {
           <thead>
             <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
               {['Tool', 'Platform', 'Monthly Spend', 'Benchmark', 'vs Benchmark', 'Per Inference', 'Monthly Volume', 'ROI'].map(h => (
-                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#6B7280', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
+                <th key={h} style={{ textAlign: 'left', padding: '8px', color: '#3C3C3C', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase' }}>{h}</th>
               ))}
             </tr>
           </thead>
@@ -690,16 +690,16 @@ function CostTab() {
               const delta = t.monthlySpend - t.benchmarkSpend
               const deltaColor = delta > 0 ? '#DC2626' : '#059669'
               const roiLabel = t.roi < 0 ? 'Unmeasured' : t.roi < 1 ? 'Negative' : t.roi > 5 ? 'Strong' : t.roi > 2 ? 'Positive' : 'Marginal'
-              const roiColor = t.roi < 0 ? '#9CA3AF' : t.roi < 1 ? '#DC2626' : t.roi > 5 ? '#059669' : t.roi > 2 ? '#4DA3FF' : '#D97706'
+              const roiColor = t.roi < 0 ? '#888888' : t.roi < 1 ? '#DC2626' : t.roi > 5 ? '#059669' : t.roi > 2 ? '#4DA3FF' : '#D97706'
               return (
                 <tr key={i} style={{ borderBottom: '1px solid #F1F5F9' }}>
                   <td style={{ padding: '10px 8px', fontWeight: 600, color: '#1E293B', fontSize: '12px' }}>{t.name}</td>
-                  <td style={{ padding: '10px 8px', color: '#6B7280', fontSize: '12px' }}>{t.platform}</td>
-                  <td style={{ padding: '10px 8px', fontWeight: 600, color: '#374151' }}>${(t.monthlySpend / 1000).toFixed(1)}K</td>
-                  <td style={{ padding: '10px 8px', color: '#9CA3AF' }}>${(t.benchmarkSpend / 1000).toFixed(1)}K</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C', fontSize: '12px' }}>{t.platform}</td>
+                  <td style={{ padding: '10px 8px', fontWeight: 600, color: '#3C3C3C' }}>${(t.monthlySpend / 1000).toFixed(1)}K</td>
+                  <td style={{ padding: '10px 8px', color: '#888888' }}>${(t.benchmarkSpend / 1000).toFixed(1)}K</td>
                   <td style={{ padding: '10px 8px', fontWeight: 700, color: deltaColor }}>{delta > 0 ? '+' : ''}{Math.round((delta / t.benchmarkSpend) * 100)}%</td>
-                  <td style={{ padding: '10px 8px', color: '#374151' }}>${t.perInference.toFixed(2)}</td>
-                  <td style={{ padding: '10px 8px', color: '#6B7280' }}>{t.inferenceCount.toLocaleString()}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>${t.perInference.toFixed(2)}</td>
+                  <td style={{ padding: '10px 8px', color: '#3C3C3C' }}>{t.inferenceCount.toLocaleString()}</td>
                   <td style={{ padding: '10px 8px' }}><span style={{ fontSize: '11px', fontWeight: 700, color: roiColor }}>{roiLabel}</span></td>
                 </tr>
               )
@@ -719,7 +719,7 @@ function CostTab() {
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: colors[i] }}>{Math.round(pct)}%</div>
                 <div style={{ width: '100%', height: (pct / 100 * 90) + 'px', background: colors[i], borderRadius: '4px 4px 0 0', opacity: 0.85 }} />
-                <div style={{ fontSize: '9px', color: '#6B7280', textAlign: 'center', lineHeight: 1.2 }}>{t.name.split(' ').slice(0, 2).join(' ')}</div>
+                <div style={{ fontSize: '9px', color: '#3C3C3C', textAlign: 'center', lineHeight: 1.2 }}>{t.name.split(' ').slice(0, 2).join(' ')}</div>
               </div>
             )
           })}
@@ -739,11 +739,11 @@ function ResponsibleAITab() {
         <div style={{ ...S.card, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px' }}>
           <div style={S.label}>Responsible AI Score</div>
           <ScoreGauge score={RA_SCORE} size={120} />
-          <div style={{ marginTop: '16px', fontSize: '14px', color: '#374151', textAlign: 'center' }}>
+          <div style={{ marginTop: '16px', fontSize: '14px', color: '#3C3C3C', textAlign: 'center' }}>
             <strong style={{ color: RA_SCORE >= 75 ? '#059669' : '#D97706' }}>
               {RA_SCORE >= 75 ? 'Good' : RA_SCORE >= 55 ? 'Needs Improvement' : 'At Risk'}
             </strong>
-            <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Incident response and training are the primary gaps</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>Incident response and training are the primary gaps</div>
           </div>
         </div>
 
@@ -760,7 +760,7 @@ function ResponsibleAITab() {
                 <div style={{ height: '6px', background: '#F1F5F9', borderRadius: '3px', marginBottom: '3px' }}>
                   <div style={{ height: '6px', borderRadius: '3px', width: d.score + '%', background: d.score >= 75 ? '#059669' : d.score >= 55 ? '#D97706' : '#DC2626' }} />
                 </div>
-                <div style={{ fontSize: '11px', color: '#6B7280' }}>{d.note}</div>
+                <div style={{ fontSize: '11px', color: '#3C3C3C' }}>{d.note}</div>
               </div>
             ))}
           </div>
@@ -782,7 +782,7 @@ function ResponsibleAITab() {
                 <span style={{ fontSize: '11px', fontWeight: 700, color: statusColor, minWidth: '70px', marginTop: '1px' }}>{item.status}</span>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#1E293B' }}>{item.item}</div>
-                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px' }}>{item.note}</div>
+                  <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '2px' }}>{item.note}</div>
                 </div>
               </div>
             )
@@ -798,7 +798,7 @@ function ResponsibleAITab() {
             Export PDF
           </button>
         </div>
-        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px', fontSize: '13px', lineHeight: 1.7, color: '#374151' }}>
+        <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '8px', padding: '20px', fontSize: '13px', lineHeight: 1.7, color: '#3C3C3C' }}>
           <div style={{ fontWeight: 700, fontSize: '14px', color: '#0F172A', marginBottom: '12px' }}>MERIDIAN HEALTH SYSTEM — AI GOVERNANCE ATTESTATION</div>
           <div style={{ marginBottom: '8px' }}><strong>Reporting Period:</strong> Q1 2026 (January – March)</div>
           <div style={{ marginBottom: '8px' }}><strong>Accountable Executive:</strong> Marcus Webb, CIO</div>
@@ -817,7 +817,7 @@ function ResponsibleAITab() {
               <span>{att}</span>
             </div>
           ))}
-          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px', marginTop: '8px', color: '#6B7280', fontSize: '12px' }}>
+          <div style={{ borderTop: '1px solid #E2E8F0', paddingTop: '12px', marginTop: '8px', color: '#3C3C3C', fontSize: '12px' }}>
             Responsible AI Score: {RA_SCORE}/100 · Prepared by AbarVa Intelligence Platform · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </div>
         </div>
@@ -864,7 +864,7 @@ function ControlTowerInner() {
                 cursor: 'pointer',
                 border: 'none',
                 background: 'none',
-                color: activeTab === tab.id ? '#0F172A' : '#6B7280',
+                color: activeTab === tab.id ? '#0F172A' : '#3C3C3C',
                 borderBottom: activeTab === tab.id ? '2px solid #2DD4C8' : '2px solid transparent',
                 marginBottom: '-2px',
                 whiteSpace: 'nowrap',
@@ -893,7 +893,7 @@ function ControlTowerInner() {
 
 export default function ControlTowerPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#6B7280' }}>Loading AI Control Tower...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#3C3C3C' }}>Loading AI Control Tower...</div>}>
       <ControlTowerInner />
     </Suspense>
   )

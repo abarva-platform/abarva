@@ -48,19 +48,19 @@ function BoardDeckContent() {
   const deck = DECKS[clientId] || DECKS.meridian
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0D1117', fontFamily: 'Inter, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Inter, -apple-system, sans-serif' }}>
       <AbarvaNav activePage="board-deck" />
 
       {/* Header */}
-      <div style={{ background: '#111827', borderBottom: '1px solid #21262D', padding: '24px 40px' }}>
+      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E2E1DC', padding: '24px 40px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Board Presentation</div>
-            <div style={{ fontSize: '26px', fontWeight: 800, color: '#E6EDF3', letterSpacing: '-0.02em', marginBottom: '4px' }}>{deck.client}</div>
-            <div style={{ fontSize: '14px', color: '#6B7280' }}>{deck.title} · {deck.slides.length} slides · Every number sourced from client data</div>
+            <div style={{ fontSize: '26px', fontWeight: 800, color: '#0C0C0C', letterSpacing: '-0.02em', marginBottom: '4px' }}>{deck.client}</div>
+            <div style={{ fontSize: '14px', color: '#3C3C3C' }}>{deck.title} · {deck.slides.length} slides · Every number sourced from client data</div>
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <div style={{ padding: '10px 20px', borderRadius: '8px', background: '#21262D', border: '1px solid #30363D', fontSize: '13px', fontWeight: 600, color: '#6B7280', cursor: 'default' }}>
+            <div style={{ padding: '10px 20px', borderRadius: '8px', background: '#F1F0EC', border: '1px solid #E2E1DC', fontSize: '13px', fontWeight: 600, color: '#3C3C3C', cursor: 'default' }}>
               Export PowerPoint →
             </div>
           </div>
@@ -71,7 +71,7 @@ function BoardDeckContent() {
       <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '32px 40px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {deck.slides.map((slide, i) => (
-            <div key={i} style={{ background: '#111827', border: '1px solid #21262D', borderRadius: '12px', overflow: 'hidden', borderLeft: '4px solid ' + deck.color }}>
+            <div key={i} style={{ background: '#FFFFFF', border: '1px solid #E2E1DC', borderRadius: '12px', overflow: 'hidden', borderLeft: '4px solid ' + deck.color }}>
               <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', gap: '0' }}>
                 {/* Slide number */}
                 <div style={{ background: deck.color + '20', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 0' }}>
@@ -80,14 +80,14 @@ function BoardDeckContent() {
                 {/* Content */}
                 <div style={{ padding: '20px 24px' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '12px' }}>
-                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#E6EDF3' }}>{slide.title}</div>
-                    <div style={{ fontSize: '12px', color: '#6B7280', fontStyle: 'italic' }}>{slide.subtitle}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#0C0C0C' }}>{slide.title}</div>
+                    <div style={{ fontSize: '12px', color: '#3C3C3C', fontStyle: 'italic' }}>{slide.subtitle}</div>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     {slide.content.map((line, j) => (
                       <div key={j} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                         <span style={{ color: deck.color, fontSize: '12px', flexShrink: 0, marginTop: '3px', fontWeight: 700 }}>→</span>
-                        <span style={{ fontSize: '13px', color: '#C9D1D9', lineHeight: 1.6 }}>{line}</span>
+                        <span style={{ fontSize: '13px', color: '#3C3C3C', lineHeight: 1.6 }}>{line}</span>
                       </div>
                     ))}
                   </div>
@@ -98,10 +98,10 @@ function BoardDeckContent() {
         </div>
 
         {/* Footer CTA */}
-        <div style={{ marginTop: '32px', padding: '24px', background: '#111827', border: '1px solid #21262D', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ marginTop: '32px', padding: '24px', background: '#FFFFFF', border: '1px solid #E2E1DC', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#E6EDF3', marginBottom: '4px' }}>Generated by AbarVa in minutes. McKinsey takes 16 weeks.</div>
-            <div style={{ fontSize: '12px', color: '#6B7280' }}>Every number on every slide is sourced from actual {deck.client} data.</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0C0C0C', marginBottom: '4px' }}>Generated by AbarVa in minutes. McKinsey takes 16 weeks.</div>
+            <div style={{ fontSize: '12px', color: '#3C3C3C' }}>Every number on every slide is sourced from actual {deck.client} data.</div>
           </div>
           <a href={'/ai-strategy?client=' + clientId} style={{ padding: '12px 24px', borderRadius: '8px', background: deck.color, color: '#fff', fontSize: '13px', fontWeight: 700, textDecoration: 'none', flexShrink: 0, marginLeft: '16px' }}>
             Back to AI Strategy →
@@ -114,7 +114,7 @@ function BoardDeckContent() {
 
 export default function BoardDeckPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6B7280', fontFamily: 'Inter, sans-serif' }}>Loading...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F8F7F4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3C3C3C', fontFamily: 'Inter, sans-serif' }}>Loading...</div>}>
       <BoardDeckContent />
     </Suspense>
   )

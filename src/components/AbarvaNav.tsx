@@ -55,7 +55,7 @@ function NavInner({ activePage }: NavProps) {
     metaRole === 'client'   ? 'Client'   : null
 
   const isElevated = metaRole === 'admin' || metaRole === 'investor'
-  const isAdmin    = metaRole === 'admin'
+  const isAdmin    = metaRole === 'admin' || metaRole === 'investor'  // investors play Maestro role
 
   const solutionPath = (sol: string) => {
     if (metaRole === 'client' && metaClientId) return `/portal/${sol}?client=${metaClientId}`
@@ -64,19 +64,20 @@ function NavInner({ activePage }: NavProps) {
 
   const modulePath = (page: string) => `/${page}?client=${clientId}`
 
-  // Intelligence → AI Strategy overview (not a specific module — that avoids double-highlight with AVR)
-  const intelligencePath = modulePath('ai-strategy')
+  // Intelligence → cockpit at /intelligence (separate from AVR module links)
+  const intelligencePath = modulePath('intelligence')
 
-  // 9 modules organised by phase
+  // 3 phases × modules → all link to unified /ai-strategy page
+  const avrPath = (slug: string) => `/ai-strategy?module=${slug}&client=${clientId}`
   const AVR_PHASES = [
     {
       phase: 1,
       label: 'DIAGNOSE',
       color: '#4DA3FF',
       modules: [
-        { name: 'Situation Intelligence',     desc: 'What is broken — and what it costs',        path: modulePath('diagnose') },
-        { name: 'Contradiction Intelligence', desc: 'What was promised vs what exists',           path: modulePath('contradictions') },
-        { name: 'Data Intelligence',          desc: 'Data readiness before AI investment',        path: modulePath('data-intelligence') },
+        { name: 'Situation Intelligence',     num: '01', desc: 'What is broken — and what it costs',             path: avrPath('situation') },
+        { name: 'Contradiction Intelligence', num: '02', desc: 'What was promised vs what the data shows',        path: avrPath('contradiction') },
+        { name: 'Data Intelligence',          num: '03', desc: 'Is your data ready to support AI?',              path: avrPath('data') },
       ],
     },
     {
@@ -84,41 +85,47 @@ function NavInner({ activePage }: NavProps) {
       label: 'PRESCRIBE',
       color: '#F59E0B',
       modules: [
-        { name: 'Technology Intelligence',    desc: 'Current stack — inventory, spend, contracts', path: modulePath('intelligence') },
-        { name: 'Vendor Intelligence',        desc: 'Vendor selection scored against your situation', path: modulePath('vendor-intelligence') },
-        { name: 'Architecture Intelligence',  desc: 'Target state — AI stack blueprint',           path: modulePath('architecture') },
-        { name: 'Business Case Intelligence', desc: 'CFO-grade case with Genome validation',       path: modulePath('justify') },
+        { name: 'Technology Intelligence',    num: '04', desc: 'Stack inventory, spend, and contract windows',    path: avrPath('technology') },
+        { name: 'Vendor Intelligence',        num: '05', desc: 'Which vendor wins in your situation — not their demo', path: avrPath('vendor') },
+        { name: 'Architecture Intelligence',  num: '06', desc: 'Target AI stack blueprint for 3 years out',      path: avrPath('architecture') },
+        { name: 'Business Case Intelligence', num: '07', desc: 'CFO-grade numbers the board will sign off on',   path: avrPath('business-case') },
       ],
     },
     {
       phase: 3,
-      label: 'VALUE REALIZATION',
+      label: 'EXECUTE',
       color: '#34D399',
       modules: [
-        { name: 'AI Delivery Intelligence', desc: 'Portfolio, blockers, and delivery roadmap',   path: modulePath('ai-pdlc') },
-        { name: 'Outcome Intelligence',     desc: 'Baseline locked · verified delta · fee earned', path: modulePath('outcome-intelligence') },
+        { name: 'AI Delivery Intelligence', num: '08', desc: 'Portfolio, blockers, delivery roadmap',            path: avrPath('ai-delivery') },
+        { name: 'Outcome Intelligence',     num: '09', desc: 'Baseline locked — verified delta — fee earned',    path: avrPath('outcome') },
+        { name: 'Monthly Actuals',          num: '10', desc: 'Are the numbers moving right now?',                path: avrPath('actuals') },
+        { name: 'Fee Calculation',          num: '11', desc: 'What AbarVa has earned — verified',               path: avrPath('fee') },
       ],
     },
   ]
 
-  // Admin sub-menu items
+  // Admin sub-menu items — all route to /admin portal with ?section= param
   const ADMIN_ITEMS = [
-    { label: 'Setup',             path: '/admin/context',    desc: 'Client onboarding and configuration' },
-    { label: 'Data / Approvals',  path: '/admin/approvals',  desc: 'Data governance and sign-offs' },
-    { label: 'Users',             path: '/admin/new-client', desc: 'Manage users and permissions' },
-    { label: 'Security',          path: '/admin',            desc: 'Access control and audit logs' },
-    { label: 'Demo Data',         path: '/admin/data-guide', desc: 'Install and reset demo datasets' },
+    { label: 'Programme Dashboard', path: '/admin?section=programme', desc: 'All engagements, phases, approvals, fees' },
+    { label: 'Client Setup',        path: '/admin?section=setup',     desc: 'Client profile, fee model, contacts' },
+    { label: 'Data Uploads',        path: '/admin?section=data',      desc: 'Upload files, approve data, AI readiness' },
+    { label: 'Engagements',         path: '/admin?section=engagements', desc: 'Define and assign engagement backlog' },
+    { label: 'Users & Roles',       path: '/admin?section=users',     desc: 'Invite Maestros, assign engagements' },
+    { label: 'Workload',            path: '/admin?section=backlog',   desc: 'Capacity planning and assignment' },
   ]
 
-  // AVR active: all 9 module pages — but NOT ai-strategy (that's the Intelligence overview)
+  // AVR active: 8 module pages — intelligence is now its own top-level cockpit link
   const avrActive = [
-    'intelligence', 'architecture', 'ai-pdlc', 'avr',
+    'architecture', 'ai-pdlc', 'avr',
     'data-intelligence', 'justify', 'contradictions', 'outcome-intelligence',
-    'diagnose', 'vendor-intelligence',
+    'diagnose', 'vendor-intelligence', 'ai-strategy',
   ].includes(activePage || '')
 
-  // Intelligence link active: only when on the AI strategy overview or a generic hub page
-  const intelligenceActive = ['ai-strategy', 'intelligence-hub'].includes(activePage || '')
+  // Intelligence cockpit active
+  const intelligenceActive = activePage === 'intelligence'
+
+  // AI Unlock active
+  const aiUnlockActive = activePage === 'ai-unlock'
 
   const adminActive = (activePage || '').startsWith('admin')
 
@@ -127,7 +134,7 @@ function NavInner({ activePage }: NavProps) {
     'diagnose':             { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Situation Intelligence' },
     'contradictions':       { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Contradiction Intelligence' },
     'data-intelligence':    { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Data Intelligence' },
-    'intelligence':         { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Technology Intelligence' },
+    // 'intelligence' is a standalone cockpit — no AVR breadcrumb
     'vendor-intelligence':  { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Vendor Intelligence' },
     'architecture':         { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Architecture Intelligence' },
     'justify':              { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Business Case Intelligence' },
@@ -277,56 +284,109 @@ function NavInner({ activePage }: NavProps) {
           )}
         </div>
 
-        {/* ── AI Value Realization ▾ ────────────────────────────────────────── */}
-        {signedIn ? (
-          <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
-            <button style={{
-              fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
-              color: avrActive ? TEAL : NAV_TEXT,
-              borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
-            }}>
-              AI Value Realization ▾
-            </button>
-            {open === 'avr' && (
-              <div style={{ ...dropPanel, minWidth: '340px' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
-                {AVR_PHASES.map((phase, pi) => (
-                  <div key={phase.phase}>
-                    {pi > 0 && <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />}
-                    <div style={{ padding: '6px 20px 4px' }}>
-                      <span style={{ fontFamily: MONO, fontSize: '7.5px', color: phase.color, letterSpacing: '.12em', textTransform: 'uppercase' as const, fontWeight: 700 }}>
-                        Phase {phase.phase} — {phase.label}
-                      </span>
-                    </div>
-                    {phase.modules.map(item => (
-                      <a key={item.name} href={item.path} onClick={() => setOpen(null)}
-                        style={{ display: 'block', padding: '8px 20px 8px 28px', textDecoration: 'none', borderRadius: '8px', margin: '0 4px' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS }}>{item.name}</div>
-                        <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '1px' }}>{item.desc}</div>
-                      </a>
-                    ))}
-                  </div>
-                ))}
-                <div style={{ borderTop: `1px solid ${DROP_BORD}`, margin: '6px 0' }} />
-                <a href="/ai-strategy" onClick={() => setOpen(null)}
-                  style={{ display: 'block', padding: '9px 20px', textDecoration: 'none', fontFamily: SANS, fontSize: '12px', color: '#1D4ED8', fontWeight: 500, borderRadius: '8px', margin: '0 4px' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                  View all 9 modules →
-                </a>
-              </div>
-            )}
-          </div>
-        ) : (
-          <a href="/ai-strategy" style={{
-            fontSize: '13px', color: avrActive ? TEAL : NAV_TEXT, padding: '8px 10px',
-            fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+        {/* ── Start Here ▾ — mega menu ─────────────────────────────────────── */}
+        <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
+          <button style={{
+            fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px',
+            color: avrActive ? TEAL : NAV_TEXT,
             borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent',
           }}>
-            AI Value Realization
-          </a>
-        )}
+            AI Value Realization ▾
+          </button>
+          {open === 'avr' && (
+            <div
+              style={{
+                ...dropPanel,
+                minWidth: '780px',
+                padding: '0',
+                left: '50%',
+                transform: 'translateX(-50%)',
+              }}
+              onMouseEnter={cancelClose}
+              onMouseLeave={startClose}
+            >
+              {/* Top bar */}
+              <div style={{
+                padding: '14px 24px 12px',
+                borderBottom: `1px solid ${DROP_BORD}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: DROP_HEAD }}>
+                    AI Value Realization Navigator
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: DROP_DESC, marginTop: '2px' }}>
+                    3 phases · 11 modules · gate-locked delivery
+                  </div>
+                </div>
+                <a
+                  href={`/ai-strategy?client=${clientId}`}
+                  onClick={() => setOpen(null)}
+                  style={{
+                    fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 600,
+                    textDecoration: 'none', padding: '6px 14px',
+                    border: `1px solid rgba(45,212,200,0.35)`, borderRadius: '6px',
+                    background: 'rgba(45,212,200,0.05)',
+                  }}
+                >
+                  Open Navigator →
+                </a>
+              </div>
+
+              {/* 3-column phase grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0' }}>
+                {AVR_PHASES.map((phase, pi) => (
+                  <div
+                    key={phase.phase}
+                    style={{
+                      padding: '16px 20px 20px',
+                      borderRight: pi < AVR_PHASES.length - 1 ? `1px solid ${DROP_BORD}` : 'none',
+                    }}
+                  >
+                    {/* Phase label */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                      <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: phase.color, flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
+                          Phase {phase.phase}
+                        </div>
+                        <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 700, color: phase.color, letterSpacing: '.04em' }}>
+                          {phase.label}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Module list */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {phase.modules.map(item => (
+                        <a
+                          key={item.name}
+                          href={item.path}
+                          onClick={() => setOpen(null)}
+                          style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 8px', textDecoration: 'none', borderRadius: '6px' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                        >
+                          <span style={{ fontFamily: MONO, fontSize: '9px', color: DROP_CAT, marginTop: '3px', flexShrink: 0, width: '16px' }}>
+                            {item.num}
+                          </span>
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS, lineHeight: 1.3 }}>
+                              {item.name}
+                            </div>
+                            <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px', lineHeight: 1.4 }}>
+                              {item.desc}
+                            </div>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ── Admin ▾ — admin role only ─────────────────────────────────────── */}
         {signedIn && isAdmin && (
@@ -372,6 +432,14 @@ function NavInner({ activePage }: NavProps) {
               Maestro
             </a>
           )}
+
+          {/* Demo */}
+          <a href="/demo" style={{
+            fontSize: '12px', color: activePage === 'demo' ? TEAL : NAV_TEXT,
+            textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0,
+          }}>
+            Demo
+          </a>
 
           {/* Platform */}
           <a href="/platform" style={{

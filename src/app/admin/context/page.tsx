@@ -67,7 +67,7 @@ const PRIORITIES = [
   { rank: 3, title: 'Complete Blue Ridge technology integration', category: 'Post-Merger', impact: 'High', ic: '#D97706', ib: '#FFFBEB', cc: '#1E3A5F', cb: '#EFF6FF' },
   { rank: 4, title: 'Reduce travel nurse dependency by 40%', category: 'Cost', impact: 'High', ic: '#D97706', ib: '#FFFBEB', cc: '#064E3B', cb: '#ECFDF5' },
   { rank: 5, title: 'Launch AI strategy with measurable outcomes', category: 'Innovation', impact: 'High', ic: '#D97706', ib: '#FFFBEB', cc: '#4C1D95', cb: '#F5F3FF' },
-  { rank: 6, title: 'Resolve Ensemble RCM performance issues', category: 'Vendor', impact: 'Medium', ic: '#6B7280', ib: '#F9FAFB', cc: '#374151', cb: '#F3F4F6' },
+  { rank: 6, title: 'Resolve Ensemble RCM performance issues', category: 'Vendor', impact: 'Medium', ic: '#3C3C3C', ib: '#F9FAFB', cc: '#3C3C3C', cb: '#F3F4F6' },
 ]
 
 const KPIS = [
@@ -101,7 +101,7 @@ function SectionHeader({ n, label, meta }: { n: string; label: string; meta?: st
         <div style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, color: '#4DA3FF', letterSpacing: '2.5px', textTransform: 'uppercase' as const, marginBottom: '3px' }}>Section {n}</div>
         <div style={{ fontSize: '15px', fontWeight: 700, color: '#E6EDF3' }}>{label}</div>
       </div>
-      {meta && <div style={{ fontSize: '12px', color: '#8B949E' }}>{meta}</div>}
+      {meta && <div style={{ fontSize: '12px', color: '#888888' }}>{meta}</div>}
     </div>
   )
 }
@@ -124,7 +124,7 @@ export default function BusinessContext() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Business Context</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280' }}>Meridian Health System · Engagement intelligence for Maestro use only</p>
+            <p style={{ fontSize: '14px', color: '#3C3C3C' }}>Meridian Health System · Engagement intelligence for Maestro use only</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ECFDF5', border: '1px solid #A7F3D0', borderRadius: '8px', padding: '8px 14px' }}>
             <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#059669', display: 'block' }} />
@@ -145,7 +145,7 @@ export default function BusinessContext() {
                       <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: s.color + '18', border: '2px solid ' + s.color + '50', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 700, color: s.color, flexShrink: 0 }}>{s.initials}</div>
                       <div>
                         <div style={{ fontSize: '13px', fontWeight: 700, color: '#0F172A', marginBottom: '1px' }}>{s.name}</div>
-                        <div style={{ fontSize: '11px', color: '#6B7280', lineHeight: 1.3 }}>{s.title}</div>
+                        <div style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.3 }}>{s.title}</div>
                       </div>
                     </div>
                     <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: s.interviewed ? '#ECFDF5' : '#FFFBEB', color: s.interviewed ? '#059669' : '#D97706', border: '1px solid ' + (s.interviewed ? '#A7F3D0' : '#FDE68A'), whiteSpace: 'nowrap' as const, flexShrink: 0 }}>
@@ -157,11 +157,11 @@ export default function BusinessContext() {
                 {/* Quotes */}
                 <div style={{ padding: '14px 16px', flex: 1, background: s.interviewed ? '#FFFFFF' : '#FAFAFA' }}>
                   {!s.interviewed && (
-                    <div style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, color: '#94A3B8', letterSpacing: '1.5px', marginBottom: '10px' }}>PRE-INTERVIEW CONTEXT</div>
+                    <div style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, color: '#3C3C3C', letterSpacing: '1.5px', marginBottom: '10px' }}>PRE-INTERVIEW CONTEXT</div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {s.quotes.map((q, qi) => (
-                      <div key={qi} style={{ fontSize: '12px', color: s.interviewed ? '#374151' : '#94A3B8', lineHeight: 1.65, fontStyle: 'italic', paddingLeft: '10px', borderLeft: '2px solid ' + (s.interviewed ? s.color + '70' : '#E2E8F0') }}>
+                      <div key={qi} style={{ fontSize: '12px', color: s.interviewed ? '#3C3C3C' : '#3C3C3C', lineHeight: 1.65, fontStyle: 'italic', paddingLeft: '10px', borderLeft: '2px solid ' + (s.interviewed ? s.color + '70' : '#E2E8F0') }}>
                         "{q}"
                       </div>
                     ))}
@@ -170,7 +170,7 @@ export default function BusinessContext() {
 
                 {/* Action button */}
                 <div style={{ padding: '12px 16px', borderTop: '1px solid #F1F5F9', background: '#FAFAFA' }}>
-                  <button style={{ width: '100%', padding: '7px 12px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, border: '1px solid ' + (s.interviewed ? '#BFDBFE' : '#E2E8F0'), background: s.interviewed ? '#EFF6FF' : '#F1F5F9', color: s.interviewed ? '#2563EB' : '#94A3B8', cursor: s.interviewed ? 'pointer' : 'default' }}>
+                  <button style={{ width: '100%', padding: '7px 12px', borderRadius: '7px', fontSize: '11px', fontWeight: 600, border: '1px solid ' + (s.interviewed ? '#BFDBFE' : '#E2E8F0'), background: s.interviewed ? '#EFF6FF' : '#F1F5F9', color: s.interviewed ? '#2563EB' : '#3C3C3C', cursor: s.interviewed ? 'pointer' : 'default' }}>
                     {s.interviewed ? 'View Full Interview →' : 'Schedule Interview →'}
                   </button>
                 </div>
@@ -208,14 +208,14 @@ export default function BusinessContext() {
           {/* Table header */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px 75px 1fr', gap: '0', padding: '10px 24px', background: '#F8FAFC', borderBottom: '2px solid #E2E8F0' }}>
             {['KPI', 'Current', 'Target', 'Owner', 'Progress to Target'].map((h, i) => (
-              <div key={i} style={{ fontSize: '10px', fontWeight: 700, color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>{h}</div>
+              <div key={i} style={{ fontSize: '10px', fontWeight: 700, color: '#3C3C3C', letterSpacing: '0.08em', textTransform: 'uppercase' as const }}>{h}</div>
             ))}
           </div>
           {KPIS.map((k, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 110px 110px 75px 1fr', gap: '0', padding: '16px 24px', borderBottom: i < KPIS.length - 1 ? '1px solid #F1F5F9' : 'none', alignItems: 'center' }}>
               <div>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: '#0F172A', marginBottom: '3px' }}>{k.name}</div>
-                <div style={{ fontSize: '11px', color: '#94A3B8', lineHeight: 1.4 }}>{k.note}</div>
+                <div style={{ fontSize: '11px', color: '#3C3C3C', lineHeight: 1.4 }}>{k.note}</div>
               </div>
               <div style={{ fontSize: '16px', fontWeight: 700, color: '#DC2626' }}>{k.current}</div>
               <div style={{ fontSize: '16px', fontWeight: 700, color: '#059669' }}>{k.target}</div>
@@ -226,7 +226,7 @@ export default function BusinessContext() {
                 <div style={{ flex: 1, height: '6px', background: '#F1F5F9', borderRadius: '3px' }}>
                   <div style={{ height: '6px', borderRadius: '3px', width: k.progress + '%', background: k.progress < 30 ? '#DC2626' : k.progress < 55 ? '#D97706' : '#059669', transition: 'width 0.3s' }} />
                 </div>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#6B7280', width: '34px', textAlign: 'right' as const }}>{k.progress}%</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#3C3C3C', width: '34px', textAlign: 'right' as const }}>{k.progress}%</span>
               </div>
             </div>
           ))}
@@ -244,7 +244,7 @@ export default function BusinessContext() {
                 </div>
                 <div style={{ padding: '16px', background: '#FFFBEB' }}>
                   <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400E', marginBottom: '10px' }}>{p.title}</div>
-                  <div style={{ fontSize: '12.5px', color: '#374151', lineHeight: 1.75 }}>{p.body}</div>
+                  <div style={{ fontSize: '12.5px', color: '#3C3C3C', lineHeight: 1.75 }}>{p.body}</div>
                 </div>
               </div>
             ))}

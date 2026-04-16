@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const BLUEPRINTS: Record<string, any> = {
@@ -179,7 +180,7 @@ const SECTIONS = [
 
 function BlueprintContent() {
   const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
+  const clientId = useActiveClient()
   const [section, setSection] = useState('summary')
   const bp = BLUEPRINTS[clientId] || BLUEPRINTS.meridian
 
@@ -189,16 +190,16 @@ function BlueprintContent() {
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; }
     .tag { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
-    .h1 { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; color: #111827; margin-bottom: 12px; }
-    .h2 { font-size: 20px; font-weight: 800; color: #111827; margin-bottom: 12px; letter-spacing: -0.01em; }
-    .h3 { font-size: 14px; font-weight: 700; color: #374151; margin-bottom: 8px; }
-    .body { font-size: 14px; line-height: 1.75; color: #4B5563; }
+    .h1 { font-size: 32px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; color: #0C0C0C; margin-bottom: 12px; }
+    .h2 { font-size: 20px; font-weight: 800; color: #0C0C0C; margin-bottom: 12px; letter-spacing: -0.01em; }
+    .h3 { font-size: 14px; font-weight: 700; color: #3C3C3C; margin-bottom: 8px; }
+    .body { font-size: 14px; line-height: 1.75; color: #888888; }
     .card { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 24px; margin-bottom: 16px; }
     .section-nav { background: none; border: none; cursor: pointer; font-size: 13px; padding: 10px 16px; border-radius: 6px; width: 100%; text-align: left; font-family: inherit; transition: all 0.12s; color: #6B7280; }
-    .section-nav.active { background: #F3F4F6; color: #111827; font-weight: 700; }
+    .section-nav.active { background: #F3F4F6; color: #0C0C0C; font-weight: 700; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #6B7280; background: #F9FAFB; border-bottom: 2px solid #E5E7EB; }
-    td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; color: #374151; vertical-align: top; }
+    td { padding: 12px 14px; border-bottom: 1px solid #F3F4F6; color: #3C3C3C; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
     tr:nth-child(even) td { background: #FAFAFA; }
     .badge { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 100px; }
@@ -218,19 +219,19 @@ function BlueprintContent() {
         {/* SIDEBAR */}
         <div style={{ padding: '32px 16px 32px 0', position: 'sticky' as const, top: '56px', height: 'calc(100vh - 56px)', overflowY: 'auto' as const }}>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>Initiative</div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#111827', lineHeight: 1.4 }}>{bp.initiative}</div>
+            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#888888', marginBottom: '4px' }}>Initiative</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#0C0C0C', lineHeight: 1.4 }}>{bp.initiative}</div>
           </div>
           <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>Domain</div>
-            <div style={{ fontSize: '13px', color: '#374151' }}>{bp.domain}</div>
+            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#888888', marginBottom: '4px' }}>Domain</div>
+            <div style={{ fontSize: '13px', color: '#3C3C3C' }}>{bp.domain}</div>
           </div>
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>Investment</div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>{fmt(bp.businessCase.totalInvestment)}</div>
+            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#888888', marginBottom: '4px' }}>Investment</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: '#0C0C0C', letterSpacing: '-0.02em' }}>{fmt(bp.businessCase.totalInvestment)}</div>
           </div>
           <div style={{ marginBottom: '32px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#9CA3AF', marginBottom: '4px' }}>Annual Value</div>
+            <div style={{ fontSize: '10px', fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: '#888888', marginBottom: '4px' }}>Annual Value</div>
             <div style={{ fontSize: '20px', fontWeight: 800, color: '#059669', letterSpacing: '-0.02em' }}>{fmt(bp.businessCase.totalSteadyValue)}</div>
           </div>
           <div style={{ height: '1px', background: '#E5E7EB', marginBottom: '20px' }} />
@@ -242,7 +243,7 @@ function BlueprintContent() {
             </button>
           ))}
           <div style={{ height: '1px', background: '#E5E7EB', margin: '20px 0' }} />
-          <div style={{ fontSize: '11px', color: '#9CA3AF', lineHeight: 1.6 }}>
+          <div style={{ fontSize: '11px', color: '#888888', lineHeight: 1.6 }}>
             Prepared by {bp.preparedBy}<br />{bp.date}
           </div>
         </div>
@@ -254,7 +255,7 @@ function BlueprintContent() {
           <div style={{ marginBottom: '32px' }}>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' as const }}>
               <span className="badge" style={{ background: bp.color + '15', color: bp.color }}>{bp.domain}</span>
-              <span className="badge" style={{ background: '#F3F4F6', color: '#374151' }}>{bp.client}</span>
+              <span className="badge" style={{ background: '#F3F4F6', color: '#3C3C3C' }}>{bp.client}</span>
               <span className="badge" style={{ background: '#ECFDF5', color: '#059669' }}>Solution Blueprint</span>
             </div>
             <h1 className="h1">{bp.initiative}</h1>
@@ -276,7 +277,7 @@ function BlueprintContent() {
                 </div>
                 <div style={{ padding: '16px 20px', background: '#FFFBEB', borderRadius: '8px', border: '1px solid #FEF3C7' }}>
                   <span style={{ fontSize: '11px', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#D97706', display: 'block', marginBottom: '6px' }}>Decision Required This Week</span>
-                  <span className="body" style={{ fontWeight: 600, color: '#374151' }}>{bp.executiveSummary.decision}</span>
+                  <span className="body" style={{ fontWeight: 600, color: '#3C3C3C' }}>{bp.executiveSummary.decision}</span>
                 </div>
               </div>
 
@@ -289,7 +290,7 @@ function BlueprintContent() {
                 ].map((m, i) => (
                   <div key={i} style={{ background: '#fff', padding: '20px' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.color, marginBottom: '6px' }}>{m.label}</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>{m.value}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#0C0C0C', letterSpacing: '-0.02em' }}>{m.value}</div>
                   </div>
                 ))}
               </div>
@@ -297,11 +298,11 @@ function BlueprintContent() {
               <div className="card" style={{ background: '#F0FDF4', border: '1px solid #A7F3D0' }}>
                 <h3 className="h3" style={{ color: '#059669', marginBottom: '12px' }}>AbarVa Economics on This Initiative</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-                  <div><div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Platform fee</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>{fmt(bp.businessCase.abarvaFee.platform)}</div></div>
-                  <div><div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Outcome fee (15%)</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>{fmt(bp.businessCase.abarvaFee.outcomeFee)}</div></div>
-                  <div><div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>Total Year 1</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>{fmt(bp.businessCase.abarvaFee.total)}</div></div>
+                  <div><div style={{ fontSize: '11px', color: '#3C3C3C', marginBottom: '4px' }}>Platform fee</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#0C0C0C' }}>{fmt(bp.businessCase.abarvaFee.platform)}</div></div>
+                  <div><div style={{ fontSize: '11px', color: '#3C3C3C', marginBottom: '4px' }}>Outcome fee (15%)</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>{fmt(bp.businessCase.abarvaFee.outcomeFee)}</div></div>
+                  <div><div style={{ fontSize: '11px', color: '#3C3C3C', marginBottom: '4px' }}>Total Year 1</div><div style={{ fontSize: '18px', fontWeight: 800, color: '#059669' }}>{fmt(bp.businessCase.abarvaFee.total)}</div></div>
                 </div>
-                <div style={{ marginTop: '12px', fontSize: '12px', color: '#6B7280', fontStyle: 'italic' }}>{bp.businessCase.abarvaFee.note}</div>
+                <div style={{ marginTop: '12px', fontSize: '12px', color: '#3C3C3C', fontStyle: 'italic' }}>{bp.businessCase.abarvaFee.note}</div>
               </div>
             </div>
           )}
@@ -356,7 +357,7 @@ function BlueprintContent() {
                         <td><span className="badge" style={{ background: bp.color + '15', color: bp.color }}>{row.layer}</span></td>
                         <td style={{ fontWeight: 600 }}>{row.component}</td>
                         <td>{row.description}</td>
-                        <td style={{ color: '#6B7280', fontSize: '12px' }}>{row.technology}</td>
+                        <td style={{ color: '#3C3C3C', fontSize: '12px' }}>{row.technology}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -372,7 +373,7 @@ function BlueprintContent() {
                         <td style={{ fontWeight: 600 }}>{row.data}</td>
                         <td><span className="badge" style={{ background: row.status === 'Available' ? '#ECFDF5' : '#EFF6FF', color: row.status === 'Available' ? '#059669' : '#1B4FD8' }}>{row.status}</span></td>
                         <td style={{ fontWeight: 700, color: parseInt(row.completeness) > 80 ? '#059669' : '#D97706' }}>{row.completeness}</td>
-                        <td style={{ color: '#6B7280', fontSize: '12px' }}>{row.note}</td>
+                        <td style={{ color: '#3C3C3C', fontSize: '12px' }}>{row.note}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -389,7 +390,7 @@ function BlueprintContent() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: bp.color, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '4px' }}>AbarVa Recommendation</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#111827' }}>{bp.vendorDecision.recommendation}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#0C0C0C' }}>{bp.vendorDecision.recommendation}</div>
                   </div>
                   <span className="badge" style={{ background: '#ECFDF5', color: '#059669', fontSize: '12px', padding: '6px 14px' }}>RECOMMENDED</span>
                 </div>
@@ -440,18 +441,18 @@ function BlueprintContent() {
             <div>
               <h2 className="h2">Resource Model</h2>
               <div className="card" style={{ marginBottom: '16px', background: '#ECFDF5', border: '1px solid #A7F3D0' }}>
-                <p className="body" style={{ fontWeight: 600, color: '#374151' }}>{bp.resourceModel.headline}</p>
+                <p className="body" style={{ fontWeight: 600, color: '#3C3C3C' }}>{bp.resourceModel.headline}</p>
               </div>
               {bp.resourceModel.phases.map((phase: any, pi: number) => (
                 <div key={pi} className="card" style={{ marginBottom: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                     <div>
                       <span className="badge" style={{ background: bp.color, color: '#fff', marginRight: '8px' }}>{phase.phase}</span>
-                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#111827' }}>{phase.name}</span>
+                      <span style={{ fontSize: '16px', fontWeight: 700, color: '#0C0C0C' }}>{phase.name}</span>
                     </div>
                     <div style={{ textAlign: 'right' as const }}>
-                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#111827' }}>{fmt(phase.cost)}</div>
-                      <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{phase.duration}</div>
+                      <div style={{ fontSize: '18px', fontWeight: 800, color: '#0C0C0C' }}>{fmt(phase.cost)}</div>
+                      <div style={{ fontSize: '12px', color: '#888888' }}>{phase.duration}</div>
                     </div>
                   </div>
                   <table>
@@ -462,8 +463,8 @@ function BlueprintContent() {
                           <td style={{ fontWeight: 600 }}>{r.role}</td>
                           <td><span className="badge" style={{ background: r.type === 'AbarVa' ? '#EFF6FF' : r.type === 'Vendor' ? '#F5F3FF' : r.type === 'Internal' ? '#ECFDF5' : '#FEF2F2', color: r.type === 'AbarVa' ? '#1B4FD8' : r.type === 'Vendor' ? '#6D28D9' : r.type === 'Internal' ? '#059669' : '#DC2626' }}>{r.type}</span></td>
                           <td>{r.allocation}</td>
-                          <td style={{ fontWeight: 600, color: r.cost === 'Included in platform fee' || r.cost === 'Included' || r.cost === '$0 incremental' ? '#059669' : '#111827' }}>{r.cost}</td>
-                          <td style={{ color: '#6B7280', fontSize: '12px' }}>{r.responsibility}</td>
+                          <td style={{ fontWeight: 600, color: r.cost === 'Included in platform fee' || r.cost === 'Included' || r.cost === '$0 incremental' ? '#059669' : '#0C0C0C' }}>{r.cost}</td>
+                          <td style={{ color: '#3C3C3C', fontSize: '12px' }}>{r.responsibility}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -472,7 +473,7 @@ function BlueprintContent() {
               ))}
               <div style={{ marginBottom: '12px' }}>
                 <a href={'/how-to-build?client=' + clientId} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', borderRadius: '8px', background: '#0F172A', color: '#2DD4C8', textDecoration: 'none', fontSize: '13px', fontWeight: 600, border: '1px solid #1E293B' }}>View Full Build Plan →</a>
-                <span style={{ marginLeft: '12px', fontSize: '12px', color: '#6B7280' }}>4-phase approach · cost comparison · agent decision matrix · outcome tracking</span>
+                <span style={{ marginLeft: '12px', fontSize: '12px', color: '#3C3C3C' }}>4-phase approach · cost comparison · agent decision matrix · outcome tracking</span>
               </div>
               <div className="card">
                 <h3 className="h3">Agent vs Human Decision Matrix</h3>
@@ -482,10 +483,10 @@ function BlueprintContent() {
                     {bp.resourceModel.agentVsHuman.map((row: any, i: number) => (
                       <tr key={i}>
                         <td>{row.task}</td>
-                        <td style={{ fontWeight: 600, color: row.recommended.includes('Agent') ? '#1B4FD8' : '#374151' }}>{row.recommended}</td>
+                        <td style={{ fontWeight: 600, color: row.recommended.includes('Agent') ? '#1B4FD8' : '#3C3C3C' }}>{row.recommended}</td>
                         <td>{row.cost}</td>
                         <td>{row.volume}</td>
-                        <td style={{ color: '#6B7280', fontSize: '12px' }}>{row.note}</td>
+                        <td style={{ color: '#3C3C3C', fontSize: '12px' }}>{row.note}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -507,7 +508,7 @@ function BlueprintContent() {
                 ].map((m, i) => (
                   <div key={i} style={{ background: '#fff', padding: '20px' }}>
                     <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: m.color, marginBottom: '6px' }}>{m.label}</div>
-                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#111827', letterSpacing: '-0.02em' }}>{m.value}</div>
+                    <div style={{ fontSize: '24px', fontWeight: 800, color: '#0C0C0C', letterSpacing: '-0.02em' }}>{m.value}</div>
                   </div>
                 ))}
               </div>
@@ -519,8 +520,8 @@ function BlueprintContent() {
                     {bp.businessCase.investment.map((row: any, i: number) => (
                       <tr key={i}>
                         <td style={{ fontWeight: 600 }}>{row.phase}</td>
-                        <td style={{ fontWeight: 700, color: '#111827' }}>{fmt(row.amount)}</td>
-                        <td style={{ color: '#6B7280' }}>{row.type}</td>
+                        <td style={{ fontWeight: 700, color: '#0C0C0C' }}>{fmt(row.amount)}</td>
+                        <td style={{ color: '#3C3C3C' }}>{row.type}</td>
                       </tr>
                     ))}
                     <tr style={{ background: '#F9FAFB' }}>
@@ -569,7 +570,7 @@ function BlueprintContent() {
                         <td style={{ color: '#DC2626', fontWeight: 600 }}>{row.baseline}</td>
                         <td style={{ color: '#059669', fontWeight: 600 }}>{row.target}</td>
                         <td>{row.frequency}</td>
-                        <td style={{ color: '#6B7280' }}>{row.owner}</td>
+                        <td style={{ color: '#3C3C3C' }}>{row.owner}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -585,21 +586,21 @@ function BlueprintContent() {
                         <td style={{ fontWeight: 600 }}>{row.risk}</td>
                         <td><span className={'badge risk-' + (row.probability === 'High' ? 'high' : row.probability === 'Medium' ? 'med' : 'low')}>{row.probability}</span></td>
                         <td><span className={'badge risk-' + (row.impact === 'High' ? 'high' : row.impact === 'Medium' ? 'med' : 'low')}>{row.impact}</span></td>
-                        <td style={{ color: '#6B7280', fontSize: '12px' }}>{row.mitigation}</td>
+                        <td style={{ color: '#3C3C3C', fontSize: '12px' }}>{row.mitigation}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <div className="card" style={{ background: '#111827' }}>
+              <div className="card" style={{ background: '#0C0C0C' }}>
                 <h3 className="h3" style={{ color: '#fff', marginBottom: '16px' }}>Actions Required This Week</h3>
                 {bp.governance.nextSteps.map((step: any, i: number) => (
                   <div key={i} style={{ display: 'flex', gap: '16px', padding: '14px 0', borderBottom: i < bp.governance.nextSteps.length - 1 ? '1px solid rgba(255,255,255,0.1)' : 'none', alignItems: 'flex-start' }}>
                     <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6EE7B7', marginTop: '6px', flexShrink: 0 }} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '2px' }}>{step.action}</div>
-                      <div style={{ fontSize: '12px', color: '#9CA3AF' }}>{step.owner} · {step.deadline}</div>
-                      <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '2px', fontStyle: 'italic' }}>{step.rationale}</div>
+                      <div style={{ fontSize: '12px', color: '#888888' }}>{step.owner} · {step.deadline}</div>
+                      <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '2px', fontStyle: 'italic' }}>{step.rationale}</div>
                     </div>
                   </div>
                 ))}
@@ -615,7 +616,7 @@ function BlueprintContent() {
 
 export default function BlueprintPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#6B7280' }}>Loading blueprint...</div>}>
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', color: '#3C3C3C' }}>Loading blueprint...</div>}>
       <BlueprintContent />
     </Suspense>
   )

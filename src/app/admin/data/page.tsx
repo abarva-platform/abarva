@@ -5,7 +5,7 @@ import AbarvaNav from '@/components/AbarvaNav'
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
   card: { background: '#FFFFFF', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '24px' } as React.CSSProperties,
-  label: { fontSize: '11px', fontWeight: 700, color: '#6B7280', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' } as React.CSSProperties,
+  label: { fontSize: '11px', fontWeight: 700, color: '#3C3C3C', textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '12px' } as React.CSSProperties,
 }
 
 const LINKS = [
@@ -111,7 +111,7 @@ export default function AdminData() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Data Loader</h1>
-            <p style={{ fontSize: '14px', color: '#6B7280' }}>Upload, verify, and approve client data. All data reviewed before impacting intelligence.</p>
+            <p style={{ fontSize: '14px', color: '#3C3C3C' }}>Upload, verify, and approve client data. All data reviewed before impacting intelligence.</p>
           </div>
           <button onClick={() => setShowModal(true)} style={{ padding: '10px 18px', borderRadius: '8px', background: '#1E3A5F', color: '#FFFFFF', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
             ↻ Quarterly Update
@@ -127,11 +127,11 @@ export default function AdminData() {
                 <span style={{ fontSize: '52px', fontWeight: 800, color: '#059669', letterSpacing: '-0.03em', lineHeight: 1 }}>{OVERALL_CONFIDENCE}%</span>
                 <span style={{ fontSize: '14px', color: '#059669', fontWeight: 600 }}>Gold Standard</span>
               </div>
-              <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>8 of 12 files uploaded · 2 leadership files pending</div>
+              <div style={{ fontSize: '12px', color: '#3C3C3C', marginTop: '4px' }}>8 of 12 files uploaded · 2 leadership files pending</div>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '12px', color: '#6B7280' }}>Overall confidence</span>
+                <span style={{ fontSize: '12px', color: '#3C3C3C' }}>Overall confidence</span>
                 <span style={{ fontSize: '12px', fontWeight: 700, color: '#059669' }}>{OVERALL_CONFIDENCE}%</span>
               </div>
               <div style={{ height: '10px', background: '#F1F5F9', borderRadius: '5px', marginBottom: '20px' }}>
@@ -141,7 +141,7 @@ export default function AdminData() {
                 {CONFIDENCE_CATEGORIES.map((cat, i) => (
                   <div key={i}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <span style={{ fontSize: '10px', color: '#94A3B8', lineHeight: 1.2 }}>{cat.label.split(' ')[0]}</span>
+                      <span style={{ fontSize: '10px', color: '#3C3C3C', lineHeight: 1.2 }}>{cat.label.split(' ')[0]}</span>
                       <span style={{ fontSize: '10px', fontWeight: 700, color: cat.color }}>+{cat.pct}%</span>
                     </div>
                     <div style={{ height: '4px', background: '#F1F5F9', borderRadius: '2px' }}>
@@ -162,8 +162,8 @@ export default function AdminData() {
               <div onDragOver={e => { e.preventDefault(); setDrag(true) }} onDragLeave={() => setDrag(false)} onDrop={e => { e.preventDefault(); setDrag(false) }}
                 style={{ border: `2px dashed ${drag ? '#2563EB' : '#E2E8F0'}`, borderRadius: '10px', padding: '40px', textAlign: 'center', background: drag ? '#EFF6FF' : '#F8FAFC', cursor: 'pointer' }}>
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>📁</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>Drop files here or click to upload</div>
-                <div style={{ fontSize: '12px', color: '#94A3B8' }}>Excel, CSV, PDF, PowerPoint supported</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#3C3C3C', marginBottom: '6px' }}>Drop files here or click to upload</div>
+                <div style={{ fontSize: '12px', color: '#3C3C3C' }}>Excel, CSV, PDF, PowerPoint supported</div>
               </div>
             </div>
 
@@ -183,11 +183,11 @@ export default function AdminData() {
                     <div key={fi} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', background: '#F0FDF4', borderRadius: '6px', marginBottom: '6px', alignItems: 'center' }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
                         <span style={{ color: '#059669', fontWeight: 700, flexShrink: 0 }}>✓</span>
-                        <span style={{ fontSize: '12px', color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</span>
+                        <span style={{ fontSize: '12px', color: '#3C3C3C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</span>
                       </div>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0, marginLeft: '8px' }}>
                         <span style={{ fontSize: '11px', color: '#059669', fontWeight: 600 }}>{f.contribution}</span>
-                        <span style={{ fontSize: '11px', color: '#94A3B8' }}>{f.date}</span>
+                        <span style={{ fontSize: '11px', color: '#3C3C3C' }}>{f.date}</span>
                       </div>
                     </div>
                   ))}
@@ -196,7 +196,7 @@ export default function AdminData() {
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', minWidth: 0 }}>
                         <span style={{ color: '#D97706', fontWeight: 700, flexShrink: 0 }}>!</span>
                         <div style={{ minWidth: 0 }}>
-                          <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</div>
+                          <div style={{ fontSize: '12px', fontWeight: 500, color: '#3C3C3C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</div>
                           <div style={{ fontSize: '11px', color: '#92400E' }}>{f.reason}</div>
                         </div>
                       </div>
@@ -216,8 +216,8 @@ export default function AdminData() {
               {FILES.map((f, i) => (
                 <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < FILES.length - 1 ? '1px solid #F1F5F9' : 'none', alignItems: 'center', gap: '12px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 500, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</div>
-                    <div style={{ fontSize: '11px', color: '#94A3B8' }}>{f.client} · {f.type} · {f.date}</div>
+                    <div style={{ fontSize: '12px', fontWeight: 500, color: '#3C3C3C', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{f.name}</div>
+                    <div style={{ fontSize: '11px', color: '#3C3C3C' }}>{f.client} · {f.type} · {f.date}</div>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
                     <span style={{ fontSize: '11px', fontWeight: 600, color: '#059669' }}>{f.confidence} confidence</span>
@@ -241,7 +241,7 @@ export default function AdminData() {
               ].map((p, i) => (
                 <div key={i} style={{ padding: '12px', borderRadius: '8px', background: p.priority === 'High' ? '#FEF2F2' : '#FFFBEB', border: `1px solid ${p.priority === 'High' ? '#FECACA' : '#FDE68A'}`, marginBottom: '8px' }}>
                   <div style={{ fontSize: '12px', fontWeight: 600, color: '#0F172A', marginBottom: '2px' }}>{p.file}</div>
-                  <div style={{ fontSize: '11px', color: '#6B7280', marginBottom: '4px' }}>{p.client} — {p.reason}</div>
+                  <div style={{ fontSize: '11px', color: '#3C3C3C', marginBottom: '4px' }}>{p.client} — {p.reason}</div>
                   <div style={{ fontSize: '10px', fontWeight: 600, color: p.priority === 'High' ? '#DC2626' : '#D97706' }}>{p.priority} priority</div>
                 </div>
               ))}
@@ -260,7 +260,7 @@ export default function AdminData() {
                 { name: 'Vendor Performance', file: 'Vendor_Performance_Scorecard.xlsx' },
                 { name: 'AI Initiative Tracker', file: 'AI_Analytics_Initiative_Tracker.xlsx' },
               ].map((t, i) => (
-                <a key={i} href={`/templates/${t.file}`} download style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#F8FAFC', border: '1px solid #E2E8F0', textDecoration: 'none', fontSize: '12px', color: '#374151', marginBottom: '6px' }}>
+                <a key={i} href={`/templates/${t.file}`} download style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 10px', borderRadius: '6px', background: '#F8FAFC', border: '1px solid #E2E8F0', textDecoration: 'none', fontSize: '12px', color: '#3C3C3C', marginBottom: '6px' }}>
                   {t.name} <span style={{ color: '#059669', fontWeight: 600 }}>↓</span>
                 </a>
               ))}
@@ -285,29 +285,29 @@ export default function AdminData() {
               <div style={{ textAlign: 'center' as const, padding: '24px' }}>
                 <div style={{ fontSize: '40px', marginBottom: '16px' }}>✓</div>
                 <div style={{ fontSize: '18px', fontWeight: 700, color: '#059669', marginBottom: '8px' }}>Intelligence Updated</div>
-                <div style={{ fontSize: '14px', color: '#6B7280' }}>AbarVa is processing your updates. Confidence scores will refresh within 2 hours.</div>
+                <div style={{ fontSize: '14px', color: '#3C3C3C' }}>AbarVa is processing your updates. Confidence scores will refresh within 2 hours.</div>
               </div>
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
                   <div>
                     <div style={{ fontSize: '18px', fontWeight: 700, color: '#0F172A', marginBottom: '4px' }}>Quarterly Update — Meridian Health System</div>
-                    <div style={{ fontSize: '13px', color: '#6B7280' }}>5 questions · 15 minutes · keeps intelligence current</div>
+                    <div style={{ fontSize: '13px', color: '#3C3C3C' }}>5 questions · 15 minutes · keeps intelligence current</div>
                   </div>
-                  <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#94A3B8', cursor: 'pointer', flexShrink: 0, marginLeft: '16px' }}>×</button>
+                  <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '20px', color: '#3C3C3C', cursor: 'pointer', flexShrink: 0, marginLeft: '16px' }}>×</button>
                 </div>
                 {Q_UPDATE_QUESTIONS.map((q, i) => (
                   <div key={q.id} style={{ marginBottom: '20px' }}>
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '11px', fontWeight: 700, color: '#2563EB', flexShrink: 0 }}>{q.label}</span>
-                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#374151', lineHeight: 1.4 }}>{q.question}</span>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#3C3C3C', lineHeight: 1.4 }}>{q.question}</span>
                     </div>
                     <textarea
                       rows={2}
                       placeholder={q.placeholder}
                       value={answers[q.id] || ''}
                       onChange={e => setAnswers(p => ({ ...p, [q.id]: e.target.value }))}
-                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#374151', resize: 'none' as const, boxSizing: 'border-box' as const }}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid #E2E8F0', borderRadius: '8px', fontSize: '13px', fontFamily: 'Inter, sans-serif', color: '#3C3C3C', resize: 'none' as const, boxSizing: 'border-box' as const }}
                     />
                     {i < Q_UPDATE_QUESTIONS.length - 1 && <div style={{ height: '1px', background: '#F1F5F9', marginTop: '16px' }} />}
                   </div>

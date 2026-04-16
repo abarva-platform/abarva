@@ -31,7 +31,7 @@ function statusColor(s: StepStatus) {
   if (s === 'completed') return '#059669'
   if (s === 'active') return '#2DD4C8'
   if (s === 'next') return '#6B9FD4'
-  return '#4B5563'
+  return '#888888'
 }
 
 function ProgressBar() {
