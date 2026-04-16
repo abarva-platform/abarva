@@ -107,11 +107,10 @@ function JustifyContent() {
       <div style={{ position: 'sticky', top: 0, zIndex: 40, background: T.surface, borderBottom: `1px solid ${T.border}` }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '16px 32px 0' }}>
           {/* Label + role selector on one line */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal, letterSpacing: '0.14em', textTransform: 'uppercase' as const }}>
               Business Case Intelligence · {clientName}
             </div>
-            {/* Role tabs — above the question so you pick your lens first */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
               {ROLES.map(r => {
                 const isActive = role === r
@@ -125,79 +124,34 @@ function JustifyContent() {
               })}
             </div>
           </div>
-          <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 14px', lineHeight: 1.3, maxWidth: '680px' }}>
+          <h1 style={{ fontFamily: T.serif, fontSize: '24px', fontWeight: 700, color: T.text, margin: '0 0 12px', lineHeight: 1.3, maxWidth: '680px' }}>
             &ldquo;How do we justify this to the board — with numbers they can defend?&rdquo;
           </h1>
-          <div style={{ display: 'flex', gap: '40px', paddingBottom: '14px' }}>
+          <div style={{ display: 'flex', gap: '40px', paddingBottom: '0' }}>
             {[
               { label: 'Initiatives', value: String(allOpps.length) },
               { label: 'Total Opportunity (3yr)', value: fmt(allOpps.reduce((s: number, o: any) => s + (o.annualValue || 0), 0) * 3) },
               { label: 'Median Payback', value: '14 mo' },
             ].map((m, i) => (
               <div key={i}>
-                <div style={{ fontFamily: T.mono, fontSize: '20px', fontWeight: 700, color: T.text }}>{m.value}</div>
-                <div style={{ fontFamily: T.mono, fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '3px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{m.label}</div>
+                <div style={{ fontFamily: T.mono, fontSize: '18px', fontWeight: 700, color: T.text }}>{m.value}</div>
+                <div style={{ fontFamily: T.mono, fontSize: '8px', color: 'rgba(255,255,255,0.55)', marginTop: '2px', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{m.label}</div>
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* ── Role lens ──────────────────────────────────────────────────────── */}
-      <div style={{ background: `${T.teal}08`, borderBottom: `1px solid ${T.border}`, padding: '12px 32px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '24px' }}>
-          {(() => {
-            const front = ai.opportunities.frontOffice || []
-            const mid   = ai.opportunities.middleOffice || []
-            const back  = ai.opportunities.backOffice  || []
-            const oppsForRole = role === 'CMO'
-              ? front
-              : role === 'COO'
-              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/ops|supply|fulfil|workforce|sched/))
-              : role === 'CIO'
-              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/platform|tech|data|migration|infrastructure|ai/))
-              : role === 'CRO'
-              ? [...mid, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/risk|compliance|govern|stress|fraud/))
-              : role === 'CMIO'
-              ? [...front, ...back].filter((o: any) => (o.name||'').toLowerCase().match(/clinical|prior|patient|physician|care/))
-              : allOpps
-
-            const scopeVal = oppsForRole.reduce((s: number, o: any) => s + (o.annualValue || 0), 0)
-            const best = oppsForRole.reduce((b: any, o: any) => (!b || (o.annualValue||0) > (b.annualValue||0)) ? o : b, null as any)
-            const roi = best && best.investment ? ((best.annualValue || 0) * 3 / best.investment) : null
-
-            return [
-              { label: role === 'CFO' ? 'Total 3-Year Value' : 'Value in Scope (3yr)',
-                value: fmt(scopeVal * 3) },
-              { label: role === 'CFO' ? 'Median Payback' : 'Initiatives in Scope',
-                value: role === 'CFO' ? '14 mo' : String(oppsForRole.length) + ' initiatives' },
-              { label: 'Top Initiative',
-                value: best ? best.name : '—',
-                sub: roi ? `${roi.toFixed(1)}× ROI` : '' },
-            ].map((item, i) => (
-              <div key={i}>
-                <div style={{ fontSize: '9px', fontWeight: 700, color: T.teal, fontFamily: T.mono, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>{item.label}</div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: T.text, fontFamily: T.serif }}>{item.value}</div>
-                {item.sub && <div style={{ fontSize: '10px', color: T.teal, fontFamily: T.mono, fontWeight: 600, marginTop: '2px' }}>{item.sub}</div>}
-              </div>
-            ))
-          })()}
-        </div>
-      </div>
-
-      {/* ── Step nav ───────────────────────────────────────────────────────── */}
-      <div style={{ background: T.surface, borderBottom: `1px solid ${T.border}`, padding: '0 32px' }}>
-        <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex' }}>
-          {STEPS.map(s => (
-            <button key={s.id}
-              onClick={() => s.id <= step && setStep(s.id)}
-              style={{ padding: '12px 20px', fontSize: '12px', fontFamily: T.sans, fontWeight: step === s.id ? 600 : 400, color: step === s.id ? T.teal : step > s.id ? T.teal : T.text2, background: 'none', border: 'none', cursor: s.id <= step ? 'pointer' : 'default', borderBottom: step === s.id ? `2px solid ${T.teal}` : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
-              <span style={{ width: '18px', height: '18px', borderRadius: '50%', fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === s.id ? T.teal : step > s.id ? `${T.teal}25` : T.border, color: step === s.id ? T.bg : step > s.id ? T.teal : T.text2, flexShrink: 0 }}>
-                {step > s.id ? '✓' : s.id}
-              </span>
-              {s.name}
-            </button>
-          ))}
+          {/* Step wizard as bottom tab row — same pattern as data-intelligence */}
+          <div style={{ display: 'flex', marginTop: '10px', borderTop: `1px solid ${T.border}` }}>
+            {STEPS.map(s => (
+              <button key={s.id}
+                onClick={() => s.id <= step && setStep(s.id)}
+                style={{ padding: '10px 20px', fontSize: '12px', fontFamily: T.sans, fontWeight: step === s.id ? 600 : 400, color: step === s.id ? T.teal : step > s.id ? T.teal : T.text2, background: 'none', border: 'none', cursor: s.id <= step ? 'pointer' : 'default', borderBottom: step === s.id ? `2px solid ${T.teal}` : '2px solid transparent', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+                <span style={{ width: '16px', height: '16px', borderRadius: '50%', fontSize: '9px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', background: step === s.id ? T.teal : step > s.id ? `${T.teal}25` : T.border, color: step === s.id ? T.bg : step > s.id ? T.teal : T.text2, flexShrink: 0 }}>
+                  {step > s.id ? '✓' : s.id}
+                </span>
+                {s.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
