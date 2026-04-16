@@ -72,7 +72,7 @@ export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
     if (!userId) {
       return NextResponse.redirect(new URL('/sign-in', request.url))
     }
-    if (role === 'viewer' || role === 'client') {
+    if (role === 'viewer' || role === 'client' || role === 'investor') {
       return NextResponse.redirect(new URL('/client-view', request.url))
     }
   }

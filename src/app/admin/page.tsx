@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
+import { useClientContext } from '@/lib/use-client-context'
 
 // ── Design tokens ──────────────────────────────────────────────────────────────
 const PAGE  = '#F8F7F4'
@@ -21,6 +22,12 @@ const MONO  = 'JetBrains Mono, monospace'
 const SERIF = 'Georgia, serif'
 
 type Section = 'programme' | 'setup' | 'data' | 'engagements' | 'users' | 'security' | 'backlog' | 'assign' | 'capacity'
+
+const CLIENT_NAME_MAP: Record<string, string> = {
+  meridian:   'Meridian Health',
+  arcturus:   'Arcturus Financial',
+  apexretail: 'Apex Retail',
+}
 
 // ── Mock data ──────────────────────────────────────────────────────────────────
 const ENGAGEMENTS = [
@@ -209,13 +216,16 @@ const CANVAS_LABELS = ['LEADERSHIP DIRECTIVE', 'PRIMARY PROBLEM', 'SUCCESS CRITE
 // ── Section: Programme Dashboard ───────────────────────────────────────────────
 function ProgrammeDashboard() {
   const router = useRouter()
+  const { clientId, currentClient } = useClientContext()
+  const engagements = ENGAGEMENTS.filter(e => e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? ''))
+  const activeCount = engagements.filter(e => e.status === 'In Progress').length
   return (
     <div>
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT, marginBottom: 3 }}>Programme Dashboard</div>
-          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>Last updated: Today at 14:23 · 2 active clients</div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>Last updated: Today at 14:23 · {currentClient.shortName}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>+ New Engagement</button>
@@ -226,9 +236,9 @@ function ProgrammeDashboard() {
       {/* 4 compact stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
-          { label: 'ACTIVE ENGAGEMENTS', value: '2', color: TEXT, sub: 'Across 2 clients' },
-          { label: 'TOTAL VALUE TRACKED', value: '$960M+', color: TEXT, sub: 'Pipeline value at stake' },
-          { label: 'PHASES APPROVED', value: '3', color: GRN, sub: 'Gate-locked delivery' },
+          { label: 'ACTIVE ENGAGEMENTS', value: String(activeCount), color: TEXT, sub: `${engagements.length} total for ${currentClient.shortName}` },
+          { label: 'TOTAL VALUE TRACKED', value: clientId === 'arcturus' ? '$840M+' : clientId === 'apexretail' ? '$120M+' : '$160M+', color: TEXT, sub: 'Pipeline value at stake' },
+          { label: 'PHASES APPROVED', value: String(engagements.filter(e => e.phase >= 1).length), color: GRN, sub: 'Gate-locked delivery' },
           { label: 'FEE EARNED TO DATE', value: '$0', color: TEAL, sub: 'Activates on verified outcomes' },
         ].map((m, i) => (
           <div key={i} style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px' }}>
@@ -243,7 +253,7 @@ function ProgrammeDashboard() {
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderTop: `3px solid ${BDR}`, borderRadius: 8, marginBottom: 20, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: `1px solid ${BDR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>All Engagements</div>
-          <span style={{ fontFamily: SANS, fontSize: 13, color: TEAL, cursor: 'pointer' }}>Show all {ENGAGEMENTS.length} →</span>
+          <span style={{ fontFamily: SANS, fontSize: 13, color: TEAL, cursor: 'pointer' }}>Show all {engagements.length} →</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
           <thead>
@@ -254,7 +264,7 @@ function ProgrammeDashboard() {
             </tr>
           </thead>
           <tbody>
-            {ENGAGEMENTS.map((e, i) => (
+            {engagements.map((e, i) => (
               <tr key={e.id} style={{ borderTop: `1px solid ${BDR}`, height: 52, borderLeft: e.priority === 'Critical' ? `3px solid ${RED}` : e.priority === 'High' ? `3px solid ${ORG}` : '3px solid transparent' }}
                 onMouseEnter={ev => (ev.currentTarget as HTMLTableRowElement).style.background = PAGE}
                 onMouseLeave={ev => (ev.currentTarget as HTMLTableRowElement).style.background = CARD}
@@ -313,10 +323,11 @@ function ProgrammeDashboard() {
             <span style={{ fontFamily: SANS, fontSize: 12, color: TEAL }}>View all →</span>
           </div>
           {[
-            { client: 'Meridian Health System', score: 42, sub: '2 files missing · Below deployment threshold' },
-            { client: 'Arcturus Financial', score: 68, sub: 'All files present · Ready for deployment' },
+            clientId === 'arcturus'   ? { client: 'Arcturus Financial Group', score: 68, sub: 'All files present · Ready for deployment' } :
+            clientId === 'apexretail' ? { client: 'Apex Retail Group', score: 58, sub: '2 files missing · Below deployment threshold' } :
+                                        { client: 'Meridian Health System', score: 42, sub: '2 files missing · Below deployment threshold' },
           ].map((c, i) => (
-            <div key={i} style={{ padding: '12px 20px', borderBottom: i === 0 ? `1px solid ${BDR}` : 'none' }}>
+            <div key={i} style={{ padding: '12px 20px', borderBottom: 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{c.client}</div>
                 <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 700, color: c.score < 60 ? RED : c.score < 80 ? ORG : GRN }}>{c.score}</div>
@@ -414,7 +425,8 @@ const CLIENT_TABS = [
 ]
 
 function DataSection() {
-  const [activeClient, setActiveClient] = useState('meridian')
+  const { clientId } = useClientContext()
+  const activeClient = clientId
   const files = DATA_FILES_BY_CLIENT[activeClient] ?? []
   const allFiles = Object.values(DATA_FILES_BY_CLIENT).flat()
   const totalApproved = allFiles.filter(f => f.status === 'approved').length
@@ -461,28 +473,22 @@ function DataSection() {
         </div>
       </div>
 
-      {/* Client tabs */}
-      <div style={{ display: 'flex', gap: 2, marginBottom: 20, background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 4 }}>
+      {/* Current client label */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, padding: '10px 16px', background: CARD, border: `1px solid ${BDR}`, borderRadius: 8 }}>
         {CLIENT_TABS.map(tab => {
           const tabFiles = DATA_FILES_BY_CLIENT[tab.key] ?? []
           const tabApproved = tabFiles.filter(f => f.status === 'approved').length
           const tabMissing  = tabFiles.filter(f => f.status === 'missing').length
           const isActive = activeClient === tab.key
+          if (!isActive) return null
           return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveClient(tab.key)}
-              style={{
-                flex: 1, padding: '10px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                background: isActive ? TEXT : 'transparent',
-                textAlign: 'left' as const,
-              }}
-            >
-              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: isActive ? '#FFFFFF' : TEXT, marginBottom: 2 }}>{tab.short}</div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: isActive ? TEAL : MUTED }}>
+            <div key={tab.key} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>{tab.label}</div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>
                 {tabApproved} approved{tabMissing > 0 ? ` · ${tabMissing} missing` : ''}
               </div>
-            </button>
+              <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED }}>Use the client toggle in the nav to switch clients</div>
+            </div>
           )
         })}
       </div>
@@ -1047,13 +1053,13 @@ function SecuritySection() {
 
 // ── Section: Backlog ───────────────────────────────────────────────────────────
 function BacklogSection() {
-  const [filterClient,   setFilterClient]   = useState('All')
+  const { clientId } = useClientContext()
   const [filterPriority, setFilterPriority] = useState('All')
   const [filterStatus,   setFilterStatus]   = useState('All')
 
   const filtered = ENGAGEMENTS.filter(e => {
+    if (!e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? '')) return false
     if (e.status === 'Complete') return false
-    if (filterClient   !== 'All' && e.client   !== filterClient)   return false
     if (filterPriority !== 'All' && e.priority  !== filterPriority) return false
     if (filterStatus   !== 'All' && e.status    !== filterStatus)   return false
     return true
@@ -1071,11 +1077,6 @@ function BacklogSection() {
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
-        <select style={selStyle} value={filterClient} onChange={e => setFilterClient(e.target.value)}>
-          <option value="All">All Clients</option>
-          <option>Meridian Health</option>
-          <option>Arcturus Financial</option>
-        </select>
         <select style={selStyle} value={filterPriority} onChange={e => setFilterPriority(e.target.value)}>
           <option value="All">All Priorities</option>
           <option>Critical</option><option>High</option><option>Normal</option>
@@ -1132,6 +1133,7 @@ function BacklogSection() {
 
 // ── Section: Assignment ────────────────────────────────────────────────────────
 function AssignSection() {
+  const { clientId } = useClientContext()
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -1155,7 +1157,7 @@ function AssignSection() {
         <div style={{ fontFamily: SANS, fontSize: 15, color: MUTED, marginBottom: 32 }}>72% · 2 slots available</div>
 
         <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 14 }}>Active Engagements</div>
-        {ENGAGEMENTS.filter(e => e.maestro === 'Anand S.' && e.status === 'In Progress').map((e, i) => (
+        {ENGAGEMENTS.filter(e => e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? '') && e.maestro === 'Anand S.' && e.status === 'In Progress').map((e, i) => (
           <div key={i} style={{ background: PAGE, border: `1px solid ${BDR}`, borderRadius: 8, padding: 16, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: TEXT, marginBottom: 4 }}>{e.name}</div>
@@ -1166,7 +1168,7 @@ function AssignSection() {
         ))}
 
         <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginTop: 28, marginBottom: 14 }}>Unassigned — Drag to Assign</div>
-        {ENGAGEMENTS.filter(e => e.maestro === '—' || e.maestro === 'TBD').map((e, i) => (
+        {ENGAGEMENTS.filter(e => e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? '') && (e.maestro === '—' || e.maestro === 'TBD')).map((e, i) => (
           <div key={i} style={{ background: CARD, border: `2px dashed ${BDR}`, borderRadius: 8, padding: 16, marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'grab' }}>
             <div>
               <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 600, color: TEXT, marginBottom: 4 }}>{e.name}</div>
@@ -1185,8 +1187,9 @@ function AssignSection() {
 
 // ── Section: Capacity ──────────────────────────────────────────────────────────
 function CapacitySection() {
+  const { clientId } = useClientContext()
   const capacity = 72
-  const active   = ENGAGEMENTS.filter(e => e.status === 'In Progress' && e.maestro === 'Anand S.')
+  const active   = ENGAGEMENTS.filter(e => e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? '') && e.status === 'In Progress' && e.maestro === 'Anand S.')
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -1278,7 +1281,7 @@ function AdminPortalInner() {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
     const role = user.publicMetadata?.role as string
-    if (role !== 'admin' && role !== 'investor') { router.push('/'); return }
+    if (role !== 'admin') { router.push('/'); return }
   }, [isLoaded, user, router])
 
   if (!isLoaded || !user) return <div style={{ minHeight: '100vh', background: PAGE }} />
