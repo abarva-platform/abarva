@@ -37,13 +37,81 @@ const APPROVALS = [
   { doc: 'Data Upload: Payer Contract Analysis', engagement: 'RCM AI — Denial Prevention', from: 'Finance Team', status: 'overdue' },
 ]
 
-const DATA_FILES = [
-  { name: 'Meridian Financial Statements FY2025', owner: 'CFO Office', date: '2026-03-15', confidence: 96, status: 'approved' },
-  { name: 'Technology Landscape Assessment', owner: 'IT Dept', date: '2026-03-20', confidence: 88, status: 'approved' },
-  { name: 'Epic EHR Implementation Plan', owner: 'CTO', date: '2026-04-01', confidence: 91, status: 'approved' },
-  { name: 'Payer Contract Analysis', owner: '—', date: '—', confidence: 0, status: 'missing' },
-  { name: 'CDO Profile + Org Chart', owner: '—', date: '—', confidence: 0, status: 'missing' },
-]
+type DataFile = { name: string; owner: string; date: string; confidence: number; status: 'approved' | 'processing' | 'missing'; category: string }
+
+const DATA_FILES_BY_CLIENT: Record<string, DataFile[]> = {
+  meridian: [
+    { name: 'Annual Financial Statements FY2025',           owner: 'CFO Office',        date: '2026-02-28', confidence: 96, status: 'approved',   category: 'Financial' },
+    { name: 'Clinical Quality Metrics & HEDIS Data',        owner: 'CMO Office',        date: '2026-03-01', confidence: 89, status: 'approved',   category: 'Clinical' },
+    { name: 'Technology Landscape Assessment',              owner: 'CTO',               date: '2026-03-15', confidence: 88, status: 'approved',   category: 'Technology' },
+    { name: 'Full Technology Inventory (312 systems)',       owner: 'IT Dept',           date: '2026-03-20', confidence: 92, status: 'approved',   category: 'Technology' },
+    { name: 'AI Initiative Portfolio Register ($42M)',       owner: 'CIO',               date: '2026-03-22', confidence: 87, status: 'approved',   category: 'AI' },
+    { name: 'Leadership Profiles & Org Chart',              owner: 'HR Dept',           date: '2026-03-25', confidence: 94, status: 'approved',   category: 'Leadership' },
+    { name: 'Vendor Contracts & SLA Register',              owner: 'Procurement',       date: '2026-03-28', confidence: 91, status: 'approved',   category: 'Vendors' },
+    { name: 'Executive Interview Transcripts (7 leaders)',  owner: 'AbarVa',            date: '2026-04-01', confidence: 85, status: 'approved',   category: 'Intelligence' },
+    { name: 'HFMA Industry Benchmarks 2025',               owner: 'AbarVa Research',   date: '2026-03-10', confidence: 98, status: 'approved',   category: 'Benchmarks' },
+    { name: 'IT Architecture & Data Flow Diagrams',         owner: 'CTO',               date: '2026-04-01', confidence: 86, status: 'approved',   category: 'Technology' },
+    { name: 'RCM Vendor RFP Responses (6 vendors)',         owner: 'Procurement',       date: '2026-04-05', confidence: 90, status: 'approved',   category: 'Vendors' },
+    { name: 'Baseline Outcome Metrics (Day 0 Lock)',        owner: 'Internal Audit',    date: '2026-04-10', confidence: 97, status: 'approved',   category: 'Outcomes' },
+    { name: 'Payer Contract Analysis',                      owner: '—',                 date: '—',          confidence: 0,  status: 'missing',    category: 'Financial' },
+    { name: 'CDO Profile + Org Chart',                     owner: '—',                 date: '—',          confidence: 0,  status: 'missing',    category: 'Leadership' },
+  ],
+  arcturus: [
+    { name: 'AUM & Revenue Breakdown FY2025',               owner: 'Finance',           date: '2026-03-12', confidence: 94, status: 'approved',   category: 'Financial' },
+    { name: 'AI Initiative Register ($94M, 28 initiatives)',owner: 'CIO',               date: '2026-03-18', confidence: 91, status: 'approved',   category: 'AI' },
+    { name: 'Salesforce FSC Implementation Report',         owner: 'IT Dept',           date: '2026-03-20', confidence: 88, status: 'approved',   category: 'Technology' },
+    { name: 'Technology Stack & Vendor Inventory',          owner: 'CTO',               date: '2026-03-22', confidence: 87, status: 'approved',   category: 'Technology' },
+    { name: 'Leadership Profiles & Board Composition',      owner: 'HR',                date: '2026-03-25', confidence: 93, status: 'approved',   category: 'Leadership' },
+    { name: 'MAS FEAT Compliance Assessment',               owner: 'CRO',               date: '2026-03-28', confidence: 89, status: 'approved',   category: 'Regulatory' },
+    { name: 'Wealth Management Industry Benchmarks',        owner: 'AbarVa Research',   date: '2026-03-10', confidence: 98, status: 'approved',   category: 'Benchmarks' },
+    { name: 'Aladdin Risk System Configuration Report',     owner: 'CRO',               date: '2026-04-02', confidence: 86, status: 'approved',   category: 'Technology' },
+    { name: 'Bloomberg AIM Contract & Usage Data',          owner: 'Procurement',       date: '2026-04-05', confidence: 92, status: 'approved',   category: 'Vendors' },
+    { name: 'CDO Vacancy & Search Status Report',           owner: 'HR',                date: '2026-04-08', confidence: 84, status: 'approved',   category: 'Leadership' },
+    { name: 'Executive Interview Transcripts (5 leaders)',  owner: 'AbarVa',            date: '2026-04-10', confidence: 85, status: 'approved',   category: 'Intelligence' },
+    { name: 'Stress Testing Configuration Audit',           owner: '—',                 date: '—',          confidence: 0,  status: 'missing',    category: 'Regulatory' },
+  ],
+  apexretail: [
+    { name: 'P&L Statement by Channel FY2025',              owner: 'CFO',               date: '2026-03-10', confidence: 95, status: 'approved',   category: 'Financial' },
+    { name: 'Salesforce Einstein License & Usage Audit',    owner: 'CMO',               date: '2026-03-15', confidence: 92, status: 'approved',   category: 'AI' },
+    { name: 'E-commerce Platform Analytics (72% abandonment)',owner: 'CMO / CTO',       date: '2026-03-18', confidence: 88, status: 'approved',   category: 'Digital' },
+    { name: 'Inventory & Supply Chain Data',                owner: 'COO',               date: '2026-03-20', confidence: 90, status: 'approved',   category: 'Operations' },
+    { name: 'Technology Inventory (28,000 employees)',       owner: 'IT Dept',           date: '2026-03-22', confidence: 86, status: 'approved',   category: 'Technology' },
+    { name: 'AI Portfolio Register (3 initiatives)',         owner: 'CTO',               date: '2026-03-25', confidence: 87, status: 'approved',   category: 'AI' },
+    { name: 'Vendor Contracts & RFP Data',                  owner: 'Procurement',       date: '2026-03-28', confidence: 91, status: 'approved',   category: 'Vendors' },
+    { name: 'Leadership Profiles & Org Chart',              owner: 'HR',                date: '2026-04-01', confidence: 93, status: 'approved',   category: 'Leadership' },
+    { name: 'Retail Industry Benchmarks 2025',              owner: 'AbarVa Research',   date: '2026-03-10', confidence: 98, status: 'approved',   category: 'Benchmarks' },
+    { name: 'o9 Demand Forecasting Implementation Status',  owner: 'COO',               date: '2026-04-05', confidence: 89, status: 'approved',   category: 'Operations' },
+    { name: 'Executive Interview Transcripts (5 leaders)',  owner: 'AbarVa',            date: '2026-04-08', confidence: 84, status: 'approved',   category: 'Intelligence' },
+    { name: 'Shrinkage & Loss Prevention Data',             owner: 'COO',               date: '2026-04-10', confidence: 88, status: 'approved',   category: 'Operations' },
+    { name: 'CDO Vacancy Profile',                          owner: '—',                 date: '—',          confidence: 0,  status: 'missing',    category: 'Leadership' },
+  ],
+  firstcapital: [
+    { name: 'Annual Financial Statements FY2025',           owner: 'CFO',               date: '2026-03-15', confidence: 93, status: 'approved',   category: 'Financial' },
+    { name: 'Core Banking Architecture Assessment',         owner: 'CTO',               date: '2026-03-20', confidence: 88, status: 'approved',   category: 'Technology' },
+    { name: 'AI Initiative Register (3 initiatives)',       owner: 'CTO',               date: '2026-03-22', confidence: 87, status: 'approved',   category: 'AI' },
+    { name: 'Technology Inventory & Vendor Contracts',      owner: 'IT Dept',           date: '2026-03-25', confidence: 90, status: 'approved',   category: 'Technology' },
+    { name: 'AML & Compliance Systems Assessment',          owner: 'CRO',               date: '2026-03-28', confidence: 91, status: 'approved',   category: 'Regulatory' },
+    { name: 'FedNow Implementation Status Report',          owner: 'CTO',               date: '2026-04-01', confidence: 85, status: 'approved',   category: 'Technology' },
+    { name: 'Digital Adoption Analytics (41% current)',     owner: 'CMO',               date: '2026-04-03', confidence: 89, status: 'approved',   category: 'Digital' },
+    { name: 'Leadership Profiles & Org Chart',              owner: 'HR',                date: '2026-04-05', confidence: 93, status: 'approved',   category: 'Leadership' },
+    { name: 'Banking Industry Benchmarks 2025',             owner: 'AbarVa Research',   date: '2026-03-10', confidence: 98, status: 'approved',   category: 'Benchmarks' },
+    { name: 'Executive Interview Transcripts (4 leaders)',  owner: 'AbarVa',            date: '2026-04-08', confidence: 83, status: 'approved',   category: 'Intelligence' },
+    { name: 'NICE Actimize AML Configuration Audit',        owner: 'CRO',               date: '2026-04-10', confidence: 86, status: 'approved',   category: 'Regulatory' },
+    { name: 'Payer / Counterparty Contract Analysis',       owner: '—',                 date: '—',          confidence: 0,  status: 'missing',    category: 'Financial' },
+  ],
+  nexora: [
+    { name: 'Group P&L by Channel FY2025',                  owner: 'CFO',               date: '2026-03-20', confidence: 94, status: 'approved',   category: 'Financial' },
+    { name: 'SAP R/3 Configuration & Customisation Report', owner: 'CTO',               date: '2026-03-25', confidence: 89, status: 'approved',   category: 'Technology' },
+    { name: 'Salesforce Einstein License Activation Audit', owner: 'CMO',               date: '2026-03-28', confidence: 91, status: 'approved',   category: 'AI' },
+    { name: 'Operations & Supply Chain Analytics',          owner: 'COO',               date: '2026-04-01', confidence: 88, status: 'approved',   category: 'Operations' },
+    { name: 'Technology Stack Assessment',                  owner: 'CTO',               date: '2026-04-03', confidence: 87, status: 'approved',   category: 'Technology' },
+    { name: 'AI Initiative Register',                       owner: 'CIO',               date: '2026-04-05', confidence: 86, status: 'approved',   category: 'AI' },
+    { name: 'Global Retail Industry Benchmarks 2025',       owner: 'AbarVa Research',   date: '2026-03-10', confidence: 98, status: 'approved',   category: 'Benchmarks' },
+  ],
+}
+
+// Legacy flat array for any remaining references
+const DATA_FILES = DATA_FILES_BY_CLIENT.meridian
 
 const USERS = [
   { name: 'Anand Sundaram', email: 'anand@abarva.ai', role: 'Admin', engCount: '2 active', lastActive: 'Today' },
@@ -337,9 +405,25 @@ function SetupSection() {
 }
 
 // ── Section: Data Uploads ──────────────────────────────────────────────────────
+const CLIENT_TABS = [
+  { key: 'meridian',     label: 'Meridian Health',    short: 'Meridian' },
+  { key: 'arcturus',     label: 'Arcturus Financial',  short: 'Arcturus' },
+  { key: 'apexretail',   label: 'Apex Retail',         short: 'Apex Retail' },
+  { key: 'firstcapital', label: 'First Capital',       short: 'First Capital' },
+  { key: 'nexora',       label: 'Nexora Retail',       short: 'Nexora' },
+]
+
 function DataSection() {
-  const approved = DATA_FILES.filter(f => f.confidence > 0)
-  const avgConf  = Math.round(approved.reduce((a, b) => a + b.confidence, 0) / approved.length)
+  const [activeClient, setActiveClient] = useState('meridian')
+  const files = DATA_FILES_BY_CLIENT[activeClient] ?? []
+  const allFiles = Object.values(DATA_FILES_BY_CLIENT).flat()
+  const totalApproved = allFiles.filter(f => f.status === 'approved').length
+  const totalMissing  = allFiles.filter(f => f.status === 'missing').length
+  const totalFiles    = allFiles.length
+  const approvedFiles = allFiles.filter(f => f.confidence > 0)
+  const avgConf       = Math.round(approvedFiles.reduce((a, b) => a + b.confidence, 0) / approvedFiles.length)
+  const clientMissing = files.filter(f => f.status === 'missing')
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
@@ -350,23 +434,24 @@ function DataSection() {
         <button style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#FFFFFF', background: TEXT, border: 'none', borderRadius: 6, height: 34, padding: '0 16px', cursor: 'pointer' }}>Upload Files</button>
       </div>
 
-      {/* Dark readiness banner */}
+      {/* Dark readiness banner — aggregate across all clients */}
       <div style={{ background: '#0C0C0C', borderRadius: 8, padding: '20px 28px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 32 }}>
         <div style={{ flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 }}>
-            <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: TEAL, lineHeight: 1 }}>42</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>/100 · AI Readiness</div>
+            <div style={{ fontFamily: SANS, fontSize: 36, fontWeight: 700, color: TEAL, lineHeight: 1 }}>{totalFiles}</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Total Datasets · 5 Clients</div>
           </div>
           <div style={{ height: 4, background: '#1A1A1A', borderRadius: 2, width: 160, marginBottom: 6 }}>
-            <div style={{ height: 4, borderRadius: 2, width: '42%', background: TEAL }} />
+            <div style={{ height: 4, borderRadius: 2, width: `${(totalApproved / totalFiles) * 100}%`, background: TEAL }} />
           </div>
-          <div style={{ fontFamily: SANS, fontSize: 13, color: '#6B7280' }}>Below 60-point deployment threshold</div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: '#6B7280' }}>{totalApproved} approved · {totalMissing} missing</div>
         </div>
         <div style={{ display: 'flex', gap: 28 }}>
           {[
-            { value: `${avgConf}%`, label: 'AVG CONFIDENCE', color: '#FFFFFF' },
-            { value: '3 / 5', label: 'FILES APPROVED', color: GRN },
-            { value: '2', label: 'MISSING', color: RED },
+            { value: `${avgConf}%`,              label: 'AVG CONFIDENCE',  color: '#FFFFFF' },
+            { value: `${totalApproved} / ${totalFiles}`, label: 'FILES APPROVED',  color: GRN },
+            { value: String(totalMissing),        label: 'MISSING',         color: ORG },
+            { value: '5',                         label: 'CLIENTS ACTIVE',  color: TEAL },
           ].map((s, i) => (
             <div key={i} style={{ borderLeft: '1px solid #1F2937', paddingLeft: 24 }}>
               <div style={{ fontFamily: SANS, fontSize: 28, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 4 }}>{s.value}</div>
@@ -376,63 +461,103 @@ function DataSection() {
         </div>
       </div>
 
-      {/* Warnings panel */}
-      <div style={{ background: CARD, border: `1px solid ${BDR}`, borderLeft: `4px solid ${ORG}`, borderRadius: 8, padding: 20, marginBottom: 24 }}>
-        <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: ORG, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 12 }}>Missing Data Warnings</div>
-        {[
-          { name: 'Payer Contract Analysis', reason: 'Required for SLA intelligence' },
-          { name: 'CDO Profile + Org Chart', reason: 'Required for leadership intelligence' },
-        ].map((w, i) => (
-          <div key={i} style={{ marginBottom: i === 0 ? 10 : 0 }}>
-            <div style={{ fontFamily: SANS, fontSize: 15, color: TEXT }}>⚠ {w.name}</div>
-            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{w.reason}</div>
-          </div>
-        ))}
+      {/* Client tabs */}
+      <div style={{ display: 'flex', gap: 2, marginBottom: 20, background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, padding: 4 }}>
+        {CLIENT_TABS.map(tab => {
+          const tabFiles = DATA_FILES_BY_CLIENT[tab.key] ?? []
+          const tabApproved = tabFiles.filter(f => f.status === 'approved').length
+          const tabMissing  = tabFiles.filter(f => f.status === 'missing').length
+          const isActive = activeClient === tab.key
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveClient(tab.key)}
+              style={{
+                flex: 1, padding: '10px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                background: isActive ? TEXT : 'transparent',
+                textAlign: 'left' as const,
+              }}
+            >
+              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: isActive ? '#FFFFFF' : TEXT, marginBottom: 2 }}>{tab.short}</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: isActive ? TEAL : MUTED }}>
+                {tabApproved} approved{tabMissing > 0 ? ` · ${tabMissing} missing` : ''}
+              </div>
+            </button>
+          )
+        })}
       </div>
 
+      {/* Missing data warnings for selected client */}
+      {clientMissing.length > 0 && (
+        <div style={{ background: CARD, border: `1px solid ${BDR}`, borderLeft: `4px solid ${ORG}`, borderRadius: 8, padding: 20, marginBottom: 20 }}>
+          <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: ORG, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 10 }}>Missing Data Warnings</div>
+          {clientMissing.map((w, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: i < clientMissing.length - 1 ? 8 : 0 }}>
+              <div>
+                <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT }}>⚠ {w.name}</div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED }}>Category: {w.category}</div>
+              </div>
+              <button style={{ fontFamily: SANS, fontSize: 13, color: TEAL, background: 'none', border: `1px solid ${BDR}`, borderRadius: 6, padding: '6px 14px', cursor: 'pointer' }}>Request →</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Drop zone */}
-      <div style={{ background: CARD, border: `2px dashed ${BDR}`, borderRadius: 8, padding: 60, textAlign: 'center' as const, marginBottom: 24, cursor: 'pointer' }}>
-        <div style={{ fontFamily: SANS, fontSize: 17, color: MUTED, marginBottom: 8 }}>↑ Drag files here or click to upload</div>
-        <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF' }}>PDF, Excel, CSV, Word — max 50MB per file</div>
+      <div style={{ background: CARD, border: `2px dashed ${BDR}`, borderRadius: 8, padding: 40, textAlign: 'center' as const, marginBottom: 20, cursor: 'pointer' }}>
+        <div style={{ fontFamily: SANS, fontSize: 16, color: MUTED, marginBottom: 6 }}>↑ Drag files here or click to upload</div>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF' }}>PDF, Excel, CSV, Word — max 50MB per file · files ingest in 2–4 minutes</div>
       </div>
 
       {/* File table */}
       <div style={{ background: CARD, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
-        <div style={{ padding: '20px 24px', borderBottom: `1px solid ${BDR}` }}>
-          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>Meridian Health System · Uploaded Files</div>
+        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${BDR}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT }}>
+            {CLIENT_TABS.find(t => t.key === activeClient)?.label} · {files.filter(f => f.status === 'approved').length} of {files.length} datasets ingested
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL }}>
+            {files.filter(f => f.status === 'approved').length} APPROVED · {files.filter(f => f.status === 'missing').length} MISSING
+          </div>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
           <thead>
             <tr style={{ background: '#FAFAFA', borderBottom: `1px solid ${BDR}` }}>
-              {['File', 'Owner', 'Date', 'Confidence', 'Status', ''].map(h => (
-                <th key={h} style={{ padding: '10px 20px', textAlign: 'left' as const, fontFamily: SANS, fontSize: 12, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
+              {['Dataset', 'Category', 'Owner', 'Uploaded', 'Confidence', 'Status', ''].map(h => (
+                <th key={h} style={{ padding: '10px 16px', textAlign: 'left' as const, fontFamily: SANS, fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {DATA_FILES.map((f, i) => (
+            {files.map((f, i) => (
               <tr key={i} style={{ borderTop: `1px solid ${BDR}` }}>
-                <td style={{ padding: '14px 20px', fontFamily: SANS, fontSize: 15, color: f.status === 'missing' ? MUTED : TEXT, fontStyle: f.status === 'missing' ? 'italic' : 'normal' }}>{f.name}</td>
-                <td style={{ padding: '14px 20px', fontFamily: SANS, fontSize: 15, color: TEXT2 }}>{f.owner}</td>
-                <td style={{ padding: '14px 20px', fontFamily: MONO, fontSize: 13, color: MUTED }}>{f.date}</td>
-                <td style={{ padding: '14px 20px' }}>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: 14, color: f.status === 'missing' ? MUTED : TEXT, fontStyle: f.status === 'missing' ? 'italic' : 'normal', maxWidth: 280 }}>{f.name}</td>
+                <td style={{ padding: '12px 16px' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: MUTED, background: '#F3F4F6', padding: '3px 8px', borderRadius: 4 }}>{f.category}</span>
+                </td>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{f.owner}</td>
+                <td style={{ padding: '12px 16px', fontFamily: MONO, fontSize: 12, color: MUTED }}>{f.date}</td>
+                <td style={{ padding: '12px 16px' }}>
                   {f.confidence > 0 ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 60, height: 4, background: BDR, borderRadius: 2 }}>
-                        <div style={{ height: 4, borderRadius: 2, width: `${f.confidence}%`, background: TEAL }} />
+                      <div style={{ width: 52, height: 3, background: BDR, borderRadius: 2 }}>
+                        <div style={{ height: 3, borderRadius: 2, width: `${f.confidence}%`, background: TEAL }} />
                       </div>
-                      <span style={{ fontFamily: MONO, fontSize: 12, color: TEAL }}>{f.confidence}%</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL }}>{f.confidence}%</span>
                     </div>
-                  ) : <span style={{ fontFamily: MONO, fontSize: 12, color: RED }}>—</span>}
+                  ) : <span style={{ fontFamily: MONO, fontSize: 11, color: ORG }}>—</span>}
                 </td>
-                <td style={{ padding: '14px 20px' }}>
-                  <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, padding: '4px 10px', borderRadius: 4, color: f.status === 'approved' ? GRN : f.status === 'missing' ? ORG : MUTED, background: f.status === 'approved' ? 'rgba(52,211,153,0.12)' : f.status === 'missing' ? 'rgba(245,158,11,0.1)' : '#F3F4F6' }}>
+                <td style={{ padding: '12px 16px' }}>
+                  <span style={{
+                    fontFamily: SANS, fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 4,
+                    color: f.status === 'approved' ? GRN : f.status === 'missing' ? ORG : MUTED,
+                    background: f.status === 'approved' ? 'rgba(52,211,153,0.12)' : f.status === 'missing' ? 'rgba(245,158,11,0.1)' : '#F3F4F6',
+                  }}>
                     {f.status.toUpperCase()}
                   </span>
                 </td>
-                <td style={{ padding: '14px 20px' }}>
+                <td style={{ padding: '12px 16px' }}>
                   {f.status === 'missing' && (
-                    <button style={{ fontFamily: SANS, fontSize: 14, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Request →</button>
+                    <button style={{ fontFamily: SANS, fontSize: 13, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Request →</button>
                   )}
                 </td>
               </tr>
