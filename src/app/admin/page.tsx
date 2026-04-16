@@ -21,7 +21,7 @@ const SANS  = 'DM Sans, sans-serif'
 const MONO  = 'JetBrains Mono, monospace'
 const SERIF = 'Georgia, serif'
 
-type Section = 'programme' | 'setup' | 'data' | 'engagements' | 'users' | 'security' | 'backlog' | 'assign' | 'capacity'
+type Section = 'program' | 'setup' | 'data' | 'engagements' | 'users' | 'security' | 'backlog' | 'assign' | 'capacity'
 
 const CLIENT_NAME_MAP: Record<string, string> = {
   meridian:   'Meridian Health',
@@ -167,7 +167,7 @@ const CHAT_QUESTIONS = [
   },
   {
     step: 3,
-    ai: `Before we define the metrics, let me share what 'good' looks like at this level.\n\nFor a supply chain programme at a $4.2B IDN:\n\nBOARD LEVEL: CFO can defend supply spend with a verified reduction trajectory. Neither the board nor bondholders question it.\n\nCSO LEVEL: Vendor scorecard visible. Contract SLAs tracked. Agency spend declining quarter over quarter with a credible plan.\n\nOPERATIONAL: Procurement team freed from manual process by 30%+. Staff focused on strategic sourcing, not paperwork.\n\nDoes this match what the CSO and their boss need to see?`,
+    ai: `Before we define the metrics, let me share what 'good' looks like at this level.\n\nFor a supply chain program at a $4.2B IDN:\n\nBOARD LEVEL: CFO can defend supply spend with a verified reduction trajectory. Neither the board nor bondholders question it.\n\nCSO LEVEL: Vendor scorecard visible. Contract SLAs tracked. Agency spend declining quarter over quarter with a credible plan.\n\nOPERATIONAL: Procurement team freed from manual process by 30%+. Staff focused on strategic sourcing, not paperwork.\n\nDoes this match what the CSO and their boss need to see?`,
     freeText: false,
     options: [
       { letter: 'A', text: 'Yes — this is exactly the right framing' },
@@ -178,22 +178,22 @@ const CHAT_QUESTIONS = [
   },
   {
     step: 4,
-    ai: `What is the timeline?\n\nMeridian's next major milestone is the Q3 board meeting. The FY2026 budget cycle closes in October.\n\nThe Genome shows F022 pattern achieves initial results in 90 days and full programme maturity in 9 months.`,
+    ai: `What is the timeline?\n\nMeridian's next major milestone is the Q3 board meeting. The FY2026 budget cycle closes in October.\n\nThe Genome shows F022 pattern achieves initial results in 90 days and full program maturity in 9 months.`,
     freeText: false,
     options: [
       { letter: 'A', text: '90-day quick win — board meeting deadline' },
-      { letter: 'B', text: '6-month programme — next planning cycle' },
+      { letter: 'B', text: '6-month program — next planning cycle' },
       { letter: 'C', text: '12-month transformation — full redesign' },
       { letter: 'D', text: 'No hard deadline — quality over speed' },
     ],
   },
   {
     step: 5,
-    ai: `Who owns this programme?\n\nThe F002 failure pattern — the single biggest predictor of disengagement — is a missing or powerless sponsor.\n\nI need a named CXO who: has budget authority, can unblock cross-functional resistance, and will stand in front of the board on results.\n\nWho is the named executive sponsor for this engagement?`,
+    ai: `Who owns this program?\n\nThe F002 failure pattern — the single biggest predictor of disengagement — is a missing or powerless sponsor.\n\nI need a named CXO who: has budget authority, can unblock cross-functional resistance, and will stand in front of the board on results.\n\nWho is the named executive sponsor for this engagement?`,
     freeText: false,
     options: [
       { letter: 'A', text: 'CEO — this is a board-level mandate' },
-      { letter: 'B', text: 'CFO — it is a margin and P&L programme' },
+      { letter: 'B', text: 'CFO — it is a margin and P&L program' },
       { letter: 'C', text: 'COO / CSO — operational ownership' },
       { letter: 'D', text: 'CTO / CIO — technology-led transformation' },
     ],
@@ -213,8 +213,8 @@ const CHAT_QUESTIONS = [
 
 const CANVAS_LABELS = ['LEADERSHIP DIRECTIVE', 'PRIMARY PROBLEM', 'SUCCESS CRITERIA', 'WHAT GOOD LOOKS LIKE', 'TIMELINE', 'CXO SPONSOR', 'EXECUTION PATH']
 
-// ── Section: Programme Dashboard ───────────────────────────────────────────────
-function ProgrammeDashboard() {
+// ── Section: Program Dashboard ───────────────────────────────────────────────
+function ProgramDashboard() {
   const router = useRouter()
   const { clientId, currentClient } = useClientContext()
   const engagements = ENGAGEMENTS.filter(e => e.client.startsWith(CLIENT_NAME_MAP[clientId] ?? ''))
@@ -224,7 +224,7 @@ function ProgrammeDashboard() {
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT, marginBottom: 3 }}>Programme Dashboard</div>
+          <div style={{ fontFamily: SANS, fontSize: 22, fontWeight: 600, color: TEXT, marginBottom: 3 }}>Program Dashboard</div>
           <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>Last updated: Today at 14:23 · {currentClient.shortName}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -1254,12 +1254,12 @@ const NAV_GROUPS = [
     { key: 'capacity' as Section, label: 'Capacity',   icon: '▦' },
   ]},
   { label: 'PROGRAMME DASHBOARD', items: [
-    { key: 'programme' as Section, label: 'Progress & Metrics', icon: '⬡' },
+    { key: 'program' as Section, label: 'Progress & Metrics', icon: '⬡' },
   ]},
 ]
 
 const SECTION_MAP: Record<Section, () => React.JSX.Element> = {
-  programme:   ProgrammeDashboard,
+  program:   ProgramDashboard,
   setup:       SetupSection,
   data:        DataSection,
   engagements: EngagementsSection,
@@ -1275,7 +1275,7 @@ function AdminPortalInner() {
   const { user, isLoaded } = useUser()
   const router   = useRouter()
   const params   = useSearchParams()
-  const [section, setSection] = useState<Section>((params.get('section') as Section) ?? 'programme')
+  const [section, setSection] = useState<Section>((params.get('section') as Section) ?? 'program')
 
   useEffect(() => {
     if (!isLoaded) return
