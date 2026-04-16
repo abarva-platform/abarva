@@ -106,7 +106,7 @@ function NavInner({ activePage }: NavProps) {
 
   // Admin sub-menu items — all route to /admin portal with ?section= param
   const ADMIN_ITEMS = [
-    { label: 'Programme Dashboard', path: '/admin?section=programme', desc: 'All engagements, phases, approvals, fees' },
+    { label: 'Program Dashboard', path: '/admin?section=program', desc: 'All engagements, phases, approvals, fees' },
     { label: 'Client Setup',        path: '/admin?section=setup',     desc: 'Client profile, fee model, contacts' },
     { label: 'Data Uploads',        path: '/admin?section=data',      desc: 'Upload files, approve data, AI readiness' },
     { label: 'Engagements',         path: '/admin?section=engagements', desc: 'Define and assign engagement backlog' },
