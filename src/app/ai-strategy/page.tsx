@@ -1,668 +1,1079 @@
 'use client'
-import { Suspense, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
-import { arcturusFinancial, arcturusTechnology, arcturusIndustry } from '@/data/arcturus/index'
-import { arcturusAI } from '@/data/arcturus/ai'
-import { meridianHealth } from '@/data/meridian/index'
+import { useClientContext } from '@/lib/use-client-context'
+import { useSearchParams } from 'next/navigation'
 
-// ── Design tokens ──────────────────────────────────────────────────────────────
-const LBG = '#F8F7F4', LTEXT = '#0C0C0C', LBODY = '#3C3C3C', LMUTE = '#888888', LBDR = '#E2E1DC'
-const DBG = '#060A12', DTEXT = '#EFF6FF', DBODY = 'rgba(255,255,255,0.74)', DMUTE = 'rgba(255,255,255,0.46)', DBDR = '#1C2D45', DCARD = '#0D1520'
-const TEAL = '#2DD4C8', SANS = 'DM Sans, sans-serif', MONO = 'JetBrains Mono, monospace', SERIF = 'Georgia, serif'
-// Status dots only — never use these as text color
-const DOT_RED = '#EF4444', DOT_AMBER = '#F59E0B', DOT_GREEN = '#10B981'
-// Phase categorical dots (structural navigation only)
-const PHASE_COLORS = ['#4DA3FF', '#F59E0B', '#34D399']
+// ── Design tokens — exact from Solutions page ─────────────────────────────────
+const LBG   = '#F8F7F4'
+const TX    = '#0C0C0C'
+const BODY  = '#3C3C3C'
+const MUTE  = '#9CA3AF'
+const SMUTE = '#6B7280'
+const BD    = '#E5E7EB'
+const DBG   = '#060A12'
+const DCARD = '#0D1520'
+const DBDR  = '#1F2937'
+const TEAL  = '#2DD4C8'
+const TEAL_BG  = 'rgba(45,212,200,0.07)'
+const TEAL_LBG = 'rgba(45,212,200,0.18)'
+const RED   = '#EF4444'
+const AMBER = '#F59E0B'
+const GREEN = '#34D399'
+const SANS  = 'DM Sans, sans-serif'
+const MONO  = 'JetBrains Mono, monospace'
+const SERIF = 'Georgia, serif'
+const NAV_W    = 240
+const FOOTER_H = 56
 
-// ── Phase / Module map ─────────────────────────────────────────────────────────
-const PHASES = [
-  {
-    phase: 1, label: 'DIAGNOSE', color: PHASE_COLORS[0],
-    modules: [
-      { num: 1, key: 'situation',     name: 'Situation Intelligence',     desc: 'What is broken — and what it costs',          output: 'SITUATION BRIEF · 48HRS' },
-      { num: 2, key: 'contradiction', name: 'Contradiction Intelligence', desc: 'What was promised vs what data shows',         output: 'CONTRADICTION MAP · 72HRS' },
-      { num: 3, key: 'data',          name: 'Data Intelligence',          desc: 'Data readiness before AI investment',          output: 'DATA CERTIFICATE · 1 WEEK' },
-    ],
-  },
-  {
-    phase: 2, label: 'PRESCRIBE', color: PHASE_COLORS[1],
-    modules: [
-      { num: 4, key: 'technology',    name: 'Technology Intelligence',    desc: 'Current stack — inventory, spend, contracts',  output: 'AI READINESS CERT · 1 WEEK' },
-      { num: 5, key: 'vendor',        name: 'Vendor Intelligence',        desc: 'Vendors scored against Genome outcomes',       output: 'VENDOR SCORECARD · 1 WEEK' },
-      { num: 6, key: 'architecture',  name: 'Architecture Intelligence',  desc: 'Target state — AI stack blueprint',            output: 'ARCHITECTURE BLUEPRINT · 2WKS' },
-      { num: 7, key: 'business-case', name: 'Business Case Intelligence', desc: 'CFO-grade case with Genome validation',        output: 'IC PACKAGE · 1 WEEK' },
-    ],
-  },
-  {
-    phase: 3, label: 'VALUE REALIZATION', color: PHASE_COLORS[2],
-    modules: [
-      { num: 8, key: 'ai-delivery',   name: 'AI Delivery Intelligence',   desc: 'Portfolio, blockers, and delivery roadmap',    output: 'EXECUTION BASELINE · 2WKS' },
-      { num: 9, key: 'outcome',       name: 'Outcome Intelligence',        desc: 'Baseline locked · verified delta · fee earned', output: 'LIVE OUTCOME DASHBOARD' },
-    ],
-  },
+// ── Types ─────────────────────────────────────────────────────────────────────
+type StepStatus  = 'locked' | 'pending' | 'active' | 'complete'
+type PhaseStatus = 'locked' | 'active' | 'approved'
+
+interface StepDef  { id: string; label: string }
+interface PhaseDef { id: number; name: string; steps: StepDef[] }
+
+interface ChatMessage {
+  role: 'ai' | 'user'
+  text: string
+  options?: string[]
+  selectedOption?: string
+  stepId: string
+}
+
+interface OutcomeItem { stepId: string; label: string; value: string }
+
+interface SavedState {
+  phaseStatuses:  Record<number, PhaseStatus>
+  stepStatuses:   Record<string, StepStatus>
+  outcomes:       OutcomeItem[]
+  messagesByStep: Record<string, ChatMessage[]>
+  activeStep:     string
+}
+
+// ── Phase / step definitions ──────────────────────────────────────────────────
+const PHASE_DEFS: PhaseDef[] = [
+  { id: 0, name: 'READINESS', steps: [
+    { id: '0.1', label: 'Situation Confirmation' },
+    { id: '0.2', label: 'AI Aspiration' },
+    { id: '0.3', label: 'Data Readiness' },
+    { id: '0.4', label: 'Genome Pre-Match' },
+    { id: '0.5', label: 'Scope Confirmation' },
+  ]},
+  { id: 1, name: 'DIAGNOSE', steps: [
+    { id: '1.1', label: 'Situation Brief' },
+    { id: '1.2', label: 'Contradiction Surface' },
+    { id: '1.3', label: 'Competitive Benchmarks' },
+    { id: '1.4', label: 'Data Readiness Gap' },
+  ]},
+  { id: 2, name: 'PRESCRIBE', steps: [
+    { id: '2.1', label: 'Use Case Prioritization' },
+    { id: '2.2', label: 'Technology & Vendor Fit' },
+    { id: '2.3', label: 'Architecture Approach' },
+    { id: '2.4', label: 'Business Case Framing' },
+  ]},
+  { id: 3, name: 'VALUE REALIZATION', steps: [
+    { id: '3.1', label: 'Value Model Build' },
+    { id: '3.2', label: 'KPI Framework' },
+    { id: '3.3', label: 'Milestone Plan' },
+  ]},
+  { id: 4, name: 'EXECUTE & VERIFY', steps: [
+    { id: '4.1', label: '90-Day Sprint Plan' },
+    { id: '4.2', label: 'Governance & Measurement' },
+  ]},
 ]
 
-type ModuleInfo = { num: number; key: string; name: string; desc: string; output: string; phaseLabel: string; phaseColor: string }
-
-function allModules(): ModuleInfo[] {
-  return PHASES.flatMap(p => p.modules.map(m => ({ ...m, phaseLabel: p.label, phaseColor: p.color })))
+// ── Approval checklists ───────────────────────────────────────────────────────
+const APPROVAL_CHECKS: Record<number, string[]> = {
+  0: [
+    'Situation confirmed and key risks acknowledged',
+    'AI aspiration aligned with executive sponsor',
+    'Data readiness baseline documented',
+    'Scope and investment parameters agreed',
+  ],
+  1: [
+    'Situation brief reviewed and signed off',
+    'Contradictions documented and acknowledged',
+    'Competitive benchmark data validated',
+    'Data readiness gap report delivered',
+  ],
+  2: [
+    'Use case prioritization approved by sponsor',
+    'Technology and vendor recommendation signed off',
+    'Architecture blueprint reviewed by CTO / CIO',
+    'Business case numbers approved by CFO',
+  ],
+  3: [
+    'Value model locked with baseline metrics',
+    'KPI framework agreed with executive team',
+    'Milestone plan committed to by delivery team',
+  ],
+  4: [
+    '90-day sprint plan approved by programme lead',
+    'Governance model agreed and owners named',
+  ],
 }
 
-// ── Shared card primitives ─────────────────────────────────────────────────────
-const cardStyle = (extra?: React.CSSProperties): React.CSSProperties => ({
-  background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 8, padding: '18px 20px', ...extra,
-})
-const sectionLabel = (text: string) => (
-  <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>{text}</div>
-)
-
-// Dot for status — the ONLY colored UI element in panels
-function StatusDot({ severity }: { severity: 'critical' | 'warning' | 'ok' }) {
-  const bg = severity === 'critical' ? DOT_RED : severity === 'warning' ? DOT_AMBER : DOT_GREEN
-  return <span style={{ width: 6, height: 6, borderRadius: '50%', background: bg, flexShrink: 0, display: 'inline-block' }} />
+// ── Outcome labels & step values ──────────────────────────────────────────────
+const OUTCOME_LABELS: Record<string, string> = {
+  '0.1': 'Priority Signal',   '0.2': 'AI Aspiration',     '0.3': 'Data Readiness',
+  '0.4': 'Genome Match',      '0.5': 'Scope Confirmed',
+  '1.1': 'Top Finding',       '1.2': 'Key Contradiction',  '1.3': 'Benchmark Gap',    '1.4': 'Data Gap',
+  '2.1': 'Priority Use Case', '2.2': 'Tech Direction',     '2.3': 'Architecture',     '2.4': 'Business Case',
+  '3.1': 'Value Potential',   '3.2': 'Primary KPI',        '3.3': 'First Milestone',
+  '4.1': '90-Day Focus',      '4.2': 'Governance Model',
 }
 
-// ── Module panels ──────────────────────────────────────────────────────────────
+const P0_VALUES: Record<string, Record<string, string>> = {
+  '0.1': {
+    A: 'Denial rate gap ($94M) — revenue is bleeding now',
+    B: 'Epic go-live risk — execution pressure is highest',
+    C: 'Prior auth automation lag — compounding daily',
+    D: 'Custom priority signal',
+  },
+  '0.2': {
+    A: 'Revenue recovery — stop the denial bleed first',
+    B: 'Epic integration — AI-native go-live, no retrofitting',
+    C: 'Full RCM transformation — end-to-end redesign',
+    D: 'Custom aspiration',
+  },
+  '0.3': {
+    A: 'Data fragmentation across facilities',
+    B: 'Epic migration freeze blocking AI deployment',
+    C: 'No AI-ready platform in production',
+    D: 'Custom data gap',
+  },
+  '0.4': {
+    A: 'F011 — AI post go-live deployment (71% failure)',
+    B: 'F007 — Denial rate widens in EHR transition (84%)',
+    C: 'F031 — Recovery costs 2.3× after stabilization',
+    D: 'Pattern match not applicable to our situation',
+  },
+  '0.5': {
+    A: 'Phase 1 only — prove ROI in 90 days',
+    B: 'Phase 1+2 — strategic 18-month program',
+    C: 'Full 3-phase — multi-year platform build',
+    D: 'Custom scope and mandate',
+  },
+}
 
-function SituationPanel({ clientId }: { clientId: string }) {
-  const metrics = clientId === 'arcturus' ? arcturusFinancial.situationMetrics : [
-    { label: 'Denial Rate',        value: `${meridianHealth.technology.rcm.denialRate}%`,          benchmark: `${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, status: 'critical' as const, gap: '$94M annual write-off' },
-    { label: 'Operating Margin',   value: `${meridianHealth.org.operatingMargin}%`,                benchmark: `${meridianHealth.org.targetOperatingMargin}% target`,     status: 'critical' as const, gap: '2.2pp to target' },
-    { label: 'Days in AR',         value: `${meridianHealth.technology.rcm.daysInAR}`,             benchmark: '35 benchmark',                                            status: 'critical' as const, gap: '17 days above benchmark' },
-    { label: 'Prior Auth Avg Days',value: `${meridianHealth.technology.rcm.priorAuthAvgDays}`,     benchmark: `${meridianHealth.technology.rcm.priorAuthPeerDays} peer`,   status: 'critical' as const, gap: '2.4 days above peer' },
-    { label: 'MyChart Adoption',   value: '34%',                                                   benchmark: '60% target',                                              status: 'warning' as const,  gap: '26pp below target' },
-    { label: 'Epic Optimization',  value: `${meridianHealth.technology.ehr.optimizationScore}/100`,benchmark: '80 benchmark',                                            status: 'warning' as const,  gap: '22 points below benchmark' },
-    { label: 'MA Star Rating',     value: `${meridianHealth.healthPlan.medicareAdvantage.starRating}`, benchmark: '4.0 target',                                         status: 'warning' as const,  gap: '0.5 stars to target' },
-    { label: 'Hospital Occupancy', value: `${meridianHealth.hospitals.occupancyRate}%`,            benchmark: '76% target',                                              status: 'warning' as const,  gap: '5pp below target' },
-  ]
-  const crit = metrics.filter(m => m.status === 'critical').length
+// ── Phase 0 intelligence-grounded scripts ─────────────────────────────────────
+function phase0Script(
+  stepId: string,
+  name: string,
+  vertical: string,
+  clientId: string,
+): { text: string; options: string[] } {
+  const isMeridian = clientId === 'meridian'
+
+  const scripts: Record<string, { text: string; options: string[] }> = {
+
+    '0.1': isMeridian ? {
+      text: `I've pulled Meridian Health System's operational data. Three signals are registering as board-level risks:\n\n1. Denial rate at 18.2% vs 11.4% benchmark — a $94M annual revenue gap that compounds every quarter\n2. Prior auth automation at 23% vs 62% peer average — the manual drag is measurable and growing\n3. Epic EHR go-live in Q3 2026 with no verified AI integration path — the window to act is narrowing\n\nWhich of these represents the most urgent pressure on Meridian's leadership today?`,
+      options: [
+        'A: Denial rate gap — revenue is bleeding now, this is the fire',
+        'B: Epic go-live risk — execution pressure is the board\'s top concern',
+        'C: Prior auth lag — operational drag is compounding faster than leadership realizes',
+        'D: Add context I\'m missing from this situation...',
+      ],
+    } : {
+      text: `I've reviewed ${name}'s operational profile. I'm flagging the three most significant risk signals from your data.\n\nTo calibrate this strategy session, which best represents the most urgent pressure your leadership team is facing right now?`,
+      options: [
+        'A: Revenue and margin pressure — cash flow is the crisis',
+        'B: Operational inefficiency — manual work is slowing the business',
+        'C: Competitive displacement — the market is moving faster than we are',
+        'D: Add context about your specific situation...',
+      ],
+    },
+
+    '0.2': isMeridian ? {
+      text: `Based on Meridian's situation, there are three distinct AI paths — each with a different risk and return profile.\n\nPath A — Revenue Recovery: Deploy AI directly against the $94M denial gap. ROI visible within 90 days. Fastest to board-level proof.\n\nPath B — Epic Integration: Build AI natively into the go-live. Avoids the technical debt that accumulates when AI is retrofitted post-implementation.\n\nPath C — Full RCM Transformation: Redesign the revenue cycle end-to-end with AI, from claims submission to collection.\n\nWhich best reflects what Meridian's leadership team is actually aligned on?`,
+      options: [
+        'A: Revenue recovery — stop the $94M denial bleed first',
+        'B: Epic integration — AI-native go-live, no retrofitting later',
+        'C: Full RCM transformation — redesign the entire cycle',
+        'D: Share what leadership has actually agreed on...',
+      ],
+    } : {
+      text: `What does AI success look like for ${name} in 3 years? I want to anchor this engagement on the outcome that leadership is actually committed to — not the one that sounds best in a board deck.\n\nWhich best describes the real mandate?`,
+      options: [
+        'A: Cost reduction — operate leaner, not just automate the same work',
+        'B: Revenue growth — unlock new streams and close leakage',
+        'C: Experience transformation — redefine customer or employee outcomes',
+        'D: Define the actual mandate in your own words...',
+      ],
+    },
+
+    '0.3': isMeridian ? {
+      text: `Meridian's data readiness score is 42 out of 100. The threshold for reliable AI deployment at scale is 60.\n\nThe three primary gaps driving this score:\n\n• Claims data fragmented across 47 facilities — no unified operational view exists today\n• Epic migration creating a 6–9 month freeze on historical records — timing is critical\n• No AI-ready data platform in production — data exists but cannot be activated\n\nWhich of these gaps is most blocking Meridian's AI plans right now?`,
+      options: [
+        'A: Fragmentation — we can\'t get a unified view across facilities',
+        'B: Epic freeze — our infrastructure is mid-transition, nothing is stable',
+        'C: No platform — we have the data but no way to activate it for AI',
+        'D: There\'s a different data gap I need to flag...',
+      ],
+    } : {
+      text: `Where is ${name} today on data and AI foundations? I want a truthful baseline — not an aspirational one.\n\nWhich description is most accurate about your current state?`,
+      options: [
+        'A: Early stage — data is siloed, no ML or AI in production',
+        'B: Developing — some analytics in place, 1–2 AI pilots underway',
+        'C: Capable — data platform exists, actively scaling AI use cases',
+        'D: Describe your actual current state in detail...',
+      ],
+    },
+
+    '0.4': isMeridian ? {
+      text: `AbarVa's pattern library has matched Meridian against prior health system engagements. Three failure patterns are active in your situation:\n\nF011 — 71% failure rate when AI deployment begins after EHR go-live. At 14 months from go-live, the window is narrowing.\n\nF007 — 84% of organizations in EHR transitions see denial rates worsen in year one. The gap will likely grow before it shrinks.\n\nF031 — Recovery costs 2.3× more when AI initiatives begin after the Epic stabilization phase. Time has a price here.\n\nWhich of these patterns is most relevant to Meridian's current position?`,
+      options: [
+        'A: F011 — we\'re already behind the AI deployment window',
+        'B: F007 — the denial rate will get worse before it gets better',
+        'C: F031 — we need to act now before recovery becomes 2× harder',
+        'D: None of these fit — our situation is different...',
+      ],
+    } : {
+      text: `AbarVa's pattern library has matched ${name} against prior ${vertical} engagements. Before designing a strategy, I want to confirm which failure pattern is most relevant to your situation.\n\nWhich of these best describes the risk you're most concerned about?`,
+      options: [
+        'A: Underestimating complexity — AI initiatives stall after early pilots',
+        'B: Data debt — the foundation isn\'t ready to support the ambition',
+        'C: Org resistance — the business won\'t adopt what technology builds',
+        'D: Our specific risk is different — let me describe it...',
+      ],
+    },
+
+    '0.5': isMeridian ? {
+      text: `Based on Meridian's situation, genome match, and data readiness score of 42/100, I'm recommending a 3-phase scope:\n\nPhase 1 (0–6 months): AI-driven prior auth automation — immediate denial rate reduction, fastest path to board-level proof\n\nPhase 2 (6–18 months): Denial prevention AI integrated with Epic at go-live — eliminates the post-implementation technical debt risk\n\nPhase 3 (18–36 months): Full revenue cycle intelligence platform — end-to-end AI from submission to collection\n\nEstimated total value: $94M–$147M over 36 months.\n\nWhich scope best matches Meridian's current readiness and executive mandate?`,
+      options: [
+        'A: Phase 1 only — prove ROI in 90 days, then decide on the rest',
+        'B: Phase 1 + 2 — commit to the strategic 18-month program',
+        'C: Full 3-phase roadmap — transformative, multi-year platform',
+        'D: Our scope and mandate is different — let me share it...',
+      ],
+    } : {
+      text: `Based on what I've confirmed so far, I want to lock in the scope and investment horizon before moving into the diagnostic phase.\n\nWhich best describes ${name}'s AI investment mandate?`,
+      options: [
+        'A: Quick wins only — prove ROI within 6 months, then scale',
+        'B: Strategic program — 12–18 month transformation with clear milestones',
+        'C: Transformative — multi-year platform build, full commitment',
+        'D: Share your specific budget and timeline constraints...',
+      ],
+    },
+  }
+
+  return scripts[stepId] ?? { text: '', options: [] }
+}
+
+// ── Utility ───────────────────────────────────────────────────────────────────
+function phaseOfStep(id: string) { return parseInt(id.split('.')[0]) }
+function allStepIds() { return PHASE_DEFS.flatMap(p => p.steps.map(s => s.id)) }
+function completedCount(ss: Record<string, StepStatus>) { return Object.values(ss).filter(s => s === 'complete').length }
+function lsKey(clientId: string) { return `abarva_avr_v2_${clientId}` }
+
+function loadSaved(clientId: string): SavedState | null {
+  try { const raw = localStorage.getItem(lsKey(clientId)); return raw ? JSON.parse(raw) : null }
+  catch { return null }
+}
+function persist(clientId: string, s: SavedState) {
+  try { localStorage.setItem(lsKey(clientId), JSON.stringify(s)) } catch { /* ignore */ }
+}
+function makeInitial(): SavedState {
+  const phaseStatuses: Record<number, PhaseStatus> = {}
+  const stepStatuses: Record<string, StepStatus> = {}
+  PHASE_DEFS.forEach((p, pi) => {
+    phaseStatuses[p.id] = pi === 0 ? 'active' : 'locked'
+    p.steps.forEach((s, si) => {
+      stepStatuses[s.id] = pi === 0 && si === 0 ? 'active' : (pi === 0 ? 'pending' : 'locked')
+    })
+  })
+  return { phaseStatuses, stepStatuses, outcomes: [], messagesByStep: {}, activeStep: '0.1' }
+}
+
+// ── StepDot ───────────────────────────────────────────────────────────────────
+function StepDot({ status }: { status: StepStatus }) {
+  const base: React.CSSProperties = { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, transition: 'all 0.2s' }
+  if (status === 'complete') return <span style={{ fontSize: 11, color: GREEN, lineHeight: 1, flexShrink: 0 }}>✓</span>
+  if (status === 'active')   return <div style={{ ...base, background: TEAL, boxShadow: `0 0 0 3px rgba(45,212,200,0.25)` }} />
+  if (status === 'pending')  return <div style={{ ...base, border: `1.5px solid ${TEAL}`, background: 'transparent' }} />
+  return <div style={{ ...base, background: '#D1D5DB' }} />
+}
+
+// ── LeftNav ───────────────────────────────────────────────────────────────────
+function LeftNav({ phaseStatuses, stepStatuses, activeStep, collapsed, onToggle, onSelect }: {
+  phaseStatuses: Record<number, PhaseStatus>
+  stepStatuses:  Record<string, StepStatus>
+  activeStep:    string
+  collapsed:     Set<number>
+  onToggle:      (id: number) => void
+  onSelect:      (id: string) => void
+}) {
+  const total = allStepIds().length
+  const done  = completedCount(stepStatuses)
+  const pct   = Math.round((done / total) * 100)
+
   return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 24 }}>
-        {metrics.map((m, i) => (
-          <div key={i} style={cardStyle()}>
-            {sectionLabel(m.label)}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <StatusDot severity={m.status} />
-              <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: DTEXT, lineHeight: 1 }}>{m.value}</div>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE, marginTop: 4 }}>{m.benchmark}</div>
-            <div style={{ fontSize: 11, color: DBODY, marginTop: 6 }}>{m.gap}</div>
-          </div>
-        ))}
-      </div>
-      <div style={cardStyle({ borderColor: 'rgba(239,68,68,0.15)' })}>
-        {sectionLabel(`${crit} critical gaps identified by Genome · 340 patterns run`)}
-        <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.6 }}>
-          Every gap above has been cross-referenced against the AbarVa Genome library — 340 patterns from prior transformations. Each metric sits in the bottom quartile of its peer group. The combined economic exposure exceeds what any individual initiative can recover alone.
+    <div style={{ width: NAV_W, flexShrink: 0, background: '#fff', borderRight: `1px solid ${BD}`, display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+      {/* Header */}
+      <div style={{ padding: '20px 16px 16px', borderBottom: `1px solid ${BD}` }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+          AI Value Realization
+        </div>
+        <div style={{ fontFamily: SERIF, fontSize: 17, fontWeight: 700, color: TX, marginBottom: 12 }}>
+          5-Phase Navigator
+        </div>
+        <div style={{ height: 4, background: BD, borderRadius: 2 }}>
+          <div style={{ height: '100%', width: `${pct}%`, background: TEAL, borderRadius: 2, transition: 'width 0.4s' }} />
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 12, color: MUTE, marginTop: 6 }}>
+          {done}/{total} steps · {pct}% complete
         </div>
       </div>
-    </div>
-  )
-}
 
-function ContradictionPanel({ clientId }: { clientId: string }) {
-  const contradictions = clientId === 'arcturus' ? arcturusFinancial.contradictions : meridianHealth.contradictions.slice(0, 8).map((c, i) => ({
-    id: `c${i}`, claim: c.split(' — ')[0], reality: c.split(' — ').slice(1).join(' — '), severity: i < 3 ? 'critical' as const : 'high' as const, source: 'AbarVa data cross-reference',
-  }))
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
-      {contradictions.map((c: any, i: number) => (
-        <div key={i} style={cardStyle()}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 10 }}>
-            <div>
-              {sectionLabel('Claim')}
-              <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.5 }}>{c.claim}</div>
-            </div>
-            <div>
-              {sectionLabel('Reality')}
-              <div style={{ fontSize: 13, color: DTEXT, lineHeight: 1.5 }}>{c.reality}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            <StatusDot severity={c.severity === 'critical' ? 'critical' : 'warning'} />
-            <span style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, letterSpacing: '.06em' }}>{(c.severity as string).toUpperCase()}</span>
-            {c.source && <span style={{ fontFamily: MONO, fontSize: 9, color: DMUTE }}>· {c.source}</span>}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
+      {/* Phase tree */}
+      <div style={{ flex: 1, padding: '8px 0 20px' }}>
+        {PHASE_DEFS.map(phase => {
+          const phSt   = phaseStatuses[phase.id]
+          const locked = phSt === 'locked'
+          const approved = phSt === 'approved'
+          const isOpen = !collapsed.has(phase.id)
 
-function DataPanel({ clientId }: { clientId: string }) {
-  const dimensions = clientId === 'arcturus' ? [
-    { dim: 'Portfolio Positions',   score: arcturusAI.maturity.dataReadiness.portfolioPositions, note: 'Bloomberg AIM data — siloed, limited API' },
-    { dim: 'Client Relationship',   score: arcturusAI.maturity.dataReadiness.clientRelationship, note: 'FSC 44% adoption — 56% of signals missing' },
-    { dim: 'Risk Analytics',        score: arcturusAI.maturity.dataReadiness.riskAnalytics,      note: 'Aladdin disconnected — monthly vs daily cadence' },
-    { dim: 'Regulatory Compliance', score: arcturusAI.maturity.dataReadiness.regulatory,         note: 'Charles River exists — compliance gaps remain' },
-    { dim: 'Finance Reporting',     score: arcturusAI.maturity.dataReadiness.financeReporting,   note: 'Geneva functional — not AI-connected' },
-    { dim: 'ML Platform Readiness', score: arcturusAI.maturity.techReadiness.mlPlatform,         note: 'No ML platform — no Azure ML, no Databricks' },
-    { dim: 'Data Platform',         score: arcturusAI.maturity.techReadiness.dataPlatform,       note: '14 silos — no unified platform, no golden record' },
-    { dim: 'MLOps',                 score: arcturusAI.maturity.techReadiness.mlops,              note: 'No MLOps — models cannot be deployed at scale' },
-  ] : [
-    { dim: 'EHR Clinical Data',     score: meridianHealth.technology.ehr.optimizationScore, note: 'Epic deployed — 34% of docs still in workarounds' },
-    { dim: 'Revenue Cycle Data',    score: 72,  note: 'Ensemble RCM — denial patterns poorly structured' },
-    { dim: 'Patient Identity',      score: 38,  note: 'No golden MRN across 23 hospitals' },
-    { dim: 'Prior Auth Data',       score: 45,  note: 'Only 23% of payers on automation' },
-    { dim: 'Analytics / BI',        score: 42,  note: 'Only 12 of 47 Cogito dashboards live' },
-    { dim: 'Integration Layer',     score: 31,  note: '14+ point-to-point interfaces — no unified platform' },
-    { dim: 'AI Readiness',          score: 35,  note: 'Data too fragmented for reliable ML training' },
-    { dim: 'Data Governance',       score: 29,  note: 'No CDO equivalent — CIO carrying both roles' },
-  ]
-  return (
-    <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
-        {dimensions.map((d, i) => {
-          const barColor = d.score >= 70 ? DOT_GREEN : d.score >= 50 ? DOT_AMBER : DOT_RED
-          const sev: 'critical' | 'warning' | 'ok' = d.score >= 70 ? 'ok' : d.score >= 50 ? 'warning' : 'critical'
           return (
-            <div key={i} style={cardStyle()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <div style={{ fontSize: 13, color: DTEXT, fontWeight: 500 }}>{d.dim}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 10 }}>
-                  <StatusDot severity={sev} />
-                  <div style={{ fontFamily: MONO, fontSize: 18, fontWeight: 700, color: DTEXT }}>{d.score}</div>
+            <div key={phase.id}>
+              <button
+                onClick={() => !locked && onToggle(phase.id)}
+                style={{
+                  width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '8px 16px', background: 'none', border: 'none',
+                  cursor: locked ? 'default' : 'pointer', opacity: locked ? 0.38 : 1,
+                }}
+              >
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, width: 12 }}>
+                  {isOpen && !locked ? '▾' : '▸'}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '.06em', marginBottom: 1 }}>
+                    Phase {phase.id}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: approved ? TEAL : TX }}>
+                    {phase.name}
+                  </div>
                 </div>
-              </div>
-              {/* Progress bar — colored bar is OK (visual indicator, not text) */}
-              <div style={{ height: 4, background: DBDR, borderRadius: 2, marginBottom: 8 }}>
-                <div style={{ height: '100%', width: `${d.score}%`, background: barColor, borderRadius: 2 }} />
-              </div>
-              <div style={{ fontSize: 11, color: DBODY }}>{d.note}</div>
+                {approved && <span style={{ fontSize: 11, color: GREEN }}>✓</span>}
+              </button>
+
+              {isOpen && !locked && (
+                <div style={{ paddingBottom: 4 }}>
+                  {phase.steps.map(step => {
+                    const st       = stepStatuses[step.id]
+                    const isActive = step.id === activeStep
+                    const isLocked = st === 'locked'
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => !isLocked && onSelect(step.id)}
+                        style={{
+                          width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '6px 12px 6px 24px',
+                          background: isActive ? TEAL_BG : 'none',
+                          border: 'none',
+                          borderLeft: isActive ? `3px solid ${TEAL}` : '3px solid transparent',
+                          cursor: isLocked ? 'default' : 'pointer',
+                          opacity: isLocked ? 0.3 : 1,
+                          transition: 'all 0.12s',
+                        }}
+                      >
+                        <StepDot status={st} />
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, width: 18, flexShrink: 0 }}>
+                          {step.id}
+                        </span>
+                        <span style={{
+                          fontFamily: SANS, fontSize: 13,
+                          color: isActive ? TX : (st === 'complete' ? MUTE : (isLocked ? '#D1D5DB' : BODY)),
+                          fontWeight: isActive ? 600 : 400,
+                          lineHeight: 1.3,
+                        }}>
+                          {step.label}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
             </div>
           )
         })}
       </div>
-      <div style={cardStyle({ borderColor: 'rgba(45,212,200,0.2)' })}>
-        {sectionLabel('Data Readiness Certificate — not yet issuable')}
-        <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.6 }}>
-          A data readiness certificate is issued when all 12 dimensions score above 70. Current state requires remediation before AI investment can be responsibly approved. Specific pipeline gaps and remediation steps are included in the full report.
-        </div>
-      </div>
     </div>
   )
 }
 
-function TechnologyPanel({ clientId }: { clientId: string }) {
-  const items = clientId === 'arcturus' ? [
-    { platform: 'Bloomberg AIM', status: 'critical' as const, detail: '3 consecutive modernisation failures · $22.2M total', issues: ['API rate limit 100x below ML requirements', 'Data exports missing 38% of required fields', 'Contract auto-renews Dec 2026 with no improvement terms'] },
-    { platform: 'Salesforce FSC', status: 'critical' as const, detail: '$38M investment · 44% adoption after 18 months', issues: ['Adoption target reset 85%→70% without board disclosure', 'NPS 31 vs 58 industry median', '4 AI initiatives blocked by adoption failure'] },
-    { platform: 'Shadow IT', status: 'warning' as const, detail: 'Est. $18M annually ungoverned', issues: ['3 BUs with direct procurement — no IT gate', 'IT budget grew 12% vs 2.5% revenue growth', '$178M above peer benchmark annually'] },
-  ] : [
-    { platform: 'Epic EHR', status: 'warning' as const, detail: `Optimization: ${meridianHealth.technology.ehr.optimizationScore}/100 (reported 71, actual 44-47)`, issues: meridianHealth.technology.ehr.knownGaps },
-    { platform: 'Ensemble Health Partners (RCM)', status: 'critical' as const, detail: `$${meridianHealth.technology.rcm.contractValue}M/yr · denial rate ${meridianHealth.technology.rcm.denialRate}%`, issues: [`${meridianHealth.technology.rcm.denialRate}% denial vs ${meridianHealth.technology.rcm.benchmarkDenialRate}% benchmark`, 'Prior auth avg 4.2 days vs 1.8 peer', 'Contract penalties $8M — never enforced'] },
-  ]
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
-      {items.map((item, i) => (
-        <div key={i} style={cardStyle()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: DTEXT }}>{item.platform}</div>
-              <div style={{ fontSize: 12, color: DBODY, marginTop: 3 }}>{item.detail}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginLeft: 16, flexShrink: 0 }}>
-              <StatusDot severity={item.status} />
-              <span style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, letterSpacing: '.06em' }}>{item.status.toUpperCase()}</span>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 5 }}>
-            {item.issues.map((iss, j) => (
-              <div key={j} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: DOT_RED, flexShrink: 0, marginTop: 6 }} />
-                <span style={{ fontSize: 12, color: DBODY, lineHeight: 1.5 }}>{iss}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
+// ── ChatBubble ────────────────────────────────────────────────────────────────
+function ChatBubble({ msg, isLast, onSelect, loading, customVal, setCustomVal, onSubmitCustom }: {
+  msg:             ChatMessage
+  isLast:          boolean
+  onSelect?:       (letter: string) => void
+  loading?:        boolean
+  customVal?:      string
+  setCustomVal?:   (v: string) => void
+  onSubmitCustom?: () => void
+}) {
+  const [dataPanelOpen, setDataPanelOpen] = useState(false)
+  const isAI        = msg.role === 'ai'
+  const showOptions = isAI && isLast && !!(msg.options?.length) && !msg.selectedOption && !!onSelect
 
-function VendorPanel({ clientId }: { clientId: string }) {
-  const vendors = clientId === 'arcturus' ? [
-    { name: 'Salesforce FSC',       category: 'CRM / Client Platform',  score: 34, risk: 'critical' as const, genomeFail: 68, issue: 'Platform adoption failure pattern active. 44% adoption after 18 months is below the 55% threshold where Genome patterns show recovery is possible without programme reset.' },
-    { name: 'Bloomberg AIM',        category: 'Portfolio Management',   score: 28, risk: 'critical' as const, genomeFail: 71, issue: '3 failed modernisation attempts. Pattern F008 (vendor lock with technical debt) confirmed. $22.2M spent. Contract auto-renews Dec 2026 — no leverage without immediate action.' },
-    { name: 'Accenture (historical)',category: 'Systems Integrator',     score: 22, risk: 'warning' as const,  genomeFail: 74, issue: 'Head of Technology recruited post-failure of Project Aurora — conflict of interest not surfaced to board. Genome pattern F013 (post-failure hire) present.' },
-  ] : [
-    { name: 'Ensemble Health Partners', category: 'Revenue Cycle Management', score: 41, risk: 'critical' as const, genomeFail: 74, issue: 'SLA breach on denial rate commitment. 18.2% vs 12% contracted. $8M in penalties exist but have never been enforced. Pattern F011 (RCM vendor misalignment) active.' },
-    { name: 'Epic Systems',             category: 'EHR',                      score: 55, risk: 'warning' as const,  genomeFail: 69, issue: 'Under-optimization pattern active. 58/100 score reported — actual 44-47. Only 12 of 47 Cogito dashboards live. No accountable owner for optimization programme.' },
-    { name: 'Experian Health',          category: 'Patient Access',            score: 60, risk: 'ok' as const,     genomeFail: 42, issue: 'Prior auth automation at 23% of payers only. Module purchased, deployment plan absent. Low failure risk but significant value locked.' },
-  ]
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
-      {vendors.map((v, i) => (
-        <div key={i} style={cardStyle()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: DTEXT }}>{v.name}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE, marginTop: 2 }}>{v.category}</div>
-            </div>
-            <div style={{ textAlign: 'right' as const, flexShrink: 0, marginLeft: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 2 }}>
-                <StatusDot severity={v.risk} />
-                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 700, color: DTEXT }}>{v.score}</div>
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE }}>genome score /100</div>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, marginTop: 2 }}>{v.genomeFail}% patterns failed at this score</div>
-            </div>
-          </div>
-          <div style={{ fontSize: 12, color: DBODY, lineHeight: 1.6 }}>{v.issue}</div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const ARCH_LAYERS: Record<string, { current: { layer: string; systems: string[] }[]; gaps: string[]; target: string[] }> = {
-  arcturus: {
-    current: [
-      { layer: 'Portfolio', systems: ['Bloomberg AIM', 'Bloomberg Terminal (13 seats)', 'Legacy IBOR'] },
-      { layer: 'Client',    systems: ['Salesforce FSC (44%)', 'Legacy CRM (still live)', 'Manual Excel reporting'] },
-      { layer: 'Data',      systems: ['14 siloed systems', 'No golden record', '3-day reporting lag'] },
-      { layer: 'AI',        systems: ['28 initiatives (0 baselined)', 'No MLOps', 'Ad-hoc Python in BUs'] },
-    ],
-    gaps:   ['Bloomberg API 100x below ML requirements', 'Dual CRM running — data split 44/56', 'No unified data platform', 'CDO vacant 11 months — no AI governance'],
-    target: ['Bloomberg AIM modernised with API-first layer', 'Single CRM at 90%+ adoption', 'Unified cloud data platform', 'AI governance with baselines across all 28 initiatives'],
-  },
-  meridian: {
-    current: [
-      { layer: 'Clinical',     systems: ['Epic EHR (23 hospitals)', 'Legacy Epic at Blue Ridge', 'Cerner (pre-migration)'] },
-      { layer: 'Revenue',      systems: ['Ensemble RCM', 'Experian Health', 'Waystar clearinghouse'] },
-      { layer: 'Analytics',    systems: ['12 of 47 Cogito dashboards', 'Tableau (dept)', 'Excel reporting'] },
-      { layer: 'Integration',  systems: ['Mulesoft (limited)', '14+ point-to-point', 'No unified platform'] },
-    ],
-    gaps:   ['No golden MRN across 23 hospitals', 'Blue Ridge on legacy Epic — blocked', '34% docs outside Epic (workarounds)', 'Prior auth automation 23% of payers only'],
-    target: ['Unified Epic all 23 hospitals by Q4 2026', 'Real-time RCM + AI denial prevention', 'All 47 Cogito dashboards live', 'HL7 FHIR integration layer'],
-  },
-}
-
-function ArchitecturePanel({ clientId }: { clientId: string }) {
-  const arch = ARCH_LAYERS[clientId] ?? ARCH_LAYERS.meridian
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-      <div style={cardStyle()}>
-        {sectionLabel('Current state')}
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 16 }}>
-          {arch.current.map((l, i) => (
-            <div key={i}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, textTransform: 'uppercase' as const, letterSpacing: '.07em', marginBottom: 5 }}>{l.layer}</div>
-              {l.systems.map((s, j) => (
-                <div key={j} style={{ fontSize: 12, color: DTEXT, padding: '4px 0', borderBottom: j < l.systems.length - 1 ? `1px solid ${DBDR}` : 'none' }}>{s}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
-        <div style={cardStyle()}>
-          {sectionLabel('Architecture gaps')}
-          {arch.gaps.map((g, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '4px 0', alignItems: 'flex-start' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: DOT_RED, flexShrink: 0, marginTop: 6 }} />
-              <span style={{ fontSize: 12, color: DBODY, lineHeight: 1.5 }}>{g}</span>
-            </div>
-          ))}
-        </div>
-        <div style={cardStyle({ borderColor: 'rgba(45,212,200,0.2)' })}>
-          {sectionLabel('Target architecture')}
-          {arch.target.map((t, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '4px 0', alignItems: 'flex-start' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: DOT_GREEN, flexShrink: 0, marginTop: 6 }} />
-              <span style={{ fontSize: 12, color: DBODY, lineHeight: 1.5 }}>{t}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function BusinessCasePanel({ clientId }: { clientId: string }) {
-  const benchmarks = clientId === 'arcturus' ? [
-    { metric: 'Cost-to-Income Ratio', ours: '71%',    peer: '61%',    gap: '$840M efficiency gap',          sev: 'critical' as const },
-    { metric: 'AUM per Employee',     ours: '$65M',   peer: '$185M',  gap: '-$120M per employee vs peers',  sev: 'critical' as const },
-    { metric: 'AI Maturity Score',    ours: '28/100', peer: '54/100', gap: '26 points below peer median',   sev: 'critical' as const },
-    { metric: 'Client Portal Adoption',ours: '44%',  peer: '78%',    gap: '-34pp vs industry median',      sev: 'critical' as const },
-  ] : [
-    { metric: 'Denial Rate',        ours: '18.2%', peer: '12.0%', gap: '$94M annual write-off',       sev: 'critical' as const },
-    { metric: 'Operating Margin',   ours: '1.8%',  peer: '3.4%',  gap: '-1.6pp vs IDN median',        sev: 'critical' as const },
-    { metric: 'Days in AR',         ours: '52',    peer: '35',    gap: '+17 days — working capital drag', sev: 'critical' as const },
-    { metric: 'Epic Optimization',  ours: '58/100',peer: '78/100',gap: '-20 points below benchmark',   sev: 'warning' as const  },
-  ]
-  return (
-    <div>
-      <div style={{ border: `1px solid ${DBDR}`, borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
-        {benchmarks.map((b, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', background: DCARD, borderBottom: i < benchmarks.length - 1 ? `1px solid ${DBDR}` : 'none' }}>
-            <div style={{ flex: 1, fontSize: 13, color: DBODY }}>{b.metric}</div>
-            <div style={{ display: 'flex', gap: 32, alignItems: 'center' }}>
-              <div style={{ textAlign: 'right' as const }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <StatusDot severity={b.sev} />
-                  <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: DTEXT }}>{b.ours}</div>
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE }}>current</div>
-              </div>
-              <div style={{ textAlign: 'right' as const }}>
-                <div style={{ fontFamily: MONO, fontSize: 16, fontWeight: 700, color: DTEXT }}>{b.peer}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE }}>peer median</div>
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: DBODY, minWidth: 220, textAlign: 'right' as const }}>{b.gap}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={cardStyle({ borderColor: 'rgba(45,212,200,0.2)' })}>
-        {sectionLabel('AbarVa engagement model')}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-          {[
-            { k: 'Fee model', v: 'Outcome-linked', d: 'Fee tied to verified performance improvements only' },
-            { k: 'Scenarios', v: 'Bear / Base / Bull', d: 'Three-scenario IC package built from your data + Genome' },
-            { k: 'Assurance', v: 'Maestro', d: 'Embedded operator holds vendors accountable throughout' },
-          ].map((x, i) => (
-            <div key={i}>
-              {sectionLabel(x.k)}
-              <div style={{ fontSize: 14, fontWeight: 600, color: TEAL, marginBottom: 4 }}>{x.v}</div>
-              <div style={{ fontSize: 12, color: DBODY }}>{x.d}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function AIDeliveryPanel({ clientId }: { clientId: string }) {
-  const initiatives = clientId === 'arcturus'
-    ? arcturusAI.maturity.currentInitiatives.slice(0, 6).map((x: any) => ({
-        name: x.name, status: x.status, type: x.category,
-        blocker: x.blocker || x.rootCause?.slice(0, 100),
-        inv: x.investment ? `$${(x.investment / 1e6).toFixed(1)}M` : undefined,
-      }))
-    : [
-        { name: 'Coding AI (Optum360)',    status: 'Live — On Track', type: 'NLP · Code optimization',  blocker: undefined,                                      inv: undefined },
-        { name: 'Sepsis Early Warning',    status: 'Live — Partial',  type: 'Predictive · Clinical',    blocker: 'Live 5 hospitals, failing 3, blocked 13',      inv: undefined },
-        { name: 'Prior Auth AI',           status: 'Blocked',         type: 'Workflow · RCM',           blocker: 'Epic module purchased, 23% deployed',          inv: undefined },
-        { name: 'Unified Data Platform',   status: 'Planning',        type: 'Data infrastructure',      blocker: 'Blue Ridge migration must complete first',     inv: '$84M approved' },
-      ]
-
-  const statusSev = (s: string): 'ok' | 'warning' | 'critical' => {
-    if (s.includes('Track') || s.includes('Live')) return 'ok'
-    if (s.includes('Partial') || s.includes('Planning')) return 'warning'
-    return 'critical'
-  }
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
-      {initiatives.map((item: any, i: number) => (
-        <div key={i} style={cardStyle()}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: item.blocker ? 8 : 0 }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: DTEXT }}>{item.name}</div>
-              <div style={{ fontFamily: MONO, fontSize: 10, color: DMUTE, marginTop: 2 }}>{item.type}{item.inv ? ` · ${item.inv}` : ''}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginLeft: 12, flexShrink: 0 }}>
-              <StatusDot severity={statusSev(item.status)} />
-              <span style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, letterSpacing: '.06em' }}>{item.status.toUpperCase()}</span>
-            </div>
-          </div>
-          {item.blocker && (
-            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: DOT_RED, flexShrink: 0, marginTop: 6 }} />
-              <span style={{ fontSize: 12, color: DBODY }}>{item.blocker}</span>
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function OutcomePanel({ clientId }: { clientId: string }) {
-  const outcomes = clientId === 'meridian' ? [
-    { name: 'RCM Denial Rate',   baseline: '18.2%',       committed: '12.0%',      current: '15.4%',          trend: 'improving' as const,    savingsToDate: 14.2 },
-    { name: 'Operating Margin',  baseline: '1.8%',        committed: '3.2%',       current: '2.1%',           trend: 'improving' as const,    savingsToDate: 7.8  },
-    { name: 'Days in AR',        baseline: '52 days',     committed: '38 days',    current: '47 days',        trend: 'improving' as const,    savingsToDate: 4.1  },
-    { name: 'Epic Optimization', baseline: '58/100',      committed: '78/100',     current: '63/100',         trend: 'locked' as const,       savingsToDate: 0    },
-  ] : [
-    { name: 'AI Initiative ROI',       baseline: '$0 verified', committed: '$94M tracked', current: 'In setup',         trend: 'locked' as const,      savingsToDate: 0 },
-    { name: 'Cost-to-Income Ratio',    baseline: '71%',         committed: '64%',          current: 'Baseline phase',   trend: 'locked' as const,      savingsToDate: 0 },
-    { name: 'MAS FEAT Compliance',     baseline: 'Overdue 4mo', committed: 'Compliant',    current: 'In remediation',   trend: 'in-progress' as const, savingsToDate: 0 },
-  ]
-  const trendSev = (t: string): 'ok' | 'warning' | 'critical' => t === 'improving' ? 'ok' : t === 'in-progress' ? 'warning' : 'critical'
-  return (
-    <div>
-      <div style={{ border: `1px solid ${DBDR}`, borderRadius: 8, overflow: 'hidden', marginBottom: 20 }}>
-        {outcomes.map((o, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 120px', padding: '14px 20px', background: DCARD, borderBottom: i < outcomes.length - 1 ? `1px solid ${DBDR}` : 'none', alignItems: 'center' }}>
-            <div style={{ fontSize: 13, color: DTEXT, fontWeight: 500 }}>{o.name}</div>
-            <div>
-              {sectionLabel('Baseline')}
-              <div style={{ fontFamily: MONO, fontSize: 13, color: DBODY }}>{o.baseline}</div>
-            </div>
-            <div>
-              {sectionLabel('Committed')}
-              <div style={{ fontFamily: MONO, fontSize: 13, color: TEAL }}>{o.committed}</div>
-            </div>
-            <div>
-              {sectionLabel('Current')}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <StatusDot severity={trendSev(o.trend)} />
-                <div style={{ fontFamily: MONO, fontSize: 13, color: DTEXT }}>{o.current}</div>
-              </div>
-            </div>
-            <div style={{ textAlign: 'right' as const }}>
-              {sectionLabel('Savings')}
-              <div style={{ fontFamily: MONO, fontSize: 13, color: DTEXT }}>
-                {o.savingsToDate > 0 ? `$${o.savingsToDate}M` : '—'}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={cardStyle({ borderColor: 'rgba(45,212,200,0.2)' })}>
-        {sectionLabel('Fee model — outcome-linked only')}
-        <div style={{ fontSize: 13, color: DBODY, lineHeight: 1.6 }}>
-          Baseline locked Day 0. Monthly actuals vs baseline tracked in real time. AbarVa fee released only on verified, audited savings — independently confirmed. Zero fee if baseline does not move.
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function ModuleContent({ moduleKey, clientId }: { moduleKey: string; clientId: string }) {
-  switch (moduleKey) {
-    case 'situation':     return <SituationPanel clientId={clientId} />
-    case 'contradiction': return <ContradictionPanel clientId={clientId} />
-    case 'data':          return <DataPanel clientId={clientId} />
-    case 'technology':    return <TechnologyPanel clientId={clientId} />
-    case 'vendor':        return <VendorPanel clientId={clientId} />
-    case 'architecture':  return <ArchitecturePanel clientId={clientId} />
-    case 'business-case': return <BusinessCasePanel clientId={clientId} />
-    case 'ai-delivery':   return <AIDeliveryPanel clientId={clientId} />
-    case 'outcome':       return <OutcomePanel clientId={clientId} />
-    default: return null
-  }
-}
-
-// ── Main canvas ────────────────────────────────────────────────────────────────
-
-function AVRCanvas() {
-  const searchParams = useSearchParams()
-  const clientId = searchParams.get('client') || 'meridian'
-  const clientName = clientId === 'arcturus' ? 'Arcturus Financial' : 'Meridian Health'
-
-  const [phaseFilter, setPhaseFilter] = useState<number | null>(null)
-  const [activeModule, setActiveModule] = useState<ModuleInfo | null>(null)
-
-  const visiblePhases = phaseFilter ? PHASES.filter(p => p.phase === phaseFilter) : PHASES
-
-  // ── Module detail view ───────────────────────────────────────────────────────
-  if (activeModule) {
+  if (!isAI) {
     return (
-      <div style={{ minHeight: '100vh', background: DBG, fontFamily: SANS }}>
-        <AbarvaNav activePage={activeModule.key} />
-
-        {/* Breadcrumb */}
-        <div style={{ background: DCARD, borderBottom: `1px solid ${DBDR}`, height: 40, display: 'flex', alignItems: 'center', padding: '0 48px', gap: 10 }}>
-          <button
-            onClick={() => setActiveModule(null)}
-            style={{ fontFamily: MONO, fontSize: 9, color: TEAL, background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '.07em', padding: 0 }}
-          >
-            AI Value Realization
-          </button>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: DBDR }}>›</span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: DMUTE, letterSpacing: '.07em' }}>
-            Phase {PHASES.findIndex(p => p.modules.some(m => m.key === activeModule.key)) + 1} — {activeModule.phaseLabel}
-          </span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: DBDR }}>›</span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: DTEXT, letterSpacing: '.06em' }}>{activeModule.name}</span>
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL }} />
-            <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>{clientName}</span>
-          </div>
-        </div>
-
-        {/* Module content */}
-        <div style={{ maxWidth: 1400, margin: '0 auto', padding: '36px 48px 80px' }}>
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 6 }}>
-              Module {String(activeModule.num).padStart(2, '0')} · {activeModule.output}
-            </div>
-            <h1 style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 500, color: DTEXT, margin: 0 }}>{activeModule.name}</h1>
-            <p style={{ fontSize: 14, color: DBODY, marginTop: 8 }}>{activeModule.desc}</p>
-          </div>
-          <ModuleContent moduleKey={activeModule.key} clientId={clientId} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 18 }}>
+        <div style={{ maxWidth: '68%', background: TX, borderRadius: '12px 0 12px 12px', padding: '11px 16px' }}>
+          <p style={{ fontFamily: SANS, fontSize: 15, color: '#fff', margin: 0, lineHeight: 1.55 }}>{msg.text}</p>
         </div>
       </div>
     )
   }
 
-  // ── Canvas overview ──────────────────────────────────────────────────────────
   return (
-    <div style={{ minHeight: '100vh', fontFamily: SANS }}>
-      <AbarvaNav activePage="avr" />
-
-      {/* ── HERO ─ light ──────────────────────────────────────────────────── */}
-      <div style={{ background: LBG, padding: '88px 64px 72px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.12em', textTransform: 'uppercase' as const, marginBottom: 18 }}>
-            AI Value Realization
-          </div>
-          <h1 style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 400, color: LTEXT, margin: '0 0 20px', lineHeight: 1.1 }}>
-            Nine modules.<br />Three phases. One verified outcome.
-          </h1>
-          <p style={{ fontSize: 17, color: LBODY, maxWidth: 560, margin: '0 0 36px', lineHeight: 1.72 }}>
-            From situation to verified delivery — every module builds on the last. No guesswork. No vendor promises. Only outcomes your CFO can put in a board pack.
-          </p>
-          <div style={{ display: 'flex', gap: 32 }}>
-            {[
-              { value: '9', label: 'Intelligence modules' },
-              { value: '3', label: 'Phases' },
-              { value: '340', label: 'Genome patterns' },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ fontFamily: SERIF, fontSize: 28, color: LTEXT, lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: LMUTE, letterSpacing: '.06em', marginTop: 4 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+      {/* Avatar */}
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: DBG, fontWeight: 800 }}>AV</span>
       </div>
 
-      {/* ── PHASE + MODULE CARDS ─ dark ───────────────────────────────────── */}
-      <div style={{ background: DBG, padding: '24px 64px 80px' }}>
-        {/* Phase filter tabs */}
-        <div style={{ maxWidth: 1280, margin: '0 auto', borderBottom: `1px solid ${DBDR}`, display: 'flex', alignItems: 'stretch', height: 48, marginBottom: 40 }}>
-          {[
-            { label: 'All phases', value: null },
-            { label: 'Phase 1 — Diagnose',          value: 1, dot: PHASE_COLORS[0] },
-            { label: 'Phase 2 — Prescribe',          value: 2, dot: PHASE_COLORS[1] },
-            { label: 'Phase 3 — Value Realization',  value: 3, dot: PHASE_COLORS[2] },
-          ].map(tab => {
-            const active = phaseFilter === tab.value
-            return (
-              <button
-                key={tab.label}
-                onClick={() => setPhaseFilter(tab.value)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 7,
-                  background: 'none', border: 'none', cursor: 'pointer',
-                  fontFamily: MONO, fontSize: 9, letterSpacing: '.07em',
-                  color: active ? DTEXT : DMUTE,
-                  borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
-                  padding: '0 16px',
-                  transition: 'color 0.15s',
-                }}
-              >
-                {tab.dot && <span style={{ width: 5, height: 5, borderRadius: '50%', background: tab.dot }} />}
-                {tab.label}
-              </button>
-            )
-          })}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, marginBottom: 6, letterSpacing: '.1em' }}>ABARVA</div>
+
+        {/* AI bubble — light background */}
+        <div style={{ background: LBG, borderRadius: '0 12px 12px 12px', padding: '14px 18px' }}>
+          <p style={{ fontFamily: SANS, fontSize: 16, color: TX, lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+            {msg.text}
+          </p>
         </div>
 
-        {/* Module cards */}
-        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          {visiblePhases.map((phase, pi) => (
-            <div key={phase.phase} style={{ marginBottom: 40 }}>
-              {pi > 0 && <div style={{ height: 1, background: DBDR, margin: '0 0 40px' }} />}
+        {/* Option buttons */}
+        {showOptions && (
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: BODY, marginBottom: 8 }}>
+              What would you like to do?
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {msg.options!.map((opt, i) => {
+                const letter    = 'ABCD'[i]
+                const isD       = letter === 'D'
+                const labelText = opt.replace(/^[A-D]:\s*/, '')
 
-              {/* Phase label */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: phase.color }} />
-                <div style={{ fontFamily: MONO, fontSize: 9, color: DTEXT, letterSpacing: '.12em' }}>
-                  PHASE {phase.phase} — {phase.label}
-                </div>
-                <div style={{ flex: 1, height: 1, background: DBDR }} />
-                <div style={{ fontFamily: MONO, fontSize: 9, color: DMUTE }}>{phase.modules.length} modules</div>
-              </div>
+                return (
+                  <div key={letter}>
+                    <button
+                      onClick={() => { if (isD) setDataPanelOpen(o => !o); else onSelect!(letter) }}
+                      disabled={loading}
+                      style={{
+                        width: '100%', textAlign: 'left', padding: '10px 14px',
+                        background: '#fff', border: `1px solid ${BD}`, borderRadius: 8,
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        cursor: loading ? 'default' : 'pointer', transition: 'all 0.12s',
+                      }}
+                      onMouseEnter={e => {
+                        if (!loading) {
+                          const el = e.currentTarget as HTMLButtonElement
+                          el.style.background = LBG
+                          el.style.borderColor = TEAL
+                        }
+                      }}
+                      onMouseLeave={e => {
+                        const el = e.currentTarget as HTMLButtonElement
+                        el.style.background = '#fff'
+                        el.style.borderColor = BD
+                      }}
+                    >
+                      {/* Letter badge — teal circle */}
+                      <div style={{ width: 24, height: 24, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: TX }}>{letter}</span>
+                      </div>
+                      <span style={{ fontFamily: SANS, fontSize: 15, color: TX, lineHeight: 1.4, flex: 1 }}>{labelText}</span>
+                      {isD && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>▸</span>}
+                    </button>
 
-              {/* Module cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: 12 }}>
-                {phase.modules.map(mod => (
-                  <div
-                    key={mod.key}
-                    onClick={() => setActiveModule({ ...mod, phaseLabel: phase.label, phaseColor: phase.color })}
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.querySelector('[data-card]') as HTMLElement).style.borderColor = `rgba(45,212,200,0.3)`}
-                    onMouseLeave={e => (e.currentTarget.querySelector('[data-card]') as HTMLElement).style.borderColor = DBDR}
-                  >
-                    <div data-card="" style={{ background: DCARD, border: `1px solid ${DBDR}`, borderRadius: 10, padding: '20px 22px', transition: 'border-color 0.15s' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                          <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 10, color: TEAL, fontWeight: 600, flexShrink: 0 }}>
-                            {String(mod.num).padStart(2, '0')}
-                          </div>
-                          <div style={{ fontSize: 15, fontWeight: 600, color: DTEXT }}>{mod.name}</div>
-                        </div>
-                        <div style={{ fontFamily: MONO, fontSize: 8, color: TEAL, background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.18)', borderRadius: 4, padding: '3px 7px', flexShrink: 0, marginLeft: 8 }}>
-                          {mod.output}
+                    {isD && dataPanelOpen && (
+                      <div style={{ marginTop: 6, padding: 14, background: LBG, borderRadius: 8, border: `1px solid ${BD}` }}>
+                        <textarea
+                          value={customVal ?? ''}
+                          onChange={e => setCustomVal?.(e.target.value)}
+                          placeholder="Type your custom response (max 500 characters)..."
+                          rows={3}
+                          maxLength={500}
+                          style={{
+                            width: '100%', boxSizing: 'border-box', fontFamily: SANS, fontSize: 14,
+                            color: TX, border: `1px solid ${BD}`, borderRadius: 6, padding: '10px 12px',
+                            resize: 'vertical', background: '#fff', outline: 'none',
+                          }}
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
+                          <button
+                            onClick={() => { setDataPanelOpen(false); onSubmitCustom?.() }}
+                            style={{
+                              padding: '8px 20px', background: TX, border: 'none', borderRadius: 6,
+                              fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer',
+                            }}
+                          >
+                            Submit →
+                          </button>
                         </div>
                       </div>
-                      <div style={{ fontSize: 12, color: DBODY, lineHeight: 1.6, marginBottom: 12 }}>{mod.desc}</div>
-                      <div style={{ fontSize: 12, color: TEAL, textAlign: 'right' as const }}>Open module →</div>
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
-          ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── OutcomesPanel ─────────────────────────────────────────────────────────────
+function OutcomesPanel({ outcomes, phaseStatuses }: { outcomes: OutcomeItem[]; phaseStatuses: Record<number, PhaseStatus> }) {
+  const byPhase: Record<number, OutcomeItem[]> = {}
+  outcomes.forEach(o => {
+    const ph = phaseOfStep(o.stepId)
+    if (!byPhase[ph]) byPhase[ph] = []
+    byPhase[ph].push(o)
+  })
+
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', padding: '20px 18px' }}>
+      <div style={{ marginBottom: 18 }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+          Live Strategy Profile
+        </div>
+        <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: TX }}>
+          AI Value Brief
         </div>
       </div>
 
+      {outcomes.length === 0 && (
+        <div style={{ border: `1px dashed ${BD}`, borderRadius: 8, padding: '32px 16px', textAlign: 'center', background: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontFamily: SANS, fontSize: 14, color: '#D1D5DB', marginBottom: 4 }}>
+            Your strategy profile builds here
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: '#D1D5DB' }}>
+            Complete steps to populate
+          </div>
+        </div>
+      )}
+
+      {PHASE_DEFS.map(p => {
+        const items = byPhase[p.id]
+        if (!items?.length) return null
+        return (
+          <div key={p.id} style={{ marginBottom: 22 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Phase {p.id} — {p.name}
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {items.map(item => (
+                <div
+                  key={item.stepId}
+                  style={{
+                    background: '#fff',
+                    border: `1px solid ${BD}`,
+                    borderLeft: `3px solid ${TEAL}`,
+                    borderRadius: 8,
+                    padding: '10px 14px',
+                  }}
+                >
+                  <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: TX, marginBottom: 3 }}>
+                    {item.label}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 14, color: BODY, lineHeight: 1.5 }}>
+                    {item.value}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {phaseStatuses[p.id] === 'approved' && (
+              <div style={{ marginTop: 8, padding: '6px 10px', background: TEAL_BG, border: `1px solid rgba(45,212,200,0.25)`, borderRadius: 6 }}>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL }}>✓ Phase {p.id} Approved</span>
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {outcomes.length >= 3 && (
+        <div style={{ marginTop: 8, border: `1px solid ${BD}`, borderRadius: 8, padding: 16, background: '#fff' }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>
+            Deliverable Progress
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: 15, color: TX, marginBottom: 10 }}>
+            AI Value Realization Brief
+          </div>
+          <div style={{ height: 4, background: BD, borderRadius: 2, marginBottom: 6 }}>
+            <div style={{ height: '100%', width: `${Math.min(100, Math.round((outcomes.length / 18) * 100))}%`, background: TEAL, borderRadius: 2, transition: 'width 0.4s' }} />
+          </div>
+          <div style={{ fontFamily: SANS, fontSize: 13, color: SMUTE }}>
+            {outcomes.length} of 18 fields populated
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── ApprovalModal ─────────────────────────────────────────────────────────────
+function ApprovalModal({ phaseId, onApprove, onClose }: { phaseId: number; onApprove: (name: string) => void; onClose: () => void }) {
+  const [checks, setChecks] = useState<Record<string, boolean>>({})
+  const [name, setName]     = useState('')
+  const items     = APPROVAL_CHECKS[phaseId] ?? []
+  const allDone   = items.every((_, i) => checks[String(i)])
+  const canSubmit = allDone && name.trim().length > 0
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(6,10,18,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: 36, maxWidth: 480, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>
+          Phase Approval Gate
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: TX, margin: '0 0 24px' }}>
+          Approve Phase {phaseId}: {PHASE_DEFS[phaseId]?.name}
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+          {items.map((item, i) => (
+            <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={!!checks[String(i)]}
+                onChange={e => setChecks(p => ({ ...p, [String(i)]: e.target.checked }))}
+                style={{ marginTop: 3, accentColor: TEAL }}
+              />
+              <span style={{ fontFamily: SANS, fontSize: 15, color: BODY, lineHeight: 1.5 }}>{item}</span>
+            </label>
+          ))}
+        </div>
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ fontFamily: SANS, fontSize: 12, color: MUTE, display: 'block', marginBottom: 6 }}>
+            Approver name
+          </label>
+          <input
+            type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name..."
+            style={{ width: '100%', boxSizing: 'border-box', fontFamily: SANS, fontSize: 14, color: TX, border: `1px solid ${BD}`, borderRadius: 6, padding: '10px 12px', background: '#fff', outline: 'none' }}
+          />
+          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginTop: 6 }}>
+            {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={onClose}
+            style={{ flex: 1, padding: '11px 0', background: 'transparent', border: `1px solid ${BD}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: TX, cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => canSubmit && onApprove(name)}
+            disabled={!canSubmit}
+            style={{
+              flex: 2, padding: '11px 0',
+              background: canSubmit ? TX : '#E5E7EB',
+              border: 'none', borderRadius: 8,
+              fontFamily: SANS, fontSize: 14, fontWeight: 600,
+              color: canSubmit ? '#fff' : MUTE,
+              cursor: canSubmit ? 'pointer' : 'default',
+              transition: 'all 0.15s',
+            }}
+          >
+            Approve Phase {phaseId} →
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── AIStrategyInner ───────────────────────────────────────────────────────────
+function AIStrategyInner() {
+  const { clientId, currentClient } = useClientContext()
+  const clientName = currentClient.name
+  const vertical   = currentClient.vertical
+  const searchParams   = useSearchParams()
+  const skipSetup      = searchParams.get('skip_setup') === 'true'
+
+  const [st, setSt]               = useState<SavedState>(() => makeInitial())
+  const [collapsed, setCollapsed] = useState<Set<number>>(new Set([1, 2, 3, 4]))
+  const [customVal, setCustomVal] = useState('')
+  const [loading, setLoading]     = useState(false)
+  const [approvalFor, setApprovalFor] = useState<number | null>(null)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const { phaseStatuses, stepStatuses, outcomes, messagesByStep, activeStep } = st
+
+  // Load / init on client change
+  useEffect(() => {
+    const saved = loadSaved(clientId)
+    if (saved) {
+      setSt(saved)
+      const newCollapsed = new Set<number>()
+      PHASE_DEFS.forEach(p => { if (saved.phaseStatuses[p.id] === 'locked') newCollapsed.add(p.id) })
+      setCollapsed(newCollapsed)
+    } else {
+      const init   = makeInitial()
+      const script = phase0Script('0.1', clientName, vertical, clientId)
+      init.messagesByStep['0.1'] = [{ role: 'ai', text: script.text, options: script.options, stepId: '0.1' }]
+      setSt(init)
+    }
+    setCustomVal('')
+    setLoading(false)
+    setApprovalFor(null)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientId])
+
+  useEffect(() => { persist(clientId, st) }, [clientId, st])
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messagesByStep, activeStep, loading])
+
+  const msgs             = messagesByStep[activeStep] ?? []
+  const phaseId          = phaseOfStep(activeStep)
+  const phaseDef         = PHASE_DEFS[phaseId]
+  const stepDef          = phaseDef?.steps.find(s => s.id === activeStep)
+  const isDone           = stepStatuses[activeStep] === 'complete'
+  const phaseAllComplete = phaseDef?.steps.every(s => stepStatuses[s.id] === 'complete') ?? false
+  const phaseApproved    = phaseStatuses[phaseId] === 'approved'
+  const showApproveBtn   = phaseAllComplete && !phaseApproved
+
+  const allSteps   = allStepIds()
+  const totalSteps = allSteps.length
+  const doneSoFar  = completedCount(stepStatuses)
+  const pct        = Math.round((doneSoFar / totalSteps) * 100)
+  const stepIndex  = allSteps.indexOf(activeStep) + 1
+
+  function handleSelect(letter: string) {
+    const lastAI = [...msgs].reverse().find(m => m.role === 'ai')
+    if (!lastAI) return
+    const optText    = lastAI.options?.find(o => o.startsWith(letter + ':')) ?? letter
+    const userMsg: ChatMessage = { role: 'user', text: optText, stepId: activeStep }
+    const updatedMsgs = msgs.map((m, i) => i === msgs.length - 1 && m.role === 'ai' ? { ...m, selectedOption: letter } : m)
+    setSt(prev => ({ ...prev, messagesByStep: { ...prev.messagesByStep, [activeStep]: [...updatedMsgs, userMsg] } }))
+    completeStep(letter, optText)
+  }
+
+  function handleSubmitCustom() {
+    if (!customVal.trim()) return
+    const lastAI = [...msgs].reverse().find(m => m.role === 'ai')
+    if (!lastAI) return
+    const userMsg: ChatMessage = { role: 'user', text: customVal, stepId: activeStep }
+    const updatedMsgs = msgs.map((m, i) => i === msgs.length - 1 && m.role === 'ai' ? { ...m, selectedOption: 'D' } : m)
+    setSt(prev => ({ ...prev, messagesByStep: { ...prev.messagesByStep, [activeStep]: [...updatedMsgs, userMsg] } }))
+    completeStep('D', customVal)
+  }
+
+  async function completeStep(letter: string, optText: string) {
+    setLoading(true)
+    const phase     = phaseOfStep(activeStep)
+    const stepIdx   = allSteps.indexOf(activeStep)
+    const nextStep  = allSteps[stepIdx + 1]
+    const nextPhase = nextStep ? phaseOfStep(nextStep) : -1
+    const samePhase = nextPhase === phase
+
+    const label = OUTCOME_LABELS[activeStep] ?? activeStep
+    const value = phase === 0
+      ? (letter === 'D' ? (customVal || 'Custom') : (P0_VALUES[activeStep]?.[letter] ?? optText))
+      : optText
+    const outcome: OutcomeItem = { stepId: activeStep, label, value }
+    const newSS: Record<string, StepStatus> = { ...stepStatuses, [activeStep]: 'complete' }
+
+    if (phase === 0) {
+      const updated: SavedState = { ...st, stepStatuses: newSS, outcomes: [...outcomes.filter(o => o.stepId !== activeStep), outcome] }
+      if (nextStep && samePhase) {
+        const script = phase0Script(nextStep, clientName, vertical, clientId)
+        updated.messagesByStep = { ...updated.messagesByStep, [nextStep]: [{ role: 'ai', text: script.text, options: script.options, stepId: nextStep }] }
+        updated.stepStatuses[nextStep] = 'active'
+        updated.activeStep = nextStep
+      }
+      setSt(updated)
+      setCustomVal('')
+      setLoading(false)
+    } else {
+      try {
+        const summary = outcomes.map(o => `${o.label}: ${o.value}`).join('\n')
+        const res = await fetch('/api/chat/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stepId: activeStep, clientId,
+            selectedOption: letter,
+            customText: letter === 'D' ? customVal : undefined,
+            priorStepsSummary: summary,
+            clientContext: { name: clientName, vertical },
+          }),
+        })
+
+        let aiText = '', nextOptions: string[] = [], outcomeOverride: string | undefined
+
+        if (res.ok && res.body) {
+          const reader = res.body.getReader(), decoder = new TextDecoder()
+          let buf = ''
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n'); buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              try {
+                const d = JSON.parse(line.slice(6))
+                if (d.type === 'text') aiText += d.chunk
+                if (d.type === 'done') { nextOptions = d.options ?? []; outcomeOverride = d.outcomeItem?.value }
+              } catch { /* ignore */ }
+            }
+          }
+        }
+
+        const finalOutcome: OutcomeItem = { stepId: activeStep, label, value: outcomeOverride ?? value }
+        const newSS2 = { ...newSS }
+        const newActiveStep = nextStep && samePhase ? nextStep : activeStep
+        if (nextStep && samePhase) newSS2[nextStep] = 'active'
+
+        setSt(prev => ({
+          ...prev, stepStatuses: newSS2,
+          outcomes: [...prev.outcomes.filter(o => o.stepId !== activeStep), finalOutcome],
+          messagesByStep: {
+            ...prev.messagesByStep,
+            ...(nextStep && samePhase && aiText ? { [nextStep]: [{ role: 'ai', text: aiText, options: nextOptions, stepId: nextStep }] } : {}),
+          },
+          activeStep: newActiveStep,
+        }))
+      } catch {
+        setSt(prev => ({ ...prev, stepStatuses: newSS, outcomes: [...prev.outcomes.filter(o => o.stepId !== activeStep), outcome] }))
+      } finally {
+        setCustomVal(''); setLoading(false)
+      }
+    }
+  }
+
+  async function handleApprove(approverName: string) {
+    const nextPhaseId = phaseId + 1
+    const newPS: Record<number, PhaseStatus> = { ...phaseStatuses, [phaseId]: 'approved' }
+    const newSS: Record<string, StepStatus>  = { ...stepStatuses }
+
+    if (nextPhaseId <= 4) {
+      newPS[nextPhaseId] = 'active'
+      PHASE_DEFS[nextPhaseId]?.steps.forEach((s, i) => { newSS[s.id] = i === 0 ? 'active' : 'pending' })
+    }
+
+    const firstNextId = PHASE_DEFS[nextPhaseId]?.steps[0]?.id
+
+    setSt(prev => ({ ...prev, phaseStatuses: newPS, stepStatuses: newSS, activeStep: firstNextId ?? activeStep }))
+    setCollapsed(prev => {
+      const n = new Set(prev); n.add(phaseId)
+      if (firstNextId) n.delete(nextPhaseId)
+      return n
+    })
+    setApprovalFor(null)
+
+    if (firstNextId && nextPhaseId >= 1) {
+      setLoading(true)
+      try {
+        const summary = outcomes.map(o => `${o.label}: ${o.value}`).join('\n')
+        const res = await fetch('/api/chat/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stepId: firstNextId, clientId, selectedOption: 'A',
+            priorStepsSummary: summary,
+            clientContext: { name: clientName, vertical },
+            isKickoff: true,
+          }),
+        })
+        let aiText = '', nextOptions: string[] = []
+        if (res.ok && res.body) {
+          const reader = res.body.getReader(), decoder = new TextDecoder()
+          let buf = ''
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buf += decoder.decode(value, { stream: true })
+            const lines = buf.split('\n'); buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              try {
+                const d = JSON.parse(line.slice(6))
+                if (d.type === 'text') aiText += d.chunk
+                if (d.type === 'done') nextOptions = d.options ?? []
+              } catch { /* ignore */ }
+            }
+          }
+        }
+        if (aiText) {
+          setSt(prev => ({
+            ...prev,
+            messagesByStep: { ...prev.messagesByStep, [firstNextId]: [{ role: 'ai', text: aiText, options: nextOptions, stepId: firstNextId }] },
+          }))
+        }
+      } catch { /* ignore */ } finally { setLoading(false) }
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: LBG, overflow: 'hidden' }}>
+      <AbarvaNav activePage="ai-strategy" />
+
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        {/* ── Left nav ── */}
+        <LeftNav
+          phaseStatuses={phaseStatuses}
+          stepStatuses={stepStatuses}
+          activeStep={activeStep}
+          collapsed={collapsed}
+          onToggle={id => setCollapsed(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })}
+          onSelect={id => setSt(prev => ({ ...prev, activeStep: id }))}
+        />
+
+        {/* ── Right area ── */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+          {/* Skip-setup pre-population banner */}
+          {skipSetup && (
+            <div style={{ flexShrink: 0, background: 'rgba(45,212,200,0.07)', borderLeft: '3px solid #2DD4C8', padding: '16px 24px', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.08em', textTransform: 'uppercase' }}>Context loaded</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: TX }}>Engagement context loaded from Setup. Phase 0 pre-populated. Review and approve to proceed to Phase 1.</span>
+            </div>
+          )}
+
+          {/* Step header — #F8F7F4, Georgia step name, Mono phase label */}
+          <div style={{ flexShrink: 0, background: LBG, borderBottom: '1px solid rgba(0,0,0,0.08)', padding: '16px 24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Phase {phaseId}: {phaseDef?.name} · Step {stepIndex} of {totalSteps}
+                </div>
+                <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: TX }}>
+                  {stepDef?.label ?? 'AI Value Realization'}
+                </div>
+              </div>
+              <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: TEAL, marginTop: 4 }}>
+                {pct}%
+              </span>
+            </div>
+            {/* 4px progress bar */}
+            <div style={{ height: 4, background: BD, borderRadius: 2 }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: TEAL, borderRadius: 2, transition: 'width 0.4s' }} />
+            </div>
+          </div>
+
+          {/* Chat + Outcomes */}
+          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+            {/* Chat — white background, 55% */}
+            <div style={{ width: '55%', display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRight: `1px solid ${BD}`, background: '#fff' }}>
+              <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 8px' }}>
+                {msgs.map((msg, i) => (
+                  <ChatBubble
+                    key={i} msg={msg} isLast={i === msgs.length - 1}
+                    onSelect={!isDone ? handleSelect : undefined}
+                    loading={loading}
+                    customVal={customVal} setCustomVal={setCustomVal}
+                    onSubmitCustom={handleSubmitCustom}
+                  />
+                ))}
+
+                {loading && (
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: DBG, fontWeight: 800 }}>AV</span>
+                    </div>
+                    <div style={{ background: LBG, borderRadius: '0 12px 12px 12px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: TEAL, animation: `dot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef} />
+              </div>
+            </div>
+
+            {/* Outcomes — #F8F7F4, 45% */}
+            <div style={{ width: '45%', background: LBG, overflow: 'hidden' }}>
+              <OutcomesPanel outcomes={outcomes} phaseStatuses={phaseStatuses} />
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ height: FOOTER_H, flexShrink: 0, background: '#fff', borderTop: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', padding: '0 24px', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, textTransform: 'uppercase', letterSpacing: '.08em' }}>
+                {stepDef ? `${activeStep} — ${stepDef.label}` : ''}
+              </div>
+            </div>
+
+            {/* Step progress squares */}
+            <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              {allSteps.map(sid => {
+                const s = stepStatuses[sid]
+                const a = sid === activeStep
+                return (
+                  <div key={sid} style={{
+                    width: a ? 10 : 6, height: a ? 10 : 6, borderRadius: 2,
+                    background: s === 'complete' ? TEAL : (a ? TEAL : (s === 'locked' ? '#E5E7EB' : '#C5C5C5')),
+                    opacity: s === 'locked' ? 0.4 : 1, transition: 'all 0.2s',
+                  }} />
+                )
+              })}
+            </div>
+
+            {phaseId > 0 && !isDone && !loading && (
+              <button
+                onClick={() => handleSelect('A')}
+                style={{ padding: '9px 16px', background: 'transparent', border: `1px solid ${BD}`, borderRadius: 6, fontFamily: SANS, fontSize: 13, color: SMUTE, cursor: 'pointer' }}
+              >
+                Skip →
+              </button>
+            )}
+
+            {showApproveBtn ? (
+              <button
+                onClick={() => setApprovalFor(phaseId)}
+                style={{ height: 44, padding: '0 24px', background: TX, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+              >
+                Approve Phase {phaseId} →
+              </button>
+            ) : (
+              <button
+                disabled={isDone || loading}
+                style={{
+                  height: 44, padding: '0 24px',
+                  background: (isDone || loading) ? '#E5E7EB' : TX,
+                  border: 'none', borderRadius: 6,
+                  fontFamily: SANS, fontSize: 15, fontWeight: 600,
+                  color: (isDone || loading) ? MUTE : '#fff',
+                  cursor: (isDone || loading) ? 'default' : 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {isDone ? 'Step Complete ✓' : 'Complete Step'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {approvalFor !== null && (
+        <ApprovalModal phaseId={approvalFor} onApprove={handleApprove} onClose={() => setApprovalFor(null)} />
+      )}
+
+      <style>{`
+        @keyframes dot {
+          0%, 80%, 100% { opacity: 0.25; transform: scale(0.75); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   )
 }
 
 export default function AIStrategyPage() {
   return (
-    <Suspense fallback={<div style={{ minHeight: '100vh', background: DBG }} />}>
-      <AVRCanvas />
+    <Suspense fallback={<div style={{ height: '100vh', background: LBG }} />}>
+      <AIStrategyInner />
     </Suspense>
   )
 }
