@@ -2662,6 +2662,121 @@ function ClientIntelTab({ clientId }: { clientId: string }) {
 }
 
 // ─── MAESTRO GUIDE ───────────────────────────────────────────────────────────
+function buildGuideHTML(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Maestro Guide — AbarNexus</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:#F8F7F4;color:#3C3C3C;line-height:1.6}
+.page{max-width:800px;margin:0 auto;padding:60px 40px 80px}
+.nav{background:#0F0E0D;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;margin-bottom:0}
+.logo{font-family:Georgia,serif;font-size:18px;color:#F8F7F4;letter-spacing:.01em}
+.logo span{color:#2DD4C8}
+.nav-tag{font-size:10px;font-family:monospace;color:rgba(255,255,255,.4);letter-spacing:.12em;text-transform:uppercase}
+.hero{background:#060A12;padding:56px 40px;margin-bottom:0}
+.hero-tag{font-size:10px;font-family:monospace;color:#2DD4C8;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px}
+.hero-title{font-family:Georgia,serif;font-size:52px;color:#fff;line-height:1.1;margin-bottom:16px}
+.hero-sub{font-size:17px;color:#9CA3AF;max-width:520px}
+.step{margin:40px 0 0;border-radius:10px;overflow:hidden;border:1px solid #E5E7EB;background:#fff}
+.step-header{padding:20px 28px;background:#0D1520;display:flex;align-items:center;gap:14px}
+.step-tag{font-family:monospace;font-size:10px;color:#2DD4C8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.step-title{font-family:Georgia,serif;font-size:24px;color:#fff}
+.step-icon{font-size:20px;color:#2DD4C8;width:28px;text-align:center}
+.step-body{padding:28px}
+.step-summary{font-size:15px;color:#374151;margin-bottom:24px;line-height:1.7;padding-bottom:20px;border-bottom:1px solid #F3F4F6}
+.card{background:#F9F9F8;border:1px solid #E5E7EB;border-left:3px solid #2DD4C8;border-radius:8px;padding:18px 20px;margin-bottom:12px}
+.card-h{font-size:14px;font-weight:700;color:#0F0E0D;margin-bottom:6px}
+.card-b{font-size:13px;color:#6B7280;line-height:1.7}
+.training{margin-top:48px;background:#fff;border:1px solid #E5E7EB;border-radius:10px;padding:28px}
+.training-tag{font-family:monospace;font-size:10px;color:#2DD4C8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px}
+.training-title{font-family:Georgia,serif;font-size:22px;color:#0F0E0D;margin-bottom:8px}
+.training-sub{font-size:14px;color:#9CA3AF;margin-bottom:20px}
+.pill{display:inline-block;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:20px;padding:6px 16px;font-size:13px;color:#9CA3AF;margin:4px}
+.foot{margin-top:48px;padding-top:24px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;align-items:center}
+.foot-l{font-family:monospace;font-size:10px;color:#9CA3AF;letter-spacing:.08em}
+.foot-r{font-size:12px;color:#9CA3AF}
+@media print{.nav{background:#0F0E0D!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.hero{background:#060A12!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.step-header{background:#0D1520!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="logo">Abar<span>Nexus</span></div>
+  <div class="nav-tag">Maestro Playbook · Confidential</div>
+</nav>
+<div class="hero">
+  <div class="hero-tag">Maestro Guide</div>
+  <h1 class="hero-title">How to run<br>an engagement.</h1>
+  <p class="hero-sub">Five steps from client setup to verified value delivery. Follow this playbook for every engagement.</p>
+</div>
+<div class="page">
+${[
+  { tag:'Step 1', icon:'◎', title:'Setup', summary:'Configure your client workspace before running any engagement.',
+    cards:[
+      {h:'Add the client', b:'Navigate to Maestro → select or create a client. Each client gets a dedicated workspace with intelligence, engagements, data, and outputs.'},
+      {h:'Upload client data', b:'Go to Data → Uploads. Add financial statements, IT inventory, leadership profiles, vendor contracts. Each file increases your intelligence confidence score.'},
+      {h:'Review data readiness', b:'Check Data → Data Readiness. A score below 70 means you\'re missing critical files. The gap checklist tells you exactly what to request from the client.'},
+      {h:'Request sensitive access', b:'Private files require explicit access requests. Use Data → Request Sensitive Access to log each request against the file owner.'},
+    ]},
+  { tag:'Step 2', icon:'◈', title:'Intelligence Review', summary:'Read the intelligence before you speak to the client — know more than they expect.',
+    cards:[
+      {h:'Situation brief', b:'Intelligence → Situation gives you the most urgent finding, AI aspiration, genome match, and confirmed scope. This is your pre-call brief.'},
+      {h:'Findings', b:'Intelligence → Findings shows what the data extracted from uploaded files. Each finding has a confidence score and an implication. Lead with the highest-severity finding.'},
+      {h:'Contradictions', b:'Intelligence → Contradictions shows where what the client said conflicts with what the data shows. These are your most powerful conversation openers.'},
+      {h:'Genome patterns', b:'Intelligence → Genome shows which F-code failure patterns are active in this client. Each carries a confirmed failure rate and a mitigation playbook.'},
+    ]},
+  { tag:'Step 3', icon:'≡', title:'Running Engagements', summary:'Create, gate, and progress engagements through the AVR Navigator.',
+    cards:[
+      {h:'Create an engagement', b:'Click "+ New Engagement" in the sidebar. The AbarNexus AI will interview you — answer the questions about the client situation and it generates a scoped engagement with a clean name and ID.'},
+      {h:'Understand the gate model', b:'Every engagement moves through 5 phases: Readiness → Diagnose → Prescribe → Value Realization → Execute & Verify. Each phase requires named executive sponsor approval before the next begins.'},
+      {h:'Record gate approvals', b:'In Engagements → All Engagements, click "Record Approval →" on any Gate Pending engagement. This logs the approving sponsor and date, unlocking the next phase.'},
+      {h:'Track progress', b:'The engagements table shows phase, progress bar, value target, and gate status at a glance. Use this as your weekly status view.'},
+    ]},
+  { tag:'Step 4', icon:'⬡', title:'Using AbarNav', summary:'AbarNav is the AI co-pilot for engagement delivery — use it to build, diagnose, and present.',
+    cards:[
+      {h:'Access AbarNav', b:'From any engagement, click "Continue →" to open the AbarNav AI co-pilot. It has context on the client, the engagement, and the phase you\'re in.'},
+      {h:'Phase 0 — Readiness', b:'AbarNav interviews you on the client situation, AI aspiration, and data readiness. It generates the Situation Brief automatically at the end of this phase.'},
+      {h:'Phase 1 — Diagnose', b:'AbarNav pulls intelligence from uploaded files, genome patterns, and sector benchmarks. It drafts the Diagnose Report — review and refine before sending to the client.'},
+      {h:'Phase 2–4', b:'AbarNav builds the architecture, roadmap, KPI framework, board pack, and fee calculation as you work through each phase. Every document is generated from structured data — not a template.'},
+    ]},
+  { tag:'Step 5', icon:'$', title:'Value & Fees', summary:'Track verified savings and trigger outcome-share fees.',
+    cards:[
+      {h:'Lock the baseline', b:'Before any work begins, the Day 0 baseline must be documented and accepted by the client CFO. AbarNav generates the baseline document in Phase 1.'},
+      {h:'Monthly review cycle', b:'Value → Monthly Reviews shows verified savings month by month. Each review is auto-generated from actuals — download and share with the client on the 1st.'},
+      {h:'Fee tracker', b:'Value → Fee Tracker shows the three-component fee: platform access, engagement delivery, and outcome share. Outcome share only triggers on audited, baseline-locked results.'},
+      {h:'Board pack', b:'Outputs → Deliverables contains the auto-generated Board Pack for Phase 4. This summarises the full engagement — verified value, ROI on fee, and next programme.'},
+    ]},
+].map(s => `
+  <div class="step">
+    <div class="step-header">
+      <span class="step-icon">${s.icon}</span>
+      <div><div class="step-tag">${s.tag}</div><div class="step-title">${s.title}</div></div>
+    </div>
+    <div class="step-body">
+      <p class="step-summary">${s.summary}</p>
+      ${s.cards.map(c => `<div class="card"><div class="card-h">${c.h}</div><div class="card-b">${c.b}</div></div>`).join('')}
+    </div>
+  </div>`).join('')}
+  <div class="training">
+    <div class="training-tag">Training &amp; Demos</div>
+    <div class="training-title">More resources coming soon.</div>
+    <div class="training-sub">Video walkthroughs, live demos, and the full Maestro handbook are in production.</div>
+    <span class="pill">📘 Full Maestro Handbook</span>
+    <span class="pill">▶ Video Walkthrough</span>
+    <span class="pill">◎ Live Demo — Meridian</span>
+  </div>
+  <div class="foot">
+    <div class="foot-l">ABARNEXUS · MAESTRO PLAYBOOK · CONFIDENTIAL</div>
+    <div class="foot-r">Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+  </div>
+</div>
+</body></html>`
+}
+
 function MaestroGuideView() {
   const [activeStep, setActiveStep] = useState(0)
 
@@ -3493,6 +3608,31 @@ export default function MaestroClientPage() {
             <div style={{ fontSize: 11, color: '#6B7280', fontFamily: SANS }}>{data.type} · ${(data.revenue / 1e9).toFixed(1)}B</div>
           </div>
 
+          {/* Maestro Guide — pinned top, bold */}
+          <div style={{ padding: '10px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 4 }}>
+            <button
+              onClick={() => setActiveSection('guide')}
+              onDoubleClick={() => {
+                const html = buildGuideHTML()
+                const blob = new Blob([html], { type: 'text/html' })
+                const url = URL.createObjectURL(blob)
+                window.open(url, '_blank')
+                setTimeout(() => URL.revokeObjectURL(url), 5000)
+              }}
+              title="Click to open · Double-click to print"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%',
+                padding: '8px 10px', border: `1px solid ${activeSection === 'guide' ? TEAL : 'rgba(45,212,200,0.25)'}`,
+                borderRadius: 6, cursor: 'pointer', textAlign: 'left' as const,
+                background: activeSection === 'guide' ? 'rgba(45,212,200,0.1)' : 'rgba(45,212,200,0.04)',
+              }}
+            >
+              <span style={{ fontSize: 13, color: TEAL }}>?</span>
+              <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: TEAL }}>Maestro Guide</span>
+              <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 8, color: '#4B5563' }}>2×</span>
+            </button>
+          </div>
+
           {/* Intelligence */}
           <div style={{ padding: '12px 16px 4px' }}>
             <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Intelligence</div>
@@ -3536,11 +3676,6 @@ export default function MaestroClientPage() {
             <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Outputs</div>
             {sbItem('deliverables', '📄', 'Deliverables')}
             {sbItem('board-packs',  '📊', 'Board Packs')}
-          </div>
-
-          {/* Guide */}
-          <div style={{ padding: '12px 16px 4px' }}>
-            {sbItem('guide', '?', 'Maestro Guide')}
           </div>
 
           {/* Back link */}
