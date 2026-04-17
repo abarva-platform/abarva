@@ -271,11 +271,12 @@ function NavInner({ activePage }: NavProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            INVESTOR — Intelligence · AVR · Solutions | Platform · Investor · Admin(grey)
+            INVESTOR — same as admin; Admin link greyed out on right
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isInvestor && (
           <>
             {clientDropdown()}
+            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
@@ -306,8 +307,9 @@ function NavInner({ activePage }: NavProps) {
           </>
         )}
 
-        {/* ── Right side: Platform · Admin · Investor + user avatar ────────── */}
+        {/* ── Right side: Demo · Platform · Investor · Admin + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {signedIn && navLink('Demo', '/demo', demoActive)}
           {signedIn && navLink('Platform', '/platform', platformActive)}
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && adminNavItem()}
