@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusFinancial, arcturusFinancials, arcturusTechnology, arcturusLeadership, arcturusRegulatory, arcturusIndustry } from '@/data/arcturus/index'
 import { meridianHealth } from '@/data/meridian/index'
@@ -934,16 +934,56 @@ interface DeliverableRow {
   generated_at: string
 }
 
+interface UploadRow {
+  id: string
+  client_id: string
+  phase: number
+  filename: string
+  file_url: string
+  file_size: number
+  file_type: string
+  doc_category: string
+  description: string
+  uploaded_by: string
+  uploaded_at: string
+}
+
 const PHASE_NAMES: Record<number, string> = {
   0: 'Readiness', 1: 'Diagnose', 2: 'Prescribe', 3: 'Value Realization', 4: 'Execute & Verify',
 }
+const PHASE_DESC: Record<number, string> = {
+  0: 'Client setup, data ingestion, situation brief, executive alignment',
+  1: 'Deep diagnosis, gap analysis, Genome pattern matching, diagnose report',
+  2: 'Target architecture, roadmap, vendor decisions, business case',
+  3: 'KPI framework, monthly actuals tracking, value measurement',
+  4: 'Verified outcomes, board pack, fee calculation, renewal',
+}
+const PHASE_EXPECTED: Record<number, string[]> = {
+  0: ['Situation Brief', 'Phase 0 Gate Approval'],
+  1: ['Diagnose Report', 'Phase 1 Gate Approval'],
+  2: ['Target Architecture', 'Execution Roadmap', 'Phase 2 Gate Approval'],
+  3: ['Value & KPI Framework', 'Phase 3 Gate Approval'],
+  4: ['Board Pack', 'Fee Calculation', 'Phase 4 Gate Approval'],
+}
 const DOC_TYPE_LABELS: Record<string, string> = {
   situation_brief: 'Situation Brief', diagnose_report: 'Diagnose Report',
-  architecture: 'Architecture', roadmap: 'Roadmap', monthly_actuals: 'Value & KPI Framework',
+  architecture: 'Target Architecture', roadmap: 'Execution Roadmap', monthly_actuals: 'Value & KPI Framework',
   board_pack: 'Board Pack', fee_calculation: 'Fee Calculation', gate_approval: 'Gate Approval',
 }
+const DOC_TYPE_ICONS: Record<string, string> = {
+  situation_brief: '📋', diagnose_report: '🔍', architecture: '🏗', roadmap: '🗺',
+  monthly_actuals: '📊', board_pack: '📑', fee_calculation: '💰', gate_approval: '✅',
+}
+const UPLOAD_CATEGORIES = ['Meeting Notes', 'Interview Transcript', 'Discovery Document', 'Data File', 'Vendor Contract', 'Assessment', 'Presentation', 'Other']
+const UPLOAD_CAT_ICONS: Record<string, string> = {
+  'Meeting Notes': '📝', 'Interview Transcript': '🎙', 'Discovery Document': '🔎',
+  'Data File': '📈', 'Vendor Contract': '📄', 'Assessment': '🧪', 'Presentation': '📊', 'Other': '📁',
+}
+const PHASE_COLORS: Record<number, string> = {
+  0: '#6EE7B7', 1: '#4DA3FF', 2: '#A855F7', 3: TEAL, 4: '#34D399',
+}
 
-// Static fallback deliverables — generated locally so the section always has content
+// Static fallback deliverables
 const DEMO_DELIVERABLE_MAP: Record<string, DeliverableRow[]> = (() => {
   const build = (
     clientId: string, clientName: string,
@@ -962,119 +1002,311 @@ const DEMO_DELIVERABLE_MAP: Record<string, DeliverableRow[]> = (() => {
         generated_at:  timestamps[phase] ?? '2026-04-16T09:00:00Z',
       }))
     )
-
   return {
     meridian:   build('meridian',   'Meridian Health System', 'MER-RCM-001', [0,1,2,3,4], MERIDIAN_SEED.outcomes, { 0:'2026-04-01T09:00:00Z', 1:'2026-04-05T09:00:00Z', 2:'2026-04-08T09:00:00Z', 3:'2026-04-12T09:00:00Z', 4:'2026-04-16T09:00:00Z' }),
     apexretail: build('apexretail', 'Apex Retail Group',      'ARG-TECH-001', [0,2,4],     APEX_SEED.outcomes,     { 0:'2026-04-02T09:00:00Z', 2:'2026-04-10T09:00:00Z', 4:'2026-04-16T09:00:00Z' }),
   }
 })()
 
+// Demo uploaded documents per phase
+const DEMO_UPLOADS: Record<string, UploadRow[]> = {
+  meridian: [
+    { id: 'u1', client_id: 'meridian', phase: 0, filename: 'CEO-Kickoff-Notes-Apr01.pdf', file_url: '#', file_size: 142000, file_type: 'application/pdf', doc_category: 'Meeting Notes', description: 'CEO + CFO kickoff call — agreed priorities, Epic timeline, Ensemble SLA leverage strategy', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-01T10:30:00Z' },
+    { id: 'u2', client_id: 'meridian', phase: 0, filename: 'CDO-Interview-Mar29.docx', file_url: '#', file_size: 88000, file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc_category: 'Interview Transcript', description: 'CDO candidate interview — confirmed role vacant, interim governance plan discussed', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-03-29T14:00:00Z' },
+    { id: 'u3', client_id: 'meridian', phase: 1, filename: 'Ensemble-Contract-Redacted.pdf', file_url: '#', file_size: 824000, file_type: 'application/pdf', doc_category: 'Vendor Contract', description: 'Ensemble RCM contract — SLA clauses identified, $8M penalties documented', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-04T09:00:00Z' },
+    { id: 'u4', client_id: 'meridian', phase: 1, filename: 'RCM-Denial-Analysis-Q1-2026.xlsx', file_url: '#', file_size: 256000, file_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', doc_category: 'Data File', description: 'CFO-provided denial data Q1 2026 — 18.2% confirmed, breakdown by payer', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-05T11:00:00Z' },
+    { id: 'u5', client_id: 'meridian', phase: 2, filename: 'Epic-Integration-Vendor-Shortlist.pdf', file_url: '#', file_size: 192000, file_type: 'application/pdf', doc_category: 'Assessment', description: 'Cohere Health vs Waystar vs Olive — vendor comparison scoring matrix', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-08T15:00:00Z' },
+    { id: 'u6', client_id: 'meridian', phase: 4, filename: 'KPMG-Verification-Letter-Apr2026.pdf', file_url: '#', file_size: 340000, file_type: 'application/pdf', doc_category: 'Assessment', description: 'KPMG third-party verification of $22.4M in verified savings — signed by audit partner', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-15T16:00:00Z' },
+  ],
+  arcturus: [
+    { id: 'u7', client_id: 'arcturus', phase: 0, filename: 'CEO-Intro-Call-Apr03.pdf', file_url: '#', file_size: 98000, file_type: 'application/pdf', doc_category: 'Meeting Notes', description: 'Victoria Hargreaves intro meeting — strategic priorities, fee pressure, advisor retention concerns', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-03T09:30:00Z' },
+    { id: 'u8', client_id: 'arcturus', phase: 0, filename: 'CTO-Tech-Interview-Apr05.docx', file_url: '#', file_size: 76000, file_type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', doc_category: 'Interview Transcript', description: 'Raj Malhotra — confirmed Salesforce Einstein not activated, Bloomberg API already licensed', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-05T14:00:00Z' },
+  ],
+  apexretail: [
+    { id: 'u9', client_id: 'apexretail', phase: 0, filename: 'CMO-Discovery-Call-Apr02.pdf', file_url: '#', file_size: 114000, file_type: 'application/pdf', doc_category: 'Meeting Notes', description: 'CMO + CFO discovery — markdown problem confirmed, Q4 2026 deadline discussed, Teradata EOL flagged', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-02T10:00:00Z' },
+    { id: 'u10', client_id: 'apexretail', phase: 1, filename: 'POS-Data-Sample-SKU-Apr2026.csv', file_url: '#', file_size: 4200000, file_type: 'text/csv', doc_category: 'Data File', description: 'Sample SKU-store-week POS export — used to validate data quality before model build', uploaded_by: 'Anand Sundaram', uploaded_at: '2026-04-09T13:00:00Z' },
+  ],
+}
+
+function fmtBytes(b: number): string {
+  if (b >= 1e6) return (b / 1e6).toFixed(1) + ' MB'
+  if (b >= 1e3) return (b / 1e3).toFixed(0) + ' KB'
+  return b + ' B'
+}
+
 function DeliverablesSection({ clientId, clientName }: { clientId: string; clientName: string }) {
-  const [docs, setDocs]       = useState<DeliverableRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [viewDoc, setViewDoc] = useState<DeliverableRow | null>(null)
+  const [docs, setDocs]         = useState<DeliverableRow[]>([])
+  const [uploads, setUploads]   = useState<UploadRow[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [viewDoc, setViewDoc]   = useState<DeliverableRow | null>(null)
+  const [uploadPhase, setUploadPhase] = useState<number | null>(null)
+  const [uploadFile, setUploadFile]   = useState<File | null>(null)
+  const [uploadCat, setUploadCat]     = useState('Meeting Notes')
+  const [uploadDesc, setUploadDesc]   = useState('')
+  const [uploading, setUploading]     = useState(false)
+  const [uploadToast, setUploadToast] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    supabase
-      .from('engagement_deliverables')
-      .select('*')
-      .eq('client_id', clientId)
-      .order('generated_at', { ascending: true })
-      .then(({ data, error }: { data: DeliverableRow[] | null; error: unknown }) => {
-        const rows = (!error && data && data.length > 0) ? data : (DEMO_DELIVERABLE_MAP[clientId] ?? [])
-        setDocs(rows)
-        setLoading(false)
-      })
+    Promise.all([
+      supabase.from('engagement_deliverables').select('*').eq('client_id', clientId).order('generated_at', { ascending: true }),
+      supabase.from('engagement_uploads').select('*').eq('client_id', clientId).order('uploaded_at', { ascending: true }),
+    ]).then(([{ data: ddata, error: derr }, { data: udata, error: uerr }]) => {
+      setDocs((!derr && ddata && ddata.length > 0) ? ddata : (DEMO_DELIVERABLE_MAP[clientId] ?? []))
+      setUploads((!uerr && udata && udata.length > 0) ? udata : (DEMO_UPLOADS[clientId] ?? []))
+      setLoading(false)
+    })
   }, [clientId])
 
-  function download(doc: DeliverableRow) {
+  function downloadDoc(doc: DeliverableRow) {
     const blob = new Blob([doc.html_content], { type: 'text/html' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
-    a.href = url
-    a.download = `${clientId}-phase${doc.phase_id}-${doc.document_type}.html`
-    a.click()
+    a.href = url; a.download = `${clientId}-phase${doc.phase_id}-${doc.document_type}.html`; a.click()
     URL.revokeObjectURL(url)
   }
 
-  // Group by phase_id
-  const grouped: Record<number, DeliverableRow[]> = {}
-  for (const d of docs) {
-    if (!grouped[d.phase_id]) grouped[d.phase_id] = []
-    grouped[d.phase_id].push(d)
+  async function handleUpload() {
+    if (!uploadFile || uploadPhase === null) return
+    setUploading(true)
+    const path = `${clientId}/phase${uploadPhase}/${Date.now()}-${uploadFile.name}`
+    let fileUrl = '#'
+    try {
+      const { data: storageData } = await supabase.storage.from('engagement-docs').upload(path, uploadFile, { upsert: false })
+      if (storageData) {
+        const { data: pub } = supabase.storage.from('engagement-docs').getPublicUrl(path)
+        fileUrl = pub?.publicUrl ?? '#'
+      }
+    } catch { /* storage bucket may not exist — fall through with # */ }
+
+    const row: Omit<UploadRow, 'id'> = {
+      client_id: clientId, phase: uploadPhase,
+      filename: uploadFile.name, file_url: fileUrl,
+      file_size: uploadFile.size, file_type: uploadFile.type,
+      doc_category: uploadCat, description: uploadDesc,
+      uploaded_by: 'Anand Sundaram', uploaded_at: new Date().toISOString(),
+    }
+    const newRow: UploadRow = { id: `local-${Date.now()}`, ...row }
+    try {
+      const { data } = await supabase.from('engagement_uploads').insert(row).select().single()
+      if (data) newRow.id = data.id
+    } catch { /* table may not exist — keep local row */ }
+
+    setUploads(prev => [...prev, newRow])
+    setUploadToast(`"${uploadFile.name}" uploaded to Phase ${uploadPhase}`)
+    setTimeout(() => setUploadToast(null), 4000)
+    setUploadFile(null); setUploadDesc(''); setUploadCat('Meeting Notes'); setUploadPhase(null)
+    setUploading(false)
   }
-  const phases = Object.keys(grouped).map(Number).sort((a, b) => a - b)
+
+  // Group by phase
+  const groupedDocs: Record<number, DeliverableRow[]> = {}
+  for (const d of docs) { if (!groupedDocs[d.phase_id]) groupedDocs[d.phase_id] = []; groupedDocs[d.phase_id].push(d) }
+  const groupedUps: Record<number, UploadRow[]> = {}
+  for (const u of uploads) { if (!groupedUps[u.phase]) groupedUps[u.phase] = []; groupedUps[u.phase].push(u) }
+
+  const totalDocs = docs.length + uploads.length
+  const completedPhases = new Set([...docs.map(d => d.phase_id), ...uploads.map(u => u.phase)])
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 860 }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontFamily: SERIF, fontSize: 22, color: '#0C0C0C', fontWeight: 400, marginBottom: 6 }}>Deliverables</div>
-        <div style={{ fontFamily: SANS, fontSize: 13, color: '#706D66' }}>{docs.length} document{docs.length !== 1 ? 's' : ''} for {clientName}</div>
-      </div>
+    <div style={{ padding: '28px 32px', maxWidth: 960 }}>
 
-      {loading && <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', padding: '24px 0' }}>Loading…</div>}
-      {!loading && phases.length === 0 && (
-        <div style={{ background: '#F9F9F8', border: '1px solid #E5E7EB', borderRadius: 10, padding: '32px 28px', textAlign: 'center' as const }}>
-          <div style={{ fontFamily: SERIF, fontSize: 18, color: '#0C0C0C', marginBottom: 8 }}>No documents yet</div>
-          <div style={{ fontFamily: SANS, fontSize: 14, color: '#706D66' }}>Documents are generated automatically when each phase is completed in the AVR Navigator.</div>
+      {/* Upload toast */}
+      {uploadToast && (
+        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 3000, background: '#0C0C0C', color: '#fff', padding: '12px 20px', borderRadius: 8, fontFamily: SANS, fontSize: 13, borderLeft: `3px solid ${TEAL}`, boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
+          ✓ {uploadToast}
         </div>
       )}
 
-      {phases.map(phase => (
-        <div key={phase} style={{ marginBottom: 24, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '10px 20px', background: '#F9F9F8', borderBottom: '1px solid #F3F4F6' }}>
-            <span style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
-              Phase {phase} · {PHASE_NAMES[phase] ?? ''}
-            </span>
-          </div>
-          {grouped[phase].map(doc => (
-            <div key={doc.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', marginBottom: 2 }}>
-                  {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
+      {/* Header */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: SERIF, fontSize: 22, color: '#0C0C0C', fontWeight: 400, marginBottom: 4 }}>Engagement Documents</div>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: '#706D66' }}>{totalDocs} document{totalDocs !== 1 ? 's' : ''} · {docs.length} generated · {uploads.length} uploaded · {clientName}</div>
+      </div>
+
+      {/* Phase progress stepper */}
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 32, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, padding: '16px 24px', gap: 0 }}>
+        {[0,1,2,3,4].map((ph, i) => {
+          const done    = completedPhases.has(ph)
+          const color   = PHASE_COLORS[ph]
+          const docCnt  = (groupedDocs[ph]?.length ?? 0) + (groupedUps[ph]?.length ?? 0)
+          return (
+            <div key={ph} style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+              <div style={{ flex: 1, minWidth: 0, textAlign: 'center' as const }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: done ? color : '#F3F4F6', border: `2px solid ${done ? color : '#E5E7EB'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontFamily: MONO, fontSize: 12, fontWeight: 700, color: done ? '#060A12' : '#9CA3AF' }}>
+                  {done ? '✓' : ph}
                 </div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>
-                  {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                <div style={{ fontFamily: MONO, fontSize: 9, color: done ? color : '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.07em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{PHASE_NAMES[ph]}</div>
+                {docCnt > 0 && <div style={{ fontFamily: MONO, fontSize: 8, color: '#9CA3AF', marginTop: 2 }}>{docCnt} doc{docCnt !== 1 ? 's' : ''}</div>}
+              </div>
+              {i < 4 && <div style={{ width: 24, height: 2, background: done ? color : '#E5E7EB', flexShrink: 0, margin: '0 2px', marginBottom: 20 }} />}
+            </div>
+          )
+        })}
+      </div>
+
+      {loading && <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', padding: '24px 0' }}>Loading…</div>}
+
+      {/* Per-phase sections */}
+      {[0,1,2,3,4].map(phase => {
+        const phaseDocs  = groupedDocs[phase] ?? []
+        const phaseUps   = groupedUps[phase] ?? []
+        const expected   = PHASE_EXPECTED[phase] ?? []
+        const color      = PHASE_COLORS[phase]
+        const hasContent = phaseDocs.length > 0 || phaseUps.length > 0
+        return (
+          <div key={phase} style={{ marginBottom: 16, background: '#fff', border: `1px solid ${hasContent ? '#E5E7EB' : '#F3F4F6'}`, borderRadius: 10, overflow: 'hidden' }}>
+            {/* Phase header */}
+            <div style={{ padding: '12px 20px', background: hasContent ? '#F9F9F8' : '#FCFCFB', borderBottom: `1px solid ${hasContent ? '#F0F0EE' : '#F3F4F6'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 24, height: 24, borderRadius: '50%', background: hasContent ? color : '#E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 10, fontWeight: 700, color: hasContent ? '#060A12' : '#9CA3AF', flexShrink: 0 }}>
+                  {hasContent ? '✓' : phase}
+                </div>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: hasContent ? color : '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.09em', fontWeight: 700 }}>
+                    Phase {phase} · {PHASE_NAMES[phase]}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF', marginTop: 1 }}>{PHASE_DESC[phase]}</div>
                 </div>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {!hasContent && (
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: '#C4C3BD', letterSpacing: '.06em' }}>
+                    Expected: {expected.join(' · ')}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setUploadPhase(phase); setUploadFile(null); setUploadDesc(''); setUploadCat('Meeting Notes') }}
+                  style={{ padding: '5px 12px', background: 'transparent', border: `1px solid ${hasContent ? '#D1D5DB' : '#E5E7EB'}`, borderRadius: 6, fontFamily: MONO, fontSize: 9, color: '#706D66', cursor: 'pointer', letterSpacing: '.06em', display: 'flex', alignItems: 'center', gap: 5 }}
+                >
+                  ↑ Upload
+                </button>
+              </div>
+            </div>
+
+            {hasContent && (
+              <div style={{ padding: '4px 0' }}>
+                {/* Generated deliverables */}
+                {phaseDocs.length > 0 && (
+                  <div>
+                    <div style={{ padding: '8px 20px 4px', fontFamily: MONO, fontSize: 9, color: '#C4C3BD', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Generated by AbarNexus</div>
+                    {phaseDocs.map(doc => (
+                      <div key={doc.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>{DOC_TYPE_ICONS[doc.document_type] ?? '📄'}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: SANS, fontSize: 13, color: '#0C0C0C', fontWeight: 500 }}>{DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>
+                            Generated {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </div>
+                        </div>
+                        <button onClick={() => setViewDoc(doc)} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 12, color: '#3C3C3C', cursor: 'pointer' }}>View</button>
+                        <button onClick={() => downloadDoc(doc)} style={{ padding: '5px 12px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 12, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}>↓ HTML</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Uploaded documents */}
+                {phaseUps.length > 0 && (
+                  <div>
+                    <div style={{ padding: '8px 20px 4px', fontFamily: MONO, fontSize: 9, color: '#C4C3BD', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>Uploaded by Team</div>
+                    {phaseUps.map(up => (
+                      <div key={up.id} style={{ display: 'flex', alignItems: 'center', padding: '10px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>{UPLOAD_CAT_ICONS[up.doc_category] ?? '📁'}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontFamily: SANS, fontSize: 13, color: '#0C0C0C', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{up.filename}</div>
+                          <div style={{ fontFamily: SANS, fontSize: 12, color: '#706D66', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{up.description || up.doc_category}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>
+                            {up.doc_category} · {fmtBytes(up.file_size)} · {new Date(up.uploaded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} · {up.uploaded_by}
+                          </div>
+                        </div>
+                        {up.file_url !== '#' && (
+                          <a href={up.file_url} target="_blank" rel="noreferrer" style={{ padding: '5px 12px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 12, fontWeight: 600, color: '#060A12', textDecoration: 'none', cursor: 'pointer' }}>↓ Open</a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )
+      })}
+
+      {/* Upload modal */}
+      {uploadPhase !== null && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setUploadPhase(null) }}>
+          <div style={{ background: '#fff', borderRadius: 12, padding: '28px 32px', width: 520, maxWidth: 'calc(100vw - 32px)', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 18, color: '#0C0C0C', marginBottom: 4 }}>Upload Document</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 24 }}>Phase {uploadPhase} · {PHASE_NAMES[uploadPhase]}</div>
+
+            {/* File drop zone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{ border: `2px dashed ${uploadFile ? TEAL : '#D1D5DB'}`, borderRadius: 8, padding: '24px', textAlign: 'center' as const, cursor: 'pointer', marginBottom: 16, background: uploadFile ? 'rgba(45,212,200,0.04)' : '#FAFAF9', transition: 'all 0.15s' }}
+            >
+              <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={e => setUploadFile(e.target.files?.[0] ?? null)} />
+              {uploadFile ? (
+                <div>
+                  <div style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', fontWeight: 600, marginBottom: 2 }}>{uploadFile.name}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>{fmtBytes(uploadFile.size)} · click to change</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontSize: 24, marginBottom: 8 }}>↑</div>
+                  <div style={{ fontFamily: SANS, fontSize: 14, color: '#706D66', marginBottom: 2 }}>Click to select a file</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF' }}>PDF, DOCX, XLSX, CSV, MP3, MP4, PPTX</div>
+                </div>
+              )}
+            </div>
+
+            {/* Category */}
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: '#706D66', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 6 }}>Document Type</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                {UPLOAD_CATEGORIES.map(cat => (
+                  <button key={cat} onClick={() => setUploadCat(cat)} style={{ padding: '5px 10px', borderRadius: 20, fontFamily: SANS, fontSize: 12, cursor: 'pointer', border: `1px solid ${uploadCat === cat ? TEAL : '#E5E7EB'}`, background: uploadCat === cat ? 'rgba(45,212,200,0.1)' : '#fff', color: uploadCat === cat ? '#0C0C0C' : '#706D66', fontWeight: uploadCat === cat ? 600 : 400 }}>
+                    {UPLOAD_CAT_ICONS[cat]} {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: '#706D66', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 6 }}>Description (optional)</div>
+              <textarea
+                value={uploadDesc} onChange={e => setUploadDesc(e.target.value)}
+                placeholder="e.g. CEO kickoff call notes — Epic timeline agreed, Ensemble SLA leverage confirmed"
+                style={{ width: '100%', height: 72, padding: '10px 12px', borderRadius: 6, border: '1px solid #E5E7EB', fontFamily: SANS, fontSize: 13, color: '#0C0C0C', resize: 'none' as const, outline: 'none', boxSizing: 'border-box' as const }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setUploadPhase(null)} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#706D66', cursor: 'pointer' }}>Cancel</button>
               <button
-                onClick={() => setViewDoc(doc)}
-                style={{ padding: '6px 14px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#0C0C0C', cursor: 'pointer' }}
+                onClick={handleUpload}
+                disabled={!uploadFile || uploading}
+                style={{ padding: '9px 24px', background: uploadFile && !uploading ? TEAL : '#E5E7EB', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: uploadFile && !uploading ? '#060A12' : '#9CA3AF', cursor: uploadFile && !uploading ? 'pointer' : 'not-allowed' }}
               >
-                View
-              </button>
-              <button
-                onClick={() => download(doc)}
-                style={{ padding: '6px 14px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
-              >
-                Download
+                {uploading ? 'Uploading…' : '↑ Upload'}
               </button>
             </div>
-          ))}
+          </div>
         </div>
-      ))}
+      )}
 
       {/* Full-screen document viewer */}
       {viewDoc && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.9)', overflow: 'auto' }}>
           <div style={{ position: 'sticky', top: 0, background: '#0F0E0D', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
             <div>
-              <span style={{ fontFamily: SANS, fontSize: 14, color: '#fff' }}>{viewDoc.title}</span>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', marginLeft: 12 }}>Phase {viewDoc.phase_id} · {PHASE_NAMES[viewDoc.phase_id] ?? ''}</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: '#fff' }}>{DOC_TYPE_LABELS[viewDoc.document_type] ?? viewDoc.document_type}</span>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', marginLeft: 12 }}>Phase {viewDoc.phase_id} · {PHASE_NAMES[viewDoc.phase_id] ?? ''} · {clientName}</span>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => download(viewDoc)}
-                style={{ padding: '7px 16px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
-              >
-                Download
-              </button>
-              <button
-                onClick={() => setViewDoc(null)}
-                style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#fff', cursor: 'pointer' }}
-              >
-                ✕ Close
-              </button>
+              <button onClick={() => downloadDoc(viewDoc)} style={{ padding: '7px 16px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}>↓ Download HTML</button>
+              <button onClick={() => setViewDoc(null)} style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#fff', cursor: 'pointer' }}>✕ Close</button>
             </div>
           </div>
           <div style={{ background: '#fff', minHeight: 'calc(100vh - 52px)' }}>
@@ -3485,11 +3717,18 @@ export default function MaestroClientPage() {
   const router = useRouter()
   const params = useParams()
   const clientId = params.client as string
+  const searchParams = useSearchParams()
 
   const [activeSection, setActiveSection] = useState<SidebarSection>('engagements')
   const [showCreate, setShowCreate] = useState(false)
   const [createSolution, setCreateSolution] = useState<string | null>(null)
   const [engRefreshKey, setEngRefreshKey] = useState(0)
+
+  useEffect(() => {
+    if (searchParams.get('view') === 'deliverables') {
+      setTimeout(() => setActiveSection('deliverables'), 800)
+    }
+  }, [searchParams])
 
   function openCreate(solution: string) {
     setCreateSolution(solution || null)
