@@ -3,110 +3,115 @@ import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import AbarvaNav from '@/components/AbarvaNav'
 
+// ── Design tokens (spec-exact) ────────────────────────────────────────────
 const BG     = '#FAFAF9'
-const BG2    = '#F2F1F0'
 const DARK   = '#0F0E0D'
 const TEXT   = '#3D3B38'
 const MUTED  = '#706D66'
 const BORDER = '#E8E6E3'
+const BG2    = '#F2F1F0'
 const TEAL   = '#2DD4C8'
 const RED    = '#C53030'
 const AMBER  = '#B45309'
 const GREEN  = '#166534'
 const MONO   = "'Courier New', monospace"
+const SANS   = 'DM Sans, sans-serif'
 
+// ── Types ─────────────────────────────────────────────────────────────────
 type Section =
   | 'maestros' | 'roles' | 'security'
-  | 'clients' | 'contracts'
+  | 'clients'  | 'contracts'
   | 'sensitive-data' | 'access-logs' | 'pending-requests'
   | 'audit-log' | 'api-keys' | 'compliance'
 
-const SIDEBAR_GROUPS = [
+// ── Sidebar config ────────────────────────────────────────────────────────
+const SIDEBAR_GROUPS: Array<{
+  label: string
+  items: Array<{ key: Section; icon: string; label: string; badge?: number; badgeAmber?: boolean }>
+}> = [
   {
-    label: 'USERS & ACCESS',
+    label: 'Users & Access',
     items: [
-      { key: 'maestros' as Section,  icon: '👤', label: 'Maestros' },
-      { key: 'roles'    as Section,  icon: '🔐', label: 'Roles & Permissions' },
-      { key: 'security' as Section,  icon: '🔒', label: 'Security' },
+      { key: 'maestros', icon: '👤', label: 'Maestros' },
+      { key: 'roles',    icon: '🔐', label: 'Roles & Permissions' },
+      { key: 'security', icon: '🔒', label: 'Security' },
     ],
   },
   {
-    label: 'CLIENT GOVERNANCE',
+    label: 'Client Governance',
     items: [
-      { key: 'clients'   as Section, icon: '🏢', label: 'Active Clients' },
-      { key: 'contracts' as Section, icon: '📋', label: 'Contract Terms' },
+      { key: 'clients',   icon: '🏢', label: 'Active Clients' },
+      { key: 'contracts', icon: '📋', label: 'Contract Terms' },
     ],
   },
   {
-    label: 'DATA GOVERNANCE',
+    label: 'Data Governance',
     items: [
-      { key: 'sensitive-data'    as Section, icon: '⚠️', label: 'Sensitive Data',      badge: 3 },
-      { key: 'access-logs'       as Section, icon: '📊', label: 'Access Logs' },
-      { key: 'pending-requests'  as Section, icon: '📥', label: 'Pending Requests',     badge: 2 },
+      { key: 'sensitive-data',    icon: '⚠️',  label: 'Sensitive Data Approvals', badge: 3, badgeAmber: false },
+      { key: 'access-logs',       icon: '📊',  label: 'Access Logs' },
+      { key: 'pending-requests',  icon: '📥',  label: 'Pending Requests',          badge: 2, badgeAmber: true },
     ],
   },
   {
-    label: 'PLATFORM',
+    label: 'Platform',
     items: [
-      { key: 'audit-log'   as Section, icon: '📜', label: 'Audit Log' },
-      { key: 'api-keys'    as Section, icon: '🔑', label: 'API Keys' },
-      { key: 'compliance'  as Section, icon: '✓',  label: 'Compliance' },
+      { key: 'audit-log',  icon: '📜', label: 'Audit Log' },
+      { key: 'api-keys',   icon: '🔑', label: 'API Keys' },
+      { key: 'compliance', icon: '✅', label: 'Compliance' },
     ],
   },
 ]
 
-const SENSITIVE_REQUESTS = [
-  { dataset: 'Payer Contract Analysis',   sub: 'Confidential · PII adjacent',     client: 'Meridian Health',    by: 'Anand S.', forWhat: 'RCM AI engagement',   date: 'Today' },
-  { dataset: 'CDO Profile + Org Chart',   sub: 'Organisational · Sensitive',       client: 'Meridian Health',    by: 'Anand S.', forWhat: 'Tech Mod engagement', date: 'Yesterday' },
-  { dataset: 'MAS Regulatory Filing',     sub: 'Regulatory · Restricted',          client: 'Arcturus Financial', by: 'Anand S.', forWhat: 'FEAT Compliance',      date: '2 days ago' },
+// ── Static data ───────────────────────────────────────────────────────────
+const MAESTROS = [
+  { name: 'Anand Sundaram', email: 'anand+clerk_test@abarva.com', roleBg: '#CCFBF1', roleColor: '#0F4F3E', roleLabel: 'Admin + Maestro', clients: 'Meridian · Arcturus', engagements: 4,  status: 'Active',  action: 'Manage →' },
+  { name: 'TBD — Hire 1',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
+  { name: 'TBD — Hire 2',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
 ]
 
-const MAESTROS_LIST = [
-  { name: 'Anand Sundaram', email: 'anand@abarva.ai', role: 'Admin + Maestro', roleBg: '#CCFBF1', roleColor: '#0F4F3E', clients: 'Meridian · Arcturus', engagements: 4, status: 'Active', action: 'Manage →' },
-  { name: 'TBD — Hire 1',   email: 'Pending hire',   role: 'Maestro',         roleBg: BG2,       roleColor: MUTED,     clients: 'Unassigned',          engagements: 0, status: 'Pending', action: 'Assign →' },
+const APPROVALS = [
+  { dataset: 'Payer Contract Analysis', sub: 'Confidential · PII adjacent',  client: 'Meridian Health',    by: 'Anand S.', engagement: 'RCM AI — Denial Prevention', when: 'Today' },
+  { dataset: 'CDO Profile + Org Chart', sub: 'Organisational · Sensitive',   client: 'Meridian Health',    by: 'Anand S.', engagement: 'Technology Modernization',  when: 'Yesterday' },
+  { dataset: 'MAS Regulatory Filing',   sub: 'Regulatory · Restricted',      client: 'Arcturus Financial', by: 'Anand S.', engagement: 'MAS FEAT Compliance',        when: '2 days ago' },
 ]
 
-const CLIENTS_LIST = [
-  { name: 'Meridian Health System',  type: 'IDN · 14 hospitals',    status: 'Active', tier: 'Enterprise', maestro: 'Anand S.', since: '2026-01-15' },
-  { name: 'Arcturus Financial',      type: 'Asset Manager · Global', status: 'Active', tier: 'Enterprise', maestro: 'Anand S.', since: '2026-02-01' },
-]
+// ── Shared table styles (spec-exact) ─────────────────────────────────────
+const thStyle: React.CSSProperties = {
+  padding: '9px 16px', fontSize: '10px', fontWeight: 700, color: MUTED,
+  textTransform: 'uppercase', letterSpacing: '0.08em', background: BG2,
+  borderBottom: `1px solid ${BORDER}`, textAlign: 'left', fontFamily: MONO,
+}
+const tdStyle: React.CSSProperties = {
+  padding: '12px 16px', fontSize: '14px', color: DARK,
+  borderBottom: `1px solid ${BG2}`, verticalAlign: 'middle',
+}
 
-const AUDIT_LOG = [
-  { who: 'Anand S.', action: 'Approved sensitive data request',   detail: 'Arcturus Financial · FCA filings',  when: '14:22 today',       color: GREEN },
-  { who: 'System',   action: 'Phase gate submitted for approval', detail: 'Meridian · RCM AI Ph1',             when: '11:05 today',       color: TEAL },
-  { who: 'Anand S.', action: 'Created Maestro account',           detail: 'jordan@abarva.com',                 when: 'Yesterday 16:40',   color: MUTED },
-  { who: 'System',   action: 'Client onboarded',                  detail: 'Arcturus Financial — status Active',when: 'Yesterday 09:12',   color: MUTED },
-  { who: 'Anand S.', action: 'API key rotated',                   detail: 'Production key — Supabase',         when: '2 days ago',        color: AMBER },
-]
+function rowHover(on: boolean, row: HTMLTableRowElement) {
+  Array.from(row.querySelectorAll('td')).forEach(td => {
+    (td as HTMLElement).style.background = on ? BG2 : ''
+  })
+}
 
 function StatusPill({ status }: { status: string }) {
-  const s = status.toLowerCase()
-  const bg    = s === 'active'  ? '#DCFCE7' : s === 'pending' ? '#FEF3C7' : '#FEF2F2'
-  const color = s === 'active'  ? '#166534' : s === 'pending' ? '#78350F' : '#7F1D1D'
+  const active = status === 'Active'
   return (
-    <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: bg, color }}>
+    <span style={{ fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '10px', background: active ? '#DCFCE7' : '#FEF3C7', color: active ? '#166534' : '#78350F' }}>
       {status}
     </span>
   )
 }
 
-function thStyles(): React.CSSProperties {
-  return { padding: '8px 14px', fontSize: '10px', fontWeight: 600, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '0.08em', background: BG2, borderBottom: `1px solid ${BORDER}`, textAlign: 'left' as const, fontFamily: MONO }
-}
-
-function tdStyles(): React.CSSProperties {
-  return { padding: '11px 14px', fontSize: '13px', color: DARK, borderBottom: `1px solid ${BG2}`, verticalAlign: 'middle' as const }
-}
-
-function MaestrosSection() {
+// ── Default view: Maestros management ─────────────────────────────────────
+function MaestrosView() {
   return (
-    <div>
+    <>
+      {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
         <div>
           <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Maestros</div>
-          <div style={{ fontSize: '13px', color: MUTED }}>Manage Maestro accounts, roles, and client assignments.</div>
+          <div style={{ fontSize: '13px', color: MUTED }}>Manage Maestro accounts, roles, and client assignments</div>
         </div>
-        <button style={{ fontSize: '13px', fontWeight: 500, color: BG, background: DARK, padding: '8px 16px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>
+        <button style={{ background: DARK, color: BG, fontSize: '13px', fontWeight: 600, padding: '9px 18px', borderRadius: '5px', border: 'none', cursor: 'pointer', fontFamily: SANS }}>
           + Add Maestro
         </button>
       </div>
@@ -114,82 +119,83 @@ function MaestrosSection() {
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px', marginBottom: '28px' }}>
         {[
-          { label: 'Total Maestros',           value: '3',  valueColor: DARK,  sub: '1 pending onboarding' },
-          { label: 'Active Clients',            value: '2',  valueColor: DARK,  sub: 'Meridian · Arcturus' },
-          { label: 'Sensitive Data Requests',   value: '3',  valueColor: RED,   sub: 'Awaiting your approval' },
-          { label: 'Security Alerts',           value: '1',  valueColor: AMBER, sub: 'API key rotation due' },
-        ].map((s, i) => (
-          <div key={i} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '18px 20px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 600, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '0.08em', marginBottom: '8px' }}>{s.label}</div>
-            <div style={{ fontSize: '24px', fontWeight: 600, color: s.valueColor, lineHeight: 1, marginBottom: '4px' }}>{s.value}</div>
-            <div style={{ fontSize: '11px', color: MUTED }}>{s.sub}</div>
+          { label: 'Total Maestros',       value: '3', color: DARK,  sub: '1 pending onboarding' },
+          { label: 'Active Clients',        value: '2', color: DARK,  sub: 'Meridian · Arcturus' },
+          { label: 'Data Requests Pending', value: '3', color: RED,   sub: 'Awaiting your approval' },
+          { label: 'Security Alerts',       value: '1', color: AMBER, sub: 'API key rotation due' },
+        ].map(s => (
+          <div key={s.label} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '18px 20px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: MONO, marginBottom: '8px' }}>{s.label}</div>
+            <div style={{ fontSize: '26px', fontWeight: 600, color: s.color, lineHeight: 1, marginBottom: '4px' }}>{s.value}</div>
+            <div style={{ fontSize: '12px', color: MUTED }}>{s.sub}</div>
           </div>
         ))}
       </div>
 
       {/* Maestros table */}
-      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', overflow: 'hidden', marginBottom: '20px' }}>
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', overflow: 'hidden', marginBottom: '20px' }}>
         <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: DARK }}>All Maestros</div>
-          <span style={{ fontSize: '12px', color: MUTED }}>3 total</span>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: DARK }}>All Maestros</div>
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 9px', borderRadius: '3px', background: BG2, color: MUTED }}>3 total</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Name', 'Role', 'Clients Assigned', 'Active Engagements', 'Status', 'Action'].map(h => (
-                <th key={h} style={thStyles()}>{h}</th>
+                <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {MAESTROS_LIST.map((m, i) => (
-              <tr key={i} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BG2 }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}>
-                <td style={tdStyles()}>
-                  <div style={{ fontWeight: 600, color: DARK }}>{m.name}</div>
-                  <div style={{ fontSize: '11px', color: MUTED }}>{m.email}</div>
+            {MAESTROS.map((m, i) => (
+              <tr key={i} onMouseEnter={e => rowHover(true, e.currentTarget)} onMouseLeave={e => rowHover(false, e.currentTarget)}>
+                <td style={tdStyle}>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: DARK }}>{m.name}</div>
+                  <div style={{ fontSize: '12px', color: MUTED, marginTop: '2px' }}>{m.email}</div>
                 </td>
-                <td style={tdStyles()}>
-                  <span style={{ fontSize: '11px', background: m.roleBg, color: m.roleColor, padding: '2px 7px', borderRadius: '3px', fontWeight: 600 }}>{m.role}</span>
+                <td style={tdStyle}>
+                  <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 7px', borderRadius: '3px', background: m.roleBg, color: m.roleColor }}>{m.roleLabel}</span>
                 </td>
-                <td style={{ ...tdStyles(), color: TEXT }}>{m.clients}</td>
-                <td style={{ ...tdStyles(), fontWeight: 600 }}>{m.engagements || '—'}</td>
-                <td style={tdStyles()}><StatusPill status={m.status} /></td>
-                <td style={{ ...tdStyles(), fontSize: '12px', fontWeight: 500, color: TEAL, cursor: 'pointer' }}>{m.action}</td>
+                <td style={{ ...tdStyle, color: TEXT }}>{m.clients}</td>
+                <td style={{ ...tdStyle, fontWeight: m.engagements ? 600 : 400, color: m.engagements ? DARK : MUTED }}>{m.engagements || '—'}</td>
+                <td style={tdStyle}><StatusPill status={m.status} /></td>
+                <td style={{ ...tdStyle, fontSize: '13px', fontWeight: 500, color: TEAL, cursor: 'pointer', whiteSpace: 'nowrap' }}>{m.action}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Sensitive data approvals */}
-      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', overflow: 'hidden' }}>
+      {/* Sensitive Data Approvals table */}
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', overflow: 'hidden' }}>
         <div style={{ padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: DARK }}>Sensitive Data Approval Requests</div>
-          <span style={{ fontSize: '11px', background: '#FEF2F2', color: '#7F1D1D', padding: '2px 8px', borderRadius: '3px', fontWeight: 600 }}>3 pending</span>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: DARK }}>Sensitive Data Approval Requests</div>
+          <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 9px', borderRadius: '3px', background: '#FEF2F2', color: '#7F1D1D', border: '1px solid #FCA5A5' }}>3 pending</span>
         </div>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Dataset', 'Client', 'Requested By', 'Requested For', 'Date', 'Action'].map(h => (
-                <th key={h} style={thStyles()}>{h}</th>
+              {['Dataset', 'Client', 'Requested By', 'Engagement', 'Requested', 'Action'].map(h => (
+                <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {SENSITIVE_REQUESTS.map((r, i) => (
-              <tr key={i} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BG2 }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}>
-                <td style={tdStyles()}>
-                  <div style={{ fontWeight: 600, color: DARK }}>{r.dataset}</div>
-                  <div style={{ fontSize: '11px', color: MUTED }}>{r.sub}</div>
+            {APPROVALS.map((r, i) => (
+              <tr key={i} onMouseEnter={e => rowHover(true, e.currentTarget)} onMouseLeave={e => rowHover(false, e.currentTarget)}>
+                <td style={tdStyle}>
+                  <div style={{ fontWeight: 600, fontSize: '14px', color: DARK }}>{r.dataset}</div>
+                  <div style={{ fontSize: '12px', color: MUTED, marginTop: '2px' }}>{r.sub}</div>
                 </td>
-                <td style={tdStyles()}>{r.client}</td>
-                <td style={tdStyles()}>{r.by}</td>
-                <td style={{ ...tdStyles(), color: MUTED }}>{r.forWhat}</td>
-                <td style={{ ...tdStyles(), fontSize: '12px', color: MUTED }}>{r.date}</td>
-                <td style={tdStyles()}>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: GREEN, cursor: 'pointer' }}>Approve</span>
-                    <span style={{ fontSize: '12px', fontWeight: 600, color: RED, cursor: 'pointer' }}>Reject</span>
+                <td style={{ ...tdStyle, color: DARK }}>{r.client}</td>
+                <td style={{ ...tdStyle, color: DARK }}>{r.by}</td>
+                <td style={{ ...tdStyle, color: MUTED }}>{r.engagement}</td>
+                <td style={{ ...tdStyle, fontSize: '13px', color: MUTED }}>{r.when}</td>
+                <td style={tdStyle}>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: GREEN, cursor: 'pointer' }}>Approve</span>
+                    <span style={{ color: BORDER }}>|</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: RED, cursor: 'pointer' }}>Reject</span>
                   </div>
                 </td>
               </tr>
@@ -197,94 +203,26 @@ function MaestrosSection() {
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   )
 }
 
-function ClientsSection() {
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
-        <div>
-          <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Active Clients</div>
-          <div style={{ fontSize: '13px', color: MUTED }}>Manage client accounts and engagement status.</div>
-        </div>
-        <button style={{ fontSize: '13px', fontWeight: 500, color: BG, background: DARK, padding: '8px 16px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}>
-          + Add Client
-        </button>
-      </div>
-      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: DARK }}>All Clients</div>
-        </div>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              {['Client', 'Type', 'Status', 'Tier', 'Maestro', 'Since'].map(h => (
-                <th key={h} style={thStyles()}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CLIENTS_LIST.map((c, i) => (
-              <tr key={i} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = BG2 }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}>
-                <td style={tdStyles()}><div style={{ fontWeight: 600 }}>{c.name}</div></td>
-                <td style={{ ...tdStyles(), color: MUTED }}>{c.type}</td>
-                <td style={tdStyles()}><StatusPill status={c.status} /></td>
-                <td style={{ ...tdStyles(), color: MUTED }}>{c.tier}</td>
-                <td style={tdStyles()}>{c.maestro}</td>
-                <td style={{ ...tdStyles(), fontFamily: MONO, fontSize: '12px', color: MUTED }}>{c.since}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  )
-}
-
-function AuditLogSection() {
-  return (
-    <div>
-      <div style={{ paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
-        <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Audit Log</div>
-        <div style={{ fontSize: '13px', color: MUTED }}>Complete activity log for compliance and security review.</div>
-      </div>
-      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: DARK }}>Recent Activity</div>
-        </div>
-        {AUDIT_LOG.map((e, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '16px 1fr 140px', gap: '14px', alignItems: 'flex-start', padding: '12px 18px', borderBottom: i < AUDIT_LOG.length - 1 ? `1px solid ${BG2}` : 'none' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: e.color, marginTop: '4px', flexShrink: 0 }} />
-            <div>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: DARK }}>{e.who}</span>
-              <span style={{ fontSize: '13px', color: TEXT }}> — {e.action}</span>
-              <div style={{ fontSize: '12px', color: MUTED, marginTop: '2px' }}>{e.detail}</div>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, textAlign: 'right' as const, paddingTop: '2px' }}>{e.when}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function PlaceholderSection({ title, sub }: { title: string; sub: string }) {
+function PlaceholderView({ title, sub }: { title: string; sub: string }) {
   return (
     <div>
       <div style={{ paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
         <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>{title}</div>
         <div style={{ fontSize: '13px', color: MUTED }}>{sub}</div>
       </div>
-      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '48px', textAlign: 'center' as const }}>
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '48px', textAlign: 'center' }}>
         <div style={{ fontSize: '13px', color: MUTED }}>No items to display.</div>
       </div>
     </div>
   )
 }
 
-export default function AdminPage() {
+// ── Admin Portal — standalone, no maestro imports ─────────────────────────
+export default function AdminPortal() {
   const { isLoaded, user } = useUser()
   const [active, setActive] = useState<Section>('maestros')
 
@@ -294,11 +232,11 @@ export default function AdminPage() {
 
   if (!user || role !== 'admin') {
     return (
-      <div style={{ minHeight: '100vh', background: BG }}>
+      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS }}>
         <AbarvaNav activePage="admin" />
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)' }}>
-          <div style={{ textAlign: 'center' as const }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
             <div style={{ fontSize: '13px', color: MUTED }}>This area is restricted to platform administrators.</div>
           </div>
         </div>
@@ -308,56 +246,65 @@ export default function AdminPage() {
 
   function renderContent() {
     switch (active) {
-      case 'maestros':       return <MaestrosSection />
-      case 'clients':        return <ClientsSection />
-      case 'audit-log':      return <AuditLogSection />
-      case 'roles':          return <PlaceholderSection title="Roles & Permissions" sub="Manage user roles and access permissions." />
-      case 'security':       return <PlaceholderSection title="Security" sub="Security settings and two-factor authentication." />
-      case 'contracts':      return <PlaceholderSection title="Contract Terms" sub="Client contract terms and SLA management." />
-      case 'sensitive-data': return <PlaceholderSection title="Sensitive Data" sub="Review and manage sensitive data classifications." />
-      case 'access-logs':    return <PlaceholderSection title="Access Logs" sub="Data access audit trail by user and dataset." />
-      case 'pending-requests': return <PlaceholderSection title="Pending Requests" sub="Maestro requests for elevated data access." />
-      case 'api-keys':       return <PlaceholderSection title="API Keys" sub="Manage platform API keys and integrations." />
-      case 'compliance':     return <PlaceholderSection title="Compliance" sub="SOC2 compliance status and reporting." />
-      default:               return <MaestrosSection />
+      case 'maestros':         return <MaestrosView />
+      case 'roles':            return <PlaceholderView title="Roles & Permissions"       sub="Manage user roles and access control." />
+      case 'security':         return <PlaceholderView title="Security"                  sub="Security settings and authentication." />
+      case 'clients':          return <PlaceholderView title="Active Clients"            sub="Client accounts and contract status." />
+      case 'contracts':        return <PlaceholderView title="Contract Terms"            sub="Contract terms and SLA management." />
+      case 'sensitive-data':   return <PlaceholderView title="Sensitive Data Approvals"  sub="Review and approve data access requests." />
+      case 'access-logs':      return <PlaceholderView title="Access Logs"               sub="Data access audit trail by user and dataset." />
+      case 'pending-requests': return <PlaceholderView title="Pending Requests"          sub="Maestro requests for elevated data access." />
+      case 'audit-log':        return <PlaceholderView title="Audit Log"                 sub="Complete platform activity log." />
+      case 'api-keys':         return <PlaceholderView title="API Keys"                  sub="Platform API keys and integrations." />
+      case 'compliance':       return <PlaceholderView title="Compliance"                sub="SOC2 compliance status and reporting." />
+      default:                 return <MaestrosView />
     }
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS }}>
       <AbarvaNav activePage="admin" />
+
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
-        {/* ── Sidebar ─────────────────────────────────────────────────── */}
-        <div style={{ width: '220px', minWidth: '220px', background: DARK, padding: '16px 0', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '4px' }}>Admin Portal</div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Platform governance</div>
+        {/* ── Sidebar ──────────────────────────────────────────────── */}
+        <div style={{ width: '240px', minWidth: '240px', background: DARK, display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+
+          {/* Portal header */}
+          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '4px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: MONO, marginBottom: '4px' }}>
+              Portal
+            </div>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: '#FAFAF9', marginBottom: '2px' }}>Admin Portal</div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Platform governance
+            </div>
           </div>
 
-          {SIDEBAR_GROUPS.map((group) => (
-            <div key={group.label} style={{ padding: '10px 16px 4px' }}>
-              <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '4px' }}>
+          {/* Nav groups */}
+          {SIDEBAR_GROUPS.map(group => (
+            <div key={group.label} style={{ padding: '14px 18px 4px' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: MONO }}>
                 {group.label}
               </div>
-              {group.items.map((item) => {
+              {group.items.map(item => {
                 const isActive = active === item.key
                 return (
                   <div
                     key={item.key}
                     onClick={() => setActive(item.key)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '8px',
-                      padding: '6px 8px', borderRadius: '4px', cursor: 'pointer', marginBottom: '1px',
-                      background: isActive ? 'rgba(45,212,200,0.1)' : 'transparent',
-                    }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(45,212,200,0.1)' : 'transparent', transition: 'background 0.15s' }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
                     onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
-                    <span style={{ fontSize: '11px', color: isActive ? TEAL : 'rgba(255,255,255,0.3)', width: '14px', textAlign: 'center' as const }}>{item.icon}</span>
-                    <span style={{ fontSize: '12px', color: isActive ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.5)', fontWeight: isActive ? 500 : 400 }}>{item.label}</span>
-                    {'badge' in item && item.badge ? (
-                      <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 600, background: RED, color: '#fff', padding: '1px 6px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '13px', color: isActive ? TEAL : 'rgba(255,255,255,0.28)', width: '16px', textAlign: 'center', flexShrink: 0 }}>
+                      {item.icon}
+                    </span>
+                    <span style={{ fontSize: '13px', fontWeight: isActive ? 500 : 400, color: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.5)' }}>
+                      {item.label}
+                    </span>
+                    {item.badge ? (
+                      <span style={{ marginLeft: 'auto', fontSize: '10px', fontWeight: 700, background: item.badgeAmber ? AMBER : RED, color: '#fff', padding: '1px 6px', borderRadius: '8px', flexShrink: 0 }}>
                         {item.badge}
                       </span>
                     ) : null}
@@ -368,10 +315,11 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* ── Main ────────────────────────────────────────────────────── */}
-        <div style={{ flex: 1, padding: '28px 36px', background: BG }}>
+        {/* ── Main content ─────────────────────────────────────────── */}
+        <div style={{ flex: 1, padding: '28px 36px', background: BG, overflowY: 'auto' }}>
           {renderContent()}
         </div>
+
       </div>
     </div>
   )
