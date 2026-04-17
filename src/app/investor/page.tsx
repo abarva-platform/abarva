@@ -681,8 +681,7 @@ export default function InvestorPage() {
 
   useEffect(() => {
     if (!isLoaded || !user) return
-    if (role === 'admin') router.push('/admin')
-    else if (role === 'client') router.push('/portal/delivery')
+    if (role === 'client') router.push('/portal/delivery')
   }, [isLoaded, user, role, router])
 
   const panels = [
