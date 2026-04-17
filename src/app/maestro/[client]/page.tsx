@@ -1173,48 +1173,185 @@ interface DataRecord {
   name: string; owner: string; date: string; confidence: number
   status: 'approved' | 'missing' | 'processing'; category: string
   segment: 'business' | 'it' | 'third-party'; privacy: 'available' | 'private'
+  fileType: 'xlsx' | 'pdf' | 'csv' | 'pptx' | 'docx'
 }
 const DATA_RECORDS_MAP: Record<string, DataRecord[]> = {
   meridian: [
-    { name: 'Annual Financial Statements FY2025', owner: 'CFO Office', date: '2026-02-28', confidence: 96, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private' },
-    { name: 'Payer Contract Analysis', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Financial', segment: 'business', privacy: 'private' },
-    { name: 'RCM Vendor RFP Responses (6 vendors)', owner: 'Procurement', date: '2026-04-05', confidence: 90, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private' },
-    { name: 'Baseline Outcome Metrics (Day 0 Lock)', owner: 'Internal Audit', date: '2026-04-10', confidence: 97, status: 'approved', category: 'Outcomes', segment: 'business', privacy: 'available' },
-    { name: 'Vendor Contracts & SLA Register', owner: 'Procurement', date: '2026-03-28', confidence: 91, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private' },
-    { name: 'CDO Profile + Org Chart', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Leadership', segment: 'business', privacy: 'private' },
-    { name: 'Technology Landscape Assessment', owner: 'CTO', date: '2026-03-15', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available' },
-    { name: 'Full Technology Inventory (312 systems)', owner: 'IT Dept', date: '2026-03-20', confidence: 92, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available' },
-    { name: 'IT Architecture & Data Flow Diagrams', owner: 'CTO', date: '2026-04-01', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private' },
-    { name: 'AI Initiative Portfolio Register ($42M)', owner: 'CIO', date: '2026-03-22', confidence: 87, status: 'approved', category: 'AI', segment: 'it', privacy: 'available' },
-    { name: 'Clinical Quality Metrics & HEDIS Data', owner: 'CMO Office', date: '2026-03-01', confidence: 89, status: 'approved', category: 'Clinical', segment: 'third-party', privacy: 'available' },
-    { name: 'Executive Interview Transcripts (7 leaders)', owner: 'AbarVa', date: '2026-04-01', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private' },
-    { name: 'HFMA Industry Benchmarks 2025', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available' },
-    { name: 'Leadership Profiles & Org Chart', owner: 'HR Dept', date: '2026-03-25', confidence: 94, status: 'approved', category: 'Leadership', segment: 'third-party', privacy: 'private' },
+    // ── Business: Financial ──
+    { name: 'Annual Financial Statements FY2025', owner: 'CFO Office', date: '2026-02-28', confidence: 96, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Annual Financial Statements FY2024', owner: 'CFO Office', date: '2026-02-10', confidence: 95, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Annual Financial Statements FY2023', owner: 'CFO Office', date: '2026-01-15', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'IT Financial Model FY2025', owner: 'IT Finance', date: '2026-04-08', confidence: 92, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Capital Expenditure Plan FY2026', owner: 'CFO Office', date: '2026-03-15', confidence: 89, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'RCM Revenue Cycle Performance Q4 FY2025', owner: 'Revenue Cycle', date: '2026-02-20', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'RCM Revenue Cycle Performance Q3 FY2025', owner: 'Revenue Cycle', date: '2025-11-15', confidence: 93, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Denial Rate Analysis by Payer FY2025', owner: 'Revenue Cycle', date: '2026-03-01', confidence: 95, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    // ── Business: Vendors / Contracts ──
+    { name: 'Ensemble Contract & SLA Register', owner: 'Procurement', date: '2026-03-28', confidence: 91, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'RCM Vendor RFP Responses (6 vendors)', owner: 'Procurement', date: '2026-04-05', confidence: 90, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Vendor Performance Scorecard FY2025', owner: 'Procurement', date: '2026-03-20', confidence: 88, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Payer Contract Analysis — Medicare', owner: 'Contracts', date: '2026-04-02', confidence: 87, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Payer Contract Analysis — Commercial', owner: 'Contracts', date: '2026-04-02', confidence: 86, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Prior Auth Denial Breakdown by Payer', owner: 'Revenue Cycle', date: '2026-03-10', confidence: 92, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    // ── Business: Leadership / Ops ──
+    { name: 'Board Strategic Plan 2026–2028', owner: 'CEO Office', date: '2026-02-01', confidence: 88, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'CEO Executive Briefing Q1 2026', owner: 'CEO Office', date: '2026-04-01', confidence: 86, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'Headcount by Function & Department', owner: 'HR Dept', date: '2026-03-05', confidence: 90, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Baseline Outcome Metrics (Day 0 Lock)', owner: 'Internal Audit', date: '2026-04-10', confidence: 97, status: 'approved', category: 'Outcomes', segment: 'business', privacy: 'available', fileType: 'xlsx' },
+    { name: 'CDO Profile + Org Chart', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    // ── IT: Technology ──
+    { name: 'Application Technology Inventory (312 systems)', owner: 'IT Dept', date: '2026-03-20', confidence: 92, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'DataCenter Infrastructure Inventory', owner: 'IT Dept', date: '2026-03-18', confidence: 91, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'IT Architecture & Data Flow Diagrams', owner: 'CTO', date: '2026-04-01', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'System Integration Map', owner: 'CTO', date: '2026-03-25', confidence: 84, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Epic EHR Implementation Plan', owner: 'CTO', date: '2026-03-10', confidence: 90, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pptx' },
+    { name: 'Epic Go-Live Readiness Assessment', owner: 'CTO', date: '2026-04-08', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Shadow IT Audit Report', owner: 'IT Dept', date: '2026-03-12', confidence: 85, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'IT Spend by Category FY2025', owner: 'IT Finance', date: '2026-03-15', confidence: 93, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'xlsx' },
+    { name: 'IT Project Portfolio Status Q1 2026', owner: 'IT Dept', date: '2026-04-05', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Cloud Migration Roadmap', owner: 'CTO', date: '2026-02-15', confidence: 83, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pptx' },
+    { name: 'Network & Security Risk Assessment', owner: 'CISO', date: '2026-02-28', confidence: 89, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Data Governance Framework v1.2', owner: 'CIO', date: '2026-03-08', confidence: 82, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pdf' },
+    { name: 'Cybersecurity Risk Register', owner: 'CISO', date: '2026-03-22', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'xlsx' },
+    // ── IT: AI ──
+    { name: 'AI Analytics Initiative Tracker ($42M)', owner: 'CIO', date: '2026-03-22', confidence: 87, status: 'approved', category: 'AI', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Epic AI Module Evaluation', owner: 'CIO', date: '2026-04-01', confidence: 86, status: 'approved', category: 'AI', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Prior Auth Automation Assessment', owner: 'CIO', date: '2026-03-30', confidence: 85, status: 'approved', category: 'AI', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Data Platform Architecture Design', owner: 'CTO', date: '2026-03-28', confidence: 84, status: 'approved', category: 'AI', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    // ── Third-party: Benchmarks ──
+    { name: 'HFMA Industry Benchmarks 2025', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Healthcare AI Adoption Survey 2025', owner: 'AbarVa Research', date: '2026-03-05', confidence: 96, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Medicare Advantage Star Ratings Benchmark', owner: 'AbarVa Research', date: '2026-02-20', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Denial Management Peer Comparison (47 systems)', owner: 'AbarVa Research', date: '2026-03-15', confidence: 95, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'RCM Vendor Market Analysis 2025', owner: 'AbarVa Research', date: '2026-03-12', confidence: 94, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'CMS RADV Audit Scope Update Q1 2026', owner: 'AbarVa Research', date: '2026-04-02', confidence: 96, status: 'approved', category: 'Regulatory', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Genome Pattern Analysis — F011 (Epic Failure)', owner: 'AbarVa', date: '2026-03-20', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    // ── Third-party: Intelligence ──
+    { name: 'Executive Interview — Sarah Chen, CMO', owner: 'AbarVa', date: '2026-04-01', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Mark Rivera, CTO', owner: 'AbarVa', date: '2026-04-02', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Diana Torres, CFO', owner: 'AbarVa', date: '2026-04-03', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — James Park, CIO', owner: 'AbarVa', date: '2026-04-04', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Robert Kim, COO', owner: 'AbarVa', date: '2026-04-05', confidence: 83, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Dr. Patel, Deputy CMO', owner: 'AbarVa', date: '2026-04-06', confidence: 83, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Legal Counsel', owner: 'AbarVa', date: '2026-04-07', confidence: 82, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Clinical Quality Metrics & HEDIS Data', owner: 'CMO Office', date: '2026-03-01', confidence: 89, status: 'approved', category: 'Clinical', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Leadership Profiles & Board Composition', owner: 'HR Dept', date: '2026-03-25', confidence: 94, status: 'approved', category: 'Leadership', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
   ],
   arcturus: [
-    { name: 'AUM & Revenue Breakdown FY2025', owner: 'Finance', date: '2026-03-12', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private' },
-    { name: 'MAS FEAT Compliance Assessment', owner: 'CRO', date: '2026-03-28', confidence: 89, status: 'approved', category: 'Regulatory', segment: 'business', privacy: 'private' },
-    { name: 'Bloomberg AIM Contract & Usage Data', owner: 'Procurement', date: '2026-04-05', confidence: 92, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private' },
-    { name: 'CDO Vacancy & Search Status Report', owner: 'HR', date: '2026-04-08', confidence: 84, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private' },
-    { name: 'Stress Testing Configuration Audit', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Regulatory', segment: 'business', privacy: 'private' },
-    { name: 'Salesforce FSC Implementation Report', owner: 'IT Dept', date: '2026-03-20', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available' },
-    { name: 'Technology Stack & Vendor Inventory', owner: 'CTO', date: '2026-03-22', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available' },
-    { name: 'Aladdin Risk System Configuration Report', owner: 'CRO', date: '2026-04-02', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private' },
-    { name: 'AI Initiative Register ($94M, 28 initiatives)', owner: 'CIO', date: '2026-03-18', confidence: 91, status: 'approved', category: 'AI', segment: 'it', privacy: 'available' },
-    { name: 'Wealth Management Industry Benchmarks', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available' },
-    { name: 'Executive Interview Transcripts (5 leaders)', owner: 'AbarVa', date: '2026-04-10', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private' },
-    { name: 'Leadership Profiles & Board Composition', owner: 'HR', date: '2026-03-25', confidence: 93, status: 'approved', category: 'Leadership', segment: 'third-party', privacy: 'private' },
+    // ── Business: Financial ──
+    { name: 'AUM & Revenue Breakdown FY2025', owner: 'Finance', date: '2026-03-12', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'AUM & Revenue Breakdown FY2024', owner: 'Finance', date: '2026-02-10', confidence: 93, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'AUM & Revenue Breakdown FY2023', owner: 'Finance', date: '2026-01-15', confidence: 92, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Cost-to-Income Ratio Analysis FY2025', owner: 'Finance', date: '2026-03-20', confidence: 95, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'P&L by Business Unit FY2025', owner: 'Finance', date: '2026-03-18', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'IT Financial Model FY2025', owner: 'Finance', date: '2026-04-05', confidence: 91, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Capital Allocation Plan FY2026', owner: 'CFO', date: '2026-03-10', confidence: 88, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    // ── Business: Vendors / Regulatory ──
+    { name: 'Bloomberg AIM Contract & Usage Data', owner: 'Procurement', date: '2026-04-05', confidence: 92, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Bloomberg SLA Incident Log (18 months)', owner: 'Procurement', date: '2026-04-08', confidence: 91, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Vendor & Platform Contract Register', owner: 'Procurement', date: '2026-03-25', confidence: 89, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Technology Vendor Spend Analysis', owner: 'Finance', date: '2026-03-22', confidence: 90, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'MAS FEAT Compliance Assessment', owner: 'CRO', date: '2026-03-28', confidence: 89, status: 'approved', category: 'Regulatory', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'FCA AI Governance Gap Analysis', owner: 'CRO', date: '2026-03-20', confidence: 86, status: 'approved', category: 'Regulatory', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'APRA Operational Resilience Report', owner: 'CRO', date: '2026-03-15', confidence: 87, status: 'approved', category: 'Regulatory', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Stress Testing Configuration Audit', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Regulatory', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    // ── Business: Leadership ──
+    { name: 'Board Strategic Plan 2026–2029', owner: 'CEO Office', date: '2026-02-05', confidence: 88, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'CEO Quarterly Briefing Q1 2026', owner: 'CEO Office', date: '2026-04-01', confidence: 86, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'CDO Vacancy & Search Status Report', owner: 'HR', date: '2026-04-08', confidence: 84, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Leadership Org Chart 2026', owner: 'HR', date: '2026-03-20', confidence: 90, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'AI Initiative Register ($94M, 28 initiatives)', owner: 'CIO', date: '2026-03-18', confidence: 91, status: 'approved', category: 'AI', segment: 'business', privacy: 'available', fileType: 'xlsx' },
+    // ── IT: Technology ──
+    { name: 'Technology Stack & Vendor Inventory (240 apps)', owner: 'CTO', date: '2026-03-22', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Salesforce FSC Implementation Report', owner: 'IT Dept', date: '2026-03-20', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pdf' },
+    { name: 'Aladdin Risk System Configuration Report', owner: 'CRO', date: '2026-04-02', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Bloomberg Terminal Integration Map', owner: 'CTO', date: '2026-03-28', confidence: 85, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Data Platform Architecture (Snowflake)', owner: 'CTO', date: '2026-03-25', confidence: 84, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'IT Architecture Overview', owner: 'CTO', date: '2026-03-15', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pptx' },
+    { name: 'BI Tool Consolidation Analysis', owner: 'IT Dept', date: '2026-04-01', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Tableau Usage & License Audit', owner: 'IT Dept', date: '2026-03-30', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Cybersecurity Risk Assessment FY2025', owner: 'CISO', date: '2026-03-10', confidence: 89, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Data Governance Framework v2.0', owner: 'CIO', date: '2026-03-05', confidence: 83, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'pdf' },
+    { name: 'Shadow IT Discovery Report', owner: 'IT Dept', date: '2026-03-18', confidence: 85, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'IT Project Delivery Scorecard', owner: 'IT Dept', date: '2026-04-05', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'AI Initiative Technical Assessment (28 initiatives)', owner: 'CIO', date: '2026-04-08', confidence: 88, status: 'approved', category: 'AI', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Snowflake Data Platform Roadmap', owner: 'CTO', date: '2026-04-03', confidence: 85, status: 'approved', category: 'AI', segment: 'it', privacy: 'available', fileType: 'pptx' },
+    // ── Third-party: Benchmarks ──
+    { name: 'Wealth Management Industry Benchmarks 2025', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Asset Manager C/I Ratio Peer Analysis (31 firms)', owner: 'AbarVa Research', date: '2026-03-15', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'McKinsey Wealth Survey 2025', owner: 'AbarVa Research', date: '2026-03-08', confidence: 96, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Bloomberg Pricing Benchmarks (31 peers)', owner: 'AbarVa Research', date: '2026-03-20', confidence: 95, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'MAS FEAT Enforcement Update Q1 2026', owner: 'AbarVa Research', date: '2026-04-02', confidence: 98, status: 'approved', category: 'Regulatory', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'FCA AI Governance Consultation Response', owner: 'AbarVa Research', date: '2026-03-25', confidence: 96, status: 'approved', category: 'Regulatory', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Genome Pattern — F007 (CDO Vacancy)', owner: 'AbarVa', date: '2026-03-20', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Genome Pattern — F008 (Untracked AI Spend)', owner: 'AbarVa', date: '2026-03-20', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Genome Pattern — F002 (Efficiency Gap)', owner: 'AbarVa', date: '2026-03-20', confidence: 96, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    // ── Third-party: Intelligence ──
+    { name: 'Executive Interview — Victoria Hargreaves, CEO', owner: 'AbarVa', date: '2026-04-05', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Raj Malhotra, CIO', owner: 'AbarVa', date: '2026-04-06', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Sarah Okonkwo, CFO', owner: 'AbarVa', date: '2026-04-07', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — David Chen, CTO', owner: 'AbarVa', date: '2026-04-08', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Priya Singh, CRO', owner: 'AbarVa', date: '2026-04-09', confidence: 83, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Leadership Profiles & Board Composition', owner: 'HR', date: '2026-03-25', confidence: 93, status: 'approved', category: 'Leadership', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
   ],
   apexretail: [
-    { name: 'P&L Statement by Channel FY2025', owner: 'CFO', date: '2026-03-10', confidence: 95, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private' },
-    { name: 'Inventory & Supply Chain Data', owner: 'COO', date: '2026-03-20', confidence: 90, status: 'approved', category: 'Operations', segment: 'business', privacy: 'private' },
-    { name: 'CDO Vacancy Profile', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Leadership', segment: 'business', privacy: 'private' },
-    { name: 'Digital P&L Detail', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Financial', segment: 'business', privacy: 'private' },
-    { name: 'Technology Inventory (28,000 employees)', owner: 'IT Dept', date: '2026-03-22', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available' },
-    { name: 'Salesforce Einstein License & Usage Audit', owner: 'CMO', date: '2026-03-15', confidence: 92, status: 'approved', category: 'AI', segment: 'it', privacy: 'available' },
-    { name: 'E-commerce Platform Analytics (72% abandon)', owner: 'CMO / CTO', date: '2026-03-18', confidence: 88, status: 'approved', category: 'Digital', segment: 'it', privacy: 'available' },
-    { name: 'Retail Industry Benchmarks 2025', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available' },
-    { name: 'Executive Interview Transcripts (4 leaders)', owner: 'AbarVa', date: '2026-04-01', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private' },
+    // ── Business: Financial ──
+    { name: 'P&L Statement by Channel FY2025', owner: 'CFO', date: '2026-03-10', confidence: 95, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'P&L Statement by Channel FY2024', owner: 'CFO', date: '2026-02-08', confidence: 94, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'P&L Statement by Channel FY2023', owner: 'CFO', date: '2026-01-12', confidence: 93, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Digital P&L Detail FY2025', owner: 'CFO', date: '2026-03-15', confidence: 92, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Store Performance Data by Region', owner: 'COO', date: '2026-03-20', confidence: 91, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'IT Financial Model FY2025', owner: 'Finance', date: '2026-04-05', confidence: 90, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Capital Allocation Plan FY2026', owner: 'CFO', date: '2026-03-08', confidence: 88, status: 'approved', category: 'Financial', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    // ── Business: Operations / Vendors ──
+    { name: 'Inventory & Supply Chain Data Q4 FY2025', owner: 'COO', date: '2026-03-20', confidence: 90, status: 'approved', category: 'Operations', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Inventory & Supply Chain Data Q3 FY2025', owner: 'COO', date: '2025-11-20', confidence: 89, status: 'approved', category: 'Operations', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Retail Store Footfall Data FY2025', owner: 'COO', date: '2026-03-12', confidence: 88, status: 'approved', category: 'Operations', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Vendor Contract Register', owner: 'Procurement', date: '2026-03-25', confidence: 89, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Salesforce Einstein License & SLA', owner: 'Procurement', date: '2026-03-15', confidence: 88, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Technology Vendor Spend Analysis', owner: 'Finance', date: '2026-03-22', confidence: 87, status: 'approved', category: 'Vendors', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    // ── Business: Leadership ──
+    { name: 'Board Strategic Plan 2026–2028', owner: 'CEO Office', date: '2026-02-01', confidence: 87, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'CEO Briefing Q1 2026', owner: 'CEO Office', date: '2026-04-01', confidence: 85, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pptx' },
+    { name: 'Headcount by Function (28,000 employees)', owner: 'HR', date: '2026-03-08', confidence: 90, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Leadership Org Chart 2026', owner: 'HR', date: '2026-03-15', confidence: 91, status: 'approved', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    { name: 'Baseline Outcome Metrics (Day 0 Lock)', owner: 'Internal Audit', date: '2026-04-10', confidence: 96, status: 'approved', category: 'Outcomes', segment: 'business', privacy: 'available', fileType: 'xlsx' },
+    { name: 'CDO Vacancy Profile', owner: '—', date: '—', confidence: 0, status: 'missing', category: 'Leadership', segment: 'business', privacy: 'private', fileType: 'pdf' },
+    // ── IT: Technology ──
+    { name: 'Technology Inventory (28,000 employees)', owner: 'IT Dept', date: '2026-03-22', confidence: 86, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'IT Architecture & System Map', owner: 'CTO', date: '2026-03-18', confidence: 85, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'E-commerce Platform Architecture', owner: 'CTO', date: '2026-03-20', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Store POS System Inventory', owner: 'IT Dept', date: '2026-03-10', confidence: 88, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Cloud Infrastructure Assessment', owner: 'CTO', date: '2026-03-05', confidence: 84, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Data Platform Architecture', owner: 'CTO', date: '2026-03-25', confidence: 83, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'IT Project Portfolio Status Q1 2026', owner: 'IT Dept', date: '2026-04-05', confidence: 85, status: 'approved', category: 'Technology', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Cybersecurity Risk Assessment FY2025', owner: 'CISO', date: '2026-03-12', confidence: 87, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'Integration Architecture Map', owner: 'CTO', date: '2026-03-28', confidence: 83, status: 'approved', category: 'Technology', segment: 'it', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Mobile App Analytics FY2025', owner: 'CMO / CTO', date: '2026-03-15', confidence: 88, status: 'approved', category: 'Digital', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    // ── IT: AI / Digital ──
+    { name: 'Salesforce Einstein License & Usage Audit', owner: 'CMO', date: '2026-03-15', confidence: 92, status: 'approved', category: 'AI', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'E-commerce Platform Analytics (72% abandonment)', owner: 'CMO / CTO', date: '2026-03-18', confidence: 88, status: 'approved', category: 'Digital', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'AI Initiative Register ($28M)', owner: 'CIO', date: '2026-03-22', confidence: 86, status: 'approved', category: 'AI', segment: 'it', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Personalization Engine Evaluation', owner: 'CMO', date: '2026-04-01', confidence: 84, status: 'approved', category: 'AI', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    { name: 'CDP Implementation Report', owner: 'CMO', date: '2026-03-28', confidence: 85, status: 'approved', category: 'Digital', segment: 'it', privacy: 'private', fileType: 'pdf' },
+    // ── Third-party: Benchmarks ──
+    { name: 'Retail Industry Benchmarks 2025', owner: 'AbarVa Research', date: '2026-03-10', confidence: 98, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'E-commerce Conversion Benchmark (Top 50 Retailers)', owner: 'AbarVa Research', date: '2026-03-15', confidence: 97, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Customer Retention Cost Analysis 2025', owner: 'AbarVa Research', date: '2026-03-08', confidence: 95, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Supply Chain AI ROI Benchmark', owner: 'AbarVa Research', date: '2026-03-12', confidence: 94, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Retail Digital Transformation Survey 2025', owner: 'AbarVa Research', date: '2026-03-05', confidence: 96, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Peer Retailer E-commerce Comparison', owner: 'AbarVa Research', date: '2026-03-20', confidence: 95, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'xlsx' },
+    { name: 'Genome Pattern — F005 (E-commerce Leakage)', owner: 'AbarVa', date: '2026-03-18', confidence: 96, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    { name: 'Genome Pattern — F009 (Loyalty Erosion)', owner: 'AbarVa', date: '2026-03-18', confidence: 95, status: 'approved', category: 'Benchmarks', segment: 'third-party', privacy: 'available', fileType: 'pdf' },
+    // ── Third-party: Intelligence ──
+    { name: 'Executive Interview — Jennifer Walsh, CEO', owner: 'AbarVa', date: '2026-04-01', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Michael Torres, CFO', owner: 'AbarVa', date: '2026-04-02', confidence: 85, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Lisa Chen, CMO', owner: 'AbarVa', date: '2026-04-03', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Robert Park, CTO', owner: 'AbarVa', date: '2026-04-04', confidence: 84, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Executive Interview — Angela Davis, COO', owner: 'AbarVa', date: '2026-04-05', confidence: 83, status: 'approved', category: 'Intelligence', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
+    { name: 'Customer Loyalty Transaction Data FY2025', owner: 'CMO', date: '2026-03-10', confidence: 88, status: 'approved', category: 'Customer', segment: 'third-party', privacy: 'private', fileType: 'csv' },
+    { name: 'Customer NPS & Satisfaction Survey FY2025', owner: 'CMO', date: '2026-03-08', confidence: 87, status: 'approved', category: 'Customer', segment: 'third-party', privacy: 'private', fileType: 'xlsx' },
+    { name: 'Leadership Profiles & Board Composition', owner: 'HR', date: '2026-03-25', confidence: 92, status: 'approved', category: 'Leadership', segment: 'third-party', privacy: 'private', fileType: 'pdf' },
   ],
 }
 
@@ -1600,9 +1737,9 @@ function DataTab({ clientId }: { clientId: string }) {
           Data Repository · {clientId.charAt(0).toUpperCase() + clientId.slice(1)}
         </div>
         <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 32px', lineHeight: 1.15 }}>
-          {totalApproved} datasets ingested.{totalMissing > 0 ? <br /> : ' '}{totalMissing > 0 ? `${totalMissing} still missing.` : 'No gaps.'}
+          {totalApproved} files ingested.{totalMissing > 0 ? <br /> : ' '}{totalMissing > 0 ? `${totalMissing} still missing.` : 'No gaps.'}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
           {[
             { value: String(records.length),  label: 'TOTAL FILES',     color: '#FFFFFF' },
             { value: String(totalApproved),    label: 'APPROVED',        color: GREEN },
@@ -1614,6 +1751,20 @@ function DataTab({ clientId }: { clientId: string }) {
               <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
             </div>
           ))}
+        </div>
+        {/* File type breakdown */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+          {(['xlsx','pdf','csv','pptx','docx'] as const).map(ft => {
+            const count = records.filter(r => r.fileType === ft && r.status === 'approved').length
+            if (count === 0) return null
+            const ftColor: Record<string,string> = { xlsx:'#16A34A', pdf:'#DC2626', csv:'#2563EB', pptx:'#D97706', docx:'#7C3AED' }
+            return (
+              <div key={ft} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0D1520', border: '1px solid #1F2937', borderRadius: 6, padding: '8px 14px' }}>
+                <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: ftColor[ft], textTransform: 'uppercase' as const }}>{ft}</span>
+                <span style={{ fontFamily: SANS, fontSize: 13, color: '#FFFFFF', fontWeight: 600 }}>{count}</span>
+              </div>
+            )
+          })}
         </div>
       </section>
 
@@ -1636,14 +1787,16 @@ function DataTab({ clientId }: { clientId: string }) {
               </div>
               <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden' }}>
                 {/* Header row */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 130px 90px 80px 100px 110px', background: '#F3F4F5', borderBottom: `1px solid ${BORDER}`, padding: '10px 20px', gap: 8 }}>
-                  {['File', 'Owner', 'Date', 'Conf.', 'Status', 'Access'].map(h => (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 130px 90px 80px 100px 110px', background: '#0D1520', borderBottom: `1px solid ${BORDER}`, padding: '10px 20px', gap: 8 }}>
+                  {['File', 'Type', 'Owner', 'Date', 'Conf.', 'Status', 'Access'].map(h => (
                     <div key={h} style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{h}</div>
                   ))}
                 </div>
-                {segRecords.map((r, i) => (
+                {segRecords.map((r, i) => {
+                  const ftColor: Record<string,string> = { xlsx:'#16A34A', pdf:'#DC2626', csv:'#2563EB', pptx:'#D97706', docx:'#7C3AED' }
+                  return (
                   <div key={i} style={{
-                    display: 'grid', gridTemplateColumns: '1fr 130px 90px 80px 100px 110px', gap: 8,
+                    display: 'grid', gridTemplateColumns: '1fr 52px 130px 90px 80px 100px 110px', gap: 8,
                     padding: '13px 20px', alignItems: 'center',
                     borderBottom: i < segRecords.length - 1 ? `1px solid ${BORDER}` : 'none',
                     background: r.status === 'missing' ? 'rgba(239,68,68,0.03)' : 'transparent',
@@ -1652,7 +1805,10 @@ function DataTab({ clientId }: { clientId: string }) {
                       <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: r.status === 'missing' ? RED : WHITE, marginBottom: 3 }}>
                         {r.status === 'missing' ? '○ ' : ''}{r.name}
                       </div>
-                      <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, background: '#F3F4F5', padding: '2px 6px', borderRadius: 3 }}>{r.category}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 3 }}>{r.category}</span>
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: ftColor[r.fileType] ?? DIM, background: 'rgba(255,255,255,0.06)', padding: '2px 5px', borderRadius: 3, textTransform: 'uppercase' as const }}>{r.fileType}</span>
                     </div>
                     <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED }}>{r.owner}</div>
                     <div style={{ fontFamily: MONO, fontSize: 11, color: DIM }}>{r.date === '—' ? '—' : r.date.slice(5)}</div>
@@ -1687,7 +1843,8 @@ function DataTab({ clientId }: { clientId: string }) {
                       ) : <span style={{ fontFamily: MONO, fontSize: 11, color: DIM }}>—</span>}
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           )
