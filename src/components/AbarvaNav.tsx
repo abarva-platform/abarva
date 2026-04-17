@@ -273,10 +273,11 @@ function NavInner({ activePage }: NavProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            INVESTOR — same as admin; Admin link greyed out on right
+            INVESTOR — Home · Maestro · Intelligence · AVR · Solutions | ...
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isInvestor && (
           <>
+            {navLink('Home', '/', homeActive)}
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
