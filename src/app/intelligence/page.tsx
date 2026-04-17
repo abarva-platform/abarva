@@ -1031,11 +1031,30 @@ function UseCardGrid({ cards, dark }: { cards: typeof MER_FRONT_OFFICE; dark: bo
   )
 }
 
-function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
+const OFFICE_H3: Record<string, { front: string; middle: string; back: string }> = {
+  meridian:   {
+    front:  'The patient journey generates $105M in AI value. Most of it is invisible.',
+    middle: 'Clinical operations are where the $140M labour cost problem gets solved.',
+    back:   'The $94M denial problem can be substantially solved by AI in 90 days.',
+  },
+  arcturus:   {
+    front:  'Advisor productivity is where $90M in AI value hides. 64% of advisor time is reclaimable.',
+    middle: '12% compliance coverage creates $50M in regulatory exposure. AI closes the gap.',
+    back:   '$45M in vendor spend with zero performance benchmarking. AI recovers $10M.',
+  },
+  apexretail: {
+    front:  '22M loyalty profiles. $108M in customer AI value waiting to be unlocked.',
+    middle: '$180M in annual markdowns from 61% forecast accuracy. AI solves it at the SKU level.',
+    back:   '$112M in excess labour cost from manual scheduling. AI matches staffing to demand.',
+  },
+}
+
+function AIUnlockSection({ offices, isMeridian, totalValue, readiness, clientId }: {
   offices: AIOffice[]
   isMeridian: boolean
   totalValue: string
   readiness: number
+  clientId: string
 }) {
   return (
     <section id="ai-unlock" style={{ background: LBG, scrollMarginTop: '110px' }}>
@@ -1120,11 +1139,13 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
       <div style={{ background: DBG }}>
         <div style={{ ...W }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>FRONT OFFICE · PATIENT EXPERIENCE, ACCESS & FINANCIAL JOURNEY</div>
-            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>$105M / yr</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>
+              {(() => { const o = offices.find(x => x.key === 'front'); return `FRONT OFFICE · ${(o?.sublabel ?? '').toUpperCase()}` })()}
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>{offices.find(o => o.key === 'front')?.totalValue ?? '$105M'} / yr</div>
           </div>
           <h3 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: DTEXT, margin: '0 0 0', lineHeight: 1.2 }}>
-            The patient journey generates $105M in AI value. Most of it is invisible.
+            {OFFICE_H3[clientId]?.front ?? OFFICE_H3.meridian.front}
           </h3>
           <UseCardGrid cards={isMeridian ? MER_FRONT_OFFICE : offices.find(o => o.key === 'front')?.functions.flatMap(f => f.useCases.map(uc => ({
             title: uc.title, status: uc.timeline === '0–6 months' ? 'NOW' : 'FOUNDATION REQUIRED',
@@ -1138,11 +1159,13 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
       <div style={{ background: LBG }}>
         <div style={{ ...W }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>MIDDLE OFFICE · CLINICAL QUALITY, CARE MANAGEMENT & HOSPITAL OPERATIONS</div>
-            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>$91M / yr</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>
+              {(() => { const o = offices.find(x => x.key === 'middle'); return `MIDDLE OFFICE · ${(o?.sublabel ?? '').toUpperCase()}` })()}
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>{offices.find(o => o.key === 'middle')?.totalValue ?? '$91M'} / yr</div>
           </div>
           <h3 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: LTEXT, margin: '0 0 0', lineHeight: 1.2 }}>
-            Clinical operations are where the $140M labour cost problem gets solved.
+            {OFFICE_H3[clientId]?.middle ?? OFFICE_H3.meridian.middle}
           </h3>
           <UseCardGrid cards={isMeridian ? MER_MIDDLE_OFFICE : offices.find(o => o.key === 'middle')?.functions.flatMap(f => f.useCases.map(uc => ({
             title: uc.title, status: uc.timeline === '0–6 months' ? 'NOW' : 'FOUNDATION REQUIRED',
@@ -1156,11 +1179,13 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
       <div style={{ background: DBG }}>
         <div style={{ ...W }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>BACK OFFICE · REVENUE CYCLE, SUPPLY CHAIN, FINANCE, HR & IT</div>
-            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>$81M / yr</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em' }}>
+              {(() => { const o = offices.find(x => x.key === 'back'); return `BACK OFFICE · ${(o?.sublabel ?? '').toUpperCase()}` })()}
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: 32, color: TEAL }}>{offices.find(o => o.key === 'back')?.totalValue ?? '$81M'} / yr</div>
           </div>
           <h3 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: DTEXT, margin: '0 0 0', lineHeight: 1.2 }}>
-            The $94M denial problem can be substantially solved by AI in 90 days.
+            {OFFICE_H3[clientId]?.back ?? OFFICE_H3.meridian.back}
           </h3>
           <UseCardGrid cards={isMeridian ? MER_BACK_OFFICE : offices.find(o => o.key === 'back')?.functions.flatMap(f => f.useCases.map(uc => ({
             title: uc.title, status: uc.timeline === '0–6 months' ? 'NOW' : 'FOUNDATION REQUIRED',
@@ -1170,8 +1195,8 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
         </div>
       </div>
 
-      {/* Sequencing roadmap */}
-      <div style={{ background: LTEXT }}>
+      {/* Sequencing roadmap — Meridian only */}
+      {isMeridian && <div style={{ background: LTEXT }}>
         <div style={W}>
           <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', marginBottom: 20 }}>HOW ABARVA SEQUENCES THIS</div>
           <h3 style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 400, color: '#fff', margin: '0 0 40px' }}>The order matters as much as the use cases.</h3>
@@ -1203,10 +1228,10 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
             ))}
           </div>
         </div>
-      </div>
+      </div>}
 
-      {/* Final CTA */}
-      <div style={{ background: TEAL }}>
+      {/* Final CTA — Meridian only */}
+      {isMeridian && <div style={{ background: TEAL }}>
         <div style={{ ...W, textAlign: 'center' as const }}>
           <h3 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 400, color: '#fff', margin: '0 0 20px', lineHeight: 1.2 }}>
             Meridian is 90 days from a cash crisis<br />and 30 days from a governance solution.
@@ -1222,7 +1247,7 @@ function AIUnlockSection({ offices, isMeridian, totalValue, readiness }: {
             Start the Engagement →
           </a>
         </div>
-      </div>
+      </div>}
     </section>
   )
 }
@@ -1250,7 +1275,7 @@ function IntelligenceInner() {
       <ContradictionsSection intel={intel} isMeridian={isMeridian} />
       <MarketSection intel={intel} isMeridian={isMeridian} />
       <GenomeSection intel={intel} isMeridian={isMeridian} />
-      <AIUnlockSection offices={offices} isMeridian={isMeridian} totalValue={totalValue} readiness={readiness} />
+      <AIUnlockSection offices={offices} isMeridian={isMeridian} totalValue={totalValue} readiness={readiness} clientId={clientId} />
     </div>
   )
 }
