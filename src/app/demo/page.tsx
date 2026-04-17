@@ -30,6 +30,7 @@ type ActionId =
   | 'click-deliverables-view-arch'
   | 'click-maestro-guide'
   | 'click-platform-bet'
+  | 'force-step-42'
 
 interface Panel {
   src: string
@@ -126,7 +127,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/platform', zoom: 0.62,
     panels: [
-      { src: '/platform', duration: 20, scrollTo: 600, label: 'DATA ARCHITECTURE · YOUR ENVIRONMENT' },
+      { src: '/platform', duration: 20, scrollTo: 1800, label: 'YOUR DATA · YOUR ENVIRONMENT' },
     ],
   },
   {
@@ -241,8 +242,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4',                 label: 'PHASE 4 · EXECUTE & VERIFY · 4.2 ACTIVE' },
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', scrollTo: 800,  label: '18/18 COMPLETE · $22.4M VERIFIED · 5.7× ROI' },
+      { src: '/ai-strategy?client=meridian', duration: 14, action: 'force-step-42', label: 'PHASE 4 · STEP 4.2 · EXECUTE & VERIFY' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,           label: 'VALUE DASHBOARD · $22.4M VERIFIED · 5.7× ROI' },
     ],
   },
   {
@@ -310,7 +311,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
     panels: [
       { src: '/maestro/meridian', duration: 10, action: 'click-deliverables',                 label: 'DELIVERABLES · PHASE 0 · 1' },
-      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables', scrollTo: 600,  label: 'DELIVERABLES · PHASE 2 · 3 · 4' },
+      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables', scrollTo: 400,  label: 'DELIVERABLES · PHASE 2 · 3 · 4' },
     ],
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
@@ -327,8 +328,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4',                 label: 'MERIDIAN · PHASE 4 · 4.2 ACTIVE' },
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', scrollTo: 800,  label: 'MERIDIAN · 18/18 COMPLETE · $22.4M VERIFIED' },
+      { src: '/ai-strategy?client=meridian', duration: 14, action: 'force-step-42', label: 'MERIDIAN · PHASE 4 · STEP 4.2' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,           label: 'MERIDIAN · VALUE DASHBOARD · $22.4M VERIFIED' },
     ],
   },
   {
@@ -371,7 +372,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/platform', zoom: 0.62,
     panels: [
-      { src: '/platform', duration: 12, scrollTo: 2000,                 label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
+      { src: '/platform', duration: 12, scrollTo: 2500,                 label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
       { src: '/investor', duration: 10, action: 'click-platform-bet',   label: 'INVESTOR · THE PLATFORM BET' },
     ],
   },
@@ -452,6 +453,24 @@ function DemoGuidedPageInner() {
       case 'click-deliverables':    clickText(t => t.trim() === 'Deliverables'); break
       case 'click-maestro-guide':   clickText(t => t.includes('Maestro Guide')); break
       case 'click-platform-bet':    clickText(t => t.trim() === 'Platform Bet'); break
+      case 'force-step-42': {
+        // Same-origin only: write activeStep into iframe localStorage and reload to land on Phase 4.
+        // Guarded so the post-reload load doesn't loop.
+        schedulePanelTimer(() => {
+          try {
+            const win = iframe.contentWindow
+            if (!win) return
+            const key = 'abarva_avr_v2_meridian'
+            const raw = win.localStorage.getItem(key)
+            const existing = raw ? JSON.parse(raw) : {}
+            if (existing.activeStep === '4.2') return // already correct, no reload
+            existing.activeStep = '4.2'
+            win.localStorage.setItem(key, JSON.stringify(existing))
+            win.location.reload()
+          } catch { /* cross-origin */ }
+        }, REACT_RENDER_DELAY)
+        break
+      }
       case 'click-deliverables-view-arch': {
         clickText(t => t.trim() === 'Deliverables')
         schedulePanelTimer(() => {
