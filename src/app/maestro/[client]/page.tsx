@@ -615,31 +615,29 @@ const DASHBOARD_DATA: Record<string, DimCard[]> = {
 
 function DashboardGrid({ clientId }: { clientId: string }) {
   const cards = DASHBOARD_DATA[clientId] ?? DASHBOARD_DATA['meridian']
-  const BDR   = '#E8E6E3'
+  const BDR = '#E8E6E3'
+  const DOT_COLOR: Record<DimDotColor, string> = { red: '#DC2626', green: '#16A34A', amber: '#D97706', grey: '#9CA3AF' }
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
       {cards.map(card => (
         <div key={card.title} style={{ background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '20px' }}>
           {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em' }}>
-              {card.title}
-            </div>
-            <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: card.badgeC }}>{card.badge}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 700, color: '#0F0E0D' }}>{card.title}</div>
+            <div style={{ fontFamily: SANS, fontSize: '12px', color: '#706D66' }}>{card.badge}</div>
           </div>
           {/* Metrics */}
-          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column' as const }}>
             {card.metrics.map((m, mi) => (
               <div key={m.name}>
                 {mi > 0 && <div style={{ height: '1px', background: BDR, margin: '8px 0' }} />}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#3C3C3C', flex: 1 }}>{m.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: VC[m.vc] }}>{m.value}</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: DC[m.dot], display: 'inline-block', flexShrink: 0 }} />
-                      {m.arrow && <span style={{ fontFamily: MONO, fontSize: '10px', color: DC[m.dot] }}>{m.arrow}</span>}
-                      <span style={{ fontFamily: SANS, fontSize: '11px', color: DC[m.dot], fontWeight: 600 }}>{m.label}</span>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66', flex: 1 }}>{m.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{m.value}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: DOT_COLOR[m.dot], display: 'inline-block', flexShrink: 0 }} />
+                      <span style={{ fontFamily: SANS, fontSize: '12px', color: '#9CA3AF' }}>{m.label}</span>
                     </span>
                   </div>
                 </div>
@@ -648,7 +646,7 @@ function DashboardGrid({ clientId }: { clientId: string }) {
           </div>
           {/* Footer */}
           <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: `1px solid ${BDR}` }}>
-            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 500, textDecoration: 'none' }}>
+            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: '#0F0E0D', textDecoration: 'none' }}>
               {card.footer}
             </a>
           </div>
