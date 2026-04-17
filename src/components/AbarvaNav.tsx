@@ -67,6 +67,7 @@ function NavInner({ activePage }: NavProps) {
   const investorActive     = activePage === 'investor'
   const demoActive         = activePage === 'demo'
   const maestroActive      = activePage === 'maestro'
+  const homeActive         = activePage === 'home'
 
   // ── AVR breadcrumb ────────────────────────────────────────────────────────
   const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
@@ -260,11 +261,13 @@ function NavInner({ activePage }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isAdmin && (
           <>
+            {navLink('Home', '/', homeActive)}
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {avrMegaMenu()}
+            {navLink('Investor', '/investor', investorActive)}
             {adminNavItem()}
           </>
         )}
@@ -275,11 +278,13 @@ function NavInner({ activePage }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isInvestor && (
           <>
+            {navLink('Home', '/', homeActive)}
             {clientDropdown()}
             {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {avrMegaMenu()}
+            {navLink('Investor', '/investor', investorActive)}
             {adminNavItem()}
           </>
         )}
@@ -290,6 +295,7 @@ function NavInner({ activePage }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isMaestro && (
           <>
+            {navLink('Home', '/', homeActive)}
             {staticClientLabel()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Platform', '/platform', platformActive)}
@@ -305,6 +311,7 @@ function NavInner({ activePage }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {(!signedIn || isClient) && (
           <>
+            {navLink('Home', '/', homeActive)}
             {navLink('Platform', '/platform', platformActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {navLink('Investor', '/investor', investorActive)}
