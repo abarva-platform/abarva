@@ -738,6 +738,7 @@ function AIStrategyInner() {
   const [loading, setLoading]     = useState(false)
   const [approvalFor, setApprovalFor] = useState<number | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const persistInitRef = useRef(false)
 
   const { phaseStatuses, stepStatuses, outcomes, messagesByStep, activeStep } = st
 
@@ -800,12 +801,15 @@ function AIStrategyInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId])
 
-  // Persist whenever st changes — intentionally excludes clientId from deps.
-  // Including clientId caused a race: on client switch the effect fired with the
-  // new clientId but the previous client's st (stale closure), overwriting the
-  // new client's saved state before the load effect above could restore it.
+  // Persist on st change. Two intentional deviations from exhaustive-deps:
+  // 1. clientId excluded — including it caused a stale-closure race on client switch.
+  // 2. Skip first mount — on mount st = makeInitial(); persisting that overwrites
+  //    any seeded/saved state in localStorage before the load effect runs setSt().
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { persist(clientId, st) }, [st])
+  useEffect(() => {
+    if (!persistInitRef.current) { persistInitRef.current = true; return }
+    persist(clientId, st)
+  }, [st])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
