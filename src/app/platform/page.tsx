@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const BG     = '#FAFAF9'
@@ -13,9 +13,66 @@ const RED    = '#C53030'
 const AMBER  = '#B45309'
 const MONO   = "'Courier New', monospace"
 const SERIF  = 'Georgia, serif'
+const SANS   = "'DM Sans', sans-serif"
+
+const ARCH_LAYERS = [
+  {
+    label: 'LAYER 04 · USER LAYER',
+    title: 'Maestros & Clients',
+    desc: 'Human operators running AI-powered engagements. Outcomes tracked against immutable Day-0 baselines. Verification closes the fee loop — no outcome, no fee.',
+    chips: ['Maestro Workspace', 'Client Portal', 'Engagement Tracking', 'Outcome Verification', 'Baseline Lock'],
+    accent: 'rgba(255,255,255,0.80)',
+    border: 'rgba(255,255,255,0.12)',
+    bg: 'rgba(255,255,255,0.03)',
+    delay: '0.05s',
+  },
+  {
+    label: 'LAYER 03 · ORCHESTRATION',
+    title: 'Workflow & AI Orchestration',
+    desc: 'Engagement workflows triggered by intelligence signals. AI routes tasks, escalates exceptions, tracks milestone completion in real time, and surfaces contradictions before they become blockers.',
+    chips: ['Engagement Workflows', 'AI Step Routing', 'Milestone Tracking', 'Escalation Engine', 'Contradiction Detection'],
+    accent: '#A5B4FC',
+    border: 'rgba(165,180,252,0.2)',
+    bg: 'rgba(165,180,252,0.04)',
+    delay: '0.2s',
+  },
+  {
+    label: 'LAYER 02 · KNOWLEDGE LAYER',
+    title: 'AbarVa Knowledge Layer',
+    desc: 'The Genome — 340+ transformation patterns from real engagements, updated with every client. Domain intelligence models for healthcare, financial services, and retail. Situation, Vendor, Business Case, and Outcome intelligence products built on top.',
+    chips: ['The Genome · 340+ Patterns', 'Situation Intelligence', 'Vendor Intelligence', 'Business Case AI', 'Outcome Baselines', 'Domain Models'],
+    accent: '#2DD4C8',
+    border: 'rgba(45,212,200,0.25)',
+    bg: 'rgba(45,212,200,0.05)',
+    delay: '0.35s',
+  },
+  {
+    label: 'LAYER 01 · FOUNDATION AI',
+    title: 'Claude · Anthropic',
+    desc: 'Best-in-class foundation models deployed across all three hyperscalers. Enterprise data governance — zero training on client data. Reproducible reasoning, structured outputs, SOC 2 Type II. The only foundation model with the context and reasoning required for enterprise transformation.',
+    chips: ['Claude Sonnet 4', 'AWS Bedrock', 'Azure AI Foundry', 'Google Vertex AI', 'Zero Client Data Training', 'SOC 2 Type II'],
+    accent: '#93C5FD',
+    border: 'rgba(147,197,253,0.2)',
+    bg: 'rgba(147,197,253,0.04)',
+    delay: '0.5s',
+  },
+]
 
 export default function PlatformPage() {
   const [activeStep, setActiveStep] = useState(0)
+  const [stackVisible, setStackVisible] = useState(false)
+  const stackRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const el = stackRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setStackVisible(true); obs.disconnect() } },
+      { threshold: 0.1 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   const steps = [
     { num: '01', title: 'Diagnose', sub: '48hrs · your data', body: 'Every gap quantified against benchmarks and 340+ Genome patterns. Situation Brief in 48 hours.' },
@@ -191,6 +248,103 @@ export default function PlatformPage() {
           ))}
         </div>
       </section>
+
+      {/* ── Platform Architecture ──────────────────────────────────────────── */}
+      <section ref={stackRef} style={{ background: '#060A12', padding: '80px' }}>
+        <style>{`
+          @keyframes layerIn {
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes connPulse {
+            0%, 100% { opacity: 0.15; }
+            50%       { opacity: 0.5; }
+          }
+          @keyframes floatDot {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-4px); }
+          }
+        `}</style>
+
+        {/* Header */}
+        <div style={{ maxWidth: '960px', margin: '0 auto 56px' }}>
+          <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '0.08em', textTransform: 'uppercase' as const, marginBottom: '14px' }}>PLATFORM ARCHITECTURE</div>
+          <h2 style={{ fontFamily: SERIF, fontSize: '52px', fontWeight: 400, color: '#fff', lineHeight: 1.05, letterSpacing: '-0.02em', margin: '0 0 20px' }}>
+            Four layers.<br />One coherent platform.
+          </h2>
+          <p style={{ fontFamily: SANS, fontSize: '17px', color: 'rgba(255,255,255,0.42)', maxWidth: '560px', lineHeight: 1.7, margin: 0 }}>
+            Every layer is purpose-built — from Anthropic&apos;s foundation models on enterprise cloud to the Maestro operators who close the loop on verified outcomes.
+          </p>
+        </div>
+
+        {/* Stack */}
+        <div style={{ maxWidth: '960px', margin: '0 auto' }}>
+          {ARCH_LAYERS.map((layer, i) => (
+            <div key={i}>
+              {i > 0 && (
+                <div style={{ paddingLeft: '32px', height: '40px', display: 'flex', alignItems: 'stretch' }}>
+                  <div style={{
+                    width: '1px',
+                    background: `linear-gradient(to bottom, ${ARCH_LAYERS[i-1].accent}50, ${layer.accent}50)`,
+                    animation: 'connPulse 3s ease-in-out infinite',
+                  }} />
+                </div>
+              )}
+              <div style={{
+                opacity: stackVisible ? undefined : 0,
+                animation: stackVisible ? `layerIn 0.55s cubic-bezier(0.22,1,0.36,1) ${layer.delay} both` : 'none',
+                background: layer.bg,
+                borderTop: `1px solid ${layer.border}`,
+                borderRight: `1px solid ${layer.border}`,
+                borderBottom: `1px solid ${layer.border}`,
+                borderLeft: `3px solid ${layer.accent}`,
+                borderRadius: '2px 8px 8px 2px',
+                padding: '28px 36px',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '48px',
+                alignItems: 'start',
+              }}>
+                {/* Left */}
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: layer.accent, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: '12px', opacity: 0.65 }}>{layer.label}</div>
+                  <div style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 400, color: '#fff', marginBottom: '12px', lineHeight: 1.2 }}>{layer.title}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '14px', color: 'rgba(255,255,255,0.42)', lineHeight: 1.7 }}>{layer.desc}</div>
+                </div>
+                {/* Right: chips */}
+                <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '8px', alignContent: 'flex-start' as const, paddingTop: '28px' }}>
+                  {layer.chips.map((chip, j) => (
+                    <span key={j} style={{
+                      fontFamily: MONO,
+                      fontSize: '11px',
+                      color: layer.accent,
+                      border: `1px solid ${layer.border}`,
+                      padding: '5px 12px',
+                      borderRadius: '3px',
+                      background: `${layer.bg}`,
+                      animation: stackVisible ? `floatDot 3s ease-in-out ${(j * 0.15).toFixed(2)}s infinite` : 'none',
+                    }}>
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ maxWidth: '960px', margin: '56px auto 0', paddingTop: '28px', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '40px', flexWrap: 'wrap' as const }}>
+          <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.22)', letterSpacing: '.08em', textTransform: 'uppercase' as const }}>Deployed on</div>
+          {['Amazon Web Services', 'Microsoft Azure', 'Google Cloud Platform'].map((p, i) => (
+            <div key={i} style={{ fontFamily: MONO, fontSize: '12px', color: 'rgba(255,255,255,0.38)', letterSpacing: '0.02em' }}>{p}</div>
+          ))}
+          <div style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.22)', letterSpacing: '.04em' }}>
+            Foundation models · Anthropic
+          </div>
+        </div>
+      </section>
+
     </div>
   )
 }

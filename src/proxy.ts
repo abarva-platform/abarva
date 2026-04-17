@@ -35,6 +35,7 @@ const isPublicRoute = createRouteMatcher([
   '/status(.*)',
   '/intelligence(.*)',
   '/ai-unlock(.*)',
+  '/platform(.*)',
   '/investor(.*)',
   '/engage/(.*)',
   '/api/engage/(.*)/seed-demo(.*)',
