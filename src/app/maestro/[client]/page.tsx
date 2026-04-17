@@ -1684,6 +1684,189 @@ function InsightsTab({ data, clientId }: { data: ClientData; clientId: string })
   )
 }
 
+// ─── SIDEBAR SECTION TYPE ────────────────────────────────────────────────────
+type SidebarSection =
+  | 'engagements' | 'situation' | 'findings' | 'contradictions' | 'genome'
+  | 'uploads' | 'data-readiness' | 'sensitive-access'
+  | 'value-dashboard' | 'monthly-reviews' | 'fee-tracker'
+  | 'deliverables' | 'board-packs'
+
+// ─── ENGAGEMENTS SECTION — spec Page 2 layout ────────────────────────────────
+function EngagementsSection({
+  data, clientId, onNavigate,
+}: { data: ClientData; clientId: string; onNavigate: (s: SidebarSection) => void }) {
+  const [showChat, setShowChat] = useState(false)
+  const [chatSolution, setChatSolution] = useState<string | null>(null)
+  const engagements = ENGAGEMENT_DATA[clientId] ?? []
+  const activeCount = engagements.filter(eng => eng.status === 'In Progress').length
+  const finding = data.heroFindings[0]
+  const bigStat = finding.addressable.split(' ')[0].replace('/yr', '')
+  const readinessScore = CLIENT_READINESS[clientId] ?? 65
+  const missingFiles = CLIENT_MISSING[clientId] ?? []
+  const now = new Date()
+  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+  const PCOLOR: Record<string, string> = { Critical: RED, High: AMBER, Normal: '#9CA3AF' }
+
+  return (
+    <div style={{ padding: '24px 28px' }}>
+      {showChat && (
+        <div style={{ margin: '-24px -28px 20px' }}>
+          <MaestroEngagementChat
+            clientId={clientId}
+            clientName={data.name}
+            initSolution={chatSolution}
+            onClose={() => { setShowChat(false); setChatSolution(null) }}
+          />
+        </div>
+      )}
+
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>{data.name}</div>
+          <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 3 }}>
+            Last updated: Today {timeStr} · {activeCount} active engagement{activeCount !== 1 ? 's' : ''}
+          </div>
+        </div>
+        <button
+          onClick={() => { setChatSolution(null); setShowChat(true) }}
+          style={{ background: '#0C0C0C', color: '#fff', fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 5, border: 'none', cursor: 'pointer', fontFamily: SANS }}
+        >
+          + New Engagement
+        </button>
+      </div>
+
+      {/* Signal Card */}
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderLeft: `4px solid ${TEAL}`, borderRadius: '0 8px 8px 0', padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 6 }}>
+            MOST URGENT · {data.name.toUpperCase()}
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: '#0C0C0C', marginBottom: 4 }}>
+            {finding.headline.replace(/"/g, '')}
+          </div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>{finding.detail}</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => { setChatSolution(finding.solutionSlug); setShowChat(true) }}
+              style={{ background: '#0C0C0C', color: '#fff', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 4, border: 'none', cursor: 'pointer', fontFamily: SANS }}
+            >
+              Create Engagement →
+            </button>
+            <a
+              href={`/intelligence?client=${clientId}`}
+              style={{ background: 'transparent', color: '#0C0C0C', fontSize: 11, fontWeight: 600, padding: '6px 12px', borderRadius: 4, border: '1px solid #D1D5DB', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', fontFamily: SANS }}
+            >
+              View Intelligence →
+            </a>
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' as const, flexShrink: 0, paddingLeft: 20 }}>
+          <div style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: RED, lineHeight: 1 }}>{bigStat}</div>
+          <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>annual exposure</div>
+          <div style={{ background: '#0C0C0C', color: '#fff', fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 3, display: 'inline-block', fontFamily: MONO, marginBottom: 6 }}>
+            {finding.code} · {finding.rate}% Genome failure rate
+          </div>
+          <button
+            onClick={() => onNavigate('situation')}
+            style={{ display: 'block', fontSize: 11, color: TEAL, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'right' as const, fontFamily: SANS, marginLeft: 'auto' }}
+          >
+            See all {data.heroFindings.length} signals →
+          </button>
+        </div>
+      </div>
+
+      {/* Engagements Table */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>Active Engagements</div>
+      </div>
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+          <thead>
+            <tr>
+              {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', 'Action'].map(h => (
+                <th key={h} style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', textAlign: 'left' as const, background: '#F8F7F4', borderBottom: '1px solid #E5E7EB', fontFamily: MONO }}>
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {engagements.map((eng, i) => (
+              <tr key={eng.id}
+                onMouseEnter={ev => (ev.currentTarget.style.background = '#F8F7F4')}
+                onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
+              >
+                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontWeight: 600, color: '#0C0C0C', fontSize: 12 }}>{eng.name}</div>
+                  <span style={{ fontSize: 10, background: eng.type === 'AI Value Realization' ? '#EFF6FF' : '#CCFBF1', color: eng.type === 'AI Value Realization' ? '#1e40af' : '#0f5443', padding: '1px 5px', borderRadius: 2, fontWeight: 600, display: 'inline-block', marginTop: 2 }}>
+                    {eng.type === 'AI Value Realization' ? 'AVR' : 'SOL'}
+                  </span>
+                </td>
+                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontSize: 12, color: '#0C0C0C' }}>{eng.sponsor.split(' · ')[0]}</div>
+                  <div style={{ fontSize: 10, color: '#9CA3AF' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
+                </td>
+                <td style={{ padding: '10px 14px', fontSize: 11, color: TEAL, fontFamily: MONO, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  Ph {eng.phase}
+                </td>
+                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: eng.status === 'In Progress' ? '#CCFBF1' : eng.status === 'Assigned' ? '#FEF3C7' : '#F3F4F6', color: eng.status === 'In Progress' ? '#0f5443' : eng.status === 'Assigned' ? '#785a00' : '#6B7280' }}>
+                    {eng.status}
+                  </span>
+                </td>
+                <td style={{ padding: '10px 14px', fontSize: 12, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  {eng.maestro}
+                </td>
+                <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  {eng.value}
+                </td>
+                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <span style={{ color: PCOLOR[eng.priority] ?? '#9CA3AF', fontSize: 12, fontWeight: 700 }}>● {eng.priority}</span>
+                </td>
+                <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' as const, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <a
+                    href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
+                    onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
+                    style={{ color: TEAL, textDecoration: 'none' }}
+                  >
+                    {eng.status === 'In Progress' ? 'Continue →' : eng.status === 'Backlog' ? 'Start →' : 'View →'}
+                  </a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Data Readiness Row */}
+      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 20, marginTop: 16 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#0C0C0C', whiteSpace: 'nowrap' as const, fontFamily: SANS }}>Data Readiness</div>
+          <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: SANS }}>{data.name}</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: AMBER, whiteSpace: 'nowrap' as const }}>{readinessScore} / 100</div>
+          <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: SANS }}>AI Readiness Score</div>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap' as const }}>
+          {missingFiles.map((f, idx) => (
+            <span key={idx} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#FEF3C7', color: '#785a00', border: '1px solid #FCD34D', whiteSpace: 'nowrap' as const, fontFamily: SANS }}>
+              ○ {f} — MISSING
+            </span>
+          ))}
+        </div>
+        <button
+          onClick={() => onNavigate('uploads')}
+          style={{ fontSize: 11, color: TEAL, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' as const, marginLeft: 'auto', background: 'none', border: 'none', fontFamily: SANS }}
+        >
+          Go to Data Uploads →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── MAIN PAGE ─────────────────────────────────────────────────────────────────
 
 export default function MaestroClientPage() {
@@ -1692,8 +1875,7 @@ export default function MaestroClientPage() {
   const params = useParams()
   const clientId = params.client as string
 
-  const [activeTab, setActiveTab] = useState<'brief' | 'engagements' | 'data' | 'insights'>('brief')
-  const [engInitSolution, setEngInitSolution] = useState<string | null>(null)
+  const [activeSection, setActiveSection] = useState<SidebarSection>('engagements')
 
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
@@ -1708,49 +1890,131 @@ export default function MaestroClientPage() {
     </div>
   )
 
-  const now = new Date()
-  const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+  const SB_BG        = '#060A12'
+  const SB_ACTIVE_BG = 'rgba(45,212,200,0.12)'
+  const SB_TEXT_MUT  = 'rgba(255,255,255,0.6)'
 
-  const tabs = [
-    { key: 'brief' as const,       label: 'Brief' },
-    { key: 'engagements' as const, label: 'Engagements' },
-    { key: 'data' as const,        label: 'Data' },
-    { key: 'insights' as const,    label: 'Insights' },
-  ]
+  function sbItem(section: SidebarSection, icon: string, label: string) {
+    const active = activeSection === section
+    return (
+      <button
+        key={section}
+        onClick={() => setActiveSection(section)}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 5, width: '100%', border: 'none', cursor: 'pointer', marginBottom: 1, textAlign: 'left' as const, background: active ? SB_ACTIVE_BG : 'transparent', fontFamily: SANS }}
+        onMouseEnter={ev => { if (!active) (ev.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
+        onMouseLeave={ev => { if (!active) (ev.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+      >
+        <span style={{ width: 14, fontSize: 11, color: active ? TEAL : '#6B7280', textAlign: 'center' as const }}>{icon}</span>
+        <span style={{ fontSize: 12, color: active ? TEAL : SB_TEXT_MUT, fontWeight: active ? 600 : 400 }}>{label}</span>
+      </button>
+    )
+  }
+
+  function renderContent() {
+    switch (activeSection) {
+      case 'engagements':
+        return <EngagementsSection data={data!} clientId={clientId} onNavigate={setActiveSection} />
+      case 'situation':
+        return <BriefTab data={data!} clientId={clientId} onCreateEngagement={() => setActiveSection('engagements')} />
+      case 'findings':
+      case 'contradictions':
+      case 'genome':
+        return <InsightsTab data={data!} clientId={clientId} />
+      case 'uploads':
+      case 'data-readiness':
+      case 'sensitive-access':
+        return <DataTab clientId={clientId} />
+      case 'value-dashboard':
+      case 'monthly-reviews':
+      case 'fee-tracker':
+        return <ValueDashboard clientId={clientId} />
+      case 'deliverables':
+      case 'board-packs':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS, marginBottom: 8 }}>
+              {activeSection === 'deliverables' ? 'Deliverables' : 'Board Packs'}
+            </div>
+            <div style={{ fontSize: 13, color: '#6B7280', fontFamily: SANS }}>Coming soon.</div>
+          </div>
+        )
+    }
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS, color: WHITE }}>
+    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS }}>
       <AbarvaNav activePage="maestro" />
 
-      {/* Breadcrumb */}
-      <div style={{ height: 40, background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 48px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <a href="/maestro" style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', textDecoration: 'none', letterSpacing: '.06em' }}>← ALL CLIENTS</a>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: '#D1D5DB' }}>·</span>
-          <span style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', fontWeight: 600 }}>{data.name}</span>
-        </div>
-        <div style={{ fontFamily: SANS, fontSize: 12, color: '#9CA3AF' }}>
-          Last updated: Today {timeStr}
-        </div>
-      </div>
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
-      {/* Tab bar */}
-      <div style={{ background: '#FFFFFF', borderBottom: '1px solid #E5E7EB', height: 44, display: 'flex', alignItems: 'center', padding: '0 48px', gap: 0 }}>
-        {tabs.map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)} style={{
-            height: 44, padding: '0 20px', background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: SANS, fontSize: 14, fontWeight: activeTab === t.key ? 600 : 400,
-            color: activeTab === t.key ? WHITE : '#3C3C3C',
-            borderBottom: activeTab === t.key ? `2px solid ${TEAL}` : '2px solid transparent',
-          }}>{t.label}</button>
-        ))}
-      </div>
+        {/* ── LEFT SIDEBAR ──────────────────────────────────────── */}
+        <div style={{ width: 220, minWidth: 220, background: SB_BG, display: 'flex', flexDirection: 'column' as const, paddingTop: 20, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
 
-      {/* Tab content */}
-      {activeTab === 'brief'       && <BriefTab data={data} clientId={clientId} onCreateEngagement={(slug) => { setEngInitSolution(slug); setActiveTab('engagements') }} />}
-      {activeTab === 'engagements' && <NewEngagementsTab data={data} clientId={clientId} initSolution={engInitSolution} />}
-      {activeTab === 'data'        && <DataTab clientId={clientId} />}
-      {activeTab === 'insights'    && <InsightsTab data={data} clientId={clientId} />}
+          {/* Active Client */}
+          <div style={{ padding: '0 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 8 }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Active Client</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{data.name}</div>
+            <div style={{ fontSize: 11, color: '#6B7280', fontFamily: SANS }}>{data.type} · ${(data.revenue / 1e9).toFixed(1)}B</div>
+          </div>
+
+          {/* Intelligence */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Intelligence</div>
+            {sbItem('situation',      '◎', 'Situation')}
+            {sbItem('findings',       '◈', 'Findings')}
+            {sbItem('contradictions', '⚡', 'Contradictions')}
+            {sbItem('genome',         '⬡', 'Genome')}
+          </div>
+
+          {/* Engagements */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Engagements</div>
+            {sbItem('engagements', '≡', 'All Engagements')}
+            <button
+              onClick={() => setActiveSection('engagements')}
+              style={{ margin: '4px 0 0', padding: '6px 10px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.3)', borderRadius: 5, fontSize: 11, fontWeight: 600, color: TEAL, cursor: 'pointer', textAlign: 'center' as const, width: '100%', fontFamily: SANS }}
+            >
+              + New Engagement
+            </button>
+          </div>
+
+          {/* Data */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Data</div>
+            {sbItem('uploads',          '↑',  'Uploads')}
+            {sbItem('data-readiness',   '◉',  'Data Readiness')}
+            {sbItem('sensitive-access', '🔒', 'Request Sensitive Access')}
+          </div>
+
+          {/* Value */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Value</div>
+            {sbItem('value-dashboard', '$',  'Value Dashboard')}
+            {sbItem('monthly-reviews', '📋', 'Monthly Reviews')}
+            {sbItem('fee-tracker',     '%',  'Fee Tracker')}
+          </div>
+
+          {/* Outputs */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Outputs</div>
+            {sbItem('deliverables', '📄', 'Deliverables')}
+            {sbItem('board-packs',  '📊', 'Board Packs')}
+          </div>
+
+          {/* Back link */}
+          <div style={{ marginTop: 'auto', padding: '14px 16px 20px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <a href="/maestro" style={{ fontSize: 11, color: '#6B7280', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6, fontFamily: SANS }}>
+              ← All Clients
+            </a>
+          </div>
+        </div>
+
+        {/* ── MAIN CONTENT ──────────────────────────────────────── */}
+        <div style={{ flex: 1, background: BG, overflowY: 'auto' as const }}>
+          {renderContent()}
+        </div>
+
+      </div>
 
       {isAdmin && <SeedDemosFloatMenu clientId={clientId} />}
     </div>
