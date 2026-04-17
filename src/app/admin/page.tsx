@@ -268,7 +268,7 @@ export default function AdminPortal() {
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
         {/* ── Sidebar ──────────────────────────────────────────────── */}
-        <div style={{ width: '240px', minWidth: '240px', background: DARK, display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ width: '240px', minWidth: '240px', background: '#020408', display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
 
           {/* Portal header */}
           <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '4px' }}>
@@ -284,7 +284,7 @@ export default function AdminPortal() {
           {/* Nav groups */}
           {SIDEBAR_GROUPS.map(group => (
             <div key={group.label} style={{ padding: '14px 18px 4px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: MONO }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: MONO }}>
                 {group.label}
               </div>
               {group.items.map(item => {
@@ -297,10 +297,10 @@ export default function AdminPortal() {
                     onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
                     onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
-                    <span style={{ fontSize: '13px', color: isActive ? TEAL : 'rgba(255,255,255,0.28)', width: '16px', textAlign: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: '14px', color: isActive ? TEAL : 'rgba(255,255,255,0.45)', width: '16px', textAlign: 'center', flexShrink: 0 }}>
                       {item.icon}
                     </span>
-                    <span style={{ fontSize: '13px', fontWeight: isActive ? 500 : 400, color: isActive ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ fontSize: '14px', fontWeight: isActive ? 600 : 400, color: isActive ? '#ffffff' : 'rgba(255,255,255,0.85)' }}>
                       {item.label}
                     </span>
                     {item.badge ? (

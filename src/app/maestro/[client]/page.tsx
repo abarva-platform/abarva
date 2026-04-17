@@ -3524,9 +3524,9 @@ export default function MaestroClientPage() {
     </div>
   )
 
-  const SB_BG        = '#060A12'
-  const SB_ACTIVE_BG = 'rgba(45,212,200,0.12)'
-  const SB_TEXT_MUT  = 'rgba(255,255,255,0.6)'
+  const SB_BG        = '#020408'
+  const SB_ACTIVE_BG = 'rgba(45,212,200,0.14)'
+  const SB_TEXT_MUT  = 'rgba(255,255,255,0.85)'
 
   function sbItem(section: SidebarSection, icon: string, label: string) {
     const active = activeSection === section
@@ -3534,12 +3534,12 @@ export default function MaestroClientPage() {
       <button
         key={section}
         onClick={() => setActiveSection(section)}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 8px', borderRadius: 5, width: '100%', border: 'none', cursor: 'pointer', marginBottom: 1, textAlign: 'left' as const, background: active ? SB_ACTIVE_BG : 'transparent', fontFamily: SANS }}
-        onMouseEnter={ev => { if (!active) (ev.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', borderRadius: 5, width: '100%', border: 'none', cursor: 'pointer', marginBottom: 1, textAlign: 'left' as const, background: active ? SB_ACTIVE_BG : 'transparent', fontFamily: SANS }}
+        onMouseEnter={ev => { if (!active) (ev.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)' }}
         onMouseLeave={ev => { if (!active) (ev.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
       >
-        <span style={{ width: 14, fontSize: 11, color: active ? TEAL : '#6B7280', textAlign: 'center' as const }}>{icon}</span>
-        <span style={{ fontSize: 12, color: active ? TEAL : SB_TEXT_MUT, fontWeight: active ? 600 : 400 }}>{label}</span>
+        <span style={{ width: 14, fontSize: 12, color: active ? TEAL : 'rgba(255,255,255,0.45)', textAlign: 'center' as const }}>{icon}</span>
+        <span style={{ fontSize: 13, color: active ? TEAL : SB_TEXT_MUT, fontWeight: active ? 600 : 400 }}>{label}</span>
       </button>
     )
   }
@@ -3599,11 +3599,11 @@ export default function MaestroClientPage() {
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
 
         {/* ── LEFT SIDEBAR ──────────────────────────────────────── */}
-        <div style={{ width: 220, minWidth: 220, background: SB_BG, display: 'flex', flexDirection: 'column' as const, paddingTop: 20, borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ width: 230, minWidth: 230, background: SB_BG, display: 'flex', flexDirection: 'column' as const, paddingTop: 20, borderRight: '1px solid rgba(255,255,255,0.08)' }}>
 
           {/* Active Client */}
           <div style={{ padding: '0 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: 8 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Active Client</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Active Client</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', marginBottom: 2 }}>{data.name}</div>
             <div style={{ fontSize: 11, color: '#6B7280', fontFamily: SANS }}>{data.type} · ${(data.revenue / 1e9).toFixed(1)}B</div>
           </div>
@@ -3635,7 +3635,7 @@ export default function MaestroClientPage() {
 
           {/* Intelligence */}
           <div style={{ padding: '12px 16px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Intelligence</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Intelligence</div>
             {sbItem('situation',      '◎', 'Situation')}
             {sbItem('findings',       '◈', 'Findings')}
             {sbItem('contradictions', '⚡', 'Contradictions')}
@@ -3645,7 +3645,7 @@ export default function MaestroClientPage() {
 
           {/* Engagements */}
           <div style={{ padding: '12px 16px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Engagements</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Engagements</div>
             {sbItem('engagements', '≡', 'All Engagements')}
             <button
               onClick={() => openCreate('')}
@@ -3657,7 +3657,7 @@ export default function MaestroClientPage() {
 
           {/* Data */}
           <div style={{ padding: '12px 16px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Data</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Data</div>
             {sbItem('uploads',          '↑',  'Uploads')}
             {sbItem('data-readiness',   '◉',  'Data Readiness')}
             {sbItem('sensitive-access', '🔒', 'Request Sensitive Access')}
@@ -3665,7 +3665,7 @@ export default function MaestroClientPage() {
 
           {/* Value */}
           <div style={{ padding: '12px 16px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Value</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Value</div>
             {sbItem('value-dashboard', '$',  'Value Dashboard')}
             {sbItem('monthly-reviews', '📋', 'Monthly Reviews')}
             {sbItem('fee-tracker',     '%',  'Fee Tracker')}
@@ -3673,7 +3673,7 @@ export default function MaestroClientPage() {
 
           {/* Outputs */}
           <div style={{ padding: '12px 16px 4px' }}>
-            <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Outputs</div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Outputs</div>
             {sbItem('deliverables', '📄', 'Deliverables')}
             {sbItem('board-packs',  '📊', 'Board Packs')}
           </div>
