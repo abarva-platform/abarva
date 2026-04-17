@@ -217,8 +217,7 @@ export default function PlatformPage() {
           100% { top: 0%; opacity: 0; }
         }
         .arch-layer-wrap:hover .arch-layer-card {
-          background: #fff !important;
-          border-color: #0F0E0D !important;
+          background: rgba(255,255,255,0.08) !important;
         }
         .arch-layer-wrap:hover .arch-tag {
           opacity: 1 !important;
