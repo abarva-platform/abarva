@@ -59,6 +59,7 @@ function NavInner({ activePage }: NavProps) {
   const avrActive = [
     'architecture', 'ai-pdlc', 'avr', 'data-intelligence', 'justify',
     'contradictions', 'outcome-intelligence', 'diagnose', 'vendor-intelligence', 'ai-strategy',
+    'ai-value-realization',
   ].includes(activePage || '')
   const intelligenceActive = activePage === 'intelligence'
   const solutionsActive    = activePage === 'solutions'
@@ -266,7 +267,7 @@ function NavInner({ activePage }: NavProps) {
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {avrMegaMenu()}
+            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
             {navLink('Investor', '/investor', investorActive)}
             {adminNavItem()}
           </>
@@ -283,7 +284,7 @@ function NavInner({ activePage }: NavProps) {
             {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {avrMegaMenu()}
+            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
             {navLink('Investor', '/investor', investorActive)}
             {adminNavItem()}
           </>
@@ -301,7 +302,7 @@ function NavInner({ activePage }: NavProps) {
             {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {avrMegaMenu()}
+            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
             {adminNavItem()}
           </>
         )}

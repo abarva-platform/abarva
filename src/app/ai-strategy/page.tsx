@@ -974,6 +974,18 @@ function AIStrategyInner() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: LBG, overflow: 'hidden' }}>
       <AbarvaNav activePage="ai-strategy" />
 
+      {/* Context banner */}
+      <div style={{ flexShrink: 0, background: '#060A12', borderBottom: '1px solid #1C2D45', padding: '0 24px', height: '34px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>AI VALUE REALIZATION</span>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: '#1C2D45' }}>·</span>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.4)', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>{clientName}</span>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: '#1C2D45' }}>·</span>
+        <span style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.25)' }}>Guided by AbarVa AI across 3 phases · 11 modules</span>
+        <a href="/ai-value-realization" style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: '9px', color: 'rgba(45,212,200,0.55)', textDecoration: 'none', letterSpacing: '.06em', flexShrink: 0 }}>
+          ? What is this
+        </a>
+      </div>
+
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         {/* ── Left nav ── */}
         <LeftNav
