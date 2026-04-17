@@ -141,7 +141,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/intelligence?client=meridian', zoom: 0.62,
     panels: [
-      { src: '/intelligence?client=meridian', duration: 12, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
+      { src: '/intelligence?client=meridian', duration: 14, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
       { src: '/intelligence?client=meridian', duration: 10, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
     ],
   },
@@ -240,8 +240,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
-      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', scrollTo: 800, label: 'VALUE BRIEF · $22.4M VERIFIED · 5.7× ROI' },
+      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12,                 label: 'PHASE 4 · EXECUTE & VERIFY · 4.2 ACTIVE' },
+      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12, scrollTo: 800,  label: '18/18 COMPLETE · $22.4M VERIFIED · 5.7× ROI' },
     ],
   },
   {
@@ -326,8 +326,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
-      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', scrollTo: 800, label: 'MERIDIAN · VALUE BRIEF · $22.4M VERIFIED' },
+      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12,                 label: 'MERIDIAN · PHASE 4 · 4.2 ACTIVE' },
+      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12, scrollTo: 800,  label: 'MERIDIAN · 18/18 COMPLETE · $22.4M VERIFIED' },
     ],
   },
   {
