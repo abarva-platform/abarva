@@ -655,6 +655,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
 }) {
   type Step = 0 | 1 | 2 | 'done'
   const [step, setStep] = useState<Step>(initSolution ? 1 : 0)
+  const router = useRouter()
   const [directive, setDirective] = useState('')
   const [solution, setSolution] = useState(initSolution ?? '')
   const [sponsor, setSponsor] = useState('')
@@ -752,7 +753,6 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
               <button
                 onClick={() => {
                   if (!sponsor.trim()) return
-                  setStep('done')
                   const solName = MAESTRO_SOLUTIONS.find(s => s.slug === solution)?.name ?? solution
                   const newEng: EngagementRecord = {
                     id: `E${Date.now()}`,
@@ -766,6 +766,13 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
                     slug: solution, lastActivity: 'Just now',
                   }
                   onCreated?.(newEng)
+                  router.push(
+                    `/ai-strategy?client=${clientId}` +
+                    `&engagement=${newEng.id}` +
+                    `&sponsor=${encodeURIComponent(sponsor.trim())}` +
+                    `&directive=${encodeURIComponent(directive)}` +
+                    `&reset=true`
+                  )
                 }}
                 disabled={!sponsor.trim()}
                 style={{ marginTop: 12, padding: '12px 28px', background: sponsor.trim() ? TEAL : '#1C2D45', color: sponsor.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: sponsor.trim() ? 'pointer' : 'not-allowed' }}

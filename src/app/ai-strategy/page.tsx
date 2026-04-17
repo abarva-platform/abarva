@@ -4,6 +4,7 @@ import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 import { useSearchParams } from 'next/navigation'
 import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
+import { supabase } from '@/lib/supabase'
 
 // ── Design tokens — exact from Solutions page ─────────────────────────────────
 const LBG   = '#F8F7F4'
@@ -189,7 +190,9 @@ function phase0Script(
   const scripts: Record<string, { text: string; options: string[] }> = {
 
     '0.1': (engCtx && stepId === '0.1') ? {
-      text: `I have your engagement context from Setup.\n\nDIRECTIVE: "${engCtx.directive}"\n\nPRIMARY PROBLEM:\n${engCtx.primary_problem} — ${engCtx.primary_problem_dollar}\n\nCXO SPONSOR: ${engCtx.cxo_sponsor_name}${engCtx.cxo_sponsor_title ? ' · ' + engCtx.cxo_sponsor_title : ''}\n\nSUCCESS CRITERIA: ${engCtx.success_criteria || 'To be confirmed'}\n\nThis is already confirmed from Setup. What I need from you now to complete Phase 0:\n\n1. Data readiness — I'll verify your uploaded files match this use case\n2. Genome validation — confirm the matched failure patterns are relevant\n3. Scope document — approve the generated scope before Phase 1 begins\n\nShall we proceed directly to data readiness review?`,
+      text: engCtx.primary_problem
+        ? `I have your engagement context from Setup.\n\nDIRECTIVE: "${engCtx.directive}"\n\nPRIMARY PROBLEM:\n${engCtx.primary_problem} — ${engCtx.primary_problem_dollar}\n\nCXO SPONSOR: ${engCtx.cxo_sponsor_name}${engCtx.cxo_sponsor_title ? ' · ' + engCtx.cxo_sponsor_title : ''}\n\nSUCCESS CRITERIA: ${engCtx.success_criteria || 'To be confirmed'}\n\nThis is already confirmed from Setup. What I need from you now to complete Phase 0:\n\n1. Data readiness — I'll verify your uploaded files match this use case\n2. Genome validation — confirm the matched failure patterns are relevant\n3. Scope document — approve the generated scope before Phase 1 begins\n\nShall we proceed directly to data readiness review?`
+        : `Engagement created from Maestro.\n\nDIRECTIVE: "${engCtx.directive}"\n\nEXECUTIVE SPONSOR: ${engCtx.cxo_sponsor_name}\n\nI've reviewed ${name}'s operational profile against this directive. Phase 0 will confirm the situation, data readiness, genome pattern match, and scope before Phase 1 begins.\n\nWhich aspect of the directive is under the most leadership pressure right now?`,
       options: [
         'A: Yes — take me to data readiness now',
         'B: Let me review the problem statement first',
@@ -664,70 +667,98 @@ function OutcomesPanel({ outcomes, phaseStatuses }: { outcomes: OutcomeItem[]; p
 }
 
 // ── ApprovalModal ─────────────────────────────────────────────────────────────
-function ApprovalModal({ phaseId, onApprove, onClose }: { phaseId: number; onApprove: (name: string) => void; onClose: () => void }) {
-  const [checks, setChecks] = useState<Record<string, boolean>>({})
-  const [name, setName]     = useState('')
-  const items     = APPROVAL_CHECKS[phaseId] ?? []
-  const allDone   = items.every((_, i) => checks[String(i)])
-  const canSubmit = allDone && name.trim().length > 0
+function ApprovalModal({ phaseId, sponsorName, onApprove, onClose }: {
+  phaseId: number
+  sponsorName: string
+  onApprove: (name: string) => void
+  onClose: () => void
+}) {
+  const [confirming, setConfirming] = useState(false)
+  const [name, setName] = useState(sponsorName)
+  const nextPhaseId   = phaseId + 1
+  const nextPhaseName = PHASE_DEFS[nextPhaseId]?.name
+  const criteria      = APPROVAL_CHECKS[phaseId] ?? []
+  const approvalDate  = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(6,10,18,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: 12, padding: 36, maxWidth: 480, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.15)' }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 6 }}>
-          Phase Approval Gate
-        </div>
-        <h2 style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: TX, margin: '0 0 24px' }}>
-          Approve Phase {phaseId}: {PHASE_DEFS[phaseId]?.name}
-        </h2>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-          {items.map((item, i) => (
-            <label key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(6,10,18,0.75)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 12, padding: '32px 36px', maxWidth: 480, width: '90%', boxShadow: '0 24px 64px rgba(0,0,0,0.18)' }}>
+
+        {!confirming ? (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 16 }}>🔒</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>
+                Phase Gate — Approval Required
+              </span>
+            </div>
+            <h2 style={{ fontFamily: SERIF, fontSize: 21, fontWeight: 400, color: TX, margin: '0 0 8px' }}>
+              Phase {phaseId}: {PHASE_DEFS[phaseId]?.name}
+            </h2>
+            {nextPhaseName && (
+              <p style={{ fontFamily: SANS, fontSize: 14, color: SMUTE, margin: '0 0 20px', lineHeight: 1.55 }}>
+                Before Phase {nextPhaseId} ({nextPhaseName}) can begin, the gate brief must be approved by the executive sponsor.
+              </p>
+            )}
+            {sponsorName && (
+              <div style={{ background: 'rgba(45,212,200,0.06)', border: '1px solid rgba(45,212,200,0.2)', borderRadius: 8, padding: '10px 14px', marginBottom: 20, fontFamily: SANS, fontSize: 14, color: TX }}>
+                Sponsor: <strong>{sponsorName}</strong>
+              </div>
+            )}
+            <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>Gate Criteria</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 24 }}>
+              {criteria.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontFamily: SANS, fontSize: 14, color: BODY, lineHeight: 1.5 }}>
+                  <span style={{ color: '#16a34a', fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
+                  <span>{item}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontFamily: SANS, fontSize: 14, color: '#DC2626', lineHeight: 1.5 }}>
+                <span style={{ fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✗</span>
+                <span>Sponsor approval — PENDING</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: 'transparent', border: `1px solid ${BD}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: TX, cursor: 'pointer' }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => setConfirming(true)}
+                style={{ flex: 2, padding: '11px 0', background: TX, border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+              >
+                Record Sponsor Approval →
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 8 }}>Confirm Approval</div>
+            <p style={{ fontFamily: SANS, fontSize: 15, color: TX, lineHeight: 1.6, margin: '0 0 20px' }}>
+              Record that <strong>{name || 'the sponsor'}</strong> approved the Phase {phaseId} gate on {approvalDate}?
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontFamily: SANS, fontSize: 12, color: MUTE, display: 'block', marginBottom: 6 }}>Approver name</label>
               <input
-                type="checkbox"
-                checked={!!checks[String(i)]}
-                onChange={e => setChecks(p => ({ ...p, [String(i)]: e.target.checked }))}
-                style={{ marginTop: 3, accentColor: TEAL }}
+                type="text" value={name} onChange={e => setName(e.target.value)}
+                placeholder="Sponsor name..."
+                style={{ width: '100%', boxSizing: 'border-box' as const, fontFamily: SANS, fontSize: 14, color: TX, border: `1px solid ${BD}`, borderRadius: 6, padding: '10px 12px', outline: 'none' }}
               />
-              <span style={{ fontFamily: SANS, fontSize: 15, color: BODY, lineHeight: 1.5 }}>{item}</span>
-            </label>
-          ))}
-        </div>
-        <div style={{ marginBottom: 24 }}>
-          <label style={{ fontFamily: SANS, fontSize: 12, color: MUTE, display: 'block', marginBottom: 6 }}>
-            Approver name
-          </label>
-          <input
-            type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name..."
-            style={{ width: '100%', boxSizing: 'border-box', fontFamily: SANS, fontSize: 14, color: TX, border: `1px solid ${BD}`, borderRadius: 6, padding: '10px 12px', background: '#fff', outline: 'none' }}
-          />
-          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginTop: 6 }}>
-            {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button
-            onClick={onClose}
-            style={{ flex: 1, padding: '11px 0', background: 'transparent', border: `1px solid ${BD}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: TX, cursor: 'pointer' }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => canSubmit && onApprove(name)}
-            disabled={!canSubmit}
-            style={{
-              flex: 2, padding: '11px 0',
-              background: canSubmit ? TX : '#E5E7EB',
-              border: 'none', borderRadius: 8,
-              fontFamily: SANS, fontSize: 14, fontWeight: 600,
-              color: canSubmit ? '#fff' : MUTE,
-              cursor: canSubmit ? 'pointer' : 'default',
-              transition: 'all 0.15s',
-            }}
-          >
-            Approve Phase {phaseId} →
-          </button>
-        </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginTop: 6 }}>{approvalDate}</div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setConfirming(false)} style={{ flex: 1, padding: '11px 0', background: 'transparent', border: `1px solid ${BD}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: TX, cursor: 'pointer' }}>
+                ← Back
+              </button>
+              <button
+                onClick={() => name.trim() && onApprove(name.trim())}
+                disabled={!name.trim()}
+                style={{ flex: 2, padding: '11px 0', background: name.trim() ? TX : '#E5E7EB', border: 'none', borderRadius: 8, fontFamily: SANS, fontSize: 14, fontWeight: 600, color: name.trim() ? '#fff' : MUTE, cursor: name.trim() ? 'pointer' : 'default' }}
+              >
+                Confirm Approval
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -741,6 +772,9 @@ function AIStrategyInner() {
   const searchParams   = useSearchParams()
   const skipSetup      = searchParams.get('skip_setup') === 'true'
   const engagementId   = searchParams.get('engagement_id')
+  const directiveParam = searchParams.get('directive')
+  const sponsorParam   = searchParams.get('sponsor')
+  const engagementParam = searchParams.get('engagement')
 
   const [engCtx, setEngCtx] = useState<EngagementContext | null>(null)
   const [st, setSt]               = useState<SavedState>(() => makeInitial())
@@ -748,8 +782,10 @@ function AIStrategyInner() {
   const [customVal, setCustomVal] = useState('')
   const [loading, setLoading]     = useState(false)
   const [approvalFor, setApprovalFor] = useState<number | null>(null)
+  const [toast, setToast]         = useState<string | null>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const persistInitRef = useRef(false)
+  const autoShownGates = useRef(new Set<number>())
 
   const { phaseStatuses, stepStatuses, outcomes, messagesByStep, activeStep } = st
 
@@ -767,9 +803,30 @@ function AIStrategyInner() {
       seedOnce(STORAGE_KEY, DEMO_SEEDS[clientId])
     }
 
-    // Try to read engagement context from Setup handoff
+    // Try to read engagement context — Setup handoff or Maestro URL params
     let ctx: EngagementContext | null = null
-    if (skipSetup && engagementId) {
+    if (directiveParam && sponsorParam) {
+      // Maestro-originated engagement: context comes from URL params
+      const maestroCtx: EngagementContext = {
+        engagement_id: engagementParam ?? `local-${Date.now()}`,
+        client_id: clientId,
+        name: clientName,
+        directive: directiveParam,
+        primary_problem: '',
+        primary_problem_dollar: '',
+        success_criteria: '',
+        what_good_looks_like: '',
+        timeline: '',
+        cxo_sponsor_name: sponsorParam,
+        cxo_sponsor_title: '',
+        execution_path: '',
+        genome_patterns: [],
+        genome_success_rate: 0,
+        skip_setup: false,
+      }
+      ctx = maestroCtx
+      setEngCtx(maestroCtx)
+    } else if (skipSetup && engagementId) {
       try {
         const raw = localStorage.getItem('abarva_engagement_context')
         if (raw) {
@@ -840,6 +897,15 @@ function AIStrategyInner() {
   const phaseAllComplete = phaseDef?.steps.every(s => stepStatuses[s.id] === 'complete') ?? false
   const phaseApproved    = phaseStatuses[phaseId] === 'approved'
   const showApproveBtn   = phaseAllComplete && !phaseApproved
+
+  // Auto-show gate modal when a phase completes for the first time
+  useEffect(() => {
+    if (phaseAllComplete && !phaseApproved && !autoShownGates.current.has(phaseId)) {
+      autoShownGates.current.add(phaseId)
+      const t = setTimeout(() => setApprovalFor(phaseId), 800)
+      return () => clearTimeout(t)
+    }
+  }, [phaseAllComplete, phaseApproved, phaseId])
 
   const allSteps   = allStepIds()
   const totalSteps = allSteps.length
@@ -962,6 +1028,7 @@ function AIStrategyInner() {
     }
 
     const firstNextId = PHASE_DEFS[nextPhaseId]?.steps[0]?.id
+    const nextPhaseName = PHASE_DEFS[nextPhaseId]?.name
 
     setSt(prev => ({ ...prev, phaseStatuses: newPS, stepStatuses: newSS, activeStep: firstNextId ?? activeStep }))
     setCollapsed(prev => {
@@ -970,6 +1037,43 @@ function AIStrategyInner() {
       return n
     })
     setApprovalFor(null)
+
+    // Toast
+    const toastMsg = nextPhaseName
+      ? `Phase ${phaseId} approved — Phase ${nextPhaseId} (${nextPhaseName}) unlocked`
+      : `Phase ${phaseId} approved`
+    setToast(toastMsg)
+    setTimeout(() => setToast(null), 4500)
+
+    // Save gate approval to Supabase
+    try {
+      const approvalDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      const phaseName = PHASE_DEFS[phaseId]?.name ?? `Phase ${phaseId}`
+      const criteria = APPROVAL_CHECKS[phaseId] ?? []
+      const html = `<div style="font-family: DM Sans, sans-serif; padding: 32px; max-width: 640px; color: #0C0C0C;">
+  <div style="font-size: 11px; font-family: monospace; color: #2DD4C8; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px;">Gate Approval Record</div>
+  <h1 style="font-size: 22px; font-family: Georgia, serif; font-weight: 400; margin: 0 0 24px;">Phase ${phaseId} Gate — Approved</h1>
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px;">
+    <tr><td style="padding: 8px 0; font-size: 13px; color: #6B7280; width: 160px;">Client</td><td style="font-size: 14px;">${clientName}</td></tr>
+    <tr><td style="padding: 8px 0; font-size: 13px; color: #6B7280;">Phase</td><td style="font-size: 14px;">${phaseId} — ${phaseName}</td></tr>
+    <tr><td style="padding: 8px 0; font-size: 13px; color: #6B7280;">Approved by</td><td style="font-size: 14px; font-weight: 600;">${approverName}</td></tr>
+    <tr><td style="padding: 8px 0; font-size: 13px; color: #6B7280;">Date</td><td style="font-size: 14px;">${approvalDate}</td></tr>
+  </table>
+  <div style="font-size: 12px; font-family: monospace; color: #6B7280; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px;">Gate Criteria</div>
+  <ul style="margin: 0; padding: 0 0 0 20px; font-size: 14px; line-height: 2;">
+    ${criteria.map(c => `<li>${c}</li>`).join('')}
+    <li style="color: #16a34a; font-weight: 600;">Sponsor approval — Recorded ${approvalDate}</li>
+  </ul>
+</div>`
+      await supabase.from('engagement_deliverables').insert({
+        document_type: 'gate_approval',
+        title: `Phase ${phaseId} Gate — Approved by ${approverName}`,
+        html_content: html,
+        client_id: clientId,
+        phase_id: phaseId,
+        generated_at: new Date().toISOString(),
+      })
+    } catch { /* table may not exist yet — gate still unlocks */ }
 
     if (firstNextId && nextPhaseId >= 1) {
       setLoading(true)
@@ -1158,7 +1262,7 @@ function AIStrategyInner() {
                 onClick={() => setApprovalFor(phaseId)}
                 style={{ height: 44, padding: '0 24px', background: TX, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#fff', cursor: 'pointer' }}
               >
-                Approve Phase {phaseId} →
+                🔒 Phase Gate →
               </button>
             ) : (
               <button
@@ -1181,7 +1285,18 @@ function AIStrategyInner() {
       </div>
 
       {approvalFor !== null && (
-        <ApprovalModal phaseId={approvalFor} onApprove={handleApprove} onClose={() => setApprovalFor(null)} />
+        <ApprovalModal
+          phaseId={approvalFor}
+          sponsorName={engCtx?.cxo_sponsor_name ?? sponsorParam ?? ''}
+          onApprove={handleApprove}
+          onClose={() => setApprovalFor(null)}
+        />
+      )}
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 2000, background: '#0C0C0C', color: '#fff', fontFamily: SANS, fontSize: 14, fontWeight: 500, padding: '14px 20px', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.25)', borderLeft: `3px solid ${TEAL}`, maxWidth: 380 }}>
+          {toast}
+        </div>
       )}
 
       <style>{`
