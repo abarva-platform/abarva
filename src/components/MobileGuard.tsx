@@ -7,7 +7,9 @@ export default function MobileGuard({ children }: { children: React.ReactNode })
   useEffect(() => {
     // Don't block when embedded in an iframe (e.g. demo guided walkthrough)
     if (window.self !== window.top) return
-    const check = () => setBlocked(window.innerWidth < 1024)
+    // Only block actual mobile devices — not desktop browsers with DevTools open
+    const isMobileUA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    const check = () => setBlocked(isMobileUA && window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
