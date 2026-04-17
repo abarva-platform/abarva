@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 import { useSearchParams } from 'next/navigation'
+import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
 
 // ── Design tokens — exact from Solutions page ─────────────────────────────────
 const LBG   = '#F8F7F4'
@@ -290,7 +291,7 @@ function phase0Script(
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
-function phaseOfStep(id: string) { return parseInt(id.split('.')[0]) }
+function phaseOfStep(id: string | undefined) { return id ? parseInt(id.split('.')[0]) : 0 }
 function allStepIds() { return PHASE_DEFS.flatMap(p => p.steps.map(s => s.id)) }
 function completedCount(ss: Record<string, StepStatus>) { return Object.values(ss).filter(s => s === 'complete' || s === 'pre-confirmed').length }
 function lsKey(clientId: string) { return `abarva_avr_v2_${clientId}` }
@@ -751,6 +752,11 @@ function AIStrategyInner() {
       localStorage.removeItem(STORAGE_KEY)
     }
 
+    // Seed demo: ?seed=demo writes full completed engagement to localStorage
+    if (searchParams.get('seed') === 'demo' && DEMO_SEEDS[clientId]) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_SEEDS[clientId]))
+    }
+
     // Try to read engagement context from Setup handoff
     let ctx: EngagementContext | null = null
     if (skipSetup && engagementId) {
@@ -770,6 +776,7 @@ function AIStrategyInner() {
       try {
         const parsed = JSON.parse(existing)
         if (parsed?.stepStatuses && parsed?.phaseStatuses) {
+          if (!parsed.activeStep && parsed.currentStep) parsed.activeStep = parsed.currentStep
           saved = parsed as SavedState
         }
       } catch { /* ignore */ }
