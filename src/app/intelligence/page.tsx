@@ -220,14 +220,14 @@ function OrgDiagram({ nodes, lines }: { nodes: OrgNode[]; lines: [string, string
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — COMPANY PROFILE
 // ─────────────────────────────────────────────────────────────────────────────
-function CompanySection({ intel, isMeridian }: { intel: ClientIntelligence; isMeridian: boolean }) {
+function CompanySection({ intel, isMeridian, patternCount }: { intel: ClientIntelligence; isMeridian: boolean; patternCount: number }) {
   return (
     <section id="company-profile" style={{ background: LBG, scrollMarginTop: '110px' }}>
       <div style={W}>
         {/* Opening statement */}
         <div style={{ marginBottom: 64 }}>
           <h1 style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: LTEXT, lineHeight: 1.15, margin: '0 0 24px' }}>
-            Client data.<br />340 failure patterns.<br />Sector intelligence.
+            Client data.<br />{patternCount} failure patterns matched.<br />Sector intelligence.
           </h1>
           <p style={{ fontFamily: SANS, fontSize: 20, color: LBODY, lineHeight: 1.7, maxWidth: 900, margin: 0 }}>
             {isMeridian
@@ -1232,12 +1232,13 @@ function IntelligenceInner() {
   const totalValue = AI_TOTAL_VALUE[clientId as keyof typeof AI_TOTAL_VALUE] ?? '$277M'
   const active = useActiveSection()
   const isMeridian = clientId === 'meridian'
+  const patternCount = intel.genome.length
 
   return (
     <div style={{ background: LBG }}>
       <AbarvaNav activePage="intelligence" />
       <StickyNav active={active} intel={intel} />
-      <CompanySection intel={intel} isMeridian={isMeridian} />
+      <CompanySection intel={intel} isMeridian={isMeridian} patternCount={patternCount} />
       <LeadershipSection intel={intel} isMeridian={isMeridian} />
       <SituationSection findings={findings} isMeridian={isMeridian} />
       <ContradictionsSection intel={intel} isMeridian={isMeridian} />
