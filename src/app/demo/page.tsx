@@ -46,7 +46,6 @@ interface Screen {
   url: string           // fallback when no panels
   zoom?: number         // iframe scale (default 0.7)
   audio?: string        // filename base; defaults to padded idx+1
-  onLoad?: (iframe: HTMLIFrameElement) => void
   panels?: Panel[]      // overrides url when present; rotates on duration
 }
 
@@ -58,48 +57,9 @@ const PHASE_GROUPS: { label: string; category: Section; screens: string[] }[] = 
   { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: ['18', '19'] },
 ]
 
-// iframe interaction helpers — all wrapped in try/catch to silence cross-origin errors
-function clickInIframe(iframe: HTMLIFrameElement, match: (text: string) => boolean, delayMs = 1000) {
-  setTimeout(() => {
-    try {
-      const doc = iframe.contentDocument
-      if (!doc) return
-      const els = Array.from(doc.querySelectorAll('button, a'))
-      const el = els.find(e => match(e.textContent || '')) as HTMLElement | undefined
-      el?.click()
-    } catch { /* cross-origin */ }
-  }, delayMs)
-}
-
-function scrollIframe(iframe: HTMLIFrameElement, top: number, delayMs = 1000) {
-  setTimeout(() => {
-    try {
-      iframe.contentWindow?.scrollTo({ top, behavior: 'smooth' })
-    } catch { /* cross-origin */ }
-  }, delayMs)
-}
-
-const ACTIONS: Record<ActionId, (iframe: HTMLIFrameElement) => void> = {
-  'click-situation':      (ifr) => clickInIframe(ifr, t => t.includes('Situation'), 800),
-  'click-contradictions': (ifr) => clickInIframe(ifr, t => t.includes('Contradictions'), 800),
-  'click-genome':         (ifr) => clickInIframe(ifr, t => t.includes('Genome'), 800),
-  'click-new-engagement': (ifr) => clickInIframe(ifr, t => t.includes('New Engagement'), 800),
-  'click-phase4':         (ifr) => clickInIframe(ifr, t => t.includes('4.2') || t.includes('EXECUTE'), 800),
-  'click-step-01':        (ifr) => clickInIframe(ifr, t => t.includes('0.1') || t.includes('Situation Confirmation'), 800),
-  'click-deliverables':   (ifr) => clickInIframe(ifr, t => t.trim() === 'Deliverables', 800),
-  'click-deliverables-view-arch': (ifr) => {
-    clickInIframe(ifr, t => t.trim() === 'Deliverables', 800)
-    setTimeout(() => {
-      try {
-        const doc = ifr.contentDocument
-        if (!doc) return
-        const viewBtns = Array.from(doc.querySelectorAll('button'))
-          .filter(b => (b.textContent || '').trim() === 'View') as HTMLButtonElement[]
-        viewBtns[1]?.click()
-      } catch { /* cross-origin */ }
-    }, 1600)
-  },
-}
+const PANEL_START_DELAY = 2000                            // ms before first rotation
+const REACT_RENDER_DELAY = 500                            // ms after iframe load before firing action
+const ABARVA_ORIGIN = 'https://app.abarva.ai'
 
 const SCREENS: Screen[] = [
   // ── THE PROBLEM ───────────────────────────────────────────────────────────
@@ -127,7 +87,10 @@ const SCREENS: Screen[] = [
       'Baseline locked Day 0 — immutable, auditable, defensible',
       'Knowledge stays in the platform permanently — never walks out the door',
     ],
-    url: '/platform',
+    url: `${ABARVA_ORIGIN}/platform`,
+    panels: [
+      { src: `${ABARVA_ORIGIN}/platform`, duration: 15, label: 'THE ABARVA PLATFORM' },
+    ],
   },
   // ── ABARNEXUS ─────────────────────────────────────────────────────────────
   {
@@ -141,11 +104,10 @@ const SCREENS: Screen[] = [
       'Dimension 3: Emergent — every engagement adds new patterns permanently',
       'Zero data lock-in: you can leave at any time, your data stays with you',
     ],
-    url: '/intelligence?client=meridian', zoom: 0.62,
+    url: `${ABARVA_ORIGIN}/intelligence?client=meridian`, zoom: 0.62,
     panels: [
-      { src: '/platform',                     duration: 8,  label: 'THE ABARVA PLATFORM' },
-      { src: '/intelligence?client=meridian', duration: 8,  action: 'click-situation',      label: 'SITUATION INTELLIGENCE' },
-      { src: '/intelligence?client=meridian', duration: 8,  action: 'click-genome',         label: 'GENOME INTELLIGENCE' },
+      { src: `${ABARVA_ORIGIN}/platform`,                     duration: 10, label: 'PLATFORM · 5 KNOWLEDGE LAYERS' },
+      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 12, action: 'click-situation', label: 'SITUATION INTELLIGENCE · LIVE' },
     ],
   },
   {
@@ -159,7 +121,10 @@ const SCREENS: Screen[] = [
       'Vendor contracts, financials, org charts: searchable, never exposed',
       'Engagement ends: all intelligence stays with you permanently',
     ],
-    url: '/platform', zoom: 0.62,
+    url: `${ABARVA_ORIGIN}/platform`, zoom: 0.62,
+    panels: [
+      { src: `${ABARVA_ORIGIN}/platform`, duration: 20, scrollTo: 600, label: 'DATA ARCHITECTURE · YOUR ENVIRONMENT' },
+    ],
   },
   {
     id: '5', audio: '05',
@@ -172,11 +137,10 @@ const SCREENS: Screen[] = [
       'F011 active at Meridian: Ensemble SLA never enforced — 74% failure rate',
       'Genome compounds — each new engagement sharpens every future pattern',
     ],
-    url: '/maestro/meridian', zoom: 0.62,
-    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('Contradictions'), 800),
+    url: `${ABARVA_ORIGIN}/intelligence?client=meridian`, zoom: 0.62,
     panels: [
-      { src: '/intelligence?client=meridian', duration: 10, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE' },
-      { src: '/intelligence?client=meridian', duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE' },
+      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 12, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
+      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
     ],
   },
   {
@@ -205,10 +169,9 @@ const SCREENS: Screen[] = [
       'Margin Optimization · Phase 0 · 🔒 Locked',
     ],
     url: '/maestro/meridian', zoom: 0.62,
-    onLoad: (iframe) => scrollIframe(iframe, 350, 1000),
     panels: [
-      { src: '/maestro/meridian', duration: 8,  scrollTo: 0,   label: 'SITUATION INTELLIGENCE' },
-      { src: '/maestro/meridian', duration: 10, scrollTo: 350, label: 'ACTIVE ENGAGEMENTS · PHASE GATES' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, scrollTo: 0,   label: 'SITUATION INTELLIGENCE' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 12, scrollTo: 350, label: 'ACTIVE ENGAGEMENTS · PHASE GATES' },
     ],
   },
   {
@@ -236,10 +199,9 @@ const SCREENS: Screen[] = [
       'Canvas populates as questions are answered — scope locked on Submit',
     ],
     url: '/maestro/meridian', zoom: 0.62,
-    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('New Engagement'), 1000),
     panels: [
-      { src: '/maestro/meridian', duration: 5,  scrollTo: 0,   label: 'MAESTRO DASHBOARD' },
-      { src: '/maestro/meridian', duration: 15, action: 'click-new-engagement', label: 'NEW ENGAGEMENT · DISCOVERY' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, scrollTo: 0,                    label: 'MAESTRO DASHBOARD' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 15, action: 'click-new-engagement', label: 'NEW ENGAGEMENT · DISCOVERY' },
     ],
   },
   {
@@ -254,10 +216,9 @@ const SCREENS: Screen[] = [
       'AbarNexus retrieves Genome patterns in real time for each response',
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
-    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('0.1') || t.includes('Situation Confirmation'), 1500),
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 15, action: 'click-step-01', label: 'PHASE 0 · SITUATION CONFIRMATION' },
-      { src: '/ai-strategy?client=meridian', duration: 10, scrollTo: 200,          label: 'AI VALUE BRIEF BUILDING' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 15, action: 'click-step-01', label: 'PHASE 0 · SITUATION CONFIRMATION' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, scrollTo: 200,          label: 'AI VALUE BRIEF BUILDING' },
     ],
   },
   {
@@ -272,10 +233,9 @@ const SCREENS: Screen[] = [
       'Renewal confirmed — Meridian is a Phase 2 client. The Genome compounds.',
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
-    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('EXECUTE'), 1500),
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
-      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
+      { src: 'https://app.abarva.ai/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
     ],
   },
   {
@@ -291,8 +251,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/solutions',
     panels: [
-      { src: '/solutions', duration: 15, scrollTo: 0,   label: 'POINT SOLUTIONS' },
-      { src: '/solutions', duration: 10, scrollTo: 400, label: 'SOLUTION LIBRARY' },
+      { src: 'https://app.abarva.ai/solutions', duration: 15, scrollTo: 0,   label: 'POINT SOLUTIONS' },
+      { src: 'https://app.abarva.ai/solutions', duration: 10, scrollTo: 400, label: 'SOLUTION LIBRARY' },
     ],
   },
   {
@@ -308,7 +268,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/solutions',
     panels: [
-      { src: '/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
+      { src: 'https://app.abarva.ai/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
     ],
   },
   {
@@ -324,8 +284,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=arcturus', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
-      { src: '/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
     ],
   },
   {
@@ -340,10 +300,9 @@ const SCREENS: Screen[] = [
       'Download as HTML — present to your board directly',
     ],
     url: '/maestro/meridian', zoom: 0.62,
-    onLoad: (iframe) => ACTIONS['click-deliverables-view-arch'](iframe),
     panels: [
-      { src: '/maestro/meridian', duration: 8,  action: 'click-deliverables',            label: 'DELIVERABLES · ALL PHASES' },
-      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, action: 'click-deliverables',           label: 'DELIVERABLES · ALL PHASES' },
+      { src: 'https://app.abarva.ai/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
     ],
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
@@ -359,10 +318,9 @@ const SCREENS: Screen[] = [
       'Renewal confirmed — Phase 2 client, Genome compounds',
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
-    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('Governance'), 1500),
     panels: [
-      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
-      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
+      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
+      { src: 'https://app.abarva.ai/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
     ],
   },
   {
@@ -404,10 +362,9 @@ const SCREENS: Screen[] = [
       'Harvey AI: $11B for legal. AbarVa: same thesis. $800B. Nobody has touched it.',
     ],
     url: '/platform', zoom: 0.62,
-    onLoad: (iframe) => scrollIframe(iframe, 1200, 1000),
     panels: [
-      { src: '/platform', duration: 10, scrollTo: 800, label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
-      { src: '/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
+      { src: 'https://app.abarva.ai/platform', duration: 12, scrollTo: 800, label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
+      { src: 'https://app.abarva.ai/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
     ],
   },
   {
@@ -438,20 +395,89 @@ function DemoGuidedPageInner() {
   const [panelIdx, setPanelIdx] = useState(0)
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef  = useRef<HTMLAudioElement | null>(null)
+  const panelTimersRef = useRef<number[]>([])
   const screen    = SCREENS[idx]
   const total     = SCREENS.length
   const activePanel = screen.panels ? screen.panels[Math.min(panelIdx, screen.panels.length - 1)] : null
 
-  // Reset panel index when screen changes
-  useEffect(() => { setPanelIdx(0) }, [idx])
+  // Track every panel-related setTimeout so we can cancel on nav
+  const clearAllPanelTimers = useCallback(() => {
+    panelTimersRef.current.forEach(id => clearTimeout(id))
+    panelTimersRef.current = []
+  }, [])
 
-  // Rotate panels by their durations
+  const schedulePanelTimer = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(() => {
+      panelTimersRef.current = panelTimersRef.current.filter(x => x !== id)
+      fn()
+    }, ms)
+    panelTimersRef.current.push(id)
+  }, [])
+
+  const runAction = useCallback((action: ActionId, iframe: HTMLIFrameElement) => {
+    const clickText = (match: (t: string) => boolean) => schedulePanelTimer(() => {
+      try {
+        const doc = iframe.contentDocument
+        if (!doc) return
+        const els = Array.from(doc.querySelectorAll('button, a'))
+        const el  = els.find(e => match(e.textContent || '')) as HTMLElement | undefined
+        el?.click()
+      } catch { /* cross-origin */ }
+    }, REACT_RENDER_DELAY)
+    switch (action) {
+      case 'click-situation':       clickText(t => t.includes('Situation')); break
+      case 'click-contradictions':  clickText(t => t.includes('Contradictions')); break
+      case 'click-genome':          clickText(t => t.includes('Genome')); break
+      case 'click-new-engagement':  clickText(t => t.includes('New Engagement')); break
+      case 'click-phase4':          clickText(t => t.includes('4.2') || t.includes('EXECUTE') || t.includes('Governance')); break
+      case 'click-step-01':         clickText(t => t.includes('0.1') || t.includes('Situation Confirmation')); break
+      case 'click-deliverables':    clickText(t => t.trim() === 'Deliverables'); break
+      case 'click-deliverables-view-arch': {
+        clickText(t => t.trim() === 'Deliverables')
+        schedulePanelTimer(() => {
+          try {
+            const doc = iframe.contentDocument
+            if (!doc) return
+            const viewBtns = Array.from(doc.querySelectorAll('button'))
+              .filter(b => (b.textContent || '').trim() === 'View') as HTMLButtonElement[]
+            viewBtns[1]?.click()
+          } catch { /* cross-origin */ }
+        }, REACT_RENDER_DELAY + 1200)
+        break
+      }
+    }
+  }, [schedulePanelTimer])
+
+  const scrollIframeTracked = useCallback((iframe: HTMLIFrameElement, top: number) => {
+    schedulePanelTimer(() => {
+      try { iframe.contentWindow?.scrollTo({ top, behavior: 'smooth' }) } catch { /* cross-origin */ }
+    }, REACT_RENDER_DELAY)
+  }, [schedulePanelTimer])
+
+  // Reset panel index and clear all panel timers when screen changes
+  useEffect(() => {
+    setPanelIdx(0)
+    clearAllPanelTimers()
+  }, [idx, clearAllPanelTimers])
+
+  // Unmount cleanup
+  useEffect(() => () => clearAllPanelTimers(), [clearAllPanelTimers])
+
+  // Rotate panels by their durations — first panel gets PANEL_START_DELAY extra breathing room
   useEffect(() => {
     const panels = screen.panels
     if (!panels || panels.length <= 1) return
     if (panelIdx >= panels.length - 1) return
-    const t = setTimeout(() => setPanelIdx(i => Math.min(i + 1, panels.length - 1)), panels[panelIdx].duration * 1000)
-    return () => clearTimeout(t)
+    const extra = panelIdx === 0 ? PANEL_START_DELAY : 0
+    const id = window.setTimeout(() => {
+      panelTimersRef.current = panelTimersRef.current.filter(x => x !== id)
+      setPanelIdx(i => Math.min(i + 1, panels.length - 1))
+    }, panels[panelIdx].duration * 1000 + extra)
+    panelTimersRef.current.push(id)
+    return () => {
+      clearTimeout(id)
+      panelTimersRef.current = panelTimersRef.current.filter(x => x !== id)
+    }
   }, [panelIdx, screen.panels])
   const posthog   = usePostHog()
   const searchParams = useSearchParams()
@@ -502,7 +528,8 @@ function DemoGuidedPageInner() {
     setIdx(clamped)
     setCountdown(60)
     stopAudio()
-  }, [total, idx, stopAudio])
+    clearAllPanelTimers()
+  }, [total, idx, stopAudio, clearAllPanelTimers])
 
   // ── Voice playback ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -598,6 +625,10 @@ function DemoGuidedPageInner() {
         @keyframes dotPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,200,0.5); }
           50%      { box-shadow: 0 0 0 5px rgba(45,212,200,0); }
+        }
+        @keyframes panelBar {
+          from { width: 100%; }
+          to   { width: 0%; }
         }
         @keyframes voicePulse {
           0%, 100% { opacity: 1; }
@@ -822,18 +853,18 @@ function DemoGuidedPageInner() {
                 const zoom = screen.zoom ?? 0.7
                 const inv  = Math.round((100 / zoom) * 10) / 10
                 const src  = activePanel?.src ?? screen.url
+                const panels = screen.panels
+                // First panel gets an extra start-delay window before bar fills
+                const barDuration = activePanel
+                  ? activePanel.duration + (panelIdx === 0 ? PANEL_START_DELAY / 1000 : 0)
+                  : 0
                 const handleLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
                   const iframe = e.currentTarget
-                  try {
-                    if (activePanel) {
-                      if (activePanel.action) ACTIONS[activePanel.action](iframe)
-                      if (activePanel.scrollTo !== undefined) scrollIframe(iframe, activePanel.scrollTo, 1000)
-                    } else {
-                      screen.onLoad?.(iframe)
-                    }
-                  } catch { /* cross-origin */ }
+                  // Wait REACT_RENDER_DELAY after page load so React has committed before we click
+                  if (!activePanel) return
+                  if (activePanel.action) runAction(activePanel.action, iframe)
+                  if (activePanel.scrollTo !== undefined) scrollIframeTracked(iframe, activePanel.scrollTo)
                 }
-                const panels = screen.panels
                 return (
                   <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
                     <iframe
@@ -851,7 +882,7 @@ function DemoGuidedPageInner() {
                     />
                     {activePanel?.label && (
                       <div style={{
-                        position: 'absolute', bottom: 12, left: 12, zIndex: 10,
+                        position: 'absolute', bottom: 14, left: 14, zIndex: 20,
                         background: 'rgba(15,14,13,0.88)', color: TEAL,
                         fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600,
                         letterSpacing: '.1em', padding: '4px 10px', borderRadius: 3,
@@ -862,17 +893,25 @@ function DemoGuidedPageInner() {
                     )}
                     {panels && panels.length > 1 && (
                       <div style={{
-                        position: 'absolute', bottom: 14, right: 14, zIndex: 10,
-                        display: 'flex', gap: 6, pointerEvents: 'none',
+                        position: 'absolute', top: 8, right: 8, zIndex: 20,
+                        background: 'rgba(15,14,13,0.80)', color: TEAL,
+                        fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600,
+                        padding: '3px 8px', borderRadius: 3,
+                        pointerEvents: 'none',
                       }}>
-                        {panels.map((_, i) => (
-                          <span key={i} style={{
-                            width: 8, height: 8, borderRadius: 4,
-                            background: i === panelIdx ? TEAL : 'rgba(45,212,200,0.35)',
-                            transition: 'background 0.3s ease',
-                          }} />
-                        ))}
+                        {panelIdx + 1} / {panels.length}
                       </div>
+                    )}
+                    {activePanel && barDuration > 0 && (
+                      <div
+                        key={`bar-${idx}-${panelIdx}`}
+                        style={{
+                          position: 'absolute', bottom: 0, left: 0, zIndex: 20,
+                          height: 3, background: TEAL,
+                          animation: `panelBar ${barDuration}s linear forwards`,
+                          pointerEvents: 'none',
+                        }}
+                      />
                     )}
                   </div>
                 )
