@@ -1,0 +1,46 @@
+AI TALENT, LEADERSHIP, AND GOVERNANCE IN FINANCIAL SERVICES
+Source: CFA Institute AI in Investment Survey 2025, Oliver Wyman FS Leadership Research
+
+CDO AND CHIEF AI OFFICER PREVALENCE IN FS
+Global banks with CDO: 74%
+Asset managers with CDO: 58%
+Regional banks with CDO: 34%
+Firms where CDO reports to CEO: 38%
+Firms where CDO reports to CIO: 44%
+CDO impact on AI outcomes: 2.4x higher programme success rate
+
+AI GOVERNANCE STRUCTURES IN FS
+Firms with AI governance committee: 52% (higher than other industries, driven by regulation)
+AI governance meeting frequency (monthly): 61%
+Firms where AI committee has investment authority: 44%
+AI model risk management (MRM) framework: 68% of large FS firms have MRM
+AI model validation by risk function (before production): required at 74% of large banks
+
+MODEL RISK MANAGEMENT (MRM) STANDARDS
+SR 11-7 (Federal Reserve): governs model risk in US banks
+MRM framework adoption by regional banks: 58%
+Model validation cost per model: $42,000-120,000
+Average time from model development to production (with MRM): 8.4 months
+Average models in validation queue: 18 (large bank)
+MRM bottleneck: primary AI deployment blocker in regulated banking
+
+AI TALENT IN FINANCIAL SERVICES
+Average AI engineer salary (FS, US): $196,000 fully loaded
+Data scientist salary (FS, US): $168,000 fully loaded
+Average time to hire AI talent: 4.8 months (FS vs. 4.2 months other industries)
+AI talent retention rate (FS vs. Big Tech): 31% lower retention
+FS firms offering competitive AI compensation to retain: 44%
+
+AI LITERACY IN FS WORKFORCE
+C-suite AI proficient (can direct AI strategy): 28% of FS executives
+Relationship managers with AI tool proficiency: 34%
+Operations staff with AI tool proficiency: 22%
+Compliance staff with AI tool proficiency: 18%
+Target for effective AI deployment: 60%+ workforce AI awareness
+
+VENDOR SELECTION RISK
+FS firms that selected AI vendor before defining use cases: 48%
+Outcome: 2.1x higher platform cost, 38% lower utilisation at 24 months
+Recommended approach: use case definition → requirements → vendor evaluation
+Average vendor evaluation cycle length (FS, due to regulation): 8.4 months
+RFP requirement for FS AI vendor: security, explainability, audit trail

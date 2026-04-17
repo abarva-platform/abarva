@@ -1,0 +1,78 @@
+HEALTHCARE REVENUE CYCLE MANAGEMENT — INDUSTRY BENCHMARKS
+Source: HFMA Peer Comparison Data 2024-2025
+
+DENIAL RATE BENCHMARKS
+Industry average denial rate: 15.1%
+Top quartile performance: 8.2%
+Bottom quartile: 22.4%
+Best-in-class (academic medical centers): 6.8%
+
+By payer type:
+- Medicare: 6.2% average denial rate
+- Medicaid: 18.7% average denial rate
+- Commercial: 11.4% average denial rate
+- Medicare Advantage: 14.8% average denial rate
+
+By hospital type:
+- Academic Medical Centers (AMC): 8.9%
+- Community hospitals (200-500 beds): 13.2%
+- IDNs (10+ hospitals): 11.4%
+- Critical access hospitals: 17.8%
+
+FINANCIAL IMPACT
+Average cost to rework a denied claim: $118
+Average revenue lost per denied claim (not reworked): $214
+Percentage of denied claims never reworked: 65%
+
+TOP DENIAL CAUSES (industry-wide):
+1. Prior authorization missing/invalid: 23%
+2. Eligibility/coverage errors: 19%
+3. Medical necessity documentation: 17%
+4. Coding errors (ICD-10, CPT): 14%
+5. Duplicate billing: 8%
+6. Timely filing: 7%
+7. Other administrative: 12%
+
+RCM OUTSOURCING MARKET
+Market size 2025: $18.2B
+Growth rate: 11.4% CAGR
+Vendor SLA enforcement rate: 26%
+  (74% of health systems never invoke SLA penalty clauses)
+Average SLA breach duration before enforcement: 6.2 quarters
+Average recovery when penalty invoked: $4.2-8.8M annually
+
+PRIOR AUTHORIZATION AUTOMATION
+Industry average automation rate: 38%
+Top quartile automation: 68%
+Manual PA cost per request: $12.40
+Automated PA cost per request: $1.10
+Average denial rate with PA automation: 9.4%
+Average denial rate without PA automation: 16.8%
+Net revenue impact of automation gap (per $1B revenue): $17-24M
+
+DAYS IN ACCOUNTS RECEIVABLE (AR)
+Top quartile: < 38 days
+Industry median: 46 days
+Bottom quartile: > 58 days
+Financial impact: each day of AR = $2.7-4.1M per $1B net revenue
+
+CLEAN CLAIM RATE BENCHMARKS
+Top quartile: 96-98%
+Median: 91-93%
+Bottom quartile: < 86%
+Impact: 1% improvement in clean claim rate = $0.8-1.4M per $1B revenue
+
+AI-ASSISTED RCM OUTCOMES (measured 2023-2025)
+Denial reduction with AI: 28-44% within 12 months
+ROI timeline: positive within 8 months
+Automated denial appeal success rate (AI): 67-74%
+Human-only appeal success rate: 41%
+Net revenue improvement from AI-first RCM: $28-44M per $1B gross charges
+
+VENDOR MARKET SHARE (outsourced RCM)
+Ensemble (Optum): 18% market share
+Guidehouse: 14%
+Nthrive: 12%
+Conifer: 11%
+R1 RCM: 10%
+Remaining fragmented: 35%

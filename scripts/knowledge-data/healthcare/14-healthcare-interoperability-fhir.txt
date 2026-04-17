@@ -1,0 +1,44 @@
+HEALTHCARE INTEROPERABILITY AND FHIR ADOPTION BENCHMARKS
+Source: ONC Health IT Dashboard 2025, HL7 FHIR Maturity Data
+
+FHIR ADOPTION LANDSCAPE
+Health systems with FHIR R4 APIs live: 72%
+FHIR maturity level ≥ 3 (capable of real data exchange): 44%
+CMS Interoperability Rule compliance (required by 2023): 81% compliant
+Patient data sent via FHIR monthly: 2.1B transactions (US healthcare system)
+
+DATA EXCHANGE PERFORMANCE
+Electronic health information (EHI) access within 24 hours: top quartile 89%
+EHI access within 48 hours: industry median 71%
+Data blocking incidents reported (2024): 140+ formal complaints to ONC
+Average cost of information blocking enforcement: $200,000-1M per case
+
+AI DEPENDENCY ON INTEROPERABILITY
+AI models requiring real-time data (sepsis, deterioration): require FHIR or HL7 feeds
+AI models that fail due to batch-only data: 41% of deployed clinical AI systems
+Average data latency (batch ETL to analytics): 18-36 hours
+Real-time FHIR pipeline latency: 2-8 seconds
+Health systems with real-time clinical data pipelines: 28%
+
+COMMONWELL AND CAREQUALITY
+CommonWell Health Alliance members: 43,000+ provider sites
+Carequality Framework: 52,000+ provider sites
+Patient records exchanged daily via networks: 12M+
+Duplicate MRN resolution challenge: 4.8% of cross-network records are duplicates
+
+BULK FHIR FOR AI TRAINING
+Bulk FHIR export: enables population-level AI training data extraction
+Health systems using Bulk FHIR for AI: 18%
+Bulk FHIR export time (1M patient records): 4-8 hours
+Data quality improvement via FHIR standardisation vs. legacy ETL: 34%
+
+PATIENT-MEDIATED DATA EXCHANGE
+Apple Health Records: available at 1,400+ health systems
+Patients who have shared records via USCDI: 8.4% (growing at 38% annually)
+AI apps using patient-contributed FHIR data: 44% of approved health apps
+
+EPIC FHIR ECOSYSTEM
+Epic App Orchard: 800+ apps with FHIR integration
+Epic FHIR API volume: 14B+ calls per month (largest in healthcare)
+Epic Cosmos database: 265M+ de-identified patient records for AI training
+Health systems contributing to Epic Cosmos: 200+

@@ -1,0 +1,51 @@
+SALESFORCE AND CRM ADOPTION IN FINANCIAL SERVICES
+Source: Salesforce State of Financial Services 2025, KLAS FinServ CRM Research
+
+CRM MARKET SHARE IN FINANCIAL SERVICES
+Salesforce Financial Services Cloud (FSC): 38% market share (firms >$50B AUM)
+Microsoft Dynamics 365: 19%
+Proprietary/legacy CRM: 29%
+Other (Backstop, Altvia, DealCloud): 14%
+
+SALESFORCE ADOPTION RATE BENCHMARKS
+Daily active use by relationship managers (industry median): 54%
+Top quartile: 78%
+Bottom quartile: < 31%
+Revenue leakage at < 40% adoption: 18-26% of cross-sell opportunities missed
+Cross-sell revenue improvement (>70% CRM adoption): +22-31%
+
+SALESFORCE DATA QUALITY BENCHMARKS
+CRM data completeness required for Einstein AI: 85%+
+Industry median CRM data completeness: 61%
+Gap between required and actual: 24 percentage points
+Einstein AI unreliability below 70% completeness: 68% of recommendations unreliable
+Top quartile data completeness: 89%
+
+DATA QUALITY IMPROVEMENT TIMELINE
+From 61% to 85% completeness: 8-14 months
+Required activities: data cleansing programme, MPI deduplication, data governance
+Annual ongoing maintenance cost: $280,000-480,000 for large firm
+ROI of data quality investment: 4.2x within 24 months (from Einstein activation)
+
+SALESFORCE EINSTEIN AI PERFORMANCE
+Einstein Lead Scoring accuracy: 84%
+Next Best Action recommendation accuracy: 78% (at 85% data completeness)
+Email engagement prediction accuracy: 81%
+Firms with Einstein activated: 41% of FSC clients
+Firms that consider Einstein "materially impactful": 18%
+Activation gap: 23 percentage points — due to data quality dependency
+
+RELATIONSHIP INTELLIGENCE AI
+Firms using relationship intelligence AI: 28%
+Vendors: Hearsay Systems, Seismic, Salesforce Einstein Relationship Insights
+Relationship manager productivity improvement: 22-31%
+Relationship health scoring accuracy: 82%
+At-risk client identification 90 days in advance: 78% accuracy
+Retention rate improvement with early intervention: +14 percentage points
+
+SALESFORCE IMPLEMENTATION BENCHMARKS
+Average FSC implementation timeline: 6-12 months
+Average implementation cost ($20B AUM firm): $1.2-2.8M
+Implementations that meet original go-live date: 44%
+Primary delay causes: data migration (58%) and change management (34%)
+Post-go-live optimization investment (recommended): 20-30% of initial cost

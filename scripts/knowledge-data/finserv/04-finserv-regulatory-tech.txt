@@ -1,0 +1,54 @@
+FINANCIAL SERVICES REGULATORY TECHNOLOGY (REGTECH) BENCHMARKS
+Source: Thomson Reuters Regulatory Intelligence, FCA/SEC Public Data 2025
+
+REGULATORY CHANGE VOLUME
+Global regulatory changes 2024: 56,000+
+Growth rate in regulatory changes: 11% annually
+Average regulatory changes materially affecting large asset manager: 4,200-6,800/year
+Cost to process one regulatory change (manual): $820
+Cost to process one regulatory change (AI-assisted): $180
+Annual savings from AI regulatory monitoring (large firm): $22-36M
+
+REGTECH SPEND
+Large asset managers/banks on compliance technology: 2.1-3.4% of total operating costs
+RegTech spend growth rate: 18% annually
+AI-powered RegTech as % of total RegTech spend: 34% (up from 14% in 2021)
+
+MIFID II COMPLIANCE AI
+Best execution reporting time with AI: -34%
+Data archival compliance improvement with AI: +38 percentage points
+Firms non-compliant with MiFID II data archival: 28% as of 2025
+MiFID II enforcement fine (average): €2.8M per enforcement action
+AI best execution analysis: covers 100% of trades vs. 18% manual sampling
+
+DORA (DIGITAL OPERATIONAL RESILIENCE ACT)
+Effective date: January 2025 (in force for EU-regulated firms)
+Non-compliance penalty: up to 2% of annual global turnover
+Scope: all critical IT systems including AI-assisted processes
+AI governance documentation requirements: full audit trail for AI decisions
+Firms behind schedule on DORA implementation: 34%
+DORA compliance cost estimate: €4-12M for large firm
+
+AML (ANTI-MONEY LAUNDERING) AI
+ML-based AML false positive reduction vs rule-based: 60-75%
+Cost per AML investigation (manual): $2,800
+Cost per AML investigation (AI-assisted): $420
+Annual savings from AML AI ($10B AUM firm): $2.1-4.8M
+SAR (Suspicious Activity Report) filing accuracy with AI: +22%
+AML model tuning cadence needed: every 6 months to remain effective
+
+SANCTIONS SCREENING AI
+Sanctions list changes per day: 8-14 (OFAC, EU, UN combined)
+AI screening coverage: 100% of transactions in real-time
+Manual screening speed: 200 names/hour
+AI screening speed: 50,000 names/second
+False positive rate reduction with AI: 72%
+Regulatory fine for sanctions breach: $100M-1B+ (per case, OFAC)
+
+CONDUCT RISK AND COMMUNICATIONS SURVEILLANCE
+Financial services firms with AI communications surveillance: 58%
+Email and voice surveillance coverage with AI: 94% of communications
+Alert rate reduction (AI vs. keyword): 68% fewer false alerts
+Cost per surveillance case (AI): $24 vs $380 (manual)
+FCA/SEC communication surveillance enforcement actions 2024: 48
+Average fine per enforcement action: £1.4M (FCA), $6.8M (SEC)

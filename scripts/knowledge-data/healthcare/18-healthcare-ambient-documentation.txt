@@ -1,0 +1,50 @@
+AMBIENT CLINICAL DOCUMENTATION AI — BENCHMARKS AND MARKET DATA
+Source: Nuance/Microsoft Clinical AI Report 2025, KLAS Ambient AI Research
+
+MARKET OVERVIEW
+Ambient documentation AI market size (2025): $2.4B
+Growth rate: 68% CAGR (2023-2026)
+Market leader: Nuance DAX (Microsoft) — 58% market share
+Other vendors: Suki AI (18%), Abridge (12%), Ambience Healthcare (8%)
+Deployed health systems with ambient AI: 600+ (DAX as of Q1 2025)
+
+PERFORMANCE BENCHMARKS
+Documentation time reduction: 34-52% per physician
+After-hours documentation reduction: 43%
+Time saved per encounter: 8.2 minutes average
+Patient interaction time increase: +22% (physician looks at patient, not screen)
+Documentation error rate: AI 2.8% vs. manual 4.1%
+
+PHYSICIAN SATISFACTION AND RETENTION
+NPS improvement with ambient AI: +24 points average
+Burnout score reduction (Maslach scale): 12-18 points
+Documentation as top burnout driver: cited by 71% of burned-out physicians
+Turnover intent reduction with ambient AI: 28%
+Value of one retained physician: $500,000-1.1M (recruitment + ramp)
+
+IMPLEMENTATION BENCHMARKS
+Time to full workflow adoption per physician: 3-6 weeks
+Integration requirement: EHR (Epic, Cerner) API access
+DAX integration with Epic: native integration, no FHIR required
+Rollout time (per 100 physicians): 6-8 weeks with dedicated champion
+Training requirement: 2-hour initial + 30-minute follow-up
+
+FINANCIAL IMPACT
+Productivity recovery (physician RVU increase): +11% within 6 months
+Revenue impact (per 100 physicians): $1.4-2.8M annual RVU uplift
+Recruitment cost savings (reduced turnover): $1.8-3.4M per 1,000 physicians
+Support staff reduction: 0.4-0.8 FTE per physician group (scribes, documentation support)
+Total ROI: 2.4-4.1x within 18 months
+
+PAYER AND BILLING ACCURACY
+Note completeness improvement with ambient AI: 34% more complete notes
+CDI query reduction: 28% (better documentation reduces need for queries)
+E/M level accuracy improvement: +14 percentage points
+Claim denial reduction attributable to documentation: 8-12%
+
+SPECIALITY PERFORMANCE DATA
+Primary care: 52% documentation time reduction (highest)
+Emergency medicine: 44% reduction
+Specialist (cardiology, oncology): 38% reduction
+Surgical specialties: 28% reduction (lower due to procedural documentation)
+Mental/behavioral health: 61% reduction (highest time savings per encounter)

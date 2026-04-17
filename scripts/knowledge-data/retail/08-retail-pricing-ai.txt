@@ -1,0 +1,58 @@
+RETAIL PRICING AI AND MARKDOWN OPTIMISATION BENCHMARKS
+Source: McKinsey Retail AI Report 2025, Boston Consulting Group Pricing Study
+
+PRICING AI ADOPTION
+Retailers with AI pricing in production: 24%
+Retailers using dynamic pricing (rule-based): 38%
+Retailers using purely manual pricing: 38%
+Pricing decision volume: large retailer makes 10M+ pricing decisions per year
+
+MARKDOWN OPTIMISATION AI BENCHMARKS
+End-of-season inventory write-off (no AI): 8-14% of seasonal inventory value
+End-of-season write-off reduction with AI: 22-34%
+Clearance rate improvement: +24 percentage points
+Gross margin improvement from AI markdowns: 1.2-2.8pp
+Annual savings ($5B revenue, 30% apparel): $12-28M
+
+DYNAMIC PRICING BENCHMARKS
+Revenue uplift from dynamic pricing: 4-8% of affected category revenue
+Margin improvement from dynamic pricing: 1.2-2.4pp
+Price elasticity model accuracy (AI): 88% vs. 64% (analyst estimate)
+Competitors monitored in real-time (top quartile): 840+ SKUs/day
+Price change frequency (with AI): 4.2x more changes per week vs. manual
+
+PERSONALIZED PRICING AI
+Retailers with individual customer-level pricing: 14%
+Personalised promotion conversion rate vs. mass offer: 2.4x higher
+Basket size improvement with personalised pricing: +18%
+Customer retention improvement with pricing AI: +14pp
+Regulatory risk: price discrimination laws vary by state — legal review required
+
+PRICING AI VENDOR LANDSCAPE
+Revionics (Aptos): 28% market share
+Attract.ai: 14%
+Pricing Intelligence (Wiser, Profitero): 22% (competitive monitoring focus)
+Salesforce Commerce Cloud Pricing: 12%
+Adobe Commerce Pricing: 8%
+Inhouse/custom: 16%
+
+PROMOTIONS AI
+Retailer promotion spend as % of revenue: 18-28% (grocery-heavy)
+Promotions with negative ROI (without AI): 40%
+Promotions with negative ROI (with AI modelling): 28%
+Improvement: 12pp — saving $1.8-3.6M per $1B promotional spend
+AI promotion optimisation payback: 8-12 months
+Top use cases: multi-brand cross-promotion, optimal promotion depth, timing AI
+
+CATEGORY MANAGEMENT AI
+Market basket analysis (traditional): weekly batch
+Market basket analysis (AI, real-time): continuous
+Category space allocation AI: improves sales/sqft 12-18%
+New product success prediction AI: 74% accuracy (vs. 51% traditional)
+Planogram AI: reduces planogram design time 64%, improves compliance 22%
+
+TRADE SPEND AI (RETAIL PERSPECTIVE)
+Retailers with AI for trade fund management: 28%
+Trade spend as % of COGS: 3.8-8.4% (category-dependent)
+AI-optimised trade terms: improves trade ROI 14-22%
+Deduction management AI: recovers 28-44% of disputed deductions automatically

@@ -1,0 +1,46 @@
+HEALTHCARE TECHNOLOGY VENDOR LANDSCAPE
+Source: KLAS Research 2025, Black Book Rankings, AbarVa Vendor Intelligence
+
+EHR VENDORS — MARKET SHARE AND PERFORMANCE
+Epic Systems: 38% market share (hospitals >200 beds), KLAS score 89.2/100
+Oracle Health (Cerner): 22%, KLAS score 74.1/100
+MEDITECH: 14% (community hospitals), KLAS score 81.4/100
+Allscripts/Veradigm: 9%, KLAS score 66.2/100
+
+EHR VENDOR AI CAPABILITIES (2025)
+Epic AI: 31% of clients have activated AI modules; ambient documentation (DAX partnership), deterioration AI, claim scrubbing AI
+Oracle Health AI: 18% activation; Oracle Clinical AI Agent (GenAI), integrated Cerner Millennium AI
+MEDITECH Expanse AI: 12% activation; early warning systems primary use case
+
+RCM OUTSOURCING VENDORS — PERFORMANCE DATA
+Ensemble (Optum): 18% market share, avg SLA compliance 72%, avg denial rate 11.2%
+R1 RCM: 10%, avg SLA compliance 79%, avg denial rate 9.8%
+Conifer Health: 11%, avg SLA compliance 68%, avg denial rate 12.4%
+Nthrive: 12%, avg SLA compliance 74%, avg denial rate 10.6%
+Guidehouse: 14%, avg SLA compliance 81%, avg denial rate 8.9%
+
+VENDOR SLA ENFORCEMENT DATA
+Health systems that have never enforced SLA penalties: 74%
+Average duration of SLA breach before client action: 6.2 quarters
+Average recoverable value per enforcement action: $4.2-12.1M
+Primary reason for non-enforcement: Legal/procurement disconnect from operations
+
+CLINICAL AI VENDORS (leading)
+Nuance DAX (Microsoft): ambient documentation, deployed in 600+ health systems
+Viz.ai: clinical imaging AI, PE/stroke detection, FDA-cleared
+Pieces Technologies: clinical documentation AI
+Innovaccer: health data platform + AI
+Arcadia: population health AI
+Notable Health: patient intake AI
+Cohere Health: prior authorization AI
+
+CLOUD INFRASTRUCTURE VENDORS IN HEALTHCARE
+Microsoft Azure Health Data Services: HIPAA BAA, Epic partnership, FHIR R4
+AWS HealthLake: FHIR-based, strong SageMaker integration
+Google Cloud Healthcare API: FHIR + BigQuery analytics strength
+
+CYBERSECURITY VENDORS (high priority in healthcare)
+Healthcare cyberattacks increased 264% from 2018-2024
+Average data breach cost in healthcare: $10.9M (highest of any industry)
+Top vendors: CrowdStrike, Palo Alto Networks, Claroty (IoMT security)
+HIPAA breach notification costs alone: $400K-2.1M per incident

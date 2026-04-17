@@ -1,0 +1,43 @@
+FINANCIAL SERVICES AI AND TECHNOLOGY VENDOR LANDSCAPE
+Source: AbarVa Vendor Intelligence Layer 2025, Gartner Magic Quadrant FS
+
+CORE FINANCIAL SYSTEMS VENDORS
+ERP/Finance: SAP S/4HANA (34% FS market), Oracle Fusion (28%), Workday Financials (18%)
+CRM: Salesforce FSC (38%), Microsoft Dynamics 365 (19%), Proprietary (29%)
+Core Banking (US): Fiserv (31%), Jack Henry (24%), FIS (19%)
+Core Banking (Global): Temenos (23%), Finastra (18%), Oracle Banking (14%)
+
+MARKET DATA AND ANALYTICS VENDORS
+Bloomberg: 35-45% of market data budget (most FS firms)
+Refinitiv/LSEG: 18-22%
+FactSet: 12-16% (strong in investment research workflow)
+S&P Global Market Intelligence: 10-14% (strong in credit and corporates)
+ICE Data Services: 8-12%
+Alternative data vendors (top): Quandl/Nasdaq, Second Measure, SimilarWeb, RS Metrics
+
+AI AND ANALYTICS PLATFORM VENDORS
+Enterprise AI: Microsoft Azure OpenAI, AWS Bedrock (Claude), Google Vertex AI
+ML platforms: Databricks, DataRobot, H2O.ai, Dataiku
+Risk and compliance AI: Behavox (surveillance), Symphony AyasdiAI (risk), Kensho (analytics)
+Portfolio management AI: BlackRock Aladdin (risk), MSCI RiskMetrics, Axioma
+ESG AI: MSCI ESG Research, Sustainalytics, Clarity AI, Arabesque S-Ray
+
+VENDOR PERFORMANCE DATA (AbarVa ENGAGEMENTS)
+Vendor categories with highest SLA breach rate: RCM outsourcers (74% never enforced), IT service management (44%)
+Vendor lock-in risk: Bloomberg (38% price premium over alternatives), core banking (switching cost $60-280M)
+Vendor consolidation savings achieved: 8-14% of IT spend
+Average vendor renegotiation savings: 18-28% per contract cycle
+
+TOP VENDOR SELECTION RISKS
+Risk 1: Selecting AI vendor before defining use cases — affects 48% of FS selections
+Risk 2: No exit strategy in vendor contract — affects 61% of FS tech contracts
+Risk 3: Vendor lock-in with proprietary data format — Bloomberg, some core banking
+Risk 4: Vendor acquired or discontinued — happened to 14% of installed base (2020-2025)
+Risk 5: Over-reliance on single vendor: adds 30-40% to 5-year TCO
+
+EMERGING VENDORS TO WATCH (2025-2026)
+AI agent platforms: Salesforce Agentforce, Microsoft Copilot Studio, ServiceNow AI
+Open source AI: Meta LLaMA 4, Mistral Large (reducing hyperscaler dependency)
+Data mesh platforms: Collibra, Atlan, Select Star
+Financial services AI infrastructure: Modular (AI hardware), Groq (inference speed)
+Regulatory AI: Ascent RegTech, Rulebook.ai, SALI (standard AI for legal instruments)

@@ -1,0 +1,56 @@
+MLOPS AND MODEL LIFECYCLE MANAGEMENT IN FINANCIAL SERVICES
+Source: Gartner MLOps Survey 2025, AbarVa PDLC Framework Data
+
+MLOPS MATURITY LEVELS IN FS
+Level 0 (manual, no MLOps): 34% of FS firms
+Level 1 (basic automation, some CI/CD): 28%
+Level 2 (automated training, monitoring): 22%
+Level 3 (full MLOps with governance): 16%
+AI programme success at Level 0-1: 38%
+AI programme success at Level 2-3: 81%
+
+MODELS IN PRODUCTION
+Average ML models in production (large bank): 68
+Average ML models in production (large asset manager): 41
+Models with no monitoring: 34%
+Models with performance monitoring but no drift detection: 28%
+Models with full monitoring and automated retraining: 28%
+Models with documented lineage and audit trail: 44%
+
+MODEL DRIFT AND DEGRADATION
+Average model performance decay (no retraining): 14-22% over 12 months
+Models requiring retraining: monthly 41%, quarterly 29%, annually 18%, ad hoc 12%
+Model failure rate (catastrophic degradation): 6% per year in unmonitored models
+Cost of undetected model failure (FS): $2.8-8.4M per incident
+Recovery time from model failure: 4.2 weeks (average)
+
+MLOPS PLATFORM LANDSCAPE IN FS
+MLflow + custom infrastructure: 34% of FS ML teams
+Azure Machine Learning: 28%
+AWS SageMaker: 22%
+Databricks MLflow (native): 21%
+DataRobot (no-code ML): 12%
+H2O.ai: 8%
+Feature store adoption: 28% of advanced ML teams
+
+FEATURE STORE BENCHMARKS
+Firms with enterprise feature store: 22%
+Feature reuse rate without store: 8%
+Feature reuse rate with feature store: 64%
+Development time saving with feature store: 41%
+Feature computation cost saving: 28% (no recomputation across teams)
+Leading feature stores in FS: Feast (open source), Tecton, Vertex AI Feature Store
+
+MODEL RISK MANAGEMENT INTEGRATION WITH MLOPS
+Banks requiring MRM validation in CI/CD pipeline: 18%
+Average MRM validation time added to deployment: +6.4 weeks
+Firms automating MRM evidence collection: 14%
+Target: automated evidence reduces MRM cycle to 2.1 weeks
+SR 11-7 compliance with MLOps audit trail: 61% of large banks
+
+PDLC (PRODUCT DELIVERY LIFECYCLE FOR AI) BENCHMARKS
+Time from model development to production (industry average): 8.4 months
+Time with mature MLOps: 2.8 months
+Cost to deploy one AI model (without MLOps): $280,000-620,000
+Cost to deploy one AI model (with MLOps): $42,000-88,000
+MLOps ROI: 4.8x within 24 months for organisations with >10 models in production

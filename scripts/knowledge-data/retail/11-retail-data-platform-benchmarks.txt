@@ -1,0 +1,55 @@
+RETAIL DATA PLATFORM AND ANALYTICS BENCHMARKS
+Source: Databricks Retail Report 2025, Snowflake Data Cloud Survey
+
+RETAIL DATA PLATFORM LANDSCAPE
+Snowflake: 41% adoption among $1B+ retailers (strongest in retail)
+Databricks: 34% adoption (ML-heavy retailers prefer Databricks)
+Azure Synapse: 18%
+AWS Redshift: 14%
+Google BigQuery: 12%
+On-premise DW still primary: 52%
+
+MEDALLION ARCHITECTURE ADOPTION (DATABRICKS)
+Retailers with medallion (Bronze/Silver/Gold) architecture: 28%
+Key benefit: unified product, customer, and transaction data for AI
+Bronze layer: raw ingestion (all sources, no transformation)
+Silver layer: cleaned, deduplicated, entity-resolved data
+Gold layer: business-ready, AI-ready aggregates
+Time to implement medallion architecture: 4-8 months
+AI model quality improvement with medallion vs. ad hoc: 44% better features
+
+DATA LATENCY BENCHMARKS
+Batch pipeline (nightly): 41% of retail data pipelines
+Near-real-time (15-min to 1-hour): 34%
+Real-time streaming (< 60 seconds): 18%
+Data latency impact on demand sensing: batch misses 14% of signal vs. streaming
+Real-time inventory update requirement: BOPIS requires < 5 minute latency
+
+RETAIL DATA VOLUME BENCHMARKS
+Average transactions per day ($5B retailer): 2.8M
+POS data volume: 120-180 GB per day
+Product catalogue size (large retailer): 800,000-4M SKUs
+Customer data records (deduplicated): 18-45M per large retailer
+Image data (CV for LP): 240 TB per year (1,000-store retailer)
+
+DATA GOVERNANCE IN RETAIL
+Retailers with formal data governance: 28%
+Retailers with data catalogue: 24%
+Data quality score (retail average): 71% on 100-point scale
+Retail-specific data quality issue: SKU master data inconsistency (affects 24% of SKUs)
+Store-level data accuracy for inventory: 65% (much lower than expected)
+Data governance ROI: 3.2x within 24 months
+
+SELF-SERVICE ANALYTICS
+Retailers with mature self-service analytics: 22%
+Business users who generate their own insights (without IT): top quartile 48%
+Time saved by self-service vs. IT request: 6.2 days per request
+Tools: Tableau (38%), Power BI (32%), Looker/Looker Studio (18%), ThoughtSpot (12%)
+AI-powered natural language query adoption: 18% of BI users
+
+REAL-TIME ANALYTICS AI
+Retailers with real-time dashboard for store managers: 38%
+Real-time KPIs tracked: hourly sales, inventory level, conversion, queue length
+AI anomaly detection on real-time data: alerts on 94% of issues within 8 minutes
+Manual anomaly detection: catches 61% of issues, average 4.2 hour delay
+Impact of 4-hour delay in detecting stockout: 3.4% lost sales per episode

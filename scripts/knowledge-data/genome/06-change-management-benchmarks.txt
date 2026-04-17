@@ -1,0 +1,55 @@
+CHANGE MANAGEMENT BENCHMARKS FOR AI PROGRAMMES
+Source: AbarVa Genome — 340+ engagements, Prosci Change Management Research 2025
+
+CHANGE MANAGEMENT INVESTMENT AND ADOPTION CORRELATION
+Budget allocated to change management vs. AI adoption rate at 18 months:
+- < 8% of budget: 41% adoption rate
+- 8-12% of budget: 58% adoption rate
+- 12-15% of budget: 76% adoption rate
+- > 15% of budget: 84% adoption rate
+
+ROI on change management investment:
+Programmes with < 8% change management: average ROI 140%
+Programmes with 12-15% change management: average ROI 280%
+Delta: 140pp — change management investment doubles ROI
+
+ADOPTION VELOCITY BENCHMARKS
+Quick win (first tangible AI result to users): within 90 days = 78% programme continuation
+Quick win at 90-120 days: 61% continuation
+No quick win within 120 days: 38% continuation
+Key insight: the 90-day proof point is the single most important milestone in the first phase
+
+RESISTANCE PATTERNS BY ROLE
+Middle management: 41% active resistance (highest)
+Reason: AI perceived as undermining their value add and decision authority
+Frontline workers: 22% resistance (lower when AI framed as reducing tedious tasks)
+Clinical staff (healthcare): 34% resistance (fear of AI replacing clinical judgement)
+Finance analysts (FS): 18% resistance (see AI as productivity tool, not threat)
+C-suite: 12% active resistance (highest sponsor of AI in most organisations)
+
+LIGHTHOUSE USER PROGRAMME
+Organisations with structured lighthouse user programme: 24%
+Broad adoption rate with lighthouse programme: 2.8x faster than without
+Lighthouse user selection criteria: early adopter, respected peer, enthusiastic communicator
+Lighthouse user to team adoption timeline: 60-90 days per team
+Return on lighthouse investment: $0 incremental cost, 2.8x adoption acceleration
+
+TRAINING AND LEARNING BENCHMARKS
+Training delivered without immediate practice: 62% revert within 30 days
+Training with immediate use case and practice environment: 84% retention
+Training format preference (by role):
+- Executives: 90-minute case study workshops
+- Managers: half-day scenario-based learning
+- Frontline: micro-learning (10-15 minute modules in flow of work)
+
+PARALLEL RUN RISK
+Parallel run (AI + manual simultaneously): necessary for safety — but 60-90 day maximum
+Extended parallel run (> 90 days): 2.3x cost, workforce never fully adopts AI
+Hard cutover with safety net: achieves 88% adoption in first 30 days
+Indefinite parallel run: adopted by 31% of organisations — a failure pattern
+
+MEASUREMENT AND CONSEQUENCE
+KPIs tracked but no manager consequence: 38% of target adoption at 18 months
+Manager performance review includes AI adoption metrics: 81% of target adoption at 18 months
+Monthly team-level adoption dashboard: 2.1x adoption vs. quarterly-only
+Organisations that celebrate AI wins publicly: 2.4x higher adoption across other teams

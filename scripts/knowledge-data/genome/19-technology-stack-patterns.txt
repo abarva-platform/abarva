@@ -1,0 +1,59 @@
+TECHNOLOGY STACK PATTERNS FOR AI-READY ORGANISATIONS
+Source: AbarVa Technology Assessment Framework, Gartner Data and Analytics Survey 2025
+
+ABARVA AI-READY TECHNOLOGY STACK REFERENCE
+
+LAYER 1: INGESTION
+Best-in-class: Kafka (real-time), Fivetran/dbt (batch), Airbyte (open source)
+Common mistake: single ingestion tool for all data types — streaming and batch require different tools
+Healthcare specific: Epic FHIR API as primary ingestion; HL7 v2 for legacy
+Retail specific: POS real-time (Kafka), ERP batch (Fivetran), e-com webhook (API)
+Financial services: FIX protocol for market data; REST API for bank/CRM data
+
+LAYER 2: STORAGE
+Best-in-class: Azure Data Lake Storage Gen2, AWS S3, Google Cloud Storage
+Format standard: Delta Lake (Databricks), Apache Iceberg (Snowflake), Parquet
+Anti-pattern: storing data in proprietary format with no open standard
+Governance requirement: all tables must be registered in data catalogue on creation
+
+LAYER 3: TRANSFORMATION
+Best-in-class: dbt (data build tool) for SQL transformation; Apache Spark for big data
+dbt adoption: 38% of enterprises; fastest growing data tool (2022-2025)
+dbt benefit: version-controlled, tested, documented SQL — all automated
+Anti-pattern: undocumented stored procedures in on-premise SQL Server
+
+LAYER 4: ANALYTICS AND BI
+Best-in-class: Tableau, Power BI, Looker, ThoughtSpot (AI-powered)
+Semantic layer: dbt Semantic Layer, AtScale, Cube.dev — prevents metric inconsistency
+Anti-pattern: BI without semantic layer = shadow analytics proliferation (D-002)
+Self-service target: 60%+ of analytics requests served by self-service, not IT
+
+LAYER 5: AI/ML PLATFORM
+Best-in-class: Databricks MLflow, Azure Machine Learning, AWS SageMaker
+Feature store: Feast (open source), Tecton, Vertex AI Feature Store
+Model serving: Seldon, BentoML, MLflow Serving
+Anti-pattern: Jupyter notebooks in production — no versioning, monitoring, or governance
+
+LAYER 6: GENERATIVE AI
+Best-in-class: Azure OpenAI (Microsoft shops), AWS Bedrock (AWS-primary), Vertex AI (GCP)
+RAG architecture: vector database (Pinecone, Weaviate, pgvector) + embedding model + LLM
+Anti-pattern: GenAI without RAG for factual queries — hallucination rate 8-14% unacceptable for business use
+Governance: all GenAI outputs reviewed by human before client-facing use (required in FS and healthcare)
+
+VENDOR CONCENTRATION RISK THRESHOLDS
+Single vendor > 30% of IT spend: board disclosure risk
+Single vendor dependency for critical AI: board-level risk register
+No evaluated alternative in 3+ years: switch cost unknown — assess annually
+
+TECHNOLOGY PATTERN ASSESSMENT QUESTIONS
+1. Can all your critical metrics be calculated from a single source with documented lineage?
+2. Is your data catalogue used by >80% of your data engineers?
+3. Can a data scientist access training data without filing an IT ticket?
+4. Do you have automated data quality monitoring on your critical tables?
+5. Is your model monitoring alerting you to drift within 24 hours?
+6. Can you deploy a new ML model to production in < 2 weeks?
+
+ORGANISATIONS THAT ANSWER YES TO 5-6: AI-Ready (top 8%)
+ORGANISATIONS THAT ANSWER YES TO 3-4: Foundation Building (29%)
+ORGANISATIONS THAT ANSWER YES TO 1-2: Significant Gaps (41%)
+ORGANISATIONS THAT ANSWER YES TO 0: Pre-Foundation (22%)

@@ -1,0 +1,44 @@
+MEDICARE ADVANTAGE AND PAYER AI BENCHMARKS
+Source: CMS Medicare Advantage Landscape 2025, AHIP Data
+
+MEDICARE ADVANTAGE MARKET
+MA penetration of Medicare beneficiaries: 52% (2025)
+Annual MA revenue (total): $450B+
+MA penetration by geography: varies from 28% (rural) to 68% (urban)
+Growth rate: 4.2% annually in enrollment
+MA plans: 800+ plans offered nationally
+
+PAYER AI ADOPTION
+Health plans with AI-powered prior auth: 61%
+Health plans with AI for fraud, waste, abuse (FWA): 78%
+Health plans with predictive analytics for risk adjustment: 84%
+Health plans with AI member engagement: 44%
+Health plans with AI care management: 38%
+
+MA STAR RATING AI IMPACT
+Star rating calculation factors: 40+ quality measures
+Financial impact of STAR rating (per member per year):
+- 5 STAR: $48 bonus per member per month above 4 stars
+- 4 STAR: $12 bonus per member per month above 3 stars
+- Below 3 STAR: quality bonus withheld
+AI-driven care gap closure: +0.4-0.8 STAR improvement average
+Revenue impact per 0.5 STAR improvement (per 10,000 members): $2.9M annually
+
+PAYER-PROVIDER TENSION POINTS
+Prior auth denials (MA): 14.8% average vs 6.2% traditional Medicare
+MA prior auth appeal success rate (providers): 62%
+OIG finding: 18% of MA prior auth denials were inappropriate
+CMS 2026 rule: limits MA prior auth for post-acute care services
+
+RISK ADJUSTMENT AND CODING
+HCC (Hierarchical Condition Category) coding accuracy: AI improves 12-18pp
+Undercoding of HCCs: costs providers $1,200-2,400 per patient annually
+AI-assisted HCC capture increase: +0.08-0.12 average RAF score
+Revenue impact per 0.1 RAF improvement (per 10,000 patients): $1.8M
+
+VALUE-BASED CARE CONTRACTS WITH PAYERS
+Health systems in shared savings with payers: 68%
+Health systems in full-risk capitation: 14%
+Average shared savings rate earned: 4.2% of spend
+AI-enabled health systems earn: 3.1pp more in shared savings
+Preferred provider network status dependency: 84% of revenues for most IDNs

@@ -1,0 +1,59 @@
+BASELINE MEASUREMENT AND ROI VERIFICATION STANDARDS
+Source: AbarVa Outcome Verification Framework, ISACA AI Assurance Standards
+
+THE BASELINE PROBLEM IN AI PROGRAMMES
+84% of enterprise AI programmes have no locked baseline at go-live
+Consequence: ROI cannot be calculated with integrity
+Common result: programme declared successful without evidence; or ROI claimed is inflated
+Root cause: urgency to deploy AI outpaces discipline to measure
+
+WHY BASELINES ARE FREQUENTLY MISSING
+Reason 1: "We know what the baseline is approximately" — insufficient (approximations drift)
+Reason 2: Data systems cannot produce the baseline metric historically — data quality issue (signals readiness problem)
+Reason 3: "We'll measure the improvement after go-live" — too late (many confounding variables)
+Reason 4: Multiple stakeholders disagree on the right metric — governance issue
+Reason 5: Vendor wants to go live quickly — baseline slows deployment (resist this pressure)
+
+ABARVA BASELINE LOCKING PROTOCOL
+Step 1: Define 5-7 KPIs that AI must improve (by CXO sign-off, not IT)
+Step 2: Calculate historical baseline for each KPI (12 months minimum, 24 preferred)
+Step 3: CXO signs baseline document — cannot be changed after AI deployment
+Step 4: Set target: what KPI value constitutes success at 12 and 24 months
+Step 5: Define measurement methodology (how will KPI be calculated, by whom, how often)
+Step 6: Identify confounding variables (seasonality, market changes) and document exclusion methodology
+
+MEASUREMENT CADENCE BEST PRACTICES
+Week 1-4 post-go-live: daily monitoring (instability expected)
+Month 2-3: weekly reporting against baseline
+Month 4+: monthly reporting, quarterly CXO review
+Annual: independent third-party verification of ROI claims
+
+COMMON BASELINE MEASUREMENT ERRORS
+Error 1: Using a different metric before vs. after AI (e.g., gross revenue before, net revenue after)
+Error 2: Counting AI improvement during a period of external tailwinds (market recovery, etc.)
+Error 3: Measuring model performance (accuracy, AUC) instead of business outcome (revenue, cost)
+Error 4: Not accounting for learning curve (months 1-3 are typically below steady-state performance)
+Error 5: Comparing to a "control group" that was cherry-picked
+
+KPI FRAMEWORKS BY USE CASE
+
+RCM AI (Healthcare):
+Primary: denial rate %, days in AR, clean claim rate %
+Secondary: prior auth cycle time, rework cost per denial
+Measurement: monthly, from EHR billing system (Epic Clarity preferred)
+
+Demand Forecasting AI (Retail):
+Primary: forecast accuracy % at SKU/store, inventory turnover, out-of-stock rate
+Secondary: markdown % of inventory, days of inventory on hand
+Measurement: weekly, from WMS/ERP
+
+Fraud Detection AI (Banking):
+Primary: fraud loss as % of transactions, false positive rate
+Secondary: false negative rate, investigation cost per case
+Measurement: daily, from fraud management system
+
+INDEPENDENT VERIFICATION
+Third-party ROI verification: 22% of AI programmes use independent verification
+AbarVa recommendation: all programmes >$5M should have independent verification
+Verification reduces ROI claim inflation: from 340% claimed to 280% independently verified (average delta: 17%)
+Verification cost: $40,000-180,000 (small fraction of claimed ROI)

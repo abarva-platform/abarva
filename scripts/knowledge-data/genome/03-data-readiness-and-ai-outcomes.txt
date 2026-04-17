@@ -1,0 +1,65 @@
+DATA READINESS AND AI PROGRAMME OUTCOME CORRELATION
+Source: AbarVa Assessment Database — 340+ engagements
+
+ABARVA DATA READINESS SCORE (0-100)
+Composite of: Data Quality (30%), Infrastructure Maturity (25%), Governance (25%), Talent (20%)
+
+SCORE DISTRIBUTION (AbarVa assessed client base)
+Score > 70 (AI-ready): 8% of organisations
+Score 50-70 (foundation building): 29%
+Score 35-50 (significant gaps): 41%
+Score < 35 (pre-foundation): 22%
+
+OUTCOME CORRELATION BY SCORE BAND
+
+Score > 65 (AI-Ready):
+- AI use case deployment rate: 2x the 35-50 band in 24 months
+- Programme cost vs. forecast: 94% on or under budget
+- Model accuracy at deployment: 88% average
+- ROI at 24 months: 280-380%
+- 90-day milestone achieved: 84%
+
+Score 50-64 (Foundation Building):
+- AI use case deployment rate: 1.4x median
+- Programme cost vs. forecast: 12% over budget average
+- Model accuracy at deployment: 76% average
+- ROI at 24 months: 140-210%
+- 90-day milestone achieved: 61%
+
+Score 35-49 (Significant Gaps):
+- AI use case deployment rate: 0.7x median
+- Programme cost vs. forecast: 44% over budget average
+- Model accuracy at deployment: 62% average
+- ROI at 24 months: 60-110%
+- 90-day milestone achieved: 38%
+
+Score < 35 (Pre-Foundation):
+- 68% of AI initiatives stall at proof-of-concept
+- Deployed models: 0.3x the AI-ready band
+- Cost overrun: 2.1x original programme estimate
+- ROI: negative in 44% of cases
+
+DATA READINESS IMPROVEMENT ROI
+Moving from score 35-40 to 60-65:
+- Required investment: $4-12M (varies by size)
+- Required timeline: 12-18 months
+- ROI on readiness investment: 4.2x (through downstream AI programme performance)
+
+Top 5 data readiness blockers by frequency:
+1. No enterprise data governance framework: 61%
+2. Multiple conflicting master data sources (customer, product): 54%
+3. Data lake without data catalogue: 48%
+4. No self-service analytics for business users: 44%
+5. Data quality score < 70% on critical datasets: 41%
+
+KEY FINDING
+Organisations that invest in data readiness before selecting an AI platform achieve 2.8x better AI programme outcomes than those who select the platform first.
+
+Sequence that works: Baseline → Governance → Data Quality → Platform → Use Cases → Scale
+Sequence that fails: Platform → Use Cases → (discover) Data Quality → Rework → (miss) Governance → Delay
+
+READINESS INVESTMENT BENCHMARK
+Readiness investment as % of total AI programme: top quartile 18-24%
+Readiness investment as % of total AI programme: bottom quartile 4-8%
+Bottom quartile programmes with low readiness investment: 2.1x higher total programme cost
+(Skipping readiness is expensive — it is paid for with rework)

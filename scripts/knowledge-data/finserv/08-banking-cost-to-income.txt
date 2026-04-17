@@ -1,0 +1,57 @@
+REGIONAL BANKING COST-TO-INCOME AND PERFORMANCE BENCHMARKS
+Source: FDIC Quarterly Banking Profile 2025, Federal Reserve Bank Performance Data
+
+COST-TO-INCOME RATIO BENCHMARKS
+Top-quartile US regional banks (> $10B assets): 52-57%
+Median regional bank: 64%
+Community banks (< $10B assets) median: 68%
+National banks median: 61%
+Bottom quartile: > 74% (structural profitability risk)
+
+AI IMPACT ON C/I RATIOS
+Firms with mature AI automation: avg C/I 58.4%
+Firms with no AI: avg C/I 70.2%
+Delta: 11.8 percentage points
+Time to realise AI-driven C/I improvement: 18-30 months
+Target C/I achievable with AI (5-year programme): 52-58% for regional banks
+
+KEY C/I LEVERS FOR REGIONAL BANKS
+Contact center AI (reduction): 2-4pp
+Back-office process automation: 2-3pp
+Branch network optimization with AI: 1-2pp
+AI-driven fraud reduction: 0.5-1pp
+Loan origination automation: 1-2pp
+Total achievable improvement: 7-12pp with comprehensive AI programme
+
+NET INTEREST MARGIN (NIM) BENCHMARKS
+Post-rate-normalization NIM projection (2025-2026): 2.8-3.4%
+AI deposit pricing optimization: improves NIM 8-14 basis points
+AI loan pricing (individual customer level): improves NIM additional 4-8 basis points
+Revenue impact of 10bp NIM improvement (per $10B assets): $10M annually
+Firms with AI pricing in production: 18%
+
+DIGITAL BANKING ADOPTION BENCHMARKS
+Mobile banking monthly active users as % of customers:
+- Top quartile: 72-81%
+- Median: 54%
+- Bottom quartile: 38%
+Banks below 45% mobile adoption: losing 18-24% of primary relationship share
+Online account opening completion rate (top quartile): 78%
+Online account opening completion rate (median): 41%
+
+LOAN ORIGINATION BENCHMARKS
+Consumer loan decision time (top quartile): < 48 hours end-to-end
+Consumer loan decision time (median): 7.2 days
+AI underwriting: reduces origination time 68-74%
+Credit loss performance with AI: same or better than traditional underwriting
+SBA loan origination time (manual): 18 days
+SBA loan origination time (AI-assisted): 6 days
+Conversion rate improvement with faster decisions: +22%
+
+FRAUD AND AML BENCHMARKS
+Average annual fraud loss (per $10B bank): $4.2M
+AI fraud detection ROI: saves $1.6-2.3M net of platform costs
+AML false positive rate (rule-based): 68%
+AML false positive rate (ML-based): 18%
+SAR filing accuracy improvement: +22%
+Regulatory fine risk reduction: 34%

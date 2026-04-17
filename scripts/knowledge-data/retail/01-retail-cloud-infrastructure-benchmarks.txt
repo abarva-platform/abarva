@@ -1,0 +1,54 @@
+RETAIL CLOUD INFRASTRUCTURE BENCHMARKS
+Source: Gartner Retail IT Spending Survey 2025, IDC Cloud Adoption in Retail 2024
+
+CLOUD SPEND BENCHMARKS
+Cloud spend as % of IT budget (retailers $1B+ revenue): 31%
+Average annual cloud spend ($5-10B revenue retailer): $52-68M
+Azure market share in retail: 38%
+AWS market share in retail: 41%
+GCP market share in retail: 21%
+
+FINOPS BENCHMARKS
+Retailers with formal FinOps function: 31%
+Average cloud waste (no FinOps): 38-44%
+Reserved instance coverage (retailers without FinOps): 14%
+Reserved instance coverage (top quartile): 68%
+Average annual savings when FinOps implemented: $12-42M
+Payback period for FinOps investment: 2.1 months
+
+DATA INFRASTRUCTURE
+Retailers with unified customer data platform: 28%
+Average customer data silos: 6.4 systems
+Retailers with Databricks: 34%
+Retailers with Snowflake: 41%
+On-premise DW still primary: 52%
+
+ERP LANDSCAPE
+SAP penetration ($1B+ retail): 54%
+Oracle EBS penetration: 31%
+Average number of ERP instances (post-M&A): 3.8
+Retailers with 10+ ERP instances: 12%
+ERP unification cost (cloud migration): $8-24M
+
+AI ADOPTION
+AI in production (at least 1 use case): 44%
+Personalisation AI live: 28%
+Demand forecasting AI live: 39%
+Loss prevention AI live: 22%
+Supply chain AI live: 31%
+Pricing optimisation AI live: 24%
+
+IT SPEND AS % OF REVENUE
+Specialty retail top quartile: 2.4-3.8%
+Specialty retail median: 2.1%
+Department stores: 1.6-2.4%
+Grocery: 1.2-1.8%
+Pure-play e-commerce: 6-9%
+Retailers below 1.4%: digitally at risk
+
+CLOUD MIGRATION PATTERNS
+Lift-and-shift (fastest): 44% of retail cloud migrations
+Re-platform (medium complexity): 36%
+Re-architect (cloud-native): 20%
+Average migration project duration: 18-30 months for large retailers
+Post-migration performance improvement: 34% average

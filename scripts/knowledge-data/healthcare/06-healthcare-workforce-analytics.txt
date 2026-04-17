@@ -1,0 +1,49 @@
+HEALTHCARE WORKFORCE ANALYTICS AND AI BENCHMARKS
+Source: AHA Workforce Survey 2025, NSI Nursing Solutions National Healthcare Retention Report
+
+TRAVEL NURSE AND AGENCY SPEND BENCHMARKS
+Average travel nurse spend as % of total nursing payroll: 12.8%
+Top-quartile health systems: < 7%
+Bottom-quartile (crisis-level): > 22%
+Average cost premium: travel RN costs 2.4-2.8x permanent staff fully loaded
+Average travel RN cost per 13-week contract: $68,000-96,000
+
+AI-DRIVEN STAFFING OPTIMISATION OUTCOMES
+Health systems with AI scheduling deployed: 29%
+Travel nurse spend reduction with AI scheduling: 18-31%
+At $60M travel nurse spend (large IDN), AI savings: $10.8-18.6M annually
+Permanent RN retention improvement with AI-optimised scheduling: 14-19%
+Overtime cost reduction with predictive staffing: 22-28%
+
+NURSE TURNOVER BENCHMARKS
+Industry average RN turnover 2024: 18.4%
+Top quartile: 12.1%
+Bottom quartile: 26.2%
+Cost to replace one RN: $46,000-61,000 (recruitment + orientation + productivity loss)
+Annual turnover cost at 18.4% (500-bed hospital): $11.4-15.2M
+
+AI PREDICTIVE ATTRITION MODELS
+Accuracy of best-in-class attrition prediction: 84% (flagged 90 days pre-departure)
+Intervention success rate when flagged early: 41% of at-risk nurses retained
+Net retention improvement with AI: 3-5 percentage points
+Annual savings from 3pp turnover reduction (500-bed): $2.8-3.6M
+
+PHYSICIAN BURNOUT AND DOCUMENTATION AI
+Physician burnout prevalence: 63% report burnout symptoms
+Primary cause: administrative burden (cited by 71% of burned-out physicians)
+Documentation time as % of physician workday: 34-41%
+Ambient documentation AI (Nuance DAX, Suki) reduces documentation time: 34-52%
+Physician retention improvement with documentation AI: 12-18% reduction in turnover intent
+Estimated value of one retained physician: $500,000-1.1M in recruitment + revenue
+
+WORKFORCE PLANNING BENCHMARKS
+Health systems with AI-powered workforce planning: 14%
+Average nurse scheduling system age: 8.4 years (mostly rules-based)
+AI scheduling payback period: 6-10 months
+Patient-to-nurse ratio AI optimization: reduces ratio variation 24%, improves HCAHPS 8-12 points
+
+STAFFING AGENCY VENDOR LANDSCAPE
+AMN Healthcare: 28% of temporary healthcare staffing market
+Aya Healthcare: 22% (fastest growing, tech-enabled)
+CrossCountry Healthcare: 18%
+Key trend: Agencies with AI-powered matching fill positions 38% faster

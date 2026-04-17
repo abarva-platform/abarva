@@ -1,0 +1,63 @@
+AI TRANSFORMATION PEER OUTCOMES — CROSS-INDUSTRY BENCHMARKS
+Source: AbarVa Engagement Outcomes Database (340+ engagements, anonymised)
+
+OVERALL PROGRAMME OUTCOMES (ABARVA CLIENT BASE)
+Average AI programme ROI (AbarVa structured programmes): 280% at 24 months
+Average AI programme ROI (industry unstructured): 110% at 24 months
+AbarVa structured programme success rate: 61%
+Industry average success rate: 34%
+
+KEY DIFFERENTIATORS OF TOP-PERFORMING PROGRAMMES
+1. Phase 0 discovery completed: 84% success rate (vs. 31% without)
+2. CDO appointed before Phase 2: 84% success rate
+3. 90-day quick win achieved: 78% programme continuation
+4. Outcome-based vendor contracts: 82% SLA compliance
+5. Change management > 12% of budget: 76% adoption at 18 months
+6. Data readiness score > 60 before AI deployment: 2x use case count at 24 months
+
+CROSS-INDUSTRY BENCHMARK COMPARISONS
+
+TIME TO FIRST AI USE CASE IN PRODUCTION
+Healthcare: 14 months average; top quartile 8 months
+Financial services: 11 months average; top quartile 6 months
+Retail: 9 months average; top quartile 5 months
+Manufacturing: 12 months average
+
+ROI AT 24 MONTHS (STRUCTURED PROGRAMMES)
+Healthcare (RCM focus): 2.8-4.2x
+Financial services (operations focus): 3.2-5.8x
+Retail (demand forecasting + personalisation): 3.4-5.4x
+Banking (fraud + digital): 4.2-8.2x
+Cross-industry average: 3.4x
+
+INVESTMENT REQUIRED PER $1M AI PROGRAMME VALUE
+Data platform investment: $0.18M per $1M AI value
+Governance and talent: $0.12M per $1M AI value
+Change management: $0.08M per $1M AI value
+Technology: $0.22M per $1M AI value
+Total enablement per $1M value: $0.60M (1.67x ROI minimum, typically 3x+)
+
+CROSS-INDUSTRY SUCCESS CASE BENCHMARKS
+
+HEALTHCARE RCM AI SUCCESS:
+Baseline denial rate: 12.4% → Target: 6.2% → Achieved: 6.8% (12 months)
+Revenue recovered: $28M on $4.8M investment (5.8x ROI)
+Programme: denial AI + PA automation + coding AI, phased
+Time to first positive ROI: 8 months
+
+FINANCIAL SERVICES OPERATIONS AI SUCCESS:
+Baseline reconciliation errors: 2.4% → Achieved: 0.18%
+Baseline financial close: 7.2 days → Achieved: 2.8 days
+Annual savings: $9.2M on $6.8M programme
+ROI: 7.4x at 24 months
+
+RETAIL SUPPLY CHAIN AI SUCCESS:
+Baseline forecast accuracy: 74% → Achieved: 91%
+Baseline out-of-stock: 2.4% → Achieved: 0.9%
+Annual inventory savings: $18M ($5B retailer)
+ROI: 4.8x at 24 months on $3.8M programme
+
+WORST CASE OUTCOMES (FAILURE PATTERNS MATCHED)
+Healthcare: AI deployed without CDO, baseline not locked — programme abandoned at month 14 ($3.2M lost)
+Financial services: vendor selected before use cases defined — $4.8M platform with 6% utilisation at 24 months
+Retail: personalisation AI deployed before identity resolution — ROI 0.4x (vs. 3.4x potential)

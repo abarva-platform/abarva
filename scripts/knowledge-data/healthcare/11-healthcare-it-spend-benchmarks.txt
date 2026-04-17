@@ -1,0 +1,54 @@
+HEALTHCARE IT SPEND AND BUDGET BENCHMARKS
+Source: HIMSS Analytics 2025, Gartner Healthcare IT Spending Forecast
+
+IT SPEND AS % OF NET PATIENT REVENUE BY SYSTEM SIZE
+Large IDN (> $5B revenue): 3.8-5.2%, median 4.3%
+Mid-size health system ($1B-$5B): 3.2-4.6%, median 3.8%
+Community hospital (< $1B): 2.8-4.1%, median 3.4%
+Academic Medical Center: 4.8-6.2%, median 5.4%
+Children's hospitals: 4.1-5.8%, median 4.9%
+
+IT BUDGET ALLOCATION (% of total IT spend)
+Infrastructure and operations: 38-45%
+Applications (EHR, ancillary): 28-35%
+Security and compliance: 10-14%
+Analytics and AI: 6-12% (leaders: 14-18%)
+Innovation and emerging tech: 2-5%
+
+High performer vs. laggard AI spend:
+Top quartile IT leaders: 14-18% of IT budget on AI/analytics
+Bottom quartile: < 5% on AI/analytics
+Outcome gap: 2x more AI use cases in production within 24 months
+
+EPIC-SPECIFIC COST BENCHMARKS
+Epic license and maintenance: 18-28% of total IT spend (Epic-live organisations)
+Epic implementation spend per hospital (mid-size): $12-22M
+Epic optimization post-go-live: $3.8-6.4M per year
+Epic go-live IT spend spike: 1.8-2.4x baseline during go-live year
+Normalisation timeline post go-live: 18-24 months
+
+CYBERSECURITY SPEND
+Healthcare cybersecurity spend as % of IT budget: 10-14%
+Recommended (NIST framework): 12-15%
+Average cost of healthcare data breach 2024: $10.9M (highest of any industry)
+Average ransomware recovery cost: $1.4-4.2M per incident
+Health systems with zero-trust architecture: 22%
+
+CLOUD INFRASTRUCTURE SPEND
+Cloud as % of IT budget: 28% (growing from 18% in 2021)
+On-premise vs. hybrid vs. cloud-first:
+- Predominantly on-premise: 34%
+- Hybrid: 48%
+- Cloud-first: 18%
+
+TECHNOLOGY DEBT
+Average healthcare technology debt: $48M per $1B revenue
+IT systems older than 10 years: 41% of applications
+Annual technical debt interest (maintenance cost premium): $6.8-12.4M per $1B revenue
+
+VENDOR SPEND CONSOLIDATION OPPORTUNITY
+Average number of clinical application vendors per large IDN: 84
+Top quartile (optimised): 54
+Vendor consolidation cost savings: 8-14% of application spend
+AI-assisted vendor rationalization timeline: 12-18 months
+Annual application rationalization savings (large IDN): $3.2-6.8M

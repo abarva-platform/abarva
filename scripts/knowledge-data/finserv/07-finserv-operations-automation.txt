@@ -1,0 +1,56 @@
+FINANCIAL SERVICES OPERATIONS AND BACK OFFICE AI BENCHMARKS
+Source: McKinsey Global Banking Survey 2025, Deloitte FS Operations Report
+
+OPERATIONS AI ADOPTION IN ASSET MANAGEMENT
+Firms with AI in at least one back office function: 64%
+Trade reconciliation AI: 48%
+Fund accounting AI: 31%
+Client reporting AI: 38%
+Transfer agency AI: 22%
+Invoice processing AI: 44%
+
+TRADE RECONCILIATION AI
+Manual reconciliation error rate: 2.4%
+AI reconciliation error rate: 0.18%
+Processing speed improvement: 8.2x faster
+Cost per reconciliation (manual): $4.80
+Cost per reconciliation (AI): $0.42
+Annual savings ($100B AUM firm with 2M annual trades): $8.8M
+
+FINANCIAL CLOSE AI
+Average financial close timeline (asset management): 6-8 days
+With AI automation: 2.5-3.5 days
+Key tasks automated: journal entries, reconciliation, consolidation, intercompany
+CFO satisfaction improvement: +28 NPS points
+Error rate reduction in financial close: 64%
+AI close acceleration ROI: 3.8x within 18 months
+
+CLIENT REPORTING AI
+Manual report production time per client: 4.2 hours
+AI-assisted report production: 22 minutes
+Customisation level: AI can produce 10x more customised reports than manual
+Client satisfaction with AI-personalised reports: +18 NPS points
+Report production cost reduction: 61%
+Annual savings (firm with 2,400 institutional clients): $4.4M
+
+RFP AUTOMATION AI
+RFP response time (manual): 3.2 weeks
+RFP response time (AI-assisted): 5 days
+RFP win rate improvement with AI (better quality): +14%
+Cost per RFP (manual): $18,000
+Cost per RFP (AI-assisted): $5,800
+Annual savings (40 RFPs/year): $488,000
+
+INVOICE PROCESSING AND ACCOUNTS PAYABLE AI
+Invoice processing time (manual): 8.2 days
+Invoice processing time (AI): 1.4 days
+Early payment discount capture improvement: +34%
+Duplicate invoice detection accuracy: 98.4%
+AP automation ROI: 4.1x within 12 months
+
+IT OPERATIONS AI (AIOps)
+Asset managers with AIOps: 22%
+System downtime reduction with AIOps: 34%
+Mean-time-to-resolution (MTTR) improvement: -44%
+IT helpdesk ticket automation rate: 38% fully automated
+Annual IT operations cost reduction with AIOps: 18-28%

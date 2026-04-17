@@ -1,0 +1,49 @@
+HEALTHCARE CLOUD ADOPTION AND MIGRATION BENCHMARKS
+Source: IDC Healthcare Cloud Adoption Survey 2025, HIMSS Analytics
+
+CLOUD ADOPTION OVERVIEW
+Health systems using at least one cloud provider: 94%
+Primarily cloud-based (>60% workloads in cloud): 28%
+Hybrid (40-60% cloud): 52%
+Primarily on-premise (<40% cloud): 20%
+
+CLOUD PROVIDER MARKET SHARE IN HEALTHCARE
+Microsoft Azure: 37% primary cloud (Epic partnership, HIPAA compliance tooling)
+AWS: 31% primary cloud (SageMaker, HealthLake, strong ML tools)
+Google Cloud: 19% primary cloud (BigQuery analytics, Vertex AI, FHIR)
+Multi-cloud average: 2.3 providers per health system
+
+EPIC AND MICROSOFT PARTNERSHIP IMPACT
+Epic runs on Azure exclusively: 100% (Epic moved all cloud hosting to Azure 2023)
+Health systems with Epic on Azure: automatically have Azure footprint
+Microsoft Copilot for Healthcare: integrated with Epic via DAX and Teams
+Azure Health Data Services (FHIR): direct Epic integration, 4-hour provisioning
+
+CLOUD MIGRATION COST BENCHMARKS
+Average migration cost per application: $280,000-620,000
+Legacy data warehouse migration (Teradata to cloud): $3.8-9.2M per $1B revenue
+On-premise to cloud server migration: $8,400-24,000 per server
+Timeline: large IDN full infrastructure migration: 3-5 years
+Lift-and-shift vs. cloud-native redesign cost ratio: 1:2.4 (native 2.4x more expensive but 3.8x better performance)
+
+CLOUD COST MANAGEMENT
+Average cloud overspend (no FinOps): 36-44%
+Health systems with formal FinOps practice: 24%
+FinOps annual savings (large IDN): $4.2-8.8M
+Reserved instance savings vs on-demand: 38-52%
+Health systems with >50% reserved instance coverage: 31%
+
+AI/ML CLOUD SERVICES ADOPTION IN HEALTHCARE
+Azure OpenAI Service in healthcare: 24% of Azure-primary health systems
+AWS Bedrock in healthcare: 18% of AWS-primary health systems
+Google Vertex AI in healthcare: 14% of GCP-primary health systems
+SageMaker for clinical ML: 22% of health systems with ML programmes
+Containerisation (Kubernetes) for AI workloads: 34% of AI-active health systems
+
+DATA RESIDENCY AND SOVEREIGNTY
+Health systems requiring US data residency: 88%
+Health systems with HIPAA BAA from cloud provider: 94% (of cloud users)
+Multi-region deployment for disaster recovery: 44%
+Average RPO (recovery point objective) for clinical systems: 4 hours
+Average RTO (recovery time objective): 2 hours
+Health systems meeting RPO/RTO targets: 61%

@@ -1,0 +1,48 @@
+BANKING AI USE CASES — LENDING, CUSTOMER EXPERIENCE, AND DIGITAL
+Source: American Banker Technology Survey 2025, Deloitte Banking AI Report
+
+AI LENDING AND CREDIT BENCHMARKS
+AI underwriting decision time: < 2 minutes (consumer); < 24 hours (business)
+Traditional underwriting: 7.2 days (consumer); 18 days (SMB)
+AI credit model accuracy: 4-7% reduction in credit losses vs. traditional scorecard
+AI coverage: includes thin-file and new-to-credit populations (18% more approvals, same loss rate)
+AI model types: gradient boosted trees most common (44%), deep learning (22%), ensembles (28%)
+
+SMALL BUSINESS BANKING AI OUTCOMES
+SMB loan turnaround time (top quartile with AI): 3-5 days
+SMB loan turnaround time (median): 18 days
+Conversion rate at 3-5 day turnaround vs. 18+ days: +34%
+Cash flow AI adoption rate (SMB banking): 18%
+Cash flow forecasting AI: increases product adoption 22%, reduces churn 14%
+SMB NPS improvement with cash flow AI: +18 points (highest-NPS AI feature in banking)
+
+PERSONALISED DEPOSIT PRICING AI
+Firms with AI deposit pricing: 18%
+NIM improvement from AI deposit pricing: 8-14 basis points
+AI pricing at individual customer level: 1.4x more effective than segment pricing
+Customer churn reduction from personalised offers: 14-19%
+Annual revenue impact ($10B bank, 10bp NIM): $10M
+
+DIGITAL BANKING AI FEATURES
+Predictive balance and overdraft alerts: 44% of top-quartile banks deployed
+AI chatbot (FAQ and account servicing): 48%
+AI fraud alert in mobile: 68% of mid-size+ banks
+Personalized product recommendation in app: 28%
+AI financial wellness tools: 18%
+
+CONTACT CENTER AI BENCHMARKS
+Banks with AI-first contact center routing: 38%
+Cost per contact (live agent): $8.20-12.40
+Cost per AI-handled interaction: $0.84-1.40
+Containment rate (AI, top quartile): 68%
+Containment rate (AI, median): 44%
+CSAT improvement (AI + agent assist vs. agent only): +14%
+Annual savings ($10B bank, 500K contacts/year): $2.1-3.8M
+
+WEALTH DEMOCRATISATION AI
+Banks using AI for digital wealth (sub-$250K segment): 22%
+AUM growth from digital wealth AI (first 18 months): +34%
+Investment in AI wealth platform: $1.8-4.2M
+Digital wealth platform fee: 0.25-0.45% AUM (AI-managed)
+Traditional advisor fee: 0.85-1.1% AUM
+Customer adoption rate: 31% of eligible customers within 12 months

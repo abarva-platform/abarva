@@ -1,0 +1,54 @@
+RETAIL OMNICHANNEL OPERATIONS AND STORE TECHNOLOGY BENCHMARKS
+Source: NRF Technology Survey 2025, IDC Retail Operations Report
+
+STORE TECHNOLOGY AI ADOPTION
+Stores with AI-assisted task management: 22%
+Stores with AI workforce scheduling: 28%
+Stores with AI-driven planogram compliance: 18%
+Stores with digital shelf labels (ESL): 14%
+Stores with autonomous inventory scanning: 8%
+
+STORE LABOUR AND SCHEDULING AI
+Retailer labour as % of revenue: 14-22% (highly variable by format)
+Grocery store labour: 18-24%
+Specialty retail store labour: 14-18%
+AI scheduling accuracy (predicting hours needed): 91% vs. 74% traditional
+Overtime cost reduction with AI scheduling: 22-28%
+Part-time associate retention improvement: +14%
+Labour cost reduction with AI (without headcount cut): 8-12%
+
+STORE EXECUTION AND COMPLIANCE AI
+Planogram compliance rate without AI: 68%
+Planogram compliance rate with AI (image recognition): 88%
+Revenue impact of compliance improvement: 4-8% of category revenue
+Store audit AI (remote via camera): covers 94% of store vs 22% manual audit
+Price compliance accuracy with AI: 99.2% vs. 94.8% manual
+
+STORE NETWORK OPTIMIZATION AI
+Retailers with AI for store network optimization: 14%
+Store closure risk prediction accuracy: 82%
+Optimal store size recommendation AI: saves $280K-640K per new store in capital
+Trade area analysis AI: increases new store revenue prediction accuracy 28%
+Site selection AI payback: 6 months (avoids one poor site = $2-4M loss)
+
+CLIENTELING AND IN-STORE PERSONALISATION
+Retailers with AI clienteling for associates: 18%
+Sales uplift from AI-suggested clienteling: +22% per assisted interaction
+Associate confidence score improvement: +28%
+Top platforms: Salesforce Commerce, Tulip Retail, Newstore
+Average in-store conversion lift with AI clienteling: +14%
+Average basket size lift: +18%
+
+UNIFIED COMMERCE BENCHMARKS
+Retailers with real-time unified inventory view: 34%
+Fulfilment accuracy (ship-from-store): 96.8% with AI, 91.2% without
+In-store pickup wait time: top quartile <4 minutes, median 12 minutes
+Click-and-collect customer satisfaction: 82% (NPS 68) vs. home delivery 76% (NPS 54)
+In-store return of online purchase rate: 44% (drives incremental in-store sales)
+
+WORKFORCE PRODUCTIVITY AI
+Associate productivity improvement with AI tools: +18%
+New associate onboarding time reduction (AI training): -34%
+Task completion rate (AI-guided): 94% vs. 81% unguided
+Shrink from associate turnover: high-churn stores 2.4x shrink vs. low-churn
+AI-predicted turnover risk accuracy: 79% (90-day advance)

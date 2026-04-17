@@ -1,0 +1,51 @@
+RETAIL SUPPLY CHAIN AI AND OPERATIONS BENCHMARKS
+Source: Gartner Supply Chain Top 25, NRF Supply Chain Survey 2025
+
+SUPPLY CHAIN PERFORMANCE BENCHMARKS
+On-time-in-full (OTIF) rate — top quartile: 96-98%
+OTIF median: 88%
+Bottom quartile: < 79%
+Customer chargeback rate at < 85% OTIF: 1.4-2.8% of invoice value (Walmart, Target mandated)
+Revenue at risk from OTIF penalties ($5B retailer): $14-28M
+
+SUPPLY CHAIN AI ADOPTION
+Retailers with AI demand-driven replenishment: 31%
+Retailers with AI transportation management: 24%
+Retailers with AI warehouse management: 22%
+Retailers with AI supplier performance monitoring: 18%
+Retailers with end-to-end AI supply chain: 8%
+
+TRANSPORTATION AND LOGISTICS AI
+Route optimization AI: reduces mileage 8-14%
+Load optimization AI: increases truck utilisation 12-18%
+Carrier selection AI: reduces freight cost 6-11%
+Delivery time prediction accuracy (AI): 91% vs 74% (manual)
+Annual transportation savings ($5B retailer with AI): $8.4-18.2M
+
+WAREHOUSE AND DC AI
+Order picking accuracy (AI-assisted): 99.6% vs. 98.2% (manual)
+Pick rate improvement with AI guidance: +28%
+Returns processing time reduction with AI: 38%
+Autonomous mobile robots (AMR) ROI: 2.4x at 30 months
+AI slotting optimisation: reduces travel time 22%, improves picks/hour 31%
+
+SUPPLIER RISK AND PERFORMANCE AI
+Retailers with AI supplier risk monitoring: 18%
+Supply disruption early warning (AI): 4-8 weeks advance notice
+Suppliers at high risk (not monitored): 14% of supply base on average
+Cost of unmanaged supply disruption: $1.4-4.2M per major disruption event
+AI-identified single-source dependencies: avg 18% of critical SKUs
+
+CPG AND TRADE PROMOTION AI
+Retailer-supplier data sharing (APIs): 34% of top 100 supplier relationships
+Trade promotion ROI without AI: 40% of promotions lose money
+Trade promotion ROI with AI modelling: 28% of promotions lose money (12pp improvement)
+Collaborative forecasting accuracy improvement with AI: +14pp
+EDI modernisation (API-first): reduces errors 62%, improves OTIF 8pp
+
+FULFILLMENT NETWORK OPTIMIZATION
+Retailers with AI-optimised fulfilment network: 18%
+Store-to-door fulfilment cost vs. DC-to-door: store 28% cheaper within 30 miles
+AI fulfilment routing: reduces cost per order 14-22%
+Ship-from-store AI (inventory allocation): requires real-time inventory accuracy > 97%
+Network optimization AI payback: 10-16 months

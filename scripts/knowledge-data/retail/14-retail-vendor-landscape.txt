@@ -1,0 +1,43 @@
+RETAIL TECHNOLOGY VENDOR LANDSCAPE
+Source: AbarVa Vendor Intelligence 2025, Gartner Magic Quadrant Retail
+
+CORE RETAIL SYSTEMS VENDORS
+POS and Commerce: Aptos (26%), Oracle Retail (22%), NCR Voyix (18%), Manhattan Associates (14%)
+ERP: SAP S/4HANA (54%), Oracle Retail/EBS (31%), Microsoft Dynamics (8%)
+WMS (Warehouse Management): Blue Yonder (28%), Manhattan Associates (24%), SAP EWM (18%), HighJump (12%)
+
+AI AND ANALYTICS VENDORS
+Demand forecasting: Blue Yonder (28%), o9 Solutions (18%), Oracle Retail (16%), Relex (12%)
+Pricing AI: Revionics/Aptos (28%), DemandTec/IBM (12%), Wiser (14%)
+Personalisation: Dynamic Yield/Mastercard (18%), Adobe Target (22%), Salesforce (14%)
+Supply chain visibility: project44 (18%), FourKites (16%), Kinaxis (14%)
+CDP: Salesforce Data Cloud (24%), Adobe (22%), Segment (18%), Treasure Data (14%)
+
+VENDOR PERFORMANCE DATA (ABARVA ENGAGEMENTS)
+Blue Yonder SLA compliance: 78% (industry: 68%)
+SAP implementation partner quality: highly variable (RISE programme partners 40-85% score)
+Personalisation vendor ROI at 24 months: 2.4-4.1x
+Demand forecasting vendor ROI at 24 months: 3.2-5.8x
+Loss prevention CV vendor ROI at 24 months: 2.1-3.8x
+
+VENDOR SELECTION RISK PATTERNS
+Risk 1: SAP RISE partner capability varies 2x in quality — reference check required
+Risk 2: Demand forecasting vendors require 24+ months of data — assess before contract
+Risk 3: Personalisation vendors require CDP first — wrong sequence wastes $1.2-2.8M
+Risk 4: Supply chain visibility vendors require carrier API agreements — procurement complexity
+Risk 5: CV loss prevention vendors oversell hardware replacement frequency — 5-year TCO required
+
+EMERGING VENDORS IN RETAIL (2025-2026)
+AI agents for retail: Salesforce Agentforce (retail edition), ServiceNow
+Generative AI commerce: Algolia AI (search), Constructor.io, Coveo
+Autonomous stores: Standard AI, Grabango (reduce friction)
+Social commerce: TikTok Shop integration (API), Instagram Shopping
+Returns management AI: Happy Returns (UPS), 8returns, Narvar
+
+SAP ECOSYSTEM IN RETAIL
+SAP RISE with S/4HANA: cloud-first migration programme
+RISE pricing model: per-user subscription + consumption-based cloud
+Average RISE contract value ($5B retailer): $8-14M/year (vs. $4-6M on-premise)
+RISE benefit: built-in AI tools, automatic upgrades
+RISE risk: vendor lock-in, limited customisation vs. on-premise
+Retailers who chose RISE over on-premise: 44% of new S/4HANA contracts

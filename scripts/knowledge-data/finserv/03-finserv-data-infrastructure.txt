@@ -1,0 +1,52 @@
+FINANCIAL SERVICES DATA INFRASTRUCTURE AND PLATFORM BENCHMARKS
+Source: Celent Data Management in Financial Services 2025, Gartner FS Data Survey
+
+DATA FRAGMENTATION IN ASSET MANAGEMENT
+Average number of separate data environments (large asset manager): 11-16
+Percentage of investment data siloed by business unit: 68%
+Estimated cost of data fragmentation: $18-28M annually per $100B AUM firm
+Annual duplicated data engineering effort: 34% of total data team time
+
+DATA PLATFORM LANDSCAPE IN FINANCIAL SERVICES
+Snowflake adoption: 38% of large asset managers
+Databricks adoption: 29% (preferred for ML workloads)
+Azure Synapse: 18%
+AWS Redshift: 11%
+On-premise warehouses still primary: 31%
+
+DATA CATALOGUE ADOPTION
+Asset managers with enterprise data catalogue: 28%
+Leading platforms: Collibra (32% FS market), Alation (24%), Microsoft Purview (21%)
+Data catalogue ROI: 3.2x within 24 months (reduced rework, faster AI)
+Time saved finding data with catalogue vs. without: 64% reduction
+Asset managers without catalogue experiencing "data swamp": 62%
+
+DATA QUALITY BENCHMARKS
+Data quality score (FS industry average on 100-point scale): 71%
+Top quartile: 88%
+Bottom quartile: 54%
+Data quality investment as % of data budget: 8% (industry), 18% (top performers)
+Cost of poor data quality in FS: $12.6M per $100B AUM firm annually
+
+MARKET DATA COSTS
+Average annual market data spend (>$200B AUM): $28-48M
+Bloomberg: 35-45% of total market data budget
+Refinitiv/LSEG: 18-22%
+FactSet: 12-16%
+Alternative data: 14-22% (and growing 34% annually)
+Market data renegotiation success rate: 71%
+Average savings when renegotiated: 14-28%
+
+REAL-TIME DATA CAPABILITIES
+Asset managers with real-time portfolio analytics: 44%
+Average data latency (batch): 4-8 hours
+Average data latency (streaming): 18-45 seconds
+Firms with sub-second trade data: 28% (primarily systematic traders)
+Event-driven architecture adoption: 31%
+
+MLOPS AND MODEL MANAGEMENT
+Asset managers with formal MLOps platform: 22%
+ML models in production (avg, large firm): 48
+ML models with monitoring and drift detection: 38% of deployed models
+Model retraining cadence: 41% monthly, 29% quarterly, 30% ad hoc
+Cost of unmonitored model degradation: 14-22% performance decay over 12 months

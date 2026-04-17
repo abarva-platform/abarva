@@ -1,0 +1,62 @@
+TECHNOLOGY DEBT AND LEGACY MODERNISATION PATTERNS
+Source: AbarVa Genome, Gartner Technical Debt Survey 2025
+
+TECHNOLOGY DEBT OVERVIEW
+Average enterprise technology debt: $4.2B (Fortune 500)
+Average enterprise technology debt (mid-market $1-5B revenue): $48-180M
+Annual technology debt interest (maintenance cost premium): 18-28% above modern stack
+Systems over 10 years old: 44% of enterprise application portfolio
+Technology debt that blocks AI deployment: 61% of assessed items
+
+TECHNOLOGY DEBT BY INDUSTRY
+Healthcare: average tech debt $48M per $1B revenue (Epic retrofit complexity highest)
+Financial services: average tech debt $340M per $1B revenue (mainframe, COBOL legacy)
+Retail: average tech debt $36M per $1B revenue (SAP ECC, legacy WMS)
+Manufacturing: average tech debt $28M per $1B revenue
+Technology debt growth rate: 11% annually without active remediation
+
+PLATFORM END-OF-LIFE RISK REGISTER
+SAP ECC 6.0: end of mainstream support January 2027; affects 54% of $1B+ retailers
+Teradata: various EOL dates by version; affects 41% of large enterprises (all industries)
+Oracle Database 12c: December 2024 (extended support); affects 28% of enterprises
+Microsoft SQL Server 2014: end of support July 2024 (already past)
+IBM AS/400 (iSeries): no formal EOL but skills are dying; affects 22% of mid-market
+COBOL applications: 800B lines of COBOL in production globally; skills declining 6% annually
+
+MAINFRAME AND COBOL PATTERNS
+Financial services with mainframe: 72%
+Average mainframe age: 26 years
+Annual mainframe cost ($10B bank): $8-24M
+Mainframe modernisation options: rehost (emulate), refactor (rewrite), replace (migrate)
+Mainframe replacement timeline: 4-7 years for large bank
+COBOL-to-Java translation AI (GitHub Copilot, Syncsort): reduces rewrite time 38%
+Risk: COBOL knowledge concentrated in retiring workforce (average age 58)
+
+TECHNICAL DEBT REMEDIATION PATTERNS
+
+PATTERN T-D001: INCREMENTAL REMEDIATION
+Description: fix tech debt progressively alongside new feature development
+Rule: 20% of each sprint allocated to tech debt reduction
+Timeline to resolve: 4-6 years (but sustainable without disruption)
+Best for: organisations without urgent EOL forcing function
+
+PATTERN T-D002: FORCED EOL MIGRATION (REACTIVE)
+Description: platform EOL forces emergency migration
+Cost premium: 38-47% above planned migration
+Timeline premium: 9-18 months
+Quality risk: rushed migrations have 2.3x higher post-migration defect rate
+Trigger: SAP ECC 2027, Teradata EOL — currently affecting many large enterprises
+
+PATTERN T-D003: AI-ENABLED MODERNISATION
+Description: use AI to accelerate code modernisation, testing, and migration
+Tools: GitHub Copilot (code), Diffblue Cover (test generation), Google Cloud Migration Center
+Time reduction: 34-52% for code modernisation with AI assistance
+Quality improvement: AI-generated tests catch 28% more bugs than manual testing
+New approach: treat tech debt as AI enablement investment, not maintenance cost
+
+MEASURING AND COMMUNICATING TECH DEBT
+Tech debt as financial liability: $1 of tech debt costs $2.50 to remediate in 3 years (compound effect)
+Board communication: "Our tech debt of $X represents $Y in annual maintenance premium and $Z in AI capability we cannot access"
+CFO framing: tech debt interest rate is 18-28% annually — higher than any loan
+Common mistake: tech debt managed by IT team, invisible to board
+Fix: annual tech debt assessment with board disclosure and remediation plan

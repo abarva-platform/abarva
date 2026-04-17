@@ -1,0 +1,52 @@
+PRIOR AUTHORIZATION AI — COMPREHENSIVE BENCHMARKS
+Source: American Medical Association (AMA) Prior Auth Survey 2024, CMS Data
+
+PRIOR AUTHORIZATION VOLUME AND COST
+Average prior auth requests per physician per week: 41
+Time physicians spend on PA per week: 12.4 hours
+Percentage of PA requests ultimately approved: 88%
+Percentage approved after initial denial with appeal: 62%
+Administrative cost of one manual PA request: $12.40-18.60
+
+IMPACT ON CARE AND REVENUE
+Clinical staff time consumed by PA in outpatient settings: 41%
+Patient care delays due to PA: 93% of physicians report delays
+Abandonment rate (patients abandon care due to PA delays): 28%
+Revenue impact of abandonment (per $1B outpatient revenue): $8.4-14.2M
+
+AI AUTOMATION BENCHMARKS
+Industry average PA automation rate: 38%
+Top quartile automation: 68%
+Manual PA cost per request: $12.40
+Automated PA cost per request: $1.10
+PA cycle time (manual): 4.2 days average
+PA cycle time (AI-automated): 18 hours average
+PA cycle time (real-time AI): 4 minutes (Medicare Advantage mandated by 2026)
+
+DENIAL RATE IMPACT
+Average denial rate with PA automation: 9.4%
+Average denial rate without PA automation: 16.8%
+Appeal success rate (AI-assisted appeal): 71%
+Appeal success rate (manual appeal): 41%
+Net revenue improvement from PA automation (per $1B revenue): $17-24M
+
+AI VENDOR LANDSCAPE — PRIOR AUTHORIZATION
+Cohere Health: 89% approval rate, 94% reduction in peer-to-peer review
+Olive AI: integrated with Epic, handles 40+ payer rules
+Waystar: end-to-end RCM + PA automation
+Availity: largest payer network integration
+nThrive PAi: predictive approval model
+
+CMS MANDATE — REAL-TIME PA BY 2026
+CMS Interoperability and Prior Authorization Final Rule requires:
+- Real-time PA decisions for routine requests by January 2026
+- 72-hour turnaround for urgent requests
+- Payer API mandated (HL7 FHIR Da Vinci)
+Health systems unprepared: 64% do not have FHIR PA integration
+Implementation cost for FHIR PA integration: $1.4-2.8M
+Revenue at risk from non-compliance: $6.8-12.4M per year for large IDN
+
+GOLD CARDING
+Physicians eligible for gold carding (consistent approval rate): 34%
+States with gold carding legislation: 21
+Revenue impact of gold carding implementation: $2.2-4.8M per 1,000 employed physicians

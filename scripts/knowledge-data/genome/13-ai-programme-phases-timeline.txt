@@ -1,0 +1,75 @@
+AI PROGRAMME PHASES, TIMELINES, AND MILESTONE BENCHMARKS
+Source: AbarVa Phase Gate Delivery Framework
+
+PHASE 0 — DISCOVERY AND STRATEGY (4-8 WEEKS)
+Deliverables:
+- Situation diagnosis (5-7 critical findings with financial impact)
+- Contradiction analysis (stated strategy vs. data reality)
+- Data readiness baseline (0-100 score with gap analysis)
+- Use case prioritisation (5-10 use cases ranked by ROI and feasibility)
+- Investment thesis (programme size, timeline, expected ROI)
+- Governance model recommendation
+
+Risk of skipping Phase 0: 2.4x more spent correcting strategic misdirection in Phase 2
+Phase 0 investment: $280,000-640,000 (typical)
+Phase 0 ROI: prevents $2.4-8.4M in wasted Phase 2 investment
+
+PHASE 1 — FOUNDATION (3-6 MONTHS)
+Deliverables:
+- Data governance framework established
+- Cloud platform selected and provisioned
+- Data catalogue deployed
+- Master data management initiated
+- AI Centre of Excellence established (or CDO appointed)
+- Data quality programme initiated on critical datasets
+
+Common mistake: skipping foundation to "get to AI faster"
+Cost of skipping: 2.1x higher Phase 2 cost (rework)
+Foundation is chronically underfunded: 44% of AI programmes allocate < 15% of budget to Phase 1
+
+PHASE 2 — FIRST USE CASE (3-6 MONTHS)
+Deliverables:
+- First AI use case in production
+- Baseline KPIs established and locked (before go-live)
+- Model monitoring in place (performance, drift)
+- 90-day quick win documented and communicated
+
+90-day milestone: working proof of concept in controlled environment
+Key risk: scope creep — stakeholders want to add use cases before first is stable
+Scope rule: "one use case in production before another begins"
+Use case selection: highest ROI AND sufficient data — not just highest ROI
+
+PHASE 3 — SCALE (6-18 MONTHS)
+Deliverables:
+- 3-5 AI use cases in production
+- Self-service analytics for business users
+- AI CoE running independently of external consultants
+- AI model monitoring automated
+
+Key risk: AI team attrition (28% annual attrition in scale phase)
+Retention investment: pay market, give compute access, reduce bureaucracy
+Governance: quarterly CXO review of AI KPIs — mandatory
+
+PHASE 4 — COMPOUND (18-36 MONTHS)
+Deliverables:
+- AI embedded in core business processes
+- AI programme financially self-funding through ROI
+- Measurable competitive advantage vs. peers
+- Institutional AI capability (not consultant-dependent)
+
+Key risk: complacency — reducing AI investment just as compounding returns begin
+Warning signal: programme budget reduced after first positive ROI
+Correct response: reinvest ROI into next wave of AI use cases
+
+TOTAL TIMELINE BENCHMARKS
+Time to measurable competitive advantage:
+- Large organisations (>$5B revenue): 30-48 months
+- Mid-size ($1-5B): 18-30 months
+- Small (<$1B): 12-18 months
+Most common mistake: expecting AI competitive advantage in under 12 months (unrealistic)
+
+PROGRAMME INVESTMENT BENCHMARKS BY SIZE
+$1B revenue organisation: $4-8M AI programme (12-18 months Phase 1-2)
+$5B revenue organisation: $18-38M AI programme (24-36 months Phase 1-3)
+$10B revenue organisation: $42-88M AI programme (36-48 months Phase 1-4)
+ROI at programme completion: 3.4-4.8x for structured programme

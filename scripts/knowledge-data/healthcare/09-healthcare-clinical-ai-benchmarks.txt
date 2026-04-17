@@ -1,0 +1,56 @@
+CLINICAL AI ADOPTION AND PERFORMANCE BENCHMARKS
+Source: NEJM Catalyst, AHA 2025, FDA AI/ML Device Database
+
+CLINICAL AI ADOPTION RATES (large health systems, >1,000 beds)
+At least one clinical AI in production: 61%
+Sepsis/deterioration early warning: 44%
+Radiology AI (at least one FDA-cleared tool): 61%
+Clinical documentation AI: 28%
+Capacity management AI: 22%
+Clinical decision support AI: 34%
+Patient flow/ED AI: 18%
+Predictive readmission: 29%
+
+FDA-CLEARED CLINICAL AI LANDSCAPE
+Total FDA-cleared AI/ML medical devices (2025): 950+
+Annual growth rate: 40%
+Radiology: 68% of all cleared devices
+Cardiology: 11%
+Pathology: 7%
+Other specialties: 14%
+
+SEPSIS EARLY WARNING AI BENCHMARKS
+Top-performing systems: 34-38% mortality reduction
+False positive rate (best-in-class): < 9% (specificity > 91%)
+False positive rate (average deployed system): 22%
+Alert fatigue rate (high false positive systems): 67% of alerts ignored
+Successful deployment requiring: specificity > 85% to avoid fatigue
+Time to intervention improvement with AI: 42 minutes earlier on average
+ICU length of stay reduction: 1.4 days with AI-triggered early intervention
+
+AMBIENT DOCUMENTATION AI BENCHMARKS (Nuance DAX, Suki)
+Deployed in: 600+ health systems (DAX as of 2025)
+Documentation time reduction: 34-52%
+Physician satisfaction improvement: +24 NPS points
+Reduction in after-hours documentation: 43%
+Error rate comparison: AI-assisted 2.8% vs. manual 4.1%
+Time to adoption (per physician): 3-6 weeks to full workflow integration
+
+RADIOLOGY AI PERFORMANCE DATA
+Chest X-ray triage AI: reduces radiologist read time 24%
+CT PE (pulmonary embolism) detection: 94% sensitivity in clinical deployment
+Mammography AI: 8% reduction in false negative rate
+Average radiologist productivity improvement with AI: 18-27%
+Revenue impact (radiology throughput improvement): $1.8-3.4M per 10-radiologist department
+
+CLINICAL DECISION SUPPORT (CDS) AI
+Medication error prevention AI: reduces adverse drug events 28-34%
+Drug-drug interaction alerts (AI vs. rule-based): 62% fewer false alerts
+Sepsis CDS alert accuracy: rule-based 14% positive predictive value; AI 41% PPV
+Clinical guideline adherence with AI CDS: +22 percentage points
+
+CAPACITY MANAGEMENT AI
+OR block utilization improvement: from 68% (median) to 79-84% with AI
+ED left-without-being-seen (LWBS) rate reduction: 22-31%
+Inpatient discharge timing improvement: 38% earlier discharges with AI
+Annual revenue impact (OR utilization 10pp improvement): $3.4-6.8M per OR suite

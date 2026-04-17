@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { retrieveContext, verticalFromClientContext } from '@/lib/retrieval'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -41,11 +42,20 @@ const STEP_CONTEXT: Record<string, { question: string; outcomeLabel: string }> =
   '4.2': { question: 'What governance model and measurement cadence ensures accountability?',           outcomeLabel: 'Governance Model' },
 }
 
-const SYSTEM_PROMPT = `You are AbarVa, the world's most rigorous AI transformation advisor.
+function buildSystemPrompt(ragContext: string): string {
+  return `You are AbarVa, the world's most rigorous AI transformation advisor.
 You are running a structured, step-by-step AI strategy session with a client.
+${ragContext ? `
+INDUSTRY BENCHMARKS AND KNOWLEDGE BASE (retrieved from AbarNexus):
+Use these specific benchmarks to ground your analysis. When relevant, cite the source in parentheses.
+Do not invent numbers — only use figures from this context or say "industry benchmarks suggest".
 
+${ragContext}
+
+END OF KNOWLEDGE BASE
+` : ''}
 GUARDRAILS you must ALWAYS follow:
-G1 — Never invent specific metrics or dollar figures not provided in the context. Use ranges or directional language if data is missing.
+G1 — Ground specific metrics and dollar figures in the knowledge base above. If a figure is not in the knowledge base, use directional language or industry ranges rather than invented numbers.
 G2 — Only address the current step. Do not jump ahead or reference future phases.
 G3 — Always return exactly 4 options labelled A, B, C, D in the JSON done event. Option D must always offer the user a way to enter their own response (e.g. "D: None of these fit — let me describe our situation...").
 G4 — Keep your message concise (3-5 sentences max). This is a conversation, not a report.
@@ -59,6 +69,7 @@ OUTPUT FORMAT (strict):
 - After the message, emit a single JSON line: {"type":"done","options":["A: ...","B: ...","C: ...","D: ..."],"outcomeItem":{"label":"...","value":"..."}}
 - The outcomeItem.value should be a 3-8 word summary of what was selected/confirmed
 - options must be exactly 4 strings`
+}
 
 function buildPrompt(body: {
   stepId: string
@@ -138,6 +149,18 @@ export async function POST(request: Request) {
 
   const prompt = buildPrompt({ ...body, customText: sanitizedCustom })
 
+  // Build RAG retrieval query from step context + engagement directive
+  const vertical = verticalFromClientContext(body.clientContext?.vertical)
+  const step = STEP_CONTEXT[body.stepId]
+  const retrievalQuery = [
+    body.engagementContext?.directive,
+    step?.question,
+    body.isKickoff ? undefined : body.selectedOption !== 'D' ? body.selectedOption : body.customText,
+  ].filter(Boolean).join(' ')
+
+  const ragContext = await retrieveContext(retrievalQuery, vertical, 4)
+  const systemPrompt = buildSystemPrompt(ragContext)
+
   const encoder = new TextEncoder()
 
   const readable = new ReadableStream({
@@ -146,7 +169,7 @@ export async function POST(request: Request) {
         const stream = await client.messages.stream({
           model: 'claude-sonnet-4-6',
           max_tokens: 1024,
-          system: SYSTEM_PROMPT,
+          system: systemPrompt,
           messages: [{ role: 'user', content: prompt }],
         })
 

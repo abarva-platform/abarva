@@ -1,0 +1,47 @@
+RETAIL SUSTAINABILITY, ESG, AND AI BENCHMARKS
+Source: NRF Retail Sustainability Survey 2025, CDP Corporate Environmental Study
+
+RETAIL SUSTAINABILITY MANDATES
+EU Corporate Sustainability Reporting Directive (CSRD): mandatory for large retailers with EU revenue > €150M
+CSRD effective: 2024-2026 phased (large companies first)
+SEC Climate Disclosure: applicable to US-listed retailers
+Retailers with comprehensive Scope 3 emissions data: 22%
+Retailers with sustainability AI programme: 18%
+
+SUPPLY CHAIN SUSTAINABILITY AI
+Carbon footprint calculation per SKU (AI): 4 hours vs. 3 months (manual)
+Supplier sustainability scoring AI: covers 94% of suppliers vs. 18% (manual)
+Transportation emissions reduction (AI-optimised routing): 12-18%
+Packaging material AI (right-size optimisation): reduces packaging waste 22%
+Deforestation risk detection AI (supply chain): 88% accuracy
+
+FOOD WASTE AI (GROCERY/FOODSERVICE)
+Grocery food waste rate: 3.8% of revenue
+AI demand forecasting reduces food waste: 22-31%
+AI fresh category markdown optimisation: additional 14-18% waste reduction
+Dynamic pricing for near-expiry (AI): 28% waste reduction
+Total food waste AI value ($5B grocery retailer): $12-22M annually
+Food waste regulatory requirements: EU targets 50% reduction by 2030
+
+RETURNS AND CIRCULAR ECONOMY AI
+E-commerce return rate (industry avg): 24%
+Returns that cannot be resold (first quality): 28%
+Returns sold to secondary market (AI-graded): +34% recovery rate vs. manual grading
+Resale/recommerce market size (2025): $218B (growing 24% annually)
+Retailers with AI-powered recommerce: 12%
+AI-driven recommerce recovery rate: 68% of return value vs. 42% traditional liquidation
+
+ENERGY AND FACILITIES AI FOR RETAIL
+Retail energy cost as % of revenue: 1.2-2.4%
+AI energy management (store): reduces energy consumption 8-14%
+Annual savings ($1,000-store retailer at $120K/store energy): $10-17M
+LED + AI lighting optimisation: 34% energy reduction (with occupancy AI)
+HVAC AI optimisation: 18-22% energy reduction
+ESG disclosure requirement: 88% of top 200 global retailers now publish sustainability report
+
+CONSUMER SUSTAINABILITY BEHAVIOUR
+Consumers who prefer sustainable brands (willing to pay premium): 44%
+Sustainability premium consumers will pay: 9.4% on average
+Retailers with AI-powered sustainability product labelling: 18%
+Green product conversion rate vs. non-green equivalent: +14% (with trust signal)
+AI carbon labelling accuracy: 88% (requires strong supply chain data)

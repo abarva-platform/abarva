@@ -1,0 +1,52 @@
+HEALTHCARE REVENUE INTEGRITY AND CODING AI BENCHMARKS
+Source: HFMA, Advisory Board Revenue Intelligence Survey 2025
+
+CODING ACCURACY BENCHMARKS
+Industry average coding error rate: 8.4%
+Top quartile accuracy: < 3.2%
+Bottom quartile: > 14.1%
+Average revenue lost to undercoding per physician: $28,000-44,000/year
+Annual undercoding loss (1,000 physician organisation): $28-44M
+
+CDI (CLINICAL DOCUMENTATION IMPROVEMENT) AI
+Organisations with AI CDI: 34%
+Traditional CDI query rate: 14.2%
+AI CDI query rate: 8.6% (more accurate targeting)
+AI CDI capture rate: 81% vs. 58% (manual)
+CMRI (case mix index) improvement with AI CDI: +0.08-0.12 (avg)
+Revenue impact per 0.1 CMI improvement: $2.8-4.2M per $1B revenue
+AI CDI ROI: 3.1-5.2x within 18 months
+
+CHARGE CAPTURE AI
+Missing charge rate (industry average): 4.2%
+Top quartile: < 1.8%
+AI charge capture improvement: reduces missing charges 38-62%
+Revenue recovered: $0.8-1.4M per 100 physicians annually
+
+UNDERPAYMENT DETECTION AI
+Percentage of payer payments verified manually: 12%
+Underpayment rate (of all payer remittances): 3.8% (industry average)
+AI underpayment detection coverage: 94% of all remittances
+Average recovery per underpayment detected: $840
+Annual underpayment recovery (with AI, per $1B revenue): $2.1-5.6M
+AI underpayment detection ROI: 4.2-7.8x within 12 months
+
+PAYMENT INTEGRITY AI
+Health systems with AI payment integrity: 22%
+Contract modelling AI coverage: 38% of health systems with complex payer mix
+Average payer contract negotiation cycle: 18 months
+AI contract modelling improves negotiation outcomes: 8-14% better rates
+Revenue impact of AI-assisted contract negotiation (large IDN): $3.5-9.2M per cycle
+
+AUDIT AND COMPLIANCE AI
+RAC audit denial risk identification with AI: 88% accuracy (90 days prior)
+OIG work plan compliance monitoring: AI reduces exposure 41%
+Cost of RAC audit defense per chart: $380-620 (manual), $42 (AI-assisted)
+Health systems with proactive RAC audit AI: 19%
+Estimated recoverable audit risk per year (large IDN): $1.8-4.4M
+
+PHYSICIAN COMPENSATION AI
+wRVU target compliance with AI coding support: +12% above manual
+E/M documentation AI (level assignment): 94% accuracy vs. 81% manual
+Physician satisfaction with AI coding support: +18 NPS points
+(Reduced rework and query time is primary satisfaction driver)

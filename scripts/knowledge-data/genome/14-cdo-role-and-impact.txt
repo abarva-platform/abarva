@@ -1,0 +1,57 @@
+CDO ROLE, IMPACT, AND GOVERNANCE BENCHMARKS
+Source: CDOIQ Research 2025, AbarVa Genome Data — 340+ engagements
+
+CDO PREVALENCE AND MATURITY
+Enterprises with CDO or Chief AI Officer: 68%
+Fortune 500 with CDO: 82%
+Mid-market ($1-5B revenue) with CDO: 44%
+CDO reporting structure:
+- Reports to CEO: 38% (highest impact)
+- Reports to CIO: 32%
+- Reports to COO: 18%
+- Reports to CFO: 12% (least effective for AI programme)
+
+CDO IMPACT ON AI OUTCOMES (AbarVa Genome — 127 patterns)
+With CDO at AI programme launch: 84% programme success rate
+Without CDO at AI programme launch: 38% programme success rate
+Delta: 46 percentage points — largest single governance factor
+CDO with budget authority (not advisory only): 91% success rate
+CDO with no budget authority: 51% success rate
+
+CDO TENURE AND RETENTION
+Average CDO tenure: 2.8 years
+CDO tenure risk: shorter than other C-suite roles (average CIO tenure: 4.2 years)
+CDO departure risk factor: if CDO leaves within 18 months of AI launch, 68% of programmes lose significant momentum
+Mitigation: board-level documentation of programme mandate before CDO is recruited
+
+CDO RESPONSIBILITIES AND SCOPE
+Data strategy and architecture: 92% of CDO roles
+AI programme governance: 78%
+Data governance framework: 88%
+Vendor and technology selection: 72%
+Data literacy programme: 64%
+AI ethics and risk: 58%
+Regulatory compliance for data and AI: 62%
+
+CDO CAPABILITY REQUIREMENTS FOR AI PROGRAMME
+Technical: data architecture, cloud platforms, ML fundamentals
+Business: financial modelling, stakeholder management, board communication
+Leadership: change management, vendor management, team building
+Experience: prior AI transformation or CDO role (2+ years)
+
+CDO TEAM STRUCTURE (TYPICAL, $5B ORGANISATION)
+CDO (1): strategic leadership
+Data Platform Lead (1): cloud and infrastructure
+Data Governance Lead (1): policies, catalogue, quality
+ML/AI Lead (1): model development and deployment
+Analytics Lead (1): BI and self-service
+Data Engineers (3-4): pipeline and platform
+Business Translators (2-3): domain + data bridge
+Total: 10-14 FTE under CDO, $2.4-4.2M annually
+
+CDO SEARCH AND HIRING BENCHMARKS
+Average CDO search duration: 7.4 months
+Search cost (executive search firm): $180,000-280,000
+Interim CDO (while searching): $28,000-48,000/month
+CDO candidates with both technical and business credentials: 18% of available pool
+Key failure: hiring technically strong CDO without business communication skills — board relationship fails within 12 months

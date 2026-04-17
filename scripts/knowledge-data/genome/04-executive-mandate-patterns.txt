@@ -1,0 +1,58 @@
+EXECUTIVE MANDATE PATTERNS AND AI STRATEGY FRAMING
+Source: AbarVa Engagement Strategy Layer — 340+ engagements
+
+MANDATE STRENGTH AND OUTCOME CORRELATION
+Strong mandate (specific, measurable, owned): 74% programme success rate
+Weak mandate (aspirational, unowned): 28% programme success rate
+Delta: 46 percentage points
+
+CHARACTERISTICS OF STRONG MANDATES
+1. Specific outcome: "Reduce denial rate from 9.8% to < 5% within 18 months"
+2. Named accountable executive: "CDO owns this outcome"
+3. Measurable baseline: existing denial rate documented and agreed
+4. Financial consequence: "$34M in recoverable revenue unlocked"
+5. Time-bound: "18 months, first milestone at 90 days"
+
+CHARACTERISTICS OF WEAK MANDATES (AVOID)
+"We need to leverage AI"
+"AI is a strategic priority"
+"We want to be an AI-first organisation"
+"We should explore machine learning opportunities"
+Without specific outcomes, these mandates produce: committee proliferation, pilot culture, no accountability
+
+STAKEHOLDER MANDATE FRAMING
+
+CFO FRAME:
+Resonates: cost reduction through automation
+Numbers required: fully-loaded FTE equivalent or total cost reduction %
+ROI horizon: must be within 24 months
+Approval threshold: most CFOs approve at 2x ROI, 18 months payback
+Framing: "AI automates [specific process], eliminating [X] FTE equivalents at $Y/FTE, delivering $Z net savings in 18 months"
+
+CEO FRAME:
+Resonates: competitive advantage and revenue growth
+Data needed: peer comparison showing competitors' AI trajectory
+Key risk: "We are 18 months behind our peer group in AI capability"
+Framing: "Our top 3 competitors have deployed [use case]. We are losing [X]% of [revenue category] to this capability gap"
+
+COO FRAME:
+Resonates: operational excellence and delivery reliability
+Numbers needed: cycle time reduction, error rate reduction, capacity scaling
+Key trigger: evidence of operational pain, not aspirational language
+Framing: "[Specific process] costs us [X] per [unit]. AI reduces this to [Y]. At [Z volume], this is $[amount] annually"
+
+CHRO FRAME:
+Resonates: talent retention and workforce capability
+Positioning: AI as workforce empowerment, not replacement
+Key insight: organisations framing AI as workforce empowerment see 2.4x faster adoption
+Framing: "AI handles [routine tasks], freeing [role] to focus on [higher-value work]. This improves retention and attracts better talent"
+
+BOARD FRAME:
+Resonates: risk management and long-term value creation
+Data: peer comparisons, regulatory risk, strategic risk
+Key message: "We are [X] months behind the industry in AI capability. If this gap persists, [specific risk]"
+
+MANDATE DECAY PATTERN
+Mandates not translated to specific KPIs within 90 days: 68% are abandoned or de-prioritised
+Mandates with quarterly steering review: 84% maintained at 18 months
+Mandates with annual-only review: 62% de-prioritised before 12 months

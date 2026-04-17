@@ -1,0 +1,63 @@
+AI GOVERNANCE MODELS AND ACCOUNTABILITY FRAMEWORKS
+Source: AbarVa Genome — 340+ engagements, MIT Sloan AI Governance Study 2025
+
+GOVERNANCE MODEL COMPARISON
+
+MODEL 1: AI STEERING COMMITTEE (CEO-SPONSORED)
+Structure: CEO, CFO, CDO, COO, business unit heads meet monthly
+AI KPIs reviewed against baseline with financial consequences
+Spend authority: pre-delegated to committee for AI programme
+Success rate: 2.1x vs. no governance committee
+Best for: organisations >$5B revenue, enterprise-wide AI
+
+MODEL 2: CDO ACCOUNTABILITY MODEL
+Structure: CDO owns all AI outcome metrics with P&L consequences
+CDO bonus structure includes AI ROI delivery components
+Success rate: 88% programme continuation at 24 months
+Rare but highest-performing model
+Risk: CDO departure → programme at risk (F-pattern L-004)
+Mitigation: Board-level documentation of programme mandate
+
+MODEL 3: CENTRE OF EXCELLENCE (CoE)
+Structure: dedicated AI CoE provides platforms, standards, and skills; business units own use case delivery and ROI
+Success rate: 74%
+Best for: organisations >$3B revenue with multiple business units
+Most scalable model for complex organisations
+Key risk: CoE becomes bottleneck if not resourced adequately (6-8 FTE minimum)
+Staffing: AI architects, ML engineers, data stewards, business translators
+
+MODEL 4: FEDERATED MODEL
+Structure: AI capability distributed across business units, loose central coordination
+Success rate: 52%
+Risk: duplication, inconsistent standards, data fragmentation
+Common outcome: 34 parallel AI pilots with no shared platform or data (Genome F-pattern F044)
+Best for: early-stage organisations below $1B revenue
+
+GOVERNANCE FAILURE PATTERNS
+
+FAILURE 1: COMMITTEE WITHOUT FINANCIAL AUTHORITY
+AI committee cannot approve spend > $100K without board sign-off
+Decision speed: 3.4x slower
+Vendor relationships suffer — vendors deprioritise slow-decision clients
+Fix: pre-delegated authority to $1-5M per quarter for AI steering
+
+FAILURE 2: MONTHLY MEETING WITHOUT CONSEQUENCE
+Monthly steering reviews AI KPIs, but no consequence for missing targets
+64% of targets missed without consequence are not recovered
+Fix: quarterly performance review with explicit manager accountability tied to AI KPIs
+
+FAILURE 3: GOVERNANCE WITHOUT DATA GOVERNANCE TRACK
+AI governance committee exists but data governance has no representation
+Result: AI programme succeeds, data quality degrades, AI starts to fail at month 18
+Fix: data governance lead as standing member of AI steering committee
+
+FAILURE 4: RETROSPECTIVE GOVERNANCE
+AI models deployed, then governance built around them
+Result: unapproved models in production, explainability gaps, regulatory exposure
+Fix: governance framework before first model goes to production
+
+KPI MEASUREMENT CADENCE
+Quarterly review only: 62% of AI KPI targets maintained at 12 months
+Weekly operational + quarterly strategic: 88% of AI KPI targets maintained
+Annual only: 38% maintained
+Best practice: automated weekly AI performance dashboard + quarterly CXO review

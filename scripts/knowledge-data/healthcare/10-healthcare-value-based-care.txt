@@ -1,0 +1,49 @@
+HEALTHCARE VALUE-BASED CARE AND AI BENCHMARKS
+Source: CMS Innovation Center, HFMA Value-Based Care Survey 2025
+
+VALUE-BASED CARE MARKET
+% of US healthcare payments in value-based arrangements: 59%
+% in full capitation or global risk: 14%
+% in fee-for-service (declining): 41%
+CMS Innovation Center cumulative investment: $1.2B in AI-enabled VBC pilots
+Target: 100% of Medicare in accountable care by 2030
+
+MEDICARE ADVANTAGE AI OPPORTUNITIES
+MA denial rate: 14.8% (vs 6.2% Medicare FFS)
+AI impact on MA prior auth: reduces denials 28-44%
+STAR rating improvement with care gap AI: +0.4-0.8 stars average
+Financial impact of 1 STAR rating point: $8-14M per 10,000 MA members
+MA penetration of Medicare: 52% (2025) — fastest growing segment
+
+ACO REACH PROGRAMME BENCHMARKS
+Average ACO savings vs. benchmark: 4.2% (top quartile: 8.1%)
+AI-enabled ACOs outperform non-AI: 3.1 percentage points above benchmark
+Risk stratification AI accuracy: 84% identification of high-risk patients 90 days ahead
+Preventable hospitalization reduction with AI: 18-24%
+Average ACO shared savings payment: $2.8-6.4M per 10,000 attributed patients
+
+POPULATION HEALTH AI BENCHMARKS
+Health systems with AI population health: 34%
+Platforms: Innovaccer (35% market share), Arcadia (24%), Health Catalyst (18%)
+AI-driven care gap closure rate: +34% vs. manual outreach
+Chronic disease management AI: 19% reduction in ED utilization
+Post-acute AI (SNF/home health optimization): $820 savings per Medicare episode
+
+BUNDLED PAYMENT AI
+Organizations in bundled payment programmes: 28%
+AI episode cost prediction accuracy: 88%
+AI-predicted high-cost cases (correctly identified): 81%
+Cost reduction in bundles with AI: 12-18% per episode
+Joint replacement bundle AI example: $1,240-1,880 savings per episode
+
+QUALITY MEASURE AI PERFORMANCE
+AI-assisted quality measure calculation accuracy: 97.2% vs. 94.1% manual
+Time saved on quality reporting with AI: 68%
+CMS quality penalty avoidance value: $1.2-3.4M per year for large IDN
+HEDIS measure improvement with AI outreach: +8-14 percentage points on key measures
+
+SOCIAL DETERMINANTS OF HEALTH (SDOH) AI
+SDOH screening AI accuracy: 82% identification of high-risk patients
+AI-connected SDOH intervention ROI: 3.1x within 18 months
+Hospital readmission reduction with SDOH AI: 14-21%
+Top SDOH risk factors AI identifies: housing instability, food insecurity, transportation

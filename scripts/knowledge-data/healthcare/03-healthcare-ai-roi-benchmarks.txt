@@ -1,0 +1,53 @@
+HEALTHCARE AI IMPLEMENTATION ROI — BENCHMARK STUDY
+Source: Accenture Health AI Survey 2024, NEJM Catalyst
+
+TOP-ROI AI USE CASES IN HEALTHCARE
+
+Revenue Cycle:
+- Denial prediction/prevention: ROI 4.2-8.1x, payback 8-14 months
+- Prior auth automation: ROI 5.8-9.4x, payback 6-10 months
+- Coding accuracy (CDI): ROI 3.1-5.2x, payback 12-18 months
+- Revenue integrity/underpayment detection: ROI 2.8-4.6x, payback 14-22 months
+- Patient propensity-to-pay modeling: ROI 2.2-3.8x, payback 10-16 months
+
+Clinical:
+- Sepsis prediction and early warning: ROI 2.1-3.8x, payback 18-24 months
+- Readmission prevention: ROI 1.8-3.2x, payback 18-30 months
+- Clinical documentation AI (ambient): ROI 2.4-4.1x, payback 12-18 months
+- Radiology AI (chest X-ray triage): ROI 2.8-4.4x, payback 14-20 months
+- Operating room scheduling AI: ROI 2.6-4.2x, payback 12-18 months
+
+Operational:
+- Capacity management AI (ED, inpatient): ROI 3.2-5.4x, payback 10-16 months
+- Supply chain demand sensing: ROI 2.6-4.2x, payback 14-20 months
+- Staffing/scheduling AI (nursing): ROI 3.4-5.8x, payback 8-14 months
+- Predictive maintenance (clinical equipment): ROI 2.1-3.6x, payback 16-24 months
+
+IMPLEMENTATION SUCCESS FACTORS
+Factor 1 — Named executive sponsor at COO/CFO level: 3.2x higher success rate
+Factor 2 — Clean data foundation established first: 2.8x higher ROI
+Factor 3 — Baseline metrics locked and signed Day 0: required for any ROI claim
+Factor 4 — Phased rollout (1 use case at a time): 2.1x less likely to be abandoned
+Factor 5 — Vendor outcome accountability clauses: 1.9x better vendor performance
+Factor 6 — CDO or CDIO role filled before launch: 84% programme success rate
+
+FAILURE PATTERNS (Genome F-codes)
+F007 — CDO/CDIO vacancy at go-live: 79% programme failure rate
+F011 — Vendor SLA not enforced: 74% suboptimal performance, avg $6.2M lost per year
+F003 — Platform EOL unplanned: 82% budget overrun, avg 38-47% cost premium
+F019 — Data fragmentation unresolved: 68% miss personalization window
+F027 — ERP fragmentation blocks AI data layer: 71% AI deployment blocked
+
+OVERALL HEALTHCARE AI PROGRAMME SUCCESS RATES
+Programmes deemed successful at 24 months: 34% (industry average)
+Programmes with AbarVa structured discovery: 61% (matched client set)
+Top failure cause: leadership misalignment (cited in 71% of failed programmes)
+Secondary failure cause: data readiness below threshold (cited in 54%)
+Technology failure: cited in only 18% as primary cause
+
+INVESTMENT AND ROI RANGES BY PROGRAMME SIZE
+$1-5M AI programme: median 24-month ROI 140%
+$5-20M AI programme: median 24-month ROI 210%
+$20-50M AI programme: median 24-month ROI 280%
+$50M+ structured portfolio: median 36-month ROI 380%
+Key insight: portfolio effects compound — second use case delivers 1.6x ROI of first

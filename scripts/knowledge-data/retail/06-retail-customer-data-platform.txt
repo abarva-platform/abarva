@@ -1,0 +1,52 @@
+RETAIL CUSTOMER DATA PLATFORM AND LOYALTY AI BENCHMARKS
+Source: Forrester CDP Wave 2025, NRF Loyalty Report
+
+CUSTOMER DATA FRAGMENTATION IN RETAIL
+Average customer data systems per retailer: 6.4
+Retailers with unified single customer view: 28%
+Duplicate customer records (without CDP): 18-34%
+Customers with both online and in-store records (unlinked): 44%
+Revenue impact of unlinked identities: 22% personalisation accuracy loss
+
+CDP MARKET LANDSCAPE
+Retailers with CDP deployed: 34%
+CDP market leaders: Salesforce Data Cloud (24%), Adobe Real-Time CDP (22%), Segment (18%), Treasure Data (14%), BlueConic (8%)
+Average CDP implementation cost: $480,000-1.4M (first year)
+Average CDP implementation timeline: 6-12 months
+CDP ROI: 3.4x within 24 months (Forrester TEI study)
+
+IDENTITY RESOLUTION BENCHMARKS
+Identity resolution match rate (best-in-class): 88-92%
+Identity resolution match rate (industry average): 68%
+Retailers with AI-powered identity resolution: 28%
+Time to resolve identities (large retailer, 50M customers): 4-8 months with AI
+Post-resolution personalisation accuracy improvement: +34%
+
+LOYALTY PROGRAMME AI BENCHMARKS
+Retailers with AI-personalised loyalty: 38%
+Points-only loyalty engagement decline (without AI): -28% over 3 years
+AI-personalised loyalty member spend vs. non-member: +34%
+Loyalty programme ROI with AI: 3.8x vs. 1.4x without AI
+Personalised offer redemption rate vs. generic offer: 2.4x higher
+Churn prediction accuracy (loyalty AI): 81% identification 90 days in advance
+
+CUSTOMER LIFETIME VALUE (CLV) AI
+Retailers using AI CLV prediction: 24%
+CLV prediction accuracy (top quartile): 84%
+High-CLV customer identification: 90 days in advance, 78% accuracy
+Preventable churn (with early intervention): 14-22% reduction
+Acquisition spend optimisation with CLV AI: 22% reduction in CAC (same LTV targets)
+
+PERSONALISATION TECHNOLOGY LANDSCAPE
+Dynamic Yield (acquired by Mastercard): 18% e-commerce retail market
+Adobe Target: 22%
+Salesforce Personalization: 14%
+Bloomreach: 16% (strong in mid-market)
+Optimizely: 12%
+Braze (mobile/push): 28% of personalised push deployments
+
+REAL-TIME PERSONALISATION BENCHMARKS
+Time to personalised recommendation (best-in-class): < 50ms
+Industry average latency: 280ms
+Latency above 200ms: 22% conversion rate degradation
+Personalisation coverage (% of sessions): top quartile 88%, median 44%

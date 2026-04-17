@@ -1,0 +1,53 @@
+CPG AND CONSUMER GOODS AI BENCHMARKS
+Source: Deloitte CPG Transformation Study 2025, McKinsey Consumer Goods AI Report
+
+CPG AI ADOPTION LANDSCAPE
+CPG companies with AI in at least one function: 54%
+CPG companies with enterprise AI strategy: 31%
+CPG functions with highest AI adoption: supply chain (61%), sales/trade (44%), marketing (38%)
+
+TRADE PROMOTION AI FOR CPG
+Trade spend as % of revenue (CPG average): 18-28%
+Promotions with positive ROI (without AI): 60%
+Promotions with positive ROI (with AI): 72%
+AI promotion optimisation improvement: 12pp
+Annual trade spend at $5B CPG: $900M-1.4B
+Annual savings from 12pp ROI improvement: $108-168M
+
+REVENUE GROWTH MANAGEMENT (RGM) AI
+CPG firms with RGM AI: 38%
+Price elasticity model accuracy: 84% (AI) vs. 58% (analyst)
+Channel mix optimisation AI: +8-12% revenue efficiency
+Pack size AI (right size for right channel): +6-9% margin
+Trade term negotiation AI: +4-8% trade efficiency
+Annual RGM AI value ($5B CPG): $40-80M
+
+DIGITAL SHELF AND E-COMMERCE AI FOR CPG
+Share of shelf (digital) monitoring: 44% of large CPG
+Search rank optimisation AI: +22% product visibility
+Product content compliance monitoring: 88% accuracy vs. 41% manual
+e-com SKU availability monitoring: real-time vs. 48-hour manual
+Direct-to-consumer (DTC) AI: 28% of large CPG have DTC channels with AI
+
+SUPPLY CHAIN AI FOR CPG
+Demand sensing accuracy (CPG, AI): 88% vs. 74% traditional
+S&OP (Sales and Operations Planning) AI: 38% CPG adoption
+AI scenario planning: 10,000+ scenarios in 4 hours (vs. 3 scenarios in 1 week)
+Supply chain disruption prediction (AI): 4-8 week advance notice
+Finished goods inventory reduction with AI: 18-24 days
+Raw material procurement AI: reduces COGS 2-4%
+
+CUSTOMER AND CHANNEL ANALYTICS
+CPG with AI-powered distributor analytics: 28%
+Key accounts AI (real-time performance): 34%
+Field sales AI (next-best action): 22%
+Route optimisation AI (distribution): reduces cost 8-14%
+Retail execution compliance AI: improves from 68% to 88% compliance rate
+
+CPG DATA PLATFORM BENCHMARKS
+CPG firms with unified product data platform: 31%
+Average product data systems: 5.8
+Time to launch new SKU data (manual): 4.2 days
+Time to launch new SKU data (AI-assisted): 4.8 hours
+Product master data accuracy: 78% industry average
+AI-driven product master data quality: 94%

@@ -1,0 +1,52 @@
+RETAIL GENERATIVE AI AND CONTENT AI BENCHMARKS
+Source: NRF Digital Commerce Report 2025, Gartner Retail GenAI Survey
+
+GENAI ADOPTION IN RETAIL
+Retailers with GenAI in production: 38%
+Retailers in GenAI pilot: 34%
+Retailers with no GenAI activity: 28%
+Most rapid adoption: content generation and customer service
+
+TOP RETAIL GENAI USE CASES (BY ADOPTION)
+1. Product description generation: 58% of GenAI-active retailers
+2. Marketing content/copy: 52%
+3. Customer service chatbot (LLM-based): 44%
+4. Image generation for product/marketing: 38%
+5. Internal knowledge search: 34%
+6. Social media content scaling: 31%
+7. Personalised email campaigns: 28%
+8. Size/fit recommendations: 22%
+9. Visual search: 18%
+10. Trend prediction AI: 16%
+
+CONTENT GENERATION PRODUCTIVITY
+Product description time (manual): 22 minutes per SKU
+Product description time (AI): 2.4 minutes per SKU
+Cost per description (manual): $8.40
+Cost per description (AI): $0.18
+For retailer with 800,000 SKUs: $6.6M annual savings on descriptions alone
+Content quality (AI vs. human-rated): 78% of AI descriptions rated "good" or better
+SEO performance of AI descriptions: equivalent to human (when fine-tuned on brand voice)
+
+CUSTOMER SERVICE CHATBOT AI
+Retailers with AI chatbot (LLM-based): 44%
+Previous generation (rule-based): 31%
+AI chatbot containment rate: 68% (top quartile)
+AI chatbot containment rate (median): 44%
+CSAT for AI-only resolution: 72 (vs. 81 for human — closing gap)
+Cost per AI-handled contact: $0.84 vs. $8.20 (human)
+Annual savings ($5B retailer): $4.4-8.8M
+
+VISUAL SEARCH AND DISCOVERY
+Retailers with visual search: 18%
+Visual search conversion rate: 2.8x higher than text search
+Visual search adoption by customers: 22% of searches initiated via image
+Product recognition accuracy (best-in-class): 94%
+AI style recommendation (image-based): +28% click-through vs. text-based
+
+TREND PREDICTION AI
+Retailers with AI trend prediction: 16%
+Trend signal sources: social media, search, runway, competitor
+Lead time: AI identifies trends 6-8 weeks earlier than traditional methods
+Inventory reduction from trend accuracy: 14%
+Markdown avoidance from trend prediction: 22%

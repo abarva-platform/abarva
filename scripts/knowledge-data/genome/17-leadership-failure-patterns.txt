@@ -1,0 +1,61 @@
+LEADERSHIP FAILURE PATTERNS IN AI TRANSFORMATION
+Source: AbarVa Genome — Leadership Category (L-series patterns), 127 total patterns
+
+L-001 — CDO ROLE FILLED BEFORE AI PROGRAMME KICKOFF
+Signal: success_predictor
+Success rate with CDO at launch: 84%
+Success rate without CDO at launch: 38%
+Sample size: 31 organisations
+Insight: CDO presence at go-live is the single strongest predictor of AI programme success across all industries
+
+L-002 — EXECUTIVE FAULT LINES SURFACED IN SESSION 1
+Signal: success_predictor
+Success rate: 78% (when fault lines explicitly mapped in session 1)
+Sample size: 44 organisations
+Insight: Surfacing disagreement early reduces mid-programme leadership conflict by 63%
+Failure mode: teams that avoid the conversation face leadership conflict at the worst time (Phase 2, when investment is highest)
+
+L-003 — C-SUITE AI LITERACY BELOW 40%
+Signal: failure_predictor
+Success rate: 38%
+Sample size: 21 organisations
+Insight: Low AI literacy produces unrealistic expectations; 62% of these programmes experienced scope creep
+Measurement: 40% = can explain AI concepts and evaluate AI claims without IT translation
+
+L-004 — SPONSOR DEPARTURE MID-PROGRAMME
+Signal: failure_predictor
+Risk: when executive sponsor leaves within 18 months of launch, 68% of programmes lose significant momentum
+Mitigation: board-level mandate documentation before sponsor is recruited — so programme survives individual departure
+Signal this is needed: sponsor says "if I leave, who would continue this?"
+
+L-005 — TECHNOLOGY AS THE SOLUTION (CIO-LED WITHOUT BUSINESS CO-OWNERSHIP)
+Signal: failure_predictor
+AI business impact with CIO-only ownership: 44% lower than joint CDO + business ownership
+Root cause: technology teams define success as deployment; business teams define success as outcome
+Mitigation: Joint accountability model with CDO and business unit head as co-owners
+
+L-006 — MANDATE AT ASPIRATION, NOT OUTCOME LEVEL
+Signal: failure_predictor
+Programmes with aspirational mandates ("AI-first") vs. outcome mandates ($X improvement): 2.6x more likely to be discontinued
+Sample size: 54 organisations
+Mitigation: translate mandate to specific KPIs with financial consequence within 90 days
+
+L-007 — VENDOR-SELECTED BEFORE STRATEGY DEFINED
+Signal: failure_predictor
+Success rate when vendor selected before strategy: 44%
+Cost overrun rate: 2.1x higher
+ROI at 24 months: 38% lower
+Prevalence: 48% of enterprise AI programmes
+Insight: Vendors optimise for contract value, not client outcome — only a defined strategy protects the client
+
+L-008 — PILOT PROLIFERATION WITHOUT SCALING
+Signal: failure_predictor
+Organisations with > 10 AI pilots but < 3 in production: 78% failure rate at programme level
+Cause: political comfort of piloting, discomfort of organisational change required for production
+Insight: Successful organisations limit pilots to 3 at once, and require production deployment before new pilot approval
+
+L-009 — COMMITTEE-MANAGED AI (NO SINGLE ACCOUNTABLE OWNER)
+Signal: failure_predictor
+Programmes managed by committee with no single accountable owner: 29% success rate
+Programmes with named accountable individual: 71% success rate
+Key principle: committees advise, individuals decide and are accountable

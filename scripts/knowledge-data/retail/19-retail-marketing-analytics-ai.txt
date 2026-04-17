@@ -1,0 +1,55 @@
+RETAIL MARKETING ANALYTICS AND AI BENCHMARKS
+Source: Salesforce State of Marketing 2025, Klaviyo E-Commerce Marketing Study
+
+MARKETING ANALYTICS MATURITY IN RETAIL
+Descriptive analytics only (what happened): 34%
+Diagnostic + descriptive (why it happened): 38%
+Predictive (what will happen): 22%
+Prescriptive + AI-autonomous (what to do): 6%
+
+EMAIL AND CRM AI BENCHMARKS
+Email volume (large retailer): 8-48M emails per month
+Personalised email open rate (AI): 28% vs. 18% (generic)
+Personalised email click-through rate (AI): 6.4% vs. 2.8% (generic)
+Revenue per email (AI-personalised): $0.14 vs. $0.08 (generic)
+AI email timing optimisation: improves open rate additional +22%
+Unsubscribe rate with AI (relevant content): 0.12% vs. 0.24% (generic)
+
+PAID MEDIA AND ACQUISITION AI
+Retailers with AI bid management: 44%
+ROAS improvement with AI bidding: +24%
+CAC reduction with AI audience targeting: 18%
+Lookalike modelling accuracy (for acquisition): 82%
+Creative AI (automatic generation/testing): 38% of retailers using
+AI creative performance vs. human-only: 28% higher CTR (automatic optimisation)
+
+SOCIAL COMMERCE AND INFLUENCER AI
+TikTok Shop revenue (% of e-com for early adopters): 14%
+Social commerce new customer % (2025): 22%
+AI-generated social content: 44% of retailers use AI for some social content
+Influencer AI matching accuracy: 84% (vs. 54% human review)
+Influencer ROI prediction accuracy: 78%
+Average influencer cost ($10K-100K followers): $1,200-4,800 per post
+
+CUSTOMER JOURNEY ANALYTICS
+Customer touchpoints before purchase: 6.4 on average
+AI attribution accuracy (multi-touch): 84% vs. 61% last-click
+Customer journey AI prediction (next likely channel): 78% accuracy
+Churn prediction accuracy (retail): 81% at 90 days
+Win-back campaign ROI (AI-targeted): 3.8x vs. 1.4x (mass win-back)
+
+SEO AND SEARCH AI
+AI product description SEO improvement: +18% organic traffic
+Internal site search satisfaction (AI): 84% vs. 61% (keyword)
+Search-driven conversion rate: 3.2x higher than non-search browsing
+Zero-result rate (without AI search): 14%
+Zero-result rate (with AI semantic search): 2.1%
+Revenue impact of zero-result elimination: +1.2% e-commerce revenue
+
+MARKETING MIX MODELLING (MMM) AI
+Retailers with MMM AI: 22%
+Traditional MMM update frequency: quarterly
+AI MMM update frequency: weekly (or real-time)
+Budget allocation accuracy improvement: +34%
+ROAS improvement from AI MMM: +18%
+MMM implementation cost: $280,000-640,000 annually

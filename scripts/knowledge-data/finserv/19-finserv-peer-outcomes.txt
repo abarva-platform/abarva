@@ -1,0 +1,51 @@
+FINANCIAL SERVICES AI PEER OUTCOME BENCHMARKS
+Source: AbarVa engagement data (anonymised), Oliver Wyman Digital Banking Study 2025
+
+PEER OUTCOME CASE STUDIES (ANONYMISED)
+
+CASE 1: Global Asset Manager ($420B AUM) — Data Platform Transformation
+Challenge: 14 fragmented data environments, Salesforce at 44% adoption, CDO vacancy
+Solution: Databricks enterprise lakehouse, Salesforce data remediation, CDO appointment
+Timeline: 18 months
+Investment: $12.4M
+Outcome: Salesforce adoption to 78%, Einstein ROI documented at 3.2x, C/I improved 4.2pp
+Pattern: matches AbarVa Genome P005 (Data Governance Before Platform)
+
+CASE 2: Regional Asset Manager ($80B AUM) — AI Research Automation
+Challenge: 180 research documents per analyst per day, no NLP, 2 days per earnings cycle
+Solution: Azure OpenAI NLP pipeline on Databricks, custom LLM on earnings data
+Timeline: 9 months
+Investment: $3.2M
+Outcome: 1,800 documents per analyst per day, earnings call processing < 4 hours
+Revenue impact: 2.4x more investable ideas per analyst, fund outperformance +0.8%
+
+CASE 3: UK Asset Manager ($240B AUM) — ESG Data AI Programme
+Challenge: 3 ESG data providers, 52% divergence, SFDR Article 9 compliance at risk
+Solution: AI ESG reconciliation engine, Collibra data catalogue, automated SFDR reporting
+Timeline: 12 months
+Investment: $4.8M
+Outcome: ESG score confidence interval -31%, SFDR reporting cost -61%, £1.2B new ESG mandate won
+Pattern: Fast-track ESG compliance unlocks new AUM category
+
+CASE 4: US Regional Bank ($14B assets) — Fraud and Core Banking Transformation
+Challenge: Legacy Fiserv core (22 years), fraud losses $3.8M annually, C/I at 68%
+Solution: Progressive core modernisation + ML fraud detection in parallel
+Timeline: Phase 1 (fraud AI) 8 months; Phase 2 (core migration) 32 months
+Investment: $82M total
+Outcome: Fraud losses $1.4M (-63%), C/I improved 6.2pp, mobile adoption from 38% to 64%
+Pattern: Quick win (fraud AI) funded the confidence and budget for core migration
+
+CASE 5: Large Investment Bank — AI Operations and Reconciliation
+Challenge: 2.4% trade reconciliation error rate, 6 days financial close
+Solution: ML reconciliation engine, GenAI financial close assistance
+Timeline: 14 months
+Investment: $6.8M
+Outcome: Error rate 0.18%, close cycle 2.8 days, $9.2M annual savings
+ROI: 7.4x at 24 months
+
+KEY PATTERNS FROM PEER OUTCOMES
+1. Firms that fix data quality before AI platform: 2.8x better outcomes
+2. Quick win in 90 days: 78% programme continuation rate
+3. CDO appointed before Phase 2: 84% success rate
+4. Outcome-based vendor contracts: 82% SLA compliance
+5. Change management > 12% of budget: 76% adoption at 18 months

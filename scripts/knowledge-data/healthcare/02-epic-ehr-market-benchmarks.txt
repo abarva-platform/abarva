@@ -1,0 +1,65 @@
+EPIC EHR IMPLEMENTATION — INDUSTRY BENCHMARKS
+Source: KLAS Research 2024, Black Book Rankings 2025
+
+MARKET POSITION
+Epic market share (hospitals > 200 beds): 38%
+Epic market share (academic medical centers): 57%
+Epic NPS score: 78 (highest in EHR market)
+Oracle Health (Cerner) market share: 22%
+MEDITECH: 14%
+Allscripts/Veradigm: 9%
+Other/legacy: 17%
+
+IMPLEMENTATION BENCHMARKS
+Average implementation timeline: 18-24 months
+Average implementation cost (400-bed hospital): $32-48M
+Average implementation cost (IDN, 10+ hospitals): $80-180M
+Go-live failure rate (budget or timeline overrun): 42%
+Primary overrun cause: change management underinvestment (61% of cases)
+
+STAFFING BENCHMARKS
+Recommended Epic project team (per $1B revenue): 1.8 FTE
+Industry average actual staffing: 1.1 FTE (39% below recommendation)
+Impact of understaffing: productivity loss duration extended 8-14 months
+Go-live productivity loss (adequately staffed): 11-16%
+Go-live productivity loss (understaffed): 22-34%
+
+AI INTEGRATION TIMING
+Optimal AI integration window: Months 6-18 of implementation (pre-go-live)
+Cost premium for post-go-live AI retrofit: 38-47% above pre-go-live integration
+Typical retrofit cost: $14-28M above original budget
+Timeline extension for retrofit: 14-22 months additional
+Percentage of organizations that miss the optimal window: 77%
+
+AI MODULE ADOPTION (Epic-live systems)
+Systems with at least one AI module active: 31%
+AI module types deployed (by frequency):
+1. Clinical documentation NLP: 44% of AI-active sites
+2. Sepsis/deterioration early warning: 38%
+3. Scheduling optimization: 29%
+4. Denial prediction: 24%
+5. Care gap identification: 21%
+
+AI adoption rate in first 12 months post-go-live: 9%
+AI adoption rate 24+ months post-go-live: 38%
+Key barrier (cited by 68% of non-adopters): data migration not complete
+
+EPIC MYHART PORTAL BENCHMARKS
+Top quartile activation rate: 65-75%
+Median activation rate: 44%
+Bottom quartile: < 31%
+AI-personalized portal outreach improves activation: +18-24 percentage points
+
+EPIC DATA ARCHITECTURE FOR AI
+Epic Chronicles: Operational database (proprietary Caché)
+Epic Clarity: SQL reporting database (read-only mirror)
+FHIR R4 API: Available for certified applications
+Recommended AI pipeline: Epic → FHIR API → Cloud DW → AI model
+Integration complexity: High (Epic-certified developer required)
+Average full pipeline integration cost: $2.4-4.8M
+
+PRE-GO-LIVE AI ROI (measured outcomes)
+Denial prevention models: 4.2x ROI within 18 months
+Prior auth automation: 6.1x ROI within 12 months
+Clinical decision support: 3.8x ROI within 24 months
+Scheduling AI: 2.9x ROI within 18 months

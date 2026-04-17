@@ -1,0 +1,53 @@
+HEALTHCARE CDO ROLE AND AI GOVERNANCE BENCHMARKS
+Source: CHIME CDO Survey 2025, AbarVa Genome Data
+
+CDO ROLE PREVALENCE
+Health systems with CDO or Chief AI Officer: 44%
+Health systems with CDO in place before AI programme: 18%
+Health systems with CDO vacancy during AI programme: 34%
+Average CDO tenure: 2.8 years (lower than other C-suite roles)
+
+CDO IMPACT ON AI OUTCOMES (AbarVa Genome)
+Systems with CDO at AI launch: 84% programme success rate
+Systems without CDO at AI launch: 38% programme success rate
+Delta: 46 percentage points
+CDO with budget authority (not just advisory role): 91% success rate
+
+CDO REPORTING STRUCTURE
+CDO reporting to CEO: 41% (most effective)
+CDO reporting to CIO: 32% (mixed outcomes)
+CDO reporting to COO: 18% (operational focus)
+CDO reporting to CFO: 9% (least effective for AI)
+
+AI GOVERNANCE COMMITTEE PREVALENCE
+Health systems with formal AI governance committee: 31%
+AI committee meeting frequency:
+- Monthly: 44% of those with committees
+- Quarterly: 38%
+- Ad hoc: 18%
+AI governance committees with budget authority: 28%
+
+GOVERNANCE COMMITTEE IMPACT
+Systems with AI committee: 2.1x higher AI programme success rate
+Systems with AI committee + budget authority: 2.8x higher success rate
+Systems with quarterly-only review: 38% of decisions reversed within 90 days
+Systems with monthly review + consequences: 91% decision adherence
+
+AI POLICY COVERAGE GAPS (2025)
+Health systems with comprehensive AI use policy: 38%
+Health systems with no formal AI policy: 34%
+Health systems with policy for EHR AI but not general AI: 28%
+Most common policy gap: non-FDA-cleared AI in clinical workflows (61% have no policy)
+Liability exposure from unvetted clinical AI: $2.4-8.8M per incident estimate
+
+AI ETHICS AND BIAS MONITORING
+Health systems with AI bias monitoring programme: 14%
+AI models audited for bias within 12 months of deployment: 28%
+Racial/ethnic disparity in AI performance (unmonitored models): found in 34% audited
+CMS bias equity requirements for AI in value-based contracts: effective 2026
+
+SHADOW AI RISK
+Health systems with employees using unauthorised AI tools: 91%
+Most common unauthorised AI: ChatGPT, Claude, Copilot in clinical documentation
+PHI exposure risk from unauthorised AI: $100-50,000 per record (HIPAA)
+Health systems with shadow AI monitoring: 18%

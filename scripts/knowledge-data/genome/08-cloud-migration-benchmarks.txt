@@ -1,0 +1,55 @@
+CLOUD MIGRATION BENCHMARKS AND AI ENABLEMENT PATTERNS
+Source: Gartner Cloud Migration Study 2025, AWS Migration Intelligence, AbarVa Assessment Data
+
+CLOUD MIGRATION MARKET OVERVIEW
+Enterprise workloads in cloud (2025): 48%
+Projected 2028: 64%
+Estimated remaining on-premise workloads suitable for cloud: 82%
+Migration timeline (all suitable workloads): 5-8 years at current pace
+
+MIGRATION APPROACH BENCHMARKS
+Lift-and-shift (rehost): 44% of first-wave migrations
+Re-platform (OS/DB upgrade, same architecture): 34%
+Re-architect (cloud-native redesign): 20%
+Performance improvement post-migration: lift-and-shift +8%, re-platform +34%, re-architect +68%
+Cost reduction post-migration: lift-and-shift +2%, re-platform +18%, re-architect +34%
+
+MIGRATION COST BENCHMARKS
+Cost per server (lift-and-shift): $8,400-24,000
+Cost per application (re-platform): $280,000-620,000
+Cost per application (re-architect): $480,000-1.2M
+Total migration cost for large enterprise (1,000 apps): $280M-620M over 5 years
+Cloud migration ROI at 5 years: 3.4x for re-architect, 1.8x for lift-and-shift
+
+AI WORKLOAD CLOUD REQUIREMENTS
+All major AI frameworks require cloud (or cloud-equivalent): PyTorch, TensorFlow, Hugging Face
+GPU/TPU availability: only cloud provides elastic GPU compute
+LLM inference at scale: requires cloud elasticity (Bedrock, Azure OpenAI, Vertex AI)
+Data pipeline for AI: requires cloud object storage (S3, ADLS, GCS) and streaming (Kinesis, Event Hubs, Pub/Sub)
+Key finding: on-premise AI is possible for inference but cloud is required for training at scale
+
+DATA MIGRATION RISK FACTORS
+Data volume growth rate: 23% annually (most organisations underestimate)
+Data migration cost underestimation (typical): 40-60% more than budgeted
+Data quality issues discovered during migration: 22% of records have quality issues
+Recommended data profiling before migration: 2-3 months
+Migration testing requirement: 6-9 months for business-critical systems
+
+CLOUD PLATFORM SELECTION CRITERIA (FOR AI)
+Azure: best for Microsoft-integrated organisations (Office 365, Teams, Epic Health)
+AWS: best for Python-native ML teams, SageMaker ecosystem, startup-style development
+GCP: best for analytics-heavy (BigQuery) and ML innovation
+Multi-cloud strategy: adopt when specific capabilities require different providers
+
+COST OPTIMISATION POST-MIGRATION
+Average cloud overspend in first year: 38-44% above optimal
+FinOps implementation: reduces overspend to 8-14%
+Reserved instances/savings plans: 38-52% cost reduction vs. on-demand
+Spot/preemptible for AI training: 60-80% cost reduction vs. on-demand for non-time-critical workloads
+Annual cloud cost savings opportunity (large enterprise): $12-48M with FinOps
+
+HYBRID AND EDGE CONSIDERATIONS
+Healthcare: 44% keep PHI on-premise for compliance, AI runs in cloud on de-identified data
+Financial services: market data and trading systems: 38% remain on-premise for latency
+Retail: store-level AI (CV for LP): edge deployment reduces bandwidth 84%
+Hybrid architecture cost premium vs. pure cloud: 12-18%

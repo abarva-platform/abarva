@@ -1,0 +1,50 @@
+AI ADOPTION IN PORTFOLIO MANAGEMENT AND INVESTMENT RESEARCH
+Source: PwC Asset and Wealth Management Revolution 2025, CFA Institute AI Survey
+
+PORTFOLIO MANAGEMENT AI ADOPTION RATES
+Large asset managers (>$200B AUM) with AI in investment process: 72%
+Mid-size ($20B-$200B): 48%
+Boutique (<$20B): 28%
+
+AI USE CASE ADOPTION RATES (large asset managers)
+NLP for research synthesis: 48%
+ML risk models: 44%
+Quantitative factor model enhancement: 38%
+Alternative data processing: 41%
+ESG AI scoring: 71%
+GenAI for report generation: 22%
+Automated trading signal generation: 31%
+
+NLP RESEARCH INTELLIGENCE BENCHMARKS
+Daily research documents processed per analyst: 180 (manual) vs 1,800 (with NLP)
+Analyst time saved by NLP research: 58%
+Investment ideas generated per analyst with NLP: 2.4x without
+Earnings call sentiment analysis accuracy: 84%
+Signal-to-noise improvement with NLP: 38%
+
+QUANTITATIVE AND ML STRATEGIES
+Systematic AUM (ML-driven): 34% of global AUM
+Pure ML strategies AUM growth 2023-2025: +28%
+ML-driven quant outperformance vs. rule-based: 1.1% annually (net of costs)
+Sharpe ratio improvement with ML: +0.18 average
+Drawdown reduction with ML risk models: 14%
+
+GENERATIVE AI IN INVESTMENT
+Asset managers in GenAI pilots: 22%
+Early movers report analyst time reduction on documentation: 40-60%
+RFP automation time reduction: 44-68%
+Client report generation time: 8 hours → 45 minutes with GenAI
+Risk of GenAI hallucination in investment context: requires human review on all outputs
+
+ESG AI CAPABILITIES
+ESG score divergence across providers (same issuer): 40-60%
+Asset managers with AI ESG reconciliation: 41%
+AI ESG score confidence interval improvement: 28% tighter vs manual
+Regulatory reporting time with AI ESG: -52%
+AUM requiring ESG compliance reporting: £48T globally (EU SFDR, SEC)
+
+AI RISK MANAGEMENT IN PORTFOLIO
+Scenario simulation speed: 10,000+ scenarios in minutes (AI) vs hours (traditional)
+VaR model prediction error reduction with ML: 18-24%
+Stress testing coverage with AI: 6.8x more scenarios tested
+Tail risk identification improvement with ML: 31%

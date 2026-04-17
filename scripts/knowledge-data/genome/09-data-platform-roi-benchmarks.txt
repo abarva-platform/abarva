@@ -1,0 +1,64 @@
+DATA PLATFORM ROI AND ARCHITECTURE BENCHMARKS
+Source: Databricks Data + AI Summit Report 2025, Snowflake Data Cloud ROI Study, AbarVa Data
+
+DATA PLATFORM MARKET AND ADOPTION
+Snowflake: 29% enterprise market share (cross-cloud, strong in SQL/analytics)
+Databricks: 24% enterprise market share (strong in ML/AI, Python-native)
+Azure Synapse: 16%
+Google BigQuery: 14%
+AWS Redshift: 11%
+Convergence: Snowflake and Databricks both adding ML/AI capabilities
+
+SNOWFLAKE BENCHMARKS
+Average Snowflake ROI (Forrester TEI study): 612% over 3 years
+Time to positive ROI: 8 months
+Average annual savings vs. previous data warehouse: $2.4-8.4M
+Query performance improvement vs. on-premise: 6.2x
+Concurrency (users accessing simultaneously): 10,000+ vs. 12-40 (on-premise)
+
+DATABRICKS BENCHMARKS
+Average Databricks ROI (Forrester TEI study): 417% over 3 years
+Time to positive ROI: 11 months
+Data engineering productivity improvement: +28%
+ML model deployment speed: 2.6x faster vs. ad hoc infrastructure
+Databricks Photon (SQL acceleration): 2.4-8.1x faster than standard Spark
+
+MEDALLION ARCHITECTURE ROI
+Organisations with medallion architecture:
+- Data quality improvement: 44% better AI feature quality
+- Data engineering rework reduction: 31%
+- AI model deployment time: 2.6x faster
+- Analyst self-service adoption: 38% higher
+Organisations without medallion (ad hoc data lake): 48% "data swamp" within 18 months
+
+DATA PLATFORM FAILURE PATTERNS
+Pattern DP-001: Built without use cases (44% of data platforms)
+Result: Platform deployed, no AI use cases activated within 24 months
+Cost: $2.4-8.4M platform investment with minimal ROI
+Fix: define 3 priority use cases before platform RFP
+
+Pattern DP-002: Deployed without data catalogue
+Result: 74% of data becomes undiscoverable within 18 months
+Fix: Collibra, Alation, or Purview in parallel with data lake
+
+Pattern DP-003: No data quality SLA for production tables
+Result: AI models degrade as data quality drifts
+Fix: Great Expectations or dbt tests on all gold layer tables
+
+Pattern DP-004: Separate data science and engineering stacks
+Result: 2.3x cost, 1.8x time to production per model
+Fix: Databricks lakehouse unifies both on one platform
+
+BUILD VS. BUY ANALYSIS FOR DATA PLATFORMS
+Build custom DW: $4.8-12.4M, 18-30 months, hard to scale
+Buy cloud DW (Snowflake/Databricks): $1.2-3.4M, 3-6 months, auto-scale
+Build custom ML infrastructure: $3.8-8.2M, 12-24 months
+Use SageMaker/Azure ML/Vertex: $0.8-1.8M, 2-4 months
+Key insight: buying platform saves 60-70% of infrastructure cost, allowing investment in use cases
+
+TOTAL COST OF OWNERSHIP (3-YEAR)
+On-premise data warehouse (Teradata/IBM): $8.4-24M
+Snowflake equivalent: $2.8-6.4M
+Databricks equivalent: $2.4-5.8M
+Cloud TCO advantage: 60-70% lower over 3 years
+Additional benefit: cloud auto-scales; on-premise requires capacity planning (18-month lead time)

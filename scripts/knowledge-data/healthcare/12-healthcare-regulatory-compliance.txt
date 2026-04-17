@@ -1,0 +1,52 @@
+HEALTHCARE AI REGULATORY AND COMPLIANCE LANDSCAPE
+Source: CMS, FDA, ONC, HHS — Public Data 2024-2025
+
+CMS AI REGULATORY PRIORITIES
+CMS AI Strategy 2024: prioritises AI for care quality, payment integrity, and access
+AI use in Medicare/Medicaid payment decisions: requires explainability documentation
+Proposed mandatory explainability rule: covers all AI in claims adjudication
+Non-compliance risk: $10,000/day per algorithm violation
+CMS payment integrity AI: recovered $4.7B in improper payments in 2024 using AI
+
+FDA CLEARED AI/ML DEVICES
+Total cleared devices (2025): 950+
+Annual new clearances: 180-220 devices per year
+Radiology: 68% of cleared devices
+Cardiology AI: 11%
+Pathology AI: 7%
+
+FDA SaMD (Software as Medical Device) Classification
+Class I (general controls): 12% of cleared AI devices
+Class II (510k pathway): 76% of cleared devices
+Class III (PMA): 12% (highest risk, full clinical trial required)
+
+HIPAA AND AI MODEL TRAINING
+PHI use in AI training requires: valid TPO (Treatment, Payment, Operations) use case OR patient authorization
+De-identification standards: Safe Harbor (18 identifiers) or Expert Determination
+Federated learning: avoids PHI egress; gaining traction in multi-site research
+HIPAA breach notification (if PHI in AI training data exposed): $100-50,000 per record
+
+ONC HTI-1 RULE (AI TRANSPARENCY)
+Effective date: 2024-2026 phased
+Requirement: Algorithm transparency for EHR-embedded predictive models
+Affects: All Epic, Oracle, MEDITECH customers
+Non-compliance risk: $10,000/day per violation
+Health systems with compliant AI documentation: 31%
+
+STATE AI LEGISLATION (HEALTHCARE)
+Colorado: comprehensive healthcare AI bias law (2024)
+California: AI in clinical decision making disclosure requirement
+21 states: prior authorization gold carding legislation enacted
+Federal preemption landscape: uncertain — CMS may preempt state PA AI laws
+
+INFORMATION BLOCKING RULE
+ONC Information Blocking Rule: prohibits withholding patient data
+Violation penalty: up to $1M per violation
+Health systems subject to enforcement actions (2024): 18
+AI-assisted compliance monitoring reduces information blocking risk: 64%
+
+DATA SECURITY MANDATES
+HITRUST certification: required by 28% of payer contracts as of 2025
+SOC 2 Type II: required by 22% of AI vendor contracts
+Average annual HITRUST certification cost: $180,000-380,000
+Penalty for unencrypted PHI breach: $100-50,000 per record affected

@@ -1,0 +1,52 @@
+VENDOR SLA PERFORMANCE AND ENFORCEMENT BENCHMARKS
+Source: AbarVa Vendor Intelligence Layer — 340+ engagements
+
+VENDOR SLA COMPLIANCE RATES BY CATEGORY
+RCM outsourcers (healthcare): 72% average SLA compliance
+IT infrastructure vendors: 81% average SLA compliance
+EHR implementation partners: 74% average SLA compliance
+Cloud providers: 99.8% SLA (but SLA definition excludes most real outages)
+AI/ML platform vendors: 78% average SLA compliance
+Data management vendors: 76% average SLA compliance
+
+SLA ENFORCEMENT PATTERNS
+Clients that have ever enforced SLA penalty clauses: 26%
+Clients that never enforce despite breach: 74%
+Average breach duration before client action: 6.2 quarters (18+ months)
+Primary reason for non-enforcement: legal/procurement disconnected from operations
+Secondary reason: "relationship risk" perceived to outweigh penalty value
+
+FINANCIAL IMPACT OF NON-ENFORCEMENT
+Average recoverable value per enforcement action: $4.2-12.1M
+Annual value left on table by non-enforcement: $2.4-6.8M per major vendor relationship
+Compounding effect: vendors who see non-enforcement reduce service quality further (AbarVa data: 34% quality decline after first unenforced breach)
+
+HIGH-RISK SLA PATTERNS TO MONITOR
+Pattern 1: Vendor reporting "green" status on dashboards while operational metrics are red
+Pattern 2: SLA penalties capped at small percentage of contract value
+Pattern 3: SLA measured on technical uptime, not business outcome
+Pattern 4: No independent third-party measurement — vendor self-reports
+Pattern 5: Penalty invocation requires multi-level approval (kills enforcement in practice)
+
+VENDOR CONTRACT BEST PRACTICES (AbarVa FRAMEWORK)
+1. Business outcome SLA: tie penalties to denial rate, fill rate, system availability — not just uptime
+2. Automatic penalty: penalty triggers without client action (invoice deduction)
+3. Third-party measurement: independent measurement of SLA performance
+4. Quarterly business review: mandatory CXO-level SLA review
+5. Ratchet clauses: SLA tightens each year of contract (incentivises continuous improvement)
+6. Exit clarity: defined transition assistance and data portability in all contracts
+
+OUTCOME-BASED CONTRACT BENCHMARKS
+Clients with outcome-based contracts: 22%
+SLA compliance with outcome-based contracts: 84%
+SLA compliance with traditional contracts: 61%
+Delta: 23 percentage points
+Vendor willingness to sign outcome-based contracts: 38% will negotiate; 62% resist
+Signal: vendor resistance to outcome-based contract = performance confidence gap
+
+VENDOR LOCK-IN RISK ASSESSMENT
+Single vendor for multiple critical systems: adds 30-40% to 5-year TCO (AbarVa benchmark)
+No alternative vendor evaluated in 3+ years: cost premium 18-28%
+Proprietary data format with no export standard: switching cost multiplier 2.4x
+Vendor with > 30% of IT spend: governance risk — board should be aware
+AI vendor with proprietary model (no explainability): regulatory risk in FS and healthcare

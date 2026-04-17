@@ -1,0 +1,55 @@
+GENERATIVE AI ADOPTION IN FINANCIAL SERVICES
+Source: Morgan Stanley AI in FS Report 2025, Deloitte GenAI in Banking Survey
+
+GENAI ADOPTION RATES IN FINANCIAL SERVICES
+FS firms with at least one GenAI use case in production: 44%
+FS firms in GenAI pilot phase: 38%
+FS firms with no GenAI activity: 18%
+Growth: from 12% in production (2023) to 44% (2025)
+
+TOP GENAI USE CASES BY ADOPTION RATE (FS)
+1. Internal knowledge search/Q&A: 68% of GenAI-active firms
+2. Code generation and review: 61%
+3. Document summarisation: 58%
+4. Client report generation: 38%
+5. RFP automation: 34%
+6. Regulatory document analysis: 31%
+7. Investment research synthesis: 28%
+8. Risk report generation: 24%
+9. Client communication drafting: 22%
+10. Contract analysis: 21%
+
+PRODUCTIVITY IMPACT OF GENAI IN FS
+Analyst productivity (research synthesis): +40-60% efficiency gain
+Software developer productivity: +28-44% (GitHub Copilot, Cursor)
+Compliance analyst productivity: +34-52% (regulation processing)
+Client-facing staff (report and proposal generation): +44-68%
+Average productivity gain across functions: +32%
+
+GENAI COST REDUCTION
+Document processing cost (GenAI vs. manual): 68% reduction
+Legal contract review (GenAI-assisted): 52% time reduction
+Regulatory submission preparation: 44% time reduction
+Meeting summarisation and action tracking: 88% time reduction
+
+GENAI RISK AND GOVERNANCE
+FS firms with GenAI governance policy: 52%
+FS firms with GenAI human review requirement (before client use): 78%
+GenAI hallucination rate in unguarded mode: 8-14% of outputs contain factual errors
+Hallucination rate with retrieval augmentation (RAG): < 2%
+FS firms using RAG for GenAI: 38%
+Key risk: GenAI fabricating financial data or regulatory citations — requires RAG and human review
+
+GENAI VENDOR LANDSCAPE IN FS
+Microsoft Copilot (M365 integrated): 54% of FS GenAI deployments
+Azure OpenAI: 34%
+AWS Bedrock (Anthropic Claude): 28%
+Google Gemini: 18%
+Proprietary LLMs (built by large banks): 12%
+Open source (Llama, Mistral): 14%
+
+ROI MEASUREMENT
+FS firms that can quantify GenAI ROI: 34%
+Average 12-month ROI where measured: 2.9x
+Fastest ROI: internal knowledge search (payback 4 months)
+Hardest to measure: client experience improvement

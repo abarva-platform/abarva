@@ -1,0 +1,53 @@
+SAP ECC TO S/4HANA MIGRATION — RETAIL BENCHMARKS
+Source: SAP Partner Network, Deloitte SAP Migration Study 2025
+
+SAP MARKET POSITION IN RETAIL
+SAP penetration ($1B+ retail): 54%
+SAP ECC 6.0 end of mainstream support: January 2027
+Extended maintenance (premium): available through 2030
+ECC customers globally: 22,000+
+Customers migrated to S/4HANA: 28% (as of 2025)
+Customers with active migration in progress: 34%
+Customers with no migration plan: 38% (at risk)
+
+MIGRATION TIMELINE BENCHMARKS
+Average migration timeline ($5B+ retailer): 32-42 months from kickoff to production
+Greenfield implementation: 6-9 months longer than brownfield
+Typical retailer with 28 months remaining to 2027: already at timeline risk
+Go-live failure rate (budget/timeline overrun): 44%
+
+MIGRATION COST BENCHMARKS
+$1-3B revenue retailer: $18-42M total programme
+$3-10B revenue retailer: $42-96M total programme
+$10B+ revenue retailer: $96-220M total programme
+Cost overrun rate (>20% over budget): 41%
+Primary overrun cause: data migration complexity (discovered mid-project, 68%)
+
+EXTENDED MAINTENANCE COST PREMIUM
+SAP ECC maintenance post-2027 (standard support): +20% premium
+SAP ECC extended maintenance (through 2030): +30% premium above current
+Impact on budget: $2.8-8.4M per year additional for large retailers
+
+AI CAPABILITIES UNLOCKED BY S/4HANA
+SAP Joule AI (embedded in S/4HANA): conversational AI for finance/procurement/supply chain
+Embedded demand sensing: real-time SKU-level demand AI
+Automated financial close: AI-accelerated period-end from 8 to 3 days
+Supply chain resilience AI: disruption prediction and alternative routing
+Business Partner deduplication AI: automatic MDM matching
+
+MIGRATION APPROACHES AND PATTERNS
+Greenfield (new system): 34% — highest risk, cleanest architecture
+Brownfield (conversion): 48% — preserves customisations, carries forward debt
+Hybrid selective data migration: 18%
+
+KEY RISK: DATA MIGRATION UNDERESTIMATION
+Average SAP data records per $1B revenue: 8.4M
+Duplicate record rate (pre-migration): 3.8%
+Data quality issues discovered after migration starts: 22%
+Recommended data assessment duration: 3-4 months before migration kickoff
+Retailers that skip data assessment: 2.1x higher cost overrun
+
+BUSINESS CASE FRAMING
+Weak framing: "IT infrastructure upgrade" — board approval rate: 44%
+Strong framing: "AI enablement platform" — board approval rate: 78%
+Time: Every 6-month delay = $4.2M incremental risk (extended maintenance + missed AI ROI)

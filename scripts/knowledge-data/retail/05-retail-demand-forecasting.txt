@@ -1,0 +1,59 @@
+RETAIL DEMAND FORECASTING AND INVENTORY AI BENCHMARKS
+Source: Gartner Supply Chain AI Report 2025, Blue Yonder Customer Data
+
+DEMAND FORECASTING ACCURACY BENCHMARKS
+Industry average (traditional statistical): 74% accuracy at SKU/store level
+AI/ML-based forecasting (deployed): 88-94%
+Top quartile with advanced AI: 91-94%
+Days of inventory at median accuracy: 48 days
+Days of inventory at top quartile accuracy: 34 days
+
+FINANCIAL IMPACT OF FORECAST ACCURACY
+Revenue uplift from reducing out-of-stocks:
+- Every 1% improvement in accuracy = 0.8% revenue lift (from stockout reduction)
+- For $5B retailer: 1% accuracy gain = $40M revenue opportunity
+Inventory cost reduction: 1-1.4% of revenue per 1pp accuracy gain
+Markdown reduction from better planning: 22-34%
+Working capital improvement: $120-180M per $5B revenue (from inventory reduction)
+
+OUT-OF-STOCK BENCHMARKS
+Industry average out-of-stock rate: 2.4%
+Top quartile (with AI): 0.8-1.2%
+Revenue impact of 1% out-of-stock: 1.4-2.2% revenue loss (customers substitute or leave)
+At-shelf availability (top quartile): 98.8%
+AI demand-driven replenishment: reduces out-of-stock 28-44%
+
+AI DEMAND SENSING CAPABILITIES
+Real-time demand sensing (point-of-sale + social + weather): used by 28%
+Demand sensing latency reduction: from weekly to daily updates
+Seasonal event uplift prediction accuracy: 86% (top quartile AI)
+New product introduction forecast accuracy with AI: 68% (vs. 41% traditional)
+Promotion uplift modelling accuracy: 82% (AI) vs. 54% (traditional)
+
+INVENTORY OPTIMIZATION AI
+SKU rationalisation AI: identifies 15-22% of SKUs with negative margin contribution
+Assortment optimisation AI: improves sell-through 8-14pp
+Replenishment AI: reduces reorder point safety stock 28% without increasing stockouts
+Dead stock reduction: 31-44% reduction in end-of-season write-off
+DC-to-store allocation AI: reduces inter-store transfers 24%
+
+VENDOR LANDSCAPE — DEMAND FORECASTING
+Blue Yonder (Panasonic): 28% retail market share
+o9 Solutions: 18% (fast growing)
+Oracle Retail: 16%
+SAP IBP (Integrated Business Planning): 14%
+Relex Solutions: 12% (strong in grocery)
+Anaplan: 8%
+Inhouse/custom: 12%
+
+IMPLEMENTATION BENCHMARKS
+Time to first AI demand forecast in production: 4-8 months
+Full SKU coverage achievement: 10-16 months
+Data requirements: 24+ months of sales history at SKU/location level
+Integration required: POS, inventory, weather, promotional calendar
+Payback period: 6-9 months (fastest AI ROI in retail)
+
+KEY FAILURE PATTERN: DATA FOUNDATION
+Retailers with poor inventory data (accuracy < 92%): AI provides no uplift
+Retailers with poor promotional data: AI cannot model uplift correctly
+Retailers without unified SKU master: multiple AI errors per SKU

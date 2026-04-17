@@ -1,0 +1,49 @@
+FINANCIAL SERVICES IT SPEND AND TECHNOLOGY INVESTMENT BENCHMARKS
+Source: Gartner IT Spending Forecast 2025, Deloitte FS Technology Survey
+
+IT SPEND AS % OF REVENUE BY SEGMENT
+Large global banks (>$50B revenue): 8.4-11.2%, median 9.6%
+Regional banks ($1-10B revenue): 7.8-10.4%, median 8.9%
+Asset managers ($50-200B AUM): 7.2-9.8%, median 8.1%
+Large asset managers (>$200B AUM): 9.4-13.2%, median 11.1%
+Insurance (global): 4.8-7.2%, median 6.1%
+FinTech (native digital): 18-28% (technology is the product)
+
+IT BUDGET ALLOCATION IN FINANCIAL SERVICES
+Run and maintain (infrastructure, operations): 52-58%
+Change and grow (application, AI, innovation): 28-34%
+Compliance and risk technology: 12-18%
+AI and analytics (dedicated): 6-14% (leaders: 18-22%)
+
+TECHNOLOGY DEBT IN FINANCIAL SERVICES
+Average legacy system age: 22-28 years (mainframe, COBOL)
+Annual legacy maintenance cost premium: 18-28% above modern alternative
+Total FS industry technology debt (global estimate): $1.1T
+Average FS firm technology debt: $8.4B (global bank), $340M (regional bank), $48M (asset manager)
+
+VENDOR SPEND CONSOLIDATION
+Average number of technology vendors (large bank): 1,200+
+Top quartile (optimised): 600-700
+Vendor consolidation savings: 8-14% of technology spend
+AI-assisted vendor rationalization: 12-18 months to complete
+
+CLOUD SPEND GROWTH
+Cloud as % of IT spend (FS): 28% (2025)
+On-premise still dominant (% of IT): 72%
+Cloud spend growth rate: 24% annually
+Projected cloud as % of IT spend by 2028: 44%
+
+CYBERSECURITY SPEND
+Cybersecurity as % of IT budget (FS): 12-18%
+FS target (best practice): 18-22%
+Average cost of FS data breach: $5.9M per incident
+Average cost of ransomware attack (FS): $3.4M per incident
+FS cyberattack frequency: 300x higher than other industries
+Top FS cybersecurity vendors: CrowdStrike, Palo Alto Networks, Darktrace (AI-native)
+
+DATA AND ANALYTICS INVESTMENT
+Data vendor spend (large asset manager): $28-48M annually
+Enterprise data management investment: 8-12% of IT budget
+Data quality ROI: 3.8x within 24 months
+Business intelligence tool spend: $2.4-6.8M annually (varies by size)
+Self-service analytics penetration in FS: 38% (faster growing than other industries)

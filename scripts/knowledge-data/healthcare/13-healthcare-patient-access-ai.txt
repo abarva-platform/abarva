@@ -1,0 +1,50 @@
+HEALTHCARE PATIENT ACCESS AND ENGAGEMENT AI BENCHMARKS
+Source: Press Ganey, MGMA, Epic User Group Research 2025
+
+PATIENT ACCESS PERFORMANCE BENCHMARKS
+Average days to third next available appointment (primary care): 26 days
+Top quartile: 8 days
+Bottom quartile: 44 days
+AI scheduling optimization reduces wait time: 38-52%
+No-show rate (industry average): 14-18%
+Top quartile no-show rate: 7-9%
+Revenue impact of 1pp no-show reduction: $0.8-1.4M per 1,000 physicians
+
+AI SCHEDULING OPTIMIZATION OUTCOMES
+No-show prediction accuracy (best-in-class AI): 82%
+No-show rate reduction with AI-targeted interventions: 28-44%
+Schedule fill rate improvement: from 73% to 88% with AI
+AI-optimised template utilization improvement: 14-22 percentage points
+Annual revenue uplift from scheduling AI (per 100 physicians): $1.8-3.2M
+
+CALL CENTER AND DIGITAL ACCESS
+Average calls to schedule appointment: 2.4 attempts
+Calls resolved on first attempt (industry average): 61%
+AI-powered IVR and chat deflection rate (top quartile): 44%
+Cost per call (live agent): $8.20
+Cost per digital interaction (AI): $0.84
+Organisations with AI-first contact center: 18%
+AI contact center annual savings (500-physician group): $1.2-2.4M
+
+PORTAL ACTIVATION AND ENGAGEMENT
+MyChart/patient portal activation (Epic median): 44%
+Top quartile portal activation: 68-75%
+Patients using portal for scheduling (of activated): 38%
+Patients using portal for messaging (of activated): 54%
+AI-personalized portal outreach improves activation: +18-24pp
+Revenue impact of activated portal patient: $142 higher annual spend vs. non-portal
+
+PATIENT FINANCIAL EXPERIENCE AI
+Propensity-to-pay model accuracy: 84-88%
+Collection rate improvement with AI-guided payment plans: 12-19%
+Bad debt reduction with AI: 18-24%
+Patient financial satisfaction (AI-guided): +14 NPS points
+Charity care appropriateness (AI-screened): 28% reduction in under-utilization
+Cost to collect (AI-assisted) vs. (manual): $0.08 vs. $0.14 per dollar collected
+
+TELEHEALTH AND DIGITAL FRONT DOOR
+Telehealth as % of total visits (2025): 18%
+AI-powered triage and routing: reduces ED inappropriate utilization 14-22%
+Digital front door completion rate (with AI): 68% vs 39% without
+New patient acquisition cost: AI-digital $124 vs. traditional $312
+AI symptom checker to appropriate care routing accuracy: 81%

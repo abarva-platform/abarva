@@ -1,0 +1,61 @@
+HEALTHCARE DATA PLATFORM AND CLOUD INFRASTRUCTURE BENCHMARKS
+Source: HIMSS Analytics 2025, Gartner Healthcare IT Survey
+
+DATA READINESS BENCHMARKS (AbarVa 0-100 scale)
+Distribution across assessed health systems:
+- Score > 70 (AI-ready): 8% of health systems
+- Score 50-70 (foundation building): 29%
+- Score 35-50 (significant gaps): 41%
+- Score < 35 (pre-foundation): 22%
+
+Impact on AI programme outcomes:
+- Score > 65: 2x use case deployment in 24 months
+- Score 50-64: median programme outcomes
+- Score 35-49: 44% higher programme cost than projected
+- Score < 35: 68% of AI initiatives stall at proof-of-concept
+
+TOP DATA READINESS BLOCKERS (by frequency in health systems)
+1. No enterprise data catalogue: 67% of assessed organisations
+2. Epic/EHR data not integrated with enterprise data warehouse: 61%
+3. Master Patient Index (MPI) duplicate rate above 3%: 54%
+4. Multiple conflicting definitions for the same metric: 51%
+5. No self-service analytics for clinical/operational users: 48%
+6. Data quality score below 70% on critical datasets: 44%
+7. No real-time data pipeline (batch-only): 41%
+
+MPI QUALITY BENCHMARKS
+Average MPI duplicate rate (no active deduplication): 4.8%
+Top quartile (with MDM programme): 1.2%
+Industry median: 3.1%
+AI model accuracy degradation at 3% duplicate rate: 40-60%
+Cost to remediate MPI (per 1M records): $0.8-1.4M
+Ongoing annual deduplication cost: $0.3-0.6M per 1M records
+
+CLOUD PLATFORM ADOPTION IN HEALTHCARE
+Microsoft Azure: 37% primary cloud (Epic partnership, HIPAA tooling)
+AWS: 31% primary cloud (strong ML/AI tooling)
+GCP: 19% primary cloud (BigQuery analytics strength)
+Multi-cloud: 76% use at least two providers
+
+Cloud spend as % of total IT budget: 28%
+Average annual cloud spend ($5B+ health system): $42-68M
+Organisations with formal FinOps: 24%
+Average cloud waste without FinOps: 36-44%
+
+DATA WAREHOUSE / LAKEHOUSE PATTERNS
+On-premise data warehouse (Teradata, IBM): 41% still primary
+Snowflake: 24% deployed (fastest growing)
+Databricks: 18% deployed (strongest for ML workloads)
+Azure Synapse: 12%
+AWS Redshift: 8%
+
+Teradata end-of-life risk: average health system Teradata installation age 11.4 years
+Cost to migrate from Teradata to cloud DW: $3.8-9.2M per $1B revenue
+
+SELF-SERVICE ANALYTICS MATURITY
+Health systems with mature self-service BI: 21%
+Average BI tools in use (per system): 3.6 (fragmented)
+Tableau penetration: 44%
+Power BI penetration: 38%
+Epic Radar/Reporting Workbench as primary: 29%
+Organisations with consistent metric definitions across tools: 19%

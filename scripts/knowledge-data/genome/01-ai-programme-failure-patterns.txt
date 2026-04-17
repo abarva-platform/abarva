@@ -1,0 +1,64 @@
+ABARVA GENOME — AI PROGRAMME FAILURE PATTERNS
+Based on: 340+ enterprise transformation engagements
+Industries: Healthcare, Financial Services, Retail, Technology
+Updated: 2025
+
+F001 — NO BASELINE LOCKED DAY 0
+Failure rate: 84% (programmes without locked baseline cannot prove ROI)
+Description: AI programme launched without immutable baseline metrics before go-live. ROI cannot be calculated. Programme declared successful without evidence.
+Prevalence: 84% of enterprise AI programmes
+Signal: If baseline was not captured before the first model went to production, it is now too late
+Mitigation: Lock 5-7 KPI baselines with CXO signature before any AI vendor goes live. Third-party verification preferred.
+
+F003 — PLATFORM EOL UNPLANNED MIGRATION
+Failure rate: 82%
+Description: Legacy data platform reaches end-of-life without migration plan. Forced reactive migration.
+Cost premium: 38-47% above planned migration
+Timeline premium: 9-18 months additional
+Most affected: Healthcare (Teradata), Retail (SAP ECC 2027), Banking (legacy core)
+Mitigation: Begin planning 18+ months before EOL date. Business case framing as AI unlock, not IT infrastructure.
+
+F007 — CDO VACANCY AT AI PROGRAMME LAUNCH
+Failure rate: 79%
+Description: Chief Data/Digital Officer role vacant when AI programme launches. No executive accountability for data.
+Prevalence: 34% of health system AI programmes have CDO vacancy at launch
+Impact: Governance collapse at implementation phase. No one owns data quality or model outcomes.
+Mitigation: Interim CDO appointment before Phase 2. CDO must have budget authority.
+
+F011 — VENDOR SLA BREACH UNENFORCED
+Failure rate: 74% (of SLA-breaching vendors continue to underperform)
+Description: Primary IT vendor breaching SLA for multiple quarters with no penalty enforcement by client.
+Average breach duration before detection: 4.8 quarters
+Average recoverable value when enforced: $4.2-12.1M
+Reason for non-enforcement: Legal/procurement disconnect from operations
+Most common vendors: RCM outsourcers, EHR implementation partners, cloud providers
+Mitigation: Quarterly SLA review with penalty automation. Separate legal authority to invoke penalties without board approval.
+
+F019 — CUSTOMER DATA FRAGMENTATION UNRESOLVED
+Failure rate: 68%
+Description: AI personalisation or churn prevention programme launched before customer data unified.
+Average systems containing customer data: 6.4
+Time to unify with modern CDT tooling: 4-8 months
+Cost of delay: Personalisation AI window closes as competitors act
+Mitigation: CDT/CDP before personalisation AI vendor contract.
+
+F027 — ERP DATA QUALITY BLOCKS AI
+Failure rate: 71% (when AI attempted before data layer fix)
+Description: Supply chain or inventory AI blocked by inconsistent data across multiple ERP instances.
+Common scenario: Post-M&A with 4-12 ERP instances
+Solution: Silver layer entity resolution (not ERP replacement)
+Average resolution time: 4-6 months with Databricks DLT
+
+F031 — CHANGE MANAGEMENT UNDER-INVESTED
+Failure rate: 68%
+Description: AI programme with < 10% of budget allocated to change management and training.
+Outcome: 41% adoption at 18 months (vs. 76% with >12% budget)
+Cost of re-adoption programme: $1.8-4.2M after the fact
+Mitigation: Change management budget minimum 12% of total programme cost from Day 1.
+
+F044 — COMMITTEE WITHOUT AUTHORITY
+Failure rate: 58%
+Description: AI steering committee that cannot approve spend above $100K without full board sign-off.
+Decision speed: 3.4x slower than committees with delegated authority
+Impact: Vendors leave, opportunities missed, urgency lost
+Mitigation: Pre-approve spending thresholds for AI steering committee. CEO or board delegate authority explicitly.

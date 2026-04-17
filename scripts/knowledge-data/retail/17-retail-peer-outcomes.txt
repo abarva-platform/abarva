@@ -1,0 +1,48 @@
+RETAIL AI PEER OUTCOME BENCHMARKS (ANONYMISED)
+Source: AbarVa Engagement Data, NRF Case Studies, McKinsey Retail AI
+
+CASE 1: Specialty Apparel Retailer ($4.2B revenue)
+Challenge: 29% e-commerce vs. 44% target, fragmented loyalty (3 programmes), 74% forecast accuracy
+Solution: CDP unification, AI demand forecasting (Blue Yonder), personalised loyalty AI
+Timeline: 18 months (demand forecasting 6 months, CDP 12 months)
+Investment: $8.4M
+Outcome: Forecast accuracy 91%, e-commerce 36%, loyalty unified, return rate -18pp
+ROI: 4.2x at 24 months
+
+CASE 2: Omnichannel Department Store ($8.8B revenue)
+Challenge: SAP ECC EOL 2027, 48-month migration timeline, C/I at 72%
+Solution: S/4HANA migration + embedded AI activation, parallel demand forecasting
+Timeline: SAP migration 38 months, AI activated month 6 (parallel)
+Investment: $88M (SAP), $4.2M (AI programme)
+Outcome: C/I improved 5.8pp, OR reduction 18%, AI ROI positive month 14
+Key insight: Starting AI before SAP go-live captured 22 months of AI value vs. waiting
+
+CASE 3: Grocery Retailer ($12B revenue)
+Challenge: 74% OTIF, 1.8% shrink, 68% labour schedule compliance
+Solution: AI replenishment (Relex), CV loss prevention, AI scheduling (UKG)
+Timeline: 14 months (phased)
+Investment: $12.4M total
+Outcome: OTIF 91%, shrink 1.1%, labour cost -9%, AI ROI 3.8x at 24 months
+
+CASE 4: CPG Global Manufacturer ($18B revenue)
+Challenge: 40% trade promotions losing money, 3.8M SKU data quality issues
+Solution: Trade promotion AI (o9 Solutions), product master data AI
+Timeline: 10 months
+Investment: $4.8M
+Outcome: Profitable promotions improved from 60% to 74%, SKU data quality 94%
+Annual savings: $48M in trade promotion optimisation
+
+CASE 5: E-Commerce Pure-Play ($2.4B revenue)
+Challenge: 31% return rate, CAC rising, personalisation below target
+Solution: AI sizing (True Fit), personalisation AI (Dynamic Yield), CLV modelling
+Timeline: 8 months
+Investment: $2.1M
+Outcome: Return rate -14pp, conversion +22%, CAC -18%
+ROI: 5.4x at 18 months
+
+KEY PATTERNS FROM RETAIL PEER OUTCOMES
+1. Demand forecasting first: enables all supply chain AI — do not skip
+2. CDP before personalisation: retailers who skip CDP on personalisation get 41% less ROI
+3. SAP delay is expensive: $4.2M per 6-month delay in migration initiation
+4. Quick win visibility: supply chain AI wins (fastest ROI) unlock board confidence for larger programmes
+5. Shrink AI requires hardware investment: budget $42-88K per store — plan capital cycle

@@ -1,0 +1,49 @@
+FINANCIAL SERVICES CLOUD ADOPTION AND INFRASTRUCTURE BENCHMARKS
+Source: IDC FS Cloud Adoption Survey 2025, AWS FS Benchmark Report
+
+CLOUD ADOPTION OVERVIEW IN FINANCIAL SERVICES
+FS firms using at least one cloud provider: 88%
+Primarily cloud-first (>60% workloads): 22%
+Hybrid: 54%
+Predominantly on-premise: 24%
+
+CLOUD PROVIDER MARKET SHARE IN FINANCIAL SERVICES
+AWS: 34% primary (trading, quant, US capital markets)
+Microsoft Azure: 31% primary (UK/EU regulated, Microsoft-shop)
+Google Cloud: 22% primary (analytics, AI innovation)
+Oracle Cloud: 8% primary (legacy ERP lift-and-shift)
+IBM Cloud: 5% (mainframe-adjacent workloads)
+
+CLOUD PLATFORM SELECTION BY SEGMENT
+Hedge funds: AWS 48%, GCP 31% (ML/quant focus)
+Asset managers: Azure 38%, AWS 31% (Microsoft 365 dependency)
+Regional banks: Azure 42% (compliance tooling, Teams), AWS 29%
+UK/EU-regulated firms: Azure dominant (62%) — DORA compliance tooling
+
+SOVEREIGN CLOUD AND REGULATORY REQUIREMENTS
+UK FCA: FCA expects cloud outsourcing risk management, not prohibition
+EU: DORA requires ICT risk management, third-party resilience testing
+US OCC: supervisory expectations for cloud risk management, exit planning
+Multi-cloud for regulatory resilience: adopted by 38% of large FS firms
+
+FINOPS AND COST MANAGEMENT
+Average cloud overspend (no FinOps): 34-42%
+FS firms with formal FinOps: 34% (higher than other industries)
+Annual FinOps savings (large firm): $8.4-18.2M
+Reserved and savings plan coverage (top performers): 72%
+Spot/preemptible instance use (for ML training): 44% of AI workloads
+
+AI/ML INFRASTRUCTURE IN FINANCIAL SERVICES
+AWS SageMaker + Bedrock adoption: 28% of AWS-primary FS firms
+Azure Machine Learning + OpenAI: 34% of Azure-primary FS firms
+Google Vertex AI: 22% of GCP-primary FS firms
+On-premise GPU clusters (large quant firms): 41%
+Model training cloud cost (large quant firm, annual): $2.8-8.4M
+
+MAINFRAME MODERNISATION
+FS firms with mainframe: 72%
+Average mainframe age: 26 years
+Annual mainframe cost: $8-24M (large bank)
+Cloud migration cost vs. mainframe TCO: breakeven at 4.2 years
+Mainframe exit strategy: 41% have formal exit plans; 31% have no plans
+AI capabilities on mainframe: severely limited — all modern AI requires cloud connectivity

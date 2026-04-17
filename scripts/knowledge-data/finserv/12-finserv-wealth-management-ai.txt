@@ -1,0 +1,46 @@
+WEALTH MANAGEMENT AI AND DIGITAL ADVISOR BENCHMARKS
+Source: Aite-Novarica Wealth Management Technology 2025, Cerulli Associates
+
+WEALTH MANAGEMENT MARKET SEGMENTS
+Ultra-high net worth (>$30M): 12% of investors, 42% of AUM
+High net worth ($1M-$30M): 28% of investors, 38% of AUM
+Mass affluent ($250K-$1M): 31% of investors, 14% of AUM
+Mass market (<$250K): 29% of investors, 6% of AUM
+AI focus: mass affluent and mass market (underserved by traditional model)
+
+ROBO-ADVISOR AND AI-DRIVEN PLATFORMS
+Global robo-advisor AUM: $2.8T (2025)
+Growth rate: 21% annually
+Betterment, Wealthfront: pioneered mass market (fee: 0.25% AUM)
+Schwab Intelligent Portfolios: no fee, account minimum $5,000
+Traditional bank robo (JPMorgan, BofA): 34% market share (using brand advantage)
+Average customer acquisition cost (robo): $84 vs $312 (traditional advisor)
+
+HUMAN-PLUS-AI HYBRID MODEL BENCHMARKS
+Firms with hybrid AI + advisor model: 44%
+Assets per advisor (AI-augmented): $142M average (vs $88M traditional)
+Client NPS (hybrid model): 68 (vs 54 traditional advisor-only)
+Advisor time saved on administration: 41%
+Advisor capacity increase with AI: +28% more clients served
+Revenue per advisor (AI-augmented): +31%
+
+AI PERSONALIZATION IN WEALTH
+Next-best-action accuracy for wealth recommendations: 78% (at 85% data completeness)
+Personalized portfolio rebalancing AI: reduces tax drag 0.4-0.8% annually
+AI financial plan generation: 12 minutes vs. 4 hours (human)
+Estate planning AI: reduces attorney time 52%
+Tax-loss harvesting AI: adds 0.4-1.1% after-tax return annually
+
+CLIENT RETENTION AND RISK AI
+Client attrition prediction accuracy (90-day advance): 79%
+Intervention success rate with early detection: +24% retention
+Average AUM per departing client: $840,000
+Annual retention value per 1% improvement in retention: significant
+AI-flagged "at-risk" clients: 8.4% of book on average
+
+COMPLIANCE AND SUITABILITY AI
+Suitability review automation: reduces time 68%
+KYC (Know Your Customer) AI: reduces onboarding time from 11 days to 2.4 days
+Enhanced due diligence (EDD) AI: 4.2x faster than manual
+SEC Reg BI documentation AI: generates suitability documentation automatically
+Compliance review AI: covers 94% of client interactions vs. 12% manual sampling

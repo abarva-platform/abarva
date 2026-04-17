@@ -1,0 +1,51 @@
+HEALTHCARE TECHNOLOGY STACK PATTERNS AND AI READINESS
+Source: KLAS Research, HIMSS Analytics 2025, AbarVa Technology Assessment Data
+
+COMMON HEALTHCARE TECHNOLOGY STACK PATTERNS
+
+Pattern A: Epic-Centric (37% of large IDNs)
+EHR: Epic | Data: Azure Synapse or Epic Chronicles | BI: Tableau/PowerBI | AI: Azure OpenAI + Epic AI
+AI readiness score: 58 (medium) | Cloud: Azure primary
+Key strength: tight EHR integration | Key weakness: Epic dependency for all data pipelines
+
+Pattern B: Best-of-Breed Clinical (28% of large IDNs)
+EHR: Epic + multiple ancillary systems | Data: Snowflake or Databricks | BI: Tableau | AI: vendor-specific
+AI readiness score: 51 (medium) | Cloud: Multi-cloud (AWS + Azure)
+Key strength: clinical flexibility | Key weakness: integration complexity
+
+Pattern C: Cloud-Native Emerging (12% of IDNs)
+EHR: Epic or Oracle | Data: Databricks lakehouse | BI: Databricks SQL/Power BI | AI: Azure OpenAI
+AI readiness score: 72 (high) | Cloud: Azure or AWS-primary
+Key strength: AI-ready architecture | Key weakness: talent and change management gaps
+
+Pattern D: Legacy/On-Premise (23% of IDNs)
+EHR: MEDITECH or older Epic | Data: on-premise SQL Server or Teradata | BI: Crystal Reports/SSRS
+AI readiness score: 28 (low) | Key risk: platform EOL, AI deployment impossible
+
+INTEGRATION ARCHITECTURE BENCHMARKS
+Average number of interfaces (HL7 v2) per health system: 1,840
+Active FHIR integrations: 94 average (growing 38% per year)
+Interface engine market: Rhapsody (32%), Mirth Connect (28%), InterSystems (22%)
+API-first architecture adoption: 22% of health systems
+Average integration maintenance cost: $0.8-1.4M per $1B revenue annually
+
+DATA PIPELINE MATURITY
+Batch ETL only (no streaming): 44%
+Hybrid (batch + limited streaming): 38%
+Real-time streaming data pipeline: 18%
+Average data latency to analytics: 18-36 hours (batch), 2-8 seconds (streaming)
+Data quality SLA achievement: 62% of organisations meet internal data quality targets
+
+ANALYTICS MATURITY LEVELS
+Descriptive only (what happened): 34% of health systems
+Descriptive + diagnostic (why it happened): 42%
+Predictive (what will happen): 18%
+Prescriptive (what should we do): 6%
+AI-driven autonomous (act on predictions): 2%
+
+TECH DEBT QUANTIFICATION
+Average healthcare technology debt: $48M per $1B revenue
+Systems with quantified tech debt assessment: 22%
+Annual tech debt interest (maintenance cost premium): $6.8-12.4M per $1B revenue
+Estimated time to resolve ($1B health system): 4-6 years at adequate investment
+Tech debt that blocks AI deployment: 61% of assessed tech debt items

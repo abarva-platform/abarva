@@ -1,0 +1,51 @@
+RETAIL IT SPEND AND TECHNOLOGY INVESTMENT BENCHMARKS
+Source: Gartner Retail IT Spending Forecast 2025, NRF Technology Survey
+
+IT SPEND AS % OF REVENUE BY FORMAT
+Pure-play e-commerce: 6-9% (technology is core competency)
+Specialty retail (top quartile): 2.4-3.8%
+Specialty retail (median): 2.1%
+Department stores: 1.6-2.4%
+Grocery/supermarket: 1.2-1.8%
+Home improvement: 1.8-2.4%
+Below 1.4%: digitally at risk, losing share to digital competitors
+
+IT BUDGET ALLOCATION IN RETAIL
+Store operations and POS: 22-28%
+E-commerce and digital: 24-32%
+Supply chain and logistics: 18-24%
+AI/analytics: 8-14% (leaders: 15-20%)
+Corporate systems (ERP, HR, Finance): 14-18%
+
+DIGITAL TRANSFORMATION INVESTMENT
+Top quartile retailers invest: 3-4% of revenue in technology and digital
+Bottom quartile: 1.2-1.6%
+Outcome gap: top quartile achieves 44-58% e-commerce penetration
+Bottom quartile e-commerce: 14-22%
+Technology gap closure timeline (from bottom to median): 3-4 years at increased investment
+
+TECHNOLOGY DEBT IN RETAIL
+Average technology debt: $36M per $1B revenue
+Systems older than 10 years: 44% of retail application portfolio
+Annual technical debt interest: $4.8-8.4M per $1B revenue
+Most common legacy system risk: SAP ECC EOL 2027 (affects 54% of $1B+ retailers)
+
+CLOUD INVESTMENT TRAJECTORY
+Cloud as % of IT budget (current): 31%
+Cloud as % of IT budget (2027 projection): 48%
+Capital expenditure shift to cloud (OpEx vs. CapEx): 38% already OpEx-dominant
+
+AI-SPECIFIC INVESTMENT
+AI and analytics as % of IT budget (leaders): 15-20%
+AI and analytics as % of IT budget (laggards): < 5%
+Correlation: leaders with 15%+ AI spend achieve 2x ROI on IT investment
+AI investment ROI in retail (structured programme): 3.4x at 24 months
+Common mistake: treating AI as a line item vs. a programme (project AI ROI: 1.8x vs. portfolio: 3.8x)
+
+CYBERSECURITY IN RETAIL
+Cybersecurity spend as % of IT budget: 8-12%
+PCI DSS compliance cost: $1.2-4.8M annually
+Average retail data breach cost: $3.6M per incident
+Most common retail breach vector: point-of-sale malware (34%), phishing (28%)
+Ransomware attack on retail: 22% experienced in last 3 years
+AI-powered threat detection: reduces breach cost 28-44%

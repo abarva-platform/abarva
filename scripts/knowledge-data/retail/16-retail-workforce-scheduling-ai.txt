@@ -1,0 +1,50 @@
+RETAIL WORKFORCE AND SCHEDULING AI BENCHMARKS
+Source: Kronos/UKG Workforce Survey 2025, NRF Store Operations Study
+
+RETAIL LABOUR BENCHMARKS
+Labour cost as % of revenue: 14-22% (format-dependent)
+Grocery: 18-24%
+Specialty retail: 14-18%
+Restaurants/food service: 28-34%
+Full-time vs. part-time mix: 38% FT, 62% PT (industry average)
+
+WORKFORCE SCHEDULING AI ADOPTION
+Retailers with AI scheduling: 28%
+Traditional scheduling (rule-based): 44%
+Manual/spreadsheet scheduling: 28%
+AI scheduling platform leaders: UKG (Kronos) 28%, Workday (18%), Ceridian Dayforce (16%), Quinyx (12%)
+
+AI SCHEDULING PERFORMANCE BENCHMARKS
+Labour cost reduction (without headcount cuts): 8-12%
+Overtime reduction: 22-28%
+Schedule effectiveness score improvement: +24pp
+Time to create schedule (per manager): 4.2 hours → 22 minutes
+Compliance violation rate (labour law): -44%
+Employee preference satisfaction rate: +31%
+
+EMPLOYEE RETENTION AND SCHEDULING AI
+Part-time associate turnover rate: 64% annually (industry average)
+AI scheduling improvement on retention: -14pp turnover
+Turnover cost (retail, hourly associate): $3,200-5,600
+Annual savings from 14pp reduction (1,000 hourly employees): $4.5-7.8M
+Preferred hours matching with AI: 78% vs. 54% without AI
+
+LABOUR FORECASTING AI
+Labour demand prediction accuracy (AI): 92% vs. 76% traditional
+Variable traffic AI: captures weather, events, promotions
+Under-staffing loss (customers not served): 0.4% revenue per hour under-staffed
+Over-staffing cost: $22 per wasted labour hour (average)
+AI optimisation payback: 4-8 months
+
+STORE MANAGER PRODUCTIVITY WITH AI
+Time on scheduling: reduced 34%
+Time on operational tasks (increased): +28%
+Store manager retention improvement with AI tools: -12pp turnover
+Store performance correlation: managers with AI tools outperform by 8% on sales
+
+GIG AND FLEXIBLE LABOUR AI
+Retailers using on-demand/gig labour platforms: 22%
+Platforms: Instawork, Staffmark, Wonolo
+Gig fill rate (for same-day staffing): 84% with AI matching
+Premium paid for gig vs. scheduled: 28%
+AI scheduling: reduces gig dependency 38% while maintaining flexibility

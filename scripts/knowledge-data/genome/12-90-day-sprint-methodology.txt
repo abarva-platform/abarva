@@ -1,0 +1,68 @@
+90-DAY SPRINT AND QUICK WIN METHODOLOGY
+Source: AbarVa Phase Gate Framework, AbarVa Genome — Programme Survival Patterns
+
+THE 90-DAY IMPERATIVE
+Programme continuation rate at 24 months WITH 90-day quick win: 78%
+Programme continuation rate WITHOUT 90-day quick win: 38%
+Delta: 40 percentage points — the 90-day win is the most critical programme survival factor
+
+WHY 90 DAYS IS THE THRESHOLD
+Board attention span: 3 months to first evidence
+Sponsor confidence: needs visible proof before internal political pressure mounts
+Budget renewal cycle: many organisations have quarterly budget reviews
+Workforce engagement: 90-day cycles match human psychological commitment cycles
+Competitor visibility: 90 days is about the time competitor AI deployments become visible
+
+DEFINING THE RIGHT 90-DAY WIN
+Criteria for a valid 90-day quick win:
+1. Measurable: specific numeric improvement vs. locked baseline
+2. Visible: something a board member can see or understand
+3. Attributable: clearly caused by AI, not external factors
+4. Credible: based on real data, not a pilot on best-case scenarios
+5. Scale-able: the first win should be replicable across the organisation
+
+QUICK WIN SELECTION BY INDUSTRY
+
+Healthcare:
+Best 90-day wins: denial rate improvement (AI denial scrubbing), prior auth time reduction
+Data requirement: Epic billing data (usually available)
+Achievable improvement: 15-25% denial rate reduction in 90 days
+Board visibility: CFO-level (revenue impact)
+
+Financial Services:
+Best 90-day wins: AML false positive reduction, document processing time reduction
+Data requirement: transaction system data (usually available)
+Achievable improvement: 30-50% false positive reduction in 90 days
+Board visibility: COO/Chief Risk Officer level
+
+Retail:
+Best 90-day wins: forecast accuracy improvement in one category, loss prevention reduction in pilot stores
+Data requirement: POS + inventory data (usually available)
+Achievable improvement: 10-14% accuracy improvement in 90 days
+Board visibility: COO/CFO level (inventory cost)
+
+SPRINT DESIGN FRAMEWORK
+Week 1-2: data access, baseline locked, model training environment
+Week 3-6: model development, data pipeline validation
+Week 7-8: model validation and testing in controlled environment
+Week 9-10: production deployment (limited scope)
+Week 11-12: measurement and results documentation
+Week 12: CXO presentation with evidence
+
+90-DAY WIN FAILURE PATTERNS
+Failure: picking a use case with insufficient data (discover mid-sprint)
+Mitigation: data audit Week 1 with hard go/no-go decision
+
+Failure: picking a use case too complex for 90 days
+Mitigation: pick the simplest version of the use case, not the most ambitious
+
+Failure: vendor delay pushing past 90 days
+Mitigation: internal team capability for quick win, not vendor-dependent
+
+Failure: 90-day win is technically complete but not communicated effectively
+Mitigation: board presentation designed by comms and business leader, not IT
+
+PROGRAMME SURVIVAL AFTER QUICK WIN
+After successful 90-day win: programme continuation at 78% (as above)
+Phase 2 investment approval: 84% success rate (after 90-day win)
+Team confidence and retention: 94% of AI team stays through Phase 2 after visible win

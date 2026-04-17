@@ -1,0 +1,55 @@
+AI ROI BENCHMARKS BY USE CASE — ALL INDUSTRIES
+Source: AbarVa Use Case Library, McKinsey Global AI Survey 2024-2025
+
+ROI RANGES BY AI CATEGORY
+
+DATA PLATFORM AND INFRASTRUCTURE
+Data lakehouse (Snowflake/Databricks): Median time to positive ROI 28 months; top-quartile 36-month ROI 340%
+Failure mode: 44% of data platform investments do not progress to active AI use cases within 24 months (built without use cases)
+Key driver: platforms with use cases defined before build: 2.1x ROI
+
+MACHINE LEARNING — PREDICTIVE MODELS
+Demand forecasting: ROI 3.2-5.8x at 24 months, payback 6-9 months
+Fraud detection (banking): ROI 4.2-8.2x at 24 months, payback 8-14 months
+Denial prediction (healthcare): ROI 4.2-8.1x at 24 months, payback 8-14 months
+Churn prediction (retail/FS): ROI 2.4-4.1x at 24 months, payback 12-18 months
+Predictive maintenance: ROI 2.1-3.6x at 24 months, payback 16-24 months
+
+GENERATIVE AI
+Content generation: Median time to positive ROI 7 months (fastest)
+Top-quartile ROI at 12 months: 290%
+Caution: 38% of organisations cannot quantify GenAI ROI accurately
+Best performing GenAI use cases: code generation (41% productivity), document summarisation (52% time reduction)
+
+AI PROCESS AUTOMATION (RPA + AI)
+Document processing AI: ROI 4.1x at 24 months, payback 8-14 months
+Clinical documentation AI (ambient): ROI 2.4-4.1x at 18 months
+Trade reconciliation AI (FS): ROI 7.4x at 24 months
+Fastest RPA + AI payback: invoice processing (payback 3-5 months)
+
+AI-ENABLED OPTIMISATION
+Supply chain optimisation: ROI 2.6-4.2x at 24 months, payback 12-18 months
+Pricing/markdown optimisation: ROI 2.8-4.4x at 24 months, payback 8-12 months
+Workforce scheduling AI: ROI 3.4-5.8x at 24 months, payback 8-14 months
+Energy management AI: ROI 2.1-3.8x at 24 months, payback 12-18 months
+
+PORTFOLIO COMPOUNDING EFFECT
+1st AI use case median ROI (24 months): 140%
+2nd AI use case median ROI (24 months): 224% (1.6x first)
+3rd AI use case median ROI (24 months): 294% (2.1x first)
+5-use case portfolio median 36-month ROI: 380%
+Reason: data, platform, and organisational capability from first use case reduce cost of subsequent deployments
+
+COMMON ROI MEASUREMENT ERRORS
+Error 1: No locked baseline — 84% of programmes cannot prove ROI
+Error 2: Counting gross savings, not net of AI programme cost
+Error 3: Attributing all improvement to AI when other factors changed
+Error 4: Measuring too early (measuring at 6 months before model stabilises)
+Error 5: Counting "potential" ROI from use cases not yet deployed
+
+INVESTMENT SIZE AND ROI CORRELATION
+$1-5M AI programme: median 24-month ROI 140%
+$5-20M AI programme: median 24-month ROI 210%
+$20-50M AI programme: median 24-month ROI 280%
+$50M+ structured portfolio: median 36-month ROI 380%
+Under $1M AI investment: median 24-month ROI 62% (insufficient scale)

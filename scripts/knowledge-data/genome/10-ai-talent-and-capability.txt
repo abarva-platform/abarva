@@ -1,0 +1,68 @@
+AI TALENT, CAPABILITY BUILDING, AND TEAM BENCHMARKS
+Source: Korn Ferry AI Talent Outlook 2025, AbarVa Talent Assessment Data
+
+AI TALENT MARKET
+Global demand vs. supply gap: 3.2x (demand exceeds supply)
+Average time to hire AI engineer: 4.2 months
+Average time to hire senior data scientist: 5.8 months
+Average time to hire CDO/Chief AI Officer: 7.4 months
+
+AI ROLE COMPENSATION (US, fully loaded)
+AI/ML Engineer: $180,000-240,000
+Senior Data Scientist: $168,000-224,000
+Data Engineer: $144,000-192,000
+ML Architect: $210,000-280,000
+Chief Data Officer: $320,000-480,000 + bonus (15-35%)
+Chief AI Officer: $360,000-520,000 + bonus
+
+BUILD VS. BUY VS. PARTNER (AI CAPABILITY)
+Build internal AI team: 28% of enterprises
+Primary use vendor/platform AI: 34%
+Hybrid (both): 38%
+Hybrid is fastest-growing approach
+
+Time-to-value comparison:
+- Build: 18-24 months to capable internal team
+- Partner: 3-4 months to first AI use case
+- Hybrid: 4-6 months to first AI use case, 24 months to internal capability
+
+Cost comparison (3-year, 5 AI use cases):
+- Build internal team: $8.4-14.2M
+- Partner only: $4.8-9.6M
+- Hybrid: $6.2-10.8M (best capability + speed balance)
+
+AI LITERACY BENCHMARKS
+AI proficient (use AI tools without support): 14% of enterprise employees
+AI aware (have used AI tools): 38%
+No meaningful AI tool engagement: 48%
+Target for effective AI deployment: 60%+ awareness, 30%+ proficiency
+
+AI LITERACY PROGRAMME BENCHMARKS
+Organisations with formal AI literacy programme: 22%
+Adoption acceleration with literacy programme: 2.4x faster
+Learning time required to reach "AI aware": 4-8 hours
+Learning time required to reach "AI proficient": 40-80 hours
+Formats that work: scenario-based, use-case-relevant, in workflow
+
+TEAM STRUCTURE FOR AI PROGRAMME
+AI CoE minimum viable team (for >$5B organisation):
+- AI Programme Director: 1 FTE
+- ML Engineers: 3-4 FTE
+- Data Engineers: 2-3 FTE
+- Data Scientists: 2-3 FTE
+- Business Translators (domain experts + AI): 2-3 FTE
+- Data Steward: 1-2 FTE
+Total: 11-16 FTE, $2.4-3.8M annually (fully loaded)
+
+AI TEAM ATTRITION RISK
+Annual AI team attrition rate: 28% (industry average)
+Top reasons: compensation gap vs. Big Tech, slow bureaucracy, lack of compute access
+Organisations that retain AI talent: pay market rate (94%), give compute access (88%), reduce approval friction (82%)
+Cost of one senior AI engineer departure: $280,000-420,000 (replacement cost)
+
+OUTSOURCING AI CONSIDERATIONS
+Global AI outsourcing market: $48B (2025)
+Key vendors: Accenture AI, McKinsey QuantumBlack, BCG Gamma, Deloitte AI
+Average consulting rate (AI transformation): $280-480 per hour
+AI-accelerated delivery models: AbarVa agent+human delivers in 55% of traditional timeline
+Build vs. outsource: outsourcing accelerates speed, building accelerates long-term capability

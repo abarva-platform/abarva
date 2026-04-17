@@ -1,0 +1,64 @@
+RETAIL E-COMMERCE AND DIGITAL PERFORMANCE BENCHMARKS
+Source: NRF Digital Commerce Report 2025, Digital Commerce 360
+
+E-COMMERCE PENETRATION BY SEGMENT
+Specialty retail top quartile: 44-58% of revenue from e-commerce
+Specialty retail median: 31%
+Department stores top quartile: 28%
+Department stores median: 19%
+Grocery top quartile: 18%
+Grocery median: 11%
+Omnichannel top quartile: 38-44%
+Pure-play e-commerce (comparison): 100%
+
+DIGITAL MARGIN GAP
+Retailers below 25% e-commerce penetration: 3.4-6.2pp margin disadvantage vs. digital-native peers
+AI-driven efficiency can close: 40-60% of this gap within 3 years
+Digital customer lifetime value: 1.4x higher than store-only customer
+E-commerce COGS: 22% lower than store (no occupancy cost) but 8% higher fulfilment cost
+
+CONVERSION RATE BENCHMARKS
+E-commerce conversion rate (desktop): top quartile 4.8-6.2%
+E-commerce conversion rate (mobile): top quartile 2.4-3.8%
+Industry average (all devices): 2.1%
+AI personalisation conversion lift: +18-34 percentage points
+A/B testing velocity (top quartile): 12+ tests per month
+
+AVERAGE ORDER VALUE (AOV)
+Top quartile e-commerce AOV (specialty apparel): $148
+Median: $88
+AI recommendation AOV lift: +12-22%
+Personalised cross-sell AOV lift: +18%
+Basket abandonment rate: 68% (industry average)
+AI-personalized cart recovery: recovers 14-22% of abandoned baskets
+
+SAME-DAY AND FAST DELIVERY
+Consumers expecting same-day delivery: 44%
+Retailers offering same-day on key categories: 38%
+Cost of same-day delivery per order: $8.40-14.20 (vs. 2-day $3.80-6.20)
+AI routing optimisation reduces delivery cost: 18-28%
+On-time delivery improvement with AI routing: +14pp
+
+BOPIS (BUY ONLINE PICK UP IN STORE)
+Retailers with mature BOPIS: 58%
+BOPIS basket size vs. e-commerce: +28%
+BOPIS basket size vs. in-store: +18%
+BOPIS fulfilment cost vs. ship-from-warehouse: -12%
+Technology investment for BOPIS (per store): $14,000-28,000
+AI inventory visibility requirement: real-time store inventory accuracy > 96%
+
+CUSTOMER ACQUISITION AND RETENTION
+Customer acquisition cost (digital): $42-88 (by category)
+Customer acquisition cost (store): $18-32
+LTV (2-year, digital-first customer): 2.4x store-first customer
+E-commerce churn rate: 41% of first-year customers
+AI-driven retention (personalized offers): -18pp churn reduction
+Email/CRM AI: +22% open rate, +34% click-through rate
+
+RETURNS MANAGEMENT
+E-commerce return rate (apparel): 24% industry average, 29% bottom quartile
+E-commerce return rate (electronics): 18%
+AI virtual try-on/sizing: reduces return rate 11-18%
+Returns processing cost per unit: $8.20-14.40
+AI returns classification and routing: -38% processing cost
+Annual returns cost (top 50 retailer): $400M-1.2B — material AI opportunity

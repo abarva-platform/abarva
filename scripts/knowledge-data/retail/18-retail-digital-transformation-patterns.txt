@@ -1,0 +1,59 @@
+RETAIL DIGITAL TRANSFORMATION SUCCESS AND FAILURE PATTERNS
+Source: AbarVa Genome, McKinsey Digital Transformation Study 2025
+
+TRANSFORMATION SUCCESS PATTERNS IN RETAIL
+
+PATTERN R-001: DEMAND FORECASTING AS FOUNDATION
+Success rate: 78%
+Description: Retailers who deploy demand forecasting AI before any other AI initiative establish the data and organisational foundation for all subsequent AI
+Why it works: Demand forecasting forces SKU data quality, unified inventory, and cross-functional data sharing — all prerequisites for other AI
+Example: Retailer that deployed demand forecasting first achieved 4.2x ROI on subsequent personalisation vs. 1.8x for retailer that started with personalisation first
+
+PATTERN R-002: OMNICHANNEL IDENTITY BEFORE PERSONALISATION
+Success rate: 82%
+Description: Resolving customer identity across channels before deploying personalisation AI
+Why it works: Personalisation AI trained on fragmented customer data generates recommendations that are wrong 34% of the time
+Timeline: Identity resolution 4-8 months; then personalisation AI 4-6 months
+Cost of skipping: -41% ROI on personalisation
+
+PATTERN R-003: SAP MIGRATION AS AI UNLOCK NARRATIVE
+Success rate: 74%
+Description: Framing SAP S/4HANA migration as an AI enablement investment, not an IT project
+Why it works: CFO and board approve AI investments 34% more readily than infrastructure refreshes
+ROI reframe: "S/4HANA unlocks $22-44M in AI value over 24 months post-migration" vs. "We must upgrade SAP by 2027"
+
+RETAIL FAILURE PATTERNS (GENOME F-CODES)
+
+R-F001: PERSONALISATION WITHOUT IDENTITY RESOLUTION
+Failure rate: 68%
+Description: Deploying personalisation AI before customer identity is unified across channels
+Prevalence: 41% of retail AI personalisation deployments
+Cost: $1.2-2.8M wasted on personalisation that underperforms
+Fix: CDP + identity resolution before personalisation vendor contract
+
+R-F002: SAP MIGRATION DELAYED PAST POINT OF NO RETURN
+Failure rate: 71% (of delayed programmes hitting crisis)
+Description: ECC EOL in 2027 with no migration plan in place; forced emergency migration
+Cost premium vs. planned migration: 38-47%
+Window: Retailers must start by Q3 2025 to hit 2027 deadline safely
+
+R-F003: AI PROGRAMME WITHOUT BASELINE METRICS
+Failure rate: 84%
+Description: AI deployed without locking baseline metrics before go-live
+Result: ROI cannot be calculated; programme declared successful without evidence
+Prevalence: 84% of retail AI programmes have no locked baseline
+Fix: Lock 5-7 KPI baselines with CXO signature before any AI vendor goes live
+
+R-F004: FORECASTING AI WITHOUT DATA QUALITY FIX
+Failure rate: 64%
+Description: Demand forecasting AI deployed on dirty ERP/POS data
+Result: AI accuracy no better than traditional statistical forecasting
+Fix: 3-month data quality sprint before forecasting AI deployment
+Signal: Inventory accuracy below 92% = data quality fix required first
+
+R-F005: VENDOR SELECTED BEFORE USE CASE DEFINED
+Failure rate: 61%
+Description: AI vendor contract signed without specific use cases defined
+Cost: 2.1x higher platform cost, 38% lower utilisation at 24 months
+Most common in: large ERP vendors bundling AI as "included"
+Fix: Define 3 priority use cases first; evaluate vendor fit specifically

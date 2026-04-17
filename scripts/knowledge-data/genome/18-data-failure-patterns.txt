@@ -1,0 +1,59 @@
+DATA FAILURE PATTERNS IN AI TRANSFORMATION
+Source: AbarVa Genome — Data Category (D-series patterns)
+
+D-001 — DATA LAKE WITHOUT DATA CATALOGUE
+Signal: failure_predictor
+Prevalence: 48% of data lake deployments do not have a catalogue
+Failure rate: 74% of data becomes undiscoverable within 18 months
+Consequence: data engineering time wasted rediscovering existing datasets; AI model quality degrades as training data degrades
+Fix: deploy data catalogue (Alation, Collibra, Microsoft Purview) in parallel with lake — never as an afterthought
+
+D-002 — SHADOW ANALYTICS PROLIFERATION
+Signal: failure_predictor
+Prevalence: 81% of organisations have shadow analytics (Excel, personal BI files)
+Consequence: 6-14 versions of key metrics exist simultaneously; executive decisions made on inconsistent data
+Detection: ask 3 executives for the same metric — if answers differ, shadow analytics has taken root
+Fix: semantic layer (dbt, AtScale) + governed self-service BI; make official data easier to access than shadow data
+
+D-003 — MPI DUPLICATE RATE CREEP (MASTER PATIENT/CUSTOMER INDEX)
+Signal: failure_predictor
+Growth rate without active deduplication: 1.8-2.4% per year
+Threshold: above 3% duplicate rate = AI model accuracy degrades 40-60%
+Industry average duplicate rate: 4.8% (no MDM), 1.2% (with MDM)
+Fix: MDM investment and ongoing deduplication; assess before any AI deployment
+
+D-004 — AI MODEL TRAINED ON BIASED HISTORICAL DATA
+Signal: failure_predictor
+Description: models trained on pre-AI operational data inherit the inefficiencies AI is meant to fix
+Healthcare example: denial prediction model trained on historical denials learns to predict, not prevent
+Retail example: demand forecasting trained on stockout-distorted historical sales underestimates true demand
+Fix: retrain on post-intervention data within 12 months; use causal modelling for baseline construction
+
+D-005 — BATCH-ONLY DATA PIPELINE FOR REAL-TIME AI
+Signal: failure_predictor
+Consequence: real-time AI use cases (fraud, sepsis detection, pricing) cannot function on 18-hour-old data
+Impact: AI model accuracy degrades as data latency increases
+Healthcare: sepsis detection requires < 60-second latency; batch = useless
+Retail: demand sensing requires hourly update; weekly batch = 68% less signal captured
+Fix: Kafka/Kinesis/Event Hubs streaming pipeline; assess data latency requirements before platform selection
+
+D-006 — DATA GOVERNANCE DECLARED BUT NOT ENFORCED
+Signal: failure_predictor
+Prevalence: 54% of organisations have governance policies; 28% enforce them
+Consequence: data quality degrades despite policy existence; AI models trained on unvalidated data
+Detection: ask data engineers if they follow governance policies in practice
+Fix: automated data quality gates in data pipeline (dbt tests, Great Expectations); governance must be technical, not just policy
+
+D-007 — SINGLE SOURCE OF TRUTH ASSERTED WITHOUT RECONCILIATION
+Signal: failure_predictor
+Prevalence: 44% of organisations assert "we have a single source of truth" for key metrics
+Reality: 81% of these have 2+ inconsistent sources for the same metric
+Consequence: AI model trained on "single source" actually trains on 2.4 sources with noise
+Fix: data reconciliation sprint (4-6 weeks) before AI programme begins; document all sources and their hierarchy
+
+D-008 — DATA TEAM ORGANISED BY TOOL, NOT BY DOMAIN
+Signal: failure_predictor
+Structure: "we have a data engineering team, a BI team, a data science team" (siloed by function)
+Consequence: no team owns end-to-end data quality for a domain; handoffs create gaps
+Fix: domain-oriented data teams (healthcare/FS: clinical data team, RCM data team, supply data team)
+Pattern: data mesh principle — domain ownership accelerates AI readiness

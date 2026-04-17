@@ -1,0 +1,55 @@
+CORE BANKING MODERNISATION PATTERNS AND BENCHMARKS
+Source: Celent Banking Technology Research 2025, IDC Financial Services
+
+CORE BANKING MARKET LANDSCAPE
+Fiserv (DNA, Premier, Cleartouch): 31% US community/regional market
+Jack Henry (Symitar, SilverLake): 24%
+FIS (Modern Banking Platform): 19%
+Temenos: 23% global market
+Average core installation age: 22 years (some exceed 35 years)
+Core banking systems over 15 years old: 48% of US regional banks
+
+PERFORMANCE IMPACT OF LEGACY CORE
+Operational incident rate: legacy core 2.4x higher than modern core
+Feature deployment time: legacy 8-14 months vs. modern 6-8 weeks
+API capability: legacy 0-12 APIs; modern 200-800+ APIs
+Mobile feature parity with digital-native competitors: legacy achieves 34%
+Technical staff required: legacy 2.8x more IT FTE per $1B assets
+
+MODERNISATION APPROACHES
+Greenfield (new implementation): 34% of planned migrations
+Brownfield (system conversion): 48%
+Hybrid (selective data migration): 18%
+
+Greenfield timeline ($10B bank): 36-48 months
+Brownfield timeline ($10B bank): 24-36 months
+Greenfield risk: higher disruption, cleaner architecture
+Brownfield risk: carries forward technical debt, but faster
+
+MODERNISATION COST BENCHMARKS
+$1-5B asset bank: $20-48M total programme cost
+$5-20B asset bank: $60-140M total programme cost
+$20-50B asset bank: $120-280M total programme cost
+Cost overrun rate: 41% exceed budget by >20%
+Primary overrun cause: data migration complexity (discovered mid-project, 68% of cases)
+
+DATA MIGRATION RISK FACTORS
+Average number of accounts to migrate per $10B bank: 1.2M
+Duplicate account rate (pre-migration): 3.8%
+Data quality issues discovered post-migration (average): 22%
+Data migration testing duration (recommended): 6-9 months
+Health systems that underestimated data migration: 73%
+
+AI CAPABILITIES UNLOCKED BY MODERN CORE
+Real-time payment fraud detection (requires: streaming API)
+Personalised deposit pricing (requires: event-driven data)
+AI small business underwriting (requires: open banking data access)
+Cash flow forecasting for business customers (requires: transaction-level data)
+Personalised lending offers in mobile app (requires: API + ML model)
+All require modern core: none achievable on 15+ year old core without expensive middleware
+
+PROGRESSIVE MODERNISATION PATTERN
+Deploy modern core alongside legacy: 18% choose this approach
+Key benefit: reduces business risk vs. big-bang replacement
+Timeline extension: 18-24 months longer than big-bang
+Recommended for: banks above $5B with complex product portfolios

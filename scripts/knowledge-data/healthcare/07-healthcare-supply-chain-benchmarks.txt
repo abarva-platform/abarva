@@ -1,0 +1,53 @@
+HEALTHCARE SUPPLY CHAIN AI AND PERFORMANCE BENCHMARKS
+Source: AHRMM (Association for Health Care Resource & Materials Management) 2025, Gartner
+
+SUPPLY CHAIN COST BENCHMARKS
+Supply chain costs as % of hospital operating expenses: 14-18%
+Top quartile (lean supply chain): 13.2%
+Industry median: 16.4%
+Bottom quartile: 19.8%
+
+AI ADOPTION IN HEALTHCARE SUPPLY CHAIN
+Health systems with AI demand forecasting: 29%
+Health systems with AI-assisted contract management: 18%
+Health systems with predictive par-level management: 22%
+
+SUPPLY CHAIN AI OUTCOMES
+Fill rate improvement with AI: from 84% (industry median) to 92-96% (top quartile)
+Inventory carrying cost reduction from AI: 12-18%
+Expired product write-off reduction: 31-44%
+Emergency order rate reduction: 28-38%
+AI supply chain payback period: 8-14 months
+
+SURGICAL SUPPLY BENCHMARKS
+Per-case supply cost (median): $1,840
+Top-quartile health systems: $1,420
+AI surgical supply optimization reduces per-case cost: $180-420
+For 500-OR-case-per-week system: $4.7-11M annual savings
+Preference card accuracy without AI: 67%
+Preference card accuracy with AI: 91%
+
+VENDOR CONSOLIDATION BENCHMARKS
+Average active supply chain vendors (large IDN): 1,400-2,200
+Top quartile (post-consolidation): 800-900
+Vendor consolidation savings: 8-14% of supply spend
+Time to consolidate (with AI-assisted analytics): 14-20 months
+AI-assisted GPO compliance improvement: from 61% to 84%
+
+GPO MARKET (Group Purchasing Organizations)
+Vizient: 51% market share
+Premier: 29% market share
+HealthTrust: 12%
+Average price savings vs. non-GPO: 14-22%
+
+DISASTER PREPAREDNESS AND RESILIENCE
+Health systems with AI-powered supply resilience monitoring: 12%
+COVID-19 supply disruption cost (2020-2022): $4.2-8.8M per large IDN
+AI supply chain resilience reduces disruption impact: 34-48%
+Dual-source vendor strategy (AI-identified): reduces shortage risk 61%
+
+ENERGY AND FACILITIES AI
+Predictive maintenance AI reduces equipment downtime: 34%
+Energy management AI reduces utility costs: 8-14%
+Average hospital energy cost: $2.8M per 100 beds annually
+AI HVAC and energy optimization saves: $0.3-0.6M per 100 beds annually

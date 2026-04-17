@@ -1,0 +1,47 @@
+DATA GOVERNANCE AND MANAGEMENT IN FINANCIAL SERVICES
+Source: DAMA DMBOK 2025, BCBS 239 Compliance Survey, AbarVa Assessment Data
+
+BCBS 239 COMPLIANCE (Data Aggregation and Reporting)
+Banks subject to BCBS 239 (G-SIBs and D-SIBs): 200+ globally
+Full compliance rate: 42% (below target)
+Key gaps: data lineage documentation, aggregation accuracy, reconciliation
+Average cost to achieve BCBS 239 compliance: $120-280M (large bank)
+Regulatory pressure increasing: EBA/PRA actively enforcing
+
+DATA GOVERNANCE MATURITY IN FS
+Level 1 (ad hoc, no formal governance): 28% of FS firms
+Level 2 (reactive, policies exist but not enforced): 34%
+Level 3 (defined and managed governance programme): 24%
+Level 4 (optimised, data as strategic asset): 14%
+AI programme success at Level 1-2: 38%
+AI programme success at Level 3-4: 84%
+
+DATA CATALOGUE ADOPTION
+FS firms with enterprise data catalogue: 44% (higher than other industries)
+Leading platforms: Collibra (38% FS market), Microsoft Purview (22%), Alation (18%)
+Data catalogue ROI: 3.4x within 24 months
+Time saved finding trusted data: 62% reduction
+Data lineage visibility (with catalogue): 88% of critical datasets
+Data lineage visibility (without): 24%
+
+MASTER DATA MANAGEMENT IN FS
+Client/counterparty data duplicates (without MDM): 4.2%
+With MDM programme: 1.1%
+Duplicate client records: costs $1.8-4.2M annually in duplicated effort
+MDM implementation cost: $2.4-6.8M (depends on scope)
+MDM ROI: 3.8x within 30 months
+Leading MDM vendors: Informatica (34% FS market), IBM InfoSphere (22%), Reltio (18%)
+
+DATA QUALITY METRICS IN FS
+Completeness (data expected vs. actual): industry avg 74%, top quartile 92%
+Accuracy (correct values): industry avg 81%, top quartile 96%
+Timeliness (data available when needed): industry avg 68%, top quartile 89%
+Consistency (same data across systems): industry avg 61%, top quartile 84%
+Cost of poor data quality in FS: $12.6M annually per $100B AUM
+
+GDPR AND DATA PRIVACY IN FS
+GDPR compliance rate (EU/UK FS firms): 78%
+Average GDPR fine (FS sector, 2023-2025): €4.2M
+Right-to-erasure compliance with AI: requires data lineage to execute
+AI training data privacy risks: 34% of FS AI models have undocumented training data sources
+Privacy-by-design for AI: implemented by 28% of FS AI programmes
