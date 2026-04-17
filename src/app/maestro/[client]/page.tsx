@@ -2681,6 +2681,152 @@ function ClientIntelTab({ clientId }: { clientId: string }) {
   )
 }
 
+// ─── MAESTRO GUIDE ───────────────────────────────────────────────────────────
+function MaestroGuideView() {
+  const [activeStep, setActiveStep] = useState(0)
+
+  const steps = [
+    {
+      id: 0, icon: '◎', title: 'Setup', tag: 'STEP 1',
+      summary: 'Configure your client workspace before running any engagement.',
+      content: [
+        { heading: 'Add the client', body: 'Navigate to Maestro → select or create a client. Each client gets a dedicated workspace with intelligence, engagements, data, and outputs.' },
+        { heading: 'Upload client data', body: 'Go to Data → Uploads. Add financial statements, IT inventory, leadership profiles, vendor contracts. Each file increases your intelligence confidence score.' },
+        { heading: 'Review data readiness', body: 'Check Data → Data Readiness. A score below 70 means you\'re missing critical files. The gap checklist tells you exactly what to request from the client.' },
+        { heading: 'Request sensitive access', body: 'Private files require explicit access requests. Use Data → Request Sensitive Access to log each request against the file owner.' },
+      ],
+    },
+    {
+      id: 1, icon: '◈', title: 'Intelligence Review', tag: 'STEP 2',
+      summary: 'Read the intelligence before you speak to the client — know more than they expect.',
+      content: [
+        { heading: 'Situation brief', body: 'Intelligence → Situation gives you the most urgent finding, AI aspiration, genome match, and confirmed scope. This is your pre-call brief.' },
+        { heading: 'Findings', body: 'Intelligence → Findings shows what the data extracted from uploaded files. Each finding has a confidence score and an implication. Lead with the highest-severity finding.' },
+        { heading: 'Contradictions', body: 'Intelligence → Contradictions shows where what the client said conflicts with what the data shows. These are your most powerful conversation openers.' },
+        { heading: 'Genome patterns', body: 'Intelligence → Genome shows which F-code failure patterns are active in this client. Each carries a confirmed failure rate and a mitigation playbook.' },
+      ],
+    },
+    {
+      id: 2, icon: '≡', title: 'Running Engagements', tag: 'STEP 3',
+      summary: 'Create, gate, and progress engagements through the AVR Navigator.',
+      content: [
+        { heading: 'Create an engagement', body: 'Click "+ New Engagement" in the sidebar. The AbarNexus AI will interview you — answer the questions about the client situation and it generates a scoped engagement with a clean name and ID.' },
+        { heading: 'Understand the gate model', body: 'Every engagement moves through 5 phases: Readiness → Diagnose → Prescribe → Value Realization → Execute & Verify. Each phase requires named executive sponsor approval before the next begins.' },
+        { heading: 'Record gate approvals', body: 'In Engagements → All Engagements, click "Record Approval →" on any Gate Pending engagement. This logs the approving sponsor and date, unlocking the next phase.' },
+        { heading: 'Track progress', body: 'The engagements table shows phase, progress bar, value target, and gate status at a glance. Use this as your weekly status view.' },
+      ],
+    },
+    {
+      id: 3, icon: '⬡', title: 'Using AbarNav', tag: 'STEP 4',
+      summary: 'AbarNav is the AI co-pilot for engagement delivery — use it to build, diagnose, and present.',
+      content: [
+        { heading: 'Access AbarNav', body: 'From any engagement, click "Continue →" to open the AbarNav AI co-pilot. It has context on the client, the engagement, and the phase you\'re in.' },
+        { heading: 'Phase 0 — Readiness', body: 'AbarNav interviews you on the client situation, AI aspiration, and data readiness. It generates the Situation Brief automatically at the end of this phase.' },
+        { heading: 'Phase 1 — Diagnose', body: 'AbarNav pulls intelligence from uploaded files, genome patterns, and sector benchmarks. It drafts the Diagnose Report — review and refine before sending to the client.' },
+        { heading: 'Phase 2–4', body: 'AbarNav builds the architecture, roadmap, KPI framework, board pack, and fee calculation as you work through each phase. Every document is generated from structured data — not a template.' },
+      ],
+    },
+    {
+      id: 4, icon: '$', title: 'Value & Fees', tag: 'STEP 5',
+      summary: 'Track verified savings and trigger outcome-share fees.',
+      content: [
+        { heading: 'Lock the baseline', body: 'Before any work begins, the Day 0 baseline must be documented and accepted by the client CFO. AbarNav generates the baseline document in Phase 1.' },
+        { heading: 'Monthly review cycle', body: 'Value → Monthly Reviews shows verified savings month by month. Each review is auto-generated from actuals — download and share with the client on the 1st.' },
+        { heading: 'Fee tracker', body: 'Value → Fee Tracker shows the three-component fee: platform access, engagement delivery, and outcome share. Outcome share only triggers on audited, baseline-locked results.' },
+        { heading: 'Board pack', body: 'Outputs → Deliverables contains the auto-generated Board Pack for Phase 4. This summarises the full engagement — verified value, ROI on fee, and next programme.' },
+      ],
+    },
+  ]
+
+  const step = steps[activeStep]
+  const DARK = '#060A12', DARK2 = '#0D1520'
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100%' }}>
+
+      {/* Left — step list */}
+      <div style={{ width: 260, minWidth: 260, background: DARK, borderRight: '1px solid #1F2937', padding: '32px 0' }}>
+        <div style={{ padding: '0 20px 20px', borderBottom: '1px solid #1F2937', marginBottom: 8 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 8 }}>Maestro Guide</div>
+          <div style={{ fontFamily: SERIF, fontSize: 22, color: '#fff', lineHeight: 1.2 }}>How to run<br />an engagement.</div>
+        </div>
+        {steps.map(s => {
+          const active = s.id === activeStep
+          return (
+            <button key={s.id} onClick={() => setActiveStep(s.id)} style={{
+              display: 'flex', alignItems: 'flex-start', gap: 12, width: '100%', textAlign: 'left' as const,
+              padding: '14px 20px', border: 'none', cursor: 'pointer',
+              background: active ? 'rgba(45,212,200,0.08)' : 'transparent',
+              borderLeft: `2px solid ${active ? TEAL : 'transparent'}`,
+            }}>
+              <span style={{ fontFamily: MONO, fontSize: 14, color: active ? TEAL : '#4B5563', marginTop: 1, width: 18, textAlign: 'center' as const }}>{s.icon}</span>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: active ? TEAL : '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 3 }}>{s.tag}</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: active ? 600 : 400, color: active ? '#fff' : '#9CA3AF' }}>{s.title}</div>
+              </div>
+            </button>
+          )
+        })}
+
+        {/* Future: Training & Demos */}
+        <div style={{ margin: '20px 20px 0', paddingTop: 16, borderTop: '1px solid #1F2937' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>Training & Demos</div>
+          {[
+            { label: 'Full Maestro Handbook', sub: 'Coming soon', icon: '📘' },
+            { label: 'Video Walkthrough', sub: 'Coming soon', icon: '▶' },
+            { label: 'Live Demo — Meridian', sub: 'Coming soon', icon: '◎' },
+          ].map((r, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', opacity: 0.4 }}>
+              <span style={{ fontSize: 12, color: '#6B7280', width: 18, textAlign: 'center' as const }}>{r.icon}</span>
+              <div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: '#6B7280' }}>{r.label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: '#4B5563' }}>{r.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right — content */}
+      <div style={{ flex: 1, background: BG, overflowY: 'auto' as const }}>
+        {/* Hero */}
+        <div style={{ background: DARK, padding: '40px 48px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>{step.tag}</div>
+          <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#fff', margin: '0 0 12px', lineHeight: 1.15 }}>{step.title}</h2>
+          <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: 0, maxWidth: 560 }}>{step.summary}</p>
+        </div>
+
+        {/* Content cards */}
+        <div style={{ padding: '32px 48px' }}>
+          {step.content.map((c, i) => (
+            <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: 8, padding: '20px 24px', marginBottom: 14 }}>
+              <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: WHITE, marginBottom: 8 }}>{c.heading}</div>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: MUTED, lineHeight: 1.7 }}>{c.body}</div>
+            </div>
+          ))}
+
+          {/* Next step */}
+          {activeStep < steps.length - 1 && (
+            <button
+              onClick={() => setActiveStep(activeStep + 1)}
+              style={{ marginTop: 8, padding: '12px 24px', background: '#0F0E0D', color: '#fff', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Next: {steps[activeStep + 1].title} →
+            </button>
+          )}
+          {activeStep === steps.length - 1 && (
+            <div style={{ background: DARK2, border: '1px solid #1F2937', borderRadius: 8, padding: '20px 24px', marginTop: 8 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>You're ready.</div>
+              <div style={{ fontFamily: SERIF, fontSize: 20, color: '#fff', marginBottom: 8 }}>That's the full Maestro playbook.</div>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', lineHeight: 1.6 }}>Training modules and video walkthroughs coming soon. In the meantime, the AbarNexus AI in every engagement will guide you through each phase in real time.</div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── FOCUSED SIDEBAR VIEWS ───────────────────────────────────────────────────
 
 function FindingsView({ data, clientId }: { data: ClientData; clientId: string }) {
@@ -3058,6 +3204,7 @@ type SidebarSection =
   | 'value-dashboard' | 'monthly-reviews' | 'fee-tracker'
   | 'deliverables' | 'board-packs'
   | 'client-intel'
+  | 'guide'
 
 // ─── ENGAGEMENTS SECTION — spec Page 2 layout ────────────────────────────────
 const LS_ENG_KEY = (clientId: string) => `abarva-engagements-${clientId}`
@@ -3345,6 +3492,8 @@ export default function MaestroClientPage() {
       case 'deliverables':
       case 'board-packs':
         return <DeliverablesSection clientId={clientId} clientName={data!.name} />
+      case 'guide':
+        return <MaestroGuideView />
     }
   }
 
@@ -3407,6 +3556,11 @@ export default function MaestroClientPage() {
             <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Outputs</div>
             {sbItem('deliverables', '📄', 'Deliverables')}
             {sbItem('board-packs',  '📊', 'Board Packs')}
+          </div>
+
+          {/* Guide */}
+          <div style={{ padding: '12px 16px 4px' }}>
+            {sbItem('guide', '?', 'Maestro Guide')}
           </div>
 
           {/* Back link */}
