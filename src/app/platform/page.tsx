@@ -174,6 +174,7 @@ const verticalBadge: Record<string, { bg: string; color: string }> = {
 
 export default function PlatformPage() {
   const [archVisible, setArchVisible] = useState(false)
+  const [hoveredLayer, setHoveredLayer] = useState<number | null>(null)
   const archRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -215,12 +216,6 @@ export default function PlatformPage() {
           10%  { opacity: 1; }
           90%  { opacity: 1; }
           100% { top: 0%; opacity: 0; }
-        }
-        .arch-layer-wrap:hover .arch-layer-card {
-          background: rgba(255,255,255,0.08) !important;
-        }
-        .arch-layer-wrap:hover .arch-tag {
-          opacity: 1 !important;
         }
         .sol-card-hover:hover {
           border-color: #0F0E0D !important;
@@ -454,19 +449,24 @@ export default function PlatformPage() {
               const staggerDelay = (totalLayers - 1 - i) * 100
               const tagsDelay = staggerDelay + 200
               const isFeatured = layer.featured
+              const isHovered = hoveredLayer === i
               return (
-                <div key={i} className="arch-layer-wrap" style={{ opacity: archVisible ? undefined : 0, animation: archVisible ? `layerIn 400ms ease ${staggerDelay}ms both` : 'none' }}>
+                <div key={i} style={{ opacity: archVisible ? undefined : 0, animation: archVisible ? `layerIn 400ms ease ${staggerDelay}ms both` : 'none' }}>
                   <div
-                    className="arch-layer-card"
+                    onMouseEnter={() => setHoveredLayer(i)}
+                    onMouseLeave={() => setHoveredLayer(null)}
                     style={{
-                      background: isFeatured ? 'rgba(45,212,200,0.07)' : 'rgba(255,255,255,0.04)',
+                      background: isFeatured
+                        ? isHovered ? 'rgba(45,212,200,0.12)' : 'rgba(45,212,200,0.07)'
+                        : isHovered ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
                       border: isFeatured ? '1px solid rgba(45,212,200,0.40)' : '1px solid rgba(255,255,255,0.09)',
                       borderRadius: '8px',
                       padding: '28px 32px',
                       display: 'flex',
                       alignItems: 'flex-start',
                       gap: '24px',
-                      transition: 'background 0.2s, border-color 0.2s',
+                      transition: 'background 0.2s',
+                      cursor: 'default',
                       animation: isFeatured && archVisible ? `nexusPulse 1s ease ${staggerDelay + 400}ms 1 both` : undefined,
                     }}
                   >
