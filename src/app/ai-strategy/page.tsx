@@ -902,12 +902,17 @@ function AIStrategyInner() {
 
   // Auto-show gate modal when a phase completes for the first time
   useEffect(() => {
-    if (phaseAllComplete && !phaseApproved && !autoShownGates.current.has(phaseId)) {
+    const alreadyApproved = (phaseStatuses[phaseId] as string) === 'approved' || (phaseStatuses[phaseId] as string) === 'complete'
+    if (alreadyApproved) return
+    const sessionKey = `gate_shown_${clientId}_ph${phaseId}`
+    if (sessionStorage.getItem(sessionKey)) return
+    if (phaseAllComplete && !autoShownGates.current.has(phaseId)) {
       autoShownGates.current.add(phaseId)
+      sessionStorage.setItem(sessionKey, 'true')
       const t = setTimeout(() => setApprovalFor(phaseId), 800)
       return () => clearTimeout(t)
     }
-  }, [phaseAllComplete, phaseApproved, phaseId])
+  }, [phaseAllComplete, phaseStatuses, phaseId, clientId])
 
   const allSteps   = allStepIds()
   const totalSteps = allSteps.length
