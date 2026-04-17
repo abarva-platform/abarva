@@ -646,11 +646,12 @@ function DashboardGrid({ clientId }: { clientId: string }) {
   )
 }
 
-function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: {
+function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, onCreated }: {
   clientId: string
   clientName: string
   initSolution: string | null
   onClose: () => void
+  onCreated?: (eng: EngagementRecord) => void
 }) {
   type Step = 0 | 1 | 2 | 'done'
   const [step, setStep] = useState<Step>(initSolution ? 1 : 0)
@@ -749,7 +750,23 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                 style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, outline: 'none', boxSizing: 'border-box' as const }}
               />
               <button
-                onClick={() => { if (sponsor.trim()) setStep('done') }}
+                onClick={() => {
+                  if (!sponsor.trim()) return
+                  setStep('done')
+                  const solName = MAESTRO_SOLUTIONS.find(s => s.slug === solution)?.name ?? solution
+                  const newEng: EngagementRecord = {
+                    id: `E${Date.now()}`,
+                    name: directive ? directive.slice(0, 60) + (directive.length > 60 ? '…' : '') : solName,
+                    type: 'AI Value Realization',
+                    phase: 0, status: 'Assigned',
+                    sponsor: sponsor.trim(),
+                    function: solName,
+                    value: 'TBD', priority: 'Normal',
+                    progress: 0, maestro: 'Anand S.',
+                    slug: solution, lastActivity: 'Just now',
+                  }
+                  onCreated?.(newEng)
+                }}
                 disabled={!sponsor.trim()}
                 style={{ marginTop: 12, padding: '12px 28px', background: sponsor.trim() ? TEAL : '#1C2D45', color: sponsor.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: sponsor.trim() ? 'pointer' : 'not-allowed' }}
               >
@@ -1605,13 +1622,25 @@ function BriefTab({ data, clientId, onCreateEngagement }: { data: ClientData; cl
 
 // ─── ENGAGEMENTS TAB ─────────────────────────────────────────────────────────
 function NewEngagementsTab({ data, clientId, initSolution }: { data: ClientData; clientId: string; initSolution?: string | null }) {
-  const engagements = ENGAGEMENT_DATA[clientId] ?? []
-  const activeCount = engagements.filter(e => e.status === 'In Progress').length
+  const [savedEngs, setSavedEngs] = useState<EngagementRecord[]>(() => {
+    try {
+      const raw = localStorage.getItem(LS_ENG_KEY(clientId))
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const engagements = [...(ENGAGEMENT_DATA[clientId] ?? []), ...savedEngs]
+  const activeCount = engagements.filter(e => e.status === 'In Progress' || e.status === 'Assigned').length
   const [createMode, setCreateMode] = useState(!!initSolution)
   const [createSolution, setCreateSolution] = useState<string | null>(initSolution ?? null)
   const totalValue = clientId === 'arcturus' ? '$840M+' : clientId === 'apexretail' ? '$120M' : '$160M'
   const PCOLOR: Record<string, string> = { Critical: RED, High: AMBER, Normal: DIM }
   const SCOLOR: Record<string, string> = { 'In Progress': TEAL, 'Assigned': AMBER, 'Backlog': DIM, 'Complete': GREEN }
+
+  function handleCreated(eng: EngagementRecord) {
+    const updated = [...savedEngs, eng]
+    setSavedEngs(updated)
+    try { localStorage.setItem(LS_ENG_KEY(clientId), JSON.stringify(updated)) } catch { /* ignore */ }
+  }
 
   return (
     <div>
@@ -1621,6 +1650,7 @@ function NewEngagementsTab({ data, clientId, initSolution }: { data: ClientData;
           clientId={clientId}
           clientName={data.name}
           initSolution={createSolution}
+          onCreated={handleCreated}
           onClose={() => { setCreateMode(false); setCreateSolution(null) }}
         />
       )}
@@ -2374,13 +2404,27 @@ type SidebarSection =
   | 'client-intel'
 
 // ─── ENGAGEMENTS SECTION — spec Page 2 layout ────────────────────────────────
+const LS_ENG_KEY = (clientId: string) => `abarva-engagements-${clientId}`
+
 function EngagementsSection({
   data, clientId, onNavigate,
 }: { data: ClientData; clientId: string; onNavigate: (s: SidebarSection) => void }) {
   const [showChat, setShowChat] = useState(false)
   const [chatSolution, setChatSolution] = useState<string | null>(null)
-  const engagements = ENGAGEMENT_DATA[clientId] ?? []
-  const activeCount = engagements.filter(eng => eng.status === 'In Progress').length
+  const [savedEngs, setSavedEngs] = useState<EngagementRecord[]>(() => {
+    try {
+      const raw = localStorage.getItem(LS_ENG_KEY(clientId))
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const engagements = [...(ENGAGEMENT_DATA[clientId] ?? []), ...savedEngs]
+  const activeCount = engagements.filter(eng => eng.status === 'In Progress' || eng.status === 'Assigned').length
+
+  function handleCreated(eng: EngagementRecord) {
+    const updated = [...savedEngs, eng]
+    setSavedEngs(updated)
+    try { localStorage.setItem(LS_ENG_KEY(clientId), JSON.stringify(updated)) } catch { /* ignore */ }
+  }
   const readinessScore = CLIENT_READINESS[clientId] ?? 65
   const missingFiles = CLIENT_MISSING[clientId] ?? []
   const now = new Date()
@@ -2395,6 +2439,7 @@ function EngagementsSection({
             clientId={clientId}
             clientName={data.name}
             initSolution={chatSolution}
+            onCreated={handleCreated}
             onClose={() => { setShowChat(false); setChatSolution(null) }}
           />
         </div>
