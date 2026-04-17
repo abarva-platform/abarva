@@ -619,14 +619,14 @@ export default function InvestorPage() {
       <AbarvaNav activePage="investor" />
 
       {/* ── Tab bar ─────────────────────────────────────────────────────── */}
-      <div style={{ background: BG, borderBottom: `1px solid ${BORDR}`, padding: '0 80px', display: 'flex', gap: 0 }}>
+      <div style={{ background: '#020408', borderBottom: `1px solid ${BORDR}`, padding: '0 80px', display: 'flex', gap: 0 }}>
         {TABS.map((tab, i) => (
           <button
             key={tab}
             onClick={() => setActiveTab(i)}
             style={{
-              fontFamily: SANS, fontSize: '13px', fontWeight: 500,
-              color: i === activeTab ? LIGHT : 'rgba(255,255,255,0.45)',
+              fontFamily: SANS, fontSize: '14px', fontWeight: 500,
+              color: i === activeTab ? LIGHT : 'rgba(255,255,255,0.75)',
               padding: '14px 20px', cursor: 'pointer',
               borderBottom: i === activeTab ? `2px solid ${TEAL}` : '2px solid transparent',
               background: 'none', border: 'none',

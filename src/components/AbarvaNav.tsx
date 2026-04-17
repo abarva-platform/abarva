@@ -4,8 +4,8 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
-const NAV_BG    = '#060A12'
-const NAV_BORD  = '#1C2D45'
+const NAV_BG    = '#020408'
+const NAV_BORD  = 'rgba(255,255,255,0.08)'
 const TEAL      = '#2DD4C8'
 const NAV_TEXT  = '#EFF6FF'
 const NAV_MUTE  = 'rgba(239,246,255,0.85)'
@@ -124,7 +124,7 @@ function NavInner({ activePage }: NavProps) {
 
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} style={{
-      fontSize: '13px', color: active ? TEAL : NAV_TEXT,
+      fontSize: '14px', color: active ? TEAL : NAV_TEXT,
       padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
       borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
     }}>
@@ -138,7 +138,7 @@ function NavInner({ activePage }: NavProps) {
       href={isAdmin ? '/admin' : undefined}
       key="admin-nav"
       style={{
-        fontSize: '13px',
+        fontSize: '14px',
         color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : 'rgba(255,255,255,0.25)',
         padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
         borderBottom: isAdmin && adminActive ? `2px solid ${TEAL}` : '2px solid transparent',
@@ -193,7 +193,7 @@ function NavInner({ activePage }: NavProps) {
   // AVR mega-menu
   const avrMegaMenu = () => (
     <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
-      <button style={{ fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', color: avrActive ? TEAL : NAV_TEXT, borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent' }}>
+      <button style={{ fontSize: '14px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', color: avrActive ? TEAL : NAV_TEXT, borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent' }}>
         AI Value Realization ▾
       </button>
       {open === 'avr' && (
@@ -395,7 +395,7 @@ function NavInner({ activePage }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: '#0D1520', borderBottom: '1px solid #1C2D45' }} />}>
+    <Suspense fallback={<div style={{ height: '60px', background: '#020408', borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
       <NavInner {...props} />
     </Suspense>
   )
