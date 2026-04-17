@@ -330,21 +330,21 @@ export default function PlatformPage() {
       </section>
 
       {/* ── Section 3: AbarNexus Knowledge Layer ────────────────────────────── */}
-      <section style={{ background: BG, padding: '80px' }}>
+      <section style={{ background: DARK, padding: '80px' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>LAYER 02 · THE KNOWLEDGE LAYER</div>
-            <div style={{ fontFamily: SERIF, fontSize: '44px', fontWeight: 400, color: DARK, marginBottom: '16px', lineHeight: 1.1 }}>
+            <div style={{ fontFamily: SERIF, fontSize: '44px', fontWeight: 400, color: BG, marginBottom: '20px', lineHeight: 1.1 }}>
               Abar<span style={{ color: TEAL, fontStyle: 'italic' }}>Nexus</span>
             </div>
-            <p style={{ fontSize: '17px', color: TEXT, lineHeight: 1.7, marginBottom: '20px' }}>
+            <p style={{ fontSize: '18px', color: BG, lineHeight: 1.7, marginBottom: '16px' }}>
               AbarNexus is the proprietary knowledge layer that sits between the foundation AI and every engagement. It is what makes AbarVa different from a large language model with a prompt. It is built from real transformations — and it gets smarter with every client.
             </p>
-            <p style={{ fontSize: '15px', color: MUTED, lineHeight: 1.7, marginBottom: '32px' }}>
-              Advisory firms carry this knowledge in partners&apos; heads. It walks out when they retire. AbarNexus compounds permanently. <strong style={{ color: DARK }}>The 50th client benefits from the first 49.</strong>
+            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.70)', lineHeight: 1.7, marginBottom: '36px' }}>
+              Advisory firms carry this knowledge in partners&apos; heads. It walks out when they retire. AbarNexus compounds permanently. <strong style={{ color: BG }}>The 50th client benefits from the first 49.</strong>
             </p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '32px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '36px' }}>
               {[
                 {
                   label: '01 · THE TRANSFORMATION GENOME',
@@ -367,31 +367,31 @@ export default function PlatformPage() {
                   body: 'AbarNexus contains pre-trained domain models for each target vertical — so the AI Analyst doesn\'t treat a healthcare denial problem like a retail inventory problem. The context is built in, not prompted in.',
                 },
               ].map((pillar, i) => (
-                <div key={i} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '0 6px 6px 0', padding: '14px 18px' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{pillar.label}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: DARK, marginBottom: '3px' }}>{pillar.title}</div>
-                  <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.5 }}>{pillar.body}</div>
+                <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderLeft: `3px solid ${TEAL}`, borderRadius: '0 6px 6px 0', padding: '20px 24px' }}>
+                  <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>{pillar.label}</div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: BG, marginBottom: '8px' }}>{pillar.title}</div>
+                  <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.65 }}>{pillar.body}</div>
                 </div>
               ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', borderRadius: '6px', overflow: 'hidden', border: `1px solid ${BORDER}` }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', borderRadius: '6px', overflow: 'hidden' }}>
               {[
                 { val: '340+', lbl: 'Genome patterns' },
                 { val: '89%', lbl: 'Prediction accuracy' },
                 { val: '3', lbl: 'Verticals' },
                 { val: '∞', lbl: 'Compounds with every engagement' },
               ].map((s, i) => (
-                <div key={i} style={{ background: BG2, padding: '16px', textAlign: 'center' }}>
-                  <div style={{ fontFamily: SERIF, fontSize: '28px', fontWeight: 400, color: DARK, lineHeight: 1, marginBottom: '4px' }}>{s.val}</div>
-                  <div style={{ fontSize: '11px', color: MUTED, fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.lbl}</div>
+                <div key={i} style={{ background: 'rgba(45,212,200,0.08)', padding: '20px 16px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: SERIF, fontSize: '30px', fontWeight: 400, color: TEAL, lineHeight: 1, marginBottom: '6px' }}>{s.val}</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.60)', fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.lbl}</div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>Intelligence products built on AbarNexus</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.50)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Intelligence products built on AbarNexus</div>
             {[
               { title: 'Situation Intelligence', badge: 'Phase 0', body: 'What is broken — and what does it cost? Cross-references all uploaded data against Genome patterns and peer benchmarks. Produces the Situation Brief in 48 hours.', tags: ['F-code matching', 'Peer benchmarks', 'Exposure quantification'] },
               { title: 'Contradiction Intelligence', badge: 'Phase 1', body: 'What was promised vs what the data shows. Surfaces vendor SLA breaches, unused contract clauses, and accountability gaps — with financial exposure for each.', tags: ['Vendor SLA tracking', 'Contract analysis', 'Gap quantification'] },
@@ -399,15 +399,15 @@ export default function PlatformPage() {
               { title: 'Business Case Intelligence', badge: 'Phase 2', body: 'CFO-grade numbers the board will sign off on. Recovery ranges from comparable Genome engagements. Third-party verifiable from Day 0.', tags: ['Recovery ranges', 'ROI modelling', 'Audit-ready'] },
               { title: 'Outcome Intelligence', badge: 'Phase 3-4', body: 'Baseline locked Day 0 — verified delta — fee earned. Monthly actuals tracked against the immutable baseline. AbarVa earns only on what is verified.', tags: ['Immutable baseline', 'Monthly actuals', 'Third-party audit'] },
             ].map((mod, i) => (
-              <div key={i} style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '18px 20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '15px', fontWeight: 600, color: DARK }}>{mod.title}</div>
-                  <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, background: 'rgba(45,212,200,0.12)', padding: '2px 7px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', marginLeft: '8px', border: '1px solid rgba(45,212,200,0.25)' }}>{mod.badge}</div>
+              <div key={i} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '7px', padding: '22px 24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: BG }}>{mod.title}</div>
+                  <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, background: 'rgba(45,212,200,0.12)', padding: '3px 8px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', marginLeft: '10px', border: '1px solid rgba(45,212,200,0.30)' }}>{mod.badge}</div>
                 </div>
-                <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, marginBottom: '10px' }}>{mod.body}</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.65, marginBottom: '12px' }}>{mod.body}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                   {mod.tags.map((tag, j) => (
-                    <span key={j} style={{ fontSize: '10px', color: MUTED, background: BG2, padding: '2px 8px', borderRadius: '3px', fontFamily: MONO, border: `1px solid ${BORDER}` }}>{tag}</span>
+                    <span key={j} style={{ fontSize: '11px', color: 'rgba(255,255,255,0.60)', background: 'rgba(255,255,255,0.07)', padding: '3px 10px', borderRadius: '3px', fontFamily: MONO, border: '1px solid rgba(255,255,255,0.10)' }}>{tag}</span>
                   ))}
                 </div>
               </div>
@@ -417,26 +417,26 @@ export default function PlatformPage() {
       </section>
 
       {/* ── Section 4: 5-Layer Architecture ─────────────────────────────────── */}
-      <section id="architecture" ref={archRef} style={{ background: BG2, padding: '80px' }}>
+      <section id="architecture" ref={archRef} style={{ background: DARK, padding: '80px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', marginBottom: '60px', alignItems: 'flex-end' }}>
           <div>
             <div style={{ fontFamily: MONO, fontSize: '11px', color: TEAL, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '16px' }}>PLATFORM ARCHITECTURE</div>
-            <h2 style={{ fontFamily: SERIF, fontSize: '38px', fontWeight: 400, color: DARK, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: '16px' }}>
+            <h2 style={{ fontFamily: SERIF, fontSize: '38px', fontWeight: 400, color: BG, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: '16px' }}>
               Five layers.<br />One coherent platform.
             </h2>
-            <p style={{ fontSize: '15px', color: TEXT, lineHeight: 1.7, margin: 0 }}>
+            <p style={{ fontSize: '16px', color: 'rgba(255,255,255,0.80)', lineHeight: 1.7, margin: 0 }}>
               Every layer is purpose-built — from Anthropic&apos;s foundation models on enterprise cloud to the Maestros who close the loop on verified outcomes. Each layer feeds the next. AbarNexus is the proprietary layer that makes the intelligence possible.
             </p>
           </div>
-          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '6px', padding: '16px 20px' }}>
-            <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, color: TEAL, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>How the layers animate</div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '6px', padding: '20px 24px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, color: TEAL, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '12px' }}>How the layers animate</div>
             {[
               'Layers reveal bottom-up as you scroll into this section',
               'Each layer: opacity 0 → 1, translateY(24px) → 0, 400ms ease, 100ms stagger',
               'AbarNexus (Layer 02): teal border pulses once on reveal',
-              'Hover any layer: card lifts to white with dark border',
+              'Hover any layer: background brightens, tag badges sharpen',
             ].map((item, i) => (
-              <div key={i} style={{ fontSize: '12px', color: MUTED, padding: '3px 0', display: 'flex', gap: '8px' }}>
+              <div key={i} style={{ fontSize: '13px', color: 'rgba(255,255,255,0.70)', padding: '4px 0', display: 'flex', gap: '10px' }}>
                 <span style={{ color: TEAL, flexShrink: 0 }}>→</span>{item}
               </div>
             ))}
@@ -444,14 +444,13 @@ export default function PlatformPage() {
         </div>
 
         <div style={{ position: 'relative' }}>
-          {/* Connector line */}
-          <div style={{ position: 'absolute', left: '47px', top: 0, bottom: 0, width: '2px', background: `linear-gradient(to bottom, transparent, ${TEAL} 20%, ${TEAL} 80%, transparent)`, opacity: 0.25, pointerEvents: 'none', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', left: '51px', top: 0, bottom: 0, width: '2px', background: `linear-gradient(to bottom, transparent, ${TEAL} 20%, ${TEAL} 80%, transparent)`, opacity: 0.25, pointerEvents: 'none', overflow: 'hidden' }}>
             {archVisible && (
               <div style={{ position: 'absolute', left: '-3px', width: '8px', height: '8px', borderRadius: '50%', background: TEAL, animation: 'dotTravel 3s ease-in-out 1s infinite' }} />
             )}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {ARCH_LAYERS.map((layer, i) => {
               const staggerDelay = (totalLayers - 1 - i) * 100
               const tagsDelay = staggerDelay + 200
@@ -461,32 +460,32 @@ export default function PlatformPage() {
                   <div
                     className="arch-layer-card"
                     style={{
-                      background: isFeatured ? 'rgba(45,212,200,0.06)' : BG,
-                      border: isFeatured ? `1px solid rgba(45,212,200,0.40)` : `1px solid ${BORDER}`,
+                      background: isFeatured ? 'rgba(45,212,200,0.07)' : 'rgba(255,255,255,0.04)',
+                      border: isFeatured ? '1px solid rgba(45,212,200,0.40)' : '1px solid rgba(255,255,255,0.09)',
                       borderRadius: '8px',
-                      padding: '24px 28px',
+                      padding: '28px 32px',
                       display: 'flex',
                       alignItems: 'flex-start',
-                      gap: '20px',
+                      gap: '24px',
                       transition: 'background 0.2s, border-color 0.2s',
                       animation: isFeatured && archVisible ? `nexusPulse 1s ease ${staggerDelay + 400}ms 1 both` : undefined,
                     }}
                   >
-                    <div style={{ fontFamily: MONO, fontSize: '11px', color: isFeatured ? TEAL : MUTED, width: '20px', flexShrink: 0, marginTop: '2px' }}>{layer.num}</div>
-                    <div style={{ width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0, background: isFeatured ? 'rgba(45,212,200,0.12)' : BG2 }}>{layer.icon}</div>
+                    <div style={{ fontFamily: MONO, fontSize: '12px', color: isFeatured ? TEAL : 'rgba(255,255,255,0.40)', width: '22px', flexShrink: 0, marginTop: '3px' }}>{layer.num}</div>
+                    <div style={{ width: '44px', height: '44px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, background: isFeatured ? 'rgba(45,212,200,0.15)' : 'rgba(255,255,255,0.07)' }}>{layer.icon}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: MONO, fontSize: '9px', color: isFeatured ? TEAL : MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>{layer.layerLabel}</div>
-                      <div style={{ fontSize: '17px', fontWeight: 600, color: isFeatured ? TEAL : DARK, marginBottom: '6px' }}>{layer.title}</div>
-                      <div style={{ fontSize: '13px', color: TEXT, lineHeight: 1.6, marginBottom: '10px' }}>{layer.desc}</div>
+                      <div style={{ fontFamily: MONO, fontSize: '10px', color: isFeatured ? TEAL : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>{layer.layerLabel}</div>
+                      <div style={{ fontSize: '19px', fontWeight: 600, color: isFeatured ? TEAL : BG, marginBottom: '8px' }}>{layer.title}</div>
+                      <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.82)', lineHeight: 1.65, marginBottom: '14px' }}>{layer.desc}</div>
                       <div
                         className="arch-tags"
-                        style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', opacity: archVisible ? 1 : 0, animation: archVisible ? `tagsIn 300ms ease ${tagsDelay}ms both` : 'none' }}
+                        style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', opacity: archVisible ? 1 : 0, animation: archVisible ? `tagsIn 300ms ease ${tagsDelay}ms both` : 'none' }}
                       >
                         {layer.tags.map((tag, j) => (
                           <span
                             key={j}
                             className="arch-tag"
-                            style={{ fontSize: '10px', fontFamily: MONO, color: isFeatured ? TEAL : MUTED, background: isFeatured ? 'rgba(45,212,200,0.08)' : BG2, padding: '2px 8px', borderRadius: '3px', border: isFeatured ? '1px solid rgba(45,212,200,0.25)' : `1px solid ${BORDER}`, transition: 'opacity 0.2s' }}
+                            style={{ fontSize: '11px', fontFamily: MONO, color: isFeatured ? TEAL : 'rgba(255,255,255,0.65)', background: isFeatured ? 'rgba(45,212,200,0.10)' : 'rgba(255,255,255,0.07)', padding: '3px 10px', borderRadius: '3px', border: isFeatured ? '1px solid rgba(45,212,200,0.25)' : '1px solid rgba(255,255,255,0.10)', transition: 'opacity 0.2s' }}
                           >
                             {tag}
                           </span>
@@ -500,10 +499,10 @@ export default function PlatformPage() {
           </div>
         </div>
 
-        <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: '0 8px 8px 0', padding: '20px 24px', marginTop: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-          <div style={{ color: TEAL, fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>🔒</div>
-          <div style={{ fontSize: '14px', color: TEXT, lineHeight: 1.6 }}>
-            Client data never trains the models. <strong style={{ color: DARK }}>Zero data leakage.</strong> Every conversation is isolated. AbarNexus is updated only from anonymised, aggregated engagement outcomes — never from raw client data. Enterprise governance is architectural, not policy.
+        <div style={{ background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.22)', borderRadius: '8px', padding: '24px 28px', marginTop: '20px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+          <div style={{ color: TEAL, fontSize: '18px', flexShrink: 0, marginTop: '2px' }}>🔒</div>
+          <div style={{ fontSize: '15px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65 }}>
+            Client data never trains the models. <strong style={{ color: BG }}>Zero data leakage.</strong> Every conversation is isolated. AbarNexus is updated only from anonymised, aggregated engagement outcomes — never from raw client data. Enterprise governance is architectural, not policy.
           </div>
         </div>
       </section>
@@ -573,7 +572,7 @@ export default function PlatformPage() {
             </div>
           </div>
 
-          <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '8px', padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ background: DARK, borderRadius: '8px', padding: '28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {[
               {
                 title: 'How AbarNexus uses this',
@@ -592,10 +591,10 @@ export default function PlatformPage() {
               },
             ].map((insight, i) => (
               <div key={i}>
-                {i > 0 && <div style={{ height: '1px', background: BORDER, marginBottom: '14px' }} />}
-                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>{insight.title}</div>
-                <div style={{ fontSize: '14px', color: DARK, fontWeight: 600, lineHeight: 1.5, marginBottom: '6px' }}>{insight.body}</div>
-                <div style={{ fontSize: '13px', color: MUTED, lineHeight: 1.6 }}>{insight.sub}</div>
+                {i > 0 && <div style={{ height: '1px', background: 'rgba(255,255,255,0.08)', marginBottom: '4px' }} />}
+                <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>{insight.title}</div>
+                <div style={{ fontSize: '15px', color: BG, fontWeight: 600, lineHeight: 1.55, marginBottom: '8px' }}>{insight.body}</div>
+                <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.72)', lineHeight: 1.65 }}>{insight.sub}</div>
               </div>
             ))}
           </div>
