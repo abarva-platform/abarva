@@ -664,6 +664,37 @@ function inferSolutionFromContext(directive: string, aiUseCase: string, techLand
   return MAESTRO_SOLUTIONS.find(s => s.slug === 'tech')!
 }
 
+function generateEngagementName(directive: string, solSlug: string): string {
+  const d = directive.toLowerCase()
+  if (/denial|rcm|revenue cycle|prior auth/.test(d)) return 'RCM AI — Denial Prevention'
+  if (/epic|ehr|go-live|go live/.test(d)) return 'Epic AI Integration'
+  if (/analytics|data platform|data lake|modern/.test(d)) return 'Analytics AI Foundation'
+  if (/cost|margin|c\/i|efficiency|income/.test(d)) return 'Cost-to-Income Reduction'
+  if (/cloud|azure|migration|databricks/.test(d)) return 'Cloud Data Modernisation'
+  if (/ai programme|portfolio|governance|accountability/.test(d)) return 'AI Investment Accountability'
+  if (/vendor|contract|spend|procurement/.test(d)) return 'Vendor Spend Optimisation'
+  const solNames: Record<string, string> = {
+    rcm: 'RCM AI — Denial Prevention',
+    tech: 'Technology Modernisation',
+    margin: 'Margin Optimisation',
+    'ai-pdlc': 'AI Portfolio Accountability',
+    delivery: 'Transformation Delivery',
+    pdlc: 'AI Platform Delivery',
+  }
+  return solNames[solSlug] ?? 'New Engagement'
+}
+
+function generateEngagementId(clientId: string, solSlug: string, existingCount: number): string {
+  const prefix = clientId.slice(0, 3).toUpperCase()
+  const typeMap: Record<string, string> = {
+    rcm: 'RCM', tech: 'TECH', margin: 'MARG',
+    'ai-pdlc': 'AIPF', delivery: 'DLVR', pdlc: 'PDLC',
+  }
+  const type = typeMap[solSlug] ?? 'ENG'
+  const num = String(existingCount + 1).padStart(3, '0')
+  return `${prefix}-${type}-${num}`
+}
+
 function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, onCreated, fullScreen }: {
   clientId: string
   clientName: string
@@ -834,9 +865,12 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
                 onClick={() => {
                   if (!sponsor.trim()) return
                   const sol = inferredSolution ?? MAESTRO_SOLUTIONS[2]
+                  const savedForCount: EngagementRecord[] = (() => { try { return JSON.parse(localStorage.getItem(LS_ENG_KEY(clientId)) ?? '[]') } catch { return [] } })()
+                  const allForCount = [...(ENGAGEMENT_DATA[clientId] ?? []), ...savedForCount]
+                  const existingCount = allForCount.filter(e => e.slug === sol.slug).length
                   const newEng: EngagementRecord = {
-                    id: `E${Date.now()}`,
-                    name: directive.slice(0, 60) + (directive.length > 60 ? '…' : ''),
+                    id: generateEngagementId(clientId, sol.slug, existingCount),
+                    name: generateEngagementName(directive, sol.slug),
                     type: 'AI Value Realization',
                     phase: 0, status: 'Assigned',
                     sponsor: sponsor.trim(),
@@ -2624,15 +2658,34 @@ type SidebarSection =
 // ─── ENGAGEMENTS SECTION — spec Page 2 layout ────────────────────────────────
 const LS_ENG_KEY = (clientId: string) => `abarva-engagements-${clientId}`
 
+const JUNK_PATTERNS = [
+  /^reduce prior auth/i, /^modernize analytics/i,
+  /^I would like/i, /^modernise/i, /^we need a modern/i,
+  /^the board wants/i,
+]
+
+function gateStatus(eng: EngagementRecord): { icon: string; label: string; color: string } {
+  if (eng.phase >= 1 && eng.status === 'In Progress') return { icon: '✅', label: 'Approved', color: '#059669' }
+  if (eng.phase === 0 && eng.status === 'In Progress') return { icon: '⏳', label: 'Gate Pending', color: '#F59E0B' }
+  if (eng.status === 'Backlog') return { icon: '🔒', label: 'Locked', color: '#9CA3AF' }
+  return { icon: '🔓', label: 'Open', color: '#706D66' }
+}
+
 function EngagementsSection({
   data, clientId, onNavigate, onCreateEngagement,
 }: { data: ClientData; clientId: string; onNavigate: (s: SidebarSection) => void; onCreateEngagement: (solution: string) => void }) {
   const [savedEngs] = useState<EngagementRecord[]>(() => {
     try {
       const raw = localStorage.getItem(LS_ENG_KEY(clientId))
-      return raw ? JSON.parse(raw) : []
+      const all: EngagementRecord[] = raw ? JSON.parse(raw) : []
+      const cleaned = all.filter(e => !JUNK_PATTERNS.some(p => p.test(e.name)))
+      if (cleaned.length !== all.length) {
+        try { localStorage.setItem(LS_ENG_KEY(clientId), JSON.stringify(cleaned)) } catch { /* ignore */ }
+      }
+      return cleaned
     } catch { return [] }
   })
+  const [gateModal, setGateModal] = useState<EngagementRecord | null>(null)
   const engagements = [...(ENGAGEMENT_DATA[clientId] ?? []), ...savedEngs]
   const activeCount = engagements.filter(eng => eng.status === 'In Progress' || eng.status === 'Assigned').length
 
@@ -2668,7 +2721,7 @@ function EngagementsSection({
         <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontFamily: SANS, fontSize: '15px' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${BDR}` }}>
-              {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', ''].map(h => (
+              {['Engagement', 'Sponsor', 'Phase', 'Gate', 'Status', 'Maestro', 'Value', ''].map(h => (
                 <th key={h} style={{ padding: '11px 16px', fontFamily: SANS, fontSize: '13px', fontWeight: 400, color: '#9CA3AF', textAlign: 'left' as const, background: '#FAFAF9' }}>
                   {h}
                 </th>
@@ -2680,15 +2733,30 @@ function EngagementsSection({
               const bd = i < engagements.length - 1 ? `1px solid ${BDR}` : 'none'
               const td: React.CSSProperties = { padding: '13px 16px', borderBottom: bd, color: '#0F0E0D', verticalAlign: 'middle' }
               const tdg: React.CSSProperties = { padding: '13px 16px', borderBottom: bd, color: '#706D66', verticalAlign: 'middle' }
+              const gate = gateStatus(eng)
               return (
                 <tr key={eng.id}>
-                  <td style={td}>{eng.name}</td>
+                  <td style={td}>
+                    <div>{eng.name}</div>
+                    <div style={{ fontFamily: "'Courier New', monospace", fontSize: 10, color: '#706D66', marginTop: 2 }}>{eng.id}</div>
+                  </td>
                   <td style={tdg}>{eng.sponsor.split(' · ')[0]}</td>
                   <td style={tdg}>Phase {eng.phase}</td>
+                  <td style={{ ...tdg, whiteSpace: 'nowrap' }}>
+                    {gate.label === 'Gate Pending' ? (
+                      <button
+                        onClick={() => setGateModal(eng)}
+                        style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 600, color: '#F59E0B', background: 'rgba(245,158,11,0.10)', border: '1px solid rgba(245,158,11,0.30)', borderRadius: '4px', padding: '3px 10px', cursor: 'pointer' }}
+                      >
+                        ⏳ Record Approval →
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '12px', color: gate.color }}>{gate.icon} {gate.label}</span>
+                    )}
+                  </td>
                   <td style={tdg}>{eng.status}</td>
                   <td style={tdg}>{eng.maestro}</td>
                   <td style={{ ...td, fontWeight: 600 }}>{eng.value}</td>
-                  <td style={tdg}>{eng.priority}</td>
                   <td style={{ ...tdg, textAlign: 'right' }}>
                     <a
                       href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
@@ -2723,6 +2791,43 @@ function EngagementsSection({
           </button>
         </div>
       </div>
+
+      {/* Gate Approval Modal */}
+      {gateModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', borderRadius: '10px', padding: '32px', maxWidth: '440px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+            <div style={{ fontFamily: SANS, fontSize: '18px', fontWeight: 700, color: '#0F0E0D', marginBottom: '8px' }}>
+              Phase {gateModal.phase} Gate — Approval Required
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: '14px', color: '#706D66', lineHeight: 1.6, marginBottom: '24px' }}>
+              Record that <strong style={{ color: '#0F0E0D' }}>{gateModal.sponsor.split(' · ')[0]}</strong> approved the Phase {gateModal.phase} gate on{' '}
+              <strong style={{ color: '#0F0E0D' }}>{new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>?
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={() => {
+                  setGateModal(null)
+                  // Show toast
+                  const toast = document.createElement('div')
+                  toast.textContent = `Phase ${gateModal.phase} approved — Phase ${gateModal.phase + 1} unlocked`
+                  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0F0E0D;color:#fff;padding:10px 20px;border-radius:6px;font-family:DM Sans,sans-serif;font-size:13px;z-index:9999;pointer-events:none'
+                  document.body.appendChild(toast)
+                  setTimeout(() => toast.remove(), 3000)
+                }}
+                style={{ flex: 1, fontFamily: SANS, fontSize: '14px', fontWeight: 700, background: '#0F0E0D', color: '#fff', border: 'none', borderRadius: '6px', padding: '12px', cursor: 'pointer' }}
+              >
+                Confirm Approval
+              </button>
+              <button
+                onClick={() => setGateModal(null)}
+                style={{ fontFamily: SANS, fontSize: '14px', color: '#706D66', background: 'none', border: '1px solid #E5E7EB', borderRadius: '6px', padding: '12px 20px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
