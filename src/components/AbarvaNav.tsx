@@ -49,7 +49,7 @@ function NavInner({ activePage }: NavProps) {
   const initials    = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   const isAdmin    = metaRole === 'admin'
-  const isMaestro  = metaRole === 'admin' || metaRole === 'investor'  // both can use Maestro workspace
+  const isMaestro  = metaRole === 'admin'  // only admin gets full Maestro nav
   const isClient   = metaRole === 'client'
   const isInvestor = metaRole === 'investor'
 
@@ -176,6 +176,7 @@ function NavInner({ activePage }: NavProps) {
               )}
             </div>
 
+            {navLink('Platform', '/platform', activePage === 'platform')}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
 
@@ -232,25 +233,33 @@ function NavInner({ activePage }: NavProps) {
           </>
         )}
 
-        {/* ── PUBLIC / CLIENT: minimal nav ────────────────────────────────────── */}
+        {/* ── INVESTOR ROLE: minimal nav (Platform + Investor only) ──────────── */}
+        {signedIn && isInvestor && (
+          <>
+            {navLink('Platform', '/platform', activePage === 'platform')}
+            {navLink('Investor', '/investor', activePage === 'investor')}
+          </>
+        )}
+
+        {/* ── PUBLIC / CLIENT: Platform + Solutions + Investor + Demo ─────────── */}
         {(!signedIn || isClient) && (
           <>
+            {navLink('Platform', '/platform', activePage === 'platform')}
             {navLink('Solutions', '/solutions', solutionsActive)}
+            {navLink('Investor', '/investor', activePage === 'investor')}
+            {navLink('Demo', '/demo', activePage === 'demo')}
           </>
         )}
 
         {/* ── Right side ──────────────────────────────────────────────────────── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
 
-          {/* Investor — always visible */}
-          <a href="/investor" style={{ fontSize: '12px', color: activePage === 'investor' ? TEAL : NAV_TEXT, textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0 }}>
-            Investor
-          </a>
-
-          {/* Demo — always visible */}
-          <a href="/demo" style={{ fontSize: '12px', color: activePage === 'demo' ? TEAL : NAV_TEXT, textDecoration: 'none', padding: '6px 10px', fontFamily: SANS, flexShrink: 0 }}>
-            Demo
-          </a>
+          {/* Investor role: CONFIDENTIAL label */}
+          {signedIn && isInvestor && (
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
+              CONFIDENTIAL · SEED 2026
+            </div>
+          )}
 
           {signedIn ? (
             <div style={{ position: 'relative' }}>
@@ -303,9 +312,14 @@ function NavInner({ activePage }: NavProps) {
               )}
             </div>
           ) : (
-            <a href="/sign-in" style={{ background: TEAL, color: '#060A12', fontSize: '13px', fontWeight: 600, textDecoration: 'none', padding: '7px 18px', borderRadius: '8px', flexShrink: 0, fontFamily: SANS }}>
-              Login →
-            </a>
+            <>
+              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+                Login
+              </a>
+              <a href="/demo" style={{ fontSize: '12px', fontWeight: 600, color: NAV_BG, background: NAV_TEXT, textDecoration: 'none', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+                Request Demo
+              </a>
+            </>
           )}
         </div>
 
