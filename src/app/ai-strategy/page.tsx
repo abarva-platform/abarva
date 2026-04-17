@@ -303,6 +303,16 @@ function loadSaved(clientId: string): SavedState | null {
 function persist(clientId: string, s: SavedState) {
   try { localStorage.setItem(lsKey(clientId), JSON.stringify(s)) } catch { /* ignore */ }
 }
+function seedOnce(key: string, state: object) {
+  const existing = localStorage.getItem(key)
+  if (existing) {
+    try {
+      const parsed = JSON.parse(existing)
+      if (parsed?.stepStatuses && parsed?.phaseStatuses) return
+    } catch { /* fall through */ }
+  }
+  localStorage.setItem(key, JSON.stringify(state))
+}
 function makeInitial(): SavedState {
   const phaseStatuses: Record<number, PhaseStatus> = {}
   const stepStatuses: Record<string, StepStatus> = {}
@@ -754,7 +764,7 @@ function AIStrategyInner() {
 
     // Seed demo: ?seed=demo writes full completed engagement to localStorage
     if (searchParams.get('seed') === 'demo' && DEMO_SEEDS[clientId]) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEMO_SEEDS[clientId]))
+      seedOnce(STORAGE_KEY, DEMO_SEEDS[clientId])
     }
 
     // Try to read engagement context from Setup handoff
