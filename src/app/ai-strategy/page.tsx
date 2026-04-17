@@ -972,10 +972,71 @@ function AIStrategyInner() {
     const outcome: OutcomeItem = { stepId: activeStep, label, value }
     const newSS: Record<string, StepStatus> = { ...stepStatuses, [activeStep]: 'complete' }
 
-    if (phase === 0) {
-      const updated: SavedState = { ...st, stepStatuses: newSS, outcomes: [...outcomes.filter(o => o.stepId !== activeStep), outcome] }
+    const engCtxPayload = engCtx ? {
+      directive: engCtx.directive,
+      sponsor: engCtx.cxo_sponsor_name,
+      solution: engCtx.execution_path || undefined,
+    } : (directiveParam ? { directive: directiveParam, sponsor: sponsorParam || undefined } : undefined)
+
+    if (phase === 0 && engCtx && nextStep && samePhase) {
+      // Dynamic Phase 0 via Claude when engagement context is available
+      const updatedOutcomes = [...outcomes.filter(o => o.stepId !== activeStep), outcome]
+      setSt(prev => ({
+        ...prev,
+        stepStatuses: { ...newSS, [nextStep]: 'active' },
+        outcomes: updatedOutcomes,
+        activeStep: nextStep,
+      }))
+      try {
+        const summary = updatedOutcomes.map(o => `${o.label}: ${o.value}`).join('\n')
+        const res = await fetch('/api/chat/step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            stepId: activeStep, clientId,
+            selectedOption: letter,
+            customText: letter === 'D' ? customVal : undefined,
+            priorStepsSummary: summary,
+            clientContext: { name: clientName, vertical },
+            engagementContext: engCtxPayload,
+          }),
+        })
+        let aiText = '', nextOptions: string[] = [], outcomeOverride: string | undefined
+        if (res.ok && res.body) {
+          const reader = res.body.getReader(), decoder = new TextDecoder()
+          let buf = ''
+          while (true) {
+            const { done, value: chunk } = await reader.read()
+            if (done) break
+            buf += decoder.decode(chunk, { stream: true })
+            const lines = buf.split('\n'); buf = lines.pop() ?? ''
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue
+              try {
+                const d = JSON.parse(line.slice(6))
+                if (d.type === 'text') aiText += d.chunk
+                if (d.type === 'done') { nextOptions = d.options ?? []; outcomeOverride = d.outcomeItem?.value }
+              } catch { /* ignore */ }
+            }
+          }
+        }
+        const finalOutcome: OutcomeItem = { stepId: activeStep, label, value: outcomeOverride ?? value }
+        setSt(prev => ({
+          ...prev,
+          outcomes: [...prev.outcomes.filter(o => o.stepId !== activeStep), finalOutcome],
+          messagesByStep: {
+            ...prev.messagesByStep,
+            ...(aiText ? { [nextStep]: [{ role: 'ai', text: aiText, options: nextOptions, stepId: nextStep }] } : {}),
+          },
+        }))
+      } catch { /* ignore */ }
+      setCustomVal(''); setLoading(false)
+    } else if (phase === 0) {
+      // Hardcoded scripts for demo clients or Phase 0 completion (step 0.5)
+      const updatedOutcomes = [...outcomes.filter(o => o.stepId !== activeStep), outcome]
+      const updated: SavedState = { ...st, stepStatuses: newSS, outcomes: updatedOutcomes }
       if (nextStep && samePhase) {
-        const script = phase0Script(nextStep, clientName, vertical, clientId)
+        const script = phase0Script(nextStep, clientName, vertical, clientId, engCtx)
         updated.messagesByStep = { ...updated.messagesByStep, [nextStep]: [{ role: 'ai', text: script.text, options: script.options, stepId: nextStep }] }
         updated.stepStatuses[nextStep] = 'active'
         updated.activeStep = nextStep
@@ -996,6 +1057,7 @@ function AIStrategyInner() {
             customText: letter === 'D' ? customVal : undefined,
             priorStepsSummary: summary,
             clientContext: { name: clientName, vertical },
+            engagementContext: engCtxPayload,
           }),
         })
 
@@ -1117,6 +1179,11 @@ function AIStrategyInner() {
             stepId: firstNextId, clientId, selectedOption: 'A',
             priorStepsSummary: summary,
             clientContext: { name: clientName, vertical },
+            engagementContext: engCtx ? {
+              directive: engCtx.directive,
+              sponsor: engCtx.cxo_sponsor_name,
+              solution: engCtx.execution_path || undefined,
+            } : (directiveParam ? { directive: directiveParam, sponsor: sponsorParam || undefined } : undefined),
             isKickoff: true,
           }),
         })
