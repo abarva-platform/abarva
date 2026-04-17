@@ -647,12 +647,13 @@ function DashboardGrid({ clientId }: { clientId: string }) {
   )
 }
 
-function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, onCreated }: {
+function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, onCreated, fullScreen }: {
   clientId: string
   clientName: string
   initSolution: string | null
   onClose: () => void
   onCreated?: (eng: EngagementRecord) => void
+  fullScreen?: boolean
 }) {
   type Step = 0 | 1 | 2 | 'done'
   const [step, setStep] = useState<Step>(initSolution ? 1 : 0)
@@ -666,8 +667,8 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
   const initSolName = MAESTRO_SOLUTIONS.find(s => s.slug === initSolution)?.name ?? initSolution ?? ''
 
   return (
-    <div style={{ background: '#060A12', borderBottom: '1px solid #1C2D45' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'start' }}>
+    <div style={{ background: '#060A12', ...(fullScreen ? { minHeight: '100%' } : { borderBottom: '1px solid #1C2D45' }) }}>
+      <div style={{ padding: fullScreen ? '60px 80px' : '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: fullScreen ? 64 : 48, alignItems: 'start', ...(fullScreen ? {} : { maxWidth: 1200, margin: '0 auto' }) }}>
 
         {/* Left — Chat */}
         <div>
@@ -2566,11 +2567,9 @@ type SidebarSection =
 const LS_ENG_KEY = (clientId: string) => `abarva-engagements-${clientId}`
 
 function EngagementsSection({
-  data, clientId, onNavigate,
-}: { data: ClientData; clientId: string; onNavigate: (s: SidebarSection) => void }) {
-  const [showChat, setShowChat] = useState(false)
-  const [chatSolution, setChatSolution] = useState<string | null>(null)
-  const [savedEngs, setSavedEngs] = useState<EngagementRecord[]>(() => {
+  data, clientId, onNavigate, onCreateEngagement,
+}: { data: ClientData; clientId: string; onNavigate: (s: SidebarSection) => void; onCreateEngagement: (solution: string) => void }) {
+  const [savedEngs] = useState<EngagementRecord[]>(() => {
     try {
       const raw = localStorage.getItem(LS_ENG_KEY(clientId))
       return raw ? JSON.parse(raw) : []
@@ -2579,11 +2578,6 @@ function EngagementsSection({
   const engagements = [...(ENGAGEMENT_DATA[clientId] ?? []), ...savedEngs]
   const activeCount = engagements.filter(eng => eng.status === 'In Progress' || eng.status === 'Assigned').length
 
-  function handleCreated(eng: EngagementRecord) {
-    const updated = [...savedEngs, eng]
-    setSavedEngs(updated)
-    try { localStorage.setItem(LS_ENG_KEY(clientId), JSON.stringify(updated)) } catch { /* ignore */ }
-  }
   const readinessScore = CLIENT_READINESS[clientId] ?? 65
   const missingFiles = CLIENT_MISSING[clientId] ?? []
   const now = new Date()
@@ -2592,18 +2586,6 @@ function EngagementsSection({
 
   return (
     <div style={{ padding: '24px 28px' }}>
-      {showChat && (
-        <div style={{ margin: '-24px -28px 20px' }}>
-          <MaestroEngagementChat
-            clientId={clientId}
-            clientName={data.name}
-            initSolution={chatSolution}
-            onCreated={handleCreated}
-            onClose={() => { setShowChat(false); setChatSolution(null) }}
-          />
-        </div>
-      )}
-
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
@@ -2613,7 +2595,7 @@ function EngagementsSection({
           </div>
         </div>
         <button
-          onClick={() => { setChatSolution(null); setShowChat(true) }}
+          onClick={() => onCreateEngagement('')}
           style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, background: '#0F0E0D', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
         >
           + New Engagement
@@ -2652,7 +2634,7 @@ function EngagementsSection({
                   <td style={{ ...tdg, textAlign: 'right' }}>
                     <a
                       href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
-                      onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
+                      onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); onCreateEngagement('') } : undefined}
                       style={{ color: '#0F0E0D', textDecoration: 'none' }}
                     >
                       {eng.status === 'In Progress' ? 'Continue →' : 'Start →'}
@@ -2696,6 +2678,29 @@ export default function MaestroClientPage() {
   const clientId = params.client as string
 
   const [activeSection, setActiveSection] = useState<SidebarSection>('engagements')
+  const [showCreate, setShowCreate] = useState(false)
+  const [createSolution, setCreateSolution] = useState<string | null>(null)
+  const [engRefreshKey, setEngRefreshKey] = useState(0)
+
+  function openCreate(solution: string) {
+    setCreateSolution(solution || null)
+    setShowCreate(true)
+  }
+
+  function closeCreate() {
+    setShowCreate(false)
+    setCreateSolution(null)
+    setEngRefreshKey(k => k + 1)
+    setActiveSection('engagements')
+  }
+
+  function handleEngCreated(eng: EngagementRecord) {
+    try {
+      const raw = localStorage.getItem(LS_ENG_KEY(clientId))
+      const saved: EngagementRecord[] = raw ? JSON.parse(raw) : []
+      localStorage.setItem(LS_ENG_KEY(clientId), JSON.stringify([...saved, eng]))
+    } catch { /* ignore */ }
+  }
 
   if (!isLoaded) return <div style={{ minHeight: '100vh', background: BG }} />
   if (!user) { router.push('/sign-in'); return null }
@@ -2731,11 +2736,25 @@ export default function MaestroClientPage() {
   }
 
   function renderContent() {
+    if (showCreate) {
+      return (
+        <div style={{ background: '#060A12', minHeight: '100%' }}>
+          <MaestroEngagementChat
+            clientId={clientId}
+            clientName={data!.name}
+            initSolution={createSolution}
+            onCreated={handleEngCreated}
+            onClose={closeCreate}
+            fullScreen
+          />
+        </div>
+      )
+    }
     switch (activeSection) {
       case 'engagements':
-        return <EngagementsSection data={data!} clientId={clientId} onNavigate={setActiveSection} />
+        return <EngagementsSection key={engRefreshKey} data={data!} clientId={clientId} onNavigate={setActiveSection} onCreateEngagement={openCreate} />
       case 'situation':
-        return <BriefTab data={data!} clientId={clientId} onCreateEngagement={() => setActiveSection('engagements')} />
+        return <BriefTab data={data!} clientId={clientId} onCreateEngagement={openCreate} />
       case 'findings':
       case 'contradictions':
       case 'genome':
@@ -2787,7 +2806,7 @@ export default function MaestroClientPage() {
             <div style={{ fontSize: 9, fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6, fontFamily: MONO }}>Engagements</div>
             {sbItem('engagements', '≡', 'All Engagements')}
             <button
-              onClick={() => setActiveSection('engagements')}
+              onClick={() => openCreate('')}
               style={{ margin: '4px 0 0', padding: '6px 10px', background: 'rgba(45,212,200,0.1)', border: '1px solid rgba(45,212,200,0.3)', borderRadius: 5, fontSize: 11, fontWeight: 600, color: TEAL, cursor: 'pointer', textAlign: 'center' as const, width: '100%', fontFamily: SANS }}
             >
               + New Engagement
