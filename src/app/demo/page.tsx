@@ -37,6 +37,7 @@ interface Panel {
   scrollTo?: number
   label?: string
   action?: ActionId
+  startDelay?: number   // ms before rotation begins from this panel (overrides PANEL_START_DELAY)
 }
 
 interface Screen {
@@ -141,8 +142,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/intelligence?client=meridian', zoom: 0.62,
     panels: [
-      { src: '/intelligence?client=meridian', duration: 14, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
-      { src: '/intelligence?client=meridian', duration: 10, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
+      { src: '/intelligence?client=meridian', duration: 14, startDelay: 3000, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
+      { src: '/intelligence?client=meridian', duration: 10,                   action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
     ],
   },
   {
@@ -240,8 +241,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12,                 label: 'PHASE 4 · EXECUTE & VERIFY · 4.2 ACTIVE' },
-      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12, scrollTo: 800,  label: '18/18 COMPLETE · $22.4M VERIFIED · 5.7× ROI' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4',                 label: 'PHASE 4 · EXECUTE & VERIFY · 4.2 ACTIVE' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', scrollTo: 800,  label: '18/18 COMPLETE · $22.4M VERIFIED · 5.7× ROI' },
     ],
   },
   {
@@ -308,8 +309,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     panels: [
-      { src: '/maestro/meridian', duration: 10, action: 'click-deliverables',           label: 'DELIVERABLES · ALL PHASES' },
-      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
+      { src: '/maestro/meridian', duration: 10, action: 'click-deliverables',                 label: 'DELIVERABLES · PHASE 0 · 1' },
+      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables', scrollTo: 600,  label: 'DELIVERABLES · PHASE 2 · 3 · 4' },
     ],
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
@@ -326,8 +327,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12,                 label: 'MERIDIAN · PHASE 4 · 4.2 ACTIVE' },
-      { src: '/ai-strategy?client=meridian&seed=demo', duration: 12, scrollTo: 800,  label: 'MERIDIAN · 18/18 COMPLETE · $22.4M VERIFIED' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4',                 label: 'MERIDIAN · PHASE 4 · 4.2 ACTIVE' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', scrollTo: 800,  label: 'MERIDIAN · 18/18 COMPLETE · $22.4M VERIFIED' },
     ],
   },
   {
@@ -370,7 +371,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/platform', zoom: 0.62,
     panels: [
-      { src: '/platform', duration: 12, scrollTo: 800,                  label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
+      { src: '/platform', duration: 12, scrollTo: 2000,                 label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
       { src: '/investor', duration: 10, action: 'click-platform-bet',   label: 'INVESTOR · THE PLATFORM BET' },
     ],
   },
@@ -431,16 +432,26 @@ function DemoGuidedPageInner() {
         el?.click()
       } catch { /* cross-origin */ }
     }, REACT_RENDER_DELAY)
+    // Last-matching variant for deeply-nested nav buttons that hydrate after parent containers
+    const clickLastText = (match: (t: string) => boolean, delayMs = 2500) => schedulePanelTimer(() => {
+      try {
+        const doc = iframe.contentDocument
+        if (!doc) return
+        const matches = Array.from(doc.querySelectorAll('button, a'))
+          .filter(e => match(e.textContent || '')) as HTMLElement[]
+        matches[matches.length - 1]?.click()
+      } catch { /* cross-origin */ }
+    }, delayMs)
     switch (action) {
       case 'click-situation':       clickText(t => t.includes('Situation')); break
       case 'click-contradictions':  clickText(t => t.includes('Contradictions')); break
       case 'click-genome':          clickText(t => t.includes('Genome')); break
       case 'click-new-engagement':  clickText(t => t.includes('New Engagement')); break
-      case 'click-phase4':          clickText(t => t.includes('4.2') || t.includes('EXECUTE') || t.includes('Governance')); break
+      case 'click-phase4':          clickLastText(t => t.includes('4.2') || t.includes('EXECUTE') || t.includes('Governance'), 2500); break
       case 'click-step-01':         clickText(t => t.includes('0.1') || t.includes('Situation Confirmation')); break
       case 'click-deliverables':    clickText(t => t.trim() === 'Deliverables'); break
       case 'click-maestro-guide':   clickText(t => t.includes('Maestro Guide')); break
-      case 'click-platform-bet':    clickText(t => t.includes('Platform Bet')); break
+      case 'click-platform-bet':    clickText(t => t.trim() === 'Platform Bet'); break
       case 'click-deliverables-view-arch': {
         clickText(t => t.trim() === 'Deliverables')
         schedulePanelTimer(() => {
@@ -472,16 +483,16 @@ function DemoGuidedPageInner() {
   // Unmount cleanup
   useEffect(() => () => clearAllPanelTimers(), [clearAllPanelTimers])
 
-  // Rotate panels by their durations — first panel gets PANEL_START_DELAY extra breathing room
+  // Rotate panels by their durations — first panel gets PANEL_START_DELAY extra breathing room (or per-panel override)
   useEffect(() => {
     const panels = screen.panels
     if (!panels || panels.length <= 1) return
     if (panelIdx >= panels.length - 1) return
-    const extra = panelIdx === 0 ? PANEL_START_DELAY : 0
+    const startDelay = panelIdx === 0 ? (panels[0].startDelay ?? PANEL_START_DELAY) : 0
     const id = window.setTimeout(() => {
       panelTimersRef.current = panelTimersRef.current.filter(x => x !== id)
       setPanelIdx(i => Math.min(i + 1, panels.length - 1))
-    }, panels[panelIdx].duration * 1000 + extra)
+    }, panels[panelIdx].duration * 1000 + startDelay)
     panelTimersRef.current.push(id)
     return () => {
       clearTimeout(id)
@@ -863,10 +874,11 @@ function DemoGuidedPageInner() {
                 const inv  = Math.round((100 / zoom) * 10) / 10
                 const src  = activePanel?.src ?? screen.url
                 const panels = screen.panels
-                // First panel gets an extra start-delay window before bar fills
-                const barDuration = activePanel
-                  ? activePanel.duration + (panelIdx === 0 ? PANEL_START_DELAY / 1000 : 0)
+                // First panel gets an extra start-delay window before bar fills (per-panel startDelay overrides global)
+                const startDelaySec = panelIdx === 0
+                  ? ((activePanel?.startDelay ?? PANEL_START_DELAY) / 1000)
                   : 0
+                const barDuration = activePanel ? activePanel.duration + startDelaySec : 0
                 const handleLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
                   const iframe = e.currentTarget
                   // Wait REACT_RENDER_DELAY after page load so React has committed before we click
