@@ -228,7 +228,8 @@ function NavInner({ activePage }: NavProps) {
               )}
             </div>
 
-            {/* Admin link — admin role only */}
+            {/* Maestro + Admin links — admin role only */}
+            {isAdmin && navLink('Maestro', '/maestro', maestroActive)}
             {isAdmin && navLink('Admin', '/admin', adminActive)}
           </>
         )}
