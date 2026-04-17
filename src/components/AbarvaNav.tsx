@@ -66,6 +66,7 @@ function NavInner({ activePage }: NavProps) {
   const platformActive     = activePage === 'platform'
   const investorActive     = activePage === 'investor'
   const demoActive         = activePage === 'demo'
+  const maestroActive      = activePage === 'maestro'
 
   // ── AVR breadcrumb ────────────────────────────────────────────────────────
   const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
@@ -260,6 +261,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isAdmin && (
           <>
             {clientDropdown()}
+            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {avrMegaMenu()}
@@ -289,6 +291,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isMaestro && (
           <>
             {staticClientLabel()}
+            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
