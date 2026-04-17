@@ -28,6 +28,8 @@ type ActionId =
   | 'click-step-01'
   | 'click-deliverables'
   | 'click-deliverables-view-arch'
+  | 'click-maestro-guide'
+  | 'click-platform-bet'
 
 interface Panel {
   src: string
@@ -139,8 +141,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/intelligence?client=meridian', zoom: 0.62,
     panels: [
-      { src: '/intelligence?client=meridian', duration: 12, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
-      { src: '/intelligence?client=meridian', duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
+      { src: '/intelligence?client=meridian', duration: 12, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
+      { src: '/intelligence?client=meridian', duration: 10, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
     ],
   },
   {
@@ -186,6 +188,10 @@ const SCREENS: Screen[] = [
       'Steps 4–5: Navigate every phase → verify outcomes → earn the fee',
     ],
     url: '/maestro/meridian', zoom: 0.62,
+    panels: [
+      { src: '/maestro/meridian', duration: 8,  scrollTo: 0,                  label: 'MAESTRO DASHBOARD' },
+      { src: '/maestro/meridian', duration: 12, action: 'click-maestro-guide', label: 'MAESTRO GUIDE · 5 STEPS' },
+    ],
   },
   {
     id: '9', audio: '09',
@@ -235,7 +241,7 @@ const SCREENS: Screen[] = [
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
       { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
-      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
+      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', scrollTo: 800, label: 'VALUE BRIEF · $22.4M VERIFIED · 5.7× ROI' },
     ],
   },
   {
@@ -266,9 +272,10 @@ const SCREENS: Screen[] = [
       'Two weeks: CFO-grade negotiation brief, no external consultant',
       'You run the RFP. You negotiate. You own the intelligence.',
     ],
-    url: '/solutions',
+    url: '/vendor-intelligence?client=arcturus',
     panels: [
-      { src: '/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
+      { src: '/vendor-intelligence?client=arcturus', duration: 12,                label: 'VENDOR INTELLIGENCE · ARCTURUS' },
+      { src: '/vendor-intelligence?client=arcturus', duration: 10, scrollTo: 400, label: 'BLOOMBERG · $8.4M · 31-PEER BENCHMARK' },
     ],
   },
   {
@@ -282,10 +289,10 @@ const SCREENS: Screen[] = [
       '18 vendors above market rate — renewal windows flagged',
       'Not a spreadsheet, not a consultant — a platform reading every contract',
     ],
-    url: '/ai-strategy?client=arcturus', zoom: 0.60,
+    url: '/maestro/arcturus', zoom: 0.62,
     panels: [
-      { src: '/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
-      { src: '/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
+      { src: '/maestro/arcturus',                    duration: 12,                label: 'ARCTURUS · MAESTRO DASHBOARD' },
+      { src: '/vendor-intelligence?client=arcturus', duration: 10, scrollTo: 300, label: 'SLA BREACH · $1.8M CREDITS AVAILABLE' },
     ],
   },
   {
@@ -320,7 +327,7 @@ const SCREENS: Screen[] = [
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
       { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
-      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
+      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', scrollTo: 800, label: 'MERIDIAN · VALUE BRIEF · $22.4M VERIFIED' },
     ],
   },
   {
@@ -363,8 +370,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/platform', zoom: 0.62,
     panels: [
-      { src: 'https://app.abarva.ai/platform', duration: 12, scrollTo: 800, label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
-      { src: '/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
+      { src: '/platform', duration: 12, scrollTo: 800,                  label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
+      { src: '/investor', duration: 10, action: 'click-platform-bet',   label: 'INVESTOR · THE PLATFORM BET' },
     ],
   },
   {
@@ -432,6 +439,8 @@ function DemoGuidedPageInner() {
       case 'click-phase4':          clickText(t => t.includes('4.2') || t.includes('EXECUTE') || t.includes('Governance')); break
       case 'click-step-01':         clickText(t => t.includes('0.1') || t.includes('Situation Confirmation')); break
       case 'click-deliverables':    clickText(t => t.trim() === 'Deliverables'); break
+      case 'click-maestro-guide':   clickText(t => t.includes('Maestro Guide')); break
+      case 'click-platform-bet':    clickText(t => t.includes('Platform Bet')); break
       case 'click-deliverables-view-arch': {
         clickText(t => t.trim() === 'Deliverables')
         schedulePanelTimer(() => {
