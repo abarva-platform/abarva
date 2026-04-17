@@ -27,10 +27,10 @@ interface Screen {
 
 const PHASE_GROUPS: { label: string; category: Section; screens: number[] }[] = [
   { label: 'THE PROBLEM',  category: 'THE PROBLEM',  screens: [1, 2] },
-  { label: 'ABARNEXUS',    category: 'ABARNEXUS',    screens: [3, 4, 5] },
-  { label: 'THE PLATFORM', category: 'THE PLATFORM', screens: [6, 7, 8, 9, 10, 11, 12, 13] },
-  { label: 'PROOF',        category: 'PROOF',        screens: [14, 15, 16] },
-  { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: [17, 18] },
+  { label: 'ABARNEXUS',    category: 'ABARNEXUS',    screens: [3, 4, 5, 6] },
+  { label: 'THE PLATFORM', category: 'THE PLATFORM', screens: [7, 8, 9, 10, 11, 12, 13, 14] },
+  { label: 'PROOF',        category: 'PROOF',        screens: [15, 16, 17] },
+  { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: [18, 19] },
 ]
 
 const SCREENS: Screen[] = [
@@ -66,17 +66,30 @@ const SCREENS: Screen[] = [
     id: 3,
     category: 'ABARNEXUS',
     title: 'AbarNexus. The brain that never forgets.',
-    body: 'Three dimensions of knowledge: 340 transformation failure patterns from real engagements, client data processed as embeddings in your environment, and emergent intelligence that compounds with every engagement. The 50th client benefits from the first 49. Permanently.',
+    body: 'Three dimensions of knowledge — and none of them require you to give up your data. Dimension one: AbarNexus out-of-box — 340 Genome patterns, HFMA benchmarks, vendor performance data. Dimension two: your data, in your environment — files processed as embeddings inside your infrastructure, never ours. Dimension three: emergent intelligence — patterns from every engagement added back permanently. The 50th client benefits from the first 49.',
     bullets: [
-      'Client data: ingested and vectorized before the first Maestro meeting',
-      '340+ failure patterns: every documented failure mode from real engagements',
-      'Sector benchmarks: KLAS, Gartner, Everest — continuously updated',
-      'Compounds: every engagement adds to the knowledge base permanently',
+      'Dimension 1: 340 Genome patterns + HFMA benchmarks — out of box',
+      'Dimension 2: YOUR data — embeddings in YOUR infrastructure, not AbarVa',
+      'Dimension 3: Emergent — every engagement adds new patterns permanently',
+      'Zero data lock-in: you can leave at any time, your data stays with you',
     ],
     url: '/intelligence?client=meridian', zoom: 0.62,
   },
   {
     id: 4,
+    category: 'ABARNEXUS',
+    title: 'Your data never leaves your environment. Ever.',
+    body: 'Every file you upload is processed into embeddings inside your Supabase instance — not ours. Your contracts, financials, org charts, vendor agreements: they become searchable intelligence that AbarNexus can query. But the raw data stays in your environment. We never see it. We never store it. When the engagement ends, you own the intelligence. Not AbarVa. You.',
+    bullets: [
+      'Client data: embeddings in your Supabase, not AbarVa servers',
+      'AbarNexus queries your embeddings — never ingests your raw files',
+      'Vendor contracts, financials, org charts: searchable, never exposed',
+      'Engagement ends: all intelligence stays with you permanently',
+    ],
+    url: 'https://app.abarva.ai/platform', zoom: 0.62,
+  },
+  {
+    id: 5,
     category: 'ABARNEXUS',
     title: '340 failure patterns. Every one documented.',
     body: 'F007: CDO vacant at go-live — 79% programme failure rate. F011: vendor SLA never enforced — 74% suboptimal outcome. F003: platform end-of-life unplanned — 82% budget overrun. These are not estimates. They are statistical facts from organisations that were in exactly this position.',
@@ -89,7 +102,7 @@ const SCREENS: Screen[] = [
     url: '/intelligence?client=meridian', zoom: 0.62,
   },
   {
-    id: 5,
+    id: 6,
     category: 'ABARNEXUS',
     title: 'AbarNexus retrieves at every step.',
     body: 'Every message triggers a retrieval from the knowledge base. HFMA benchmarks. Genome failure patterns. The uploaded Ensemble contract. The brain retrieves exactly what\'s relevant — and injects it into every single response. Not a static prompt. Live intelligence.',
@@ -103,7 +116,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE PLATFORM ──────────────────────────────────────────────────────────
   {
-    id: 6,
+    id: 7,
     category: 'THE PLATFORM',
     title: 'Before the first meeting, the Maestro already knows everything.',
     body: 'The Maestro workspace for Meridian. Before the first meeting, the platform knows: denial rate 18.2% vs benchmark 11.4%, CDO role vacant — F007 active, Epic goes live Q3 2026. No discovery week. 48 hours from data upload.',
@@ -116,7 +129,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: 7,
+    id: 8,
     category: 'THE PLATFORM',
     title: 'The Maestro Guide. Five steps from setup to verified outcome.',
     body: 'This is the operating manual that replaces 40 consultants. Setup the workspace. Review what AbarNexus already knows. Run the engagement. Navigate AbarNexus through every phase. Capture the verified outcome and earn the fee.',
@@ -129,7 +142,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: 8,
+    id: 9,
     category: 'THE PLATFORM',
     title: 'A new engagement. Three minutes.',
     body: 'Click New Engagement. Four questions: the leadership directive, AI use cases, technology landscape, executive sponsor. AbarVa auto-infers the solution type from what you describe — you never pick from a list. A McKinsey SOW takes three weeks. This takes three minutes — and arrives knowing more.',
@@ -142,7 +155,7 @@ const SCREENS: Screen[] = [
     url: 'https://app.abarva.ai/maestro/meridian', zoom: 0.62,
   },
   {
-    id: 9,
+    id: 10,
     category: 'THE PLATFORM',
     title: 'Phase 0, Step 1. Three board-level signals.',
     body: 'AbarNexus opens with the three most critical signals at Meridian: the denial rate gap, prior auth automation lag, and the Epic go-live window. Every option is a real CXO stance — not a vague category. The AI Value Brief builds on the right. Every decision locked.',
@@ -155,7 +168,7 @@ const SCREENS: Screen[] = [
     url: '/ai-strategy?client=meridian&reset=true', zoom: 0.60,
   },
   {
-    id: 10,
+    id: 11,
     category: 'THE PLATFORM',
     title: '18 steps. 5 phases. Every outcome locked.',
     body: '$22.4M verified — KPMG audited. Day Zero baseline never moved. Denial rate: 18.2% to 16.1%, tracking to 12%. Epic integration on track Q3 2026. The board pack is ready. The fee is earned. Renewal confirmed.',
@@ -168,7 +181,7 @@ const SCREENS: Screen[] = [
     url: '/ai-strategy?client=meridian&seed=demo', zoom: 0.60,
   },
   {
-    id: 11,
+    id: 12,
     category: 'THE PLATFORM',
     title: 'Not every problem needs 18 steps.',
     body: 'AbarVa has point solutions for specific problems: vendor spend optimisation, RCM denial prevention, AI portfolio accountability, Epic AI integration. Each is a focused workflow. Same AbarNexus intelligence. Faster time to value. No engagement manager required.',
@@ -181,7 +194,7 @@ const SCREENS: Screen[] = [
     url: '/select?client=meridian',
   },
   {
-    id: 12,
+    id: 13,
     category: 'THE PLATFORM',
     title: 'Your Bloomberg contract is $8.4M. Peers pay $5.1M.',
     body: 'AbarNexus knows 31 comparable asset managers pay $5.1M for the same Bloomberg service. It found $1.4M in unclaimed SLA credits — 18 months unacted. Run the Vendor Spend solution. Two weeks. CFO-grade negotiation brief. No third party. You own the intelligence.',
@@ -194,7 +207,7 @@ const SCREENS: Screen[] = [
     url: '/vendor-intelligence?client=arcturus',
   },
   {
-    id: 13,
+    id: 14,
     category: 'THE PLATFORM',
     title: '7 deliverables. Every phase. Permanently yours.',
     body: 'Phase 0 Situation Brief. Phase 1 Diagnose Report. Phase 2 Architecture and Roadmap. Phase 3 Value Framework. Phase 4 Board Pack and Fee Calculation. Generated by AbarNexus. Reviewed by the Maestro. Yours to keep — not locked in a partner\'s head.',
@@ -208,7 +221,7 @@ const SCREENS: Screen[] = [
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
   {
-    id: 14,
+    id: 15,
     category: 'PROOF',
     title: 'Meridian Health System. $22.4M verified.',
     body: '14-hospital IDN. Denial rate 18.2% → 16.1% → tracking to 12%. Ensemble SLA invoked Month 2. $22.4M verified by Month 3 — KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed.',
@@ -221,7 +234,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: 15,
+    id: 16,
     category: 'PROOF',
     title: 'Arcturus Financial Group. $18.2M verified.',
     body: '$200B AUM. Cost-to-income ratio 71% versus 58% peer benchmark — an $840M efficiency gap. AbarNexus found $94M in AI spend with zero baselines and $1.4M in unclaimed Bloomberg SLA credits. $18.2M verified Month 4.',
@@ -234,7 +247,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/arcturus', zoom: 0.62,
   },
   {
-    id: 16,
+    id: 17,
     category: 'PROOF',
     title: 'Apex Retail Group. $47.2M verified.',
     body: '340 stores. Azure spend 41% above peer benchmark — $39M recoverable. F003 matched: Teradata end-of-life with no migration plan. Month 1: reserved instance purchase — $14M Year 1, zero risk. Month 4: Azure + Databricks Medallion live. $47.2M verified Month 6.',
@@ -248,7 +261,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE FUTURE ────────────────────────────────────────────────────────────
   {
-    id: 17,
+    id: 18,
     category: 'THE FUTURE',
     title: 'Every engagement makes AbarNexus smarter. Permanently.',
     body: 'At Series A, agents handle Phase 0 autonomously — one Maestro runs 4–6 engagements simultaneously. At Series B, the Genome Agent reads industry research continuously — AbarNexus self-updates from the world and from every engagement. Harvey AI did this for legal: $11B. Our market is $800B.',
@@ -261,14 +274,14 @@ const SCREENS: Screen[] = [
     url: '/investor',
   },
   {
-    id: 18,
+    id: 19,
     category: 'THE FUTURE',
     title: 'When the engagement ends, everything stays.',
-    body: 'The Situation Brief. The Architecture. The Board Pack. Your data never left your environment. You run the next RFP yourself. You negotiate the next contract. AbarVa gave you the intelligence. Now act on it.',
+    body: 'When the engagement ends, everything stays with you. The Situation Brief. The Architecture. The Board Pack. Your vendor contracts were never on our servers. Your financials were never on our servers. Your data was processed as embeddings in your environment — and it stays there. AbarVa gave you the intelligence. You always had the data. Now act on it.',
     bullets: [
       'All deliverables are yours — Board Pack, Architecture, Roadmap, all of it',
-      'Your data: never left your environment at any point in the engagement',
-      'Next RFP: you run it yourself with AbarVa intelligence as the brief',
+      'Your vendor contracts: never on AbarVa servers — ever',
+      'Your data: embeddings in your environment, stays there permanently',
       '71% of clients re-engage within 6 months — because the Genome compounds',
     ],
     url: '/maestro/meridian', zoom: 0.62,
