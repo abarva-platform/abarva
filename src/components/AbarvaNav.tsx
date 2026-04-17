@@ -311,8 +311,7 @@ function NavInner({ activePage }: NavProps) {
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
           {signedIn && navLink('Demo', '/demo', demoActive)}
           {signedIn && navLink('Platform', '/platform', platformActive)}
-          {signedIn && isAdmin && navLink('Investor', '/investor', investorActive)}
-          {signedIn && isInvestor && navLink('Home', '/', homeActive)}
+          {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && adminNavItem()}
           <div style={{ width: '12px' }} />
 
