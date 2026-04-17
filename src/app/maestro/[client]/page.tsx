@@ -504,6 +504,160 @@ const MAESTRO_SOLUTIONS = [
   { slug: 'delivery',name: 'Transformation Delivery' },
 ]
 
+// ─── DATA DASHBOARD ───────────────────────────────────────────────────────────
+type DimValColor = 'critical' | 'warning' | 'good' | 'normal'
+type DimDotColor = 'red' | 'green' | 'amber' | 'grey'
+
+interface DimMetric { name: string; value: string; vc: DimValColor; dot: DimDotColor; arrow?: string; label: string }
+interface DimCard    { title: string; badge: string; badgeC: string; metrics: DimMetric[]; footer: string; href: string }
+
+const VC: Record<DimValColor, string> = { critical: '#991B1B', warning: '#B45309', good: '#166534', normal: '#0F0E0D' }
+const DC: Record<DimDotColor, string> = { red: '#991B1B', green: '#166534', amber: '#B45309', grey: '#706D66' }
+
+const DASHBOARD_DATA: Record<string, DimCard[]> = {
+  meridian: [
+    {
+      title: 'Financial Health', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'RCM Denial Rate',      value: '18.2%',      vc: 'critical', dot: 'red',   arrow: '↑', label: '6pp above SLA'       },
+        { name: 'Revenue at Risk',      value: '$94M/yr',    vc: 'critical', dot: 'red',              label: 'unrecovered'          },
+        { name: 'Prior Auth Coverage',  value: '23%',        vc: 'warning',  dot: 'red',   arrow: '↓', label: 'vs 62% peer'         },
+        { name: 'MA Star Rating',       value: '3.5',        vc: 'warning',  dot: 'grey',  arrow: '→', label: 'threshold 4.0'       },
+      ],
+      footer: 'View Situation Intelligence →', href: '/intelligence?client=meridian',
+    },
+    {
+      title: 'Technology', badge: 'Attention', badgeC: '#B45309',
+      metrics: [
+        { name: 'Epic Go-Live',         value: 'Q3 2026',    vc: 'warning',  dot: 'grey',  arrow: '→', label: 'no AI path'           },
+        { name: 'App Inventory',        value: '312',        vc: 'normal',   dot: 'red',              label: '42% redundant'        },
+        { name: 'Shadow IT Spend',      value: '$38M',       vc: 'warning',  dot: 'red',   arrow: '↑', label: 'untracked SaaS'      },
+        { name: 'Tech Mod Phase',       value: 'Ph 2',       vc: 'good',     dot: 'green', arrow: '↑', label: '65% complete'        },
+      ],
+      footer: 'View Technology Intelligence →', href: '/intelligence?client=meridian',
+    },
+    {
+      title: 'Operations', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'CDO Role',             value: 'Vacant',     vc: 'critical', dot: 'red',              label: 'F007 · 79% fail'      },
+        { name: 'Travel Nurse Cost',    value: '$20M over',  vc: 'critical', dot: 'red',   arrow: '↑', label: 'vs target'           },
+        { name: 'Epic Optimization',    value: '58/100',     vc: 'warning',  dot: 'grey',  arrow: '→', label: '$34M at risk'        },
+        { name: 'Data Readiness',       value: '72/100',     vc: 'warning',  dot: 'green', arrow: '↑', label: '2 gaps remain'       },
+      ],
+      footer: 'View Contradiction Intelligence →', href: '/contradictions?client=meridian',
+    },
+  ],
+  arcturus: [
+    {
+      title: 'Financial Health', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'Cost-to-Income',       value: '71%',        vc: 'critical', dot: 'red',   arrow: '↑', label: 'vs 58% peer'         },
+        { name: 'AI Initiative ROI',    value: '$0 tracked', vc: 'critical', dot: 'red',              label: '28 initiatives'       },
+        { name: 'Bloomberg Contract',   value: '$14M/yr',    vc: 'warning',  dot: 'amber', arrow: '→', label: 'renewal Dec 2026'    },
+        { name: 'Revenue',              value: '$2.8B',      vc: 'normal',   dot: 'green', arrow: '→', label: 'stable'              },
+      ],
+      footer: 'View Situation Intelligence →', href: '/intelligence?client=arcturus',
+    },
+    {
+      title: 'Technology', badge: 'Attention', badgeC: '#B45309',
+      metrics: [
+        { name: 'Salesforce FSC',       value: '44%',        vc: 'critical', dot: 'red',   arrow: '↓', label: 'target 78%'          },
+        { name: 'AI Maturity Score',    value: '34/100',     vc: 'critical', dot: 'red',              label: '26pp below peer'      },
+        { name: 'Core Banking Age',     value: '14 yrs',     vc: 'warning',  dot: 'amber', arrow: '→', label: 'modernisation stalled' },
+        { name: 'Tech Mod Plan',        value: '60%',        vc: 'normal',   dot: 'green', arrow: '↑', label: 'on track'            },
+      ],
+      footer: 'View Technology Intelligence →', href: '/intelligence?client=arcturus',
+    },
+    {
+      title: 'Operations', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'CDO Role',             value: 'Vacant',     vc: 'critical', dot: 'red',              label: '11 months vacant'     },
+        { name: 'MAS FEAT Status',      value: 'Non-compliant', vc: 'critical', dot: 'red',           label: 'FCA review Q3'        },
+        { name: 'AUM per Employee',     value: '$34M',       vc: 'warning',  dot: 'red',   arrow: '↓', label: 'vs $120M peer'       },
+        { name: 'AI Governance',        value: '0 baselines',vc: 'critical', dot: 'red',              label: '28 initiatives'       },
+      ],
+      footer: 'View Contradiction Intelligence →', href: '/contradictions?client=arcturus',
+    },
+  ],
+  apexretail: [
+    {
+      title: 'Financial Health', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'E-com Conversion',     value: '2.8%',       vc: 'critical', dot: 'red',   arrow: '↓', label: 'vs 4.2% benchmark'   },
+        { name: 'Revenue Gap',          value: '$248M',      vc: 'critical', dot: 'red',              label: 'conversion shortfall' },
+        { name: 'Operating Margin',     value: '3.8%',       vc: 'warning',  dot: 'amber', arrow: '→', label: 'target 6.0%'         },
+        { name: 'Cart Abandonment',     value: '72%',        vc: 'critical', dot: 'red',   arrow: '↑', label: 'vs 58% benchmark'    },
+      ],
+      footer: 'View Situation Intelligence →', href: '/intelligence?client=apexretail',
+    },
+    {
+      title: 'Technology', badge: 'Critical', badgeC: '#991B1B',
+      metrics: [
+        { name: 'SAP ECC Age',          value: '14 yrs',     vc: 'critical', dot: 'red',   arrow: '↑', label: 'EOL 2027 · no decision' },
+        { name: 'IT Spend (% Rev)',     value: '2.3%',       vc: 'critical', dot: 'red',   arrow: '↓', label: 'vs 6% digital-native' },
+        { name: 'AI Utilisation',       value: '12%',        vc: 'critical', dot: 'red',              label: '$14M Einstein licensed' },
+        { name: 'Supply Chain AI',      value: '62%',        vc: 'warning',  dot: 'amber', arrow: '→', label: '$180M forecast gap'  },
+      ],
+      footer: 'View Technology Intelligence →', href: '/intelligence?client=apexretail',
+    },
+    {
+      title: 'Operations', badge: 'Warning', badgeC: '#B45309',
+      metrics: [
+        { name: 'Inventory Accuracy',   value: '84%',        vc: 'warning',  dot: 'amber', arrow: '↓', label: 'vs 95% benchmark'    },
+        { name: 'On-time Delivery',     value: '82%',        vc: 'warning',  dot: 'amber', arrow: '↓', label: 'vs 95% benchmark'    },
+        { name: 'Loyalty Active Rate',  value: '42%',        vc: 'critical', dot: 'red',   arrow: '↓', label: 'vs 68% target'       },
+        { name: 'Demand Forecast',      value: '62%',        vc: 'critical', dot: 'red',   arrow: '↓', label: 'vs 84% peer'         },
+      ],
+      footer: 'View Contradiction Intelligence →', href: '/contradictions?client=apexretail',
+    },
+  ],
+}
+
+function DashboardGrid({ clientId }: { clientId: string }) {
+  const cards = DASHBOARD_DATA[clientId] ?? DASHBOARD_DATA['meridian']
+  const BDR   = '#E8E6E3'
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+      {cards.map(card => (
+        <div key={card.title} style={{ background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '20px' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+            <div style={{ fontFamily: MONO, fontSize: '10px', fontWeight: 700, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em' }}>
+              {card.title}
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: card.badgeC }}>{card.badge}</div>
+          </div>
+          {/* Metrics */}
+          <div style={{ display: 'flex', flexDirection: 'column' as const, gap: '0' }}>
+            {card.metrics.map((m, mi) => (
+              <div key={m.name}>
+                {mi > 0 && <div style={{ height: '1px', background: BDR, margin: '8px 0' }} />}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#3C3C3C', flex: 1 }}>{m.name}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                    <span style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 600, color: VC[m.vc] }}>{m.value}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: DC[m.dot], display: 'inline-block', flexShrink: 0 }} />
+                      {m.arrow && <span style={{ fontFamily: MONO, fontSize: '10px', color: DC[m.dot] }}>{m.arrow}</span>}
+                      <span style={{ fontFamily: SANS, fontSize: '11px', color: DC[m.dot], fontWeight: 600 }}>{m.label}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Footer */}
+          <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: `1px solid ${BDR}` }}>
+            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 500, textDecoration: 'none' }}>
+              {card.footer}
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: {
   clientId: string
   clientName: string
@@ -1699,8 +1853,6 @@ function EngagementsSection({
   const [chatSolution, setChatSolution] = useState<string | null>(null)
   const engagements = ENGAGEMENT_DATA[clientId] ?? []
   const activeCount = engagements.filter(eng => eng.status === 'In Progress').length
-  const finding = data.heroFindings[0]
-  const bigStat = finding.addressable.split(' ')[0].replace('/yr', '')
   const readinessScore = CLIENT_READINESS[clientId] ?? 65
   const missingFiles = CLIENT_MISSING[clientId] ?? []
   const now = new Date()
@@ -1723,7 +1875,7 @@ function EngagementsSection({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>{data.name}</div>
+          <div style={{ fontSize: 22, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>{data.name}</div>
           <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 3 }}>
             Last updated: Today {timeStr} · {activeCount} active engagement{activeCount !== 1 ? 's' : ''}
           </div>
@@ -1736,45 +1888,7 @@ function EngagementsSection({
         </button>
       </div>
 
-      {/* Signal Card */}
-      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderLeft: `4px solid ${TEAL}`, borderRadius: '0 8px 8px 0', padding: '16px 20px', marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 20 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase' as const, marginBottom: 6 }}>
-            MOST URGENT · {data.name.toUpperCase()}
-          </div>
-          <div style={{ fontSize: 16, fontWeight: 700, color: '#0C0C0C', marginBottom: 4 }}>
-            {finding.headline.replace(/"/g, '')}
-          </div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>{finding.detail}</div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => { setChatSolution(finding.solutionSlug); setShowChat(true) }}
-              style={{ background: '#0C0C0C', color: '#fff', fontSize: 11, fontWeight: 700, padding: '6px 12px', borderRadius: 4, border: 'none', cursor: 'pointer', fontFamily: SANS }}
-            >
-              Create Engagement →
-            </button>
-            <a
-              href={`/intelligence?client=${clientId}`}
-              style={{ background: 'transparent', color: '#0C0C0C', fontSize: 11, fontWeight: 600, padding: '6px 12px', borderRadius: 4, border: '1px solid #D1D5DB', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', fontFamily: SANS }}
-            >
-              View Intelligence →
-            </a>
-          </div>
-        </div>
-        <div style={{ textAlign: 'right' as const, flexShrink: 0, paddingLeft: 20 }}>
-          <div style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: RED, lineHeight: 1 }}>{bigStat}</div>
-          <div style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 8 }}>annual exposure</div>
-          <div style={{ background: '#0C0C0C', color: '#fff', fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 3, display: 'inline-block', fontFamily: MONO, marginBottom: 6 }}>
-            {finding.code} · {finding.rate}% Genome failure rate
-          </div>
-          <button
-            onClick={() => onNavigate('situation')}
-            style={{ display: 'block', fontSize: 11, color: TEAL, cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'right' as const, fontFamily: SANS, marginLeft: 'auto' }}
-          >
-            See all {data.heroFindings.length} signals →
-          </button>
-        </div>
-      </div>
+      <DashboardGrid clientId={clientId} />
 
       {/* Engagements Table */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -1785,7 +1899,7 @@ function EngagementsSection({
           <thead>
             <tr>
               {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', 'Action'].map(h => (
-                <th key={h} style={{ padding: '8px 14px', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', textAlign: 'left' as const, background: '#F8F7F4', borderBottom: '1px solid #E5E7EB', fontFamily: MONO }}>
+                <th key={h} style={{ padding: '9px 16px', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', textAlign: 'left' as const, background: '#F8F7F4', borderBottom: '1px solid #E5E7EB', fontFamily: MONO }}>
                   {h}
                 </th>
               ))}
@@ -1797,34 +1911,34 @@ function EngagementsSection({
                 onMouseEnter={ev => (ev.currentTarget.style.background = '#F8F7F4')}
                 onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
               >
-                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontWeight: 600, color: '#0C0C0C', fontSize: 12 }}>{eng.name}</div>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontWeight: 600, color: '#0C0C0C', fontSize: 14 }}>{eng.name}</div>
                   <span style={{ fontSize: 10, background: eng.type === 'AI Value Realization' ? '#EFF6FF' : '#CCFBF1', color: eng.type === 'AI Value Realization' ? '#1e40af' : '#0f5443', padding: '1px 5px', borderRadius: 2, fontWeight: 600, display: 'inline-block', marginTop: 2 }}>
                     {eng.type === 'AI Value Realization' ? 'AVR' : 'SOL'}
                   </span>
                 </td>
-                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontSize: 12, color: '#0C0C0C' }}>{eng.sponsor.split(' · ')[0]}</div>
-                  <div style={{ fontSize: 10, color: '#9CA3AF' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontSize: 14, color: '#0C0C0C' }}>{eng.sponsor.split(' · ')[0]}</div>
+                  <div style={{ fontSize: 11, color: '#9CA3AF' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
                 </td>
-                <td style={{ padding: '10px 14px', fontSize: 11, color: TEAL, fontFamily: MONO, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: TEAL, fontFamily: MONO, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
                   Ph {eng.phase}
                 </td>
-                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
                   <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: eng.status === 'In Progress' ? '#CCFBF1' : eng.status === 'Assigned' ? '#FEF3C7' : '#F3F4F6', color: eng.status === 'In Progress' ? '#0f5443' : eng.status === 'Assigned' ? '#785a00' : '#6B7280' }}>
                     {eng.status}
                   </span>
                 </td>
-                <td style={{ padding: '10px 14px', fontSize: 12, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
                   {eng.maestro}
                 </td>
-                <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
                   {eng.value}
                 </td>
-                <td style={{ padding: '10px 14px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <span style={{ color: PCOLOR[eng.priority] ?? '#9CA3AF', fontSize: 12, fontWeight: 700 }}>● {eng.priority}</span>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                  <span style={{ color: PCOLOR[eng.priority] ?? '#9CA3AF', fontSize: 14, fontWeight: 700 }}>● {eng.priority}</span>
                 </td>
-                <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' as const, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' as const, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
                   <a
                     href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
                     onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
