@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
 import AbarvaMark from '@/components/AbarvaMark'
+import { BrandedText } from '@/components/BrandedText'
 
 const BG     = '#060A12'
 const PANEL  = '#0C0C0C'
@@ -18,16 +19,35 @@ const SANS   = "'DM Sans', system-ui, sans-serif"
 
 type Section = 'THE PROBLEM' | 'ABARNEXUS' | 'THE PLATFORM' | 'PROOF' | 'THE FUTURE'
 
+type ActionId =
+  | 'click-situation'
+  | 'click-contradictions'
+  | 'click-genome'
+  | 'click-new-engagement'
+  | 'click-phase4'
+  | 'click-step-01'
+  | 'click-deliverables'
+  | 'click-deliverables-view-arch'
+
+interface Panel {
+  src: string
+  duration: number      // seconds to show before rotating to next
+  scrollTo?: number
+  label?: string
+  action?: ActionId
+}
+
 interface Screen {
   id: string
   category: Section
   title: string
   body: string
   bullets: string[]
-  url: string
-  zoom?: number   // iframe scale (default 0.7)
-  audio?: string  // filename base; defaults to padded idx+1
+  url: string           // fallback when no panels
+  zoom?: number         // iframe scale (default 0.7)
+  audio?: string        // filename base; defaults to padded idx+1
   onLoad?: (iframe: HTMLIFrameElement) => void
+  panels?: Panel[]      // overrides url when present; rotates on duration
 }
 
 const PHASE_GROUPS: { label: string; category: Section; screens: string[] }[] = [
@@ -57,6 +77,28 @@ function scrollIframe(iframe: HTMLIFrameElement, top: number, delayMs = 1000) {
       iframe.contentWindow?.scrollTo({ top, behavior: 'smooth' })
     } catch { /* cross-origin */ }
   }, delayMs)
+}
+
+const ACTIONS: Record<ActionId, (iframe: HTMLIFrameElement) => void> = {
+  'click-situation':      (ifr) => clickInIframe(ifr, t => t.includes('Situation'), 800),
+  'click-contradictions': (ifr) => clickInIframe(ifr, t => t.includes('Contradictions'), 800),
+  'click-genome':         (ifr) => clickInIframe(ifr, t => t.includes('Genome'), 800),
+  'click-new-engagement': (ifr) => clickInIframe(ifr, t => t.includes('New Engagement'), 800),
+  'click-phase4':         (ifr) => clickInIframe(ifr, t => t.includes('4.2') || t.includes('EXECUTE'), 800),
+  'click-step-01':        (ifr) => clickInIframe(ifr, t => t.includes('0.1') || t.includes('Situation Confirmation'), 800),
+  'click-deliverables':   (ifr) => clickInIframe(ifr, t => t.trim() === 'Deliverables', 800),
+  'click-deliverables-view-arch': (ifr) => {
+    clickInIframe(ifr, t => t.trim() === 'Deliverables', 800)
+    setTimeout(() => {
+      try {
+        const doc = ifr.contentDocument
+        if (!doc) return
+        const viewBtns = Array.from(doc.querySelectorAll('button'))
+          .filter(b => (b.textContent || '').trim() === 'View') as HTMLButtonElement[]
+        viewBtns[1]?.click()
+      } catch { /* cross-origin */ }
+    }, 1600)
+  },
 }
 
 const SCREENS: Screen[] = [
@@ -100,6 +142,11 @@ const SCREENS: Screen[] = [
       'Zero data lock-in: you can leave at any time, your data stays with you',
     ],
     url: '/intelligence?client=meridian', zoom: 0.62,
+    panels: [
+      { src: '/platform',                     duration: 8,  label: 'THE ABARVA PLATFORM' },
+      { src: '/intelligence?client=meridian', duration: 8,  action: 'click-situation',      label: 'SITUATION INTELLIGENCE' },
+      { src: '/intelligence?client=meridian', duration: 8,  action: 'click-genome',         label: 'GENOME INTELLIGENCE' },
+    ],
   },
   {
     id: '4', audio: '04',
@@ -127,6 +174,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     onLoad: (iframe) => clickInIframe(iframe, t => t.includes('Contradictions'), 800),
+    panels: [
+      { src: '/intelligence?client=meridian', duration: 10, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE' },
+      { src: '/intelligence?client=meridian', duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE' },
+    ],
   },
   {
     id: '6', audio: '06',
@@ -155,6 +206,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     onLoad: (iframe) => scrollIframe(iframe, 350, 1000),
+    panels: [
+      { src: '/maestro/meridian', duration: 8,  scrollTo: 0,   label: 'SITUATION INTELLIGENCE' },
+      { src: '/maestro/meridian', duration: 10, scrollTo: 350, label: 'ACTIVE ENGAGEMENTS · PHASE GATES' },
+    ],
   },
   {
     id: '8', audio: '08',
@@ -182,6 +237,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     onLoad: (iframe) => clickInIframe(iframe, t => t.includes('New Engagement'), 1000),
+    panels: [
+      { src: '/maestro/meridian', duration: 5,  scrollTo: 0,   label: 'MAESTRO DASHBOARD' },
+      { src: '/maestro/meridian', duration: 15, action: 'click-new-engagement', label: 'NEW ENGAGEMENT · DISCOVERY' },
+    ],
   },
   {
     id: '10', audio: '10',
@@ -196,6 +255,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     onLoad: (iframe) => clickInIframe(iframe, t => t.includes('0.1') || t.includes('Situation Confirmation'), 1500),
+    panels: [
+      { src: '/ai-strategy?client=meridian', duration: 15, action: 'click-step-01', label: 'PHASE 0 · SITUATION CONFIRMATION' },
+      { src: '/ai-strategy?client=meridian', duration: 10, scrollTo: 200,          label: 'AI VALUE BRIEF BUILDING' },
+    ],
   },
   {
     id: '11', audio: '11',
@@ -210,6 +273,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('EXECUTE'), 1500),
+    panels: [
+      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
+    ],
   },
   {
     id: '12', audio: '12',
@@ -223,6 +290,10 @@ const SCREENS: Screen[] = [
       'Each solution uses the same Genome intelligence — just scoped tighter',
     ],
     url: '/solutions',
+    panels: [
+      { src: '/solutions', duration: 15, scrollTo: 0,   label: 'POINT SOLUTIONS' },
+      { src: '/solutions', duration: 10, scrollTo: 400, label: 'SOLUTION LIBRARY' },
+    ],
   },
   {
     id: '13A', audio: '13a',
@@ -236,6 +307,9 @@ const SCREENS: Screen[] = [
       'You run the RFP. You negotiate. You own the intelligence.',
     ],
     url: '/solutions',
+    panels: [
+      { src: '/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
+    ],
   },
   {
     id: '13B', audio: '13b',
@@ -249,6 +323,10 @@ const SCREENS: Screen[] = [
       'Not a spreadsheet, not a consultant — a platform reading every contract',
     ],
     url: '/ai-strategy?client=arcturus', zoom: 0.60,
+    panels: [
+      { src: '/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
+      { src: '/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
+    ],
   },
   {
     id: '14', audio: '14',
@@ -262,26 +340,11 @@ const SCREENS: Screen[] = [
       'Download as HTML — present to your board directly',
     ],
     url: '/maestro/meridian', zoom: 0.62,
-    onLoad: (iframe) => {
-      setTimeout(() => {
-        try {
-          const doc = iframe.contentDocument
-          if (!doc) return
-          const del = Array.from(doc.querySelectorAll('button, a'))
-            .find(el => (el.textContent || '').trim() === 'Deliverables') as HTMLElement | undefined
-          del?.click()
-          setTimeout(() => {
-            try {
-              const d2 = iframe.contentDocument
-              if (!d2) return
-              const viewBtns = Array.from(d2.querySelectorAll('button'))
-                .filter(b => (b.textContent || '').trim() === 'View') as HTMLButtonElement[]
-              viewBtns[1]?.click()
-            } catch { /* cross-origin */ }
-          }, 1500)
-        } catch { /* cross-origin */ }
-      }, 1000)
-    },
+    onLoad: (iframe) => ACTIONS['click-deliverables-view-arch'](iframe),
+    panels: [
+      { src: '/maestro/meridian', duration: 8,  action: 'click-deliverables',            label: 'DELIVERABLES · ALL PHASES' },
+      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
+    ],
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
   {
@@ -297,6 +360,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('Governance'), 1500),
+    panels: [
+      { src: '/ai-strategy?client=meridian', duration: 10, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
+    ],
   },
   {
     id: '16', audio: '16',
@@ -338,6 +405,10 @@ const SCREENS: Screen[] = [
     ],
     url: '/platform', zoom: 0.62,
     onLoad: (iframe) => scrollIframe(iframe, 1200, 1000),
+    panels: [
+      { src: '/platform', duration: 10, scrollTo: 800, label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
+      { src: '/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
+    ],
   },
   {
     id: '19', audio: '19',
@@ -364,10 +435,24 @@ function DemoGuidedPageInner() {
   const [selfServe, setSelfServe] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [panelIdx, setPanelIdx] = useState(0)
   const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
   const audioRef  = useRef<HTMLAudioElement | null>(null)
   const screen    = SCREENS[idx]
   const total     = SCREENS.length
+  const activePanel = screen.panels ? screen.panels[Math.min(panelIdx, screen.panels.length - 1)] : null
+
+  // Reset panel index when screen changes
+  useEffect(() => { setPanelIdx(0) }, [idx])
+
+  // Rotate panels by their durations
+  useEffect(() => {
+    const panels = screen.panels
+    if (!panels || panels.length <= 1) return
+    if (panelIdx >= panels.length - 1) return
+    const t = setTimeout(() => setPanelIdx(i => Math.min(i + 1, panels.length - 1)), panels[panelIdx].duration * 1000)
+    return () => clearTimeout(t)
+  }, [panelIdx, screen.panels])
   const posthog   = usePostHog()
   const searchParams = useSearchParams()
   const ref = searchParams?.get('ref') ?? null
@@ -662,11 +747,11 @@ function DemoGuidedPageInner() {
               </div>
 
               <h2 style={{ fontFamily: SERIF, fontSize: 24, color: WHITE, fontWeight: 700, lineHeight: 1.2, margin: '0 0 16px' }}>
-                {screen.title}
+                <BrandedText color={WHITE}>{screen.title}</BrandedText>
               </h2>
 
               <p style={{ fontFamily: SANS, fontSize: 14, color: MUTED, lineHeight: 1.75, margin: '0 0 24px' }}>
-                {screen.body}
+                <BrandedText color={MUTED}>{screen.body}</BrandedText>
               </p>
 
               <div>
@@ -676,7 +761,7 @@ function DemoGuidedPageInner() {
                 {screen.bullets.map((b, i) => (
                   <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
                     <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 1, lineHeight: 1.5 }}>›</span>
-                    <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(255,255,255,0.68)', lineHeight: 1.6 }}>{b}</span>
+                    <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(255,255,255,0.68)', lineHeight: 1.6 }}><BrandedText color="rgba(255,255,255,0.68)">{b}</BrandedText></span>
                   </div>
                 ))}
               </div>
@@ -736,21 +821,59 @@ function DemoGuidedPageInner() {
               {(() => {
                 const zoom = screen.zoom ?? 0.7
                 const inv  = Math.round((100 / zoom) * 10) / 10
+                const src  = activePanel?.src ?? screen.url
+                const handleLoad = (e: React.SyntheticEvent<HTMLIFrameElement>) => {
+                  const iframe = e.currentTarget
+                  try {
+                    if (activePanel) {
+                      if (activePanel.action) ACTIONS[activePanel.action](iframe)
+                      if (activePanel.scrollTo !== undefined) scrollIframe(iframe, activePanel.scrollTo, 1000)
+                    } else {
+                      screen.onLoad?.(iframe)
+                    }
+                  } catch { /* cross-origin */ }
+                }
+                const panels = screen.panels
                 return (
                   <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
                     <iframe
-                      src={screen.url}
-                      onLoad={(e) => {
-                        try { screen.onLoad?.(e.currentTarget) } catch { /* cross-origin */ }
-                      }}
+                      key={`${idx}-${panelIdx}`}
+                      src={src}
+                      onLoad={handleLoad}
                       style={{
                         width: `${inv}%`, height: `${inv}%`,
                         transform: `scale(${zoom})`, transformOrigin: 'top left',
                         position: 'absolute', top: 0, left: 0,
                         border: 'none', display: 'block',
+                        animation: 'fadeUp 0.3s ease both',
                       }}
                       title={screen.title}
                     />
+                    {activePanel?.label && (
+                      <div style={{
+                        position: 'absolute', bottom: 12, left: 12, zIndex: 10,
+                        background: 'rgba(15,14,13,0.88)', color: TEAL,
+                        fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600,
+                        letterSpacing: '.1em', padding: '4px 10px', borderRadius: 3,
+                        border: `1px solid ${TEAL}`, pointerEvents: 'none',
+                      }}>
+                        {activePanel.label}
+                      </div>
+                    )}
+                    {panels && panels.length > 1 && (
+                      <div style={{
+                        position: 'absolute', bottom: 14, right: 14, zIndex: 10,
+                        display: 'flex', gap: 6, pointerEvents: 'none',
+                      }}>
+                        {panels.map((_, i) => (
+                          <span key={i} style={{
+                            width: 8, height: 8, borderRadius: 4,
+                            background: i === panelIdx ? TEAL : 'rgba(45,212,200,0.35)',
+                            transition: 'background 0.3s ease',
+                          }} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })()}
