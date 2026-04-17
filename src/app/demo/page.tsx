@@ -57,9 +57,8 @@ const PHASE_GROUPS: { label: string; category: Section; screens: string[] }[] = 
   { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: ['18', '19'] },
 ]
 
-const PANEL_START_DELAY = 2000                            // ms before first rotation
-const REACT_RENDER_DELAY = 500                            // ms after iframe load before firing action
-const ABARVA_ORIGIN = 'https://app.abarva.ai'
+const PANEL_START_DELAY  = 2000                           // ms before first rotation
+const REACT_RENDER_DELAY = 1200                           // ms after iframe load before firing action (heavy pages need more)
 
 const SCREENS: Screen[] = [
   // ── THE PROBLEM ───────────────────────────────────────────────────────────
@@ -87,9 +86,9 @@ const SCREENS: Screen[] = [
       'Baseline locked Day 0 — immutable, auditable, defensible',
       'Knowledge stays in the platform permanently — never walks out the door',
     ],
-    url: `${ABARVA_ORIGIN}/platform`,
+    url: '/platform',
     panels: [
-      { src: `${ABARVA_ORIGIN}/platform`, duration: 15, label: 'THE ABARVA PLATFORM' },
+      { src: '/platform', duration: 15, label: 'THE ABARVA PLATFORM' },
     ],
   },
   // ── ABARNEXUS ─────────────────────────────────────────────────────────────
@@ -104,14 +103,14 @@ const SCREENS: Screen[] = [
       'Dimension 3: Emergent — every engagement adds new patterns permanently',
       'Zero data lock-in: you can leave at any time, your data stays with you',
     ],
-    url: `${ABARVA_ORIGIN}/intelligence?client=meridian`, zoom: 0.62,
+    url: '/intelligence?client=meridian', zoom: 0.62,
     panels: [
-      { src: `${ABARVA_ORIGIN}/platform`,                     duration: 10, label: 'PLATFORM · 5 KNOWLEDGE LAYERS' },
-      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 12, action: 'click-situation', label: 'SITUATION INTELLIGENCE · LIVE' },
+      { src: '/platform',                     duration: 10, scrollTo: 800, label: 'PLATFORM · KNOWLEDGE LAYERS' },
+      { src: '/intelligence?client=meridian', duration: 12, action: 'click-genome', label: 'GENOME · 340+ PATTERNS' },
     ],
   },
   {
-    id: '4', audio: '04',
+    id: '4', audio: '19',
     category: 'ABARNEXUS',
     title: 'Your data never leaves your environment. Ever.',
     body: 'Every file you upload is processed into embeddings inside your Supabase instance — not ours. Your contracts, financials, org charts, vendor agreements: they become searchable intelligence that AbarNexus can query. But the raw data stays in your environment. We never see it. We never store it. When the engagement ends, you own the intelligence. Not AbarVa. You.',
@@ -121,13 +120,13 @@ const SCREENS: Screen[] = [
       'Vendor contracts, financials, org charts: searchable, never exposed',
       'Engagement ends: all intelligence stays with you permanently',
     ],
-    url: `${ABARVA_ORIGIN}/platform`, zoom: 0.62,
+    url: '/platform', zoom: 0.62,
     panels: [
-      { src: `${ABARVA_ORIGIN}/platform`, duration: 20, scrollTo: 600, label: 'DATA ARCHITECTURE · YOUR ENVIRONMENT' },
+      { src: '/platform', duration: 20, scrollTo: 600, label: 'DATA ARCHITECTURE · YOUR ENVIRONMENT' },
     ],
   },
   {
-    id: '5', audio: '05',
+    id: '5', audio: '04',
     category: 'ABARNEXUS',
     title: '340 failure patterns. Every one documented.',
     body: 'F007: CDO vacant at go-live — 79% programme failure rate. F011: vendor SLA never enforced — 74% suboptimal outcome. F003: platform end-of-life unplanned — 82% budget overrun. These are not estimates. They are statistical facts from organisations that were in exactly this position.',
@@ -137,14 +136,14 @@ const SCREENS: Screen[] = [
       'F011 active at Meridian: Ensemble SLA never enforced — 74% failure rate',
       'Genome compounds — each new engagement sharpens every future pattern',
     ],
-    url: `${ABARVA_ORIGIN}/intelligence?client=meridian`, zoom: 0.62,
+    url: '/intelligence?client=meridian', zoom: 0.62,
     panels: [
-      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 12, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
-      { src: `${ABARVA_ORIGIN}/intelligence?client=meridian`, duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
+      { src: '/intelligence?client=meridian', duration: 12, action: 'click-contradictions', label: 'CONTRADICTION INTELLIGENCE · LIVE' },
+      { src: '/intelligence?client=meridian', duration: 10, action: 'click-genome',         label: 'GENOME INTELLIGENCE · 340+ PATTERNS' },
     ],
   },
   {
-    id: '6', audio: '06',
+    id: '6', audio: '05',
     category: 'ABARNEXUS',
     title: 'AbarNexus retrieves at every step.',
     body: 'Every message triggers a retrieval from the knowledge base. HFMA benchmarks. Genome failure patterns. The uploaded Ensemble contract. The brain retrieves exactly what\'s relevant — and injects it into every single response. Not a static prompt. Live intelligence.',
@@ -158,7 +157,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE PLATFORM ──────────────────────────────────────────────────────────
   {
-    id: '7', audio: '07',
+    id: '7', audio: '06',
     category: 'THE PLATFORM',
     title: 'Before the first meeting, the Maestro already knows everything.',
     body: 'The Maestro workspace for Meridian. Before the first meeting, the platform knows: denial rate 18.2% vs benchmark 11.4%, CDO role vacant — F007 active, Epic goes live Q3 2026. No discovery week. 48 hours from data upload.',
@@ -170,12 +169,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     panels: [
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, scrollTo: 0,   label: 'SITUATION INTELLIGENCE' },
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 12, scrollTo: 350, label: 'ACTIVE ENGAGEMENTS · PHASE GATES' },
+      { src: '/maestro/meridian', duration: 10, scrollTo: 0,   label: 'SITUATION INTELLIGENCE' },
+      { src: '/maestro/meridian', duration: 12, scrollTo: 350, label: 'ACTIVE ENGAGEMENTS · PHASE GATES' },
     ],
   },
   {
-    id: '8', audio: '08',
+    id: '8', audio: '07',
     category: 'THE PLATFORM',
     title: 'The Maestro Guide. Five steps from setup to verified outcome.',
     body: 'This is the operating manual that replaces 40 consultants. Setup the workspace. Review what AbarNexus already knows. Run the engagement. Navigate AbarNexus through every phase. Capture the verified outcome and earn the fee.',
@@ -188,7 +187,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: '9', audio: '09',
+    id: '9', audio: '08',
     category: 'THE PLATFORM',
     title: 'A new engagement. Three minutes.',
     body: 'Click New Engagement. Four questions: the leadership directive, AI use cases, technology landscape, executive sponsor. AbarVa auto-infers the solution type from what you describe — you never pick from a list. A McKinsey SOW takes three weeks. This takes three minutes — and arrives knowing more.',
@@ -200,12 +199,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     panels: [
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, scrollTo: 0,                    label: 'MAESTRO DASHBOARD' },
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 15, action: 'click-new-engagement', label: 'NEW ENGAGEMENT · DISCOVERY' },
+      { src: '/maestro/meridian', duration: 10, scrollTo: 0,                    label: 'MAESTRO DASHBOARD' },
+      { src: '/maestro/meridian', duration: 15, action: 'click-new-engagement', label: 'NEW ENGAGEMENT · DISCOVERY' },
     ],
   },
   {
-    id: '10', audio: '10',
+    id: '10', audio: '09',
     category: 'THE PLATFORM',
     title: 'Phase 0, Step 1. Three board-level signals.',
     body: 'AbarNexus opens with the three most critical signals at Meridian: the denial rate gap, prior auth automation lag, and the Epic go-live window. Every option is a real CXO stance — not a vague category. The AI Value Brief builds on the right. Every decision locked.',
@@ -217,12 +216,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 15, action: 'click-step-01', label: 'PHASE 0 · SITUATION CONFIRMATION' },
-      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, scrollTo: 200,          label: 'AI VALUE BRIEF BUILDING' },
+      { src: '/ai-strategy?client=meridian', duration: 15, action: 'click-step-01', label: 'PHASE 0 · SITUATION CONFIRMATION' },
+      { src: '/ai-strategy?client=meridian', duration: 12, scrollTo: 200,          label: 'AI VALUE BRIEF BUILDING' },
     ],
   },
   {
-    id: '11', audio: '11',
+    id: '11', audio: '10',
     category: 'THE PLATFORM',
     title: '18 steps. 5 phases. Every outcome locked.',
     body: '$22.4M verified — KPMG audited. Day Zero baseline never moved. Denial rate: 18.2% to 16.1%, tracking to 12%. Epic integration on track Q3 2026. The board pack is ready. The fee is earned. Renewal confirmed.',
@@ -234,12 +233,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
-      { src: 'https://app.abarva.ai/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'PHASE 4 · EXECUTE & VERIFY' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'VALUE DASHBOARD · $22.4M VERIFIED' },
     ],
   },
   {
-    id: '12', audio: '12',
+    id: '12', audio: '11',
     category: 'THE PLATFORM',
     title: 'Not every problem needs 18 steps.',
     body: 'AbarVa has point solutions for specific problems: vendor spend optimisation, RCM denial prevention, AI portfolio accountability, Epic AI integration. Each is a focused workflow. Same AbarNexus intelligence. Faster time to value. No engagement manager required.',
@@ -251,8 +250,8 @@ const SCREENS: Screen[] = [
     ],
     url: '/solutions',
     panels: [
-      { src: 'https://app.abarva.ai/solutions', duration: 15, scrollTo: 0,   label: 'POINT SOLUTIONS' },
-      { src: 'https://app.abarva.ai/solutions', duration: 10, scrollTo: 400, label: 'SOLUTION LIBRARY' },
+      { src: '/solutions', duration: 15, scrollTo: 0,   label: 'POINT SOLUTIONS' },
+      { src: '/solutions', duration: 10, scrollTo: 400, label: 'SOLUTION LIBRARY' },
     ],
   },
   {
@@ -268,7 +267,7 @@ const SCREENS: Screen[] = [
     ],
     url: '/solutions',
     panels: [
-      { src: 'https://app.abarva.ai/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
+      { src: '/solutions', duration: 8, label: 'VENDOR SPEND OPTIMISATION' },
     ],
   },
   {
@@ -284,12 +283,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=arcturus', zoom: 0.60,
     panels: [
-      { src: 'https://app.abarva.ai/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
-      { src: 'https://app.abarva.ai/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
+      { src: '/ai-strategy?client=arcturus', duration: 12,                label: 'ARCTURUS · $279M VENDOR PORTFOLIO' },
+      { src: '/ai-strategy?client=arcturus', duration: 8,  scrollTo: 300, label: 'SLA BREACH · $1.4M UNCLAIMED' },
     ],
   },
   {
-    id: '14', audio: '14',
+    id: '14', audio: '13',
     category: 'THE PLATFORM',
     title: '7 deliverables. Every phase documented.',
     body: 'Phase 0 Situation Brief. Phase 1 Diagnose Report. Phase 2 Architecture and Roadmap. Phase 3 Value Framework. Phase 4 Board Pack and Fee Calculation. Every document generated by AbarNexus, reviewed by the Maestro, stored permanently. Yours to view, download, present.',
@@ -301,13 +300,13 @@ const SCREENS: Screen[] = [
     ],
     url: '/maestro/meridian', zoom: 0.62,
     panels: [
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 10, action: 'click-deliverables',           label: 'DELIVERABLES · ALL PHASES' },
-      { src: 'https://app.abarva.ai/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
+      { src: '/maestro/meridian', duration: 10, action: 'click-deliverables',           label: 'DELIVERABLES · ALL PHASES' },
+      { src: '/maestro/meridian', duration: 12, action: 'click-deliverables-view-arch', label: 'PHASE 2 · ARCHITECTURE DOCUMENT' },
     ],
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
   {
-    id: '15', audio: '15',
+    id: '15', audio: '14',
     category: 'PROOF',
     title: 'Meridian. $22.4M verified. KPMG audited.',
     body: 'The engagement started with a denial rate of 18.2 percent. It ends with $22.4M verified. KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed. Meridian is a Phase 2 client. This is what outcome accountability looks like.',
@@ -319,12 +318,12 @@ const SCREENS: Screen[] = [
     ],
     url: '/ai-strategy?client=meridian', zoom: 0.60,
     panels: [
-      { src: 'https://app.abarva.ai/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
-      { src: 'https://app.abarva.ai/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
+      { src: '/ai-strategy?client=meridian', duration: 12, action: 'click-phase4', label: 'MERIDIAN · PHASE 4 COMPLETE' },
+      { src: '/maestro/meridian',            duration: 10, scrollTo: 350,          label: 'MERIDIAN · ENGAGEMENTS OVERVIEW' },
     ],
   },
   {
-    id: '16', audio: '16',
+    id: '16', audio: '15',
     category: 'PROOF',
     title: 'Arcturus Financial Group. $18.2M verified.',
     body: '$200B AUM. Cost-to-income ratio 71% versus 58% peer benchmark — an $840M efficiency gap. AbarNexus found $94M in AI spend with zero baselines and $1.4M in unclaimed Bloomberg SLA credits. $18.2M verified Month 4.',
@@ -337,7 +336,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/arcturus', zoom: 0.62,
   },
   {
-    id: '17', audio: '17',
+    id: '17', audio: '16',
     category: 'PROOF',
     title: 'Apex Retail Group. $47.2M verified.',
     body: '340 stores. Azure spend 41% above peer benchmark — $39M recoverable. F003 matched: Teradata end-of-life with no migration plan. Month 1: reserved instance purchase — $14M Year 1, zero risk. Month 4: Azure + Databricks Medallion live. $47.2M verified Month 6.',
@@ -351,7 +350,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE FUTURE ────────────────────────────────────────────────────────────
   {
-    id: '18', audio: '18',
+    id: '18', audio: '17',
     category: 'THE FUTURE',
     title: 'Every engagement makes AbarNexus smarter. Permanently.',
     body: 'At Series A, agents handle Phase 0 autonomously — one Maestro runs 4–6 engagements simultaneously. At Series B, the Genome Agent reads industry research continuously — AbarNexus self-updates from the world and from every engagement. Harvey AI did this for legal: $11B. Our market is $800B.',
@@ -364,11 +363,11 @@ const SCREENS: Screen[] = [
     url: '/platform', zoom: 0.62,
     panels: [
       { src: 'https://app.abarva.ai/platform', duration: 12, scrollTo: 800, label: 'PLATFORM ARCHITECTURE · 5 LAYERS' },
-      { src: 'https://app.abarva.ai/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
+      { src: '/investor', duration: 10, scrollTo: 0,   label: 'AGENT ROADMAP · SERIES A → B' },
     ],
   },
   {
-    id: '19', audio: '19',
+    id: '19', audio: '18',
     category: 'THE FUTURE',
     title: 'When the engagement ends, everything stays.',
     body: 'When the engagement ends, everything stays with you. The Situation Brief. The Architecture. The Board Pack. Your vendor contracts were never on our servers. Your financials were never on our servers. Your data was processed as embeddings in your environment — and it stays there. AbarVa gave you the intelligence. You always had the data. Now act on it.',
