@@ -415,23 +415,27 @@ export default function DemoGuidedPage() {
           0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,200,0.5); }
           50%      { box-shadow: 0 0 0 5px rgba(45,212,200,0); }
         }
+        @keyframes voicePulse {
+          0%, 100% { opacity: 1; }
+          50%      { opacity: 0.6; }
+        }
       `}</style>
 
       <div style={{ height: '100vh', overflow: 'hidden', background: BG, display: 'flex', flexDirection: 'column', fontFamily: MONO }}>
 
         {/* ── TOP BAR ────────────────────────────────────────────────────── */}
         <div style={{
-          height: 52, background: PANEL, borderBottom: `1px solid ${BORDER}`,
+          height: 52, background: '#0F0E0D', borderBottom: '1px solid rgba(255,255,255,0.08)',
           display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, flexShrink: 0,
         }}>
-          {/* AbarVa serif logo */}
+          {/* AbarVa serif wordmark */}
           <a href="/" style={{ textDecoration: 'none', flexShrink: 0, lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: 16, color: WHITE, fontWeight: 400, letterSpacing: '.01em' }}>Abar</span>
-            <span style={{ fontFamily: SERIF, fontSize: 16, color: TEAL, fontWeight: 700, letterSpacing: '.01em' }}>Va</span>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: '#FAFAF9', fontWeight: 800, letterSpacing: '.05em' }}>Abar</span>
+            <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: TEAL, fontWeight: 900, letterSpacing: '.05em' }}>Va</span>
           </a>
-          <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
-          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
-          <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
+          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
+          <span style={{ fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600, color: TEAL, letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
+          <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
 
           {/* Phase groups + dots */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
@@ -439,10 +443,10 @@ export default function DemoGuidedPage() {
               const groupActive = group.category === screen.category
               return (
                 <div key={gi} style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 1, minWidth: 0 }}>
-                  {gi > 0 && <div style={{ width: 1, height: 16, background: BORDER, marginRight: 2, flexShrink: 0 }} />}
+                  {gi > 0 && <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.12)', marginRight: 2, flexShrink: 0 }} />}
                   <span style={{
-                    fontSize: 8, letterSpacing: '.09em', flexShrink: 0, whiteSpace: 'nowrap',
-                    color: groupActive ? WHITE : 'rgba(255,255,255,0.35)',
+                    fontSize: 9, letterSpacing: '.09em', flexShrink: 0, whiteSpace: 'nowrap',
+                    color: groupActive ? WHITE : 'rgba(255,255,255,0.50)',
                     fontWeight: groupActive ? 700 : 400,
                   }}>
                     {group.label}
@@ -457,15 +461,15 @@ export default function DemoGuidedPage() {
                         onClick={() => goTo(si)}
                         title={SCREENS[si].title}
                         style={{
-                          width: active ? 20 : 13, height: 13,
+                          width: 13, height: 13,
                           borderRadius: 3, border: 'none', cursor: 'pointer',
-                          background: active ? TEAL : past ? 'rgba(45,212,200,0.3)' : 'rgba(255,255,255,0.08)',
+                          background: active ? TEAL : past ? 'rgba(45,212,200,0.35)' : 'rgba(255,255,255,0.15)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, transition: 'width 0.15s ease',
+                          flexShrink: 0,
                           animation: active ? 'dotPulse 2s ease infinite' : 'none',
                         }}
                       >
-                        <span style={{ fontSize: 7, color: active ? BG : past ? TEAL : DIM, fontWeight: 700 }}>{sn}</span>
+                        <span style={{ fontSize: 7, color: active ? BG : past ? '#fff' : 'rgba(255,255,255,0.70)', fontWeight: 700 }}>{sn}</span>
                       </button>
                     )
                   })}
@@ -478,10 +482,12 @@ export default function DemoGuidedPage() {
           <button
             onClick={() => { setVoiceEnabled(v => !v); if (isPlaying) stopAudio() }}
             style={{
-              fontSize: 9, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
-              background: voiceEnabled ? 'rgba(45,212,200,0.1)' : 'transparent',
-              border: `1px solid ${voiceEnabled ? 'rgba(45,212,200,0.35)' : BORDER}`,
-              color: voiceEnabled ? TEAL : DIM, flexShrink: 0, letterSpacing: '.06em',
+              padding: '5px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.08em',
+              background: (voiceEnabled || isPlaying) ? 'rgba(45,212,200,0.15)' : 'rgba(255,255,255,0.06)',
+              border: `1px solid ${(voiceEnabled || isPlaying) ? TEAL : 'rgba(255,255,255,0.15)'}`,
+              color: (voiceEnabled || isPlaying) ? TEAL : 'rgba(255,255,255,0.50)',
+              animation: isPlaying ? 'voicePulse 1.5s ease infinite' : 'none',
             }}
           >
             {isPlaying ? '🎙 SPEAKING' : voiceEnabled ? '🔊 VOICE' : '🔇 VOICE'}
@@ -489,10 +495,10 @@ export default function DemoGuidedPage() {
           <button
             onClick={() => setAutoOn(a => !a)}
             style={{
-              fontSize: 9, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
-              background: autoOn ? 'rgba(45,212,200,0.1)' : 'transparent',
-              border: `1px solid ${autoOn ? 'rgba(45,212,200,0.35)' : BORDER}`,
-              color: autoOn ? TEAL : DIM, flexShrink: 0,
+              padding: '5px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.08em',
+              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
+              color: autoOn ? TEAL : 'rgba(255,255,255,0.50)',
             }}
           >
             {autoOn ? `⏸ ${countdown}s` : '▶ AUTO'}
@@ -500,18 +506,19 @@ export default function DemoGuidedPage() {
           <button
             onClick={() => setSelfServe(true)}
             style={{
-              fontSize: 9, color: 'rgba(255,255,255,0.5)', padding: '4px 8px',
-              border: `1px solid ${BORDER}`, borderRadius: 4,
-              background: 'transparent', cursor: 'pointer', flexShrink: 0,
+              padding: '5px 12px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11,
+              background: 'transparent', border: 'none',
+              color: 'rgba(255,255,255,0.60)',
             }}
           >
             Explore →
           </button>
           <a href="/" style={{
-            fontSize: 9, color: WHITE, padding: '4px 12px',
-            border: `1px solid rgba(255,255,255,0.25)`, borderRadius: 4,
-            background: 'rgba(255,255,255,0.06)', textDecoration: 'none',
-            flexShrink: 0, letterSpacing: '.06em', fontFamily: MONO,
+            padding: '5px 14px', borderRadius: 20, flexShrink: 0,
+            fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.06em',
+            border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)',
+            color: WHITE, textDecoration: 'none',
           }}>
             ← Home
           </a>
