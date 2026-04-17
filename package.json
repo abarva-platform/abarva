@@ -16,6 +16,7 @@
     "test:before-commit": "npm run test:nav && npm run test:behaviors && npm run test:integration && npm run build",
     "seed": "node scripts/seed-datasets.js",
     "seed:setup": "node scripts/seed-datasets.js --setup",
+    "generate-demo-audio": "npx tsx scripts/generate-demo-audio.ts",
     "ingest": "npx tsx scripts/ingest-knowledge.ts",
     "ingest:verify": "npx tsx -e \"const {Pinecone}=require('@pinecone-database/pinecone');const fs=require('fs'),path=require('path');const lines=fs.readFileSync(path.join(process.cwd(),'.env.local'),'utf-8').split('\\n');const env={};for(const l of lines){const[k,...v]=l.split('=');if(k&&v.length)env[k.trim()]=v.join('=').trim();}const pc=new Pinecone({apiKey:env.PINECONE_API_KEY});pc.index(env.PINECONE_INDEX||'nexus-knowledge').describeIndexStats().then(s=>console.log('Vectors in nexus-knowledge:',s.totalRecordCount));\""
   },
@@ -25,6 +26,7 @@
     "@pinecone-database/pinecone": "^7.2.0",
     "@supabase/supabase-js": "^2.102.1",
     "next": "16.2.2",
+    "openai": "^6.34.0",
     "posthog-js": "^1.368.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",

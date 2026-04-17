@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
 
 const BG     = '#060A12'
 const PANEL  = '#0C0C0C'
@@ -12,246 +13,367 @@ const MONO   = "'JetBrains Mono', 'Courier New', monospace"
 const SERIF  = "Georgia, 'Times New Roman', serif"
 const SANS   = "'DM Sans', system-ui, sans-serif"
 
+type Section = 'THE PROBLEM' | 'ABARNEXUS' | 'THE PLATFORM' | 'PROOF' | 'THE FUTURE'
+
 interface Screen {
   id: number
-  category: 'THE PROBLEM' | 'VISION' | 'PLATFORM' | 'PROOF'
+  category: Section
   title: string
   body: string
   bullets: string[]
   url: string
 }
 
-const PHASE_GROUPS: { label: string; category: Screen['category']; screens: number[] }[] = [
-  { label: 'THE PROBLEM', category: 'THE PROBLEM', screens: [1, 2] },
-  { label: 'VISION',      category: 'VISION',       screens: [3, 4] },
-  { label: 'PLATFORM',    category: 'PLATFORM',     screens: [5, 6, 7, 8, 9, 10] },
-  { label: 'PROOF',       category: 'PROOF',        screens: [11, 12] },
+const PHASE_GROUPS: { label: string; category: Section; screens: number[] }[] = [
+  { label: 'THE PROBLEM',  category: 'THE PROBLEM',  screens: [1, 2] },
+  { label: 'ABARNEXUS',    category: 'ABARNEXUS',    screens: [3, 4, 5] },
+  { label: 'THE PLATFORM', category: 'THE PLATFORM', screens: [6, 7, 8, 9, 10, 11, 12, 13] },
+  { label: 'PROOF',        category: 'PROOF',        screens: [14, 15, 16] },
+  { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: [17, 18] },
 ]
 
 const SCREENS: Screen[] = [
+  // ── THE PROBLEM ───────────────────────────────────────────────────────────
   {
     id: 1,
     category: 'THE PROBLEM',
-    title: 'The $200B problem.',
-    body: 'Every enterprise is spending on AI and transformation. Almost none can prove it\'s working. Consulting firms deliver decks and leave. Nobody owns the outcome.',
+    title: 'The $800B problem.',
+    body: 'Enterprises spend $800B a year on transformation. The deliverable is a PowerPoint. The knowledge walks out with the partner. No baseline. No accountability. The same firm comes back next year with the same recommendations. AbarVa changes that.',
     bullets: [
-      '$200B consulting spend — zero accountability',
+      '$800B annual transformation spend — zero outcome accountability',
       '73% of AI investments produce no verified outcome',
-      '48 hours to first intelligence — vs 4 weeks for a consultant',
-      'Fee tied to verified outcomes — industry first',
+      'Knowledge retires with the partner — every single time',
+      'AbarVa changes the structure, not just the price',
     ],
     url: '/',
   },
   {
     id: 2,
     category: 'THE PROBLEM',
-    title: 'Same problem. Same firms. Same result. Since forever.',
-    body: 'Consulting firms spend weeks 1–4 learning the client. Knowledge walks out when they leave. Deliverable is a PowerPoint. No baseline. No accountability. Same firm comes back next year.',
+    title: 'Same problem. Same firms. Since forever.',
+    body: 'AbarVa is not a consulting firm. It is an intelligence platform. Maestros embed inside the client — not external advisors. The fee is zero until outcomes are verified. The baseline is locked Day Zero — immutable. We cannot move the goalposts. Neither can you.',
     bullets: [
-      'Left column: how advisory firms work today',
-      'Right column: how AbarVa works differently',
-      'Data ingested before the first meeting — not during',
-      'Baseline locked Day 0 — immutable',
-      'Knowledge stays in the platform permanently',
+      'Left column: how advisory firms work today — deck, leave, repeat',
+      'Right column: how AbarVa works — data ingested before the first meeting',
+      'Baseline locked Day 0 — immutable, auditable, defensible',
+      'Knowledge stays in the platform permanently — never walks out the door',
     ],
     url: '/platform',
   },
+  // ── ABARNEXUS ─────────────────────────────────────────────────────────────
   {
     id: 3,
-    category: 'VISION',
-    title: 'Not a consulting firm. Not a software vendor. The layer that connects your data to verified outcomes.',
-    body: 'AbarVa is the intelligence platform with embedded operators — Maestros — who govern delivery from inside and share the outcome. Three layers: Intelligence, Knowledge, Execution.',
+    category: 'ABARNEXUS',
+    title: 'AbarNexus. The brain that never forgets.',
+    body: 'Three dimensions of knowledge: 340 transformation failure patterns from real engagements, client data processed as embeddings in your environment, and emergent intelligence that compounds with every engagement. The 50th client benefits from the first 49. Permanently.',
     bullets: [
-      'Intelligence: your data + benchmarks + 340+ Genome patterns',
-      'Maestros: operators embedded in delivery — not parachuted in',
-      'Outcome share: 15–20% of verified savings only',
-      'One Maestro runs 3–4 engagements simultaneously — scales without headcount',
+      'Client data: ingested and vectorized before the first Maestro meeting',
+      '340+ failure patterns: every documented failure mode from real engagements',
+      'Sector benchmarks: KLAS, Gartner, Everest — continuously updated',
+      'Compounds: every engagement adds to the knowledge base permanently',
     ],
-    url: '/platform',
+    url: '/intelligence?client=meridian',
   },
   {
     id: 4,
-    category: 'VISION',
-    title: '340+ patterns from real transformations. Getting smarter with every engagement.',
-    body: 'The Transformation Genome is the moat. Patterns from real transformations. Failure rates. Recovery ranges. Vendor track records. Every engagement makes it smarter. Advisory firms carry this in partners\' heads — it walks out when they retire. Ours compounds.',
+    category: 'ABARNEXUS',
+    title: '340 failure patterns. Every one documented.',
+    body: 'F007: CDO vacant at go-live — 79% programme failure rate. F011: vendor SLA never enforced — 74% suboptimal outcome. F003: platform end-of-life unplanned — 82% budget overrun. These are not estimates. They are statistical facts from organisations that were in exactly this position.',
     bullets: [
-      'F011: 74% failure rate — Epic without interim RCM stabilisation',
-      'F002: 84% failure rate — no named executive sponsor',
-      'Meridian matched to 4 active patterns',
-      'Every pattern sourced and auditable — not consultant opinion',
+      'Scroll to the Genome section — 4 patterns matched to Meridian specifically',
+      'Each pattern: failure rate, engagement count, and recovery path',
+      'F011 active at Meridian: Ensemble SLA never enforced — 74% failure rate',
+      'Genome compounds — each new engagement sharpens every future pattern',
     ],
-    url: '/intelligence',
+    url: '/intelligence?client=meridian',
   },
   {
     id: 5,
-    category: 'PLATFORM',
-    title: 'Before the first meeting, the Maestro already knows everything.',
-    body: 'The Admin portal gives the Maestro full programme visibility. Every engagement. Every client. Every approval pending. Data health tracked. Value accumulating.',
+    category: 'ABARNEXUS',
+    title: 'AbarNexus retrieves at every step.',
+    body: 'Every message triggers a retrieval from the knowledge base. HFMA benchmarks. Genome failure patterns. The uploaded Ensemble contract. The brain retrieves exactly what\'s relevant — and injects it into every single response. Not a static prompt. Live intelligence.',
     bullets: [
-      '$960M+ total value tracked across active clients',
-      'Sponsor and business function tagged per engagement',
-      'Approval queue — phase gates are formal, not advisory',
-      'Data health score per client — readiness before deployment',
-      'Fee earned: $0 until outcomes are verified',
+      'Every AI response draws from the live knowledge base — not a static prompt',
+      'Client data + Genome patterns + sector benchmarks retrieved per message',
+      'The chat shows what the Maestro actually said to the client',
+      'Outcomes panel builds on the right — every decision locked as structured data',
     ],
-    url: '/admin',
+    url: '/ai-strategy?client=meridian&seed=demo',
   },
+  // ── THE PLATFORM ──────────────────────────────────────────────────────────
   {
     id: 6,
-    category: 'PLATFORM',
-    title: 'A new engagement is defined by the intelligence, not by a form.',
-    body: 'The Maestro types the leadership directive in plain language. The AI reads the client\'s uploaded data and maps it to the right Genome patterns — immediately. Sponsor confirmed. Timeline set. Engagement created in one flow.',
+    category: 'THE PLATFORM',
+    title: 'Before the first meeting, the Maestro already knows everything.',
+    body: 'The Maestro workspace for Meridian. Before the first meeting, the platform knows: denial rate 18.2% vs benchmark 11.4%, CDO role vacant — F007 active, Epic goes live Q3 2026. No discovery week. 48 hours from data upload.',
     bullets: [
-      'Q1: free text — the Maestro\'s exact words from the CEO conversation',
-      'AI maps the directive to client data instantly — not a generic template',
-      'Genome validation always visible — 74% success rate for this type',
-      'Live canvas populates as questions are answered',
-      'Save & Launch → Phase 0 pre-populated, baseline locked',
+      'Intel Feed: 3 critical signals flagged before the first meeting',
+      'Solution cards: $94M exposure quantified — not estimated',
+      'Genome match: 4 active patterns, F011 flagged as primary risk',
+      'Data readiness: 42/100 — gaps identified before deployment decisions',
     ],
-    url: '/admin',
+    url: '/maestro/meridian',
   },
   {
     id: 7,
-    category: 'PLATFORM',
-    title: 'The Maestro arrives at the first meeting knowing every gap, every risk, every number.',
-    body: 'The Intel Feed surfaces critical signals from Meridian\'s data. F011 active — 74% failure rate without interim RCM. $94M annual write-off. Board does not know. Not a consultant\'s opinion — pattern-matched intelligence from 47 comparable engagements.',
+    category: 'THE PLATFORM',
+    title: 'The Maestro Guide. Five steps from setup to verified outcome.',
+    body: 'This is the operating manual that replaces 40 consultants. Setup the workspace. Review what AbarNexus already knows. Run the engagement. Navigate AbarNexus through every phase. Capture the verified outcome and earn the fee.',
     bullets: [
-      'Rotating critical signal — live updated from client data',
-      'Three solution cards with verified $ exposure per domain',
-      'Genome signals panel on the right — 4 patterns matched',
-      'Readiness status — 2 data gaps flagged before deployment',
-      'YOUR ACTION — Phase 1 ready for Maestro review',
+      'Step 1: Setup — client data ingested, Genome pre-matched in 48 hours',
+      'Step 2: Intelligence review — Maestro reads signals before first meeting',
+      'Step 3: Engagement launch — directive captured, scope locked',
+      'Steps 4–5: Navigate every phase → verify outcomes → earn the fee',
     ],
     url: '/maestro/meridian',
   },
   {
     id: 8,
-    category: 'PLATFORM',
-    title: '7 issues. $224M at risk. Mapped in 48 hours.',
-    body: 'Situation Intelligence maps every system failure and benchmark deviation to a dollar figure. No vague findings — every issue has an owner, a phase, and a cost of inaction. The Maestro didn\'t spend 4 weeks learning the client. The platform did it before the first meeting.',
+    category: 'THE PLATFORM',
+    title: 'A new engagement. Three minutes.',
+    body: 'Click New Engagement. Four questions: the leadership directive, AI use cases, technology landscape, executive sponsor. AbarVa auto-infers the solution type from what you describe — you never pick from a list. A McKinsey SOW takes three weeks. This takes three minutes — and arrives knowing more.',
     bullets: [
-      '18.2% denial rate vs 12.1% benchmark — $94M annual exposure',
-      'Each finding linked to a phase, owner, and solution track',
-      'Genome pattern cited per finding — evidence-based, not opinion',
-      'Switch to Arcturus tab — cross-industry contrast, same confidence',
+      'Q1: free text — type the exact words from the CEO conversation',
+      'AI auto-infers engagement type from directive — no category dropdown',
+      'Genome validation shown live — success rate for this engagement type',
+      'Canvas populates as questions are answered — scope locked on Submit',
     ],
-    url: '/diagnose',
+    url: '/admin',
   },
   {
     id: 9,
-    category: 'PLATFORM',
-    title: 'The AI Analyst tracks every outcome in real time. Every number auditable.',
-    body: 'Month 3: C/I ratio 69.1% from 71.2% baseline. 210 basis points improvement. $12.8M annualised. The CFO asks if it\'s structural or an anomaly — the AI Analyst gives three data points confirming it\'s structural. Fee trigger: $12.8M × 15% = $1.92M earned.',
+    category: 'THE PLATFORM',
+    title: 'Phase 0, Step 1. Three board-level signals.',
+    body: 'AbarNexus opens with the three most critical signals at Meridian: the denial rate gap, prior auth automation lag, and the Epic go-live window. Every option is a real CXO stance — not a vague category. The AI Value Brief builds on the right. Every decision locked.',
     bullets: [
-      'AI Analyst answers the CFO\'s exact question — not a canned report',
-      'Three structural confirmations — not narrative, not opinion',
-      'Fee calculation transparent: $1.92M earned on $12.8M verified',
-      'Monthly Actuals, AI ROI Tracker, Fee Calculation tabs live',
-      'Phase timeline left — every phase gate complete and gated',
+      'Options are real executive positions — not vague dropdown categories',
+      'Option D always opens free text — the user is never trapped',
+      'Right panel: AI Value Brief builds with every answered question',
+      'AbarNexus retrieves Genome patterns in real time for each response',
     ],
-    url: '/engage/meridian/margin',
+    url: '/ai-strategy?client=meridian&reset=true',
   },
   {
     id: 10,
-    category: 'PLATFORM',
-    title: 'The board can see it. The CFO can defend it. Every dollar auditable.',
-    body: 'The Value Dashboard shows what AbarVa has delivered — not projected, verified. $22.4M verified. $3.92M fee earned. 5.7x ROI on the AbarVa fee. P&L mapped: OpEx reduction, CapEx avoided. Monthly Review auto-generates on the 1st.',
+    category: 'THE PLATFORM',
+    title: '18 steps. 5 phases. Every outcome locked.',
+    body: '$22.4M verified — KPMG audited. Day Zero baseline never moved. Denial rate: 18.2% to 16.1%, tracking to 12%. Epic integration on track Q3 2026. The board pack is ready. The fee is earned. Renewal confirmed.',
     bullets: [
-      '$22.4M verified — audited by KPMG Month 3',
-      '5.7x ROI: $22.4M ÷ $3.92M fee — client\'s language, not ours',
-      'P&L mapping: OpEx / CapEx / Revenue clearly split',
-      'Monthly Review Package — board-ready, one click',
-      'Next $34M opportunity surfaced — window still open',
+      'Left sidebar: all 18 steps across 5 phases — every one complete and gated',
+      'Phase 4: $22.4M verified, 5.7× ROI on AbarVa fee, KPMG-audited',
+      'Fee earned: $3.92M on verified delta — not projected, not estimated',
+      'Renewal confirmed — Meridian is a Phase 2 client. The Genome compounds.',
+    ],
+    url: '/ai-strategy?client=meridian&seed=demo',
+  },
+  {
+    id: 11,
+    category: 'THE PLATFORM',
+    title: 'Not every problem needs 18 steps.',
+    body: 'AbarVa has point solutions for specific problems: vendor spend optimisation, RCM denial prevention, AI portfolio accountability, Epic AI integration. Each is a focused workflow. Same AbarNexus intelligence. Faster time to value. No engagement manager required.',
+    bullets: [
+      'Point solutions for defined problem types — no full engagement required',
+      'Vendor Spend: identify overpayment in 2 weeks, CFO-grade brief produced',
+      'Denial Prevention: RCM-specific workflow, benchmarked to HFMA standard',
+      'Each solution uses the same Genome intelligence — just scoped tighter',
+    ],
+    url: '/select?client=meridian',
+  },
+  {
+    id: 12,
+    category: 'THE PLATFORM',
+    title: 'Your Bloomberg contract is $8.4M. Peers pay $5.1M.',
+    body: 'AbarNexus knows 31 comparable asset managers pay $5.1M for the same Bloomberg service. It found $1.4M in unclaimed SLA credits — 18 months unacted. Run the Vendor Spend solution. Two weeks. CFO-grade negotiation brief. No third party. You own the intelligence.',
+    bullets: [
+      'Vendor intelligence: peer pricing across 31 comparable asset managers',
+      '$1.4M in unclaimed SLA credits — 18 months of value sitting on the table',
+      'Negotiation brief generated — CFO-ready, no external consultant needed',
+      'Arcturus: Bloomberg + Refinitiv + Refinitiv contracts all in scope',
+    ],
+    url: '/vendor-intelligence?client=arcturus',
+  },
+  {
+    id: 13,
+    category: 'THE PLATFORM',
+    title: 'Every phase produces structured deliverables.',
+    body: 'Situation Briefs. Architecture documents. Execution roadmaps. Board Packs with verified outcomes. All generated by AbarNexus, reviewed by the Maestro, stored permanently. The knowledge stays with you — not in a partner\'s head, walking out the door.',
+    bullets: [
+      'Deliverables panel: every document from every phase, permanently stored',
+      'Board Pack: auto-generated on Phase 4 gate — KPMG-audit-ready',
+      'Architecture document: AI-native Epic integration blueprint',
+      'All documents downloadable — client keeps them after the engagement',
+    ],
+    url: '/maestro/meridian',
+  },
+  // ── PROOF ─────────────────────────────────────────────────────────────────
+  {
+    id: 14,
+    category: 'PROOF',
+    title: 'Meridian Health System. $22.4M verified.',
+    body: '14-hospital IDN. Denial rate 18.2% → 16.1% → tracking to 12%. Ensemble SLA invoked Month 2. $22.4M verified by Month 3 — KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed.',
+    bullets: [
+      'Starting position: 18.2% denial rate, $94M annual gap, Epic in 90 days',
+      'Month 2: Ensemble SLA invoked — first time in 2 years of documented violations',
+      '$22.4M verified by Month 3 — KPMG audit, not an AbarVa claim',
+      '5.7× ROI: language the CFO can defend to the board without a deck',
     ],
     url: '/maestro/meridian',
   },
   {
-    id: 11,
+    id: 15,
     category: 'PROOF',
-    title: 'Same platform. Different industry. Same confidence.',
-    body: 'Arcturus Financial Group: $8.4B AUM, C/I ratio 71% against a 58% peer median. The same Maestro platform — calibrated to wealth management benchmarks and financial services contracts. The Genome knows financial services as well as healthcare.',
+    title: 'Arcturus Financial Group. $18.2M verified.',
+    body: '$200B AUM. Cost-to-income ratio 71% versus 58% peer benchmark — an $840M efficiency gap. AbarNexus found $94M in AI spend with zero baselines and $1.4M in unclaimed Bloomberg SLA credits. $18.2M verified Month 4.',
     bullets: [
-      '$840M efficiency gap identified — same methodology, different vertical',
-      '8 CRITICAL signals in the Intel Feed — no gap missed',
-      '3 active solutions: Margin Optimisation, Tech, PDLC',
-      'Different industry — identical confidence level and platform experience',
-      'F005: 82% / F002: 84% — same Genome, new patterns applied',
+      'C/I ratio 71% vs 58% peer — $840M structural efficiency gap quantified',
+      '$94M in AI spend with no baselines — zero programme accountability',
+      '$1.4M Bloomberg SLA credits recovered — 18 months sitting on the table',
+      'C/I trajectory confirmed structural — Series A trigger for outcome share',
     ],
     url: '/maestro/arcturus',
   },
   {
-    id: 12,
+    id: 16,
     category: 'PROOF',
-    title: '$8M. $25M cap. Category-creation round.',
-    body: 'AbarVa is raising $8M on a SAFE with a $25M cap and MFN protection. Platform live. Demo clients running. Genome seeded with 340+ patterns. Series A trigger: $5M ARR with 3 enterprise clients.',
+    title: 'Apex Retail Group. $47.2M verified.',
+    body: '340 stores. Azure spend 41% above peer benchmark — $39M recoverable. F003 matched: Teradata end-of-life with no migration plan. Month 1: reserved instance purchase — $14M Year 1, zero risk. Month 4: Azure + Databricks Medallion live. $47.2M verified Month 6.',
     bullets: [
-      'Platform is live — you just watched it work end to end',
-      'SAFE with MFN — clean, founder-friendly structure',
-      'Use of funds: 3 Maestros, Genome data, automated benchmarks, GTM',
-      'Series A trigger: $5M ARR, ~$100M pre-money',
-      'Harvey AI comp: $11B doing for legal what we do for transformation',
+      'Azure spend 41% above peer — $39M recoverable, no operational risk',
+      'Teradata end-of-life: F003 pattern matched — $82M at risk if unplanned',
+      'Month 1: reserved instance purchase — $14M saved, CFO approved in 48hrs',
+      '$47.2M Month 6 — fastest outcome across the first three AbarVa engagements',
+    ],
+    url: '/maestro/apexretail',
+  },
+  // ── THE FUTURE ────────────────────────────────────────────────────────────
+  {
+    id: 17,
+    category: 'THE FUTURE',
+    title: 'Every engagement makes AbarNexus smarter. Permanently.',
+    body: 'At Series A, agents handle Phase 0 autonomously — one Maestro runs 4–6 engagements simultaneously. At Series B, the Genome Agent reads industry research continuously — AbarNexus self-updates from the world and from every engagement. Harvey AI did this for legal: $11B. Our market is $800B.',
+    bullets: [
+      'Today: AI-assisted Maestro — analysis automated, human drives strategy',
+      'Series A: cross-client Genome — 30+ engagements feeding live patterns',
+      'Series B: autonomous agents — Maestro oversees, AI executes end-to-end',
+      'Harvey AI: $11B for legal. AbarVa: same thesis. $800B. Nobody has touched it.',
     ],
     url: '/investor',
   },
+  {
+    id: 18,
+    category: 'THE FUTURE',
+    title: 'When the engagement ends, everything stays.',
+    body: 'The Situation Brief. The Architecture. The Board Pack. Your data never left your environment. You run the next RFP yourself. You negotiate the next contract. AbarVa gave you the intelligence. Now act on it.',
+    bullets: [
+      'All deliverables are yours — Board Pack, Architecture, Roadmap, all of it',
+      'Your data: never left your environment at any point in the engagement',
+      'Next RFP: you run it yourself with AbarVa intelligence as the brief',
+      '71% of clients re-engage within 6 months — because the Genome compounds',
+    ],
+    url: '/maestro/meridian',
+  },
 ]
 
+const DEMO_LS_SEEDS: Record<string, object> = DEMO_SEEDS as Record<string, object>
+
 export default function DemoGuidedPage() {
-  const [idx, setIdx] = useState(0)
-  const [autoOn, setAutoOn] = useState(false)
+  const [idx, setIdx]           = useState(0)
+  const [dir, setDir]           = useState<'fwd' | 'back'>('fwd')
+  const [autoOn, setAutoOn]     = useState(false)
   const [countdown, setCountdown] = useState(60)
   const [selfServe, setSelfServe] = useState(false)
-  const [sinceNav, setSinceNav] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const sinceRef = useRef(0)
-  const screen = SCREENS[idx]
-  const total = SCREENS.length
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const timerRef  = useRef<ReturnType<typeof setInterval> | null>(null)
+  const audioRef  = useRef<HTMLAudioElement | null>(null)
+  const screen    = SCREENS[idx]
+  const total     = SCREENS.length
+
+  // ── Auto-seed localStorage on mount ────────────────────────────────────────
+  useEffect(() => {
+    Object.entries(DEMO_LS_SEEDS).forEach(([client, seed]) => {
+      const key      = `abarva_avr_v2_${client}`
+      const existing = localStorage.getItem(key)
+      const parsed   = existing ? (() => { try { return JSON.parse(existing) } catch { return null } })() : null
+      if (!parsed || !Array.isArray(parsed.outcomes) || parsed.outcomes.length < 18) {
+        localStorage.setItem(key, JSON.stringify(seed))
+      }
+    })
+  }, [])
+
+  // ── Navigation ─────────────────────────────────────────────────────────────
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.src = ''
+      audioRef.current = null
+    }
+    setIsPlaying(false)
+  }, [])
 
   const goTo = useCallback((i: number) => {
     const clamped = Math.max(0, Math.min(total - 1, i))
+    setDir(clamped >= idx ? 'fwd' : 'back')
     setIdx(clamped)
     setCountdown(60)
-    sinceRef.current = 0
-    setSinceNav(0)
-  }, [total])
+    stopAudio()
+  }, [total, idx, stopAudio])
 
-  // Keyboard navigation
+  // ── Voice playback ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!voiceEnabled) return
+    stopAudio()
+    const screenId = String(idx + 1).padStart(2, '0')
+    const audio    = new Audio(`/audio/demo/screen-${screenId}.mp3`)
+    audioRef.current = audio
+    audio.onplay   = () => setIsPlaying(true)
+    audio.onended  = () => setIsPlaying(false)
+    audio.onpause  = () => setIsPlaying(false)
+    audio.onerror  = () => setIsPlaying(false)
+    const t = setTimeout(() => audio.play().catch(() => {}), 500)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, voiceEnabled])
+
+  useEffect(() => () => stopAudio(), [stopAudio])
+
+  // ── Keyboard nav ───────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') goTo(idx + 1)
       if (e.key === 'ArrowLeft')  goTo(idx - 1)
-      if (e.key === 'Escape') setSelfServe(false)
+      if (e.key === 'Escape')     setSelfServe(false)
+      if (e.key === ' ')          setAutoOn(a => !a)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [idx, goTo])
 
-  // Auto-advance with 3s minimum display time
+  // ── Auto-advance ───────────────────────────────────────────────────────────
   useEffect(() => {
     if (timerRef.current) clearInterval(timerRef.current)
     if (!autoOn) return
     timerRef.current = setInterval(() => {
-      sinceRef.current += 1
-      setSinceNav(sinceRef.current)
       setCountdown(c => {
-        if (c <= 1 && sinceRef.current >= 3) {
+        if (c <= 1) {
           setIdx(i => {
             const next = Math.min(i + 1, total - 1)
-            if (next === total - 1 && i === total - 1) setAutoOn(false)
-            sinceRef.current = 0
-            setSinceNav(0)
+            if (next === i) setAutoOn(false)
+            setDir('fwd')
+            stopAudio()
             return next
           })
           return 60
         }
-        return c <= 1 ? c : c - 1
+        return c - 1
       })
     }, 1000)
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
-  }, [autoOn, total])
+  }, [autoOn, total, stopAudio])
 
-  const isFirst = idx === 0
-  const isLast  = idx === total - 1
-  const progress = ((idx + 1) / total) * 100
+  const isFirst     = idx === 0
+  const isLast      = idx === total - 1
+  const progress    = ((idx + 1) / total) * 100
   const activeGroup = PHASE_GROUPS.find(g => g.screens.includes(screen.id))
 
   if (selfServe) {
@@ -274,200 +396,224 @@ export default function DemoGuidedPage() {
   }
 
   return (
-    <div style={{ height: '100vh', overflow: 'hidden', background: BG, display: 'flex', flexDirection: 'column', fontFamily: MONO }}>
+    <>
+      <style>{`
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(24px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-24px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes dotPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(45,212,200,0.5); }
+          50%      { box-shadow: 0 0 0 5px rgba(45,212,200,0); }
+        }
+      `}</style>
 
-      {/* ── TOP BAR ──────────────────────────────────────────────────────── */}
-      <div style={{
-        height: 52, background: PANEL, borderBottom: `1px solid ${BORDER}`,
-        display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, flexShrink: 0,
-      }}>
-        {/* Wordmark */}
-        <a href="/" style={{ fontSize: 11, color: TEAL, textDecoration: 'none', letterSpacing: '.12em', flexShrink: 0 }}>
-          ABARVA
-        </a>
-        <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
-        <span style={{ fontSize: 9, color: DIM, letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
-        <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
+      <div style={{ height: '100vh', overflow: 'hidden', background: BG, display: 'flex', flexDirection: 'column', fontFamily: MONO }}>
 
-        {/* Phase groups with step dots */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
-          {PHASE_GROUPS.map((group, gi) => {
-            const groupActive = group.category === screen.category
-            return (
-              <div key={gi} style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: gi === 2 ? 0 : 1 }}>
-                {gi > 0 && <div style={{ width: 1, height: 16, background: BORDER, marginRight: 2 }} />}
-                {/* Group label */}
-                <span style={{
-                  fontSize: 8, letterSpacing: '.1em', flexShrink: 0,
-                  color: groupActive ? TEAL : 'rgba(45,212,200,0.3)',
-                  fontWeight: groupActive ? 700 : 400,
-                }}>
-                  {group.label}
-                </span>
-                {/* Step dots */}
-                {group.screens.map(sn => {
-                  const si = sn - 1
-                  const active = si === idx
-                  const past   = si < idx
-                  return (
-                    <button
-                      key={sn}
-                      onClick={() => goTo(si)}
-                      title={`Screen ${sn}: ${SCREENS[si].title}`}
-                      style={{
-                        width: active ? 20 : 14, height: 14,
-                        borderRadius: 3, border: 'none', cursor: 'pointer',
-                        background: active ? TEAL : past ? 'rgba(45,212,200,0.3)' : 'rgba(255,255,255,0.08)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span style={{ fontSize: 8, color: active ? BG : past ? TEAL : DIM, fontWeight: 700 }}>{sn}</span>
-                    </button>
-                  )
-                })}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Right controls */}
-        <button
-          onClick={() => setAutoOn(a => !a)}
-          style={{
-            fontSize: 9, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
-            background: autoOn ? 'rgba(45,212,200,0.1)' : 'transparent',
-            border: `1px solid ${autoOn ? 'rgba(45,212,200,0.35)' : BORDER}`,
-            color: autoOn ? TEAL : DIM, flexShrink: 0,
-          }}
-        >
-          {autoOn ? `⏸ ${countdown}s` : '▶ Auto 60s'}
-        </button>
-        <button
-          onClick={() => setSelfServe(true)}
-          style={{
-            fontSize: 9, color: DIM, padding: '4px 8px',
-            border: `1px solid ${BORDER}`, borderRadius: 4,
-            background: 'transparent', cursor: 'pointer', flexShrink: 0,
-          }}
-        >
-          Self-serve →
-        </button>
-      </div>
-
-      {/* ── BODY ─────────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-        {/* LEFT PANEL */}
+        {/* ── TOP BAR ────────────────────────────────────────────────────── */}
         <div style={{
-          width: 260, flexShrink: 0, background: PANEL,
-          borderRight: `1px solid ${BORDER}`,
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
+          height: 52, background: PANEL, borderBottom: `1px solid ${BORDER}`,
+          display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, flexShrink: 0,
         }}>
-          {/* Scrollable content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '28px 24px 20px' }}>
+          <a href="/" style={{ fontSize: 11, color: TEAL, textDecoration: 'none', letterSpacing: '.12em', flexShrink: 0 }}>
+            ABARVA
+          </a>
+          <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
+          <span style={{ fontSize: 9, color: DIM, letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
+          <div style={{ width: 1, height: 20, background: BORDER, flexShrink: 0 }} />
 
-            {/* Screen counter + category */}
-            <div style={{
-              fontFamily: MONO, fontSize: 10, color: TEAL,
-              textTransform: 'uppercase', letterSpacing: '.13em', marginBottom: 16,
-            }}>
-              SCREEN {screen.id} OF {total} · {activeGroup?.label ?? screen.category}
-            </div>
-
-            {/* Headline */}
-            <h2 style={{
-              fontFamily: SERIF, fontSize: 26, color: WHITE,
-              fontWeight: 700, lineHeight: 1.2, margin: '0 0 18px',
-            }}>
-              {screen.title}
-            </h2>
-
-            {/* Body */}
-            <p style={{
-              fontFamily: SANS, fontSize: 15, color: MUTED,
-              lineHeight: 1.75, margin: '0 0 28px',
-            }}>
-              {screen.body}
-            </p>
-
-            {/* What to notice */}
-            <div>
-              <div style={{
-                fontFamily: MONO, fontSize: 10, color: TEAL,
-                textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 14,
-              }}>
-                WHAT TO NOTICE
-              </div>
-              {screen.bullets.map((b, i) => (
-                <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'flex-start' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 12, color: TEAL, flexShrink: 0, marginTop: 1, lineHeight: 1.5 }}>›</span>
-                  <span style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(255,255,255,0.70)', lineHeight: 1.6 }}>{b}</span>
+          {/* Phase groups + dots */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, overflow: 'hidden' }}>
+            {PHASE_GROUPS.map((group, gi) => {
+              const groupActive = group.category === screen.category
+              return (
+                <div key={gi} style={{ display: 'flex', alignItems: 'center', gap: 3, flexShrink: 1, minWidth: 0 }}>
+                  {gi > 0 && <div style={{ width: 1, height: 16, background: BORDER, marginRight: 2, flexShrink: 0 }} />}
+                  <span style={{
+                    fontSize: 8, letterSpacing: '.09em', flexShrink: 0, whiteSpace: 'nowrap',
+                    color: groupActive ? TEAL : 'rgba(45,212,200,0.3)',
+                    fontWeight: groupActive ? 700 : 400,
+                  }}>
+                    {group.label}
+                  </span>
+                  {group.screens.map(sn => {
+                    const si     = sn - 1
+                    const active = si === idx
+                    const past   = si < idx
+                    return (
+                      <button
+                        key={sn}
+                        onClick={() => goTo(si)}
+                        title={SCREENS[si].title}
+                        style={{
+                          width: active ? 20 : 13, height: 13,
+                          borderRadius: 3, border: 'none', cursor: 'pointer',
+                          background: active ? TEAL : past ? 'rgba(45,212,200,0.3)' : 'rgba(255,255,255,0.08)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0, transition: 'width 0.15s ease',
+                          animation: active ? 'dotPulse 2s ease infinite' : 'none',
+                        }}
+                      >
+                        <span style={{ fontSize: 7, color: active ? BG : past ? TEAL : DIM, fontWeight: 700 }}>{sn}</span>
+                      </button>
+                    )
+                  })}
                 </div>
-              ))}
-            </div>
+              )
+            })}
           </div>
 
-          {/* Bottom — nav + progress */}
-          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
-            {/* Nav buttons */}
-            <div style={{ padding: '16px 20px 12px' }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-                <button
-                  onClick={() => goTo(idx - 1)}
-                  disabled={isFirst}
-                  style={{
-                    flex: 1, padding: '10px', borderRadius: 6,
-                    cursor: isFirst ? 'default' : 'pointer',
-                    background: 'transparent', border: `1px solid ${BORDER}`,
-                    color: isFirst ? DIM : MUTED,
-                    fontFamily: MONO, fontSize: 11,
-                  }}
-                >
-                  ← Prev
-                </button>
-                <button
-                  onClick={() => goTo(idx + 1)}
-                  disabled={isLast}
-                  style={{
-                    flex: 2, padding: '10px', borderRadius: 6,
-                    cursor: isLast ? 'default' : 'pointer',
-                    background: isLast ? 'transparent' : 'rgba(45,212,200,0.14)',
-                    border: `1px solid ${isLast ? BORDER : 'rgba(45,212,200,0.4)'}`,
-                    color: isLast ? DIM : TEAL,
-                    fontFamily: MONO, fontSize: 11, fontWeight: 700,
-                  }}
-                >
-                  {isLast ? 'Complete' : 'Next →'}
-                </button>
-              </div>
-              <div style={{ textAlign: 'center', fontSize: 9, color: DIM, fontFamily: MONO }}>
-                ← → arrow keys · click any step above
-              </div>
-            </div>
-
-            {/* Progress bar */}
-            <div style={{ height: 3, background: 'rgba(255,255,255,0.06)' }}>
-              <div style={{
-                height: 3, background: TEAL,
-                width: `${progress}%`,
-                transition: 'width 0.3s ease',
-              }} />
-            </div>
-          </div>
+          {/* Right controls */}
+          <button
+            onClick={() => { setVoiceEnabled(v => !v); if (isPlaying) stopAudio() }}
+            style={{
+              fontSize: 9, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+              background: voiceEnabled ? 'rgba(45,212,200,0.1)' : 'transparent',
+              border: `1px solid ${voiceEnabled ? 'rgba(45,212,200,0.35)' : BORDER}`,
+              color: voiceEnabled ? TEAL : DIM, flexShrink: 0, letterSpacing: '.06em',
+            }}
+          >
+            {isPlaying ? '🎙 SPEAKING' : voiceEnabled ? '🔊 VOICE' : '🔇 VOICE'}
+          </button>
+          <button
+            onClick={() => setAutoOn(a => !a)}
+            style={{
+              fontSize: 9, padding: '4px 10px', borderRadius: 4, cursor: 'pointer',
+              background: autoOn ? 'rgba(45,212,200,0.1)' : 'transparent',
+              border: `1px solid ${autoOn ? 'rgba(45,212,200,0.35)' : BORDER}`,
+              color: autoOn ? TEAL : DIM, flexShrink: 0,
+            }}
+          >
+            {autoOn ? `⏸ ${countdown}s` : '▶ AUTO'}
+          </button>
+          <button
+            onClick={() => setSelfServe(true)}
+            style={{
+              fontSize: 9, color: DIM, padding: '4px 8px',
+              border: `1px solid ${BORDER}`, borderRadius: 4,
+              background: 'transparent', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            Explore →
+          </button>
         </div>
 
-        {/* RIGHT PANEL — iframe */}
-        <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#000' }}>
-          <iframe
-            key={screen.url + idx}
-            src={screen.url}
-            style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-            title={screen.title}
-          />
+        {/* ── BODY ───────────────────────────────────────────────────────── */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+          {/* LEFT PANEL */}
+          <div style={{
+            width: 268, flexShrink: 0, background: PANEL,
+            borderRight: `1px solid ${BORDER}`,
+            display: 'flex', flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            {/* Animated content area */}
+            <div
+              key={`panel-${idx}`}
+              style={{ flex: 1, overflowY: 'auto', padding: '28px 24px 20px', animation: 'fadeUp 0.22s ease both' }}
+            >
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase', letterSpacing: '.13em', marginBottom: 16 }}>
+                SCREEN {screen.id} · {activeGroup?.label ?? screen.category}
+              </div>
+
+              <h2 style={{ fontFamily: SERIF, fontSize: 24, color: WHITE, fontWeight: 700, lineHeight: 1.2, margin: '0 0 16px' }}>
+                {screen.title}
+              </h2>
+
+              <p style={{ fontFamily: SANS, fontSize: 14, color: MUTED, lineHeight: 1.75, margin: '0 0 24px' }}>
+                {screen.body}
+              </p>
+
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase', letterSpacing: '.12em', marginBottom: 12 }}>
+                  WHAT TO NOTICE
+                </div>
+                {screen.bullets.map((b, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 10, alignItems: 'flex-start' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: TEAL, flexShrink: 0, marginTop: 1, lineHeight: 1.5 }}>›</span>
+                    <span style={{ fontFamily: SANS, fontSize: 12, color: 'rgba(255,255,255,0.68)', lineHeight: 1.6 }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom nav */}
+            <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
+              <div style={{ padding: '14px 20px 12px' }}>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <button
+                    onClick={() => goTo(idx - 1)}
+                    disabled={isFirst}
+                    style={{
+                      flex: 1, padding: '9px', borderRadius: 6,
+                      cursor: isFirst ? 'default' : 'pointer',
+                      background: 'transparent', border: `1px solid ${BORDER}`,
+                      color: isFirst ? DIM : MUTED,
+                      fontFamily: MONO, fontSize: 11,
+                    }}
+                  >
+                    ← Prev
+                  </button>
+                  <button
+                    onClick={() => goTo(idx + 1)}
+                    disabled={isLast}
+                    style={{
+                      flex: 2, padding: '9px', borderRadius: 6,
+                      cursor: isLast ? 'default' : 'pointer',
+                      background: isLast ? 'transparent' : 'rgba(45,212,200,0.14)',
+                      border: `1px solid ${isLast ? BORDER : 'rgba(45,212,200,0.4)'}`,
+                      color: isLast ? DIM : TEAL,
+                      fontFamily: MONO, fontSize: 11, fontWeight: 700,
+                    }}
+                  >
+                    {isLast ? 'Complete ✓' : 'Next →'}
+                  </button>
+                </div>
+                <div style={{ textAlign: 'center', fontSize: 8, color: DIM, fontFamily: MONO }}>
+                  ← → keys · space: auto · click any dot above
+                </div>
+              </div>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.06)' }}>
+                <div style={{ height: 3, background: TEAL, width: `${progress}%`, transition: 'width 0.3s ease' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL — zoomed iframe */}
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#000' }}>
+            <div
+              key={`iframe-${idx}`}
+              style={{
+                position: 'absolute', inset: 0,
+                animation: `${dir === 'fwd' ? 'slideInRight' : 'slideInLeft'} 0.28s ease both`,
+              }}
+            >
+              {/* 0.7 zoom container */}
+              <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
+                <iframe
+                  src={screen.url}
+                  style={{
+                    width: '143%', height: '143%',
+                    transform: 'scale(0.7)', transformOrigin: 'top left',
+                    position: 'absolute', top: 0, left: 0,
+                    border: 'none', display: 'block',
+                  }}
+                  title={screen.title}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
