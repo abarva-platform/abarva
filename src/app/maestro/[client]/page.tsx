@@ -616,39 +616,31 @@ const DASHBOARD_DATA: Record<string, DimCard[]> = {
 function DashboardGrid({ clientId }: { clientId: string }) {
   const cards = DASHBOARD_DATA[clientId] ?? DASHBOARD_DATA['meridian']
   const BDR = '#E8E6E3'
-  const DOT_COLOR: Record<DimDotColor, string> = { red: '#DC2626', green: '#16A34A', amber: '#D97706', grey: '#9CA3AF' }
+  const DOT: Record<DimDotColor, string> = { red: '#DC2626', green: '#16A34A', amber: '#D97706', grey: '#D1D5DB' }
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
       {cards.map(card => (
-        <div key={card.title} style={{ background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '20px' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 700, color: '#0F0E0D' }}>{card.title}</div>
-            <div style={{ fontFamily: SANS, fontSize: '12px', color: '#706D66' }}>{card.badge}</div>
-          </div>
-          {/* Metrics */}
+        <div key={card.title} style={{ background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '16px' }}>
+          <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', marginBottom: '14px' }}>{card.title}</div>
           <div style={{ display: 'flex', flexDirection: 'column' as const }}>
             {card.metrics.map((m, mi) => (
               <div key={m.name}>
-                {mi > 0 && <div style={{ height: '1px', background: BDR, margin: '8px 0' }} />}
+                {mi > 0 && <div style={{ height: '1px', background: BDR, margin: '9px 0' }} />}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66', flex: 1 }}>{m.name}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66' }}>{m.name}</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
                     <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{m.value}</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: DOT_COLOR[m.dot], display: 'inline-block', flexShrink: 0 }} />
-                      <span style={{ fontFamily: SANS, fontSize: '12px', color: '#9CA3AF' }}>{m.label}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: DOT[m.dot], display: 'inline-block', flexShrink: 0 }} />
+                      <span style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', whiteSpace: 'nowrap' as const }}>{m.label}</span>
                     </span>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-          {/* Footer */}
           <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: `1px solid ${BDR}` }}>
-            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: '#0F0E0D', textDecoration: 'none' }}>
-              {card.footer}
-            </a>
+            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: '#706D66', textDecoration: 'none' }}>{card.footer}</a>
           </div>
         </div>
       ))}
@@ -1855,7 +1847,7 @@ function EngagementsSection({
   const missingFiles = CLIENT_MISSING[clientId] ?? []
   const now = new Date()
   const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-  const PCOLOR: Record<string, string> = { Critical: RED, High: AMBER, Normal: '#9CA3AF' }
+  const BDR = '#E8E6E3'
 
   return (
     <div style={{ padding: '24px 28px' }}>
@@ -1871,16 +1863,16 @@ function EngagementsSection({
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>{data.name}</div>
-          <div style={{ fontSize: 12, color: '#9CA3AF', marginTop: 3 }}>
+          <div style={{ fontFamily: SANS, fontSize: '20px', fontWeight: 700, color: '#0F0E0D' }}>{data.name}</div>
+          <div style={{ fontFamily: SANS, fontSize: '13px', color: '#9CA3AF', marginTop: '4px' }}>
             Last updated: Today {timeStr} · {activeCount} active engagement{activeCount !== 1 ? 's' : ''}
           </div>
         </div>
         <button
           onClick={() => { setChatSolution(null); setShowChat(true) }}
-          style={{ background: '#0C0C0C', color: '#fff', fontSize: 12, fontWeight: 700, padding: '8px 16px', borderRadius: 5, border: 'none', cursor: 'pointer', fontFamily: SANS }}
+          style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, background: '#0F0E0D', color: '#fff', padding: '8px 16px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
         >
           + New Engagement
         </button>
@@ -1889,15 +1881,13 @@ function EngagementsSection({
       <DashboardGrid clientId={clientId} />
 
       {/* Engagements Table */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS }}>Active Engagements</div>
-      </div>
-      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden' }}>
+      <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', marginBottom: '10px' }}>Active Engagements</div>
+      <div style={{ background: '#fff', border: `1px solid ${BDR}`, borderRadius: '8px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
           <thead>
-            <tr>
-              {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', 'Action'].map(h => (
-                <th key={h} style={{ padding: '9px 16px', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em', textAlign: 'left' as const, background: '#F8F7F4', borderBottom: '1px solid #E5E7EB', fontFamily: MONO }}>
+            <tr style={{ background: '#F8F7F4', borderBottom: `1px solid ${BDR}` }}>
+              {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', ''].map(h => (
+                <th key={h} style={{ padding: '10px 16px', fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: '#9CA3AF', textAlign: 'left' as const }}>
                   {h}
                 </th>
               ))}
@@ -1909,38 +1899,34 @@ function EngagementsSection({
                 onMouseEnter={ev => (ev.currentTarget.style.background = '#F8F7F4')}
                 onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
               >
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontWeight: 600, color: '#0C0C0C', fontSize: 14 }}>{eng.name}</div>
-                  <span style={{ fontSize: 10, background: eng.type === 'AI Value Realization' ? '#EFF6FF' : '#CCFBF1', color: eng.type === 'AI Value Realization' ? '#1e40af' : '#0f5443', padding: '1px 5px', borderRadius: 2, fontWeight: 600, display: 'inline-block', marginTop: 2 }}>
-                    {eng.type === 'AI Value Realization' ? 'AVR' : 'SOL'}
-                  </span>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{eng.name}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{eng.type === 'AI Value Realization' ? 'AVR' : 'Solution'}</div>
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontSize: 14, color: '#0C0C0C' }}>{eng.sponsor.split(' · ')[0]}</div>
-                  <div style={{ fontSize: 11, color: '#9CA3AF' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
+                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D' }}>{eng.sponsor.split(' · ')[0]}</div>
+                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: TEAL, fontFamily: MONO, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  Ph {eng.phase}
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
+                  Phase {eng.phase}
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, background: eng.status === 'In Progress' ? '#CCFBF1' : eng.status === 'Assigned' ? '#FEF3C7' : '#F3F4F6', color: eng.status === 'In Progress' ? '#0f5443' : eng.status === 'Assigned' ? '#785a00' : '#6B7280' }}>
-                    {eng.status}
-                  </span>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
+                  {eng.status}
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 14, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
                   {eng.maestro}
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#0C0C0C', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
                   {eng.value}
                 </td>
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
-                  <span style={{ color: PCOLOR[eng.priority] ?? '#9CA3AF', fontSize: 14, fontWeight: 700 }}>● {eng.priority}</span>
+                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
+                  {eng.priority}
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' as const, borderBottom: i < engagements.length - 1 ? '1px solid #F3F4F6' : 'none', verticalAlign: 'middle' as const }}>
+                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const, textAlign: 'right' as const }}>
                   <a
                     href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
                     onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
-                    style={{ color: TEAL, textDecoration: 'none' }}
+                    style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', textDecoration: 'none', whiteSpace: 'nowrap' as const }}
                   >
                     {eng.status === 'In Progress' ? 'Continue →' : eng.status === 'Backlog' ? 'Start →' : 'View →'}
                   </a>
@@ -1952,27 +1938,27 @@ function EngagementsSection({
       </div>
 
       {/* Data Readiness Row */}
-      <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 8, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 20, marginTop: 16 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#0C0C0C', whiteSpace: 'nowrap' as const, fontFamily: SANS }}>Data Readiness</div>
-          <div style={{ fontSize: 11, color: '#9CA3AF', fontFamily: SANS }}>{data.name}</div>
+      <div style={{ background: '#fff', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '24px', marginTop: '12px' }}>
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>Data Readiness</div>
+          <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{data.name}</div>
         </div>
-        <div>
-          <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: AMBER, whiteSpace: 'nowrap' as const }}>{readinessScore} / 100</div>
-          <div style={{ fontSize: 10, color: '#9CA3AF', fontFamily: SANS }}>AI Readiness Score</div>
+        <div style={{ flexShrink: 0 }}>
+          <div style={{ fontFamily: SANS, fontSize: '20px', fontWeight: 700, color: '#0F0E0D' }}>{readinessScore}<span style={{ fontSize: '13px', fontWeight: 400, color: '#9CA3AF' }}> / 100</span></div>
+          <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>AI Readiness Score</div>
         </div>
-        <div style={{ display: 'flex', gap: 6, flex: 1, flexWrap: 'wrap' as const }}>
+        <div style={{ display: 'flex', gap: '6px', flex: 1, flexWrap: 'wrap' as const }}>
           {missingFiles.map((f, idx) => (
-            <span key={idx} style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 10, background: '#FEF3C7', color: '#785a00', border: '1px solid #FCD34D', whiteSpace: 'nowrap' as const, fontFamily: SANS }}>
-              ○ {f} — MISSING
+            <span key={idx} style={{ fontFamily: SANS, fontSize: '11px', color: '#706D66', padding: '3px 8px', borderRadius: '4px', border: `1px solid ${BDR}`, whiteSpace: 'nowrap' as const }}>
+              {f} — missing
             </span>
           ))}
         </div>
         <button
           onClick={() => onNavigate('uploads')}
-          style={{ fontSize: 11, color: TEAL, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' as const, marginLeft: 'auto', background: 'none', border: 'none', fontFamily: SANS }}
+          style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' as const, background: 'none', border: 'none', flexShrink: 0 }}
         >
-          Go to Data Uploads →
+          Upload data →
         </button>
       </div>
     </div>
