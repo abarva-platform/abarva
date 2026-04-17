@@ -2647,6 +2647,376 @@ function ClientIntelTab({ clientId }: { clientId: string }) {
   )
 }
 
+// ─── FOCUSED SIDEBAR VIEWS ───────────────────────────────────────────────────
+
+function FindingsView({ data, clientId }: { data: ClientData; clientId: string }) {
+  const findings = (INSIGHT_DATA[clientId] ?? []).filter(i => i.source === 'CLIENT DATA')
+  const SCOLOR: Record<string, string> = { critical: RED, high: AMBER, medium: TEAL }
+  const activeFiles = data.files.filter(f => f.type === 'active').length
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Findings · {data.name}
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {findings.length} findings extracted<br />from your uploaded data.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: '0 0 32px', maxWidth: 560 }}>
+          Derived from {activeFiles} ingested files. Confidence-weighted. Ranked by impact.
+        </p>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' as const }}>
+          {['critical', 'high', 'medium'].map(sev => {
+            const count = findings.filter(f => f.severity === sev).length
+            if (count === 0) return null
+            return (
+              <div key={sev} style={{ background: '#0D1520', border: `1px solid ${SCOLOR[sev]}40`, borderRadius: 6, padding: '8px 16px', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: SCOLOR[sev], display: 'inline-block' }} />
+                <span style={{ fontFamily: MONO, fontSize: 10, color: SCOLOR[sev], textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{sev}</span>
+                <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: '#fff' }}>{count}</span>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        {findings.length === 0 && (
+          <div style={{ fontFamily: SANS, fontSize: 14, color: DIM }}>No findings extracted yet. Upload data files to begin.</div>
+        )}
+        {findings.map((f, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${SCOLOR[f.severity]}`, borderRadius: 8, padding: '18px 20px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 8, color: SCOLOR[f.severity] }}>●</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: SCOLOR[f.severity], textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{f.severity}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, marginLeft: 'auto' }}>{f.confidence}% conf.</span>
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: WHITE, marginBottom: 8, lineHeight: 1.4 }}>{f.title}</div>
+            <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, lineHeight: 1.6, marginBottom: 10 }}>{f.detail}</div>
+            <div style={{ height: 2, background: BORDER, borderRadius: 1, marginBottom: 10 }}>
+              <div style={{ height: 2, borderRadius: 1, width: `${f.confidence}%`, background: SCOLOR[f.severity] }} />
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: TEAL }}>→ {f.implication}</div>
+          </div>
+        ))}
+      </section>
+    </div>
+  )
+}
+
+function ContradictionsView({ data }: { data: ClientData }) {
+  const SCOLOR: Record<string, string> = { critical: RED, high: AMBER, medium: TEAL, low: DIM }
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: RED, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Contradictions · {data.name}
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {data.contradictions.length} contradictions detected.<br />What you said vs what the data shows.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: 0, maxWidth: 560 }}>
+          Identified by cross-referencing uploaded documents, external benchmarks, and public statements.
+        </p>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        {data.contradictions.map((c, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${SCOLOR[c.severity] ?? RED}`, borderRadius: 8, padding: '20px 24px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              <span style={{ fontFamily: MONO, fontSize: 9, background: `${SCOLOR[c.severity] ?? RED}18`, color: SCOLOR[c.severity] ?? RED, padding: '3px 8px', borderRadius: 4, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{c.severity}</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>{c.id}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: 6, padding: '14px 16px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: RED, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Claimed</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: WHITE, lineHeight: 1.5 }}>{c.claim}</div>
+              </div>
+              <div style={{ background: 'rgba(52,211,153,0.04)', border: '1px solid rgba(52,211,153,0.15)', borderRadius: 6, padding: '14px 16px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: GREEN, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 8 }}>Reality</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: WHITE, lineHeight: 1.5 }}>{c.reality}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  )
+}
+
+function GenomeView({ data, clientId }: { data: ClientData; clientId: string }) {
+  const genInsights = (INSIGHT_DATA[clientId] ?? []).filter(i => i.source === 'GENOME')
+  const patterns = data.genomePatternsMatched
+  const SCOLOR: Record<string, string> = { critical: RED, high: AMBER, medium: TEAL }
+  const PURPLE2 = '#818CF8'
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: PURPLE2, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Failure Genome · {data.name}
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {patterns.filter(p => p.present).length} failure patterns<br />matched to your profile.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: '0 0 32px', maxWidth: 560 }}>
+          Matched against 1,200+ transformation programmes. Each F-code carries a confirmed failure rate and proven mitigation.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(patterns.length, 4)}, 1fr)`, gap: 12 }}>
+          {patterns.filter(p => p.present).map((p, i) => (
+            <div key={i} style={{ background: '#0D1520', border: '1px solid #1F2937', borderRadius: 8, padding: '16px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: PURPLE2, marginBottom: 4 }}>{p.code}</div>
+              <div style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 700, color: RED, lineHeight: 1, marginBottom: 4 }}>{p.failureRate}%</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>failure rate</div>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: PURPLE2, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 16 }}>Matched Patterns</div>
+        {patterns.map((p, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${p.present ? PURPLE2 : BORDER}`, borderRadius: 8, padding: '18px 24px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <span style={{ fontFamily: MONO, fontSize: 11, fontWeight: 700, color: PURPLE2 }}>{p.code}</span>
+              <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: WHITE }}>{p.name}</span>
+              <span style={{ marginLeft: 'auto', fontFamily: SERIF, fontSize: 20, fontWeight: 700, color: p.present ? RED : DIM }}>{p.failureRate}%</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>failure rate</span>
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, lineHeight: 1.6, marginBottom: p.present ? 10 : 0 }}>{p.mitigation}</div>
+            {p.present && (
+              <div style={{ fontFamily: MONO, fontSize: 9, color: RED, background: 'rgba(239,68,68,0.08)', padding: '4px 10px', borderRadius: 4, display: 'inline-block', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>ACTIVE IN THIS CLIENT</div>
+            )}
+          </div>
+        ))}
+        {genInsights.length > 0 && (
+          <>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: PURPLE2, textTransform: 'uppercase' as const, letterSpacing: '.1em', margin: '32px 0 16px' }}>Genome-Derived Insights</div>
+            {genInsights.map((ins, i) => (
+              <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${SCOLOR[ins.severity]}`, borderRadius: 8, padding: '18px 20px', marginBottom: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: SCOLOR[ins.severity], textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{ins.severity}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, marginLeft: 'auto' }}>{ins.confidence}% conf.</span>
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: WHITE, marginBottom: 8, lineHeight: 1.4 }}>{ins.title}</div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, lineHeight: 1.6, marginBottom: 8 }}>{ins.detail}</div>
+                <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: TEAL }}>→ {ins.implication}</div>
+              </div>
+            ))}
+          </>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function DataReadinessView({ clientId }: { clientId: string }) {
+  const score = CLIENT_READINESS[clientId] ?? 65
+  const missing = CLIENT_MISSING[clientId] ?? []
+  const records = DATA_RECORDS_MAP[clientId] ?? []
+  const approved = records.filter(r => r.status === 'approved').length
+  const total = records.length
+  const color = score >= 80 ? GREEN : score >= 65 ? AMBER : RED
+  const label = score >= 80 ? 'Good' : score >= 65 ? 'Moderate' : 'Insufficient'
+  const gaps = [
+    { item: 'Business financial data', done: records.filter(r => r.segment === 'business' && r.category === 'Financial' && r.status === 'approved').length > 0 },
+    { item: 'Technology architecture', done: records.filter(r => r.segment === 'it' && r.status === 'approved').length > 0 },
+    { item: 'Leadership profiles', done: records.filter(r => r.category === 'Leadership' && r.status === 'approved').length > 0 },
+    { item: 'Vendor contracts', done: records.filter(r => r.category === 'Vendors' && r.status === 'approved').length > 0 },
+    ...missing.map(m => ({ item: m, done: false })),
+  ]
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Data Readiness · {clientId}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 24, marginBottom: 32 }}>
+          <div>
+            <div style={{ fontFamily: SERIF, fontSize: 96, fontWeight: 700, color, lineHeight: 1, marginBottom: 4 }}>{score}</div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>READINESS SCORE / 100</div>
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontFamily: SANS, fontSize: 20, fontWeight: 700, color }}>{label}</div>
+            <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginTop: 4 }}>{approved} of {total} files approved</div>
+          </div>
+        </div>
+        <div style={{ height: 8, background: '#1F2937', borderRadius: 4, maxWidth: 480 }}>
+          <div style={{ height: 8, borderRadius: 4, width: `${score}%`, background: color }} />
+        </div>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 16 }}>Coverage Gaps</div>
+        {gaps.map((g, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, marginBottom: 8 }}>
+            <span style={{ fontSize: 16, color: g.done ? GREEN : RED }}>{g.done ? '✓' : '○'}</span>
+            <span style={{ fontFamily: SANS, fontSize: 14, color: g.done ? MUTED : WHITE, fontWeight: g.done ? 400 : 600, textDecoration: g.done ? 'line-through' : 'none' }}>{g.item}</span>
+            {!g.done && <span style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: 10, color: RED, background: 'rgba(239,68,68,0.08)', padding: '3px 8px', borderRadius: 4 }}>MISSING</span>}
+          </div>
+        ))}
+        {missing.length > 0 && (
+          <div style={{ marginTop: 24, background: CARD, border: `1px solid ${BORDER}`, borderTop: `3px solid ${AMBER}`, borderRadius: 8, padding: '20px 24px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: WHITE, marginBottom: 8 }}>How to improve your score</div>
+            <p style={{ fontFamily: SANS, fontSize: 13, color: MUTED, lineHeight: 1.6, margin: 0 }}>
+              Upload the {missing.length} missing file{missing.length > 1 ? 's' : ''} listed above to unlock higher-confidence intelligence and enable additional engagement workstreams.
+            </p>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function SensitiveAccessView({ clientId }: { clientId: string }) {
+  const records = DATA_RECORDS_MAP[clientId] ?? []
+  const privateRecords = records.filter(r => r.privacy === 'private' && r.status === 'approved')
+  const [requested, setRequested] = useState<Set<string>>(new Set())
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Sensitive Data Access
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {privateRecords.length} private files.<br />Request access to unlock analysis.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: 0, maxWidth: 560 }}>
+          These files contain confidential data. Access requires approval from the file owner and the engagement director.
+        </p>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        {privateRecords.map((r, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', background: CARD, border: `1px solid ${BORDER}`, borderRadius: 8, marginBottom: 8 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: WHITE, marginBottom: 4 }}>{r.name}</div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 3, textTransform: 'uppercase' as const }}>{r.category}</span>
+                <span style={{ fontFamily: SANS, fontSize: 12, color: DIM }}>{r.owner}</span>
+              </div>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: AMBER, background: 'rgba(245,158,11,0.08)', padding: '4px 10px', borderRadius: 4, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Private</div>
+            <button
+              onClick={() => setRequested(prev => new Set([...prev, r.name]))}
+              disabled={requested.has(r.name)}
+              style={{ padding: '8px 16px', background: requested.has(r.name) ? 'transparent' : TEAL, color: requested.has(r.name) ? TEAL : '#000', border: `1px solid ${TEAL}`, borderRadius: 6, fontFamily: SANS, fontSize: 12, fontWeight: 600, cursor: requested.has(r.name) ? 'default' : 'pointer' }}
+            >
+              {requested.has(r.name) ? '✓ Requested' : 'Request Access'}
+            </button>
+          </div>
+        ))}
+        {privateRecords.length === 0 && (
+          <div style={{ fontFamily: SANS, fontSize: 14, color: DIM }}>No private files on record.</div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function MonthlyReviewsView({ clientId }: { clientId: string }) {
+  const isMeridian = clientId === 'meridian'
+  const months = isMeridian
+    ? [
+        { month: 'April 2026',    savings: '$8.4M',  milestone: 'Phase 2 gate approved',          status: 'current'  },
+        { month: 'March 2026',    savings: '$7.6M',  milestone: 'Denial rate reduced 1.8pp',       status: 'complete' },
+        { month: 'February 2026', savings: '$6.4M',  milestone: 'Baseline locked — Day 0 audit',   status: 'complete' },
+      ]
+    : [
+        { month: 'April 2026',    savings: '$6.2M',  milestone: 'Cost-to-income improvement confirmed', status: 'current'  },
+        { month: 'March 2026',    savings: '$7.4M',  milestone: 'Bloomberg contract savings verified',  status: 'complete' },
+        { month: 'February 2026', savings: '$7.5M',  milestone: 'AI portfolio audit complete',          status: 'complete' },
+      ]
+  const total = isMeridian ? '$22.4M' : '$21.1M'
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Monthly Reviews · {clientId}
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {total} verified<br />across {months.length} review periods.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: 0, maxWidth: 560 }}>
+          Auto-generated on the 1st of each month from verified actuals. All numbers auditable.
+        </p>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        {months.map((m, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderTop: i === 0 ? `3px solid ${TEAL}` : `1px solid ${BORDER}`, borderRadius: 8, padding: '24px 28px', marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{m.month}</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED }}>{m.milestone}</div>
+              </div>
+              <div style={{ textAlign: 'right' as const }}>
+                <div style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: TEAL, lineHeight: 1 }}>{m.savings}</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, marginTop: 4, textTransform: 'uppercase' as const }}>verified savings</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button style={{ padding: '8px 16px', background: '#0F0E0D', color: '#fff', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                Download {m.month.split(' ')[0]} Review →
+              </button>
+              {m.status === 'current' && (
+                <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, background: 'rgba(45,212,200,0.08)', padding: '0 10px', borderRadius: 4, display: 'flex', alignItems: 'center', textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>Current</span>
+              )}
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  )
+}
+
+function FeeTrackerView({ clientId }: { clientId: string }) {
+  const isMeridian = clientId === 'meridian'
+  const platform   = isMeridian ? '$48K/mo' : '$48K/mo'
+  const engagement = isMeridian ? '$420K'   : '$360K'
+  const outcomeRate = isMeridian ? '17.5%'  : '14.7%'
+  const verified   = isMeridian ? '$22.4M'  : '$21.1M'
+  const outcomeFee = isMeridian ? '$3.47M'  : '$3.10M'
+  const totalFee   = isMeridian ? '$3.92M'  : '$3.58M'
+  const roi        = isMeridian ? '5.7x'    : '5.9x'
+  return (
+    <div>
+      <section style={{ background: '#060A12', padding: '40px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 12 }}>
+          Fee Tracker · {clientId}
+        </div>
+        <h2 style={{ fontFamily: SERIF, fontSize: 42, color: '#FFFFFF', margin: '0 0 12px', lineHeight: 1.15 }}>
+          {totalFee} earned.<br />{roi} return on every fee dollar.
+        </h2>
+        <p style={{ fontFamily: SANS, fontSize: 16, color: '#9CA3AF', margin: 0, maxWidth: 560 }}>
+          Three-component fee model: platform access, engagement delivery, outcome share.
+        </p>
+      </section>
+      <section style={{ background: BG, padding: '32px 48px' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 16 }}>Fee Breakdown</div>
+        {[
+          { label: 'Platform Access', value: platform, desc: 'Monthly platform licence. Covers all intelligence modules, Genome access, and client workspace.', tag: 'RECURRING' },
+          { label: 'Engagement Delivery', value: engagement, desc: 'Fixed-fee advisory for Phase 1 engagement. Covers discovery, blueprint, and implementation support.', tag: 'FIXED' },
+          { label: 'Outcome Share', value: outcomeFee, desc: `${outcomeRate} of ${verified} verified savings. Outcome share only triggers on audited, baseline-locked results.`, tag: 'OUTCOME' },
+        ].map((row, i) => (
+          <div key={i} style={{ background: CARD, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${TEAL}`, borderRadius: 8, padding: '20px 24px', marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                  <span style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: WHITE }}>{row.label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, background: 'rgba(45,212,200,0.08)', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{row.tag}</span>
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, lineHeight: 1.5, maxWidth: 460 }}>{row.desc}</div>
+              </div>
+              <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: GREEN, whiteSpace: 'nowrap' as const, marginLeft: 24 }}>{row.value}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{ background: '#0F0E0D', border: '1px solid #1F2937', borderRadius: 8, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 4 }}>Total Fee Earned</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: '#9CA3AF' }}>Client ROI: {roi} — every fee dollar returned {roi.replace('x', '')}x in verified value</div>
+          </div>
+          <div style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: TEAL }}>{totalFee}</div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 // ─── SIDEBAR SECTION TYPE ────────────────────────────────────────────────────
 type SidebarSection =
   | 'engagements' | 'situation' | 'findings' | 'contradictions' | 'genome'
@@ -2919,19 +3289,25 @@ export default function MaestroClientPage() {
       case 'situation':
         return <BriefTab data={data!} clientId={clientId} onCreateEngagement={openCreate} />
       case 'findings':
+        return <FindingsView data={data!} clientId={clientId} />
       case 'contradictions':
+        return <ContradictionsView data={data!} />
       case 'genome':
-        return <InsightsTab data={data!} clientId={clientId} />
+        return <GenomeView data={data!} clientId={clientId} />
       case 'client-intel':
         return <ClientIntelTab clientId={clientId} />
       case 'uploads':
-      case 'data-readiness':
-      case 'sensitive-access':
         return <DataTab clientId={clientId} />
+      case 'data-readiness':
+        return <DataReadinessView clientId={clientId} />
+      case 'sensitive-access':
+        return <SensitiveAccessView clientId={clientId} />
       case 'value-dashboard':
-      case 'monthly-reviews':
-      case 'fee-tracker':
         return <ValueDashboard clientId={clientId} />
+      case 'monthly-reviews':
+        return <MonthlyReviewsView clientId={clientId} />
+      case 'fee-tracker':
+        return <FeeTrackerView clientId={clientId} />
       case 'deliverables':
       case 'board-packs':
         return <DeliverablesSection clientId={clientId} clientName={data!.name} />

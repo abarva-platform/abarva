@@ -226,8 +226,8 @@ function CompanySection({ intel, isMeridian }: { intel: ClientIntelligence; isMe
       <div style={W}>
         {/* Opening statement */}
         <div style={{ marginBottom: 64 }}>
-          <h1 style={{ fontFamily: SERIF, fontSize: 80, fontWeight: 700, color: LTEXT, lineHeight: 1.05, margin: '0 0 24px' }}>
-            Intelligence
+          <h1 style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: LTEXT, lineHeight: 1.15, margin: '0 0 24px' }}>
+            Client data.<br />340 failure patterns.<br />Sector intelligence.
           </h1>
           <p style={{ fontFamily: SANS, fontSize: 20, color: LBODY, lineHeight: 1.7, maxWidth: 900, margin: 0 }}>
             {isMeridian
