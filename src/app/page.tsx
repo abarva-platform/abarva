@@ -56,7 +56,7 @@ export default function Homepage() {
             Act on intelligence.<br />Before the window closes.
           </h1>
           <p style={{ fontSize: 18, color: LBODY, lineHeight: 1.6, margin: '0 0 32px', maxWidth: 480 }}>
-            AbarVa is the first platform that arrives knowing your data, embeds Maestros through execution, and only charges when outcomes are verified.
+            AbarVa is the first platform that arrives knowing your data, embeds Maestros through execution, and charges a platform fee, an engagement fee, and 15–20% of verified savings above the locked baseline.
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <a href={seeItLiveHref} style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
@@ -72,7 +72,7 @@ export default function Homepage() {
           {[
             { label: 'Consulting spend wasted',      value: '$200B', body: 'Global annual market with no outcome accountability' },
             { label: 'Enterprise AI with zero ROI',  value: '73%',   body: 'Of AI investments produce no verified outcome' },
-            { label: '0% fee until outcomes verified', value: '0%',  body: 'No retainer. No hourly. Fee on what we actually deliver.' },
+            { label: 'OUTCOME-ACCOUNTABLE FEES',        value: '15–20%', body: 'Platform fee + engagement fee. Then 15–20% of verified savings — only if outcomes achieved.' },
             { label: 'Time to first intelligence',   value: '48hrs', body: 'From kickoff to your first Situation Brief' },
           ].map(s => (
             <div key={s.label} style={{ background: '#fff', border: `1px solid ${LBDR}`, borderRadius: 8, padding: '24px 20px' }}>

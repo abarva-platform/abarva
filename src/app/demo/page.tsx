@@ -52,7 +52,7 @@ const SCREENS: Screen[] = [
     id: 2,
     category: 'THE PROBLEM',
     title: 'Same problem. Same firms. Since forever.',
-    body: 'AbarVa is not a consulting firm. It is an intelligence platform. Maestros embed inside the client — not external advisors. The fee is zero until outcomes are verified. The baseline is locked Day Zero — immutable. We cannot move the goalposts. Neither can you.',
+    body: 'AbarVa is not a consulting firm. It is an intelligence platform. Maestros embed inside the client — not external advisors. Platform fee. Engagement fee. Then 15–20% of verified savings above the locked Day Zero baseline — only if achieved. No ballooning SOWs. No fee for effort. Skin in the game.',
     bullets: [
       'Left column: how advisory firms work today — deck, leave, repeat',
       'Right column: how AbarVa works — data ingested before the first meeting',
