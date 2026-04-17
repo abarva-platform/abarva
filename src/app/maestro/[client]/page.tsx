@@ -926,14 +926,12 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
 // ── Deliverables Section ──────────────────────────────────────────────────────
 interface DeliverableRow {
   id: string
-  engagement_id: string
   client_id: string
-  phase: number
+  phase_id: number
   document_type: string
   title: string
   html_content: string
   generated_at: string
-  generated_by: string
 }
 
 const PHASE_NAMES: Record<number, string> = {
@@ -956,14 +954,12 @@ const DEMO_DELIVERABLE_MAP: Record<string, DeliverableRow[]> = (() => {
     phases.flatMap(phase =>
       generateDeliverables(phase, clientId, engId, outcomes, clientName, 'Anand Sundaram').map((doc, i) => ({
         id:            `${clientId}-${phase}-${i}`,
-        engagement_id: engId,
         client_id:     clientId,
-        phase,
+        phase_id:      phase,
         document_type: doc.document_type,
         title:         doc.title,
         html_content:  doc.html_content,
         generated_at:  timestamps[phase] ?? '2026-04-16T09:00:00Z',
-        generated_by:  'Anand Sundaram',
       }))
     )
 
@@ -996,81 +992,65 @@ function DeliverablesSection({ clientId, clientName }: { clientId: string; clien
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url
-    a.download = `${doc.engagement_id}-${doc.document_type}.html`
+    a.download = `${clientId}-phase${doc.phase_id}-${doc.document_type}.html`
     a.click()
     URL.revokeObjectURL(url)
   }
 
-  // Group: engagement_id → phase → rows
-  const grouped: Record<string, Record<number, DeliverableRow[]>> = {}
+  // Group by phase_id
+  const grouped: Record<number, DeliverableRow[]> = {}
   for (const d of docs) {
-    if (!grouped[d.engagement_id]) grouped[d.engagement_id] = {}
-    if (!grouped[d.engagement_id][d.phase]) grouped[d.engagement_id][d.phase] = []
-    grouped[d.engagement_id][d.phase].push(d)
+    if (!grouped[d.phase_id]) grouped[d.phase_id] = []
+    grouped[d.phase_id].push(d)
   }
-  const engIds = Object.keys(grouped)
+  const phases = Object.keys(grouped).map(Number).sort((a, b) => a - b)
 
   return (
     <div style={{ padding: '28px 32px', maxWidth: 860 }}>
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontFamily: SERIF, fontSize: 22, color: '#0C0C0C', fontWeight: 400, marginBottom: 6 }}>Deliverables</div>
-        <div style={{ fontFamily: SANS, fontSize: 13, color: '#706D66' }}>All generated documents for {clientName}</div>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: '#706D66' }}>{docs.length} document{docs.length !== 1 ? 's' : ''} for {clientName}</div>
       </div>
 
       {loading && <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', padding: '24px 0' }}>Loading…</div>}
-      {!loading && engIds.length === 0 && (
+      {!loading && phases.length === 0 && (
         <div style={{ background: '#F9F9F8', border: '1px solid #E5E7EB', borderRadius: 10, padding: '32px 28px', textAlign: 'center' as const }}>
           <div style={{ fontFamily: SERIF, fontSize: 18, color: '#0C0C0C', marginBottom: 8 }}>No documents yet</div>
           <div style={{ fontFamily: SANS, fontSize: 14, color: '#706D66' }}>Documents are generated automatically when each phase is completed in the AVR Navigator.</div>
         </div>
       )}
 
-      {engIds.map(engId => (
-        <div key={engId} style={{ marginBottom: 32, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#0C0C0C', marginBottom: 2 }}>{engId}</div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>{docs.filter(d => d.engagement_id === engId).length} documents</div>
-            </div>
+      {phases.map(phase => (
+        <div key={phase} style={{ marginBottom: 24, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '10px 20px', background: '#F9F9F8', borderBottom: '1px solid #F3F4F6' }}>
+            <span style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
+              Phase {phase} · {PHASE_NAMES[phase] ?? ''}
+            </span>
           </div>
-
-          {Object.entries(grouped[engId])
-            .sort(([a], [b]) => Number(a) - Number(b))
-            .map(([phaseStr, phaseDocs]) => (
-              <div key={phaseStr}>
-                <div style={{ padding: '8px 20px 4px', background: '#F9F9F8', borderBottom: '1px solid #F3F4F6' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
-                    Phase {phaseStr} · {PHASE_NAMES[Number(phaseStr)] ?? ''}
-                  </span>
+          {grouped[phase].map(doc => (
+            <div key={doc.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', marginBottom: 2 }}>
+                  {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
                 </div>
-                {phaseDocs.map(doc => (
-                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', marginBottom: 2 }}>
-                        {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
-                      </div>
-                      <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>
-                        {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                        {doc.generated_by ? ` · ${doc.generated_by}` : ''}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setViewDoc(doc)}
-                      style={{ padding: '6px 14px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#0C0C0C', cursor: 'pointer' }}
-                    >
-                      View
-                    </button>
-                    <button
-                      onClick={() => download(doc)}
-                      style={{ padding: '6px 14px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
-                    >
-                      Download
-                    </button>
-                  </div>
-                ))}
+                <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>
+                  {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </div>
               </div>
-            ))
-          }
+              <button
+                onClick={() => setViewDoc(doc)}
+                style={{ padding: '6px 14px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#0C0C0C', cursor: 'pointer' }}
+              >
+                View
+              </button>
+              <button
+                onClick={() => download(doc)}
+                style={{ padding: '6px 14px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
+              >
+                Download
+              </button>
+            </div>
+          ))}
         </div>
       ))}
 
@@ -1080,7 +1060,7 @@ function DeliverablesSection({ clientId, clientName }: { clientId: string; clien
           <div style={{ position: 'sticky', top: 0, background: '#0F0E0D', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
             <div>
               <span style={{ fontFamily: SANS, fontSize: 14, color: '#fff' }}>{viewDoc.title}</span>
-              <span style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', marginLeft: 12 }}>{viewDoc.engagement_id}</span>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', marginLeft: 12 }}>Phase {viewDoc.phase_id} · {PHASE_NAMES[viewDoc.phase_id] ?? ''}</span>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button

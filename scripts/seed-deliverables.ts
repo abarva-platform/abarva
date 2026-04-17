@@ -67,8 +67,8 @@ const SEEDS: SeedConfig[] = [
 
 async function seed() {
   // Clear existing demo rows so re-running is idempotent
-  const engIds = SEEDS.map(s => s.engagementId)
-  await db.from('engagement_deliverables').delete().in('engagement_id', engIds)
+  const clientIds = SEEDS.map(s => s.clientId)
+  await db.from('engagement_deliverables').delete().in('client_id', clientIds)
   console.log('Cleared existing demo rows')
 
   for (const cfg of SEEDS) {
@@ -76,17 +76,16 @@ async function seed() {
       const docs = generateDeliverables(phase, cfg.clientId, cfg.engagementId, cfg.outcomes, cfg.clientName, cfg.generatedBy)
       for (const doc of docs) {
         const { error } = await db.from('engagement_deliverables').insert({
-          engagement_id: cfg.engagementId,
           client_id:     cfg.clientId,
-          phase,
+          phase_id:      phase,
           document_type: doc.document_type,
           title:         doc.title,
           html_content:  doc.html_content,
-          generated_by:  cfg.generatedBy,
           generated_at:  cfg.timestamps[phase] ?? new Date().toISOString(),
         })
         if (error) {
-          console.error(`  ✗ ${cfg.clientId} phase ${phase} ${doc.document_type}:`, error.message)
+          const cause = (error as any)?.cause
+          console.error(`  ✗ ${cfg.clientId} phase ${phase} ${doc.document_type}:`, error.message, cause ? `\n    cause: ${cause?.message ?? cause}` : '')
         } else {
           console.log(`  ✓ ${cfg.clientId} · ${cfg.engagementId} · Phase ${phase} · ${doc.document_type}`)
         }
