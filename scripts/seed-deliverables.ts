@@ -5,9 +5,25 @@
 import { createClient } from '@supabase/supabase-js'
 import { generateDeliverables } from '../src/lib/generate-deliverable'
 import { MERIDIAN_SEED, APEX_SEED } from '../src/lib/avr-demo-seed'
+import fs from 'fs'
+import path from 'path'
 
-const SUPABASE_URL = 'https://xtbymdryojmvoulaotce.supabase.co'
-const SERVICE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0YnltZHJ5b2ptdm91bGFvdGNlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTY3NTczOCwiZXhwIjoyMDkxMjUxNzM4fQ.kx4zDDCOmjGSrM9UV_WBHNGq-vs6a4iDxgWdh9VjCXg'
+// Load .env.local
+const envPath = path.join(process.cwd(), '.env.local')
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+    const [k, ...v] = line.split('=')
+    if (k && v.length) process.env[k.trim()] = v.join('=').trim()
+  }
+}
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const SERVICE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+if (!SUPABASE_URL || !SERVICE_KEY) {
+  console.error('Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY')
+  process.exit(1)
+}
 
 const db = createClient(SUPABASE_URL, SERVICE_KEY)
 
