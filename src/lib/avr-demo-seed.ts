@@ -256,7 +256,132 @@ export const ARCTURUS_SEED: DemoSeed = {
   }
 }
 
+export const APEX_SEED: DemoSeed = {
+  phaseStatuses: { "0":"complete","1":"complete","2":"complete","3":"complete","4":"complete" },
+  stepStatuses: {
+    "0.1":"complete","0.2":"complete","0.3":"complete","0.4":"complete","0.5":"complete",
+    "1.1":"complete","1.2":"complete","1.3":"complete","1.4":"complete",
+    "2.1":"complete","2.2":"complete","2.3":"complete","2.4":"complete",
+    "3.1":"complete","3.2":"complete","3.3":"complete",
+    "4.1":"complete","4.2":"complete"
+  },
+  activeStep: "4.2",
+  outcomes: [
+    { stepId:"0.1", label:"Priority Signal", value:"E-commerce conversion 2.1% vs 3.4% peer — $248M revenue gap while digital competitors widen" },
+    { stepId:"0.2", label:"AI Aspiration", value:"Demand forecasting accuracy — stop the $180M markdown cycle before fixing conversion" },
+    { stepId:"0.3", label:"Data Readiness", value:"61/100 — Snowflake deployed but batch-only; 24hr lag makes real-time AI impossible today" },
+    { stepId:"0.4", label:"Genome Match", value:"22 comparable omnichannel retailers — F016 digital-physical failure at 81%, F004 analytics-to-action gap at 72%" },
+    { stepId:"0.5", label:"Confirmed Scope", value:"OMS-WMS real-time sync + AI demand forecasting + personalization engine via CDP" },
+    { stepId:"1.1", label:"Situation Finding", value:"$248M e-commerce revenue gap + $180M annual markdown waste — root cause is 34% BOPIS fail rate and 61% forecast accuracy" },
+    { stepId:"1.2", label:"Contradiction", value:"Salesforce Einstein: $14M licensed, 12% feature utilisation — $12M in unused AI capability paying full price" },
+    { stepId:"1.3", label:"Data Gap", value:"No CDP deployed — real-time personalization impossible without unified customer identity layer" },
+    { stepId:"1.4", label:"Diagnose Complete", value:"Phase 1 gate approved by Jennifer Walsh, CEO — $428M combined exposure accepted" },
+    { stepId:"2.1", label:"Tech Stack", value:"OMS and WMS are separate systems with no real-time sync — 34% BOPIS fail rate is structural, not operational" },
+    { stepId:"2.2", label:"Vendor Decision", value:"Einstein renegotiated — feature utilisation programme unlocks $8M dormant capability; CDP vendor selected" },
+    { stepId:"2.3", label:"Architecture", value:"OMS-WMS real-time bridge Month 1–4 · CDP + streaming pipeline Month 2–6 · Personalization engine Month 4–8" },
+    { stepId:"2.4", label:"Business Case", value:"$180M demand + $248M conversion addressable · $22M Year 1 · 8.2x ROI on AbarVa fee · CFO approved" },
+    { stepId:"3.1", label:"AI Delivery", value:"OMS-WMS sync live in 6 pilot stores — BOPIS fail rate 34%→18%. Demand model training complete." },
+    { stepId:"3.2", label:"Month 3 Actuals", value:"Conversion 2.1%→2.6% in pilot stores · $18.4M annualised · Demand forecast 61%→71% in pilot SKUs" },
+    { stepId:"3.3", label:"Outcome Verified", value:"$31.4M verified · Independent audit complete · APX-FEE-001 at $4.71M · 6.7x ROI" },
+    { stepId:"4.1", label:"Fee Triggered", value:"$4.71M AbarVa fee · Invoice APX-FEE-001 · Verified on 90-day actuals vs Day 0 immutable baseline" },
+    { stepId:"4.2", label:"Engagement Complete", value:"$31.4M verified. Conversion 2.1%→2.6%. BOPIS 34%→18%. $180M markdown programme activated. Phase 2 confirmed." }
+  ],
+  messagesByStep: {
+    "0.1": [
+      { role:"ai", text:"I've reviewed Apex Retail's data across 380 stores and digital channels. Three signals are registering as board-level risks:\n\n• E-commerce conversion 2.1% vs 3.4% peer benchmark — $248M annual revenue gap while digital-native competitors accelerate\n• Demand forecast accuracy 61% vs 85% best-in-class — $180M in annual excess markdowns from the gap\n• BOPIS unfulfillable rate 34% — one in three click-and-collect orders fails at the store, destroying the omnichannel promise\n\nWhich of these is Jennifer Walsh most focused on?" },
+      { role:"user", text:"The e-commerce gap — she said we're 18 months behind Amazon and closing the wrong direction" },
+      { role:"ai", text:"Confirmed. Conversion is the board-visible metric — but the Genome shows that 78% of retailers who address conversion without fixing inventory accuracy first spend twice as much and recover half as fast.\n\nThe $180M markdown problem is the root cause of the conversion problem. Shoppers see out-of-stock and leave.\n\nPriority signal locked: E-commerce conversion gap — $248M, but the fix starts with inventory." }
+    ],
+    "0.2": [
+      { role:"ai", text:"Two AI paths available given the data:\n\nPath A — Demand Forecasting First: Fix the 61% accuracy rate. Each 1pp improvement = approximately $4M in reduced markdowns. 90-day payback visible. Board can see it.\n\nPath B — Conversion Directly: Personalization engine, CDP deployment, real-time recommendations. 12–18 month ROI horizon. Requires data infrastructure first.\n\nWhat has leadership actually committed to?" },
+      { role:"user", text:"Demand forecasting — COO Priya Nakamura is leading it. She has the budget and the board mandate." },
+      { role:"ai", text:"Right sequence. Fix forecast accuracy, reduce the markdown waste, use that verified savings to fund the personalization infrastructure.\n\nThe Genome confirms: 19 of 22 comparable retailers that started with forecasting achieved conversion improvement as a second-order effect.\n\nAI Aspiration locked: Demand forecasting accuracy — stop the $180M markdown cycle first." }
+    ],
+    "0.3": [
+      { role:"ai", text:"Apex Retail data readiness: 61 out of 100.\n\nSnowflake is deployed — that's a 12-point advantage over comparable retailers. But the feeds are batch-only with a 24-hour lag. AI models trained on yesterday's data can't catch today's demand shifts.\n\nThree gaps:\n• No real-time streaming pipeline from POS to Snowflake\n• OMS and WMS are separate systems — inventory truth is in two places at once\n• No CDP — 22M loyalty members, zero unified identity layer\n\nWhich gap is most blocking?" },
+      { role:"user", text:"The OMS-WMS split — our store inventory and online inventory are two different numbers and neither is right" },
+      { role:"ai", text:"That's the structural root cause. The 34% BOPIS fail rate isn't an operations problem — it's a data architecture problem. Two systems, two truths, no reconciliation.\n\nData gap locked: OMS-WMS split is the primary constraint." }
+    ],
+    "0.4": [
+      { role:"ai", text:"Genome match: 22 comparable omnichannel retailers — 400–800 stores, $2–6B revenue, active digital transformation.\n\nTwo patterns active:\n• F016 — Digital-Physical Integration Failure: 81% failure rate. Retailers that don't resolve OMS-WMS first spend 2.4x more on personalization and get 40% of the ROI.\n• F004 — Analytics-to-Action Gap: 72% failure rate. Snowflake with batch feeds is a reporting tool, not an AI platform.\n\nBoth are addressable. F016 is the sequencing constraint." },
+      { role:"user", text:"F016 — that's exactly our problem. We have two separate systems and everyone knows it but no one owns fixing it." },
+      { role:"ai", text:"F016 confirmed. The fix requires a named owner with cross-functional authority — CTO and COO must both be sponsors.\n\nGenome match locked: 22 retailers, F016 primary, F004 secondary." }
+    ],
+    "0.5": [
+      { role:"ai", text:"Confirmed scope:\n\n1. OMS-WMS Real-Time Integration — primary engagement, resolves BOPIS failure and inventory truth\n2. AI Demand Forecasting — COO-led, $180M markdown target\n3. CDP + Personalization Engine — Month 4 start, unlocks $248M conversion opportunity\n\nSponsors: Jennifer Walsh CEO (overall), Priya Nakamura COO (forecasting), David Abara CTO (integration).\n\nProceed to Phase 1 — Diagnose?" },
+      { role:"user", text:"Yes — Jennifer approved the scope" },
+      { role:"ai", text:"Phase 0 complete. Scope locked. Three-track programme confirmed. Moving to Phase 1 — Diagnose." }
+    ],
+    "1.1": [
+      { role:"ai", text:"Situation Intelligence complete. 9 issues identified. $428M total exposure.\n\nTop findings:\n• $248M e-commerce revenue gap — conversion 2.1% vs 3.4%, $58M in revenue lost annually vs peer conversion rate\n• $180M markdown waste — 61% demand forecast accuracy creating systematic overstock and clearance cycles\n• 34% BOPIS unfulfillable — one in three orders fails, destroying retention in the channel with the highest margin\n\nAll three trace to the same root cause: OMS and WMS are separate systems with no real-time reconciliation.\n\nData confidence: 91%" },
+      { role:"user", text:"The $180M markdown number — is that auditable? CFO Michael Torres will ask." },
+      { role:"ai", text:"$180M is conservative. It's based on 7 years of POS transaction history compared against demand forecasting output — the delta between predicted and actual sell-through, priced at clearance discount. KPMG baseline methodology confirmed.\n\nSituation finding locked: $428M combined exposure, $180M markdown root cause, OMS-WMS structural gap." }
+    ],
+    "1.2": [
+      { role:"ai", text:"Contradiction finding:\n\nSalesforce Einstein AI is licensed at approximately $14M annually. Current utilisation: 12% of available features.\n\nThe unused 88%:\n• Real-time product recommendation engine — licensed, not configured\n• Predictive inventory replenishment — licensed, not connected to WMS\n• Churn propensity scoring on 22M loyalty members — licensed, never run\n\n$12M per year in unused capability. The AI is already paid for." },
+      { role:"user", text:"We didn't even know it was licensed — it came with the Commerce Cloud deal" },
+      { role:"ai", text:"Classic bundled-and-forgotten. Before buying new AI infrastructure, activate what's already paid for.\n\nContradiction locked: $12M unused Einstein capability. Month 1 action — Einstein utilisation audit and activation plan." }
+    ],
+    "1.3": [
+      { role:"ai", text:"Data Intelligence: 50+ files loaded across financials, supply chain, technology, and customer data.\n\nPrimary gap: No Customer Data Platform deployed. 22M loyalty members exist in Salesforce CRM. But without a CDP, there is no real-time unified identity — the same customer on mobile, in-store, and online is three different records.\n\nWithout a CDP, real-time personalization is architecturally impossible. Einstein is working on stale, fragmented data.\n\nSecondary gap: OMS and WMS APIs not documented — integration scope needs technical discovery." },
+      { role:"user", text:"CDP was in the roadmap but budget got cut — we have the RFP but no selection" },
+      { role:"ai", text:"CDP selection goes into Phase 2 prescriptions. The RFP is a 6-week acceleration — we can move to vendor selection in Month 2.\n\nData gap locked. RFP acceleration added to Phase 2." }
+    ],
+    "1.4": [
+      { role:"ai", text:"Phase 1 gate brief prepared for Jennifer Walsh, CEO:\n\n• Root cause: OMS-WMS architectural gap — two inventory systems, no real-time reconciliation\n• Financial exposure: $428M ($180M markdown + $248M conversion), 91% confidence\n• Immediate actions: Einstein activation ($12M unlocked), CDP vendor selection\n• Phase 2: OMS-WMS integration architecture, demand forecasting deployment, CDP build\n\nPriority framing: Fix inventory truth first. Everything else follows." },
+      { role:"user", text:"Jennifer approved — she wants to move fast on OMS-WMS" },
+      { role:"ai", text:"Phase 1 gate approved. Jennifer Walsh, CEO — confirmed. Moving to Phase 2 — Prescribe." }
+    ],
+    "2.1": [
+      { role:"ai", text:"Technology Intelligence:\n\nOMS: Manhattan Associates — modern system, API-capable\nWMS: Blue Yonder — batch sync only, 4-hour update cycle\nPOS: NCR Counterpoint — 2008 vintage, no real-time feed to either system\n\nBOPIS fail mechanics: Customer places order → OMS shows available → WMS has already committed inventory elsewhere → fail at store.\n\nFix: Manhattan-Blue Yonder real-time event stream. Build time: 8–12 weeks. No rip-and-replace." },
+      { role:"user", text:"David said 8 weeks is achievable if we don't touch the POS" },
+      { role:"ai", text:"Correct scope. POS stays. Manhattan-Blue Yonder bridge only. 8 weeks confirmed.\n\nTechnology locked. OMS-WMS integration is the critical path item." }
+    ],
+    "2.2": [
+      { role:"ai", text:"Vendor Intelligence:\n\nEinstein: Salesforce will provide an activation specialist at no additional cost — it's in the Commerce Cloud contract. Utilisation programme: 8 weeks to full feature activation.\n\nCDP: 3 vendors shortlisted from Apex's existing RFP — Segment, mParticle, Treasure Data. Recommendation: Segment — fastest to Snowflake integration, 4-week onboarding.\n\nBlue Yonder: API access confirmed — event-stream integration is supported in current contract." },
+      { role:"user", text:"Segment — CMO Juliana already knows them. That removes the procurement timeline." },
+      { role:"ai", text:"Segment selected. Existing relationship accelerates by 6 weeks. Vendor locked.\n\nEinstein activation and Segment CDP in parallel from Month 2." }
+    ],
+    "2.3": [
+      { role:"ai", text:"Architecture for Apex Retail:\n\nTrack 1 — Inventory Truth (Months 1–4):\nManhattan OMS → Blue Yonder WMS real-time event stream. BOPIS reconciliation in minutes, not hours.\n\nTrack 2 — Data Platform (Months 2–6):\nPOS → Snowflake streaming pipeline. Segment CDP unifying 22M loyalty identities. Einstein on live data.\n\nTrack 3 — AI Applications (Months 4–8):\nDemand forecasting model on unified Snowflake data. Real-time personalization via Einstein + CDP.\n\nTotal build: $6.4M · ROI: $22M Year 1 minimum" },
+      { role:"user", text:"This is the roadmap David has been trying to get approved for 18 months" },
+      { role:"ai", text:"Architecture locked. The sequencing is what was missing — not the plan. David's team leads from Month 1." }
+    ],
+    "2.4": [
+      { role:"ai", text:"Business Case:\n\nInvestment: $8M (AbarVa fee + build + CDP licence Year 1)\nYear 1 recovery: $22M minimum\n• Markdown reduction (forecast 61%→75%): $14M\n• BOPIS recovery (34%→12%): $4.8M\n• Einstein activation (12%→60%): $3.2M\n\nFull addressable: $428M ($180M markdowns + $248M conversion)\nROI on AbarVa fee: 8.2x on Year 1 verified savings\nBaseline: Day 0 lock — KPMG methodology confirmed" },
+      { role:"user", text:"Michael Torres approved — he said 8x is the best business case he's seen in 5 years" },
+      { role:"ai", text:"Business case locked. CFO approved. Day 0 baseline immutable. Moving to Phase 3 — Value Realization." }
+    ],
+    "3.1": [
+      { role:"ai", text:"Month 1 delivery:\n\nOMS-WMS integration: Live in 6 pilot stores (Chicago, Dallas, Seattle clusters)\n• BOPIS fail rate in pilot stores: 34%→18% · 47% improvement\n• Inventory accuracy: 84%→91% in pilot stores\n\nEinstein activation: 4 features activated (product recommendations, cart abandonment, replenishment alerts, churn scoring)\n\nSegment CDP: Onboarding complete, 22M loyalty identities ingesting" },
+      { role:"user", text:"18% BOPIS fail rate already — in 6 weeks. Operations team is energised." },
+      { role:"ai", text:"18% in 6 weeks confirms the root cause was architectural, not operational. Extrapolated to chain-wide: $4.8M annual recovery on BOPIS alone.\n\nPhase 3 delivery locked. 6-store pilot results go into Month 3 board brief." }
+    ],
+    "3.2": [
+      { role:"ai", text:"Month 3 Actuals — pilot store cluster:\n\nConversion (pilot stores): 2.1%→2.6% · +0.5pp\nAnnualised revenue impact: $18.4M (pilot extrapolated to full chain)\n\nDemand forecast accuracy (pilot SKUs): 61%→71% · +10pp\nMarkdown reduction: $6.2M annualised from pilot cohort\n\nBOPIS fail rate (pilot): 34%→14% · on track for <10% by Month 6\n\nEinstein: cart abandonment recovery up 23% in pilot segment" },
+      { role:"user", text:"Priya is ready to expand OMS-WMS to all 380 stores — she wants to move in Month 4" },
+      { role:"ai", text:"Month 4 chain-wide rollout confirmed. Pilot data is the business case for speed.\n\n$18.4M annualised from 6 stores. Full chain: trajectory to $180M markdown recovery by Month 18." }
+    ],
+    "3.3": [
+      { role:"ai", text:"Outcome Verification — Month 3:\n\n$31.4M verified savings:\n• BOPIS improvement (pilot → partial chain): $8.2M annualised\n• Demand forecast improvement: $14.6M annualised\n• Einstein activation (abandoned cart + replenishment): $5.4M annualised\n• Conversion uplift (pilot stores): $3.2M annualised\n\nAudit methodology: actuals vs Day 0 immutable baseline, independently verified.\n\nFee: 15% × $31.4M = $4.71M · Invoice APX-FEE-001 ready" },
+      { role:"user", text:"Jennifer signed off — she said this is the first time she's seen a number with an audit trail behind it" },
+      { role:"ai", text:"$31.4M verified. APX-FEE-001 ready. The audit trail is the product." }
+    ],
+    "4.1": [
+      { role:"ai", text:"Fee Calculation:\n\nVerified savings: $31.4M (independent audit)\nAbarVa fee: 15% = $4.71M\nROI on fee: 6.7x\nInvoice: APX-FEE-001" },
+      { role:"user", text:"Invoice paid — Michael processed it same day" },
+      { role:"ai", text:"APX-FEE-001 settled. First verification cycle complete." }
+    ],
+    "4.2": [
+      { role:"ai", text:"Engagement Complete — Apex Retail:\n\n$31.4M verified · 6.7x ROI · 18 steps complete\nBOPIS: 34%→14% (pilot) · Chain rollout Month 4\nConversion: 2.1%→2.6% · Trajectory to 3.4%\nDemand accuracy: 61%→71% · $180M markdown programme active\nCDP live · Einstein at 60% utilisation · OMS-WMS integrated\n\nBoard Pack delivered. All numbers traceable to Day 0 baseline.\n\nGenome: 3 new retail patterns added.\n\nCEO requested Phase 2: full chain personalization + loyalty reactivation." },
+      { role:"user", text:"Jennifer confirmed Phase 2 — she wants the full 22M loyalty members activated" },
+      { role:"ai", text:"Phase 2 confirmed. 22M loyalty members. Apex Retail is a Phase 2 client. The Genome compounds." }
+    ]
+  }
+}
+
 export const DEMO_SEEDS: Record<string, DemoSeed> = {
-  meridian: MERIDIAN_SEED,
-  arcturus: ARCTURUS_SEED,
+  meridian:   MERIDIAN_SEED,
+  arcturus:   ARCTURUS_SEED,
+  apexretail: APEX_SEED,
 }
