@@ -536,7 +536,12 @@ function DemoGuidedPageInner() {
             </div>
           </a>
           <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
-          <span style={{ fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600, color: TEAL, letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
+          <span style={{
+            fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 700, letterSpacing: '.14em',
+            flexShrink: 0, padding: '4px 8px', borderRadius: 4,
+            background: 'rgba(45,212,200,0.14)', color: TEAL,
+            border: `1px solid ${TEAL}`,
+          }}>GUIDED DEMO</span>
           <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
 
           {/* Phase groups + dots */}
@@ -567,13 +572,13 @@ function DemoGuidedPageInner() {
                         style={{
                           minWidth: 13, width: wide ? 20 : 13, height: 13,
                           borderRadius: 3, border: 'none', cursor: 'pointer',
-                          background: active ? TEAL : past ? 'rgba(45,212,200,0.35)' : 'rgba(255,255,255,0.15)',
+                          background: active ? TEAL : past ? 'rgba(45,212,200,0.55)' : 'rgba(250,250,247,0.32)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           flexShrink: 0,
                           animation: active ? 'dotPulse 2s ease infinite' : 'none',
                         }}
                       >
-                        <span style={{ fontSize: 7, color: active ? BG : past ? '#fff' : 'rgba(255,255,255,0.70)', fontWeight: 700 }}>{sn}</span>
+                        <span style={{ fontSize: 7, color: active ? BG : past ? '#060A12' : '#FAFAF7', fontWeight: 700 }}>{sn}</span>
                       </button>
                     )
                   })}
@@ -582,7 +587,7 @@ function DemoGuidedPageInner() {
             })}
           </div>
 
-          {/* Right controls */}
+          {/* Right controls — solid pills pop against the dark top bar */}
           <button
             onClick={() => {
               const next = !voiceEnabled
@@ -591,11 +596,12 @@ function DemoGuidedPageInner() {
               posthog?.capture('demo_voice_toggled', { enabled: next, screen_number: idx + 1, ref })
             }}
             style={{
-              padding: '5px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
-              fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.08em',
-              background: (voiceEnabled || isPlaying) ? 'rgba(45,212,200,0.15)' : 'rgba(255,255,255,0.06)',
-              border: `1px solid ${(voiceEnabled || isPlaying) ? TEAL : 'rgba(255,255,255,0.15)'}`,
-              color: (voiceEnabled || isPlaying) ? TEAL : 'rgba(255,255,255,0.50)',
+              padding: '6px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+              background: (voiceEnabled || isPlaying) ? TEAL : '#FAFAF7',
+              border: '1px solid transparent',
+              color: '#0C0C0C',
+              boxShadow: (voiceEnabled || isPlaying) ? '0 0 0 2px rgba(45,212,200,0.35)' : '0 1px 2px rgba(0,0,0,0.25)',
               animation: isPlaying ? 'voicePulse 1.5s ease infinite' : 'none',
             }}
           >
@@ -604,10 +610,12 @@ function DemoGuidedPageInner() {
           <button
             onClick={() => setAutoOn(a => !a)}
             style={{
-              padding: '5px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
-              fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.08em',
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)',
-              color: autoOn ? TEAL : 'rgba(255,255,255,0.50)',
+              padding: '6px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '.08em',
+              background: autoOn ? TEAL : '#FAFAF7',
+              border: '1px solid transparent',
+              color: '#0C0C0C',
+              boxShadow: autoOn ? '0 0 0 2px rgba(45,212,200,0.35)' : '0 1px 2px rgba(0,0,0,0.25)',
             }}
           >
             {autoOn ? `⏸ ${countdown}s` : '▶ AUTO'}
@@ -615,19 +623,20 @@ function DemoGuidedPageInner() {
           <button
             onClick={() => setSelfServe(true)}
             style={{
-              padding: '5px 12px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
-              fontFamily: "'Courier New', monospace", fontSize: 11,
-              background: 'transparent', border: 'none',
-              color: 'rgba(255,255,255,0.60)',
+              padding: '6px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
+              fontFamily: "'Courier New', monospace", fontSize: 11, fontWeight: 600, letterSpacing: '.04em',
+              background: 'transparent', border: '1px solid rgba(250,250,247,0.45)',
+              color: '#FAFAF7',
             }}
           >
             Explore →
           </button>
           <a href="/" style={{
-            padding: '5px 14px', borderRadius: 20, flexShrink: 0,
-            fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.06em',
-            border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.06)',
-            color: WHITE, textDecoration: 'none',
+            padding: '6px 14px', borderRadius: 20, flexShrink: 0,
+            fontFamily: "'Courier New', monospace", fontSize: 11, fontWeight: 700, letterSpacing: '.06em',
+            border: '1px solid transparent', background: '#FAFAF7',
+            color: '#0C0C0C', textDecoration: 'none',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
           }}>
             ← Home
           </a>
