@@ -258,71 +258,60 @@ function NavInner({ activePage }: NavProps) {
         </a>
 
         {/* ══════════════════════════════════════════════════════════════════
-            ADMIN — Intelligence · Solutions · AI Value Realization · Admin
+            ADMIN — Maestro · Intelligence · AVR · Solutions | Platform · Investor · Admin
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isAdmin && (
           <>
-            {navLink('Home', '/', homeActive)}
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
-            {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
-            {navLink('Investor', '/investor', investorActive)}
-            {adminNavItem()}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            INVESTOR — Platform · Intelligence · Solutions · AVR · Admin(grey)
-            CLIENT TOGGLE: full dropdown, all clients
+            INVESTOR — Intelligence · AVR · Solutions | Platform · Investor · Admin(grey)
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isInvestor && (
           <>
-            {navLink('Home', '/', homeActive)}
             {clientDropdown()}
-            {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
-            {navLink('Investor', '/investor', investorActive)}
-            {adminNavItem()}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            MAESTRO — Platform · Intelligence · Solutions · AVR · Admin(grey)
-            CLIENT TOGGLE: static label only (locked to their client)
+            MAESTRO — Maestro · Intelligence · AVR · Solutions | Platform · Admin(grey)
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isMaestro && (
           <>
-            {navLink('Home', '/', homeActive)}
             {staticClientLabel()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
-            {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
-            {adminNavItem()}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            UNAUTHENTICATED / CLIENT — Platform · Solutions · Investor · Demo
+            UNAUTHENTICATED / CLIENT — Solutions | Platform · Investor · Demo
         ══════════════════════════════════════════════════════════════════ */}
         {(!signedIn || isClient) && (
           <>
-            {navLink('Home', '/', homeActive)}
-            {navLink('Platform', '/platform', platformActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {navLink('Investor', '/investor', investorActive)}
             {navLink('Demo', '/demo', demoActive)}
           </>
         )}
 
-        {/* ── Right side ───────────────────────────────────────────────────── */}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        {/* ── Right side: Platform · Admin · Investor + user avatar ────────── */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          {signedIn && navLink('Platform', '/platform', platformActive)}
+          {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
+          {signedIn && adminNavItem()}
+          <div style={{ width: '12px' }} />
 
           {signedIn ? (
             <div style={{ position: 'relative' }}>
