@@ -657,6 +657,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
   const [sponsor, setSponsor] = useState('')
   const [input, setInput] = useState('')
 
+  const W = '#FFFFFF'
   const initSolName = MAESTRO_SOLUTIONS.find(s => s.slug === initSolution)?.name ?? initSolution ?? ''
 
   return (
@@ -671,7 +672,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
 
           {step === 0 && (
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
                 What is the leadership directive?
               </div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
@@ -682,12 +683,12 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                 onChange={e => setInput(e.target.value)}
                 placeholder="e.g. The board wants our denial rate below 14% before Epic goes live in Q3..."
                 rows={4}
-                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: WHITE, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
               />
               <button
                 onClick={() => { if (input.trim()) { setDirective(input.trim()); setInput(''); setStep(1) } }}
                 disabled={!input.trim()}
-                style={{ marginTop: 12, padding: '12px 28px', background: input.trim() ? WHITE : '#1C2D45', color: input.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed' }}
+                style={{ marginTop: 12, padding: '12px 28px', background: input.trim() ? W : '#1C2D45', color: input.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed' }}
               >
                 Next →
               </button>
@@ -701,7 +702,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                   &ldquo;{directive}&rdquo;
                 </div>
               )}
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
                 Which solution aligns to this?
               </div>
               {initSolName && (
@@ -714,7 +715,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                   <button
                     key={s.slug}
                     onClick={() => setSolution(s.slug)}
-                    style={{ textAlign: 'left' as const, padding: '12px 16px', background: solution === s.slug ? 'rgba(45,212,200,0.1)' : '#0D1520', border: `1px solid ${solution === s.slug ? 'rgba(45,212,200,0.5)' : '#1C2D45'}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: solution === s.slug ? TEAL : WHITE, cursor: 'pointer' }}
+                    style={{ textAlign: 'left' as const, padding: '12px 16px', background: solution === s.slug ? 'rgba(45,212,200,0.1)' : '#0D1520', border: `1px solid ${solution === s.slug ? 'rgba(45,212,200,0.5)' : '#1C2D45'}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: solution === s.slug ? TEAL : W, cursor: 'pointer' }}
                   >
                     {solution === s.slug ? '✓ ' : ''}{s.name}
                   </button>
@@ -723,7 +724,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
               <button
                 onClick={() => { if (solution) setStep(2) }}
                 disabled={!solution}
-                style={{ marginTop: 16, padding: '12px 28px', background: solution ? WHITE : '#1C2D45', color: solution ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: solution ? 'pointer' : 'not-allowed' }}
+                style={{ marginTop: 16, padding: '12px 28px', background: solution ? W : '#1C2D45', color: solution ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: solution ? 'pointer' : 'not-allowed' }}
               >
                 Next →
               </button>
@@ -732,7 +733,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
 
           {step === 2 && (
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: WHITE, marginBottom: 16, lineHeight: 1.3 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
                 Who is the executive sponsor?
               </div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
@@ -743,7 +744,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                 value={sponsor}
                 onChange={e => setSponsor(e.target.value)}
                 placeholder="e.g. Sarah Chen, CMO"
-                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: WHITE, outline: 'none', boxSizing: 'border-box' as const }}
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, outline: 'none', boxSizing: 'border-box' as const }}
               />
               <button
                 onClick={() => { if (sponsor.trim()) setStep('done') }}
@@ -757,13 +758,13 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
 
           {step === 'done' && (
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 28, color: WHITE, marginBottom: 16, lineHeight: 1.2 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 28, color: W, marginBottom: 16, lineHeight: 1.2 }}>
                 Engagement created.
               </div>
               <p style={{ fontFamily: SANS, fontSize: 15, color: '#9CA3AF', lineHeight: 1.65, marginBottom: 24 }}>
                 The engagement context has been captured. Your Admin portal has been notified and the engagement will appear in the Active Engagements list below.
               </p>
-              <button onClick={onClose} style={{ padding: '12px 28px', background: WHITE, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={onClose} style={{ padding: '12px 28px', background: W, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 View Active Engagements
               </button>
             </div>
@@ -784,7 +785,7 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose }: 
                 <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{item.label}</div>
                 {item.value && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>{item.locked ? '✓ pre-selected' : '✓ confirmed'}</span>}
               </div>
-              <div style={{ fontFamily: SANS, fontSize: 14, color: item.value ? WHITE : '#475569', fontStyle: item.label === 'DIRECTIVE' && item.value ? 'italic' : 'normal' }}>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: item.value ? W : '#475569', fontStyle: item.label === 'DIRECTIVE' && item.value ? 'italic' : 'normal' }}>
                 {item.value ? (item.label === 'DIRECTIVE' ? `"${item.value}"` : item.value) : 'Awaiting your answer...'}
               </div>
             </div>
