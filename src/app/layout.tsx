@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 import PostHogProvider from '@/components/PostHogProvider'
+import PostHogPageView from './posthog-pageview'
 import MobileGuard from '@/components/MobileGuard'
 
 export const metadata: Metadata = {
@@ -26,6 +28,9 @@ export default function RootLayout({
       <html lang="en">
         <body>
           <PostHogProvider>
+            <Suspense fallback={null}>
+              <PostHogPageView />
+            </Suspense>
             <MobileGuard>
               {children}
             </MobileGuard>

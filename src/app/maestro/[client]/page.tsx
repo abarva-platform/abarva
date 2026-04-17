@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusFinancial, arcturusFinancials, arcturusTechnology, arcturusLeadership, arcturusRegulatory, arcturusIndustry } from '@/data/arcturus/index'
 import { meridianHealth } from '@/data/meridian/index'
@@ -1035,6 +1036,7 @@ function fmtBytes(b: number): string {
 }
 
 function DeliverablesSection({ clientId, clientName }: { clientId: string; clientName: string }) {
+  const posthog = usePostHog()
   const [docs, setDocs]         = useState<DeliverableRow[]>([])
   const [uploads, setUploads]   = useState<UploadRow[]>([])
   const [loading, setLoading]   = useState(true)
@@ -1059,11 +1061,27 @@ function DeliverablesSection({ clientId, clientName }: { clientId: string; clien
   }, [clientId])
 
   function downloadDoc(doc: DeliverableRow) {
+    posthog?.capture('deliverable_downloaded', {
+      client: clientId,
+      document_type: doc.document_type,
+      phase: doc.phase_id,
+      title: DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type,
+    })
     const blob = new Blob([doc.html_content], { type: 'text/html' })
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href = url; a.download = `${clientId}-phase${doc.phase_id}-${doc.document_type}.html`; a.click()
     URL.revokeObjectURL(url)
+  }
+
+  function viewDocument(doc: DeliverableRow) {
+    posthog?.capture('deliverable_viewed', {
+      client: clientId,
+      document_type: doc.document_type,
+      phase: doc.phase_id,
+      title: DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type,
+    })
+    setViewDoc(doc)
   }
 
   async function handleUpload() {
@@ -1199,7 +1217,7 @@ function DeliverablesSection({ clientId, clientName }: { clientId: string; clien
                             Generated {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                           </div>
                         </div>
-                        <button onClick={() => setViewDoc(doc)} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 12, color: '#3C3C3C', cursor: 'pointer' }}>View</button>
+                        <button onClick={() => viewDocument(doc)} style={{ padding: '5px 12px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 12, color: '#3C3C3C', cursor: 'pointer' }}>View</button>
                         <button onClick={() => downloadDoc(doc)} style={{ padding: '5px 12px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 12, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}>↓ HTML</button>
                       </div>
                     ))}

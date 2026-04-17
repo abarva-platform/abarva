@@ -3,6 +3,7 @@ import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
+import AbarvaMark from './AbarvaMark'
 
 const NAV_BG    = '#020408'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
@@ -250,7 +251,8 @@ function NavInner({ activePage }: NavProps) {
       }}>
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
+        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
+          <AbarvaMark size={36} />
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
             <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>

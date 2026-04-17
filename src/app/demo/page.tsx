@@ -1,6 +1,9 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
 import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
+import AbarvaMark from '@/components/AbarvaMark'
 
 const BG     = '#060A12'
 const PANEL  = '#0C0C0C'
@@ -290,7 +293,7 @@ const SCREENS: Screen[] = [
 
 const DEMO_LS_SEEDS: Record<string, object> = DEMO_SEEDS as Record<string, object>
 
-export default function DemoGuidedPage() {
+function DemoGuidedPageInner() {
   const [idx, setIdx]           = useState(0)
   const [dir, setDir]           = useState<'fwd' | 'back'>('fwd')
   const [autoOn, setAutoOn]     = useState(false)
@@ -302,6 +305,26 @@ export default function DemoGuidedPage() {
   const audioRef  = useRef<HTMLAudioElement | null>(null)
   const screen    = SCREENS[idx]
   const total     = SCREENS.length
+  const posthog   = usePostHog()
+  const searchParams = useSearchParams()
+  const ref = searchParams?.get('ref') ?? null
+
+  // Capture screen view (and completion on final screen)
+  useEffect(() => {
+    if (!posthog) return
+    posthog.capture('demo_screen_viewed', {
+      screen_number: idx + 1,
+      screen_title: SCREENS[idx].title,
+      section: SCREENS[idx].category,
+      ref,
+    })
+    if (idx === total - 1) {
+      posthog.capture('demo_completed', {
+        total_screens: total,
+        ref,
+      })
+    }
+  }, [idx, posthog, ref, total])
 
   // ── Auto-seed localStorage on mount ────────────────────────────────────────
   useEffect(() => {
@@ -442,9 +465,12 @@ export default function DemoGuidedPage() {
           display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, flexShrink: 0,
         }}>
           {/* AbarVa serif wordmark */}
-          <a href="/" style={{ textDecoration: 'none', flexShrink: 0, lineHeight: 1 }}>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: '#FAFAF9', fontWeight: 800, letterSpacing: '.05em' }}>Abar</span>
-            <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: TEAL, fontWeight: 900, letterSpacing: '.05em' }}>Va</span>
+          <a href="/" style={{ textDecoration: 'none', flexShrink: 0, lineHeight: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AbarvaMark size={22} />
+            <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: 15, color: '#FAFAF9', fontWeight: 800, letterSpacing: '.05em' }}>Abar</span>
+              <span style={{ fontFamily: 'Georgia, serif', fontSize: 18, color: TEAL, fontWeight: 900, letterSpacing: '.05em' }}>Va</span>
+            </div>
           </a>
           <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.12)', flexShrink: 0 }} />
           <span style={{ fontFamily: "'Courier New', monospace", fontSize: 10, fontWeight: 600, color: TEAL, letterSpacing: '.12em', flexShrink: 0 }}>GUIDED DEMO</span>
@@ -493,7 +519,12 @@ export default function DemoGuidedPage() {
 
           {/* Right controls */}
           <button
-            onClick={() => { setVoiceEnabled(v => !v); if (isPlaying) stopAudio() }}
+            onClick={() => {
+              const next = !voiceEnabled
+              setVoiceEnabled(next)
+              if (isPlaying) stopAudio()
+              posthog?.capture('demo_voice_toggled', { enabled: next, screen_number: idx + 1, ref })
+            }}
             style={{
               padding: '5px 14px', borderRadius: 20, cursor: 'pointer', flexShrink: 0,
               fontFamily: "'Courier New', monospace", fontSize: 11, letterSpacing: '.08em',
@@ -651,5 +682,13 @@ export default function DemoGuidedPage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function DemoGuidedPage() {
+  return (
+    <Suspense fallback={null}>
+      <DemoGuidedPageInner />
+    </Suspense>
   )
 }
