@@ -4,15 +4,14 @@ import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 
-const NAV_BG   = '#060A12'
-const NAV_BORD = '#1C2D45'
-const TEAL     = '#2DD4C8'
-const NAV_TEXT = '#EFF6FF'
-const NAV_MUTE = 'rgba(239,246,255,0.85)'
-const SANS     = 'DM Sans, sans-serif'
-const MONO     = 'JetBrains Mono, monospace'
-const SERIF    = 'Georgia, serif'
-
+const NAV_BG    = '#060A12'
+const NAV_BORD  = '#1C2D45'
+const TEAL      = '#2DD4C8'
+const NAV_TEXT  = '#EFF6FF'
+const NAV_MUTE  = 'rgba(239,246,255,0.85)'
+const SANS      = 'DM Sans, sans-serif'
+const MONO      = 'JetBrains Mono, monospace'
+const SERIF     = 'Georgia, serif'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'
@@ -20,9 +19,7 @@ const DROP_DESC = '#3C3C3C'
 const DROP_CAT  = '#2DD4C8'
 const DROP_HOVER = '#F9FAFB'
 
-interface NavProps {
-  activePage?: string
-}
+interface NavProps { activePage?: string }
 
 function NavInner({ activePage }: NavProps) {
   const [open, setOpen] = useState<string | null>(null)
@@ -40,62 +37,37 @@ function NavInner({ activePage }: NavProps) {
   const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 180) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
-  const metaRole     = user?.publicMetadata?.role       as string | undefined
-  const metaClientId = user?.publicMetadata?.clientId   as string | undefined
+  const metaRole = user?.publicMetadata?.role as string | undefined
 
   const signedIn    = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User'
   const firstName   = user?.firstName || displayName.split(' ')[0]
   const initials    = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
+  // ── Role flags ───────────────────────────────────────────────────────────
   const isAdmin    = metaRole === 'admin'
-  const isMaestro  = metaRole === 'admin'  // only admin gets full Maestro nav
-  const isClient   = metaRole === 'client'
   const isInvestor = metaRole === 'investor'
+  const isMaestro  = metaRole === 'maestro'   // separate Maestro role (mh+clerk_test, af+clerk_test)
+  const isClient   = metaRole === 'client'
+  const isOperator = signedIn && (isAdmin || isInvestor || isMaestro) // all non-client signed-in
 
-  const modulePath = (page: string) => `/${page}?client=${clientId}`
-  const intelligencePath = modulePath('intelligence')
+  // ── Paths ────────────────────────────────────────────────────────────────
+  const intelligencePath = `/intelligence?client=${clientId}`
   const avrPath = (slug: string) => `/ai-strategy?module=${slug}&client=${clientId}`
 
-  const AVR_PHASES = [
-    {
-      phase: 1, label: 'DIAGNOSE', color: '#4DA3FF',
-      modules: [
-        { name: 'Situation Intelligence',     num: '01', desc: 'What is broken — and what it costs',              path: avrPath('situation') },
-        { name: 'Contradiction Intelligence', num: '02', desc: 'What was promised vs what the data shows',         path: avrPath('contradiction') },
-        { name: 'Data Intelligence',          num: '03', desc: 'Is your data ready to support AI?',               path: avrPath('data') },
-      ],
-    },
-    {
-      phase: 2, label: 'PRESCRIBE', color: '#F59E0B',
-      modules: [
-        { name: 'Technology Intelligence',    num: '04', desc: 'Stack inventory, spend, and contract windows',     path: avrPath('technology') },
-        { name: 'Vendor Intelligence',        num: '05', desc: 'Which vendor wins in your situation — not their demo', path: avrPath('vendor') },
-        { name: 'Architecture Intelligence',  num: '06', desc: 'Target AI stack blueprint for 3 years out',       path: avrPath('architecture') },
-        { name: 'Business Case Intelligence', num: '07', desc: 'CFO-grade numbers the board will sign off on',    path: avrPath('business-case') },
-      ],
-    },
-    {
-      phase: 3, label: 'EXECUTE', color: '#34D399',
-      modules: [
-        { name: 'AI Delivery Intelligence', num: '08', desc: 'Portfolio, blockers, delivery roadmap',             path: avrPath('ai-delivery') },
-        { name: 'Outcome Intelligence',     num: '09', desc: 'Baseline locked — verified delta — fee earned',     path: avrPath('outcome') },
-        { name: 'Monthly Actuals',          num: '10', desc: 'Are the numbers moving right now?',                 path: avrPath('actuals') },
-        { name: 'Fee Calculation',          num: '11', desc: 'What AbarVa has earned — verified',                path: avrPath('fee') },
-      ],
-    },
-  ]
-
+  // ── Active states ─────────────────────────────────────────────────────────
   const avrActive = [
     'architecture', 'ai-pdlc', 'avr', 'data-intelligence', 'justify',
     'contradictions', 'outcome-intelligence', 'diagnose', 'vendor-intelligence', 'ai-strategy',
   ].includes(activePage || '')
-
   const intelligenceActive = activePage === 'intelligence'
   const solutionsActive    = activePage === 'solutions'
-  const maestroActive      = (activePage || '').startsWith('maestro')
   const adminActive        = (activePage || '').startsWith('admin')
+  const platformActive     = activePage === 'platform'
+  const investorActive     = activePage === 'investor'
+  const demoActive         = activePage === 'demo'
 
+  // ── AVR breadcrumb ────────────────────────────────────────────────────────
   const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
     'diagnose':             { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Situation Intelligence' },
     'contradictions':       { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Contradiction Intelligence' },
@@ -107,8 +79,39 @@ function NavInner({ activePage }: NavProps) {
     'outcome-intelligence': { phase: 3, phaseLabel: 'VALUE REALIZATION', phaseColor: '#34D399', moduleName: 'Outcome Intelligence' },
   }
   const crumb = MODULE_CRUMBS[activePage || '']
-  const showBreadcrumb = signedIn && isMaestro && !!crumb
+  const showBreadcrumb = (isAdmin || isMaestro) && !!crumb
 
+  // ── AVR phases ────────────────────────────────────────────────────────────
+  const AVR_PHASES = [
+    {
+      phase: 1, label: 'DIAGNOSE', color: '#4DA3FF',
+      modules: [
+        { name: 'Situation Intelligence',     num: '01', desc: 'What is broken — and what it costs',                  path: avrPath('situation') },
+        { name: 'Contradiction Intelligence', num: '02', desc: 'What was promised vs what the data shows',             path: avrPath('contradiction') },
+        { name: 'Data Intelligence',          num: '03', desc: 'Is your data ready to support AI?',                   path: avrPath('data') },
+      ],
+    },
+    {
+      phase: 2, label: 'PRESCRIBE', color: '#F59E0B',
+      modules: [
+        { name: 'Technology Intelligence',    num: '04', desc: 'Stack inventory, spend, and contract windows',         path: avrPath('technology') },
+        { name: 'Vendor Intelligence',        num: '05', desc: 'Which vendor wins in your situation — not their demo', path: avrPath('vendor') },
+        { name: 'Architecture Intelligence',  num: '06', desc: 'Target AI stack blueprint for 3 years out',           path: avrPath('architecture') },
+        { name: 'Business Case Intelligence', num: '07', desc: 'CFO-grade numbers the board will sign off on',        path: avrPath('business-case') },
+      ],
+    },
+    {
+      phase: 3, label: 'EXECUTE', color: '#34D399',
+      modules: [
+        { name: 'AI Delivery Intelligence', num: '08', desc: 'Portfolio, blockers, delivery roadmap',                 path: avrPath('ai-delivery') },
+        { name: 'Outcome Intelligence',     num: '09', desc: 'Baseline locked — verified delta — fee earned',         path: avrPath('outcome') },
+        { name: 'Monthly Actuals',          num: '10', desc: 'Are the numbers moving right now?',                     path: avrPath('actuals') },
+        { name: 'Fee Calculation',          num: '11', desc: 'What AbarVa has earned — verified',                    path: avrPath('fee') },
+      ],
+    },
+  ]
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
   const dropPanel: React.CSSProperties = {
     position: 'absolute', top: '58px', left: 0,
     background: DROP_BG, border: `1px solid ${DROP_BORD}`,
@@ -117,13 +120,121 @@ function NavInner({ activePage }: NavProps) {
   }
 
   const navLink = (label: string, href: string, active: boolean) => (
-    <a href={href} style={{
+    <a href={href} key={label} style={{
       fontSize: '13px', color: active ? TEAL : NAV_TEXT,
       padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
       borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
     }}>
       {label}
     </a>
+  )
+
+  // Admin nav item — clickable for admin, greyed + disabled for others
+  const adminNavItem = () => (
+    <a
+      href={isAdmin ? '/admin' : undefined}
+      key="admin-nav"
+      style={{
+        fontSize: '13px',
+        color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : 'rgba(255,255,255,0.25)',
+        padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+        borderBottom: isAdmin && adminActive ? `2px solid ${TEAL}` : '2px solid transparent',
+        pointerEvents: isAdmin ? 'auto' : 'none' as React.CSSProperties['pointerEvents'],
+        cursor: isAdmin ? 'pointer' : 'default',
+      }}
+    >
+      Admin
+    </a>
+  )
+
+  // Client dropdown (admin + investor)
+  const clientDropdown = () => (
+    <div style={{ position: 'relative', marginRight: '16px' }}>
+      <button
+        onClick={() => setClientToggleOpen(o => !o)}
+        style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: 'pointer' }}
+      >
+        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
+        <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
+        <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>
+      </button>
+      {clientToggleOpen && (
+        <div onMouseLeave={() => setClientToggleOpen(false)} style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: DROP_BG, border: `1px solid ${DROP_BORD}`, borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+          <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>Switch Account</div>
+          {ALL_CLIENTS.map(c => {
+            const isActive  = c.id === clientId
+            const isAllowed = !!allowedClients.find(a => a.id === c.id)
+            return (
+              <button key={c.id} onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
+                style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '7px', border: 'none', background: isActive ? `${c.color}12` : 'transparent', cursor: isAllowed ? 'pointer' : 'default', opacity: isAllowed ? 1 : 0.35 }}
+              >
+                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
+                <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>{c.shortName}</div>
+                {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color, marginLeft: 'auto' }}>✓</span>}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+
+  // Static client label (maestro — locked to their client)
+  const staticClientLabel = () => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginRight: '16px', padding: '4px 8px 4px 0' }}>
+      <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
+      <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
+    </div>
+  )
+
+  // AVR mega-menu
+  const avrMegaMenu = () => (
+    <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
+      <button style={{ fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', color: avrActive ? TEAL : NAV_TEXT, borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent' }}>
+        AI Value Realization ▾
+      </button>
+      {open === 'avr' && (
+        <div style={{ ...dropPanel, minWidth: '780px', padding: '0', left: '50%', transform: 'translateX(-50%)' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
+          <div style={{ padding: '14px 24px 12px', borderBottom: `1px solid ${DROP_BORD}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: DROP_HEAD }}>AI Value Realization Navigator</div>
+              <div style={{ fontFamily: SANS, fontSize: '11px', color: DROP_DESC, marginTop: '2px' }}>3 phases · 11 modules · gate-locked delivery</div>
+            </div>
+            <a href={`/ai-strategy?client=${clientId}`} onClick={() => setOpen(null)} style={{ fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 600, textDecoration: 'none', padding: '6px 14px', border: `1px solid rgba(45,212,200,0.35)`, borderRadius: '6px', background: 'rgba(45,212,200,0.05)' }}>
+              Open Navigator →
+            </a>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0' }}>
+            {AVR_PHASES.map((phase, pi) => (
+              <div key={phase.phase} style={{ padding: '16px 20px 20px', borderRight: pi < AVR_PHASES.length - 1 ? `1px solid ${DROP_BORD}` : 'none' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: phase.color, flexShrink: 0 }} />
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>Phase {phase.phase}</div>
+                    <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 700, color: phase.color, letterSpacing: '.04em' }}>{phase.label}</div>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  {phase.modules.map(item => (
+                    <a key={item.name} href={item.path} onClick={() => setOpen(null)}
+                      style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 8px', textDecoration: 'none', borderRadius: '6px' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <span style={{ fontFamily: MONO, fontSize: '9px', color: DROP_CAT, marginTop: '3px', flexShrink: 0, width: '16px' }}>{item.num}</span>
+                      <div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS, lineHeight: 1.3 }}>{item.name}</div>
+                        <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px', lineHeight: 1.4 }}>{item.desc}</div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 
   return (
@@ -135,7 +246,7 @@ function NavInner({ activePage }: NavProps) {
         boxSizing: 'border-box',
       }}>
 
-        {/* ── Wordmark ────────────────────────────────────────────────────────── */}
+        {/* ── Wordmark ─────────────────────────────────────────────────────── */}
         <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', marginRight: '24px', flexShrink: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
             <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
@@ -143,124 +254,63 @@ function NavInner({ activePage }: NavProps) {
           </div>
         </a>
 
-        {/* ── ELEVATED (admin + investor): client switcher + full Maestro nav ─── */}
-        {signedIn && isMaestro && (
+        {/* ══════════════════════════════════════════════════════════════════
+            ADMIN — Intelligence · Solutions · AI Value Realization · Admin
+        ══════════════════════════════════════════════════════════════════ */}
+        {signedIn && isAdmin && (
           <>
-            {/* Client switcher */}
-            <div style={{ position: 'relative', marginRight: '16px' }}>
-              <button
-                onClick={() => canSwitch ? setClientToggleOpen(o => !o) : undefined}
-                style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: canSwitch ? 'pointer' : 'default' }}
-              >
-                <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
-                <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: NAV_TEXT }}>{currentClient.shortName}</span>
-                {canSwitch && <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_MUTE }}>▾</span>}
-              </button>
-              {canSwitch && clientToggleOpen && (
-                <div onMouseLeave={() => setClientToggleOpen(false)} style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, background: DROP_BG, border: `1px solid ${DROP_BORD}`, borderRadius: '10px', padding: '6px', zIndex: 400, minWidth: '220px', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
-                  <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', padding: '4px 8px 8px', textTransform: 'uppercase' }}>Switch Account</div>
-                  {ALL_CLIENTS.map(c => {
-                    const isActive  = c.id === clientId
-                    const isAllowed = !!allowedClients.find(a => a.id === c.id)
-                    return (
-                      <button key={c.id} onClick={() => { if (isAllowed) { switchClient(c.id); setClientToggleOpen(false) } }}
-                        style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 10px', borderRadius: '7px', border: 'none', background: isActive ? `${c.color}12` : 'transparent', cursor: isAllowed ? 'pointer' : 'default', opacity: isAllowed ? 1 : 0.35 }}
-                      >
-                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: c.color, flexShrink: 0 }} />
-                        <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: isActive ? 600 : 400, color: isActive ? c.color : DROP_HEAD }}>{c.shortName}</div>
-                        {isActive && <span style={{ fontFamily: MONO, fontSize: '9px', color: c.color, marginLeft: 'auto' }}>✓</span>}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {navLink('Platform', '/platform', activePage === 'platform')}
+            {clientDropdown()}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
-
-            {/* AI Value Realization mega-menu */}
-            <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
-              <button style={{ fontSize: '13px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', color: avrActive ? TEAL : NAV_TEXT, borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-                AI Value Realization ▾
-              </button>
-              {open === 'avr' && (
-                <div style={{ ...dropPanel, minWidth: '780px', padding: '0', left: '50%', transform: 'translateX(-50%)' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
-                  <div style={{ padding: '14px 24px 12px', borderBottom: `1px solid ${DROP_BORD}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div>
-                      <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: DROP_HEAD }}>AI Value Realization Navigator</div>
-                      <div style={{ fontFamily: SANS, fontSize: '11px', color: DROP_DESC, marginTop: '2px' }}>3 phases · 11 modules · gate-locked delivery</div>
-                    </div>
-                    <a href={`/ai-strategy?client=${clientId}`} onClick={() => setOpen(null)} style={{ fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 600, textDecoration: 'none', padding: '6px 14px', border: `1px solid rgba(45,212,200,0.35)`, borderRadius: '6px', background: 'rgba(45,212,200,0.05)' }}>
-                      Open Navigator →
-                    </a>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0' }}>
-                    {AVR_PHASES.map((phase, pi) => (
-                      <div key={phase.phase} style={{ padding: '16px 20px 20px', borderRight: pi < AVR_PHASES.length - 1 ? `1px solid ${DROP_BORD}` : 'none' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                          <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: phase.color, flexShrink: 0 }} />
-                          <div>
-                            <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>Phase {phase.phase}</div>
-                            <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 700, color: phase.color, letterSpacing: '.04em' }}>{phase.label}</div>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          {phase.modules.map(item => (
-                            <a key={item.name} href={item.path} onClick={() => setOpen(null)}
-                              style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 8px', textDecoration: 'none', borderRadius: '6px' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                            >
-                              <span style={{ fontFamily: MONO, fontSize: '9px', color: DROP_CAT, marginTop: '3px', flexShrink: 0, width: '16px' }}>{item.num}</span>
-                              <div>
-                                <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS, lineHeight: 1.3 }}>{item.name}</div>
-                                <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px', lineHeight: 1.4 }}>{item.desc}</div>
-                              </div>
-                            </a>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Maestro + Admin links — admin role only */}
-            {isAdmin && navLink('Maestro', '/maestro', maestroActive)}
-            {isAdmin && navLink('Admin', '/admin', adminActive)}
+            {avrMegaMenu()}
+            {adminNavItem()}
           </>
         )}
 
-        {/* ── INVESTOR ROLE: minimal nav (Platform + Investor only) ──────────── */}
+        {/* ══════════════════════════════════════════════════════════════════
+            INVESTOR — Platform · Intelligence · Solutions · AVR · Admin(grey)
+            CLIENT TOGGLE: full dropdown, all clients
+        ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isInvestor && (
           <>
-            {navLink('Platform', '/platform', activePage === 'platform')}
-            {navLink('Investor', '/investor', activePage === 'investor')}
+            {clientDropdown()}
+            {navLink('Platform', '/platform', platformActive)}
+            {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('Solutions', '/solutions', solutionsActive)}
+            {avrMegaMenu()}
+            {adminNavItem()}
           </>
         )}
 
-        {/* ── PUBLIC / CLIENT: Platform + Solutions + Investor + Demo ─────────── */}
+        {/* ══════════════════════════════════════════════════════════════════
+            MAESTRO — Platform · Intelligence · Solutions · AVR · Admin(grey)
+            CLIENT TOGGLE: static label only (locked to their client)
+        ══════════════════════════════════════════════════════════════════ */}
+        {signedIn && isMaestro && (
+          <>
+            {staticClientLabel()}
+            {navLink('Platform', '/platform', platformActive)}
+            {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('Solutions', '/solutions', solutionsActive)}
+            {avrMegaMenu()}
+            {adminNavItem()}
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            UNAUTHENTICATED / CLIENT — Platform · Solutions · Investor · Demo
+        ══════════════════════════════════════════════════════════════════ */}
         {(!signedIn || isClient) && (
           <>
-            {navLink('Platform', '/platform', activePage === 'platform')}
+            {navLink('Platform', '/platform', platformActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
-            {navLink('Investor', '/investor', activePage === 'investor')}
-            {navLink('Demo', '/demo', activePage === 'demo')}
+            {navLink('Investor', '/investor', investorActive)}
+            {navLink('Demo', '/demo', demoActive)}
           </>
         )}
 
-        {/* ── Right side ──────────────────────────────────────────────────────── */}
+        {/* ── Right side ───────────────────────────────────────────────────── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-
-          {/* Investor role: CONFIDENTIAL label */}
-          {signedIn && isInvestor && (
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontFamily: MONO, letterSpacing: '0.06em', textTransform: 'uppercase' as const }}>
-              CONFIDENTIAL · SEED 2026
-            </div>
-          )}
 
           {signedIn ? (
             <div style={{ position: 'relative' }}>
@@ -271,7 +321,7 @@ function NavInner({ activePage }: NavProps) {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{firstName}</div>
                   <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>
-                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isClient ? 'Client' : ''}
+                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
                   </div>
                 </div>
                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(45,212,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
@@ -284,10 +334,10 @@ function NavInner({ activePage }: NavProps) {
                   <div style={{ padding: '8px 14px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '4px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, fontWeight: 600 }}>{displayName}</div>
                     <div style={{ fontFamily: MONO, fontSize: '9px', color: '#6B7280', marginTop: '2px' }}>
-                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isClient ? 'Client' : ''}
+                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
                     </div>
                   </div>
-                  {isMaestro && (
+                  {(isAdmin || isMaestro) && (
                     <a href="/maestro" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
                       onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
@@ -326,7 +376,7 @@ function NavInner({ activePage }: NavProps) {
 
       </div>
 
-      {/* ── AVR breadcrumb ───────────────────────────────────────────────────────── */}
+      {/* ── AVR breadcrumb (admin + maestro only) ─────────────────────────── */}
       {showBreadcrumb && crumb && (
         <div style={{ height: '30px', background: NAV_BG, borderBottom: `1px solid ${NAV_BORD}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: '8px' }}>
           <a href={`/ai-strategy?client=${clientId}`} style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.06em', opacity: 0.9 }}>AI Value Realization</a>
