@@ -220,14 +220,21 @@ function OrgDiagram({ nodes, lines }: { nodes: OrgNode[]; lines: [string, string
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 1 — COMPANY PROFILE
 // ─────────────────────────────────────────────────────────────────────────────
-function CompanySection({ intel, isMeridian, patternCount }: { intel: ClientIntelligence; isMeridian: boolean; patternCount: number }) {
+const CLIENT_H1: Record<string, React.ReactNode> = {
+  meridian: <><span style={{ color: '#EF4444' }}>$94M in annual write-offs.</span><br />Epic go-live is 90 days out.</>,
+  arcturus: <>71% cost-to-income. The peer median is 58.<br /><span style={{ color: '#EF4444' }}>$840M in efficiency, unaccounted for.</span></>,
+  apexretail: <><span style={{ color: '#EF4444' }}>$180M in annual markdowns</span> from broken forecasting.<br />Teradata end-of-life. No migration plan.</>,
+}
+
+function CompanySection({ intel, isMeridian, clientId }: { intel: ClientIntelligence; isMeridian: boolean; clientId: string }) {
+  const h1 = CLIENT_H1[clientId] ?? <>{intel.name}.<br />Intelligence ready.</>
   return (
     <section id="company-profile" style={{ background: LBG, scrollMarginTop: '110px' }}>
       <div style={W}>
         {/* Opening statement */}
         <div style={{ marginBottom: 64 }}>
           <h1 style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: LTEXT, lineHeight: 1.15, margin: '0 0 24px' }}>
-            Client data.<br />{patternCount} failure patterns matched.<br />Sector intelligence.
+            {h1}
           </h1>
           <p style={{ fontFamily: SANS, fontSize: 20, color: LBODY, lineHeight: 1.7, maxWidth: 900, margin: 0 }}>
             {isMeridian
@@ -1232,13 +1239,12 @@ function IntelligenceInner() {
   const totalValue = AI_TOTAL_VALUE[clientId as keyof typeof AI_TOTAL_VALUE] ?? '$277M'
   const active = useActiveSection()
   const isMeridian = clientId === 'meridian'
-  const patternCount = intel.genome.length
 
   return (
     <div style={{ background: LBG }}>
       <AbarvaNav activePage="intelligence" />
       <StickyNav active={active} intel={intel} />
-      <CompanySection intel={intel} isMeridian={isMeridian} patternCount={patternCount} />
+      <CompanySection intel={intel} isMeridian={isMeridian} clientId={clientId} />
       <LeadershipSection intel={intel} isMeridian={isMeridian} />
       <SituationSection findings={findings} isMeridian={isMeridian} />
       <ContradictionsSection intel={intel} isMeridian={isMeridian} />
