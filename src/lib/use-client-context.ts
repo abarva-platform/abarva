@@ -76,8 +76,8 @@ export function useClientContext() {
   function switchClient(newId: string) {
     if (!allowedClients.find(c => c.id === newId)) return // silently ignore unauthorized switch
     writeLocalStorage(newId)
-    // On the Maestro home, switching client goes directly to that client's workspace
-    if (pathname === '/maestro') {
+    // On any Maestro page, switching client navigates to that client's workspace
+    if (pathname === '/maestro' || pathname.startsWith('/maestro/')) {
       router.push(`/maestro/${newId}`)
       return
     }
