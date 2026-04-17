@@ -2871,11 +2871,11 @@ function MaestroGuideView() {
             { label: 'Video Walkthrough', sub: 'Coming soon', icon: '▶' },
             { label: 'Live Demo — Meridian', sub: 'Coming soon', icon: '◎' },
           ].map((r, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', opacity: 0.4 }}>
-              <span style={{ fontSize: 12, color: '#6B7280', width: 18, textAlign: 'center' as const }}>{r.icon}</span>
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
+              <span style={{ fontSize: 12, color: '#9CA3AF', width: 18, textAlign: 'center' as const }}>{r.icon}</span>
               <div>
-                <div style={{ fontFamily: SANS, fontSize: 12, color: '#6B7280' }}>{r.label}</div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: '#4B5563' }}>{r.sub}</div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: '#D1D5DB' }}>{r.label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em' }}>{r.sub}</div>
               </div>
             </div>
           ))}
