@@ -617,30 +617,26 @@ function DashboardGrid({ clientId }: { clientId: string }) {
   const cards = DASHBOARD_DATA[clientId] ?? DASHBOARD_DATA['meridian']
   const BDR = '#E8E6E3'
   const DOT: Record<DimDotColor, string> = { red: '#DC2626', green: '#16A34A', amber: '#D97706', grey: '#D1D5DB' }
+  const F = SANS
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-      {cards.map(card => (
-        <div key={card.title} style={{ background: '#FFFFFF', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '16px' }}>
-          <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', marginBottom: '14px' }}>{card.title}</div>
-          <div style={{ display: 'flex', flexDirection: 'column' as const }}>
-            {card.metrics.map((m, mi) => (
-              <div key={m.name}>
-                {mi > 0 && <div style={{ height: '1px', background: BDR, margin: '9px 0' }} />}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66' }}>{m.name}</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                    <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{m.value}</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: DOT[m.dot], display: 'inline-block', flexShrink: 0 }} />
-                      <span style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', whiteSpace: 'nowrap' as const }}>{m.label}</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: `1px solid ${BDR}` }}>
-            <a href={card.href} style={{ fontFamily: SANS, fontSize: '12px', color: '#706D66', textDecoration: 'none' }}>{card.footer}</a>
+    <div style={{ border: `1px solid ${BDR}`, borderRadius: '6px', marginBottom: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', background: '#fff' }}>
+      {cards.map((card, ci) => (
+        <div key={card.title} style={{ padding: '16px 20px', borderLeft: ci > 0 ? `1px solid ${BDR}` : 'none' }}>
+          {/* Section label */}
+          <div style={{ fontFamily: F, fontSize: '12px', color: '#9CA3AF', marginBottom: '12px' }}>{card.title}</div>
+          {/* Metric rows */}
+          {card.metrics.map((m, mi) => (
+            <div key={m.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '36px', borderTop: mi > 0 ? `1px solid ${BDR}` : 'none' }}>
+              <span style={{ fontFamily: F, fontSize: '13px', color: '#706D66' }}>{m.name}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                <span style={{ fontFamily: F, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{m.value}</span>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: DOT[m.dot], display: 'inline-block', flexShrink: 0 }} />
+              </span>
+            </div>
+          ))}
+          {/* Footer */}
+          <div style={{ borderTop: `1px solid ${BDR}`, marginTop: '4px', paddingTop: '10px' }}>
+            <a href={card.href} style={{ fontFamily: F, fontSize: '12px', color: '#9CA3AF', textDecoration: 'none' }}>{card.footer}</a>
           </div>
         </div>
       ))}
@@ -1881,85 +1877,65 @@ function EngagementsSection({
       <DashboardGrid clientId={clientId} />
 
       {/* Engagements Table */}
-      <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', marginBottom: '10px' }}>Active Engagements</div>
-      <div style={{ background: '#fff', border: `1px solid ${BDR}`, borderRadius: '8px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' as const }}>
+      <div style={{ fontFamily: SANS, fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>Active Engagements</div>
+      <div style={{ border: `1px solid ${BDR}`, borderRadius: '6px', overflow: 'hidden', background: '#fff' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontFamily: SANS, fontSize: '13px' }}>
           <thead>
-            <tr style={{ background: '#F8F7F4', borderBottom: `1px solid ${BDR}` }}>
+            <tr style={{ borderBottom: `1px solid ${BDR}` }}>
               {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', ''].map(h => (
-                <th key={h} style={{ padding: '10px 16px', fontFamily: SANS, fontSize: '11px', fontWeight: 600, color: '#9CA3AF', textAlign: 'left' as const }}>
+                <th key={h} style={{ padding: '10px 16px', fontFamily: SANS, fontSize: '12px', fontWeight: 400, color: '#9CA3AF', textAlign: 'left' as const, background: '#FAFAF9' }}>
                   {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {engagements.map((eng, i) => (
-              <tr key={eng.id}
-                onMouseEnter={ev => (ev.currentTarget.style.background = '#F8F7F4')}
-                onMouseLeave={ev => (ev.currentTarget.style.background = 'transparent')}
-              >
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{eng.name}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{eng.type === 'AI Value Realization' ? 'AVR' : 'Solution'}</div>
-                </td>
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  <div style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D' }}>{eng.sponsor.split(' · ')[0]}</div>
-                  <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{eng.sponsor.split(' · ')[1] ?? ''}</div>
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  Phase {eng.phase}
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  {eng.status}
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  {eng.maestro}
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  {eng.value}
-                </td>
-                <td style={{ padding: '12px 16px', fontFamily: SANS, fontSize: '13px', color: '#706D66', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const }}>
-                  {eng.priority}
-                </td>
-                <td style={{ padding: '12px 16px', borderBottom: i < engagements.length - 1 ? `1px solid ${BDR}` : 'none', verticalAlign: 'middle' as const, textAlign: 'right' as const }}>
-                  <a
-                    href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
-                    onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
-                    style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', textDecoration: 'none', whiteSpace: 'nowrap' as const }}
-                  >
-                    {eng.status === 'In Progress' ? 'Continue →' : eng.status === 'Backlog' ? 'Start →' : 'View →'}
-                  </a>
-                </td>
-              </tr>
-            ))}
+            {engagements.map((eng, i) => {
+              const bd = i < engagements.length - 1 ? `1px solid ${BDR}` : 'none'
+              const td: React.CSSProperties = { padding: '11px 16px', borderBottom: bd, color: '#0F0E0D', verticalAlign: 'middle' }
+              const tdg: React.CSSProperties = { padding: '11px 16px', borderBottom: bd, color: '#706D66', verticalAlign: 'middle' }
+              return (
+                <tr key={eng.id}>
+                  <td style={td}>{eng.name}</td>
+                  <td style={tdg}>{eng.sponsor.split(' · ')[0]}</td>
+                  <td style={tdg}>Phase {eng.phase}</td>
+                  <td style={tdg}>{eng.status}</td>
+                  <td style={tdg}>{eng.maestro}</td>
+                  <td style={{ ...td, fontWeight: 600 }}>{eng.value}</td>
+                  <td style={tdg}>{eng.priority}</td>
+                  <td style={{ ...tdg, textAlign: 'right' }}>
+                    <a
+                      href={eng.status === 'In Progress' ? `/engage/${clientId}/${eng.slug}` : '#'}
+                      onClick={eng.status !== 'In Progress' ? (ev) => { ev.preventDefault(); setChatSolution(null); setShowChat(true) } : undefined}
+                      style={{ color: '#0F0E0D', textDecoration: 'none' }}
+                    >
+                      {eng.status === 'In Progress' ? 'Continue →' : 'Start →'}
+                    </a>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Data Readiness Row */}
-      <div style={{ background: '#fff', border: `1px solid ${BDR}`, borderRadius: '8px', padding: '16px', display: 'flex', alignItems: 'center', gap: '24px', marginTop: '12px' }}>
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>Data Readiness</div>
-          <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>{data.name}</div>
+      {/* Data Readiness */}
+      <div style={{ border: `1px solid ${BDR}`, borderRadius: '6px', background: '#fff', marginTop: '10px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderBottom: `1px solid ${BDR}` }}>
+          <span style={{ fontFamily: SANS, fontSize: '12px', color: '#9CA3AF' }}>Data Readiness</span>
+          <span style={{ fontFamily: SANS, fontSize: '13px', fontWeight: 600, color: '#0F0E0D' }}>{readinessScore} / 100</span>
         </div>
-        <div style={{ flexShrink: 0 }}>
-          <div style={{ fontFamily: SANS, fontSize: '20px', fontWeight: 700, color: '#0F0E0D' }}>{readinessScore}<span style={{ fontSize: '13px', fontWeight: 400, color: '#9CA3AF' }}> / 100</span></div>
-          <div style={{ fontFamily: SANS, fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>AI Readiness Score</div>
+        {missingFiles.map((f, idx) => (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderBottom: idx < missingFiles.length - 1 ? `1px solid ${BDR}` : 'none' }}>
+            <span style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66' }}>{f}</span>
+            <span style={{ fontFamily: SANS, fontSize: '12px', color: '#9CA3AF' }}>Missing</span>
+          </div>
+        ))}
+        <div style={{ padding: '11px 16px', borderTop: missingFiles.length > 0 ? `1px solid ${BDR}` : 'none' }}>
+          <button onClick={() => onNavigate('uploads')} style={{ fontFamily: SANS, fontSize: '13px', color: '#706D66', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
+            Upload data →
+          </button>
         </div>
-        <div style={{ display: 'flex', gap: '6px', flex: 1, flexWrap: 'wrap' as const }}>
-          {missingFiles.map((f, idx) => (
-            <span key={idx} style={{ fontFamily: SANS, fontSize: '11px', color: '#706D66', padding: '3px 8px', borderRadius: '4px', border: `1px solid ${BDR}`, whiteSpace: 'nowrap' as const }}>
-              {f} — missing
-            </span>
-          ))}
-        </div>
-        <button
-          onClick={() => onNavigate('uploads')}
-          style={{ fontFamily: SANS, fontSize: '13px', color: '#0F0E0D', fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap' as const, background: 'none', border: 'none', flexShrink: 0 }}
-        >
-          Upload data →
-        </button>
       </div>
     </div>
   )
