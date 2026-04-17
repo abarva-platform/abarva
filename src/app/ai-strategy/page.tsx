@@ -743,6 +743,13 @@ function AIStrategyInner() {
 
   // Load / init on client change
   useEffect(() => {
+    const STORAGE_KEY = lsKey(clientId)
+
+    // Reset support: ?reset=true wipes state so fresh initialisation runs
+    if (searchParams.get('reset') === 'true') {
+      localStorage.removeItem(STORAGE_KEY)
+    }
+
     // Try to read engagement context from Setup handoff
     let ctx: EngagementContext | null = null
     if (skipSetup && engagementId) {
@@ -755,11 +762,22 @@ function AIStrategyInner() {
       } catch { /* ignore */ }
     }
 
-    const saved = loadSaved(clientId)
+    // Guard: validate shape before trusting existing state
+    let saved: SavedState | null = null
+    const existing = localStorage.getItem(STORAGE_KEY)
+    if (existing) {
+      try {
+        const parsed = JSON.parse(existing)
+        if (parsed?.stepStatuses && parsed?.phaseStatuses) {
+          saved = parsed as SavedState
+        }
+      } catch { /* ignore */ }
+    }
+
     if (saved && !ctx) {
       setSt(saved)
       const newCollapsed = new Set<number>()
-      PHASE_DEFS.forEach(p => { if (saved.phaseStatuses[p.id] === 'locked') newCollapsed.add(p.id) })
+      PHASE_DEFS.forEach(p => { if (saved!.phaseStatuses[p.id] === 'locked') newCollapsed.add(p.id) })
       setCollapsed(newCollapsed)
     } else {
       const init = makeInitial()
@@ -782,7 +800,12 @@ function AIStrategyInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId])
 
-  useEffect(() => { persist(clientId, st) }, [clientId, st])
+  // Persist whenever st changes — intentionally excludes clientId from deps.
+  // Including clientId caused a race: on client switch the effect fired with the
+  // new clientId but the previous client's st (stale closure), overwriting the
+  // new client's saved state before the load effect above could restore it.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { persist(clientId, st) }, [st])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
