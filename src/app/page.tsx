@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useUser } from '@clerk/nextjs'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const LBG   = '#F8F7F4'
@@ -22,6 +23,24 @@ const SERIF = 'Georgia, serif'
 
 export default function Homepage() {
   const [activeStep, setActiveStep] = useState(0)
+  const { user, isLoaded } = useUser()
+
+  const role       = user?.publicMetadata?.role       as string | undefined
+  const metaClient = user?.publicMetadata?.clientId   as string | undefined
+
+  // Admin and investor can access any client workspace
+  const isElevated = isLoaded && !!user && (role === 'admin' || role === 'investor')
+  // Restricted roles (maestro/client) are locked to their assigned client
+  const isRestricted = isLoaded && !!user && !isElevated
+
+  // "See it live" target: assigned client for restricted users, meridian for everyone else
+  const seeItLiveHref = isRestricted && metaClient
+    ? `/maestro/${metaClient}`
+    : '/maestro/meridian'
+
+  // Which explore cards are accessible
+  const canAccessMeridian = !isRestricted || metaClient === 'meridian'
+  const canAccessArcturus = !isRestricted || metaClient === 'arcturus'
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: SANS }}>
@@ -40,8 +59,8 @@ export default function Homepage() {
             AbarVa is the first platform that arrives knowing your data, embeds Maestros through execution, and only charges when outcomes are verified.
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
-            <a href="/diagnose?client=meridian" style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
-              See it with Meridian Health →
+            <a href={seeItLiveHref} style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
+              See it live →
             </a>
             <a href="/demo" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
               Watch a demo
@@ -236,8 +255,9 @@ export default function Homepage() {
                 'Epic go-live Q3 2026 — no AI integration path confirmed',
                 'Travel nurse cost $20M above target — F011 pattern active',
               ],
-              href: '/intelligence?client=meridian',
+              href: '/maestro/meridian',
               cta: 'Explore Meridian →',
+              canAccess: canAccessMeridian,
             },
             {
               vertical: 'Financial Services · $8.4B AUM',
@@ -250,11 +270,12 @@ export default function Homepage() {
                 '$94M AI committed — zero with documented baseline',
                 'CDO role vacant 11 months — F007 pattern active',
               ],
-              href: '/intelligence?client=arcturus',
+              href: '/maestro/arcturus',
               cta: 'Explore Arcturus →',
+              canAccess: canAccessArcturus,
             },
           ].map(c => (
-            <div key={c.name} style={{ background: DCARD, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 36 }}>
+            <div key={c.name} style={{ background: DCARD, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 36, opacity: c.canAccess ? 1 : 0.45 }}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.dotColor }} />
                 <span style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, textTransform: 'uppercase', letterSpacing: '.1em' }}>{c.vertical}</span>
@@ -270,9 +291,15 @@ export default function Homepage() {
                   </div>
                 ))}
               </div>
-              <a href={c.href} style={{ fontSize: 14, fontWeight: 600, color: TEAL, border: '1px solid rgba(45,212,200,0.4)', padding: '10px 20px', borderRadius: 6, background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
-                {c.cta}
-              </a>
+              {c.canAccess ? (
+                <a href={c.href} style={{ fontSize: 14, fontWeight: 600, color: TEAL, border: '1px solid rgba(45,212,200,0.4)', padding: '10px 20px', borderRadius: 6, background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
+                  {c.cta}
+                </a>
+              ) : (
+                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 20px', borderRadius: 6, display: 'inline-block', cursor: 'not-allowed' }}>
+                  {c.cta}
+                </span>
+              )}
             </div>
           ))}
         </div>
