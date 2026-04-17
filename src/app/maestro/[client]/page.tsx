@@ -8,6 +8,7 @@ import { meridianHealth } from '@/data/meridian/index'
 import { apexRetail } from '@/data/apexretail/index'
 import { CLIENT_IT_DATA } from '@/lib/client-it-data'
 import { getClientIntelligence } from '@/lib/client-intelligence'
+import { supabase } from '@/lib/supabase'
 
 const BG='#F8F7F4', CARD='#FFFFFF', BORDER='#E2E1DC'
 const TEAL='#2DD4C8', WHITE='#0C0C0C', MUTED='#3C3C3C', DIM='#888888'
@@ -823,6 +824,157 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
         </div>
 
       </div>
+    </div>
+  )
+}
+
+// ── Deliverables Section ──────────────────────────────────────────────────────
+interface DeliverableRow {
+  id: string
+  engagement_id: string
+  client_id: string
+  phase: number
+  document_type: string
+  title: string
+  html_content: string
+  generated_at: string
+  generated_by: string
+}
+
+const PHASE_NAMES: Record<number, string> = {
+  0: 'Readiness', 1: 'Diagnose', 2: 'Prescribe', 3: 'Value Realization', 4: 'Execute & Verify',
+}
+const DOC_TYPE_LABELS: Record<string, string> = {
+  situation_brief: 'Situation Brief', diagnose_report: 'Diagnose Report',
+  architecture: 'Architecture', roadmap: 'Roadmap', monthly_actuals: 'Value & KPI Framework',
+  board_pack: 'Board Pack', fee_calculation: 'Fee Calculation', gate_approval: 'Gate Approval',
+}
+
+function DeliverablesSection({ clientId, clientName }: { clientId: string; clientName: string }) {
+  const [docs, setDocs]       = useState<DeliverableRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [viewDoc, setViewDoc] = useState<DeliverableRow | null>(null)
+
+  useEffect(() => {
+    supabase
+      .from('engagement_deliverables')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('generated_at', { ascending: true })
+      .then(({ data }: { data: DeliverableRow[] | null }) => { setDocs(data ?? []); setLoading(false) })
+  }, [clientId])
+
+  function download(doc: DeliverableRow) {
+    const blob = new Blob([doc.html_content], { type: 'text/html' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href = url
+    a.download = `${doc.engagement_id}-${doc.document_type}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  // Group: engagement_id → phase → rows
+  const grouped: Record<string, Record<number, DeliverableRow[]>> = {}
+  for (const d of docs) {
+    if (!grouped[d.engagement_id]) grouped[d.engagement_id] = {}
+    if (!grouped[d.engagement_id][d.phase]) grouped[d.engagement_id][d.phase] = []
+    grouped[d.engagement_id][d.phase].push(d)
+  }
+  const engIds = Object.keys(grouped)
+
+  return (
+    <div style={{ padding: '28px 32px', maxWidth: 860 }}>
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ fontFamily: SERIF, fontSize: 22, color: '#0C0C0C', fontWeight: 400, marginBottom: 6 }}>Deliverables</div>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: '#706D66' }}>All generated documents for {clientName}</div>
+      </div>
+
+      {loading && <div style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', padding: '24px 0' }}>Loading…</div>}
+      {!loading && engIds.length === 0 && (
+        <div style={{ background: '#F9F9F8', border: '1px solid #E5E7EB', borderRadius: 10, padding: '32px 28px', textAlign: 'center' as const }}>
+          <div style={{ fontFamily: SERIF, fontSize: 18, color: '#0C0C0C', marginBottom: 8 }}>No documents yet</div>
+          <div style={{ fontFamily: SANS, fontSize: 14, color: '#706D66' }}>Documents are generated automatically when each phase is completed in the AVR Navigator.</div>
+        </div>
+      )}
+
+      {engIds.map(engId => (
+        <div key={engId} style={{ marginBottom: 32, background: '#fff', border: '1px solid #E5E7EB', borderRadius: 10, overflow: 'hidden' }}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid #F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#0C0C0C', marginBottom: 2 }}>{engId}</div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>{docs.filter(d => d.engagement_id === engId).length} documents</div>
+            </div>
+          </div>
+
+          {Object.entries(grouped[engId])
+            .sort(([a], [b]) => Number(a) - Number(b))
+            .map(([phaseStr, phaseDocs]) => (
+              <div key={phaseStr}>
+                <div style={{ padding: '8px 20px 4px', background: '#F9F9F8', borderBottom: '1px solid #F3F4F6' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>
+                    Phase {phaseStr} · {PHASE_NAMES[Number(phaseStr)] ?? ''}
+                  </span>
+                </div>
+                {phaseDocs.map(doc => (
+                  <div key={doc.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid #F9F9F8', gap: 12 }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontFamily: SANS, fontSize: 14, color: '#0C0C0C', marginBottom: 2 }}>
+                        {DOC_TYPE_LABELS[doc.document_type] ?? doc.document_type}
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF' }}>
+                        {new Date(doc.generated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {doc.generated_by ? ` · ${doc.generated_by}` : ''}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setViewDoc(doc)}
+                      style={{ padding: '6px 14px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#0C0C0C', cursor: 'pointer' }}
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => download(doc)}
+                      style={{ padding: '6px 14px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
+                    >
+                      Download
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ))
+          }
+        </div>
+      ))}
+
+      {/* Full-screen document viewer */}
+      {viewDoc && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(0,0,0,0.9)', overflow: 'auto' }}>
+          <div style={{ position: 'sticky', top: 0, background: '#0F0E0D', padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 10 }}>
+            <div>
+              <span style={{ fontFamily: SANS, fontSize: 14, color: '#fff' }}>{viewDoc.title}</span>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: '#9CA3AF', marginLeft: 12 }}>{viewDoc.engagement_id}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => download(viewDoc)}
+                style={{ padding: '7px 16px', background: TEAL, border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: '#060A12', cursor: 'pointer' }}
+              >
+                Download
+              </button>
+              <button
+                onClick={() => setViewDoc(null)}
+                style={{ padding: '7px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 6, fontFamily: SANS, fontSize: 13, color: '#fff', cursor: 'pointer' }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          <div style={{ background: '#fff', minHeight: 'calc(100vh - 52px)' }}>
+            <div dangerouslySetInnerHTML={{ __html: viewDoc.html_content }} />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -2600,14 +2752,7 @@ export default function MaestroClientPage() {
         return <ValueDashboard clientId={clientId} />
       case 'deliverables':
       case 'board-packs':
-        return (
-          <div style={{ padding: '24px 28px' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0C0C0C', fontFamily: SANS, marginBottom: 8 }}>
-              {activeSection === 'deliverables' ? 'Deliverables' : 'Board Packs'}
-            </div>
-            <div style={{ fontSize: 13, color: '#6B7280', fontFamily: SANS }}>Coming soon.</div>
-          </div>
-        )
+        return <DeliverablesSection clientId={clientId} clientName={data!.name} />
     }
   }
 

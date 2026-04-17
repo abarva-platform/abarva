@@ -5,6 +5,8 @@ import { useClientContext } from '@/lib/use-client-context'
 import { useSearchParams } from 'next/navigation'
 import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
 import { supabase } from '@/lib/supabase'
+import { generateDeliverables } from '@/lib/generate-deliverable'
+import type { OutcomeItem as GenOutcomeItem } from '@/lib/generate-deliverable'
 
 // ── Design tokens — exact from Solutions page ─────────────────────────────────
 const LBG   = '#F8F7F4'
@@ -933,6 +935,28 @@ function AIStrategyInner() {
     completeStep('D', customVal)
   }
 
+  async function saveDeliverables(phase: number, phaseOutcomes: GenOutcomeItem[]) {
+    const engId = engagementParam ?? engCtx?.engagement_id ?? `${clientId}-${Date.now()}`
+    const docs = generateDeliverables(phase, clientId, engId, phaseOutcomes, clientName, 'Anand Sundaram')
+    if (!docs.length) return
+    setToast(`Phase ${phase} complete — ${docs[0].title} saved to Deliverables`)
+    setTimeout(() => setToast(null), 4500)
+    for (const doc of docs) {
+      try {
+        await supabase.from('engagement_deliverables').insert({
+          engagement_id: engId,
+          client_id: clientId,
+          phase,
+          document_type: doc.document_type,
+          title: doc.title,
+          html_content: doc.html_content,
+          generated_by: 'Anand Sundaram',
+          generated_at: new Date().toISOString(),
+        })
+      } catch { /* ignore — table may not exist */ }
+    }
+  }
+
   async function completeStep(letter: string, optText: string) {
     setLoading(true)
     const phase     = phaseOfStep(activeStep)
@@ -957,6 +981,7 @@ function AIStrategyInner() {
         updated.activeStep = nextStep
       }
       setSt(updated)
+      if (!samePhase || !nextStep) void saveDeliverables(0, updated.outcomes)
       setCustomVal('')
       setLoading(false)
     } else {
@@ -1000,15 +1025,18 @@ function AIStrategyInner() {
         const newActiveStep = nextStep && samePhase ? nextStep : activeStep
         if (nextStep && samePhase) newSS2[nextStep] = 'active'
 
+        const updatedOutcomes = [...outcomes.filter(o => o.stepId !== activeStep), finalOutcome]
+
         setSt(prev => ({
           ...prev, stepStatuses: newSS2,
-          outcomes: [...prev.outcomes.filter(o => o.stepId !== activeStep), finalOutcome],
+          outcomes: updatedOutcomes,
           messagesByStep: {
             ...prev.messagesByStep,
             ...(nextStep && samePhase && aiText ? { [nextStep]: [{ role: 'ai', text: aiText, options: nextOptions, stepId: nextStep }] } : {}),
           },
           activeStep: newActiveStep,
         }))
+        if (!samePhase || !nextStep) void saveDeliverables(phase, updatedOutcomes)
       } catch {
         setSt(prev => ({ ...prev, stepStatuses: newSS, outcomes: [...prev.outcomes.filter(o => o.stepId !== activeStep), outcome] }))
       } finally {
@@ -1065,12 +1093,15 @@ function AIStrategyInner() {
     <li style="color: #16a34a; font-weight: 600;">Sponsor approval — Recorded ${approvalDate}</li>
   </ul>
 </div>`
+      const engId = engagementParam ?? engCtx?.engagement_id ?? `${clientId}-${Date.now()}`
       await supabase.from('engagement_deliverables').insert({
+        engagement_id: engId,
+        client_id: clientId,
+        phase: phaseId,
         document_type: 'gate_approval',
         title: `Phase ${phaseId} Gate — Approved by ${approverName}`,
         html_content: html,
-        client_id: clientId,
-        phase_id: phaseId,
+        generated_by: approverName,
         generated_at: new Date().toISOString(),
       })
     } catch { /* table may not exist yet — gate still unlocks */ }
