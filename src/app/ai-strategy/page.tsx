@@ -483,12 +483,12 @@ function ChatBubble({ msg, isLast, onSelect, loading, customVal, setCustomVal, o
   return (
     <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
       {/* Avatar */}
-      <div style={{ width: 32, height: 32, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: DBG, fontWeight: 800 }}>AV</span>
+      <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#0F0E0D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, fontWeight: 800 }}>AN</span>
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, marginBottom: 6, letterSpacing: '.1em' }}>ABARVA</div>
+        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, marginBottom: 6, letterSpacing: '.1em' }}>ABARNEXUS</div>
 
         {/* AI bubble — light background */}
         <div style={{ background: LBG, borderRadius: '0 12px 12px 12px', padding: '14px 18px' }}>
@@ -1302,8 +1302,8 @@ function AIStrategyInner() {
 
                 {loading && (
                   <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: TEAL, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 9, color: DBG, fontWeight: 800 }}>AV</span>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#0F0E0D', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, fontWeight: 800 }}>AN</span>
                     </div>
                     <div style={{ background: LBG, borderRadius: '0 12px 12px 12px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {[0, 1, 2].map(i => (

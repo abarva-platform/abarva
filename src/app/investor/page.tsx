@@ -95,7 +95,7 @@ function TabOverview() {
       <H size={44}>The same problem. A different structure.</H>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: BORDR, border: `1px solid ${BORDR}`, borderRadius: '6px', overflow: 'hidden', marginBottom: '40px' }}>
         <div style={{ background: BG2, padding: '28px' }}>
-          <div style={{ fontFamily: MONO, fontSize: '11px', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '16px' }}>How advisory firms work today</div>
+          <div style={{ fontFamily: MONO, fontSize: '11px', color: 'rgba(255,255,255,0.80)', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '16px' }}>How advisory firms work today</div>
           {['CXO pays $2–8M per engagement', 'Consultants spend weeks 1–4 learning the client', 'Deliverable is a PowerPoint deck', 'Knowledge walks out with the team', 'No accountability for outcomes', 'Same firm, same process, 2 years later'].map((item, i) => (
             <Bullet key={i} icon="✗">{item}</Bullet>
           ))}
@@ -317,7 +317,7 @@ function FundBar({ label, amount, pct, sub, featured }: { label: string; amount:
       <div style={{ height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', marginBottom: '6px' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: featured ? TEAL : 'rgba(255,255,255,0.35)', borderRadius: '2px' }} />
       </div>
-      <div style={{ fontSize: '13px', color: MUTED }}>{sub} · <span style={{ color: featured ? TEAL : 'rgba(255,255,255,0.50)' }}>{pct}%</span></div>
+      <div style={{ fontSize: '13px', color: MUTED }}>{sub} · <span style={{ color: featured ? TEAL : 'rgba(255,255,255,0.80)' }}>{pct}%</span></div>
     </div>
   )
 }

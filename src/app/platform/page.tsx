@@ -202,6 +202,10 @@ export default function PlatformPage() {
           from { opacity: 0; transform: translateY(24px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes layerReveal {
+          from { opacity: 0; transform: translateY(20px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         @keyframes tagsIn {
           from { opacity: 0; }
           to   { opacity: 1; }
@@ -331,10 +335,10 @@ export default function PlatformPage() {
             <div style={{ fontFamily: SERIF, fontSize: '44px', fontWeight: 400, color: BG, marginBottom: '20px', lineHeight: 1.1 }}>
               Abar<span style={{ color: TEAL, fontStyle: 'italic' }}>Nexus</span>
             </div>
-            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: '16px' }}>
+            <p style={{ fontSize: '17px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, marginBottom: '16px' }}>
               AbarNexus is the proprietary knowledge layer that sits between the foundation AI and every engagement. It is what makes AbarVa different from a large language model with a prompt. It is built from real transformations — and it gets smarter with every client.
             </p>
-            <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, marginBottom: '36px' }}>
+            <p style={{ fontSize: '15px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, marginBottom: '36px' }}>
               Advisory firms carry this knowledge in partners&apos; heads. It walks out when they retire. AbarNexus compounds permanently. <strong style={{ color: BG }}>The 50th client benefits from the first 49.</strong>
             </p>
 
@@ -364,7 +368,7 @@ export default function PlatformPage() {
                 <div key={i} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderLeft: `3px solid ${TEAL}`, borderRadius: '0 6px 6px 0', padding: '20px 24px' }}>
                   <div style={{ fontFamily: MONO, fontSize: '10px', color: TEAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>{pillar.label}</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: BG, marginBottom: '8px' }}>{pillar.title}</div>
-                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>{pillar.body}</div>
+                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.65 }}>{pillar.body}</div>
                 </div>
               ))}
             </div>
@@ -398,10 +402,10 @@ export default function PlatformPage() {
                   <div style={{ fontSize: '14px', fontWeight: 600, color: BG }}>{mod.title}</div>
                   <div style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, background: 'rgba(45,212,200,0.12)', padding: '2px 7px', borderRadius: '3px', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap', marginLeft: '10px', border: '1px solid rgba(45,212,200,0.25)' }}>{mod.badge}</div>
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: '10px' }}>{mod.body}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.85)', lineHeight: 1.6, marginBottom: '10px' }}>{mod.body}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
                   {mod.tags.map((tag, j) => (
-                    <span key={j} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '3px', fontFamily: MONO, border: '1px solid rgba(255,255,255,0.08)' }}>{tag}</span>
+                    <span key={j} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.80)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '3px', fontFamily: MONO, border: '1px solid rgba(255,255,255,0.08)' }}>{tag}</span>
                   ))}
                 </div>
               </div>
@@ -451,7 +455,7 @@ export default function PlatformPage() {
               const isFeatured = layer.featured
               const isHovered = hoveredLayer === i
               return (
-                <div key={i} style={{ opacity: archVisible ? undefined : 0, animation: archVisible ? `layerIn 400ms ease ${staggerDelay}ms both` : 'none' }}>
+                <div key={i} style={{ opacity: 0, animation: `layerReveal 0.5s ease ${i * 0.1}s forwards` }}>
                   <div
                     onMouseEnter={() => setHoveredLayer(i)}
                     onMouseLeave={() => setHoveredLayer(null)}
@@ -473,18 +477,18 @@ export default function PlatformPage() {
                     <div style={{ fontFamily: MONO, fontSize: '12px', color: isFeatured ? TEAL : 'rgba(255,255,255,0.40)', width: '22px', flexShrink: 0, marginTop: '3px' }}>{layer.num}</div>
                     <div style={{ width: '44px', height: '44px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0, background: isFeatured ? 'rgba(45,212,200,0.15)' : 'rgba(255,255,255,0.07)' }}>{layer.icon}</div>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontFamily: MONO, fontSize: '10px', color: isFeatured ? TEAL : 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>{layer.layerLabel}</div>
+                      <div style={{ fontFamily: MONO, fontSize: '10px', color: isFeatured ? TEAL : 'rgba(255,255,255,0.80)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '6px' }}>{layer.layerLabel}</div>
                       <div style={{ fontSize: '17px', fontWeight: 600, color: isFeatured ? TEAL : BG, marginBottom: '6px' }}>{layer.title}</div>
-                      <div style={{ fontSize: '13px', color: isFeatured ? 'rgba(255,255,255,0.60)' : 'rgba(255,255,255,0.45)', lineHeight: 1.6, marginBottom: '10px' }}>{layer.desc}</div>
+                      <div style={{ fontSize: '13px', color: isFeatured ? 'rgba(255,255,255,0.60)' : 'rgba(255,255,255,0.80)', lineHeight: 1.6, marginBottom: '10px' }}>{layer.desc}</div>
                       <div
                         className="arch-tags"
-                        style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', opacity: archVisible ? 1 : 0, animation: archVisible ? `tagsIn 300ms ease ${tagsDelay}ms both` : 'none' }}
+                        style={{ display: 'flex', flexWrap: 'wrap', gap: '7px', opacity: 0, animation: `tagsIn 300ms ease ${i * 0.1 + 0.25}s forwards` }}
                       >
                         {layer.tags.map((tag, j) => (
                           <span
                             key={j}
                             className="arch-tag"
-                            style={{ fontSize: '10px', fontFamily: MONO, color: isFeatured ? TEAL : 'rgba(255,255,255,0.35)', background: isFeatured ? 'rgba(45,212,200,0.10)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '3px', border: isFeatured ? '1px solid rgba(45,212,200,0.20)' : '1px solid rgba(255,255,255,0.07)', transition: 'opacity 0.2s' }}
+                            style={{ fontSize: '10px', fontFamily: MONO, color: isFeatured ? TEAL : 'rgba(255,255,255,0.80)', background: isFeatured ? 'rgba(45,212,200,0.10)' : 'rgba(255,255,255,0.05)', padding: '2px 8px', borderRadius: '3px', border: isFeatured ? '1px solid rgba(45,212,200,0.20)' : '1px solid rgba(255,255,255,0.07)', transition: 'opacity 0.2s' }}
                           >
                             {tag}
                           </span>
