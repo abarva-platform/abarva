@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
@@ -65,6 +65,7 @@ function HowToBuildContent() {
   const searchParams = useSearchParams()
   const clientId = useActiveClient()
   const [selectedClient, setSelectedClient] = useState(clientId)
+  useEffect(() => { setSelectedClient(clientId) }, [clientId])
   const meta = CLIENT_META[selectedClient] || CLIENT_META.meridian
   const tasks = TASKS_BY_CLIENT[selectedClient] || TASKS_BY_CLIENT.meridian
 

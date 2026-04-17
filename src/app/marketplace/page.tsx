@@ -659,6 +659,7 @@ function EntryScreen({ onSelect }: { onSelect: (path: EntryPath) => void }) {
 function MarketplaceInner() {
   const { clientId } = useClientContext()
   const [activeClient, setActiveClient] = useState(clientId)
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
   const [entryPath, setEntryPath] = useState<EntryPath>(null)
 
   return (

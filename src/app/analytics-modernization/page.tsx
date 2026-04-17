@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 import EngagementProgress from '@/components/EngagementProgress'
@@ -807,6 +807,7 @@ function AnalyticsModernizationContent() {
   const clientId = searchParams.get('client') ?? 'meridian'
   const [step, setStep] = useState(0)
   const [activeClient, setActiveClient] = useState(clientId)
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
 
   const meta = CLIENT_META[activeClient] ?? CLIENT_META['meridian']
 

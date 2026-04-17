@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useActiveClient } from '@/lib/use-active-client'
 import AbarvaNav from '@/components/AbarvaNav'
@@ -201,6 +201,7 @@ function DomainStrategyContent() {
   const searchParams = useSearchParams()
   const clientId = useActiveClient()
   const [activeClient, setActiveClient] = useState(clientId)
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
   const [domainId, setDomainId] = useState('rcm')
 
   const domain = DOMAINS.find(d => d.id === domainId) || DOMAINS[0]

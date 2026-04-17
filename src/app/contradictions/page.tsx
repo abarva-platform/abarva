@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef, useCallback, Suspense } from 'react'
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import ModuleHeader from '@/components/ModuleHeader'
 import { useClientContext } from '@/lib/use-client-context'
@@ -325,6 +325,7 @@ function ContradictionChat({ client, contradictionTitle, contradictionImpact }: 
 function ContradictionsContent() {
   const { clientId, allowedClients, isAdmin } = useClientContext()
   const [selectedClient, setSelectedClient] = useState(clientId)
+  useEffect(() => { setSelectedClient(clientId) }, [clientId])
 
   const visibleClients = CLIENTS.filter(c => allowedClients.find(a => a.id === c.id))
   const [selectedId, setSelectedId] = useState<string | null>(null)

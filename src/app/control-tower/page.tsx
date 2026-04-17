@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 import EngagementProgress from '@/components/EngagementProgress'
@@ -831,6 +831,7 @@ function ResponsibleAITab() {
 function ControlTowerInner() {
   const { clientId } = useClientContext()
   const [activeClient, setActiveClient] = useState(clientId)
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
   const [activeTab, setActiveTab] = useState<TabId>('overview')
 
   const clientName = CLIENT_NAMES[activeClient] ?? 'Your Organization'

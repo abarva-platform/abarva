@@ -1,5 +1,5 @@
 'use client'
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 import EngagementProgress from '@/components/EngagementProgress'
@@ -166,6 +166,7 @@ function FutureOfWorkContent() {
 
   const [step, setStep] = useState(0)
   const [activeClient, setActiveClient] = useState(clientId)
+  useEffect(() => { setActiveClient(clientId) }, [clientId])
   const [platform, setPlatform] = useState<PlatformId>('agnostic')
   const [scenario, setScenario] = useState<'conservative' | 'moderate' | 'aggressive'>('moderate')
 
