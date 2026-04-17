@@ -9,6 +9,8 @@ import { apexRetail } from '@/data/apexretail/index'
 import { CLIENT_IT_DATA } from '@/lib/client-it-data'
 import { getClientIntelligence } from '@/lib/client-intelligence'
 import { supabase } from '@/lib/supabase'
+import { generateDeliverables } from '@/lib/generate-deliverable'
+import { MERIDIAN_SEED, APEX_SEED } from '@/lib/avr-demo-seed'
 
 const BG='#F8F7F4', CARD='#FFFFFF', BORDER='#E2E1DC'
 const TEAL='#2DD4C8', WHITE='#0C0C0C', MUTED='#3C3C3C', DIM='#888888'
@@ -943,6 +945,34 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   board_pack: 'Board Pack', fee_calculation: 'Fee Calculation', gate_approval: 'Gate Approval',
 }
 
+// Static fallback deliverables — generated locally so the section always has content
+const DEMO_DELIVERABLE_MAP: Record<string, DeliverableRow[]> = (() => {
+  const build = (
+    clientId: string, clientName: string,
+    engId: string, phases: number[],
+    outcomes: { stepId: string; label: string; value: string }[],
+    timestamps: Record<number, string>,
+  ): DeliverableRow[] =>
+    phases.flatMap(phase =>
+      generateDeliverables(phase, clientId, engId, outcomes, clientName, 'Anand Sundaram').map((doc, i) => ({
+        id:            `${clientId}-${phase}-${i}`,
+        engagement_id: engId,
+        client_id:     clientId,
+        phase,
+        document_type: doc.document_type,
+        title:         doc.title,
+        html_content:  doc.html_content,
+        generated_at:  timestamps[phase] ?? '2026-04-16T09:00:00Z',
+        generated_by:  'Anand Sundaram',
+      }))
+    )
+
+  return {
+    meridian:   build('meridian',   'Meridian Health System', 'MER-RCM-001', [0,1,2,3,4], MERIDIAN_SEED.outcomes, { 0:'2026-04-01T09:00:00Z', 1:'2026-04-05T09:00:00Z', 2:'2026-04-08T09:00:00Z', 3:'2026-04-12T09:00:00Z', 4:'2026-04-16T09:00:00Z' }),
+    apexretail: build('apexretail', 'Apex Retail Group',      'ARG-TECH-001', [0,2,4],     APEX_SEED.outcomes,     { 0:'2026-04-02T09:00:00Z', 2:'2026-04-10T09:00:00Z', 4:'2026-04-16T09:00:00Z' }),
+  }
+})()
+
 function DeliverablesSection({ clientId, clientName }: { clientId: string; clientName: string }) {
   const [docs, setDocs]       = useState<DeliverableRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -954,7 +984,11 @@ function DeliverablesSection({ clientId, clientName }: { clientId: string; clien
       .select('*')
       .eq('client_id', clientId)
       .order('generated_at', { ascending: true })
-      .then(({ data }: { data: DeliverableRow[] | null }) => { setDocs(data ?? []); setLoading(false) })
+      .then(({ data, error }: { data: DeliverableRow[] | null; error: unknown }) => {
+        const rows = (!error && data && data.length > 0) ? data : (DEMO_DELIVERABLE_MAP[clientId] ?? [])
+        setDocs(rows)
+        setLoading(false)
+      })
   }, [clientId])
 
   function download(doc: DeliverableRow) {
