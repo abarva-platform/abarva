@@ -1879,11 +1879,11 @@ function EngagementsSection({
       {/* Engagements Table */}
       <div style={{ fontFamily: SANS, fontSize: '13px', color: '#9CA3AF', marginBottom: '8px' }}>Active Engagements</div>
       <div style={{ border: `1px solid ${BDR}`, borderRadius: '6px', overflow: 'hidden', background: '#fff' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontFamily: SANS, fontSize: '13px' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' as const, fontFamily: SANS, fontSize: '15px' }}>
           <thead>
             <tr style={{ borderBottom: `1px solid ${BDR}` }}>
               {['Engagement', 'Sponsor', 'Phase', 'Status', 'Maestro', 'Value', 'Priority', ''].map(h => (
-                <th key={h} style={{ padding: '10px 16px', fontFamily: SANS, fontSize: '12px', fontWeight: 400, color: '#9CA3AF', textAlign: 'left' as const, background: '#FAFAF9' }}>
+                <th key={h} style={{ padding: '11px 16px', fontFamily: SANS, fontSize: '13px', fontWeight: 400, color: '#9CA3AF', textAlign: 'left' as const, background: '#FAFAF9' }}>
                   {h}
                 </th>
               ))}
@@ -1892,8 +1892,8 @@ function EngagementsSection({
           <tbody>
             {engagements.map((eng, i) => {
               const bd = i < engagements.length - 1 ? `1px solid ${BDR}` : 'none'
-              const td: React.CSSProperties = { padding: '11px 16px', borderBottom: bd, color: '#0F0E0D', verticalAlign: 'middle' }
-              const tdg: React.CSSProperties = { padding: '11px 16px', borderBottom: bd, color: '#706D66', verticalAlign: 'middle' }
+              const td: React.CSSProperties = { padding: '13px 16px', borderBottom: bd, color: '#0F0E0D', verticalAlign: 'middle' }
+              const tdg: React.CSSProperties = { padding: '13px 16px', borderBottom: bd, color: '#706D66', verticalAlign: 'middle' }
               return (
                 <tr key={eng.id}>
                   <td style={td}>{eng.name}</td>
