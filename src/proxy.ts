@@ -71,14 +71,13 @@ export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
 
-  // Admin-only routes — require admin role
+  // Admin-only routes — require authenticated session; page handles role check
   if (adminRoutes(request)) {
     if (!userId) {
       return NextResponse.redirect(new URL('/sign-in', request.url))
     }
-    if (role !== 'admin' && role !== 'investor') {
-      return NextResponse.redirect(new URL('/maestro', request.url))
-    }
+    // Let admin/page.tsx render the restricted message for non-admin roles
+    // rather than silently redirecting to /maestro
   }
 
   // Maestro routes — require authenticated Maestro/Admin/Investor
