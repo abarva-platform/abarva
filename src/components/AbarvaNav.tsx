@@ -265,6 +265,7 @@ function NavInner({ activePage }: NavProps) {
             {navLink('Home', '/', homeActive)}
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
+            {navLink('Platform', '/platform', platformActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
             {navLink('Solutions', '/solutions', solutionsActive)}
             {navLink('AI Value Realization', '/ai-value-realization', avrActive)}
