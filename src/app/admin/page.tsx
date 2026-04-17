@@ -1,7 +1,6 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const BG     = '#FAFAF9'
@@ -15,7 +14,6 @@ const RED    = '#C53030'
 const AMBER  = '#B45309'
 const GREEN  = '#166534'
 const MONO   = "'Courier New', monospace"
-const SERIF  = 'Georgia, serif'
 
 type Section =
   | 'maestros' | 'roles' | 'security'
@@ -288,17 +286,25 @@ function PlaceholderSection({ title, sub }: { title: string; sub: string }) {
 
 export default function AdminPage() {
   const { isLoaded, user } = useUser()
-  const router = useRouter()
   const [active, setActive] = useState<Section>('maestros')
 
   const role = user?.publicMetadata?.role as string | undefined
 
-  useEffect(() => {
-    if (!isLoaded || !user) return
-    if (role !== 'admin') router.push('/')
-  }, [isLoaded, user, role, router])
+  if (!isLoaded) return null
 
-  if (!isLoaded || role !== 'admin') return null
+  if (!user || role !== 'admin') {
+    return (
+      <div style={{ minHeight: '100vh', background: BG }}>
+        <AbarvaNav activePage="admin" />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)' }}>
+          <div style={{ textAlign: 'center' as const }}>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
+            <div style={{ fontSize: '13px', color: MUTED }}>This area is restricted to platform administrators.</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   function renderContent() {
     switch (active) {
@@ -325,8 +331,8 @@ export default function AdminPage() {
         {/* ── Sidebar ─────────────────────────────────────────────────── */}
         <div style={{ width: '220px', minWidth: '220px', background: DARK, padding: '16px 0', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ padding: '12px 16px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' }}>
-            <div style={{ fontSize: '12px', fontWeight: 600, color: BG }}>Admin Portal</div>
-            <div style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '2px', textTransform: 'uppercase' as const, letterSpacing: '0.08em' }}>Platform governance</div>
+            <div style={{ fontFamily: MONO, fontSize: '9px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' as const, letterSpacing: '0.1em', marginBottom: '4px' }}>Admin Portal</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Platform governance</div>
           </div>
 
           {SIDEBAR_GROUPS.map((group) => (
