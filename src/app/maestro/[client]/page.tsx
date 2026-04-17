@@ -647,6 +647,23 @@ function DashboardGrid({ clientId }: { clientId: string }) {
   )
 }
 
+function inferSolutionFromContext(directive: string, aiUseCase: string, techLandscape: string): { slug: string; name: string } {
+  const text = `${directive} ${aiUseCase} ${techLandscape}`.toLowerCase()
+  if (/rcm|denial|revenue cycle|billing|claim|prior auth|ehr|epic|reimbursement/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'rcm')!
+  if (/margin|cost reduction|operational cost|reduce spend|profitability|efficiency gain/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'margin')!
+  if (/data platform|databricks|azure|snowflake|cloud|lakehouse|data lake|warehouse|pipeline|ingestion|modern data|data infra/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'tech')!
+  if (/pdlc|mlops|model deploy|ai engineering|feature store|model lifecycle|llmops/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'pdlc')!
+  if (/governance|portfolio|accountability|roi|ai program|oversight|tracking program/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'ai-pdlc')!
+  if (/transformation|delivery|programme|execute|implementation|program delivery/.test(text))
+    return MAESTRO_SOLUTIONS.find(s => s.slug === 'delivery')!
+  return MAESTRO_SOLUTIONS.find(s => s.slug === 'tech')!
+}
+
 function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, onCreated, fullScreen }: {
   clientId: string
   clientName: string
@@ -655,39 +672,57 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
   onCreated?: (eng: EngagementRecord) => void
   fullScreen?: boolean
 }) {
-  type Step = 0 | 1 | 2 | 'done'
-  const [step, setStep] = useState<Step>(initSolution ? 1 : 0)
+  type Step = 0 | 1 | 2 | 3
   const router = useRouter()
+  const [step, setStep] = useState<Step>(0)
   const [directive, setDirective] = useState('')
-  const [solution, setSolution] = useState(initSolution ?? '')
+  const [aiUseCase, setAiUseCase] = useState('')
+  const [techLandscape, setTechLandscape] = useState('')
   const [sponsor, setSponsor] = useState('')
   const [input, setInput] = useState('')
+  const initSolObj = initSolution ? (MAESTRO_SOLUTIONS.find(s => s.slug === initSolution) ?? null) : null
+  const [inferredSolution, setInferredSolution] = useState<{ slug: string; name: string } | null>(initSolObj)
 
   const W = '#FFFFFF'
-  const initSolName = MAESTRO_SOLUTIONS.find(s => s.slug === initSolution)?.name ?? initSolution ?? ''
+
+  function canvasItem(label: string, value: string | null, opts?: { italic?: boolean; badge?: string }) {
+    const filled = !!value
+    return (
+      <div key={label} style={{ background: filled ? '#0D1520' : 'transparent', border: filled ? '1px solid #1C2D45' : '1px dashed rgba(255,255,255,0.08)', borderLeft: filled ? `3px solid ${TEAL}` : '1px dashed rgba(255,255,255,0.08)', borderRadius: 8, padding: '12px 14px', opacity: filled ? 1 : 0.38, transition: 'opacity 0.3s' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{label}</div>
+          {filled && opts?.badge && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>{opts.badge}</span>}
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 13, color: filled ? W : '#475569', fontStyle: opts?.italic && filled ? 'italic' : 'normal', lineHeight: 1.5 }}>
+          {filled ? (opts?.italic ? `"${value}"` : value) : 'Awaiting your answer...'}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: '#060A12', ...(fullScreen ? { minHeight: '100%' } : { borderBottom: '1px solid #1C2D45' }) }}>
       <div style={{ padding: fullScreen ? '60px 80px' : '40px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: fullScreen ? 64 : 48, alignItems: 'start', ...(fullScreen ? {} : { maxWidth: 1200, margin: '0 auto' }) }}>
 
-        {/* Left — Chat */}
+        {/* Left — Discovery conversation */}
         <div>
           <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.12em', marginBottom: 20 }}>
             New Engagement · {clientName}
           </div>
 
+          {/* Step 0: Leadership directive */}
           {step === 0 && (
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 12, lineHeight: 1.3 }}>
                 What is the leadership directive?
               </div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
-                Describe it exactly as it was given to you. Don&apos;t filter it.
+                The mandate as given. Include the urgency, the pressure, the exact ask — don&apos;t sanitize it.
               </p>
               <textarea
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="e.g. The board wants our denial rate below 14% before Epic goes live in Q3..."
+                placeholder="e.g. We need a modern data platform to support our new AI aspirations — the board wants this done before Q4..."
                 rows={4}
                 style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
               />
@@ -701,49 +736,92 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
             </div>
           )}
 
+          {/* Step 1: AI use cases */}
           {step === 1 && (
             <div>
-              {directive && (
-                <div style={{ background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontFamily: SANS, fontSize: 14, color: '#9CA3AF', fontStyle: 'italic' }}>
-                  &ldquo;{directive}&rdquo;
-                </div>
-              )}
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
-                Which solution aligns to this?
+              <div style={{ background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontFamily: SANS, fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>
+                &ldquo;{directive}&rdquo;
               </div>
-              {initSolName && (
-                <div style={{ background: 'rgba(45,212,200,0.08)', border: '1px solid rgba(45,212,200,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontFamily: SANS, fontSize: 14, color: TEAL }}>
-                  ✓ Pre-selected: {initSolName}
-                </div>
-              )}
-              <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 8 }}>
-                {MAESTRO_SOLUTIONS.map(s => (
-                  <button
-                    key={s.slug}
-                    onClick={() => setSolution(s.slug)}
-                    style={{ textAlign: 'left' as const, padding: '12px 16px', background: solution === s.slug ? 'rgba(45,212,200,0.1)' : '#0D1520', border: `1px solid ${solution === s.slug ? 'rgba(45,212,200,0.5)' : '#1C2D45'}`, borderRadius: 8, fontFamily: SANS, fontSize: 14, color: solution === s.slug ? TEAL : W, cursor: 'pointer' }}
-                  >
-                    {solution === s.slug ? '✓ ' : ''}{s.name}
-                  </button>
-                ))}
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 12, lineHeight: 1.3 }}>
+                What AI use cases is leadership most focused on?
               </div>
+              <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
+                What problems should AI solve? Which workflows, decisions, or data challenges are top of mind? Be specific — where is the business feeling the most pain right now?
+              </p>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder="e.g. Predictive analytics for readmissions, AI-assisted clinical documentation, real-time pipeline for operational decisions across the network..."
+                rows={4}
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
+              />
               <button
-                onClick={() => { if (solution) setStep(2) }}
-                disabled={!solution}
-                style={{ marginTop: 16, padding: '12px 28px', background: solution ? W : '#1C2D45', color: solution ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: solution ? 'pointer' : 'not-allowed' }}
+                onClick={() => { if (input.trim()) { setAiUseCase(input.trim()); setInput(''); setStep(2) } }}
+                disabled={!input.trim()}
+                style={{ marginTop: 12, padding: '12px 28px', background: input.trim() ? W : '#1C2D45', color: input.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed' }}
               >
                 Next →
               </button>
             </div>
           )}
 
+          {/* Step 2: Technology landscape */}
           {step === 2 && (
             <div>
-              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 16, lineHeight: 1.3 }}>
+              <div style={{ background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontFamily: SANS, fontSize: 13, color: '#9CA3AF', fontStyle: 'italic' }}>
+                &ldquo;{aiUseCase}&rdquo;
+              </div>
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 12, lineHeight: 1.3 }}>
+                What does the current technology and data landscape look like?
+              </div>
+              <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
+                Data platforms, cloud posture, key systems, AI maturity today. What&apos;s in place, what&apos;s missing, what&apos;s in transition. Think of this as the tech context a consulting firm would need to frame the SOW.
+              </p>
+              <textarea
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                placeholder="e.g. Azure cloud with Databricks in pilot — no unified data lake yet, siloed systems across departments, some ML experiments but nothing in production AI..."
+                rows={4}
+                style={{ width: '100%', background: '#0D1520', border: '1px solid #1C2D45', borderRadius: 8, padding: '14px 16px', fontFamily: SANS, fontSize: 14, color: W, resize: 'none', outline: 'none', boxSizing: 'border-box' as const }}
+              />
+              <button
+                onClick={() => {
+                  if (!input.trim()) return
+                  const landscape = input.trim()
+                  setTechLandscape(landscape)
+                  setInput('')
+                  if (!initSolObj) setInferredSolution(inferSolutionFromContext(directive, aiUseCase, landscape))
+                  setStep(3)
+                }}
+                disabled={!input.trim()}
+                style={{ marginTop: 12, padding: '12px 28px', background: input.trim() ? W : '#1C2D45', color: input.trim() ? '#060A12' : '#475569', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: input.trim() ? 'pointer' : 'not-allowed' }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+
+          {/* Step 3: Executive sponsor (+ inferred solution shown) */}
+          {step === 3 && (
+            <div>
+              {inferredSolution && (
+                <div style={{ background: 'rgba(45,212,200,0.07)', border: '1px solid rgba(45,212,200,0.25)', borderRadius: 8, padding: '14px 16px', marginBottom: 20 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 6 }}>
+                    {initSolObj ? 'Solution type · pre-selected' : 'Solution type · AbarVa auto-matched'}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: TEAL }}>{inferredSolution.name}</div>
+                  {!initSolObj && (
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: '#6B7280', marginTop: 4 }}>
+                      Inferred from your directive, use cases, and technology context.
+                    </div>
+                  )}
+                </div>
+              )}
+              <div style={{ fontFamily: SERIF, fontSize: 22, color: W, marginBottom: 12, lineHeight: 1.3 }}>
                 Who is the executive sponsor?
               </div>
               <p style={{ fontFamily: SANS, fontSize: 14, color: '#9CA3AF', marginBottom: 20, lineHeight: 1.65 }}>
-                The named CXO who owns outcomes and has budget authority.
+                The named CXO who owns outcomes and has budget authority for this engagement.
               </p>
               <input
                 type="text"
@@ -755,17 +833,17 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
               <button
                 onClick={() => {
                   if (!sponsor.trim()) return
-                  const solName = MAESTRO_SOLUTIONS.find(s => s.slug === solution)?.name ?? solution
+                  const sol = inferredSolution ?? MAESTRO_SOLUTIONS[2]
                   const newEng: EngagementRecord = {
                     id: `E${Date.now()}`,
-                    name: directive ? directive.slice(0, 60) + (directive.length > 60 ? '…' : '') : solName,
+                    name: directive.slice(0, 60) + (directive.length > 60 ? '…' : ''),
                     type: 'AI Value Realization',
                     phase: 0, status: 'Assigned',
                     sponsor: sponsor.trim(),
-                    function: solName,
+                    function: sol.name,
                     value: 'TBD', priority: 'Normal',
                     progress: 0, maestro: 'Anand S.',
-                    slug: solution, lastActivity: 'Just now',
+                    slug: sol.slug, lastActivity: 'Just now',
                   }
                   onCreated?.(newEng)
                   router.push(
@@ -783,41 +861,21 @@ function MaestroEngagementChat({ clientId, clientName, initSolution, onClose, on
               </button>
             </div>
           )}
-
-          {step === 'done' && (
-            <div>
-              <div style={{ fontFamily: SERIF, fontSize: 28, color: W, marginBottom: 16, lineHeight: 1.2 }}>
-                Engagement created.
-              </div>
-              <p style={{ fontFamily: SANS, fontSize: 15, color: '#9CA3AF', lineHeight: 1.65, marginBottom: 24 }}>
-                The engagement context has been captured. Your Admin portal has been notified and the engagement will appear in the Active Engagements list below.
-              </p>
-              <button onClick={onClose} style={{ padding: '12px 28px', background: W, color: '#060A12', border: 'none', borderRadius: 6, fontFamily: SANS, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                View Active Engagements
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Right — Canvas */}
-        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+        {/* Right — Engagement Canvas (builds as user answers) */}
+        <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
           <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.1em', marginBottom: 4 }}>Engagement Canvas</div>
-          {[
-            { label: 'CLIENT', value: clientName, locked: true },
-            { label: 'SOLUTION TYPE', value: MAESTRO_SOLUTIONS.find(s => s.slug === solution)?.name ?? (solution || null), locked: !!initSolution },
-            { label: 'DIRECTIVE', value: directive || null, locked: false },
-            { label: 'EXECUTIVE SPONSOR', value: step === 'done' ? sponsor : null, locked: false },
-          ].map((item, i) => (
-            <div key={i} style={{ background: item.value ? '#0D1520' : 'transparent', border: item.value ? '1px solid #1C2D45' : '1px dashed #1C2D45', borderLeft: item.value ? `3px solid ${TEAL}` : '1px dashed #1C2D45', borderRadius: 8, padding: '12px 14px', opacity: item.value ? 1 : 0.4 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{item.label}</div>
-                {item.value && <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL }}>{item.locked ? '✓ pre-selected' : '✓ confirmed'}</span>}
-              </div>
-              <div style={{ fontFamily: SANS, fontSize: 14, color: item.value ? W : '#475569', fontStyle: item.label === 'DIRECTIVE' && item.value ? 'italic' : 'normal' }}>
-                {item.value ? (item.label === 'DIRECTIVE' ? `"${item.value}"` : item.value) : 'Awaiting your answer...'}
-              </div>
-            </div>
-          ))}
+          {canvasItem('Client', clientName, { badge: '✓ locked' })}
+          {canvasItem('Leadership Directive', directive || null, { italic: true, badge: directive ? '✓ captured' : undefined })}
+          {canvasItem('AI Use Cases', aiUseCase || null, { badge: aiUseCase ? '✓ captured' : undefined })}
+          {canvasItem('Technology Landscape', techLandscape || null, { badge: techLandscape ? '✓ captured' : undefined })}
+          {canvasItem(
+            'Solution Type',
+            inferredSolution ? `${inferredSolution.name}${!initSolObj ? ' · auto-matched' : ''}` : null,
+            { badge: inferredSolution ? (initSolObj ? '✓ pre-selected' : '✓ AbarVa inferred') : undefined }
+          )}
+          {canvasItem('Executive Sponsor', step === 3 ? (sponsor || null) : null, { badge: sponsor ? '✓ confirmed' : undefined })}
 
           <button onClick={onClose} style={{ marginTop: 8, background: 'none', border: 'none', fontFamily: SANS, fontSize: 13, color: '#475569', cursor: 'pointer', textAlign: 'left' as const }}>
             ← Cancel
