@@ -59,6 +59,7 @@ const PHASE_GROUPS: { label: string; category: Section; screens: string[] }[] = 
 
 const PANEL_START_DELAY  = 2000                           // ms before first rotation
 const REACT_RENDER_DELAY = 1200                           // ms after iframe load before firing action (heavy pages need more)
+const AUDIO_VERSION      = '20260417b'                    // bump to bust browser cache when audio files are regenerated
 
 const SCREENS: Screen[] = [
   // ── THE PROBLEM ───────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '4', audio: '19',
+    id: '4', audio: '04',
     category: 'ABARNEXUS',
     title: 'Your data never leaves your environment. Ever.',
     body: 'Every file you upload is processed into embeddings inside your Supabase instance — not ours. Your contracts, financials, org charts, vendor agreements: they become searchable intelligence that AbarNexus can query. But the raw data stays in your environment. We never see it. We never store it. When the engagement ends, you own the intelligence. Not AbarVa. You.',
@@ -126,7 +127,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '5', audio: '04',
+    id: '5', audio: '05',
     category: 'ABARNEXUS',
     title: '340 failure patterns. Every one documented.',
     body: 'F007: CDO vacant at go-live — 79% programme failure rate. F011: vendor SLA never enforced — 74% suboptimal outcome. F003: platform end-of-life unplanned — 82% budget overrun. These are not estimates. They are statistical facts from organisations that were in exactly this position.',
@@ -143,7 +144,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '6', audio: '05',
+    id: '6', audio: '06',
     category: 'ABARNEXUS',
     title: 'AbarNexus retrieves at every step.',
     body: 'Every message triggers a retrieval from the knowledge base. HFMA benchmarks. Genome failure patterns. The uploaded Ensemble contract. The brain retrieves exactly what\'s relevant — and injects it into every single response. Not a static prompt. Live intelligence.',
@@ -157,7 +158,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE PLATFORM ──────────────────────────────────────────────────────────
   {
-    id: '7', audio: '06',
+    id: '7', audio: '07',
     category: 'THE PLATFORM',
     title: 'Before the first meeting, the Maestro already knows everything.',
     body: 'The Maestro workspace for Meridian. Before the first meeting, the platform knows: denial rate 18.2% vs benchmark 11.4%, CDO role vacant — F007 active, Epic goes live Q3 2026. No discovery week. 48 hours from data upload.',
@@ -174,7 +175,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '8', audio: '07',
+    id: '8', audio: '08',
     category: 'THE PLATFORM',
     title: 'The Maestro Guide. Five steps from setup to verified outcome.',
     body: 'This is the operating manual that replaces 40 consultants. Setup the workspace. Review what AbarNexus already knows. Run the engagement. Navigate AbarNexus through every phase. Capture the verified outcome and earn the fee.',
@@ -187,7 +188,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: '9', audio: '08',
+    id: '9', audio: '09',
     category: 'THE PLATFORM',
     title: 'A new engagement. Three minutes.',
     body: 'Click New Engagement. Four questions: the leadership directive, AI use cases, technology landscape, executive sponsor. AbarVa auto-infers the solution type from what you describe — you never pick from a list. A McKinsey SOW takes three weeks. This takes three minutes — and arrives knowing more.',
@@ -204,7 +205,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '10', audio: '09',
+    id: '10', audio: '10',
     category: 'THE PLATFORM',
     title: 'Phase 0, Step 1. Three board-level signals.',
     body: 'AbarNexus opens with the three most critical signals at Meridian: the denial rate gap, prior auth automation lag, and the Epic go-live window. Every option is a real CXO stance — not a vague category. The AI Value Brief builds on the right. Every decision locked.',
@@ -221,7 +222,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '11', audio: '10',
+    id: '11', audio: '11',
     category: 'THE PLATFORM',
     title: '18 steps. 5 phases. Every outcome locked.',
     body: '$22.4M verified — KPMG audited. Day Zero baseline never moved. Denial rate: 18.2% to 16.1%, tracking to 12%. Epic integration on track Q3 2026. The board pack is ready. The fee is earned. Renewal confirmed.',
@@ -238,7 +239,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '12', audio: '11',
+    id: '12', audio: '12',
     category: 'THE PLATFORM',
     title: 'Not every problem needs 18 steps.',
     body: 'AbarVa has point solutions for specific problems: vendor spend optimisation, RCM denial prevention, AI portfolio accountability, Epic AI integration. Each is a focused workflow. Same AbarNexus intelligence. Faster time to value. No engagement manager required.',
@@ -288,7 +289,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '14', audio: '13',
+    id: '14', audio: '14',
     category: 'THE PLATFORM',
     title: '7 deliverables. Every phase documented.',
     body: 'Phase 0 Situation Brief. Phase 1 Diagnose Report. Phase 2 Architecture and Roadmap. Phase 3 Value Framework. Phase 4 Board Pack and Fee Calculation. Every document generated by AbarNexus, reviewed by the Maestro, stored permanently. Yours to view, download, present.',
@@ -306,7 +307,7 @@ const SCREENS: Screen[] = [
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
   {
-    id: '15', audio: '14',
+    id: '15', audio: '15',
     category: 'PROOF',
     title: 'Meridian. $22.4M verified. KPMG audited.',
     body: 'The engagement started with a denial rate of 18.2 percent. It ends with $22.4M verified. KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed. Meridian is a Phase 2 client. This is what outcome accountability looks like.',
@@ -323,7 +324,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '16', audio: '15',
+    id: '16', audio: '16',
     category: 'PROOF',
     title: 'Arcturus Financial Group. $18.2M verified.',
     body: '$200B AUM. Cost-to-income ratio 71% versus 58% peer benchmark — an $840M efficiency gap. AbarNexus found $94M in AI spend with zero baselines and $1.4M in unclaimed Bloomberg SLA credits. $18.2M verified Month 4.',
@@ -336,7 +337,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/arcturus', zoom: 0.62,
   },
   {
-    id: '17', audio: '16',
+    id: '17', audio: '17',
     category: 'PROOF',
     title: 'Apex Retail Group. $47.2M verified.',
     body: '340 stores. Azure spend 41% above peer benchmark — $39M recoverable. F003 matched: Teradata end-of-life with no migration plan. Month 1: reserved instance purchase — $14M Year 1, zero risk. Month 4: Azure + Databricks Medallion live. $47.2M verified Month 6.',
@@ -350,7 +351,7 @@ const SCREENS: Screen[] = [
   },
   // ── THE FUTURE ────────────────────────────────────────────────────────────
   {
-    id: '18', audio: '17',
+    id: '18', audio: '18',
     category: 'THE FUTURE',
     title: 'Every engagement makes AbarNexus smarter. Permanently.',
     body: 'At Series A, agents handle Phase 0 autonomously — one Maestro runs 4–6 engagements simultaneously. At Series B, the Genome Agent reads industry research continuously — AbarNexus self-updates from the world and from every engagement. Harvey AI did this for legal: $11B. Our market is $800B.',
@@ -367,7 +368,7 @@ const SCREENS: Screen[] = [
     ],
   },
   {
-    id: '19', audio: '18',
+    id: '19', audio: '19',
     category: 'THE FUTURE',
     title: 'When the engagement ends, everything stays.',
     body: 'When the engagement ends, everything stays with you. The Situation Brief. The Architecture. The Board Pack. Your vendor contracts were never on our servers. Your financials were never on our servers. Your data was processed as embeddings in your environment — and it stays there. AbarVa gave you the intelligence. You always had the data. Now act on it.',
@@ -535,7 +536,7 @@ function DemoGuidedPageInner() {
     if (!voiceEnabled) return
     stopAudio()
     const screenAudio = SCREENS[idx].audio ?? String(idx + 1).padStart(2, '0')
-    const audio       = new Audio(`/audio/demo/screen-${screenAudio}.mp3`)
+    const audio       = new Audio(`/audio/demo/screen-${screenAudio}.mp3?v=${AUDIO_VERSION}`)
     audioRef.current = audio
     audio.onplay   = () => setIsPlaying(true)
     audio.onended  = () => setIsPlaying(false)
