@@ -6,6 +6,8 @@ import AbarvaNav from '@/components/AbarvaNav'
 import { arcturusFinancial, arcturusFinancials, arcturusTechnology, arcturusLeadership, arcturusRegulatory, arcturusIndustry } from '@/data/arcturus/index'
 import { meridianHealth } from '@/data/meridian/index'
 import { apexRetail } from '@/data/apexretail/index'
+import { CLIENT_IT_DATA } from '@/lib/client-it-data'
+import { getClientIntelligence } from '@/lib/client-intelligence'
 
 const BG='#F8F7F4', CARD='#FFFFFF', BORDER='#E2E1DC'
 const TEAL='#2DD4C8', WHITE='#0C0C0C', MUTED='#3C3C3C', DIM='#888888'
@@ -1982,12 +1984,394 @@ function InsightsTab({ data, clientId }: { data: ClientData; clientId: string })
   )
 }
 
+// ─── CLIENT INTEL TAB ────────────────────────────────────────────────────────
+type IntelSection =
+  | 'architecture' | 'tech-stack' | 'infrastructure' | 'ai-data'
+  | 'budget' | 'initiatives' | 'volumetrics'
+  | 'leadership' | 'priorities' | 'contradictions'
+
+function ClientIntelTab({ clientId }: { clientId: string }) {
+  const [sec, setSec] = useState<IntelSection>('architecture')
+  const it = CLIENT_IT_DATA[clientId]
+  const intel = getClientIntelligence(clientId as 'meridian' | 'arcturus' | 'apexretail')
+
+  const IT_NAV: { key: IntelSection; label: string; icon: string }[] = [
+    { key: 'architecture',  label: 'Architecture',    icon: '⬡' },
+    { key: 'tech-stack',    label: 'Tech Stack',      icon: '◈' },
+    { key: 'infrastructure',label: 'Infrastructure',  icon: '◉' },
+    { key: 'ai-data',       label: 'AI & Data',       icon: '◎' },
+    { key: 'budget',        label: 'IT Budget',       icon: '$' },
+    { key: 'initiatives',   label: 'Key Initiatives', icon: '↑' },
+    { key: 'volumetrics',   label: 'Volumetrics',     icon: '≡' },
+  ]
+  const BIZ_NAV: { key: IntelSection; label: string; icon: string }[] = [
+    { key: 'leadership',     label: 'Leadership',     icon: '◎' },
+    { key: 'priorities',     label: 'Priorities',     icon: '▲' },
+    { key: 'contradictions', label: 'Contradictions', icon: '⚡' },
+  ]
+
+  const BDR = '#E8E6E3'
+  const TEXT = '#0F0E0D'
+  const TEXT2 = '#374151'
+  const MUTED2 = '#6B7280'
+  const W = CARD
+  const STATUS_C: Record<string, string> = { 'on-track': GREEN, 'at-risk': RED, 'delayed': AMBER, 'planning': MUTED }
+
+  function NavBtn({ item }: { item: { key: IntelSection; label: string; icon: string } }) {
+    const active = sec === item.key
+    return (
+      <button onClick={() => setSec(item.key)} style={{
+        display: 'flex', alignItems: 'center', gap: 8, padding: '7px 12px 7px 14px',
+        width: '100%', border: 'none', cursor: 'pointer', textAlign: 'left' as const,
+        background: active ? 'rgba(45,212,200,0.08)' : 'transparent',
+        borderLeft: `2px solid ${active ? TEAL : 'transparent'}`,
+        fontFamily: SANS, marginBottom: 1,
+      }}>
+        <span style={{ fontSize: 10, color: active ? TEAL : '#9CA3AF', width: 14, textAlign: 'center' as const }}>{item.icon}</span>
+        <span style={{ fontSize: 13, color: active ? TEAL : TEXT2, fontWeight: active ? 600 : 400 }}>{item.label}</span>
+      </button>
+    )
+  }
+
+  function renderSection() {
+    if (!it) return <div style={{ padding: 40, fontFamily: SANS, fontSize: 14, color: MUTED }}>No data available.</div>
+
+    switch (sec) {
+      case 'architecture':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+              {[
+                { label: 'TOTAL APPS', value: String(it.totalApps), color: TEXT },
+                { label: 'CLOUD %',    value: `${it.cloudPct}%`,    color: it.cloudPct < 40 ? RED : TEAL },
+                { label: 'IT SPEND',   value: it.itSpend,           color: TEXT },
+                { label: 'AI SPEND',   value: it.aiSpend,           color: TEAL },
+              ].map(s => (
+                <div key={s.label} style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, padding: '16px 20px' }}>
+                  <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: s.color, lineHeight: 1, marginBottom: 6 }}>{s.value}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px', marginBottom: 16 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>Architecture Overview</div>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 16 }}>{it.architecture.summary}</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {[
+                  { label: 'Type',        val: it.architecture.type },
+                  { label: 'Integration', val: it.architecture.integration },
+                  { label: 'Data',        val: it.architecture.data },
+                  { label: 'Cloud',       val: it.architecture.cloud },
+                  { label: 'Risk',        val: it.architecture.risk },
+                ].map(r => (
+                  <div key={r.label} style={{ borderLeft: `2px solid ${r.label === 'Risk' ? RED : TEAL}`, paddingLeft: 10 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: r.label === 'Risk' ? RED : TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 3 }}>{r.label}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, lineHeight: 1.5 }}>{r.val}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '180px 1fr 200px', gap: 12, background: '#F3F4F5', borderBottom: `1px solid ${BDR}`, padding: '10px 20px' }}>
+                {['Layer', 'Systems', 'Notes'].map(h => <div key={h} style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{h}</div>)}
+              </div>
+              {it.architecture.layers.map((l, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 200px', gap: 12, padding: '14px 20px', borderBottom: i < it.architecture.layers.length - 1 ? `1px solid ${BDR}` : 'none', alignItems: 'start' }}>
+                  <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{l.layer}</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap' as const, gap: 6 }}>
+                    {l.systems.map((sys, j) => <span key={j} style={{ fontFamily: SANS, fontSize: 12, color: TEXT2, background: '#F3F4F5', border: `1px solid ${BDR}`, padding: '3px 8px', borderRadius: 4 }}>{sys}</span>)}
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{l.note}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+
+      case 'tech-stack':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Technology Stack</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED2, marginBottom: 16 }}>{it.totalApps} total apps · {it.techStack.length} key systems shown</div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 80px 90px', gap: 12, background: '#F3F4F5', borderBottom: `1px solid ${BDR}`, padding: '10px 20px' }}>
+                {['System', 'Vendor', 'Category', 'Users', 'Status'].map(h => <div key={h} style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{h}</div>)}
+              </div>
+              {it.techStack.map((app, i) => {
+                const sc = app.status === 'active' ? TEAL : app.status === 'retiring' ? RED : app.status === 'pilot' ? AMBER : MUTED
+                return (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr 80px 90px', gap: 12, padding: '12px 20px', borderBottom: i < it.techStack.length - 1 ? `1px solid ${BDR}` : 'none', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: app.status === 'retiring' ? RED : TEXT }}>{app.name}</div>
+                      <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED2, marginTop: 2 }}>{app.notes}</div>
+                    </div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{app.vendor}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED2 }}>{app.category}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{app.users}</div>
+                    <span style={{ fontFamily: MONO, fontSize: 10, padding: '3px 8px', borderRadius: 3, background: `${sc}18`, color: sc, textTransform: 'uppercase' as const, letterSpacing: '.06em', display: 'inline-block' }}>{app.status}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case 'infrastructure': {
+        const infra = [
+          { label: 'Data Centers', items: it.infrastructure.datacenters },
+          { label: 'Network',      items: it.infrastructure.network },
+          { label: 'Cloud',        items: it.infrastructure.cloud },
+          { label: 'Storage',      items: it.infrastructure.storage },
+        ]
+        return (
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
+            {infra.map(s => (
+              <div key={s.label} style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
+                <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, padding: '11px 20px', borderBottom: `1px solid ${BDR}`, background: '#FAFAF9' }}>{s.label}</div>
+                {s.items.map((item, i) => (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '180px 1fr 1fr', gap: 16, padding: '12px 20px', borderBottom: i < s.items.length - 1 ? `1px solid ${BDR}` : 'none', alignItems: 'start' }}>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{item.label}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED2 }}>{item.detail}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2 }}>{item.spec}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )
+      }
+
+      case 'ai-data': {
+        const aiApps = it.techStack.filter(a =>
+          a.category.toLowerCase().includes('ai') ||
+          a.category.toLowerCase().includes('data') ||
+          a.category.toLowerCase().includes('analytics') ||
+          a.category.toLowerCase().includes('bi')
+        )
+        return (
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column' as const, gap: 14 }}>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.08em', marginBottom: 10 }}>Data Platform Status</div>
+              <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT2, lineHeight: 1.7, marginBottom: 14 }}>{it.architecture.data}</div>
+              <div style={{ borderLeft: `2px solid ${AMBER}`, paddingLeft: 10 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: AMBER, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 3 }}>Cloud Integration</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2 }}>{it.architecture.cloud}</div>
+              </div>
+            </div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: TEXT, padding: '11px 20px', borderBottom: `1px solid ${BDR}`, background: '#FAFAF9' }}>
+                AI & Analytics Systems ({aiApps.length})
+              </div>
+              {aiApps.map((app, i) => {
+                const sc = app.status === 'active' ? TEAL : app.status === 'pilot' ? AMBER : app.status === 'planned' ? MUTED : RED
+                return (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 90px', gap: 16, padding: '12px 20px', borderBottom: i < aiApps.length - 1 ? `1px solid ${BDR}` : 'none', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: TEXT }}>{app.name}</div>
+                      <div style={{ fontFamily: SANS, fontSize: 11, color: MUTED2, marginTop: 2 }}>{app.notes}</div>
+                    </div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2 }}>{app.vendor}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED2 }}>{app.category}</div>
+                    <span style={{ fontFamily: MONO, fontSize: 10, padding: '3px 8px', borderRadius: 3, background: `${sc}18`, color: sc, textTransform: 'uppercase' as const, display: 'inline-block' }}>{app.status}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      }
+
+      case 'budget':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>IT Budget</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED2, marginBottom: 16 }}>{it.budget.fiscal} · Total: {it.budget.total}</div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, padding: '24px' }}>
+              {it.budget.lines.map((line, i) => {
+                const barC = i === 0 ? TEAL : i === 1 ? '#818CF8' : i === 2 ? AMBER : GREEN
+                return (
+                  <div key={i} style={{ marginBottom: i < it.budget.lines.length - 1 ? 22 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+                      <div style={{ fontFamily: SANS, fontSize: 14, color: TEXT }}>{line.category}</div>
+                      <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: TEXT }}>
+                        {line.amount} <span style={{ fontFamily: MONO, fontSize: 11, color: DIM, fontWeight: 400 }}>({line.pct}%)</span>
+                      </div>
+                    </div>
+                    <div style={{ height: 8, background: '#F3F4F5', borderRadius: 4 }}>
+                      <div style={{ height: 8, borderRadius: 4, width: `${line.pct}%`, background: barC }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case 'initiatives':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Key Initiatives</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED2, marginBottom: 16 }}>{it.initiatives.length} tracked initiatives</div>
+            <div style={{ display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+              {it.initiatives.map((init, i) => {
+                const sc = STATUS_C[init.status] ?? MUTED
+                return (
+                  <div key={i} style={{ background: W, border: `1px solid ${BDR}`, borderLeft: `4px solid ${sc}`, borderRadius: 8, padding: '16px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 8 }}>
+                      <div>
+                        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 3 }}>{init.name}</div>
+                        <div style={{ fontFamily: SANS, fontSize: 13, color: TEAL }}>{init.owner} · {init.timeline}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: TEXT }}>{init.budget}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 10, padding: '3px 8px', borderRadius: 4, background: `${sc}18`, color: sc, textTransform: 'uppercase' as const }}>{init.status}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.06em', flexShrink: 0 }}>Phase: {init.phase}</span>
+                      <span style={{ fontFamily: SANS, fontSize: 12, color: MUTED2, lineHeight: 1.5 }}>Risk: {init.risk}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case 'volumetrics':
+        return (
+          <div style={{ padding: '24px 28px' }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Volumetrics</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED2, marginBottom: 16 }}>Key operational metrics and benchmarks</div>
+            <div style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.6fr', gap: 12, background: '#F3F4F5', borderBottom: `1px solid ${BDR}`, padding: '10px 20px' }}>
+                {['Metric', 'Value', 'Benchmark', 'Gap', 'Critical For'].map(h => <div key={h} style={{ fontFamily: MONO, fontSize: 9, color: DIM, textTransform: 'uppercase' as const, letterSpacing: '.08em' }}>{h}</div>)}
+              </div>
+              {it.volumetrics.map((v, i) => {
+                const isCritical = v.criticalFor.includes('CRITICAL')
+                return (
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr 1fr 1fr 1.6fr', gap: 12, padding: '12px 20px', borderBottom: i < it.volumetrics.length - 1 ? `1px solid ${BDR}` : 'none', alignItems: 'center', background: isCritical ? 'rgba(239,68,68,0.02)' : 'transparent' }}>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: isCritical ? RED : TEXT }}>{v.metric}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: TEXT }}>{v.value}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED2 }}>{v.benchmark}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: v.gap.includes('+') || v.gap.includes('above') ? RED : v.gap === '—' ? MUTED : TEAL }}>{v.gap}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 12, color: isCritical ? RED : MUTED2 }}>{v.criticalFor}</div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+
+      case 'leadership':
+        if (!intel?.leadership?.length) return <div style={{ padding: 40, fontFamily: SANS, fontSize: 14, color: MUTED }}>No leadership data available.</div>
+        return (
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Leadership Profiles</div>
+            {intel.leadership.map((exec, i) => (
+              <div key={i} style={{ background: W, border: `1px solid ${BDR}`, borderRadius: 8, padding: '20px 24px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT }}>{exec.name}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEAL }}>{exec.title} · {exec.tenure}</div>
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, color: MUTED2, background: '#F3F4F5', padding: '4px 10px', borderRadius: 4 }}>{exec.priority}</div>
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, marginBottom: 10, lineHeight: 1.65 }}>{exec.background}</div>
+                <div style={{ fontFamily: SANS, fontSize: 13, color: MUTED, fontStyle: 'italic', borderLeft: `2px solid ${BDR}`, paddingLeft: 10 }}>&ldquo;{exec.quote}&rdquo;</div>
+              </div>
+            ))}
+          </div>
+        )
+
+      case 'priorities':
+        if (!intel?.priorities?.length) return <div style={{ padding: 40, fontFamily: SANS, fontSize: 14, color: MUTED }}>No priorities data available.</div>
+        return (
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Strategic Priorities</div>
+            {intel.priorities.map((p, i) => {
+              const rc = p.risk === 'critical' ? RED : p.risk === 'high' ? AMBER : TEAL
+              const sc2 = p.status === 'AT RISK' ? RED : p.status === 'ACTIVE' ? TEAL : MUTED
+              return (
+                <div key={i} style={{ background: W, border: `1px solid ${BDR}`, borderLeft: `4px solid ${rc}`, borderRadius: 8, padding: '16px 20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL }}>{p.num}</span>
+                      <span style={{ fontFamily: SANS, fontSize: 15, fontWeight: 700, color: TEXT }}>{p.title}</span>
+                    </div>
+                    <span style={{ fontFamily: MONO, fontSize: 10, padding: '3px 8px', borderRadius: 3, background: `${sc2}18`, color: sc2, textTransform: 'uppercase' as const }}>{p.status}</span>
+                  </div>
+                  <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, lineHeight: 1.6, marginBottom: 8 }}>{p.desc}</div>
+                  <div style={{ fontFamily: SANS, fontSize: 12, color: MUTED2, fontStyle: 'italic' }}>Signal: {p.signal}</div>
+                </div>
+              )
+            })}
+          </div>
+        )
+
+      case 'contradictions':
+        if (!intel?.contradictions?.length) return <div style={{ padding: 40, fontFamily: SANS, fontSize: 14, color: MUTED }}>No contradiction data available.</div>
+        return (
+          <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column' as const, gap: 12 }}>
+            <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Contradictions</div>
+            {intel.contradictions.map((c, i) => (
+              <div key={i} style={{ background: W, border: `1px solid ${BDR}`, borderTop: `3px solid ${RED}`, borderRadius: 8, padding: '16px 20px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 10 }}>{c.topic}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 10 }}>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: MUTED, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 4 }}>Reported</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: TEXT2, lineHeight: 1.5 }}>{c.reported}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: RED, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 4 }}>Actual</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, color: RED, lineHeight: 1.5 }}>{c.actual}</div>
+                  </div>
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 12, color: AMBER }}>Gap: {c.gap}</div>
+              </div>
+            ))}
+          </div>
+        )
+
+      default:
+        return null
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', minHeight: '100%' }}>
+      {/* Left secondary nav */}
+      <div style={{ width: 200, minWidth: 200, background: CARD, borderRight: `1px solid #E8E6E3`, paddingTop: 20, flexShrink: 0 }}>
+        <div style={{ padding: '0 0 8px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '0 14px', marginBottom: 6 }}>IT & Technology</div>
+          {IT_NAV.map(item => <NavBtn key={item.key} item={item} />)}
+        </div>
+        <div style={{ height: 1, background: '#E8E6E3', margin: '8px 14px' }} />
+        <div style={{ padding: '8px 0 0' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase' as const, letterSpacing: '.1em', padding: '0 14px', marginBottom: 6 }}>Business</div>
+          {BIZ_NAV.map(item => <NavBtn key={item.key} item={item} />)}
+        </div>
+        <div style={{ margin: '16px 10px 0', padding: '12px', background: '#F3F4F5', borderRadius: 6 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, textTransform: 'uppercase' as const, letterSpacing: '.06em', marginBottom: 6 }}>Quick Stats</div>
+          <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2, marginBottom: 3 }}>{it?.totalApps ?? '—'} apps · {it?.cloudPct ?? '—'}% cloud</div>
+          <div style={{ fontFamily: SANS, fontSize: 12, color: TEXT2 }}>IT Spend: {it?.itSpend ?? '—'}</div>
+        </div>
+      </div>
+      {/* Right content */}
+      <div style={{ flex: 1, overflowY: 'auto' as const, background: BG }}>
+        {renderSection()}
+      </div>
+    </div>
+  )
+}
+
 // ─── SIDEBAR SECTION TYPE ────────────────────────────────────────────────────
 type SidebarSection =
   | 'engagements' | 'situation' | 'findings' | 'contradictions' | 'genome'
   | 'uploads' | 'data-readiness' | 'sensitive-access'
   | 'value-dashboard' | 'monthly-reviews' | 'fee-tracker'
   | 'deliverables' | 'board-packs'
+  | 'client-intel'
 
 // ─── ENGAGEMENTS SECTION — spec Page 2 layout ────────────────────────────────
 function EngagementsSection({
@@ -2152,6 +2536,8 @@ export default function MaestroClientPage() {
       case 'contradictions':
       case 'genome':
         return <InsightsTab data={data!} clientId={clientId} />
+      case 'client-intel':
+        return <ClientIntelTab clientId={clientId} />
       case 'uploads':
       case 'data-readiness':
       case 'sensitive-access':
@@ -2196,6 +2582,7 @@ export default function MaestroClientPage() {
             {sbItem('findings',       '◈', 'Findings')}
             {sbItem('contradictions', '⚡', 'Contradictions')}
             {sbItem('genome',         '⬡', 'Genome')}
+            {sbItem('client-intel',   '⊞', 'Client Intel')}
           </div>
 
           {/* Engagements */}
