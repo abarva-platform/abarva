@@ -1,10 +1,19 @@
 import { Pinecone } from '@pinecone-database/pinecone'
 
-const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! })
-const idx = pc.index(process.env.PINECONE_INDEX ?? 'nexus-knowledge')
-
 const EMBED_MODEL = 'multilingual-e5-large'
 const MIN_SCORE = 0.68
+
+let _pc: Pinecone | null = null
+let _idx: ReturnType<Pinecone['index']> | null = null
+
+function getClient() {
+  if (!process.env.PINECONE_API_KEY) return null
+  if (!_pc) {
+    _pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY })
+    _idx = _pc.index(process.env.PINECONE_INDEX ?? 'nexus-knowledge')
+  }
+  return { pc: _pc, idx: _idx! }
+}
 
 export async function retrieveContext(
   query: string,
@@ -12,14 +21,17 @@ export async function retrieveContext(
   topK = 4,
 ): Promise<string> {
   try {
-    const embedResponse = await pc.inference.embed({
+    const client = getClient()
+    if (!client) return ''
+
+    const embedResponse = await client.pc.inference.embed({
       model: EMBED_MODEL,
       inputs: [query],
       parameters: { inputType: 'query', truncate: 'END' },
     })
     const queryVector = (embedResponse.data[0] as any).values as number[]
 
-    const results = await idx.query({
+    const results = await client.idx.query({
       vector: queryVector,
       topK,
       includeMetadata: true,
@@ -38,7 +50,6 @@ export async function retrieveContext(
       .join('\n\n---\n\n')
 
   } catch {
-    // Never break the chat for RAG errors
     return ''
   }
 }
