@@ -19,27 +19,50 @@ const SANS   = "'DM Sans', system-ui, sans-serif"
 type Section = 'THE PROBLEM' | 'ABARNEXUS' | 'THE PLATFORM' | 'PROOF' | 'THE FUTURE'
 
 interface Screen {
-  id: number
+  id: string
   category: Section
   title: string
   body: string
   bullets: string[]
   url: string
   zoom?: number   // iframe scale (default 0.7)
+  audio?: string  // filename base; defaults to padded idx+1
+  onLoad?: (iframe: HTMLIFrameElement) => void
 }
 
-const PHASE_GROUPS: { label: string; category: Section; screens: number[] }[] = [
-  { label: 'THE PROBLEM',  category: 'THE PROBLEM',  screens: [1, 2] },
-  { label: 'ABARNEXUS',    category: 'ABARNEXUS',    screens: [3, 4, 5, 6] },
-  { label: 'THE PLATFORM', category: 'THE PLATFORM', screens: [7, 8, 9, 10, 11, 12, 13, 14] },
-  { label: 'PROOF',        category: 'PROOF',        screens: [15, 16, 17] },
-  { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: [18, 19] },
+const PHASE_GROUPS: { label: string; category: Section; screens: string[] }[] = [
+  { label: 'THE PROBLEM',  category: 'THE PROBLEM',  screens: ['1', '2'] },
+  { label: 'ABARNEXUS',    category: 'ABARNEXUS',    screens: ['3', '4', '5', '6'] },
+  { label: 'THE PLATFORM', category: 'THE PLATFORM', screens: ['7', '8', '9', '10', '11', '12', '13A', '13B', '14'] },
+  { label: 'PROOF',        category: 'PROOF',        screens: ['15', '16', '17'] },
+  { label: 'THE FUTURE',   category: 'THE FUTURE',   screens: ['18', '19'] },
 ]
+
+// iframe interaction helpers — all wrapped in try/catch to silence cross-origin errors
+function clickInIframe(iframe: HTMLIFrameElement, match: (text: string) => boolean, delayMs = 1000) {
+  setTimeout(() => {
+    try {
+      const doc = iframe.contentDocument
+      if (!doc) return
+      const els = Array.from(doc.querySelectorAll('button, a'))
+      const el = els.find(e => match(e.textContent || '')) as HTMLElement | undefined
+      el?.click()
+    } catch { /* cross-origin */ }
+  }, delayMs)
+}
+
+function scrollIframe(iframe: HTMLIFrameElement, top: number, delayMs = 1000) {
+  setTimeout(() => {
+    try {
+      iframe.contentWindow?.scrollTo({ top, behavior: 'smooth' })
+    } catch { /* cross-origin */ }
+  }, delayMs)
+}
 
 const SCREENS: Screen[] = [
   // ── THE PROBLEM ───────────────────────────────────────────────────────────
   {
-    id: 1,
+    id: '1', audio: '01',
     category: 'THE PROBLEM',
     title: 'The $800B problem.',
     body: 'Enterprises spend $800B a year on transformation. The deliverable is a PowerPoint. The knowledge walks out with the partner. No baseline. No accountability. The same firm comes back next year with the same recommendations. AbarVa changes that.',
@@ -52,7 +75,7 @@ const SCREENS: Screen[] = [
     url: '/',
   },
   {
-    id: 2,
+    id: '2', audio: '02',
     category: 'THE PROBLEM',
     title: 'Same problem. Same firms. Since forever.',
     body: 'AbarVa is not a consulting firm. It is an intelligence platform. Maestros embed inside the client — not external advisors. Platform fee. Engagement fee. Then 15–20% of verified savings above the locked Day Zero baseline — only if achieved. No ballooning SOWs. No fee for effort. Skin in the game.',
@@ -66,7 +89,7 @@ const SCREENS: Screen[] = [
   },
   // ── ABARNEXUS ─────────────────────────────────────────────────────────────
   {
-    id: 3,
+    id: '3', audio: '03',
     category: 'ABARNEXUS',
     title: 'AbarNexus. The brain that never forgets.',
     body: 'Three dimensions of knowledge — and none of them require you to give up your data. Dimension one: AbarNexus out-of-box — 340 Genome patterns, HFMA benchmarks, vendor performance data. Dimension two: your data, in your environment — files processed as embeddings inside your infrastructure, never ours. Dimension three: emergent intelligence — patterns from every engagement added back permanently. The 50th client benefits from the first 49.',
@@ -79,7 +102,7 @@ const SCREENS: Screen[] = [
     url: '/intelligence?client=meridian', zoom: 0.62,
   },
   {
-    id: 4,
+    id: '4', audio: '04',
     category: 'ABARNEXUS',
     title: 'Your data never leaves your environment. Ever.',
     body: 'Every file you upload is processed into embeddings inside your Supabase instance — not ours. Your contracts, financials, org charts, vendor agreements: they become searchable intelligence that AbarNexus can query. But the raw data stays in your environment. We never see it. We never store it. When the engagement ends, you own the intelligence. Not AbarVa. You.',
@@ -89,23 +112,24 @@ const SCREENS: Screen[] = [
       'Vendor contracts, financials, org charts: searchable, never exposed',
       'Engagement ends: all intelligence stays with you permanently',
     ],
-    url: 'https://app.abarva.ai/platform', zoom: 0.62,
+    url: '/platform', zoom: 0.62,
   },
   {
-    id: 5,
+    id: '5', audio: '05',
     category: 'ABARNEXUS',
     title: '340 failure patterns. Every one documented.',
     body: 'F007: CDO vacant at go-live — 79% programme failure rate. F011: vendor SLA never enforced — 74% suboptimal outcome. F003: platform end-of-life unplanned — 82% budget overrun. These are not estimates. They are statistical facts from organisations that were in exactly this position.',
     bullets: [
-      'Scroll to the Genome section — 4 patterns matched to Meridian specifically',
+      'Live Contradiction Intelligence opens — F011 Ensemble SLA breach flagged',
       'Each pattern: failure rate, engagement count, and recovery path',
       'F011 active at Meridian: Ensemble SLA never enforced — 74% failure rate',
       'Genome compounds — each new engagement sharpens every future pattern',
     ],
-    url: '/intelligence?client=meridian', zoom: 0.62,
+    url: '/maestro/meridian', zoom: 0.62,
+    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('Contradictions'), 800),
   },
   {
-    id: 6,
+    id: '6', audio: '06',
     category: 'ABARNEXUS',
     title: 'AbarNexus retrieves at every step.',
     body: 'Every message triggers a retrieval from the knowledge base. HFMA benchmarks. Genome failure patterns. The uploaded Ensemble contract. The brain retrieves exactly what\'s relevant — and injects it into every single response. Not a static prompt. Live intelligence.',
@@ -119,20 +143,21 @@ const SCREENS: Screen[] = [
   },
   // ── THE PLATFORM ──────────────────────────────────────────────────────────
   {
-    id: 7,
+    id: '7', audio: '07',
     category: 'THE PLATFORM',
     title: 'Before the first meeting, the Maestro already knows everything.',
     body: 'The Maestro workspace for Meridian. Before the first meeting, the platform knows: denial rate 18.2% vs benchmark 11.4%, CDO role vacant — F007 active, Epic goes live Q3 2026. No discovery week. 48 hours from data upload.',
     bullets: [
-      'Intel Feed: 3 critical signals flagged before the first meeting',
-      'Solution cards: $94M exposure quantified — not estimated',
-      'Genome match: 4 active patterns, F011 flagged as primary risk',
-      'Data readiness: 42/100 — gaps identified before deployment decisions',
+      'Active engagements table — Phase/Gate column visible after scroll',
+      'RCM AI Denial Prevention · Phase 1 · ✅ Approved',
+      'Technology Modernization · Phase 2 · ✅ Approved',
+      'Margin Optimization · Phase 0 · 🔒 Locked',
     ],
     url: '/maestro/meridian', zoom: 0.62,
+    onLoad: (iframe) => scrollIframe(iframe, 350, 1000),
   },
   {
-    id: 8,
+    id: '8', audio: '08',
     category: 'THE PLATFORM',
     title: 'The Maestro Guide. Five steps from setup to verified outcome.',
     body: 'This is the operating manual that replaces 40 consultants. Setup the workspace. Review what AbarNexus already knows. Run the engagement. Navigate AbarNexus through every phase. Capture the verified outcome and earn the fee.',
@@ -145,20 +170,21 @@ const SCREENS: Screen[] = [
     url: '/maestro/meridian', zoom: 0.62,
   },
   {
-    id: 9,
+    id: '9', audio: '09',
     category: 'THE PLATFORM',
     title: 'A new engagement. Three minutes.',
     body: 'Click New Engagement. Four questions: the leadership directive, AI use cases, technology landscape, executive sponsor. AbarVa auto-infers the solution type from what you describe — you never pick from a list. A McKinsey SOW takes three weeks. This takes three minutes — and arrives knowing more.',
     bullets: [
-      'Q1: free text — type the exact words from the CEO conversation',
+      'New Engagement flow auto-opens — discovery conversation live',
       'AI auto-infers engagement type from directive — no category dropdown',
       'Genome validation shown live — success rate for this engagement type',
       'Canvas populates as questions are answered — scope locked on Submit',
     ],
-    url: 'https://app.abarva.ai/maestro/meridian', zoom: 0.62,
+    url: '/maestro/meridian', zoom: 0.62,
+    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('New Engagement'), 1000),
   },
   {
-    id: 10,
+    id: '10', audio: '10',
     category: 'THE PLATFORM',
     title: 'Phase 0, Step 1. Three board-level signals.',
     body: 'AbarNexus opens with the three most critical signals at Meridian: the denial rate gap, prior auth automation lag, and the Epic go-live window. Every option is a real CXO stance — not a vague category. The AI Value Brief builds on the right. Every decision locked.',
@@ -168,10 +194,11 @@ const SCREENS: Screen[] = [
       'Right panel: AI Value Brief builds with every answered question',
       'AbarNexus retrieves Genome patterns in real time for each response',
     ],
-    url: '/ai-strategy?client=meridian&reset=true', zoom: 0.60,
+    url: '/ai-strategy?client=meridian', zoom: 0.60,
+    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('0.1') || t.includes('Situation Confirmation'), 1500),
   },
   {
-    id: 11,
+    id: '11', audio: '11',
     category: 'THE PLATFORM',
     title: '18 steps. 5 phases. Every outcome locked.',
     body: '$22.4M verified — KPMG audited. Day Zero baseline never moved. Denial rate: 18.2% to 16.1%, tracking to 12%. Epic integration on track Q3 2026. The board pack is ready. The fee is earned. Renewal confirmed.',
@@ -181,10 +208,11 @@ const SCREENS: Screen[] = [
       'Fee earned: $3.92M on verified delta — not projected, not estimated',
       'Renewal confirmed — Meridian is a Phase 2 client. The Genome compounds.',
     ],
-    url: '/ai-strategy?client=meridian&seed=demo', zoom: 0.60,
+    url: '/ai-strategy?client=meridian', zoom: 0.60,
+    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('EXECUTE'), 1500),
   },
   {
-    id: 12,
+    id: '12', audio: '12',
     category: 'THE PLATFORM',
     title: 'Not every problem needs 18 steps.',
     body: 'AbarVa has point solutions for specific problems: vendor spend optimisation, RCM denial prevention, AI portfolio accountability, Epic AI integration. Each is a focused workflow. Same AbarNexus intelligence. Faster time to value. No engagement manager required.',
@@ -194,50 +222,84 @@ const SCREENS: Screen[] = [
       'Denial Prevention: RCM-specific workflow, benchmarked to HFMA standard',
       'Each solution uses the same Genome intelligence — just scoped tighter',
     ],
-    url: '/select?client=meridian',
+    url: '/solutions',
   },
   {
-    id: 13,
+    id: '13A', audio: '13a',
     category: 'THE PLATFORM',
-    title: 'Your Bloomberg contract is $8.4M. Peers pay $5.1M.',
-    body: 'AbarNexus knows 31 comparable asset managers pay $5.1M for the same Bloomberg service. It found $1.4M in unclaimed SLA credits — 18 months unacted. Run the Vendor Spend solution. Two weeks. CFO-grade negotiation brief. No third party. You own the intelligence.',
+    title: 'Your biggest vendor contract. AbarNexus already knows.',
+    body: 'Your Bloomberg contract is $8.4M. AbarNexus knows 31 comparable asset managers pay $5.1M. It found $1.4M in unclaimed SLA credits — 18 months unacted. Run the Vendor Spend solution. Two weeks. CFO-grade negotiation brief. No third party. You own the intelligence.',
     bullets: [
-      'Vendor intelligence: peer pricing across 31 comparable asset managers',
-      '$1.4M in unclaimed SLA credits — 18 months of value sitting on the table',
-      'Negotiation brief generated — CFO-ready, no external consultant needed',
-      'Arcturus: Bloomberg + Refinitiv + Refinitiv contracts all in scope',
+      'Bloomberg contract: $8.4M — peers pay $5.1M, 31-firm benchmark',
+      '$1.4M in unclaimed SLA credits — 18 months sitting on the table',
+      'Two weeks: CFO-grade negotiation brief, no external consultant',
+      'You run the RFP. You negotiate. You own the intelligence.',
     ],
-    url: '/vendor-intelligence?client=arcturus',
+    url: '/solutions',
   },
   {
-    id: 14,
+    id: '13B', audio: '13b',
     category: 'THE PLATFORM',
-    title: '7 deliverables. Every phase. Permanently yours.',
-    body: 'Phase 0 Situation Brief. Phase 1 Diagnose Report. Phase 2 Architecture and Roadmap. Phase 3 Value Framework. Phase 4 Board Pack and Fee Calculation. Generated by AbarNexus. Reviewed by the Maestro. Yours to keep — not locked in a partner\'s head.',
+    title: 'Live vendor intelligence. Every contract benchmarked.',
+    body: 'This is Arcturus Financial — $279M vendor portfolio, 60 active contracts. 6 vendors meeting SLA. 11 SLA breaches with $1.8M in credits available NOW. 18 vendors above market rate. AbarNexus knows what comparable firms pay. It knows your SLA terms. It knows the renewal window.',
     bullets: [
-      '7 documents across all 5 phases — complete audit trail',
-      'View: full AbarVa-branded document renders inline',
+      '$279M vendor portfolio · 60 active contracts benchmarked',
+      '11 SLA breaches · $1.8M in credits available right now',
+      '18 vendors above market rate — renewal windows flagged',
+      'Not a spreadsheet, not a consultant — a platform reading every contract',
+    ],
+    url: '/ai-strategy?client=arcturus', zoom: 0.60,
+  },
+  {
+    id: '14', audio: '14',
+    category: 'THE PLATFORM',
+    title: '7 deliverables. Every phase documented.',
+    body: 'Phase 0 Situation Brief. Phase 1 Diagnose Report. Phase 2 Architecture and Roadmap. Phase 3 Value Framework. Phase 4 Board Pack and Fee Calculation. Every document generated by AbarNexus, reviewed by the Maestro, stored permanently. Yours to view, download, present.',
+    bullets: [
+      'Deliverables panel auto-opens — all 7 docs across 5 phases',
+      'Architecture doc opens inline — full AbarVa-branded render',
       'Every document has engagement ID, date, Maestro name',
       'Download as HTML — present to your board directly',
     ],
-    url: 'https://app.abarva.ai/maestro/meridian?view=deliverables', zoom: 0.62,
+    url: '/maestro/meridian', zoom: 0.62,
+    onLoad: (iframe) => {
+      setTimeout(() => {
+        try {
+          const doc = iframe.contentDocument
+          if (!doc) return
+          const del = Array.from(doc.querySelectorAll('button, a'))
+            .find(el => (el.textContent || '').trim() === 'Deliverables') as HTMLElement | undefined
+          del?.click()
+          setTimeout(() => {
+            try {
+              const d2 = iframe.contentDocument
+              if (!d2) return
+              const viewBtns = Array.from(d2.querySelectorAll('button'))
+                .filter(b => (b.textContent || '').trim() === 'View') as HTMLButtonElement[]
+              viewBtns[1]?.click()
+            } catch { /* cross-origin */ }
+          }, 1500)
+        } catch { /* cross-origin */ }
+      }, 1000)
+    },
   },
   // ── PROOF ─────────────────────────────────────────────────────────────────
   {
-    id: 15,
+    id: '15', audio: '15',
     category: 'PROOF',
-    title: 'Meridian Health System. $22.4M verified.',
-    body: '14-hospital IDN. Denial rate 18.2% → 16.1% → tracking to 12%. Ensemble SLA invoked Month 2. $22.4M verified by Month 3 — KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed.',
+    title: 'Meridian. $22.4M verified. KPMG audited.',
+    body: 'The engagement started with a denial rate of 18.2 percent. It ends with $22.4M verified. KPMG audited. 5.7× return on the AbarVa fee. Epic AI integration on track. Renewal confirmed. Meridian is a Phase 2 client. This is what outcome accountability looks like.',
     bullets: [
-      'Starting position: 18.2% denial rate, $94M annual gap, Epic in 90 days',
-      'Month 2: Ensemble SLA invoked — first time in 2 years of documented violations',
-      '$22.4M verified by Month 3 — KPMG audit, not an AbarVa claim',
-      '5.7× ROI: language the CFO can defend to the board without a deck',
+      'Starting position: 18.2% denial rate, $94M annual gap',
+      '$22.4M verified — KPMG audit, not an AbarVa claim',
+      '5.7× return on AbarVa fee — defensible to any board',
+      'Renewal confirmed — Phase 2 client, Genome compounds',
     ],
-    url: '/maestro/meridian', zoom: 0.62,
+    url: '/ai-strategy?client=meridian', zoom: 0.60,
+    onLoad: (iframe) => clickInIframe(iframe, t => t.includes('4.2') || t.includes('Governance'), 1500),
   },
   {
-    id: 16,
+    id: '16', audio: '16',
     category: 'PROOF',
     title: 'Arcturus Financial Group. $18.2M verified.',
     body: '$200B AUM. Cost-to-income ratio 71% versus 58% peer benchmark — an $840M efficiency gap. AbarNexus found $94M in AI spend with zero baselines and $1.4M in unclaimed Bloomberg SLA credits. $18.2M verified Month 4.',
@@ -250,7 +312,7 @@ const SCREENS: Screen[] = [
     url: '/maestro/arcturus', zoom: 0.62,
   },
   {
-    id: 17,
+    id: '17', audio: '17',
     category: 'PROOF',
     title: 'Apex Retail Group. $47.2M verified.',
     body: '340 stores. Azure spend 41% above peer benchmark — $39M recoverable. F003 matched: Teradata end-of-life with no migration plan. Month 1: reserved instance purchase — $14M Year 1, zero risk. Month 4: Azure + Databricks Medallion live. $47.2M verified Month 6.',
@@ -264,20 +326,21 @@ const SCREENS: Screen[] = [
   },
   // ── THE FUTURE ────────────────────────────────────────────────────────────
   {
-    id: 18,
+    id: '18', audio: '18',
     category: 'THE FUTURE',
     title: 'Every engagement makes AbarNexus smarter. Permanently.',
     body: 'At Series A, agents handle Phase 0 autonomously — one Maestro runs 4–6 engagements simultaneously. At Series B, the Genome Agent reads industry research continuously — AbarNexus self-updates from the world and from every engagement. Harvey AI did this for legal: $11B. Our market is $800B.',
     bullets: [
-      'Today: AI-assisted Maestro — analysis automated, human drives strategy',
+      'Platform architecture: 5 knowledge layers compounding per engagement',
       'Series A: cross-client Genome — 30+ engagements feeding live patterns',
       'Series B: autonomous agents — Maestro oversees, AI executes end-to-end',
       'Harvey AI: $11B for legal. AbarVa: same thesis. $800B. Nobody has touched it.',
     ],
-    url: '/investor',
+    url: '/platform', zoom: 0.62,
+    onLoad: (iframe) => scrollIframe(iframe, 1200, 1000),
   },
   {
-    id: 19,
+    id: '19', audio: '19',
     category: 'THE FUTURE',
     title: 'When the engagement ends, everything stays.',
     body: 'When the engagement ends, everything stays with you. The Situation Brief. The Architecture. The Board Pack. Your vendor contracts were never on our servers. Your financials were never on our servers. Your data was processed as embeddings in your environment — and it stays there. AbarVa gave you the intelligence. You always had the data. Now act on it.',
@@ -360,8 +423,8 @@ function DemoGuidedPageInner() {
   useEffect(() => {
     if (!voiceEnabled) return
     stopAudio()
-    const screenId = String(idx + 1).padStart(2, '0')
-    const audio    = new Audio(`/audio/demo/screen-${screenId}.mp3`)
+    const screenAudio = SCREENS[idx].audio ?? String(idx + 1).padStart(2, '0')
+    const audio       = new Audio(`/audio/demo/screen-${screenAudio}.mp3`)
     audioRef.current = audio
     audio.onplay   = () => setIsPlaying(true)
     audio.onended  = () => setIsPlaying(false)
@@ -491,16 +554,18 @@ function DemoGuidedPageInner() {
                     {group.label}
                   </span>
                   {group.screens.map(sn => {
-                    const si     = sn - 1
+                    const si     = SCREENS.findIndex(s => s.id === sn)
+                    if (si < 0) return null
                     const active = si === idx
                     const past   = si < idx
+                    const wide   = sn.length > 2
                     return (
                       <button
                         key={sn}
                         onClick={() => goTo(si)}
                         title={SCREENS[si].title}
                         style={{
-                          width: 13, height: 13,
+                          minWidth: 13, width: wide ? 20 : 13, height: 13,
                           borderRadius: 3, border: 'none', cursor: 'pointer',
                           background: active ? TEAL : past ? 'rgba(45,212,200,0.35)' : 'rgba(255,255,255,0.15)',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -666,6 +731,9 @@ function DemoGuidedPageInner() {
                   <div style={{ position: 'relative', overflow: 'hidden', width: '100%', height: '100%' }}>
                     <iframe
                       src={screen.url}
+                      onLoad={(e) => {
+                        try { screen.onLoad?.(e.currentTarget) } catch { /* cross-origin */ }
+                      }}
                       style={{
                         width: `${inv}%`, height: `${inv}%`,
                         transform: `scale(${zoom})`, transformOrigin: 'top left',
