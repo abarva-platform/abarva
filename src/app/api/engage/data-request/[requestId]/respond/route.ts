@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  return createClient(url, key)
+}
 
 export async function POST(
   req: NextRequest,
@@ -40,6 +41,7 @@ export async function POST(
   }
 
   const respondedAt = new Date().toISOString()
+  const supabase = getSupabase()
 
   // Fetch the data request first (needed for engagement context and file_requested label)
   const { data: dataRequest, error: fetchErr } = await supabase

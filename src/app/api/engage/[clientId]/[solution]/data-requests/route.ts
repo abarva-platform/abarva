@@ -1,15 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  return createClient(url, key)
+}
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ clientId: string; solution: string }> }
 ) {
+  const supabase = getSupabase()
   const { clientId, solution } = await params
   const { searchParams } = new URL(req.url)
   const statusFilter = searchParams.get('status')
