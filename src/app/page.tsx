@@ -62,9 +62,9 @@ export default function Homepage() {
             <a href={seeItLiveHref} style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
               See it live →
             </a>
-            <a href="/demo" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
-              Watch a demo
-            </a>
+            <span title="Demo temporarily unavailable — new version coming soon" style={{ background: 'transparent', color: 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid rgba(0,0,0,0.18)`, cursor: 'default' }}>
+              Watch a demo · soon
+            </span>
           </div>
         </div>
 
@@ -313,9 +313,9 @@ export default function Homepage() {
         </h2>
         <p style={{ fontSize: 17, color: LMUTE, margin: '0 0 36px' }}>No sales calls. A Maestro responds within 24 hours.</p>
         <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-          <a href="/demo" style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
-            See a live demo →
-          </a>
+          <span title="Demo temporarily unavailable — new version coming soon" style={{ background: 'rgba(0,0,0,0.18)', color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'default' }}>
+            See a live demo · soon
+          </span>
           <a href="/diagnose?client=meridian" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
             Request a conversation
           </a>

@@ -245,9 +245,9 @@ export default function PlatformPage() {
               <a href="#architecture" onClick={scrollToArch} style={{ fontSize: '14px', fontWeight: 500, color: BG, background: DARK, padding: '11px 22px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block' }}>
                 See the architecture ↓
               </a>
-              <a href="/demo" style={{ fontSize: '14px', fontWeight: 500, color: DARK, border: `1px solid ${DARK}`, padding: '10px 22px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block', background: 'transparent' }}>
-                Request a demo
-              </a>
+              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(0,0,0,0.35)', border: `1px solid rgba(0,0,0,0.18)`, padding: '10px 22px', borderRadius: '4px', display: 'inline-block', background: 'transparent', cursor: 'default' }}>
+                Request a demo · soon
+              </span>
             </div>
           </div>
 
@@ -635,12 +635,12 @@ export default function PlatformPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '14px', marginTop: '32px' }}>
-          <a href="/demo" style={{ fontSize: '14px', fontWeight: 500, color: BG, background: DARK, padding: '11px 22px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block' }}>
-            See it working on Meridian Health →
-          </a>
-          <a href="/demo" style={{ fontSize: '14px', fontWeight: 500, color: DARK, border: `1px solid ${DARK}`, padding: '10px 22px', borderRadius: '4px', textDecoration: 'none', display: 'inline-block', background: 'transparent' }}>
-            Request a demo
-          </a>
+          <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '14px', fontWeight: 500, color: BG, background: 'rgba(0,0,0,0.35)', padding: '11px 22px', borderRadius: '4px', display: 'inline-block', cursor: 'default' }}>
+            See it working on Meridian · soon
+          </span>
+          <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '14px', fontWeight: 500, color: 'rgba(0,0,0,0.35)', border: `1px solid rgba(0,0,0,0.18)`, padding: '10px 22px', borderRadius: '4px', display: 'inline-block', background: 'transparent', cursor: 'default' }}>
+            Request a demo · soon
+          </span>
         </div>
       </section>
 

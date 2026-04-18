@@ -133,6 +133,24 @@ function NavInner({ activePage }: NavProps) {
     </a>
   )
 
+  // Demo nav item — temporarily disabled while v2 ships; rendered as muted, non-clickable
+  const demoNavItem = () => (
+    <span
+      key="demo-nav"
+      title="Demo temporarily unavailable — new version coming soon"
+      style={{
+        fontSize: '14px',
+        color: 'rgba(255,255,255,0.30)',
+        padding: '8px 10px', fontFamily: SANS, flexShrink: 0,
+        borderBottom: '2px solid transparent',
+        pointerEvents: 'none' as React.CSSProperties['pointerEvents'],
+        cursor: 'default',
+      }}
+    >
+      Demo <span style={{ fontFamily: MONO, fontSize: 9, marginLeft: 4, color: 'rgba(255,255,255,0.40)' }}>soon</span>
+    </span>
+  )
+
   // Admin nav item — clickable for admin, greyed + disabled for others
   const adminNavItem = () => (
     <a
@@ -306,13 +324,13 @@ function NavInner({ activePage }: NavProps) {
           <>
             {navLink('Solutions', '/solutions', solutionsActive)}
             {navLink('Investor', '/investor', investorActive)}
-            {navLink('Demo', '/demo', demoActive)}
+            {demoNavItem()}
           </>
         )}
 
         {/* ── Right side: Demo · Platform · Investor · Admin + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {signedIn && navLink('Demo', '/demo', demoActive)}
+          {signedIn && demoNavItem()}
           {signedIn && navLink('Platform', '/platform', platformActive)}
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
           {signedIn && adminNavItem()}
@@ -373,9 +391,9 @@ function NavInner({ activePage }: NavProps) {
               <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
                 Login
               </a>
-              <a href="/demo" style={{ fontSize: '12px', fontWeight: 600, color: NAV_BG, background: NAV_TEXT, textDecoration: 'none', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
-                Request Demo
-              </a>
+              <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
+                Demo soon
+              </span>
             </>
           )}
         </div>
