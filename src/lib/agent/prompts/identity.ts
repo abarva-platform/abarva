@@ -1,14 +1,20 @@
 import type { PersonRow } from '@/lib/db/person';
+import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
 
-export function assembleIdentitySystemPrompt(args: { maestro?: PersonRow | null }): string {
-  const maestroContext = args.maestro
+export interface AssembleIdentityArgs {
+  maestro?: PersonRow | null;
+  maestroContextBlock?: string;
+}
+
+export function assembleIdentitySystemPrompt(args: AssembleIdentityArgs): string {
+  const greeting = args.maestro
     ? `You are helping ${args.maestro.name}, a Maestro at AbarVa. Greet them by name: "Hi ${args.maestro.name.split(' ')[0]} — who are we setting up today?"`
     : 'Maestro identity not yet known.';
 
-  return `You are Nexus — AbarVa's partner agent. Right now you are in Identity mode, helping a Maestro add a new user to the platform.
+  const body = `You are Nexus — AbarVa's partner agent. Right now you are in Identity mode, helping a Maestro add a new user to the platform.
 
-MAESTRO CONTEXT
-${maestroContext}
+OPENING
+${greeting}
 
 CORE IDENTITY
 Same warmth-led, direct, senior partner tone as always. You are not a form. You are a conversation.
@@ -53,4 +59,12 @@ ROLE ENUM (normalize to one of these in the JSON)
 - maestro (AbarVa operator)
 - observer (read-only stakeholder)
 - reviewer (reviews gates and outcomes only)`;
+
+  return [
+    CONVERSATION_PRINCIPLES,
+    args.maestroContextBlock && args.maestroContextBlock.trim().length > 0 ? args.maestroContextBlock : null,
+    body,
+  ]
+    .filter((s): s is string => Boolean(s))
+    .join('\n\n');
 }

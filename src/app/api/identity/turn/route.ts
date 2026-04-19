@@ -2,6 +2,9 @@ import { NextRequest } from 'next/server';
 import { assembleIdentitySystemPrompt } from '@/lib/agent/prompts/identity';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { parseUserReadyBlock } from '@/lib/agent/parse';
+import { parseChoicesFromText } from '@/lib/agent/parse-choices';
+import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
+import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { createPerson } from '@/lib/db/person';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
@@ -20,8 +23,16 @@ export async function POST(req: NextRequest) {
 
   const maestro = await getCurrentMaestro();
   const actorMaestro = maestro;
-  const system = assembleIdentitySystemPrompt({ maestro });
+
+  const maestroContextBlock = maestro
+    ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
+    : '';
+
+  const system = assembleIdentitySystemPrompt({ maestro, maestroContextBlock });
   const encoder = new TextEncoder();
+
+  const lastUserMessage = [...messages].reverse().find((m) => m?.role === 'user');
+  const lastUserText = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -31,7 +42,13 @@ export async function POST(req: NextRequest) {
           full += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }
-        const parsed = parseUserReadyBlock(full);
+
+        const { text: cleanedAgentText, choices: turnChoices } = parseChoicesFromText(full);
+        if (turnChoices.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'choices', choices: turnChoices }) + '\n'));
+        }
+
+        const parsed = parseUserReadyBlock(cleanedAgentText);
         if (parsed) {
           const person = await createPerson({
             name: parsed.name,
@@ -47,9 +64,6 @@ export async function POST(req: NextRequest) {
             role: person.role ?? parsed.role,
             organization: person.organization ?? parsed.organization,
           });
-          // Best-effort: sync person_id into Clerk public metadata so Clerk
-          // JWTs carry it forward for RLS. Silent no-op if no matching Clerk
-          // user exists yet (they may sign up later).
           if (person.email) {
             void (async () => {
               try {
@@ -79,6 +93,23 @@ export async function POST(req: NextRequest) {
           });
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'user_created', person }) + '\n'));
         }
+
+        if (maestro && lastUserText.trim().length > 0) {
+          void (async () => {
+            try {
+              await updateMaestroProfile({
+                maestroPersonId: maestro.id,
+                turnId: `identity-${Date.now()}`,
+                turnText: lastUserText,
+                engagementId: null,
+                engagementIndustry: null,
+              });
+            } catch (err) {
+              console.error('[maestro-extractor-identity]', err);
+            }
+          })();
+        }
+
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
         controller.close();
       } catch (err) {

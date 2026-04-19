@@ -1,4 +1,5 @@
 import type { PersonRow } from '@/lib/db/person';
+import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
 
 export interface DataContextArgs {
   clientName: string;
@@ -6,17 +7,18 @@ export interface DataContextArgs {
   alreadyLoadedByAbarva: { dimension: string; summary: string }[];
   filesProcessedThisSession: { filename: string; chunks: number }[];
   maestro?: PersonRow | null;
+  maestroContextBlock?: string;
 }
 
 export function assembleDataSystemPrompt(ctx: DataContextArgs): string {
-  const maestroContext = ctx.maestro
+  const greeting = ctx.maestro
     ? `You are helping ${ctx.maestro.name} (Maestro). Open with: "Hi ${ctx.maestro.name.split(' ')[0]} — let's get ${ctx.clientName} loaded."`
     : 'Maestro identity not yet known.';
 
-  return `You are Nexus in Data mode, helping a Maestro load a client's data.
+  const body = `You are Nexus in Data mode, helping a Maestro load a client's data.
 
-MAESTRO CONTEXT
-${maestroContext}
+OPENING
+${greeting}
 
 CORE IDENTITY
 Warm, senior partner. Same voice as always. You are not a form.
@@ -30,10 +32,10 @@ ${ctx.alreadyLoadedByAbarva.map((d) => `- ${d.dimension}: ${d.summary}`).join('\
 
 FILES PROCESSED THIS SESSION
 ${
-  ctx.filesProcessedThisSession.length === 0
-    ? '- None yet'
-    : ctx.filesProcessedThisSession.map((f) => `- ${f.filename} (${f.chunks} chunks)`).join('\n')
-}
+    ctx.filesProcessedThisSession.length === 0
+      ? '- None yet'
+      : ctx.filesProcessedThisSession.map((f) => `- ${f.filename} (${f.chunks} chunks)`).join('\n')
+  }
 
 HOW TO OPEN
 First turn: acknowledge what AbarVa already has for this industry (briefly — one sentence per dimension), then ask what client-specific data the Maestro has. Example: "For healthcare IDNs I already have HFMA denial benchmarks, CMS/HIPAA/MA Star regulatory context, and the Genome failure patterns. What I don't have is anything ${ctx.clientName}-specific. What do you have for me?"
@@ -51,4 +53,12 @@ Confirm data onboarding is complete for this client. Tell them they can now star
 
 STYLE
 No markdown, no emoji, 2-4 short paragraphs max per turn, one question at a time.`;
+
+  return [
+    CONVERSATION_PRINCIPLES,
+    ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
+    body,
+  ]
+    .filter((s): s is string => Boolean(s))
+    .join('\n\n');
 }

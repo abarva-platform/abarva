@@ -1,6 +1,9 @@
 import { NextRequest } from 'next/server';
 import { assembleDataSystemPrompt } from '@/lib/agent/prompts/data';
 import { streamAgentTurn } from '@/lib/agent/stream';
+import { parseChoicesFromText } from '@/lib/agent/parse-choices';
+import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
+import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
@@ -46,21 +49,54 @@ export async function POST(req: NextRequest) {
   }
 
   const maestro = await getCurrentMaestro();
+
+  const maestroContextBlock = maestro
+    ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
+    : '';
+
   const system = assembleDataSystemPrompt({
     clientName,
     industry,
     alreadyLoadedByAbarva: ABARVA_DIMENSIONS[industry] ?? [],
     filesProcessedThisSession: files,
     maestro,
+    maestroContextBlock,
   });
+
+  const lastUserMessage = [...messages].reverse().find((m) => m?.role === 'user');
+  const lastUserText = typeof lastUserMessage?.content === 'string' ? lastUserMessage.content : '';
 
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        let full = '';
         for await (const delta of streamAgentTurn({ system, messages })) {
+          full += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }
+
+        const { choices: turnChoices } = parseChoicesFromText(full);
+        if (turnChoices.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'choices', choices: turnChoices }) + '\n'));
+        }
+
+        if (maestro && lastUserText.trim().length > 0) {
+          void (async () => {
+            try {
+              await updateMaestroProfile({
+                maestroPersonId: maestro.id,
+                turnId: `data-${Date.now()}`,
+                turnText: lastUserText,
+                engagementId: null,
+                engagementIndustry: industry,
+              });
+            } catch (err) {
+              console.error('[maestro-extractor-data]', err);
+            }
+          })();
+        }
+
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
         controller.close();
       } catch (err) {
