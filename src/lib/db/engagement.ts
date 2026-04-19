@@ -138,14 +138,20 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     if (base > 0 && actual > 0) trackedSavingsUsd += actual - base;
   }
 
-  // Gates pending: active engagements whose current-phase gate is not in gates_passed
+  // Gates pending: gate objects that have been submitted (exist in gates_passed)
+  // but not yet approved. Fresh engagements with empty gates_passed contribute 0.
   let gatesPending = 0;
   for (const r of activeRows) {
     const passed = Array.isArray(r.gates_passed) ? r.gates_passed : [];
-    const currentGateSigned = passed.some(
-      (g) => typeof g === 'object' && g !== null && (g as Record<string, unknown>).phase === r.current_phase,
-    );
-    if (!currentGateSigned) gatesPending += 1;
+    for (const g of passed) {
+      if (typeof g !== 'object' || g === null) continue;
+      const gate = g as Record<string, unknown>;
+      const approved =
+        Boolean(gate.approved_at) ||
+        Boolean(gate.approved_by) ||
+        gate.status === 'approved';
+      if (!approved) gatesPending += 1;
+    }
   }
 
   // Outcome fees: SUM approved outcome_fee_usd this quarter (across any status)

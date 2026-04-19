@@ -42,19 +42,20 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [opened, setOpened] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const idRef = useRef(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const openedRef = useRef(false);
   const nextId = () => `local-${Date.now()}-${++idRef.current}`;
 
-  // Auto-fire the opening turn on mount so the agent speaks first
+  // Auto-fire the opening turn on mount. Ref is set synchronously before any
+  // async work, so strict-mode double-invocation is a no-op on the second pass.
   useEffect(() => {
-    if (opened) return;
-    setOpened(true);
+    if (openedRef.current) return;
+    openedRef.current = true;
     void sendTurn('[BEGIN]', { suppressUserMessage: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opened]);
+  }, []);
 
   async function sendTurn(text: string, opts?: { suppressUserMessage?: boolean }) {
     if (isStreaming) return;
