@@ -7,6 +7,7 @@ import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
 import { ChoiceChips, type Choice } from './ChoiceChips';
+import { renderWithCitations } from './renderWithCitations';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -242,7 +243,7 @@ export function EngagementConsole({
                       {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
                     </div>
                     <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      {t.text}
+                      {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
                       {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
                     </div>
                   </div>
