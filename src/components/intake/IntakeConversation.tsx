@@ -75,6 +75,7 @@ export default function IntakeConversation({
   const [latestAct, setLatestAct] = useState<number | null>(null)
   const [latestTurn, setLatestTurn] = useState<number | null>(null)
   const charterFiredRef = useRef(false)
+  const bootstrapRef = useRef(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const userId = user?.id ?? ''
@@ -154,7 +155,8 @@ export default function IntakeConversation({
 
   // On mount: load history, fire opening if empty.
   useEffect(() => {
-    if (!ready || bootstrapped) return
+    if (!ready || bootstrapRef.current) return
+    bootstrapRef.current = true
     let cancelled = false
 
     async function bootstrap() {
@@ -191,7 +193,7 @@ export default function IntakeConversation({
     return () => {
       cancelled = true
     }
-  }, [ready, bootstrapped, engagementId, userId, sendTurn])
+  }, [ready, engagementId, userId, sendTurn])
 
   // Auto-scroll.
   useEffect(() => {
