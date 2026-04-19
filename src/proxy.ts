@@ -68,7 +68,7 @@ const authRequiredRoutes = createRouteMatcher([
   '/client-view(.*)',
 ])
 
-export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
+export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
 
