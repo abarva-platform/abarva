@@ -4,7 +4,7 @@ import {
   type EngagementRow,
 } from '@/lib/db/engagement';
 import { getRecentTurns } from '@/lib/db/turn';
-import { getActivePatterns } from '@/lib/graph/retrieval';
+import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export interface EngagementCharter {
@@ -58,6 +58,152 @@ RULES
 - Do not add commentary, markdown, or any text outside the JSON object.
 
 Output ONLY the JSON object.`;
+}
+
+function assembleSolutionDesignPrompt(args: {
+  engagementName: string;
+  diagnosticSummary: string;
+  turnHistory: string;
+  peerDecisions: Array<{ choice: string; engagement_count: number; avg_outcome_usd: number }>;
+}): string {
+  return `You are generating a Solution Design from a completed Phase 2 conversation.
+
+ENGAGEMENT: ${args.engagementName}
+
+DIAGNOSTIC (locked)
+${args.diagnosticSummary}
+
+PEER DECISIONS AT THIS PHASE
+${args.peerDecisions.map((d) => `- "${d.choice}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join('\n')}
+
+CONVERSATION (Phase 2 Design turns)
+${args.turnHistory}
+
+Produce a Solution Design in JSON:
+
+{
+  "options_considered": [
+    {
+      "name": "Short name",
+      "description": "1-2 sentence description",
+      "estimated_cost_usd": 5000000,
+      "estimated_timeline_months": 9,
+      "risk_level": "low" | "medium" | "high",
+      "expected_outcome_usd": 15000000,
+      "peer_comparables": [{"engagement_name": "...", "outcome_summary": "..."}],
+      "genome_pattern_risks": [{"code": "F007", "note": "..."}],
+      "pros": ["..."],
+      "cons": ["..."]
+    }
+  ],
+  "recommended_option": "name matching one of options_considered",
+  "recommendation_rationale": "2-3 sentences",
+  "selected_option": "what the sponsor ACTUALLY chose",
+  "roadmap": [{"milestone": "...", "target_date": "YYYY-MM-DD", "owner": "role or name", "dependencies": []}],
+  "baseline_metrics_proposed": [
+    {"metric": "name", "baseline_value": "number with unit", "measurement_method": "how", "source": "where"}
+  ]
+}
+
+RULES
+- Each option must have all fields populated
+- Only include options actually discussed
+- recommended_option and selected_option may differ
+- Numbers explicit, not ranges
+- Output ONLY JSON. No commentary.`;
+}
+
+function assembleExecutionPrompt(args: {
+  engagementName: string;
+  roadmap: string;
+  turnHistory: string;
+  decisionsCount: number;
+}): string {
+  return `You are generating an Execution Dashboard summarizing a completed Phase 3 conversation.
+
+ENGAGEMENT: ${args.engagementName}
+
+ROADMAP (from Phase 2 Design)
+${args.roadmap}
+
+DECISIONS LOGGED DURING PHASE 3: ${args.decisionsCount}
+
+CONVERSATION (Phase 3 turns)
+${args.turnHistory}
+
+Produce an Execution Dashboard in JSON:
+
+{
+  "milestones": [
+    {
+      "milestone": "from roadmap",
+      "target_date": "YYYY-MM-DD",
+      "actual_date": "YYYY-MM-DD or null",
+      "status": "complete" | "on_track" | "at_risk" | "slipped" | "descoped",
+      "notes": "short factual note"
+    }
+  ],
+  "chain_risks_surfaced": [
+    {"code": "F007", "surfaced_at": "YYYY-MM-DD", "mitigation": "what was done"}
+  ],
+  "decisions_logged_count": ${args.decisionsCount},
+  "scope_changes": [
+    {"change": "description", "approved_by": "person"}
+  ]
+}
+
+Output ONLY JSON.`;
+}
+
+function assembleVerificationPrompt(args: {
+  engagementName: string;
+  baselineItems: string;
+  actualItems: string;
+  feeInfo: string;
+  turnHistory: string;
+  durationDays: number;
+}): string {
+  return `You are generating an Outcome Verification for a completed Phase 4 conversation.
+
+ENGAGEMENT: ${args.engagementName}
+DURATION: ${args.durationDays} days
+
+BASELINE METRICS
+${args.baselineItems}
+
+ACTUAL METRICS
+${args.actualItems}
+
+OUTCOME FEE PROPOSAL
+${args.feeInfo}
+
+CONVERSATION (Phase 4 Verify turns)
+${args.turnHistory}
+
+Produce an Outcome Verification in JSON:
+
+{
+  "metrics_compared": [
+    {
+      "metric": "name",
+      "baseline_value": "value with unit",
+      "actual_value": "value with unit",
+      "delta_absolute": "value with unit",
+      "delta_percentage": 25.5
+    }
+  ],
+  "total_baseline_cost_usd": 14200000,
+  "total_actual_cost_usd": 9600000,
+  "total_savings_usd": 4600000,
+  "fee_percentage": 20,
+  "fee_amount_usd": 920000,
+  "engagement_duration_days": ${args.durationDays},
+  "lessons_learned": ["short lesson statements"]
+}
+
+- delta_percentage positive = improvement (cost down, hours down, etc.)
+- If numbers not explicitly stated, derive from baseline/actual items
+- Output ONLY JSON.`;
 }
 
 function assembleDiagnosticPrompt(args: {
@@ -153,6 +299,78 @@ export async function generateDeliverableForPhase(engagementId: string, phase: n
         })),
       }),
     );
+  } else if (phase === 2) {
+    deliverableType = 'solution_design';
+    const deliverables = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []);
+    const diagnostic = deliverables.find((d) => d.type === 'diagnostic_charter');
+    const peerDecisions = await getPeerDecisionsForPhase(engagement.graph_node_id, 2);
+    deliverable = await runHaiku(
+      assembleSolutionDesignPrompt({
+        engagementName: engagement.name,
+        diagnosticSummary: diagnostic ? JSON.stringify(diagnostic.content).slice(0, 1500) : 'No diagnostic available',
+        turnHistory,
+        peerDecisions: peerDecisions.map((d) => ({
+          choice: d.choice,
+          engagement_count: d.engagement_count,
+          avg_outcome_usd: d.avg_outcome_usd,
+        })),
+      }),
+    );
+    // Also mirror baseline_metrics_proposed into engagements.baseline_metrics
+    if (deliverable && Array.isArray((deliverable as { baseline_metrics_proposed?: unknown[] }).baseline_metrics_proposed)) {
+      const items = (deliverable as { baseline_metrics_proposed: Array<Record<string, unknown>> }).baseline_metrics_proposed;
+      await getServerSupabase()
+        .from('engagements')
+        .update({ baseline_metrics: { items, captured_at: new Date().toISOString() } })
+        .eq('id', engagementId);
+    }
+  } else if (phase === 3) {
+    deliverableType = 'execution_dashboard';
+    const deliverables = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []);
+    const design = deliverables.find((d) => d.type === 'solution_design');
+    const roadmap = design
+      ? JSON.stringify((design.content as { roadmap?: unknown }).roadmap ?? []).slice(0, 1500)
+      : 'No roadmap available';
+    const decisions = (engagement.decisions as unknown[] | null) ?? [];
+    deliverable = await runHaiku(
+      assembleExecutionPrompt({
+        engagementName: engagement.name,
+        roadmap,
+        turnHistory,
+        decisionsCount: decisions.length,
+      }),
+    );
+  } else if (phase === 4) {
+    deliverableType = 'outcome_verification';
+    const baseline = (engagement.baseline_metrics as { items?: Array<Record<string, unknown>> } | null)?.items ?? [];
+    const actual = (engagement.actual_metrics as { items?: Array<Record<string, unknown>> } | null)?.items ?? [];
+    const feeUsd = engagement.outcome_fee_usd ?? null;
+    const feeInfo = feeUsd
+      ? `Fee proposed: $${feeUsd.toLocaleString()}`
+      : 'No fee proposed yet';
+    const startedAt = engagement.phase_0_started_at ? new Date(engagement.phase_0_started_at) : new Date(engagement.created_at);
+    const durationDays = Math.max(1, Math.floor((Date.now() - startedAt.getTime()) / 86_400_000));
+    deliverable = await runHaiku(
+      assembleVerificationPrompt({
+        engagementName: engagement.name,
+        baselineItems: baseline.map((m) => `- ${m.metric}: ${m.baseline_value}`).join('\n') || '- none',
+        actualItems: actual.map((m) => `- ${m.metric}: ${m.actual_value}`).join('\n') || '- none',
+        feeInfo,
+        turnHistory,
+        durationDays,
+      }),
+    );
+    // On successful generation, transition to completed + fee approved
+    if (deliverable) {
+      await getServerSupabase()
+        .from('engagements')
+        .update({
+          status: 'completed',
+          outcome_fee_status: feeUsd && feeUsd > 0 ? 'approved' : 'not_triggered',
+          phase_4_completed_at: new Date().toISOString(),
+        })
+        .eq('id', engagementId);
+    }
   } else {
     return;
   }

@@ -38,6 +38,50 @@ export async function getEngagementByGraphId(graphNodeId: string): Promise<Engag
   return data as EngagementRow | null;
 }
 
+export interface DecisionEntry {
+  summary: string;
+  rationale: string;
+  decision_maker: string;
+  impact: string;
+  logged_at?: string;
+}
+
+export async function appendDecision(engagementId: string, decision: DecisionEntry): Promise<void> {
+  const sb = getServerSupabase();
+  const { data: current } = await sb
+    .from('engagements')
+    .select('decisions')
+    .eq('id', engagementId)
+    .single();
+  const existing = ((current?.decisions as DecisionEntry[] | null) ?? []);
+  await sb
+    .from('engagements')
+    .update({ decisions: [...existing, { ...decision, logged_at: new Date().toISOString() }] })
+    .eq('id', engagementId);
+}
+
+export async function updateActualMetrics(
+  engagementId: string,
+  items: Array<{ metric: string; actual_value: string; measurement_date?: string; source?: string }>,
+): Promise<void> {
+  await getServerSupabase()
+    .from('engagements')
+    .update({
+      actual_metrics: { items, captured_at: new Date().toISOString() },
+    })
+    .eq('id', engagementId);
+}
+
+export async function proposeOutcomeFee(
+  engagementId: string,
+  feeUsd: number,
+): Promise<void> {
+  await getServerSupabase()
+    .from('engagements')
+    .update({ outcome_fee_usd: feeUsd, outcome_fee_status: 'proposed' })
+    .eq('id', engagementId);
+}
+
 export interface CreateEngagementArgs {
   name: string;
   sponsor_person_id: string;
@@ -207,7 +251,7 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
 
   const { data: active, error: activeErr } = await sb
     .from('engagements')
-    .select('id, current_phase, baseline_metrics, actual_metrics, gates_passed')
+    .select('id, current_phase, baseline_metrics, actual_metrics, gates_passed, deliverables')
     .eq('status', 'active');
   if (activeErr) throw activeErr;
   const activeRows = (active ?? []) as Array<{
@@ -215,13 +259,24 @@ export async function getDashboardMetrics(): Promise<DashboardMetrics> {
     baseline_metrics: Record<string, unknown> | null;
     actual_metrics: Record<string, unknown> | null;
     gates_passed: unknown[] | null;
+    deliverables: Array<Record<string, unknown>> | null;
   }>;
 
   const activeCount = activeRows.length;
 
-  // Honest savings: only contribute when both baseline + actual have the key. No fabrication.
+  // Tracked savings in-flight:
+  // Prefer the verified savings from outcome_verification deliverables; else fall
+  // back to baseline/actual jsonb deltas for engagements not yet at Phase 4.
   let trackedSavingsUsd = 0;
   for (const r of activeRows) {
+    const outcome = (r.deliverables ?? []).find((d) => d.type === 'outcome_verification');
+    const verified = outcome && typeof (outcome.content as { total_savings_usd?: unknown })?.total_savings_usd === 'number'
+      ? ((outcome.content as { total_savings_usd: number }).total_savings_usd)
+      : 0;
+    if (verified > 0) {
+      trackedSavingsUsd += verified;
+      continue;
+    }
     const base = jsonNumber(r.baseline_metrics, 'savings_usd');
     const actual = jsonNumber(r.actual_metrics, 'savings_usd');
     if (base > 0 && actual > 0) trackedSavingsUsd += actual - base;

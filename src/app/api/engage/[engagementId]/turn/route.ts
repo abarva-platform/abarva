@@ -16,8 +16,18 @@ import {
   appendRelationshipNote,
   getActivePersonalThreads,
 } from '@/lib/db/relationship-note';
-import { parseGateApprovalBlock } from '@/lib/agent/parse';
-import { recordGateApproval } from '@/lib/db/engagement';
+import {
+  parseGateApprovalBlock,
+  parseDecisionBlocks,
+  parseActualMetricsBlock,
+  parseOutcomeFeeBlock,
+} from '@/lib/agent/parse';
+import {
+  recordGateApproval,
+  appendDecision,
+  updateActualMetrics,
+  proposeOutcomeFee,
+} from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
 
 export const runtime = 'nodejs';
@@ -96,6 +106,47 @@ export async function POST(
           text: agentFullText,
           retrievedRefs,
         });
+        // Decision logging (Phase 3) — append each block, non-blocking for stream close
+        try {
+          const decisions = parseDecisionBlocks(agentFullText);
+          for (const d of decisions) {
+            await appendDecision(engagement.id, d);
+          }
+          if (decisions.length > 0) {
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'decisions_logged', count: decisions.length }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[decision-log]', err);
+        }
+
+        // Actual metrics capture (Phase 4)
+        try {
+          const actual = parseActualMetricsBlock(agentFullText);
+          if (actual && actual.items.length > 0) {
+            await updateActualMetrics(engagement.id, actual.items);
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'actual_metrics_captured', count: actual.items.length }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[actual-metrics]', err);
+        }
+
+        // Outcome fee proposal (Phase 4)
+        try {
+          const fee = parseOutcomeFeeBlock(agentFullText);
+          if (fee) {
+            await proposeOutcomeFee(engagement.id, fee.fee_amount_usd);
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'outcome_fee_proposed', amount: fee.fee_amount_usd }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[outcome-fee]', err);
+        }
+
         // Gate approval detection — emit event BEFORE 'done' so UI can show toast
         const gateApproval = parseGateApprovalBlock(agentFullText);
         if (gateApproval && sponsor) {

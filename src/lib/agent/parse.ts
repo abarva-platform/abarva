@@ -87,3 +87,80 @@ export function parseGateApprovalBlock(text: string): ParsedGateApproval | null 
 export function stripGateApprovalBlock(text: string): string {
   return text.replace(/<gate_approval>[\s\S]*?<\/gate_approval>/g, '').trim();
 }
+
+export interface ParsedDecision {
+  summary: string;
+  rationale: string;
+  decision_maker: string;
+  impact: string;
+}
+
+export function parseDecisionBlocks(text: string): ParsedDecision[] {
+  const matches = [...text.matchAll(/<decision_logged>([\s\S]*?)<\/decision_logged>/g)];
+  const out: ParsedDecision[] = [];
+  for (const m of matches) {
+    try {
+      const p = JSON.parse(m[1].trim());
+      if (p.summary && p.rationale && p.decision_maker && p.impact) out.push(p as ParsedDecision);
+    } catch {
+      // skip malformed block
+    }
+  }
+  return out;
+}
+
+export function stripDecisionBlocks(text: string): string {
+  return text.replace(/<decision_logged>[\s\S]*?<\/decision_logged>/g, '').trim();
+}
+
+export interface ParsedActualMetrics {
+  items: Array<{ metric: string; actual_value: string; measurement_date?: string; source?: string }>;
+}
+
+export function parseActualMetricsBlock(text: string): ParsedActualMetrics | null {
+  const m = text.match(/<actual_metrics>([\s\S]*?)<\/actual_metrics>/);
+  if (!m) return null;
+  try {
+    const p = JSON.parse(m[1].trim());
+    if (!Array.isArray(p.items)) return null;
+    return p as ParsedActualMetrics;
+  } catch {
+    return null;
+  }
+}
+
+export function stripActualMetricsBlock(text: string): string {
+  return text.replace(/<actual_metrics>[\s\S]*?<\/actual_metrics>/g, '').trim();
+}
+
+export interface ParsedOutcomeFeeProposal {
+  total_baseline_cost_usd: number;
+  total_actual_cost_usd: number;
+  total_savings_usd: number;
+  fee_percentage: number;
+  fee_amount_usd: number;
+  rationale?: string;
+}
+
+export function parseOutcomeFeeBlock(text: string): ParsedOutcomeFeeProposal | null {
+  const m = text.match(/<outcome_fee_proposal>([\s\S]*?)<\/outcome_fee_proposal>/);
+  if (!m) return null;
+  try {
+    const p = JSON.parse(m[1].trim());
+    const required = [
+      'total_baseline_cost_usd',
+      'total_actual_cost_usd',
+      'total_savings_usd',
+      'fee_percentage',
+      'fee_amount_usd',
+    ];
+    if (required.some((k) => typeof p[k] !== 'number')) return null;
+    return p as ParsedOutcomeFeeProposal;
+  } catch {
+    return null;
+  }
+}
+
+export function stripOutcomeFeeBlock(text: string): string {
+  return text.replace(/<outcome_fee_proposal>[\s\S]*?<\/outcome_fee_proposal>/g, '').trim();
+}
