@@ -38,6 +38,51 @@ export async function getEngagementByGraphId(graphNodeId: string): Promise<Engag
   return data as EngagementRow | null;
 }
 
+export interface CreateEngagementArgs {
+  name: string;
+  sponsor_person_id: string;
+  industry_code: string;
+  function_code: string;
+  objective_code: string;
+  topic_code: string;
+  maestro_person_id?: string | null;
+}
+
+export async function createEngagement(args: CreateEngagementArgs): Promise<EngagementRow> {
+  const slug = args.name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+  const graphNodeId = `eng_${slug}_${Date.now().toString(36)}`;
+
+  const { data, error } = await getServerSupabase()
+    .from('engagements')
+    .insert({
+      graph_node_id: graphNodeId,
+      name: args.name,
+      industry_code: args.industry_code,
+      function_code: args.function_code,
+      objective_code: args.objective_code,
+      topic_code: args.topic_code,
+      sponsor_person_id: args.sponsor_person_id,
+      maestro_person_id: args.maestro_person_id ?? null,
+      current_phase: 0,
+      status: 'active',
+      charter: {},
+      gates_passed: [],
+      decisions: [],
+      deliverables: [],
+      sponsor_approvals: [],
+      baseline_metrics: {},
+      actual_metrics: {},
+      phase_0_started_at: new Date().toISOString(),
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as EngagementRow;
+}
+
 export async function getEngagementById(id: string): Promise<EngagementRow | null> {
   const { data, error } = await getServerSupabase()
     .from('engagements')

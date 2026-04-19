@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { assembleIdentitySystemPrompt } from '@/lib/agent/prompts/identity';
 import { streamAgentTurn } from '@/lib/agent/stream';
-import { parseUserReadyBlock } from '@/lib/agent/parsers/identity';
+import { parseUserReadyBlock } from '@/lib/agent/parse';
 import { createPerson } from '@/lib/db/person';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
 
