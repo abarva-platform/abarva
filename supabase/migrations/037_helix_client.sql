@@ -1,33 +1,10 @@
--- Migration 037 · Pack K — Helix Therapeutics client seed + cross-client partnership table
--- Idempotent.
+-- Migration 037 · Pack K — client_partnerships table for Helix↔Meridian relationships
+-- Idempotent. Helix Therapeutics client row inserted separately via
+-- src/scripts/insert-helix-client.ts (clients.name has no UNIQUE constraint,
+-- so DDL-side ON CONFLICT isn't available here).
 
 BEGIN;
 
--- Insert Helix client row (composite $22B biotech). ON CONFLICT skip so
--- re-runs are safe. Client name is NOT on the forbidden list.
-INSERT INTO clients (name, legal_name, industry_code, annual_revenue_usd, it_budget_usd, ai_budget_usd, employee_count, operational_units, business_description)
-VALUES (
-  'Helix Therapeutics',
-  'Helix Therapeutics, Inc.',
-  'HEALTHCARE_IDN',
-  22000000000,
-  420000000,
-  95000000,
-  18000,
-  6,
-  '$22B mid-cap biotech · 14 approved drugs · 280 pipeline compounds (Phase 1-4) · 340 active trials · 6 manufacturing sites · HQ US East Coast with research hubs in Basel + Singapore + Cambridge MA'
-)
-ON CONFLICT (name) DO UPDATE SET
-  legal_name = EXCLUDED.legal_name,
-  industry_code = EXCLUDED.industry_code,
-  annual_revenue_usd = EXCLUDED.annual_revenue_usd,
-  it_budget_usd = EXCLUDED.it_budget_usd,
-  ai_budget_usd = EXCLUDED.ai_budget_usd,
-  employee_count = EXCLUDED.employee_count,
-  operational_units = EXCLUDED.operational_units,
-  business_description = EXCLUDED.business_description;
-
--- Cross-client partnership relationships (Pack K section 'Shared touchpoints').
 CREATE TABLE IF NOT EXISTS client_partnerships (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   source_client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
