@@ -33,6 +33,19 @@ export interface CreatePersonArgs {
   graph_node_id?: string;
 }
 
+export async function appendPersonalThreads(personId: string, threads: string[]): Promise<void> {
+  if (threads.length === 0) return;
+  const sb = getServerSupabase();
+  const { data: existing } = await sb
+    .from('persons')
+    .select('personal_threads')
+    .eq('id', personId)
+    .single();
+  const current = (existing?.personal_threads ?? []) as string[];
+  const merged = Array.from(new Set([...current, ...threads])).slice(-20);
+  await sb.from('persons').update({ personal_threads: merged }).eq('id', personId);
+}
+
 export async function getAllPersons(): Promise<PersonRow[]> {
   const { data, error } = await getServerSupabase()
     .from('persons')

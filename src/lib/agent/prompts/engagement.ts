@@ -9,10 +9,12 @@ interface AssembleArgs {
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
   maestro?: PersonRow | null;
+  personalThreads?: string[];
 }
 
 export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
   const { engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro } = ctx;
+  const personalThreads = ctx.personalThreads ?? [];
   const phaseNames = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const phase = phaseNames[engagement.current_phase];
   const familiarity = sponsor?.familiarity ?? 'first_meeting';
@@ -47,6 +49,21 @@ ${sponsor ? `- Name: ${sponsor.name}
 - Role: ${sponsor.role} at ${sponsor.organization}
 - Relationship: ${familiarity.replace(/_/g, ' ')}
 - Personal threads noted: ${sponsor.personal_threads.length ? sponsor.personal_threads.join('; ') : 'none yet'}` : '- Not yet linked. Ask them who you are talking to.'}
+
+PERSONAL THREADS NOTED (from prior conversations — use naturally, do not over-dwell)
+${personalThreads.length === 0 ? '- None yet' : personalThreads.map((t) => `- ${t}`).join('\n')}
+
+HOW TO USE THESE THREADS
+If this is not the first conversation AND threads exist, weave brief acknowledgment at the start of your opening turn. Examples:
+- "How did the board prep go?"
+- "Hope the college tour went well — any thoughts shaping up on which school?"
+- "Mid-marathon season, right? Hope training's going."
+
+CRITICAL
+- Never fabricate details. Only reference exactly what's in the threads above.
+- Acknowledge briefly (one sentence). Do not dwell. Pivot to the work.
+- If threads are empty, open fresh with the Phase 0 warmth pattern.
+- Do not acknowledge a thread more than once per session.
 
 ACTIVE GENOME PATTERNS (triggered by this engagement)
 ${activePatterns.length === 0 ? '- None observed yet.' : activePatterns.map(p => `- ${p.code} "${p.name}" — ${(p.failure_rate * 100).toFixed(0)}% historical failure rate (${p.category})`).join('\n')}

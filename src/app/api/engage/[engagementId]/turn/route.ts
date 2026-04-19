@@ -10,6 +10,12 @@ import {
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
+import { captureRelationshipNotes } from '@/lib/agent/capture';
+import { appendPersonalThreads } from '@/lib/db/person';
+import {
+  appendRelationshipNote,
+  getActivePersonalThreads,
+} from '@/lib/db/relationship-note';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,14 +36,14 @@ export async function POST(
   }
 
   // Persist user turn first
-  await appendTurn({
+  const savedUserTurn = await appendTurn({
     engagementId: engagement.id,
     phase: engagement.current_phase,
     sender: 'user',
     text: userMessage,
   });
 
-  // Retrieve all three layers + maestro context
+  // Retrieve all three layers + maestro context + personal threads
   const [sponsor, recentTurns, activePatterns, peerDecisions, chainedPatterns, maestro] = await Promise.all([
     engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
     getRecentTurns(engagement.id, 30),
@@ -47,8 +53,12 @@ export async function POST(
     getCurrentMaestro(),
   ]);
 
+  const personalThreads = sponsor
+    ? await getActivePersonalThreads(sponsor.id)
+    : [];
+
   const system = assembleEngagementSystemPrompt({
-    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro,
+    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
   });
 
   const messages = recentTurns.map(t => ({
@@ -85,6 +95,41 @@ export async function POST(
         });
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done', turnId: savedTurn.id }) + '\n'));
         controller.close();
+
+        // Fire capture loop in background — never blocks the response.
+        // Skip if no sponsor, message too short, or any error inside. Missed
+        // captures are fine; broken conversations are not.
+        if (sponsor && userMessage.trim().length > 30) {
+          void (async () => {
+            try {
+              const existing = await getActivePersonalThreads(sponsor.id);
+              const notes = await captureRelationshipNotes({
+                personName: sponsor.name,
+                existingThreads: existing,
+                userText: userMessage,
+                engagementName: engagement.name,
+              });
+              for (const n of notes) {
+                await appendRelationshipNote({
+                  personId: sponsor.id,
+                  category: n.category,
+                  noteText: n.text,
+                  sourceTurnId: savedUserTurn.id,
+                  sourceEngagementId: engagement.id,
+                  decayDays: n.decay_days,
+                });
+              }
+              const mirror = notes
+                .filter((n) => n.category === 'personal' || n.category === 'preference')
+                .map((n) => n.text);
+              if (mirror.length > 0) {
+                await appendPersonalThreads(sponsor.id, mirror);
+              }
+            } catch (err) {
+              console.error('[capture-loop]', err);
+            }
+          })();
+        }
       } catch (err) {
         const message = err instanceof Error ? err.message : 'unknown error';
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
