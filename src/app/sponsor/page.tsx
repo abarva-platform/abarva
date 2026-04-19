@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
 
+export const dynamic = 'force-dynamic';
+
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';

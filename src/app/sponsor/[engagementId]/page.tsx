@@ -5,6 +5,8 @@ import { getRecentTurns } from '@/lib/db/turn';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { SponsorConsole } from '@/components/sponsor/SponsorConsole';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SponsorEngagementPage({
   params,
 }: {

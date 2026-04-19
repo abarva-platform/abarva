@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { getAllActiveEngagements } from '@/lib/db/engagement';
 
+export const dynamic = 'force-dynamic';
+
 const INK = '#F5F5F0';
 const MUTE = '#8B8680';
 const TEAL = '#2DD4C8';

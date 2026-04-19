@@ -1,6 +1,8 @@
 import { IntelligenceConsole } from '@/components/intelligence/IntelligenceConsole';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 
+export const dynamic = 'force-dynamic';
+
 export default async function IntelligencePage() {
   const patterns = await getAllGenomePatterns();
   const initialCode = patterns[0]?.code ?? null;

@@ -6,6 +6,8 @@ import {
 } from '@/lib/db/engagement';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 
+export const dynamic = 'force-dynamic';
+
 const INK = '#F5F5F0';
 const MUTE = '#8B8680';
 const TEAL = '#2DD4C8';

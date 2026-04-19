@@ -1,4 +1,7 @@
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
+
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
