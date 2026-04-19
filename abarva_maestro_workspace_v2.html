@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Maestro Client Workspace Design Spec</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: #e5e7eb; }
+
+/* ── SPEC CHROME ── */
+.spec-bar { background: #7C3AED; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+.spec-title { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; }
+.spec-note { font-size: 13px; color: rgba(255,255,255,0.75); }
+.ann { background: rgba(253,224,71,0.1); border-top: 2px dashed #FCD34D; border-bottom: 2px dashed #FCD34D; padding: 7px 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ann-lbl { font-size: 10px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.t { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; }
+.ty { color: #78350F; background: #FEF3C7; border: 1px solid #FCD34D; }
+.tb { color: #1E3A5F; background: #EFF6FF; border: 1px solid #93C5FD; }
+.tt { color: #0F4F3E; background: #CCFBF1; border: 1px solid #5EEAD4; }
+.tr { color: #7F1D1D; background: #FEF2F2; border: 1px solid #FCA5A5; }
+.page-label { background: #2DD4C8; padding: 8px 20px; font-size: 11px; font-weight: 700; color: #0F0E0D; text-transform: uppercase; letter-spacing: 0.12em; }
+.browser { background: #E8E6E3; border-radius: 6px 6px 0 0; padding: 7px 12px; display: flex; align-items: center; gap: 5px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.url-bar { flex: 1; background: #fff; border-radius: 3px; padding: 3px 10px; font-size: 11px; color: #706D66; margin: 0 8px; font-family: monospace; }
+
+/* ════════════════════════════════════════
+   HOMEPAGE DESIGN TOKENS — reference
+   ════════════════════════════════════════ */
+:root {
+  /* From homepage exactly */
+  --hp-bg:        #FAFAF9;   /* page background */
+  --hp-dark:      #0F0E0D;   /* headlines, near-black */
+  --hp-body:      #3C3C3C;   /* body copy */
+  --hp-muted:     #706D66;   /* muted/secondary */
+  --hp-border:    #E8E6E3;   /* warm border */
+  --hp-teal:      #2DD4C8;   /* accent */
+  --hp-font-head: Georgia, serif;
+  --hp-font-body: 'DM Sans', -apple-system, sans-serif;
+  --hp-font-mono: 'Courier New', monospace;
+
+  /* Operational status colours */
+  --green:  #166534;
+  --green-bg: #DCFCE7;
+  --red:    #991B1B;
+  --red-bg: #FEF2F2;
+  --amber:  #92400E;
+  --amber-bg: #FEF3C7;
+
+  /* Trend colours */
+  --trend-up:   #166534;   /* good movement */
+  --trend-down: #991B1B;   /* bad movement */
+  --trend-flat: #706D66;   /* neutral */
+}
+
+/* ── NAV ── */
+.nav { background: #0F0E0D; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+.logo { display: flex; align-items: baseline; }
+.la { font-family: Georgia, serif; font-weight: 800; font-size: 16px; color: #FAFAF9; }
+.lv { font-family: Georgia, serif; font-weight: 900; font-size: 21px; color: #2DD4C8; }
+.nav-links { display: flex; gap: 24px; }
+.nav-link { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.65); text-decoration: none; }
+.nav-link.active { color: #FAFAF9; font-weight: 600; }
+.nav-link.greyed { color: rgba(255,255,255,0.2); cursor: default; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-role { font-size: 9px; color: #2DD4C8; font-family: monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+.nav-name { font-size: 12px; color: rgba(255,255,255,0.7); text-align: right; }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #2DD4C8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0F0E0D; }
+
+/* ── MAESTRO LAYOUT ── */
+.workspace { display: flex; background: var(--hp-bg); min-height: 700px; }
+
+/* ── SIDEBAR ── */
+.sidebar { width: 220px; min-width: 220px; background: #0F0E0D; display: flex; flex-direction: column; padding-bottom: 20px; }
+.sb-client { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 4px; }
+.sb-client-lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.22); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; font-family: monospace; }
+.sb-client-name { font-size: 14px; font-weight: 600; color: #FAFAF9; margin-bottom: 2px; }
+.sb-client-sub { font-size: 11px; color: rgba(255,255,255,0.35); }
+.sb-sec { padding: 12px 16px 4px; }
+.sb-sec-lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.22); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; font-family: monospace; }
+.sb-item { display: flex; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 5px; cursor: pointer; margin-bottom: 1px; }
+.sb-item.active { background: rgba(45,212,200,0.1); }
+.sb-icon { font-size: 12px; color: rgba(255,255,255,0.28); width: 15px; text-align: center; }
+.sb-item.active .sb-icon { color: #2DD4C8; }
+.sb-text { font-size: 13px; color: rgba(255,255,255,0.5); }
+.sb-item.active .sb-text { color: rgba(255,255,255,0.92); font-weight: 500; }
+.sb-new { margin: 4px 16px 0; padding: 6px 10px; background: rgba(45,212,200,0.08); border: 1px solid rgba(45,212,200,0.25); border-radius: 5px; font-size: 12px; font-weight: 600; color: #2DD4C8; cursor: pointer; text-align: center; }
+.sb-back { margin-top: auto; padding: 14px 16px 0; border-top: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: rgba(255,255,255,0.28); cursor: pointer; }
+
+/* ── MAIN CONTENT ── */
+.main { flex: 1; padding: 28px 32px; background: var(--hp-bg); overflow: auto; }
+
+/* PAGE HEADER — homepage font style */
+.page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid var(--hp-border); }
+.page-title {
+  /* Matches homepage: DM Sans 22px 600 — NOT Georgia (operational page) */
+  font-family: var(--hp-font-body);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--hp-dark);
+  margin-bottom: 4px;
+}
+.page-sub { font-size: 13px; color: var(--hp-muted); font-family: var(--hp-font-body); }
+.btn-primary { background: var(--hp-dark); color: #FAFAF9; font-size: 13px; font-weight: 600; padding: 9px 16px; border-radius: 5px; border: none; cursor: pointer; font-family: var(--hp-font-body); }
+
+/* ════════════════════════════════════════
+   NEW: DATA DASHBOARD — replaces signal hero
+   3 dimension cards: Financial · Technology · Operations
+   ════════════════════════════════════════ */
+.dashboard-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+.dim-card { background: #fff; border: 1px solid var(--hp-border); border-radius: 8px; padding: 20px; }
+.dim-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+.dim-title {
+  /* Homepage card labels: mono uppercase teal */
+  font-family: var(--hp-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: #2DD4C8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.dim-score { font-family: var(--hp-font-body); font-size: 13px; font-weight: 600; color: var(--hp-muted); }
+.dim-score.red { color: var(--red); }
+.dim-score.green { color: var(--green); }
+.dim-score.amber { color: #B45309; }
+
+/* Metric rows inside cards */
+.metric-list { display: flex; flex-direction: column; gap: 10px; }
+.metric-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.metric-name {
+  /* DM Sans 13px — matches homepage body copy weight */
+  font-family: var(--hp-font-body);
+  font-size: 13px;
+  color: var(--hp-body);
+  flex: 1;
+}
+.metric-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.metric-value {
+  font-family: var(--hp-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--hp-dark);
+}
+.metric-value.critical { color: var(--red); }
+.metric-value.good { color: var(--green); }
+.metric-value.warning { color: #B45309; }
+
+/* TREND INDICATORS — dot + arrow */
+.trend { display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; }
+.trend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.trend-dot.up { background: #166534; }
+.trend-dot.down { background: #991B1B; }
+.trend-dot.flat { background: #706D66; }
+.trend-arrow { font-size: 10px; }
+.trend.up { color: #166534; }
+.trend.down { color: #991B1B; }
+.trend.flat { color: #706D66; }
+.trend-label { font-size: 11px; }
+
+/* Separator line in cards */
+.metric-divider { height: 1px; background: var(--hp-border); margin: 4px 0; }
+
+/* Card footer link */
+.dim-footer { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--hp-border); font-size: 12px; color: #2DD4C8; font-weight: 500; cursor: pointer; font-family: var(--hp-font-body); }
+
+/* ════════════════════════════════════════
+   ENGAGEMENTS TABLE
+   ════════════════════════════════════════ */
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.section-title {
+  /* DM Sans 16px 600 — homepage body weight */
+  font-family: var(--hp-font-body);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hp-dark);
+}
+.table-wrap { background: #fff; border: 1px solid var(--hp-border); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  /* Mono 10px — same as homepage stat card labels */
+  font-family: var(--hp-font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--hp-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #F2F1F0;
+  border-bottom: 1px solid var(--hp-border);
+  padding: 9px 16px;
+  text-align: left;
+}
+tbody td {
+  /* DM Sans 14px — matches homepage body, up from 12px */
+  font-family: var(--hp-font-body);
+  font-size: 14px;
+  color: var(--hp-dark);
+  border-bottom: 1px solid #F2F1F0;
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #F2F1F0; }
+.td-name { font-weight: 600; color: var(--hp-dark); font-size: 14px; }
+.td-sub { font-size: 11px; color: var(--hp-muted); margin-top: 2px; }
+.type-badge { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; display: inline-block; margin-top: 3px; }
+.type-avr { background: #EFF6FF; color: #1E3A5F; }
+.type-sol { background: #CCFBF1; color: #0F4F3E; }
+.phase { font-family: var(--hp-font-mono); font-size: 11px; color: #2DD4C8; }
+.status-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; display: inline-block; }
+.sp-progress { background: #CCFBF1; color: #0F4F3E; }
+.sp-backlog { background: #F2F1F0; color: #706D66; }
+.sp-assigned { background: #FEF3C7; color: #78350F; }
+.priority-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; font-weight: 600; }
+.pd-red { color: #991B1B; }
+.pd-orange { color: #B45309; }
+.pd-grey { color: #706D66; }
+.td-action { font-size: 13px; font-weight: 500; color: #2DD4C8; cursor: pointer; white-space: nowrap; }
+.td-value { font-size: 14px; font-weight: 700; color: var(--hp-dark); }
+
+/* ════════════════════════════════════════
+   DATA READINESS ROW
+   ════════════════════════════════════════ */
+.readiness-row { background: #fff; border: 1px solid var(--hp-border); border-radius: 8px; padding: 14px 20px; display: flex; align-items: center; gap: 20px; }
+.rr-title { font-family: var(--hp-font-body); font-size: 14px; font-weight: 600; color: var(--hp-dark); }
+.rr-sub { font-size: 12px; color: var(--hp-muted); margin-top: 2px; }
+.rr-score { font-family: Georgia, serif; font-size: 28px; font-weight: 400; color: #B45309; white-space: nowrap; }
+.rr-label { font-size: 10px; color: var(--hp-muted); font-family: monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+.rr-pills { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+.rr-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; background: #FEF3C7; color: #78350F; border: 1px solid #FCD34D; white-space: nowrap; }
+.rr-link { font-size: 13px; color: #2DD4C8; font-weight: 500; cursor: pointer; white-space: nowrap; margin-left: auto; }
+
+/* ════════════════════════════════════════
+   FONT + DESIGN REFERENCE
+   ════════════════════════════════════════ */
+.ref-panel { background: #0F0E0D; padding: 24px 28px; }
+.ref-title { font-size: 10px; font-weight: 700; color: #2DD4C8; font-family: monospace; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 16px; }
+.ref-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.ref-section-title { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: monospace; }
+.ref-item { font-size: 11px; color: rgba(255,255,255,0.55); padding: 2px 0; display: flex; align-items: baseline; gap: 6px; line-height: 1.5; }
+.ref-size { font-size: 11px; font-weight: 700; color: #2DD4C8; font-family: monospace; min-width: 36px; flex-shrink: 0; }
+.ref-rule { color: #2DD4C8; font-size: 11px; padding: 2px 0; }
+.ref-banned { color: #EF4444; font-size: 11px; padding: 2px 0; }
+
+/* ── WHAT CHANGED CALLOUT ── */
+.changes { background: #1e1b4b; padding: 16px 24px; }
+.ch-title { font-size: 11px; font-weight: 700; color: #a5b4fc; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+.ch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ch-col-title { font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+.ch-item { font-size: 12px; color: rgba(255,255,255,0.6); padding: 3px 0; display: flex; gap: 6px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- SPEC HEADER -->
+<div class="spec-bar">
+  <span class="spec-title">Maestro Client Workspace — Design Spec</span>
+  <span class="spec-note">Homepage fonts throughout. Data dashboard replaces signal hero. Trend dots + arrows for all metrics. Yellow bars = annotations only.</span>
+</div>
+
+<!-- WHAT CHANGES -->
+<div class="changes">
+  <div class="ch-title">What changes vs current page</div>
+  <div class="ch-grid">
+    <div>
+      <div class="ch-col-title" style="color:#EF4444;">REMOVED</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> Dark hero banner ("MOST URGENT · RCM outsourced...") — too dominant, wrong emphasis</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> "$94M" in giant teal type — not the right first impression</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> "See all 3 signals →" link — forces clicking to get context</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> "Create Engagement" / "View Intelligence" CTA pair — scattered CTAs</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> Random red/orange dollar figures with no trend context</div>
+      <div class="ch-item"><span style="color:#EF4444;">✗</span> Mixed fonts — inconsistent serif/sans throughout</div>
+    </div>
+    <div>
+      <div class="ch-col-title" style="color:#2DD4C8;">ADDED / CHANGED</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> 3-column data dashboard: Financial · Technology · Operations — immediate context</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> Trend dots (green/red/amber) + arrows (↑↓→) on every metric</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> Homepage font stack throughout: DM Sans body, mono labels, Georgia only for key numbers</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> Consistent 14px table cells, 13px sidebar items, 10px mono column headers</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> Signals surfaced WITHIN dashboard cards — no separate signal section</div>
+      <div class="ch-item"><span style="color:#2DD4C8;">✓</span> Clean page header: client name (DM Sans 22px) + last updated + one CTA</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE SPEC -->
+<div class="page-label">Maestro Client Workspace · /maestro/[clientId] · Default view on landing</div>
+
+<div class="ann">
+  <span class="ann-lbl">Core rule</span>
+  <span class="t tt">Homepage font stack: DM Sans body · mono labels · Georgia numbers only</span>
+  <span class="t ty">NO dark hero banner · NO giant teal dollar figures · NO "See all signals" click-through</span>
+  <span class="t tb">Data dashboard is the landing view — 3 dimensions, metrics visible immediately</span>
+  <span class="t tr">Every metric with movement: green dot ↑ / red dot ↓ / grey dot → + label</span>
+</div>
+
+<div class="browser">
+  <div class="dot" style="background:#EF4444;"></div>
+  <div class="dot" style="background:#F59E0B;"></div>
+  <div class="dot" style="background:#22C55E;"></div>
+  <div class="url-bar">app.abarva.ai/maestro/meridian</div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Home</a>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:#2DD4C8;"></div>
+      <span style="font-size:13px;font-weight:500;color:#FAFAF9;">Meridian Health</span>
+      <span style="color:rgba(255,255,255,0.4);font-size:11px;">▾</span>
+    </div>
+    <a class="nav-link active" href="#">Maestro</a>
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">AI Value Realization</a>
+    <a class="nav-link greyed" href="#">Admin</a>
+  </div>
+  <div class="nav-right">
+    <div style="text-align:right;"><div class="nav-role">Maestro</div><div class="nav-name">Anand Sundaram</div></div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-client">
+      <div class="sb-client-lbl">Active Client</div>
+      <div class="sb-client-name">Meridian Health System</div>
+      <div class="sb-client-sub">Healthcare IDN · $4.2B</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-lbl">Intelligence</div>
+      <div class="sb-item active"><span class="sb-icon">◎</span><span class="sb-text">Situation</span></div>
+      <div class="sb-item"><span class="sb-icon">◈</span><span class="sb-text">Findings</span></div>
+      <div class="sb-item"><span class="sb-icon">⚡</span><span class="sb-text">Contradictions</span></div>
+      <div class="sb-item"><span class="sb-icon">⬡</span><span class="sb-text">Genome</span></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-lbl">Engagements</div>
+      <div class="sb-item"><span class="sb-icon">≡</span><span class="sb-text">All Engagements</span></div>
+      <div class="sb-new">+ New Engagement</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-lbl">Data</div>
+      <div class="sb-item"><span class="sb-icon">↑</span><span class="sb-text">Uploads</span></div>
+      <div class="sb-item"><span class="sb-icon">◉</span><span class="sb-text">Data Readiness</span></div>
+      <div class="sb-item"><span class="sb-icon">🔒</span><span class="sb-text">Request Sensitive Access</span></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-lbl">Value</div>
+      <div class="sb-item"><span class="sb-icon">$</span><span class="sb-text">Value Dashboard</span></div>
+      <div class="sb-item"><span class="sb-icon">📋</span><span class="sb-text">Monthly Reviews</span></div>
+      <div class="sb-item"><span class="sb-icon">%</span><span class="sb-text">Fee Tracker</span></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-sec-lbl">Outputs</div>
+      <div class="sb-item"><span class="sb-icon">📄</span><span class="sb-text">Deliverables</span></div>
+      <div class="sb-item"><span class="sb-icon">📊</span><span class="sb-text">Board Packs</span></div>
+    </div>
+    <div class="sb-back">← All Clients</div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="ann" style="margin:-28px -32px 20px;border-radius:0;">
+      <span class="ann-lbl">Page header</span>
+      <span class="t tt">DM Sans 22px 600 — matches homepage body weight · NOT Georgia</span>
+      <span class="t ty">Sub: DM Sans 13px #706D66 · ONE button top right</span>
+    </div>
+    <div class="page-header">
+      <div>
+        <div class="page-title">Meridian Health System</div>
+        <div class="page-sub">Last updated: Today 20:45 · 3 active engagements · 50+ files loaded</div>
+      </div>
+      <button class="btn-primary">+ New Engagement</button>
+    </div>
+
+    <!-- DATA DASHBOARD -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Data Dashboard — NEW · replaces the dark signal hero</span>
+      <span class="t tr">Remove the dark hero banner entirely — it was too dominant and required a click to see more</span>
+      <span class="t tt">3 cards: Financial Health · Technology · Operations — immediate data visibility</span>
+      <span class="t ty">Metrics show current value + trend dot (●) + arrow (↑↓→) + context label</span>
+      <span class="t tb">Card footer links to the relevant Intelligence module — no separate "signals" section</span>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <!-- CARD 1: FINANCIAL HEALTH -->
+      <div class="dim-card">
+        <div class="dim-card-header">
+          <div class="dim-title">Financial Health</div>
+          <div class="dim-score red">Critical</div>
+        </div>
+        <div class="metric-list">
+
+          <div class="metric-row">
+            <div class="metric-name">RCM Denial Rate</div>
+            <div class="metric-right">
+              <span class="metric-value critical">18.2%</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-arrow">↑</span>
+                <span class="trend-label">6pp above SLA</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Revenue at Risk</div>
+            <div class="metric-right">
+              <span class="metric-value critical">$94M/yr</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-label">unrecovered</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Prior Auth Coverage</div>
+            <div class="metric-right">
+              <span class="metric-value warning">23%</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-arrow">↓</span>
+                <span class="trend-label">vs 62% peer</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">MA Star Rating</div>
+            <div class="metric-right">
+              <span class="metric-value warning">3.5</span>
+              <span class="trend flat">
+                <span class="trend-dot flat"></span>
+                <span class="trend-arrow">→</span>
+                <span class="trend-label">threshold 4.0</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="dim-footer">View Situation Intelligence →</div>
+      </div>
+
+      <!-- CARD 2: TECHNOLOGY -->
+      <div class="dim-card">
+        <div class="dim-card-header">
+          <div class="dim-title">Technology</div>
+          <div class="dim-score amber">Attention</div>
+        </div>
+        <div class="metric-list">
+
+          <div class="metric-row">
+            <div class="metric-name">Epic Go-Live</div>
+            <div class="metric-right">
+              <span class="metric-value warning">Q3 2026</span>
+              <span class="trend flat">
+                <span class="trend-dot flat"></span>
+                <span class="trend-label">no AI path</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Application Inventory</div>
+            <div class="metric-right">
+              <span class="metric-value">312</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-label">42% redundant</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Shadow IT Spend</div>
+            <div class="metric-right">
+              <span class="metric-value warning">$38M</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-arrow">↑</span>
+                <span class="trend-label">untracked SaaS</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Tech Mod Phase</div>
+            <div class="metric-right">
+              <span class="metric-value good">Ph 2</span>
+              <span class="trend up">
+                <span class="trend-dot up"></span>
+                <span class="trend-arrow">↑</span>
+                <span class="trend-label">65% complete</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="dim-footer">View Technology Intelligence →</div>
+      </div>
+
+      <!-- CARD 3: OPERATIONS -->
+      <div class="dim-card">
+        <div class="dim-card-header">
+          <div class="dim-title">Operations</div>
+          <div class="dim-score red">Critical</div>
+        </div>
+        <div class="metric-list">
+
+          <div class="metric-row">
+            <div class="metric-name">CDO Role</div>
+            <div class="metric-right">
+              <span class="metric-value critical">Vacant</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-label">F007 · 79% fail</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Travel Nurse Cost</div>
+            <div class="metric-right">
+              <span class="metric-value critical">$20M over</span>
+              <span class="trend down">
+                <span class="trend-dot down"></span>
+                <span class="trend-arrow">↑</span>
+                <span class="trend-label">vs target</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Epic Optimization</div>
+            <div class="metric-right">
+              <span class="metric-value warning">58/100</span>
+              <span class="trend flat">
+                <span class="trend-dot flat"></span>
+                <span class="trend-arrow">→</span>
+                <span class="trend-label">$34M at risk</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="metric-divider"></div>
+
+          <div class="metric-row">
+            <div class="metric-name">Data Readiness</div>
+            <div class="metric-right">
+              <span class="metric-value warning">72/100</span>
+              <span class="trend up">
+                <span class="trend-dot up"></span>
+                <span class="trend-arrow">↑</span>
+                <span class="trend-label">2 gaps remain</span>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="dim-footer">View Contradiction Intelligence →</div>
+      </div>
+    </div>
+
+    <!-- ENGAGEMENTS TABLE -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Engagements table</span>
+      <span class="t tt">DM Sans 14px cells · 10px mono headers · 12px 16px row padding</span>
+      <span class="t ty">Priority: coloured dot only — red ● Critical · orange ● High · grey ● Normal</span>
+      <span class="t tb">Action: teal "Continue →" or "Start →" — 13px DM Sans</span>
+    </div>
+    <div class="section-header">
+      <div class="section-title">Active Engagements</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Engagement</th>
+            <th>Sponsor</th>
+            <th>Phase</th>
+            <th>Status</th>
+            <th>Maestro</th>
+            <th>Value</th>
+            <th>Priority</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-name">RCM AI — Denial Prevention</div>
+              <span class="type-badge type-avr">AVR</span>
+            </td>
+            <td>
+              <div style="font-size:14px;color:#0F0E0D;">Dr. Sarah Chen</div>
+              <div class="td-sub">CMO</div>
+            </td>
+            <td><span class="phase">Ph 1</span></td>
+            <td><span class="status-pill sp-progress">In Progress</span></td>
+            <td style="font-size:14px;color:#0F0E0D;">Anand S.</td>
+            <td class="td-value">$94M</td>
+            <td><span class="priority-dot pd-red">● Critical</span></td>
+            <td class="td-action">Continue →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-name">Technology Modernization</div>
+              <span class="type-badge type-sol">SOL</span>
+            </td>
+            <td>
+              <div style="font-size:14px;color:#0F0E0D;">Mark Rivera</div>
+              <div class="td-sub">CTO</div>
+            </td>
+            <td><span class="phase">Ph 2</span></td>
+            <td><span class="status-pill sp-progress">In Progress</span></td>
+            <td style="font-size:14px;color:#0F0E0D;">Anand S.</td>
+            <td class="td-value">$38M</td>
+            <td><span class="priority-dot pd-orange">● High</span></td>
+            <td class="td-action">Continue →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-name">Margin Optimization</div>
+              <span class="type-badge type-sol">SOL</span>
+            </td>
+            <td>
+              <div style="font-size:14px;color:#706D66;">—</div>
+            </td>
+            <td><span class="phase">Ph 0</span></td>
+            <td><span class="status-pill sp-backlog">Backlog</span></td>
+            <td style="font-size:14px;color:#706D66;">—</td>
+            <td class="td-value">$28M</td>
+            <td><span class="priority-dot pd-grey">● Normal</span></td>
+            <td class="td-action">Start →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DATA READINESS -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Data readiness strip</span>
+      <span class="t tt">Single compact row · Georgia 28px amber score · orange pills for missing items</span>
+    </div>
+    <div class="readiness-row">
+      <div>
+        <div class="rr-title">Data Readiness</div>
+        <div class="rr-sub">Meridian Health System</div>
+      </div>
+      <div>
+        <div class="rr-score">72 / 100</div>
+        <div class="rr-label">AI Readiness Score</div>
+      </div>
+      <div class="rr-pills">
+        <span class="rr-pill">○ Payer Contract Analysis — MISSING</span>
+        <span class="rr-pill">○ CDO Profile + Org Chart — MISSING</span>
+      </div>
+      <a class="rr-link">Go to Data Uploads →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- FONT + DESIGN REFERENCE -->
+<div class="ref-panel">
+  <div class="ref-title">Font & colour spec — Maestro workspace · matches homepage exactly</div>
+  <div class="ref-grid">
+    <div>
+      <div class="ref-section-title">Typography</div>
+      <div class="ref-item"><span class="ref-size">22px 600</span> Page title — DM Sans (NOT Georgia)</div>
+      <div class="ref-item"><span class="ref-size">16px 600</span> Section titles (Active Engagements)</div>
+      <div class="ref-item"><span class="ref-size">14px 400</span> Table cells — DM Sans body</div>
+      <div class="ref-item"><span class="ref-size">13px 500</span> Sidebar nav items</div>
+      <div class="ref-item"><span class="ref-size">13px 400</span> Body / sub-labels</div>
+      <div class="ref-item"><span class="ref-size">10px 700</span> Column headers — mono uppercase</div>
+      <div class="ref-item"><span class="ref-size">10px 700</span> Card dimension labels — mono teal</div>
+      <div class="ref-item"><span class="ref-size">28px 400</span> Data Readiness score — Georgia only</div>
+      <div class="ref-banned">NO Georgia for page title or table content</div>
+      <div class="ref-banned">NO mixed serif/sans within same component</div>
+    </div>
+    <div>
+      <div class="ref-section-title">Colours</div>
+      <div class="ref-item"><span class="ref-size">#FAFAF9</span> Page background (from homepage)</div>
+      <div class="ref-item"><span class="ref-size">#0F0E0D</span> Primary text / headlines</div>
+      <div class="ref-item"><span class="ref-size">#3C3C3C</span> Body copy</div>
+      <div class="ref-item"><span class="ref-size">#706D66</span> Muted / secondary</div>
+      <div class="ref-item"><span class="ref-size">#E8E6E3</span> Warm borders</div>
+      <div class="ref-item"><span class="ref-size">#2DD4C8</span> Teal — labels, links, active</div>
+      <div class="ref-item"><span class="ref-size">#0F0E0D</span> Sidebar background</div>
+      <div class="ref-banned">NO pure #000 or pure #fff for text</div>
+      <div class="ref-banned">NO blue/purple — teal is the only accent</div>
+    </div>
+    <div>
+      <div class="ref-section-title">Trend indicators</div>
+      <div class="ref-item"><span class="ref-size" style="color:#166534;">● ↑</span> Green dot + up arrow = improving</div>
+      <div class="ref-item"><span class="ref-size" style="color:#991B1B;">● ↓</span> Red dot + down arrow = worsening</div>
+      <div class="ref-item"><span class="ref-size" style="color:#706D66;">● →</span> Grey dot + right arrow = flat/neutral</div>
+      <div class="ref-item"><span class="ref-size" style="color:#991B1B;">●</span> Red dot alone = problem (no direction)</div>
+      <div class="ref-item"><span class="ref-size" style="color:#B45309;">●</span> Amber dot = warning / at risk</div>
+      <div style="height:8px;"></div>
+      <div class="ref-rule">Dot always left of arrow always left of label</div>
+      <div class="ref-rule">Label = context ("vs 62% peer", "6pp above SLA")</div>
+      <div class="ref-rule">Dot size: 8px · Arrow: 10px mono</div>
+      <div class="ref-banned">NO red text for values — use dot for status</div>
+      <div class="ref-banned">NO giant coloured $ values (was $60-120M teal)</div>
+    </div>
+    <div>
+      <div class="ref-section-title">Dashboard cards</div>
+      <div class="ref-rule">3 dimensions: Financial · Technology · Operations</div>
+      <div class="ref-rule">Each card: white bg · 1px #E8E6E3 border · 8px radius</div>
+      <div class="ref-rule">Card title: mono 10px teal uppercase</div>
+      <div class="ref-rule">Card score badge: right-aligned · coloured text</div>
+      <div class="ref-rule">4 metrics per card with dividers</div>
+      <div class="ref-rule">Footer: teal link to Intelligence module</div>
+      <div style="height:8px;"></div>
+      <div class="ref-section-title" style="margin-top:4px;">What removed</div>
+      <div class="ref-banned">Dark hero banner</div>
+      <div class="ref-banned">Giant teal/red $ exposure figure</div>
+      <div class="ref-banned">F-code badge on hero (move to card)</div>
+      <div class="ref-banned">"See all N signals →" click-through</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

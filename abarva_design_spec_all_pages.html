@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa Design Spec — Platform, Admin, Investor</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ════════════════════════════════════════
+   HARVEY-INSPIRED DESIGN SYSTEM
+   Extracted from harvey.ai directly
+   ════════════════════════════════════════ */
+
+/* HARVEY COLOR PALETTE */
+:root {
+  /* Harvey's exact colours */
+  --h-bg-primary:    #FAFAF9;   /* off-white — main page bg */
+  --h-bg-secondary:  #F2F1F0;   /* warm grey — section bg */
+  --h-bg-dark:       #0F0E0D;   /* near-black — dark sections */
+  --h-bg-dark2:      #1F1D1A;   /* dark card bg */
+  --h-text-primary:  #0F0E0D;   /* near-black — headlines */
+  --h-text-body:     #3D3B38;   /* dark warm grey — body */
+  --h-text-muted:    #706D66;   /* muted warm grey — sub-copy */
+  --h-text-light:    #CCCAC6;   /* light grey — dark bg labels */
+  --h-border:        #E8E6E3;   /* warm border */
+  --h-border-dark:   rgba(255,255,255,0.1); /* dark bg border */
+
+  /* AbarVa teal accent — kept */
+  --av-teal:         #2DD4C8;
+  --av-teal-light:   rgba(45,212,200,0.12);
+  --av-teal-border:  rgba(45,212,200,0.3);
+
+  /* Status colours */
+  --red:   #C53030;
+  --amber: #B45309;
+  --green: #166534;
+}
+
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: #E8E6E3; }
+
+/* SPEC CHROME */
+.spec-bar { background: #0F0E0D; padding: 10px 24px; display: flex; align-items: center; gap: 16px; }
+.spec-title { font-size: 11px; font-weight: 700; color: #FAFAF9; text-transform: uppercase; letter-spacing: 0.1em; }
+.spec-note { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+.page-divider { background: #2DD4C8; padding: 10px 24px; }
+.page-divider-text { font-size: 11px; font-weight: 700; color: #0F0E0D; text-transform: uppercase; letter-spacing: 0.12em; }
+
+.ann { background: rgba(253,224,71,0.12); border-top: 2px dashed #FCD34D; border-bottom: 2px dashed #FCD34D; padding: 7px 20px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.ann-lbl { font-size: 10px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.t { display: inline-flex; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; }
+.ty { color: #78350F; background: #FEF3C7; border: 1px solid #FCD34D; }
+.tb { color: #1E3A5F; background: #EFF6FF; border: 1px solid #93C5FD; }
+.tt { color: #0F4F3E; background: #CCFBF1; border: 1px solid #5EEAD4; }
+.tr { color: #7F1D1D; background: #FEF2F2; border: 1px solid #FCA5A5; }
+
+/* BROWSER CHROME */
+.browser { background: #E8E6E3; border-radius: 6px 6px 0 0; padding: 6px 10px; display: flex; align-items: center; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+.url-bar { flex: 1; background: #fff; border-radius: 3px; padding: 3px 10px; font-size: 11px; color: #706D66; margin: 0 8px; font-family: 'Courier New', monospace; }
+
+/* ════════════════════
+   SHARED NAV
+   ════════════════════ */
+.nav { background: #0F0E0D; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; position: sticky; top: 0; z-index: 50; }
+.logo { display: flex; align-items: baseline; }
+.la { font-family: Georgia, serif; font-weight: 800; font-size: 16px; color: #FAFAF9; }
+.lv { font-family: Georgia, serif; font-weight: 900; font-size: 21px; color: #2DD4C8; }
+.nav-links { display: flex; gap: 28px; }
+.nav-link { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.7); text-decoration: none; letter-spacing: 0.01em; }
+.nav-link.active { color: #FAFAF9; }
+.nav-right { display: flex; align-items: center; gap: 16px; }
+.nav-role-btn { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5); padding: 5px 12px; border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; cursor: pointer; }
+.nav-login-btn { font-size: 12px; font-weight: 600; color: #0F0E0D; background: #FAFAF9; padding: 5px 14px; border-radius: 4px; cursor: pointer; }
+.nav-user { font-size: 11px; color: rgba(255,255,255,0.6); text-align: right; }
+.nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #2DD4C8; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #0F0E0D; }
+
+/* ════════════════════════════════════════
+   SECTION 0 — NAV DESIGN SPEC
+   ════════════════════════════════════════ */
+.color-system { background: #0F0E0D; padding: 28px 40px; }
+.cs-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 16px; }
+.cs-label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'Courier New', monospace; }
+.cs-swatch { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.sw { width: 18px; height: 18px; border-radius: 3px; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1); }
+.sw-label { font-size: 11px; color: rgba(255,255,255,0.6); font-family: 'Courier New', monospace; }
+.cs-rule { font-size: 11px; color: #2DD4C8; padding: 2px 0; }
+.cs-banned { font-size: 11px; color: #EF4444; padding: 2px 0; }
+
+/* ════════════════════════════════════════
+   PAGE 1 — PLATFORM PAGE
+   ════════════════════════════════════════ */
+
+/* Harvey-style: off-white bg, dark type, no heavy colour */
+.section-light { background: #FAFAF9; padding: 72px 80px; }
+.section-warm { background: #F2F1F0; padding: 72px 80px; }
+.section-dark { background: #0F0E0D; padding: 72px 80px; }
+.section-dark2 { background: #1F1D1A; padding: 72px 80px; }
+
+/* Labels — like Harvey, small and understated */
+.lbl { font-size: 11px; font-weight: 500; color: #706D66; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 16px; font-family: 'Courier New', monospace; }
+.lbl-teal { color: #2DD4C8; }
+.lbl-light { color: rgba(255,255,255,0.4); }
+
+/* Headlines — Harvey uses thin serif weight, large */
+.h-display { font-family: Georgia, serif; font-size: 56px; font-weight: 400; color: #0F0E0D; line-height: 1.05; letter-spacing: -0.02em; }
+.h-display-light { color: #FAFAF9; }
+.h-xl { font-family: Georgia, serif; font-size: 44px; font-weight: 400; color: #0F0E0D; line-height: 1.1; letter-spacing: -0.02em; }
+.h-xl-light { color: #FAFAF9; }
+.h-lg { font-family: Georgia, serif; font-size: 32px; font-weight: 400; color: #0F0E0D; line-height: 1.2; }
+.h-lg-light { color: #FAFAF9; }
+.h-md { font-size: 18px; font-weight: 600; color: #0F0E0D; line-height: 1.4; }
+.h-md-light { color: #FAFAF9; }
+
+/* Body — warm dark grey like Harvey */
+.body-lg { font-size: 18px; color: #3D3B38; line-height: 1.7; }
+.body-md { font-size: 15px; color: #3D3B38; line-height: 1.7; }
+.body-sm { font-size: 13px; color: #706D66; line-height: 1.6; }
+.body-light { color: rgba(255,255,255,0.6); }
+
+/* Harvey-style cards — very minimal, warm borders */
+.card { background: #FAFAF9; border: 1px solid #E8E6E3; border-radius: 8px; padding: 28px; }
+.card-dark { background: #1F1D1A; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 28px; }
+
+/* Buttons — Harvey style */
+.btn-outline-dark { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; color: #0F0E0D; border: 1px solid #0F0E0D; padding: 10px 20px; border-radius: 4px; cursor: pointer; background: transparent; }
+.btn-solid-dark { font-size: 14px; font-weight: 500; color: #FAFAF9; background: #0F0E0D; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; }
+.btn-outline-light { font-size: 14px; font-weight: 500; color: #FAFAF9; border: 1px solid rgba(255,255,255,0.3); padding: 10px 20px; border-radius: 4px; cursor: pointer; background: transparent; }
+.btn-teal { font-size: 14px; font-weight: 600; color: #0F0E0D; background: #2DD4C8; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; }
+
+/* Horizontal rule */
+.divider { width: 100%; height: 1px; background: #E8E6E3; }
+.divider-dark { background: rgba(255,255,255,0.08); }
+
+/* Stats */
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid #E8E6E3; border-left: 1px solid #E8E6E3; }
+.stat-cell { padding: 32px 28px; border-right: 1px solid #E8E6E3; border-bottom: 1px solid #E8E6E3; }
+.stat-value { font-family: Georgia, serif; font-size: 40px; font-weight: 400; color: #0F0E0D; line-height: 1; margin-bottom: 8px; }
+.stat-label { font-size: 13px; color: #706D66; }
+
+/* Platform three layers */
+.layers-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: #E8E6E3; border: 1px solid #E8E6E3; border-radius: 8px; overflow: hidden; }
+.layer { background: #FAFAF9; padding: 32px; }
+.layer-num { font-family: 'Courier New', monospace; font-size: 11px; color: #2DD4C8; margin-bottom: 16px; }
+.layer-title { font-size: 17px; font-weight: 600; color: #0F0E0D; margin-bottom: 10px; }
+.layer-body { font-size: 14px; color: #706D66; line-height: 1.6; }
+.layer-items { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
+.layer-item { font-size: 13px; color: #3D3B38; display: flex; align-items: center; gap: 6px; }
+.layer-item::before { content: '→'; color: #2DD4C8; font-size: 11px; }
+
+/* Process steps */
+.process-steps { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid #E8E6E3; }
+.ps { padding: 32px 24px; border-right: 1px solid #E8E6E3; position: relative; cursor: pointer; }
+.ps:last-child { border-right: none; }
+.ps.ps-active { border-top: 2px solid #0F0E0D; margin-top: -1px; }
+.ps-num { font-family: 'Courier New', monospace; font-size: 11px; color: #706D66; margin-bottom: 10px; }
+.ps-title { font-size: 17px; font-weight: 600; color: #0F0E0D; margin-bottom: 6px; }
+.ps-sub { font-size: 11px; color: #706D66; margin-bottom: 10px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.06em; }
+.ps-body { font-size: 13px; color: #706D66; line-height: 1.6; }
+
+/* Genome cards */
+.genome-card { border: 1px solid #E8E6E3; border-left: 3px solid #0F0E0D; border-radius: 0 6px 6px 0; padding: 20px 24px; background: #FAFAF9; }
+.gc-id { font-family: 'Courier New', monospace; font-size: 10px; color: #706D66; margin-bottom: 6px; }
+.gc-pct { font-family: Georgia, serif; font-size: 36px; font-weight: 400; color: #C53030; line-height: 1; margin-bottom: 4px; }
+.gc-title { font-size: 14px; font-weight: 600; color: #0F0E0D; margin-bottom: 4px; }
+.gc-body { font-size: 12px; color: #706D66; line-height: 1.5; }
+
+/* ════════════════════════════════════════
+   PAGE 2 — ADMIN PAGE (thin governance)
+   ════════════════════════════════════════ */
+.admin-layout { display: flex; background: #FAFAF9; min-height: 600px; }
+.admin-sidebar { width: 220px; min-width: 220px; background: #0F0E0D; padding: 16px 0; border-right: 1px solid rgba(255,255,255,0.06); }
+.asb-title { padding: 12px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px; }
+.asb-title-text { font-size: 12px; font-weight: 600; color: #FAFAF9; }
+.asb-title-sub { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 2px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.08em; }
+.asb-section { padding: 10px 16px 4px; }
+.asb-section-lbl { font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; font-family: 'Courier New', monospace; }
+.asb-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; margin-bottom: 1px; }
+.asb-item:hover { background: rgba(255,255,255,0.04); }
+.asb-item.active { background: rgba(45,212,200,0.1); }
+.asb-icon { font-size: 11px; color: rgba(255,255,255,0.3); width: 14px; text-align: center; }
+.asb-item.active .asb-icon { color: #2DD4C8; }
+.asb-text { font-size: 12px; color: rgba(255,255,255,0.5); }
+.asb-item.active .asb-text { color: rgba(255,255,255,0.9); font-weight: 500; }
+.asb-badge { margin-left: auto; font-size: 10px; font-weight: 600; background: #C53030; color: #fff; padding: 1px 6px; border-radius: 8px; }
+
+.admin-main { flex: 1; padding: 28px 36px; overflow: auto; background: #FAFAF9; }
+.admin-page-header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 1px solid #E8E6E3; margin-bottom: 24px; }
+.admin-page-title { font-size: 22px; font-weight: 600; color: #0F0E0D; margin-bottom: 4px; }
+.admin-page-sub { font-size: 13px; color: #706D66; }
+
+/* Admin stat cards */
+.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+.asc { background: #fff; border: 1px solid #E8E6E3; border-radius: 6px; padding: 18px 20px; }
+.asc-label { font-size: 10px; font-weight: 600; color: #706D66; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'Courier New', monospace; }
+.asc-value { font-size: 24px; font-weight: 600; color: #0F0E0D; line-height: 1; margin-bottom: 4px; }
+.asc-value.red { color: #C53030; }
+.asc-value.amber { color: #B45309; }
+.asc-sub { font-size: 11px; color: #706D66; }
+
+/* Admin table */
+.admin-table-wrap { background: #fff; border: 1px solid #E8E6E3; border-radius: 6px; overflow: hidden; margin-bottom: 20px; }
+.admin-table-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E8E6E3; }
+.admin-table-title { font-size: 14px; font-weight: 600; color: #0F0E0D; }
+table.admin { width: 100%; border-collapse: collapse; }
+table.admin thead th { padding: 8px 14px; font-size: 10px; font-weight: 600; color: #706D66; text-transform: uppercase; letter-spacing: 0.08em; background: #F2F1F0; border-bottom: 1px solid #E8E6E3; text-align: left; font-family: 'Courier New', monospace; }
+table.admin tbody td { padding: 11px 14px; font-size: 13px; color: #0F0E0D; border-bottom: 1px solid #F2F1F0; vertical-align: middle; }
+table.admin tbody tr:last-child td { border-bottom: none; }
+table.admin tbody tr:hover td { background: #F2F1F0; }
+.status-pill { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.sp-pending { background: #FEF3C7; color: #78350F; }
+.sp-approved { background: #DCFCE7; color: #166534; }
+.sp-rejected { background: #FEF2F2; color: #7F1D1D; }
+.td-action { font-size: 12px; font-weight: 500; color: #2DD4C8; cursor: pointer; }
+
+/* ════════════════════════════════════════
+   PAGE 3 — INVESTOR PAGE
+   ════════════════════════════════════════ */
+.investor-tabs { background: #0F0E0D; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 0 80px; display: flex; gap: 0; }
+.inv-tab { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.4); padding: 14px 20px; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.inv-tab.active { color: #FAFAF9; border-bottom-color: #2DD4C8; }
+.inv-confidential { margin-left: auto; font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.25); padding: 14px 0; font-family: 'Courier New', monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* Investor hero */
+.inv-hero { background: #0F0E0D; padding: 64px 80px; }
+.inv-eyebrow { font-family: 'Courier New', monospace; font-size: 11px; color: #2DD4C8; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px; }
+.inv-headline { font-family: Georgia, serif; font-size: 52px; font-weight: 400; color: #FAFAF9; line-height: 1.07; letter-spacing: -0.02em; margin-bottom: 20px; }
+.inv-teal { color: #2DD4C8; font-style: italic; }
+.inv-body { font-size: 17px; color: rgba(255,255,255,0.55); line-height: 1.7; max-width: 620px; margin-bottom: 40px; }
+.inv-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; }
+.inv-stat { background: #1F1D1A; padding: 24px 20px; }
+.inv-stat-value { font-family: Georgia, serif; font-size: 32px; font-weight: 400; color: #2DD4C8; line-height: 1; margin-bottom: 6px; }
+.inv-stat-label { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.4; }
+
+/* Investor comparison */
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; overflow: hidden; margin-top: 32px; }
+.comp-col-dark { background: #1F1D1A; padding: 28px; }
+.comp-col-teal { background: rgba(45,212,200,0.06); padding: 28px; border-left: 2px solid #2DD4C8; }
+.comp-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 16px; font-family: 'Courier New', monospace; }
+.comp-title-teal { color: #2DD4C8; }
+.comp-item { font-size: 13px; color: rgba(255,255,255,0.6); padding: 5px 0; display: flex; align-items: flex-start; gap: 8px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.comp-item-teal { color: rgba(255,255,255,0.85); }
+.comp-item:last-child { border-bottom: none; }
+.cx { color: rgba(255,255,255,0.2); font-size: 11px; margin-top: 2px; }
+.ck { color: #2DD4C8; font-size: 11px; margin-top: 2px; }
+
+/* Investor roadmap */
+.roadmap { display: flex; gap: 0; margin-top: 32px; }
+.rm-phase { flex: 1; padding: 24px; border-right: 1px solid rgba(255,255,255,0.08); }
+.rm-phase:last-child { border-right: none; }
+.rm-phase.rm-active { background: rgba(45,212,200,0.06); border-top: 2px solid #2DD4C8; }
+.rm-label { font-family: 'Courier New', monospace; font-size: 10px; color: #2DD4C8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.rm-date { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 10px; }
+.rm-items { display: flex; flex-direction: column; gap: 5px; }
+.rm-item { font-size: 12px; color: rgba(255,255,255,0.5); padding: 3px 0; display: flex; align-items: flex-start; gap: 6px; }
+.rm-item::before { content: '·'; color: #2DD4C8; margin-top: 0; flex-shrink: 0; }
+.rm-item.rm-done { color: rgba(255,255,255,0.25); text-decoration: line-through; }
+.rm-item.rm-done::before { color: rgba(45,212,200,0.3); }
+
+/* The Ask section */
+.ask-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 32px; }
+.ask-card { background: #1F1D1A; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 28px; }
+.ask-card-teal { border-color: rgba(45,212,200,0.3); background: rgba(45,212,200,0.05); }
+.ask-label { font-family: 'Courier New', monospace; font-size: 10px; color: #2DD4C8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+.ask-value { font-family: Georgia, serif; font-size: 40px; font-weight: 400; color: #FAFAF9; line-height: 1; margin-bottom: 6px; }
+.ask-body { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+.ask-items { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.ask-item { font-size: 13px; color: rgba(255,255,255,0.6); display: flex; align-items: flex-start; gap: 8px; }
+.ask-dot { width: 5px; height: 5px; border-radius: 50%; background: #2DD4C8; margin-top: 5px; flex-shrink: 0; }
+
+/* ════════════════════
+   NAV ROLE DESIGN
+   ════════════════════ */
+.nav-design-note { background: #1F1D1A; padding: 20px 40px; border-top: 1px solid rgba(255,255,255,0.06); }
+.ndn-title { font-size: 10px; font-weight: 700; color: #2DD4C8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; font-family: 'Courier New', monospace; }
+.ndn-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.ndn-col { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 5px; padding: 14px; }
+.ndn-col-title { font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+.ndn-item { font-size: 11px; color: rgba(255,255,255,0.4); padding: 2px 0; display: flex; align-items: center; gap: 5px; }
+.ndn-item .ck { color: #2DD4C8; font-size: 10px; }
+.ndn-item .cx { color: rgba(255,255,255,0.15); font-size: 10px; }
+.ndn-route { font-family: 'Courier New', monospace; font-size: 10px; color: #2DD4C8; margin-top: 6px; }
+</style>
+</head>
+<body>
+
+<!-- BUILD SPEC HEADER -->
+<div class="spec-bar">
+  <span class="spec-title">AbarVa Design Spec</span>
+  <span class="spec-note">Platform · Admin · Investor — Harvey.ai colour system. Yellow bars = annotations, do NOT render in production.</span>
+</div>
+
+<!-- ══════════════════════════════════════
+   DESIGN SYSTEM REFERENCE
+══════════════════════════════════════ -->
+<div class="page-divider"><span class="page-divider-text">Design System — Harvey-inspired colour palette</span></div>
+
+<div class="ann">
+  <span class="ann-lbl">Core principle</span>
+  <span class="t ty">Off-white #FAFAF9 background — NOT pure white, NOT cream #F8F7F4</span>
+  <span class="t tb">Near-black #0F0E0D text — NOT pure black, warm undertone like Harvey</span>
+  <span class="t tt">Warm grey borders #E8E6E3 — soft, professional, not clinical</span>
+  <span class="t tr">Teal #2DD4C8 ONLY for accent, labels, active states — NOT for backgrounds</span>
+</div>
+
+<div class="color-system">
+  <div style="font-size:10px;font-weight:700;color:#2DD4C8;text-transform:uppercase;letter-spacing:0.12em;font-family:'Courier New',monospace;">Colour palette — extracted from harvey.ai</div>
+  <div class="cs-grid">
+    <div>
+      <div class="cs-label">Backgrounds</div>
+      <div class="cs-swatch"><div class="sw" style="background:#FAFAF9;"></div><span class="sw-label">#FAFAF9 — primary bg</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#F2F1F0;"></div><span class="sw-label">#F2F1F0 — section alt bg</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#0F0E0D;"></div><span class="sw-label">#0F0E0D — dark sections</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#1F1D1A;"></div><span class="sw-label">#1F1D1A — dark cards</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#FFFFFF;border:1px solid #E8E6E3;"></div><span class="sw-label">#FFFFFF — cards, tables</span></div>
+    </div>
+    <div>
+      <div class="cs-label">Text</div>
+      <div class="cs-swatch"><div class="sw" style="background:#0F0E0D;"></div><span class="sw-label">#0F0E0D — primary headlines</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#3D3B38;"></div><span class="sw-label">#3D3B38 — body copy</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#706D66;"></div><span class="sw-label">#706D66 — muted / sub</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#CCCAC6;"></div><span class="sw-label">#CCCAC6 — dark bg body</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#FAFAF9;"></div><span class="sw-label">#FAFAF9 — dark bg headline</span></div>
+    </div>
+    <div>
+      <div class="cs-label">Accent</div>
+      <div class="cs-swatch"><div class="sw" style="background:#2DD4C8;"></div><span class="sw-label">#2DD4C8 — teal accent</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#E8E6E3;"></div><span class="sw-label">#E8E6E3 — warm border</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#C53030;"></div><span class="sw-label">#C53030 — critical/error</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#B45309;"></div><span class="sw-label">#B45309 — warning/amber</span></div>
+      <div class="cs-swatch"><div class="sw" style="background:#166534;"></div><span class="sw-label">#166534 — success/green</span></div>
+    </div>
+    <div>
+      <div class="cs-label">Typography</div>
+      <div style="margin-bottom:8px;"><span style="font-family:Georgia,serif;font-size:18px;color:#FAFAF9;font-weight:400;">Georgia serif</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">Headlines · weight 400 (not 700) · -0.02em tracking</span></div>
+      <div style="margin-bottom:8px;"><span style="font-size:14px;color:#FAFAF9;font-weight:500;">System sans</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">Body, UI, nav · weight 400/500/600</span></div>
+      <div><span style="font-family:'Courier New',monospace;font-size:10px;color:#2DD4C8;letter-spacing:0.1em;text-transform:uppercase;">MONO LABELS</span><span style="display:block;font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px;">Section labels · 10-11px · uppercase</span></div>
+    </div>
+    <div>
+      <div class="cs-label">BANNED</div>
+      <div class="cs-banned">#888888 grey for any label</div>
+      <div class="cs-banned">font-weight 700+ for Georgia headlines</div>
+      <div class="cs-banned">Teal for backgrounds or large fills</div>
+      <div class="cs-banned">Pure #000 or #fff — use warm variants</div>
+      <div class="cs-banned">Heavy drop shadows</div>
+      <div class="cs-rule">Harvey rule: restraint over emphasis</div>
+      <div class="cs-rule">Harvey rule: warmth over clinical coldness</div>
+      <div class="cs-rule">Harvey rule: serif headlines, sans body</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+   NAV — ROLE-BASED MENU ITEMS
+══════════════════════════════════════ -->
+<div class="page-divider"><span class="page-divider-text">Navigation — Role-based menu items</span></div>
+
+<div class="ann">
+  <span class="ann-lbl">Nav design</span>
+  <span class="t tt">Background: #0F0E0D — same nav across ALL pages</span>
+  <span class="t ty">Menu items shown depend on who is logged in — role-based</span>
+  <span class="t tb">Unauthenticated: Home · Platform · Solutions · Investor → Login · Request Demo</span>
+  <span class="t tb">Admin role: + Admin menu item · avatar shows "Admin"</span>
+  <span class="t tb">Maestro role: + Maestro menu item · no Admin visible</span>
+  <span class="t tb">Investor role: only Investor + Platform visible</span>
+</div>
+
+<!-- UNAUTHENTICATED NAV -->
+<div class="browser"><div class="dot" style="background:#EF4444;"></div><div class="dot" style="background:#F59E0B;"></div><div class="dot" style="background:#22C55E;"></div><div class="url-bar">app.abarva.ai — unauthenticated visitor</div></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link active" href="#">Platform</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">Investor</a>
+    <a class="nav-link" href="#">Demo</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-btn">Login</span>
+    <span class="nav-login-btn">Request Demo</span>
+  </div>
+</nav>
+
+<!-- ADMIN NAV -->
+<div class="ann"><span class="ann-lbl">Admin nav</span><span class="t tt">Same nav + Admin item visible · role badge in avatar</span></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Platform</a>
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">AI Value Realization</a>
+    <a class="nav-link active" href="#">Admin</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user"><div style="font-size:9px;color:#2DD4C8;font-family:'Courier New',monospace;letter-spacing:0.06em;">ADMIN</div>Anand Sundaram</div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<!-- MAESTRO NAV -->
+<div class="ann"><span class="ann-lbl">Maestro nav</span><span class="t tt">Maestro item visible · Admin NOT visible</span></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">AI Value Realization</a>
+    <a class="nav-link active" href="#">Maestro</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user"><div style="font-size:9px;color:#2DD4C8;font-family:'Courier New',monospace;letter-spacing:0.06em;">MAESTRO</div>Anand Sundaram</div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<!-- INVESTOR NAV -->
+<div class="ann"><span class="ann-lbl">Investor nav</span><span class="t tt">Only Investor + Platform visible · minimal</span></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Platform</a>
+    <a class="nav-link active" href="#">Investor</a>
+  </div>
+  <div class="nav-right">
+    <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Courier New',monospace;letter-spacing:0.06em;text-transform:uppercase;">CONFIDENTIAL · SEED 2026</div>
+  </div>
+</nav>
+
+<div class="nav-design-note">
+  <div class="ndn-title">Nav menu items by role</div>
+  <div class="ndn-grid">
+    <div class="ndn-col">
+      <div class="ndn-col-title">Unauthenticated</div>
+      <div class="ndn-item"><span class="ck">✓</span> Platform</div>
+      <div class="ndn-item"><span class="ck">✓</span> Solutions</div>
+      <div class="ndn-item"><span class="ck">✓</span> Investor</div>
+      <div class="ndn-item"><span class="ck">✓</span> Demo</div>
+      <div class="ndn-item"><span class="cx">✗</span> Intelligence</div>
+      <div class="ndn-item"><span class="cx">✗</span> Admin / Maestro</div>
+      <div class="ndn-route">Landing: /platform</div>
+    </div>
+    <div class="ndn-col">
+      <div class="ndn-col-title">Admin role</div>
+      <div class="ndn-item"><span class="ck">✓</span> Intelligence</div>
+      <div class="ndn-item"><span class="ck">✓</span> Solutions</div>
+      <div class="ndn-item"><span class="ck">✓</span> AI Value Realization</div>
+      <div class="ndn-item"><span class="ck">✓</span> Admin</div>
+      <div class="ndn-item"><span class="cx">✗</span> Maestro (not needed)</div>
+      <div class="ndn-item"><span class="cx">✗</span> Platform / Investor</div>
+      <div class="ndn-route">Landing: /admin</div>
+    </div>
+    <div class="ndn-col">
+      <div class="ndn-col-title">Maestro role</div>
+      <div class="ndn-item"><span class="ck">✓</span> Intelligence</div>
+      <div class="ndn-item"><span class="ck">✓</span> Solutions</div>
+      <div class="ndn-item"><span class="ck">✓</span> AI Value Realization</div>
+      <div class="ndn-item"><span class="ck">✓</span> Maestro</div>
+      <div class="ndn-item"><span class="cx">✗</span> Admin</div>
+      <div class="ndn-item"><span class="cx">✗</span> Platform / Investor</div>
+      <div class="ndn-route">Landing: /maestro</div>
+    </div>
+    <div class="ndn-col">
+      <div class="ndn-col-title">Investor / Viewer</div>
+      <div class="ndn-item"><span class="ck">✓</span> Platform</div>
+      <div class="ndn-item"><span class="ck">✓</span> Investor</div>
+      <div class="ndn-item"><span class="cx">✗</span> Intelligence</div>
+      <div class="ndn-item"><span class="cx">✗</span> Admin</div>
+      <div class="ndn-item"><span class="cx">✗</span> Maestro</div>
+      <div class="ndn-item"><span class="cx">✗</span> Solutions</div>
+      <div class="ndn-route">Landing: /investor</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+   PAGE 1 — PLATFORM PAGE /platform
+══════════════════════════════════════ -->
+<div class="page-divider" style="margin-top:16px;"><span class="page-divider-text">Page 1 · /platform · Product vision for unauthenticated visitors</span></div>
+
+<div class="ann">
+  <span class="ann-lbl">Platform page purpose</span>
+  <span class="t tt">For: unauthenticated visitors — CXOs, potential clients, investors browsing</span>
+  <span class="t ty">Explains: what is AbarVa, how it works, why it beats consulting over time</span>
+  <span class="t tb">Tone: Harvey-level restraint — confident, not loud. No teal backgrounds.</span>
+</div>
+
+<div class="browser"><div class="dot" style="background:#EF4444;"></div><div class="dot" style="background:#F59E0B;"></div><div class="dot" style="background:#22C55E;"></div><div class="url-bar">app.abarva.ai/platform</div></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link active" href="#">Platform</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">Investor</a>
+    <a class="nav-link" href="#">Demo</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-btn">Login</span>
+    <span class="nav-login-btn">Request Demo</span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="ann"><span class="ann-lbl">Hero</span><span class="t tt">bg: #FAFAF9 · Headline: Georgia 400 weight (not bold) · 56px</span><span class="t tb">2-col: headline + sub left (55%) · stat grid right (45%)</span><span class="t ty">No teal in headline — reserve teal for labels and accents only</span></div>
+<section class="section-light">
+  <div style="display:grid;grid-template-columns:55% 45%;gap:48px;align-items:center;">
+    <div>
+      <div class="lbl lbl-teal">ENTERPRISE TRANSFORMATION · AI-NATIVE · OUTCOME-ACCOUNTABLE</div>
+      <h1 class="h-display" style="margin-bottom:20px;">Intelligence. Then execution.<br>Outcome-accountable fees.</h1>
+      <p class="body-lg" style="margin-bottom:32px;max-width:520px;">AbarVa is not a consulting firm. It is an intelligence platform with embedded operators — Maestros — who govern delivery from inside and earn only when outcomes are verified.</p>
+      <div style="display:flex;gap:12px;">
+        <button class="btn-solid-dark">See it working →</button>
+        <button class="btn-outline-dark">Request a demo</button>
+      </div>
+    </div>
+    <div>
+      <div class="stat-row">
+        <div class="stat-cell">
+          <div class="lbl" style="margin-bottom:8px;">Consulting spend</div>
+          <div class="stat-value">$200B</div>
+          <div class="stat-label">Annual market with no outcome accountability</div>
+        </div>
+        <div class="stat-cell">
+          <div class="lbl" style="margin-bottom:8px;">AI with zero ROI</div>
+          <div class="stat-value">73%</div>
+          <div class="stat-label">Of AI investments produce no verified outcome</div>
+        </div>
+        <div class="stat-cell">
+          <div class="lbl" style="margin-bottom:8px;">Fee until verified</div>
+          <div class="stat-value">0%</div>
+          <div class="stat-label">No retainer. No hourly. Fee on what we deliver.</div>
+        </div>
+        <div class="stat-cell">
+          <div class="lbl" style="margin-bottom:8px;">Time to first brief</div>
+          <div class="stat-value">48h</div>
+          <div class="stat-label">From kickoff to your first Situation Brief</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THREE LAYERS -->
+<div class="ann"><span class="ann-lbl">Three layers</span><span class="t tt">bg: #F2F1F0 warm grey · 3 equal columns separated by 1px warm border</span><span class="t tb">No card shadows · clean flat surfaces like Harvey</span></div>
+<section class="section-warm" style="padding-top:56px;padding-bottom:56px;">
+  <div class="lbl" style="margin-bottom:8px;">HOW ABARVA WORKS</div>
+  <h2 class="h-xl" style="margin-bottom:40px;max-width:500px;">Three layers. One platform. End-to-end accountability.</h2>
+  <div class="layers-grid">
+    <div class="layer">
+      <div class="layer-num">01 · INTELLIGENCE LAYER</div>
+      <div class="layer-title">Your data tells us everything before we arrive.</div>
+      <div class="layer-body">Five intelligence products that diagnose, prescribe, and surface what's actually breaking. Powered by 340+ Genome patterns.</div>
+      <div class="layer-items">
+        <div class="layer-item">Situation Intelligence</div>
+        <div class="layer-item">AI Investment Intelligence</div>
+        <div class="layer-item">Vendor Intelligence</div>
+        <div class="layer-item">Business Case Intelligence</div>
+        <div class="layer-item">Outcome Intelligence</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-num">02 · THE GENOME</div>
+      <div class="layer-title">340 cross-client patterns. Getting smarter with every engagement.</div>
+      <div class="layer-body">Failure rates. Recovery ranges. Vendor track records. Advisory firms carry this in partners' heads — it walks out when they retire. Ours compounds permanently.</div>
+      <div class="layer-items">
+        <div class="layer-item">340+ transformation patterns</div>
+        <div class="layer-item">Failure rates by industry and vendor</div>
+        <div class="layer-item">Baseline ranges from peer organisations</div>
+        <div class="layer-item">Updated from every active engagement</div>
+      </div>
+    </div>
+    <div class="layer">
+      <div class="layer-num">03 · MAESTRO MODEL</div>
+      <div class="layer-title">Operators, not advisors. Embedded. Accountable.</div>
+      <div class="layer-body">Maestros govern delivery from inside the client. Vendors held to milestones. Knowledge transfers to your team — not back to us.</div>
+      <div class="layer-items">
+        <div class="layer-item">4 Maestros replace 40 consultants</div>
+        <div class="layer-item">Knowledge stays — no dependency</div>
+        <div class="layer-item">Vendors held to milestone contracts</div>
+        <div class="layer-item">15–20% outcome share on verified savings</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS — 4 STEPS -->
+<div class="ann"><span class="ann-lbl">4-step process</span><span class="t tt">bg: #FAFAF9 · Steps in equal columns · active step: 2px top border black</span><span class="t tb">Immutable baseline callout: full-width dark bar below steps</span></div>
+<section class="section-light" style="padding-top:48px;padding-bottom:0;">
+  <div class="lbl" style="margin-bottom:8px;">THE ENGAGEMENT MODEL</div>
+  <h2 class="h-xl" style="margin-bottom:40px;">From first signal to verified outcome.</h2>
+  <div class="process-steps">
+    <div class="ps ps-active">
+      <div class="ps-num">01</div>
+      <div class="ps-title">Diagnose</div>
+      <div class="ps-sub">48hrs · your data</div>
+      <div class="ps-body">Every gap quantified against benchmarks and 340+ Genome patterns. Situation Brief in 48 hours.</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">02</div>
+      <div class="ps-title">Prescribe</div>
+      <div class="ps-sub">Strategy + Vendor + Business Case</div>
+      <div class="ps-body">3–5 specific interventions with CFO-grade business cases and Genome validation from comparable outcomes.</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">03</div>
+      <div class="ps-title">Execute</div>
+      <div class="ps-sub">Maestro embeds · knowledge stays</div>
+      <div class="ps-body">Maestros govern delivery from inside. Vendors held to SLAs. Knowledge transfers to your team.</div>
+    </div>
+    <div class="ps">
+      <div class="ps-num">04</div>
+      <div class="ps-title">Verify</div>
+      <div class="ps-sub">Baseline vs actuals · fee earned</div>
+      <div class="ps-body">Baseline locked Day 0. Immutable. Monthly actuals tracked. Fee on verified savings only.</div>
+    </div>
+  </div>
+  <div style="background:#0F0E0D;padding:18px 32px;display:flex;align-items:center;gap:14px;">
+    <span style="font-size:16px;">🔒</span>
+    <p style="font-size:14px;color:rgba(255,255,255,0.75);line-height:1.5;">The baseline is locked on Day 0 and is <strong style="color:#FAFAF9;">immutable</strong>. Every metric. Every assumption. Verified by the CXO. We cannot move the goalposts — and <strong style="color:#FAFAF9;">neither can you</strong>.</p>
+  </div>
+</section>
+
+<!-- GENOME SECTION -->
+<div class="ann"><span class="ann-lbl">Genome — the secret sauce</span><span class="t tt">bg: #F2F1F0 · 2-col: copy left, pattern cards right</span><span class="t ty">"Being the 50th client is better than the first" — this line must appear</span><span class="t tb">Genome cards: left border 2px #0F0E0D (not teal) — restraint</span></div>
+<section class="section-warm" style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;">
+  <div>
+    <div class="lbl lbl-teal" style="margin-bottom:10px;">THE TRANSFORMATION GENOME</div>
+    <h2 class="h-xl" style="margin-bottom:20px;">340+ patterns from real transformations. Getting smarter with every engagement.</h2>
+    <p class="body-md" style="margin-bottom:16px;">The Genome is AbarVa's core competitive advantage. Built from real transformations — published research, KLAS, Everest Group, Gartner, and 15 years of founder engagement experience.</p>
+    <p class="body-md" style="margin-bottom:28px;">Advisory firms carry this in partners' heads. It walks out when they retire. Ours compounds permanently. <strong style="color:#0F0E0D;">Being the 50th client is better than being the first.</strong></p>
+    <div style="display:flex;gap:28px;">
+      <div><div style="font-family:Georgia,serif;font-size:32px;font-weight:400;color:#0F0E0D;">340+</div><div class="body-sm">Genome patterns</div></div>
+      <div><div style="font-family:Georgia,serif;font-size:32px;font-weight:400;color:#0F0E0D;">89%</div><div class="body-sm">Prediction accuracy</div></div>
+      <div><div style="font-family:Georgia,serif;font-size:32px;font-weight:400;color:#0F0E0D;">79%</div><div class="body-sm">CDO vacancy failure</div></div>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="genome-card"><div class="gc-id">F002</div><div class="gc-pct">84%</div><div class="gc-title">No named executive sponsor</div><div class="gc-body">Margin programmes without a C-suite owner stall at implementation in 84% of cases.</div></div>
+    <div class="genome-card"><div class="gc-id">F007</div><div class="gc-pct" style="color:#B45309;">79%</div><div class="gc-title">CDO vacancy at go-live</div><div class="gc-body">AI programmes with CDO role vacant at go-live fail to scale in 79% of Genome cases.</div></div>
+    <div class="genome-card"><div class="gc-id">F019</div><div class="gc-pct" style="color:#B45309;">68%</div><div class="gc-title">Migration before rationalisation</div><div class="gc-body">Analytics teams that migrate before rationalising waste 40%+ of budget on redundant tooling.</div></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+   PAGE 2 — ADMIN PAGE /admin
+══════════════════════════════════════ -->
+<div class="page-divider" style="margin-top:16px;"><span class="page-divider-text">Page 2 · /admin · Admin governance — users, data approvals, security only</span></div>
+
+<div class="ann">
+  <span class="ann-lbl">Admin page purpose</span>
+  <span class="t tr">Admin is a THIN governance layer — NOT the operational hub</span>
+  <span class="t tt">Only 3 things: user management, sensitive data approvals, audit/security</span>
+  <span class="t ty">Visual: Harvey restraint — #FAFAF9 bg, clean tables, no teal hero banners</span>
+  <span class="t tb">Left sidebar same dark pattern as Maestro workspace — consistent tool</span>
+</div>
+
+<div class="browser"><div class="dot" style="background:#EF4444;"></div><div class="dot" style="background:#F59E0B;"></div><div class="dot" style="background:#22C55E;"></div><div class="url-bar">app.abarva.ai/admin</div></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">AI Value Realization</a>
+    <a class="nav-link active" href="#">Admin</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user"><div style="font-size:9px;color:#2DD4C8;font-family:'Courier New',monospace;">ADMIN</div>Anand Sundaram</div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<div class="ann">
+  <span class="ann-lbl">Admin sidebar</span>
+  <span class="t tt">Width: 220px · bg: #0F0E0D · same pattern as Maestro sidebar</span>
+  <span class="t ty">Only admin-specific sections — NO programme dashboard, NO engagements</span>
+  <span class="t tb">Red badge on pending items — shows count, creates urgency</span>
+</div>
+
+<div class="admin-layout">
+  <!-- SIDEBAR -->
+  <div class="admin-sidebar">
+    <div class="asb-title">
+      <div class="asb-title-text">Admin Portal</div>
+      <div class="asb-title-sub">Platform governance</div>
+    </div>
+
+    <div class="asb-section">
+      <div class="asb-section-lbl">Users & Access</div>
+      <div class="asb-item active"><span class="asb-icon">👤</span><span class="asb-text">Maestros</span></div>
+      <div class="asb-item"><span class="asb-icon">🔐</span><span class="asb-text">Roles & Permissions</span></div>
+      <div class="asb-item"><span class="asb-icon">🔒</span><span class="asb-text">Security</span></div>
+    </div>
+
+    <div class="asb-section">
+      <div class="asb-section-lbl">Client Governance</div>
+      <div class="asb-item"><span class="asb-icon">🏢</span><span class="asb-text">Active Clients</span></div>
+      <div class="asb-item"><span class="asb-icon">📋</span><span class="asb-text">Contract Terms</span></div>
+    </div>
+
+    <div class="asb-section">
+      <div class="asb-section-lbl">Data Governance</div>
+      <div class="asb-item"><span class="asb-icon">⚠️</span><span class="asb-text">Sensitive Data</span><span class="asb-badge">3</span></div>
+      <div class="asb-item"><span class="asb-icon">📊</span><span class="asb-text">Access Logs</span></div>
+      <div class="asb-item"><span class="asb-icon">📥</span><span class="asb-text">Pending Requests</span><span class="asb-badge">2</span></div>
+    </div>
+
+    <div class="asb-section">
+      <div class="asb-section-lbl">Platform</div>
+      <div class="asb-item"><span class="asb-icon">📜</span><span class="asb-text">Audit Log</span></div>
+      <div class="asb-item"><span class="asb-icon">🔑</span><span class="asb-text">API Keys</span></div>
+      <div class="asb-item"><span class="asb-icon">✓</span><span class="asb-text">Compliance</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="admin-main">
+    <div class="ann" style="margin:-28px -36px 20px;border-radius:0;"><span class="ann-lbl">Admin main content</span><span class="t tt">bg: #FAFAF9 · DM Sans throughout — NO Georgia on operational pages</span><span class="t ty">Default view: Maestros management (most likely daily task)</span></div>
+
+    <div class="admin-page-header">
+      <div>
+        <div class="admin-page-title">Maestros</div>
+        <div class="admin-page-sub">Manage Maestro accounts, roles, and client assignments.</div>
+      </div>
+      <button class="btn-solid-dark" style="font-size:13px;padding:8px 16px;">+ Add Maestro</button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;"><span class="ann-lbl">Stat cards</span><span class="t tt">White cards · 1px #E8E6E3 border · NO coloured backgrounds · values in #0F0E0D</span></div>
+    <div class="admin-stats">
+      <div class="asc">
+        <div class="asc-label">Total Maestros</div>
+        <div class="asc-value">3</div>
+        <div class="asc-sub">1 pending onboarding</div>
+      </div>
+      <div class="asc">
+        <div class="asc-label">Active Clients</div>
+        <div class="asc-value">2</div>
+        <div class="asc-sub">Meridian · Arcturus</div>
+      </div>
+      <div class="asc">
+        <div class="asc-label">Sensitive Data Requests</div>
+        <div class="asc-value red">3</div>
+        <div class="asc-sub">Awaiting your approval</div>
+      </div>
+      <div class="asc">
+        <div class="asc-label">Security Alerts</div>
+        <div class="asc-value amber">1</div>
+        <div class="asc-sub">API key rotation due</div>
+      </div>
+    </div>
+
+    <!-- Maestros table -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;"><span class="ann-lbl">Tables</span><span class="t tt">Same table style as Harvey — clean, minimal, warm grey header bg</span><span class="t tb">Action column: teal text link — consistent with Maestro tables</span></div>
+    <div class="admin-table-wrap">
+      <div class="admin-table-header">
+        <div class="admin-table-title">All Maestros</div>
+        <span style="font-size:12px;color:#706D66;">3 total</span>
+      </div>
+      <table class="admin">
+        <thead><tr><th>Name</th><th>Role</th><th>Clients Assigned</th><th>Active Engagements</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="font-weight:600;color:#0F0E0D;">Anand Sundaram</div><div style="font-size:11px;color:#706D66;">anand@abarva.ai</div></td>
+            <td><span style="font-size:11px;background:#CCFBF1;color:#0F4F3E;padding:2px 7px;border-radius:3px;font-weight:600;">Admin + Maestro</span></td>
+            <td style="font-size:13px;color:#3D3B38;">Meridian · Arcturus</td>
+            <td style="font-size:13px;color:#0F0E0D;font-weight:600;">4</td>
+            <td><span class="status-pill sp-approved">Active</span></td>
+            <td class="td-action">Manage →</td>
+          </tr>
+          <tr>
+            <td><div style="font-weight:600;color:#0F0E0D;">TBD — Hire 1</div><div style="font-size:11px;color:#706D66;">Pending hire</div></td>
+            <td><span style="font-size:11px;background:#F2F1F0;color:#706D66;padding:2px 7px;border-radius:3px;font-weight:600;">Maestro</span></td>
+            <td style="font-size:13px;color:#706D66;">Unassigned</td>
+            <td style="font-size:13px;color:#706D66;">—</td>
+            <td><span class="status-pill sp-pending">Pending</span></td>
+            <td class="td-action">Assign →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Sensitive data approvals -->
+    <div class="admin-table-wrap">
+      <div class="admin-table-header">
+        <div class="admin-table-title">Sensitive Data Approval Requests</div>
+        <span style="font-size:11px;background:#FEF2F2;color:#7F1D1D;padding:2px 8px;border-radius:3px;font-weight:600;">3 pending</span>
+      </div>
+      <table class="admin">
+        <thead><tr><th>Dataset</th><th>Client</th><th>Requested By</th><th>Requested For</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="font-weight:600;color:#0F0E0D;">Payer Contract Analysis</div><div style="font-size:11px;color:#706D66;">Confidential · PII adjacent</div></td>
+            <td style="font-size:13px;">Meridian Health</td>
+            <td style="font-size:13px;">Anand S.</td>
+            <td style="font-size:13px;color:#706D66;">RCM AI engagement</td>
+            <td style="font-size:12px;color:#706D66;">Today</td>
+            <td><div style="display:flex;gap:8px;"><span style="font-size:12px;font-weight:600;color:#166534;cursor:pointer;">Approve</span><span style="font-size:12px;font-weight:600;color:#C53030;cursor:pointer;">Reject</span></div></td>
+          </tr>
+          <tr>
+            <td><div style="font-weight:600;color:#0F0E0D;">CDO Profile + Org Chart</div><div style="font-size:11px;color:#706D66;">Organisational · Sensitive</div></td>
+            <td style="font-size:13px;">Meridian Health</td>
+            <td style="font-size:13px;">Anand S.</td>
+            <td style="font-size:13px;color:#706D66;">Tech Mod engagement</td>
+            <td style="font-size:12px;color:#706D66;">Yesterday</td>
+            <td><div style="display:flex;gap:8px;"><span style="font-size:12px;font-weight:600;color:#166534;cursor:pointer;">Approve</span><span style="font-size:12px;font-weight:600;color:#C53030;cursor:pointer;">Reject</span></div></td>
+          </tr>
+          <tr>
+            <td><div style="font-weight:600;color:#0F0E0D;">MAS Regulatory Filing</div><div style="font-size:11px;color:#706D66;">Regulatory · Restricted</div></td>
+            <td style="font-size:13px;">Arcturus Financial</td>
+            <td style="font-size:13px;">Anand S.</td>
+            <td style="font-size:13px;color:#706D66;">FEAT Compliance</td>
+            <td style="font-size:12px;color:#706D66;">2 days ago</td>
+            <td><div style="display:flex;gap:8px;"><span style="font-size:12px;font-weight:600;color:#166534;cursor:pointer;">Approve</span><span style="font-size:12px;font-weight:600;color:#C53030;cursor:pointer;">Reject</span></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+   PAGE 3 — INVESTOR PAGE /investor
+══════════════════════════════════════ -->
+<div class="page-divider" style="margin-top:16px;"><span class="page-divider-text">Page 3 · /investor · Investor view — confidential, seed 2026</span></div>
+
+<div class="ann">
+  <span class="ann-lbl">Investor page</span>
+  <span class="t tt">Dark-first page — #0F0E0D bg throughout (investor context = gravitas)</span>
+  <span class="t ty">Tabs: Overview · Vision · Revenue Model · The Ask · Team · Live Platform</span>
+  <span class="t tb">Confidential label top right — always visible</span>
+  <span class="t tr">Fix: /investor must NOT redirect to Maestro — it has its own route</span>
+</div>
+
+<div class="browser"><div class="dot" style="background:#EF4444;"></div><div class="dot" style="background:#F59E0B;"></div><div class="dot" style="background:#22C55E;"></div><div class="url-bar">app.abarva.ai/investor</div></div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Platform</a>
+    <a class="nav-link active" href="#">Investor</a>
+  </div>
+  <div class="nav-right">
+    <div style="font-size:10px;color:rgba(255,255,255,0.3);font-family:'Courier New',monospace;letter-spacing:0.06em;text-transform:uppercase;">CONFIDENTIAL · SEED 2026</div>
+  </div>
+</nav>
+
+<!-- INVESTOR TABS -->
+<div class="investor-tabs">
+  <div class="inv-tab active">Overview</div>
+  <div class="inv-tab">Vision</div>
+  <div class="inv-tab">Revenue Model</div>
+  <div class="inv-tab">The Ask</div>
+  <div class="inv-tab">Team</div>
+  <div class="inv-tab">Live Platform</div>
+  <div class="inv-confidential">INVESTOR VIEW · CONFIDENTIAL · SEED 2026</div>
+</div>
+
+<div class="ann"><span class="ann-lbl">Investor hero</span><span class="t tt">bg: #0F0E0D · Georgia 400 weight 52px · teal italic for the kicker</span><span class="t tb">4 stats in grid below hero copy · dark card bg #1F1D1A</span></div>
+
+<!-- HERO -->
+<div class="inv-hero">
+  <div class="inv-eyebrow">SEED ROUND · APRIL 2026</div>
+  <h1 class="inv-headline">The $800B enterprise transformation<br>market has no intelligence layer.<br><span class="inv-teal">Until now.</span></h1>
+  <p class="inv-body">Palantir built $80B embedding AI analysts inside government. ServiceNow built $200B automating enterprise workflow. Neither touched transformation itself — the $800B market where boards spend, consultants deliver decks, and accountability is zero. AbarVa is that category.</p>
+  <div class="inv-stats">
+    <div class="inv-stat">
+      <div class="inv-stat-value">$800B</div>
+      <div class="inv-stat-label">Annual enterprise transformation spend. No outcome accountability today.</div>
+    </div>
+    <div class="inv-stat">
+      <div class="inv-stat-value">$80B</div>
+      <div class="inv-stat-label">AI + human operator + enterprise data. Same structure. Different category.</div>
+    </div>
+    <div class="inv-stat">
+      <div class="inv-stat-value">73%</div>
+      <div class="inv-stat-label">Of enterprise AI programmes produce no verified outcome. AbarVa fixes this.</div>
+    </div>
+    <div class="inv-stat">
+      <div class="inv-stat-value">0%</div>
+      <div class="inv-stat-label">Fee tied to outcomes at any leading advisory firm today.</div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="ann"><span class="ann-lbl">Comparison</span><span class="t tt">bg: #0F0E0D · 2-col: "How advisory firms work" vs "How AbarVa works"</span><span class="t tb">AbarVa col: teal left border + teal label — shows the distinction clearly</span></div>
+<section class="section-dark" style="padding-top:48px;padding-bottom:48px;">
+  <div class="lbl lbl-light" style="margin-bottom:16px;">THE STRUCTURAL OPPORTUNITY</div>
+  <h2 class="h-xl h-xl-light" style="margin-bottom:28px;">The same problem. A different structure.</h2>
+  <div class="comp-grid">
+    <div class="comp-col-dark">
+      <div class="comp-title">How advisory firms work today</div>
+      <div class="comp-item"><span class="cx">✗</span> CXO pays $2–8M per engagement</div>
+      <div class="comp-item"><span class="cx">✗</span> Consultants spend weeks 1–4 learning the client</div>
+      <div class="comp-item"><span class="cx">✗</span> Deliverable is a PowerPoint deck</div>
+      <div class="comp-item"><span class="cx">✗</span> Knowledge walks out with the team</div>
+      <div class="comp-item"><span class="cx">✗</span> No accountability for outcomes</div>
+      <div class="comp-item"><span class="cx">✗</span> Same firm, same process, 2 years later</div>
+    </div>
+    <div class="comp-col-teal">
+      <div class="comp-title comp-title-teal">How AbarVa works</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Data ingested before first meeting. Phase 0 in 48 hours.</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Maestro arrives knowing every gap, every failure pattern</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Deliverable is structured data — feeds every next phase</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Knowledge stays in the platform permanently</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Baseline locked Day 0 — accountability built in from start</div>
+      <div class="comp-item comp-item-teal"><span class="ck">✓</span> Genome compounds — every engagement makes the next better</div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<div class="ann"><span class="ann-lbl">Product roadmap</span><span class="t tt">bg: #1F1D1A · 4 phases horizontal · active phase: teal top border</span><span class="t tb">Completed items: strikethrough + muted · Future items: clear and bold</span></div>
+<section class="section-dark2" style="padding-top:48px;padding-bottom:48px;">
+  <div class="lbl lbl-light" style="margin-bottom:16px;">PRODUCT ROADMAP</div>
+  <h2 class="h-xl h-xl-light" style="margin-bottom:28px;">From beachhead to category definition.</h2>
+  <div class="roadmap">
+    <div class="rm-phase rm-active">
+      <div class="rm-label">Phase 1 · NOW</div>
+      <div class="rm-date">Q2 2026 · Live</div>
+      <div class="rm-items">
+        <div class="rm-item rm-done">Platform live at app.abarva.ai</div>
+        <div class="rm-item rm-done">Meridian + Arcturus demo clients</div>
+        <div class="rm-item rm-done">5 Intelligence products deployed</div>
+        <div class="rm-item rm-done">340+ Genome patterns seeded</div>
+        <div class="rm-item">3 design partners signing</div>
+        <div class="rm-item">$3M ARR target</div>
+      </div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-label">Phase 2 · SEED</div>
+      <div class="rm-date">Q3–Q4 2026</div>
+      <div class="rm-items">
+        <div class="rm-item">3 paying design partners live</div>
+        <div class="rm-item">50+ Genome patterns from real data</div>
+        <div class="rm-item">Automated benchmark feeds</div>
+        <div class="rm-item">3 Maestros hired and deployed</div>
+        <div class="rm-item">Retail vertical added</div>
+        <div class="rm-item">$5M ARR target</div>
+      </div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-label">Phase 3 · SERIES A</div>
+      <div class="rm-date">2027 · $5M ARR trigger</div>
+      <div class="rm-items">
+        <div class="rm-item">Cross-client Genome intelligence</div>
+        <div class="rm-item">30 clients across 3 verticals</div>
+        <div class="rm-item">Maestro marketplace</div>
+        <div class="rm-item">API for client data integration</div>
+        <div class="rm-item">$20M ARR · ~$100M pre-money</div>
+      </div>
+    </div>
+    <div class="rm-phase">
+      <div class="rm-label">Phase 4 · CATEGORY</div>
+      <div class="rm-date">2028+</div>
+      <div class="rm-items">
+        <div class="rm-item">International expansion</div>
+        <div class="rm-item">Genome as standalone product</div>
+        <div class="rm-item">Third-party Maestro platform</div>
+        <div class="rm-item">Default OS for enterprise transformation</div>
+        <div class="rm-item">$100M ARR</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE ASK -->
+<div class="ann"><span class="ann-lbl">The Ask</span><span class="t tt">bg: #0F0E0D · 2-col grid: Raise details + Use of funds</span><span class="t ty">Teal-accented card for the key numbers ($8M / $25M cap)</span></div>
+<section class="section-dark" style="padding-top:48px;padding-bottom:64px;">
+  <div class="lbl lbl-light" style="margin-bottom:16px;">THE ASK</div>
+  <h2 class="h-xl h-xl-light" style="margin-bottom:8px;">$8M. $25M cap. Category-creation round.</h2>
+  <p style="font-size:16px;color:rgba(255,255,255,0.45);margin-bottom:28px;">AbarVa is raising $8M on a SAFE with a $25M cap and MFN protection.</p>
+  <div class="ask-grid">
+    <div class="ask-card ask-card-teal">
+      <div class="ask-label">Seed Round Terms</div>
+      <div class="ask-value">$8M</div>
+      <div class="ask-body">SAFE with $25M valuation cap and MFN protection. Clean, founder-friendly structure.</div>
+      <div class="ask-items">
+        <div class="ask-item"><div class="ask-dot"></div>SAFE — no priced round complexity</div>
+        <div class="ask-item"><div class="ask-dot"></div>$25M cap — fair entry for seed risk</div>
+        <div class="ask-item"><div class="ask-dot"></div>MFN protection — investor-friendly</div>
+        <div class="ask-item"><div class="ask-dot"></div>Series A trigger: $5M ARR · 3 clients</div>
+        <div class="ask-item"><div class="ask-dot"></div>Series A pre-money: ~$100M</div>
+      </div>
+    </div>
+    <div class="ask-card">
+      <div class="ask-label">Use of Funds</div>
+      <div style="display:flex;flex-direction:column;gap:16px;margin-top:8px;">
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600;color:#FAFAF9;">3 Maestros</span><span style="font-size:13px;color:#2DD4C8;font-weight:600;">$1.8M</span></div>
+          <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:40%;height:100%;background:#2DD4C8;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">Year 1 embedded operators — core delivery capacity</div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600;color:#FAFAF9;">Genome data & benchmarks</span><span style="font-size:13px;color:#2DD4C8;font-weight:600;">$1.2M</span></div>
+          <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:27%;height:100%;background:#2DD4C8;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">Automated KLAS, Gartner, Everest feeds + 50+ new patterns</div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600;color:#FAFAF9;">Engineering</span><span style="font-size:13px;color:#2DD4C8;font-weight:600;">$2.4M</span></div>
+          <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:53%;height:100%;background:#2DD4C8;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">2 senior + 1 infra — platform depth and reliability</div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="font-size:13px;font-weight:600;color:#FAFAF9;">GTM & design partners</span><span style="font-size:13px;color:#2DD4C8;font-weight:600;">$2.6M</span></div>
+          <div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;"><div style="width:58%;height:100%;background:#2DD4C8;border-radius:2px;"></div></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:3px;">3 design partners onboarded and paying</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FINAL DESIGN RULES -->
+<div class="color-system" style="margin-top:16px;">
+  <div style="font-size:10px;font-weight:700;color:#2DD4C8;text-transform:uppercase;letter-spacing:0.12em;font-family:'Courier New',monospace;margin-bottom:16px;">Final build rules — apply to ALL pages</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
+    <div>
+      <div class="cs-label">Platform page rules</div>
+      <div class="cs-rule">bg: #FAFAF9 primary · #F2F1F0 alternating</div>
+      <div class="cs-rule">Headlines: Georgia 400 weight — NOT 700</div>
+      <div class="cs-rule">Section padding: 72px 80px</div>
+      <div class="cs-rule">Max visible width: full — no narrow container</div>
+      <div class="cs-rule">Genome cards: 2px #0F0E0D border-left (not teal)</div>
+      <div class="cs-banned">NO teal for section backgrounds</div>
+      <div class="cs-banned">NO heavy bold Georgia headings</div>
+    </div>
+    <div>
+      <div class="cs-label">Admin page rules</div>
+      <div class="cs-rule">Left sidebar: 220px · #0F0E0D bg</div>
+      <div class="cs-rule">Main area: #FAFAF9 bg</div>
+      <div class="cs-rule">Tables: #fff bg · 1px #E8E6E3 borders</div>
+      <div class="cs-rule">Headers: #F2F1F0 bg · 10px mono uppercase</div>
+      <div class="cs-rule">Approval actions: text links (Approve/Reject)</div>
+      <div class="cs-banned">NO programme dashboard in admin</div>
+      <div class="cs-banned">NO engagement management in admin</div>
+      <div class="cs-banned">NO teal hero banners</div>
+    </div>
+    <div>
+      <div class="cs-label">Investor page rules</div>
+      <div class="cs-rule">bg: #0F0E0D throughout — dark first</div>
+      <div class="cs-rule">Always shows confidential label</div>
+      <div class="cs-rule">6 tabs — all must be built and populated</div>
+      <div class="cs-rule">Stats: Georgia 400 · teal value colour</div>
+      <div class="cs-rule">Route: /investor — must NOT redirect</div>
+      <div class="cs-banned">NO redirect to Maestro or any other page</div>
+      <div class="cs-banned">NO light bg sections on investor page</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

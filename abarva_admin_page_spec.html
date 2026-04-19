@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa — Admin Page Design Spec</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: #e5e7eb; }
+
+/* ═══════════════════════════════════════
+   SPEC CHROME
+═══════════════════════════════════════ */
+.spec-bar { background: #7C3AED; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+.spec-title { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; }
+.spec-note { font-size: 13px; color: rgba(255,255,255,0.75); }
+
+.ann { background: rgba(253,224,71,0.1); border-top: 2px dashed #FCD34D; border-bottom: 2px dashed #FCD34D; padding: 7px 16px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ann-lbl { font-size: 10px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+.t { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 3px; }
+.ty { color: #78350F; background: #FEF3C7; border: 1px solid #FCD34D; }
+.tb { color: #1E3A5F; background: #EFF6FF; border: 1px solid #93C5FD; }
+.tt { color: #0F4F3E; background: #CCFBF1; border: 1px solid #5EEAD4; }
+.tr { color: #7F1D1D; background: #FEF2F2; border: 1px solid #FCA5A5; }
+
+.page-label { background: #2DD4C8; padding: 8px 20px; font-size: 11px; font-weight: 700; color: #0F0E0D; text-transform: uppercase; letter-spacing: 0.12em; }
+
+/* ═══════════════════════════════════════
+   BROWSER CHROME
+═══════════════════════════════════════ */
+.browser { background: #E8E6E3; border-radius: 6px 6px 0 0; padding: 7px 12px; display: flex; align-items: center; gap: 5px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.url { flex: 1; background: #fff; border-radius: 3px; padding: 3px 10px; font-size: 11px; color: #706D66; margin: 0 8px; font-family: monospace; }
+
+/* ═══════════════════════════════════════
+   NAV
+═══════════════════════════════════════ */
+.nav { background: #0F0E0D; height: 52px; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+.logo { display: flex; align-items: baseline; }
+.la { font-family: Georgia, serif; font-weight: 800; font-size: 16px; color: #FAFAF9; }
+.lv { font-family: Georgia, serif; font-weight: 900; font-size: 21px; color: #2DD4C8; }
+.nav-links { display: flex; gap: 24px; }
+.nav-link { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.65); text-decoration: none; }
+.nav-link.active { color: #FAFAF9; font-weight: 600; }
+.nav-link.greyed { color: rgba(255,255,255,0.2); cursor: default; }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-user-label { font-size: 9px; color: #2DD4C8; font-family: monospace; letter-spacing: 0.06em; text-transform: uppercase; }
+.nav-user-name { font-size: 12px; color: rgba(255,255,255,0.7); text-align: right; }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #2DD4C8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0F0E0D; }
+
+/* ═══════════════════════════════════════
+   ADMIN LAYOUT
+═══════════════════════════════════════ */
+.admin-wrap { display: flex; background: #FAFAF9; min-height: 640px; }
+
+/* ── LEFT SIDEBAR ── */
+.sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #0F0E0D;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 20px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+/* SIDEBAR: Portal header */
+.sb-header {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  margin-bottom: 4px;
+}
+.sb-portal-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 4px;
+}
+.sb-portal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #FAFAF9;
+  margin-bottom: 2px;
+}
+.sb-portal-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  font-family: 'Courier New', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* SIDEBAR: Section groups */
+.sb-section {
+  padding: 14px 18px 4px;
+}
+.sb-section-lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.22);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+  font-family: 'Courier New', monospace;
+}
+
+/* SIDEBAR: Items — FONT SIZE INCREASED for 13" laptops */
+.sb-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 1px;
+  transition: background 0.15s;
+}
+.sb-item:hover { background: rgba(255,255,255,0.05); }
+.sb-item.active { background: rgba(45,212,200,0.1); }
+.sb-item-icon { font-size: 13px; color: rgba(255,255,255,0.28); width: 16px; text-align: center; flex-shrink: 0; }
+.sb-item.active .sb-item-icon { color: #2DD4C8; }
+.sb-item-text {
+  font-size: 13px;           /* ← UP from 9-10px to 13px */
+  font-weight: 400;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.3;
+}
+.sb-item.active .sb-item-text {
+  color: rgba(255,255,255,0.92);
+  font-weight: 500;
+}
+.sb-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  background: #C53030;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.sb-badge-amber {
+  background: #B45309;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;
+  padding: 28px 36px;
+  background: #FAFAF9;
+  overflow: auto;
+}
+
+/* PAGE HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #E8E6E3;
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 22px;    /* ← UP from whatever it was */
+  font-weight: 600;
+  color: #0F0E0D;
+  margin-bottom: 4px;
+}
+.page-sub {
+  font-size: 13px;
+  color: #706D66;
+}
+.btn-primary {
+  background: #0F0E0D;
+  color: #FAFAF9;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* STAT CARDS */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: #fff;
+  border: 1px solid #E8E6E3;
+  border-radius: 7px;
+  padding: 18px 20px;
+}
+.stat-label {
+  font-size: 10px;           /* mono labels stay small — they're structural */
+  font-weight: 700;
+  color: #706D66;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: 'Courier New', monospace;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-size: 26px;          /* ← UP from 24px */
+  font-weight: 600;
+  color: #0F0E0D;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-value.red { color: #C53030; }
+.stat-value.amber { color: #B45309; }
+.stat-sub {
+  font-size: 12px;          /* ← UP from 11px */
+  color: #706D66;
+}
+
+/* TABLES */
+.table-wrap {
+  background: #fff;
+  border: 1px solid #E8E6E3;
+  border-radius: 7px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.table-hdr {
+  padding: 14px 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #E8E6E3;
+}
+.table-title {
+  font-size: 15px;          /* ← UP from 14px */
+  font-weight: 600;
+  color: #0F0E0D;
+}
+.table-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 3px;
+}
+.badge-red { background: #FEF2F2; color: #7F1D1D; border: 1px solid #FCA5A5; }
+.badge-grey { background: #F2F1F0; color: #706D66; }
+
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  padding: 9px 16px;
+  font-size: 10px;           /* mono table headers — intentionally small */
+  font-weight: 700;
+  color: #706D66;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: #F2F1F0;
+  border-bottom: 1px solid #E8E6E3;
+  text-align: left;
+  font-family: 'Courier New', monospace;
+}
+tbody td {
+  padding: 12px 16px;       /* ← more padding = bigger feel */
+  font-size: 14px;          /* ← UP from 12-13px to 14px */
+  color: #0F0E0D;
+  border-bottom: 1px solid #F2F1F0;
+  vertical-align: middle;
+}
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: #F2F1F0; }
+.td-primary { font-weight: 600; color: #0F0E0D; font-size: 14px; }
+.td-secondary { font-size: 12px; color: #706D66; margin-top: 2px; }
+.td-role { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 3px; }
+.role-admin { background: #CCFBF1; color: #0F4F3E; }
+.role-maestro { background: #F2F1F0; color: #706D66; }
+.status-pill { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 10px; }
+.sp-active { background: #DCFCE7; color: #166534; }
+.sp-pending { background: #FEF3C7; color: #78350F; }
+.td-link { font-size: 13px; font-weight: 500; color: #2DD4C8; cursor: pointer; white-space: nowrap; }
+.td-approve { font-size: 13px; font-weight: 600; color: #166534; cursor: pointer; }
+.td-reject { font-size: 13px; font-weight: 600; color: #C53030; cursor: pointer; }
+.action-row { display: flex; gap: 12px; align-items: center; }
+
+/* FONT SIZE REFERENCE */
+.font-ref { background: #0F0E0D; padding: 24px 28px; }
+.fr-title { font-size: 10px; font-weight: 700; color: #2DD4C8; text-transform: uppercase; letter-spacing: 0.12em; font-family: 'Courier New', monospace; margin-bottom: 16px; }
+.fr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.fr-item { font-size: 11px; color: rgba(255,255,255,0.5); padding: 2px 0; display: flex; align-items: baseline; gap: 8px; }
+.fr-size { font-size: 11px; font-weight: 700; color: #2DD4C8; font-family: monospace; min-width: 32px; }
+.fr-banned { color: #EF4444; }
+.fr-rule { color: #2DD4C8; }
+</style>
+</head>
+<body>
+
+<!-- BUILD SPEC HEADER -->
+<div class="spec-bar">
+  <span class="spec-title">Admin Page — Complete Spec</span>
+  <span class="spec-note">Standalone page. Different from Maestro in every way. Yellow bars = annotations, NOT rendered in production.</span>
+</div>
+
+<!-- ═══ WHAT THIS PAGE IS ═══ -->
+<div style="background:#1e1b4b;padding:14px 20px;display:flex;gap:20px;flex-wrap:wrap;">
+  <div style="font-size:12px;font-weight:700;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;width:100%;">What /admin is vs what /maestro is</div>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:11px;font-weight:700;color:#EF4444;margin-bottom:6px;">/admin — GOVERNANCE ONLY</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;">
+      ✓ User & Maestro management<br>
+      ✓ Sensitive data approvals<br>
+      ✓ Audit logs & compliance<br>
+      ✓ Client governance<br>
+      ✗ NO engagements<br>
+      ✗ NO intelligence<br>
+      ✗ NO signal cards
+    </div>
+  </div>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:11px;font-weight:700;color:#2DD4C8;margin-bottom:6px;">/maestro/[client] — OPERATIONS</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;">
+      ✓ Signal card (compact, teal border)<br>
+      ✓ Engagements table<br>
+      ✓ Intelligence sidebar<br>
+      ✓ Data uploads<br>
+      ✓ Value dashboard<br>
+      ✗ NO user management<br>
+      ✗ NO data approvals
+    </div>
+  </div>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:11px;font-weight:700;color:#F59E0B;margin-bottom:6px;">SIDEBAR SECTIONS DIFFER</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;">
+      Admin: Users & Access<br>
+      Admin: Client Governance<br>
+      Admin: Data Governance ← KEY<br>
+      Admin: Platform / Audit<br>
+      <br>
+      Maestro: Intelligence<br>
+      Maestro: Engagements<br>
+      Maestro: Data / Value / Outputs
+    </div>
+  </div>
+  <div style="flex:1;min-width:200px;">
+    <div style="font-size:11px;font-weight:700;color:#a5b4fc;margin-bottom:6px;">FONT SIZES — 13" LAPTOP</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.6);line-height:1.7;">
+      Sidebar items: 13px (was 9-10px)<br>
+      Table cells: 14px (was 12px)<br>
+      Page title: 22px<br>
+      Table headers: 10px mono ✓<br>
+      Stat values: 26px<br>
+      Table row padding: 12px 16px<br>
+      Sidebar item padding: 8px 10px
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PAGE SPEC ═══ -->
+<div class="page-label">Admin Portal · /admin · Route accessible: admin role only</div>
+
+<div class="ann">
+  <span class="ann-lbl">Route</span>
+  <span class="t tr">src/app/admin/page.tsx — MUST be a completely separate file from /maestro</span>
+  <span class="t tt">Does NOT import MaestroClientWorkspace or any maestro component</span>
+  <span class="t tb">Uses AdminLayout component with its own AdminSidebar</span>
+  <span class="t ty">Default view on load: Maestros management (Users & Access section)</span>
+</div>
+
+<!-- BROWSER CHROME -->
+<div class="browser">
+  <div class="dot" style="background:#EF4444;"></div>
+  <div class="dot" style="background:#F59E0B;"></div>
+  <div class="dot" style="background:#22C55E;"></div>
+  <div class="url">app.abarva.ai/admin</div>
+</div>
+
+<!-- NAV -->
+<div class="ann">
+  <span class="ann-lbl">Nav</span>
+  <span class="t tt">Same AbarVa nav as all pages · Admin item: white + active underline</span>
+  <span class="t ty">No client toggle dropdown for admin view — or show "All Clients" as static label</span>
+</div>
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Solutions</a>
+    <a class="nav-link" href="#">AI Value Realization</a>
+    <a class="nav-link active" href="#">Admin</a>
+  </div>
+  <div class="nav-right">
+    <div style="text-align:right;">
+      <div class="nav-user-label">Admin</div>
+      <div class="nav-user-name">Anand Sundaram</div>
+    </div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<!-- MAIN LAYOUT -->
+<div class="ann">
+  <span class="ann-lbl">Layout</span>
+  <span class="t tt">display: flex · sidebar 240px · main flex-1 · same pattern as Maestro workspace</span>
+  <span class="t ty">Sidebar: bg #0F0E0D · 240px · completely different sections from Maestro</span>
+  <span class="t tb">Main: bg #FAFAF9 · padding 28px 36px</span>
+</div>
+
+<div class="admin-wrap">
+
+  <!-- ── LEFT SIDEBAR ── -->
+  <div class="ann" style="flex-direction:column;align-items:flex-start;width:240px;min-width:240px;border-top:none;border-bottom:none;padding:8px 12px;background:rgba(253,224,71,0.05);border-right:2px dashed #FCD34D;">
+    <span class="ann-lbl" style="margin-bottom:6px;">Sidebar spec</span>
+    <span class="t ty" style="margin-bottom:3px;">240px · bg #0F0E0D</span>
+    <span class="t tb" style="margin-bottom:3px;">Section labels: 10px mono #rgba(255,255,255,0.22)</span>
+    <span class="t tt" style="margin-bottom:3px;">Items: 13px — UP from 9px</span>
+    <span class="t tr">Active: bg rgba(45,212,200,0.1) · text #FAFAF9</span>
+  </div>
+
+  <div class="sidebar">
+    <div class="sb-header">
+      <div class="sb-portal-label">Portal</div>
+      <div class="sb-portal-title">Admin Portal</div>
+      <div class="sb-portal-sub">Platform governance</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-lbl">Users & Access</div>
+      <div class="sb-item active">
+        <span class="sb-item-icon">👤</span>
+        <span class="sb-item-text">Maestros</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">🔐</span>
+        <span class="sb-item-text">Roles & Permissions</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">🔒</span>
+        <span class="sb-item-text">Security</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-lbl">Client Governance</div>
+      <div class="sb-item">
+        <span class="sb-item-icon">🏢</span>
+        <span class="sb-item-text">Active Clients</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">📋</span>
+        <span class="sb-item-text">Contract Terms</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-lbl">Data Governance</div>
+      <div class="sb-item">
+        <span class="sb-item-icon">⚠️</span>
+        <span class="sb-item-text">Sensitive Data Approvals</span>
+        <span class="sb-badge">3</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">📊</span>
+        <span class="sb-item-text">Access Logs</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">📥</span>
+        <span class="sb-item-text">Pending Requests</span>
+        <span class="sb-badge sb-badge-amber">2</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-lbl">Platform</div>
+      <div class="sb-item">
+        <span class="sb-item-icon">📜</span>
+        <span class="sb-item-text">Audit Log</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">🔑</span>
+        <span class="sb-item-text">API Keys</span>
+      </div>
+      <div class="sb-item">
+        <span class="sb-item-icon">✅</span>
+        <span class="sb-item-text">Compliance</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN CONTENT ── -->
+  <div class="main">
+
+    <div class="ann" style="margin:-28px -36px 24px;border-radius:0;">
+      <span class="ann-lbl">Main content</span>
+      <span class="t tt">bg #FAFAF9 · DM Sans throughout — NO Georgia serif on admin page</span>
+      <span class="t ty">Default view: Maestros management — the most common admin task</span>
+      <span class="t tb">Page title: 22px · sub: 13px #706D66 · button: dark solid</span>
+    </div>
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <div>
+        <div class="page-title">Maestros</div>
+        <div class="page-sub">Manage Maestro accounts, roles, and client assignments</div>
+      </div>
+      <button class="btn-primary">+ Add Maestro</button>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Stat cards</span>
+      <span class="t tt">White bg · 1px #E8E6E3 border · stat value 26px · NO coloured backgrounds</span>
+      <span class="t ty">Red value for alerts · amber for warnings · black for normal counts</span>
+      <span class="t tb">4 equal columns · gap 14px</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Maestros</div>
+        <div class="stat-value">3</div>
+        <div class="stat-sub">1 pending onboarding</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Clients</div>
+        <div class="stat-value">2</div>
+        <div class="stat-sub">Meridian · Arcturus</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Data Requests Pending</div>
+        <div class="stat-value red">3</div>
+        <div class="stat-sub">Awaiting your approval</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Security Alerts</div>
+        <div class="stat-value amber">1</div>
+        <div class="stat-sub">API key rotation due</div>
+      </div>
+    </div>
+
+    <!-- MAESTROS TABLE -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Table: Maestros</span>
+      <span class="t tt">td font-size: 14px · thead th: 10px mono · row padding: 12px 16px</span>
+      <span class="t ty">Role badges inline under name · status pill right-aligned</span>
+      <span class="t tb">Action: teal text link "Manage →" or "Assign →"</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <div class="table-title">All Maestros</div>
+        <span class="table-badge badge-grey">3 total</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Clients Assigned</th>
+            <th>Active Engagements</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-primary">Anand Sundaram</div>
+              <div class="td-secondary">anand+clerk_test@abarva.com</div>
+            </td>
+            <td><span class="td-role role-admin">Admin + Maestro</span></td>
+            <td style="font-size:14px;color:#3D3B38;">Meridian · Arcturus</td>
+            <td style="font-size:14px;font-weight:600;color:#0F0E0D;">4</td>
+            <td><span class="status-pill sp-active">Active</span></td>
+            <td class="td-link">Manage →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-primary">TBD — Hire 1</div>
+              <div class="td-secondary">Pending onboarding</div>
+            </td>
+            <td><span class="td-role role-maestro">Maestro</span></td>
+            <td style="font-size:14px;color:#706D66;">Unassigned</td>
+            <td style="font-size:14px;color:#706D66;">—</td>
+            <td><span class="status-pill sp-pending">Pending</span></td>
+            <td class="td-link">Assign →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-primary">TBD — Hire 2</div>
+              <div class="td-secondary">Pending onboarding</div>
+            </td>
+            <td><span class="td-role role-maestro">Maestro</span></td>
+            <td style="font-size:14px;color:#706D66;">Unassigned</td>
+            <td style="font-size:14px;color:#706D66;">—</td>
+            <td><span class="status-pill sp-pending">Pending</span></td>
+            <td class="td-link">Assign →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SENSITIVE DATA APPROVALS TABLE -->
+    <div class="ann" style="margin:0 0 8px;border-radius:0;">
+      <span class="ann-lbl">Table: Sensitive Data Approvals</span>
+      <span class="t tr">This table is the PRIMARY admin function — not available in Maestro</span>
+      <span class="t tt">Red badge "3 pending" in header · Approve/Reject inline in each row</span>
+      <span class="t ty">Approve: #166534 green text · Reject: #C53030 red text · both 13px font</span>
+      <span class="t tb">Dataset name + sensitivity classification as sub-label</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-hdr">
+        <div class="table-title">Sensitive Data Approval Requests</div>
+        <span class="table-badge badge-red">3 pending</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Dataset</th>
+            <th>Client</th>
+            <th>Requested By</th>
+            <th>Engagement</th>
+            <th>Requested</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-primary">Payer Contract Analysis</div>
+              <div class="td-secondary">Confidential · PII adjacent</div>
+            </td>
+            <td style="font-size:14px;color:#0F0E0D;">Meridian Health</td>
+            <td style="font-size:14px;color:#0F0E0D;">Anand S.</td>
+            <td style="font-size:14px;color:#706D66;">RCM AI — Denial Prevention</td>
+            <td style="font-size:13px;color:#706D66;">Today</td>
+            <td>
+              <div class="action-row">
+                <span class="td-approve">Approve</span>
+                <span style="color:#E8E6E3;">|</span>
+                <span class="td-reject">Reject</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-primary">CDO Profile + Org Chart</div>
+              <div class="td-secondary">Organisational · Sensitive</div>
+            </td>
+            <td style="font-size:14px;color:#0F0E0D;">Meridian Health</td>
+            <td style="font-size:14px;color:#0F0E0D;">Anand S.</td>
+            <td style="font-size:14px;color:#706D66;">Technology Modernization</td>
+            <td style="font-size:13px;color:#706D66;">Yesterday</td>
+            <td>
+              <div class="action-row">
+                <span class="td-approve">Approve</span>
+                <span style="color:#E8E6E3;">|</span>
+                <span class="td-reject">Reject</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-primary">MAS Regulatory Filing</div>
+              <div class="td-secondary">Regulatory · Restricted</div>
+            </td>
+            <td style="font-size:14px;color:#0F0E0D;">Arcturus Financial</td>
+            <td style="font-size:14px;color:#0F0E0D;">Anand S.</td>
+            <td style="font-size:14px;color:#706D66;">MAS FEAT Compliance</td>
+            <td style="font-size:13px;color:#706D66;">2 days ago</td>
+            <td>
+              <div class="action-row">
+                <span class="td-approve">Approve</span>
+                <span style="color:#E8E6E3;">|</span>
+                <span class="td-reject">Reject</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end admin-wrap -->
+
+<!-- ═══ FONT SIZE REFERENCE ═══ -->
+<div class="font-ref">
+  <div class="fr-title">Font size spec — Admin page · optimised for 13" MacBook (1280×800)</div>
+  <div class="fr-grid">
+    <div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:monospace;">Sidebar</div>
+      <div class="fr-item"><span class="fr-size">10px</span> Section labels (INTELLIGENCE, DATA etc) — mono uppercase</div>
+      <div class="fr-item"><span class="fr-size">13px</span> Sidebar nav items (Maestros, Security etc) ← UP</div>
+      <div class="fr-item"><span class="fr-size">15px</span> Portal title (Admin Portal)</div>
+      <div class="fr-item"><span class="fr-size">8px 10px</span> Item padding: 8px 10px ← UP from 6px 8px</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:monospace;">Main content</div>
+      <div class="fr-item"><span class="fr-size">22px</span> Page title (Maestros, Sensitive Data)</div>
+      <div class="fr-item"><span class="fr-size">13px</span> Page subtitle · button text</div>
+      <div class="fr-item"><span class="fr-size">26px</span> Stat card values</div>
+      <div class="fr-item"><span class="fr-size">12px</span> Stat card sub-labels</div>
+      <div class="fr-item"><span class="fr-size">15px</span> Table section titles</div>
+    </div>
+    <div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px;font-family:monospace;">Tables</div>
+      <div class="fr-item"><span class="fr-size">10px</span> Table column headers — mono uppercase (intentional)</div>
+      <div class="fr-item"><span class="fr-size">14px</span> Table body cells ← UP from 12px</div>
+      <div class="fr-item"><span class="fr-size">12px</span> Table body secondary (email, sub-labels)</div>
+      <div class="fr-item"><span class="fr-size">13px</span> Approve / Reject action links</div>
+      <div class="fr-item"><span class="fr-size">12px 16px</span> Row padding: 12px 16px ← UP from 8px 14px</div>
+      <div class="fr-item fr-banned"><span class="fr-size">—</span> NO Georgia serif on admin/operational pages</div>
+      <div class="fr-item fr-rule"><span class="fr-size">—</span> Teal only for active states + action links</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WHAT CODE MUST DO ═══ -->
+<div style="background:#1e1b4b;padding:20px 24px;">
+  <div style="font-size:11px;font-weight:700;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Claude Code Instructions</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+    <div style="background:rgba(255,255,255,0.04);border-radius:5px;padding:14px;">
+      <div style="font-size:11px;font-weight:700;color:#EF4444;margin-bottom:8px;">The Problem</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">
+        src/app/admin/page.tsx is currently routing to /maestro/meridian.<br><br>
+        Both /admin and /maestro/meridian render the same MaestroClientWorkspace component.<br><br>
+        They must be DIFFERENT components with DIFFERENT sidebars and DIFFERENT content.
+      </div>
+    </div>
+    <div style="background:rgba(255,255,255,0.04);border-radius:5px;padding:14px;">
+      <div style="font-size:11px;font-weight:700;color:#2DD4C8;margin-bottom:8px;">The Fix</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.7;">
+        1. Create src/app/admin/page.tsx as standalone AdminPortal component<br><br>
+        2. AdminPortal uses AdminSidebar (not MaestroSidebar)<br><br>
+        3. AdminSidebar sections: Users & Access · Client Governance · Data Governance · Platform<br><br>
+        4. Main content: stat cards + Maestros table + Sensitive Data Approvals table<br><br>
+        5. Font sizes per spec above — sidebar items 13px, table cells 14px, row padding 12px 16px
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:12px;font-size:11px;color:#F59E0B;font-weight:600;">
+    ⚠ Do not share layout components between /admin and /maestro. They are separate pages. Build AdminPortal from scratch using this spec file as the single source of truth.
+  </div>
+</div>
+
+</body>
+</html>

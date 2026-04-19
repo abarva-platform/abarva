@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa Homepage Design Spec</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; }
+  .page { width: 100%; background: #F8F7F4; }
+
+  /* NAV */
+  .nav {
+    width: 100%; background: #060A12; height: 52px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: baseline; }
+  .logo-abar { font-family: Georgia, serif; font-weight: 800; font-size: 17px; color: #fff; }
+  .logo-va { font-family: Georgia, serif; font-weight: 900; font-size: 23px; color: #2DD4C8; }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); text-decoration: none; }
+  .nav-right { display: flex; align-items: center; gap: 20px; }
+  .nav-demo { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
+  .nav-btn { font-size: 12px; font-weight: 700; color: #2DD4C8; border: 1px solid #2DD4C8; padding: 5px 14px; border-radius: 4px; }
+
+  /* LABELS */
+  .label { font-family: 'Courier New', monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #2DD4C8; margin-bottom: 16px; }
+
+  /* ANNOTATIONS */
+  .annotation {
+    width: 100%; background: rgba(255,215,0,0.08);
+    border-top: 2px dashed #FCD34D; border-bottom: 2px dashed #FCD34D;
+    padding: 10px 48px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .annotation-label { font-size: 11px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em; }
+  .note { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; color: #785a00; background: #FEF3C7; border: 1px solid #FCD34D; border-radius: 4px; padding: 3px 8px; }
+  .note-blue { color: #1e40af; background: #EFF6FF; border-color: #93C5FD; }
+  .note-teal { color: #0f5443; background: #CCFBF1; border-color: #5EEAD4; }
+
+  /* HERO */
+  .hero { width: 100%; background: #F8F7F4; padding: 72px 48px 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 0; min-height: 480px; }
+  .hero-left { padding-right: 48px; display: flex; flex-direction: column; justify-content: center; }
+  .hero-headline { font-family: Georgia, serif; font-size: 60px; font-weight: 700; line-height: 1.05; color: #0C0C0C; margin-bottom: 24px; }
+  .hero-sub { font-size: 18px; color: #3C3C3C; line-height: 1.6; margin-bottom: 32px; max-width: 480px; }
+  .hero-ctas { display: flex; gap: 12px; }
+  .btn-primary { background: #0C0C0C; color: #fff; font-size: 15px; font-weight: 700; padding: 14px 28px; border-radius: 6px; border: none; cursor: pointer; }
+  .btn-secondary { background: transparent; color: #0C0C0C; font-size: 15px; font-weight: 600; padding: 14px 28px; border-radius: 6px; border: 1.5px solid #0C0C0C; cursor: pointer; }
+  .hero-right { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 16px; align-content: center; }
+  .stat-card { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 24px 20px; }
+  .stat-card-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #2DD4C8; margin-bottom: 8px; }
+  .stat-card-value { font-family: Georgia, serif; font-size: 36px; font-weight: 700; color: #0C0C0C; line-height: 1; margin-bottom: 6px; }
+  .stat-card-body { font-size: 13px; color: #6B7280; line-height: 1.4; }
+
+  /* PROBLEM */
+  .problem { width: 100%; background: #060A12; padding: 72px 48px; }
+  .problem-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 32px; }
+  .problem-card { background: #0D1520; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 36px 28px; }
+  .problem-number { font-family: Georgia, serif; font-size: 64px; font-weight: 700; line-height: 1; margin-bottom: 16px; }
+  .n-red { color: #EF4444; }
+  .n-orange { color: #F59E0B; }
+  .problem-title { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 10px; }
+  .problem-body { font-size: 14px; color: #9CA3AF; line-height: 1.6; }
+  .problem-footer { margin-top: 40px; text-align: center; font-size: 17px; color: rgba(255,255,255,0.6); font-style: italic; }
+
+  /* WHAT WE ARE */
+  .what { width: 100%; background: #F8F7F4; padding: 72px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+  .what-headline { font-family: Georgia, serif; font-size: 44px; font-weight: 700; color: #0C0C0C; line-height: 1.1; margin-bottom: 20px; }
+  .what-body { font-size: 17px; color: #3C3C3C; line-height: 1.7; }
+  .what-pillars { display: flex; flex-direction: column; gap: 28px; }
+  .pillar { display: flex; gap: 20px; align-items: flex-start; }
+  .pillar-num { font-family: 'Courier New', monospace; font-size: 13px; font-weight: 700; color: #2DD4C8; min-width: 28px; margin-top: 3px; }
+  .pillar-title { font-size: 16px; font-weight: 700; color: #0C0C0C; margin-bottom: 4px; }
+  .pillar-body { font-size: 14px; color: #6B7280; line-height: 1.55; }
+
+  /* GENOME */
+  .genome { width: 100%; background: #060A12; padding: 72px 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .genome-headline { font-family: Georgia, serif; font-size: 44px; font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 24px; }
+  .genome-body { font-size: 16px; color: #9CA3AF; line-height: 1.7; margin-bottom: 32px; }
+  .genome-stats { display: flex; gap: 32px; margin-bottom: 32px; }
+  .gs-val { font-family: Georgia, serif; font-size: 32px; font-weight: 700; color: #2DD4C8; }
+  .gs-label { font-size: 12px; color: #6B7280; margin-top: 2px; }
+  .genome-cards { display: flex; flex-direction: column; gap: 16px; }
+  .genome-card { background: #0D1520; border: 1px solid rgba(45,212,200,0.2); border-left: 3px solid #2DD4C8; border-radius: 0 8px 8px 0; padding: 20px 24px; }
+  .gc-id { font-family: 'Courier New', monospace; font-size: 11px; color: #2DD4C8; margin-bottom: 6px; }
+  .gc-pct { font-family: Georgia, serif; font-size: 40px; font-weight: 700; color: #EF4444; line-height: 1; margin-bottom: 6px; }
+  .gc-pct-orange { color: #F59E0B; }
+  .gc-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+  .gc-body { font-size: 13px; color: #6B7280; }
+  .genome-moat { margin-top: 32px; padding: 20px 24px; border: 1px solid rgba(45,212,200,0.3); border-radius: 8px; background: rgba(45,212,200,0.05); }
+  .moat-label { font-family: 'Courier New', monospace; font-size: 10px; color: #2DD4C8; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .moat-text { font-size: 14px; color: #9CA3AF; line-height: 1.6; }
+  .moat-highlight { color: #2DD4C8; font-weight: 600; }
+
+  /* HOW IT WORKS */
+  .how { width: 100%; background: #F8F7F4; padding: 72px 48px; }
+  .how-header { text-align: center; max-width: 640px; margin: 0 auto 48px; }
+  .how-headline { font-family: Georgia, serif; font-size: 44px; font-weight: 700; color: #0C0C0C; line-height: 1.1; margin-bottom: 16px; }
+  .how-sub { font-size: 17px; color: #6B7280; }
+  .steps { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 0; }
+  .step { padding: 32px 28px; border-top: 3px solid transparent; position: relative; cursor: pointer; transition: background 0.2s; }
+  .step:hover, .step.active-step { border-top-color: #2DD4C8; background: rgba(45,212,200,0.04); }
+  .step-num { font-family: 'Courier New', monospace; font-size: 12px; color: #2DD4C8; margin-bottom: 12px; }
+  .step-title { font-size: 18px; font-weight: 700; color: #0C0C0C; margin-bottom: 8px; }
+  .step-sub { font-size: 12px; color: #9CA3AF; margin-bottom: 12px; font-family: 'Courier New', monospace; text-transform: uppercase; letter-spacing: 0.08em; }
+  .step-body { font-size: 14px; color: #6B7280; line-height: 1.6; }
+  .step-divider { position: absolute; right: 0; top: 32px; width: 1px; height: calc(100% - 64px); background: #E5E7EB; }
+  .baseline-note { margin-top: 40px; padding: 20px 28px; background: #0C0C0C; border-radius: 8px; display: flex; align-items: center; gap: 16px; }
+  .baseline-text { font-size: 15px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+  .baseline-text strong { color: #2DD4C8; }
+
+  /* CLIENTS */
+  .clients { width: 100%; background: #060A12; padding: 72px 48px; }
+  .clients-header { text-align: center; margin-bottom: 48px; }
+  .clients-headline { font-family: Georgia, serif; font-size: 40px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+  .clients-sub { font-size: 16px; color: #6B7280; }
+  .clients-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .client-card { background: #0D1520; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 36px; }
+  .client-badge { display: flex; gap: 8px; align-items: center; margin-bottom: 20px; }
+  .client-dot { width: 8px; height: 8px; border-radius: 50%; background: #2DD4C8; }
+  .client-vertical { font-family: 'Courier New', monospace; font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.1em; }
+  .client-name { font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .client-size { font-size: 14px; color: #6B7280; margin-bottom: 20px; }
+  .client-quote { font-size: 15px; color: #9CA3AF; font-style: italic; line-height: 1.6; margin-bottom: 20px; padding-left: 16px; border-left: 2px solid #2DD4C8; }
+  .client-signals { display: flex; flex-direction: column; gap: 10px; }
+  .signal { display: flex; align-items: flex-start; gap: 10px; }
+  .signal-dot { width: 6px; height: 6px; border-radius: 50%; background: #EF4444; margin-top: 6px; flex-shrink: 0; }
+  .signal-text { font-size: 13px; color: #9CA3AF; line-height: 1.4; }
+  .client-cta { margin-top: 24px; }
+  .client-btn { font-size: 14px; font-weight: 600; color: #2DD4C8; border: 1px solid rgba(45,212,200,0.4); padding: 10px 20px; border-radius: 6px; background: transparent; cursor: pointer; }
+
+  /* CTA */
+  .cta-section { width: 100%; background: #F8F7F4; padding: 80px 48px; text-align: center; }
+  .cta-headline { font-family: Georgia, serif; font-size: 48px; font-weight: 700; color: #0C0C0C; margin-bottom: 16px; }
+  .cta-sub { font-size: 17px; color: #6B7280; margin-bottom: 36px; }
+  .cta-btns { display: flex; gap: 16px; justify-content: center; }
+
+  /* DESIGN SYSTEM */
+  .design-system { background: #0C0C0C; padding: 48px; }
+  .ds-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-top: 24px; }
+  .ds-section-title { font-size: 11px; color: #6B7280; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ds-swatch { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .swatch { width: 20px; height: 20px; border-radius: 3px; flex-shrink: 0; }
+  .swatch-label { font-size: 12px; color: #9CA3AF; }
+  .ds-font { margin-bottom: 10px; }
+  .ds-banned { font-size: 12px; color: #EF4444; margin-bottom: 4px; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ═══ ANNOTATION: BUILD INSTRUCTIONS ═══ -->
+  <div style="background:#7C3AED;padding:12px 48px;display:flex;align-items:center;gap:16px;">
+    <span style="font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:0.1em;">BUILD SPEC</span>
+    <span style="font-size:13px;color:rgba(255,255,255,0.8);">Yellow dashed bars = design annotations. Do NOT render them in production. Everything else builds exactly as shown.</span>
+  </div>
+
+  <!-- ANNOTATION: NAV -->
+  <div class="annotation">
+    <span class="annotation-label">Nav</span>
+    <span class="note note-teal">Wordmark only — no tagline in nav</span>
+    <span class="note note-teal">Background: #060A12 — all pages</span>
+    <span class="note note-blue">Solutions = plain link, no dropdown arrow</span>
+    <span class="note note-blue">Platform nav link removed (redirects to /)</span>
+    <span class="note">Position: sticky top 0 · z-index 100</span>
+  </div>
+
+  <nav class="nav">
+    <div class="logo"><span class="logo-abar">Abar</span><span class="logo-va">Va</span></div>
+    <div class="nav-links">
+      <a href="#">Intelligence</a>
+      <a href="#">Solutions</a>
+      <a href="#">AI Value Realization</a>
+      <a href="#">Admin</a>
+    </div>
+    <div class="nav-right">
+      <span class="nav-demo">Demo</span>
+      <span class="nav-btn">Investor View</span>
+    </div>
+  </nav>
+
+  <!-- ANNOTATION: SECTION 1 — HERO -->
+  <div class="annotation">
+    <span class="annotation-label">Section 1 · Hero</span>
+    <span class="note note-teal">Background: #F8F7F4 · Full width · 2-col grid</span>
+    <span class="note">Headline: Georgia serif 60px 700 #0C0C0C</span>
+    <span class="note">Subhead: DM Sans 18px #3C3C3C · max-width 480px</span>
+    <span class="note note-blue">Stat cards right — label: mono 10px teal · value: Georgia 36px</span>
+    <span class="note">NO max-width container — content fills full page width with 48px padding</span>
+  </div>
+
+  <section class="hero">
+    <div class="hero-left">
+      <div class="label">ENTERPRISE TRANSFORMATION · AI-NATIVE · OUTCOME-ACCOUNTABLE</div>
+      <h1 class="hero-headline">Act on intelligence.<br>Before the window closes.</h1>
+      <p class="hero-sub">AbarVa is the first platform that arrives knowing your data, embeds Maestros through execution, and only charges when outcomes are verified.</p>
+      <div class="hero-ctas">
+        <button class="btn-primary">See it with Meridian Health →</button>
+        <button class="btn-secondary">Watch a demo</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-card">
+        <div class="stat-card-label">Consulting spend wasted</div>
+        <div class="stat-card-value">$200B</div>
+        <div class="stat-card-body">Global annual market with no outcome accountability</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Enterprise AI with zero ROI</div>
+        <div class="stat-card-value">73%</div>
+        <div class="stat-card-body">Of AI investments produce no verified outcome</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">0% fee until outcomes verified</div>
+        <div class="stat-card-value">0%</div>
+        <div class="stat-card-body">No retainer. No hourly. Fee on what we actually deliver.</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Time to first intelligence</div>
+        <div class="stat-card-value">48hrs</div>
+        <div class="stat-card-body">From kickoff to your first Situation Brief</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 2 — PROBLEM -->
+  <div class="annotation">
+    <span class="annotation-label">Section 2 · The Problem</span>
+    <span class="note note-teal">Background: #060A12 — full bleed dark section</span>
+    <span class="note">3 equal columns · cards: #0D1520 · border: rgba(255,255,255,0.08)</span>
+    <span class="note">Numbers: #EF4444 red for severity · #F59E0B orange for cost/time</span>
+    <span class="note">Footer line centred · italic · rgba(255,255,255,0.6)</span>
+  </div>
+
+  <section class="problem">
+    <div class="label">THE PROBLEM · IN REAL ORGANISATIONS · RIGHT NOW</div>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="problem-number n-red">73%</div>
+        <div class="problem-title">AI spend with zero verified outcome</div>
+        <div class="problem-body">Of enterprise AI programmes produce no measurable result. The money was spent. The board has been briefed. Nobody can prove it worked.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-number n-orange">$200B</div>
+        <div class="problem-title">Consulting spend with no accountability</div>
+        <div class="problem-body">Consulting firms deliver decks and leave. No baseline. No outcome tracking. No skin in the game. The same firm comes back next year.</div>
+      </div>
+      <div class="problem-card">
+        <div class="problem-number n-orange">4 weeks</div>
+        <div class="problem-title">Before a consultant knows your business</div>
+        <div class="problem-body">Every engagement starts from scratch. Weeks 1–4 are learning the client. Your data, your patterns, your history — locked in their heads. Gone when they leave.</div>
+      </div>
+    </div>
+    <div class="problem-footer">AbarVa was built because none of this should still be true in 2026.</div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 3 — WHAT WE ARE -->
+  <div class="annotation">
+    <span class="annotation-label">Section 3 · What we are</span>
+    <span class="note note-teal">Background: #F8F7F4 · 2-col: headline left, 3 pillars right</span>
+    <span class="note">Replaces the old verbose 3-column cards — tighter and cleaner</span>
+    <span class="note">Pillar numbers: mono 13px teal · titles: DM Sans 16px 700 #0C0C0C</span>
+    <span class="note note-blue">Headline: Georgia 44px · 3 lines · NO max-width on section</span>
+  </div>
+
+  <section class="what">
+    <div>
+      <div class="label">WHAT WE ARE</div>
+      <h2 class="what-headline">Not a consulting firm.<br>Not a software vendor.<br>The layer that connects your data to verified outcomes.</h2>
+      <p class="what-body">AbarVa is an intelligence platform with embedded operators — Maestros — who govern delivery from inside and earn only when outcomes are verified.</p>
+    </div>
+    <div class="what-pillars">
+      <div class="pillar">
+        <div class="pillar-num">01</div>
+        <div>
+          <div class="pillar-title">Your data tells us everything before we arrive.</div>
+          <div class="pillar-body">48 hours. Every gap quantified, every failure pattern matched before the first Maestro meeting. No surveys. No guesses.</div>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">02</div>
+        <div>
+          <div class="pillar-title">Maestros embed and hold delivery accountable.</div>
+          <div class="pillar-body">Operators govern execution from inside. Vendors held to SLAs. Knowledge transfers to your team — not back to us.</div>
+        </div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-num">03</div>
+        <div>
+          <div class="pillar-title">We earn more when you save more.</div>
+          <div class="pillar-body">Platform fee. Engagement fee. Then 15–20% of verified savings above the locked Day 0 baseline. No outcome — no fee. No exceptions.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 4 — GENOME (SECRET SAUCE) -->
+  <div class="annotation">
+    <span class="annotation-label">Section 4 · The Genome — THE SECRET SAUCE — moved up from section 5</span>
+    <span class="note note-teal">Background: #060A12 · 2-col: explanation left, pattern cards right</span>
+    <span class="note">"Compounds permanently" = the why AbarVa wins over time vs consulting</span>
+    <span class="note note-blue">Genome cards: border-left: 3px solid #2DD4C8 — teal accent bar</span>
+    <span class="note">Moat callout box: border rgba(45,212,200,0.3) · bg rgba(45,212,200,0.05)</span>
+    <span class="note">Stats row: Georgia 32px teal values</span>
+  </div>
+
+  <section class="genome">
+    <div>
+      <div class="label">THE TRANSFORMATION GENOME</div>
+      <h2 class="genome-headline">340+ patterns from real transformations.<br>Getting smarter with every engagement.</h2>
+      <p class="genome-body">The Genome is AbarVa's core competitive advantage. Built from real transformations — published research, KLAS, Everest Group, Gartner, and 15 years of founder engagement experience.<br><br>Advisory firms carry this in partners' heads. It walks out when they retire. Ours compounds permanently. Every engagement adds patterns. Every client benefits from what every other client learned.</p>
+      <div class="genome-stats">
+        <div class="gs"><div class="gs-val">340+</div><div class="gs-label">Genome patterns</div></div>
+        <div class="gs"><div class="gs-val">89%</div><div class="gs-label">Prediction accuracy</div></div>
+        <div class="gs"><div class="gs-val">79%</div><div class="gs-label">CDO vacancy failure rate</div></div>
+      </div>
+      <div class="genome-moat">
+        <div class="moat-label">Why AbarVa wins over time</div>
+        <div class="moat-text"><span class="moat-highlight">Being the 50th client is better than being the first.</span> The Genome compounds with every engagement. Traditional consulting firms reset to zero each time. AbarVa never does.</div>
+      </div>
+    </div>
+    <div class="genome-cards">
+      <div class="genome-card">
+        <div class="gc-id">F002</div>
+        <div class="gc-pct">84%</div>
+        <div class="gc-title">No named executive sponsor</div>
+        <div class="gc-body">Margin programmes without a C-suite owner stall at implementation in 84% of cases.</div>
+      </div>
+      <div class="genome-card">
+        <div class="gc-id">F007</div>
+        <div class="gc-pct gc-pct-orange">79%</div>
+        <div class="gc-title">CDO vacancy at go-live</div>
+        <div class="gc-body">AI programmes with CDO role vacant at go-live fail to scale in 79% of Genome cases.</div>
+      </div>
+      <div class="genome-card">
+        <div class="gc-id">F019</div>
+        <div class="gc-pct gc-pct-orange">68%</div>
+        <div class="gc-title">Migration before rationalisation</div>
+        <div class="gc-body">Analytics teams that migrate before rationalising waste 40%+ of migration budget on redundant tooling.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 5 — HOW IT WORKS -->
+  <div class="annotation">
+    <span class="annotation-label">Section 5 · How it works</span>
+    <span class="note note-teal">Background: #F8F7F4 · 4 equal columns · full page width</span>
+    <span class="note">Active step: border-top: 3px solid #2DD4C8 · bg: rgba(45,212,200,0.04)</span>
+    <span class="note note-blue">JS: click on any step sets it as active — remove active from others</span>
+    <span class="note">REMOVE 5-phase detail from homepage — link to /platform for full depth</span>
+    <span class="note">Baseline callout: bg #0C0C0C · text rgba(255,255,255,0.8) · strong = teal</span>
+  </div>
+
+  <section class="how">
+    <div class="how-header">
+      <div class="label">HOW IT WORKS</div>
+      <h2 class="how-headline">From first signal to verified outcome. Every step governed.</h2>
+      <p class="how-sub">Click each step to explore. <a href="/platform" style="color:#2DD4C8;text-decoration:none;font-weight:600;">See the full engagement model →</a></p>
+    </div>
+    <div class="steps" id="steps">
+      <div class="step active-step" onclick="setStep(this)">
+        <div class="step-num">01</div>
+        <div class="step-title">Diagnose</div>
+        <div class="step-sub">Situation product · 48hrs · your data</div>
+        <div class="step-body">Every gap in your organisation quantified against industry benchmarks and 340+ Genome patterns. Situation Brief delivered in 48 hours.</div>
+        <div class="step-divider"></div>
+      </div>
+      <div class="step" onclick="setStep(this)">
+        <div class="step-num">02</div>
+        <div class="step-title">Prescribe</div>
+        <div class="step-sub">Strategy + Vendor + Business Case</div>
+        <div class="step-body">3–5 specific interventions, sequenced by impact and feasibility. Each with a CFO-grade business case and Genome validation from comparable outcomes.</div>
+        <div class="step-divider"></div>
+      </div>
+      <div class="step" onclick="setStep(this)">
+        <div class="step-num">03</div>
+        <div class="step-title">Execute</div>
+        <div class="step-sub">Maestro team embeds · knowledge stays</div>
+        <div class="step-body">Maestros govern delivery from inside. Vendors held to SLAs. Every decision recorded. Knowledge transfers to your team — not back to us.</div>
+        <div class="step-divider"></div>
+      </div>
+      <div class="step" onclick="setStep(this)">
+        <div class="step-num">04</div>
+        <div class="step-title">Verify</div>
+        <div class="step-sub">Baseline vs actuals · outcome share earned</div>
+        <div class="step-body">Baseline locked Day 0. Immutable. Monthly actuals tracked. Fee activates only on verified savings above the locked baseline.</div>
+      </div>
+    </div>
+    <div class="baseline-note">
+      <span style="font-size:20px;">🔒</span>
+      <div class="baseline-text">The baseline is locked on Day 0 and is <strong>immutable</strong>. Every metric. Every assumption. Verified by the CXO. We cannot move the goalposts — and <strong>neither can you</strong>.</div>
+    </div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 6 — CLIENTS -->
+  <div class="annotation">
+    <span class="annotation-label">Section 6 · Live demo clients</span>
+    <span class="note note-teal">Background: #060A12 · 2-col client cards · full width</span>
+    <span class="note note-blue">Signal data reads from Supabase — NOT static copy</span>
+    <span class="note">"Explore →" → /intelligence?client=[meridian|arcturus]</span>
+    <span class="note">IMPORTANT: Label cards "composite organisations — fictional, built from real-world datasets"</span>
+  </div>
+
+  <section class="clients">
+    <div class="clients-header">
+      <div class="label">SEE IT WORKING · NO SIGNUP REQUIRED</div>
+      <h2 class="clients-headline">Two organisations. Real data.<br>Live intelligence — right now.</h2>
+      <p class="clients-sub">Composite organisations built from real-world datasets across healthcare and financial services.</p>
+    </div>
+    <div class="clients-grid">
+      <div class="client-card">
+        <div class="client-badge"><div class="client-dot"></div><span class="client-vertical">Healthcare · IDN · $4.2B</span></div>
+        <div class="client-name">Meridian Health System</div>
+        <div class="client-size">28,000 employees · 47 facilities · Epic go-live Q3 2026</div>
+        <div class="client-quote">"$94M AI spend. Zero with a documented ROI. We are adding to cost, not value."</div>
+        <div class="client-signals">
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">Denial rate 18.2% vs 11.4% benchmark — $94M annual gap</span></div>
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">Epic go-live Q3 2026 — no AI integration path confirmed</span></div>
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">Travel nurse cost $20M above target — F011 pattern active</span></div>
+        </div>
+        <div class="client-cta"><button class="client-btn">Explore Meridian →</button></div>
+      </div>
+      <div class="client-card">
+        <div class="client-badge"><div class="client-dot"></div><span class="client-vertical">Financial Services · $8.4B AUM</span></div>
+        <div class="client-name">Arcturus Financial Group</div>
+        <div class="client-size">Wealth management · FinServ benchmarks · MAS FEAT compliance</div>
+        <div class="client-quote">"C/I ratio 71% against a 58% peer target. $840M efficiency gap. AI spend growing — outcomes not."</div>
+        <div class="client-signals">
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">C/I ratio 71% vs 58% peer median — $840M efficiency gap</span></div>
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">$94M AI committed — zero with documented baseline</span></div>
+          <div class="signal"><div class="signal-dot"></div><span class="signal-text">CDO role vacant 11 months — F007 pattern active</span></div>
+        </div>
+        <div class="client-cta"><button class="client-btn">Explore Arcturus →</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ANNOTATION: SECTION 7 — CTA -->
+  <div class="annotation">
+    <span class="annotation-label">Section 7 · CTA</span>
+    <span class="note note-teal">Background: #F8F7F4 · centred · 2 buttons only</span>
+    <span class="note note-blue">REMOVE contact form — 2 clean CTAs replace everything</span>
+    <span class="note">Headline: Georgia 48px · sub: DM Sans 17px #6B7280</span>
+  </div>
+
+  <section class="cta-section">
+    <div class="label">READY TO ACT</div>
+    <h2 class="cta-headline">Ready to see your organisation in here?</h2>
+    <p class="cta-sub">No sales calls. A Maestro responds within 24 hours.</p>
+    <div class="cta-btns">
+      <button class="btn-primary">See a live demo →</button>
+      <button class="btn-secondary">Request a conversation</button>
+    </div>
+  </section>
+
+  <!-- DESIGN SYSTEM REFERENCE -->
+  <div class="design-system">
+    <div class="label">DESIGN SYSTEM REFERENCE — for build only, not visible on production page</div>
+    <div class="ds-grid">
+      <div>
+        <div class="ds-section-title">Backgrounds</div>
+        <div class="ds-swatch"><div class="swatch" style="background:#F8F7F4;border:1px solid #333;"></div><span class="swatch-label">#F8F7F4 — Light pages</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#060A12;"></div><span class="swatch-label">#060A12 — Dark sections</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#0D1520;"></div><span class="swatch-label">#0D1520 — Dark cards</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#0C0C0C;"></div><span class="swatch-label">#0C0C0C — Button / callout bg</span></div>
+      </div>
+      <div>
+        <div class="ds-section-title">Text colours</div>
+        <div class="ds-swatch"><div class="swatch" style="background:#0C0C0C;"></div><span class="swatch-label">#0C0C0C — Primary headlines</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#3C3C3C;"></div><span class="swatch-label">#3C3C3C — Body text</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#6B7280;"></div><span class="swatch-label">#6B7280 — Muted / sub-copy</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#9CA3AF;"></div><span class="swatch-label">#9CA3AF — Dark section body</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#2DD4C8;"></div><span class="swatch-label">#2DD4C8 — Teal: labels, links, accents</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#EF4444;"></div><span class="swatch-label">#EF4444 — Red: critical severity</span></div>
+        <div class="ds-swatch"><div class="swatch" style="background:#F59E0B;"></div><span class="swatch-label">#F59E0B — Orange: warning / cost</span></div>
+      </div>
+      <div>
+        <div class="ds-section-title">Typography</div>
+        <div class="ds-font"><span style="font-family:Georgia,serif;font-size:18px;color:#fff;">Georgia serif</span><span style="font-size:11px;color:#6B7280;display:block;">Client-facing headlines only. 60px hero · 44px section · 28px sub</span></div>
+        <div class="ds-font"><span style="font-size:15px;color:#fff;">DM Sans</span><span style="font-size:11px;color:#6B7280;display:block;">All body copy, buttons, UI. 18px body · 15px small · 13px micro</span></div>
+        <div class="ds-font"><span style="font-family:'Courier New',monospace;font-size:11px;color:#2DD4C8;letter-spacing:0.1em;">MONO LABELS</span><span style="font-size:11px;color:#6B7280;display:block;">JetBrains Mono / Courier. 11px · 700 · uppercase · 0.1em spacing</span></div>
+        <div style="margin-top:12px;font-size:11px;color:#EF4444;">Georgia ONLY on client-facing pages. DM Sans on Admin/Maestro.</div>
+      </div>
+      <div>
+        <div class="ds-section-title">BANNED — never use these</div>
+        <div class="ds-swatch"><div class="swatch" style="background:#888;border:2px solid #EF4444;"></div><span style="font-size:12px;color:#EF4444;">#888888 — grey labels (BANNED)</span></div>
+        <div class="ds-banned">No grey for any section label or headline</div>
+        <div class="ds-banned">No Georgia on Admin or operational pages</div>
+        <div class="ds-banned">No tagline in nav bar</div>
+        <div class="ds-banned">No max-width container narrowing sections</div>
+        <div class="ds-banned">No overflow:hidden breaking section layouts</div>
+        <div class="ds-banned">No Recharts height="100%" — use explicit px</div>
+        <div class="ds-banned">No dropdown arrow on Solutions nav item</div>
+        <div style="margin-top:12px;font-size:11px;color:#2DD4C8;font-weight:600;">Section padding: 72px 48px (top/bottom 72, left/right 48)</div>
+        <div style="font-size:11px;color:#2DD4C8;">Content stretches full width within that padding — no inner max-width</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function setStep(el) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active-step'));
+  el.classList.add('active-step');
+}
+</script>
+</body>
+</html>

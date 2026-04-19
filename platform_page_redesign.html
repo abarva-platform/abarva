@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa Platform Page — Redesign Spec</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;background:#FAFAF9;color:#0F0E0D}
+
+/* SPEC CHROME */
+.spec-bar{background:#7C3AED;padding:10px 24px;display:flex;align-items:center;gap:16px}
+.spec-title{font-size:12px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.1em}
+.spec-note{font-size:13px;color:rgba(255,255,255,.75)}
+.ann{background:rgba(253,224,71,.1);border-top:2px dashed #FCD34D;border-bottom:2px dashed #FCD34D;padding:7px 16px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ann-lbl{font-size:10px;font-weight:700;color:#92400E;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.t{font-size:10px;font-weight:600;padding:2px 6px;border-radius:3px}
+.ty{color:#78350F;background:#FEF3C7;border:1px solid #FCD34D}
+.tb{color:#1E3A5F;background:#EFF6FF;border:1px solid #93C5FD}
+.tt{color:#0F4F3E;background:#CCFBF1;border:1px solid #5EEAD4}
+.tr{color:#7F1D1D;background:#FEF2F2;border:1px solid #FCA5A5}
+.page-lbl{background:#2DD4C8;padding:8px 20px;font-size:11px;font-weight:700;color:#0F0E0D;text-transform:uppercase;letter-spacing:.12em}
+
+/* SHARED */
+.nav{background:#0F0E0D;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 80px}
+.logo{display:flex;align-items:baseline}
+.la{font-family:Georgia,serif;font-weight:800;font-size:16px;color:#FAFAF9}
+.lv{font-family:Georgia,serif;font-weight:900;font-size:21px;color:#2DD4C8}
+.nav-links{display:flex;gap:28px}
+.nl{font-size:13px;font-weight:500;color:rgba(255,255,255,.65);text-decoration:none}
+.nl.active{color:#FAFAF9;font-weight:600}
+.nav-r{display:flex;gap:12px}
+.btn-ghost{font-size:13px;font-weight:500;color:rgba(255,255,255,.7);padding:5px 14px;border:1px solid rgba(255,255,255,.2);border-radius:4px}
+.btn-white{font-size:13px;font-weight:600;color:#0F0E0D;background:#FAFAF9;padding:5px 14px;border-radius:4px}
+
+/* SECTION STYLES */
+.section-light{background:#FAFAF9;padding:80px}
+.section-warm{background:#F2F1F0;padding:80px}
+.section-dark{background:#0F0E0D;padding:80px}
+.eyebrow{font-family:'Courier New',monospace;font-size:11px;color:#2DD4C8;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px}
+.h-display{font-family:Georgia,serif;font-size:52px;font-weight:400;color:#0F0E0D;line-height:1.07;letter-spacing:-.02em;margin-bottom:20px}
+.h-display-light{color:#FAFAF9}
+.h-xl{font-family:Georgia,serif;font-size:38px;font-weight:400;color:#0F0E0D;line-height:1.15;letter-spacing:-.02em;margin-bottom:16px}
+.h-xl-light{color:#FAFAF9}
+.body-lg{font-size:18px;color:#3C3C3C;line-height:1.7;margin-bottom:16px}
+.body-md{font-size:15px;color:#3C3C3C;line-height:1.75;margin-bottom:14px}
+.body-light{color:rgba(255,255,255,.55)}
+.divider{height:1px;background:#E8E6E3;margin:64px 0}
+.divider-dark{background:rgba(255,255,255,.08)}
+.btn-dark{display:inline-block;background:#0F0E0D;color:#FAFAF9;font-size:14px;font-weight:500;padding:11px 22px;border-radius:4px;text-decoration:none}
+.btn-outline{display:inline-block;border:1px solid #0F0E0D;color:#0F0E0D;font-size:14px;font-weight:500;padding:10px 22px;border-radius:4px;text-decoration:none;margin-left:12px}
+
+/* ══════════════════════════════════════
+   SECTION 1 — HERO (new — platform-specific)
+══════════════════════════════════════ */
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.hero-tags{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.hero-tag{font-family:'Courier New',monospace;font-size:10px;font-weight:700;color:#706D66;text-transform:uppercase;letter-spacing:.08em}
+.hero-tag::after{content:'·';margin-left:8px;color:#E8E6E3}
+.hero-tag:last-child::after{display:none}
+.hero-right{display:flex;flex-direction:column;gap:14px}
+.hero-stat{background:#fff;border:1px solid #E8E6E3;border-radius:8px;padding:20px 24px;display:flex;align-items:center;gap:16px}
+.hs-icon{font-size:20px;flex-shrink:0}
+.hs-body{}
+.hs-label{font-family:'Courier New',monospace;font-size:10px;color:#706D66;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.hs-text{font-size:14px;color:#0F0E0D;line-height:1.5;font-weight:500}
+
+/* ══════════════════════════════════════
+   SECTION 2 — HOW WE SET UP A CLIENT
+══════════════════════════════════════ */
+.setup-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid #E8E6E3;border-radius:8px;overflow:hidden;margin-top:36px}
+.setup-step{padding:28px 24px;background:#fff;border-right:1px solid #E8E6E3;position:relative}
+.setup-step:last-child{border-right:none}
+.setup-num{font-family:'Courier New',monospace;font-size:11px;color:#2DD4C8;font-weight:700;margin-bottom:8px}
+.setup-title{font-size:16px;font-weight:600;color:#0F0E0D;margin-bottom:8px}
+.setup-body{font-size:13px;color:#706D66;line-height:1.6;margin-bottom:12px}
+.setup-tags{display:flex;flex-direction:column;gap:4px}
+.setup-tag{font-size:11px;color:#3C3C3C;display:flex;gap:5px}
+.setup-tag::before{content:'→';color:#2DD4C8;font-size:10px;flex-shrink:0;margin-top:1px}
+.setup-arrow{position:absolute;right:-12px;top:50%;transform:translateY(-50%);z-index:1;width:24px;height:24px;background:#2DD4C8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;color:#0F0E0D;font-weight:700}
+
+/* ══════════════════════════════════════
+   SECTION 3 — ABARNEXUS KNOWLEDGE LAYER
+══════════════════════════════════════ */
+.nexus-hero{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.nexus-name{font-family:'Courier New',monospace;font-size:11px;color:#2DD4C8;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}
+.nexus-wordmark{font-family:Georgia,serif;font-size:44px;font-weight:400;color:#FAFAF9;margin-bottom:16px}
+.nexus-wordmark span{color:#2DD4C8;font-style:italic}
+.nexus-body{font-size:16px;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:28px}
+.nexus-pillars{display:flex;flex-direction:column;gap:12px}
+.nexus-pillar{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-left:3px solid #2DD4C8;border-radius:0 6px 6px 0;padding:14px 18px}
+.np-label{font-family:'Courier New',monospace;font-size:10px;color:#2DD4C8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.np-title{font-size:14px;font-weight:600;color:#FAFAF9;margin-bottom:3px}
+.np-body{font-size:12px;color:rgba(255,255,255,.45);line-height:1.5}
+.nexus-right{display:flex;flex-direction:column;gap:10px}
+.nexus-module{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:18px 20px}
+.nm-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.nm-title{font-size:14px;font-weight:600;color:#FAFAF9}
+.nm-badge{font-family:'Courier New',monospace;font-size:9px;color:#2DD4C8;background:rgba(45,212,200,.12);padding:2px 7px;border-radius:3px;text-transform:uppercase;letter-spacing:.06em}
+.nm-body{font-size:12px;color:rgba(255,255,255,.4);line-height:1.5;margin-bottom:8px}
+.nm-tags{display:flex;flex-wrap:wrap;gap:5px}
+.nm-tag{font-size:10px;color:rgba(255,255,255,.35);background:rgba(255,255,255,.06);padding:2px 8px;border-radius:3px;font-family:'Courier New',monospace}
+.nexus-stat-row{display:flex;gap:1px;margin-top:20px;border-radius:6px;overflow:hidden}
+.nexus-stat{flex:1;background:rgba(45,212,200,.08);padding:16px;text-align:center}
+.ns-val{font-family:Georgia,serif;font-size:28px;font-weight:400;color:#2DD4C8;line-height:1;margin-bottom:4px}
+.ns-label{font-size:11px;color:rgba(255,255,255,.3);font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:.06em}
+
+/* ══════════════════════════════════════
+   SECTION 4 — 5-LAYER ARCHITECTURE
+   (animated in production — shown static here)
+══════════════════════════════════════ */
+.arch-section{background:#0F0E0D;padding:80px}
+.arch-intro{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-bottom:60px;align-items:end}
+.arch-layers{display:flex;flex-direction:column;gap:3px;position:relative}
+.arch-connector{position:absolute;left:28px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,transparent,#2DD4C8 20%,#2DD4C8 80%,transparent);opacity:.2;pointer-events:none}
+.arch-layer{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:24px 28px;display:flex;align-items:flex-start;gap:20px;transition:all .3s;position:relative}
+.arch-layer.featured{background:rgba(45,212,200,.06);border-color:rgba(45,212,200,.3)}
+.al-num{font-family:'Courier New',monospace;font-size:11px;color:rgba(255,255,255,.25);width:20px;flex-shrink:0;margin-top:2px}
+.al-icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:rgba(255,255,255,.06)}
+.al-icon.teal{background:rgba(45,212,200,.15)}
+.al-body{flex:1}
+.al-layer-label{font-family:'Courier New',monospace;font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.al-title{font-size:17px;font-weight:600;color:#FAFAF9;margin-bottom:6px}
+.al-title.teal{color:#2DD4C8}
+.al-desc{font-size:13px;color:rgba(255,255,255,.45);line-height:1.6;margin-bottom:10px}
+.al-tags{display:flex;flex-wrap:wrap;gap:6px}
+.al-tag{font-size:10px;font-family:'Courier New',monospace;color:rgba(255,255,255,.35);background:rgba(255,255,255,.05);padding:2px 8px;border-radius:3px;border:1px solid rgba(255,255,255,.07)}
+.al-tag.teal{color:#2DD4C8;background:rgba(45,212,200,.1);border-color:rgba(45,212,200,.2)}
+.arch-note{background:rgba(45,212,200,.06);border:1px solid rgba(45,212,200,.2);border-radius:8px;padding:20px 24px;margin-top:16px;display:flex;gap:12px;align-items:flex-start}
+.arch-note-icon{color:#2DD4C8;font-size:16px;flex-shrink:0;margin-top:1px}
+.arch-note-text{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6}
+.arch-note-text strong{color:#FAFAF9}
+
+/* ANIMATION SPEC NOTE */
+.anim-spec{background:#1F1D1A;border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:16px 20px;margin-top:16px}
+.anim-title{font-size:10px;font-weight:700;color:#2DD4C8;font-family:'Courier New',monospace;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.anim-item{font-size:12px;color:rgba(255,255,255,.5);padding:3px 0;display:flex;gap:8px}
+.anim-item::before{content:'→';color:#2DD4C8;flex-shrink:0}
+
+/* ══════════════════════════════════════
+   SECTION 5 — SOLUTIONS THAT WIRE UP FAST
+══════════════════════════════════════ */
+.solutions-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}
+.sol-card{background:#fff;border:1px solid #E8E6E3;border-radius:8px;padding:24px}
+.sol-card:hover{border-color:#0F0E0D}
+.sol-type{font-family:'Courier New',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:12px}
+.sol-type.healthcare{background:#CCFBF1;color:#0F4F3E}
+.sol-type.finserv{background:#EFF6FF;color:#1E3A5F}
+.sol-type.retail{background:#FEF3C7;color:#78350F}
+.sol-type.universal{background:#F2F1F0;color:#706D66}
+.sol-title{font-size:17px;font-weight:600;color:#0F0E0D;margin-bottom:6px}
+.sol-body{font-size:13px;color:#706D66;line-height:1.6;margin-bottom:14px}
+.sol-value{display:flex;align-items:baseline;gap:8px;margin-bottom:10px}
+.sol-val-num{font-family:Georgia,serif;font-size:28px;font-weight:400;color:#0F0E0D}
+.sol-val-label{font-size:12px;color:#706D66}
+.sol-modules{display:flex;gap:6px;flex-wrap:wrap}
+.sol-module{font-size:10px;font-family:'Courier New',monospace;color:#706D66;background:#F2F1F0;padding:2px 7px;border-radius:3px}
+.sol-footer{border-top:1px solid #E8E6E3;padding-top:12px;margin-top:12px;font-size:12px;color:#2DD4C8;font-weight:500}
+
+/* ══════════════════════════════════════
+   SECTION 6 — VENDOR INTELLIGENCE
+══════════════════════════════════════ */
+.vendor-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;margin-top:32px}
+.vendor-list{display:flex;flex-direction:column;gap:10px}
+.vendor-item{background:#fff;border:1px solid #E8E6E3;border-radius:7px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.vi-left{}
+.vi-name{font-size:14px;font-weight:600;color:#0F0E0D;margin-bottom:3px}
+.vi-context{font-size:12px;color:#706D66}
+.vi-right{text-align:right}
+.vi-finding{font-size:13px;font-weight:600;color:#991B1B}
+.vi-finding.amber{color:#B45309}
+.vi-finding.green{color:#166534}
+.vi-detail{font-size:11px;color:#706D66;margin-top:2px}
+.vendor-insight{background:#0F0E0D;border-radius:8px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.vis-title{font-family:'Courier New',monospace;font-size:10px;color:#2DD4C8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.vis-body{font-size:14px;color:#FAFAF9;font-weight:500;line-height:1.5;margin-bottom:6px}
+.vis-sub{font-size:12px;color:rgba(255,255,255,.4);line-height:1.5}
+
+/* ══════════════════════════════════════
+   SECTION 7 — USE CASES + VALUE
+══════════════════════════════════════ */
+.uc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
+.uc-card{background:#fff;border:1px solid #E8E6E3;border-radius:8px;padding:24px;position:relative;overflow:hidden}
+.uc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.uc-card.red::before{background:#991B1B}
+.uc-card.teal::before{background:#2DD4C8}
+.uc-card.amber::before{background:#B45309}
+.uc-vertical{font-family:'Courier New',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;color:#706D66}
+.uc-title{font-size:16px;font-weight:600;color:#0F0E0D;margin-bottom:8px;line-height:1.3}
+.uc-body{font-size:13px;color:#706D66;line-height:1.6;margin-bottom:14px}
+.uc-value{display:flex;align-items:baseline;gap:6px;margin-bottom:12px}
+.ucv-num{font-family:Georgia,serif;font-size:32px;font-weight:400;color:#0F0E0D}
+.ucv-label{font-size:12px;color:#706D66}
+.uc-modules{display:flex;gap:5px;flex-wrap:wrap}
+.uc-mod{font-size:10px;font-family:'Courier New',monospace;color:#706D66;background:#F2F1F0;padding:2px 7px;border-radius:3px}
+
+/* CTA */
+.cta-row{display:flex;gap:14px;margin-top:32px}
+
+.footer{background:#0F0E0D;padding:24px 80px;display:flex;justify-content:space-between;align-items:center}
+.footer-left{font-size:12px;color:rgba(255,255,255,.3)}
+.footer-right{font-family:'Courier New',monospace;font-size:11px;color:#2DD4C8}
+</style>
+</head>
+<body>
+
+<!-- SPEC BAR -->
+<div class="spec-bar">
+  <span class="spec-title">Platform Page — Redesign Spec</span>
+  <span class="spec-note">Remove homepage duplicates. Keep 5-layer architecture. Add AbarNexus, setup flow, solutions, vendor intelligence, use cases. Yellow bars = annotations only.</span>
+</div>
+
+<!-- WHAT CHANGES -->
+<div class="ann">
+  <span class="ann-lbl">What changes</span>
+  <span class="t tr">REMOVE: $200B · 73% · 0% · 48h hero stats — exact copy of homepage</span>
+  <span class="t tr">REMOVE: Three layers (Intelligence/Genome/Maestro) — exact copy of homepage</span>
+  <span class="t tr">REMOVE: Diagnose/Prescribe/Execute/Verify — exact copy of homepage</span>
+  <span class="t tr">REMOVE: 340+ Genome patterns section — exact copy of homepage</span>
+  <span class="t tt">KEEP + EXPAND: 5-layer architecture — add animation, make it the centrepiece</span>
+  <span class="t tt">ADD: How we set up a client — data uploads, knowledge seeding, Genome match</span>
+  <span class="t tt">ADD: AbarNexus — the knowledge layer, what it is, how it compounds</span>
+  <span class="t tt">ADD: Solutions wired up fast — 6 pre-built solutions with value estimates</span>
+  <span class="t tt">ADD: Vendor intelligence — what we know, spend optimisation</span>
+  <span class="t tt">ADD: Use cases + value — 6 use cases across verticals with $ value</span>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a class="nl" href="#">Home</a>
+    <a class="nl active" href="#">Platform</a>
+    <a class="nl" href="#">Intelligence</a>
+    <a class="nl" href="#">Solutions</a>
+    <a class="nl" href="#">AI Value Realization</a>
+    <a class="nl" href="#">Investor</a>
+  </div>
+  <div class="nav-r">
+    <span class="btn-ghost">Login</span>
+    <span class="btn-white">Request Demo</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 1 — HERO (new, platform-specific)
+     NOT the homepage hero. Platform-focused.
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 1 · Hero · Platform-specific — NOT the homepage hero</div>
+<div class="ann">
+  <span class="ann-lbl">Hero</span>
+  <span class="t tt">bg: #FAFAF9 · Georgia 52px headline · NO $200B/73%/0%/48h — those are on the homepage</span>
+  <span class="t ty">Right side: 4 platform-specific facts — what makes AbarVa's platform different technically</span>
+  <span class="t tb">CTA: "See the architecture ↓" scrolls to layer section · "Request a demo" links to contact</span>
+</div>
+
+<section class="section-light" style="padding-bottom:60px">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">THE ABARVA PLATFORM</div>
+      <h1 class="h-display">The intelligence layer enterprise transformation never had.</h1>
+      <p class="body-lg" style="margin-bottom:28px">Five layers. A proprietary knowledge base. Pre-built solutions. Wired to your data in 48 hours and ready to run engagements across healthcare, financial services, and retail.</p>
+      <div style="display:flex;gap:12px">
+        <a class="btn-dark" href="#">See the architecture ↓</a>
+        <a class="btn-outline" href="#">Request a demo</a>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="hero-stat">
+        <div class="hs-icon">⚡</div>
+        <div class="hs-body">
+          <div class="hs-label">Time to first intelligence brief</div>
+          <div class="hs-text">48 hours from data upload to your first Situation Brief. No week-1 discovery. The platform did it before the meeting.</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="hs-icon">🧬</div>
+        <div class="hs-body">
+          <div class="hs-label">AbarNexus knowledge layer</div>
+          <div class="hs-text">340+ transformation patterns from real engagements. Vendor benchmarks. Failure rates. Getting smarter with every client.</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="hs-icon">🏗️</div>
+        <div class="hs-body">
+          <div class="hs-label">Pre-built solutions</div>
+          <div class="hs-text">6 pre-integrated solution packages — from RCM denial prevention to AI portfolio accountability — each wired to AbarNexus patterns.</div>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div class="hs-icon">✓</div>
+        <div class="hs-body">
+          <div class="hs-label">Zero cold start</div>
+          <div class="hs-text">Every engagement opens with client data already analysed, patterns already matched, baseline already proposed. No reset between clients.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 2 — HOW WE SET UP A CLIENT
+     (new section — doesn't exist on homepage)
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 2 · Client Setup Flow · NEW — not on homepage</div>
+<div class="ann">
+  <span class="ann-lbl">Client setup</span>
+  <span class="t tt">bg: #F2F1F0 · 4-step horizontal flow · how a client goes live on AbarVa in 48 hours</span>
+  <span class="t ty">This answers "how do you actually get started?" — the CXO question</span>
+  <span class="t tb">Arrows between steps show progression · each step is distinct work the platform does</span>
+</div>
+
+<section class="section-warm">
+  <div class="eyebrow">GETTING STARTED</div>
+  <h2 class="h-xl">From data upload to first intelligence brief in 48 hours.</h2>
+  <p class="body-md" style="max-width:600px">No 4-week discovery. No consultant onboarding. The platform ingests your data, matches it against the AbarNexus knowledge base, and surfaces your first Situation Brief before the first meeting.</p>
+
+  <div class="setup-steps">
+    <div class="setup-step">
+      <div class="setup-num">01 · DATA INGESTION</div>
+      <div class="setup-title">Upload your data.</div>
+      <div class="setup-body">Financial reports, EHR exports, vendor contracts, technology inventories, org charts. Structured and unstructured. The platform reads everything.</div>
+      <div class="setup-tags">
+        <div class="setup-tag">50+ file types supported</div>
+        <div class="setup-tag">Financials, contracts, tech inventory</div>
+        <div class="setup-tag">Secure upload — zero training on your data</div>
+        <div class="setup-tag">SOC 2 Type II · enterprise encryption</div>
+      </div>
+      <div class="setup-arrow">→</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">02 · ABARNEXUS MATCH</div>
+      <div class="setup-title">Platform matches your situation.</div>
+      <div class="setup-body">AbarNexus runs your data against 340+ transformation patterns, vendor benchmarks, and peer baseline ranges. Every gap quantified. Every risk pattern matched.</div>
+      <div class="setup-tags">
+        <div class="setup-tag">340+ Genome patterns cross-referenced</div>
+        <div class="setup-tag">Peer benchmarks from comparable orgs</div>
+        <div class="setup-tag">Vendor performance data applied</div>
+        <div class="setup-tag">Confidence score per finding</div>
+      </div>
+      <div class="setup-arrow">→</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">03 · SITUATION BRIEF</div>
+      <div class="setup-title">Intelligence brief in 48 hours.</div>
+      <div class="setup-body">A Situation Brief is generated: every issue quantified, every gap benchmarked, every Genome pattern flagged. The Maestro arrives at meeting 1 already knowing everything.</div>
+      <div class="setup-tags">
+        <div class="setup-tag">Issues ranked by financial exposure</div>
+        <div class="setup-tag">F-code patterns with failure rates</div>
+        <div class="setup-tag">Day 0 baseline proposed for CXO sign-off</div>
+        <div class="setup-tag">Engagement scope recommended</div>
+      </div>
+      <div class="setup-arrow">→</div>
+    </div>
+    <div class="setup-step">
+      <div class="setup-num">04 · ENGAGEMENT LIVE</div>
+      <div class="setup-title">Engagement starts with context.</div>
+      <div class="setup-body">Maestro is assigned, engagement created, baseline locked. CXO approves scope. AbarVa's AI Analyst guides every phase — drafting outputs, flagging risks, tracking actuals against the locked baseline.</div>
+      <div class="setup-tags">
+        <div class="setup-tag">Baseline locked Day 0 — immutable</div>
+        <div class="setup-tag">AI Analyst active across all 18 steps</div>
+        <div class="setup-tag">Phase gate approvals built in</div>
+        <div class="setup-tag">Deliverables auto-generated each phase</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 3 — ABARNEXUS KNOWLEDGE LAYER
+     (new — give it a name, explain what it is)
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 3 · AbarNexus Knowledge Layer · NEW NAME + FULL SECTION</div>
+<div class="ann">
+  <span class="ann-lbl">AbarNexus</span>
+  <span class="t tt">bg: #0F0E0D · the proprietary knowledge layer — this is the moat</span>
+  <span class="t ty">Name: AbarNexus · tagline: "The intelligence that gets smarter with every engagement"</span>
+  <span class="t tb">Left: what AbarNexus is — 4 pillars · Right: the 5 intelligence modules built on it</span>
+  <span class="t tr">Key message: "Being the 50th client is better than the first" — this is the moat narrative</span>
+</div>
+
+<section class="section-dark">
+  <div class="nexus-hero">
+    <div>
+      <div class="nexus-name">LAYER 02 · THE KNOWLEDGE LAYER</div>
+      <div class="nexus-wordmark">Abar<span>Nexus</span></div>
+      <p style="font-size:17px;color:rgba(255,255,255,.55);line-height:1.7;margin-bottom:32px">AbarNexus is the proprietary knowledge layer that sits between the foundation AI and every engagement. It is what makes AbarVa different from a large language model with a prompt. It is built from real transformations — and it gets smarter with every client.</p>
+      <p style="font-size:15px;color:rgba(255,255,255,.4);line-height:1.7;margin-bottom:32px">Advisory firms carry this knowledge in partners' heads. It walks out when they retire. AbarNexus compounds permanently. <strong style="color:#FAFAF9">The 50th client benefits from the first 49.</strong></p>
+
+      <div class="nexus-pillars">
+        <div class="nexus-pillar">
+          <div class="np-label">01 · THE TRANSFORMATION GENOME</div>
+          <div class="np-title">340+ failure patterns from real engagements</div>
+          <div class="np-body">Every Genome pattern is a documented transformation failure mode with a failure rate, recovery range, and intervention playbook. F011 (SLA never enforced) has a 74% failure rate. F007 (CDO vacant at go-live) has a 79% failure rate. The platform flags them before they happen.</div>
+        </div>
+        <div class="nexus-pillar">
+          <div class="np-label">02 · PEER BENCHMARKS</div>
+          <div class="np-title">Baseline ranges from comparable organisations</div>
+          <div class="np-body">What is a good denial rate for a 14-hospital IDN? What should a $6B asset manager be spending on Bloomberg? AbarNexus holds the peer benchmark data across healthcare, financial services, and retail — so every gap is immediately quantified against what comparable organisations achieve.</div>
+        </div>
+        <div class="nexus-pillar">
+          <div class="np-label">03 · VENDOR INTELLIGENCE</div>
+          <div class="np-title">Track records, contract leverage points, SLA patterns</div>
+          <div class="np-body">Which EHR vendors have the best Epic integration track records? What does Ensemble's SLA penalty clause look like and when is it most effective? AbarNexus holds vendor performance data from real engagements — anonymous, aggregated, and continuously updated.</div>
+        </div>
+        <div class="nexus-pillar">
+          <div class="np-label">04 · DOMAIN MODELS</div>
+          <div class="np-title">Healthcare · Financial Services · Retail — vertical-specific intelligence</div>
+          <div class="np-body">AbarNexus contains pre-trained domain models for each target vertical — so the AI Analyst doesn't treat a healthcare denial problem like a retail inventory problem. The context is built in, not prompted in.</div>
+        </div>
+      </div>
+
+      <div class="nexus-stat-row">
+        <div class="nexus-stat"><div class="ns-val">340+</div><div class="ns-label">Genome patterns</div></div>
+        <div class="nexus-stat"><div class="ns-val">89%</div><div class="ns-label">Prediction accuracy</div></div>
+        <div class="nexus-stat"><div class="ns-val">3</div><div class="ns-label">Verticals</div></div>
+        <div class="nexus-stat"><div class="ns-val">∞</div><div class="ns-label">Compounds with every engagement</div></div>
+      </div>
+    </div>
+
+    <div class="nexus-right">
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Intelligence products built on AbarNexus</div>
+
+      <div class="nexus-module">
+        <div class="nm-header"><div class="nm-title">Situation Intelligence</div><div class="nm-badge">Phase 0</div></div>
+        <div class="nm-body">What is broken — and what does it cost? Cross-references all uploaded data against Genome patterns and peer benchmarks. Produces the Situation Brief in 48 hours.</div>
+        <div class="nm-tags"><span class="nm-tag">F-code matching</span><span class="nm-tag">Peer benchmarks</span><span class="nm-tag">Exposure quantification</span></div>
+      </div>
+
+      <div class="nexus-module">
+        <div class="nm-header"><div class="nm-title">Contradiction Intelligence</div><div class="nm-badge">Phase 1</div></div>
+        <div class="nm-body">What was promised vs what the data shows. Surfaces vendor SLA breaches, unused contract clauses, and accountability gaps — with financial exposure for each.</div>
+        <div class="nm-tags"><span class="nm-tag">Vendor SLA tracking</span><span class="nm-tag">Contract analysis</span><span class="nm-tag">Gap quantification</span></div>
+      </div>
+
+      <div class="nexus-module">
+        <div class="nm-header"><div class="nm-title">Vendor Intelligence</div><div class="nm-badge">Phase 2</div></div>
+        <div class="nm-body">Which vendor wins in your situation — not their demo. AbarNexus scores vendors on actual performance from comparable deployments, not sales materials.</div>
+        <div class="nm-tags"><span class="nm-tag">Performance scoring</span><span class="nm-tag">Genome deployments</span><span class="nm-tag">Contract leverage</span></div>
+      </div>
+
+      <div class="nexus-module">
+        <div class="nm-header"><div class="nm-title">Business Case Intelligence</div><div class="nm-badge">Phase 2</div></div>
+        <div class="nm-body">CFO-grade numbers the board will sign off on. Recovery ranges from comparable Genome engagements. Third-party verifiable from Day 0.</div>
+        <div class="nm-tags"><span class="nm-tag">Recovery ranges</span><span class="nm-tag">ROI modelling</span><span class="nm-tag">Audit-ready</span></div>
+      </div>
+
+      <div class="nexus-module">
+        <div class="nm-header"><div class="nm-title">Outcome Intelligence</div><div class="nm-badge">Phase 3-4</div></div>
+        <div class="nm-body">Baseline locked Day 0 — verified delta — fee earned. Monthly actuals tracked against the immutable baseline. AbarVa earns only on what is verified.</div>
+        <div class="nm-tags"><span class="nm-tag">Immutable baseline</span><span class="nm-tag">Monthly actuals</span><span class="nm-tag">Third-party audit</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 4 — 5-LAYER PLATFORM ARCHITECTURE
+     (keep + expand + animation spec)
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 4 · 5-Layer Architecture · KEEP + EXPAND + ANIMATION</div>
+<div class="ann">
+  <span class="ann-lbl">Architecture</span>
+  <span class="t tt">bg: #0F0E0D · this is the technical centrepiece of the platform page</span>
+  <span class="t ty">Animation: layers reveal bottom-up on scroll — each layer fades in with translateY(24px→0)</span>
+  <span class="t tb">Layer 02 (AbarNexus) is the featured/highlighted layer — teal border, different bg</span>
+  <span class="t tr">Connector line between layers shows data flow — animated pulse from bottom to top</span>
+</div>
+
+<section class="arch-section">
+  <div class="arch-intro">
+    <div>
+      <div class="eyebrow" style="color:rgba(255,255,255,.3)">PLATFORM ARCHITECTURE</div>
+      <h2 class="h-xl h-xl-light" style="margin-bottom:16px">Five layers.<br>One coherent platform.</h2>
+      <p style="font-size:15px;color:rgba(255,255,255,.45);line-height:1.7">Every layer is purpose-built — from Anthropic's foundation models on enterprise cloud to the Maestros who close the loop on verified outcomes. Each layer feeds the next. AbarNexus is the proprietary layer that makes the intelligence possible.</p>
+    </div>
+    <div>
+      <div class="anim-spec">
+        <div class="anim-title">Animation spec — build in production</div>
+        <div class="anim-item">Layers reveal bottom-up as user scrolls into section</div>
+        <div class="anim-item">Each layer: opacity 0 → 1, translateY(24px) → 0, 400ms ease, 100ms stagger</div>
+        <div class="anim-item">AbarNexus layer (Layer 02): glows on reveal — teal border pulses once</div>
+        <div class="anim-item">Connector line between layers: dashed line with animated dot travelling upward</div>
+        <div class="anim-item">Tags on each layer: appear 200ms after layer reveal with fade-in</div>
+        <div class="anim-item">Hover on any layer: slight background brighten + tag badges highlight</div>
+        <div class="anim-item">Use Intersection Observer API — trigger when 30% of section visible</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-layers">
+    <div class="arch-connector"></div>
+
+    <div class="arch-layer">
+      <div class="al-num">05</div>
+      <div class="al-icon">👥</div>
+      <div class="al-body">
+        <div class="al-layer-label">Layer 05 · User Layer</div>
+        <div class="al-title">Maestros &amp; Clients</div>
+        <div class="al-desc">Human operators running AI-powered engagements from inside the client. CXO-facing client portal for approvals and Board Pack access. Outcomes tracked against immutable Day-0 baselines — fee loop closes only on verified savings.</div>
+        <div class="al-tags">
+          <span class="al-tag">Maestro Workspace</span>
+          <span class="al-tag">Client Portal</span>
+          <span class="al-tag">Engagement Tracking</span>
+          <span class="al-tag">Phase Gate Approvals</span>
+          <span class="al-tag">Outcome Verification</span>
+          <span class="al-tag">Baseline Lock</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="al-num">04</div>
+      <div class="al-icon">⚙️</div>
+      <div class="al-body">
+        <div class="al-layer-label">Layer 04 · Orchestration</div>
+        <div class="al-title">Workflow &amp; AI Orchestration</div>
+        <div class="al-desc">Engagement workflows triggered by intelligence signals. The AI Analyst routes tasks, escalates exceptions, tracks milestone completion in real time, and surfaces contradictions before they become blockers. 18-step AVR Navigator drives every engagement from Phase 0 through fee calculation.</div>
+        <div class="al-tags">
+          <span class="al-tag">AVR Navigator (18 steps)</span>
+          <span class="al-tag">AI Step Routing</span>
+          <span class="al-tag">Milestone Tracking</span>
+          <span class="al-tag">Escalation Engine</span>
+          <span class="al-tag">Deliverable Generation</span>
+          <span class="al-tag">Contradiction Detection</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="al-num">03</div>
+      <div class="al-icon">🔗</div>
+      <div class="al-body">
+        <div class="al-layer-label">Layer 03 · Intelligence Products</div>
+        <div class="al-title">The 5 Intelligence Products</div>
+        <div class="al-desc">Five specialised AI products built on AbarNexus patterns — each purpose-built for a specific phase of the engagement lifecycle. Situation Intelligence (Phase 0), Contradiction (Phase 1), Vendor + Business Case (Phase 2), Outcome (Phase 3-4). All feed structured outputs to the Orchestration layer.</div>
+        <div class="al-tags">
+          <span class="al-tag">Situation Intelligence</span>
+          <span class="al-tag">Contradiction Intelligence</span>
+          <span class="al-tag">Vendor Intelligence</span>
+          <span class="al-tag">Business Case Intelligence</span>
+          <span class="al-tag">Outcome Intelligence</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-layer featured">
+      <div class="al-num" style="color:#2DD4C8">02</div>
+      <div class="al-icon teal">🧬</div>
+      <div class="al-body">
+        <div class="al-layer-label" style="color:#2DD4C8">Layer 02 · Knowledge Layer · PROPRIETARY</div>
+        <div class="al-title teal">AbarNexus</div>
+        <div class="al-desc" style="color:rgba(255,255,255,.6)">The proprietary knowledge layer that sits between foundation AI and every engagement. 340+ transformation patterns. Peer benchmarks. Vendor track records. Domain models for healthcare, financial services, and retail. Built from real engagements — updated with every client. The 50th client benefits from the first 49.</div>
+        <div class="al-tags">
+          <span class="al-tag teal">340+ Genome Patterns</span>
+          <span class="al-tag teal">Peer Benchmarks</span>
+          <span class="al-tag teal">Vendor Intelligence DB</span>
+          <span class="al-tag teal">Domain Models (3 verticals)</span>
+          <span class="al-tag teal">Outcome Baselines</span>
+          <span class="al-tag teal">Compounds with every engagement</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-layer">
+      <div class="al-num">01</div>
+      <div class="al-icon">⚡</div>
+      <div class="al-body">
+        <div class="al-layer-label">Layer 01 · Foundation AI</div>
+        <div class="al-title">Claude · Anthropic</div>
+        <div class="al-desc">Best-in-class foundation models deployed across all three hyperscalers. Enterprise data governance — zero training on client data. Reproducible reasoning, structured outputs, SOC 2 Type II. The only foundation model with the context window and reasoning capability required for enterprise transformation work.</div>
+        <div class="al-tags">
+          <span class="al-tag">Claude Sonnet 4</span>
+          <span class="al-tag">AWS Bedrock</span>
+          <span class="al-tag">Azure AI Foundry</span>
+          <span class="al-tag">Google Vertex AI</span>
+          <span class="al-tag">Zero Client Data Training</span>
+          <span class="al-tag">SOC 2 Type II</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arch-note">
+    <div class="arch-note-icon">🔒</div>
+    <div class="arch-note-text">Client data never trains the models. <strong>Zero data leakage.</strong> Every conversation is isolated. AbarNexus is updated only from anonymised, aggregated engagement outcomes — never from raw client data. Enterprise governance is architectural, not policy.</div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 5 — SOLUTIONS WIRED UP FAST
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 5 · Pre-built Solutions · NEW — not on homepage</div>
+<div class="ann">
+  <span class="ann-lbl">Solutions</span>
+  <span class="t tt">bg: #FAFAF9 · 6 solution cards in 2-col grid</span>
+  <span class="t ty">Each card: vertical badge, title, description, value range, AbarNexus modules used</span>
+  <span class="t tb">Key message: solutions are pre-integrated with AbarNexus — not built from scratch each time</span>
+</div>
+
+<section class="section-light">
+  <div class="eyebrow">PRE-BUILT SOLUTIONS</div>
+  <h2 class="h-xl">Six pre-integrated solutions. Wired to AbarNexus patterns. Ready to run.</h2>
+  <p class="body-md" style="max-width:640px">Each solution is a pre-integrated combination of AbarNexus intelligence modules, engagement workflows, and deliverable templates — purpose-built for a specific problem. A new engagement can be live in hours, not weeks.</p>
+
+  <div class="solutions-grid">
+    <div class="sol-card">
+      <div class="sol-type healthcare">Healthcare</div>
+      <div class="sol-title">RCM AI — Denial Prevention</div>
+      <div class="sol-body">Identify and close the denial rate gap against peer benchmarks. Surface vendor SLA breaches. Deploy AI denial prediction pre-Epic. Baseline locked Day 0.</div>
+      <div class="sol-value"><span class="sol-val-num">$28–94M</span><span class="sol-val-label">annual recovery per deployment</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Situation Intelligence</span>
+        <span class="sol-module">Contradiction Intelligence</span>
+        <span class="sol-module">Vendor Intelligence</span>
+        <span class="sol-module">Outcome Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: F011 pattern · 47 comparable deployments →</div>
+    </div>
+
+    <div class="sol-card">
+      <div class="sol-type healthcare">Healthcare</div>
+      <div class="sol-title">Epic AI Integration</div>
+      <div class="sol-body">Integrate AI natively into Epic go-live. Prior auth automation, denial prediction, and real-time clinical decision support — built before go-live, not retrofitted after.</div>
+      <div class="sol-value"><span class="sol-val-num">$14–22M</span><span class="sol-val-label">avoided retrofit cost + $40M AI capability</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Technology Intelligence</span>
+        <span class="sol-module">Architecture Intelligence</span>
+        <span class="sol-module">Business Case Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: F003 pattern · Epic go-live benchmark data →</div>
+    </div>
+
+    <div class="sol-card">
+      <div class="sol-type finserv">Financial Services</div>
+      <div class="sol-title">Cost-to-Income Reduction</div>
+      <div class="sol-body">Baseline all AI initiatives. Terminate zero-ROI spend. Renegotiate vendor contracts using Genome benchmark data. Build the C/I tracking infrastructure for sustainable improvement.</div>
+      <div class="sol-value"><span class="sol-val-num">$40–120M</span><span class="sol-val-label">annual C/I improvement</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Situation Intelligence</span>
+        <span class="sol-module">Vendor Intelligence</span>
+        <span class="sol-module">Business Case Intelligence</span>
+        <span class="sol-module">Outcome Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: F007 pattern · 31 comparable asset managers →</div>
+    </div>
+
+    <div class="sol-card">
+      <div class="sol-type retail">Retail</div>
+      <div class="sol-title">Azure + Databricks Modernisation</div>
+      <div class="sol-body">Plan and execute the migration from legacy on-premise to Azure + Databricks Medallion architecture. FinOps governance, ERP unification, and AI use case foundation in one programme.</div>
+      <div class="sol-value"><span class="sol-val-num">$47–280M</span><span class="sol-val-label">annual value at full deployment</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Technology Intelligence</span>
+        <span class="sol-module">Architecture Intelligence</span>
+        <span class="sol-module">Vendor Intelligence</span>
+        <span class="sol-module">Business Case Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: F003 pattern · 34 comparable retail deployments →</div>
+    </div>
+
+    <div class="sol-card">
+      <div class="sol-type universal">Universal</div>
+      <div class="sol-title">AI Investment Accountability</div>
+      <div class="sol-body">Baseline every AI programme in the portfolio. Identify zero-ROI spend. Accelerate high-potential programmes. Build the governance model that makes the board confident in AI spend.</div>
+      <div class="sol-value"><span class="sol-val-num">$20–60M</span><span class="sol-val-label">released from zero-ROI initiatives</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Situation Intelligence</span>
+        <span class="sol-module">Contradiction Intelligence</span>
+        <span class="sol-module">Business Case Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: F007 + F027 patterns · cross-vertical →</div>
+    </div>
+
+    <div class="sol-card">
+      <div class="sol-type universal">Universal</div>
+      <div class="sol-title">Vendor Spend Optimisation</div>
+      <div class="sol-body">Benchmark all major vendor contracts against AbarNexus peer data. Identify SLA breaches, unused penalty clauses, and renegotiation windows. Recover value from existing spend before new procurement.</div>
+      <div class="sol-value"><span class="sol-val-num">$3–40M</span><span class="sol-val-label">per engagement from existing contracts</span></div>
+      <div class="sol-modules">
+        <span class="sol-module">Contradiction Intelligence</span>
+        <span class="sol-module">Vendor Intelligence</span>
+        <span class="sol-module">Business Case Intelligence</span>
+      </div>
+      <div class="sol-footer">AbarNexus: Vendor DB · SLA pattern library · cross-vertical →</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 6 — VENDOR INTELLIGENCE
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 6 · Vendor Intelligence · NEW — not on homepage</div>
+<div class="ann">
+  <span class="ann-lbl">Vendor intelligence</span>
+  <span class="t tt">bg: #F2F1F0 · 2-col: vendor examples left, key insights right</span>
+  <span class="t ty">Shows what the Vendor Intelligence module actually knows — specific, real examples</span>
+  <span class="t tb">NOT named vendors — uses "Leading RCM vendor", "Top EHR platform" etc per content rules</span>
+</div>
+
+<section class="section-warm">
+  <div class="eyebrow">VENDOR INTELLIGENCE</div>
+  <h2 class="h-xl">What your vendors won't tell you — but AbarNexus already knows.</h2>
+  <p class="body-md" style="max-width:640px">AbarNexus holds anonymised vendor performance data from real engagements. Before you sign or renew, you see actual SLA performance, typical contract leverage points, and which vendors perform best in your specific situation.</p>
+
+  <div class="vendor-grid">
+    <div class="vendor-list">
+      <div style="font-family:'Courier New',monospace;font-size:10px;color:#706D66;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">What AbarNexus knows about vendor contracts</div>
+
+      <div class="vendor-item">
+        <div class="vi-left">
+          <div class="vi-name">Leading RCM Outsourcing Vendor</div>
+          <div class="vi-context">Healthcare · 47 Genome deployments</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-finding">74% SLA breach rate</div>
+          <div class="vi-detail">Penalty clauses invoked in only 12% of cases</div>
+        </div>
+      </div>
+
+      <div class="vendor-item">
+        <div class="vi-left">
+          <div class="vi-name">Enterprise Financial Data Platform</div>
+          <div class="vi-context">Financial Services · 31 Genome deployments</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-finding amber">38% above peer benchmark</div>
+          <div class="vi-detail">3-year renewal typically achieves 30% reduction</div>
+        </div>
+      </div>
+
+      <div class="vendor-item">
+        <div class="vi-left">
+          <div class="vi-name">Leading EHR Platform — Epic Integration</div>
+          <div class="vi-context">Healthcare · 28 Genome deployments</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-finding amber">79% retrofit risk post-go-live</div>
+          <div class="vi-detail">Pre-go-live integration window: Months 1–8 only</div>
+        </div>
+      </div>
+
+      <div class="vendor-item">
+        <div class="vi-left">
+          <div class="vi-name">BI Analytics Platform (Top 3)</div>
+          <div class="vi-context">Universal · 34 Genome deployments</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-finding green">68% consolidation success</div>
+          <div class="vi-detail">Avg $6.3M/yr saved consolidating from 3+ tools</div>
+        </div>
+      </div>
+
+      <div class="vendor-item">
+        <div class="vi-left">
+          <div class="vi-name">Cloud Infrastructure Provider (All 3)</div>
+          <div class="vi-context">Universal · 40+ Genome deployments</div>
+        </div>
+        <div class="vi-right">
+          <div class="vi-finding amber">41% waste in unmanaged estates</div>
+          <div class="vi-detail">FinOps governance recovers $12-39M in Year 1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vendor-insight">
+      <div>
+        <div class="vis-title">How AbarNexus uses this</div>
+        <div class="vis-body">Before recommending or renegotiating any vendor contract, the Vendor Intelligence module scores that vendor against all comparable Genome deployments in your vertical.</div>
+        <div class="vis-sub">The score covers: actual SLA performance (not claimed), typical penalty clause leverage, renegotiation success rate, and which client situations produce the best vendor response.</div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.08)"></div>
+      <div>
+        <div class="vis-title">The AbarNexus advantage</div>
+        <div class="vis-body">Every new engagement adds vendor performance data back to AbarNexus. Anonymised and aggregated — but compounding.</div>
+        <div class="vis-sub">When we invoke an SLA penalty clause with a vendor and achieve a 15% fee reduction, that outcome is recorded. The next client facing the same vendor starts with that data. The 50th deployment has 49 precedents. The vendor has zero equivalent leverage.</div>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.08)"></div>
+      <div>
+        <div class="vis-title">Spend optimisation — not just advice</div>
+        <div class="vis-body">AbarNexus doesn't just identify waste. The Vendor Intelligence module recommends the specific contractual levers and timing to recover it.</div>
+        <div class="vis-sub">Reserved instance purchasing, SLA enforcement, contract renegotiation, tool consolidation — each with a Genome-backed success rate and a typical $ recovery range for your vertical.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════
+     SECTION 7 — USE CASES + VALUE
+══════════════════════════════════════════════════ -->
+<div class="page-lbl">Section 7 · Use Cases + Value · NEW — not on homepage</div>
+<div class="ann">
+  <span class="ann-lbl">Use cases</span>
+  <span class="t tt">bg: #FAFAF9 · 2 rows of 3 cards · 6 use cases across 3 verticals</span>
+  <span class="t ty">Each card: vertical, title, body, $ value range, AbarNexus modules</span>
+  <span class="t tb">Colour accent top border: red = critical/urgent · teal = data/AI · amber = cost</span>
+</div>
+
+<section class="section-light">
+  <div class="eyebrow">USE CASES</div>
+  <h2 class="h-xl">What AbarVa solves. With numbers.</h2>
+  <p class="body-md" style="max-width:640px">Every use case is backed by AbarNexus Genome data from comparable deployments. The value ranges are not estimates — they are actuals from engagements of similar scope and client profile.</p>
+
+  <div class="uc-grid">
+    <div class="uc-card red">
+      <div class="uc-vertical">Healthcare · Revenue Cycle</div>
+      <div class="uc-title">Denial Rate Gap — Vendor SLA Never Enforced</div>
+      <div class="uc-body">Denial rate running above contracted SLA for multiple quarters with no enforcement action. Penalty clause available but never invoked. Board unaware of full financial exposure.</div>
+      <div class="uc-value"><span class="ucv-num">$28–94M</span><span class="ucv-label">/yr recoverable</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Situation Intelligence</span>
+        <span class="uc-mod">Contradiction Intelligence</span>
+        <span class="uc-mod">F011 Pattern</span>
+      </div>
+    </div>
+
+    <div class="uc-card teal">
+      <div class="uc-vertical">Healthcare · Technology</div>
+      <div class="uc-title">Epic AI Integration — Pre-Go-Live Window</div>
+      <div class="uc-body">Epic go-live approaching with no AI integration plan. The 8-month pre-go-live window is the only cost-effective path. After go-live, retrofitting costs 40% more and takes 18 months longer.</div>
+      <div class="uc-value"><span class="ucv-num">$14–22M</span><span class="ucv-label">avoided retrofit + AI capability</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Technology Intelligence</span>
+        <span class="uc-mod">Architecture Intelligence</span>
+        <span class="uc-mod">F003 Pattern</span>
+      </div>
+    </div>
+
+    <div class="uc-card amber">
+      <div class="uc-vertical">Financial Services · Cost</div>
+      <div class="uc-title">$94M AI Committed — Zero ROI Baseline</div>
+      <div class="uc-body">Large AI portfolio with no outcome baselines — $94M categorised as investment with zero return metrics. Board pressure on C/I ratio but no programme has a named owner or measurement framework.</div>
+      <div class="uc-value"><span class="ucv-num">$20–60M</span><span class="ucv-label">released from zero-ROI initiatives</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Situation Intelligence</span>
+        <span class="uc-mod">Business Case Intelligence</span>
+        <span class="uc-mod">F007 Pattern</span>
+      </div>
+    </div>
+
+    <div class="uc-card amber">
+      <div class="uc-vertical">Financial Services · Vendor</div>
+      <div class="uc-title">Vendor Contract Overspend vs Peer Benchmark</div>
+      <div class="uc-body">Major data platform vendor contract significantly above peer benchmark for comparable AUM. SLA credits unclaimed across 18+ months. 3-year renewal window approaching — optimal negotiation timing.</div>
+      <div class="uc-value"><span class="ucv-num">$3–15M</span><span class="ucv-label">/yr from contract renegotiation</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Contradiction Intelligence</span>
+        <span class="uc-mod">Vendor Intelligence</span>
+        <span class="uc-mod">AbarNexus Vendor DB</span>
+      </div>
+    </div>
+
+    <div class="uc-card teal">
+      <div class="uc-vertical">Retail · Technology</div>
+      <div class="uc-title">Legacy Data Warehouse EOL — Azure Migration</div>
+      <div class="uc-body">On-premise data warehouse reaching end-of-life with no migration plan. Reactive migration costs 40% more. Azure + Databricks Medallion architecture solves migration, FinOps, and AI foundation simultaneously.</div>
+      <div class="uc-value"><span class="ucv-num">$47–280M</span><span class="ucv-label">annual value at full deployment</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Technology Intelligence</span>
+        <span class="uc-mod">Architecture Intelligence</span>
+        <span class="uc-mod">F003 Pattern</span>
+      </div>
+    </div>
+
+    <div class="uc-card red">
+      <div class="uc-vertical">Universal · Cloud</div>
+      <div class="uc-title">Azure Spend 41% Above Peer Benchmark — No FinOps</div>
+      <div class="uc-body">Cloud spend significantly above peer benchmark with no FinOps governance. Reserved instance coverage far below peer. Shadow IT adding untracked SaaS spend. Month 1 purchasing decision recovers $12-15M with zero migration risk.</div>
+      <div class="uc-value"><span class="ucv-num">$12–39M</span><span class="ucv-label">/yr from FinOps governance alone</span></div>
+      <div class="uc-modules">
+        <span class="uc-mod">Situation Intelligence</span>
+        <span class="uc-mod">Vendor Intelligence</span>
+        <span class="uc-mod">F011 Pattern</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <a class="btn-dark" href="#">See it working on Meridian Health →</a>
+    <a class="btn-outline" href="#">Request a demo</a>
+  </div>
+</section>
+
+<div class="footer">
+  <div class="footer-left">AbarVa — Intelligence. Now act on it. · /platform</div>
+  <div class="footer-right">AbarNexus · 340+ patterns · 3 verticals</div>
+</div>
+
+</body>
+</html>

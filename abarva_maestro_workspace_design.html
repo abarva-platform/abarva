@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa Maestro Workspace Design Spec</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: #e5e7eb; }
+
+  /* BUILD SPEC HEADER */
+  .spec-header { background: #7C3AED; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+  .spec-title { font-size: 12px; font-weight: 700; color: #fff; text-transform: uppercase; letter-spacing: 0.1em; }
+  .spec-note { font-size: 13px; color: rgba(255,255,255,0.8); }
+
+  /* ANNOTATION BARS */
+  .ann {
+    background: rgba(255,215,0,0.1); border-top: 2px dashed #FCD34D; border-bottom: 2px dashed #FCD34D;
+    padding: 8px 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .ann-label { font-size: 10px; font-weight: 700; color: #92400E; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+  .tag { display: inline-flex; font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 3px; }
+  .tag-y { color: #785a00; background: #FEF3C7; border: 1px solid #FCD34D; }
+  .tag-b { color: #1e40af; background: #EFF6FF; border: 1px solid #93C5FD; }
+  .tag-t { color: #0f5443; background: #CCFBF1; border: 1px solid #5EEAD4; }
+  .tag-r { color: #991b1b; background: #FEF2F2; border: 1px solid #FCA5A5; }
+
+  /* SECTION LABEL */
+  .s-label { margin-bottom: 14px; }
+  .s-label span {
+    font-family: 'Courier New', monospace; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: #2DD4C8;
+  }
+
+  /* ══════════════════════════════════════════
+     PAGE 1 — MAESTRO HOME /maestro
+  ══════════════════════════════════════════ */
+  .page-label {
+    background: #1e1b4b; padding: 10px 24px;
+    font-size: 12px; font-weight: 700; color: #a5b4fc; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  /* MOCK BROWSER CHROME */
+  .browser { background: #f3f4f6; border-radius: 8px 8px 0 0; padding: 8px 12px; display: flex; align-items: center; gap: 6px; }
+  .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .browser-url { flex: 1; background: #fff; border-radius: 4px; padding: 3px 10px; font-size: 11px; color: #6B7280; margin: 0 8px; }
+
+  /* NAV */
+  .nav {
+    background: #060A12; height: 48px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 32px;
+  }
+  .logo { display: flex; align-items: baseline; }
+  .la { font-family: Georgia, serif; font-weight: 800; font-size: 15px; color: #fff; }
+  .lv { font-family: Georgia, serif; font-weight: 900; font-size: 19px; color: #2DD4C8; }
+  .nav-links { display: flex; gap: 20px; }
+  .nav-links a { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.8); text-decoration: none; }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-user { font-size: 11px; color: rgba(255,255,255,0.7); text-align: right; }
+  .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: #2DD4C8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #0C0C0C; }
+
+  /* ── MAESTRO HOME LAYOUT ── */
+  .mh-hero { background: #060A12; padding: 40px 32px 32px; }
+  .mh-hero-label { font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: #2DD4C8; margin-bottom: 10px; }
+  .mh-greeting { font-family: Georgia, serif; font-size: 40px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .mh-sub { font-size: 14px; color: #6B7280; }
+
+  .mh-body { background: #F8F7F4; padding: 28px 32px; display: grid; grid-template-columns: 1fr 280px; gap: 24px; }
+  .mh-main { display: flex; flex-direction: column; gap: 24px; }
+  .mh-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+  /* Priority cards */
+  .priority-label { font-size: 10px; font-weight: 700; color: #2DD4C8; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; font-family: 'Courier New', monospace; }
+  .priority-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pc { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 18px; }
+  .pc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .pc-name { font-size: 14px; font-weight: 700; color: #0C0C0C; }
+  .pc-badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 3px; }
+  .badge-active { background: #CCFBF1; color: #0f5443; }
+  .badge-setup { background: #FEF3C7; color: #785a00; }
+  .pc-sub { font-size: 11px; color: #9CA3AF; margin-bottom: 10px; }
+  .pc-signal { background: #FEF2F2; border-left: 2px solid #EF4444; padding: 8px 10px; border-radius: 0 4px 4px 0; margin-bottom: 10px; }
+  .pc-signal-label { font-size: 9px; font-weight: 700; color: #EF4444; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; font-family: 'Courier New', monospace; }
+  .pc-signal-text { font-size: 12px; color: #0C0C0C; line-height: 1.4; }
+  .pc-engagement { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .pc-eng-name { font-size: 12px; color: #0C0C0C; font-weight: 600; }
+  .pc-eng-value { font-size: 14px; font-weight: 700; color: #0C0C0C; }
+  .pc-eng-label { font-size: 9px; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.06em; }
+  .pc-phase { font-size: 11px; color: #2DD4C8; margin-bottom: 6px; }
+  .progress-bar { height: 3px; background: #E5E7EB; border-radius: 2px; margin-bottom: 4px; }
+  .progress-fill { height: 100%; background: #2DD4C8; border-radius: 2px; }
+  .pc-prog-label { font-size: 10px; color: #9CA3AF; display: flex; justify-content: space-between; }
+
+  /* Engagements table */
+  .table-section { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden; }
+  .table-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #E5E7EB; }
+  .table-title { font-size: 14px; font-weight: 700; color: #0C0C0C; }
+  .table-count { font-size: 12px; color: #9CA3AF; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 8px 14px; font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.08em; text-align: left; background: #F8F7F4; border-bottom: 1px solid #E5E7EB; font-family: 'Courier New', monospace; }
+  tbody td { padding: 10px 14px; font-size: 12px; color: #0C0C0C; border-bottom: 1px solid #F3F4F6; vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: #F8F7F4; }
+  .td-eng { font-weight: 600; color: #0C0C0C; }
+  .td-client { color: #6B7280; font-size: 11px; }
+  .td-phase { color: #2DD4C8; font-size: 11px; font-family: 'Courier New', monospace; }
+  .status-pill { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+  .st-progress { background: #CCFBF1; color: #0f5443; }
+  .st-review { background: #FEF3C7; color: #785a00; }
+  .st-backlog { background: #F3F4F6; color: #6B7280; }
+  .td-value { font-weight: 700; color: #0C0C0C; }
+  .td-action { color: #2DD4C8; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+
+  /* Sidebar widgets */
+  .sw { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; }
+  .sw-title { font-size: 10px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; font-family: 'Courier New', monospace; }
+  .client-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #F3F4F6; cursor: pointer; }
+  .client-item:last-child { border-bottom: none; }
+  .ci-left { display: flex; align-items: center; gap: 8px; }
+  .ci-dot { width: 7px; height: 7px; border-radius: 50%; background: #2DD4C8; }
+  .ci-name { font-size: 13px; font-weight: 600; color: #0C0C0C; }
+  .ci-sub { font-size: 11px; color: #9CA3AF; }
+  .ci-arrow { color: #9CA3AF; font-size: 14px; }
+  .approval-item { padding: 10px 0; border-bottom: 1px solid #F3F4F6; }
+  .approval-item:last-child { border-bottom: none; }
+  .ai-name { font-size: 12px; font-weight: 600; color: #0C0C0C; margin-bottom: 3px; }
+  .ai-client { font-size: 11px; color: #9CA3AF; margin-bottom: 4px; }
+  .ai-due { font-size: 11px; font-weight: 600; color: #EF4444; }
+  .ai-due-ok { color: #F59E0B; }
+
+  /* ══════════════════════════════════════════
+     PAGE 2 — MAESTRO CLIENT WORKSPACE
+     /maestro/meridian  (or /admin/client/meridian)
+  ══════════════════════════════════════════ */
+
+  /* TWO COLUMN LAYOUT: sidebar + main */
+  .workspace { display: flex; background: #F8F7F4; min-height: 600px; }
+
+  /* LEFT SIDEBAR — matches Admin exactly */
+  .sidebar {
+    width: 220px; min-width: 220px; background: #060A12;
+    display: flex; flex-direction: column; padding: 20px 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .sb-client { padding: 0 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 8px; }
+  .sb-client-label { font-size: 9px; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; font-family: 'Courier New', monospace; }
+  .sb-client-name { font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+  .sb-client-sub { font-size: 11px; color: #6B7280; }
+
+  .sb-section { padding: 12px 16px 4px; }
+  .sb-section-label { font-size: 9px; font-weight: 700; color: #4B5563; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; font-family: 'Courier New', monospace; }
+  .sb-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 5px; cursor: pointer; margin-bottom: 1px; }
+  .sb-item:hover { background: rgba(255,255,255,0.05); }
+  .sb-item.active { background: rgba(45,212,200,0.12); }
+  .sb-item-icon { width: 14px; font-size: 11px; color: #6B7280; text-align: center; }
+  .sb-item-text { font-size: 12px; color: rgba(255,255,255,0.6); }
+  .sb-item.active .sb-item-text { color: #2DD4C8; font-weight: 600; }
+  .sb-item.active .sb-item-icon { color: #2DD4C8; }
+  .sb-new-btn { margin: 4px 16px 0; padding: 6px 10px; background: rgba(45,212,200,0.1); border: 1px solid rgba(45,212,200,0.3); border-radius: 5px; font-size: 11px; font-weight: 600; color: #2DD4C8; cursor: pointer; text-align: center; }
+  .sb-back { margin: auto 0 0; padding: 14px 16px 0; border-top: 1px solid rgba(255,255,255,0.06); }
+  .sb-back-link { font-size: 11px; color: #6B7280; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .sb-back-link:hover { color: #9CA3AF; }
+
+  /* MAIN CONTENT */
+  .ws-main { flex: 1; padding: 24px 28px; overflow: auto; }
+  .ws-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .ws-title { font-size: 20px; font-weight: 700; color: #0C0C0C; font-family: -apple-system, sans-serif; }
+  .ws-sub { font-size: 12px; color: #9CA3AF; margin-top: 3px; }
+  .ws-btn { background: #0C0C0C; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 16px; border-radius: 5px; border: none; cursor: pointer; }
+
+  /* SIGNAL CARD — compact white card, NOT dark hero */
+  .signal-card { background: #fff; border: 1px solid #E5E7EB; border-left: 4px solid #2DD4C8; border-radius: 0 8px 8px 0; padding: 16px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+  .sc-left { flex: 1; }
+  .sc-badge { font-size: 9px; font-weight: 700; color: #2DD4C8; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; font-family: 'Courier New', monospace; }
+  .sc-headline { font-size: 16px; font-weight: 700; color: #0C0C0C; margin-bottom: 4px; }
+  .sc-body { font-size: 12px; color: #6B7280; margin-bottom: 10px; }
+  .sc-btns { display: flex; gap: 8px; }
+  .sc-btn-primary { background: #0C0C0C; color: #fff; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; }
+  .sc-btn-secondary { background: transparent; color: #0C0C0C; font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 4px; border: 1px solid #D1D5DB; cursor: pointer; }
+  .sc-right { text-align: right; padding-left: 20px; }
+  .sc-value { font-family: Georgia, serif; font-size: 36px; font-weight: 700; color: #EF4444; line-height: 1; }
+  .sc-value-label { font-size: 11px; color: #9CA3AF; margin-bottom: 8px; }
+  .sc-genome { background: #0C0C0C; color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 3px; display: inline-block; font-family: 'Courier New', monospace; margin-bottom: 6px; }
+  .sc-all { font-size: 11px; color: #2DD4C8; cursor: pointer; display: block; }
+
+  /* ENGAGEMENTS TABLE — same as Admin */
+  .ws-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .ws-section-title { font-size: 14px; font-weight: 700; color: #0C0C0C; }
+
+  /* DATA READINESS ROW — compact single row */
+  .readiness-row { background: #fff; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; gap: 20px; margin-top: 16px; }
+  .rr-title { font-size: 13px; font-weight: 700; color: #0C0C0C; white-space: nowrap; }
+  .rr-client { font-size: 11px; color: #9CA3AF; }
+  .rr-score { font-family: Georgia, serif; font-size: 28px; font-weight: 700; color: #F59E0B; white-space: nowrap; }
+  .rr-score-label { font-size: 10px; color: #9CA3AF; }
+  .rr-pills { display: flex; gap: 6px; flex: 1; }
+  .rr-pill { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; background: #FEF3C7; color: #785a00; border: 1px solid #FCD34D; white-space: nowrap; }
+  .rr-link { font-size: 11px; color: #2DD4C8; font-weight: 600; cursor: pointer; white-space: nowrap; margin-left: auto; }
+
+  /* ── COMPARISON CALLOUT ── */
+  .comparison {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    border: 2px solid #2DD4C8; border-radius: 8px; overflow: hidden; margin: 0 24px;
+  }
+  .comp-col { padding: 20px; }
+  .comp-col-admin { background: #F8F7F4; }
+  .comp-col-maestro { background: #060A12; }
+  .comp-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; font-family: 'Courier New', monospace; }
+  .comp-title-admin { color: #6B7280; }
+  .comp-title-maestro { color: #2DD4C8; }
+  .comp-item { font-size: 12px; padding: 4px 0; display: flex; align-items: center; gap: 6px; }
+  .comp-item-admin { color: #3C3C3C; }
+  .comp-item-maestro { color: rgba(255,255,255,0.8); }
+  .comp-check { color: #2DD4C8; font-size: 11px; }
+  .comp-x { color: #EF4444; font-size: 11px; }
+
+  /* DESIGN SYSTEM BOTTOM */
+  .ds { background: #0C0C0C; padding: 28px 24px; }
+  .ds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 16px; }
+  .ds-col-title { font-size: 10px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .ds-item { font-size: 11px; color: #9CA3AF; padding: 3px 0; display: flex; align-items: center; gap: 6px; }
+  .ds-swatch { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; }
+  .ds-banned { font-size: 11px; color: #EF4444; padding: 2px 0; }
+  .ds-rule { font-size: 11px; color: #2DD4C8; padding: 2px 0; }
+
+  /* Interactive hover effect */
+  .sb-item { transition: background 0.15s; }
+  .client-item { transition: background 0.15s; }
+  .client-item:hover { background: #F8F7F4; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<!-- BUILD SPEC HEADER -->
+<div class="spec-header">
+  <span class="spec-title">Build Spec</span>
+  <span class="spec-note">Maestro Workspace — two levels. Yellow bars = design notes, do NOT render in production.</span>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ROLE SEPARATION CALLOUT
+══════════════════════════════════════════════════════════════ -->
+<div style="background:#1e1b4b;padding:16px 24px;">
+  <div style="font-size:11px;font-weight:700;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Role Separation — Build This First</div>
+  <div class="comparison">
+    <div class="comp-col comp-col-admin">
+      <div class="comp-title comp-title-admin">/admin — Admin only (thin governance layer)</div>
+      <div class="comp-item comp-item-admin"><span class="comp-check">✓</span> User & Maestro management</div>
+      <div class="comp-item comp-item-admin"><span class="comp-check">✓</span> Create/approve client records</div>
+      <div class="comp-item comp-item-admin"><span class="comp-check">✓</span> Sensitive data approvals</div>
+      <div class="comp-item comp-item-admin"><span class="comp-check">✓</span> Audit logs & compliance</div>
+      <div class="comp-item comp-item-admin"><span class="comp-check">✓</span> API keys & security</div>
+      <div class="comp-item comp-item-admin"><span class="comp-x">✗</span> NO engagement management</div>
+      <div class="comp-item comp-item-admin"><span class="comp-x">✗</span> NO programme dashboard</div>
+      <div class="comp-item comp-item-admin"><span class="comp-x">✗</span> NO workload / backlog</div>
+    </div>
+    <div class="comp-col comp-col-maestro">
+      <div class="comp-title comp-title-maestro">/maestro — Maestro (everything operational)</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Cross-client dashboard (Level 1)</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Create & manage engagements</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Intelligence, findings, genome</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Data uploads (non-sensitive)</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Execution, actuals, value tracking</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Deliverables, board packs</div>
+      <div class="comp-item comp-item-maestro"><span class="comp-check">✓</span> Backlog, approvals, capacity</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAGE 1 — MAESTRO HOME /maestro (Level 1 — cross-client)
+══════════════════════════════════════════════════════════════ -->
+<div class="page-label">PAGE 1 · /maestro · Maestro Home · Cross-client dashboard (Level 1)</div>
+
+<div class="ann">
+  <span class="ann-label">Maestro Home</span>
+  <span class="tag tag-t">Route: /maestro · No left sidebar — this is the top-level view</span>
+  <span class="tag tag-b">Dark hero greeting + light body with 2-col layout</span>
+  <span class="tag tag-y">Client cards navigate to /maestro/[client] — the Level 2 workspace</span>
+  <span class="tag tag-r">This page largely already exists — keep it, just wire the client card clicks</span>
+</div>
+
+<!-- BROWSER CHROME -->
+<div class="browser">
+  <div class="browser-dot" style="background:#EF4444;"></div>
+  <div class="browser-dot" style="background:#F59E0B;"></div>
+  <div class="browser-dot" style="background:#22C55E;"></div>
+  <div class="browser-url">app.abarva.ai/maestro</div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a href="#">Intelligence</a>
+    <a href="#">Solutions</a>
+    <a href="#">AI Value Realization</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user"><div style="font-size:10px;color:#2DD4C8;">Maestro</div>Anand Sundaram</div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<div class="ann">
+  <span class="ann-label">Nav — Maestro role</span>
+  <span class="tag tag-t">No "Admin" nav item visible to Maestro role</span>
+  <span class="tag tag-b">Avatar shows role: "Maestro" in teal above name</span>
+  <span class="tag tag-y">Admin role shows "Admin" in nav + their own /admin page</span>
+</div>
+
+<!-- HERO -->
+<div class="mh-hero">
+  <div class="mh-hero-label">MAESTRO WORKSPACE</div>
+  <div class="mh-greeting">Good morning, Anand.</div>
+  <div class="mh-sub">2 active clients · 3 engagements in flight · 2 approvals pending</div>
+</div>
+
+<div class="ann">
+  <span class="ann-label">Hero greeting</span>
+  <span class="tag tag-t">Background: #060A12 · Georgia serif 40px · dynamic greeting</span>
+  <span class="tag tag-b">Stats row reads from Supabase — live counts not hardcoded</span>
+</div>
+
+<!-- BODY -->
+<div class="mh-body">
+  <div class="mh-main">
+
+    <!-- Today's Priority -->
+    <div>
+      <div class="priority-label">Today's Priority</div>
+      <div class="priority-grid">
+        <div class="pc">
+          <div class="pc-header">
+            <div><div class="pc-name">Meridian Health System</div><div class="pc-sub">IDN · 14 hospitals</div></div>
+            <div class="pc-badge badge-active">ACTIVE</div>
+          </div>
+          <div class="pc-signal">
+            <div class="pc-signal-label">Signal</div>
+            <div class="pc-signal-text">Denial rate 34% above target. Epic go-live Q3 at risk.</div>
+          </div>
+          <div class="pc-engagement">
+            <span class="pc-eng-name">RCM AI — Denial Prevention</span>
+            <div style="text-align:right"><div class="pc-eng-value">$94M</div><div class="pc-eng-label">OPPORTUNITY</div></div>
+          </div>
+          <div class="pc-phase">Phase 1 · Execute</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:45%"></div></div>
+          <div class="pc-prog-label"><span>Progress</span><span>45%</span></div>
+        </div>
+        <div class="pc">
+          <div class="pc-header">
+            <div><div class="pc-name">Arcturus Financial</div><div class="pc-sub">Asset Manager · Global</div></div>
+            <div class="pc-badge badge-setup">SETUP</div>
+          </div>
+          <div class="pc-signal">
+            <div class="pc-signal-label">Signal</div>
+            <div class="pc-signal-text">$840M efficiency gap. No transformation programme accountable.</div>
+          </div>
+          <div class="pc-engagement">
+            <span class="pc-eng-name">Margin Optimization</span>
+            <div style="text-align:right"><div class="pc-eng-value">$840M</div><div class="pc-eng-label">OPPORTUNITY</div></div>
+          </div>
+          <div class="pc-phase">Phase 1 · Diagnose</div>
+          <div class="progress-bar"><div class="progress-fill" style="width:12%"></div></div>
+          <div class="pc-prog-label"><span>Progress</span><span>12%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Engagements Table -->
+    <div>
+      <div class="ws-section-header">
+        <div class="ws-section-title">My Engagements</div>
+        <span style="font-size:12px;color:#9CA3AF;">4 total</span>
+      </div>
+      <div class="table-section">
+        <table>
+          <thead>
+            <tr>
+              <th>Client</th><th>Engagement</th><th>Type</th><th>Phase</th><th>Status</th><th>Next Action</th><th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><div class="td-client">Meridian Health</div></td>
+              <td><div class="td-eng">RCM AI — Denial Prevention</div></td>
+              <td><span style="font-size:10px;background:#EFF6FF;color:#1e40af;padding:2px 6px;border-radius:3px;font-weight:600;">AVR</span></td>
+              <td><span class="td-phase">Ph 1 · Execute</span></td>
+              <td><span class="status-pill st-progress">In Progress</span></td>
+              <td class="td-action">Review Phase Gate →</td>
+              <td class="td-value">$94M</td>
+            </tr>
+            <tr>
+              <td><div class="td-client">Meridian Health</div></td>
+              <td><div class="td-eng">Technology Modernization</div></td>
+              <td><span style="font-size:10px;background:#CCFBF1;color:#0f5443;padding:2px 6px;border-radius:3px;font-weight:600;">SOL</span></td>
+              <td><span class="td-phase">Ph 2 · Prescribe</span></td>
+              <td><span class="status-pill st-progress">In Progress</span></td>
+              <td class="td-action">Continue Engagement →</td>
+              <td class="td-value">$38M</td>
+            </tr>
+            <tr>
+              <td><div class="td-client">Arcturus Financial</div></td>
+              <td><div class="td-eng">Cost-to-Income Reduction</div></td>
+              <td><span style="font-size:10px;background:#EFF6FF;color:#1e40af;padding:2px 6px;border-radius:3px;font-weight:600;">AVR</span></td>
+              <td><span class="td-phase">Ph 0 · Setup</span></td>
+              <td><span class="status-pill st-backlog">Backlog</span></td>
+              <td class="td-action">Start Engagement →</td>
+              <td class="td-value">$840M</td>
+            </tr>
+            <tr>
+              <td><div class="td-client">Arcturus Financial</div></td>
+              <td><div class="td-eng">MAS FEAT Compliance</div></td>
+              <td><span style="font-size:10px;background:#CCFBF1;color:#0f5443;padding:2px 6px;border-radius:3px;font-weight:600;">SOL</span></td>
+              <td><span class="td-phase">Ph 0 · Setup</span></td>
+              <td><span class="status-pill st-review">Assigned</span></td>
+              <td class="td-action">Complete Setup →</td>
+              <td class="td-value">$0 (regulatory)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="mh-sidebar">
+    <div class="ann" style="margin:0;"><span class="ann-label">Sidebar — right</span><span class="tag tag-b">My Clients + Pending Approvals — right column</span></div>
+
+    <div class="sw">
+      <div class="sw-title">My Clients</div>
+      <div class="client-item">
+        <div class="ci-left"><div class="ci-dot"></div><div><div class="ci-name">Meridian Health System</div><div class="ci-sub">IDN · 14 hospitals</div></div></div>
+        <div class="ci-arrow">→</div>
+      </div>
+      <div class="client-item">
+        <div class="ci-left"><div class="ci-dot" style="background:#F59E0B;"></div><div><div class="ci-name">Arcturus Financial</div><div class="ci-sub">Asset Manager · Global</div></div></div>
+        <div class="ci-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="sw">
+      <div class="sw-title">Pending Approvals</div>
+      <div class="approval-item">
+        <div class="ai-name">Phase 1 Gate — RCM AI</div>
+        <div class="ai-client">Meridian Health System</div>
+        <div class="ai-due">Due Monday</div>
+      </div>
+      <div class="approval-item">
+        <div class="ai-name">Baseline Lock — Margin</div>
+        <div class="ai-client">Arcturus Financial</div>
+        <div class="ai-due ai-due-ok">Due Wednesday</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     PAGE 2 — MAESTRO CLIENT WORKSPACE /maestro/[client]
+     This is the page that has the LEFT SIDEBAR matching Admin
+══════════════════════════════════════════════════════════════ -->
+
+<div class="page-label" style="margin-top:24px;">PAGE 2 · /maestro/meridian · Client Workspace · Level 2 — LEFT SIDEBAR MATCHING ADMIN</div>
+
+<div class="ann">
+  <span class="ann-label">Client Workspace — KEY PAGE</span>
+  <span class="tag tag-t">Route: /maestro/[clientId] — this is what was previously /admin/client/[id]</span>
+  <span class="tag tag-b">LEFT SIDEBAR 220px dark #060A12 — SAME pattern as Admin page</span>
+  <span class="tag tag-y">Sidebar has full section nav — Intelligence, Engagements, Data, Value, Outputs</span>
+  <span class="tag tag-r">Signal is a COMPACT CARD with teal border — NOT a full-width dark hero section</span>
+</div>
+
+<div class="browser">
+  <div class="browser-dot" style="background:#EF4444;"></div>
+  <div class="browser-dot" style="background:#F59E0B;"></div>
+  <div class="browser-dot" style="background:#22C55E;"></div>
+  <div class="browser-url">app.abarva.ai/maestro/meridian</div>
+</div>
+
+<nav class="nav">
+  <div class="logo"><span class="la">Abar</span><span class="lv">Va</span></div>
+  <div class="nav-links">
+    <a href="#">Intelligence</a>
+    <a href="#">Solutions</a>
+    <a href="#">AI Value Realization</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user"><div style="font-size:10px;color:#2DD4C8;">Maestro</div>Anand Sundaram</div>
+    <div class="nav-avatar">AS</div>
+  </div>
+</nav>
+
+<div class="ann">
+  <span class="ann-label">Sidebar spec</span>
+  <span class="tag tag-t">Width: 220px · bg: #060A12 · same as Admin sidebar</span>
+  <span class="tag tag-b">Section labels: mono 9px #4B5563 uppercase</span>
+  <span class="tag tag-y">Active item: bg rgba(45,212,200,0.12) · text #2DD4C8</span>
+  <span class="tag tag-b">Inactive item: text rgba(255,255,255,0.6) · hover: rgba(255,255,255,0.05)</span>
+  <span class="tag tag-r">+ New Engagement: teal border button inside sidebar</span>
+  <span class="tag tag-y">← All Clients: bottom of sidebar, links back to /maestro</span>
+</div>
+
+<div class="workspace">
+
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-client">
+      <div class="sb-client-label">Active Client</div>
+      <div class="sb-client-name">Meridian Health System</div>
+      <div class="sb-client-sub">Healthcare · $4.2B</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Intelligence</div>
+      <div class="sb-item"><span class="sb-item-icon">◎</span><span class="sb-item-text">Situation</span></div>
+      <div class="sb-item"><span class="sb-item-icon">◈</span><span class="sb-item-text">Findings</span></div>
+      <div class="sb-item"><span class="sb-item-icon">⚡</span><span class="sb-item-text">Contradictions</span></div>
+      <div class="sb-item"><span class="sb-item-icon">⬡</span><span class="sb-item-text">Genome</span></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Engagements</div>
+      <div class="sb-item active"><span class="sb-item-icon">≡</span><span class="sb-item-text">All Engagements</span></div>
+      <div class="sb-new-btn">+ New Engagement</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Data</div>
+      <div class="sb-item"><span class="sb-item-icon">↑</span><span class="sb-item-text">Uploads</span></div>
+      <div class="sb-item"><span class="sb-item-icon">◉</span><span class="sb-item-text">Data Readiness</span></div>
+      <div class="sb-item"><span class="sb-item-icon">🔒</span><span class="sb-item-text">Request Sensitive Access</span></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Value</div>
+      <div class="sb-item"><span class="sb-item-icon">$</span><span class="sb-item-text">Value Dashboard</span></div>
+      <div class="sb-item"><span class="sb-item-icon">📋</span><span class="sb-item-text">Monthly Reviews</span></div>
+      <div class="sb-item"><span class="sb-item-icon">%</span><span class="sb-item-text">Fee Tracker</span></div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-section-label">Outputs</div>
+      <div class="sb-item"><span class="sb-item-icon">📄</span><span class="sb-item-text">Deliverables</span></div>
+      <div class="sb-item"><span class="sb-item-icon">📊</span><span class="sb-item-text">Board Packs</span></div>
+    </div>
+
+    <div class="sb-back">
+      <div class="sb-back-link">← All Clients</div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="ws-main">
+
+    <div class="ann" style="margin: -24px -28px 20px; border-radius: 0;">
+      <span class="ann-label">Main content area</span>
+      <span class="tag tag-t">Background: #F8F7F4 · padding: 24px 28px</span>
+      <span class="tag tag-b">Same DM Sans fonts as Admin — NOT Georgia (operational page)</span>
+      <span class="tag tag-y">Header: page title + last updated + + New Engagement button</span>
+    </div>
+
+    <!-- Header -->
+    <div class="ws-header">
+      <div>
+        <div class="ws-title">Meridian Health System</div>
+        <div class="ws-sub">Last updated: Today 18:12 · 3 active engagements</div>
+      </div>
+      <button class="ws-btn">+ New Engagement</button>
+    </div>
+
+    <!-- SIGNAL CARD — compact white card with teal border -->
+    <div class="ann" style="margin: 0 0 8px; border-radius: 0;">
+      <span class="ann-label">Signal card</span>
+      <span class="tag tag-t">White card · border-left: 4px solid #2DD4C8 · NOT a dark hero section</span>
+      <span class="tag tag-b">$value: Georgia 36px #EF4444 · Genome badge: #0C0C0C bg white text mono</span>
+      <span class="tag tag-r">REMOVE the full-width dark hero — it was too dominant. This card matches the table below.</span>
+    </div>
+
+    <div class="signal-card">
+      <div class="sc-left">
+        <div class="sc-badge">MOST URGENT · MERIDIAN HEALTH SYSTEM</div>
+        <div class="sc-headline">RCM outsourced at $48M/yr. Denial rate still 18.2%.</div>
+        <div class="sc-body">$94M annual write-off. Ensemble SLA penalties never enforced. Board does not know.</div>
+        <div class="sc-btns">
+          <button class="sc-btn-primary">Create Engagement →</button>
+          <button class="sc-btn-secondary">View Intelligence →</button>
+        </div>
+      </div>
+      <div class="sc-right">
+        <div class="sc-value">$94M</div>
+        <div class="sc-value-label">annual exposure</div>
+        <div class="sc-genome">F011 · 74% Genome failure rate</div>
+        <a class="sc-all">See all 3 signals →</a>
+      </div>
+    </div>
+
+    <!-- ENGAGEMENTS TABLE -->
+    <div class="ann" style="margin: 8px 0; border-radius: 0;">
+      <span class="ann-label">Engagements table</span>
+      <span class="tag tag-t">Same table style as Admin "All Engagements" — identical visual language</span>
+      <span class="tag tag-b">Columns: ENGAGEMENT · SPONSOR · PHASE · STATUS · VALUE · ACTION</span>
+      <span class="tag tag-y">ACTION column: [Continue →] teal text link — same pattern Admin uses</span>
+      <span class="tag tag-r">Priority dot: red = Critical · orange = High · grey = Normal</span>
+    </div>
+
+    <div class="ws-section-header">
+      <div class="ws-section-title">Active Engagements</div>
+    </div>
+
+    <div class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Engagement</th><th>Sponsor</th><th>Phase</th><th>Status</th><th>Maestro</th><th>Value</th><th>Priority</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="td-eng">RCM AI — Denial Prevention</div>
+              <div style="font-size:10px;background:#EFF6FF;color:#1e40af;padding:1px 5px;border-radius:2px;font-weight:600;display:inline-block;margin-top:2px;">AVR</div>
+            </td>
+            <td><div style="font-size:12px;color:#0C0C0C;">Dr. Sarah Chen</div><div style="font-size:10px;color:#9CA3AF;">CMO</div></td>
+            <td><span class="td-phase">Ph 1</span></td>
+            <td><span class="status-pill st-progress">In Progress</span></td>
+            <td style="font-size:12px;color:#0C0C0C;">Anand S.</td>
+            <td class="td-value">$94M</td>
+            <td><span style="color:#EF4444;font-size:12px;font-weight:700;">● Critical</span></td>
+            <td class="td-action">Continue →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-eng">Technology Modernization</div>
+              <div style="font-size:10px;background:#CCFBF1;color:#0f5443;padding:1px 5px;border-radius:2px;font-weight:600;display:inline-block;margin-top:2px;">SOL</div>
+            </td>
+            <td><div style="font-size:12px;color:#0C0C0C;">Mark Rivera</div><div style="font-size:10px;color:#9CA3AF;">CTO</div></td>
+            <td><span class="td-phase">Ph 2</span></td>
+            <td><span class="status-pill st-progress">In Progress</span></td>
+            <td style="font-size:12px;color:#0C0C0C;">Anand S.</td>
+            <td class="td-value">$38M</td>
+            <td><span style="color:#F59E0B;font-size:12px;font-weight:700;">● High</span></td>
+            <td class="td-action">Continue →</td>
+          </tr>
+          <tr>
+            <td>
+              <div class="td-eng">Margin Optimization</div>
+              <div style="font-size:10px;background:#CCFBF1;color:#0f5443;padding:1px 5px;border-radius:2px;font-weight:600;display:inline-block;margin-top:2px;">SOL</div>
+            </td>
+            <td><div style="font-size:12px;color:#9CA3AF;">—</div></td>
+            <td><span class="td-phase">Ph 0</span></td>
+            <td><span class="status-pill st-backlog">Backlog</span></td>
+            <td style="font-size:12px;color:#9CA3AF;">—</td>
+            <td class="td-value">$28M</td>
+            <td><span style="color:#9CA3AF;font-size:12px;">● Normal</span></td>
+            <td class="td-action">Start →</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- DATA READINESS — compact row -->
+    <div class="ann" style="margin: 8px 0; border-radius: 0;">
+      <span class="ann-label">Data readiness</span>
+      <span class="tag tag-t">Single compact row — NOT a full panel · same style as Admin "Data Health"</span>
+      <span class="tag tag-b">Score: Georgia 28px orange · Missing items as orange pill badges</span>
+      <span class="tag tag-y">[Go to Data Uploads →] teal link — navigates to Uploads sidebar section</span>
+    </div>
+
+    <div class="readiness-row">
+      <div>
+        <div class="rr-title">Data Readiness</div>
+        <div class="rr-client">Meridian Health System</div>
+      </div>
+      <div>
+        <div class="rr-score">72 / 100</div>
+        <div class="rr-score-label">AI Readiness Score</div>
+      </div>
+      <div class="rr-pills">
+        <div class="rr-pill">○ Payer Contract Analysis — MISSING</div>
+        <div class="rr-pill">○ CDO Profile + Org Chart — MISSING</div>
+      </div>
+      <a class="rr-link">Go to Data Uploads →</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ROUTING TABLE
+══════════════════════════════════════════════════════════════ -->
+<div style="background:#1e1b4b;padding:16px 24px;margin-top:8px;">
+  <div style="font-size:11px;font-weight:700;color:#a5b4fc;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px;">Routing — What goes where</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+    <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;">
+      <div style="font-size:10px;font-weight:700;color:#2DD4C8;margin-bottom:8px;font-family:'Courier New',monospace;text-transform:uppercase;">/maestro</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.6;">Cross-client dashboard. Greeting, Today's Priority, My Clients, Pending Approvals, My Engagements table. NO sidebar.</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;">
+      <div style="font-size:10px;font-weight:700;color:#2DD4C8;margin-bottom:8px;font-family:'Courier New',monospace;text-transform:uppercase;">/maestro/[clientId]</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.6;">Client workspace. LEFT SIDEBAR + main content. Signal card, engagements table, data readiness row. All operational work.</div>
+    </div>
+    <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;">
+      <div style="font-size:10px;font-weight:700;color:#2DD4C8;margin-bottom:8px;font-family:'Courier New',monospace;text-transform:uppercase;">/admin</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.6;">Admin only. Users, sensitive data approvals, audit logs, security. LEFT SIDEBAR with admin-only sections. Maestro cannot access.</div>
+    </div>
+  </div>
+  <div style="margin-top:12px;font-size:11px;color:#F59E0B;font-weight:600;">⚠ /admin/client/[id] should redirect to /maestro/[id] — the old route is deprecated</div>
+</div>
+
+<!-- DESIGN SYSTEM REFERENCE -->
+<div class="ds">
+  <div style="font-family:'Courier New',monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#2DD4C8;margin-bottom:16px;">Design System Reference — Operational Pages (Admin + Maestro)</div>
+  <div class="ds-grid">
+    <div>
+      <div class="ds-col-title">Colours</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#060A12;"></div>#060A12 — sidebar + nav bg</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#F8F7F4;border:1px solid #333;"></div>#F8F7F4 — main content bg</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#fff;border:1px solid #333;"></div>#fff — cards + tables</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#2DD4C8;"></div>#2DD4C8 — teal: labels, active, links</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#EF4444;"></div>#EF4444 — critical priority</div>
+      <div class="ds-item"><div class="ds-swatch" style="background:#F59E0B;"></div>#F59E0B — high / warning</div>
+    </div>
+    <div>
+      <div class="ds-col-title">Typography — operational pages</div>
+      <div class="ds-item">DM Sans 20px 700 — page title</div>
+      <div class="ds-item">DM Sans 14px 700 — section titles</div>
+      <div class="ds-item">DM Sans 12px — table body, card content</div>
+      <div class="ds-item">Courier New 10px uppercase — section labels, table headers</div>
+      <div class="ds-item">Georgia 36px — signal $ value only</div>
+      <div class="ds-rule">NO Georgia for page titles or section headers on operational pages</div>
+    </div>
+    <div>
+      <div class="ds-col-title">Rules</div>
+      <div class="ds-rule">Sidebar: 220px fixed · #060A12 · matches Admin</div>
+      <div class="ds-rule">Active sidebar item: rgba(45,212,200,0.12) bg · #2DD4C8 text</div>
+      <div class="ds-rule">Signal card: white + 4px teal border-left — NOT dark hero</div>
+      <div class="ds-rule">Tables: 1px #E5E7EB rows · hover #F8F7F4 · same as Admin</div>
+      <div class="ds-rule">+ New Engagement: #0C0C0C bg white text · top right of main</div>
+      <div class="ds-banned">BANNED: dark hero section on client workspace page</div>
+      <div class="ds-banned">BANNED: tab bar replacing sidebar navigation</div>
+      <div class="ds-banned">BANNED: engagement cards instead of table rows</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
