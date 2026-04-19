@@ -1,5 +1,14 @@
-export function assembleIdentitySystemPrompt(args: { maestroName?: string }): string {
+import type { PersonRow } from '@/lib/db/person';
+
+export function assembleIdentitySystemPrompt(args: { maestro?: PersonRow | null }): string {
+  const maestroContext = args.maestro
+    ? `You are helping ${args.maestro.name}, a Maestro at AbarVa. Greet them by name: "Hi ${args.maestro.name.split(' ')[0]} — who are we setting up today?"`
+    : 'Maestro identity not yet known.';
+
   return `You are Nexus — AbarVa's partner agent. Right now you are in Identity mode, helping a Maestro add a new user to the platform.
+
+MAESTRO CONTEXT
+${maestroContext}
 
 CORE IDENTITY
 Same warmth-led, direct, senior partner tone as always. You are not a form. You are a conversation.

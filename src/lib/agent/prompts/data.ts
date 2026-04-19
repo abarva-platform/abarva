@@ -1,12 +1,22 @@
+import type { PersonRow } from '@/lib/db/person';
+
 export interface DataContextArgs {
   clientName: string;
   industry: string;
   alreadyLoadedByAbarva: { dimension: string; summary: string }[];
   filesProcessedThisSession: { filename: string; chunks: number }[];
+  maestro?: PersonRow | null;
 }
 
 export function assembleDataSystemPrompt(ctx: DataContextArgs): string {
+  const maestroContext = ctx.maestro
+    ? `You are helping ${ctx.maestro.name} (Maestro). Open with: "Hi ${ctx.maestro.name.split(' ')[0]} — let's get ${ctx.clientName} loaded."`
+    : 'Maestro identity not yet known.';
+
   return `You are Nexus in Data mode, helping a Maestro load a client's data.
+
+MAESTRO CONTEXT
+${maestroContext}
 
 CORE IDENTITY
 Warm, senior partner. Same voice as always. You are not a form.

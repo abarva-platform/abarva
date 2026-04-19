@@ -4,6 +4,7 @@ import { streamAgentTurn } from '@/lib/agent/stream';
 import { parseUserReadyBlock } from '@/lib/agent/parse';
 import { createPerson } from '@/lib/db/person';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
+import { getCurrentMaestro } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -14,7 +15,8 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: 'messages array required' }), { status: 400 });
   }
 
-  const system = assembleIdentitySystemPrompt({});
+  const maestro = await getCurrentMaestro();
+  const system = assembleIdentitySystemPrompt({ maestro });
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({

@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { assembleDataSystemPrompt } from '@/lib/agent/prompts/data';
 import { streamAgentTurn } from '@/lib/agent/stream';
+import { getCurrentMaestro } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,11 +45,13 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const maestro = await getCurrentMaestro();
   const system = assembleDataSystemPrompt({
     clientName,
     industry,
     alreadyLoadedByAbarva: ABARVA_DIMENSIONS[industry] ?? [],
     filesProcessedThisSession: files,
+    maestro,
   });
 
   const encoder = new TextEncoder();

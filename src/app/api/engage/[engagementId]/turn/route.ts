@@ -9,6 +9,7 @@ import {
 } from '@/lib/graph/retrieval';
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { streamAgentTurn } from '@/lib/agent/stream';
+import { getCurrentMaestro } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -36,17 +37,18 @@ export async function POST(
     text: userMessage,
   });
 
-  // Retrieve all three layers
-  const [sponsor, recentTurns, activePatterns, peerDecisions, chainedPatterns] = await Promise.all([
+  // Retrieve all three layers + maestro context
+  const [sponsor, recentTurns, activePatterns, peerDecisions, chainedPatterns, maestro] = await Promise.all([
     engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
     getRecentTurns(engagement.id, 30),
     getActivePatterns(engagementId),
     getPeerDecisionsForPhase(engagementId, engagement.current_phase),
     getChainedPatterns(engagementId),
+    getCurrentMaestro(),
   ]);
 
   const system = assembleEngagementSystemPrompt({
-    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns,
+    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro,
   });
 
   const messages = recentTurns.map(t => ({

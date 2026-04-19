@@ -8,10 +8,11 @@ interface AssembleArgs {
   activePatterns: ActivePattern[];
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
+  maestro?: PersonRow | null;
 }
 
 export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
-  const { engagement, sponsor, activePatterns, peerDecisions, chainedPatterns } = ctx;
+  const { engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro } = ctx;
   const phaseNames = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const phase = phaseNames[engagement.current_phase];
   const familiarity = sponsor?.familiarity ?? 'first_meeting';
@@ -37,6 +38,9 @@ CURRENT ENGAGEMENT CONTEXT
 - Function: ${engagement.function_code}
 - Objective: ${engagement.objective_code}
 - Topic: ${engagement.topic_code ?? 'not yet set'}
+
+THE MAESTRO SUPPORTING THIS ENGAGEMENT
+${maestro ? `- ${maestro.name} (${maestro.role ?? 'Maestro'})` : '- Unassigned'}
 
 SPONSOR (the person you are talking to)
 ${sponsor ? `- Name: ${sponsor.name}
