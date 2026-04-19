@@ -316,7 +316,7 @@ export default function Homepage() {
           <span title="Demo temporarily unavailable — new version coming soon" style={{ background: 'rgba(0,0,0,0.18)', color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'default' }}>
             See a live demo · soon
           </span>
-          <a href="/diagnose?client=meridian" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
+          <a href="/sign-in" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
             Request a conversation
           </a>
         </div>
@@ -330,7 +330,6 @@ export default function Homepage() {
         </div>
         <div style={{ display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap' }}>
           <a href="/intelligence" style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Intelligence</a>
-          <a href="/solutions"    style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Solutions</a>
           <a href="/investor"     style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Investors</a>
           <a href="/sign-in"      style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Login</a>
           <span style={{ fontSize: 12, color: DMUTE }}>© 2026 AbarVa</span>
