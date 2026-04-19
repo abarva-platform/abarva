@@ -8,6 +8,7 @@ import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
 import { ChoiceChips, type Choice } from './ChoiceChips';
 import { renderWithCitations } from './renderWithCitations';
+import { TraceDrawer } from './TraceDrawer';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -43,6 +44,7 @@ export function EngagementConsole({
   const [choices, setChoices] = useState<Choice[]>([]);
   const [choicesForTurnId, setChoicesForTurnId] = useState<string | null>(null);
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
+  const [traceTurnId, setTraceTurnId] = useState<string | null>(null);
   const composerRef = useRef<HTMLInputElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
@@ -246,6 +248,26 @@ export function EngagementConsole({
                       {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
                       {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
                     </div>
+                    {t.sender === 'agent' && !t.streaming && t.id && (
+                      <button
+                        type="button"
+                        onClick={() => setTraceTurnId(t.id)}
+                        title="Why did Nexus say this?"
+                        style={{
+                          marginTop: 8,
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'rgba(245,245,240,0.55)',
+                          fontSize: 13,
+                          fontFamily: 'JetBrains Mono, monospace',
+                          cursor: 'pointer',
+                          padding: 0,
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        ◎ trace
+                      </button>
+                    )}
                   </div>
                   {t.id === choicesForTurnId && choices.length > 0 && (
                     <ChoiceChips
@@ -389,6 +411,10 @@ export function EngagementConsole({
 
         </div>
       </div>
+
+      {traceTurnId && (
+        <TraceDrawer turnId={traceTurnId} open={true} onClose={() => setTraceTurnId(null)} />
+      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { streamAgentTurn } from '@/lib/agent/stream';
+import { TurnTrace } from '@/lib/agent/trace';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { captureRelationshipNotes } from '@/lib/agent/capture';
 import { appendPersonalThreads } from '@/lib/db/person';
@@ -84,6 +85,11 @@ export async function POST(
     text: userMessage,
   });
 
+  // Trace captures retrieval + graph + stream steps for the "why did Nexus
+  // say this?" drawer. Persisted post-stream via trace.persist().
+  const trace = new TurnTrace(null, engagement.id);
+  const tRetrievalStart = Date.now();
+
   // Retrieve all three layers + maestro context + personal threads
   const [sponsor, recentTurns, activePatterns, peerDecisions, chainedPatterns, maestro] = await Promise.all([
     engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
@@ -93,6 +99,26 @@ export async function POST(
     getChainedPatterns(engagementId),
     getCurrentMaestro(),
   ]);
+
+  trace.record({
+    label: 'cypher.active_patterns',
+    kind: 'graph',
+    latencyMs: Date.now() - tRetrievalStart,
+    count: activePatterns.length,
+    summary: activePatterns.map((p) => p.code).join(', ') || 'none active',
+  });
+  trace.record({
+    label: 'cypher.peer_decisions',
+    kind: 'graph',
+    latencyMs: 0,
+    count: peerDecisions.length,
+  });
+  trace.record({
+    label: 'cypher.chained_patterns',
+    kind: 'graph',
+    latencyMs: 0,
+    count: chainedPatterns.length,
+  });
 
   const personalThreads = sponsor
     ? await getActivePersonalThreads(sponsor.id)
@@ -111,14 +137,23 @@ export async function POST(
   // OPENAI_API_KEY / PINECONE_API_KEY missing, or when namespaces are empty.
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const retrievalCtx = lastUser
-    ? await assembleRetrievalContext({
-        engagementId: engagement.id,
-        clientId: null,
-        industry: (engagement.industry_code as 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL' | null) ?? null,
-        currentPhase: engagement.current_phase,
-        userQuery: lastUser.content,
-        turnHistory: messages,
-      })
+    ? await trace.capture(
+        'pinecone.global+client fan-out',
+        'retrieval',
+        () =>
+          assembleRetrievalContext({
+            engagementId: engagement.id,
+            clientId: null,
+            industry: (engagement.industry_code as 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL' | null) ?? null,
+            currentPhase: engagement.current_phase,
+            userQuery: lastUser.content,
+            turnHistory: messages,
+          }),
+        (ctx) => ({
+          count: ctx.clientChunks.length + ctx.industryChunks.length + ctx.topicChunks.length,
+          summary: `client:${ctx.clientChunks.length} industry:${ctx.industryChunks.length} topic:${ctx.topicChunks.length}`,
+        }),
+      )
     : null;
   const retrievedContextBlock = retrievalCtx ? formatRetrievedContext(retrievalCtx) : '';
 
@@ -140,12 +175,20 @@ export async function POST(
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        const tStreamStart = Date.now();
         let agentFullText = '';
         const gen = streamAgentTurn({ system, messages });
         for await (const delta of gen) {
           agentFullText += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }
+        trace.record({
+          label: 'claude-opus stream',
+          kind: 'stream',
+          latencyMs: Date.now() - tStreamStart,
+          count: agentFullText.length,
+          summary: `~${Math.round(agentFullText.length / 4)} output tokens`,
+        });
         // Extract <choices> block before persisting + emit to client
         const { text: cleanedAgentText, choices: turnChoices } = parseChoicesFromText(agentFullText);
         if (turnChoices.length > 0) {
@@ -161,6 +204,18 @@ export async function POST(
           text: cleanedAgentText,
           retrievedRefs,
         });
+
+        // Persist reasoning trace keyed to the agent turn. Non-blocking from
+        // the client's POV — fire-and-forget so we don't block the 'done' event.
+        void (async () => {
+          try {
+            const traceForTurn = new TurnTrace(savedTurn.id, engagement.id);
+            for (const step of trace.snapshot().steps) traceForTurn.record(step);
+            await traceForTurn.persist();
+          } catch (err) {
+            console.error('[trace-persist]', err);
+          }
+        })();
 
         // Background: Maestro profile extraction on the user's input
         if (maestro && userMessage.trim().length > 30) {
