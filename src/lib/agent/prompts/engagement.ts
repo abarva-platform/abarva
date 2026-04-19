@@ -2,6 +2,7 @@ import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
 import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
+import { CITATION_INSTRUCTION } from '../retrieval-format';
 
 interface AssembleArgs {
   engagement: EngagementRow;
@@ -13,6 +14,12 @@ interface AssembleArgs {
   personalThreads?: string[];
   clientDataSummary?: string[];
   maestroContextBlock?: string;
+  /**
+   * Labeled RETRIEVED CONTEXT block from formatRetrievedContext(). Empty
+   * string when retrieval returned no chunks — do not pass a string with
+   * just whitespace; the assembler filters on trim().length > 0.
+   */
+  retrievedContextBlock?: string;
 }
 
 export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
@@ -27,11 +34,17 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
     }
   })();
 
-  // Prepend shared conversation principles + optional Maestro context block.
-  // Both are empty-safe; filter falsy so we don't emit blank separator blocks.
+  const hasRetrieval = Boolean(ctx.retrievedContextBlock && ctx.retrievedContextBlock.trim().length > 0);
+
+  // Compose:
+  //   principles → maestro context → retrieved context → citation rule → phase prompt
+  // Citation rule only included when retrieval produced chunks — otherwise it
+  // tempts the model to cite fabricated source_keys.
   return [
     CONVERSATION_PRINCIPLES,
     ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
+    hasRetrieval ? ctx.retrievedContextBlock : null,
+    hasRetrieval ? CITATION_INSTRUCTION : null,
     phasePrompt,
   ]
     .filter((s): s is string => Boolean(s))

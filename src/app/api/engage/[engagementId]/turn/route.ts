@@ -8,6 +8,8 @@ import {
   getChainedPatterns,
 } from '@/lib/graph/retrieval';
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
+import { assembleRetrievalContext } from '@/lib/agent/retrieval';
+import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { captureRelationshipNotes } from '@/lib/agent/capture';
@@ -100,14 +102,30 @@ export async function POST(
     ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
     : '';
 
-  const system = assembleEngagementSystemPrompt({
-    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads, maestroContextBlock,
-  });
-
   const messages = recentTurns.map(t => ({
     role: t.sender === 'agent' ? 'assistant' as const : 'user' as const,
     content: t.text,
   }));
+
+  // Pack B Phase 6 · retrieval merge. Empty-safe — returns empty chunks when
+  // OPENAI_API_KEY / PINECONE_API_KEY missing, or when namespaces are empty.
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  const retrievalCtx = lastUser
+    ? await assembleRetrievalContext({
+        engagementId: engagement.id,
+        clientId: null,
+        industry: (engagement.industry_code as 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL' | null) ?? null,
+        currentPhase: engagement.current_phase,
+        userQuery: lastUser.content,
+        turnHistory: messages,
+      })
+    : null;
+  const retrievedContextBlock = retrievalCtx ? formatRetrievedContext(retrievalCtx) : '';
+
+  const system = assembleEngagementSystemPrompt({
+    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
+    maestroContextBlock, retrievedContextBlock,
+  });
 
   const retrievedRefs = {
     sponsor_id: sponsor?.id ?? null,
