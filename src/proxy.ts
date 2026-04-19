@@ -59,6 +59,13 @@ const authRequiredRoutes = createRouteMatcher([
   '/ai-strategy(.*)',
   '/ai-pdlc(.*)',
   '/client-view(.*)',
+  '/dashboard(.*)',
+  '/engagements(.*)',
+  '/engage/(.*)',
+  '/users/(.*)',
+  '/data(.*)',
+  '/tower(.*)',
+  '/sponsor(.*)',
 ])
 
 export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {
