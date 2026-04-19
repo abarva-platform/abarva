@@ -17,8 +17,6 @@ export default function AuthRedirect() {
 
     const role              = user.publicMetadata?.role              as string | undefined
     const clientId          = user.publicMetadata?.clientId          as string | undefined
-    const preferredSolution = user.publicMetadata?.preferredSolution as string | undefined
-
     if (role === 'investor') {
       router.push('/investor')
       return
@@ -30,8 +28,7 @@ export default function AuthRedirect() {
     }
 
     if (role === 'client' && clientId) {
-      const sol = preferredSolution || 'delivery'
-      router.push(`/portal/${sol}?client=${clientId}`)
+      router.push(`/client-view?client=${clientId}`)
       return
     }
 

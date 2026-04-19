@@ -283,10 +283,8 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isAdmin && (
           <>
             {clientDropdown()}
-            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
+            {navLink('Maestro', '/maestro', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {avrMegaMenu()}
-            {navLink('Solutions', '/solutions', solutionsActive)}
           </>
         )}
 
@@ -297,10 +295,8 @@ function NavInner({ activePage }: NavProps) {
           <>
             {navLink('Home', '/', homeActive)}
             {clientDropdown()}
-            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
+            {navLink('Maestro', '/maestro', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {avrMegaMenu()}
-            {navLink('Solutions', '/solutions', solutionsActive)}
           </>
         )}
 
@@ -310,10 +306,8 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isMaestro && (
           <>
             {staticClientLabel()}
-            {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
+            {navLink('Maestro', '/maestro', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {avrMegaMenu()}
-            {navLink('Solutions', '/solutions', solutionsActive)}
           </>
         )}
 
@@ -322,7 +316,6 @@ function NavInner({ activePage }: NavProps) {
         ══════════════════════════════════════════════════════════════════ */}
         {(!signedIn || isClient) && (
           <>
-            {navLink('Solutions', '/solutions', solutionsActive)}
             {navLink('Investor', '/investor', investorActive)}
             {demoNavItem()}
           </>

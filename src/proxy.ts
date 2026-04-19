@@ -16,7 +16,6 @@ const isPublicRoute = createRouteMatcher([
   '/architecture(.*)',
   '/data-intelligence(.*)',
   '/domain-strategy(.*)',
-  '/value-template(.*)',
   '/how-to-build(.*)',
   '/contradictions(.*)',
   '/timeline(.*)',
@@ -25,7 +24,6 @@ const isPublicRoute = createRouteMatcher([
   '/outcomes(.*)',
   '/search(.*)',
   '/demo(.*)',
-  '/solutions(.*)',
   '/control-tower(.*)',
   '/ai-pdlc(.*)',
   '/future-of-work(.*)',
@@ -37,15 +35,11 @@ const isPublicRoute = createRouteMatcher([
   '/ai-unlock(.*)',
   '/platform(.*)',
   '/investor(.*)',
-  '/engage/(.*)',
-  '/api/engage/(.*)/seed-demo(.*)',
-  '/api/admin/seed-all-demos(.*)',
 ])
 
 // Maestro workspace — requires any authenticated Maestro/Admin/Investor session
 const maestroRoutes = createRouteMatcher([
   '/maestro(.*)',
-  '/engage/(.*)',
   '/ai-strategy(.*)',
   '/ai-pdlc(.*)',
   '/ai-unlock(.*)',
@@ -62,7 +56,6 @@ const adminRoutes = createRouteMatcher([
 const authRequiredRoutes = createRouteMatcher([
   '/admin(.*)',
   '/maestro(.*)',
-  '/engage/(.*)',
   '/ai-strategy(.*)',
   '/ai-pdlc(.*)',
   '/client-view(.*)',

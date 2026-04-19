@@ -3,10 +3,13 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 import { useClientContext } from '@/lib/use-client-context'
 import { useSearchParams } from 'next/navigation'
-import { DEMO_SEEDS } from '@/lib/avr-demo-seed'
 import { supabase } from '@/lib/supabase'
-import { generateDeliverables } from '@/lib/generate-deliverable'
-import type { OutcomeItem as GenOutcomeItem } from '@/lib/generate-deliverable'
+
+// Stubbed after solutions/AVR deletion — engagement v2 will re-provide these.
+const DEMO_SEEDS: Record<string, unknown> = {}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type GenOutcomeItem = any
+function generateDeliverables(..._args: unknown[]): Array<Record<string, unknown>> { return [] }
 
 // ── Design tokens — exact from Solutions page ─────────────────────────────────
 const LBG   = '#F8F7F4'
@@ -1232,9 +1235,6 @@ function AIStrategyInner() {
         <span style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.4)', letterSpacing: '.06em', textTransform: 'uppercase' as const }}>{clientName}</span>
         <span style={{ fontFamily: MONO, fontSize: '10px', color: '#1C2D45' }}>·</span>
         <span style={{ fontFamily: MONO, fontSize: '10px', color: 'rgba(239,246,255,0.25)' }}>Guided by AbarVa AI across 3 phases · 11 modules</span>
-        <a href="/ai-value-realization" style={{ marginLeft: 'auto', fontFamily: MONO, fontSize: '9px', color: 'rgba(45,212,200,0.55)', textDecoration: 'none', letterSpacing: '.06em', flexShrink: 0 }}>
-          ? What is this
-        </a>
       </div>
 
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
