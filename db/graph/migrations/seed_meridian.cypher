@@ -6,8 +6,8 @@ MATCH (sarah:Person {id:'person_sarah_chen'}), (e:Engagement {id:'eng_meridian_a
 MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (i:Industry {code:'HEALTHCARE_IDN'}) MERGE (e)-[:IN_INDUSTRY]->(i);
 MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (f:Function {code:'MIDDLE_OFFICE'}) MERGE (e)-[:IN_FUNCTION]->(f);
 MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (o:Objective {code:'OPTIMISE'}) MERGE (e)-[:HAS_OBJECTIVE]->(o);
-MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (p:GenomePattern {code:'F007'}) MERGE (e)-[:TRIGGERED {observed_at:datetime()}]->(p);
-MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (p:GenomePattern {code:'F008'}) MERGE (e)-[:TRIGGERED {observed_at:datetime()}]->(p);
+MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (p:GenomePattern {code:'F007'}) MERGE (e)-[r:TRIGGERED]->(p) ON CREATE SET r.observed_at = datetime();
+MATCH (e:Engagement {id:'eng_meridian_analytics_mod'}), (p:GenomePattern {code:'F008'}) MERGE (e)-[r:TRIGGERED]->(p) ON CREATE SET r.observed_at = datetime();
 
 // Historical comparable engagements — healthcare IDN, analytics modernization, Phase 2 Epic timing trade-off
 // Five in total — three chose to slip, two chose to honor. The split matters for the agent's framing.
