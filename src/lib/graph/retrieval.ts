@@ -3,6 +3,8 @@ import { getGraphDriver } from './driver';
 import type {
   ActivePattern,
   ChainedPattern,
+  GenomePatternDetail,
+  GenomePatternSummary,
   PeerDecisionSummary,
   PersonContext,
   SimilarEngagement,
@@ -156,6 +158,87 @@ RETURN sponsor.id AS id, sponsor.name AS name, sponsor.role AS role,
        count(prior) AS past_engagement_count,
        toString(sponsor.last_seen_at) AS last_seen_at
 `;
+
+const ALL_PATTERNS_CYPHER = `
+MATCH (p:GenomePattern)
+OPTIONAL MATCH (p)<-[t:TRIGGERED]-(:Engagement)
+RETURN p.code AS code, p.name AS name, p.failure_rate AS failure_rate,
+       p.category AS category, count(t) AS trigger_count
+ORDER BY p.failure_rate DESC
+`;
+
+export async function getAllGenomePatterns(): Promise<GenomePatternSummary[]> {
+  const session = getGraphDriver().session();
+  try {
+    const res = await session.run(ALL_PATTERNS_CYPHER);
+    return res.records.map((r) => ({
+      code: r.get('code') as string,
+      name: r.get('name') as string,
+      failure_rate: toNum(r.get('failure_rate')),
+      category: r.get('category') as string,
+      trigger_count: toNum(r.get('trigger_count')),
+    }));
+  } finally {
+    await session.close();
+  }
+}
+
+export async function getGenomePatternDetail(code: string): Promise<GenomePatternDetail | null> {
+  const session = getGraphDriver().session();
+  try {
+    const patternRes = await session.run(
+      `MATCH (p:GenomePattern {code: $code}) RETURN p`,
+      { code },
+    );
+    if (patternRes.records.length === 0) return null;
+    const p = (patternRes.records[0].get('p') as { properties: Record<string, unknown> }).properties;
+
+    const engRes = await session.run(
+      `MATCH (p:GenomePattern {code: $code})<-[:TRIGGERED]-(e:Engagement)
+       OPTIONAL MATCH (e)-[:IN_INDUSTRY]->(i:Industry)
+       RETURN e.id AS id, e.name AS name, e.current_phase AS phase, i.code AS industry`,
+      { code },
+    );
+
+    const toRes = await session.run(
+      `MATCH (p:GenomePattern {code: $code})-[c:CHAINS_TO]->(t:GenomePattern)
+       RETURN t.code AS code, t.name AS name, c.weight AS weight`,
+      { code },
+    );
+
+    const fromRes = await session.run(
+      `MATCH (f:GenomePattern)-[c:CHAINS_TO]->(p:GenomePattern {code: $code})
+       RETURN f.code AS code, f.name AS name, c.weight AS weight`,
+      { code },
+    );
+
+    return {
+      code: (p.code as string) ?? code,
+      name: (p.name as string) ?? '',
+      category: (p.category as string) ?? '',
+      description: (p.description as string | null) ?? null,
+      failure_rate: toNum(p.failure_rate),
+      engagements_triggering: engRes.records.map((r) => ({
+        graph_node_id: r.get('id') as string,
+        name: r.get('name') as string,
+        industry: (r.get('industry') as string) ?? 'unknown',
+        current_phase: toNum(r.get('phase')),
+      })),
+      chains_to: toRes.records.map((r) => ({
+        to_code: r.get('code') as string,
+        to_name: r.get('name') as string,
+        weight: toNum(r.get('weight')),
+      })),
+      chains_from: fromRes.records.map((r) => ({
+        from_code: r.get('code') as string,
+        from_name: r.get('name') as string,
+        weight: toNum(r.get('weight')),
+      })),
+    };
+  } finally {
+    await session.close();
+  }
+}
 
 export async function getSponsorContext(engagementId: string): Promise<PersonContext | null> {
   const session = getGraphDriver().session();

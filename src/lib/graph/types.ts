@@ -40,6 +40,30 @@ export interface PersonContext {
   last_seen_at: string | null;
 }
 
+export interface GenomePatternSummary {
+  code: string;
+  name: string;
+  failure_rate: number;
+  category: string;
+  trigger_count: number;
+}
+
+export interface GenomePatternDetail {
+  code: string;
+  name: string;
+  category: string;
+  description: string | null;
+  failure_rate: number;
+  engagements_triggering: Array<{
+    graph_node_id: string;
+    name: string;
+    industry: string;
+    current_phase: number;
+  }>;
+  chains_to: Array<{ to_code: string; to_name: string; weight: number }>;
+  chains_from: Array<{ from_code: string; from_name: string; weight: number }>;
+}
+
 export interface EngagementIntelligence {
   engagement_id: string;
   phase: number;
