@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { buildTowerViewModel, listTowerClients, type ContradictionRow } from '@/lib/tower/aggregate';
+import { loadEnterpriseSummary } from '@/lib/tower/enterprise-summary';
 import { TowerUploadZone } from '@/components/tower/TowerUploadZone';
+import { EnterpriseContextRow } from '@/components/tower/EnterpriseContextRow';
 
 export const dynamic = 'force-dynamic';
 
@@ -148,7 +150,10 @@ export default async function TowerPage({
     redirect(`/tower?clientId=${encodeURIComponent(clients[0].id)}`);
   }
 
-  const vm = await buildTowerViewModel(clientId);
+  const [vm, enterpriseSummary] = await Promise.all([
+    buildTowerViewModel(clientId),
+    loadEnterpriseSummary(clientId),
+  ]);
   if (!vm) {
     return (
       <div style={{ padding: 40, color: MUTE, fontFamily: 'DM Sans, sans-serif' }}>
@@ -301,6 +306,9 @@ export default async function TowerPage({
           </>,
         )}
       </div>
+
+      {/* Enterprise context · Pack H Phase 5 */}
+      <EnterpriseContextRow summary={enterpriseSummary} />
 
       {/* Contradiction engine */}
       <div style={{ marginTop: 24 }}>
