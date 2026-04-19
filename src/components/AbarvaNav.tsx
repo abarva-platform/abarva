@@ -64,6 +64,8 @@ function NavInner({ activePage }: NavProps) {
   ].includes(activePage || '')
   const intelligenceActive = activePage === 'intelligence'
   const solutionsActive    = activePage === 'solutions'
+  const valueOfficeActive  = activePage === 'value-office' || activePage === 'value-office-tracker'
+  const valueOfficeTrackerActive = activePage === 'value-office-tracker'
   const adminActive        = (activePage || '').startsWith('admin')
   const platformActive     = activePage === 'platform'
   const investorActive     = activePage === 'investor'
@@ -285,6 +287,8 @@ function NavInner({ activePage }: NavProps) {
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('AI Value Office', '/value-office', valueOfficeActive)}
+            {navLink('Execution', '/value-office/tracker', valueOfficeTrackerActive)}
             {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
           </>
@@ -299,6 +303,8 @@ function NavInner({ activePage }: NavProps) {
             {clientDropdown()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('AI Value Office', '/value-office', valueOfficeActive)}
+            {navLink('Execution', '/value-office/tracker', valueOfficeTrackerActive)}
             {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
           </>
@@ -312,6 +318,8 @@ function NavInner({ activePage }: NavProps) {
             {staticClientLabel()}
             {navLink('Maestro', `/maestro/${clientId}`, maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('AI Value Office', '/value-office', valueOfficeActive)}
+            {navLink('Execution', '/value-office/tracker', valueOfficeTrackerActive)}
             {avrMegaMenu()}
             {navLink('Solutions', '/solutions', solutionsActive)}
           </>
