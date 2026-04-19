@@ -72,9 +72,30 @@ async function main() {
   console.log(`   Embed model: ${EMBED_MODEL}`)
   console.log(`   Chunk size: ${CHUNK_SIZE} words, overlap: ${CHUNK_OVERLAP}\n`)
 
+  // Create index if it doesn't exist (multilingual-e5-large → 1024 dims)
+  try {
+    await pc.describeIndex(INDEX_NAME)
+    console.log(`   Index "${INDEX_NAME}" found ✓`)
+  } catch {
+    console.log(`   Index "${INDEX_NAME}" not found — creating (serverless, cosine, 1024d)...`)
+    await pc.createIndex({
+      name: INDEX_NAME,
+      dimension: 1024,
+      metric: 'cosine',
+      spec: {
+        serverless: {
+          cloud: 'aws',
+          region: 'us-east-1',
+        },
+      },
+      waitUntilReady: true,
+    })
+    console.log(`   Index created ✓\n`)
+  }
+
   const idx = pc.index(INDEX_NAME)
 
-  // Describe index to verify connectivity
+  // Confirm index is ready
   try {
     const desc = await pc.describeIndex(INDEX_NAME)
     console.log(`   Index dimension: ${desc.dimension}`)

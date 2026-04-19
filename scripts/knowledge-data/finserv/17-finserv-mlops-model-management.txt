@@ -1,56 +1,324 @@
 MLOPS AND MODEL LIFECYCLE MANAGEMENT IN FINANCIAL SERVICES
-Source: Gartner MLOps Survey 2025, AbarVa PDLC Framework Data
+Source: Gartner MLOps Survey 2025, Forrester MLOps Adoption Report, AbarVa PDLC Framework Data
 
-MLOPS MATURITY LEVELS IN FS
-Level 0 (manual, no MLOps): 34% of FS firms
-Level 1 (basic automation, some CI/CD): 28%
-Level 2 (automated training, monitoring): 22%
-Level 3 (full MLOps with governance): 16%
-AI programme success at Level 0-1: 38%
-AI programme success at Level 2-3: 81%
+OVERVIEW AND CONTEXT
 
-MODELS IN PRODUCTION
-Average ML models in production (large bank): 68
-Average ML models in production (large asset manager): 41
-Models with no monitoring: 34%
-Models with performance monitoring but no drift detection: 28%
-Models with full monitoring and automated retraining: 28%
-Models with documented lineage and audit trail: 44%
+MLOps (Machine Learning Operations) is the engineering discipline that transforms AI from experiment to production system. It encompasses model development workflow, automated training and testing pipelines, deployment infrastructure, production monitoring, drift detection, and retraining orchestration. In financial services, MLOps has an additional dimension: regulatory model risk management (MRM) — the requirement to validate, document, and govern every AI model under frameworks like SR 11-7 (Federal Reserve) and similar EBA/PRA guidance.
+
+The economic case for MLOps is overwhelming: the cost to deploy one AI model without MLOps infrastructure is $280,000-$620,000 and takes 8.4 months from development to production. With MLOps infrastructure, the same deployment costs $42,000-$88,000 and takes 2.8 months. For a firm deploying 20 models annually, mature MLOps generates $4.6-$11M in annual savings on deployment alone — before measuring the compounding value of faster iteration and model performance monitoring.
+
+AbarVa Genome failure pattern F011 (AI Without Infrastructure Foundation — MLOps Edition): AI programmes that grow beyond 5 production models without MLOps infrastructure enter a maintenance spiral — each new model adds incremental maintenance burden that eventually overwhelms the data science team's capacity to build new models. Observed in 58% of FS AI programmes with 8+ models in production.
+
+
+MLOPS MATURITY LEVELS IN FINANCIAL SERVICES
+
+The four-level MLOps maturity model (AbarVa PDLC framework, consistent with Google MLOps maturity model):
+
+Level 0 — Manual MLOps (No automation, science-as-art):
+    34% of FS firms
+    Characteristics: model developed in Jupyter notebooks by individual data scientists; deployment manual and ad hoc; no reproducibility; no monitoring; no version control for models
+    AI programme success rate: 28%
+    Risk: model provenance unknown; cannot reproduce model if developer leaves; regulatory audit would fail
+    Primary symptom: "the data scientist who built the model left and now nobody knows how it works"
+
+Level 1 — Basic Automation (Some CI/CD, limited standardisation):
+    28% of FS firms
+    Characteristics: model training uses some automation; basic CI/CD for deployment; some version control (MLflow tracking); monitoring is ad hoc
+    AI programme success rate: 38%
+    Typical platforms: MLflow tracking on individual data science workstations; no centralised registry
+
+Level 2 — Automated Training and Monitoring:
+    22% of FS firms
+    Characteristics: automated training pipelines; centralised model registry; production monitoring with alerts; drift detection; documented deployment process
+    AI programme success rate: 78%
+    This is the threshold where regulatory compliance and consistent performance become achievable
+
+Level 3 — Full MLOps with Governance:
+    16% of FS firms
+    Characteristics: CI/CD/CT (Continuous Training); feature store; automated MRM evidence collection; full model lineage; automated A/B testing; compliance integration
+    AI programme success rate: 94%
+    Examples: JPMorgan Chase AI Research, Two Sigma, Man AHL, Goldman Sachs Engineering
+
+AI programme success rate correlation with MLOps level is the strongest predictor in the AbarVa Genome dataset. Level 2 firms achieve 2x better AI ROI than Level 0 firms; Level 3 firms achieve 3.4x better ROI.
+
+
+MODELS IN PRODUCTION — FINANCIAL SERVICES INVENTORY
+
+The average ML model count in production at FS firms:
+
+    Large bank (>$100B assets): 68 ML models in production
+    Large asset manager (>$100B AUM): 41 models
+    Regional bank ($5-50B assets): 18 models
+    Mid-size asset manager ($10-100B AUM): 14 models
+    Insurance (large): 52 models (high usage in underwriting, claims, fraud)
+
+Model type distribution (across all FS production models):
+    Classification models (credit scoring, fraud detection, AML): 34%
+    Regression models (pricing, risk estimation, demand forecasting): 22%
+    NLP/text models (research synthesis, surveillance, document processing): 18%
+    Time series models (market risk, volatility, demand): 14%
+    Recommendation models (next-best-action, personalisation): 8%
+    Reinforcement learning (trading, dynamic pricing): 4%
+
+Monitoring status of production models:
+    Models with full monitoring (performance, drift detection, data quality, business KPI): 28%
+    Models with performance monitoring but no drift detection: 34%
+    Models with no monitoring whatsoever ("dark models"): 34%
+    Models with documented lineage and audit trail (for SR 11-7): 44%
+
+"Dark model" risk in FS: 34% of production models with no monitoring. These models are degrading silently. In credit, this means credit decisions are made by a model whose performance has not been reviewed in months or years. In fraud, this means fraud patterns that have evolved since training are no longer being caught. Regulatory risk: if a supervisory examiner discovers an unmonitored model driving material decisions, the firm faces validation failure and potential mandatory model suspension.
+
 
 MODEL DRIFT AND DEGRADATION
-Average model performance decay (no retraining): 14-22% over 12 months
-Models requiring retraining: monthly 41%, quarterly 29%, annually 18%, ad hoc 12%
-Model failure rate (catastrophic degradation): 6% per year in unmonitored models
-Cost of undetected model failure (FS): $2.8-8.4M per incident
-Recovery time from model failure: 4.2 weeks (average)
 
-MLOPS PLATFORM LANDSCAPE IN FS
-MLflow + custom infrastructure: 34% of FS ML teams
-Azure Machine Learning: 28%
-AWS SageMaker: 22%
-Databricks MLflow (native): 21%
-DataRobot (no-code ML): 12%
-H2O.ai: 8%
-Feature store adoption: 28% of advanced ML teams
+Model drift occurs when the statistical relationship between model inputs and outputs changes — typically because the real world has changed since the model was trained. In FS, the most common causes are:
+
+    Economic regime shifts (interest rate changes, credit cycle shifts): most impactful for credit, ALM, pricing models
+    Fraud pattern evolution (fraudsters adapt): most impactful for fraud detection models
+    Behaviour change (customer behaviour shifts post-pandemic, post-rate cycle): impacts personalisation, churn, deposit models
+    Data distribution shift (new products, new customer segments entering model scope): all model types
+
+Performance degradation benchmarks:
+    Average model performance decay without retraining: 14-22% degradation over 12 months
+    Models experiencing significant drift (>15% performance degradation): 38% of unmonitored models
+    Catastrophic model failure rate (performance collapse beyond usability): 6% per year in unmonitored models
+    Cost of undetected model failure (FS): $2.8-$8.4M per incident (based on AbarVa incident data)
+    Recovery time from model failure (diagnosing, retraining, validating, redeploying): 4.2 weeks average
+
+Model failure costs by type:
+    Credit scoring model failure (higher credit losses due to poor discrimination): $4.2-$18M per year at large bank
+    Fraud detection model failure (increased fraud losses during degradation period): $1.8-$6.4M
+    AML model failure (increased false positives or missed suspicious activity): regulatory risk + $840K-$2.4M
+    Pricing model failure (mispriced deposits or loans): $2.4-$8.8M revenue impact
+
+Retraining cadence requirements:
+    Monthly retraining (required by use case): 41% of production models
+    Quarterly retraining: 29%
+    Annually: 18%
+    Ad hoc (only when failure detected): 12%
+
+Adaptive models (continuously learning in production):
+    FS firms with any adaptive production model: 18%
+    Use cases: fraud detection (NICE Actimize CAMS, Featurespace ARIC), credit risk (LendingClub, Avant)
+    Regulatory concern: adaptive models change their behaviour without explicit validation — SR 11-7 requires special governance for adaptive models
+
+
+MLOPS PLATFORM LANDSCAPE IN FINANCIAL SERVICES
+
+Platform adoption among FS firms with Level 2+ MLOps:
+
+    MLflow (open source) with custom infrastructure: 34% of FS ML teams
+        Most flexible; highest engineering overhead
+        Commonly runs on Databricks (MLflow native) or Azure ML (MLflow compatibility layer)
+
+    Azure Machine Learning (managed MLOps on Azure): 28%
+        Tight integration with Azure DevOps, Azure Active Directory
+        Azure Machine Learning Studio: visual pipeline designer used by data analysts
+        Best for: Azure-primary firms with Microsoft governance requirements
+
+    AWS SageMaker (managed MLOps on AWS): 22%
+        SageMaker Pipelines for training automation
+        SageMaker Model Monitor: drift detection and data quality monitoring
+        SageMaker Model Registry: model versioning and approval workflow
+
+    Databricks MLflow (Databricks-managed MLflow): 21%
+        Native in Databricks Unified Analytics Platform
+        MLflow Tracking Server, Model Registry, Projects: all managed
+        Best for: firms where Databricks is the primary data engineering platform
+
+    DataRobot (automated ML, no-code ML): 12%
+        Strong for citizen data scientists and compliance analysts who need ML without Python
+        DataRobot MLOps: production monitoring and governance module
+        Strong compliance workflow: built-in model documentation for SR 11-7
+
+    H2O.ai: 8%
+        H2O Driverless AI: automated ML with explainability
+        MOJO (Model Object, Optimized): portable model format for production deployment
+        Strong in insurance and credit risk (actuarial tradition of explainable models)
+
+    Weights and Biases: 6%
+        Experiment tracking and model versioning
+        Growing in quantitative finance and research-heavy environments
+        Not a full MLOps platform — experiment tracking only
+
 
 FEATURE STORE BENCHMARKS
-Firms with enterprise feature store: 22%
-Feature reuse rate without store: 8%
-Feature reuse rate with feature store: 64%
-Development time saving with feature store: 41%
-Feature computation cost saving: 28% (no recomputation across teams)
-Leading feature stores in FS: Feast (open source), Tecton, Vertex AI Feature Store
+
+Feature stores solve the double computation problem: the same features used by multiple models are computed independently by each team, wasting time and compute. A feature store centralises feature computation and sharing:
+
+    FS firms with enterprise feature store: 22%
+    Feature reuse rate without feature store: 8%
+    Feature reuse rate with feature store: 64%
+    Development time saving per new model (with feature store): 41%
+    Feature computation cost saving (no re-computation across teams): 28%
+
+Feature store ROI benchmarks:
+    Break-even point: when firm deploys 6+ ML models that share any features
+    ROI at 10+ models: 3.4x within 18 months
+    Annual compute savings (large firm, 50+ production models): $640,000-$1.8M
+
+Leading feature stores in FS:
+    Feast (open source, Tecton-maintained): most widely used; integrates with Databricks, Spark, Redshift
+    Tecton (commercial Feast): managed feature store service; strong in real-time (online) features
+    Vertex AI Feature Store (Google): managed on GCP; tight BigQuery integration
+    SageMaker Feature Store (AWS): managed on AWS; tight SageMaker pipeline integration
+    Databricks Feature Store (native): simplest for pure Databricks shops
+
+Online vs. offline feature stores:
+    Offline feature store: stores historical features for model training; all feature stores support this
+    Online feature store: serves features in real-time for production inference (sub-10ms latency); required for real-time fraud, pricing, and personalisation models
+    FS firms with online feature store capability: 14% (lower than offline; higher engineering complexity)
+
 
 MODEL RISK MANAGEMENT INTEGRATION WITH MLOPS
-Banks requiring MRM validation in CI/CD pipeline: 18%
-Average MRM validation time added to deployment: +6.4 weeks
-Firms automating MRM evidence collection: 14%
-Target: automated evidence reduces MRM cycle to 2.1 weeks
-SR 11-7 compliance with MLOps audit trail: 61% of large banks
 
-PDLC (PRODUCT DELIVERY LIFECYCLE FOR AI) BENCHMARKS
-Time from model development to production (industry average): 8.4 months
-Time with mature MLOps: 2.8 months
-Cost to deploy one AI model (without MLOps): $280,000-620,000
-Cost to deploy one AI model (with MLOps): $42,000-88,000
-MLOps ROI: 4.8x within 24 months for organisations with >10 models in production
+The convergence of MLOps and SR 11-7 MRM is the frontier of FS AI governance:
+
+Banks requiring MRM validation integrated into CI/CD pipeline: 18%
+Average MRM validation time added to deployment cycle: +6.4 weeks
+Firms automating MRM evidence collection: 14%
+Target impact of automated MRM evidence: reduces cycle to 2.1 weeks
+
+MRM evidence types required by SR 11-7 (and what MLOps can automate):
+    Model documentation (theory, assumptions, data): MLOps auto-generates 48% of required documentation
+    Validation backtesting results: MLOps auto-runs backtests; 68% automatable
+    Performance monitoring records: 100% automatable with monitoring infrastructure
+    Data quality reports: 78% automatable
+    Change log and version history: 100% automatable (version control)
+    Business owner sign-off: human process; 0% automatable
+
+SR 11-7 compliance status with MLOps audit trail:
+    Large banks with SR 11-7 compliance in MLOps audit trail: 61%
+    Regional banks: 28%
+    Asset managers (analogous MRM framework): 34%
+
+
+PDLC — AI PRODUCT DELIVERY LIFECYCLE BENCHMARKS
+
+The PDLC (Product Delivery Lifecycle for AI) is AbarVa's framework for end-to-end AI programme delivery. Key cycle time benchmarks:
+
+    Time from model development to production (industry average, no MLOps): 8.4 months
+    Time from development to production (mature MLOps, Level 2+): 2.8 months
+    Speedup factor: 3x faster deployment
+
+Cost benchmarks per model:
+    Without MLOps: $280,000-$620,000 per model deployment
+    With MLOps (Level 2): $42,000-$88,000 per model deployment
+    Cost reduction: 84-86%
+
+At 20 models deployed per year (large bank):
+    Without MLOps: $5.6M-$12.4M annual deployment cost
+    With MLOps: $840K-$1.76M annual deployment cost
+    Annual savings: $4.76M-$10.64M
+
+MLOps ROI: 4.8x within 24 months for organisations with more than 10 models in production
+
+Long-term compound effect of MLOps maturity:
+    Firms at Level 3 MLOps can deploy new models 8-12x faster than firms at Level 0
+    At Level 3, the AI portfolio grows faster because deployment friction is removed — firms that started with 10 models reach 40-60 within 24 months of Level 3 maturity
+    Competitive compounding: AI portfolio depth correlates with business outcomes (fraud reduction, NIM improvement, C/I reduction) — Level 3 firms outperform Level 0 firms by 2.8x on AI-attributable business metrics
+
+
+AI MODEL OBSERVABILITY AND MONITORING IN PRACTICE
+
+Model observability goes beyond drift detection to comprehensive production AI health monitoring:
+
+Key monitoring dimensions:
+    Performance monitoring: is the model still achieving its original accuracy target? (precision, recall, AUC, F1)
+    Data drift monitoring: has the statistical distribution of input features changed? (Kolmogorov-Smirnov, Population Stability Index)
+    Concept drift monitoring: has the relationship between inputs and outputs changed? (requires business outcome labels)
+    Business KPI monitoring: is the model's business impact (fraud losses, credit losses, conversion rate) still at expected levels?
+    Data quality monitoring: are incoming data quality issues (missing values, out-of-range values) occurring that could corrupt model predictions?
+    Latency monitoring: is inference time within SLA? (critical for fraud models with sub-100ms requirements)
+
+Model monitoring alert thresholds (AbarVa recommendations):
+    PSI (Population Stability Index) above 0.2: model retraining review required
+    PSI above 0.25: mandatory model retraining
+    Performance drop above 10%: alert to model owner within 24 hours
+    Performance drop above 20%: immediate model escalation; human review of affected decisions
+    Business KPI deviation above 15%: cross-functional review (model + business owner + risk)
+
+Monitoring tools in production at FS firms:
+    Evidently AI (open source): data drift and model quality; 22% of FS ML teams
+    WhyLabs: data and model observability; growing in FS cloud contexts
+    Arize AI: ML observability platform; strong for real-time models (fraud, pricing)
+    DataRobot MLOps: production monitoring integrated with DataRobot ML lifecycle
+    AWS SageMaker Model Monitor: native monitoring for SageMaker-deployed models
+    Azure Machine Learning Dataset Monitor: Azure-native monitoring
+
+CONTINUOUS TRAINING (CT) IN FINANCIAL SERVICES
+
+The evolution from batch retraining to continuous training:
+
+    Level 2 MLOps: automated batch retraining on schedule (monthly, quarterly)
+    Level 3 MLOps: trigger-based retraining (when PSI exceeds threshold or performance drops)
+    Continuous Training (CT): models retrain in near-real-time as new labelled data arrives
+
+CT adoption in FS:
+    Firms with CT capability (Level 3 MLOps): 16%
+    CT use cases in FS: fraud models (fraud labels available within 30 days, enabling frequent retraining), credit models (loss labels available within 6 months — slower CT cycle)
+    CT infrastructure requirements: streaming data pipeline, online feature store, automated retraining pipeline, shadow mode testing, automated champion-challenger framework
+
+Champion-challenger model management:
+    Champion: current production model
+    Challenger: new model trained on more recent data, candidate to replace champion
+    Shadow mode: challenger runs in parallel, predictions logged but not actioned — comparison to champion without business risk
+    Traffic split: if champion-challenger is approved, 10% of decisions use challenger to measure live performance
+    FS firms with champion-challenger infrastructure: 28% — most sophisticated model management practice
+    Benefit: reduce model update risk from 18% (blind deployment) to 4% (champion-challenger validated)
+
+REAL-TIME ML INFERENCE INFRASTRUCTURE
+
+Low-latency model serving requirements differ by use case:
+
+    Fraud detection: below 100ms (often below 50ms for real-time payment fraud)
+    Credit scoring (automated instant loan): below 2 seconds
+    Personalised recommendation (mobile app, real-time): below 500ms
+    Batch overnight risk: no latency requirement — hours acceptable
+
+Inference infrastructure:
+    ONNX (Open Neural Network Exchange): model serialisation for cross-framework deployment; reduces inference latency 28-44% vs. Python serving
+    TensorRT (NVIDIA): GPU-optimised inference; 3-8x throughput improvement for deep learning models
+    Triton Inference Server (NVIDIA): multi-framework, high-throughput model serving
+    BentoML: Python-native model serving; strong for small teams
+    Seldon Deploy: Kubernetes-native model serving with drift detection integrated
+
+Latency benchmarks:
+    XGBoost model inference (fraud scoring, 100 features): 1-3ms typical
+    Deep learning (neural network, 10 layers): 8-24ms on CPU; 1-4ms on GPU
+    Transformer (BERT-class NLP): 40-180ms on CPU; 8-22ms on GPU
+    LLM (GPT-4 equivalent, RAG): 800ms-3.5 seconds per query
+    LLM on Groq (LPU chip): 80-340ms per query (10x faster than standard GPU)
+
+PDLC FRAMEWORK — DETAILED PHASE BREAKDOWN
+
+AbarVa PDLC (Product Delivery Lifecycle for AI) detailed benchmarks:
+
+Phase 1 — Problem Definition and Data Assessment (Weeks 1-4):
+    Time: 3-4 weeks
+    Key activities: use case definition, data availability assessment, success metric definition
+    Gate: data quality above 80% threshold; business case approved
+    Common failure: gate skipped; development begins on insufficient data
+
+Phase 2 — Data Engineering and Feature Development (Weeks 5-14):
+    Time: 6-10 weeks (longest phase in fragmented data environments)
+    Key activities: pipeline development, feature engineering, training dataset creation
+    Gate: feature store populated; data quality validated
+    MLOps impact: feature store availability reduces this phase from 10 weeks to 4 weeks
+
+Phase 3 — Model Development and Validation (Weeks 15-22):
+    Time: 4-8 weeks
+    Key activities: model training, hyperparameter tuning, validation backtesting
+    Gate: performance exceeds baseline; SR 11-7 documentation drafted
+    MRM impact: adds 4-8 weeks if formal MRM validation required
+
+Phase 4 — Deployment and Integration (Weeks 23-28):
+    Time: 3-6 weeks
+    Key activities: model serving setup, API integration, monitoring configuration
+    Gate: latency within SLA; monitoring active; rollback plan tested
+    MLOps impact: reduces this phase from 8 weeks to 3 weeks with CI/CD pipeline
+
+Phase 5 — Production Monitoring and Optimisation (Ongoing):
+    Ongoing: drift monitoring, business KPI tracking, scheduled retraining
+    Cost with MLOps: $8,000-$18,000 per model per year
+    Cost without MLOps: $28,000-$64,000 per model per year (manual monitoring and ad hoc retraining)

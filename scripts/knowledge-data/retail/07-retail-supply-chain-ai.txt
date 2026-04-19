@@ -1,51 +1,297 @@
 RETAIL SUPPLY CHAIN AI AND OPERATIONS BENCHMARKS
-Source: Gartner Supply Chain Top 25, NRF Supply Chain Survey 2025
+Source: Gartner Supply Chain Top 25 2025, NRF Supply Chain Survey 2025, McKinsey Operations Excellence Report 2025
+
+OVERVIEW
+
+Supply chain AI in retail is the second-highest-ROI AI investment area after demand forecasting, with a 2.6-4.2x return at 24 months and payback periods of 10-18 months depending on the specific use case. The supply chain opportunity is fragmented across transportation, warehousing, supplier management, and fulfillment — and the highest-performing retailers build an integrated AI layer that connects demand signals through to last-mile execution. As of 2025, only 8% of $1B+ retailers have deployed end-to-end AI across the supply chain; most have point solutions in one or two areas. The gap between top-quartile and bottom-quartile supply chain performance has widened to its largest level since 2010 as AI-enabled leaders compound their advantages.
 
 SUPPLY CHAIN PERFORMANCE BENCHMARKS
-On-time-in-full (OTIF) rate — top quartile: 96-98%
-OTIF median: 88%
-Bottom quartile: < 79%
-Customer chargeback rate at < 85% OTIF: 1.4-2.8% of invoice value (Walmart, Target mandated)
-Revenue at risk from OTIF penalties ($5B retailer): $14-28M
+
+ON-TIME-IN-FULL (OTIF) RATES:
+- Top quartile: 96-98%
+- Median: 88%
+- Bottom quartile: < 79%
+- Top pure-play e-commerce (Amazon fulfillment benchmark): 99.2%
+
+OTIF PENALTY EXPOSURE:
+- Customer chargeback rate at < 85% OTIF (Walmart mandate): 1.4-2.8% of invoice value
+- Customer chargeback rate at < 80% OTIF (Target mandate): 1.0-3.0% of invoice value
+- Revenue at risk from OTIF penalties ($5B retailer at 84% OTIF): $14-28M annually
+- Retailers in violation of major retail customer OTIF mandates: 34%
+- AI OTIF improvement: +14 percentage points average (from 84% to 98%)
+
+COST STRUCTURE BENCHMARKS:
+- Transportation and logistics as % of revenue: 4-8% (format-dependent)
+- Grocery: 5-8% (complex fresh logistics)
+- Specialty retail: 4-6%
+- Pure-play e-commerce: 8-14% (high last-mile cost)
+- Distribution center operating cost ($5B retailer): $120-280M annually
+- Inventory carrying cost as % of inventory value: 20-28% annually
 
 SUPPLY CHAIN AI ADOPTION
-Retailers with AI demand-driven replenishment: 31%
-Retailers with AI transportation management: 24%
-Retailers with AI warehouse management: 22%
-Retailers with AI supplier performance monitoring: 18%
-Retailers with end-to-end AI supply chain: 8%
+
+CURRENT DEPLOYMENT RATES ($1B+ RETAILERS):
+- AI demand-driven replenishment: 31%
+- AI transportation management: 24%
+- AI warehouse management: 22%
+- AI supplier performance monitoring: 18%
+- AI fulfillment network optimisation: 18%
+- End-to-end AI supply chain: 8%
+- No supply chain AI at all: 34%
+
+INVESTMENT BY AREA:
+- Transportation AI: $1.4-4.8M first year investment ($5B retailer)
+- Warehouse AI (excluding robotics): $2.8-8.4M first year
+- Warehouse robotics (AMR/AS-RS): $12-48M capital investment (per major DC)
+- Supplier risk AI: $480K-1.4M annually
+- Network optimisation AI: $640K-1.8M annually
 
 TRANSPORTATION AND LOGISTICS AI
-Route optimization AI: reduces mileage 8-14%
-Load optimization AI: increases truck utilisation 12-18%
-Carrier selection AI: reduces freight cost 6-11%
-Delivery time prediction accuracy (AI): 91% vs 74% (manual)
-Annual transportation savings ($5B retailer with AI): $8.4-18.2M
 
-WAREHOUSE AND DC AI
-Order picking accuracy (AI-assisted): 99.6% vs. 98.2% (manual)
-Pick rate improvement with AI guidance: +28%
-Returns processing time reduction with AI: 38%
-Autonomous mobile robots (AMR) ROI: 2.4x at 30 months
-AI slotting optimisation: reduces travel time 22%, improves picks/hour 31%
+ROUTE OPTIMISATION AI:
+- Mileage reduction from AI route optimisation: 8-14%
+- Delivery time prediction accuracy (AI): 91% vs. 74% manual dispatch
+- On-time delivery improvement: +14 percentage points
+- Driver utilisation improvement: +18%
+- Carbon emissions reduction from optimised routing: 10-16%
+- Annual transportation savings ($5B retailer): $8.4-18.2M
+
+CARRIER AND LOAD AI:
+- Load optimisation AI: increases truck utilisation 12-18%
+- Carrier selection AI: reduces freight cost 6-11%
+- Dynamic carrier tendering (AI real-time spot market): saves 8-14% vs. contract-only
+- Annual load/carrier AI savings ($5B retailer): $3.8-7.2M
+
+LAST-MILE OPTIMISATION:
+- Cost of last-mile delivery as % of total logistics: 41-53%
+- AI multi-stop route optimisation: 14-22% cost reduction per route
+- Delivery time window AI (customer-scheduled): +24% customer satisfaction score
+- Failed delivery rate (no AI window prediction): 8-12%
+- Failed delivery rate (AI-optimised window): 3-4%
+- Cost of failed delivery: $8-16 per occurrence (redelivery, customer service)
+
+THIRD-PARTY LOGISTICS (3PL) AI INTEGRATION:
+- Retailers using 3PL for e-com fulfillment: 44%
+- API integration with top 3PL carriers: 78% of large retailers
+- Real-time track and trace coverage: 91% of shipments with AI status prediction
+- Supply chain visibility platforms: project44 (18%), FourKites (16%), Kinaxis (14%), o9 Solutions (18%)
+
+WAREHOUSE AND DISTRIBUTION CENTER AI
+
+ORDER PICKING AI:
+- Order picking accuracy (AI-assisted, voice or vision picking): 99.6%
+- Order picking accuracy (manual, paper-based): 98.2%
+- Pick rate improvement with AI guidance: +28%
+- Pick-by-vision (smart glasses with AI overlay): +22% pick rate, 99.8% accuracy
+- Pick-by-voice (Honeywell, Voxware): +18% pick rate, 99.4% accuracy
+
+AI SLOTTING OPTIMISATION:
+- Travel time reduction from AI slotting: 22%
+- Picks per hour improvement from AI slotting: +31%
+- Annual labor savings from slotting AI ($5B retailer, 2 major DCs): $2.8-4.4M
+- Re-slotting frequency with AI (dynamic vs. quarterly): weekly dynamic vs. quarterly fixed
+
+AUTONOMOUS MOBILE ROBOTS (AMR):
+- Retailers with AMR deployment in at least 1 DC: 18%
+- AMR ROI at 30 months: 2.4x
+- Pick rate with AMR (goods-to-person): 800-1,200 units per hour (vs. 80-120 manual)
+- AMR capital cost (per DC, mid-size): $12-28M
+- AMR operating cost per pick vs. manual: 40% lower at steady state
+- Leading AMR vendors: Symbotic (Walmart partner), Ocado Technology, 6 River Systems (Shopify), Locus Robotics
+
+AS/RS (AUTOMATED STORAGE AND RETRIEVAL SYSTEMS):
+- AS/RS capital cost (large DC): $28-88M
+- AS/RS ROI: 2.8x at 48 months
+- Storage density improvement: 3-4x vs. conventional racking
+- Use case: grocery (high velocity, ambient and chilled), electronics (high value, dense)
+
+RETURNS PROCESSING AI:
+- Returns processing time reduction with AI classification: 38%
+- AI-graded return condition (sellable/refurbish/liquidate): 94% accuracy vs. 78% manual
+- Returns processing cost reduction: $8.20 to $5.10 per unit with AI routing
+- Time from return receipt to resalable inventory: 3.2 days (AI) vs. 8.4 days (manual)
+- Vendor-funded return AI (who pays for defective returns): recovery improvement +34%
 
 SUPPLIER RISK AND PERFORMANCE AI
-Retailers with AI supplier risk monitoring: 18%
-Supply disruption early warning (AI): 4-8 weeks advance notice
-Suppliers at high risk (not monitored): 14% of supply base on average
-Cost of unmanaged supply disruption: $1.4-4.2M per major disruption event
-AI-identified single-source dependencies: avg 18% of critical SKUs
 
-CPG AND TRADE PROMOTION AI
-Retailer-supplier data sharing (APIs): 34% of top 100 supplier relationships
-Trade promotion ROI without AI: 40% of promotions lose money
-Trade promotion ROI with AI modelling: 28% of promotions lose money (12pp improvement)
-Collaborative forecasting accuracy improvement with AI: +14pp
-EDI modernisation (API-first): reduces errors 62%, improves OTIF 8pp
+SUPPLIER RISK MONITORING:
+- Retailers with AI supplier risk monitoring: 18%
+- Supply disruption early warning (AI monitoring news, weather, geopolitical, financial signals): 4-8 weeks advance notice
+- Suppliers at high risk in typical portfolio (not monitored): 14% on average
+- Cost of unmanaged supply disruption (per major event): $1.4-4.2M
+- AI single-source dependency identification: 18% of critical SKUs have single-source risk on average
 
-FULFILLMENT NETWORK OPTIMIZATION
-Retailers with AI-optimised fulfilment network: 18%
-Store-to-door fulfilment cost vs. DC-to-door: store 28% cheaper within 30 miles
-AI fulfilment routing: reduces cost per order 14-22%
-Ship-from-store AI (inventory allocation): requires real-time inventory accuracy > 97%
-Network optimization AI payback: 10-16 months
+SUPPLIER PERFORMANCE AI:
+- Supplier lead time prediction accuracy (AI): 88% vs. 68% manual
+- On-time shipment prediction: 84% accuracy at 30-day horizon
+- AI-identified quality issues (from returns data, scan data): 14% earlier than traditional QA
+- Supplier scorecard AI (automated): covers 100% of supplier base vs. 28% manually
+- Annual cost avoidance from proactive supplier risk management ($5B retailer): $4.2-8.4M
+
+GEOGRAPHIC CONCENTRATION RISK:
+- Retailers with >40% of supply from a single country: 44% (primarily China)
+- AI supply base diversification modelling: scenario analysis in 4 hours vs. 6 weeks manual
+- Nearshoring decision AI (cost vs. speed vs. risk tradeoffs): adopted by 22% of large retailers post-COVID
+- AI identified cost premium of nearshoring (Mexico vs. China for apparel): 12-18%
+- Resilience value of nearshoring (disruption probability reduction): 34% lower disruption risk
+
+CPG AND TRADE PROMOTION AI (SUPPLY CHAIN PERSPECTIVE)
+
+RETAILER-CPG DATA SHARING:
+- Retailer-CPG data sharing relationships with APIs: 34% of top 100 supplier relationships
+- Benefits of retailer-CPG data sharing: CPG reduces production volatility 18%; retailer reduces OOS 22%
+- Platforms: o9 Solutions, SAP IBP, Blue Yonder Network, Logility
+- EDI to API modernisation (replacing EDI 850/860/856): reduces errors 62%, improves OTIF 8pp
+
+TRADE PROMOTION SUPPLY IMPACT:
+- Trade promotion ROI without AI planning: 40% of promotions lose money
+- Trade promotion ROI with AI modelling: 28% of promotions lose money (12pp improvement)
+- Supply chain impact: unmodelled promotions cause 24% overstock in non-promo weeks
+- Collaborative forecasting accuracy improvement with AI CPFR: +14 percentage points
+
+FULFILLMENT NETWORK OPTIMISATION
+
+NETWORK DESIGN AI:
+- Retailers with AI-optimised fulfilment network: 18%
+- Store-to-door fulfilment cost vs. DC-to-door (within 30 miles): store 28% cheaper
+- Optimal store-as-DC radius: typically 15-25 miles for same-day delivery economics
+- AI fulfilment routing: reduces cost per order 14-22%
+- Ship-from-store inventory accuracy requirement: > 97% (AI real-time inventory is prerequisite)
+
+NODE ECONOMICS:
+- DC-to-home (standard): $4.20-7.80 per order
+- Store-to-home (ship-from-store): $3.20-5.60 per order (within 20 miles)
+- Micro-fulfillment center (urban, dense orders): $2.80-4.40 per order
+- BOPIS (customer picks up): $0.80-1.60 per order (cheapest fulfillment mode)
+- Same-day delivery (any node): $8.40-14.20 per order
+
+MICRO-FULFILLMENT CENTRES (MFC):
+- Retailers with MFC deployment: 12%
+- MFC capital cost (inside store): $3.2-8.4M
+- MFC throughput: 800-1,800 orders per day (dark store scale)
+- MFC AI integration: real-time demand sensing to fulfillment allocation
+- Leading MFC technology: Takeoff Technologies, Fabric (acquired by SoftBank), Attabotics
+- Best-fit sub-vertical: grocery (high velocity), pharmacy, beauty
+
+INVENTORY POSITIONING AI:
+- Safety stock reduction with AI positioning: 18% without increasing stockouts
+- Demand-driven replenishment trigger (AI): updates daily vs. weekly (traditional)
+- Inter-store transfer AI (balancing across network): reduces emergency transfers 24%
+- Multi-node inventory visibility requirement: real-time (< 15 minute latency) for effective routing
+
+COLD CHAIN AND TEMPERATURE-CONTROLLED LOGISTICS AI
+
+COLD CHAIN BENCHMARKS:
+- Grocery cold chain as % of total logistics cost: 28-34% (refrigerated transport premium)
+- Cold chain failure rate (temperature excursion during transport): 14% of grocery cold-chain shipments
+- AI temperature monitoring (IoT sensor + predictive alert): reduces excursions to 4.2%
+- Cost of cold chain failure per incident: $4,200-18,000 (product loss + disposal + compliance)
+- Annual cold chain AI savings ($5B grocery retailer): $8.4-16.2M (excursion reduction + route optimisation)
+
+REFRIGERATED TRANSPORT AI:
+- AI-managed refrigerated truck loading (thermal map optimisation): +14% capacity utilisation
+- Predictive maintenance AI for refrigeration units: -34% unplanned breakdowns
+- Temperature prediction AI (predicts excursion 2 hours before it occurs): 84% accuracy
+- Cold chain traceability AI (blockchain + AI for audit): 22% of large grocery retailers
+- Regulatory exposure (FDA Food Safety Modernization Act cold chain compliance): $14,000-48,000 per non-compliance event
+
+INVENTORY MANAGEMENT AI — ADVANCED TOPICS
+
+OMNI-INVENTORY OPTIMISATION:
+- Retailers with AI optimising inventory across all nodes simultaneously: 14%
+- Node types: supplier, inbound transit, DC (ambient + chilled + frozen), dark store, store backroom, store salesfloor, in-transit to customer, customer return pipeline
+- Total inventory visibility (all nodes, real-time): 34% of large retailers
+- AI simultaneous node optimisation benefit: 22% further working capital improvement vs. node-by-node optimisation
+- Primary platform for omni-inventory: Blue Yonder Network, o9 Platform, Kinaxis
+
+SEASONAL INVENTORY AI:
+- Seasonal inventory as % of total: fashion (44%), garden/outdoor (34%), grocery fresh (22%)
+- Pre-season buy plan AI: commits inventory 6-8 months ahead with 78% accuracy
+- In-season replenishment AI: adjusts commitments as sell-through data arrives
+- End-of-season AI: automatically triggers clearance sequence for underperforming items
+- Seasonal inventory carryover reduction: 28-44% with AI vs. traditional
+- Annual seasonal inventory value at risk ($5B fashion retailer): $480-840M — AI manages the largest single risk item
+
+AI FOR REVERSE SUPPLY CHAIN:
+- Returns-to-DC transit time (retail avg): 3.8 days
+- AI returns pre-processing (customer initiates return, AI predicts disposition before item arrives): 22% adoption
+- Benefits: DC can pre-plan receiving capacity; high-value items fast-tracked to resale
+- Returns forecast AI (predicts return volume 7 days ahead): 84% accuracy
+- Annual DC labor savings from AI returns planning ($5B retailer): $2.4-4.8M
+
+SUPPLY CHAIN RESILIENCE AND DISRUPTION RESPONSE AI
+
+DISRUPTION TYPOLOGY AND AI RESPONSE:
+- Port disruption (LA/Long Beach, Rotterdam, Shanghai): AI reroutes via alternative ports; generates cost/time analysis in 2 hours
+- Supplier financial distress: AI monitors D&B credit scores + news signals; flags 6-8 weeks before default
+- Weather disruption (hurricane, freeze): AI integrates NOAA 10-day forecast; generates demand + supply disruption model
+- Geopolitical disruption: AI monitors global news for tariff changes, export restrictions, conflict zones
+- Pandemic/public health: AI built pandemic resilience scenarios post-COVID for 34% of large retailers
+
+SUPPLY CHAIN RISK METRICS:
+- Time to identify major disruption with AI: 2 days vs. 12 days manual (news monitoring + supplier data)
+- Cost avoidance per major disruption identified early: $4.2-8.4M
+- Retailer supply chain resilience score (Gartner composite): top quartile 84/100; median 62/100; bottom 38/100
+- AI resilience improvement on Gartner score: +18 points with full supply chain AI deployment
+
+NEAR-SHORING AND RESHORING AI:
+- Total cost of ownership (TCO) modelling for nearshoring vs. China: AI generates 200+ scenario model
+- Lead time reduction (China to Mexico sourcing): from 8-12 weeks to 3-5 weeks
+- Tariff scenario AI: models impact of 25% tariff on China goods vs. 5% tariff on Mexico
+- Retailers with active nearshoring programme (AI-supported decision): 18%
+- Cost premium of Mexico sourcing vs. China (apparel, 2025): 12-18% (partially offset by inventory carrying cost and lead time value)
+
+SUPPLY CHAIN DATA SHARING ECOSYSTEM
+
+INDUSTRY DATA STANDARDS:
+- GS1 (barcode, GTIN standard): 94% compliance among large retail suppliers
+- GS1 EPCIS (Electronic Product Code Information Services): supply chain event visibility standard; 18% adoption
+- GS1 Digital Link (QR code linking product to supply chain data): 8% adoption (EU driving adoption via Digital Product Passport)
+- EDI 850/860/856/810: still primary for 66% of retail-supplier data exchange
+- API-first supply chain integration: 34% of top-100 supplier relationships
+
+SUPPLY CHAIN CONTROL TOWER AI:
+- Retailers with supply chain control tower: 22%
+- Control tower definition: unified visibility across orders, inventory, transport, and suppliers
+- Control tower ROI: 2.8x at 30 months
+- Key metrics tracked: OTIF (real-time), inventory at each node, carrier performance, supplier lead times
+- Exception management AI: routes 94% of supply chain exceptions to correct team within 4 minutes (vs. 4.2 hours manual triage)
+- Control tower platform leaders: Blue Yonder Control Tower, o9 Platform, Kinaxis, SAP Integrated Business Planning
+
+SUPPLY CHAIN FINANCE AND WORKING CAPITAL AI
+
+SUPPLY CHAIN FINANCE BENCHMARKS:
+- Average inventory days-on-hand ($5B retailer): 48 days (industry median)
+- Top-quartile inventory days-on-hand (AI-optimised): 34 days
+- Cash conversion cycle (median retailer): 28 days
+- Cash conversion cycle (top quartile AI-optimised): 16 days
+- Working capital improvement from 14-day inventory reduction ($5B retailer): $120-180M
+- Annual cost of capital on excess inventory: $12-18M ($5B retailer at 8% cost of capital)
+
+SUPPLY CHAIN FINANCE PROGRAMMES:
+- Dynamic discounting AI: 22% of large retailers; AI optimises early payment discount offers to suppliers
+- Supply chain finance (bank-facilitated): 34% of retailers use for top 200 suppliers
+- AI-optimised payment timing: reduces working capital requirement 8-14% without supplier relationship impact
+- Inventory financing AI: AI determines optimal inventory pledge for revolving credit facility
+
+DEMAND-SUPPLY BALANCING AI:
+- S&OP (Sales and Operations Planning) AI: monthly cycle replaced by weekly AI-driven reconciliation
+- S&OP AI benefit: reduces demand-supply imbalance by 22%; reduces emergency procurement by 34%
+- Integrated Business Planning (IBP) AI: extends S&OP to include finance, strategy, and sustainability
+- Supply chain scenario AI: models 10,000+ scenarios in 4 hours (vs. 3 scenarios in 1 week)
+- What-if analysis: AI models impact of 25% tariff increase, shipping strike, weather event simultaneously
+
+CUSTOMS AND TRADE COMPLIANCE AI:
+- Import compliance AI (tariff classification, duty calculation): 94% accuracy
+- Annual duty optimisation value (AI vs. manual): $4.2-8.4M ($5B retailer with 40% imported goods)
+- Free Trade Agreement optimisation AI: identifies 18% of imports eligible for preferential duty rates not being claimed
+- Customs broker AI: auto-generates customs entry documentation from purchase order data (84% automation)
+- Trade compliance risk (incorrect classification penalty): $28,000-280,000 per shipment
+
+ABARVA GENOME FAILURE PATTERNS — SUPPLY CHAIN AI
+
+F007: SUPPLY CHAIN AI WITHOUT DEMAND FORECASTING FOUNDATION — Retailers deploy transportation or warehouse AI without first establishing AI demand forecasting. Downstream AI cannot optimise what upstream planning has not predicted. Supply chain AI ROI 34% lower when deployed in isolation vs. as part of integrated demand-supply plan.
+
+F011: SUPPLIER RISK UNMONITORED — 82% of retailers monitor <30% of their supplier base for risk. AI supplier risk monitoring identifies 14% of suppliers at high risk at any time. The cost of a single unmanaged major disruption ($1.4-4.2M) exceeds the annual cost of AI supplier risk monitoring.
+
+F019: NETWORK OPTIMISATION WITHOUT NODE P&L — Retailers optimise supply chain without understanding per-node economics. Ship-from-store AI requires confirmed store inventory accuracy > 97% and store labor cost model to avoid generating negative-contribution orders. Deploy node P&L model before network AI.

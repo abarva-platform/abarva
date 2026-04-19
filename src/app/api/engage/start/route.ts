@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SOLUTIONS, SolutionKey } from '@/lib/solutions/solution-config'
 import { ARCTURUS_DELIVERY_PHASE0, ARCTURUS_MARGIN_PHASE0, ARCTURUS_TECH_PHASE0, ARCTURUS_PDLC_PHASE0, MERIDIAN_TECH_PHASE0, Phase0Output } from '@/lib/dataset-extractor'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 function getHardcodedPhase0(clientId: string, solution: string): Phase0Output | null {
   if (clientId === 'arcturus') {
@@ -232,6 +233,20 @@ export async function POST(request: NextRequest) {
         description: `${solutionConfig.name} engagement started for ${clientName}`,
         metadata: { is_hardcoded: isHardcoded }
       })
+
+    const ph = getPostHogClient()
+    ph.capture({
+      distinctId: createdBy || 'system',
+      event: 'engagement_created',
+      properties: {
+        client_id: clientId,
+        solution,
+        engagement_id: engagement.id,
+        engagement_name: finalName,
+        is_hardcoded: isHardcoded,
+      },
+    })
+    await ph.shutdown()
 
     return NextResponse.json({
       engagementId: engagement.id,

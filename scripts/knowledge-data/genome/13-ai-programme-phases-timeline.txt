@@ -1,75 +1,343 @@
 AI PROGRAMME PHASES, TIMELINES, AND MILESTONE BENCHMARKS
-Source: AbarVa Phase Gate Delivery Framework
+Source: AbarVa Phase Gate Delivery Framework — 340+ engagements
+Updated: 2025.Q1
+
+OVERVIEW
+
+AbarVa's five-phase AI programme framework (Phase 0-4) is the delivery architecture underlying all AbarVa engagements. It was developed through analysis of 340+ engagements, identifying the sequencing decisions that separate successful programmes from failed ones. The most important structural finding: each phase is a prerequisite for the next. The most expensive mistake is skipping Phase 0 or Phase 1 in the urgency to reach Phase 2.
+
+Phase 0 prevention value: $2.4-8.4M in avoided Phase 2 rework
+Phase 1 prevention value: 2.1x reduction in Phase 2 cost overruns
+Phase 2 quick win value: 40-percentage-point improvement in programme continuation rate
+
+The phases are not ceremonial stages — each is defined by specific deliverables, gates, and evidence requirements. A phase is complete when deliverables are signed off and gates are passed, not when time has elapsed.
+
+Key timeline benchmarks:
+  Phase 0 (Discovery): 4-8 weeks; $280,000-640,000
+  Phase 1 (Foundation): 3-6 months; $1.2-4.8M
+  Phase 2 (First Use Case): 3-6 months; $2.4-6.4M
+  Phase 3 (Scale): 6-18 months; $4.8-18M
+  Phase 4 (Compound): 18-36 months; self-funding from ROI
+  Total to competitive advantage: 18-48 months depending on organisation size
+
 
 PHASE 0 — DISCOVERY AND STRATEGY (4-8 WEEKS)
-Deliverables:
-- Situation diagnosis (5-7 critical findings with financial impact)
-- Contradiction analysis (stated strategy vs. data reality)
-- Data readiness baseline (0-100 score with gap analysis)
-- Use case prioritisation (5-10 use cases ranked by ROI and feasibility)
-- Investment thesis (programme size, timeline, expected ROI)
-- Governance model recommendation
 
-Risk of skipping Phase 0: 2.4x more spent correcting strategic misdirection in Phase 2
-Phase 0 investment: $280,000-640,000 (typical)
-Phase 0 ROI: prevents $2.4-8.4M in wasted Phase 2 investment
+PURPOSE: Establish strategic foundation, identify failure patterns early, define the programme scope and business case before any investment in technology.
+
+INVESTMENT:
+  Typical: $280,000-640,000
+  Range: $120,000 (small organisation, focused scope) to $1.2M (large enterprise, multiple business units)
+  ROI on Phase 0: prevents $2.4-8.4M in Phase 2 strategic rework; enables 2.8x better programme ROI through correct sequencing
+
+KEY DELIVERABLES:
+
+Deliverable 1: Situation Diagnosis (5-7 Critical Findings)
+  Format: 5-7 findings, each with: description, financial impact, evidence, and recommended action
+  Source: stakeholder interviews (CDO, CXOs, operations leads), data system analysis, competitive benchmarking
+  Financial impact quantification: each finding must have a dollar value attached (recoverable revenue, preventable cost, risk exposure)
+  Example findings:
+    "Denial rate at 9.8% vs. 5.4% industry median — $34M in recoverable revenue with AI intervention"
+    "Vendor SLA breach undetected for 14 months — $6.8M in unrecovered penalties available"
+    "CDO role vacant — 79% failure pattern triggered; programme launch at risk"
+
+Deliverable 2: Contradiction Analysis
+  Definition: comparison of stated strategy against data reality
+  Example contradictions:
+    Stated: "We are data-driven." Reality: 81% of executives use Excel exports for key decisions
+    Stated: "AI is our top priority." Reality: AI programme has committee governance with no spending authority
+    Stated: "Our data is clean." Reality: customer duplicate rate 4.8%; EHR data missing 28% of required fields
+  Purpose: surface misalignments before they become expensive problems in Phase 2
+
+Deliverable 3: Data Readiness Score (0-100)
+  Methodology: AbarVa DRS framework (Data Quality 30%, Infrastructure 25%, Governance 25%, Talent 20%)
+  Output: numeric score with domain breakdown and heat map of gaps
+  Use: determines how much Phase 1 investment is required before Phase 2 can begin
+  Threshold: organisations below DRS 50 should not begin AI use case development until foundation is established
+
+Deliverable 4: Use Case Prioritisation (5-10 Use Cases)
+  Ranking criteria: ROI potential (40%), data availability (30%), organisational readiness (20%), strategic alignment (10%)
+  Output: ranked use case shortlist with financial case for top 3
+  Gate: Phase 2 use case must be in top 3 of prioritised list; no skipping to "most exciting" use case
+
+Deliverable 5: Investment Thesis
+  Format: programme size ($), timeline (months), expected ROI (range), key assumptions, risk register
+  Approval: signed by CEO/CDO/CFO — this document is the programme mandate translation
+  Use: basis for Phase 1 and Phase 2 budget approval; referenced in every subsequent quarterly review
+
+Deliverable 6: Governance Model Recommendation
+  Based on: organisation size, CDO maturity, business unit complexity, regulatory environment
+  Output: recommended governance model (Committee, CDO, CoE, Federated), authority matrix, meeting cadence
+  Gate: governance model must be approved before Phase 1 begins
+
+PHASE 0 RISKS:
+  Risk of skipping Phase 0: 2.4x more spent in Phase 2 correcting strategic misdirection
+  Risk of rushing Phase 0: incomplete diagnosis → critical failure patterns not identified → activated in Phase 2
+  AbarVa rule: no Phase 1 begins without completed and signed Phase 0 deliverables
+
 
 PHASE 1 — FOUNDATION (3-6 MONTHS)
-Deliverables:
-- Data governance framework established
-- Cloud platform selected and provisioned
-- Data catalogue deployed
-- Master data management initiated
-- AI Centre of Excellence established (or CDO appointed)
-- Data quality programme initiated on critical datasets
 
-Common mistake: skipping foundation to "get to AI faster"
-Cost of skipping: 2.1x higher Phase 2 cost (rework)
-Foundation is chronically underfunded: 44% of AI programmes allocate < 15% of budget to Phase 1
+PURPOSE: Build the infrastructure and governance that makes AI development possible at quality. This phase creates no AI models — its purpose is to make AI model development reliable, fast, and governed.
+
+INVESTMENT:
+  Typical: $1.2-4.8M
+  Chronically underfunded: 44% of AI programmes allocate < 15% of total budget to Phase 1
+  Cost of skipping: 2.1x higher Phase 2 cost (rework and remediation)
+  ROI on Phase 1 investment: 4.2x through downstream programme performance improvement
+
+KEY DELIVERABLES:
+
+Deliverable 1: Data Governance Framework
+  Components: data ownership policy, data classification framework, quality standards by data tier, MDM approach
+  Output: signed governance charter with named data owners per critical domain
+  Technology: Collibra, Alation, or Microsoft Purview deployed with initial catalogue population
+  Gate: all critical data domains for Phase 2 use case must have documented owner before Phase 2 begins
+
+Deliverable 2: Cloud Platform Selection and Provisioning
+  Process: platform selection RFP informed by Phase 0 use case requirements (not vendor relationship)
+  Output: cloud platform provisioned, Bronze layer ingestion pipelines running, security and networking configured
+  Timeline: provisioning 2-4 weeks; full Bronze layer population 2-4 months
+  Gate: primary use case data available in cloud platform before Phase 2 model development begins
+
+Deliverable 3: Data Catalogue Deployment
+  Tool: Collibra, Alation, or Microsoft Purview (selection based on existing technology stack)
+  Scope: all data assets relevant to Phase 2 use case catalogued as minimum; target 60%+ enterprise coverage
+  Gate: Phase 2 training data must be catalogued with lineage documented before model development
+
+Deliverable 4: Master Data Management Initiation
+  Scope: at minimum, the master data entities required by Phase 2 use case (patient, customer, product, supplier)
+  Approach: entity resolution in Silver layer (not full MDM system in most cases — faster, cheaper)
+  Timeline: 2-4 months for primary entity domain
+  Gate: duplicate rate below 2% for Phase 2 use case's primary entity before model development
+
+Deliverable 5: AI Centre of Excellence Establishment (or CDO Appointment)
+  Output: named AI programme lead with delegated authority; CoE team hired or interim capability in place
+  If CDO absent: interim appointment required before Phase 2 (Genome pattern F007)
+  Team minimum: AI programme director + 2 data engineers + 1 data scientist for Phase 2
+
+Deliverable 6: Data Quality Programme Initiation
+  Scope: critical datasets for Phase 2 use case
+  Target: > 92% completeness, > 88% cross-system consistency
+  Tooling: Great Expectations or dbt tests deployed on primary tables
+  Gate: data quality score > 80% on Phase 2 training data before model development begins
+
+PHASE 1 COMMON MISTAKES:
+  Mistake 1: Skipping Phase 1 to "get to AI faster" — results in 2.1x Phase 2 cost overrun
+  Mistake 2: Spending all Phase 1 budget on technology, nothing on governance — technology without governance degrades within 18 months
+  Mistake 3: Building Phase 1 without Phase 2 use cases in mind — generic foundation not optimised for actual use cases
+  Mistake 4: No CDO appointment in Phase 1 — programme launches Phase 2 into governance vacuum
+
 
 PHASE 2 — FIRST USE CASE (3-6 MONTHS)
-Deliverables:
-- First AI use case in production
-- Baseline KPIs established and locked (before go-live)
-- Model monitoring in place (performance, drift)
-- 90-day quick win documented and communicated
 
-90-day milestone: working proof of concept in controlled environment
-Key risk: scope creep — stakeholders want to add use cases before first is stable
-Scope rule: "one use case in production before another begins"
-Use case selection: highest ROI AND sufficient data — not just highest ROI
+PURPOSE: Deliver first AI use case to production with locked baseline, monitored performance, and demonstrated ROI within 90 days.
+
+INVESTMENT:
+  Typical: $2.4-6.4M
+  Scope: single use case from prioritised list; no scope expansion during Phase 2
+
+KEY DELIVERABLES:
+
+Deliverable 1: Baseline KPIs Locked (before go-live)
+  Protocol: AbarVa Baseline Locking Protocol (6 steps, CXO-signed)
+  Timing: must be completed before first model goes to production (not before Phase 2 begins — before go-live)
+  Gate: no model goes to production without signed baseline
+
+Deliverable 2: First AI Use Case in Production
+  Scope: minimum viable use case — simplest version that demonstrates the capability
+  Deployment: Phase 2 includes: data pipeline, model serving, business integration, monitoring
+  Parallel run: 30-60 day parallel run (AI + manual) before hard cutover
+  Quality gate: model must meet accuracy threshold defined in Phase 0 before production
+
+Deliverable 3: 90-Day Quick Win Documented and Communicated
+  Evidence: measurement from source system vs. locked baseline
+  Communication: board presentation by business owner
+  Financial translation: preliminary ROI calculation (annualised from 90-day result)
+  Programme impact: 78% continuation rate triggered (Phase 3 budget approved)
+
+Deliverable 4: Model Monitoring Infrastructure
+  Components: performance tracking (accuracy/recall/precision), data drift detection, automated alerting
+  Platform: Databricks MLflow, Azure ML, or SageMaker monitoring
+  SLA: alert within 24 hours of >5% accuracy degradation vs. training baseline
+  Gate: monitoring must be live before parallel run ends — not after hard cutover
+
+PHASE 2 RISKS:
+  Scope creep: stakeholders see Phase 2 success and want to add more use cases — resist; one use case complete before new one begins
+  Vendor pressure: vendors want to expand contract based on Phase 2 success — Phase 3 planning only, not mid-Phase 2 contract changes
+  Team over-confidence: after 90-day win, team underestimates Phase 3 complexity
+  Measurement inflation: after win, pressure to present inflated ROI — use independent verification
+
 
 PHASE 3 — SCALE (6-18 MONTHS)
-Deliverables:
-- 3-5 AI use cases in production
-- Self-service analytics for business users
-- AI CoE running independently of external consultants
-- AI model monitoring automated
 
-Key risk: AI team attrition (28% annual attrition in scale phase)
-Retention investment: pay market, give compute access, reduce bureaucracy
-Governance: quarterly CXO review of AI KPIs — mandatory
+PURPOSE: Build a portfolio of 3-5 production AI use cases, establish self-sufficient internal capability, and reduce dependency on external partners.
+
+INVESTMENT:
+  Typical: $4.8-18M (portfolio building; larger investment justified by compounding ROI)
+  Funding source: partially from Phase 2 ROI (programme begins to self-fund)
+
+KEY DELIVERABLES:
+
+Deliverable 1: 3-5 AI Use Cases in Production
+  Selection: from Phase 0 prioritised list; highest ROI use cases not yet deployed
+  Each use case: follows Phase 2 methodology (baseline → model → monitoring → quick win)
+  Portfolio effect: each use case costs 40-60% less than previous (infrastructure amortised; team learning curve compressed)
+
+Deliverable 2: Self-Service Analytics for Business Users
+  Platform: Tableau, Power BI, Looker, or equivalent — deployed for business users
+  Semantic layer: dbt Semantic Layer or AtScale — ensures consistent metrics across reports
+  Target: 60%+ of analytics requests served by self-service (vs. IT queue)
+  Adoption: lighthouse user programme extended to analytics tool
+
+Deliverable 3: AI CoE Running Independently
+  Indicator: internal team can build, deploy, and monitor AI models without external partner
+  Capability milestone: internal team successfully delivers Phase 3 use case with AbarVa advisory only (not delivery)
+  Knowledge transfer completion: all Phase 2 models documented; internal team can modify and retrain
+
+Deliverable 4: Automated Model Monitoring
+  All production models monitored automatically — no manual performance tracking
+  Dashboard: CDO receives weekly automated model health report
+  Retraining schedule: automated retraining triggered by drift detection or on defined schedule
+
+PHASE 3 RISKS:
+  AI team attrition (28% annual): talent pulled by Big Tech; compensation and environment must be competitive
+  Governance complacency: first use case ROI visible → reduced rigour on subsequent use cases → quality drift
+  Vendor lock-in: Phase 3 volume decisions (scaling Snowflake, Databricks, AI platform) create long-term contracts → negotiate hard in Phase 3
+  Technology debt accumulation: quick Phase 3 deployments may accumulate technical debt → reserve 20% of Phase 3 sprint capacity for tech debt
+
 
 PHASE 4 — COMPOUND (18-36 MONTHS)
-Deliverables:
-- AI embedded in core business processes
-- AI programme financially self-funding through ROI
-- Measurable competitive advantage vs. peers
-- Institutional AI capability (not consultant-dependent)
 
-Key risk: complacency — reducing AI investment just as compounding returns begin
-Warning signal: programme budget reduced after first positive ROI
-Correct response: reinvest ROI into next wave of AI use cases
+PURPOSE: AI is embedded in core business processes. Programme is financially self-funding. Measurable competitive advantage vs. peers.
+
+INVESTMENT:
+  Structure: programme is self-funding; ROI from Phase 2 and 3 use cases funds Phase 4 use cases
+  External investment: near zero; internal team and platform sustain the programme
+
+KEY DELIVERABLES:
+
+Deliverable 1: AI Embedded in Core Business Processes
+  Definition: AI is the standard operating method, not a tool that users choose to use
+  Indicators: manual process is the exception; AI is the default; new employees are onboarded to AI-first workflows
+  Business process examples: claims screening is AI-first; demand planning is AI-first; fraud triage is AI-first
+
+Deliverable 2: Programme Financially Self-Funding
+  Calculation: cumulative programme ROI exceeds cumulative investment
+  Typical timing: Phase 4 month 6-12 for well-structured programmes (24-36 months from Phase 0 start)
+  Indicator: CFO approves next wave of AI use cases from AI programme ROI budget, not from IT/innovation budget
+
+Deliverable 3: Measurable Competitive Advantage vs. Peers
+  Measurement: compare primary KPIs against industry peer benchmarks (AbarVa peer database)
+  Examples: denial rate below 5% (vs. 8.4% industry average); fraud loss ratio below industry median; forecast accuracy in top quartile
+  Board communication: quarterly update comparing organisation's AI KPIs against peer group
+
+Deliverable 4: Institutional AI Capability
+  Definition: AI programme capability is in the organisation, not in external consultants
+  Indicators: internal team builds new use cases without external help; AbarVa engagement has formally concluded (or transitioned to strategic advisory)
+  Knowledge retention: all models documented; all pipelines in internal version control; all governance documented
+
+PHASE 4 RISKS:
+  Complacency: reducing AI investment just as compounding returns begin to accelerate
+  Warning signal: budget for AI use cases reduced after first positive ROI — this is the single most destructive decision in Phase 4
+  Correct response: reinvest ROI into next wave of use cases; portfolio compounding is just beginning
+  Technology evolution risk: AI landscape changes rapidly; Phase 4 team must maintain learning to avoid falling behind new capabilities
+
 
 TOTAL TIMELINE BENCHMARKS
-Time to measurable competitive advantage:
-- Large organisations (>$5B revenue): 30-48 months
-- Mid-size ($1-5B): 18-30 months
-- Small (<$1B): 12-18 months
-Most common mistake: expecting AI competitive advantage in under 12 months (unrealistic)
 
-PROGRAMME INVESTMENT BENCHMARKS BY SIZE
+Time to measurable competitive advantage by organisation size:
+  Large organisations (>$5B revenue): 30-48 months
+  Mid-size organisations ($1-5B): 18-30 months
+  Small organisations (<$1B): 12-18 months
+
+Common expectation mismatch:
+  Most common mistake: expecting AI competitive advantage in under 12 months — unrealistic in 92% of organisations
+  The organisations that move fastest: had Phase 0 completed before committing to programme; had CDO in place; had DRS > 60 before Phase 2; had 90-day quick win
+
+Speed benchmarks (AbarVa top-quartile programmes):
+  Healthcare (top quartile): Phase 2 complete at 8 months from Phase 0 start
+  Financial services (top quartile): Phase 2 complete at 6 months
+  Retail (top quartile): Phase 2 complete at 5 months
+
+PROGRAMME INVESTMENT BENCHMARKS BY ORGANISATION SIZE:
+$500M revenue organisation: $2-4M AI programme (12-18 months Phase 0-2)
 $1B revenue organisation: $4-8M AI programme (12-18 months Phase 1-2)
 $5B revenue organisation: $18-38M AI programme (24-36 months Phase 1-3)
 $10B revenue organisation: $42-88M AI programme (36-48 months Phase 1-4)
-ROI at programme completion: 3.4-4.8x for structured programme
+$25B+ revenue organisation: $100M+ structured portfolio (48-60 months Phase 1-4)
+
+ROI at programme completion:
+  Well-structured (AbarVa): 3.4-4.8x at Phase 2 completion
+  Portfolio (Phase 3-4): 5-8x cumulative
+  Unstructured programme (no AbarVa): 1.1x at Phase 2 equivalent; 38% of programmes negative ROI
+
+Phase gate approval requirements:
+  Phase 0 → Phase 1: signed Investment Thesis; CDO appointed or plan in place; Governance model approved
+  Phase 1 → Phase 2: DRS > 50 for use case domains; cloud platform live; data catalogue active; CDO in role
+  Phase 2 → Phase 3: 90-day quick win delivered; locked baseline verified; model monitoring active; Phase 2 use case ROI positive
+  Phase 3 → Phase 4: 3+ use cases in production; internal team self-sufficient; governance mature; compounding ROI demonstrated
+
+
+PROGRAMME FAILURE PATTERNS BY PHASE
+
+Each phase has characteristic failure patterns. Understanding where in the phase sequence a failure originates helps AbarVa apply the right intervention.
+
+PHASE 0 FAILURES (WRONG START):
+  Most common: skipping Phase 0 entirely — vendor selected before strategy
+  Prevalence: 48% of programmes do not complete a structured Phase 0
+  Cost: $2.4-8.4M in Phase 2 rework from strategic misdirection
+  Detection: ask "when was the use case prioritisation framework applied?" — if after vendor selection, Phase 0 was skipped
+  Patterns: F001 (no baseline), L-007 (vendor before strategy), F044 (committee without authority) — all stem from Phase 0 gaps
+
+PHASE 1 FAILURES (WEAK FOUNDATION):
+  Most common: Phase 1 underfunded (< 15% of total programme budget)
+  Prevalence: 44% of programmes underfund Phase 1
+  Cost: 2.1x Phase 2 cost overrun from data quality and governance gaps
+  Detection: "What percentage of programme budget was allocated to Phase 1?" and "Was a CDO in role at Phase 2 start?"
+  Patterns: D-001 (no catalogue), D-006 (governance not enforced), D-003 (identity duplicates) — all Phase 1 deficiencies
+
+PHASE 2 FAILURES (FIRST USE CASE STALL):
+  Most common: 90-day sprint fails due to data availability discovery in week 2
+  Prevalence: 31% of 90-day sprints encounter significant data problems mid-sprint
+  Cost: $280,000-640,000 in sprint investment consumed; Phase 3 delayed 3-6 months
+  Detection: "Was a data audit completed on the use case data before sprint began?"
+  Patterns: F068 (PoC cannot scale), F052 (model without monitoring), F001 (no baseline locked)
+
+PHASE 3 FAILURES (SCALE STALL):
+  Most common: AI team attrition during scale phase (28% annual attrition)
+  Prevalence: 38% of organisations experience material AI team attrition during Phase 3
+  Cost: $1.9M annually in replacement cost; 4-6 month delay per departed key person
+  Detection: "What is your current data science team attrition rate?" and "Have you lost any ML engineers in the last 12 months?"
+  Patterns: team retention failures; vendor dependency developing; governance complacency
+
+PHASE 4 FAILURES (COMPOUND TRUNCATION):
+  Most common: AI programme budget reduced after first positive ROI
+  Prevalence: 22% of programmes reduce AI budget at Phase 4 start
+  Financial consequence: portfolio compounding aborted; organisations stuck at 2-use-case ROI vs. 480-620% 5-use-case potential
+  Detection: "Is the AI programme budget growing, flat, or declining vs. last year?" — declining is the warning signal
+  AbarVa intervention: Phase 4 competitive analysis showing cost-of-inaction as portfolio compounding forgone
+
+
+PROGRAMME ADJUSTMENT MECHANISMS
+
+Phase gates are not just approval checkpoints — they are course-correction opportunities. AbarVa designs phase gate reviews to be honest assessments, not just progress celebrations.
+
+PHASE GATE RED FLAGS (STOP/DELAY SIGNAL):
+  Phase 0 → Phase 1 gate: CDO not appointed and no timeline confirmed → delay; governance vacuum will doom Phase 2
+  Phase 1 → Phase 2 gate: DRS below 50 for use case data domains → delay; use case will stall on data issues
+  Phase 2 → Phase 3 gate: 90-day win not achieved → investigate; does programme have structural problems?
+  Phase 3 → Phase 4 gate: internal team not self-sufficient → extend Phase 3; premature independence declaration creates dependency cliff
+
+WHAT "RED FLAG" MEANS IN PRACTICE:
+  AbarVa recommends delay, not cancellation — most red flags are addressable
+  Average remediation time for a red-flag finding: 6-10 weeks
+  Cost of proceeding through a red-flag gate: 2.1-3.4x higher Phase N+1 cost (well-documented across 44 cases)
+  Governance board decision: explicit yes/no decision with documented rationale — never passive progression by default
+
+PROGRAMME SCOPE MANAGEMENT ACROSS PHASES:
+  Scope inflation: the most common scope problem — stakeholders add requirements across all phases
+  Phase 2 scope rule: one use case in production before any new use case begins
+  Phase 3 scope rule: no more than 3 use cases in simultaneous development
+  Change control: all scope changes require CDO and business unit head joint approval
+  AbarVa finding: programmes with formal change control complete 28% faster than programmes without (counterintuitive — discipline accelerates delivery by preventing rework)

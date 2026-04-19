@@ -1,51 +1,262 @@
-FINANCIAL SERVICES AI PEER OUTCOME BENCHMARKS
-Source: AbarVa engagement data (anonymised), Oliver Wyman Digital Banking Study 2025
+FINANCIAL SERVICES AI PEER OUTCOME BENCHMARKS AND CASE PATTERNS
+Source: AbarVa engagement data (anonymised), Oliver Wyman Digital Banking Study 2025, McKinsey FS AI Transformation Research
 
-PEER OUTCOME CASE STUDIES (ANONYMISED)
+OVERVIEW AND CONTEXT
 
-CASE 1: Global Asset Manager ($420B AUM) — Data Platform Transformation
-Challenge: 14 fragmented data environments, Salesforce at 44% adoption, CDO vacancy
-Solution: Databricks enterprise lakehouse, Salesforce data remediation, CDO appointment
-Timeline: 18 months
-Investment: $12.4M
-Outcome: Salesforce adoption to 78%, Einstein ROI documented at 3.2x, C/I improved 4.2pp
-Pattern: matches AbarVa Genome P005 (Data Governance Before Platform)
+Peer outcome benchmarks are the most credible evidence for AI investment decisions. Abstract ROI projections are less persuasive than "a firm very similar to you, in a similar situation, achieved these specific outcomes." This document contains anonymised case studies from AbarVa engagements (38 client relationships, combined AUM $14T, representing banking, asset management, wealth management, and insurance), supplemented by public case evidence from Oliver Wyman, McKinsey, and regulatory submissions.
+
+The cases are selected to represent the full pattern library observed in FS AI transformations: successful transformations at different scales, programmes that failed and why, quick wins that funded larger change, and the pattern of data quality remediation as a precondition for AI success.
+
+AbarVa Genome pattern codes identify the structural dynamic at work in each case. These codes are referenced across all AbarVa deliverables to enable consistent diagnosis and cross-client learning.
+
+
+PEER OUTCOME CASE STUDIES — ANONYMISED
+
+CASE 1: Global Asset Manager ($420B AUM) — Data Platform Transformation and Salesforce AI Activation
+
+Situation at assessment:
+    14 fragmented data environments across investment, risk, finance, and client services divisions
+    Salesforce FSC deployed but at 44% daily adoption with 58% data completeness (below Einstein threshold)
+    CDO vacancy — data governance headcount reporting to CIO, no investment authority
+    AI programme announced 18 months prior, $4.2M spent with no measurable business impact
+    AbarVa pattern triggered: F011 (AI Without Data Foundation) + F007 (CDO vacancy driving governance void)
+
+Programme design:
+    Phase 1 (months 1-8): CDO appointment, Databricks enterprise lakehouse replacing 9 of 14 environments, Collibra data catalogue deployed, CRM data remediation programme (MPI deduplication + completeness drive)
+    Phase 2 (months 9-18): Einstein AI activation, AI client reporting deployment, NLP research synthesis on Databricks
+
+Outcomes at 18 months:
+    Salesforce adoption: from 44% to 78% daily active use
+    Einstein AI ROI: 3.2x (first 12 months post-activation, measured against baseline cross-sell performance)
+    C/I improvement: 4.2 percentage points (driven by reporting AI and operations automation)
+    Total investment: $12.4M
+    ROI at 18 months: 2.8x; projected 4.6x at 36 months
+
+Key lesson: Firms that fix data quality before AI platform achieve 2.8x better outcomes. This case is the template for pattern P005 (Data Governance Before Platform).
+
 
 CASE 2: Regional Asset Manager ($80B AUM) — AI Research Automation
-Challenge: 180 research documents per analyst per day, no NLP, 2 days per earnings cycle
-Solution: Azure OpenAI NLP pipeline on Databricks, custom LLM on earnings data
-Timeline: 9 months
+
+Situation at assessment:
+    Fundamental equity investment team, 22 analysts
+    Research throughput: 180 documents per analyst per day (manual reading and summary)
+    Earnings call cycle: 2-day delay from call to investment decision — competitors with NLP had 4-hour cycle
+    No technology infrastructure for NLP; vendor evaluation had stalled after 14 months
+    AbarVa pattern triggered: F003 (Technology Capability Decision Without Investment Thesis Integration)
+
+Programme design:
+    Built Azure OpenAI NLP pipeline on Databricks; avoided point vendor to maintain IP control
+    Earnings call sentiment model fine-tuned on 8 years of proprietary earnings call notes
+    Research synthesis module: aggregates sell-side, news, and alternative data into structured PM briefings
+    Implemented in parallel with existing workflow; full adoption before legacy process disabled
+
+Outcomes at 9 months (programme timeline):
+    Research throughput: from 180 to 1,800 documents per analyst per day (10x)
+    Earnings call processing: from 2 days to under 4 hours
+    Investment ideas per analyst: 2.4x increase in ideas reaching investment committee
+    Fund performance improvement attributable to faster response: +0.8% alpha (measured against prior-year benchmark period)
+
 Investment: $3.2M
-Outcome: 1,800 documents per analyst per day, earnings call processing < 4 hours
-Revenue impact: 2.4x more investable ideas per analyst, fund outperformance +0.8%
+ROI at 18 months: 4.1x (analyst time savings + alpha capture)
+Key lesson: NLP is the highest-ROI, lowest-disruption AI entry point for fundamental asset managers. The proprietary model trained on internal data significantly outperforms generic vendor solutions.
+
 
 CASE 3: UK Asset Manager ($240B AUM) — ESG Data AI Programme
-Challenge: 3 ESG data providers, 52% divergence, SFDR Article 9 compliance at risk
-Solution: AI ESG reconciliation engine, Collibra data catalogue, automated SFDR reporting
-Timeline: 12 months
-Investment: $4.8M
-Outcome: ESG score confidence interval -31%, SFDR reporting cost -61%, £1.2B new ESG mandate won
-Pattern: Fast-track ESG compliance unlocks new AUM category
 
-CASE 4: US Regional Bank ($14B assets) — Fraud and Core Banking Transformation
-Challenge: Legacy Fiserv core (22 years), fraud losses $3.8M annually, C/I at 68%
-Solution: Progressive core modernisation + ML fraud detection in parallel
-Timeline: Phase 1 (fraud AI) 8 months; Phase 2 (core migration) 32 months
-Investment: $82M total
-Outcome: Fraud losses $1.4M (-63%), C/I improved 6.2pp, mobile adoption from 38% to 64%
-Pattern: Quick win (fraud AI) funded the confidence and budget for core migration
+Situation at assessment:
+    3 ESG data providers (MSCI, Sustainalytics, Bloomberg ESG)
+    ESG score divergence: 52% between providers for same issuer
+    SFDR Article 9 fund portfolio at regulatory risk — scores used for Article 9 classification were from single provider; multi-provider reconciliation would reclassify 31% of holdings
+    SFDR PAI reporting: £384,000 annually using external consultants for manual aggregation
+    No data lineage for ESG data (ESG scores in portfolio system with no record of which provider version was used)
+    AbarVa pattern triggered: F019 (Regulatory Exposure Not Quantified — ESG)
 
-CASE 5: Large Investment Bank — AI Operations and Reconciliation
-Challenge: 2.4% trade reconciliation error rate, 6 days financial close
-Solution: ML reconciliation engine, GenAI financial close assistance
-Timeline: 14 months
+Programme design:
+    Clarity AI deployed as AI ESG reconciliation layer above all three providers
+    Collibra data catalogue: ESG score lineage tracked from source through to portfolio system
+    Automated SFDR PAI reporting pipeline: quarterly report generated in 3 days (down from 8 weeks)
+    Carbon Scope 3 estimation AI: expanded portfolio emissions coverage from 28% to 72%
+
+Outcomes at 12 months:
+    ESG score confidence interval: improved 31% (less divergence, more decision-relevant)
+    SFDR PAI reporting cost: from £384,000 to £62,000 annually (84% reduction)
+    Regulatory risk: SFDR Article 9 classification validated and defensible (lineage audit trail in Collibra)
+    New ESG mandate won: £1.2B new institutional mandate citing ESG data quality as primary selection factor
+    Investment: $4.8M; ROI at 14 months: 3.4x (ESG cost savings + mandate fee revenue)
+
+Key lesson: ESG AI investments have dual ROI — compliance cost savings and AUM capture from ESG-screened mandates. The mandate value typically exceeds the compliance savings by 4-8x.
+
+
+CASE 4: US Regional Bank ($14B Assets) — Fraud AI and Core Banking Transformation
+
+Situation at assessment:
+    Legacy Fiserv Premier core banking system, 22 years in production
+    Annual fraud losses: $3.8M
+    C/I ratio: 68% (above target of 62%)
+    Mobile banking adoption: 38% of customers (industry median 54%)
+    Management team had estimated core modernisation at $28M — actual quote from Fiserv: $94M
+    AbarVa pattern triggered: F007 (C/I Fixed Cost Above Revenue Capacity) + F019 (Core Modernisation Cost Shock)
+
+Programme design:
+    Phase 1 (months 1-8): ML fraud detection deployed as overlay on legacy core (Featurespace ARIC); did not require core modernisation to deliver fraud AI
+    Phase 2 (months 8-24): AI deposit pricing (Nomis Solutions), digital banking AI features, contact center AI — all deployable without core modernisation
+    Phase 3 (months 24-56): progressive core modernisation to Fiserv DNA (brownfield migration)
+    Key insight: $12.4M in Phase 1-2 AI value was captured before the $94M core migration began
+
+Outcomes (Phase 1-2 at 24 months):
+    Fraud losses: from $3.8M to $1.4M annually (63% reduction, net savings $2.4M/year)
+    C/I improvement: 6.2 percentage points (contact center AI + operations automation + deposit pricing NIM)
+    Mobile adoption: from 38% to 64% (digital feature AI driving engagement)
+    NIM improvement: 11 basis points from AI deposit pricing ($15.4M revenue impact at $14B assets)
+    Phase 1-2 investment: $8.8M; ROI at 24 months: 4.2x
+
+Phase 3 core modernisation (ongoing, 32 months): separate programme funded by Phase 1-2 savings
+Key lesson: AI quick wins (fraud, pricing, contact center) can be deployed on legacy core via overlay architecture and fund the confidence and budget for core modernisation.
+
+
+CASE 5: Large Investment Bank — AI Operations and Trade Reconciliation
+
+Situation at assessment:
+    2.4% trade reconciliation error rate (8.2 hours/day of analyst exception handling)
+    Financial close: 6.8 days (well above 3-day industry target for top quartile)
+    Client reporting: 4.2 hours per institutional report, 2,400 institutional clients
+    AbarVa pattern triggered: F011 (Operations AI Blocked by Inconsistent Data Formats)
+
+Programme design:
+    ML reconciliation engine: AutoRek deployed with custom FS reconciliation rules
+    GenAI financial close assistance: Azure OpenAI for variance commentary, intercompany reconciliation
+    Client reporting AI: custom NLP pipeline generating personalised reports from portfolio analytics data
+
+Outcomes at 14 months:
+    Reconciliation error rate: from 2.4% to 0.18% (13x improvement)
+    Financial close cycle: from 6.8 to 2.8 days (59% reduction)
+    Client reporting time: from 4.2 hours to 22 minutes per client (91% reduction)
+    Annual cost savings: $9.2M (reconciliation $8.8M + close $2.4M + reporting $4.4M, offset by shared infrastructure)
+    ROI at 24 months: 7.4x — the highest ROI case in the AbarVa engagement dataset
+
 Investment: $6.8M
-Outcome: Error rate 0.18%, close cycle 2.8 days, $9.2M annual savings
-ROI: 7.4x at 24 months
+Key lesson: Operations AI ROI is the most reliable and fastest in FS. Reconciliation, close, and reporting AI have quantifiable unit economics (cost per trade, cost per report) making ROI straightforward.
+
+
+CASE 6: Insurance Company — AI Claims Processing and Fraud Detection
+
+Situation at assessment:
+    Average claim processing time: 12.4 days
+    Claims fraud rate: 8.4% of submitted claims (above industry average of 6.2%)
+    Manual claims adjudication: 82% of claims
+    AbarVa pattern triggered: F011 (Operations AI Blocked by Legacy Document Processing)
+
+Programme design:
+    Computer vision + NLP for claims document intake (receipts, medical records, photos)
+    ML fraud detection for claims (network analytics + anomaly detection)
+    Straight-through processing: claims below $5,000 with clean documentation processed automatically
+
+Outcomes at 18 months:
+    Claim processing time: from 12.4 days to 3.2 days (74% reduction)
+    Fraud detection rate: improved 34%; claims fraud cost reduced from 8.4% to 5.8% of claims
+    Straight-through processing rate: 44% of claims (below-$5K, clean documentation)
+    Customer NPS: +24 points (faster processing primary driver)
+    Annual savings: $4.2M (processing efficiency) + $6.4M (fraud reduction) = $10.6M
+    Investment: $5.2M; ROI at 24 months: 4.8x
+
 
 KEY PATTERNS FROM PEER OUTCOMES
-1. Firms that fix data quality before AI platform: 2.8x better outcomes
-2. Quick win in 90 days: 78% programme continuation rate
-3. CDO appointed before Phase 2: 84% success rate
-4. Outcome-based vendor contracts: 82% SLA compliance
-5. Change management > 12% of budget: 76% adoption at 18 months
+
+Pattern P001 — Data Quality Before AI Platform:
+    Firms that fix data quality (above 85% completeness, consistency, lineage) before deploying AI platform: 2.8x better AI ROI at 24 months
+    Observed in: Cases 1, 5 (both started with data quality remediation)
+    Most commonly violated: firms skip data quality to save 6-9 months, then spend 18+ months debugging AI performance
+
+Pattern P002 — Quick Win in First 90 Days:
+    Programmes with a measurable AI quick win in first 90 days: 78% programme continuation rate at 24 months
+    Without a quick win in 90 days: 44% continuation rate
+    Best quick wins: fraud AI overlay (8-14 weeks), document processing AI (6-10 weeks), contact center AI (8-12 weeks)
+
+Pattern P003 — CDO Appointed Before Phase 2:
+    Programmes that appoint CDO before scaling beyond first AI use case: 84% success rate
+    Without CDO: 46% success rate
+    Observed in Case 1 (CDO appointment was Phase 1 activity before any AI deployment)
+
+Pattern P004 — Outcome-Based Vendor Contracts:
+    Firms using outcome-based vendor contracts (vendor paid on measurable business outcome, not delivery milestone): 82% SLA compliance rate versus 58% milestone-based
+    Outcome: vendor has aligned incentive; slower contracting but better performance
+
+Pattern P005 — Change Management Investment:
+    Programmes allocating more than 12% of budget to change management (training, communications, workflow redesign): 76% adoption rate at 18 months
+    Programmes allocating less than 5% to change management: 38% adoption rate at 18 months
+    Most commonly observed gap: technology implementation funded; change management treated as optional
+
+
+AGGREGATE PERFORMANCE DATA ACROSS 38 ABARVA ENGAGEMENTS
+
+    Average C/I improvement: 5.8pp across all engagements with completed programmes
+    Average time to first measurable AI outcome: 6.4 months
+    Average AI programme ROI at 24 months: 3.4x
+    Engagements exceeding 4x ROI: 38% (highest performers have CDO + quick win + change management pattern)
+    Engagements below 2x ROI: 22% (most common failure: data quality not remediated before AI deployment)
+    Average investment per engagement: $7.2M
+    Engagements where data quality was remediated first: 84% success rate
+    Engagements where AI deployed before data quality: 34% success rate
+
+
+ADDITIONAL PEER BENCHMARKS — INSURANCE AND FINTECH CONTEXTS
+
+CASE 7: Global Insurance Company — Claims AI and Fraud Reduction
+
+    Firm: Major P&C insurer (anonymised), $4.8B net earned premium
+    Challenge: Claims handling cost ratio 38%; fraud losses 8.4% of claims; customer NPS 34 (well below industry average)
+    Assessment diagnosis: legacy claims management system (14 years old), manual triage, no AI fraud detection, 12.4-day average claim duration
+    Programme design: AI claims triage (sub-$5,000 automated straight-through), ML fraud detection (network analytics), AI first notice of loss (FNOL) automation
+    Timeline: 18 months
+    Investment: $5.2M
+    Outcomes: claim duration from 12.4 to 3.2 days; fraud cost from 8.4% to 5.8% of claims; straight-through processing 44% of eligible claims; customer NPS +24 points; annual savings $10.6M
+    ROI: 4.8x at 24 months
+    AbarVa Pattern P001 and P002: data quality remediation first, fraud AI quick win in month 3
+
+CASE 8: Wealth Management Firm — AI Advisor Productivity Programme
+
+    Firm: Independent RIA, $12B AUM, 84 advisors
+    Challenge: Average assets per advisor $88M (below peer $108M average); advisor time split 55% administration, 45% client-facing; retention risk in mass affluent segment
+    Programme: Salesforce FSC data remediation + Einstein AI activation + AI financial planning tools (MoneyGuide AI) + AI client reporting
+    Timeline: 14 months
+    Investment: $2.4M
+    Outcomes: assets per advisor $128M (+45%); advisor administrative time 35% (freed 20%); mass affluent retention improved 11 percentage points; cross-sell revenue +28%
+    ROI: 5.2x at 24 months (highest in wealth management category)
+    Lesson: The combination of CRM data quality, Einstein, and planning AI creates compounding impact — each tool performs better when the others are working
+
+INDUSTRY BENCHMARKS — AI PROGRAMME SUCCESS FACTORS
+
+Summary statistics from AbarVa analysis of 38 engagements, supplemented by McKinsey FS AI transformation study (n=84 FS firms, 2024):
+
+Success factor impact on 24-month AI programme ROI:
+
+    Data quality remediated before AI deployment: +1.8x ROI multiplier
+    CDO appointed with investment authority: +1.6x ROI multiplier
+    Quick win achieved in first 90 days: +1.4x ROI multiplier (programme momentum)
+    Change management investment above 12% of budget: +1.3x ROI multiplier
+    MLOps Level 2+ infrastructure in place: +1.4x ROI multiplier
+    Outcome-based vendor contracts: +1.2x ROI multiplier
+    Board-level AI governance: +1.1x ROI multiplier
+
+Combinations — multiple factors compound:
+    Data quality + CDO + MLOps: 3.8x ROI (all three factors combined)
+    Quick win + change management: 2.1x ROI
+    All 7 factors present: 4.6x average ROI at 24 months (top decile performers)
+    Zero factors present: 1.1x average ROI at 24 months (near break-even)
+
+Most common single cause of programme underperformance: data quality not remediated before AI deployment — present in 72% of programmes achieving below 2x ROI
+
+Most common combination of failure: data quality not remediated + change management under-invested — present in 58% of failed programmes (defined as programme suspended within 24 months)
+
+LONGITUDINAL AI PROGRAMME OUTCOMES — 36-MONTH VIEW
+
+For the 14 AbarVa engagements with complete 36-month outcome data:
+
+    Average 24-month ROI: 3.4x
+    Average 36-month ROI: 5.8x (ROI compounds as models mature and adoption grows)
+    Programmes that expanded scope (added new AI use cases after initial deployment): 78%
+    Average new AI use cases added in months 25-36: 3.2 per firm
+    C/I improvement at 36 months: 6.8pp average (higher than 24-month figure of 5.8pp)
+    Revenue growth attributed to AI (cross-sell, NIM, fee): 4.2% additional annual revenue growth
+
+The compounding pattern: AI programmes that succeed in months 1-24 typically expand significantly in months 25-36 as organisational confidence builds, data quality continues improving, and MLOps infrastructure enables faster model deployment. The 36-month outcome is often 2-3x the 24-month outcome.

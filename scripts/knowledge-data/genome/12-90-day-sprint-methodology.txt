@@ -1,68 +1,343 @@
 90-DAY SPRINT AND QUICK WIN METHODOLOGY
 Source: AbarVa Phase Gate Framework, AbarVa Genome — Programme Survival Patterns
+Updated: 2025.Q1
 
-THE 90-DAY IMPERATIVE
-Programme continuation rate at 24 months WITH 90-day quick win: 78%
-Programme continuation rate WITHOUT 90-day quick win: 38%
-Delta: 40 percentage points — the 90-day win is the most critical programme survival factor
+OVERVIEW
 
-WHY 90 DAYS IS THE THRESHOLD
-Board attention span: 3 months to first evidence
-Sponsor confidence: needs visible proof before internal political pressure mounts
-Budget renewal cycle: many organisations have quarterly budget reviews
-Workforce engagement: 90-day cycles match human psychological commitment cycles
-Competitor visibility: 90 days is about the time competitor AI deployments become visible
+The 90-day quick win is the most critical single event in an AI programme beyond initial mandate creation. Its impact on programme survival is quantified precisely: programmes with a 90-day quick win continue at 78% rate through 24 months; programmes without continue at only 38%. This 40-percentage-point difference represents the organisational psychology of AI investment — boards, sponsors, and teams all need visible evidence before they will sustain commitment through the difficulty of Phase 2 and 3.
+
+The 90-day sprint methodology is not about moving fast for the sake of speed. It is about selecting a use case and a scope that is genuinely achievable in 90 days, building it rigorously, and communicating the result effectively to the stakeholders who make Phase 3 investment decisions. A technically excellent 90-day result that is communicated poorly has the same programme survival rate as no result at all.
+
+Key findings:
+  90-day quick win → 78% programme continuation at 24 months
+  No 90-day quick win → 38% programme continuation
+  Delta: 40 percentage points — largest single Phase 2 success factor
+  Phase 2 investment approval rate after 90-day win: 84%
+  AI team retention through Phase 2 after visible win: 94%
+  Failure reason #1 for 90-day sprints: use case selected without confirming data availability
+
+
+THE 90-DAY IMPERATIVE — WHY THIS WINDOW MATTERS
+
+BOARD PSYCHOLOGY:
+  Average board attention span on strategic initiative: 2-3 quarterly cycles
+  Typical board meeting frequency: monthly to quarterly
+  Board demand for early evidence: most boards expect progress signal within first budget cycle
+  Without 90-day evidence: AI programme competes with other initiatives for continued support; board defaults to scepticism
+  With 90-day evidence: board transitions from "investor monitoring uncertainty" to "investor backing proven direction"
+
+SPONSOR CONFIDENCE:
+  Executive sponsors face internal political pressure proportional to the investment size
+  Without visible progress: sponsor is defending an investment with no evidence; political position weakens
+  With visible progress: sponsor has a success story; internal credibility grows; programme gains allies
+  The 90-day win is the sponsor's political insurance policy
+
+WORKFORCE ENGAGEMENT:
+  Human psychological engagement peaks at programme launch (excitement) and valleys at month 3-4 (reality of difficulty)
+  Without 90-day win: engagement valley becomes permanent disengagement; talent starts seeking other opportunities
+  With 90-day win: engagement valley converts to restored motivation; team sees its work validated
+  AbarVa finding: 94% of AI teams stay through Phase 2 after a visible 90-day win; 61% without
+
+BUDGET CYCLE ALIGNMENT:
+  Many organisations run quarterly budget reviews
+  Without Phase 2 evidence by quarter 2: Phase 2 budget is at risk in quarterly review
+  With Phase 2 quick win by day 90: Phase 2 budget renewal is routine; Phase 3 discussion begins
+  Financial discipline: the 90-day structure forces the programme to operate at budget rhythm, not IT project rhythm
+
+COMPETITOR VISIBILITY:
+  Competitor AI deployments typically become public or visible to customers within 90 days of launch
+  Without 90-day win: leadership begins questioning the pace of their own programme vs. competitors
+  With 90-day win: leadership has their own evidence to counter competitive narrative
+
 
 DEFINING THE RIGHT 90-DAY WIN
-Criteria for a valid 90-day quick win:
-1. Measurable: specific numeric improvement vs. locked baseline
-2. Visible: something a board member can see or understand
-3. Attributable: clearly caused by AI, not external factors
-4. Credible: based on real data, not a pilot on best-case scenarios
-5. Scale-able: the first win should be replicable across the organisation
+
+Not every use case is appropriate for a 90-day sprint. Selection criteria are more important than execution — choosing the wrong use case makes failure likely regardless of team quality.
+
+SELECTION CRITERIA (ALL FIVE REQUIRED):
+
+Criterion 1 — MEASURABLE (vs. locked baseline):
+  Must produce a specific numeric improvement in a KPI that was baselined in Phase 0
+  Acceptable: "Denial rate improved from 9.8% to 7.4% in the first 30 claims cohort processed by AI"
+  Not acceptable: "The AI model is working well" or "users are positive"
+  Non-negotiable: if there is no locked baseline, the 90-day win cannot be validated
+
+Criterion 2 — VISIBLE (board-level comprehension):
+  Must be something a board member can understand without technical explanation
+  Test: can you explain the win in one sentence without using the words "algorithm", "model", "dataset", or "pipeline"?
+  Example that passes: "AI denied claims screening reduced first-pass denial rate by 24% in pilot cohort"
+  Example that fails: "Our gradient boosting ensemble achieved 0.89 AUC on the hold-out test set"
+
+Criterion 3 — ATTRIBUTABLE (clearly caused by AI):
+  Must be demonstrably caused by the AI intervention, not by other changes during the period
+  Risk: concurrent operational changes contaminate attribution
+  Mitigation: control group comparison; baseline period that excludes concurrent changes; narrow scope where AI is the only variable
+
+Criterion 4 — CREDIBLE (real data, not pilot cherry-pick):
+  Must be based on representative real-world data, not curated best-case scenarios
+  Credibility destroyers: using hand-selected "easy" data; using historical data that was pre-cleaned; using a time period that was abnormally favourable
+  Board reaction to cherry-picked results: 68% of sponsors become sceptical of subsequent results when early results are found to be unrepresentative
+
+Criterion 5 — SCALE-ABLE (replicable across the organisation):
+  The 90-day win should demonstrate capability that can be replicated at scale
+  It must not be dependent on: exceptional individual effort, special circumstances, or one-time data availability
+  Scale-ability test: "Could we do this for all 100 hospitals/stores/branches with the same approach?"
+
 
 QUICK WIN SELECTION BY INDUSTRY
 
-Healthcare:
-Best 90-day wins: denial rate improvement (AI denial scrubbing), prior auth time reduction
-Data requirement: Epic billing data (usually available)
-Achievable improvement: 15-25% denial rate reduction in 90 days
-Board visibility: CFO-level (revenue impact)
+HEALTHCARE:
 
-Financial Services:
-Best 90-day wins: AML false positive reduction, document processing time reduction
-Data requirement: transaction system data (usually available)
-Achievable improvement: 30-50% false positive reduction in 90 days
-Board visibility: COO/Chief Risk Officer level
+Best 90-day win options:
+Option A: Denial scrubbing AI (highest recommended)
+  Use case: AI reviews claims before submission and flags likely denials for correction
+  Data requirement: Epic Clarity billing data (typically available and accessible)
+  Achievable improvement: 15-25% denial rate reduction in first 90 days
+  Board visibility: CFO-level — direct revenue impact is immediate and quantifiable
+  Data availability risk: LOW (Epic Clarity is the standard healthcare data source; AbarVa has pre-built extraction queries)
+  Technical complexity: LOW-MEDIUM (supervised classification on structured claims data)
+  Timeline confidence: HIGH — this use case has been delivered in 90 days in 28 of 31 AbarVa healthcare engagements
 
-Retail:
-Best 90-day wins: forecast accuracy improvement in one category, loss prevention reduction in pilot stores
-Data requirement: POS + inventory data (usually available)
-Achievable improvement: 10-14% accuracy improvement in 90 days
-Board visibility: COO/CFO level (inventory cost)
+Option B: Prior authorisation time reduction
+  Achievable improvement: 40-60% reduction in PA cycle time
+  Board visibility: COO/CMO — operational efficiency and physician satisfaction
+  Data risk: MEDIUM (requires PA workflow system access; not always integrated with Epic)
+  Timeline confidence: MEDIUM — depends on PA system access
+
+Avoid for 90-day sprint:
+  Sepsis early warning (complex; requires real-time data pipeline; 4-6 months minimum)
+  Readmission prediction (requires 12+ months of outcome data to validate)
+  Clinical documentation AI (requires physician workflow change; 90 days is too fast for adoption)
+
+FINANCIAL SERVICES:
+
+Best 90-day win options:
+Option A: AML/fraud false positive reduction (highest recommended)
+  Use case: ML model reduces false positive rate in transaction monitoring; fewer unnecessary investigations
+  Achievable improvement: 30-50% false positive reduction in 90 days
+  Board visibility: COO/Chief Risk Officer — operational and regulatory significance
+  Data availability risk: LOW (transaction monitoring system data is accessible)
+  Technical complexity: MEDIUM (ML classification on transaction features)
+
+Option B: Trade reconciliation or breaks reduction
+  Use case: AI identifies and resolves reconciliation exceptions automatically
+  Achievable improvement: 60-80% reduction in manual reconciliation exceptions
+  Board visibility: CFO/COO — direct time and cost saving
+  Data availability risk: LOW (reconciliation system data well-structured)
+
+Avoid for 90-day sprint:
+  Credit underwriting model (regulatory model risk approval required; 6-12 months)
+  Customer churn prediction (requires unified identity; 4-6 months data work first)
+  Market risk model (regulatory validation timeline incompatible with 90 days)
+
+RETAIL:
+
+Best 90-day win options:
+Option A: Demand forecasting improvement for one category (highest recommended)
+  Use case: AI forecast for top-volume category (e.g., beverages, cleaning products) replaces statistical baseline
+  Achievable improvement: 10-15% MAPE improvement (from 26% to 22%) in 90 days
+  Board visibility: COO/CFO — inventory cost and availability
+  Data availability risk: LOW (POS data + inventory data typically available)
+  Scope discipline: limit to 1 category and 50-100 pilot stores — do not attempt full range in 90 days
+
+Option B: Markdown optimisation for seasonal clearance
+  Use case: AI recommends markdown timing and depth for end-of-season clearance
+  Achievable improvement: 8-12% reduction in markdown depth; 15-20% better sell-through
+  Board visibility: CFO/GMM — direct margin impact visible in seasonal results
+  Data availability risk: LOW (POS + inventory + pricing history)
+
+Avoid for 90-day sprint:
+  Personalisation AI (requires identity resolution; 4-6 months before meaningful personalisation)
+  End-to-end supply chain optimisation (requires multi-system integration; 6-12 months)
+  New store site selection (requires external data integration and validation; 6+ months)
+
+MANUFACTURING:
+
+Best 90-day win options:
+Option A: Predictive quality detection on one production line
+  Use case: AI detects quality defects from sensor data before product leaves the production stage
+  Achievable improvement: 20-35% reduction in defect escape rate
+  Board visibility: COO/quality leadership — direct scrap and rework cost
+  Data availability risk: MEDIUM (requires sensor data connectivity to cloud — often the blocker)
+
+Option B: OEE (Overall Equipment Effectiveness) prediction on one machine class
+  Use case: AI predicts machine maintenance need from vibration/temperature sensor data
+  Achievable improvement: 12-18% reduction in unplanned downtime
+  Data availability risk: MEDIUM-HIGH (sensor data must be accessible and clean)
+
 
 SPRINT DESIGN FRAMEWORK
-Week 1-2: data access, baseline locked, model training environment
-Week 3-6: model development, data pipeline validation
-Week 7-8: model validation and testing in controlled environment
-Week 9-10: production deployment (limited scope)
-Week 11-12: measurement and results documentation
-Week 12: CXO presentation with evidence
+
+Week-by-week execution template:
+
+WEEK 1-2: FOUNDATION AND DATA AUDIT
+  Day 1-3: data access confirmed; source systems identified; access credentials established
+  Day 3-5: data quality audit of training dataset — completeness, accuracy, freshness assessment
+  Day 5 (gate): go/no-go decision based on data quality
+    GO: proceed if data quality > 80% completeness on required fields
+    NO-GO: alternative use case selected or data remediation sprint initiated (not a 90-day sprint)
+  Day 5-10: baseline KPI confirmed from source data; discrepancy with Phase 0 baseline documented
+  Day 10-14: model training environment established (Databricks / SageMaker / Azure ML provisioned)
+
+WEEK 3-6: MODEL DEVELOPMENT
+  Week 3: feature engineering — which data elements predict the outcome?
+  Week 4: initial model training; first accuracy assessment on training data
+  Week 5: model validation on hold-out test set; accuracy vs. business requirement threshold confirmed
+  Week 6: model review with business subject matter expert — do predictions make business sense?
+    Key check: model must pass "sanity check" by domain expert — if predictions are consistently counter-intuitive, stop and investigate before proceeding
+
+WEEK 7-8: VALIDATION AND CONTROLLED ENVIRONMENT TESTING
+  Week 7: model deployed in controlled environment (not production); predictions generated on recent real data
+  Week 7: side-by-side comparison — AI prediction vs. actual outcome for past 30-day period
+  Week 7-8: business user review — do AI recommendations align with expert judgement?
+  Week 8: accuracy threshold test — must exceed minimum viable accuracy before production deployment
+    Healthcare denial: >85% precision on flagged claims (false positives cost operations money)
+    Retail forecast: MAPE improvement >8% vs. baseline (credible improvement)
+    Fraud: >90% recall on known fraud cases (missing fraud is more costly than false positives)
+
+WEEK 9-10: PRODUCTION DEPLOYMENT (LIMITED SCOPE)
+  Week 9: production deployment to pilot scope (one hospital, one store, one product category)
+  Week 9: AI and manual process run in parallel (no hard cutover yet — safety validation)
+  Week 10: monitor AI recommendations vs. human decisions; confirm AI quality in production environment
+  Week 10: document first production results against locked baseline
+
+WEEK 11-12: MEASUREMENT AND COMMUNICATION
+  Week 11: extract measurement data from source systems; compare to locked baseline
+  Week 11: calculate preliminary ROI (extrapolated from pilot results to full programme scale)
+  Week 12: board/CXO presentation — results with evidence
+    Presentation must be: led by business owner (not IT/data science), visual (one chart of baseline vs. achievement), financial (dollar impact quantified), credible (methodology shown), future-facing (Phase 3 roadmap shown)
+  Day 90: programme continuation decision — expected outcome: Phase 3 approval and expanded budget
+
 
 90-DAY WIN FAILURE PATTERNS
-Failure: picking a use case with insufficient data (discover mid-sprint)
-Mitigation: data audit Week 1 with hard go/no-go decision
 
-Failure: picking a use case too complex for 90 days
-Mitigation: pick the simplest version of the use case, not the most ambitious
+FAILURE A: USE CASE SELECTED WITHOUT DATA AUDIT
+  Description: team selects compelling use case in Phase 0; sprint begins; data audit in week 1 reveals critical data unavailable
+  Result: sprint reset at week 2-3; timeline overruns 90 days; political capital lost
+  Prevalence: 31% of 90-day sprints face significant data discovery problems
+  Mitigation: data audit is Week 1 Gate 1 — non-negotiable go/no-go before sprint continues
+  AbarVa practice: data audit checklist completed before use case is finalised in Phase 0 discovery
 
-Failure: vendor delay pushing past 90 days
-Mitigation: internal team capability for quick win, not vendor-dependent
+FAILURE B: SCOPE TOO AMBITIOUS
+  Description: team selects most ambitious version of use case rather than minimum viable version
+  Example: full RCM AI suite (denial + PA + coding) instead of denial scrubbing only
+  Result: technical development extends past 90 days; incomplete work shown to board; confidence lost
+  Mitigation: explicitly scope the smallest replicable version of the use case; all other capabilities are Phase 3
 
-Failure: 90-day win is technically complete but not communicated effectively
-Mitigation: board presentation designed by comms and business leader, not IT
+FAILURE C: VENDOR DEPENDENCY
+  Description: 90-day sprint depends on an external AI vendor delivering their product
+  Risk: vendor delivery delays push past 90 days; client has no control over timeline
+  Mitigation: 90-day win must be deliverable by internal team + AbarVa team without vendor dependency
+  Exception: if vendor integration is pre-built and reliable, may include — but vendor must commit to 60-day delivery
+  AbarVa rule: no 90-day sprint is permitted to have critical path dependency on a vendor
+
+FAILURE D: TECHNICAL SUCCESS, COMMUNICATION FAILURE
+  Description: AI model performs well; results are real; but presentation to board is technical and unconvincing
+  Symptom: board says "that's interesting" instead of "approve Phase 3 budget"
+  Root cause: data science team presents; business language absent; financial impact not quantified
+  Mitigation: board presentation must be: designed by communications lead, presented by business owner, contain one primary financial outcome number, and show Phase 3 roadmap
+
+FAILURE E: NO SAFETY NET FOR HARD CUTOVER
+  Description: team deploys directly to production without parallel run; early error causes business disruption; trust in AI collapses
+  Mitigation: always implement 30-60 day parallel run before hard cutover; parallel run builds confidence; hard cutover happens after parallel validation
+  Note: parallel run beyond 90 days becomes a failure pattern itself (see F031 extended parallel run)
+
 
 PROGRAMME SURVIVAL AFTER QUICK WIN
-After successful 90-day win: programme continuation at 78% (as above)
-Phase 2 investment approval: 84% success rate (after 90-day win)
-Team confidence and retention: 94% of AI team stays through Phase 2 after visible win
+
+After successful 90-day win:
+  Programme continuation at 24 months: 78% (established finding)
+  Phase 2 → Phase 3 investment approval: 84% success rate
+  AI team retention through Phase 2: 94%
+  Executive sponsor political position: significantly strengthened
+  Board attitude shift: from "monitoring with scepticism" to "active supporter"
+
+After failed or absent 90-day win:
+  Programme continuation at 24 months: 38%
+  Phase 3 investment: contested; frequently reduced or restructured
+  AI team attrition risk: significantly elevated; morale impact
+  Board attitude: "let's do a strategic review" — language for de-prioritisation
+
+MOMENTUM COMPOUNDING:
+  First 90-day win achieved → second use case faster by 1.6x (team learned, data available, platform built)
+  Third use case: 2.1x faster than first (full compounding effect)
+  Organisations with successful 90-day win: proceed to Phase 3 in 8.4 months average vs. 14.2 months without
+
+
+90-DAY SPRINT RESOURCE REQUIREMENTS
+
+The 90-day sprint requires a focused team for 90 days. Trying to run a 90-day sprint as a part-time activity fails in 78% of attempts — 90 days is already the maximum timeline for in-scope use cases.
+
+MINIMUM TEAM FOR 90-DAY SPRINT:
+  ML Engineer (1 FTE for 90 days): model development, feature engineering, model deployment
+  Data Engineer (0.5-1 FTE for 90 days): data pipeline, source data extraction, Silver layer preparation
+  Data Scientist (0.5 FTE): exploratory analysis, feature selection, model validation
+  Business Translator (0.25 FTE): domain expert validation; sanity check on model predictions; user acceptance
+  Programme Manager (0.25 FTE): sprint tracking, stakeholder communication, board presentation preparation
+  Total: approximately 3 FTE equivalent for 90 days
+
+Engagement cost for 90-day sprint (external support):
+  AbarVa team for Phase 2 sprint: $320,000-640,000 (AbarVa delivers in 55% of traditional timeline)
+  Traditional consulting equivalent: $580,000-1.2M
+  Internal team only (if capable): $180,000-340,000 in loaded team cost
+
+ROI on 90-day sprint investment:
+  Average financial impact of successful 90-day win: $4.2-8.4M (annualised from pilot performance)
+  ROI on sprint investment: 6.6-26x in year 1 alone
+  Strategic value (Phase 3 approval): $18-38M in Phase 3 investment unlocked by 90-day evidence
+
+
+90-DAY SPRINT COMMUNICATION STRATEGY
+
+The communication strategy is as important as the technical delivery. A technically excellent 90-day result presented poorly has the same programme survival rate as a poor result.
+
+INTERNAL COMMUNICATION TIMELINE:
+  Week 1: launch communication — "We're starting a 90-day AI sprint; here's what we're trying to achieve and how we'll measure success"
+  Week 6: mid-sprint check-in to stakeholders — "We're on track; here's what the data is showing early"
+  Week 10: preview for executive sponsor — "Here's what the result will look like; prepare for board presentation"
+  Week 12: board presentation and business team announcement
+
+BOARD PRESENTATION FORMAT:
+  Slide 1: The problem we set out to solve (baseline KPI, financial consequence)
+  Slide 2: What we built and how it works (one paragraph, no technical jargon)
+  Slide 3: The result — KPI vs. baseline, one clear chart
+  Slide 4: Financial impact (annualised, conservative estimate)
+  Slide 5: What comes next — Phase 3 roadmap and budget request
+  Total: 5 slides; 20 minutes maximum; business owner presents (not data science team)
+
+KEY LANGUAGE FOR 90-DAY BOARD PRESENTATION:
+  "Before AI: denial rate 9.8%. After AI in our 90-day pilot: 7.4%. At current claims volume, this improvement is worth $8.4M annually."
+  "We chose the smallest, most credible version of this use case for the first 90 days. The full programme will achieve [X] in [timeframe]."
+  "The data proves this works. We are asking to invest $[X] to scale this across [scope]. Expected return: $[Y] in [timeframe]."
+  Do NOT say: "Our model achieved 0.89 AUC on the hold-out test set" — board does not know what this means
+
+BUSINESS TEAM ANNOUNCEMENT (POST-BOARD APPROVAL):
+  Announce by the business unit leader, not IT or data science
+  Language: "Our team has achieved X using AI in 90 days. Starting [date], all [role] will use the AI tool for [process]. [Manager name] will support the transition."
+  This announcement implicitly communicates: this is real, the leadership is committed, this is mandatory
+  Do not position as optional: "You can try the AI tool if you like" produces 28% adoption; "We are using the AI tool from [date]" produces 76% adoption
+
+
+SPECIFIC QUICK WIN EVIDENCE REQUIREMENTS
+
+For a 90-day win to be credible and program-sustaining, the evidence must meet specific standards:
+
+EVIDENCE STANDARD (ABARVA MINIMUM):
+  1. Comparison to locked baseline (not to estimated or remembered baseline)
+  2. Same metric definition before and after (no cherry-picking more favourable metric post-hoc)
+  3. Representative sample (not cherry-picked "easy" data)
+  4. Real production data (not test data or historical simulation)
+  5. Financial impact quantified using confirmed revenue/cost figures (not estimates)
+  6. Timeline documented (sprint started [date]; baseline measured [date]; result measured [date])
+
+EVIDENCE ENHANCERS (OPTIONAL BUT POWERFUL):
+  Control group comparison: comparing AI-enabled cohort vs. same-period non-AI cohort strengthens attribution
+  Statistical significance: if sample is small, confidence interval should be reported
+  Third-party observation: having a neutral observer (AbarVa, finance team, internal audit) verify the result is significantly more credible
+  Vendor confirmation: if the AI vendor also confirms the result against their own metrics, credibility increases
+
+EVIDENCE THAT UNDERMINES CREDIBILITY (AVOID):
+  Sample size too small (< 30 transactions/claims/predictions): board will correctly question statistical validity
+  Time period too short (< 30 days): insufficient to show stable performance
+  Comparison to manually curated "best-case" baseline: if the baseline was created after the AI result to maximise the delta, this will be detected
+  Reporting model performance (AUC, accuracy) instead of business outcome: not meaningful to board

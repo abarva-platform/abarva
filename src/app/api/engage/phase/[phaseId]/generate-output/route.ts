@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 import { buildOutputGenerationPrompt, PromptContext } from '@/lib/prompts/engagement-prompts'
 import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -159,6 +160,22 @@ export async function POST(
         description: `${phaseConfig.output_title} draft generated`,
         metadata: { output_id: output.id }
       })
+
+    const ph = getPostHogClient()
+    ph.capture({
+      distinctId: generatedBy || 'system',
+      event: 'ai_output_generated',
+      properties: {
+        phase_id: phaseId,
+        phase_number: phase.phase_number,
+        engagement_id: engagement.id,
+        client_id: engagement.client_id,
+        solution: engagement.solution,
+        output_type: phaseConfig.output_type,
+        output_id: output.id,
+      },
+    })
+    await ph.shutdown()
 
     return NextResponse.json({ output, rawContent })
   } catch (err: any) {

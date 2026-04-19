@@ -1,59 +1,257 @@
 BASELINE MEASUREMENT AND ROI VERIFICATION STANDARDS
 Source: AbarVa Outcome Verification Framework, ISACA AI Assurance Standards
+Updated: 2025.Q1
+
+OVERVIEW
+
+Baseline measurement is the most commonly skipped and most consequential step in an AI programme. AbarVa's engagement data shows that 84% of enterprise AI programmes have no locked baseline at go-live — meaning 84% of programmes cannot prove ROI with integrity. This is not a minor administrative gap; it is a fundamental programme design failure that makes the entire investment unverifiable.
+
+The problem compounds: without a locked baseline, every ROI claim becomes contestable. Programmes that show early improvements are dismissed by sceptics as seasonality, market movement, or coincidence. Programmes that underperform have no basis for objective course correction. The entire programme devolves into narrative and opinion rather than evidence.
+
+AbarVa's Baseline Locking Protocol is a mandatory Phase 0 deliverable in every engagement. It was developed from analysis of over 200 programmes where ROI claims were later disputed, audited, or proven incorrect. Every element of the protocol has a root cause in a real failure.
+
+Key findings:
+  Programmes without locked baseline: 84% — cannot prove ROI
+  Average delta between claimed ROI (340%) and independently verified (280%): 17% inflation
+  Baseline locking cost: $40,000-80,000 in Phase 0 time investment
+  Consequence of missing baseline: $2.4M in unverifiable claims per programme (median)
+  Independent ROI verification: 22% of programmes use it; AbarVa recommends for all > $5M
+
 
 THE BASELINE PROBLEM IN AI PROGRAMMES
-84% of enterprise AI programmes have no locked baseline at go-live
-Consequence: ROI cannot be calculated with integrity
-Common result: programme declared successful without evidence; or ROI claimed is inflated
-Root cause: urgency to deploy AI outpaces discipline to measure
 
-WHY BASELINES ARE FREQUENTLY MISSING
-Reason 1: "We know what the baseline is approximately" — insufficient (approximations drift)
-Reason 2: Data systems cannot produce the baseline metric historically — data quality issue (signals readiness problem)
-Reason 3: "We'll measure the improvement after go-live" — too late (many confounding variables)
-Reason 4: Multiple stakeholders disagree on the right metric — governance issue
-Reason 5: Vendor wants to go live quickly — baseline slows deployment (resist this pressure)
+WHY 84% OF PROGRAMMES LACK BASELINES:
+
+Reason 1: "We know approximately what the baseline is" (insufficient)
+  Why it fails: approximate baselines drift in memory and are contested after the fact; "approximately 8% denial rate" becomes "we said 8-10% depending on how you measure" six months later
+  Real cost: every dispute over the baseline is a dispute over the ROI — time, credibility, and stakeholder trust lost
+
+Reason 2: Data systems cannot produce the baseline metric historically (data quality signal)
+  Why it matters: if the data system cannot produce a clean historical metric, it also cannot produce a clean measurement of AI impact
+  This is diagnostic: inability to produce a baseline metric is a data readiness problem that must be solved before AI deployment
+  AbarVa rule: if you cannot measure the baseline, you cannot deploy the AI model — baseline measurement is the AI readiness test
+
+Reason 3: "We'll measure the improvement after go-live" (too late)
+  Why it fails: post-go-live measurement captures the change from an unspecified starting point in a world where other things have also changed (new patients, new market conditions, seasonal patterns, operational changes)
+  After-the-fact baseline relies on memory and contested assumptions; attribution becomes impossible
+
+Reason 4: Multiple stakeholders disagree on the right metric (governance problem)
+  Why it happens: CDO prefers one definition of "denial rate"; CFO prefers another; CMO defines it differently
+  This is not a measurement problem — it is a governance problem that must be resolved in Phase 0
+  If agreement on the definition of success cannot be reached in Phase 0, the programme will have no agreement on whether it succeeded in Phase 3
+
+Reason 5: Vendor pressure to go live quickly (resist this pressure)
+  Why vendors push: each week before go-live is a week before contract payment; revenue recognition pressure
+  Why clients comply: vendor urgency feels like momentum; slowing for baseline feels like bureaucracy
+  AbarVa rule: no AI vendor goes live without locked baseline; this is a contractual requirement in all AbarVa-advised vendor contracts
+  Counter to vendor pressure: "We are protecting our ability to prove your product delivered value — this also protects your reference case"
+
 
 ABARVA BASELINE LOCKING PROTOCOL
-Step 1: Define 5-7 KPIs that AI must improve (by CXO sign-off, not IT)
-Step 2: Calculate historical baseline for each KPI (12 months minimum, 24 preferred)
-Step 3: CXO signs baseline document — cannot be changed after AI deployment
-Step 4: Set target: what KPI value constitutes success at 12 and 24 months
-Step 5: Define measurement methodology (how will KPI be calculated, by whom, how often)
-Step 6: Identify confounding variables (seasonality, market changes) and document exclusion methodology
+
+The AbarVa Baseline Locking Protocol has six steps. All six are mandatory. Skipping any step compromises the integrity of the entire measurement framework.
+
+STEP 1: DEFINE THE KPIs
+  Who: CXO, business unit head, and CDO — not IT or data science team alone
+  What: 5-7 KPIs that the AI programme must improve — the programme's success criteria
+  Format: metric name, definition, unit, direction of improvement (higher/lower is better), current approximate value
+  Common mistake: selecting too many KPIs (>8) — measurement becomes burdensome; programme loses focus
+  Common mistake: selecting technically easy KPIs rather than the ones that actually matter
+  AbarVa guidance: the primary KPI should be the one the CFO cares about; secondary KPIs provide context
+
+  Good KPI examples:
+    Healthcare RCM: "First-pass denial rate" (% of claims denied on first submission) — lower is better
+    Retail: "Demand forecast accuracy at SKU-store level" (MAPE or WAPE) — lower MAPE is better
+    Banking: "Fraud loss as % of transaction value" — lower is better
+    Supply chain: "Fill rate" (% of orders filled complete and on-time) — higher is better
+
+  Bad KPI examples (avoid):
+    "AI model accuracy" (model performance, not business outcome)
+    "AI usage rate" (adoption metric, not business outcome)
+    "Number of AI use cases deployed" (output, not outcome)
+    "Customer satisfaction" (too many confounders)
+
+STEP 2: CALCULATE HISTORICAL BASELINE
+  Period: 12 months minimum; 24 months preferred (captures seasonal variation)
+  Method: exact query from the source system, documented with SQL or system report name
+  Granularity: if possible, monthly data points — allows seasonal adjustment in ROI calculation
+  Source: primary source system (Epic Clarity, ERP, fraud management system) — not Excel exports or manual calculations
+  Verification: two independent calculations must agree before baseline is accepted
+  Common mistake: averaging an inconsistent series — seasonal peaks and troughs must be documented, not averaged away
+
+STEP 3: CXO SIGN-OFF ON BASELINE
+  Who signs: CDO and the business CXO who owns the outcome (CFO for cost KPIs, COO for operational KPIs)
+  What they sign: the exact baseline values, the measurement methodology, and the target values
+  Why it matters: the signed document is the reference for all subsequent ROI calculations; it cannot be changed after AI goes live
+  What happens if CXOs disagree: surface and resolve the disagreement now; do not proceed until aligned
+  AbarVa record: baseline document retained in programme file; referenced in every subsequent quarterly review
+  Format: one-page table with: KPI name, definition, historical values (monthly), baseline value (12-month average), source system, measurement query/report name, sign-off signatures
+
+STEP 4: SET TARGETS
+  90-day target: what movement in each KPI constitutes a valid 90-day quick win?
+  12-month target: what KPI value constitutes successful Phase 2 completion?
+  24-month target: what KPI value constitutes full programme ROI?
+  Financial translation: for each KPI target, calculate the financial consequence of achievement
+    Example: "Denial rate reduced from 9.8% to 6.8% on $340M claims volume = $10.2M annual revenue recovered"
+  Risk: setting targets too aggressively (creating programme failure on paper when real progress made)
+  Risk: setting targets too conservatively (programme succeeds on paper without meaningful business impact)
+  AbarVa guidance: 12-month target should represent 60-70% of the total improvement potential; 24-month target is the full potential
+
+STEP 5: DEFINE MEASUREMENT METHODOLOGY
+  Who measures: named individual (not "the programme team") — a specific person is accountable
+  How often: measurement cadence documented (weekly, monthly, quarterly for each KPI)
+  From what source: exact system, report name, and query or export procedure documented
+  When to measure: start date, end date for each measurement period
+  Confounding variable documentation: what external factors might affect the KPI that are unrelated to AI?
+    Seasonal patterns: document expected seasonal variation so it is not attributed to AI
+    Market changes: document any known market events that could affect the KPI
+    Operational changes: other operational changes during the programme period that might affect KPI
+  AbarVa template: available in programme toolkit; one page per KPI
+
+STEP 6: ESTABLISH CONFOUNDING VARIABLE EXCLUSIONS
+  Definition: a confounding variable is something that would change the KPI even if AI was never deployed
+  Examples:
+    Healthcare: new payer contract changes denial rate regardless of AI
+    Retail: new store openings change total forecast accuracy regardless of AI
+    Banking: economic downturn changes fraud rates regardless of AI model
+  Methodology: document expected confounding variables before programme starts; define how to isolate AI impact
+  Approach options:
+    Control group: compare AI-enabled sites vs. non-AI-enabled sites (gold standard)
+    Before/after with adjustment: adjust for documented confounding variables (acceptable)
+    Difference-in-differences: compare rate of change in AI group vs. non-AI group (statistical approach)
+  AbarVa minimum: all baselines must document 2-3 potential confounding variables and the adjustment methodology
+
 
 MEASUREMENT CADENCE BEST PRACTICES
-Week 1-4 post-go-live: daily monitoring (instability expected)
-Month 2-3: weekly reporting against baseline
-Month 4+: monthly reporting, quarterly CXO review
-Annual: independent third-party verification of ROI claims
+
+PHASE 2 GO-LIVE (WEEK 1-4):
+  Frequency: daily monitoring of primary KPI
+  Reason: AI models exhibit instability in first 4 weeks (learning curve, data pipeline issues, edge cases)
+  Expected performance: typically 60-70% of steady-state improvement in first 4 weeks
+  Do not measure ROI in this period — learning curve will produce artificially low readings
+  Alert threshold: if KPI moves in wrong direction for 5+ consecutive days, escalate to CDO
+
+RAMP PERIOD (MONTH 2-3):
+  Frequency: weekly reporting against baseline
+  Expected performance: 70-90% of steady-state improvement
+  Action: tune model based on production data; address systematic errors
+  Communication: weekly summary to programme sponsor (3 numbers: current KPI, vs. baseline, vs. target)
+
+STEADY-STATE (MONTH 4+):
+  Frequency: monthly reporting; automated where possible
+  Expected performance: > 90% of target at month 6 for well-structured programmes
+  Quarterly CXO review: formal comparison of actual KPI vs. baseline vs. target
+  Course correction: if KPI is tracking below target at month 6, formal remediation plan required
+
+ANNUAL:
+  Independent third-party verification of ROI claims
+  Model retraining assessment (is model still trained on current patterns?)
+  Use case expansion review (are new use cases ready to compound on this one?)
+
 
 COMMON BASELINE MEASUREMENT ERRORS
-Error 1: Using a different metric before vs. after AI (e.g., gross revenue before, net revenue after)
-Error 2: Counting AI improvement during a period of external tailwinds (market recovery, etc.)
-Error 3: Measuring model performance (accuracy, AUC) instead of business outcome (revenue, cost)
-Error 4: Not accounting for learning curve (months 1-3 are typically below steady-state performance)
-Error 5: Comparing to a "control group" that was cherry-picked
 
-KPI FRAMEWORKS BY USE CASE
+ERROR 1: METRIC CHANGE BETWEEN BASELINE AND MEASUREMENT PERIODS
+  Example: measuring "gross denial rate" at baseline, then "net denial rate after appeals" after AI
+  Why it happens: as programme evolves, stakeholders refine metric definitions — but this invalidates the baseline comparison
+  Fix: lock metric definition in Step 1; any proposed metric change requires re-establishing baseline
 
-RCM AI (Healthcare):
-Primary: denial rate %, days in AR, clean claim rate %
-Secondary: prior auth cycle time, rework cost per denial
-Measurement: monthly, from EHR billing system (Epic Clarity preferred)
+ERROR 2: ATTRIBUTING EXTERNAL TAILWINDS TO AI
+  Example: measuring AI impact during a period when the insurance market improved (reducing denial rates industry-wide)
+  Detection: compare KPI improvement against industry peers who did not deploy AI
+  Fix: document and adjust for external tailwinds; use difference-in-differences approach
 
-Demand Forecasting AI (Retail):
-Primary: forecast accuracy % at SKU/store, inventory turnover, out-of-stock rate
-Secondary: markdown % of inventory, days of inventory on hand
-Measurement: weekly, from WMS/ERP
+ERROR 3: MODEL PERFORMANCE VS. BUSINESS OUTCOME CONFUSION
+  Example: reporting "model AUC improved from 0.72 to 0.89" instead of "denial rate improved from 9.8% to 6.8%"
+  Why it matters: model performance does not always translate to business outcome
+  AbarVa rule: primary KPI must always be a business outcome (revenue, cost, rate, time) — not a model metric
 
-Fraud Detection AI (Banking):
-Primary: fraud loss as % of transactions, false positive rate
-Secondary: false negative rate, investigation cost per case
-Measurement: daily, from fraud management system
+ERROR 4: EARLY MEASUREMENT (BEFORE MODEL STABILISES)
+  Prevalence: 44% of "failed" AI programmes were measured during the ramp period (months 1-3)
+  Why it matters: months 1-3 capture learning curve, not steady-state performance
+  Correct approach: report steady-state improvement starting at month 4; acknowledge learning curve in month 1-3 reporting
+  AbarVa rule: primary ROI measurement at 12-month mark; 90-day measurement is for quick win evidence only
+
+ERROR 5: PROGRAMME COST EXCLUDED FROM ROI
+  Example: $8M in gross savings claimed as ROI, but $6M programme cost not deducted
+  Reported ROI: 133% vs. actual net ROI: 33%
+  Prevalence: 62% of AI ROI claims are gross savings without programme cost deduction
+  Fix: all ROI reporting must use net ROI = (benefits - programme costs) / programme costs
+
+ERROR 6: CONTROL GROUP CONTAMINATION
+  Example: control group (without AI) inadvertently learns from AI group through shared processes or training
+  Result: control group performance improves, making AI's incremental benefit appear smaller
+  Fix: physical separation of control and treatment groups; strict blinding of control group managers
+
+
+KPI FRAMEWORKS BY USE CASE AND INDUSTRY
+
+RCM AI (HEALTHCARE REVENUE CYCLE):
+  Primary KPI 1: First-pass denial rate % (target: from 9.8% to < 5.0%)
+  Primary KPI 2: Days in AR (target: from 42 days to < 32 days)
+  Primary KPI 3: Clean claim rate % (target: from 92% to > 97%)
+  Secondary KPI 1: Prior authorisation manual review rate (target: from 78% manual to < 35% manual)
+  Secondary KPI 2: Rework cost per denied claim (target: 28% reduction)
+  Measurement source: Epic Clarity (preferred), Cerner Analytics, or RCM system reporting
+  Measurement frequency: monthly (claims cycle is monthly)
+  Seasonal adjustment: payer contract renewals, fiscal year end patterns
+  Financial translation: each 1% denial rate reduction = $2.8-8.4M per $1B in claims (payer mix dependent)
+
+DEMAND FORECASTING AI (RETAIL/CPG):
+  Primary KPI 1: Weighted Mean Absolute Percentage Error (WMAPE) at SKU/store (target: from 26% to < 12%)
+  Primary KPI 2: Out-of-stock rate % (target: from 2.4% to < 1.0%)
+  Primary KPI 3: Inventory turnover ratio (target: 15% improvement)
+  Secondary KPI 1: Markdown % of inventory (target: 18% reduction in markdown depth)
+  Secondary KPI 2: Days of inventory on hand (target: 12% reduction)
+  Measurement source: WMS (Warehouse Management System) + ERP + POS data
+  Measurement frequency: weekly (aligned to replenishment cycle)
+  Seasonal adjustment: holiday season, promotional events, new product launches
+  Financial translation: each 1% WMAPE improvement = $1.8-4.8M per $1B revenue (category dependent)
+
+FRAUD DETECTION AI (BANKING/PAYMENTS):
+  Primary KPI 1: Fraud loss as % of transaction value (target: 38-54% reduction)
+  Primary KPI 2: False positive rate % (target: 30-50% reduction)
+  Secondary KPI 1: False negative rate (target: 22% reduction)
+  Secondary KPI 2: Investigation cost per flagged case (target: 44% reduction via AI triage)
+  Measurement source: fraud management system; transaction monitoring system
+  Measurement frequency: daily (fraud is a real-time business)
+  Seasonal adjustment: holiday season elevated fraud; account for in baseline
+  Financial translation: each 0.01% fraud rate reduction on $10B transaction volume = $1M per year
+
+CLINICAL DOCUMENTATION AI (AMBIENT HEALTHCARE):
+  Primary KPI 1: Physician documentation time per encounter (target: 44-52% reduction)
+  Primary KPI 2: Patient encounters per physician per day (target: +1.8 encounters)
+  Primary KPI 3: Physician satisfaction score (target: +24 NPS points)
+  Secondary KPI 1: After-hours documentation time (target: 68% reduction)
+  Secondary KPI 2: Chart completion within 24 hours % (target: from 62% to > 90%)
+  Measurement source: EHR time-in-system logs, physician scheduling, satisfaction surveys
+  Financial translation: 1.8 more encounters per physician per day × physician panel × reimbursement rate = $1.2-3.8M per 100 physicians annually
+
 
 INDEPENDENT VERIFICATION
-Third-party ROI verification: 22% of AI programmes use independent verification
-AbarVa recommendation: all programmes >$5M should have independent verification
-Verification reduces ROI claim inflation: from 340% claimed to 280% independently verified (average delta: 17%)
-Verification cost: $40,000-180,000 (small fraction of claimed ROI)
+
+THIRD-PARTY ROI VERIFICATION — THE CASE:
+  Third-party verification: 22% of AI programmes use it
+  Average delta: claimed ROI 340% vs. independently verified 280% (17% inflation on average)
+  In 28% of programmes, claimed ROI overstated by > 30% — material misstatement
+  In 8% of programmes, claimed ROI overstated by > 100% — programme would not have been approved at correct ROI
+  Verification cost: $40,000-180,000 — fraction of programme investment and claimed ROI
+
+WHY VERIFICATION MATTERS:
+  Internal teams have cognitive bias to confirm the investment was correct
+  Vendors have motivation to demonstrate their product delivered value
+  Programme teams need the AI success story for career advancement
+  All three biases produce upward inflation in unverified claims
+
+AbarVa recommendation:
+  All programmes > $5M: independent ROI verification at month 12 and month 24
+  Verification performed by: AbarVa (as part of engagement), or agreed independent auditor
+  Verification scope: baseline confirmation, measurement methodology audit, confounding variable analysis, ROI calculation verification
+  Output: Verified ROI certificate — used for board reporting, investment decisions, and programme continuation approval
+
+VERIFICATION PROCESS (ABARVA STANDARD):
+  Week 1: retrieve baseline document signed at programme start; retrieve all measurement reports
+  Week 2: independently extract same KPI data from source systems using baseline measurement methodology
+  Week 3: compare independently extracted data against programme-reported data; document any discrepancies
+  Week 4: calculate verified ROI using programme costs confirmed from finance system; produce verified certificate
+  Typical findings: 3-4 measurement methodology deviations; 1-2 confounding variables not adjusted for; net ROI reduction of 12-18% vs. claimed

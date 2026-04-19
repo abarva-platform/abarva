@@ -159,6 +159,318 @@ const BLUEPRINTS: Record<string, any> = {
       ],
     },
   },
+
+  arcturus: {
+    client: 'Arcturus Financial Group',
+    industry: 'Wealth Management · $200B AUM · 180 Advisors',
+    initiative: 'Advisor Intelligence Co-Pilot',
+    domain: 'Front Office · Advisor Productivity & Client Intelligence',
+    preparedBy: 'AbarVa Intelligence Platform',
+    date: 'April 2026',
+    color: '#2DD4C8',
+    executiveSummary: {
+      headline: 'Arcturus advisors spend 64% of their time on tasks AI can handle — while Morgan Stanley and Merrill Lynch have already deployed advisor AI. Every quarter of delay widens the productivity gap.',
+      bullets: [
+        'Current state: advisors spend 64% of time on prep, reporting, admin. Only 36% on client relationship work — the only activity that retains AUM.',
+        'The business case: $42M annual value from advisor productivity alone, with a further $18M from proactive churn prevention. Combined $60M — against $3.2M investment.',
+        'The urgency: two institutional clients ($1.1B AUM) have issued RFPs citing fee competitiveness. Advisor AI is the only structural answer to fee pressure short of headcount reduction.',
+        'Vendor recommendation: Salesforce Einstein (already on FSC) + Azure OpenAI orchestration — zero new vendor relationship, 4-month deployment vs 14 months for alternatives.',
+        'AbarVa role: negotiate Salesforce Einstein contract (benchmarked to Fidelity pricing), deploy integration layer, and verify $42M in advisor productivity improvement within 12 months.',
+      ],
+      decision: 'The board needs one decision: approve the $3.2M Salesforce Einstein + Azure OpenAI budget this quarter. Delay compounds — Morgan Stanley advisor AI is already in the market. Every quarter of inaction costs $10M in advisor productivity and widens the churn risk.',
+    },
+    problemStatement: {
+      current: [
+        { metric: 'Advisor time on relationship work', current: '36%', target: '60%', gap: '24 percentage points', dollarImpact: '$42M/yr in productivity gap' },
+        { metric: 'Client meeting prep time', current: '45 min/meeting', target: '8 min/meeting', gap: '37 min/meeting', dollarImpact: '660 advisor-hours/week recoverable' },
+        { metric: 'AUM churn rate', current: '13%/year', target: '8%/year', gap: '5 points above benchmark', dollarImpact: '$588M AUM lost annually' },
+        { metric: 'New client prospect identification', current: 'Manual, opportunistic', target: 'AI-driven, systematic', gap: 'No predictive engine', dollarImpact: '$22M/yr in pipeline gap' },
+        { metric: 'Cost-to-income ratio', current: '71%', target: '58% (peer median)', gap: '$840M structural gap', dollarImpact: 'Largest single performance gap' },
+      ],
+      rootCause: 'The Salesforce FSC deployment was done without enabling Einstein or AI features — the tool is present but not activated. Bloomberg Terminal and Aladdin remain disconnected from the CRM, so advisors spend 45 minutes before each client meeting manually pulling data from three systems. There is no pre-built meeting brief, no portfolio narrative generation, and no proactive churn signal. The technology to solve this is already contracted — it simply has not been turned on.',
+      urgencyTitle: 'Competitive Pressure — Peer Firms Already Deployed',
+      urgency: 'Morgan Stanley launched MS Vantage (advisor AI) in Q3 2025. Merrill Lynch launched Client Insight in Q1 2026. Both are already in the hands of advisors competing for the same client base. UBS and Raymond James are 6-9 months behind Arcturus. The window to be the first independent RIA at scale to deploy advisor AI is closing. Two institutional clients representing $1.1B AUM have issued RFPs citing fee competitiveness — the decision arrives in 90 days, and advisor AI capability will be a scored criterion.',
+    },
+    solutionDesign: {
+      approach: 'Activate Salesforce Einstein (already contracted, not deployed) and connect Bloomberg, Aladdin, and Advent portfolio data via a real-time Azure integration layer. The AI co-pilot generates pre-meeting briefs, portfolio narratives, and churn alerts automatically — no new vendor relationship required. Azure OpenAI orchestrates the intelligence layer using the golden record as the data source.',
+      architecture: [
+        { layer: 'AI Layer', component: 'Azure OpenAI Orchestrator', description: 'Generates pre-meeting briefings, portfolio narratives, and churn signals from the golden record. Delivers 3-minute briefing 2 hours before each meeting.', technology: 'Azure OpenAI GPT-4o — already on Arcturus Azure tenant' },
+        { layer: 'CRM Layer', component: 'Salesforce Einstein', description: 'Surfaces AI recommendations inside advisor workflow. Next-best-action, churn prediction, and prospect alerts within FSC.', technology: 'Einstein for FSC — already contracted, activation only' },
+        { layer: 'Data Layer', component: 'Golden Record', description: 'Real-time integration of Bloomberg, Aladdin, Advent, and Salesforce into a unified client + portfolio record. Single source of truth for AI.', technology: 'Azure SQL + Azure Data Factory — 6-week build' },
+        { layer: 'Market Data', component: 'Bloomberg API', description: 'Real-time market data and portfolio valuations injected into pre-meeting briefings and portfolio narratives.', technology: 'Bloomberg B-PIPE API — already licensed' },
+        { layer: 'Governance Layer', component: 'Compliance Filter', description: 'Every AI recommendation reviewed against FSC compliance rules before delivery to advisor. Suitability flags auto-suppressed until human review.', technology: 'Azure AI Content Safety + Actimize integration' },
+      ],
+      dataRequirements: [
+        { data: 'Salesforce FSC CRM data', status: 'Available', completeness: '91%', note: '180 advisors, 12,000 clients — FSC already in use. Einstein activation only.' },
+        { data: 'Bloomberg market data', status: 'Available', completeness: '100%', note: 'B-PIPE API licensed. Requires connection to golden record — 2-week integration.' },
+        { data: 'Aladdin portfolio positions', status: 'Available', completeness: '88%', note: 'Real-time positions available via API. 14 alternative fund positions are manual — 12% of AUM.' },
+        { data: 'Advent historical performance', status: 'Available', completeness: '96%', note: 'Full performance history from Advent. 3-day lag to golden record eliminated in Phase 1.' },
+        { data: 'Client communication history', status: 'Partial', completeness: '62%', note: '38% of advisor emails not captured. CRM email sync required — 4-week configuration.' },
+      ],
+    },
+    vendorDecision: {
+      headline: 'AbarVa recommends Salesforce Einstein activation over Microsoft Copilot for Sales or custom Azure OpenAI build.',
+      recommendation: 'Salesforce Einstein (already contracted)',
+      reasoning: [
+        'Already contracted: Arcturus holds an FSC + Einstein contract. Activation cost is $380K (implementation only). No new vendor negotiation, no new security review, no procurement cycle.',
+        'Advisor workflow: Einstein lives inside Salesforce FSC — where advisors already work. Copilot for Sales requires a Teams-first workflow that conflicts with advisor habits at 11 of 14 surveyed firms.',
+        'Time to value: Einstein activation + Azure golden record = 14 weeks to first advisor brief. Custom Azure build = 52+ weeks. The 38-week difference costs $8M in delayed productivity.',
+        'Compliance coverage: Salesforce FSC + Einstein is the only solution with pre-built wealth management compliance guardrails. Custom build requires 6 months of compliance configuration that is already done in Einstein.',
+        'AbarVa benchmarking: Edward Jones paid $2.8M for equivalent Einstein deployment in 2025. LPL Financial paid $2.1M. Arcturus should target $1.8-2.2M for implementation — not the list price of $3.4M.',
+      ],
+      vendorComparison: [
+        { vendor: 'Salesforce Einstein (activate)', klas: 'N/A', cost: '$1.8-2.2M', timeline: '14 weeks', epicFit: 'Native to FSC', aiCapability: 'Best fit for wealth mgmt', recommendation: true },
+        { vendor: 'Microsoft Copilot for Sales', klas: 'N/A', cost: '$2.4-3.2M', timeline: '22 weeks', epicFit: 'Teams-first, non-native', aiCapability: 'Strong but generic', recommendation: false },
+        { vendor: 'Custom Azure OpenAI build', klas: 'N/A', cost: '$4.8-7.0M', timeline: '52+ weeks', epicFit: 'Custom integration required', aiCapability: 'Maximum flexibility', recommendation: false },
+      ],
+      negotiationPlaybook: [
+        'Open with: "We are also evaluating Microsoft Copilot for Sales. Their implementation team is available in 6 weeks." This activates the Salesforce competitive response.',
+        'Anchor to benchmarks: "Edward Jones paid $2.1M for comparable scope in 2025. Our target is $1.8M for implementation — and we need outcome-based pricing tied to adoption rate and advisor productivity."',
+        'Request: Einstein usage-based activation — Arcturus pays per activated advisor, not per licensed seat. Starts at 40 advisors, scales to 180 based on demonstrated productivity improvement.',
+        'Demand: Salesforce PS team must include one wealth management-specific Einstein deployment resource. Generic FSC PS teams have 40% longer deployment cycles at comparable firms.',
+        'Walk away condition: If Salesforce will not price competitively vs. Microsoft, escalate to SVP Sales level — the competitive displacement threat is real at this AUM tier.',
+      ],
+    },
+    resourceModel: {
+      headline: 'This initiative requires 1 AbarVa Maestro, 1 Salesforce PS lead, and 1 Azure data engineer. No SI required.',
+      phases: [
+        {
+          phase: 'Phase 1', name: 'Golden Record & Data Layer', duration: 'Weeks 1-6', cost: '$480K',
+          resources: [
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '60%', cost: 'Included in platform fee', responsibility: 'Vendor negotiation, architecture design, stakeholder alignment' },
+            { role: 'Azure Data Engineer (Avanade)', type: 'SI', allocation: '100%', cost: '$180K (6 weeks)', responsibility: 'Bloomberg-Aladdin-Advent-Salesforce golden record integration' },
+            { role: 'Salesforce FSC Admin', type: 'Internal', allocation: '50%', cost: '$0 incremental', responsibility: 'FSC data model preparation, field mapping' },
+            { role: 'Compliance Officer', type: 'Internal', allocation: '20%', cost: '$0 incremental', responsibility: 'AI recommendation guardrail approval' },
+          ],
+        },
+        {
+          phase: 'Phase 2', name: 'Einstein Activation & Pilot (40 advisors)', duration: 'Weeks 7-14', cost: '$1.4M',
+          resources: [
+            { role: 'Salesforce Einstein PS Lead', type: 'Vendor', allocation: '100%', cost: 'Included in vendor fee', responsibility: 'Einstein configuration, model training on Arcturus data, FSC workflow build' },
+            { role: 'Azure OpenAI Engineer', type: 'Vendor', allocation: '100%', cost: '$240K (8 weeks)', responsibility: 'Orchestration layer, briefing generation, meeting prep automation' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '40%', cost: 'Included', responsibility: 'Pilot governance, advisor feedback loop, outcome baseline measurement' },
+            { role: 'Change Management Lead', type: 'Internal', allocation: '80%', cost: '$0 incremental', responsibility: 'Advisor adoption program, training, feedback collection' },
+          ],
+        },
+        {
+          phase: 'Phase 3', name: 'Full Rollout (180 advisors)', duration: 'Weeks 15-20', cost: '$1.3M',
+          resources: [
+            { role: 'Salesforce PS Team (2)', type: 'Vendor', allocation: '100%', cost: 'Included in vendor fee', responsibility: 'Scale deployment, advisor customization, FSC reporting dashboards' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '20%', cost: 'Included', responsibility: 'Productivity measurement, churn impact tracking, fee calculation' },
+            { role: 'IT Operations', type: 'Internal', allocation: '30%', cost: '$0 incremental', responsibility: 'Production support, monitoring, SLA management' },
+          ],
+        },
+      ],
+      agentVsHuman: [
+        { task: 'Pre-meeting briefing generation (standard)', recommended: 'Agent (Azure OpenAI)', cost: '$0.12/brief', volume: '~2,400/week', note: '3-minute briefing generated automatically 2hr before meeting' },
+        { task: 'Portfolio narrative (quarterly report)', recommended: 'AI-generated, advisor reviews', cost: '$0.45/report', volume: '~2,400/quarter', note: 'Advisor approves in 90 seconds — not 4 hours' },
+        { task: 'Churn alert triage', recommended: 'AI flags, advisor acts', cost: '$0/alert', volume: '~30 alerts/week', note: 'Model surfaces top 30 at-risk clients weekly — advisor decides intervention' },
+        { task: 'Complex estate planning analysis', recommended: 'Human (advisor)', cost: '$N/A', volume: 'Case by case', note: 'AI provides data package; judgment stays with advisor' },
+      ],
+    },
+    businessCase: {
+      investment: [
+        { phase: 'Phase 1 (weeks 1-6)', amount: 480000, type: 'Golden record & data layer' },
+        { phase: 'Phase 2 (weeks 7-14)', amount: 1400000, type: 'Einstein activation & pilot' },
+        { phase: 'Phase 3 (weeks 15-20)', amount: 1300000, type: 'Full rollout' },
+      ],
+      totalInvestment: 3180000,
+      valueCapture: [
+        { source: 'Advisor productivity (64% → 40% admin time)', year1: 24000000, steady: 42000000 },
+        { source: 'AUM churn reduction (13% → 9%)', year1: 8400000, steady: 18000000 },
+        { source: 'New AUM from prospect intelligence', year1: 6000000, steady: 22000000 },
+        { source: 'C/I ratio improvement (contribution)', year1: 4200000, steady: 12000000 },
+      ],
+      totalYear1Value: 42600000,
+      totalSteadyValue: 94000000,
+      paybackMonths: 4.2,
+      roi: 29.6,
+      abarvaFee: {
+        platform: 500000,
+        outcomeFee: 6390000,
+        total: 6890000,
+        note: '15% of Year 1 realized savings — paid quarterly as advisor productivity and churn improvement are verified against Day 0 baseline',
+      },
+    },
+    governance: {
+      kpis: [
+        { metric: 'Advisor time on client relationship work', baseline: '36%', target: '60%', frequency: 'Monthly', owner: 'COO / Head of Advisor Experience' },
+        { metric: 'Meeting prep time per client', baseline: '45 min', target: '< 10 min', frequency: 'Weekly', owner: 'COO' },
+        { metric: 'Client churn rate (AUM)', baseline: '13%/yr', target: '< 9%/yr', frequency: 'Quarterly', owner: 'CEO / Head of Wealth' },
+        { metric: 'Einstein adoption rate (advisors)', baseline: '0%', target: '> 85% active users', frequency: 'Monthly', owner: 'CTO / Change Management' },
+        { metric: 'New AUM from AI-identified prospects', baseline: '$0', target: '$120M/yr', frequency: 'Quarterly', owner: 'Head of Business Development' },
+      ],
+      risks: [
+        { risk: 'Advisor adoption resistance (technology change)', probability: 'High', impact: 'High', mitigation: 'Pilot with the 10 most tech-forward advisors first. Build advocacy group. Adoption tracks against compensation KPIs for senior advisors.' },
+        { risk: 'CTO resistance — "90 days away" narrative disrupted', probability: 'High', impact: 'Medium', mitigation: 'Frame as "activating existing contracts" not "new AI deployment." CTO owns the Einstein activation — credit, not disruption.' },
+        { risk: 'Data quality in Advent (3-day lag)', probability: 'Medium', impact: 'Medium', mitigation: 'Golden record build eliminates lag in Phase 1. Pilot advisors use Bloomberg-only briefings until Advent is connected.' },
+        { risk: 'Compliance pushback on AI recommendations', probability: 'Medium', impact: 'High', mitigation: 'All AI content flagged "for advisor review" — not client-facing. CCO co-designs guardrails in Phase 1 alongside compliance surveillance deployment.' },
+      ],
+      nextSteps: [
+        { action: 'Audit Salesforce Einstein contract — activation scope and terms', owner: 'CTO + Legal', deadline: 'This week', rationale: 'Confirms what is already contracted vs what requires new spend' },
+        { action: 'Commission Azure data engineer (Avanade)', owner: 'CTO + AbarVa', deadline: 'This week', rationale: 'Golden record is critical path — 6-week build starts now' },
+        { action: 'Identify 10 pilot advisors', owner: 'COO + Head of Wealth', deadline: 'This week', rationale: 'Pilot group must be credible internally — success converts the skeptics' },
+        { action: 'Brief CFO on business case and AbarVa fee structure', owner: 'CEO + AbarVa', deadline: 'Next week', rationale: '$3.2M investment against $42M Year 1 value — straightforward approval' },
+        { action: 'Initiate Salesforce renegotiation', owner: 'CTO + AbarVa', deadline: 'This month', rationale: 'AbarVa benchmarking shows $1.2M savings vs list price — requires dedicated negotiation' },
+      ],
+    },
+  },
+
+  apexretail: {
+    client: 'Apex Retail Group',
+    industry: 'Omnichannel Retail · 380 Stores · $2.8B Revenue',
+    initiative: 'AI Demand Forecasting & Inventory Intelligence',
+    domain: 'Middle Office · Merchandising, Demand Planning & Supply Chain',
+    preparedBy: 'AbarVa Intelligence Platform',
+    date: 'April 2026',
+    color: '#F59E0B',
+    executiveSummary: {
+      headline: '$180M in annual markdowns and $42M in stockout losses are both traceable to a statistical forecasting system that is 61% accurate at the SKU level. AI forecasting achieves 86% SKU-level accuracy — using data Apex already has.',
+      bullets: [
+        'Current state: category-level forecast is 82% accurate — but SKU-store-week accuracy is 61%. The 21-point gap produces $180M in markdowns and 3 major stockout events annually.',
+        'The solution: ML demand forecasting model trained on 7 years of Apex POS data, integrated with weather, local events, and competitor pricing. SKU-store-week accuracy to 86%.',
+        'The business case: $62M from markdown reduction + $24M from inventory efficiency = $86M steady-state value against $5.8M investment. 4.1-month payback.',
+        'The timeline urgency: Q4 2026 holiday season is the highest-stakes demand window. Production deployment needed 6 months before — start by Q2 2026.',
+        'Critical dependency: Teradata end-of-life creates a data infrastructure deadline. The forecasting AI migration and Teradata replacement must be sequenced — AbarVa has designed the combined roadmap.',
+      ],
+      decision: 'The board needs one decision: approve the $5.8M demand forecasting AI program this quarter. Delay costs $45M/quarter in continuing markdown losses, and the Teradata end-of-life creates a hard deadline that makes delay more expensive, not less.',
+    },
+    problemStatement: {
+      current: [
+        { metric: 'SKU-level forecast accuracy', current: '61%', target: '86%', gap: '25 percentage points', dollarImpact: '$180M annual markdowns' },
+        { metric: 'Annual markdown cost', current: '$180M', target: '< $128M', gap: '$52M recoverable', dollarImpact: '$52M gross margin improvement' },
+        { metric: 'Inventory turnover', current: '3.8×/year', target: '5.0×/year', gap: '1.2× below benchmark', dollarImpact: '$24M inventory carrying cost' },
+        { metric: 'Stockout events (2025)', current: '3 events', target: '0–1 events', gap: '$42M in lost sales', dollarImpact: '$42M in 2025 alone' },
+        { metric: 'Clearance recovery rate', current: '34% of original retail', target: '51%', gap: '17 points', dollarImpact: '$22M on current clearance volume' },
+      ],
+      rootCause: "The statistical forecasting model measures accuracy at the category level — the level at which the merchandising team reports performance. SKU-store-week accuracy, which actually drives replenishment decisions, is 61% — 21 points lower. This gap is structurally invisible to the organization because KPIs are designed around the misleading category metric. The result: buyers make replenishment decisions on bad data, inventory accumulates in the wrong SKUs, and markdowns are the only tool to clear the overstock. The $180M markdown cost is not a one-time problem — it is the steady-state cost of a measurement system designed to hide the forecast error.",
+      urgencyTitle: 'Infrastructure Deadline — Teradata End-of-Life & Holiday Season Window',
+      urgency: "Teradata's end-of-life notice creates a hard data infrastructure deadline: the platform that currently houses Apex's 7-year POS history must be migrated by Q4 2026 or Apex faces data loss and license cost escalation. AbarVa has matched this as Genome failure pattern F003 (platform end-of-life unplanned — 82% budget overrun rate). The AI forecasting migration and Teradata replacement must be sequenced together — doing them separately adds $4.2M and 8 months. Additionally, Q4 2026 is the highest-stakes demand window: holiday season. To have the AI model in production and validated before Q4, the program must start immediately. A 90-day delay pushes production live-date past the holiday window, forfeiting the single largest SKU accuracy payoff of the year.",
+    },
+    solutionDesign: {
+      approach: "Train a gradient boosting ML model on Apex's 7 years of SKU-store-week POS data, augmented with weather, local events, social trend signals, and competitor pricing. Deploy on Azure Databricks (replacing Teradata), integrated with the existing JDA replenishment system for automated par-level adjustment. The Teradata migration and AI model build run concurrently — 4-month total timeline to production on the first 80 stores.",
+      architecture: [
+        { layer: 'Data Layer', component: 'Azure Databricks Medallion', description: 'Bronze/Silver/Gold data lake architecture replaces Teradata. Ingests POS, WMS, weather, social, and competitive feeds in real time. Eliminates 3-day batch latency.', technology: 'Azure Databricks on Apex Azure tenant — already contracted for data modernization' },
+        { layer: 'AI/ML Layer', component: 'Demand Forecasting Model', description: 'LightGBM gradient boosting model trained on 7 years of SKU-store-week history. Incorporates external signals (weather, events, trends). Retrained weekly on latest POS actuals.', technology: 'Azure ML + MLflow — model registry and drift monitoring included' },
+        { layer: 'Integration Layer', component: 'JDA Replenishment Connector', description: 'Forecasts pushed to JDA (Blue Yonder) replenishment engine automatically. Par levels updated daily. Purchase orders within defined parameters require no buyer approval.', technology: 'JDA REST API — existing integration, configuration only' },
+        { layer: 'Analytics Layer', component: 'Forecast Accuracy Dashboard', description: 'Real-time accuracy tracking at SKU-store-week level. Variance alerts to buyers when model confidence is below threshold. Bias detection and model performance monitoring.', technology: 'Power BI on Azure — Apex already licensed' },
+        { layer: 'Clearance Layer', component: 'Markdown Optimization Engine', description: 'Calculates optimal clearance price by SKU-store based on sell-through velocity, time to season end, and price elasticity. Eliminates calendar-driven blanket markdowns.', technology: 'Python optimization layer on Azure ML — 6-week build' },
+      ],
+      dataRequirements: [
+        { data: '7-year POS history (SKU-store-week)', status: 'Available', completeness: '96%', note: 'In Teradata today. Migration to Databricks is Phase 1 — data quality is high, 4% gap from store format changes.' },
+        { data: 'WMS inventory positions (real-time)', status: 'Available', completeness: '92%', note: 'JDA WMS feeds available. 12 distribution centres connected; 8 satellite DCs require WMS agent.' },
+        { data: 'Weather API (store-level, hourly)', status: 'Vendor-provided', completeness: '100%', note: 'Tomorrow.io weather API — $28K/year license. Critical for apparel seasonal accuracy.' },
+        { data: 'Social trend signals (by SKU category)', status: 'Available', completeness: '78%', note: 'Google Trends + Meta signals available by category. SKU-level mapping requires 3-week merchandising team effort.' },
+        { data: 'Competitor pricing (key SKUs)', status: 'Partial', completeness: '55%', note: 'Competitor price scraping for top 2,000 SKUs. Expand to 8,000 SKUs in Phase 2.' },
+      ],
+    },
+    vendorDecision: {
+      headline: 'AbarVa recommends Azure Databricks + custom LightGBM model over o9 Solutions or Blue Yonder AI add-on.',
+      recommendation: 'Azure Databricks + LightGBM (build on existing platform)',
+      reasoning: [
+        'Apex already has Azure Databricks contracted for the Teradata migration. Building the forecasting AI on Databricks means zero new vendor relationship — the forecasting build and infrastructure migration happen simultaneously, saving $4.2M and 8 months.',
+        'o9 Solutions is the market leader for AI demand planning at enterprise retail — but Apex does not have the data maturity for the full o9 deployment. o9 requires a 12-month data foundation build before the AI model is useful. That misses Q4 2026.',
+        'Blue Yonder AI add-on requires upgrading the existing JDA license from version 8.4 to 9.1 — a $3.8M upgrade fee that was not in the business case and a 9-month migration. The Databricks approach uses the existing JDA API.',
+        'Custom LightGBM model trained on Apex data will outperform a generalist vendor model for Apex-specific demand patterns (seasonal fashion, loyalty program signals, regional store format variation).',
+        'AbarVa benchmarking: Target Corporation built equivalent capability on Databricks in 14 weeks at $4.2M in 2024. Dollar Tree built equivalent in 18 weeks at $5.1M. Apex should target 16 weeks at $5.4M.',
+      ],
+      vendorComparison: [
+        { vendor: 'Azure Databricks + custom model', klas: 'N/A', cost: '$5.4-5.8M', timeline: '16 weeks', epicFit: 'Native to existing Azure + JDA', aiCapability: 'Best for Apex data patterns', recommendation: true },
+        { vendor: 'o9 Solutions', klas: '4.2/5', cost: '$8.0-12.0M', timeline: '14-18 months', epicFit: 'Requires 12-month data foundation', aiCapability: 'Best-in-class but needs data maturity', recommendation: false },
+        { vendor: 'Blue Yonder AI (JDA upgrade)', klas: '3.9/5', cost: '$7.2-9.0M', timeline: '9-12 months', epicFit: 'Requires JDA 9.1 upgrade ($3.8M)', aiCapability: 'Good for standard retail patterns', recommendation: false },
+      ],
+      negotiationPlaybook: [
+        'Open with the Databricks team: "We are running a competitive build vs. buy analysis. We have o9 in the room next week. What can you commit on time-to-production for the demand forecasting use case?"',
+        'Anchor to benchmarks: "Target built this on Databricks in 14 weeks at $4.2M. We have comparable data maturity and volume. Our target is $4.8M — including the Teradata migration work."',
+        'Bundle the Teradata migration with the AI build: Databricks has strong incentive to win the full data platform replacement, not just the AI workload. Use the migration work to negotiate the AI build at near-cost.',
+        'Demand dedicated retail industry specialist: Do not accept a generalist ML team. Require a PM and data scientist with prior retail demand forecasting deployments.',
+        'Walk away: If Databricks cannot commit to a 16-week production timeline with fixed fee, the build is better handled with a boutique ML firm (Fractal Analytics or Mu Sigma) on Azure at lower cost.',
+      ],
+    },
+    resourceModel: {
+      headline: 'This initiative requires 1 AbarVa Maestro, 1 Databricks data engineering team, and 0.5 FTE internal data scientist. No large SI required.',
+      phases: [
+        {
+          phase: 'Phase 1', name: 'Data Migration & Foundation', duration: 'Weeks 1-6', cost: '$1.2M',
+          resources: [
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '60%', cost: 'Included in platform fee', responsibility: 'Architecture design, vendor coordination, data quality assessment' },
+            { role: 'Databricks Data Engineer (2)', type: 'Vendor', allocation: '100%', cost: 'Included in Databricks contract', responsibility: 'Teradata-to-Databricks migration, POS data pipeline, Medallion architecture' },
+            { role: 'Apex Data Architect', type: 'Internal', allocation: '80%', cost: '$0 incremental', responsibility: 'Source system access, data governance, WMS integration' },
+            { role: 'JDA Administrator', type: 'Internal', allocation: '30%', cost: '$0 incremental', responsibility: 'JDA API configuration for replenishment integration' },
+          ],
+        },
+        {
+          phase: 'Phase 2', name: 'Model Build & Pilot (80 stores)', duration: 'Weeks 7-14', cost: '$2.8M',
+          resources: [
+            { role: 'ML Engineer (Fractal Analytics, 2)', type: 'SI', allocation: '100%', cost: '$520K (8 weeks × 2 FTE)', responsibility: 'LightGBM model build, feature engineering, Azure ML deployment' },
+            { role: 'Databricks Solutions Architect', type: 'Vendor', allocation: '100%', cost: 'Included', responsibility: 'MLflow model registry, monitoring, drift detection setup' },
+            { role: 'Apex Data Scientist', type: 'Internal', allocation: '100%', cost: '$0 incremental', responsibility: 'Model validation, accuracy testing, buyer feedback loop' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '40%', cost: 'Included', responsibility: 'Pilot governance, accuracy baseline measurement, stakeholder reporting' },
+          ],
+        },
+        {
+          phase: 'Phase 3', name: 'Full Rollout (380 stores)', duration: 'Weeks 15-20', cost: '$1.8M',
+          resources: [
+            { role: 'Fractal Analytics ML Engineer', type: 'SI', allocation: '60%', cost: '$180K (6 weeks)', responsibility: 'Store format model variants, markdown optimization layer build' },
+            { role: 'Apex Replenishment Team', type: 'Internal', allocation: '100%', cost: '$0 incremental', responsibility: 'JDA integration testing, buyer training, exception handling' },
+            { role: 'AbarVa Maestro', type: 'AbarVa', allocation: '20%', cost: 'Included', responsibility: 'Full-scale outcome measurement, $52M markdown reduction tracking, fee calculation' },
+          ],
+        },
+      ],
+      agentVsHuman: [
+        { task: 'Standard replenishment orders (model confidence > 85%)', recommended: 'Agent (Azure ML + JDA)', cost: '$0.04/order', volume: '~18,000 POs/week', note: 'Fully automated within defined parameters — 85% of all orders' },
+        { task: 'High-value replenishment (>$50K order, confidence 70-85%)', recommended: 'AI recommendation + buyer approval', cost: '$0.20/order', volume: '~800 POs/week', note: 'Buyer reviews AI brief, approves in 2 min vs 45 min' },
+        { task: 'Markdown price setting (model confidence > 80%)', recommended: 'Agent (markdown engine)', cost: '$0.02/SKU', volume: '~12,000 SKUs/week', note: 'Replaces blanket calendar-driven markdown — captures $22M/yr' },
+        { task: 'Strategic category decisions (new brand, seasonal open)', recommended: 'Human (merchant team)', cost: 'N/A', volume: 'Case by case', note: 'AI provides demand simulation; merchant judgment drives final call' },
+      ],
+    },
+    businessCase: {
+      investment: [
+        { phase: 'Phase 1 (weeks 1-6)', amount: 1200000, type: 'Data migration & foundation' },
+        { phase: 'Phase 2 (weeks 7-14)', amount: 2800000, type: 'Model build & pilot' },
+        { phase: 'Phase 3 (weeks 15-20)', amount: 1800000, type: 'Full rollout' },
+      ],
+      totalInvestment: 5800000,
+      valueCapture: [
+        { source: 'Markdown reduction (61% → 86% SKU accuracy)', year1: 32000000, steady: 52000000 },
+        { source: 'Inventory carrying cost (turnover 3.8× → 5.0×)', year1: 14000000, steady: 24000000 },
+        { source: 'Clearance recovery improvement (34% → 51%)', year1: 10000000, steady: 22000000 },
+        { source: 'Stockout revenue recovery', year1: 18000000, steady: 28000000 },
+      ],
+      totalYear1Value: 74000000,
+      totalSteadyValue: 126000000,
+      paybackMonths: 4.1,
+      roi: 21.7,
+      abarvaFee: {
+        platform: 500000,
+        outcomeFee: 11100000,
+        total: 11600000,
+        note: '15% of Year 1 realized savings — paid quarterly as markdown reduction and inventory improvement are verified against Day 0 baseline via Apex POS actuals',
+      },
+    },
+    governance: {
+      kpis: [
+        { metric: 'SKU-store-week forecast accuracy', baseline: '61%', target: '> 86%', frequency: 'Weekly', owner: 'Chief Merchandising Officer' },
+        { metric: 'Annual markdown cost', baseline: '$180M', target: '< $128M', frequency: 'Monthly', owner: 'CFO' },
+        { metric: 'Inventory turnover', baseline: '3.8×', target: '5.0×', frequency: 'Quarterly', owner: 'COO / SVP Supply Chain' },
+        { metric: 'AI model accuracy drift', baseline: 'N/A', target: '< 3-point monthly drift', frequency: 'Weekly', owner: 'Data Science team' },
+        { metric: 'Automated replenishment rate', baseline: '0%', target: '> 85%', frequency: 'Monthly', owner: 'SVP Supply Chain' },
+      ],
+      risks: [
+        { risk: 'Buyer resistance to automated replenishment', probability: 'High', impact: 'High', mitigation: 'Phase 2 pilot keeps buyer in approval loop for all orders. Automation gates unlock only when accuracy exceeds 84% for 4 consecutive weeks. Buyers become model reviewers, not order placers.' },
+        { risk: 'Teradata data quality issues surfaced during migration', probability: 'Medium', impact: 'High', mitigation: 'AbarVa data quality assessment in Week 1 identifies gaps before the model build starts. Worst case: Phase 1 extended 3 weeks — not a project-stopper.' },
+        { risk: 'Holiday season timing pressure causes shortcuts', probability: 'Medium', impact: 'High', mitigation: 'Fixed go-live date is Week 16. If Phase 2 slips, rollout scope is reduced to top 150 stores for Q4 — Q4 holiday coverage still achieved with partial deployment.' },
+        { risk: 'JDA version incompatibility with new forecasts', probability: 'Low', impact: 'Medium', mitigation: 'API compatibility confirmed in Week 1 tech assessment. JDA REST API on version 8.4 supports the integration without upgrade.' },
+      ],
+      nextSteps: [
+        { action: 'Commission Databricks data quality assessment of Teradata POS', owner: 'CTO + AbarVa', deadline: 'This week', rationale: 'Data quality determines model training timeline — must be known before committing to schedule' },
+        { action: 'Align Q4 2026 go-live deadline with CMO and CFO', owner: 'CEO + AbarVa', deadline: 'This week', rationale: 'Q4 holiday season is the ROI inflection point — must be board-level commitment' },
+        { action: 'Issue competitive brief to Databricks vs o9 Solutions', owner: 'CTO + AbarVa', deadline: 'This week', rationale: 'Competitive tension required for Databricks pricing to reach the Target Corp benchmark' },
+        { action: 'Initiate Teradata end-of-life formal notice', owner: 'CTO + Legal', deadline: 'This month', rationale: 'Formalizing the exit triggers Teradata negotiation on license wind-down cost — AbarVa benchmarks suggest 40% reduction is achievable' },
+        { action: 'Brief CFO on business case', owner: 'CMO + AbarVa', deadline: 'Next week', rationale: '$5.8M against $74M Year 1 value — straightforward CFO approval once presented cleanly' },
+      ],
+    },
+  },
 }
 
 function fmt(n: number) {
@@ -333,8 +645,8 @@ function BlueprintContent() {
                 <p className="body">{bp.problemStatement.rootCause}</p>
               </div>
               <div className="card" style={{ background: '#FFFBEB', border: '1px solid #FEF3C7' }}>
-                <h3 className="h3" style={{ color: '#D97706' }}>Regulatory Deadline — CMS Compliance</h3>
-                <p className="body">{bp.problemStatement.cmsDeadline}</p>
+                <h3 className="h3" style={{ color: '#D97706' }}>{bp.problemStatement.urgencyTitle ?? 'Regulatory Deadline — CMS Compliance'}</h3>
+                <p className="body">{bp.problemStatement.urgency ?? bp.problemStatement.cmsDeadline}</p>
               </div>
             </div>
           )}

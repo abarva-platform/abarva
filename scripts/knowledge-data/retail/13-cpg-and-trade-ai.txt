@@ -1,53 +1,283 @@
 CPG AND CONSUMER GOODS AI BENCHMARKS
-Source: Deloitte CPG Transformation Study 2025, McKinsey Consumer Goods AI Report
+Source: Deloitte CPG Transformation Study 2025, McKinsey Consumer Goods AI Report 2025, NielsenIQ/Circana CPG Analytics Benchmarks 2025
+
+OVERVIEW
+
+Consumer packaged goods (CPG) and fast-moving consumer goods (FMCG) companies face a distinct but intersecting set of AI opportunities compared to retailers. Their primary AI investment areas are trade promotion optimisation (where 40% of promotional spend generates negative ROI without AI), revenue growth management (RGM), supply chain demand sensing, and digital shelf intelligence. The stakes are high: a $5B CPG company spends $900M-1.4B annually on trade promotion, and a 12 percentage point improvement in promotion ROI (from 60% profitable to 72%) generates $108-168M in annual savings. CPG AI has now surpassed retailer AI in enterprise AI strategy adoption — 54% of CPG companies have at least one AI use case in production vs. 44% for retail.
 
 CPG AI ADOPTION LANDSCAPE
-CPG companies with AI in at least one function: 54%
-CPG companies with enterprise AI strategy: 31%
-CPG functions with highest AI adoption: supply chain (61%), sales/trade (44%), marketing (38%)
+
+CURRENT DEPLOYMENT STATUS:
+- CPG companies with AI in at least one function: 54%
+- CPG companies with enterprise AI strategy: 31%
+- CPG companies with no AI activity: 18%
+- Average AI programme size ($5B CPG): $8-18M over 36 months
+
+AI BY FUNCTION (ADOPTION RATES):
+- Supply chain planning and operations: 61% (highest)
+- Sales and trade promotion: 44%
+- Marketing and consumer insights: 38%
+- Manufacturing and quality: 34%
+- Finance and RGM: 28%
+- R&D / new product development: 22%
+- Sustainability and ESG: 14%
+
+CPG vs. RETAILER AI MATURITY:
+- CPG ahead of retail in: supply chain AI (61% vs. 31%), trade AI (44% vs. 28%)
+- Retail ahead of CPG in: personalisation (28% vs. 12%), loss prevention (22% vs. N/A), store operations AI
+- Both at similar stage: demand forecasting (39% retail vs. 38% CPG), GenAI content (38% vs. 36%)
 
 TRADE PROMOTION AI FOR CPG
-Trade spend as % of revenue (CPG average): 18-28%
-Promotions with positive ROI (without AI): 60%
-Promotions with positive ROI (with AI): 72%
-AI promotion optimisation improvement: 12pp
-Annual trade spend at $5B CPG: $900M-1.4B
-Annual savings from 12pp ROI improvement: $108-168M
+
+TRADE SPEND CONTEXT:
+- Trade spend as % of CPG revenue: 18-28% (category-dependent)
+- Grocery-heavy CPG (beverages, snacks): 22-28%
+- General merchandise CPG (household, personal care): 16-22%
+- Annual trade spend at $5B CPG: $900M-1.4B
+- Annual trade spend at $20B CPG (e.g., Procter and Gamble, Unilever): $3.6-5.6B
+
+PROMOTION ROI WITHOUT AI:
+- Promotions generating positive ROI: 60%
+- Promotions losing money: 40%
+- Primary causes of negative ROI promotion: over-forecasted uplift (38%), excessive discount depth (28%), wrong timing (18%), competitive cannibalization (16%)
+
+PROMOTION ROI WITH AI:
+- Promotions generating positive ROI with AI: 72%
+- Improvement: 12 percentage points
+- Annual savings from 12pp improvement ($5B CPG): $108-168M
+- Annual savings ($20B CPG): $432-672M
+- AI promotion optimisation payback: 6-10 months
+
+TRADE PROMOTION AI CAPABILITIES:
+- Promotion uplift prediction accuracy (AI): 82% vs. 54% (analyst estimate)
+- Optimal promotion depth: AI identifies optimal discount level to maximise profit, not just volume
+- Promotion timing AI: identifies optimal week based on consumer purchase cycle, competitive promotion calendar
+- Halo and cannibalization modelling: AI models impact on adjacent SKUs with 84% accuracy
+- Account-specific optimisation: tailors promotion strategy per retailer (Walmart vs. Kroger vs. Target)
+
+COLLABORATIVE PLANNING WITH RETAILERS:
+- CPG-retailer joint business planning with AI: 22% of key account relationships
+- Shared demand signal: CPG and retailer co-forecast 94-day promotional events with 82% accuracy
+- EDI to API modernisation: reduces transmission errors 62%, improves OTIF 8pp
+- Mutual financial benefit: CPG reduces trade waste $108-168M; retailer improves category margin 1.4pp
+
+TRADE PROMOTION AI PLATFORMS:
+- o9 Solutions: 18% CPG market share (leading in enterprise; real-time collaboration)
+- Anaplan: 14% (connected planning, scenario modelling)
+- SAP IBP (Integrated Business Planning): 14%
+- Blacksmith TPM: 8% (TPM specialist)
+- Accenture Trade Edge: 12% (managed service)
+- Aforza (Salesforce-native): 8% (field sales + TPM)
 
 REVENUE GROWTH MANAGEMENT (RGM) AI
-CPG firms with RGM AI: 38%
-Price elasticity model accuracy: 84% (AI) vs. 58% (analyst)
-Channel mix optimisation AI: +8-12% revenue efficiency
-Pack size AI (right size for right channel): +6-9% margin
-Trade term negotiation AI: +4-8% trade efficiency
-Annual RGM AI value ($5B CPG): $40-80M
+
+OVERVIEW:
+- CPG firms with RGM AI programme: 38%
+- RGM definition: optimising pricing, pack size, channel mix, and promotion to maximise revenue and margin
+- Annual RGM AI value ($5B CPG): $40-80M
+- Annual RGM AI value ($20B CPG): $160-320M
+
+PRICE ELASTICITY AI:
+- Price elasticity model accuracy (AI): 84% vs. 58% (analyst estimates)
+- Optimal price point identification: AI tests 10,000+ price-volume scenarios vs. 3-5 analyst scenarios
+- Cross-price elasticity (impact of one SKU's price change on another): 88% accuracy
+- Price gap management (vs. private label): AI identifies optimal premium to maintain vs. retailer own-label
+
+CHANNEL MIX OPTIMISATION:
+- Channel mix AI: +8-12% revenue efficiency (right product at right channel with right pricing)
+- E-commerce vs. grocery vs. mass channel differentiation: AI optimises pack architecture per channel
+- Direct-to-consumer (DTC) pricing AI: 14% of large CPG have AI-managed DTC pricing
+- Wholesale vs. retail price integrity AI: monitors MAP (Minimum Advertised Price) with 94% compliance
+
+PACK SIZE AND ARCHITECTURE AI:
+- Pack size AI (right size for right channel): +6-9% margin
+- Multi-pack vs. single pack optimisation: AI identifies 22% of pack configurations with sub-optimal margin
+- Private label defence AI (pack changes to prevent direct comparison): adopted by 28% of large CPG
+- Shrinkflation modelling AI: weights consumer perception vs. cost reduction across 10,000+ scenarios (controversial)
+
+TRADE TERM NEGOTIATION AI:
+- Trade term negotiation AI: +4-8% trade efficiency
+- Annual terms value (slotting, display, promotional co-op): $140-280M ($5B CPG)
+- AI improvement on terms value: $5.6-22.4M
 
 DIGITAL SHELF AND E-COMMERCE AI FOR CPG
-Share of shelf (digital) monitoring: 44% of large CPG
-Search rank optimisation AI: +22% product visibility
-Product content compliance monitoring: 88% accuracy vs. 41% manual
-e-com SKU availability monitoring: real-time vs. 48-hour manual
-Direct-to-consumer (DTC) AI: 28% of large CPG have DTC channels with AI
+
+DIGITAL SHELF INTELLIGENCE:
+- Large CPG with digital shelf monitoring AI: 44%
+- Digital shelf definition: product availability, content quality, search rank, and reviews on retailer.com
+- Search rank optimisation AI: +22% product visibility in retailer.com search results
+- Search rank impact on sales: top-3 position vs. position 10: 3.4x higher conversion
+- Share of search monitoring: CPG products appear in relevant search results vs. competitors
+
+CONTENT COMPLIANCE MONITORING:
+- Product content compliance monitoring AI: 88% accuracy vs. 41% manual
+- Non-compliant content (wrong description, outdated image, missing attributes): found in 34% of retailer.com listings
+- Revenue impact of non-compliant content: -22% conversion on affected listings
+- AI content correction speed: 4 hours vs. 3 days (manual escalation to retailer)
+- Annual revenue recovery from AI content compliance ($5B CPG): $8-18M
+
+E-COMMERCE SKU AVAILABILITY:
+- Real-time e-commerce availability monitoring: replaces 48-hour manual check
+- OOS rate monitoring: AI detects CPG product OOS on retailer.com within 2 hours
+- Revenue recovery from faster OOS detection: 14-22% of OOS revenue recovered vs. 6% manual
+- Sponsored search bid management AI: +24% ROAS for CPG sponsored products on retailer.com
+
+DTC CHANNEL AI:
+- Large CPG with DTC channel: 44%
+- DTC with AI personalisation: 28%
+- DTC personalisation ROI: 3.8x at 24 months (higher than retailer personalisation due to direct relationship)
+- DTC average CLV vs. retail channel consumer: 2.4x higher
+- DTC retention AI: -18pp churn with AI-personalised subscription and loyalty
 
 SUPPLY CHAIN AI FOR CPG
-Demand sensing accuracy (CPG, AI): 88% vs. 74% traditional
-S&OP (Sales and Operations Planning) AI: 38% CPG adoption
-AI scenario planning: 10,000+ scenarios in 4 hours (vs. 3 scenarios in 1 week)
-Supply chain disruption prediction (AI): 4-8 week advance notice
-Finished goods inventory reduction with AI: 18-24 days
-Raw material procurement AI: reduces COGS 2-4%
+
+DEMAND SENSING:
+- Demand sensing accuracy (CPG, AI): 88% vs. 74% traditional
+- Demand sensing signal sources: sell-out data from retailers, weather, search trends, social media
+- Retailer POS data access (key accounts): 78% of top CPG receive POS data from top 5 retailers
+- IRI/Circana and NielsenIQ syndicated data: 88% of large CPG use syndicated scanner data as demand input
+- Forecast improvement from sell-out (vs. sell-in only): +14 percentage points accuracy
+
+SALES AND OPERATIONS PLANNING (S&OP) AI:
+- CPG with AI-enhanced S&OP: 38%
+- S&OP AI scenario planning: 10,000+ scenarios in 4 hours vs. 3 scenarios in 1 week
+- S&OP cycle time reduction: from 4-6 weeks to 2-3 weeks with AI
+- S&OP decision quality (measured by bias in consensus forecast): AI reduces bias 44%
+
+SUPPLY CHAIN DISRUPTION PREDICTION:
+- Disruption prediction advance notice (AI): 4-8 weeks
+- Traditional disruption notice: 1-2 weeks (often reactive)
+- Cost of unmanaged supply disruption ($5B CPG, one major event): $4.2-8.4M
+- AI-identified risks by source: supplier financial risk (22%), geographic concentration (18%), transport disruption (28%), input material shortage (32%)
+
+FINISHED GOODS INVENTORY:
+- Finished goods inventory reduction with AI S&OP: 18-24 days
+- Working capital improvement ($5B CPG): $240-480M from inventory reduction
+- Service level improvement (fill rate to key accounts): +8pp with AI vs. manual S&OP
+- Forecast bias (systematic over/under forecasting): AI reduces from 14% to 4%
+
+RAW MATERIAL PROCUREMENT AI:
+- Raw material procurement AI: reduces COGS 2-4%
+- Commodity price forecasting accuracy (AI): 78% vs. 58% analyst
+- Procurement scenario AI (lock vs. spot vs. options): generates 8,000+ scenarios in 2 hours
+- Annual procurement savings ($5B CPG, 40% COGS materials): $40-80M
 
 CUSTOMER AND CHANNEL ANALYTICS
-CPG with AI-powered distributor analytics: 28%
-Key accounts AI (real-time performance): 34%
-Field sales AI (next-best action): 22%
-Route optimisation AI (distribution): reduces cost 8-14%
-Retail execution compliance AI: improves from 68% to 88% compliance rate
+
+DISTRIBUTOR ANALYTICS:
+- CPG with AI-powered distributor analytics: 28%
+- Distributor performance anomaly detection: identifies at-risk accounts 4.2 weeks earlier
+- Distributor AI metrics: sell-through rate, days of supply, inventory position, promotional compliance
+
+KEY ACCOUNT MANAGEMENT AI:
+- AI-powered key account dashboards (real-time performance): 34%
+- Key account AI use cases: assortment gap analysis, promotional effectiveness, OOS alerts, category captain insights
+- Revenue identified by AI that category captains capture vs. competitors: +8-14% category growth vs. non-AI players
+
+FIELD SALES AI (NEXT-BEST ACTION):
+- CPG with field sales AI tools: 22%
+- Field sales AI: provides rep with best action for each store visit (shelf fix, upsell opportunity, compliance issue)
+- Sales rep productivity improvement (AI-guided visits): +18%
+- Routes per day (AI-optimised territory): +14% call coverage
+- Retail execution compliance: improves from 68% to 88% with AI-guided rep visits
+
+ROUTE-TO-MARKET AI:
+- Route optimisation AI (distribution): reduces cost 8-14%
+- Direct store delivery (DSD) AI: AI schedules optimal delivery windows, reduces dry runs
+- Traditional DSD route cost: $1.20-1.80 per stop
+- AI-optimised DSD route cost: $0.88-1.20 per stop (28% reduction)
+- Annual DSD savings ($5B CPG with DSD): $8-22M
 
 CPG DATA PLATFORM BENCHMARKS
-CPG firms with unified product data platform: 31%
-Average product data systems: 5.8
-Time to launch new SKU data (manual): 4.2 days
-Time to launch new SKU data (AI-assisted): 4.8 hours
-Product master data accuracy: 78% industry average
-AI-driven product master data quality: 94%
+
+DATA INFRASTRUCTURE:
+- CPG firms with unified product data platform: 31%
+- Average product data systems per CPG firm: 5.8
+- Time to launch new SKU data (manual process): 4.2 days
+- Time to launch new SKU data (AI-assisted): 4.8 hours (13x faster)
+- Product master data accuracy (CPG industry average): 78%
+- AI-driven product master data quality: 94%
+
+DATA SHARING AND CLEAN ROOMS:
+- CPG firms sharing data with retailers via clean room: 18% (growing 44% annually)
+- Clean room benefit: joint analysis without sharing PII
+- Revenue impact of clean room collaboration: +14pp promotional ROI, +8pp forecast accuracy
+- Platforms: Snowflake Clean Rooms, LiveRamp, Habu, InfoSum
+
+CPG INNOVATION AND NEW PRODUCT DEVELOPMENT AI
+
+R&D AND INNOVATION AI:
+- CPG firms with AI in new product development: 22%
+- AI formula optimisation (food/beverage, personal care): reduces R&D cycle 28%
+- Consumer preference AI (analysing social, review, search to identify unmet needs): 34%
+- AI new product success prediction: 74% accuracy at concept stage (vs. 51% traditional concept testing)
+- Packaging design AI: generates 100+ design variants in 4 hours vs. 3 months with agency
+- Sensory AI (predicts consumer taste/smell preference from formula data): 68% accuracy
+
+PRODUCT LAUNCH AI:
+- AI product launch simulation: models demand scenarios for 10,000+ distribution scenarios
+- Launch prediction accuracy: 78% at 13-week horizon (vs. 54% traditional test market)
+- Launch supply chain planning AI: automatically generates production and distribution plan from launch forecast
+- E-commerce launch day AI: optimises sponsored search, content, and promotion for maximum day-1 visibility
+- Time-to-market reduction with AI (vs. manual processes): 34%
+
+CONSUMER INSIGHTS AI
+
+CONSUMER INTELLIGENCE PLATFORM:
+- CPG firms with AI-powered consumer intelligence: 38%
+- Data sources: social listening, search trends, reviews, panel data, loyalty data (via retailer partnerships)
+- Consumer sentiment AI (brand health monitoring): 78% accuracy vs. 61% human analyst
+- Trend identification lead time (AI vs. traditional research): 6-8 weeks earlier
+- Price sensitivity AI (from search + social + purchase data): 84% accuracy vs. 58% survey-based
+
+CONSUMER SEGMENTATION AI:
+- AI consumer segments (CPG): 15-24 micro-segments vs. 4-6 traditional (heavy/medium/light user)
+- Segment-specific innovation: AI identifies 12% of consumers with unmet needs not served by current portfolio
+- Segment migration AI: identifies consumers moving from light to heavy usage — intervention point for engagement
+- Geo-demographic AI: identifies high-potential geographies for distribution expansion with 82% accuracy
+
+CHANNEL AND DISTRIBUTION AI
+
+DISTRIBUTION OPTIMISATION AI:
+- CPG with AI-optimised distribution plan: 28%
+- Distribution coverage AI: identifies 14% of high-potential outlets not currently served
+- Out-of-distribution detection AI: identifies stores that stocked product but are no longer ordering — 88% accuracy
+- Distribution expansion ROI (AI-identified high-potential outlets): 3.4x higher than random distribution expansion
+- Route-to-market AI: recommends optimal distribution channel (direct, distributor, broker, DSD) by geography
+
+WHOLESALER AND DISTRIBUTOR AI:
+- Wholesale AI analytics: demand sensing through distributor sell-out data
+- Distributor incentive optimisation AI: designs optimal rebate structure for compliance
+- Sell-through vs. sell-in gap analysis: AI identifies distributors holding excess inventory (supply chain risk)
+- Distributor financial health monitoring: AI flags distributors at payment risk 6 weeks in advance
+
+CATEGORY CAPTAINSHIP AI:
+- CPG with AI-powered category captain tools: 28%
+- Category recommendations AI: generates retailer-specific shelf recommendations with 84% confidence
+- Space optimisation AI: recommends planogram changes that improve category by 8-14%
+- Category performance benchmarking: AI compares retailer category performance vs. market (IRI/Nielsen indexed)
+- Shopper mission analysis AI: identifies primary shopper missions and aligns assortment accordingly
+
+CPG SUSTAINABILITY AI
+
+PRODUCT PORTFOLIO SUSTAINABILITY AI:
+- Scope 3 Category 1 (purchased goods) as % of CPG carbon footprint: 68-78%
+- AI material substitution (replacing high-carbon ingredients/packaging): 14% reduction in portfolio carbon
+- Consumer sustainability labelling AI (Eco-Score, Planet Score): 22% of large CPG
+- Plastic reduction AI: identifies 68% of plastic applications with available alternatives
+- Recyclability assessment AI: evaluates 100% of packaging vs. 28% manual coverage
+
+REGENERATIVE AGRICULTURE AI:
+- CPG with regenerative agriculture programme (AI-monitored): 8%
+- AI satellite monitoring (crop health, soil carbon, water usage): 88% coverage of contracted farms
+- Carbon credit generation from regenerative sourcing: $12-28/tonne CO2e (verified credits)
+- Annual carbon credit value ($5B CPG, 400,000 sourced acres): $4.8-14.2M
+- Traceability AI (from farm to shelf): 14% of large CPG have ingredient-level traceability
+
+ABARVA GENOME FAILURE PATTERNS — CPG AI
+
+F007: TRADE PROMOTION AI WITHOUT BASELINE MEASUREMENT — 84% of CPG trade promotion AI deployments launch without establishing baseline promotion ROI. Cannot prove the 12pp improvement. Budget renewal delayed 8-12 months due to inability to demonstrate ROI. Fix: 3-month baseline measurement of promotion P&L before AI deployment.
+
+F011: SUPPLY CHAIN AI WITHOUT RETAILER DATA SHARING — CPG deploys demand sensing AI using only internal sell-in data (not sell-out/POS from retailers). Accuracy: 78% vs. 88% possible with retail POS integration. Fix: prioritise retail POS data access agreements before demand sensing AI deployment.
+
+F019: DIGITAL SHELF AI WITHOUT CONTENT GOVERNANCE — CPG monitors digital shelf with AI but cannot update non-compliant content quickly (3-4 week escalation to retailer). AI identifies the problem; process cannot fix it. Fix: establish retailer content portal access and content syndication workflow before digital shelf AI investment.

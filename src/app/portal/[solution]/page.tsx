@@ -3,6 +3,7 @@
 import { useUser, SignOutButton } from '@clerk/nextjs'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useCallback, Suspense } from 'react'
+import posthog from 'posthog-js'
 import { SOLUTIONS, SolutionKey, PhaseKey, PhaseConfig } from '@/lib/solutions/solution-config'
 
 const BG = '#060A12'
@@ -71,12 +72,18 @@ function PortalContent() {
     : user?.publicMetadata?.clientId as string | undefined
   const solutionConfig = SOLUTIONS[solution]
 
-  // Auth
+  // Auth + identify
   useEffect(() => {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
     if (role !== 'client' && role !== 'admin') { router.push('/'); return }
     if (!clientId) { router.push('/sign-in'); return }
+    posthog.identify(user.id, {
+      email: user.primaryEmailAddress?.emailAddress,
+      name: user.fullName,
+      role,
+      client_id: clientId,
+    })
   }, [isLoaded, user, router, role, clientId])
 
   const clientName = clientId === 'arcturus' ? 'Arcturus Financial Group' :
@@ -131,6 +138,7 @@ function PortalContent() {
     setDataRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'numbers_entered' } : r))
     setNumberEntryId(null)
     setRespondingId(null)
+    posthog.capture('client_data_request_submitted', { client_id: clientId, solution, request_id: requestId })
   }
 
   const handleApprove = async (phaseId: string) => {
@@ -146,6 +154,7 @@ function PortalContent() {
         comment: 'Approved via client portal'
       })
     })
+    posthog.capture('client_phase_approved', { client_id: clientId, solution, phase_id: phaseId })
     await loadData()
     setSubmitting(false)
   }
@@ -164,6 +173,7 @@ function PortalContent() {
         comment: disputeText
       })
     })
+    posthog.capture('client_phase_disputed', { client_id: clientId, solution, phase_id: phaseId })
     await loadData()
     setSubmitting(false)
   }

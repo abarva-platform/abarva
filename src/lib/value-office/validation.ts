@@ -245,7 +245,12 @@ export function validateMetricSnapshots(input: any[]): MetricSnapshotDraft[] {
       category: requireString(record.category, `metricSnapshots[${index}].category`),
       snapshot_type: enumValue(record.snapshot_type, SNAPSHOT_TYPES, `metricSnapshots[${index}].snapshot_type`),
       metric_name: requireString(record.metric_name, `metricSnapshots[${index}].metric_name`),
-      metric_value: requireString(record.metric_value, `metricSnapshots[${index}].metric_value`),
+      metric_value:
+        record.metric_value === null || record.metric_value === undefined
+          ? ''
+          : typeof record.metric_value === 'string'
+            ? record.metric_value
+            : String(record.metric_value),
       unit: optionalString(record.unit, `metricSnapshots[${index}].unit`),
       confidence_grade: requireString(record.confidence_grade, `metricSnapshots[${index}].confidence_grade`),
       notes: optionalString(record.notes, `metricSnapshots[${index}].notes`),

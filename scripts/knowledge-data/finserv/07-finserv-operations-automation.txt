@@ -1,56 +1,361 @@
 FINANCIAL SERVICES OPERATIONS AND BACK OFFICE AI BENCHMARKS
-Source: McKinsey Global Banking Survey 2025, Deloitte FS Operations Report
+Source: McKinsey Global Banking Survey 2025, Deloitte FS Operations Report 2025, DTCC Industry Operations Study
+
+OVERVIEW AND CONTEXT
+
+Back-office and middle-office automation represents the highest-ROI category of AI investment in financial services operations. Unlike front-office AI (where ROI is tied to alpha generation or revenue conversion), operations automation delivers measurable, quantifiable cost reduction on activities that are high-volume, rule-bound, and currently manual. The economic case is unambiguous: AI automation of trade reconciliation, financial close, client reporting, and RFP production consistently generates 3-8x ROI within 24 months.
+
+The 2024-2025 landscape shows significant adoption progress among large asset managers and investment banks, with mid-size managers now accelerating adoption as platforms have matured and implementation costs have declined. The primary barriers are no longer technological — they are process standardisation and change management. Data quality remains the single most common root cause when operations AI implementations underperform.
+
+AbarVa Genome failure pattern F011 (AI Without Data Foundation) is particularly prevalent in operations automation: firms that deploy AI reconciliation without first standardising data formats across source systems achieve 30-40% of expected accuracy, undermining the business case. Observed in 44% of operations AI implementations that fail to reach target performance.
+
 
 OPERATIONS AI ADOPTION IN ASSET MANAGEMENT
-Firms with AI in at least one back office function: 64%
-Trade reconciliation AI: 48%
-Fund accounting AI: 31%
-Client reporting AI: 38%
-Transfer agency AI: 22%
-Invoice processing AI: 44%
 
-TRADE RECONCILIATION AI
-Manual reconciliation error rate: 2.4%
-AI reconciliation error rate: 0.18%
-Processing speed improvement: 8.2x faster
-Cost per reconciliation (manual): $4.80
-Cost per reconciliation (AI): $0.42
-Annual savings ($100B AUM firm with 2M annual trades): $8.8M
+Current adoption rates for AI in specific back and middle-office functions (large asset managers, >$50B AUM):
 
-FINANCIAL CLOSE AI
-Average financial close timeline (asset management): 6-8 days
-With AI automation: 2.5-3.5 days
-Key tasks automated: journal entries, reconciliation, consolidation, intercompany
-CFO satisfaction improvement: +28 NPS points
-Error rate reduction in financial close: 64%
-AI close acceleration ROI: 3.8x within 18 months
+    Firms with AI in at least one back or middle-office function: 64%
+    Trade reconciliation AI: 48%
+    Invoice processing and accounts payable AI: 44%
+    Client reporting AI: 38%
+    Fund accounting AI: 31%
+    Transfer agency AI: 22%
+    Regulatory reporting automation AI: 34%
+    Financial close AI: 28%
+    RFP automation AI: 38%
 
-CLIENT REPORTING AI
-Manual report production time per client: 4.2 hours
-AI-assisted report production: 22 minutes
-Customisation level: AI can produce 10x more customised reports than manual
-Client satisfaction with AI-personalised reports: +18 NPS points
+By function, time-to-ROI ranking (fastest to slowest):
+    Invoice processing AI: 8-12 months
+    RFP automation: 10-14 months
+    Trade reconciliation: 12-18 months
+    Client reporting: 14-20 months
+    Financial close: 16-24 months
+    Fund accounting: 18-30 months (complexity of regulatory requirements slows deployment)
+
+
+TRADE RECONCILIATION AI — BENCHMARKS AND OUTCOMES
+
+Trade reconciliation is the highest-frequency, most scalable operations automation use case. A $100B AUM asset manager processes approximately 2M trades annually requiring reconciliation:
+
+    Manual reconciliation error rate: 2.4% of reconciliation items require exception handling
+    AI reconciliation error rate: 0.18% — a 13x reduction in exceptions
+    Processing speed improvement: 8.2x faster than manual
+    Cost per reconciliation item (manual): $4.80
+    Cost per reconciliation item (AI): $0.42
+    Annual savings for $100B AUM firm with 2M annual trades: $8.8M
+
+Reconciliation AI capabilities:
+    Multi-custodian reconciliation (trade data matching across prime brokers, custodians, and internal OMS): AI handles 96% of standard breaks automatically
+    Corporate action processing (dividends, stock splits, mergers — high manual error rate): AI reduces corporate action error rate from 1.8% to 0.14%
+    Cash reconciliation: AI processes same-day, reducing overnight break resolution backlog 78%
+    FX settlement reconciliation: multi-currency, multi-counterparty AI matching — 98.4% auto-match rate
+
+Primary AI reconciliation vendors:
+    AutoRek: UK market leader in fund reconciliation; used by 34% of UK asset managers with reconciliation AI
+    SmartStream Technologies: enterprise reconciliation AI for banks and asset managers
+    FIS IntelliMatch: integrated with FIS core banking and custody; strong in banking reconciliation
+    DTCC Reconciliation and Matching Services: industry utility model for securities settlement reconciliation
+    SS&C Advent (Geneva): reconciliation within Geneva portfolio accounting system
+
+DTCC T+1 settlement transition impact (US, effective May 2024):
+    Settlement cycle reduction from T+2 to T+1 increased same-day reconciliation volume 48%
+    Firms without AI reconciliation: experienced 34% increase in settlement failures in Q3 2024
+    Firms with AI reconciliation: settlement failure rate unchanged at T+1 vs. T+2
+    Industry-wide fail rate at T+1 (without AI): 2.1% (vs. 0.8% target)
+
+
+FINANCIAL CLOSE AI — BENCHMARKS AND OUTCOMES
+
+Financial close is a high-cost, high-duration process at asset managers and banks. AI acceleration directly reduces cost and improves accuracy:
+
+    Average financial close timeline (asset management, no AI): 6-8 business days
+    Average financial close timeline with AI automation: 2.5-3.5 days
+    Reduction: 58-64%
+
+Key tasks automated:
+    Journal entry preparation and posting: AI validates 94% of journal entries automatically
+    Intercompany reconciliation: AI matches intercompany transactions 98% automatically
+    Variance analysis: AI generates preliminary variance commentary (G&A, revenue, cost) — reviewed and edited by accountant
+    Consolidation: AI-assisted multi-entity consolidation reduces consolidation time 52%
+    Disclosure preparation: AI-extracted footnote drafts from underlying data
+
+Financial outcomes:
+    Error rate reduction in financial close with AI: 64%
+    CFO satisfaction improvement (NPS points): +28 points post-AI close implementation
+    Finance team capacity freed from close process: 41% of total close-period capacity — redirected to analysis
+    AI close acceleration ROI: 3.8x within 18 months
+
+Vendors:
+    BlackLine: market leader in close automation; AI-powered journal entries, reconciliation, and variance analysis
+    Trintech (Cadency): close management platform with AI; strong in insurance and banking
+    SAP Group Close: integrated AI close for SAP S/4HANA clients; 34% of large FS SAP shops
+    Oracle Financial Close: strong in Oracle Fusion finance environments
+    Workiva: regulatory disclosure and financial reporting with AI; strong in multi-entity FS
+
+
+CLIENT REPORTING AI — BENCHMARKS AND OUTCOMES
+
+Client reporting is the highest-volume documentation function for asset managers and wealth firms. The economics of AI automation are compelling at scale:
+
+    Manual report production time per institutional client: 4.2 hours
+    AI-assisted report production time per institutional client: 22 minutes
+    Time reduction: 91%
+    Customisation capability: AI can produce 10x more customised reports at no incremental cost versus manual (manual requires template standardisation; AI can personalise narrative)
+
+Client satisfaction outcomes:
+    Client satisfaction with AI-personalised reports (NPS): +18 points versus template reports
+    Report error rate reduction (incorrect data references, number transpositions): 78% reduction
+    Timeliness improvement (reports delivered within SLA): from 72% to 94%
+    Institutional client retention improvement attributed to reporting quality: +11 percentage points
+
 Report production cost reduction: 61%
-Annual savings (firm with 2,400 institutional clients): $4.4M
+Annual savings for a firm with 2,400 institutional clients (at $95/hour blended cost, 4.2 hours → 22 minutes): $4.4M
 
-RFP AUTOMATION AI
-RFP response time (manual): 3.2 weeks
-RFP response time (AI-assisted): 5 days
-RFP win rate improvement with AI (better quality): +14%
-Cost per RFP (manual): $18,000
-Cost per RFP (AI-assisted): $5,800
-Annual savings (40 RFPs/year): $488,000
+AI client reporting platforms:
+    Seismic: content management + AI report personalisation; strong in wealth and asset management
+    Qontigo Axioma (Clarity): institutional reporting automation for portfolio analytics
+    Conga: document generation AI; broad financial services use
+    Custom Azure OpenAI pipelines: 28% of large managers build proprietary reporting AI
+    InvestCloud: front-to-back wealth platform with integrated AI reporting
+
+
+RFP AUTOMATION AI — BENCHMARKS AND OUTCOMES
+
+RFP (Request for Proposal) responses are time-intensive and quality-sensitive. AI automation addresses both dimensions:
+
+    RFP response time (manual, from receipt to submission): 3.2 weeks
+    RFP response time (AI-assisted, AI drafts from library, human reviews): 5 days
+    Time reduction: 78%
+    RFP win rate improvement with AI (higher quality, more complete responses): +14%
+
+Cost per RFP:
+    Manual: $18,000 (blended investment professional and marketing team time)
+    AI-assisted: $5,800
+    Cost reduction per RFP: 68%
+
+Annual savings (firm completing 40 institutional RFPs annually): $488,000
+RFP pipeline conversion improvement: at +14% win rate on 40 RFPs with $250M average mandate size: $1.4B additional AUM annually from the same RFP volume
+
+RFP AI vendors:
+    RFPIO (Responsive): market leader in RFP automation; AI library builds from previous responses
+    Loopio: strong in asset management; learning AI improves with each RFP cycle
+    Seismic: RFP automation integrated with broader content management
+    Custom LLM (Azure OpenAI / AWS Bedrock): 22% of large managers build proprietary RFP AI trained on their complete response library and factual data
+
 
 INVOICE PROCESSING AND ACCOUNTS PAYABLE AI
-Invoice processing time (manual): 8.2 days
-Invoice processing time (AI): 1.4 days
-Early payment discount capture improvement: +34%
-Duplicate invoice detection accuracy: 98.4%
-AP automation ROI: 4.1x within 12 months
 
-IT OPERATIONS AI (AIOps)
-Asset managers with AIOps: 22%
-System downtime reduction with AIOps: 34%
-Mean-time-to-resolution (MTTR) improvement: -44%
-IT helpdesk ticket automation rate: 38% fully automated
-Annual IT operations cost reduction with AIOps: 18-28%
+Invoice and AP automation delivers fast ROI with clear unit economics:
+
+    Invoice processing time (manual): 8.2 days average (from receipt to approval and posting)
+    Invoice processing time (AI): 1.4 days
+    Time reduction: 83%
+    Early payment discount capture improvement with AI (faster processing enables discount window capture): +34%
+    Duplicate invoice detection accuracy with AI: 98.4%
+    Invoice matching accuracy (3-way match: PO, receipt, invoice): 96.8% automated with AI
+
+ROI benchmarks:
+    AP automation ROI: 4.1x within 12 months
+    Annual processing cost per invoice (manual): $14.80
+    Annual processing cost per invoice (AI): $2.60
+    Savings per invoice: $12.20
+    Annual savings (firm processing 50,000 invoices): $610,000
+
+Vendors:
+    Basware: AP automation with AI; strong in complex multi-entity FS
+    Coupa: procure-to-pay AI; 22% of large asset managers
+    SAP Concur: integrated with SAP for expense and invoice processing
+    AvidXchange: mid-market AP automation; growing in regional banking and insurance
+
+
+IT OPERATIONS AI (AIOPS) IN FINANCIAL SERVICES
+
+AIOps (AI for IT Operations) addresses the cost and reliability of technology infrastructure:
+
+    Asset managers with AIOps platform: 22%
+    Banks with AIOps: 34%
+    Insurance firms with AIOps: 18%
+
+Outcomes from AIOps deployments:
+    System downtime reduction with AIOps: 34%
+    Mean-time-to-detection (MTTD) for incidents: improved 58% versus threshold-based monitoring
+    Mean-time-to-resolution (MTTR): improved 44%
+    IT helpdesk ticket automation rate (fully resolved by AI without human): 38%
+    Annual IT operations cost reduction with AIOps: 18-28%
+
+AIOps platform vendors:
+    Dynatrace: AI-powered full-stack observability; 28% FS market share for AIOps
+    Splunk (now Cisco): log analytics and AI-driven incident management; strongest in security operations
+    ServiceNow ITOM: AI-driven IT operations management integrated with ITSM
+    Datadog: cloud-native observability with AI; growing rapidly in FS cloud migration contexts
+    IBM Watson AIOps: legacy vendor adapting to AI-native operations
+
+
+TRANSFER AGENCY AI
+
+Transfer agency (TA) is a high-volume, compliance-intensive operation for mutual fund and UCITS managers:
+
+    Transfer agency AI adoption: 22% of asset managers with in-house TA; 34% of outsourced TA providers
+    Account opening automation (KYC AI + AML screening): reduces onboarding from 11 days to 2.4 days
+    Transaction processing error rate (manual): 1.8%; with AI: 0.14%
+    Regulatory reporting compliance rate (NAV calculation accuracy): improves from 94.2% to 99.4%
+    Annual operational savings from TA AI (firm with 500,000 investor accounts): $2.4-4.8M
+
+Major outsourced TA providers incorporating AI:
+    State Street (TA + AI): AI-enhanced TA platform serving 400+ fund families globally
+    BNY Mellon (Pershing + TA AI): automation of distribution and settlement
+    Northern Trust (NTI TA): AI-driven automation for complex fund structures
+    SS&C GlobeOp: AI transfer agency platform; largest independent TA provider globally
+    IFDS (International Financial Data Services): JV between State Street and SS&C; AI integrated since 2023
+
+
+ROBOTIC PROCESS AUTOMATION (RPA) IN FINANCIAL SERVICES OPERATIONS
+
+RPA (rule-based software bots executing repetitive tasks) often precedes or complements AI automation:
+
+    FS firms with significant RPA deployment: 72%
+    Average number of RPA bots in production (large bank): 840
+    Average number of RPA bots (large asset manager): 180
+    RPA annual cost savings per bot: $28,000-$52,000 (equivalent to one FTE's time on targeted tasks)
+    RPA failure rate requiring human intervention: 18% of transactions (bots break when interfaces change)
+    RPA + AI (Intelligent Process Automation): reduces RPA failure rate to 6% through AI exception handling
+
+RPA use cases by function:
+    Finance and accounting (journal entries, reconciliation, reporting): 68% of FS RPA bots
+    Operations (trade processing, customer onboarding): 22%
+    IT operations (password resets, system provisioning): 8%
+    Compliance (regulatory report generation, data extraction): 14% (growing fastest)
+
+RPA limitations and AI upgrade path:
+    Pure RPA cannot handle unstructured data (PDFs, emails, voice); requires AI for these
+    RPA bots require frequent maintenance as source systems change (UI changes break bots)
+    Hyperautomation (RPA + AI): 44% of FS RPA programmes upgrading to AI-augmented bots
+    RPA vendor market: UiPath (38% FS market share), Automation Anywhere (28%), Blue Prism (18%), Microsoft Power Automate (14%)
+
+FUND ADMINISTRATION AI BENCHMARKS
+
+Fund administration (computing NAV, managing fund accounting, investor reporting) is heavily outsourced and increasingly AI-enhanced:
+
+    Asset managers with outsourced fund administration: 68%
+    In-house fund accounting with AI automation: 31%
+    Primary outsourced fund admin providers: State Street Global Services, BNY Mellon Asset Servicing, Northern Trust, SS&C GlobeOp, Citi Securities Services
+
+AI capabilities at top-tier fund administration providers:
+    State Street AlphaSM: data and analytics platform with AI-driven reconciliation, performance attribution, and risk; covers $42T in assets
+    BNY Mellon Nexen: AI-powered data and analytics; covers $45T in custody assets
+    Northern Trust: AI fund accounting reducing NAV calculation error rate to 0.04% from 0.18% industry average
+    SS&C GlobeOp AI: GenAI for client reporting, automated exception management, compliance reporting
+
+NAV calculation benchmarks:
+    Manual NAV calculation error rate: 0.18% of funds have NAV errors requiring restatement
+    AI-assisted NAV calculation error rate: 0.04%
+    Annual cost of NAV restatements (large fund complex): $1.2-2.8M (investor communication, reconciliation, regulatory reporting)
+
+OPERATIONAL DUE DILIGENCE (ODD) AI
+
+ODD (assessing operational risk of fund managers and investment vehicles) is a research-intensive process increasingly automated with AI:
+
+    Institutional investors with AI-assisted ODD: 28%
+    ODD AI capability: document extraction from DDQs (Due Diligence Questionnaires), cross-reference against prior responses, flag material changes
+    ODD time reduction with AI: from 6 weeks to 8 days per fund manager assessment
+    AI accuracy in identifying operational red flags vs. manual review: 88% concordance at 12% of the time cost
+    Vendors: Attain (ODD AI), Arcesium (operational analytics), Yieldbroker (market infrastructure AI)
+
+CORPORATE TREASURY AND CASH MANAGEMENT AI
+
+Corporate treasury at large FS firms (managing intercompany cash, FX hedging, liquidity) is increasingly AI-driven:
+
+    Cash flow forecasting AI accuracy (30-day horizon): 94% accuracy vs. 78% for manual treasury models
+    FX hedging optimisation AI: reduces hedge ineffectiveness ratio from 12% to 3.8% annually
+    Bank account rationalisation AI: identifies redundant accounts across global subsidiaries; typical savings $840,000 per $10B revenue firm
+    Treasury management system (TMS) AI integration: Kyriba (AI cash positioning), ION Treasury, FIS Quantum
+    AI-driven cash pooling optimisation: reduces idle cash 28%; generates $2.4-4.8M additional interest income annually at large FS firm
+
+OPERATIONS TALENT AND AUTOMATION WORKFORCE IMPACT
+
+The workforce impact of operations automation is a critical programme management consideration:
+
+    Operations headcount reduction from AI automation (5-year view): 18-28% of current operations FTE
+    Transition timeline: 24-36 months for meaningful workforce impact (not immediate)
+    Redeployment rate (operations staff retrained to higher-value roles): 44% of displaced staff at firms with structured retraining
+    Training investment per operations employee transitioning to AI-oversight role: $4,200-$8,800
+    Union and works council considerations (EU): AI workforce impact requires consultation under EU Information and Consultation Directive
+    AbarVa recommendation: operations AI business case should include workforce transition plan; firms that skip this face implementation resistance and delay
+
+
+FUND ADMINISTRATION AND CUSTODIAN AI — DETAILED BENCHMARKS
+
+Fund administration is one of the highest-volume, most error-sensitive operations in asset management. The AI opportunity in fund administration is concentrated in reconciliation, NAV calculation, and client reporting:
+
+NAV calculation and validation AI:
+    Daily NAV calculations for mutual fund industry (US): 12,400+ funds
+    Manual NAV validation (price exceptions, security master errors): 2.4 hours per fund per day
+    AI NAV validation time: 18 minutes per fund per day (87% reduction)
+    Error detection improvement: AI catches 96% of pricing errors before fund close vs. 72% manual; pricing errors uncaught cost average $840,000 per incident in regulatory remediation and investor compensation
+    AI vendors for NAV validation: SS&C Technologies (Fund Services AI), State Street Alpha (NAV AI), BNY Mellon Eagle Investment Systems
+
+Custody operations AI:
+    US custody industry assets: $38.4T (top 5: BNY Mellon $46T, State Street $40T, JPMorgan $31T, Citibank $26T, Northern Trust $14T)
+    Corporate action processing errors: 1.8% error rate without AI; $4.2-$8.8M annual cost impact for large custodian
+    AI corporate action processing: error rate reduced to 0.24% (87% improvement); AI reads corporate action notices in any format (PDF, XML, SWIFT), extracts key data, validates against reference data
+    Dividend processing AI: reconciles dividend accruals to custodian records; processing time 4.8 hours → 28 minutes
+    Settlement fail rate (US market): 1.4% of trades fail to settle T+1; AI settlement prediction identifies likely fails 6.4 hours before settlement cutoff; fail rate reduction achievable: 38%
+
+Transfer agency AI:
+    Transfer agency (TA) processes investor transactions for mutual funds: purchases, redemptions, transfers
+    TA error rate (manual processing): 2.1% transaction error rate
+    AI-assisted TA: error rate reduced to 0.18%; $2.4M annual savings for mid-size TA ($500B in fund assets administered)
+    KYC/AML at TA level: AI KYC refresh for existing investors; replaces 5-year manual review cycle with continuous AI monitoring; cost: $2.80/investor vs. $18.40 manual
+
+
+PAYMENT OPERATIONS AI — DETAILED BENCHMARKS
+
+Payment operations is undergoing the most significant AI transformation of any banking back-office function:
+
+Correspondent banking and payments:
+    Global payment messages (SWIFT): 44M+ daily (2024, growing 8% annually)
+    SWIFT ISO 20022 migration: completing 2025; richer payment data enables AI categorisation and exception handling
+    Payment exception handling (manual): 4.2 FTE per $1B in daily payment volume; exception rate: 2.8%
+    AI payment exception handling: reduces exceptions requiring human review to 0.4% (86% reduction); AI resolves 72% of exceptions autonomously
+    Payment sanctions screening false positive rate (rule-based): 88% (majority of flagged payments are false positives, requiring costly manual review)
+    AI sanctions screening false positive reduction: to 24% (73% improvement); eliminates 64% of manual review cost
+    SWIFT gpi (global payments innovation): 98% of gpi payments tracked in under 24 hours; AI anomaly detection on gpi tracker
+
+FX operations AI:
+    FX settlement: $7.5T daily (BIS 2024); 34% settled via CLS (Continuous Linked Settlement); 66% bilateral or nostro-based
+    FX post-trade AI: matching and confirmation automation; straight-through processing rate 84% with AI vs. 52% without
+    FX failed settlement rate: 2.1%; AI prediction of settlement fails: 78% accuracy 4 hours before settlement
+    FX netting AI: identifies $2.4-$4.8M in additional netting opportunities per $100B daily FX volume at large bank
+
+Real-time payments AI:
+    US FedNow (launched July 2023): 800+ financial institution participants as of Q1 2025
+    RTP (The Clearing House): 300+ participants; $500K per transaction limit
+    Fraud challenge: real-time payments are irrevocable — AI fraud decision must be made in under 5 seconds or payment is blocked entirely
+    Real-time fraud AI performance: 98.4% accuracy with sub-2-second decision; false positive rate (legitimate payments blocked): 0.8%
+    Cost of real-time payment fraud AI: $0.004 per transaction vs. $0.11 for human review (where feasible)
+
+
+MIDDLE OFFICE AI — DETAILED BENCHMARKS
+
+Middle office AI is often overlooked in favour of front-office alpha and back-office efficiency. Yet middle office sits at the intersection of both:
+
+Trade lifecycle management AI:
+    Trade confirmation matching time (traditional): 2.4 hours after execution
+    AI-assisted confirmation matching: 4.2 minutes (97% reduction)
+    DTCC's SMART system: AI for institutional trade matching; 99.8% same-day matching rate (industry target)
+    Margin call management AI: automated margin call calculation, dispute identification, and response; processing time 3.8 hours → 22 minutes; dispute identification accuracy 94%
+
+Collateral management AI:
+    Global collateral under management: $22T (ISDA 2024)
+    Collateral optimisation AI: identifies cheapest-to-deliver collateral across portfolios and counterparties
+    Savings from collateral optimisation AI: $2.40-$6.80 per $1M in bilateral collateral (annualised)
+    Large bank annual savings from AI collateral optimisation: $4.2-$12.8M
+    AI vendors: HKEX-Synergy (post-merger), Cassini Systems, CloudMargin, TriOptima
+
+Derivatives operations AI:
+    ISDA Master Agreement clause analysis: AI reviews 1,200+ unique ISDA agreements for credit support annex (CSA) terms
+    CSA review time (manual): 4.2 hours per agreement; AI: 8 minutes per agreement
+    Threshold monitoring AI: continuous monitoring of exposure vs. ISDA thresholds; automated margin call triggers
+    CVA (Credit Valuation Adjustment) calculation AI: real-time CVA update on counterparty credit events; $2.4-$4.8M faster capital relief per year for active derivatives dealer through more accurate CVA reserves
+
+AbarVa Genome pattern F003 (Technology Without Workflow Integration): Operations AI deployed without changing the underlying workflow it replaces captures 34% of available benefit. AI must replace the process, not sit alongside it. In reconciliation, this means eliminating the manual exception report entirely — not adding an AI layer that feeds the same manual exception handling process. Workflow redesign is the missing 66% of operations AI ROI that most programmes leave on the table.

@@ -1,46 +1,336 @@
 WEALTH MANAGEMENT AI AND DIGITAL ADVISOR BENCHMARKS
-Source: Aite-Novarica Wealth Management Technology 2025, Cerulli Associates
+Source: Aite-Novarica Wealth Management Technology 2025, Cerulli Associates US Wealth Management Report 2025, Morningstar Direct Wealth Study
 
-WEALTH MANAGEMENT MARKET SEGMENTS
-Ultra-high net worth (>$30M): 12% of investors, 42% of AUM
-High net worth ($1M-$30M): 28% of investors, 38% of AUM
-Mass affluent ($250K-$1M): 31% of investors, 14% of AUM
-Mass market (<$250K): 29% of investors, 6% of AUM
-AI focus: mass affluent and mass market (underserved by traditional model)
+OVERVIEW AND CONTEXT
 
-ROBO-ADVISOR AND AI-DRIVEN PLATFORMS
-Global robo-advisor AUM: $2.8T (2025)
-Growth rate: 21% annually
-Betterment, Wealthfront: pioneered mass market (fee: 0.25% AUM)
-Schwab Intelligent Portfolios: no fee, account minimum $5,000
-Traditional bank robo (JPMorgan, BofA): 34% market share (using brand advantage)
-Average customer acquisition cost (robo): $84 vs $312 (traditional advisor)
+Wealth management is undergoing the most significant structural transformation in the industry's history. The simultaneous convergence of the Great Wealth Transfer (an estimated $84T transferring from Baby Boomers to Gen X and Millennials over the next 20 years), the rise of digital-native investors who expect algorithm-driven portfolio management, and the AI-driven capability to serve mass affluent clients profitably has created a compressed window of strategic opportunity and existential risk.
+
+The fundamental economics of traditional wealth management — one advisor managing 80-120 high-net-worth clients at $750,000-$1.1M fee revenue per advisor — cannot efficiently serve the mass affluent ($250K-$1M investable assets) and certainly cannot reach mass market investors. AI resolves this unit economics problem: AI-augmented advisors manage 140-180 clients; robo platforms serve unlimited clients at $0 marginal cost. The wealth managers who deploy AI at scale capture the Great Wealth Transfer; those who do not will lose assets to Betterment, Schwab Intelligent Portfolios, and Vanguard Digital Advisor.
+
+AbarVa Genome failure pattern F007 (Operating Model Not Redesigned Around AI): wealth managers that deploy AI tools without redesigning the advisor's workflow and compensation model achieve 28% of the productivity improvement available. The advisor continues working the same way, using AI for one or two steps, without the holistic model change that multiplies the productivity gain.
+
+
+WEALTH MANAGEMENT MARKET SEGMENTS AND AI OPPORTUNITY
+
+Market segmentation by investable assets:
+
+    Ultra-high net worth (above $30M): 12% of investors globally, 42% of AUM — $29T globally
+    High net worth ($1M-$30M): 28% of investors, 38% of AUM — $26T globally
+    Mass affluent ($250K-$1M): 31% of investors, 14% of AUM — $9.7T globally
+    Mass market (below $250K): 29% of investors, 6% of AUM — $4.1T globally
+
+AI strategic focus: mass affluent and mass market segments. These are the underserved majority — traditional advisor economics make them unprofitable without AI. The mass affluent segment holds $9.7T in investable assets; capturing 10% market share at 0.35% fee generates $3.4B in annual revenue. This is the primary commercial prize driving robo-advisor and hybrid AI investment.
+
+Great Wealth Transfer impact:
+    $84T transferring from Baby Boomers to younger generations over 2023-2048
+    Younger inheritors (Millennials, Gen Z): 78% prefer digital-first engagement
+    Traditional advisor retention risk: 62% of inheritors switch advisor upon inheriting
+    AI-enabled digital engagement: reduces inheritor attrition 34%
+
+
+ROBO-ADVISOR AND AI-DRIVEN INVESTMENT PLATFORMS
+
+Global robo-advisor ecosystem (2025):
+
+    Global robo-advisor AUM: $2.8T
+    Growth rate: 21% annually
+    Projected AUM (2027): $4.2T
+    Compound annual customer growth rate: 18%
+
+Major platforms:
+    Betterment: $43B AUM; 800,000+ customers; fee 0.25% AUM; first US robo-advisor
+    Wealthfront: $51B AUM; 700,000+ customers; fee 0.25%; strong in tax-loss harvesting
+    Schwab Intelligent Portfolios: $88B AUM; zero advisory fee (revenue from cash allocation and ETF expenses); $5,000 account minimum
+    Vanguard Digital Advisor: $108B AUM; 0.15% advisory fee; leverages Vanguard fund access
+    Fidelity Go: $16B AUM; 0.35% fee; strong integration with Fidelity brokerage and 401k
+    JPMorgan Automated Investing: growing on Chase digital banking base; 0.35% fee
+    Bank of America Merrill Lynch Guided Investing: hybrid model, 0.45% fee with advisor access
+
+Customer acquisition cost comparison:
+    Robo-advisor customer acquisition cost: $84 average (digital marketing optimisation)
+    Traditional wealth advisor customer acquisition cost: $312 average
+    Hybrid platform: $148 average
+    Full-service private bank: $1,200+ average (primarily referral and event-driven)
+
+Break-even AUM per customer by platform type:
+    Pure robo (0.25% fee, $4,000 annual customer service cost): $160,000 AUM per customer
+    Hybrid (0.45% fee, $2,800 service cost): $62,000 AUM per customer
+    AI-augmented advisor (0.75% fee, $1,400 AI-assisted service cost): $187,000 minimum profitable AUM
+
 
 HUMAN-PLUS-AI HYBRID MODEL BENCHMARKS
-Firms with hybrid AI + advisor model: 44%
-Assets per advisor (AI-augmented): $142M average (vs $88M traditional)
-Client NPS (hybrid model): 68 (vs 54 traditional advisor-only)
-Advisor time saved on administration: 41%
-Advisor capacity increase with AI: +28% more clients served
-Revenue per advisor (AI-augmented): +31%
 
-AI PERSONALIZATION IN WEALTH
-Next-best-action accuracy for wealth recommendations: 78% (at 85% data completeness)
-Personalized portfolio rebalancing AI: reduces tax drag 0.4-0.8% annually
-AI financial plan generation: 12 minutes vs. 4 hours (human)
-Estate planning AI: reduces attorney time 52%
-Tax-loss harvesting AI: adds 0.4-1.1% after-tax return annually
+The hybrid model (AI tools supporting human advisors) is the dominant wealth management architecture in 2025 for serving HNW and mass affluent clients:
 
-CLIENT RETENTION AND RISK AI
-Client attrition prediction accuracy (90-day advance): 79%
-Intervention success rate with early detection: +24% retention
-Average AUM per departing client: $840,000
-Annual retention value per 1% improvement in retention: significant
-AI-flagged "at-risk" clients: 8.4% of book on average
+    Wealth management firms with hybrid AI + advisor model: 44%
+    Firms still advisor-only (no material AI in the advisory process): 38%
+    Firms fully automated (robo, no human advisors): 18%
 
-COMPLIANCE AND SUITABILITY AI
-Suitability review automation: reduces time 68%
-KYC (Know Your Customer) AI: reduces onboarding time from 11 days to 2.4 days
-Enhanced due diligence (EDD) AI: 4.2x faster than manual
-SEC Reg BI documentation AI: generates suitability documentation automatically
-Compliance review AI: covers 94% of client interactions vs. 12% manual sampling
+Productivity benchmarks:
+    Assets per advisor (traditional, no AI): $88M average
+    Assets per advisor (AI-augmented, full workflow integration): $142M average
+    Improvement: 61% more AUM per advisor — or equivalently, 38% fewer advisors for same AUM
+    Client NPS (hybrid model): 68 average (vs. 54 for traditional advisor-only model)
+    Advisor time saved on administration and reporting: 41%
+    Advisor capacity increase with AI (additional clients served): +28%
+    Revenue per advisor (AI-augmented vs. traditional): +31%
+
+AI task allocation in hybrid model (percentage of advisor workload automated):
+    Performance reporting and client reporting: 78% automated
+    Portfolio rebalancing proposal preparation: 64% automated
+    KYC and compliance documentation: 72% automated
+    Client risk assessment (questionnaire and scoring): 88% automated
+    Financial plan preparation (initial draft): 58% automated
+    Meeting preparation (account review summary): 68% automated
+    Human-retained activities: complex financial planning conversations, emotional support, business referrals, relationship development
+
+Revenue model evolution:
+    Fee compression in wealth management: AUM fee average 0.92% (2020) → 0.84% (2025)
+    Fee for financial planning (non-AUM): growing as supplementary revenue; $2,000-$8,000 per plan
+    AI efficiency required to maintain margins at compressed fees: 28% productivity improvement minimum
+
+
+AI PERSONALIZATION IN WEALTH MANAGEMENT
+
+AI personalisation goes beyond portfolio allocation to encompass the entire client relationship:
+
+Next-best-action AI:
+    Next-best-action recommendation accuracy for wealth product offers: 78% (at 85% CRM data completeness)
+    Accuracy below 70% CRM data completeness: 42% of recommendations inappropriate
+    Revenue from next-best-action AI (cross-sell conversion): +22-31% versus no AI
+
+Portfolio personalisation:
+    Personalised portfolio rebalancing AI: reduces tax drag 0.4-0.8% annually versus standard rebalancing
+    Tax-loss harvesting AI: adds 0.4-1.1% after-tax return annually (Wealthfront documented 0.77% average)
+    Direct indexing with AI (personalised ETF at single-stock level): account minimum falling from $250K to $25K as AI scales
+    Direct indexing AUM (2025): $600B, growing 28% annually; Separately Managed Accounts AI-enabled
+
+Financial planning personalisation:
+    AI financial plan generation: 12 minutes versus 4 hours (human advisors working manually)
+    Plan customisation: AI can incorporate 40+ financial scenarios in same time human advisor handles 3-5
+    Estate planning AI: reduces attorney and advisor time 52%
+    Social Security optimisation AI: identifies optimal claiming strategy; improves lifetime benefit 4-8%
+
+Behavioural finance AI:
+    AI detection of investment behaviour patterns (panic selling signals, overtrading): 78% accuracy
+    Proactive intervention with at-risk behaviour: reduces self-destructive investment decisions 34%
+    Client coaching via AI nudges (automated messages about behaviour patterns): +14% improvement in investment discipline metrics
+
+
+CLIENT RETENTION AND AT-RISK IDENTIFICATION
+
+Client retention is the highest-ROI AI use case in wealth management:
+
+    Client attrition prediction accuracy (90-day advance notice): 79%
+    Attrition signals: declining login frequency, reducing scheduled contributions, multiple outbound contacts without response, missing scheduled meetings, competitor activity in social media
+    Intervention success rate when advisor acts within 14 days of AI alert: +24% retention versus no intervention
+    Average AUM per departing client (HNW segment): $840,000
+    Annual retention value per 1% improvement in client retention (100-advisor firm): approximately $28M in preserved AUM
+
+At-risk portfolio benchmarks:
+    Percentage of client book flagged as at-risk by AI at any given time: 8.4%
+    Of at-risk clients successfully retained with AI-driven intervention: 61%
+    Net annual retention improvement from AI programme: 0.8-1.4 percentage points
+    ROI of retention AI: 12-18x within 24 months (AUM retention value vastly exceeds platform cost)
+
+CRM integration required for retention AI:
+    Salesforce FSC with Einstein Relationship Insights: most widely deployed retention AI in wealth
+    Alternatives: Introhive (relationship network analysis), Hearsay Systems (advisor social monitoring)
+    Data required: login frequency, contribution trends, service interaction logs, meeting history, email engagement
+
+
+COMPLIANCE AND SUITABILITY AI IN WEALTH
+
+Regulatory compliance in wealth management has an AI solution stack now mature enough for production use:
+
+    Suitability review automation: reduces compliance review time 68%
+    KYC (Know Your Customer) AI: reduces onboarding time from 11 days to 2.4 days
+    Enhanced due diligence (EDD) AI for complex clients (PEPs, corporate structures): 4.2x faster than manual
+    SEC Regulation Best Interest (Reg BI) documentation: AI generates suitability documentation automatically from advisor's recommended products and client profile
+    Compliance review AI coverage: 94% of client interactions reviewed versus 12% manual sampling
+
+Reg BI compliance benchmarks (SEC enforcement heightened since 2023):
+    Advisors with Reg BI documentation fully automated: 28%
+    Advisors manually documenting: 38% (at risk of SEC enforcement for incomplete records)
+    SEC Reg BI enforcement actions 2023-2025: 64 (up from 12 in 2022)
+    Average fine per Reg BI enforcement action: $840,000
+
+FINRA suitability surveillance AI:
+    FINRA Rule 2111 and 4511 compliance via AI: automated review of all recommendations versus customer profile
+    AI surveillance alert rate versus manual review: 4.2x more anomalies detected
+    FINRA CAT (Consolidated Audit Trail) data: AI required to process CAT submission volumes
+
+
+ROBO-ADVISOR PERFORMANCE BENCHMARKS
+
+Documented performance outcomes from largest robo platforms (10-year record through 2024):
+
+    Betterment 70/30 portfolio (after fees): 8.4% annualised (vs. 8.1% S&P 500 50/50 equivalent)
+    Wealthfront Path 70% equity: 8.2% annualised (after fees)
+    Schwab Intelligent Portfolios: 7.8% (cash drag from cash allocation strategy reduces returns slightly)
+    Vanguard Digital Advisor: 8.6% (low expense ratios on Vanguard ETFs provide structural advantage)
+
+Tax-loss harvesting value-add (Wealthfront data, 2024):
+    Average annual after-tax return improvement from automated tax-loss harvesting: 0.77%
+    Direct indexing (personalised stock-level portfolios): additional 0.6-1.1% tax alpha
+    Estimated lifetime value of tax-loss harvesting on $500K portfolio: $68,000-$128,000
+
+Note: past performance data is for benchmark context only; not predictive of future performance. AI investment management does not guarantee returns above passive index alternatives.
+
+
+FAMILY OFFICE AND ULTRA-HIGH-NET-WORTH AI
+
+Ultra-high-net-worth (UHNW) and family office segment has distinct AI requirements:
+
+    Family offices globally (single-family and multi-family): 10,000+
+    Assets under management at family offices: $5.9T globally
+    Family office technology investment: 24% increase annually (Campden Wealth survey 2025)
+    AI priorities: alternative investment analytics (private equity, venture, real estate), estate planning, family governance, philanthropic impact measurement
+
+UHNW AI use cases:
+    Private company portfolio analytics: AI aggregates data from portfolio companies quarterly reports and tracks KPIs
+    Alternative investment benchmarking: AI compares PE/VC portfolio performance against J-curve benchmarks
+    Generational wealth transfer planning: AI models tax-optimal transfer strategies with Monte Carlo simulation
+    Family office reporting AI: consolidated reporting across public equities, private equity, real estate, art, collectibles — reduced from 3 weeks to 2 days
+
+Family office technology vendors:
+    Addepar: portfolio performance reporting for complex multi-asset portfolios; 34% family office market
+    Orion: AI-powered portfolio management for RIAs and family offices; strong in trading and reporting
+    Black Diamond (SS&C): wealth management platform with AI analytics; strong in multi-custodian aggregation
+    Entrilia: emerging family office platform with AI private equity analytics
+    Canoe Intelligence: AI for private equity document extraction and data aggregation
+
+ADVISOR PRODUCTIVITY TOOLS BENCHMARKS
+
+The expanding universe of AI tools for wealth advisors:
+
+Specific productivity benchmarks by tool category:
+    Calendar and meeting management AI (automated scheduling, meeting prep): saves 2.8 hours/week per advisor
+    Note-taking AI (meeting transcription, CRM update): saves 1.4 hours/week (Otter.ai, Fireflies)
+    Proposal generation AI (investment proposal with personalised narrative): 4 hours to 35 minutes
+    Performance attribution AI (explaining portfolio performance to client): from 2 hours to 18 minutes
+    Tax loss harvesting AI (identifying opportunities and executing): from 1 week to 15 minutes
+    Rebalancing AI (drift detection + order generation): from 3 hours to 12 minutes
+
+Total advisor time savings: 6-10 hours per week with full AI tool stack
+Time freed: redirected to high-value activities — more clients, deeper relationships, business development
+Advisor capacity increase: from 80-120 clients (traditional) to 140-180 clients (AI-augmented) — 50-80% capacity expansion
+
+COMPLIANCE AND SUPERVISION AI FOR ADVISORS
+
+AI-assisted supervision of advisor activity is growing in regulatory priority:
+
+    SEC 2024 examination priorities: AI-driven supervision tools reviewed; requires adequate coverage
+    Hearsay Systems: AI-supervised advisor social media and client communications; 38% RIA market share
+    Surveillance completeness with AI: 94% vs. 12% manual sampling
+    Supervisory AI coverage cost per advisor: $1,200-$2,400 annually vs. $8,400 manual equivalence
+    AI compliance coaching (real-time guidance to advisors before sending communications): 28% reduction in compliance violations
+
+Reg BI compliance AI detailed benchmarks:
+    Firms with fully documented Reg BI process: 52% (up from 28% in 2022 — SEC enforcement pressure driving adoption)
+    AI documentation completeness: 96% of required fields populated vs. 68% manual
+    Time to complete Reg BI documentation per recommendation (AI): 4 minutes vs. 22 minutes manual
+    Annual compliance cost reduction per advisor from AI documentation: $8,400-$12,000
+
+INVESTMENT PLANNING AI — DETAILED BENCHMARKS
+
+    Social Security optimisation (when to claim, spousal coordination): AI models all 567 possible claiming strategies vs. 3-5 manually considered; improves lifetime benefit 6.8% on average
+    Roth conversion optimisation: AI models 1,000+ scenarios vs. 4-8 manual; identifies optimal conversion amounts and timing; average benefit $18,000-$84,000 over lifetime for eligible clients
+    Medicare optimisation (IRMAA surcharge avoidance): AI flags income management strategies before year-end; average savings $6,700 annually for affected clients
+    Required Minimum Distribution (RMD) planning AI: optimises RMD strategy across accounts; reduces unnecessary tax drag 0.4-0.8% annually for retirees
+
+Digital estate planning AI:
+    Estate planning AI coverage: 28% of advisors offer AI-assisted estate planning analysis
+    Attorney time reduction (basic estate planning with AI): 52% — AI generates first-draft documents
+    Estate planning AI providers: WealthCounsel (advisor estate planning), Vanilla (estate planning platform with AI), BOSS (Business Owner Succession Solutions)
+
+
+WEALTH MANAGEMENT TECHNOLOGY STACK — DETAILED BENCHMARKS
+
+The wealth management technology ecosystem has fragmented into dozens of specialist platforms. Understanding the stack architecture is essential for AI integration planning:
+
+Portfolio management systems (PMS):
+    Orion Portfolio Solutions: 28% US RIA market; Orion Advisor Tech suite (portfolio, compliance, CRM, planning)
+    Tamarac (Envestnet): 18% US RIA market; strong in fee billing and rebalancing
+    Riskalyze (now Nitrogen): 34% US advisors for risk tolerance questionnaire and proposal generation
+    Black Diamond (SS&C): 12% RIA market; strong in reporting and client portal
+    Addepar: HNW and UHNW segment; $5T+ assets on platform; strongest in alternative investment transparency
+
+PMS AI capabilities:
+    Rebalancing AI (tax-loss harvesting at scale): Orion Eclipse, Tamarac Rebalancing; automates 89% of rebalancing decisions vs. 34% without AI
+    Performance attribution AI: Factset Portfolio Analysis (PA3) + AI attribution; 4.2 hours → 38 minutes per attribution report
+    Custom indexing (direct indexing): Parametric, Aperio (BlackRock), Canvas (Fidelity); AI manages 1,000+ positions per client; minimum AUM declining from $2M to $250K as AI enables scale
+
+Financial planning software:
+    eMoney Advisor: 28% US advisor market; strongest in cash flow planning and estate analysis
+    MoneyGuide (Envestnet): 24% US advisor market; AI scenario generation (GoalCenter)
+    RightCapital: 18% US advisor market; growing fastest; strongest tax planning module
+    Orion Planning: integrated with Orion PMS; 14% market
+    NaviPlan: 8%; strongest in complex estate and business succession planning
+
+Planning AI use cases and benchmarks:
+    Monte Carlo simulation AI: eMoney runs 1,000-scenario simulation in 2.4 seconds vs. 8.4 minutes for traditional computation
+    Social Security optimisation AI: identifies optimal claiming strategy; adds $28,000-$84,000 in lifetime benefit (married couple, average case)
+    Roth conversion AI: identifies optimal annual conversion amounts for tax minimisation; average benefit $12,000-$38,000 NPV for $1M IRA holder
+    Required Minimum Distribution (RMD) AI: automates RMD calculation and compliance tracking for 100% of client accounts simultaneously
+
+
+WEALTH MANAGEMENT REGULATORY AI — DETAILED BENCHMARKS
+
+Regulatory compliance is an escalating cost in wealth management. AI is the primary lever for managing compliance without proportionate headcount growth:
+
+Suitability and best interest compliance (Reg BI, UK Consumer Duty):
+    Average advisor time spent on suitability documentation: 1.8 hours per recommendation
+    AI-assisted suitability documentation time: 22 minutes
+    Time savings: 80%; annual advisor time saved (at 120 recommendations/year): 188 hours per advisor
+    Suitability AI vendors: Compliance.ai, RegEd, Saifr (Fidelity Labs); accuracy: 94% match rate to manual suitability assessment
+    Reg BI examination findings (SEC 2024): 62% of examined RIAs had deficiencies in cost comparison documentation; AI now auto-generates cost comparison across share classes
+
+Supervision AI:
+    FINRA Rule 3110 (supervisory procedures): firms must review 100% of client communications for suitability concerns
+    Manual supervision review rate at average RIA: 12% sampling (compliance cost constraint)
+    AI supervision coverage: 100% review at $0.002 per communication (vs. $8.40 fully-loaded cost per manual review)
+    Supervision AI accuracy: 89% precision in flagging potentially unsuitable communications (comparable to experienced supervisor)
+    Primary vendors: Behavox (34% FS comms surveillance market), NICE Actimize, Global Relay, Smarsh
+
+Client complaints and dispute AI:
+    FINRA arbitration cases involving wealth management (2024): 3,840 cases filed
+    AI complaint pattern detection: identifies advisor behaviour patterns 4-6 months before formal complaint
+    Firms using complaint AI: 12% (early adopters); catching 34% more actionable patterns than manual review
+    Value: average FINRA arbitration settlement cost: $84,000; each prevented complaint saves $84,000 + internal legal cost
+
+ADV and disclosure AI:
+    Form ADV Part 2A: annual update required; average 60-page document for mid-size RIA
+    AI ADV drafting and comparison (identifying changes since prior year): 8.4 hours → 42 minutes
+    Disclosure monitoring AI: tracks regulatory text changes and flags ADV amendments needed; 28% of RIAs now using
+
+
+GREAT WEALTH TRANSFER — AI OPPORTUNITY ANALYSIS
+
+The Great Wealth Transfer ($84T transferring over 25 years, 2024-2049) is the defining business development opportunity in wealth management. AI is the primary tool for capitalising on it:
+
+Transfer timing and AI triggers:
+    Average age of wealth transferor: 71.4 years
+    Median wealth transfer event age: 78 (death) or 64 (gifting/trust establishment)
+    AI life event detection signals (feeding from CRM + external data): marriage, divorce, death of spouse/parent, real estate transaction, business sale, retirement, college funding, new child/grandchild
+    Detection accuracy: AI correctly identifies life event with actionable wealth implication in 68% of cases vs. 24% from advisor-reported events alone
+    Timing advantage: AI detects event trigger 6.4 weeks earlier on average than manual process
+
+Next-generation client development:
+    Advisors with formal next-gen client programme: 28%
+    Advisors using AI to identify next-gen contacts in existing HNW household: 14%
+    Next-gen retention rate for advisors with active programme: 68% vs. 34% without programme
+    AI outreach automation for next-gen: AI drafts personalised outreach emails based on life stage and interests; advisor reviews and sends; 3.4x higher response rate than generic outreach
+
+Referral network AI:
+    48% of new HNW client acquisition comes from referrals (client, COI, professional)
+    AI referral trigger detection: identifies satisfied clients likely to refer based on engagement patterns; targets outreach at 4-8 week post-milestone (performance above benchmark, estate plan completed)
+    Referral ask AI: generates personalised referral request language calibrated to client relationship depth; 24% higher referral conversion than scripted approach
+
+M&A and succession planning for RIAs:
+    RIA consolidation pace (2024): 294 acquisitions (record high)
+    Primary acquirers: Focus Financial, Mercer Advisors, Creative Planning, Savant Wealth
+    AI firm valuation for M&A: automated AUM quality scoring (client concentration, age of book, fee compression risk, technology maturity); reduces due diligence time 38%
+    AI integration planning: post-acquisition CRM migration and data deduplication; AbarVa benchmark: 8-14 weeks with AI-assisted migration vs. 22-34 weeks manual
+
+AbarVa Genome pattern F007 (Margin Compression): Wealth management firms with assets-per-advisor below $80M and technology spending below 8 basis points of AUM are in a structural efficiency trap — the economics of serving each client are deteriorating faster than fee revenue. AI-driven productivity (assets per advisor exceeding $120M) is the only viable path to sustainable margin at current fee levels. Firms that do not reach this threshold within 36 months face the choice of M&A consolidation or margin erosion to the point of practice non-viability.

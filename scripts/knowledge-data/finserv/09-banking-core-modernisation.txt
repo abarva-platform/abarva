@@ -1,55 +1,356 @@
 CORE BANKING MODERNISATION PATTERNS AND BENCHMARKS
-Source: Celent Banking Technology Research 2025, IDC Financial Services
+Source: Celent Banking Technology Research 2025, IDC Financial Services 2025, Gartner Banking Technology Hype Cycle 2025
+
+OVERVIEW AND CONTEXT
+
+Core banking modernisation is the highest-risk, highest-reward technology programme a bank can undertake. The core banking system is the system of record for all accounts, transactions, and products — everything else in the technology stack depends on it. Legacy cores, many over 20-35 years old and built on COBOL, Assembler, or early C++ architectures, impose a ceiling on the bank's ability to compete. They block real-time processing, limit API connectivity, prevent AI deployment in customer-facing channels, and require disproportionate maintenance effort.
+
+The 2024-2025 landscape shows the banking sector at a fork: large global banks have largely committed to hybrid modernisation strategies (progressive replacement rather than big-bang), while US community and regional banks face a more constrained choice set between vendor-managed cloud SaaS platforms (Fiserv DNA on Cloud, Jack Henry JHA OpenAnywhere) and brownfield upgrades. The decision is increasingly urgent as digital-native competitors (Chime, Ally, Marcus) operate on modern platforms with continuously deployed features.
+
+AbarVa Genome failure pattern F019 (False Programme — Core Modernisation Announced Without Risk Planning) is one of the highest-severity patterns: core migration programmes that proceed without adequate data migration testing and change management routinely fail at 2-3x planned cost. Observed in 41% of core modernisation programmes assessed.
+
 
 CORE BANKING MARKET LANDSCAPE
-Fiserv (DNA, Premier, Cleartouch): 31% US community/regional market
-Jack Henry (Symitar, SilverLake): 24%
-FIS (Modern Banking Platform): 19%
-Temenos: 23% global market
-Average core installation age: 22 years (some exceed 35 years)
-Core banking systems over 15 years old: 48% of US regional banks
+
+US market:
+    Fiserv (DNA, Premier, Cleartouch, Portico): 31% US community and regional bank market
+    Jack Henry (Symitar credit unions, SilverLake commercial banks): 24%
+    FIS (Modern Banking Platform, IBS): 19%
+    Temenos (T24/Transact): 7% US, 23% global
+    Finxact (acquired by Fiserv 2022): cloud-native SaaS core; now Fiserv's modern core offering
+
+Global market:
+    Temenos Transact: 23% global market share; dominant in Europe, APAC, Middle East
+    Finastra (Fusion Banking Essence): 18% global
+    Oracle Banking Platform (FLEXCUBE): 14% global; strong in Asia and Middle East
+    FIS Modern Banking Platform: primarily US and UK market
+    TCS BaNCS: strong in India, APAC, and digital-native deployments globally
+
+Core banking installation age (US banking):
+    Average core installation age: 22 years
+    Installations over 15 years old: 48% of US regional and community banks
+    Installations over 30 years old: 22% of banks
+    Oldest documented live core banking system in the US: installed 1974 — still in production at a midwestern community bank
+
 
 PERFORMANCE IMPACT OF LEGACY CORE
-Operational incident rate: legacy core 2.4x higher than modern core
-Feature deployment time: legacy 8-14 months vs. modern 6-8 weeks
-API capability: legacy 0-12 APIs; modern 200-800+ APIs
-Mobile feature parity with digital-native competitors: legacy achieves 34%
-Technical staff required: legacy 2.8x more IT FTE per $1B assets
 
-MODERNISATION APPROACHES
-Greenfield (new implementation): 34% of planned migrations
-Brownfield (system conversion): 48%
-Hybrid (selective data migration): 18%
+The cost of legacy is quantifiable:
 
-Greenfield timeline ($10B bank): 36-48 months
-Brownfield timeline ($10B bank): 24-36 months
-Greenfield risk: higher disruption, cleaner architecture
-Brownfield risk: carries forward technical debt, but faster
+Operational incident rate:
+    Legacy core (15+ years old): 2.4x higher operational incident frequency than modern core
+    Average monthly unplanned downtime (legacy): 4.8 hours; modern: 1.2 hours
+    Customer impact per unplanned outage: 18% of digital transactions fail; average customer complaint rate 34x normal
+
+Feature deployment timeline:
+    Legacy core: new product feature deployment 8-14 months
+    Modern cloud-native core: 6-8 weeks
+    Competitive disadvantage: legacy banks can deploy approximately 2 product updates per year versus 8-10 for neobanks
+
+API connectivity:
+    Legacy core API count: 0-12 (some have no native APIs — all integration via batch file)
+    Modern core API count: 200-800+ RESTful APIs
+    Impact: without APIs, mobile banking is a read-only overlay; personalisation, real-time offers, and AI recommendations are impossible
+
+Mobile feature parity with digital-native competitors:
+    Legacy core banks: achieve 34% of digital features offered by digital-native competitors
+    Modern core banks: achieve 78%
+    Gap in features: real-time balance updates, instant account opening, real-time payment acceptance, personalised offers
+
+Technical staff requirements:
+    Legacy core: 2.8 FTE IT staff per $1B in assets
+    Modern cloud-native core: 1.0 FTE IT staff per $1B in assets
+    Cost difference (blended $180,000 fully loaded per IT FTE): $324,000 per $1B assets — $3.2M for a $10B bank
+
+COBOL maintenance specifically:
+    Average annual cost to maintain COBOL-based core: $2.8-6.4M for a $10B bank
+    COBOL developer supply: declining; average age of COBOL programmer 58 years
+    Outsourced COBOL maintenance premium: 28% above market rate
+    Banks outsourcing COBOL maintenance to Accenture/IBM/TCS: 34% (abdicated control of core logic)
+
+
+MODERNISATION APPROACHES AND CHOICE FRAMEWORK
+
+Three primary migration patterns:
+
+GREENFIELD (New implementation, legacy decommissioned):
+    Percentage of planned migrations choosing this approach: 34%
+    Timeline ($10B bank): 36-48 months
+    Risk profile: highest disruption to operations during migration; cleanest architecture post-migration
+    Recommended for: banks below $5B assets with simple product portfolios; de novo digital banks
+    Primary platform choices: Thought Machine Vault (API-native), Mambu (cloud SaaS), Finxact (Fiserv)
+
+BROWNFIELD (System conversion — new vendor, existing data migrated):
+    Percentage of planned migrations: 48%
+    Timeline ($10B bank): 24-36 months
+    Risk profile: carries forward some technical debt (data quality issues from legacy); but 12-18 months faster
+    Recommended for: banks $5-20B with medium complexity
+    Primary platform choices: Fiserv DNA, Jack Henry SilverLake, Temenos Transact
+
+HYBRID / PROGRESSIVE (Modern core deployed alongside legacy; products migrated progressively):
+    Percentage of planned migrations: 18%
+    Timeline: 48-72 months (longer but lower risk per phase)
+    Risk profile: lowest single-point-of-failure risk; customers never fully switched simultaneously
+    Recommended for: banks above $20B with complex product portfolios and high operational risk sensitivity
+    Examples: HSBC (deployed 10 Architects of modern core alongside legacy), NatWest (cloud core for new business lines)
+
+LIFT-AND-SHIFT (Move legacy to cloud without re-architecting):
+    This is not true modernisation — it reduces infrastructure cost but does not unlock API or feature deployment benefits
+    Percentage of "modernisation" programmes that are actually lift-and-shift: 28%
+    AbarVa recommendation: classify this separately from true modernisation; it solves cost, not agility
+
 
 MODERNISATION COST BENCHMARKS
-$1-5B asset bank: $20-48M total programme cost
-$5-20B asset bank: $60-140M total programme cost
-$20-50B asset bank: $120-280M total programme cost
-Cost overrun rate: 41% exceed budget by >20%
-Primary overrun cause: data migration complexity (discovered mid-project, 68% of cases)
+
+Cost by bank size (total programme cost including software, implementation, data migration, training, change management):
+
+    $1-5B asset bank: $20-48M
+    $5-20B asset bank: $60-140M
+    $20-50B asset bank: $120-280M
+    $50-200B asset bank: $280-640M
+    Above $200B asset bank: $640M-$2.4B (Bank of America technology investment $3.8B annually, includes core modernisation)
+
+Cost overrun data:
+    Programmes exceeding budget by more than 20%: 41%
+    Programmes exceeding budget by more than 50%: 18%
+    Average overrun percentage when it occurs: 34% over original budget
+    Primary cause of overrun: data migration complexity discovered mid-project (68% of overrun cases)
+    Secondary cause: integration middleware complexity (44%)
+    Tertiary cause: change management and training underestimated (38%)
+
+Cost-benefit timeline:
+    Break-even (TCO savings offsetting programme cost): 4.2 years median
+    Range: 3-7 years depending on starting legacy cost and programme efficiency
+    Ongoing annual savings post-modernisation: $2.8-8.4M per $10B bank (IT cost, incident cost, feature speed value)
+
 
 DATA MIGRATION RISK FACTORS
-Average number of accounts to migrate per $10B bank: 1.2M
-Duplicate account rate (pre-migration): 3.8%
-Data quality issues discovered post-migration (average): 22%
-Data migration testing duration (recommended): 6-9 months
-Health systems that underestimated data migration: 73%
+
+Data migration is the most underestimated risk in core banking modernisation:
+
+    Average number of accounts to migrate per $10B bank: 1.2M accounts
+    Average number of data records per account (loans, transactions, documents): 280
+    Total records to migrate per $10B bank: approximately 336M
+    Duplicate account rate discovered pre-migration (industry average): 3.8%
+    Additional duplicates discovered mid-migration (not caught in pre-migration audit): average 1.4%
+    Data quality issues discovered post-migration requiring remediation: 22% of implementations
+
+Required data migration testing phases:
+    Discovery and data profiling: months 1-2
+    ETL (Extract, Transform, Load) design and development: months 3-6
+    Parallel run testing (production data tested on new core): months 7-12
+    Dress rehearsal migration (full test with rollback plan): month 13-14
+    Go-live migration: month 15+ (depending on bank size and complexity)
+    Recommended total testing duration: 6-9 months minimum
+
+Banks that underestimated data migration (FDIC supervisory review data): 73%
+Warning: TSB Bank (UK) 2018 migration failure resulted in 1.9M customers locked out for days; £366M total cost; primary cause: inadequate data migration testing. This remains the most cited core banking failure case in industry.
+
 
 AI CAPABILITIES UNLOCKED BY MODERN CORE
-Real-time payment fraud detection (requires: streaming API)
-Personalised deposit pricing (requires: event-driven data)
-AI small business underwriting (requires: open banking data access)
-Cash flow forecasting for business customers (requires: transaction-level data)
-Personalised lending offers in mobile app (requires: API + ML model)
-All require modern core: none achievable on 15+ year old core without expensive middleware
 
-PROGRESSIVE MODERNISATION PATTERN
-Deploy modern core alongside legacy: 18% choose this approach
-Key benefit: reduces business risk vs. big-bang replacement
-Timeline extension: 18-24 months longer than big-bang
-Recommended for: banks above $5B with complex product portfolios
+The primary strategic justification for core modernisation is AI capability enablement:
+
+    Real-time payment fraud detection: requires streaming transaction data from core API; not achievable on legacy batch core
+    Personalised deposit pricing: requires event-driven pricing engine connected to core; impossible without real-time core API
+    AI small business underwriting with cash flow data: requires open banking data integration via core API
+    Cash flow forecasting for business customers: requires transaction-level data streaming from core
+    Personalised lending offers in mobile app: requires API connecting ML recommendation engine to core in real-time
+    Instant account opening (sub-60 seconds): requires core to provision accounts via API in real-time; legacy core takes 24-72 hours batch
+
+All of the above are standard features of digital-native competitors. None are achievable on 15+ year-old legacy core without expensive middleware that approximates the capability at 40-60% the fidelity.
+
+AI impact of modern core on C/I ratio:
+    Incremental C/I improvement attributable to AI capabilities unlocked by modern core: 3-5pp
+    This is in addition to the 2-4pp direct IT cost savings from modernisation
+    Total C/I improvement (IT savings + AI enablement): 5-9pp over 5 years post-modernisation
+
+
+CLOUD-NATIVE CORE BANKING VENDORS (NEW ENTRANTS)
+
+The cloud-native core banking market has emerged as a credible alternative to legacy vendors:
+
+    Thought Machine Vault: UK-founded, cloud-native; deployed at JPMorgan Chase (Chase UK), Lloyds Banking Group, Atom Bank; API-first architecture with Smart Contract configuration
+    Mambu: German SaaS core; 250+ deployments globally; strongest in digital lending and neobank contexts; ABN AMRO, N26, OakNorth
+    Temenos Transact on Cloud: SaaS delivery of Temenos T24; largest traditional vendor with cloud migration path
+    Finxact (Fiserv): cloud-native core acquired by Fiserv; positioned as Fiserv's modern replacement for DNA and Premier
+    FIS Modern Banking Platform: rebuilt cloud-native platform; limited deployments to date
+    10x Banking: UK-founded; acquired by Standard Chartered; supercore architecture with 3,000+ APIs
+
+Selection criteria for cloud-native core:
+    API count and quality: minimum 200 RESTful APIs required for modern digital product development
+    Real-time processing: sub-second transaction posting for instant payments (FedNow, Zelle, SEPA Instant)
+    Configurability without code: smart contracts, product factory — allows product teams to launch without IT dependency
+    Regulatory compliance coverage: CCAR, DFAST, CECL, LCR compliance built into platform (not add-on)
+    Total cost of ownership at target scale: cloud SaaS typically 28-44% lower than equivalent on-premise
+
+
+CORE BANKING VENDOR IMPLEMENTATION QUALITY BENCHMARKS
+
+Vendor implementation quality varies significantly. Based on AbarVa observations and public implementation data:
+
+    Fiserv implementations meeting original go-live: 44%
+    Jack Henry implementations meeting original go-live: 52% (highest in US market)
+    Temenos implementations meeting original go-live: 38% (global implementation complexity higher)
+    Cloud-native (Thought Machine, Mambu) implementations meeting go-live: 62% (simpler architecture, modern tooling)
+
+Key factors in implementation success:
+    Executive sponsor dedicated to programme (not just nominal): increases on-time delivery 34%
+    Dedicated data migration team with 6+ months runway: reduces data quality failures 58%
+    Vendor implementation partner with 3+ reference implementations at similar bank size: reduces timeline variance 24%
+    Change management investment above 12% of total programme budget: reduces adoption failure 44%
+
+REAL-TIME PAYMENT INFRASTRUCTURE REQUIREMENTS
+
+Core banking systems must support real-time payment rails to remain competitive:
+
+    FedNow (US, launched July 2023): ISO 20022 messages, sub-10 second settlement
+    Banks connected to FedNow: 600+ as of Q1 2025
+    Requirement for FedNow participation: real-time API from core banking system
+    Banks unable to connect FedNow due to legacy core limitations: 28% (must wait for core modernisation or use middleware provider)
+    RTP (The Clearing House Real-Time Payments): 350+ banks connected; similar real-time core requirements
+
+    Middleware providers enabling real-time payment on legacy core: Volante Technologies, Form3, Modern Treasury
+    Middleware cost: $640,000-$1.8M annually (adds real-time payment capability without full core replacement)
+    Limitation: middleware does not unlock all AI capabilities — it solves payment infrastructure only
+
+OPEN BANKING API REQUIREMENTS FOR MODERN CORE
+
+The intersection of open banking regulation and core modernisation:
+
+    CFPB Rule 1033 (effective 2026-2030): requires API access to customer financial data
+    Legacy core compliance: requires expensive middleware or custom API layer; $1.8-$4.2M per bank
+    Modern core compliance: FDX-compliant APIs native — significantly lower compliance cost
+    API management layer: Kong, Apigee, Azure API Management — enterprise API gateway required
+
+AI CAPABILITIES BY CORE MODERNISATION STAGE
+
+Capability comparison across modernisation stages:
+
+Stage 0 (Legacy core, no API): 
+    Available AI: none natively; all AI requires offline data extract
+    C/I improvement possible: 1-2pp (fraud and AML AI via batch data only)
+
+Stage 1 (Legacy core with API middleware):
+    Available AI: fraud detection (real-time), digital onboarding, contact center AI
+    C/I improvement possible: 3-5pp
+
+Stage 2 (Modern core on-premise or private cloud):
+    Available AI: all real-time AI; personalised pricing; instant account opening
+    C/I improvement possible: 5-8pp
+
+Stage 3 (Cloud-native core with full streaming):
+    Available AI: complete AI capability; real-time personalisation; embedded finance
+    C/I improvement possible: 7-12pp
+
+POST-MODERNISATION PERFORMANCE BENCHMARKS
+
+Banks 24 months post-successful core modernisation:
+
+    Feature deployment speed: from 9 months to 6 weeks per new product feature
+    IT staff per $1B assets: from 2.8 to 1.0 FTE (64% reduction over 36 months as legacy maintenance eliminated)
+    System uptime: from 99.2% to 99.92% (legacy vs. cloud-native)
+    Mobile app store rating improvement: average +0.6 stars within 18 months (new features deployed)
+    Customer satisfaction (NPS) improvement: +14 points on average within 24 months of modernisation
+
+AbarVa Genome pattern F019 is most devastating in core banking: banks that do not plan data migration with sufficient testing (minimum 6-9 months) have a 41% chance of a significant failure event (data loss, system downtime, or regulatory incident) during migration. This pattern is responsible for the most costly AI programme failures AbarVa has observed.
+
+
+CORE BANKING VENDOR SELECTION FRAMEWORK
+
+Selecting a core banking platform is the highest-stakes technology decision a bank makes. The evaluation framework has evolved significantly since AI capability became a primary differentiator:
+
+Evaluation criteria weighting (2024-2025 FS bank RFPs):
+    AI and API readiness: 28% weight (highest individual criterion — up from 8% in 2020)
+    Cloud-native architecture and deployment model: 22%
+    Implementation risk and vendor track record: 18%
+    Functional coverage (deposits, loans, payments, GL): 16%
+    Total cost of ownership (5-year): 12%
+    Regulatory compliance (BSA, AML, FFIEC): 4%
+
+The AI-readiness gap between legacy and modern cores:
+    Event-driven architecture (real-time notifications to AI systems): modern cores (Thought Machine, Mambu, Finxact): native; legacy cores (Fiserv Premier, Jack Henry SilverLake): retrofit via middleware
+    API coverage: Thought Machine Vault: 3,000+ APIs; Mambu: 450+ APIs; legacy Fiserv Premier: 180+ APIs (rapidly expanding but limited by architecture)
+    Data model accessibility: modern cores expose normalised data models; legacy cores: proprietary data models requiring transformation layer for AI use
+    Real-time processing: modern cores: all transactions real-time; legacy: batch-heavy (60-70% of transactions processed in nightly batch)
+
+Mambu (cloud-native core banking):
+    Market position: leading cloud-native core for digital banks and credit-focused institutions
+    Clients: N26, Santander Consumer, Crédit Agricole digital banking
+    Architecture: SaaS-only; AWS and Azure deployment; event-driven with Kafka
+    AI capabilities: Mambu AI layer (in development 2025); third-party AI integration via API
+    Pricing: per-account subscription model; approximately $2.40-$4.80 per account per month
+    Implementation time: 6-12 months (fastest in category)
+
+Thought Machine Vault:
+    Architecture: 100% cloud-native; Smart Contract configuration (all product logic in Universal Product Engine)
+    AI integration: real-time event streaming enables sub-second AI model triggering
+    Clients: JPMorgan Chase (Chase UK), Lloyds Banking Group, Standard Chartered, Atom Bank
+    Pricing: enterprise subscription; estimated $4.2-$8.8M annually for regional bank ($5-20B assets)
+    Implementation time: 18-28 months
+    Key advantage: no technical debt — every deployment is the current version; upgrades automatic
+
+Finxact (Fiserv acquisition):
+    Position: Fiserv's modern core for cloud-first and digital-first US banks
+    Architecture: cloud-native, API-first; Fiserv integration layer available
+    Benefit for Fiserv clients: migration path from Premier/DNA to cloud-native without full vendor switch
+    AI capabilities: event-driven triggers for Fiserv AI products (CardHub, Digital Channels)
+    Implementation: 12-18 months; brownfield migration tools available
+
+
+PHASED MODERNISATION VS. BIG BANG REPLACEMENT
+
+The choice between phased modernisation and full core replacement determines programme risk and timeline:
+
+Full replacement (big bang):
+    Approach: replace entire core in a single cut-over event
+    Timeline: 36-60 months
+    Risk: highest — single point of failure; all systems affected simultaneously
+    Cost: 1.0x base cost (no parallel running costs)
+    FS firms choosing this approach: 18% (declining — industry recognising risk)
+    Failure rate: 28% of full core replacements experience significant delays or partial rollback
+    AbarVa recommendation: only appropriate when existing core is at end-of-life (vendor support ending) and no viable phased path exists
+
+Phased domain replacement (progressive modernisation):
+    Approach: replace one product domain at a time (e.g., deposits first, then loans, then payments)
+    Timeline: 48-84 months for full modernisation
+    Risk: moderate — each domain isolated; rollback possible domain-by-domain
+    Cost: 1.3-1.6x base cost (parallel operation of old and new core per domain)
+    FS firms choosing this approach: 54% (growing)
+    AbarVa recommendation: preferred for most regional banks; allows AI capability activation per domain without waiting for full modernisation
+
+Strangler Fig / overlay architecture:
+    Approach: leave legacy core intact; intercept transactions via API gateway; route new products to modern core
+    Timeline: 18-36 months to establish meaningful modern capability
+    Risk: lowest — legacy core continues unmodified
+    Cost: 1.1-1.2x (API gateway + modern core for new products only)
+    FS firms choosing this approach: 28% (primarily digital-first strategies within traditional banks)
+    Examples: HSBC using this model (legacy IBS backbone, new digital products on cloud-native layer), Barclays (Tesco Bank acquisition created parallel modern core)
+    AI benefit: enables AI-powered products immediately on modern layer while legacy modernisation continues
+
+
+POST-MODERNISATION PERFORMANCE BENCHMARKS
+
+Banks that completed core modernisation in 2020-2024 report the following operational improvements:
+
+Speed and agility:
+    New product time-to-market (modern core): 6-8 weeks vs. 12-18 months (legacy)
+    API integration time for fintech partnership (modern core): 2-4 weeks vs. 4-8 months (legacy)
+    Software release frequency: from quarterly (legacy constraint) to weekly or daily (modern core CI/CD)
+
+Technology cost:
+    IT maintenance cost as % of IT budget: legacy core firms: 68-72%; modern core firms: 44-52%
+    Data center cost reduction: 34% for cloud-native core (vs. on-premise legacy core)
+    IT staff reduction for core maintenance: 22% headcount reduction in core operations team (re-deployed to AI and product development)
+
+Uptime and reliability:
+    Legacy core system availability: 99.2% average (industry 2024 data)
+    Cloud-native core availability: 99.95% average (top performers: 99.99%)
+    Planned downtime elimination: legacy cores require planned maintenance windows (average 4.2 hours/month); cloud-native: zero planned downtime (rolling updates)
+
+AI enablement:
+    Time from core event to AI model trigger (modern core): under 500ms
+    Time from core event to AI model trigger (legacy core with middleware): 4.8 hours average (batch-dependent)
+    AI use cases unlocked immediately post-modernisation: real-time fraud decisioning, instant personalisation, real-time deposit rate optimisation, event-triggered marketing
+
+AbarVa Genome pattern F019 (Vendor Lock-In): Core banking modernisation programmes that select a single vendor for core + digital channels + analytics create a 5-year lock-in dynamic. Top-quartile modernisation programmes maintain best-of-breed strategy: modern core (Thought Machine, Mambu) + separate digital banking platform (Backbase, Q2) + separate analytics (Snowflake, Databricks). The API-first modern core enables this separation without integration complexity.

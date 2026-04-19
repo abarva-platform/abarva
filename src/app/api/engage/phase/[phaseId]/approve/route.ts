@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
+import { getPostHogClient } from '@/lib/posthog-server'
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -177,6 +178,23 @@ export async function POST(
           : `Phase ${phase.phase_number} output disputed: ${comment || 'No comment'}`,
         metadata: { comment, output_version: outputVersion }
       })
+
+    const ph = getPostHogClient()
+    ph.capture({
+      distinctId: actorId || actorName || 'unknown',
+      event: 'phase_action_taken',
+      properties: {
+        action,
+        phase_id: phaseId,
+        phase_number: phase.phase_number,
+        engagement_id: engagement.id,
+        client_id: engagement.client_id,
+        solution: engagement.solution,
+        actor_role: actorRole,
+        next_phase_unlocked: nextPhaseUnlocked,
+      },
+    })
+    await ph.shutdown()
 
     return NextResponse.json({
       success: true,

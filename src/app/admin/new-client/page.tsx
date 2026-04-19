@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import posthog from 'posthog-js'
 
 const T = {
   bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
@@ -235,7 +236,7 @@ export default function NewClientWizard() {
         {step < 5 && (
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '32px', paddingTop: '24px', borderTop: '1px solid ' + T.border }}>
             <button onClick={() => step > 1 && setStep(s => s - 1)} style={{ padding: '10px 20px', background: 'none', border: '1px solid ' + T.border2, borderRadius: '8px', color: step === 1 ? T.text3 : T.text, cursor: step === 1 ? 'not-allowed' : 'pointer', fontSize: '14px', fontFamily: 'inherit', opacity: step === 1 ? 0.4 : 1 }}>← Back</button>
-            <button onClick={() => canNext && setStep(s => s + 1)} disabled={!canNext} style={{ padding: '10px 24px', background: canNext ? T.teal : T.border2, color: canNext ? '#0D1117' : T.text3, border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: canNext ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
+            <button onClick={() => { if (canNext) { posthog.capture('new_client_wizard_step_completed', { step, org_vertical: org.vertical, org_size: org.size }); setStep(s => s + 1) } }} disabled={!canNext} style={{ padding: '10px 24px', background: canNext ? T.teal : T.border2, color: canNext ? '#0D1117' : T.text3, border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 700, cursor: canNext ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}>
               {step === 4 ? 'Review →' : 'Continue →'}
             </button>
           </div>

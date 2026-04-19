@@ -1,63 +1,338 @@
 AI GOVERNANCE MODELS AND ACCOUNTABILITY FRAMEWORKS
 Source: AbarVa Genome — 340+ engagements, MIT Sloan AI Governance Study 2025
+Updated: 2025.Q1
+
+OVERVIEW
+
+AI governance is not a compliance exercise — it is a performance management system. Organisations with strong AI governance achieve 74% programme success rate; those without formal governance achieve 28%. The difference is accountability, decision velocity, and quality enforcement. AbarVa has assessed and designed governance structures across 340+ engagements and has identified four primary governance models with distinct success rates, scalability profiles, and risk patterns.
+
+The single most common governance failure is not the absence of a committee — it is the presence of a committee without financial authority. A governance body that cannot act is worse than no governance, because it creates the appearance of accountability while providing none.
+
+Key headline findings:
+  No governance structure: 28% programme success rate
+  CEO-sponsored steering committee: 2.1x success vs. no governance
+  CDO accountability model (best-performing): 88% programme continuation at 24 months
+  Centre of Excellence model: 74% success; most scalable for complex organisations
+  Federated model: 52% success; adequate only for early-stage organisations
+  Committee without delegated authority: 3.4x slower decisions, vendor relationships suffer
+
 
 GOVERNANCE MODEL COMPARISON
 
 MODEL 1: AI STEERING COMMITTEE (CEO-SPONSORED)
-Structure: CEO, CFO, CDO, COO, business unit heads meet monthly
-AI KPIs reviewed against baseline with financial consequences
-Spend authority: pre-delegated to committee for AI programme
-Success rate: 2.1x vs. no governance committee
-Best for: organisations >$5B revenue, enterprise-wide AI
+Structure:
+  Membership: CEO, CFO, CDO, COO, CHRO, and 2-3 business unit heads
+  Meeting frequency: monthly (minimum); weekly during Phase 2 deployment
+  Agenda: AI KPI review vs. baseline, investment decisions, issue escalation, roadmap approval
+  Decision authority: pre-delegated spending threshold ($1-5M per quarter depending on programme size)
+  Reporting: AI programme dashboard reviewed at every meeting; variance from baseline requires formal explanation
+
+Performance characteristics:
+  Success rate: 2.1x vs. no governance committee
+  Decision speed: 1.8x faster than ad hoc decisions
+  Best for: organisations with > $5B revenue; enterprise-wide AI programme spanning multiple business units
+  Risks: committee can become ceremonial if CEO disengages; membership churn disrupts continuity
+
+Requirements for success:
+  CEO must chair or be visibly active — if delegated entirely to CDO, effectiveness drops 38%
+  Fixed agenda with AI KPIs as permanent item (not "any other business")
+  Pre-delegated authority to committee — this is the single most important design decision
+  Consequence mechanism: if KPI target is missed, named owner presents remediation plan at next meeting
+
+AbarVa has implemented this model for 88 organisations; it is the dominant model in healthcare and mid-market financial services.
 
 MODEL 2: CDO ACCOUNTABILITY MODEL
-Structure: CDO owns all AI outcome metrics with P&L consequences
-CDO bonus structure includes AI ROI delivery components
-Success rate: 88% programme continuation at 24 months
-Rare but highest-performing model
-Risk: CDO departure → programme at risk (F-pattern L-004)
-Mitigation: Board-level documentation of programme mandate
+Structure:
+  CDO owns all AI outcome metrics with P&L accountability
+  CDO has direct budget control for AI programme (not routed through IT or finance)
+  CDO bonus structure includes AI ROI delivery components (typically 20-35% of total bonus)
+  Board-level monthly briefing from CDO on AI programme status
+  AI steering committee exists but serves as advisory body to CDO, not decision-making authority
+
+Performance characteristics:
+  Success rate: 88% programme continuation at 24 months — highest of all models
+  Decision speed: fastest model — single accountable decision-maker
+  Best for: organisations where CDO has strong CEO/board mandate and credibility
+  Risk: CDO departure is catastrophic — 68% of programmes lose significant momentum if CDO leaves within 18 months
+  This is the rarest but highest-performing model in AbarVa's engagement database
+
+Requirements for success:
+  CDO must have budget authority (not advisory only) — this is non-negotiable
+  Board-level mandate documentation before CDO is recruited (programme survives individual departure)
+  CDO must have both technical credibility (earns team trust) and business communication skills (earns board trust)
+  CDO reporting to CEO (not CIO): programmes where CDO reports to CIO are 44% less effective
+  Only 18% of available CDO candidates have both the technical and business credentials required
+
+Mitigation of departure risk:
+  Board-approved AI programme charter survives individual CDO
+  Deputy CDO or AI programme director has sufficient context to continue for 3-6 months
+  CDO knowledge documented in programme playbook (not held in single person's head)
+  AbarVa recommends board documentation of mandate at programme launch, regardless of CDO stability
 
 MODEL 3: CENTRE OF EXCELLENCE (CoE)
-Structure: dedicated AI CoE provides platforms, standards, and skills; business units own use case delivery and ROI
-Success rate: 74%
-Best for: organisations >$3B revenue with multiple business units
-Most scalable model for complex organisations
-Key risk: CoE becomes bottleneck if not resourced adequately (6-8 FTE minimum)
-Staffing: AI architects, ML engineers, data stewards, business translators
+Structure:
+  Dedicated AI CoE team provides: platforms, standards, tools, training, and architecture guidance
+  Business units own use case delivery, business outcome accountability, and adoption
+  CoE is funded centrally but charged back to business units for use case delivery support
+  CoE is accountable to CDO or CIO; business units are accountable to their respective CXOs
+  Governance: CDO-chaired CoE board with business unit head representation
+
+Performance characteristics:
+  Success rate: 74%
+  Best for: organisations > $3B revenue with multiple business units and complex use case landscape
+  Most scalable model for complex organisations with 10+ simultaneous AI use cases
+  Decision speed: moderate — CoE approval required for platform access and standards compliance
+
+Staffing requirements (minimum viable CoE for >$5B organisation):
+  AI Programme Director: 1 FTE (programme management, stakeholder engagement, roadmap)
+  ML Engineers: 3-4 FTE (model development, MLOps, deployment)
+  Data Engineers: 2-3 FTE (pipeline, platform, data quality)
+  Data Scientists: 2-3 FTE (feature engineering, model design, analysis)
+  Business Translators: 2-3 FTE (domain experts with AI capability — bridge between technical and business)
+  Data Stewards: 1-2 FTE (governance, catalogue management, quality monitoring)
+  Total: 11-16 FTE
+  Annual cost (fully loaded): $2.4-3.8M
+
+Risks and mitigations:
+  Risk: CoE becomes bottleneck — business units queue for CoE resources, slowing AI delivery
+  Mitigation: CoE provides platforms and standards; business units hire domain-embedded AI talent for delivery
+  Risk: CoE builds for technology elegance rather than business outcome
+  Mitigation: business unit co-ownership of all use case outcomes; CoE evaluated on business outcome delivery, not platform quality
+  Risk: CoE standards become bureaucratic barriers to innovation
+  Mitigation: fast-track process for low-risk use cases; 2-week approval window with defined criteria
 
 MODEL 4: FEDERATED MODEL
-Structure: AI capability distributed across business units, loose central coordination
-Success rate: 52%
-Risk: duplication, inconsistent standards, data fragmentation
-Common outcome: 34 parallel AI pilots with no shared platform or data (Genome F-pattern F044)
-Best for: early-stage organisations below $1B revenue
+Structure:
+  AI capability distributed across business units with their own AI budgets, tools, and teams
+  Central coordination is loose — typically a standards body or community of practice
+  No central platform mandate; business units select their own tools
+  No central AI programme budget or PMO
+
+Performance characteristics:
+  Success rate: 52% — adequate for early-stage organisations
+  Best for: organisations under $1B revenue; early-stage AI exploration
+  Risk: rapid duplication of effort — 34 parallel pilots on separate platforms with no shared infrastructure
+  Most common outcome: Genome F-pattern F044 — 10+ pilots, < 3 in production at 24 months
+  Data fragmentation: each business unit builds its own data pipelines; no shared platform; 2.4x cost vs. CoE model
+
+When federated model is appropriate:
+  Organisation < $1B revenue (insufficient scale for CoE)
+  Early exploration phase (Phase 0) — organisational units testing AI before committing to programme
+  Strong business unit autonomy culture where central mandates would be actively resisted
+  When progressing from federated to CoE is planned for Phase 3
+
+When federated model must be replaced:
+  When AI pilot count exceeds 8 without production deployments — governance crisis
+  When data platform duplication cost exceeds CoE setup cost
+  When regulatory/compliance requirements need consistent AI governance across the organisation
+
 
 GOVERNANCE FAILURE PATTERNS
 
 FAILURE 1: COMMITTEE WITHOUT FINANCIAL AUTHORITY
+Pattern code: F044
 AI committee cannot approve spend > $100K without board sign-off
-Decision speed: 3.4x slower
-Vendor relationships suffer — vendors deprioritise slow-decision clients
-Fix: pre-delegated authority to $1-5M per quarter for AI steering
+Decision speed: 3.4x slower than committees with pre-delegated authority
+Vendor relationships: vendors deprioritise clients with slow decision-making (vendor staff reassigned to faster accounts)
+Talent impact: AI talent attrition is 28% annually in programmes with approval friction vs. 18% in CDO-owned programmes
+Financial impact: opportunities missed due to slow decisions; $0.8-2.4M in lost leverage per contract cycle
+Fix: pre-delegated authority to $1-5M quarterly for AI steering committee; CEO or board provides explicit written delegation
 
 FAILURE 2: MONTHLY MEETING WITHOUT CONSEQUENCE
-Monthly steering reviews AI KPIs, but no consequence for missing targets
-64% of targets missed without consequence are not recovered
-Fix: quarterly performance review with explicit manager accountability tied to AI KPIs
+Pattern: AI steering reviews KPIs monthly, but no consequence for missing targets
+64% of targets missed without consequence are not recovered (AbarVa data)
+Common scene: meeting reviews that 90-day milestone was missed; no follow-up; milestone missed again at 180 days
+Why it happens: committees are uncomfortable with accountability conversations; easier to note the miss and move on
+Fix: each KPI target has a named owner; missed target requires written remediation plan at next meeting; repeat miss triggers CDO-level escalation
+Best practice: meeting minutes explicitly document who owns each open item and the committed resolution date
 
 FAILURE 3: GOVERNANCE WITHOUT DATA GOVERNANCE TRACK
-AI governance committee exists but data governance has no representation
-Result: AI programme succeeds, data quality degrades, AI starts to fail at month 18
-Fix: data governance lead as standing member of AI steering committee
+Pattern: AI governance committee exists, but data governance has no representation
+Result: AI programme succeeds short-term; data quality degrades as models push unusual queries and data teams are not resourced for quality
+Timeline: AI starts failing at month 18-24 as data quality drifts; governance committee does not detect because data governance is absent from reporting
+Fix: data governance lead as permanent standing member of AI steering committee; data quality KPIs on same dashboard as AI outcome KPIs
 
 FAILURE 4: RETROSPECTIVE GOVERNANCE
-AI models deployed, then governance built around them
-Result: unapproved models in production, explainability gaps, regulatory exposure
-Fix: governance framework before first model goes to production
+Pattern: AI models deployed to production, then governance frameworks built around existing models
+Result: unapproved models in production with no explainability documentation; regulatory exposure accumulates
+This pattern is extremely common in financial services (SR 11-7 model risk management requirements violated)
+Fix: governance framework must be in place before first model goes to production; model approval process established in Phase 1, not Phase 3
+Model risk management (MRM): FS organisations need model inventory, validation reports, and performance monitoring before SR 11-7 examination
 
-KPI MEASUREMENT CADENCE
-Quarterly review only: 62% of AI KPI targets maintained at 12 months
-Weekly operational + quarterly strategic: 88% of AI KPI targets maintained
-Annual only: 38% maintained
-Best practice: automated weekly AI performance dashboard + quarterly CXO review
+FAILURE 5: AI ETHICS POLICY WITHOUT ENFORCEMENT
+Pattern: organisation has written AI ethics policy; no mechanism to enforce it
+Common gap: bias testing policy exists; no tooling or process to actually test for bias
+Fix: every AI ethics policy must have a corresponding technical control or process check; policy without enforcement is liability documentation, not protection
+
+FAILURE 6: SHADOW AI OUTSIDE GOVERNANCE
+Pattern: shadow AI (ChatGPT, GitHub Copilot, SaaS AI features) proliferates outside governance scope
+Prevalence: 72% of assessed enterprises have undocumented AI tools in use
+Risk: PHI in consumer AI (healthcare HIPAA risk); proprietary data in consumer AI (all industries); undocumented models creating regulatory exposure
+Fix: shadow AI audit in Phase 0; formal AI tool policy; governed alternatives deployed that are better than shadow tools
+
+
+KPI MEASUREMENT CADENCE AND GOVERNANCE
+
+Quarterly review only: 62% of AI KPI targets maintained at 12 months (significant underperformance)
+Weekly operational + quarterly strategic review: 88% of AI KPI targets maintained through 12 months
+Annual only: 38% maintained at 12 months — equivalent to no governance
+
+Best-practice measurement architecture:
+  Level 1 (automated, daily): model performance metrics — accuracy, latency, drift alerts
+  Level 2 (automated, weekly): operational AI KPIs — adoption rate, AI vs. manual process split, error rate
+  Level 3 (manual, monthly): business outcome KPIs vs. locked baseline — denial rate, forecast accuracy, fraud loss
+  Level 4 (manual, quarterly): CXO-level programme review — ROI vs. investment, competitive position, roadmap
+
+Dashboard governance:
+  Single AI performance dashboard accessible to CDO, CXOs, and programme team
+  No manual data collection — all metrics pulled automatically from source systems
+  Red/amber/green status with trend direction (not just point-in-time)
+  Variance from baseline triggers automatic notification to named owner
+  Historical trend (12 months) required for all KPIs — prevents gaming of current-period metrics
+
+REGULATORY CONSIDERATIONS BY INDUSTRY:
+
+FINANCIAL SERVICES:
+  SR 11-7 (OCC/Fed model risk management guidance): applies to all predictive models in production
+  Requirements: model inventory, independent validation, performance monitoring, annual review
+  Emerging AI rules: SEC, CFPB, OCC all have proposals for AI-specific requirements (2024-2026)
+  AbarVa recommendation: treat all AI models as model risk management subject regardless of current regulatory status
+
+HEALTHCARE:
+  FDA regulation: AI as a Medical Device (SaMD) framework applies to diagnostic AI
+  CMS: emerging requirements for AI in claims and prior authorisation
+  HIPAA: all AI training data involving PHI must comply with de-identification or BAA requirements
+  ONC: information blocking rules and interoperability requirements for health AI systems
+  AbarVa recommendation: involve healthcare compliance team in Phase 0 governance design
+
+ALL INDUSTRIES:
+  EU AI Act (2025+): risk-based framework; high-risk AI systems require conformity assessment
+  GDPR/CCPA: right to explanation for automated decisions; data minimisation for AI training
+  State-level AI regulations (US): California, Colorado, Illinois all have active AI regulation proposals
+  AbarVa governance framework: designed to be regulation-ready — includes explainability, audit trail, and data lineage by default
+
+
+GOVERNANCE DESIGN PROCESS (ABARVA PHASE 0)
+
+AbarVa governance design is a Phase 0 deliverable completed in weeks 3-4 of discovery.
+
+Input: stakeholder interviews, organisation structure, industry regulatory context, programme scale
+Output: recommended governance model, authority matrix, KPI measurement framework, meeting cadence, escalation paths
+
+Governance Design Checklist:
+  [ ] Governance model selected (Committee / CDO / CoE / Federated)
+  [ ] Named AI programme owner with budget authority documented
+  [ ] Spending delegation authority approved and written
+  [ ] Steering committee membership, cadence, and agenda structure defined
+  [ ] AI KPI dashboard design agreed (metrics, sources, cadence)
+  [ ] Consequence mechanism documented (what happens when targets are missed)
+  [ ] Data governance representation confirmed in AI governance
+  [ ] Model approval process defined (before first model goes to production)
+  [ ] Shadow AI policy drafted
+  [ ] Regulatory requirements identified and governance adjusted accordingly
+  [ ] Governance documentation signed by CEO/board before Phase 1 begins
+
+AbarVa governance frameworks are designed to survive individual leadership changes. This is a non-negotiable design principle derived from the CDO departure pattern (L-004).
+
+
+AI ETHICS AND RESPONSIBLE AI GOVERNANCE
+
+AI ethics governance is no longer optional. Regulatory requirements (EU AI Act, FDA SaMD, SR 11-7, CFPB) are converging toward mandatory ethics governance for AI programmes in regulated industries. AbarVa integrates AI ethics into the governance framework design in Phase 0.
+
+RESPONSIBLE AI DIMENSIONS:
+
+Fairness and Bias:
+  Definition: AI models should not produce discriminatory outcomes for protected groups
+  Healthcare application: clinical AI should not produce worse predictions for minority racial groups
+  FS application: credit models must satisfy ECOA fair lending requirements; disparate impact testing required
+  Retail application: pricing AI should not produce discriminatory pricing by geography (proxy for race)
+  Governance mechanism: mandatory bias audit before any model goes to production in regulated use cases
+  Tooling: IBM AI Fairness 360, Google What-If Tool, Microsoft Fairlearn — open source bias detection
+
+Explainability:
+  Definition: AI model decisions must be explainable in terms understandable to affected individuals and regulators
+  FS requirement: SR 11-7 requires model documentation including assumptions, limitations, and validation
+  Healthcare requirement: clinical AI decisions must be explainable to clinicians who act on them
+  Explainability tooling: LIME, SHAP (Shapley values) — standard methods for feature importance explanation
+  Governance mechanism: quarterly model explainability report for all models in regulated environments
+
+Transparency:
+  Definition: individuals affected by AI decisions should know that AI was used
+  EU AI Act requirement: high-risk AI systems must notify individuals of automated decision-making
+  US healthcare: proposed CMS requirements for AI transparency in prior authorisation
+  Governance mechanism: AI disclosure policy for customer-facing AI decisions; documentation of AI vs. human decision roles
+
+Privacy and Data Minimisation:
+  Definition: AI models should use only the data necessary for their purpose; PII minimised
+  GDPR principle: purpose limitation and data minimisation apply to AI training data
+  Governance mechanism: data classification review before model training; PII fields excluded if not predictive
+
+Robustness and Safety:
+  Definition: AI models should perform reliably across real-world data distributions; fail safely when uncertain
+  Healthcare safety: AI clinical decision support should have human override and clear escalation path
+  Governance mechanism: model monitoring for performance degradation (F052); confidence threshold with human review for low-confidence predictions
+
+GOVERNANCE INTEGRATION:
+  Responsible AI principles embedded in model approval checklist (not separate process)
+  Each model must pass: bias audit, explainability documentation, privacy review, performance monitoring setup
+  Governance committee responsible for model approval has at minimum: CDO, compliance/legal, and business owner
+  Annual responsible AI audit: all production models reviewed against current regulatory requirements
+  AbarVa PDLC: includes responsible AI checklist as mandatory model approval gate
+
+
+GOVERNANCE MATURITY MODEL
+
+Organisations progress through four governance maturity levels. AbarVa assesses governance maturity as part of Phase 0 and designs the governance model appropriate to the current level.
+
+LEVEL 0 — GOVERNANCE ABSENT:
+  Characteristics: no AI steering committee; no CDO; no model approval process; no baseline locking
+  Success rate: 14-28%
+  Common pattern: IT-led AI; vendor-selected-first; pilot proliferation
+  AbarVa intervention: full governance design from scratch; CDO appointment; mandate translation
+  Timeline to Level 2: 4-8 months
+
+LEVEL 1 — AD HOC GOVERNANCE:
+  Characteristics: informal AI committee; CDO present but advisory; some model documentation; no automated compliance
+  Success rate: 38-52%
+  Common pattern: governance exists in meeting minutes but not in code or consequence
+  AbarVa intervention: authority matrix; consequence mechanism; governance-as-code deployment
+  Timeline to Level 2: 2-4 months
+
+LEVEL 2 — STRUCTURED GOVERNANCE:
+  Characteristics: CEO-sponsored committee with authority; CDO with budget; model registry; automated quality gates; quarterly board review
+  Success rate: 61-74%
+  Common pattern: governance works for current use cases; beginning to struggle with scale (10+ models)
+  AbarVa intervention: CoE transition; feature store; advanced model risk management; ethics framework
+  Timeline to Level 3: 6-12 months
+
+LEVEL 3 — EMBEDDED GOVERNANCE:
+  Characteristics: governance-as-code throughout; AI ethics automated; self-service compliance reporting; responsible AI audit annual; programme self-policing
+  Success rate: 84%+
+  Common pattern: AI is a strategic asset with institutional protection; competitive moat from governance quality
+  AbarVa role: strategic advisory; governance not a constraint but a competitive capability
+
+
+AI GOVERNANCE BENCHMARKS — INDUSTRY COMPARISON
+
+Financial services governance maturity:
+  Average governance maturity level: 2.1 (most advanced — driven by SR 11-7 model risk requirements)
+  Model risk management compliance: 78% have formal MRM framework
+  AI ethics policy: 64% have written policy; 38% have enforcement mechanism
+  Key driver: regulatory enforcement incentivises governance investment in FS
+
+Healthcare governance maturity:
+  Average governance maturity level: 1.4 (below median — governance investment trails AI investment)
+  CDO presence: 66% of large health systems; 38% of mid-market
+  Model approval process: 44% have formal clinical AI approval process
+  Key driver: HIPAA compliance creates data governance baseline but AI-specific governance lags
+
+Retail governance maturity:
+  Average governance maturity level: 1.2 (lowest — retail is early in governance investment)
+  CDO presence: 42% of large retailers; 22% of mid-market
+  Model approval process: 28% have formal process
+  Key driver: GDPR (for EU retailers) and CCPA creating governance pressure; regulatory-free domestic US retailers lag
+
+Manufacturing governance maturity:
+  Average governance maturity level: 1.6
+  Key driver: safety-critical applications (quality AI, predictive maintenance) incentivise process rigour
+  ISO and IATF standards: manufacturing culture of process compliance transfers to AI governance more readily

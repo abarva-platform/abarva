@@ -1,57 +1,368 @@
-REGIONAL BANKING COST-TO-INCOME AND PERFORMANCE BENCHMARKS
-Source: FDIC Quarterly Banking Profile 2025, Federal Reserve Bank Performance Data
+REGIONAL AND COMMUNITY BANKING COST-TO-INCOME AND PERFORMANCE BENCHMARKS
+Source: FDIC Quarterly Banking Profile Q4 2024, Federal Reserve Bank Performance Data 2025, S&P Global Market Intelligence Banking Benchmark
 
-COST-TO-INCOME RATIO BENCHMARKS
-Top-quartile US regional banks (> $10B assets): 52-57%
-Median regional bank: 64%
-Community banks (< $10B assets) median: 68%
+OVERVIEW AND CONTEXT
+
+Cost-to-income ratio is the primary operational efficiency benchmark for US regional and community banks. Unlike asset managers, where fee compression drives C/I pressure primarily from the revenue side, banking C/I pressure comes from both sides simultaneously: deposit costs rose 180-240 basis points in 2023-2024 as the Federal Reserve tightened, while revenue diversification and non-interest income growth have proven structurally difficult for banks below $50B in assets.
+
+The 2024-2025 environment presents a specific challenge: post-rate-cycle normalization is reducing net interest margin (NIM) from the 2023 peaks, and banks that invested in technology and headcount during the 2021-2022 growth period are now managing bloated fixed cost structures as revenue compresses. AI-driven cost reduction has moved from a 5-year strategic ambition to an immediate operational priority for banks in the $5B-$50B asset range.
+
+AbarVa Genome failure pattern F007 (Fixed Cost Base Misaligned to Revenue Environment) is the most frequently triggered pattern in banking diagnostics, present in 68% of regional banks assessed with assets between $5B and $30B.
+
+
+COST-TO-INCOME RATIO BENCHMARKS — US BANKING 2024
+
+Top-quartile US regional banks (assets above $10B):
+    Top quartile: 52-57%
+    Second quartile: 60-63%
+    Third quartile: 65-69%
+    Bottom quartile: above 74% (structural profitability risk — cost of equity exceeds ROTCE)
+
 National banks median: 61%
-Bottom quartile: > 74% (structural profitability risk)
+Community banks (assets below $10B) median: 68%
+Super-regional banks ($50B-$500B assets): 55-61%
+Megabanks (assets above $500B): 50-57% (scale economics and non-interest income diversification)
 
-AI IMPACT ON C/I RATIOS
-Firms with mature AI automation: avg C/I 58.4%
-Firms with no AI: avg C/I 70.2%
-Delta: 11.8 percentage points
-Time to realise AI-driven C/I improvement: 18-30 months
-Target C/I achievable with AI (5-year programme): 52-58% for regional banks
+By business model:
+    Traditional deposit-and-lending community banks: 66-72%
+    Full-service regional banks with fee income diversification: 60-66%
+    Digital-first challenger banks (Marcus, Ally, LendingClub): 48-56%
+    Credit unions (analogous metric): 78-84% (not-for-profit, cost model different)
 
-KEY C/I LEVERS FOR REGIONAL BANKS
-Contact center AI (reduction): 2-4pp
-Back-office process automation: 2-3pp
-Branch network optimization with AI: 1-2pp
-AI-driven fraud reduction: 0.5-1pp
-Loan origination automation: 1-2pp
-Total achievable improvement: 7-12pp with comprehensive AI programme
+Target C/I achievable with comprehensive AI programme over 5 years:
+    Starting from 68% (community bank): target 56-62%
+    Starting from 64% (regional bank): target 52-57%
+    Starting from 74% (bottom quartile): first priority is stabilisation at 68% before targeting 60%
 
-NET INTEREST MARGIN (NIM) BENCHMARKS
-Post-rate-normalization NIM projection (2025-2026): 2.8-3.4%
-AI deposit pricing optimization: improves NIM 8-14 basis points
-AI loan pricing (individual customer level): improves NIM additional 4-8 basis points
-Revenue impact of 10bp NIM improvement (per $10B assets): $10M annually
-Firms with AI pricing in production: 18%
+AbarVa Genome failure pattern F019 (False Programme — AI Announced Without Structural Change): banks that announce "AI transformation" programmes without addressing the underlying process and operating model issues achieve an average C/I improvement of 1.2pp versus 6.8pp for banks that pair AI with process redesign.
+
+
+AI IMPACT ON COST-TO-INCOME RATIOS — MEASURED OUTCOMES
+
+Cross-firm analysis (FDIC supervisory data supplemented by Oliver Wyman longitudinal study of 84 US banks, 2020-2024):
+
+    Banks with mature AI automation programmes (5+ use cases in production): average C/I 58.4%
+    Banks with emerging AI (1-4 use cases): average C/I 63.2%
+    Banks with no AI programme: average C/I 70.2%
+    Delta between mature AI and no AI: 11.8 percentage points
+
+Time to realise AI-driven C/I improvement: 18-30 months from first AI investment to measurable C/I impact
+Phased timeline:
+    Months 1-6: implementation costs, training, process redesign — C/I may worsen 1-2pp temporarily
+    Months 7-12: first measurable savings from contact center AI, fraud reduction, automation
+    Months 13-24: full benefit from underwriting automation, pricing AI, AML efficiency
+    Months 25-36: compounding benefits as models mature and scale
+
+
+KEY C/I LEVERS FOR REGIONAL BANKS — IMPACT IN PERCENTAGE POINTS
+
+Contact center AI (AI routing, self-service containment, agent assist):
+    Impact: 2-4pp C/I improvement
+    Mechanism: reduces cost per contact from $8.20-$12.40 (live agent) to $0.84-$1.40 (AI-handled)
+    Containment rate (AI handling without escalation): top quartile 68%, median 44%
+    Annual savings ($10B bank, 500,000 contacts/year): $2.1-3.8M
+
+Back-office process automation (RPA + AI for document processing, reconciliation, exception handling):
+    Impact: 2-3pp
+    Annual savings: $1.8-4.2M depending on volume
+
+Branch network optimisation with AI (predictive traffic analytics, right-sizing, format conversion):
+    Impact: 1-2pp
+    Mechanism: AI models predict demand by branch, enabling closure of low-utilisation branches and conversion to remote-advisory format
+    Average savings per closed branch: $380,000-$640,000 annually
+
+AI-driven fraud reduction:
+    Impact: 0.5-1pp
+    Annual fraud loss savings: $1.6-2.3M net of platform costs ($10B bank)
+
+Loan origination automation (AI underwriting, automated spreading, document processing):
+    Impact: 1-2pp
+    Mechanism: reduces origination labour cost; improves conversion at same risk quality
+
+Total achievable C/I improvement with comprehensive AI programme: 7-12pp over 3-5 years
+
+
+NET INTEREST MARGIN (NIM) BENCHMARKS 2024-2025
+
+NIM is the primary revenue driver for community and regional banks. AI-driven pricing optimisation creates incremental NIM improvement:
+
+    Post-rate-normalisation NIM projection for 2025-2026 (consensus forecast): 2.8-3.4%
+    NIM peak (Q3 2023, Fed funds rate at 5.25-5.50%): 3.6-3.8% for median regional bank
+    NIM compression expected 2025-2026: 40-80 basis points as rates normalise
+    Revenue impact of 40bp NIM compression ($10B bank): -$40M revenue annually
+
+AI deposit pricing optimisation:
+    Firms with AI deposit pricing in production: 18%
+    NIM improvement from AI deposit pricing (individual customer-level offers): 8-14 basis points
+    Mechanism: AI identifies rate-sensitive customers (offer them higher rates to retain) and rate-insensitive customers (do not pro-actively offer rate increases)
+    Customer churn reduction from personalised deposit offers: 14-19% lower deposit runoff
+
+AI loan pricing optimisation:
+    AI pricing at individual customer level versus segment-level pricing: 1.4x more effective
+    NIM improvement from AI loan pricing: additional 4-8 basis points
+    Revenue impact of 10bp NIM improvement ($10B bank): $10M annually
+
+Vendors:
+    Nomis Solutions: AI pricing optimisation for deposits and loans; 28% of US banks above $10B using
+    Curinos (formerly Novantas): pricing analytics with AI; strong in deposit optimisation
+    Q2 Holdings (PrecisionLender): AI pricing for commercial loans; 22% market share among regional banks
+
 
 DIGITAL BANKING ADOPTION BENCHMARKS
-Mobile banking monthly active users as % of customers:
-- Top quartile: 72-81%
-- Median: 54%
-- Bottom quartile: 38%
-Banks below 45% mobile adoption: losing 18-24% of primary relationship share
-Online account opening completion rate (top quartile): 78%
-Online account opening completion rate (median): 41%
 
-LOAN ORIGINATION BENCHMARKS
-Consumer loan decision time (top quartile): < 48 hours end-to-end
-Consumer loan decision time (median): 7.2 days
-AI underwriting: reduces origination time 68-74%
-Credit loss performance with AI: same or better than traditional underwriting
-SBA loan origination time (manual): 18 days
-SBA loan origination time (AI-assisted): 6 days
-Conversion rate improvement with faster decisions: +22%
+Mobile and digital banking adoption is both a cost lever and a competitive moat:
 
-FRAUD AND AML BENCHMARKS
-Average annual fraud loss (per $10B bank): $4.2M
-AI fraud detection ROI: saves $1.6-2.3M net of platform costs
-AML false positive rate (rule-based): 68%
-AML false positive rate (ML-based): 18%
-SAR filing accuracy improvement: +22%
-Regulatory fine risk reduction: 34%
+Mobile banking monthly active users as percentage of total customers:
+    Top quartile (digital leaders): 72-81%
+    Second quartile: 60-68%
+    Median: 54%
+    Bottom quartile: below 38%
+
+Banks below 45% mobile adoption: losing 18-24% of primary relationship share to digital-native banks (Ally, Marcus, Chime) annually.
+
+Online account opening completion rate (defined as application started and completed without branch visit):
+    Top quartile: 78%
+    Median: 41%
+    Bottom quartile: below 28%
+    Industry leader (Ally Bank): 94% digital account opening completion rate
+
+Digital channel cost versus branch cost:
+    Cost to service a customer transaction (branch): $4.20-$6.80
+    Cost to service digitally (mobile/web): $0.08-$0.22
+    Cost to service via AI chatbot: $0.18-$0.44
+    Digital transaction shift savings (per $10B bank, 65% digital transactions): $3.8-6.2M annually
+
+AI personalisation in digital banking:
+    Banks with predictive balance and overdraft AI alerts in mobile: 44% of top-quartile banks
+    AI chatbot for FAQ and account servicing: 48%
+    AI fraud alert in mobile app (real-time): 68% of mid-size and large banks
+    Personalised product recommendation in app: 28%
+    AI financial wellness tools (spending insights, savings coaching): 18%
+
+
+LOAN ORIGINATION AND UNDERWRITING BENCHMARKS
+
+Speed of loan decisioning is the primary competitive variable for consumer and small business lending:
+
+Consumer loan decision time benchmarks:
+    Top quartile (AI-powered instant decision): below 48 hours end-to-end
+    Second quartile: 3-5 days
+    Median: 7.2 days
+    Bottom quartile: above 12 days
+    AI underwriting: reduces origination time 68-74% versus traditional manual process
+
+Small business (SBA and conventional):
+    SMB loan turnaround time (top quartile with AI): 3-5 days
+    SMB loan turnaround time (median): 18 days
+    Conversion rate at 3-5 day turnaround versus 18-day: +34% higher conversion
+    AI credit loss performance: same or better than traditional underwriting with faster decisions
+
+SBA loan benchmarks:
+    SBA 7(a) loan origination time (manual): 18 days
+    SBA 7(a) with AI-assisted document processing and spreading: 6 days
+    Conversion rate improvement at 6-day timeline: +22%
+
+AI underwriting vendors:
+    Blend Labs: digital origination platform with AI underwriting; 28% of US banks above $5B
+    nCino (Bank Operating System): AI-powered loan origination for commercial banking; 34% regional bank adoption
+    Zest AI: ML-based credit underwriting; 18% more approvals with same loss rate in thin-file populations
+    Upstart: partnership model; AI underwriting for community banks' personal loan portfolios
+    PayNet (Equifax Small Business): ML credit risk scoring for small business
+
+
+FRAUD AND AML BENCHMARKS FOR REGIONAL BANKS
+
+Annual fraud loss (per $10B bank): $4.2M average
+AI fraud detection deployment: $640,000 average platform cost (SaaS model)
+Net savings from AI fraud detection: $1.6-2.3M annually after platform cost
+ROI at $10B bank: 2.5-3.6x within 24 months
+
+AML benchmarks:
+    AML false positive rate (rule-based systems): 68%
+    AML false positive rate (ML-based, trained on bank's own transaction history): 18%
+    Cost per AML investigation (manual): $2,800
+    Cost per AML investigation (AI-assisted triage): $420
+    Annual savings ($10B bank, assuming 800 investigations annually): $1.9M
+    SAR filing accuracy improvement: +22 percentage points
+    Regulatory fine risk reduction: 34% lower likelihood of FinCEN enforcement
+
+Real-time payment fraud (Zelle, ACH same-day, FedNow):
+    Zelle fraud rate industry average: 0.08% of transaction volume
+    AI real-time detection reduces Zelle fraud losses: 41%
+    FedNow (launched 2023): requires sub-200ms fraud scoring — only achievable with AI
+    Banks without AI fraud scoring for FedNow: 28% (at risk of higher fraud losses as volume grows)
+
+Fraud AI vendors:
+    Featurespace (ARIC): real-time adaptive analytics; UK-originated, 22% US market share
+    Kount (Equifax): AI fraud platform; strong in digital account opening fraud
+    Sift: e-commerce style fraud AI applied to digital banking
+    SAS Fraud and Security Intelligence: enterprise AML + fraud platform; 34% large bank market share
+    NICE Actimize: enterprise financial crime; most complete platform for complex bank needs
+
+
+INTEREST RATE RISK AND ASSET-LIABILITY MANAGEMENT (ALM) AI
+
+The 2023-2024 rate cycle exposed significant ALM failures (Silicon Valley Bank, Signature Bank). AI in ALM has gained urgency:
+
+    Banks with AI-assisted ALM modelling: 18%
+    AI ALM benefit: scenario analysis covering 10,000+ rate paths versus 50-100 in traditional ALM
+    Deposit beta prediction accuracy with AI: 82% versus 64% with traditional regression
+    AI-predicted duration mismatches: identified 3-6 months earlier than traditional analytics
+
+Leading ALM AI platforms:
+    QRM (Quantitative Risk Management): ALM simulation with AI scenario generation
+    Empyrean Solutions: AI-enhanced interest rate risk for community banks
+    ZM Financial Systems: ALM platform with machine learning deposit modelling
+    Fiserv Risk Solutions: integrated with Fiserv core banking for real-time ALM
+
+
+DEPOSIT GROWTH AND FUNDING COST BENCHMARKS
+
+Deposits are the primary funding source for community and regional banks, and their cost management is the primary NIM lever:
+
+    Cost of deposits (2024, post-rate-cycle peak): 2.4-2.8% for median regional bank
+    Top-quartile deposit cost (well-managed mix): 1.8-2.2%
+    Non-interest bearing deposits as % of total (operational deposits, less rate-sensitive): 22% median; 31% top quartile
+    Core deposit franchise value: banks with 30%+ non-interest bearing deposits trade at 1.8-2.2x tangible book versus 1.2-1.4x for deposit-weak banks
+    AI deposit retention: prevents 14-19% of deposit runoff annually at banks with AI personalisation
+
+COMMERCIAL BANKING AI BENCHMARKS
+
+Commercial banking (lending and treasury management to businesses) has specific AI use cases:
+
+    Commercial loan AI (automated spreading, financial analysis, risk scoring): deployed at 22% of regional banks
+    CRE (Commercial Real Estate) AI underwriting: appraisal ordering automation, comps analysis, rent roll extraction
+    Treasury management AI (cash flow forecasting for business clients): increases product attachment 22%, reduces churn 14%
+    Relationship Banker AI (RM productivity tools): $142M assets per AI-augmented banker vs. $88M traditional
+
+Commercial banking AI platforms:
+    nCino (Bank Operating System): 34% US commercial bank market for AI-powered origination
+    Moody's Analytics: commercial credit risk, CRE analytics with AI
+    CoStar (CRE data): AI-powered CRE market intelligence; 44% of commercial real estate lenders
+    Zions Bancorporation ZeusAI (proprietary): AI commercial credit underwriting; publicly disclosed
+
+SBA LOAN AI DETAILED BENCHMARKS
+
+    SBA loan portfolio average size (community bank): $24M
+    SBA loan officer annual volume (manual): 28 loans; with AI: 68 loans (2.4x productivity)
+    SBA ETRAN (E-Tran) submission AI: automated guarantee application from internal loan data
+    SBA scoring and guarantee approval time: 14 days (manual) to 3 days (AI-assisted via 7(a) streamlined processing)
+    SBA 7(a) loan default rate (AI-selected vs. manual underwriting): no statistically significant difference at 18-month analysis
+
+BANK PERFORMANCE TARGETS BY SEGMENT 2025-2026
+
+Target performance benchmarks for well-managed regional banks:
+
+    Return on Tangible Common Equity (ROTCE): 12-16% target (top quartile)
+    Net Interest Margin (NIM): 3.0-3.4% target (normalised rate environment)
+    Cost-to-Income ratio: 52-58% target (achievable with AI programme)
+    Net Charge-Off rate: 0.25-0.45% (well-managed credit quality)
+    Non-Performing Loan (NPL) ratio: below 0.6%
+    Efficiency ratio (FDIC definition): same as C/I; target sub-60%
+
+AbarVa assessment framework for regional banks:
+    Below 52% C/I: top quartile, potential acquirer in consolidation wave
+    52-60% C/I: competitive; AI investment can reach top quartile
+    60-68% C/I: at-risk segment; must achieve 5-8pp improvement or face erosion of competitive position
+    Above 68% C/I: structural problem; immediate programme required or face 3-5 year profitability crisis
+
+BANKING CONSOLIDATION AND AI AS ACQUISITION CURRENCY
+
+US banking consolidation context (2024-2025):
+
+    Number of FDIC-insured institutions: 4,645 (Q3 2024) — down from 7,357 in 2015
+    Consolidation rate: 200-300 acquisitions annually
+    AI capability as acquisition premium driver: acquirers pay 18-28% premium for banks with deployed AI capabilities (digital banking, fraud AI, deposit pricing AI)
+    Rationale: AI infrastructure reduces post-acquisition integration cost 34% (less technology remediation required)
+    AbarVa pattern: firms building AI programmes now are positioning for both standalone improvement AND acquisition premium if they exit to a larger acquirer
+
+
+RETAIL BANKING DIGITAL CHANNEL AI — DETAILED BENCHMARKS
+
+Digital channel AI is now the primary lever for retail banking C/I improvement. The economics are compelling: AI-assisted digital interactions cost $0.08-$0.24 each vs. $4.80-$14.40 for branch transactions and $2.80-$6.40 for contact center interactions.
+
+Mobile banking AI feature adoption (2024-2025, US retail banking):
+    Banks with AI-powered mobile financial management (spending insights, budget alerts): 52%
+    Customer adoption of AI features when available: 44% (of mobile-banking customers who see the feature)
+    Engagement uplift from AI features (logins per month): +2.1x for AI-engaged customers vs. non-AI
+    Churn reduction for AI-engaged customers: 14 percentage points lower annual churn
+    Cross-sell conversion improvement from AI-triggered in-app offers: +34% vs. generic offer campaigns
+    Primary vendors: MX Technologies (financial data enrichment), Personetics (AI-driven financial advice), Strands Finance (PFM AI for banks)
+
+Branch network AI optimisation:
+    US retail bank branches: 71,190 total (FDIC 2024); declining 3.8% annually
+    Branch transaction volume decline: 22% over 5 years (2019-2024); ATM: -18%; teller: -28%
+    AI branch location optimisation: 18% of large banks using ML for branch network decisions
+    Average savings per optimised closure decision: $280,000-$480,000 annually (avoided fixed cost)
+    Trade-off risk: branch closure reduces deposit share-of-wallet in affected market 8-14% (mitigated by digital engagement programmes)
+    Branch format AI: "micro-branch" format (1,200 sq ft vs. traditional 3,800 sq ft) reduces occupancy cost 62%; AI kiosks handle routine transactions
+
+Contact center AI detailed benchmarks:
+    Large bank contact center volume: 2.4-8.8M calls annually
+    IVR containment rate (calls resolved without human agent): pre-AI: 28%; post-AI conversational IVR: 44-52%
+    Containment rate impact: each 10pp IVR containment improvement = $4.2-$8.8M annual savings for large bank (at $4.80 fully-loaded cost per human-handled call)
+    Agent assist AI (real-time suggestions to human agent): reduces average handle time 18-28%
+    After-call work (ACW) AI: summarisation reduces ACW from 3.8 to 1.2 minutes; saves 240,000+ minutes annually at large bank
+    Customer satisfaction (CSAT) improvement with AI contact center: +12 NPS points average
+    Primary platform vendors: NICE inContact CXone, Genesys Cloud, Google CCAI, Amazon Connect
+
+Fraud AI economics for retail banking:
+    US retail banking fraud losses (2024): $29.4B total across all fraud types
+    Card-not-present (CNP) fraud: $12.8B (largest category)
+    Authorised push payment (APP) / social engineering: $6.2B
+    Account takeover: $4.4B
+    AI fraud detection ROI: $3.40 recovered per $1.00 invested in fraud AI (AbarVa benchmark, 12 bank engagements)
+    False positive rate (legitimate transactions declined): pre-AI average: 4.2%; post-AI: 1.8%; customer impact: reducing false positives improves NPS +8 points
+    Real-time transaction scoring latency requirement: below 80ms; AI vendors achieving this: Featurespace ARIC (64ms), FICO Falcon (72ms), Fiserv CardHub (68ms)
+
+
+COMMERCIAL BANKING AI — DETAILED BENCHMARKS
+
+Commercial banking AI ROI is concentrated in three areas: credit underwriting, relationship management, and treasury/cash management:
+
+Commercial loan underwriting AI:
+    Manual commercial credit underwriting time: 18-42 days depending on loan complexity
+    AI-augmented underwriting time: 6-14 days (65% faster)
+    Credit model accuracy improvement (AI vs. scorecard only): 12% better default prediction for SMB loans
+    Credit limit utilisation improvement (better-calibrated limits): +18% utilisation without increased loss rate
+    Commercial credit AI vendors: Moody's Analytics CreditLens, nCino (cloud banking platform), Sageworks (Abrigo), Salesforce Financial Services Cloud commercial lending module
+
+Treasury and cash management AI:
+    AI cash flow forecasting accuracy (14-day horizon): 94% vs. 78% for rule-based treasury systems
+    Trapped cash reduction using AI treasury: 22% reduction in average daily trapped cash across subsidiaries
+    FX hedging AI (automated hedge recommendations): 14% reduction in hedge cost for corporations using AI-recommended hedges vs. manual treasury
+    Correspondent banking AI (optimising nostro accounts): $2.4-$8.8M annual savings for global bank with 40+ nostro accounts
+
+Commercial relationship manager productivity AI:
+    Average commercial RM portfolio: 42-68 relationships
+    AI portfolio monitoring (covenant breach early warning, deposit attrition signal): identifies at-risk relationships 6.4 weeks earlier than manual monitoring
+    Early warning benefit: 68% of relationships flagged by AI and acted on within 2 weeks are retained vs. 34% without early warning
+    Pipeline AI (deal probability scoring): improves forecast accuracy from 62% to 84% on 90-day pipeline
+    Commercial CRM AI vendors: Salesforce FSC (commercial), nCino Pipeline Intelligence, Supernova (FI-specific AI), PrecisionLender (Q2 Holdings) for pricing
+
+
+BANKING INDUSTRY FINANCIAL PERFORMANCE CONTEXT 2024-2025
+
+US banking sector performance (FDIC, Federal Reserve data Q4 2024):
+    Total US banks: 4,568 (FDIC-insured)
+    Aggregate net income: $258.6B (2024)
+    Aggregate C/I ratio: 59.8% (improving from 62.4% in 2023 primarily due to NIM expansion and digital efficiency)
+    Aggregate NIM: 3.38% (expanded from 3.18% in 2022 as rate increases flowed through)
+    Problem banks (FDIC watch list): 68 banks with combined $87.3B in assets
+
+By bank size category performance:
+    Megabanks (>$1T assets — JPMorgan, BofA, Wells, Citi):
+        Average C/I: 52.4%; NIM: 2.88%; ROE: 14.2%
+        JPMorgan Chase: C/I 51%, ROE 17%; highest AI investment and strongest efficiency metrics
+    Regional banks ($10-100B):
+        Average C/I: 61.8%; NIM: 3.42%; ROE: 9.8%
+        Pressure from deposit competition with money market funds (2023-2024)
+    Community banks (<$10B):
+        Average C/I: 65.2%; NIM: 3.88% (benefited most from rate rise on loan book)
+        AI adoption at 18%; highest C/I reduction opportunity from AI
+
+Rate environment impact on AI investment thesis:
+    2022-2023 rate increases expanded NIM for most banks — reduced urgency of efficiency improvement
+    2024-2025 rate normalisation (Fed cuts beginning September 2024): NIM compression resumed — C/I efficiency AI re-prioritised
+    AbarVa assessment: banks that used 2022-2023 NIM tailwind to invest in efficiency AI are better positioned for 2025-2026 rate headwinds; banks that did not are now in reactive cost-cutting mode
+    The C/I improvement imperative is structural, not cyclical — digital competition from neobanks (Chime, SoFi, Ally) maintains permanent pressure on cost structure regardless of rate environment

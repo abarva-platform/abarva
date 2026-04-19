@@ -3,6 +3,7 @@
 import { useUser } from '@clerk/nextjs'
 import { useRouter, useParams } from 'next/navigation'
 import { useEffect, useState, useRef, useCallback } from 'react'
+import posthog from 'posthog-js'
 import AbarvaNav from '@/components/AbarvaNav'
 import { SOLUTIONS, SolutionKey, PhaseKey } from '@/lib/solutions/solution-config'
 import MarginOpportunityMap from '@/components/engage/MarginOpportunityMap'
@@ -118,7 +119,7 @@ export default function MaestroWorkspace() {
   const solutionConfig = SOLUTIONS[solution]
   const clientName = engagement?.metadata?.client_name || clientId.charAt(0).toUpperCase() + clientId.slice(1)
 
-  // Auth check
+  // Auth check + identify
   useEffect(() => {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
@@ -129,6 +130,11 @@ export default function MaestroWorkspace() {
       const assignedClient = user.publicMetadata?.clientId as string | undefined
       if (assignedClient && assignedClient !== clientId) { router.push('/'); return }
     }
+    posthog.identify(user.id, {
+      email: user.primaryEmailAddress?.emailAddress,
+      name: user.fullName,
+      role,
+    })
   }, [isLoaded, user, router, clientId])
 
   const isReadOnly = false  // investors play Maestro role — full orchestration access
@@ -309,6 +315,7 @@ export default function MaestroWorkspace() {
       })
     })
     if (res.ok) {
+      posthog.capture('engagement_started', { client_id: clientId, solution, created_by: user?.id })
       await loadEngagement()
       await loadEngagementList()
     }
@@ -373,6 +380,12 @@ export default function MaestroWorkspace() {
     setAiStreamBuffer('')
     setAiTyping(false)
     setSending(false)
+    posthog.capture('maestro_message_sent', {
+      client_id: clientId,
+      solution,
+      workstream_id: activeWorkstreamId,
+      message_length: text.length,
+    })
   }
 
   const approvePhase = async (phaseId: string) => {
@@ -387,6 +400,7 @@ export default function MaestroWorkspace() {
         actorRole: 'maestro'
       })
     })
+    posthog.capture('phase_approved', { client_id: clientId, solution, phase_id: phaseId, actor_role: 'maestro' })
     await loadEngagement()
     setApproving(false)
   }
@@ -399,6 +413,7 @@ export default function MaestroWorkspace() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ generatedBy: user?.fullName || 'Maestro' })
     })
+    posthog.capture('output_generated', { client_id: clientId, solution, phase_id: activePhaseId })
     await loadEngagement()
     setGeneratingOutput(false)
   }
@@ -415,6 +430,7 @@ export default function MaestroWorkspace() {
         publisherRole: 'admin'
       })
     })
+    posthog.capture('output_published', { client_id: clientId, solution, phase_id: activePhaseId, output_id: outputId })
     await loadEngagement()
     setPublishing(false)
   }

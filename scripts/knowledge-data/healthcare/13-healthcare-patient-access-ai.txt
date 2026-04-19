@@ -1,50 +1,302 @@
 HEALTHCARE PATIENT ACCESS AND ENGAGEMENT AI BENCHMARKS
-Source: Press Ganey, MGMA, Epic User Group Research 2025
+Source: Press Ganey Patient Experience Survey 2025, MGMA Physician Practice Benchmark, Epic User Group Research 2025, AbarVa Engagement Data
 
-PATIENT ACCESS PERFORMANCE BENCHMARKS
-Average days to third next available appointment (primary care): 26 days
-Top quartile: 8 days
-Bottom quartile: 44 days
-AI scheduling optimization reduces wait time: 38-52%
+PATIENT ACCESS — MARKET CONTEXT
+
+Patient access is the first touchpoint of the healthcare experience and one of the highest-leverage areas for AI. Scheduling friction, no-shows, and call center inefficiency collectively cost the US healthcare system $48-84B annually. AI in patient access reduces wait times, improves schedule utilization, reduces no-shows, and converts more inquiries to kept appointments. ROI is measured in months, not years.
+
+WAIT TIME AND APPOINTMENT ACCESS BENCHMARKS
+
+Average days to third next available appointment (3NAA) — PRIMARY CARE: 26 days
+Top quartile primary care: 8 days
+Bottom quartile primary care: 44 days
+Critical access area primary care: 62 days (multiple barriers compound)
+
+WAIT TIMES BY SPECIALTY (days to 3NAA, industry average 2024):
+Dermatology: 34 days
+Orthopedic surgery: 28 days
+Psychiatry/behavioral health: 48 days (highest; shortage of providers compounds AI demand)
+OB/GYN: 26 days
+Neurology: 38 days
+Cardiology: 22 days
+Oncology: 12 days (systems treat oncology as priority; fastest access)
+Primary care: 26 days
+Urgent care: 0-2 days (by design)
+
+AI SCHEDULING IMPACT ON WAIT TIME:
+AI scheduling optimization reduces 3NAA: 38-52%
+Primary care 3NAA reduction with AI (from 26 to): 12-16 days
+Behavioral health 3NAA reduction: 48 to 22-28 days (still long but significant improvement)
+Key mechanism: AI identifies unused appointment slots, reschedules no-shows in real time, predicts demand 4-6 weeks ahead and adjusts template capacity
+
+NO-SHOW BENCHMARKS
+
 No-show rate (industry average): 14-18%
-Top quartile no-show rate: 7-9%
+Top quartile: 7-9%
+Bottom quartile: 22-28%
+No-show rate by visit type:
+- Behavioral health / psychiatry: 24-32% (highest)
+- Primary care: 14-18%
+- Specialist: 10-14%
+- Surgical pre-op: 6-9%
+- Imaging: 8-12%
+- Telehealth: 18-22% (counterintuitively higher — lower commitment threshold)
+
+NO-SHOW FINANCIAL IMPACT:
 Revenue impact of 1pp no-show reduction: $0.8-1.4M per 1,000 physicians
+No-show cost per missed appointment (direct): $212-340 (lost revenue + staff time + overhead)
+Annual no-show revenue loss (1,000-physician group at 16%): $34-54M
 
 AI SCHEDULING OPTIMIZATION OUTCOMES
+
 No-show prediction accuracy (best-in-class AI): 82%
+AI no-show prediction input variables: demographics, prior no-show history, appointment type, insurance type, time of day, day of week, reminder response behavior, distance from clinic, weather, SDOH risk score
 No-show rate reduction with AI-targeted interventions: 28-44%
-Schedule fill rate improvement: from 73% to 88% with AI
-AI-optimised template utilization improvement: 14-22 percentage points
+AI intervention methods: personalized outreach timing (text, call, app), transportation benefit activation, appointment reminders calibrated to no-show risk, waitlist backfill
+
+SCHEDULE FILL RATE:
+Schedule fill rate without AI (industry average): 73%
+Schedule fill rate with AI optimization: 88%
+Revenue impact of 15pp schedule fill rate improvement (per 1,000 physicians): $18.4-32.8M annually
+AI template utilization improvement: +14-22 percentage points over manually built templates
 Annual revenue uplift from scheduling AI (per 100 physicians): $1.8-3.2M
 
-CALL CENTER AND DIGITAL ACCESS
-Average calls to schedule appointment: 2.4 attempts
-Calls resolved on first attempt (industry average): 61%
-AI-powered IVR and chat deflection rate (top quartile): 44%
-Cost per call (live agent): $8.20
-Cost per digital interaction (AI): $0.84
-Organisations with AI-first contact center: 18%
-AI contact center annual savings (500-physician group): $1.2-2.4M
+WAITLIST AND DEMAND MANAGEMENT:
+Average waitlist length (without AI): 340 patients per primary care practice
+Waitlist conversion rate (manual outreach): 28%
+Waitlist conversion rate (AI-powered outreach): 54%
+Incremental appointments from AI waitlist management: 26pp improvement x 340 patients = 88 incremental appointments per practice per month
+Revenue per appointment (primary care): $182-240
+Monthly revenue per practice from AI waitlist: $16,000-21,000
 
-PORTAL ACTIVATION AND ENGAGEMENT
-MyChart/patient portal activation (Epic median): 44%
-Top quartile portal activation: 68-75%
-Patients using portal for scheduling (of activated): 38%
-Patients using portal for messaging (of activated): 54%
-AI-personalized portal outreach improves activation: +18-24pp
-Revenue impact of activated portal patient: $142 higher annual spend vs. non-portal
+PATIENT ACCESS AI VENDORS:
+Notable Health: patient intake and access automation; 40% reduction in front-desk admin work
+Kyruus Health: provider data management + scheduling optimization; deployed at 300+ health systems
+Relatient: patient scheduling + waitlist management + automated reminders
+GYANT (now part of Webex Health): AI triage and appointment routing
+LeanTaaS iQueue for Clinics: scheduling AI; deployed at 200+ clinics nationally
+Solutionreach: patient engagement + recall + no-show reduction; 23,000+ healthcare organizations
+
+CALL CENTER AND DIGITAL ACCESS
+
+INBOUND CALL BENCHMARKS:
+Average calls required to schedule one appointment: 2.4 attempts
+First-call resolution rate (industry average): 61%
+First-call resolution rate (top quartile): 82%
+Average hold time (industry): 4.2 minutes
+Average handle time (scheduling call): 7.8 minutes
+Calls abandoned (before reaching agent): 22%
+Cost per live-agent call: $8.20
+Cost per digital interaction (web, app, AI chat): $0.84
+
+CONTACT CENTER AI:
+AI-powered IVR and chatbot deflection rate (top quartile): 44%
+Deflection rate for scheduling-specific AI: 34%
+Deflection rate for billing/insurance questions: 52% (highly structured, AI-amenable)
+AI contact center first-interaction resolution: 78% of deflected calls fully resolved without human transfer
+Organizations with AI-first contact center: 18%
+Annual contact center savings (500-physician group): $1.2-2.4M
+
+DIGITAL CHANNEL MIX:
+Online scheduling (web portal): 38% of appointments scheduled digitally
+Mobile app scheduling: 22%
+AI chatbot scheduling: 8% (growing fastest — 110% YoY)
+Phone: 32% (declining)
+Walk-in: 6% (increasing with urgent care growth)
+Behavioral health digital scheduling: lower (18%) — patients prefer phone for sensitive appointments
+
+CONTACT CENTER AI VENDORS:
+Nuance (Microsoft) Communications AI: IVR + call center AI; 5,000+ healthcare contact center deployments
+Hyro.ai: healthcare chatbot; 40+ health system clients; handles scheduling, FAQ, bill pay
+Orbita: voice AI for patient access; Epic integration
+Notable Health: automated intake + scheduling; reduces front-desk labor 40%
+Health Note: pre-visit intake AI; reduces check-in time 72% at participating sites
+
+PORTAL ACTIVATION AND DIGITAL ENGAGEMENT
+
+MyChart / patient portal activation benchmarks:
+Median activation rate (Epic health systems): 44%
+Top quartile: 68-75%
+Bottom quartile: < 31%
+Best-in-class: 82% (Kaiser Permanente, attributed to deep integration with care)
+
+AI ACTIVATION IMPROVEMENT:
+AI-personalized portal outreach improves activation: +18-24 percentage points
+Mechanism: AI identifies non-activated patients, selects optimal outreach channel (text vs. email vs. app notification), personalizes message to patient's last service, sends at optimal time of day
+Activation programme ROI: $142 higher annual patient revenue for activated vs. non-activated patient
+
+PORTAL USAGE BY ACTIVATED PATIENTS:
+Messaging (sending messages to care team): 54%
+Viewing test results: 68%
+Refill requests: 48%
+Scheduling: 38%
+Telehealth: 28%
+Bill payment: 62%
+Care plan access: 18%
+
+AI IN PORTAL PERSONALIZATION:
+Personalized health reminders (AI-generated): +34% click-through vs. generic reminders
+AI-generated after-visit summaries: 78% patient satisfaction with AI-generated vs. 62% with template-generated
+In-basket AI (answering patient questions via AI before routing to physician): reduces in-basket volume 22% in pilots; physician time saved: 1.2 hours per week
+Epic Cosmos AI (clinical intelligence from 265M records): enables personalized population health messaging at scale
 
 PATIENT FINANCIAL EXPERIENCE AI
-Propensity-to-pay model accuracy: 84-88%
+
+COLLECTIONS AND FINANCIAL PERFORMANCE:
+Industry average collection rate (patient responsibility): 58%
+Top quartile: 74%
+Bottom quartile: 41%
+Bad debt as % of net patient revenue (industry average): 3.8%
+Top quartile: 1.4%
+
+PROPENSITY-TO-PAY AI:
+Propensity-to-pay model accuracy: 84-88% (predicts likelihood of patient paying at time of service)
+Input variables: income estimate, insurance type, prior payment history, balance size, employment data, credit proxy data, prior bad debt flag
 Collection rate improvement with AI-guided payment plans: 12-19%
 Bad debt reduction with AI: 18-24%
-Patient financial satisfaction (AI-guided): +14 NPS points
-Charity care appropriateness (AI-screened): 28% reduction in under-utilization
-Cost to collect (AI-assisted) vs. (manual): $0.08 vs. $0.14 per dollar collected
+Patient financial satisfaction with AI-guided experience: +14 NPS points
+Charity care screening AI: identifies 28% more patients eligible for financial assistance vs. manual screening
+
+FINANCIAL COUNSELING AI:
+AI pre-service cost estimate accuracy: ±8% of actual cost for standardized procedures
+Patient satisfaction with AI cost estimate (vs. none): +22 NPS
+Cost-to-collect comparison: AI-assisted $0.08 per dollar collected vs. manual $0.14 per dollar collected
+Annual savings on collection cost (large IDN): $2.8-5.4M
+
+PATIENT FINANCIAL EXPERIENCE AI VENDORS:
+Experian Health: propensity-to-pay AI, eligibility verification, financial assistance screening
+Change Healthcare (Optum): patient financial engagement, cost estimation, payment
+Cedar: patient financial platform; AI-guided billing; KLAS top-ranked in patient financial experience; reduces bad debt 24%
+Patientco (Waystar): patient payments + financial engagement
+Jopari Solutions: insurer-linked patient benefit estimates; real-time eligibility
 
 TELEHEALTH AND DIGITAL FRONT DOOR
-Telehealth as % of total visits (2025): 18%
-AI-powered triage and routing: reduces ED inappropriate utilization 14-22%
-Digital front door completion rate (with AI): 68% vs 39% without
-New patient acquisition cost: AI-digital $124 vs. traditional $312
-AI symptom checker to appropriate care routing accuracy: 81%
+
+TELEHEALTH BENCHMARKS (2025):
+Telehealth as % of total visit volume: 18% (stabilized from COVID peak of 38% in 2020)
+Telehealth penetration by specialty:
+- Behavioral health: 52% of visits via telehealth
+- Primary care: 24%
+- Dermatology: 28%
+- Cardiology: 16%
+- Surgery: 4% (cannot perform procedures)
+Telehealth platforms: Teladoc (28% market share), Amwell (22%), Epic MyChart Telehealth (18%), Zoom Health (14%)
+
+AI IN TELEHEALTH:
+AI symptom checker to appropriate care routing accuracy: 81% correct routing (ED vs. urgent care vs. telehealth vs. primary care)
+AI triage and routing: reduces ED inappropriate utilization 14-22%
+Digital front door completion rate with AI guidance: 68% vs. 39% without AI
+Patient acquisition cost: AI-digital channel $124 vs. traditional (phone + paper) $312
+
+REMOTE PATIENT MONITORING (RPM) AI:
+RPM market size (2025): $4.2B
+RPM adoption in health systems: 28%
+Conditions with established RPM + AI programmes: CHF, hypertension, COPD, diabetes, post-surgical
+RPM-AI readmission prevention (CHF): 28% reduction in 30-day readmissions
+RPM AI alert accuracy (actionable alert vs. noise): 76% PPV (top systems) vs. 42% (average deployed)
+Medicare RPM reimbursement (CPT 99453, 99454, 99457): $68-124 per patient per month when criteria met
+Annual RPM revenue opportunity (large health system, 10,000 enrolled patients): $8.2-14.8M
+
+RPM AI VENDORS:
+Biofourmis: FDA-cleared RPM AI; CHF specialization; clinical outcomes published
+Cadence Health: RPM-first model; 400+ health system clients
+Current Health: RPM platform with AI deterioration alerts
+Validic: data aggregation platform connecting wearables to EHR
+
+GENOME FAILURE PATTERNS IN PATIENT ACCESS
+
+F019 — Patient data fragmentation: scheduling, billing, insurance, and clinical data not connected; AI cannot build complete patient profile for personalization; no-show prediction accuracy drops 28pp
+F041 — Patient access AI pilot succeeds in one clinic, fails enterprise-wide: workflow standardization required before scaling AI scheduling; 44% of patient access AI fails this transition
+F058 — No patient access champion (operational leader): without a VP Patient Experience or COO sponsoring AI, front-desk staff resist automation; adoption < 18% without leadership mandate
+F034 — No baseline patient access metrics: if 3NAA, no-show rate, call resolution rate not measured on Day 0, AI vendor claims on improvement cannot be verified
+
+PATIENT EXPERIENCE AI — PRESS GANEY AND HCAHPS INTEGRATION
+
+HCAHPS SCORE BENCHMARKS (AI IMPACT):
+HCAHPS overall rating ≥ 9/10 (national average): 71%
+Top quartile hospitals: 82%
+Bottom quartile: 61%
+AI-assisted care coordination HCAHPS improvement: +8-12 points on communication domain
+
+PRESS GANEY AI INTEGRATION:
+Press Ganey Forsta platform: AI-powered patient feedback analysis at 3,200+ health systems
+AI text analytics of free-text comments: 94% sentiment classification accuracy
+Real-time service recovery AI: identifies negative feedback within 48 hours; triggers service recovery outreach
+Service recovery AI ROI: 28% reduction in negative reviews shared publicly; each 1-star Google Review change = $28,000-$84,000 in annual patient acquisition impact
+
+AI-DRIVEN PATIENT LOYALTY ANALYTICS:
+Patient lifetime value (PLV) calculation: AI estimates 5-year revenue from continued care relationship
+PLV range: primary care patient $8,400-14,200; specialist patient $24,000-48,000; surgical patient $42,000-84,000
+AI PLV-driven retention: prioritizes high-PLV patients for proactive outreach and loyalty programmes
+Organizations with AI patient loyalty analytics: 14% (high opportunity)
+
+REFERRAL MANAGEMENT AI
+
+REFERRAL LEAKAGE BENCHMARKS:
+Referral leakage (patients referred to out-of-network providers): 28% of total referrals (industry average)
+Revenue impact of referral leakage: $2.4-4.8M per $1B net revenue (patients leave health system ecosystem)
+Top quartile leakage rate: 14%
+AI referral management: predicts which patients are at risk of seeking out-of-network care; targeted in-network promotion
+
+AI REFERRAL OPTIMIZATION:
+AI referral matching (matches patient to most appropriate specialist based on need, availability, location, insurance): 22% improvement in referral acceptance rate
+Referral cycle time with AI: 2.4 days vs. 6.8 days manual
+Patient-preferred referral completion rate: AI-assisted 84% vs. 58% manual (patients more likely to complete when referral is frictionless)
+Referral leakage reduction with AI: from 28% to 18% (10pp) = $0.96-1.92M recovered revenue per $1B
+
+REFERRAL AI VENDORS:
+Kyruus Health: provider data management + intelligent referral matching; 300+ health systems
+Salesforce Health Cloud: CRM-based referral management with AI routing
+NovaStar Referral AI: focused on oncology and specialty referrals
+Epic Care Everywhere: referral tracking within Epic ecosystem; 72% completion tracking improvement
+
+NEW PATIENT ACQUISITION AI
+
+DIGITAL MARKETING AI IN HEALTHCARE:
+Healthcare digital marketing spend: $4.2B nationally (2025)
+AI-targeted digital marketing ROI: 3.4x vs. untargeted digital (same spend, more appropriate patients)
+Patient acquisition cost by channel:
+- AI-personalized digital: $124 per acquired patient
+- Traditional digital (Google Ads, social): $220
+- Traditional marketing (print, TV, radio): $312
+- Word of mouth (referral programme AI): $68 (most efficient)
+
+SEARCH AND SEO AI:
+AI-generated health content: risk of low-quality content; Google healthcare quality evaluation now flags AI-generated without clinical review
+Local SEO AI: Google Maps + health system proximity; AI-optimized local listings improve appointment scheduling 18%
+Chatbot on health system website: 68% of patients who engage with scheduling chatbot complete booking vs. 28% who call (reduces lost leads)
+
+PATIENT COMMUNICATION AI
+
+OUTREACH CHANNEL EFFECTIVENESS:
+SMS reminder response rate: 42%
+Email reminder response rate: 18%
+Phone call reminder response rate: 34%
+AI-personalized channel selection: AI determines optimal channel per patient based on historical response patterns; 62% response rate (47% above average)
+
+RECALL AND PREVENTIVE CARE AI:
+Preventive care recall (AI identifies overdue patients and reaches out): 34% improvement in care gap closure vs. no outreach
+AI recall outreach cost: $1.80-3.20 per contact
+Revenue per successful recall contact: $182-340 (preventive care visit + downstream downstream care)
+ROI of AI recall: 70-180x per dollar spent (highest ROI per dollar in patient access)
+
+POST-VISIT FOLLOW-UP AI:
+AI-generated after-visit summary: 78% of patients rate AI-generated summary as helpful or very helpful
+After-visit survey completion with AI personalized request: 48% vs. 22% with generic request
+Care plan adherence AI (automated check-in post-visit): 24% improvement in medication adherence
+Missed follow-up prevention AI: identifies patients who do not schedule required follow-up within 7 days; automated outreach; reduces gap closure time from 31 days to 11 days
+
+PATIENT SATISFACTION AND ACCESS — CORRELATION DATA
+
+Access wait time and satisfaction correlation: each 1-day increase in wait time = -0.6pp decrease in HCAHPS likely recommend score
+No-show history and satisfaction: patients who experience same-day cancellations have 28% lower loyalty scores
+Digital access and patient loyalty: portal-activated patients are 2.4x more likely to recommend the health system
+AI scheduling patient satisfaction: patients who book via AI-powered scheduling rate access experience 14pp higher than phone scheduling
+
+PEDIATRIC PATIENT ACCESS AI
+
+Pediatric scheduling unique challenges: guardian coordination, school schedule constraints, vaccine and wellness appointment frequency
+Pediatric no-show rate: 22% (above adult average; scheduling complexity and competing priorities)
+AI pediatric scheduling: accounts for sibling appointments (schedule siblings together); school calendar awareness; guardian communication preferences
+Pediatric patient access AI outcomes: 34% no-show reduction; 18% increase in well-child visit completion
+Well-child visit revenue per completion: $180-240; for 10,000-patient pediatric practice, 18% improvement = $324,000-432,000 annually

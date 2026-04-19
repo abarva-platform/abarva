@@ -1,49 +1,337 @@
 FINANCIAL SERVICES IT SPEND AND TECHNOLOGY INVESTMENT BENCHMARKS
-Source: Gartner IT Spending Forecast 2025, Deloitte FS Technology Survey
+Source: Gartner IT Spending Forecast 2025, Deloitte FS Technology Survey 2025, IDC Financial Services IT Spending Guide
 
-IT SPEND AS % OF REVENUE BY SEGMENT
-Large global banks (>$50B revenue): 8.4-11.2%, median 9.6%
-Regional banks ($1-10B revenue): 7.8-10.4%, median 8.9%
-Asset managers ($50-200B AUM): 7.2-9.8%, median 8.1%
-Large asset managers (>$200B AUM): 9.4-13.2%, median 11.1%
-Insurance (global): 4.8-7.2%, median 6.1%
-FinTech (native digital): 18-28% (technology is the product)
+OVERVIEW AND CONTEXT
+
+IT spend in financial services is one of the highest in any industry segment, driven by regulatory requirements, security demands, data complexity, and competitive pressure from technology-native competitors. In 2024-2025, three forces are reshaping FS IT budgets simultaneously: the shift from run-the-bank to change-the-bank as digital competition intensifies; the emergence of AI as a distinct budget category growing at 34% annually; and FinOps pressure to contain cloud spend as migration costs materialised higher than forecast.
+
+Understanding FS IT spend patterns is critical for benchmarking transformation investments, sizing vendor negotiations, and identifying where a firm is over-spending on run-and-maintain relative to investment in competitive AI capabilities. The gap between leaders and laggards in IT investment allocation — not total spend — is the primary predictor of AI programme outcomes.
+
+AbarVa Genome failure pattern F007 (Misallocated IT Budget — Run Consuming Change): in 58% of FS firms assessed, run-and-maintain consumes above 60% of IT budget, leaving insufficient investment for AI, digital, and competitive capability development. This is a structural constraint on transformation velocity.
+
+
+IT SPEND AS PERCENTAGE OF REVENUE BY SEGMENT
+
+Absolute spend levels and revenue ratios (2024 fiscal year data):
+
+Large global banks (revenue above $50B):
+    IT spend as % of total revenue: 8.4-11.2%
+    Median: 9.6%
+    Absolute spend: JPMorgan Chase ($16.9B), Bank of America ($12.3B), Citigroup ($10.1B), HSBC ($5.4B)
+    Trend: rising 8% annually as digital transformation investment persists
+
+Regional banks ($1-10B revenue):
+    IT spend as % of revenue: 7.8-10.4%
+    Median: 8.9%
+    Absolute spend: $78M-$1.04B depending on revenue scale
+
+Asset managers ($50-200B AUM):
+    IT spend as % of revenue: 7.2-9.8%
+    Median: 8.1%
+    Absolute spend: $24-$84M annually
+
+Large asset managers (>$200B AUM):
+    IT spend as % of revenue: 9.4-13.2%
+    Median: 11.1%
+    Absolute spend: $140M-$640M for largest managers
+
+Insurance (global):
+    IT spend as % of premium revenue: 4.8-7.2%
+    Median: 6.1%
+    Note: insurance IT spend as % of revenue is lower because premium revenue is high relative to technology-intensive operations
+
+FinTech and digital-native FS companies:
+    IT spend as % of revenue: 18-28%
+    For digital-native firms, technology is the product — this comparison is not apples-to-apples
+    Examples: Stripe (28%), Robinhood (24%), Revolut (22%)
+
 
 IT BUDGET ALLOCATION IN FINANCIAL SERVICES
-Run and maintain (infrastructure, operations): 52-58%
-Change and grow (application, AI, innovation): 28-34%
-Compliance and risk technology: 12-18%
-AI and analytics (dedicated): 6-14% (leaders: 18-22%)
+
+Budget category breakdown (industry median versus top performers):
+
+Run and maintain (infrastructure, legacy system maintenance, operations, IT support):
+    Industry median: 52-58% of IT budget
+    Bottom quartile: 64-72% (high legacy burden)
+    Top quartile: 38-44% (modernised infrastructure, higher automation)
+
+Change and grow (application development, digital projects, AI, innovation):
+    Industry median: 28-34% of IT budget
+    Top quartile: 42-48% (larger investment in competitive capability)
+    Bottom quartile: 18-24% (insufficient to maintain competitive pace)
+
+Compliance and risk technology (regulatory reporting, surveillance, DORA, MRM):
+    Industry median: 12-18% of IT budget
+    Regulatory-intensive firms (large banks, EU-regulated): up to 22%
+
+AI and analytics (dedicated AI budget, excluding AI embedded in other categories):
+    Industry median: 6-14%
+    Leaders (top quartile AI adopters): 18-22%
+    Laggards: below 4% dedicated AI spend
+    AI budget growth rate: 34% annually — the fastest-growing IT budget category
+
+Cloud spend:
+    Cloud as % of total IT spend (2025): 28%
+    On-premise: 72% (still dominant but declining at 6% annually)
+    Cloud spend growth rate: 24% annually
+    Projected cloud as % of IT spend by 2028: 44%
+    Note: for cloud-first FS firms already past the transition, cloud may represent 60-75% of IT spend
+
 
 TECHNOLOGY DEBT IN FINANCIAL SERVICES
-Average legacy system age: 22-28 years (mainframe, COBOL)
-Annual legacy maintenance cost premium: 18-28% above modern alternative
-Total FS industry technology debt (global estimate): $1.1T
-Average FS firm technology debt: $8.4B (global bank), $340M (regional bank), $48M (asset manager)
+
+Legacy technology debt is the single largest structural cost issue in FS IT:
+
+    Average legacy system age: 22-28 years (mainframe, COBOL, early client-server)
+    Annual legacy maintenance cost premium versus modern equivalent: 18-28% higher
+    FS industry total estimated technology debt (global, McKinsey 2024): $1.1T
+    Average technology debt by firm type:
+        Global bank (>$500B assets): $8.4B
+        Regional bank ($10-50B assets): $340M
+        Asset manager ($50-200B AUM): $48M
+        Insurance company (top-50 global): $380M
+
+Legacy maintenance cost categories:
+    COBOL programmer premium (60% above Java developer market rate): adds $28,000-$48,000 per developer per year above market
+    Batch processing overhead (mainframe batch window limitations): constrains 34% of FS firms from real-time AI deployment
+    Integration middleware (API adapters, MQ message brokers for legacy connectivity): adds $1.8-4.2M annually at large banks
+    Compliance overhead on legacy (manual controls where automated controls would be standard on modern systems): adds $2.4-6.8M annually
+
+Technology debt impact on AI:
+    Firms with high legacy burden (>60% of systems over 15 years old): achieve 42% of AI programme ROI versus low-legacy firms
+    Root cause: data quality degradation from batch systems, absent APIs for real-time AI integration, high IT maintenance consuming budget that should fund AI
+
 
 VENDOR SPEND CONSOLIDATION
-Average number of technology vendors (large bank): 1,200+
-Top quartile (optimised): 600-700
-Vendor consolidation savings: 8-14% of technology spend
-AI-assisted vendor rationalization: 12-18 months to complete
 
-CLOUD SPEND GROWTH
-Cloud as % of IT spend (FS): 28% (2025)
-On-premise still dominant (% of IT): 72%
-Cloud spend growth rate: 24% annually
-Projected cloud as % of IT spend by 2028: 44%
+Vendor management is an underutilised lever for IT cost reduction:
 
-CYBERSECURITY SPEND
-Cybersecurity as % of IT budget (FS): 12-18%
-FS target (best practice): 18-22%
-Average cost of FS data breach: $5.9M per incident
-Average cost of ransomware attack (FS): $3.4M per incident
-FS cyberattack frequency: 300x higher than other industries
-Top FS cybersecurity vendors: CrowdStrike, Palo Alto Networks, Darktrace (AI-native)
+    Average number of technology vendors (large bank, >$50B assets): 1,200+
+    Average number of vendors (top-quartile optimised bank): 600-700
+    Asset manager average vendor count ($50B-200B AUM): 280-440
+    Vendor consolidation savings achieved: 8-14% of total technology spend
+    AI-assisted vendor rationalisation (spend analytics + contract AI): reduces evaluation time 12-18 months to 6-9 months
 
-DATA AND ANALYTICS INVESTMENT
-Data vendor spend (large asset manager): $28-48M annually
-Enterprise data management investment: 8-12% of IT budget
-Data quality ROI: 3.8x within 24 months
-Business intelligence tool spend: $2.4-6.8M annually (varies by size)
-Self-service analytics penetration in FS: 38% (faster growing than other industries)
+Vendor categories with most savings opportunity:
+    Data vendors: 14-28% savings on renegotiation (Bloomberg, LSEG, FactSet)
+    Infrastructure (cloud commitments renegotiated): 12-22% savings with multi-year committed spend
+    Professional services (IT outsourcing, SI contracts): 8-18% savings with benchmarking and competition
+    Software licenses (ERP, CRM, analytics): 10-24% savings on true-up and consolidation
+
+Vendor contract risk factors:
+    Contracts with no exit clause or exit penalty: 61% of FS technology contracts
+    Contracts with proprietary data format lock-in: Bloomberg, some core banking vendors
+    Contracts with auto-renewal clauses (renewing without active decision): 44%
+    Average renegotiation savings per contract cycle: 18-28%
+
+AbarVa Genome failure pattern F019 (Vendor Governance Failure): FS firms without a formal vendor management office (VMO) overpay by 18-24% on technology contracts on average. 52% of FS firms assessed lack a formal VMO with benchmark data.
+
+
+CYBERSECURITY SPEND IN FINANCIAL SERVICES
+
+Cybersecurity is the fastest-growing IT sub-budget category and is non-discretionary:
+
+    Cybersecurity as % of IT budget (FS industry): 12-18%
+    Best-practice target (NIST Cybersecurity Framework, FS-ISAC guidance): 18-22%
+    Gap between current and best practice (median firm): 4-8 percentage points
+
+Cybersecurity incident cost data:
+    Average cost of FS data breach (IBM Security / Ponemon Institute 2024): $5.9M per incident
+    Average cost of ransomware attack (FS): $3.4M per incident (ransom + recovery + regulatory)
+    FS cyberattack frequency versus other industries: 300x higher attack rate
+    FS firms experiencing at least one significant cybersecurity incident annually: 64%
+
+Major cybersecurity spend categories:
+    Endpoint detection and response (EDR): 22% of cybersecurity budget; CrowdStrike Falcon dominant
+    Network security and SIEM: 18%; Palo Alto Networks Cortex, Splunk Enterprise Security
+    Identity and access management (IAM): 16%; Okta, CyberArk, Microsoft Entra
+    Cloud security posture management (CSPM): 12%; Wiz, Prisma Cloud, Microsoft Defender for Cloud
+    AI-native cybersecurity: 14% and growing; Darktrace (unsupervised AI), Vectra AI, Abnormal Security
+
+AI cybersecurity tools in FS:
+    Darktrace (AI autonomous threat detection): 22% market share in large FS; learns normal network behaviour and detects anomalies
+    CrowdStrike Falcon AI: ML-based endpoint protection; fastest threat detection in industry (sub-1 minute)
+    Microsoft Sentinel (AI SIEM): 34% of Azure-primary FS firms; tight integration with Azure AD and M365
+    Abnormal Security (AI email security): 18% of large banks; GenAI-based email threat detection
+
+
+DATA AND ANALYTICS INVESTMENT BENCHMARKS
+
+Data and analytics as a distinct investment category within IT:
+
+    Data vendor spend (large asset manager, >$200B AUM): $28-48M annually
+    Data vendor spend (large bank, >$50B assets): $84-180M annually (includes market data and reference data)
+    Enterprise data management investment: 8-12% of total IT budget
+    Data quality programme investment (best practice): 18% of data budget; industry median 8%
+    Data quality ROI: 3.8x within 24 months (Gartner, 2024)
+
+BI and analytics tooling:
+    Business intelligence tool spend: $2.4-6.8M annually (varies by size and user count)
+    Primary BI platforms by FS market share:
+        Tableau (Salesforce): 32% FS market share; strongest in data exploration and visualisation
+        Power BI (Microsoft): 28% and growing; Azure integration drives adoption in Microsoft-shop firms
+        MicroStrategy: 18%; strong in enterprise dashboards, mobile BI for trading floors
+        Looker (Google): 12%; growing in GCP-primary firms; SQL-based modelling layer
+        Qlik Sense: 8%; strong in embedded analytics within FS applications
+    Self-service analytics penetration in FS: 38% of FS employees have access to self-service analytics tools
+
+
+RETURN ON TECHNOLOGY INVESTMENT — FS BENCHMARKS
+
+    Average IT project ROI (FS, across all project types): 2.4x within 36 months
+    AI-specific project ROI (FS): 3.2x within 24 months (Deloitte FS AI survey, n=84)
+    Data quality projects: 3.8x within 24 months
+    Cloud migration: 2.1x within 36 months (varies by starting legacy cost)
+    Core banking modernisation: 3.4x within 60 months (5-year horizon required for large programmes)
+    RPA and automation: 4.2x within 12 months (fastest payback category)
+    GenAI productivity: 2.9x within 12 months (where measured; many firms cannot quantify yet)
+
+IT investment measurement challenges in FS:
+    Firms that can quantify technology ROI: 44% (lower than technology investment warranted)
+    Primary measurement gap: business value attribution (technology cost is clear; revenue/cost impact on business unit is not tracked)
+    AbarVa recommendation: outcome-based IT investment framework with pre-defined KPIs per initiative before investment committed
+
+
+INSURANCE TECHNOLOGY SPEND BENCHMARKS
+
+Insurance has distinct IT investment patterns driven by actuarial, claims, and distribution requirements:
+
+    P&C insurance IT spend as % of premium: 4.8-7.2%, median 6.1%
+    Life insurance IT spend as % of premium: 3.8-6.4%, median 5.2%
+    InsurTech investment (global, 2024): $9.4B
+    AI in claims: reduces claims processing cost 38-52%; primary ROI category
+
+Insurance AI priorities:
+    Claims triage and settlement AI: automated assessment for non-complex claims ($5,000 claims straightthrough at 44% of advanced P&C insurers)
+    Underwriting AI: telematics, satellite imagery, IoT data for property risk assessment
+    Fraud detection AI: 8.4% of insurance claims are fraudulent on average; AI reduces to 5.8%
+    Customer lifetime value AI: retention modelling; 14% reduction in lapse rate with AI interventions
+
+FINTECH TECHNOLOGY SPEND AND VALUATION BENCHMARKS
+
+FinTech firms show dramatically different IT investment patterns versus incumbents:
+
+    FinTech IT spend as % of revenue: 18-28% (technology is the product)
+    Developer cost as % of total cost: 42-58% (versus 12-18% at traditional FS)
+    FinTech cloud-first adoption: 94% (born in cloud; no legacy burden)
+    FinTech AI deployment speed: first production AI in 6 months average (versus 18 months traditional FS)
+
+FinTech valuation impact of AI:
+    Premium-AI-enabled FinTechs: 6-8x revenue multiple
+    Traditional FS firm with equivalent AI capability: 2.4x revenue multiple
+    Gap: markets value AI-native architecture 2.5-3.5x higher than retrofitted AI
+    Implication: FS incumbents cannot achieve FinTech valuation multiples through AI alone — require business model change to capture full value
+
+CAPITAL MARKETS TECHNOLOGY SPEND
+
+Capital markets (trading, prime brokerage, custody) has the highest absolute IT spend in FS:
+
+    Global investment bank IT spend (top 5 banks combined): $48B annually
+    Front-office trading technology (execution, pricing, risk): 32% of capital markets IT
+    Middle office (trade confirmation, clearing, settlement): 22%
+    Back office (accounting, reconciliation, regulatory reporting): 28%
+    Compliance and surveillance: 18%
+
+Capital markets AI investment focus:
+    Algorithmic trading AI: $2.4-8.4M annually (large investment bank); includes market impact, execution, and strategy AI
+    Risk AI (real-time VaR, counterparty credit risk): $1.8-4.2M annually
+    Clearing and settlement AI: $1.2-2.8M annually (T+1 transition acceleration)
+    Post-trade reporting AI (MiFID II, EMIR): $840K-1.8M annually
+
+KEY METRICS FOR BENCHMARKING IT INVESTMENT HEALTH
+
+AbarVa diagnostic framework for IT investment health:
+
+    Run vs. change balance: above 60% run spending is a structural constraint; target 42-48% run
+    AI budget as % of IT: below 6% signals under-investment; 14-22% signals AI-mature organisation
+    Legacy as % of application portfolio: above 50% legacy (15+ year old systems) creates structural AI capability gap
+    Cloud as % of IT: below 20% in 2025 signals modernisation lag; target 35-45% by 2027
+    Technical debt ratio: annual legacy maintenance cost divided by revenue; above 3% creates material drag on competitive investment
+    Cybersecurity as % of IT: below 12% is insufficient given FS threat landscape; target 18-22%
+
+Investment health scoring (AbarVa 100-point scale):
+    90-100: technology-advantage position; AI-leading
+    70-89: competitive but investment acceleration needed
+    50-69: at-risk; transformation required in 2-3 years
+    Below 50: existential technology risk; emergency programme required
+
+
+IT INVESTMENT PRIORITISATION AND GOVERNANCE
+
+FS firms allocate IT budgets under significant competing pressures: regulatory compliance mandates consume non-discretionary budget; legacy maintenance absorbs 60-70% of technology spend; and AI/innovation investment must compete against both. The governance frameworks for technology investment allocation determine whether firms can break the cycle:
+
+IT budget governance models in FS:
+    Traditional IT governance (CIO-led, annual planning): 52% of FS firms
+        Annual budget cycle; limited ability to re-prioritise mid-year; waterfall project governance
+        AI investment in this model: allocated once annually; often underfunded vs. need
+    Product-based IT governance (portfolio/product model): 34% of FS firms
+        Technology investment aligned to product lines (digital banking, wealth management, capital markets)
+        Product owners with technology budget authority; quarterly re-prioritisation
+        AI investment: embedded in product roadmaps; more agile re-allocation
+    Platform-first governance (shared platform with product-layer investment): 14% of FS firms
+        Shared data, cloud, and AI platform funded centrally; product-specific features funded by business
+        Best model for AI: platform (Snowflake, Databricks, Salesforce) funded at scale; product AI layered on top
+        Firms with platform governance: highest AI ROI in AbarVa dataset (4.2x average vs. 2.8x traditional governance)
+
+IT budget allocation shift 2020-2025:
+    Regulatory and compliance technology: from 18% to 24% of IT budget (DORA, EU AI Act driving increases)
+    Cloud infrastructure: from 8% to 22% (migration from on-premise to cloud)
+    AI and analytics: from 4% to 14% (fastest-growing category)
+    Legacy maintenance offset: from 72% to 60% (declining but still majority of IT spend for most FS firms)
+    Key observation: AI investment growth has been funded primarily by legacy maintenance reduction and operational efficiency savings — not by new budget allocation in most cases
+
+
+TECHNOLOGY INVESTMENT ROI MEASUREMENT IN FINANCIAL SERVICES
+
+Technology ROI measurement is systematically underdeveloped in FS. 62% of FS firms cannot quantify the return on their largest technology investments:
+
+ROI measurement maturity:
+    FS firms with formal technology investment ROI tracking: 38%
+    FS firms tracking technology investment against pre-agreed business KPIs: 28%
+    FS firms relying solely on project delivery metrics (on time, on budget) as measure of success: 34%
+    AbarVa assessment: technology investment measured only on delivery metrics — not business outcomes — is the leading governance failure in FS IT programmes
+
+Technology ROI by investment category (measured at 24 months):
+    Core banking modernisation: 1.4-2.2x (long payback; high cost; multi-year benefit accrual)
+    CRM (Salesforce FSC with proper change management): 3.2-4.8x
+    Data platform (Snowflake + Databricks + Collibra): 2.8-4.2x
+    Fraud AI: 3.8-6.2x (quantifiable fraud loss reduction)
+    Operations automation (reconciliation, reporting, close): 4.2-7.4x (highest ROI category in AbarVa data)
+    GenAI productivity tools: 2.4-4.1x (productivity gain, with measurement framework in place)
+    Regulatory technology: 1.8-2.8x (compliance cost avoidance + penalty avoidance)
+
+The measurement gap costs FS firms real money:
+    Without ROI tracking, average technology investment renewal rate at year 3: 62% (38% of programmes discontinued)
+    With ROI tracking showing positive returns: 88% renewal rate
+    Lost compounding value of discontinued programmes: AbarVa estimates $2.4-$6.8M per discontinued programme (future value of unrealised year 3-5 benefits)
+
+
+EMERGING TECHNOLOGY SPEND IN FINANCIAL SERVICES 2024-2025
+
+Specific technology categories driving incremental spend:
+
+Quantum-safe cryptography (post-quantum migration):
+    FS firms with PQC migration project started: 18%
+    Estimated cost for large global bank PQC migration: $48-$120M over 8-12 years
+    Urgency: NIST PQC standards published August 2024; regulatory guidance from DORA and US CISA requires roadmap documentation by 2026
+    Current spend: $2.4-$8.8M annually for planning and early migration (networking, PKI infrastructure)
+
+Digital asset infrastructure:
+    FS firms with tokenisation or digital asset infrastructure investment: 34%
+    Primary use cases: tokenised bond settlement (JPMorgan Onyx: $1T+ settled via blockchain), repo settlement (DTCC Project Lithium), tokenised fund units (BlackRock BUIDL fund)
+    Annual spend on digital asset technology (large bank): $12-$48M
+    Revenue opportunity: tokenised asset custody fees ($0.28/basis point) and settlement services
+
+Quantum computing exploration:
+    FS firms with quantum computing exploration budget: 22%
+    Primary use cases being explored: portfolio optimisation (D-Wave quantum annealing), option pricing (quantum Monte Carlo), cryptography migration planning
+    Annual spend (exploration stage): $840K-$2.4M for dedicated quantum team
+    Realistic production timeline: 8-12 years for meaningful FS quantum advantage
+
+AI infrastructure spend (incremental):
+    GPU compute for ML training (new budget category 2023-2025): $840K-$4.8M annually for large FS firm
+    LLM API costs (Azure OpenAI, AWS Bedrock): $420K-$1.8M annually
+    MLOps platform (Databricks, Azure ML, DataRobot): $280K-$1.2M annually
+    Total AI infrastructure incremental spend: $1.5-$7.8M annually (above existing data platform costs)
+
+AbarVa Genome pattern F019 (Technology Without Business Case): 44% of FS technology investments above $1M are made without a formal business case approved by a business owner. Technology investments approved solely by the CIO or CDO without business ownership have 2.4x higher abandonment rate within 36 months. Every technology investment above $500K should have a named business owner, pre-agreed success metrics, and a 24-month ROI checkpoint — regardless of whether the investment is mandated (regulatory) or discretionary (AI).

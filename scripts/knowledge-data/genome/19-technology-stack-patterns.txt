@@ -1,59 +1,259 @@
 TECHNOLOGY STACK PATTERNS FOR AI-READY ORGANISATIONS
 Source: AbarVa Technology Assessment Framework, Gartner Data and Analytics Survey 2025
+Updated: 2025.Q1
 
-ABARVA AI-READY TECHNOLOGY STACK REFERENCE
+OVERVIEW
 
-LAYER 1: INGESTION
-Best-in-class: Kafka (real-time), Fivetran/dbt (batch), Airbyte (open source)
-Common mistake: single ingestion tool for all data types — streaming and batch require different tools
-Healthcare specific: Epic FHIR API as primary ingestion; HL7 v2 for legacy
-Retail specific: POS real-time (Kafka), ERP batch (Fivetran), e-com webhook (API)
-Financial services: FIX protocol for market data; REST API for bank/CRM data
+An AI-ready technology stack is not defined by any single tool or platform — it is defined by the complete chain from data ingestion to AI model serving, with each layer performing its role reliably and connecting cleanly to adjacent layers. AbarVa's technology assessment framework evaluates six layers: ingestion, storage, transformation, analytics/BI, AI/ML platform, and GenAI. The most common failure is not weakness in a single layer — it is the absence of a layer entirely, or a break in the connection between layers.
+
+The key finding: only 8% of assessed organisations have all six layers in place at AI-ready level. This is the same 8% that scores above 70 on the AbarVa Data Readiness Score. The technology stack assessment is, effectively, a restatement of the data readiness assessment from an infrastructure rather than an outcome perspective.
+
+AI-readiness test (6 questions, one per stack layer):
+  1. Can all your critical metrics be calculated from a single source with documented lineage?
+  2. Is your data catalogue used by > 80% of your data engineers?
+  3. Can a data scientist access training data without filing an IT ticket?
+  4. Do you have automated data quality monitoring on your critical production tables?
+  5. Is your model monitoring alerting you to performance drift within 24 hours?
+  6. Can you deploy a new ML model to production in < 2 weeks?
+
+Score interpretation:
+  5-6 YES: AI-Ready (top 8% — proceed to use case development)
+  3-4 YES: Foundation Building (29% — Phase 1 investment required; use cases can start with caveats)
+  1-2 YES: Significant Gaps (41% — Phase 1 required before AI use case development)
+  0 YES: Pre-Foundation (22% — full MDP engagement required first)
+
+
+LAYER 1: DATA INGESTION
+
+PURPOSE: Move data from all source systems (ERP, EHR, POS, mainframe, APIs, sensors) into the cloud data platform reliably, completely, and on the required schedule.
+
+BEST-IN-CLASS TOOLS:
+  Fivetran: batch ingestion from 250+ connectors (ERP, SaaS, databases); managed, self-healing; SaaS-priced
+    Best for: structured source systems with existing connectors; minimal engineering effort
+    Not for: custom source systems or real-time requirements
+  dbt Cloud Sources: paired with transformation layer; batch sources with testing on ingestion
+  Apache Kafka / AWS MSK / Confluent Cloud: event streaming for real-time data (transactions, POS, IoT, sensors)
+    Best for: any use case requiring data fresher than 1-2 hours
+    Complexity: requires streaming expertise; Kafka is powerful but operationally intensive
+  Azure Event Hubs: Kafka-compatible managed service; best for Azure-primary organisations
+  Airbyte: open-source Fivetran alternative; 350+ connectors; self-hosted (lower cost, higher ops)
+  AWS Glue: AWS-native batch ETL; Python-based; best for AWS-centric organisations
+
+ANTI-PATTERNS:
+  Single ingestion tool for all data types: streaming and batch have fundamentally different requirements and tooling; do not use Kafka for batch ERP data or Fivetran for real-time IoT
+  Custom-built ETL in Python scripts: not maintainable, not monitored, breaks silently; replace with managed connectors
+  SFTP file drops as primary data source: no error handling, no schema enforcement, no monitoring; technical debt
+
+INDUSTRY-SPECIFIC INGESTION PATTERNS:
+
+Healthcare:
+  Epic FHIR API: primary ingestion for clinical and claims data; FHIR R4 standard; REST API with OAuth2
+  Epic Clarity: SQL direct access for analytics; requires Epic permissions; AbarVa has pre-built extraction queries
+  HL7 v2: legacy format for lab, ADT (admit/discharge/transfer) events; requires transformation to FHIR or flat files
+  Epic Bridges: real-time interface from Epic for streaming clinical events (slower than Kafka but accessible)
+  Cerner SMART on FHIR: equivalent to Epic FHIR; alternative EHR integration pattern
+  Key challenge: Epic extract requires Epic-certified configuration; not self-service; allows 3-4 months of setup time
+
+Retail:
+  POS real-time: Kafka from POS system; transaction-level data at sub-minute latency
+  ERP batch: Fivetran or direct SAP connector for purchase orders, inventory, cost data
+  E-commerce webhook: API events (order, cart, browse) for real-time personalisation signal
+  Loyalty programme: daily batch from CRM or loyalty platform
+  External data: Nielsen/IRI market data, weather API, economic data — via API or batch connector
+
+Financial Services:
+  FIX protocol: standard for market data (equities, FX, fixed income); requires FIX parser
+  Swift/ISO 20022: interbank payment messages; requires SWIFT connectivity
+  Core banking: direct SQL or CDC (Change Data Capture) from mainframe or core banking system
+  Bloomberg/Refinitiv API: market data feeds; streaming via WebSocket
+  CRM API: Salesforce or equivalent; Fivetran connector standard
+
 
 LAYER 2: STORAGE
-Best-in-class: Azure Data Lake Storage Gen2, AWS S3, Google Cloud Storage
-Format standard: Delta Lake (Databricks), Apache Iceberg (Snowflake), Parquet
-Anti-pattern: storing data in proprietary format with no open standard
-Governance requirement: all tables must be registered in data catalogue on creation
+
+PURPOSE: Store raw data (Bronze), validated/transformed data (Silver), and domain-ready data (Gold) in cloud object storage with appropriate governance.
+
+BEST-IN-CLASS STORAGE:
+  Azure Data Lake Storage Gen2 (ADLS Gen2): hierarchical namespace; best for Azure-primary organisations; native integration with Azure Synapse, Databricks on Azure, Azure ML
+  AWS S3: industry standard; most compatible with open-source ML frameworks; cheapest object storage
+  Google Cloud Storage (GCS): best for BigQuery-primary organisations; native integration with Vertex AI
+  Delta Lake (open standard): transactional layer on top of object storage; supports ACID transactions, time travel, schema enforcement; default format for Databricks
+  Apache Iceberg: equivalent to Delta Lake; multi-vendor support (Snowflake, AWS Glue, Flink); growing adoption
+  Parquet: columnar format for analytics; not transactional but widely supported; use when Delta/Iceberg overhead not needed
+
+ANTI-PATTERNS:
+  Proprietary data formats with no open standard: data cannot be moved between platforms; vendor lock-in (switching cost multiplier 2.4x)
+  Storing data in database tables without corresponding object storage: no separation between operational and analytical storage; performance and cost issues
+  No partitioning strategy: query performance degrades dramatically at scale; partitioning by date and primary entity is table stakes
+
+GOVERNANCE REQUIREMENT:
+  All tables must be registered in data catalogue on creation — platform-enforced, not manual
+  Databricks Unity Catalog: all Delta tables automatically registered; lineage tracked at column level
+  Microsoft Purview: automatic scanning of ADLS Gen2; applies data classification (PII, PHI, financial)
+  Data retention policy: all tables must have retention class defined (business, regulatory, audit); automated deletion/archival
+
+STORAGE COST BENCHMARKS:
+  S3 standard storage: $23/TB per month
+  Azure ADLS Gen2: $21/TB per month
+  GCS standard: $20/TB per month
+  On-premise SAN equivalent: $340-840/TB per month (annual amortisation + ops)
+  Cloud vs. on-premise storage: 95% cheaper — the cost of cloud storage is not a consideration at modern prices
+
 
 LAYER 3: TRANSFORMATION
-Best-in-class: dbt (data build tool) for SQL transformation; Apache Spark for big data
-dbt adoption: 38% of enterprises; fastest growing data tool (2022-2025)
-dbt benefit: version-controlled, tested, documented SQL — all automated
-Anti-pattern: undocumented stored procedures in on-premise SQL Server
 
-LAYER 4: ANALYTICS AND BI
-Best-in-class: Tableau, Power BI, Looker, ThoughtSpot (AI-powered)
-Semantic layer: dbt Semantic Layer, AtScale, Cube.dev — prevents metric inconsistency
-Anti-pattern: BI without semantic layer = shadow analytics proliferation (D-002)
-Self-service target: 60%+ of analytics requests served by self-service, not IT
+PURPOSE: Convert raw Bronze layer data into validated, conformed, and business-domain-ready Silver and Gold tables. This is where most data quality is enforced.
+
+BEST-IN-CLASS TOOLS:
+  dbt (data build tool): version-controlled, documented, tested SQL transformations; fastest-growing data tool 2022-2025
+    Adoption: 38% of enterprises; growing at 44% annually
+    Benefits: every transformation is SQL (accessible); every transformation is version-controlled (Git); every transformation has tests; documentation auto-generated
+    dbt Tests: built-in uniqueness, not-null, accepted-values, relationship tests; custom tests via Singular or Generic
+    dbt Semantic Layer: defines metrics centrally; any BI tool queries through semantic layer; eliminates metric inconsistency (D-002 shadow analytics prevention)
+  Apache Spark: large-scale transformation beyond SQL capability; Python/Scala; best for complex feature engineering
+    Databricks Photon: vectorised query engine for Spark; 2.4-8.1x faster than standard Spark for SQL workloads
+  dbt + Spark/Databricks: most common combination for enterprise AI; dbt for SQL transformations; Spark for ML feature engineering
+
+ANTI-PATTERNS:
+  Undocumented stored procedures in SQL Server: transformation logic hidden in database; no version control; breaks silently when database changes; impossible to audit
+    Prevalence: 61% of legacy organisations have critical business logic in undocumented stored procedures
+    Cost of migration: 3-4x the cost of building equivalent dbt models (discovery is expensive)
+  Jupyter notebooks as transformation pipeline: not schedulable, not monitored, not documented; fine for exploration, not for production
+  Custom Python scripts with no testing: data quality not validated; silent failures in production
+
+dbt ADOPTION BENCHMARKS:
+  Organisations using dbt: 38% enterprise (2025)
+  Data engineering productivity improvement with dbt vs. stored procedures: 28%
+  Data quality improvement (automated tests): 44% fewer data quality incidents
+  Onboarding time for new data engineer: 2 weeks with dbt (documented models) vs. 3 months with legacy (undocumented)
+  Documentation coverage: 100% (dbt auto-generates; stored procedures: effectively 0%)
+
+
+LAYER 4: ANALYTICS AND BUSINESS INTELLIGENCE
+
+PURPOSE: Enable business users to access, explore, and understand data without IT intervention. Self-service analytics is the output of a successful data platform.
+
+BEST-IN-CLASS TOOLS:
+  Tableau: market leader; strongest visualisation; most BI skills in market; good for executive dashboards
+  Power BI: best for Microsoft ecosystem (Office 365, Teams integration); fastest-growing enterprise BI tool; most cost-effective
+  Looker: strongest for data-model-driven BI; native semantic layer (LookML); best for developer-friendly organisations
+  ThoughtSpot: AI-powered natural language search for data; best for self-service without SQL knowledge
+  Apache Superset: open-source BI; cost-effective for technical organisations; less polished than commercial options
+
+SEMANTIC LAYER (MANDATORY FOR ENTERPRISE):
+  Without semantic layer: each BI team calculates the same metric differently → inconsistency → shadow analytics (D-002)
+  With semantic layer: metrics defined once, in code, used by all BI tools → consistency → trust
+  dbt Semantic Layer: metrics defined in dbt, served to any BI tool via semantic API
+  AtScale: multi-cloud semantic layer; works with Snowflake, Databricks, and BigQuery simultaneously
+  Cube.dev: open-source semantic layer with API-first approach; good for embedded analytics
+
+SELF-SERVICE TARGET:
+  Target: 60%+ of analytics requests served by self-service (not IT queue)
+  Industry average: 28% self-service (majority still goes through IT)
+  Top-quartile: 74% self-service
+  Organisations that meet the 60% target have: 44% faster decision-making; 38% lower analytics cost per query
+
+ANTI-PATTERNS:
+  BI without semantic layer: metric inconsistency guaranteed at scale; shadow analytics proliferates
+  100% IT-generated reports: business users dependent on IT for all data; no self-service; IT bottleneck
+  Multiple BI tools without governance: Tableau + Power BI + Looker simultaneously → metric inconsistency and licensing waste
+
 
 LAYER 5: AI/ML PLATFORM
-Best-in-class: Databricks MLflow, Azure Machine Learning, AWS SageMaker
-Feature store: Feast (open source), Tecton, Vertex AI Feature Store
-Model serving: Seldon, BentoML, MLflow Serving
-Anti-pattern: Jupyter notebooks in production — no versioning, monitoring, or governance
+
+PURPOSE: Provide the infrastructure for building, training, validating, deploying, and monitoring AI/ML models in production at scale.
+
+BEST-IN-CLASS TOOLS:
+  Databricks MLflow: most widely deployed ML tracking and model registry; open-source core; works with any cloud
+    Model registry: version-controlled models; reproducible training; A/B testing support
+    MLflow tracking: experiment tracking; hyperparameter logging; metric comparison across runs
+    Databricks AutoML: automated model training for common use cases; SQL-accessible; fastest path to first model
+  Azure Machine Learning: complete MLOps platform; best for Azure-primary organisations; strong governance and enterprise security
+  AWS SageMaker: most mature cloud ML platform; full lifecycle from training to serving; strong for Python-native ML teams
+  Google Vertex AI: GCP-native; strong for organisations using Gemini or GCP-native services; tightly integrated with BigQuery ML
+
+FEATURE STORE:
+  Feast (open source): most widely adopted; works with any cloud; requires operational knowledge
+  Tecton: commercial Feast-compatible; adds real-time serving; managed service
+  Databricks Feature Store: native Databricks; simplest if already on Databricks; integrates with Unity Catalog
+  Vertex AI Feature Store: GCP-native; best for GCP-primary organisations
+
+MODEL SERVING:
+  Databricks Model Serving: one-click deployment of MLflow models; auto-scaling; best for Databricks users
+  AWS SageMaker Endpoints: highly scalable; A/B testing native; strong for high-volume production serving
+  Azure ML Online Endpoints: managed serving; strong governance; best for Azure users
+  Seldon Core: open-source; multi-cloud; advanced A/B testing and canary deployments
+  BentoML: lightweight serving; good for Python models; developer-friendly
+
+ANTI-PATTERNS:
+  Jupyter notebooks in production: no versioning, no monitoring, no governance, no scaling; this is the most common MLOps anti-pattern in the industry
+    Prevalence: 44% of organisations have at least one production AI model served from a notebook
+    Risk: model is a single point of failure with no documented provenance
+  No model registry: models are trained and deployed without tracking; cannot reproduce training; cannot roll back
+    Impact: 2.3x longer model debugging time; regulatory exposure in FS and healthcare
+  Manual model deployment: model moved to production via copy-paste or manual upload; 6.8 months average vs. 2.6 months with automated pipeline
+  No model monitoring: 44% of production models have no automated drift monitoring; models degrade silently (see F052)
+
+MLOPS MATURITY LEVELS:
+  Level 0 (Notebooks): ad hoc training; manual deployment; no monitoring; 44% of organisations
+  Level 1 (Automated Training): training pipeline automated; deployment still manual; 28% of organisations
+  Level 2 (Automated Deployment): CI/CD for models; automated testing before deployment; monitoring in place; 20% of organisations
+  Level 3 (Full MLOps): continuous training on new data; automated drift detection and retraining; canary deployments; 8% of organisations
+  Target for AI-ready: Level 2 minimum before Phase 3; Level 3 for Phase 4 portfolio
+
 
 LAYER 6: GENERATIVE AI
-Best-in-class: Azure OpenAI (Microsoft shops), AWS Bedrock (AWS-primary), Vertex AI (GCP)
-RAG architecture: vector database (Pinecone, Weaviate, pgvector) + embedding model + LLM
-Anti-pattern: GenAI without RAG for factual queries — hallucination rate 8-14% unacceptable for business use
-Governance: all GenAI outputs reviewed by human before client-facing use (required in FS and healthcare)
+
+PURPOSE: Enable LLM-based applications (document processing, natural language interfaces, content generation, code generation, agent workflows) with enterprise security and governance.
+
+BEST-IN-CLASS PLATFORMS:
+  Azure OpenAI Service: enterprise deployment of GPT-4, GPT-4o, and o-series models; data residency; no training on customer data; Microsoft Entra security integration; best for Microsoft-primary organisations
+  AWS Bedrock: multi-model service; Anthropic Claude, Amazon Titan, Meta Llama 3, Mistral; strong enterprise security; flexible model selection; no vendor lock-in
+  Google Vertex AI (Gemini): Gemini 1.5 Pro/Flash; best grounding with Google Search; strong for data-heavy applications (BigQuery integration); GCP-primary organisations
+  Anthropic API (direct): Claude 3.5 Sonnet/Opus; strongest reasoning; most suitable for complex analytical tasks; requires direct API management
+
+RAG ARCHITECTURE (REQUIRED FOR FACTUAL AI APPLICATIONS):
+  What RAG solves: LLMs hallucinate when asked factual questions outside their training data; RAG grounds responses in retrieved documents
+  Hallucination rate without RAG: 8-14% for factual queries — unacceptable in business operations
+  Hallucination rate with RAG: 1.2-2.4% (varies by retrieval quality)
+
+  RAG components:
+    Vector database: Pinecone, Weaviate, Chroma, pgvector (PostgreSQL extension), Azure AI Search, AWS OpenSearch
+    Embedding model: text-embedding-3-large (OpenAI), Amazon Titan Embeddings, Google Gecko
+    LLM (generation): GPT-4, Claude 3.5, Gemini 1.5 Pro
+    Orchestration: LangChain, LlamaIndex, AWS Bedrock agents, Azure AI Studio
+
+  Healthcare RAG: clinical documentation, prior authorisation policy search, coding reference (CPT/ICD)
+  Financial services RAG: regulatory document search, customer document processing, trade documentation
+  Retail RAG: product catalogue AI, customer service, policy document search
+
+ANTI-PATTERNS:
+  GenAI without RAG for factual queries: 8-14% hallucination rate; in regulated industries this is regulatory exposure
+  Customer-facing GenAI without human review: LLM errors reach customers; in FS and healthcare = compliance risk
+  GenAI without prompt injection protection: adversarial inputs can extract confidential system prompts or cause harmful outputs; requires input/output validation
+  Over-reliance on GenAI for structured data analysis: GenAI is weak at precise numerical reasoning; SQL + BI is better for quantitative analysis; GenAI for narrative interpretation
+
+GOVERNANCE FOR GENERATIVE AI:
+  All GenAI outputs reviewed by human before customer-facing use (FS and healthcare regulatory requirement)
+  Prompt logging: all prompts and completions logged for audit trail (required in regulated industries)
+  PII detection on inputs: prevent customer PII from being sent to third-party LLM APIs
+  Model versioning: LLM API version pinned in production; version changes require re-validation before deployment
+  AbarVa standard: GenAI governance framework (prompt policy, review process, logging, PII controls) is required in Phase 0 before any GenAI use case development
+
 
 VENDOR CONCENTRATION RISK THRESHOLDS
-Single vendor > 30% of IT spend: board disclosure risk
-Single vendor dependency for critical AI: board-level risk register
-No evaluated alternative in 3+ years: switch cost unknown — assess annually
 
-TECHNOLOGY PATTERN ASSESSMENT QUESTIONS
-1. Can all your critical metrics be calculated from a single source with documented lineage?
-2. Is your data catalogue used by >80% of your data engineers?
-3. Can a data scientist access training data without filing an IT ticket?
-4. Do you have automated data quality monitoring on your critical tables?
-5. Is your model monitoring alerting you to drift within 24 hours?
-6. Can you deploy a new ML model to production in < 2 weeks?
+Single vendor > 30% of IT spend: board disclosure required; governance risk
+Single vendor dependency for critical AI: board-level risk register entry; alternatives evaluated
+No alternative vendor evaluated in 3+ years: switch cost unknown; likely 2.4x market price; assess annually
+Proprietary AI model with no explainability: regulatory risk in FS (SR 11-7) and healthcare (CMS AI requirements)
+AI vendor that requires data to leave controlled environment: security/compliance review before contract
+Vendor with contractual restriction on model portability: lock-in risk; negotiate exit terms before signing
 
-ORGANISATIONS THAT ANSWER YES TO 5-6: AI-Ready (top 8%)
-ORGANISATIONS THAT ANSWER YES TO 3-4: Foundation Building (29%)
-ORGANISATIONS THAT ANSWER YES TO 1-2: Significant Gaps (41%)
-ORGANISATIONS THAT ANSWER YES TO 0: Pre-Foundation (22%)
+ANNUAL TECHNOLOGY STACK REVIEW (ABARVA STANDARD):
+  Layer 1 (Ingestion): are all source systems connected? Are streaming requirements covered?
+  Layer 2 (Storage): is open-format storage in use? Is data catalogue coverage > 80%?
+  Layer 3 (Transformation): is dbt coverage > 80% of production tables? Are quality gates automated?
+  Layer 4 (Analytics): is self-service adoption > 60%? Is semantic layer preventing metric inconsistency?
+  Layer 5 (AI/ML): is MLOps at Level 2+? Are all production models monitored?
+  Layer 6 (GenAI): is RAG deployed for factual applications? Are governance controls in place?

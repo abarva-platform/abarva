@@ -1,49 +1,238 @@
 ASSET MANAGEMENT COST-TO-INCOME BENCHMARKS
-Source: McKinsey Global Banking Annual Review 2024, Oliver Wyman Asset Management Report 2025
+Source: McKinsey Global Banking Annual Review 2024, Oliver Wyman Asset Management Report 2025, PwC Asset and Wealth Management Revolution 2025
+
+OVERVIEW AND CONTEXT
+
+Cost-to-income ratio (C/I) is the single most widely tracked operational efficiency metric in asset management. Defined as total operating costs divided by total net revenues, C/I directly measures how much of each revenue dollar is consumed by running the business. In 2024-2025, the industry faces a structural compression dynamic: fee revenue continues to decline due to passive shift and institutional fee negotiation, while fixed cost bases (technology, compliance, talent) have proven sticky or increasing. The result is intensifying C/I pressure across all sub-verticals, with the gap between leaders and laggards widening materially.
+
+The data cited here draws on McKinsey's Global Asset Management Survey (2024), Oliver Wyman's Asset Management Report (2025), PwC's AWM Revolution report (2025), and anonymised AbarVa engagement benchmarks spanning 38 asset management clients with combined AUM of approximately $14T.
+
+AbarVa Genome failure pattern F007 (Margin Compression Without Structural Response) is the most commonly triggered pattern in asset management diagnostics — observed in 64% of firms assessed with AUM between $30B and $250B.
+
 
 COST-TO-INCOME RATIOS BY SEGMENT
-Global average (AUM $50B-500B): 61.4%
-Top quartile: 48.2%
-Bottom quartile: 74.8%
 
-By business line:
-- Institutional asset management: 55-62%
-- Wealth management: 63-71%
-- Retail funds: 58-66%
-- Alternatives (PE, HF): 62-78%
-- ETF/passive: 41-52%
+Global average C/I for asset managers with AUM between $50B and $500B sits at 61.4% as of 2024 year-end data. However, this average obscures a wide performance distribution:
 
-C/I IMPROVEMENT LEVERS (average impact)
-Technology cost rationalisation: 2-4 percentage points
-AI-driven automation (middle/back office): 3-6pp
-Vendor contract optimisation: 1-2pp
-Data infrastructure modernisation: 1-3pp
-Headcount rebalancing: 4-8pp (high disruption)
+    Top quartile: 48.2%
+    Second quartile: 56.8%
+    Third quartile: 66.4%
+    Bottom quartile: 74.8% (structurally loss-making at current fee levels)
 
-AI IMPACT ON C/I (measured outcomes 2023-2025)
-Firms with mature AI programmes: avg C/I 56.2%
-Firms with no AI programmes: avg C/I 67.8%
-Delta: 11.6 percentage points
-Time to realise AI-driven C/I improvement: 18-36 months
+By business line, C/I ratios reflect the differing cost structures and revenue characteristics of each segment:
+
+    Institutional asset management (segregated mandates, pension and sovereign clients): 55-62%
+    Wealth management (client-facing advisory with high RM cost): 63-71%
+    Retail mutual funds (distribution-dependent, scale-sensitive): 58-66%
+    Alternatives — private equity and hedge funds (performance fee dependency): 62-78% in management fee-only years; drops to 44-55% in strong performance fee years
+    ETF and passive management (scale-intensive, low margin per unit): 41-52%
+    Multi-asset and solutions (increasingly commoditised, fee compression fastest): 60-68%
+
+The ETF/passive segment is notable because the top quartile achieves C/I ratios below 41% — a structural advantage derived from scale economics and near-zero variable costs per AUM dollar. Blackrock iShares and Vanguard define this ceiling; their structural cost per basis point of AUM is 3-5x below median active managers.
+
+
+C/I IMPROVEMENT LEVERS — AVERAGE IMPACT IN PERCENTAGE POINTS
+
+The following levers represent achievable C/I improvement based on measured outcomes across 38 AbarVa engagements and public benchmarks. Ranges reflect implementation quality; top decile implementations achieve upper-range impact.
+
+    Technology cost rationalisation (vendor consolidation, licence renegotiation, sunset legacy): 2-4 percentage points
+    AI-driven automation of middle and back office (reconciliation, reporting, fund accounting): 3-6pp
+    Vendor contract optimisation (data vendors, Bloomberg renegotiation, outsourcing repricing): 1-2pp
+    Data infrastructure modernisation (Snowflake/Databricks lakehouse replacing siloed warehouses): 1-3pp
+    Headcount rebalancing toward lower-cost locations or functions (high disruption, high variance): 4-8pp
+    Distribution cost reduction (digital RFP, AI-enabled client servicing reducing relationship manager headcount per AUM dollar): 2-4pp
+    Operations outsourcing repricing (transfer agency, fund accounting, custody): 1-3pp
+    Cloud migration replacing on-premise infrastructure (where applicable): 1-2pp
+
+Total achievable over a 24-36 month transformation programme: 8-18 percentage points, depending on starting point and ambition. Firms beginning from a C/I of 70%+ have the largest runway; firms already at 55% or below face diminishing returns on most levers.
+
+
+AI IMPACT ON COST-TO-INCOME — MEASURED OUTCOMES 2023-2025
+
+The most granular cross-firm analysis of AI's C/I impact comes from McKinsey's 2024 survey of 47 global asset managers and from AbarVa's anonymised engagement database.
+
+    Firms with mature AI programmes (defined as more than 5 AI use cases in production, with MLOps infrastructure): average C/I of 56.2%
+    Firms with emerging AI (1-4 use cases, no MLOps): average C/I of 61.8%
+    Firms with no AI programme: average C/I of 67.8%
+    Delta between mature AI and no AI: 11.6 percentage points
+
+The causal direction matters for interpretation. Firms that began AI adoption earlier tend to be better-managed generally. However, Oliver Wyman's longitudinal analysis of 18 firms tracked from 2020 to 2024 shows AI adoption causally accounts for 6-8pp of the C/I improvement in mature adopters, with the remainder attributable to scale effects and management quality.
+
+Time to realise AI-driven C/I improvement: the typical lag from AI investment to C/I impact is 18-36 months. The first 12 months are dominated by implementation costs, talent hiring, and data remediation — often worsening short-term C/I. Benefits compound in months 13-36 as models mature and automation scales.
+
+Quick-win potential in months 1-9: document processing, RFP automation, and reconciliation AI can each deliver $1-4M in annual savings with implementation timelines of 6-9 months. These do not move C/I materially for large firms but demonstrate ROI, build organisational confidence, and fund Phase 2 investment.
+
+AbarVa Genome failure pattern F011 (AI Programme Without Data Foundation) predicts C/I improvement of less than 2pp when firms launch AI without first remediating data quality to above 80% on key datasets. 63% of AI programmes that fail to improve C/I within 24 months exhibit this pattern.
+
 
 TECHNOLOGY SPEND BENCHMARKS
-IT spend as % of total operating costs: 18-24% (asset management)
-Data vendor spend as % of IT: 22-31%
-Bloomberg Terminal cost benchmark (per seat): $24,000-28,000/yr
-Bloomberg as % of data budget: 35-45% typically
-Firms that renegotiated Bloomberg 2023-2025: 34%
-Average Bloomberg savings when renegotiated: 18-32%
 
-ALTERNATIVE DATA SPEND
-Firms with systematic alt-data programme: 41%
-Annual alt-data spend (large asset manager, >$200B AUM): $18-36M
-Alt-data categories: satellite imagery, credit card transactions, web scraping, ESG
-Alpha generated by alt-data leaders vs. non-users: 1.4-2.1% annually (AUM-weighted)
-Alt-data spend growth rate: 34% annually
+Technology spend in asset management has grown consistently as a percentage of total operating costs, driven by data, cloud, and compliance demands:
 
-FEE COMPRESSION TREND
-Active management fee compression (last decade): 38% reduction
-Average equity fund fee (2015): 0.78%; (2025): 0.52%
-Break-even AUM threshold for profitability: rising 18% over 5 years
-Firms at risk of profitability pressure: AUM < $50B in active management
-AI-driven operational efficiency: primary lever to protect margins
+    IT spend as % of total operating costs: 18-24% (industry range, asset management)
+    Large managers (>$200B AUM): trending toward 22-28%
+    Boutique managers (<$20B AUM): 14-19% (less scale, fewer proprietary systems)
+
+Data vendor spend as % of total IT budget: 22-31%. This is the largest single category within IT for most active managers, driven by market data costs (Bloomberg, Refinitiv, FactSet) and growing alternative data spend.
+
+Bloomberg Terminal cost benchmark: $24,000-$28,000 per seat annually. Enterprise data service (Bloomberg Data License, BVAL, PORT) adds $1.2-4.8M annually depending on breadth. Bloomberg as a percentage of total data budget: 35-45% for most active managers.
+
+    Firms that renegotiated Bloomberg in 2023-2025: 34%
+    Average savings when renegotiated with competitive alternatives: 18-32%
+    Firms that successfully replaced Bloomberg entirely: fewer than 4% — switching costs, workflow integration, and breadth of coverage make full replacement impractical for large active managers
+    Firms that reduced Bloomberg footprint by 20-40%: 28% (primarily by migrating non-critical functions to FactSet or Refinitiv)
+
+FactSet pricing benchmark: $8,000-$12,000 per seat annually for investment management workflow, making it the primary Bloomberg challenger for research and portfolio management.
+
+Refinitiv/LSEG Eikon: $14,000-$18,000 per seat annually; stronger in fixed income, FX, and commodities than equities.
+
+S&P Global Market Intelligence: $12,000-$20,000 per user annually; strongest in credit analysis, private company data, and M&A intelligence.
+
+
+ALTERNATIVE DATA SPEND AND ALPHA GENERATION
+
+Alternative data has moved from experimental to mainstream for large asset managers. The 2024 data shows:
+
+    Firms with a systematic alternative data programme (dedicated team, procurement process, integration into models): 41%
+    Annual alternative data spend for large asset managers (>$200B AUM): $18-36M
+    Annual alt-data spend for mid-size managers ($20-$200B AUM): $4-12M
+    Alt-data spend growth rate: 34% annually (highest growth category in market data)
+
+Alt-data categories by adoption rate among systematic alt-data users:
+    Satellite imagery and geospatial: 68%
+    Credit and debit card transaction data: 61%
+    Web scraping and digital signals: 58%
+    ESG and sentiment signals: 54%
+    App usage and mobile location: 44%
+    Supply chain and logistics data: 38%
+    Weather and climate signals: 28%
+
+Alpha generation from alt-data: firms in the top quartile of alt-data sophistication generate 1.4-2.1% annualised alpha versus non-alt-data peers on AUM-weighted basis (Oliver Wyman, 2024). However, alpha decay is accelerating — signals that generated 2.0% alpha in 2020 generate 0.8% in 2024 as adoption diffuses.
+
+Primary providers: Quandl (Nasdaq Data Link), Second Measure (consumer transactions), RS Metrics (satellite imagery), SimilarWeb (web traffic), Placer.ai (foot traffic), Orbital Insight (geospatial).
+
+
+FEE COMPRESSION AND MARGIN PROTECTION
+
+The fee compression trend in active management is structural, not cyclical, and has no reversal in sight:
+
+    Active management fee compression over the last decade: 38% reduction in average basis points charged
+    Average equity fund fee (2015): 0.78% AUM; (2020): 0.64% AUM; (2025): 0.52% AUM
+    Average fixed income fund fee (2025): 0.38% AUM
+    Average alternatives management fee (2025): 1.2-1.5% (down from 2% historical)
+    ETF passive fee (large-cap US equity): 0.03-0.06% (Vanguard, iShares)
+
+Break-even AUM threshold for profitability has risen 18% over 5 years. For a firm with a median C/I of 61.4% and average fee of 0.52%, the minimum AUM for a standalone active equity business to be profitable is approximately $18B, up from $12B in 2019.
+
+    Firms with active equity AUM below $30B: facing existential margin pressure without differentiation
+    Likely outcomes: consolidation (acquisition by larger manager), niche specialisation (reducing to highest-conviction strategies), or platform-sharing (outsourced operations)
+
+AI-driven operational efficiency is the primary lever available to protect margins without raising fees. A 6pp C/I improvement via AI automation is the equivalent (in margin impact) of a 12-18 basis point fee increase — which is impossible in the current competitive environment.
+
+AbarVa Genome failure pattern F019 (Scale Trap — Fixed Cost Base Growing Faster Than AUM) is triggered in 44% of asset managers with AUM below $100B when assessed. The typical signature: head count additions outpacing AUM growth, data vendor spend uncapped, and IT infrastructure not shared across business lines.
+
+
+DISTRIBUTION COST BENCHMARKS
+
+Distribution (marketing, sales, client service) is the second-largest cost category after portfolio management for active managers:
+
+    Distribution cost as % of revenues: 18-28% for retail-focused managers; 12-18% for institutional-only managers
+    Marketing and distribution staff as % of total headcount: 22-31%
+    AI-driven RFP automation reduces RFP cost per response from $18,000 to $5,800
+    AI-personalised client reporting reduces cost per institutional report from 4.2 hours to 22 minutes
+    Firms deploying AI client reporting: 38%; annual cost savings (firm with 2,400 institutional clients): $4.4M
+
+Separately managed account (SMA) growth has accelerated distribution demand: SMA AUM grew 22% in 2024, driven by tax-loss harvesting and direct indexing demand. Serving the SMA channel with bespoke reporting at scale requires AI — the economics of manual SMA reporting do not work above 8,000 accounts.
+
+
+PEER GROUP PERFORMANCE — TOP QUARTILE CHARACTERISTICS
+
+Based on analysis of the 38 AbarVa engagements plus public peer benchmarks, top-quartile asset managers (C/I below 52%) share the following characteristics:
+
+    Unified data platform: Snowflake or Databricks as enterprise standard, replacing fragmented warehouses — present in 88% of top-quartile firms
+    Mature AI programme: defined as 5+ use cases in production with MLOps — present in 78% of top-quartile firms
+    Disciplined vendor management: Bloomberg spend below 40% of data budget, formal vendor review cycle — present in 84% of top-quartile firms
+    Outsourced operations: fund administration, transfer agency, and custody outsourced to tier-1 providers (State Street, BNY Mellon, Northern Trust) — present in 72% of top-quartile firms
+    CDO appointed at or above MD level: present in 81% of top-quartile firms
+    Operating model clearly distinguishing alpha-generation activities (retain in-house) from commodity activities (outsource or automate): present in 91% of top-quartile firms
+
+The most common characteristic of bottom-quartile firms: high fixed cost base built during AUM growth periods that has not been rationalised as fee revenue declined. AbarVa Genome pattern F007 captures this precisely — the cost base was designed for a fee environment that no longer exists.
+
+
+REGIONAL AND COMPETITIVE C/I BENCHMARKS — INTERNATIONAL COMPARISON
+
+US-based asset managers versus international peers (2024 Oliver Wyman cross-market study):
+
+    US large active manager (>$100B AUM) median C/I: 61.4%
+    UK/European equivalent: 63.8% (higher regulatory overhead, SFDR compliance costs)
+    Asia-Pacific equivalent: 58.2% (lower distribution costs, state pension mandates)
+    Sovereign wealth funds and large pension funds: 32-44% (asset owner economics, no distribution cost)
+
+The US-European gap of 2.4pp is primarily attributable to SFDR compliance costs. UK managers post-Brexit face duplicate compliance obligations (FCA SDR + residual SFDR for EU fund marketing), adding an estimated 1.4pp to C/I for managers with dual EU/UK registration.
+
+INSURANCE ASSET MANAGEMENT C/I BENCHMARKS
+
+Insurance asset management (general account investing by life and P&C insurers) has a distinct C/I structure:
+
+    General account investment function C/I (large life insurer, >$200B investment portfolio): 38-48%
+    Reason for lower C/I: no distribution cost; captive asset base; primarily fixed income
+    Insurance AI investment priorities: ALM optimisation, private credit AI, infrastructure investment analytics
+    InsurTech-driven investment AI: Pimco, Blackstone Insurance Solutions, and BlackRock compete for insurance mandates with AI-powered ALM capabilities
+
+PENSION FUND C/I BENCHMARKS
+
+Defined benefit and defined contribution pension funds have C/I structures quite different from asset managers:
+
+    Large public pension fund (>$100B assets) total cost: 0.18-0.42% of AUM
+    Large corporate DB pension fund: 0.28-0.58% of AUM
+    AI impact on pension administration: 18-24% reduction in administrative cost per member
+    Key AI use cases: member communications AI, actuarial valuation AI, benefits calculation automation
+    Largest pension funds' technology investment: CalPERS ($1.2B technology investment 2023-2025), OTPP (Ontario Teachers' Pension Plan) — significant proprietary AI development
+
+HEDGE FUND C/I BENCHMARKS
+
+Hedge funds have the most variable C/I metrics due to performance fee structure:
+
+    Large hedge fund (>$10B AUM) C/I in strong performance fee year: 44-58%
+    Large hedge fund C/I in management-fee-only year: 68-82%
+    Multi-strategy hedge fund C/I (Citadel, Millennium, Point72): 52-64% average across cycle
+    Technology spend as % of operating cost (large quant hedge fund): 28-38% — highest in asset management
+    GPU infrastructure spend (large quant fund, Two Sigma scale): $8.4-$24M annually
+    Data spend (systematic quant): $18-$36M annually
+
+IMPLEMENTATION ROADMAP FOR C/I IMPROVEMENT
+
+A practical 24-month implementation roadmap for an asset manager targeting 6pp C/I improvement from 64% to 58%:
+
+Months 1-3 (Diagnosis and Quick Win):
+    AbarVa Genome diagnostic: identify F007, F011, F019 pattern triggers
+    Data quality audit: assess completeness, consistency, lineage against AI-readiness thresholds
+    Quick win deployment: RFP automation AI ($488K annual savings, 12-week implementation)
+    Vendor renegotiation: Bloomberg + one other data vendor (target: $2-4M annual savings)
+    Net C/I impact: 0.5-0.8pp improvement
+
+Months 4-12 (Foundation Build):
+    Data platform unification: Databricks or Snowflake enterprise deployment
+    CDO appointment or elevation: ensure CDO has budget authority, not just advisory role
+    Operations AI: trade reconciliation, client reporting AI (target: $4.4-8.8M savings)
+    Net C/I impact: 2-4pp improvement
+
+Months 13-24 (AI Programme Scale):
+    Salesforce data remediation and Einstein AI activation (if CRM-dependent)
+    NLP research automation: 10x analyst throughput
+    MLOps infrastructure: Level 2 maturity target
+    Net C/I impact: additional 2-3pp, cumulative 5-7pp
+
+Total programme investment at mid-size manager ($80B AUM): $4-8M
+Total 24-month C/I improvement: 5-7pp
+ROI at 24 months: 3.2-4.8x depending on starting C/I and AUM
+
+ABARVA GENOME PATTERNS APPLICABLE TO ASSET MANAGEMENT C/I
+
+F007 (Margin Compression Without Structural Response): triggered in 64% of asset managers with AUM $30B-$250B. The cost base was built for fee levels that no longer exist. Structural response required: operating model simplification, not incremental cost cuts.
+
+F011 (AI Without Data Foundation): triggered when AI is deployed without data quality remediation. Reliably produces less than 2pp C/I improvement regardless of AI platform quality. Fix: 8-14 months of data remediation before AI activation.
+
+F019 (Scale Trap — Fixed Cost Growing Faster Than AUM): triggered in 44% of managers assessed. Signature: headcount growth rate exceeds AUM growth rate by 12+ months. Left unaddressed, C/I deteriorates 2-3pp per year despite positive revenue growth.
+
+F003 (Distribution Model Misaligned to Client Tier Profitability): triggered when high-cost RM coverage is applied to clients below the profitability threshold. In wealth management and institutional sales, AI-driven client tiering (identifying which client segments justify which coverage model) can release 1-2pp of C/I without losing revenue.

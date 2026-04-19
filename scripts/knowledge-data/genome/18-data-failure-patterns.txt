@@ -1,59 +1,322 @@
 DATA FAILURE PATTERNS IN AI TRANSFORMATION
-Source: AbarVa Genome — Data Category (D-series patterns)
+Source: AbarVa Genome — Data Category (D-series patterns), 35 total patterns
+Pattern Library Version: 2025.Q1
+
+OVERVIEW
+
+Data failure patterns are the second most prevalent category of AI programme failure after leadership failures. AbarVa's D-series contains 35 catalogued patterns covering: data architecture mistakes, quality failures, governance gaps, pipeline design errors, and master data problems. Unlike leadership failures (which are often diagnosed through conversation), data failures require technical assessment to detect.
+
+The critical insight: 68% of data failure patterns are detectable in Phase 0 through systematic assessment. The cost of detecting and mitigating a data failure pattern in Phase 0 is $40,000-80,000. The cost of discovering the same pattern in Phase 2 (mid-model development) is $480,000-1.8M in rework. The business case for thorough Phase 0 data assessment is overwhelming.
+
+Distribution by D-series category:
+  Architecture failures: 11 patterns (D-001 through D-011)
+  Quality failures: 9 patterns (D-012 through D-020)
+  Governance failures: 7 patterns (D-021 through D-027)
+  Pipeline failures: 5 patterns (D-028 through D-032)
+  Master data failures: 3 patterns (D-033 through D-035)
+
+This document covers the highest-impact patterns from each category.
+
 
 D-001 — DATA LAKE WITHOUT DATA CATALOGUE
-Signal: failure_predictor
-Prevalence: 48% of data lake deployments do not have a catalogue
-Failure rate: 74% of data becomes undiscoverable within 18 months
-Consequence: data engineering time wasted rediscovering existing datasets; AI model quality degrades as training data degrades
-Fix: deploy data catalogue (Alation, Collibra, Microsoft Purview) in parallel with lake — never as an afterthought
+Pattern type: FAILURE PREDICTOR
+Prevalence: 48% of data lake deployments have no data catalogue at go-live
+Failure rate: 74% of data becomes undiscoverable within 18 months of uncatalogued lake deployment
+Category: Architecture failure
+
+What "undiscoverable" means in practice:
+  Data engineers spend 28-40% of their time finding and re-documenting existing datasets (instead of building new pipelines)
+  Business users cannot self-serve; every data question goes through IT (defeating the purpose of the data lake)
+  AI model training data provenance is unknown (model risk and compliance exposure)
+  Data quality cannot be enforced without knowing what data exists and where
+
+Detection: ask the data engineering team how many datasets are in the data lake vs. how many are in the catalogue. If the ratio is below 70%, undiscoverability is already active.
+
+Causation: data catalogue is almost always planned as a Phase 2 deliverable; lake is built in Phase 1; data accumulates in Phase 1 without cataloguing; catalogue is retroactively populated at 20-30% coverage; rest remains undiscovered.
+
+Fix: deploy data catalogue (Alation, Collibra, Microsoft Purview) in parallel with data lake — never as an afterthought.
+AbarVa rule: data lake provisioning and catalogue deployment are a single Phase 1 workstream. No lake table is created without a corresponding catalogue entry. This is enforced through Unity Catalog (Databricks) or automated Purview registration.
+
+Financial impact:
+  Data engineer productivity loss (28-40% time on rediscovery): $280,000-480,000 annually per 10-engineer team
+  AI model quality degradation from unknown training data provenance: 18-34% accuracy reduction in worst cases
+  Compliance exposure (GDPR/HIPAA — cannot demonstrate data lineage for personal data): $100K-$2M per regulatory finding
+
 
 D-002 — SHADOW ANALYTICS PROLIFERATION
-Signal: failure_predictor
-Prevalence: 81% of organisations have shadow analytics (Excel, personal BI files)
-Consequence: 6-14 versions of key metrics exist simultaneously; executive decisions made on inconsistent data
-Detection: ask 3 executives for the same metric — if answers differ, shadow analytics has taken root
-Fix: semantic layer (dbt, AtScale) + governed self-service BI; make official data easier to access than shadow data
+Pattern type: FAILURE PREDICTOR
+Prevalence: 81% of organisations have shadow analytics (Excel files, personal BI, Access databases)
+Category: Architecture/governance failure
 
-D-003 — MPI DUPLICATE RATE CREEP (MASTER PATIENT/CUSTOMER INDEX)
-Signal: failure_predictor
-Growth rate without active deduplication: 1.8-2.4% per year
-Threshold: above 3% duplicate rate = AI model accuracy degrades 40-60%
-Industry average duplicate rate: 4.8% (no MDM), 1.2% (with MDM)
-Fix: MDM investment and ongoing deduplication; assess before any AI deployment
+What shadow analytics looks like:
+  Finance team has "the real P&L" in an Excel model that is the true decision basis
+  Operations team has a SharePoint spreadsheet with KPIs that differ from the official BI dashboard
+  Sales team has a personal Tableau workbook that defines territory performance differently than the ERP
+  Executives receive conflicting numbers from different teams for the same metric
+
+Shadow analytics impact on AI:
+  When AI model is trained on "official" data sources, it may be trained on the wrong signal
+  Business users reject AI outputs that conflict with shadow analytics (they trust their own spreadsheets)
+  Metric inconsistency means ROI measurement is contested — different teams calculate baseline differently
+
+Detection test: ask three executives for the same KPI (e.g., "what was last quarter's revenue?"). If answers differ by >2%, shadow analytics has taken root.
+
+Financial impact: McKinsey estimates 20-30% of management time wasted reconciling inconsistent data versions. For a $5B organisation with 200 managers, this is $8-12M annually in wasted management time.
+
+Fix: semantic layer (dbt Semantic Layer, AtScale) + governed self-service BI; make official data easier to access than shadow data.
+Key principle: shadow analytics is not a technology problem — it is a trust problem. Business users use shadow analytics because official data is slow, inaccessible, or wrong. Fix the trust issue, not just the technology.
+
+
+D-003 — MPI/MASTER IDENTITY DUPLICATE RATE CREEP
+Pattern type: FAILURE PREDICTOR
+Growth rate of duplicate records without active deduplication: 1.8-2.4% per year
+AI model accuracy threshold: above 3% duplicate rate = AI model accuracy degrades 40-60%
+Industry average duplicate rate: 4.8% (no MDM); 1.2% (with active MDM)
+Category: Master data failure
+
+Industry-specific context:
+  Healthcare (MPI — Master Patient Index): 4.8% duplicate patient rate average (AHA benchmark)
+    Impact: AI model sees same patient as two patients; clinical AI misses longitudinal care patterns
+    Specific failure: readmission prediction AI trained on MPI with 5% duplicate rate has 44% false negative rate (misses real readmissions)
+  Retail/FS (customer identity): 6.4 average systems containing customer data; 4.2% cross-system duplicate rate
+    Impact: personalisation AI targets duplicate profiles with conflicting messages; churn AI misses customers with multiple profiles
+  Supply chain (product master): post-M&A organisations average 18% product code overlap across ERP instances
+    Impact: demand forecasting AI cannot match products across systems; forecasts are for segments of demand, not total demand
+
+Financial impact (examples):
+  Retail personalisation with 4.8% duplicate rate: personalisation accuracy 68% (vs. 94% with clean identity)
+  Healthcare readmission AI with 5% duplicate rate: 44% false negative rate = failed interventions
+  FS AML with 3.8% duplicate rate: 28% of suspicious patterns missed (same person in two records, transactions never connected)
+
+Fix: MDM investment and ongoing deduplication — not optional for AI programmes where customer/patient identity is critical.
+Timeline: 4-6 months for primary entity deduplication; ongoing MDM required to prevent regrowth
+AbarVa recommendation: assess duplicate rate before any personalisation, clinical, or identity-dependent AI programme; if above 2%, MDM sprint before use case development.
+
 
 D-004 — AI MODEL TRAINED ON BIASED HISTORICAL DATA
-Signal: failure_predictor
-Description: models trained on pre-AI operational data inherit the inefficiencies AI is meant to fix
-Healthcare example: denial prediction model trained on historical denials learns to predict, not prevent
-Retail example: demand forecasting trained on stockout-distorted historical sales underestimates true demand
-Fix: retrain on post-intervention data within 12 months; use causal modelling for baseline construction
+Pattern type: FAILURE PREDICTOR
+Prevalence: affects 58% of AI programmes in healthcare and FS (industries where historical processes had systematic bias)
+Category: Quality failure
 
-D-005 — BATCH-ONLY DATA PIPELINE FOR REAL-TIME AI
-Signal: failure_predictor
-Consequence: real-time AI use cases (fraud, sepsis detection, pricing) cannot function on 18-hour-old data
-Impact: AI model accuracy degrades as data latency increases
-Healthcare: sepsis detection requires < 60-second latency; batch = useless
-Retail: demand sensing requires hourly update; weekly batch = 68% less signal captured
-Fix: Kafka/Kinesis/Event Hubs streaming pipeline; assess data latency requirements before platform selection
+The bias inheritance problem:
+  AI models trained on historical data inherit the patterns of the past — including the inefficiencies and biases that AI is meant to fix
+  Healthcare: denial prediction model trained on historical denials learns to predict which claims will be denied — not which claims are inappropriately denied. The model reproduces the payer's historic denial patterns rather than identifying claims that should be fought.
+  Retail: demand forecasting trained on historical sales data is biased by past stockouts — sales data shows zero demand during stockout periods, but actual demand was non-zero. Model systematically under-forecasts.
+  Financial services: credit model trained on historical approvals reflects historical demographic patterns; may perpetuate fair lending violations if bias is not removed before training.
+  Hiring AI: trained on historical hire data reflects historical hiring manager biases; perpetuates selection bias.
+
+Detection approach:
+  Examine model outcomes stratified by protected characteristics (race, gender, age in healthcare and FS)
+  Compare model predictions against known ground truth from unbiased sources
+  Retail: compare sales-based demand forecast against market demand data (Nielsen, IRI) — gap reveals stockout bias
+
+Fix:
+  Healthcare: retrain on post-intervention data within 12 months; use causal modelling rather than purely predictive models
+  Retail: correct demand signal for known stockouts (substitute market demand data or imputed demand)
+  FS: debiasing techniques (reweighting, adversarial debiasing) + fair lending impact test before deployment
+  General: model audit for disparate impact before any customer-facing model goes to production
+
+AbarVa PDLC engagement: bias testing is a mandatory model approval gate; no model goes to production without disparate impact analysis in regulated industries.
+
+
+D-005 — BATCH-ONLY DATA PIPELINE FOR REAL-TIME AI USE CASES
+Pattern type: FAILURE PREDICTOR
+Prevalence: 54% of assessed organisations have batch-only data pipelines
+Impact: real-time AI use cases (fraud, sepsis detection, pricing, demand sensing) cannot function on stale data
+Category: Pipeline failure
+
+Data freshness requirements by use case:
+  Real-time fraud detection: < 100ms data freshness required; batch is completely incompatible
+  Sepsis early warning (healthcare): < 60-second freshness; 18-hour batch = clinical useless
+  Dynamic pricing (retail): < 1 hour freshness; daily batch = competitor has 23 hours of price advantage
+  Demand sensing (real-time retail): < 1 hour freshness; weekly batch captures 68% less signal
+  Recommendation engine (e-commerce): < 5-minute freshness; daily batch = recommendations based on yesterday's behaviour
+  AML transaction monitoring: < 5 minutes; batch = fraud committed and money moved before detection
+
+Real-time pipeline architecture requirements:
+  Event streaming: Kafka (AWS MSK, Confluent Cloud), Azure Event Hubs, GCP Pub/Sub
+  Stream processing: Apache Flink, Kafka Streams, Azure Stream Analytics, Spark Structured Streaming
+  Feature store with real-time write: Feast + Redis, Tecton, Vertex AI Feature Store
+  Model serving: low-latency inference endpoint (< 200ms); not batch scoring
+
+Migration path from batch to streaming:
+  Timeline: 3-6 months for a single data source and use case
+  Cost: $0.8-2.4M for streaming pipeline for primary fraud/clinical use case
+  Architecture approach: hybrid — maintain batch for historical data and reporting; add streaming layer for real-time AI features
+
+AbarVa recommendation: data freshness requirement is a Phase 0 assessment question. If any planned AI use case requires data fresher than 2 hours, streaming pipeline is required in Phase 1 before use case development begins.
+
 
 D-006 — DATA GOVERNANCE DECLARED BUT NOT ENFORCED
-Signal: failure_predictor
-Prevalence: 54% of organisations have governance policies; 28% enforce them
-Consequence: data quality degrades despite policy existence; AI models trained on unvalidated data
-Detection: ask data engineers if they follow governance policies in practice
-Fix: automated data quality gates in data pipeline (dbt tests, Great Expectations); governance must be technical, not just policy
+Pattern type: FAILURE PREDICTOR
+Prevalence: 54% of organisations have governance policies; only 28% enforce them (26-percentage-point gap)
+Category: Governance failure
+
+The governance performance gap:
+  Organisations with written governance policy: 54%
+  Organisations where data engineers routinely follow governance policies: 28%
+  Gap: 26 percentage points — governance on paper but not in practice
+  Detection: ask data engineers in practice: "do you follow the data governance policy when building pipelines?" — honest answer is typically "we try to, but there are shortcuts when we're under deadline pressure"
+
+What un-enforced governance looks like in practice:
+  New tables created without owner assigned (policy says "all tables must have named owner")
+  Data quality checks defined in policy but not implemented in pipeline (policy says "all gold tables must have quality gates")
+  Schema changes made without documentation (policy says "all schema changes require approval")
+  Production data accessed for model training without proper classification review (policy says "PII requires DSAR documentation")
+  After-the-fact governance: governance compliance reported at quarter-end but violations already happened
+
+Why enforcement fails:
+  Technical friction: governance compliance requires manual steps; engineers skip under deadline pressure
+  Tooling gap: governance policies not encoded into automated systems
+  Accountability gap: governance violations have no individual consequence
+  Measurement gap: governance compliance is not measured (what is not measured is not managed)
+
+Fix: governance-as-code — governance must be technical, not just policy.
+  Automated data quality gates in data pipeline (dbt tests, Great Expectations) that fail the pipeline if quality thresholds are not met
+  Data catalogue API: tables cannot be created without catalog registration (Unity Catalog enforces this at the platform level)
+  Automated classification: ML-based PII detection at ingestion (not manual tagging)
+  Policy as code: governance policies encoded in dbt YAML files, not in a Word document
+
+AbarVa delivery standard: all AbarVa MDP engagements deploy governance-as-code from day one. Data quality gates are deployed before any data goes to production tables.
+
 
 D-007 — SINGLE SOURCE OF TRUTH ASSERTED WITHOUT RECONCILIATION
-Signal: failure_predictor
-Prevalence: 44% of organisations assert "we have a single source of truth" for key metrics
-Reality: 81% of these have 2+ inconsistent sources for the same metric
-Consequence: AI model trained on "single source" actually trains on 2.4 sources with noise
-Fix: data reconciliation sprint (4-6 weeks) before AI programme begins; document all sources and their hierarchy
+Pattern type: FAILURE PREDICTOR
+Prevalence: 44% of organisations claim "we have a single source of truth" for key metrics
+Reality check: 81% of these organisations have 2+ inconsistent sources for the same metric
+Category: Architecture/governance failure
+
+The SSOT illusion:
+  Organisation declares Snowflake (or any system) is the "single source of truth"
+  In practice: Snowflake has data from 3 source systems; all 3 have slightly different values for the same metric
+  AI model trained on "SSOT Snowflake" actually trains on an average of 2.4 conflicting signals
+  Result: model learns the average noise, not the underlying signal
+
+Diagnostic examples:
+  "Our Snowflake DW is our SSOT for revenue." Check: does revenue from Snowflake match the quarterly earnings release? If not, there are still multiple sources in contention.
+  "Epic is our SSOT for clinical data." Check: are there ancillary systems (lab, radiology, pharmacy) that still have separate data not in Epic? Yes — most health systems have 8-14 systems that Epic does not fully absorb.
+  "Our S3 data lake is our SSOT for transactions." Check: does the fraud team use a separate transaction monitoring system that is not sourced from S3? Typically yes.
+
+Fix: data reconciliation sprint (4-6 weeks) before AI programme begins; document all sources and their hierarchy.
+  Reconciliation sprint output: source system inventory; discrepancy analysis; hierarchy documentation; master calculation guide
+  After reconciliation: one system is authoritative per metric; all other systems are derived or supplemental
+  AbarVa recommendation: no AI model should begin development until the source hierarchy for its training data is documented and reconciled.
+
 
 D-008 — DATA TEAM ORGANISED BY TOOL, NOT BY DOMAIN
-Signal: failure_predictor
-Structure: "we have a data engineering team, a BI team, a data science team" (siloed by function)
-Consequence: no team owns end-to-end data quality for a domain; handoffs create gaps
-Fix: domain-oriented data teams (healthcare/FS: clinical data team, RCM data team, supply data team)
-Pattern: data mesh principle — domain ownership accelerates AI readiness
+Pattern type: FAILURE PREDICTOR
+Prevalence: 64% of enterprises have functional data silos (data engineering, BI, data science as separate teams)
+Category: Governance/architecture failure
+
+The functional silo problem:
+  Typical structure: "data engineering team" (builds pipelines), "BI team" (builds dashboards), "data science team" (builds models)
+  Each team owns a tool; no team owns end-to-end data quality for a business domain
+  Handoff points: data engineering delivers tables → BI team uses them → discovers quality issues → reports to data engineering → data engineering doesn't understand business context → slow resolution
+  AI model failure: data science team trains model → discovers data quality issue in week 6 → escalates to data engineering → data engineering needs 4 weeks to investigate → model development stalled for 6 weeks
+
+Alternative: domain-oriented data teams (data mesh principle)
+  Clinical data team: owns all data for clinical domain end-to-end (ingest, quality, BI, ML feature preparation)
+  RCM data team: owns all revenue cycle data end-to-end
+  Supply chain data team: owns all supply chain data end-to-end
+  Each domain team: 1 data engineer + 1 BI analyst + 1 data scientist; domain expert as product owner
+  End-to-end accountability: domain team is accountable for data quality in their domain at all layers
+
+AbarVa finding: domain-oriented teams reduce data-quality-caused AI model delays by 68% (from 6-week avg to 2-week avg). The organisational change is harder than the technical change, but the impact is larger.
+
+Partial mitigation (without full restructuring): assign "domain data stewards" who span teams and are accountable for quality in a specific domain — bridges the gap without full reorganisation.
+
+
+D-009 — FEATURE ENGINEERING WITHOUT FEATURE STORE
+Pattern type: FAILURE PREDICTOR (emerging — as use case count grows beyond 3)
+Prevalence: 78% of organisations with 3+ AI use cases have no feature store
+Impact: feature engineering work is repeated independently for each use case; features calculated differently by different teams
+Category: Architecture failure
+
+The feature redundancy problem:
+  Use case 1 (fraud): data science team builds "customer transaction velocity in last 24 hours" feature
+  Use case 2 (churn): different data science team builds "transaction frequency in last 7 days" feature
+  Use case 3 (credit scoring): third team builds "average transaction count per week" feature
+  All three are variations of the same underlying data concept — but each team built it independently with different definitions and quality
+  When features are inconsistent, model ensembles and portfolio AI cannot share signals
+
+Feature store benefits:
+  Centralised feature definitions: "customer transaction velocity" defined once; used by all models
+  Feature reuse: each new model benefits from features built for previous models at near-zero marginal cost
+  Training-serving consistency: features computed the same way at training time and inference time (prevents training-serving skew)
+  Data lineage: every feature has documented lineage; model risk auditors can trace feature back to source
+
+Feature store options:
+  Open source: Feast (battle-tested; works with any cloud)
+  Managed: Tecton (Feast + real-time; adds operational complexity)
+  Platform-native: Databricks Feature Store (built into Databricks; easiest if already on Databricks), Vertex AI Feature Store (GCP)
+  Cost: $0.4-1.2M to implement; pays back within 3rd use case as feature reuse accelerates delivery
+
+AbarVa recommendation: feature store implementation in Phase 3 when 3+ use cases are being built simultaneously. PDLC engagement includes feature store as standard component.
+
+
+D-010 — PERSONAL IDENTIFIABLE INFORMATION (PII) IN AI TRAINING DATA UNMANAGED
+Pattern type: FAILURE PREDICTOR (regulatory severity)
+Prevalence: 62% of assessed AI training datasets contain PII that has not been reviewed for compliance
+Category: Governance/compliance failure
+
+Regulatory frameworks that apply:
+  GDPR (EU): purpose limitation principle — PII cannot be used for AI training unless training was the disclosed purpose or specific exemption applies
+  CCPA (California): similar purpose limitation; right to opt out of AI training use of personal data
+  HIPAA (US Healthcare): PHI cannot be used for AI training without patient authorisation or specific de-identification (Safe Harbor or Expert Determination)
+  LGPD (Brazil), PDPA (Thailand/Singapore): similar frameworks — increasingly global
+
+Common violations detected in AbarVa Phase 0 assessments:
+  Customer transaction data used for fraud model training without explicit consent review
+  Patient clinical notes (PHI) used for NLP model training without de-identification or HIPAA authorisation
+  Employee performance data used for HR AI model without employee notification
+  Call recordings with biometric data used for speech analytics AI without biometric data consent
+
+Financial exposure:
+  GDPR maximum fine: €20M or 4% of global annual revenue (whichever higher)
+  HIPAA minimum fine: $100 per violation; maximum $1.9M per violation category per year
+  CCPA class action exposure: $100-750 per consumer per incident
+
+Fix: data classification and PII review is a mandatory Phase 0 step before any AI model is trained.
+  De-identification: HIPAA-compliant de-identification (Safe Harbor or Expert Determination) before PHI training use
+  Consent review: verify that data subjects consented to AI training use at collection time; if not, obtain or exclude
+  Minimum necessary principle: AI models should use the minimum data required; do not include PII if it is not a necessary feature
+  AbarVa Phase 0: PII assessment of all planned training data sources is a standing deliverable
+
+
+D-SERIES PATTERN INTERACTION MATRIX
+
+Patterns frequently co-occur and amplify each other:
+
+D-001 + D-007 (No catalogue + SSOT illusion):
+  Combined effect: data is invisible AND mislabelled; AI models train on whatever data they find; provenance unknown
+  This combination produces the highest model accuracy degradation (up to 54% vs. baseline)
+
+D-003 + D-004 (Identity duplicates + biased training data):
+  Combined effect: AI model cannot identify the same person reliably AND is trained on biased historical patterns
+  Healthcare impact: clinical AI misses the same patient's history AND reproduces historical treatment disparities
+
+D-005 + D-009 (Batch pipeline + no feature store):
+  Combined effect: real-time AI cannot be built AND features are inconsistent across use cases
+  This combination makes it impossible to build a real-time AI portfolio; each use case must solve streaming and feature engineering from scratch
+
+D-006 + D-010 (Governance not enforced + PII unmanaged):
+  Combined effect: PII flows uncontrolled through pipelines because governance is not enforced; regulatory exposure accumulates silently
+  This is the highest regulatory risk combination; AbarVa escalates this to board level immediately on detection
+
+
+D-SERIES QUICK REFERENCE — ALL 35 PATTERNS
+
+D-001 through D-011 (Architecture):
+  D-001: No data catalogue; D-002: Shadow analytics; D-003: Identity duplicate creep; D-004: Biased training data; D-005: Batch-only pipeline; D-006: Governance not enforced; D-007: False SSOT; D-008: Functional team silos; D-009: No feature store; D-010: PII unmanaged; D-011: Proprietary storage format lock-in
+
+D-012 through D-020 (Quality):
+  D-012: Completeness < 85%; D-013: Cross-system consistency < 88%; D-014: Stale data for time-sensitive models; D-015: Inconsistent date/time standards across systems; D-016: Missing historical data (< 12 months); D-017: Label noise in training data > 3%; D-018: Target leakage (future data used as training feature); D-019: Distribution shift between training and production; D-020: Aggregation inconsistency (different grain in different systems)
+
+D-021 through D-027 (Governance):
+  D-021: No data ownership; D-022: Schema changes without documentation; D-023: Data retention policy not enforced; D-024: No data quality SLA on production tables; D-025: No data lineage for AI training data; D-026: Audit trail absent from production pipeline; D-027: Multiple environments without promotion process
+
+D-028 through D-032 (Pipeline):
+  D-028: No error handling in production pipelines; D-029: Data pipeline without monitoring; D-030: Hard-coded business logic in ETL; D-031: No data version control; D-032: Production pipelines untested
+
+D-033 through D-035 (Master Data):
+  D-033: No MDM for primary entities; D-034: Conflicting hierarchies across source systems; D-035: Master data not connected to operational AI features
