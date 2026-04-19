@@ -17,14 +17,26 @@ export type ClientDomain =
   | 'stores'
   | 'ecommerce'
   | 'pricing'
-  | 'returns';
+  | 'returns'
+  | 'pharma_discovery'
+  | 'pharma_clinical'
+  | 'pharma_regulatory'
+  | 'pharma_commercial'
+  | 'pharma_medaffairs';
 
-type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL';
+type IndustryCode = 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'PHARMA' | 'GENERAL';
 
 const CROSS_INDUSTRY: ClientDomain[] = ['infra', 'apps', 'data', 'cost', 'eng', 'ai'];
 const HEALTHCARE: ClientDomain[] = ['rcm', 'provops', 'clinical', 'px'];
 const FINSERV: ClientDomain[] = ['claims', 'fraud', 'cs', 'digitalbanking'];
 const RETAIL: ClientDomain[] = ['supplychain', 'stores', 'ecommerce', 'pricing', 'returns', 'cs'];
+const PHARMA: ClientDomain[] = [
+  'pharma_discovery',
+  'pharma_clinical',
+  'pharma_regulatory',
+  'pharma_commercial',
+  'pharma_medaffairs',
+];
 
 export const DOMAIN_KEYWORDS: Record<ClientDomain, string[]> = {
   infra: ['cloud', 'compute', 'storage', 'network', 'infrastructure', 'latency', 'capacity', 'ec2', 'rds', 's3', 'bedrock', 'sagemaker', 'datacenter', 'on-prem'],
@@ -46,6 +58,11 @@ export const DOMAIN_KEYWORDS: Record<ClientDomain, string[]> = {
   ecommerce: ['ecommerce', 'e-commerce', 'conversion', 'cart', 'aov', 'checkout', 'bounce rate', 'session'],
   pricing: ['pricing', 'promotion', 'markdown', 'margin', 'discount', 'price elasticity'],
   returns: ['return', 'refund', 'exchange', 'damaged', 'returns rate'],
+  pharma_discovery: ['target identification', 'molecule', 'compound', 'drug discovery', 'recursion', 'alphafold', 'small molecule', 'antibody', 'screening', 'insitro', 'atomwise', 'absci'],
+  pharma_clinical: ['clinical trial', 'protocol', 'recruitment', 'site selection', 'edc', 'ectd', 'rwe', 'real-world evidence', 'medidata', 'veeva vault', 'deep 6', 'flatiron'],
+  pharma_regulatory: ['pharmacovigilance', 'adverse event', 'regulatory submission', 'fda', 'ema', 'pmda', 'pharmora', 'icsr'],
+  pharma_commercial: ['msl', 'hcp', 'formulary', 'market access', 'speaker program', 'next-best-action', 'aktana', 'trinity life sciences'],
+  pharma_medaffairs: ['medical affairs', 'medical information', 'publication', 'kol', 'within3', 'doximity'],
 };
 
 export function isDomainApplicable(domain: ClientDomain, industry: IndustryCode | null | undefined): boolean {
@@ -53,6 +70,7 @@ export function isDomainApplicable(domain: ClientDomain, industry: IndustryCode 
   if (industry === 'HEALTHCARE_IDN') return HEALTHCARE.includes(domain);
   if (industry === 'FINSERV') return FINSERV.includes(domain);
   if (industry === 'RETAIL') return RETAIL.includes(domain);
+  if (industry === 'PHARMA') return PHARMA.includes(domain);
   return false;
 }
 
@@ -61,6 +79,7 @@ export function domainsForIndustry(industry: IndustryCode | null | undefined): C
   if (industry === 'HEALTHCARE_IDN') out.push(...HEALTHCARE);
   else if (industry === 'FINSERV') out.push(...FINSERV);
   else if (industry === 'RETAIL') out.push(...RETAIL);
+  else if (industry === 'PHARMA') out.push(...PHARMA);
   return out;
 }
 

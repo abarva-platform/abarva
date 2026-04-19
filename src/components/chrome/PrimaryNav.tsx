@@ -7,14 +7,15 @@ const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 
+// Pack F Part 1: 6 peer items. User setup folded into Admin.
+// Design-fix override: all items render at equal primary weight — no opacity.
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
-  { label: 'Dashboard', href: '/dashboard', match: (p) => p === '/dashboard' || p.startsWith('/dashboard/') },
+  { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' || p.startsWith('/dashboard/') },
   { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
-  { label: 'Data setup', href: '/data', match: (p) => p === '/data' || p.startsWith('/data/') },
-  { label: 'User setup', href: '/users/new', match: (p) => p === '/users/new' || p.startsWith('/users/') },
+  { label: 'Data', href: '/data', match: (p) => p === '/data' || p.startsWith('/data/') },
   { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
-  { label: 'Admin', href: '/admin', match: (p) => p === '/admin' || p.startsWith('/admin/') },
+  { label: 'Admin', href: '/admin', match: (p) => p === '/admin' || p.startsWith('/admin/') || p.startsWith('/users/') },
 ];
 
 export function PrimaryNav() {
