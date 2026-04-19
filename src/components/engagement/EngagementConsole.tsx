@@ -1,12 +1,20 @@
 'use client';
 
 import { useRef, useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
+
+interface Deliverable {
+  type: string;
+  phase: number;
+  generated_at: string;
+  content: Record<string, unknown>;
+}
 
 interface Props {
   engagement: EngagementRow;
@@ -15,17 +23,21 @@ interface Props {
   activePatterns: ActivePattern[];
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
+  deliverables?: Deliverable[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables,
 }: Props) {
+  const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
+  const deliverablesList = deliverables ?? [];
 
   const [messages, setMessages] = useState<LocalTurn[]>(turns);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gateToast, setGateToast] = useState<{ phase: number; newPhase: number } | null>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
 
@@ -104,6 +116,12 @@ export function EngagementConsole({
                   : m,
               ),
             );
+          } else if (evt.type === 'gate_approved') {
+            const raw = evt as unknown as { phase?: number; new_phase?: number };
+            const phase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase;
+            const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
+            setGateToast({ phase, newPhase });
+            setTimeout(() => router.refresh(), 1800);
           } else if (evt.type === 'error') {
             throw new Error(evt.error ?? 'stream error');
           }
@@ -121,7 +139,23 @@ export function EngagementConsole({
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif', position: 'relative' }}>
+      {gateToast && (
+        <div style={{
+          position: 'fixed', top: 80, right: 24, zIndex: 50,
+          padding: '12px 18px',
+          background: 'rgba(45,212,200,0.12)',
+          border: '0.5px solid rgba(45,212,200,0.4)',
+          borderRadius: 10,
+          color: '#2DD4C8',
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 12,
+          letterSpacing: '0.08em',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+        }}>
+          ✓ Phase {gateToast.phase} approved · advancing to Phase {gateToast.newPhase}…
+        </div>
+      )}
       {/* Header */}
       <div style={{ padding: '16px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
@@ -266,6 +300,28 @@ export function EngagementConsole({
                     <div style={{ color: '#F5F5F0' }}>{d.choice.replace(/_/g, ' ')}</div>
                     <div style={{ color: '#8B8680', fontSize: 11 }}>
                       {d.engagement_count} engagements · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Deliverables */}
+          <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
+              Deliverables · {deliverablesList.length}
+            </div>
+            {deliverablesList.length === 0 ? (
+              <div style={{ color: '#8B8680', fontSize: 12 }}>None yet. Generated when a phase gate is approved.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {deliverablesList.map((d) => (
+                  <div key={`${d.type}-${d.phase}`} style={{ fontSize: 12, lineHeight: 1.5 }}>
+                    <span style={{ color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>PHASE {d.phase}</span>
+                    <span style={{ color: '#F5F5F0' }}> · {d.type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>
+                    <div style={{ color: '#8B8680', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
+                      {new Date(d.generated_at).toLocaleDateString()}
                     </div>
                   </div>
                 ))}

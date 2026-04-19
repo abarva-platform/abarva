@@ -65,3 +65,25 @@ export function parseEngagementReadyBlock(text: string): ParsedEngagementIntent 
 export function stripEngagementReadyBlock(text: string): string {
   return text.replace(/<engagement_ready>[\s\S]*?<\/engagement_ready>/g, '').trim();
 }
+
+export interface ParsedGateApproval {
+  phase: number;
+  approval_text: string;
+  summary: string;
+}
+
+export function parseGateApprovalBlock(text: string): ParsedGateApproval | null {
+  const m = text.match(/<gate_approval>([\s\S]*?)<\/gate_approval>/);
+  if (!m) return null;
+  try {
+    const p = JSON.parse(m[1].trim());
+    if (typeof p.phase !== 'number' || !p.approval_text || !p.summary) return null;
+    return p as ParsedGateApproval;
+  } catch {
+    return null;
+  }
+}
+
+export function stripGateApprovalBlock(text: string): string {
+  return text.replace(/<gate_approval>[\s\S]*?<\/gate_approval>/g, '').trim();
+}

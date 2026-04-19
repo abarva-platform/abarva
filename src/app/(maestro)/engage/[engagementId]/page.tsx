@@ -27,6 +27,15 @@ export default async function EngagePage({
     getChainedPatterns(engagementId),
   ]);
 
+  const deliverables = Array.isArray(engagement.deliverables)
+    ? (engagement.deliverables as Array<{
+        type: string;
+        phase: number;
+        generated_at: string;
+        content: Record<string, unknown>;
+      }>)
+    : [];
+
   return (
     <EngagementConsole
       engagement={engagement}
@@ -35,6 +44,7 @@ export default async function EngagePage({
       activePatterns={activePatterns}
       peerDecisions={peerDecisions}
       chainedPatterns={chainedPatterns}
+      deliverables={deliverables}
     />
   );
 }

@@ -16,6 +16,9 @@ import {
   appendRelationshipNote,
   getActivePersonalThreads,
 } from '@/lib/db/relationship-note';
+import { parseGateApprovalBlock } from '@/lib/agent/parse';
+import { recordGateApproval } from '@/lib/db/engagement';
+import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,6 +96,35 @@ export async function POST(
           text: agentFullText,
           retrievedRefs,
         });
+        // Gate approval detection — emit event BEFORE 'done' so UI can show toast
+        const gateApproval = parseGateApprovalBlock(agentFullText);
+        if (gateApproval && sponsor) {
+          try {
+            const updated = await recordGateApproval({
+              engagementId: engagement.id,
+              phase: gateApproval.phase,
+              approvedByPersonId: sponsor.id,
+              approvalText: gateApproval.approval_text,
+              summary: gateApproval.summary,
+            });
+            controller.enqueue(
+              encoder.encode(
+                JSON.stringify({
+                  type: 'gate_approved',
+                  phase: gateApproval.phase,
+                  new_phase: updated.current_phase,
+                }) + '\n',
+              ),
+            );
+            // Fire deliverable generation in background — do not block stream close
+            void generateDeliverableForPhase(engagement.id, gateApproval.phase).catch((err) =>
+              console.error('[deliverable]', err),
+            );
+          } catch (err) {
+            console.error('[gate-approval]', err);
+          }
+        }
+
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done', turnId: savedTurn.id }) + '\n'));
         controller.close();
 

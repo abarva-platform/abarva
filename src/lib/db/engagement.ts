@@ -48,6 +48,50 @@ export interface CreateEngagementArgs {
   maestro_person_id?: string | null;
 }
 
+export interface RecordGateApprovalArgs {
+  engagementId: string;
+  phase: number;
+  approvedByPersonId: string;
+  approvalText: string;
+  summary: string;
+}
+
+export async function recordGateApproval(args: RecordGateApprovalArgs): Promise<EngagementRow> {
+  const sb = getServerSupabase();
+  const { data: current, error: readErr } = await sb
+    .from('engagements')
+    .select('gates_passed, current_phase')
+    .eq('id', args.engagementId)
+    .single();
+  if (readErr) throw readErr;
+
+  const gates = ((current?.gates_passed as Array<Record<string, unknown>> | null) ?? []);
+  const existing = gates.find((g) => g.phase === args.phase && g.status === 'approved');
+  if (existing) {
+    return (await getEngagementById(args.engagementId)) as EngagementRow;
+  }
+
+  const newGate = {
+    phase: args.phase,
+    status: 'approved',
+    signed_at: new Date().toISOString(),
+    signed_by: args.approvedByPersonId,
+    approval_text: args.approvalText,
+    summary: args.summary,
+  };
+  const updatedGates = [...gates.filter((g) => g.phase !== args.phase), newGate];
+  const newPhase = Math.min(4, args.phase + 1);
+
+  const { data: updated, error: updateErr } = await sb
+    .from('engagements')
+    .update({ gates_passed: updatedGates, current_phase: newPhase })
+    .eq('id', args.engagementId)
+    .select()
+    .single();
+  if (updateErr) throw updateErr;
+  return updated as EngagementRow;
+}
+
 export async function createEngagement(args: CreateEngagementArgs): Promise<EngagementRow> {
   const slug = args.name
     .toLowerCase()
