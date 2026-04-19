@@ -1,0 +1,15 @@
+# AbarVa Control Tower · Risk Template v1.0
+# Approvals, data classes, vendor posture, incidents.
+# Required columns marked with *.
+# Update templates: npm run templates:build
+# In-app catalog: /tower/onboard/risk
+#
+# governance_approval_status: approved | conditional | pending
+# model_risk_level: low | medium | high
+# data_classification: pipe-separated list (|)
+# vendor_hipaa_baa: true | false
+# vendor_soc2: true | false
+
+use_case_id*,governance_approval_status*,model_risk_level,data_classification,vendor_hipaa_baa,vendor_soc2,data_residency,bias_incidents_count,as_of_date
+# Example row (delete before uploading):
+uc_001,approved,medium,PHI|clinical_notes,true,true,US,0,2025-10-31
