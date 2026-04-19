@@ -1,0 +1,13 @@
+CREATE CONSTRAINT person_id IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE;
+CREATE CONSTRAINT engagement_id IF NOT EXISTS FOR (e:Engagement) REQUIRE e.id IS UNIQUE;
+CREATE CONSTRAINT pattern_code IF NOT EXISTS FOR (g:GenomePattern) REQUIRE g.code IS UNIQUE;
+CREATE CONSTRAINT decision_id IF NOT EXISTS FOR (d:Decision) REQUIRE d.id IS UNIQUE;
+CREATE CONSTRAINT outcome_id IF NOT EXISTS FOR (o:Outcome) REQUIRE o.id IS UNIQUE;
+CREATE CONSTRAINT industry_code IF NOT EXISTS FOR (i:Industry) REQUIRE i.code IS UNIQUE;
+CREATE CONSTRAINT function_code IF NOT EXISTS FOR (f:Function) REQUIRE f.code IS UNIQUE;
+CREATE CONSTRAINT objective_code IF NOT EXISTS FOR (j:Objective) REQUIRE j.code IS UNIQUE;
+CREATE CONSTRAINT topic_code IF NOT EXISTS FOR (t:Topic) REQUIRE t.code IS UNIQUE;
+CREATE CONSTRAINT solution_code IF NOT EXISTS FOR (s:Solution) REQUIRE s.code IS UNIQUE;
+CREATE INDEX person_email IF NOT EXISTS FOR (p:Person) ON (p.email);
+CREATE INDEX engagement_phase IF NOT EXISTS FOR (e:Engagement) ON (e.current_phase);
+CREATE INDEX engagement_industry IF NOT EXISTS FOR (e:Engagement) ON (e.industry_code);

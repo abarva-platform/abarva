@@ -18,6 +18,7 @@
     "seed:setup": "node scripts/seed-datasets.js --setup",
     "generate-demo-audio": "npx tsx scripts/generate-demo-audio.ts",
     "ingest": "npx tsx scripts/ingest-knowledge.ts",
+    "neo4j:migrate": "npx tsx src/scripts/migrate-graph.ts",
     "ingest:verify": "npx tsx -e \"const {Pinecone}=require('@pinecone-database/pinecone');const fs=require('fs'),path=require('path');const lines=fs.readFileSync(path.join(process.cwd(),'.env.local'),'utf-8').split('\\n');const env={};for(const l of lines){const[k,...v]=l.split('=');if(k&&v.length)env[k.trim()]=v.join('=').trim();}const pc=new Pinecone({apiKey:env.PINECONE_API_KEY});pc.index(env.PINECONE_INDEX||'nexus-knowledge').describeIndexStats().then(s=>console.log('Vectors in nexus-knowledge:',s.totalRecordCount));\""
   },
   "dependencies": {
@@ -25,6 +26,8 @@
     "@clerk/nextjs": "^7.0.11",
     "@pinecone-database/pinecone": "^7.2.0",
     "@supabase/supabase-js": "^2.102.1",
+    "dotenv": "^17.4.2",
+    "neo4j-driver": "^6.0.1",
     "next": "16.2.2",
     "openai": "^6.34.0",
     "posthog-js": "^1.368.0",
