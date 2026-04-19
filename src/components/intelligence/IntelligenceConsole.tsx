@@ -13,7 +13,7 @@ const BG = '#0A0A0A';
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
 const PURPLE = '#9B6DFF';
-const MUTE = '#8B8680';
+const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
@@ -80,7 +80,7 @@ export function IntelligenceConsole({ patterns, initialCode }: Props) {
   }, [selectedCode, loadDetail]);
 
   return (
-    <div style={{ padding: '24px 24px 40px', maxWidth: 1280, margin: '0 auto', color: INK, fontFamily: FONT_BODY }}>
+    <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: FONT_BODY }}>
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontSize: 22, fontWeight: 500 }}>Genome Intelligence</div>
         <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: PURPLE, textTransform: 'uppercase', marginTop: 6 }}>

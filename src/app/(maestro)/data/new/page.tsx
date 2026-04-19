@@ -16,7 +16,7 @@ export default async function NewDataPage({
   const client = getDataClient(clientId);
   if (!client) {
     return (
-      <div style={{ padding: '28px 28px 40px', color: '#8B8680' }}>
+      <div style={{ padding: '28px 28px 40px', color: 'rgba(245,245,240,0.72)' }}>
         Unknown client: <code>{clientId}</code>. Open /data and pick one.
       </div>
     );

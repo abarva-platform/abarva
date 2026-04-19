@@ -9,7 +9,7 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
-const MUTE = '#8B8680';
+const MUTE = 'rgba(245, 245, 240, 0.72)';
 const TEAL = '#2DD4C8';
 const PURPLE = '#9B6DFF';
 const CORAL = '#FF6B4A';
@@ -170,7 +170,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <div style={{ padding: '28px 28px 40px', maxWidth: 1280, margin: '0 auto' }}>
+    <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 500 }}>{greeting()}</div>

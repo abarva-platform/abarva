@@ -204,10 +204,10 @@ export function EngagementConsole({
               background: i === engagement.current_phase ? 'rgba(45,212,200,0.12)' : 'rgba(255,255,255,0.03)',
               border: `0.5px solid ${i === engagement.current_phase ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
             }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#2DD4C8' : '#8B8680', letterSpacing: '0.14em', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                 PHASE {i}
               </div>
-              <div style={{ fontSize: 13, color: i === engagement.current_phase ? '#F5F5F0' : '#8B8680' }}>
+              <div style={{ fontSize: 13, color: i === engagement.current_phase ? '#F5F5F0' : 'rgba(245,245,240,0.72)' }}>
                 {label}
               </div>
             </div>
@@ -220,12 +220,12 @@ export function EngagementConsole({
 
         {/* Conversation + composer */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#8B8680', textTransform: 'uppercase', marginBottom: 16 }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 16 }}>
             Conversation · {messages.length} turns
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {messages.length === 0 ? (
-              <div style={{ color: '#8B8680', fontSize: 14, fontStyle: 'italic' }}>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 14, fontStyle: 'italic' }}>
                 No turns yet. Say something to Nexus.
               </div>
             ) : (
@@ -238,7 +238,7 @@ export function EngagementConsole({
                     border: `0.5px solid ${t.errored ? 'rgba(255,107,74,0.5)' : t.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'}`,
                     opacity: t.streaming && !t.text ? 0.6 : 1,
                   }}>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : '#8B8680', letterSpacing: '0.14em', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                       {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
                     </div>
                     <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
@@ -296,13 +296,13 @@ export function EngagementConsole({
             {sponsor ? (
               <div style={{ fontSize: 13 }}>
                 <div style={{ fontWeight: 500 }}>{sponsor.name}</div>
-                <div style={{ color: '#8B8680', fontSize: 12 }}>{sponsor.role} · {sponsor.organization}</div>
-                <div style={{ color: '#8B8680', fontSize: 11, marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>
+                <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>{sponsor.role} · {sponsor.organization}</div>
+                <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 11, marginTop: 4, fontFamily: 'JetBrains Mono, monospace' }}>
                   {sponsor.familiarity.replace(/_/g, ' ')}
                 </div>
               </div>
             ) : (
-              <div style={{ color: '#8B8680', fontSize: 12 }}>No sponsor linked</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>No sponsor linked</div>
             )}
           </div>
 
@@ -312,14 +312,14 @@ export function EngagementConsole({
               Active patterns · {activePatterns.length}
             </div>
             {activePatterns.length === 0 ? (
-              <div style={{ color: '#8B8680', fontSize: 12 }}>None observed</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None observed</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {activePatterns.map(p => (
                   <div key={p.code} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <span style={{ color: '#9B6DFF', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>{p.code}</span>
                     <span style={{ color: '#F5F5F0' }}> {p.name}</span>
-                    <div style={{ color: '#8B8680', fontSize: 11 }}>
+                    <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 11 }}>
                       {(p.failure_rate * 100).toFixed(0)}% historical failure rate · {p.category}
                     </div>
                   </div>
@@ -334,13 +334,13 @@ export function EngagementConsole({
               Peer decisions · phase {engagement.current_phase}
             </div>
             {peerDecisions.length === 0 ? (
-              <div style={{ color: '#8B8680', fontSize: 12 }}>No comparable decisions at this phase yet</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>No comparable decisions at this phase yet</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {peerDecisions.map(d => (
                   <div key={d.choice} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <div style={{ color: '#F5F5F0' }}>{d.choice.replace(/_/g, ' ')}</div>
-                    <div style={{ color: '#8B8680', fontSize: 11 }}>
+                    <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 11 }}>
                       {d.engagement_count} engagements · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
                     </div>
                   </div>
@@ -355,14 +355,14 @@ export function EngagementConsole({
               Deliverables · {deliverablesList.length}
             </div>
             {deliverablesList.length === 0 ? (
-              <div style={{ color: '#8B8680', fontSize: 12 }}>None yet. Generated when a phase gate is approved.</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {deliverablesList.map((d) => (
                   <div key={`${d.type}-${d.phase}`} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <span style={{ color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>PHASE {d.phase}</span>
                     <span style={{ color: '#F5F5F0' }}> · {d.type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>
-                    <div style={{ color: '#8B8680', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
+                    <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
                       {new Date(d.generated_at).toLocaleDateString()}
                     </div>
                   </div>
@@ -374,13 +374,13 @@ export function EngagementConsole({
           {/* Chained patterns */}
           {chainedPatterns.length > 0 && (
             <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#8B8680', textTransform: 'uppercase', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 8 }}>
                 Chained risks
               </div>
               {chainedPatterns.map(c => (
                 <div key={`${c.from_code}-${c.to_code}`} style={{ fontSize: 11, lineHeight: 1.5, color: '#C9C6BD' }}>
                   <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>{c.from_code} → {c.to_code}</span>
-                  <span style={{ color: '#8B8680' }}> · {(c.weight * 100).toFixed(0)}% chain rate</span>
+                  <span style={{ color: 'rgba(245,245,240,0.72)' }}> · {(c.weight * 100).toFixed(0)}% chain rate</span>
                 </div>
               ))}
             </div>

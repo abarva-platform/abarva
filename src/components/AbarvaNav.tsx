@@ -73,42 +73,50 @@ function NavInner({ activePage }: NavProps) {
 
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} style={{
-      fontSize: '14px', color: active ? TEAL : NAV_TEXT,
-      padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-      borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
+      fontSize: '15px',
+      fontWeight: active ? 700 : 600,
+      letterSpacing: '-0.01em',
+      color: active ? TEAL : NAV_TEXT,
+      padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+      borderBottom: active ? `1px solid ${TEAL}` : '1px solid transparent',
+      transition: 'color 120ms ease, border-color 120ms ease, font-weight 120ms ease',
     }}>
       {label}
     </a>
   )
 
-  // Demo nav item — temporarily disabled while v2 ships; rendered as muted, non-clickable
+  // Demo nav item — temporarily disabled while v2 ships; rendered at caption weight (white 72%)
   const demoNavItem = () => (
     <span
       key="demo-nav"
       title="Demo temporarily unavailable — new version coming soon"
       style={{
-        fontSize: '14px',
-        color: 'rgba(255,255,255,0.30)',
-        padding: '8px 10px', fontFamily: SANS, flexShrink: 0,
-        borderBottom: '2px solid transparent',
+        fontSize: '15px',
+        fontWeight: 600,
+        letterSpacing: '-0.01em',
+        color: 'rgba(245,245,240,0.72)',
+        padding: '8px 20px', fontFamily: SANS, flexShrink: 0,
+        borderBottom: '1px solid transparent',
         pointerEvents: 'none' as React.CSSProperties['pointerEvents'],
         cursor: 'default',
       }}
     >
-      Demo <span style={{ fontFamily: MONO, fontSize: 9, marginLeft: 4, color: 'rgba(255,255,255,0.40)' }}>soon</span>
+      Demo <span style={{ fontFamily: MONO, fontSize: 10, marginLeft: 4, color: 'rgba(245,245,240,0.55)' }}>soon</span>
     </span>
   )
 
-  // Admin nav item — clickable for admin, greyed + disabled for others
+  // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
   const adminNavItem = () => (
     <a
       href={isAdmin ? '/admin' : undefined}
       key="admin-nav"
       style={{
-        fontSize: '14px',
-        color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : 'rgba(255,255,255,0.25)',
-        padding: '8px 10px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-        borderBottom: isAdmin && adminActive ? `2px solid ${TEAL}` : '2px solid transparent',
+        fontSize: '15px',
+        fontWeight: isAdmin && adminActive ? 700 : 600,
+        letterSpacing: '-0.01em',
+        color: isAdmin ? (adminActive ? TEAL : NAV_TEXT) : 'rgba(245,245,240,0.35)',
+        padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
+        borderBottom: isAdmin && adminActive ? `1px solid ${TEAL}` : '1px solid transparent',
         pointerEvents: isAdmin ? 'auto' : 'none' as React.CSSProperties['pointerEvents'],
         cursor: isAdmin ? 'pointer' : 'default',
       }}

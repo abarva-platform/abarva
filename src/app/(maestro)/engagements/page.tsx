@@ -4,7 +4,7 @@ import { getAllActiveEngagements } from '@/lib/db/engagement';
 export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
-const MUTE = '#8B8680';
+const MUTE = 'rgba(245, 245, 240, 0.72)';
 const TEAL = '#2DD4C8';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
 const FONT_MONO = 'JetBrains Mono, monospace';

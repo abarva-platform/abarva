@@ -28,7 +28,7 @@ interface Props {
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
-const MUTE = '#8B8680';
+const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';

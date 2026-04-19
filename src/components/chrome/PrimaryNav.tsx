@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
-const MUTE = '#8B8680';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
@@ -23,11 +22,11 @@ export function PrimaryNav() {
   return (
     <nav
       style={{
-        height: 44,
+        height: 52,
         borderBottom: '0.5px solid rgba(255,255,255,0.08)',
         display: 'flex',
         alignItems: 'stretch',
-        padding: '0 16px',
+        padding: '0 40px',
         gap: 4,
         fontFamily: FONT_BODY,
       }}
@@ -39,23 +38,45 @@ export function PrimaryNav() {
             key={item.href}
             href={item.href}
             style={{
+              position: 'relative',
               display: 'flex',
               alignItems: 'center',
-              padding: '0 14px',
-              fontSize: 13,
-              color: active ? INK : MUTE,
+              padding: '0 20px',
+              fontSize: 15,
+              fontWeight: active ? 700 : 600,
+              letterSpacing: '-0.01em',
+              color: active ? TEAL : INK,
               textDecoration: 'none',
-              borderBottom: `2px solid ${active ? TEAL : 'transparent'}`,
-              transition: 'color 120ms ease, border-color 120ms ease',
+              transition: 'color 120ms ease, font-weight 120ms ease',
             }}
             onMouseEnter={(e) => {
-              if (!active) e.currentTarget.style.color = INK;
+              if (active) return;
+              e.currentTarget.style.color = TEAL;
+              e.currentTarget.style.fontWeight = '700';
+              const bar = e.currentTarget.querySelector('.nav-underline') as HTMLSpanElement | null;
+              if (bar) bar.style.background = TEAL;
             }}
             onMouseLeave={(e) => {
-              if (!active) e.currentTarget.style.color = MUTE;
+              if (active) return;
+              e.currentTarget.style.color = INK;
+              e.currentTarget.style.fontWeight = '600';
+              const bar = e.currentTarget.querySelector('.nav-underline') as HTMLSpanElement | null;
+              if (bar) bar.style.background = 'transparent';
             }}
           >
             {item.label}
+            <span
+              className="nav-underline"
+              style={{
+                position: 'absolute',
+                bottom: 10,
+                left: 20,
+                right: 20,
+                height: 1,
+                background: active ? TEAL : 'transparent',
+                transition: 'background 120ms ease',
+              }}
+            />
           </Link>
         );
       })}
