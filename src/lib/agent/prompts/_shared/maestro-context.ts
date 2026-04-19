@@ -1,9 +1,12 @@
 import { getServerSupabase } from '@/lib/supabase-server';
 
-// Assembles a plain-text MAESTRO CONTEXT block pulling:
+// Assembles a plain-text USER CONTEXT block pulling:
 // - persons.maestro_profile (JSONB) — structured evolving profile
-// - last 5 relationship_notes where subject_type='maestro'
+// - last 5 relationship_notes where subject_type='user'
 // Returns '' if no profile yet — callers should filter falsy.
+// (Pack F Part 2 · subject_type value renamed 'maestro' → 'user' in
+//  migration 025. Column name persons.maestro_profile kept for now to
+//  avoid a deploy-window breakage; full column rename deferred.)
 export async function assembleMaestroContextBlock(args: {
   personId: string;
   personName: string;
@@ -32,7 +35,7 @@ export async function assembleMaestroContextBlock(args: {
     .from('relationship_notes')
     .select('note_text, created_at')
     .eq('person_id', args.personId)
-    .eq('subject_type', 'maestro')
+    .eq('subject_type', 'user')
     .order('created_at', { ascending: false })
     .limit(5);
   const notes = ((notesRows as Array<{ note_text: string }> | null) ?? []).map((n) => n.note_text);
@@ -48,7 +51,7 @@ export async function assembleMaestroContextBlock(args: {
   if (!hasAnySignal) return '';
 
   const lines: string[] = [];
-  lines.push(`MAESTRO CONTEXT (you're working with ${(person as { name: string }).name} today)`);
+  lines.push(`USER CONTEXT (you're working with ${(person as { name: string }).name} today)`);
   if (profile.background) lines.push(`- Background: ${profile.background}`);
   if (profile.domain_depth?.length) lines.push(`- Domain depth: ${profile.domain_depth.join(', ')}`);
   if (profile.communication_style) lines.push(`- Style: ${profile.communication_style}`);
