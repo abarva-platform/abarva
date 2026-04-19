@@ -35,6 +35,9 @@ import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
 import { logAudit } from '@/lib/audit/log';
+import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
+import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
+import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -93,8 +96,12 @@ export async function POST(
     ? await getActivePersonalThreads(sponsor.id)
     : [];
 
+  const maestroContextBlock = maestro
+    ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
+    : '';
+
   const system = assembleEngagementSystemPrompt({
-    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
+    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads, maestroContextBlock,
   });
 
   const messages = recentTurns.map(t => ({
@@ -121,14 +128,38 @@ export async function POST(
           agentFullText += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }
-        // Persist agent turn after streaming completes
+        // Extract <choices> block before persisting + emit to client
+        const { text: cleanedAgentText, choices: turnChoices } = parseChoicesFromText(agentFullText);
+        if (turnChoices.length > 0) {
+          controller.enqueue(
+            encoder.encode(JSON.stringify({ type: 'choices', choices: turnChoices }) + '\n'),
+          );
+        }
+        // Persist agent turn (text with <choices> stripped) after streaming completes
         const savedTurn = await appendTurn({
           engagementId: engagement.id,
           phase: engagement.current_phase,
           sender: 'agent',
-          text: agentFullText,
+          text: cleanedAgentText,
           retrievedRefs,
         });
+
+        // Background: Maestro profile extraction on the user's input
+        if (maestro && userMessage.trim().length > 30) {
+          void (async () => {
+            try {
+              await updateMaestroProfile({
+                maestroPersonId: maestro.id,
+                turnId: savedUserTurn.id,
+                turnText: userMessage,
+                engagementId: engagement.id,
+                engagementIndustry: engagement.industry_code,
+              });
+            } catch (err) {
+              console.error('[maestro-extractor-bg]', err);
+            }
+          })();
+        }
         // Guardrail check (v1: log violations, don't regenerate — avoid janky UX)
         void (async () => {
           try {

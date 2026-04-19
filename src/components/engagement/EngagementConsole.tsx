@@ -6,6 +6,7 @@ import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
+import { ChoiceChips, type Choice } from './ChoiceChips';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -38,14 +39,26 @@ export function EngagementConsole({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gateToast, setGateToast] = useState<{ phase: number; newPhase: number } | null>(null);
+  const [choices, setChoices] = useState<Choice[]>([]);
+  const [choicesForTurnId, setChoicesForTurnId] = useState<string | null>(null);
+  const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
+  const composerRef = useRef<HTMLInputElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const text = input.trim();
+    if (!text) return;
+    await sendTurn(text);
+  }
+
+  async function sendTurn(text: string) {
     if (!text || isStreaming) return;
     setInput('');
+    setComposerPlaceholder('Your reply…');
+    setChoices([]);
+    setChoicesForTurnId(null);
     setError(null);
     setIsStreaming(true);
 
@@ -122,6 +135,20 @@ export function EngagementConsole({
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
             setGateToast({ phase, newPhase });
             setTimeout(() => router.refresh(), 1800);
+          } else if (evt.type === 'choices') {
+            const raw = evt as unknown as { choices?: Choice[] };
+            if (Array.isArray(raw.choices) && raw.choices.length > 0) {
+              setChoices(raw.choices);
+              setChoicesForTurnId(agentTurnId);
+              // Also strip any <choices> that may have leaked into the visible bubble
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === agentTurnId
+                    ? { ...m, text: m.text.replace(/<choices>[\s\S]*?<\/choices>/g, '').trim() }
+                    : m,
+                ),
+              );
+            }
           } else if (evt.type === 'error') {
             throw new Error(evt.error ?? 'stream error');
           }
@@ -203,20 +230,34 @@ export function EngagementConsole({
               </div>
             ) : (
               messages.map(t => (
-                <div key={t.id} style={{
-                  padding: '10px 14px',
-                  borderRadius: 10,
-                  background: t.sender === 'agent' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
-                  border: `0.5px solid ${t.errored ? 'rgba(255,107,74,0.5)' : t.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'}`,
-                  opacity: t.streaming && !t.text ? 0.6 : 1,
-                }}>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : '#8B8680', letterSpacing: '0.14em', marginBottom: 4 }}>
-                    {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
+                <div key={t.id}>
+                  <div style={{
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    background: t.sender === 'agent' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
+                    border: `0.5px solid ${t.errored ? 'rgba(255,107,74,0.5)' : t.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'}`,
+                    opacity: t.streaming && !t.text ? 0.6 : 1,
+                  }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : '#8B8680', letterSpacing: '0.14em', marginBottom: 4 }}>
+                      {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
+                    </div>
+                    <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                      {t.text}
+                      {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
+                    </div>
                   </div>
-                  <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                    {t.text}
-                    {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
-                  </div>
+                  {t.id === choicesForTurnId && choices.length > 0 && (
+                    <ChoiceChips
+                      choices={choices}
+                      disabled={isStreaming}
+                      onPick={(value) => { void sendTurn(value); }}
+                      onFreeType={(placeholder) => {
+                        setComposerPlaceholder(placeholder);
+                        setChoices([]);
+                        composerRef.current?.focus();
+                      }}
+                    />
+                  )}
                 </div>
               ))
             )}
@@ -230,11 +271,12 @@ export function EngagementConsole({
 
           <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
             <input
+              ref={composerRef}
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               disabled={isStreaming}
-              placeholder="Type a message to Nexus..."
+              placeholder={composerPlaceholder}
               style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#F5F5F0', fontFamily: 'inherit', fontSize: 14 }}
             />
             <button type="submit" disabled={isStreaming || !input.trim()} style={{ padding: '10px 18px', background: '#2DD4C8', color: '#0A0A0A', border: 'none', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: isStreaming || !input.trim() ? 'default' : 'pointer', opacity: isStreaming || !input.trim() ? 0.5 : 1 }}>

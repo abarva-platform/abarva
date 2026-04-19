@@ -1,6 +1,7 @@
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
+import { CONVERSATION_PRINCIPLES } from './_shared/conversation-principles';
 
 interface AssembleArgs {
   engagement: EngagementRow;
@@ -11,23 +12,30 @@ interface AssembleArgs {
   maestro?: PersonRow | null;
   personalThreads?: string[];
   clientDataSummary?: string[];
+  maestroContextBlock?: string;
 }
 
 export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
-  switch (ctx.engagement.current_phase) {
-    case 0:
-      return assemblePhase0Prompt(ctx);
-    case 1:
-      return assemblePhase1Prompt(ctx);
-    case 2:
-      return assemblePhase2Prompt(ctx);
-    case 3:
-      return assemblePhase3Prompt(ctx);
-    case 4:
-      return assemblePhase4Prompt(ctx);
-    default:
-      return assemblePhase0Prompt(ctx);
-  }
+  const phasePrompt = (() => {
+    switch (ctx.engagement.current_phase) {
+      case 0: return assemblePhase0Prompt(ctx);
+      case 1: return assemblePhase1Prompt(ctx);
+      case 2: return assemblePhase2Prompt(ctx);
+      case 3: return assemblePhase3Prompt(ctx);
+      case 4: return assemblePhase4Prompt(ctx);
+      default: return assemblePhase0Prompt(ctx);
+    }
+  })();
+
+  // Prepend shared conversation principles + optional Maestro context block.
+  // Both are empty-safe; filter falsy so we don't emit blank separator blocks.
+  return [
+    CONVERSATION_PRINCIPLES,
+    ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
+    phasePrompt,
+  ]
+    .filter((s): s is string => Boolean(s))
+    .join('\n\n');
 }
 
 // ─── Gate approval block (shared across phases) ────────────────────────────
