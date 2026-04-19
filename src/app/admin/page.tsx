@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
-import AbarvaNav from '@/components/AbarvaNav'
 
 // ── Design tokens (spec-exact) ────────────────────────────────────────────
 const BG     = '#FAFAF9'
@@ -232,13 +231,10 @@ export default function AdminPortal() {
 
   if (!user || role !== 'admin') {
     return (
-      <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS }}>
-        <AbarvaNav activePage="admin" />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 60px)' }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
-            <div style={{ fontSize: '13px', color: MUTED }}>This area is restricted to platform administrators.</div>
-          </div>
+      <div style={{ background: BG, fontFamily: SANS, minHeight: 'calc(100vh - 104px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
+          <div style={{ fontSize: '13px', color: MUTED }}>This area is restricted to platform administrators.</div>
         </div>
       </div>
     )
@@ -262,10 +258,8 @@ export default function AdminPortal() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: BG, fontFamily: SANS }}>
-      <AbarvaNav activePage="admin" />
-
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
+    <div style={{ background: BG, fontFamily: SANS }}>
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 104px)' }}>
 
         {/* ── Sidebar ──────────────────────────────────────────────── */}
         <div style={{ width: '240px', minWidth: '240px', background: '#020408', display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
