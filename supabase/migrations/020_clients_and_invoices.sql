@@ -14,6 +14,19 @@ CREATE TABLE IF NOT EXISTS clients (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Defensive column adds — if clients was created by a prior migration with a
+-- narrower schema, CREATE TABLE IF NOT EXISTS above is a no-op and we need
+-- to ensure the billing columns exist before the INSERTs below.
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS legal_name TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS billing_email TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS industry_code TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+DO $$ BEGIN
+  ALTER TABLE clients ADD CONSTRAINT clients_stripe_customer_id_key UNIQUE (stripe_customer_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 DROP TRIGGER IF EXISTS clients_set_updated_at ON clients;
 CREATE TRIGGER clients_set_updated_at BEFORE UPDATE ON clients
   FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
