@@ -50,6 +50,6 @@ const SHADOW: UseCaseSeed[] = [
 ];
 
 export const FIRSTCAPITAL_ENTERPRISE: ClientSeed = {
-  name: 'Arcturus Financial',
+  name: 'First Capital',
   useCases: [...PRODUCTION, ...PILOTS, ...STALLED, ...RESEARCH, ...SHADOW],
 };
