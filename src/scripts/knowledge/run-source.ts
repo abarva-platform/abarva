@@ -1,16 +1,22 @@
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
+import path from 'node:path';
 import { TIER1_SOURCES } from './sources/tier1_government';
+import { TIER2_SOURCES } from './sources/tier2_frameworks';
 import { runSource } from './pipeline';
 import type { SourceDeclaration } from './pipeline';
 
+loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
+loadEnv();
+
 const ALL_SOURCES: SourceDeclaration[] = [
   ...TIER1_SOURCES,
+  ...TIER2_SOURCES,
 ];
 
 async function main() {
   const key = process.argv[2];
   if (!key) {
-    console.error('usage: tsx run-source.ts <source_key | --tier1 | --all>');
+    console.error('usage: tsx run-source.ts <source_key | --tier1 | --tier2 | --all>');
     console.error('\nAvailable source keys:');
     for (const s of ALL_SOURCES) console.error(`  ${s.source_key}  (${s.publisher})`);
     process.exit(1);
@@ -18,6 +24,7 @@ async function main() {
 
   let targets: SourceDeclaration[];
   if (key === '--tier1') targets = TIER1_SOURCES;
+  else if (key === '--tier2') targets = TIER2_SOURCES;
   else if (key === '--all') targets = ALL_SOURCES;
   else {
     const found = ALL_SOURCES.find((s) => s.source_key === key);
