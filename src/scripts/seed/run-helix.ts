@@ -86,8 +86,7 @@ const HELIX_PARTNERSHIPS: Array<{ type: string; detail: Record<string, unknown>;
   { type: 'rwe_license', detail: { scope: 'de-identified EHR-linked cohorts', trials_supported: 12 }, annualValueUsd: 8_400_000 },
   { type: 'msl_engagement', detail: { quarterly_visits: 180, specialties: ['cardiology', 'oncology'] } },
   { type: 'patient_recruitment', detail: { vendor: 'Deep 6 AI', recruitment_lift_x: 4.2, peer_avg: '1.0x' } },
-  { type: 'shared_vendor', detail: { vendor: 'Tempus Next', use: 'genomics data sharing' } },
-  { type: 'shared_vendor', detail: { vendor: 'Flatiron', use: 'oncology RWE subscription overlap' } },
+  { type: 'shared_vendor', detail: { vendors: [{ name: 'Tempus Next', use: 'genomics data sharing' }, { name: 'Flatiron', use: 'oncology RWE subscription overlap' }] } },
   { type: 'formulary', detail: { helix_drugs_on_meridian_formulary: 8, of_total: 14 } },
   { type: 'medical_info', detail: { monthly_queries: 340, routed_via: 'Within3 + Claude' } },
 ];
