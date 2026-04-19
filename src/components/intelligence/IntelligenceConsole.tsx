@@ -19,11 +19,45 @@ const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
 
+type QueryResult = {
+  cypher: string | null;
+  explanation: string;
+  result_shape?: string;
+  rows: Array<Record<string, unknown>>;
+};
+
 export function IntelligenceConsole({ patterns, initialCode }: Props) {
   const [selectedCode, setSelectedCode] = useState<string | null>(initialCode);
   const [detail, setDetail] = useState<GenomePatternDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [queryInput, setQueryInput] = useState('');
+  const [querying, setQuerying] = useState(false);
+  const [queryResult, setQueryResult] = useState<QueryResult | null>(null);
+  const [queryError, setQueryError] = useState<string | null>(null);
+
+  async function handleQuery(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const q = queryInput.trim();
+    if (!q || querying) return;
+    setQuerying(true);
+    setQueryError(null);
+    setQueryResult(null);
+    try {
+      const res = await fetch('/api/intelligence/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? `HTTP ${res.status}`);
+      setQueryResult(data as QueryResult);
+    } catch (err) {
+      setQueryError(err instanceof Error ? err.message : 'query failed');
+    } finally {
+      setQuerying(false);
+    }
+  }
 
   const loadDetail = useCallback(async (code: string) => {
     setLoading(true);
@@ -53,6 +87,77 @@ export function IntelligenceConsole({ patterns, initialCode }: Props) {
           {patterns.length} ACTIVE PATTERNS ACROSS PORTFOLIO
         </div>
       </div>
+
+      {/* Free-text Genome query bar */}
+      <form onSubmit={handleQuery} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <input
+          type="text"
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
+          disabled={querying}
+          placeholder='Ask the Genome — e.g., "which patterns chain from CDO transitions?"'
+          style={{
+            flex: 1,
+            padding: '10px 14px',
+            background: 'rgba(255,255,255,0.06)',
+            border: `0.5px solid ${PURPLE}4D`,
+            borderRadius: 8,
+            color: INK,
+            fontFamily: 'inherit',
+            fontSize: 13,
+          }}
+        />
+        <button
+          type="submit"
+          disabled={querying || !queryInput.trim()}
+          style={{
+            padding: '10px 18px',
+            background: PURPLE,
+            color: '#FFF',
+            border: 'none',
+            borderRadius: 8,
+            fontFamily: 'inherit',
+            fontSize: 13,
+            fontWeight: 500,
+            cursor: querying || !queryInput.trim() ? 'default' : 'pointer',
+            opacity: querying || !queryInput.trim() ? 0.5 : 1,
+          }}
+        >
+          {querying ? 'Querying…' : 'Ask'}
+        </button>
+      </form>
+
+      {queryError && (
+        <div style={{ marginBottom: 16, padding: '10px 12px', background: 'rgba(255,107,74,0.08)', border: '0.5px solid rgba(255,107,74,0.3)', borderRadius: 8, color: CORAL, fontSize: 12, fontFamily: FONT_MONO }}>
+          {queryError}
+        </div>
+      )}
+
+      {queryResult && (
+        <div style={{ marginBottom: 16, padding: 14, background: 'rgba(155,109,255,0.05)', border: `0.5px solid ${PURPLE}33`, borderRadius: 10 }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', color: PURPLE, textTransform: 'uppercase', marginBottom: 6 }}>
+            Result · {queryResult.rows.length} row{queryResult.rows.length === 1 ? '' : 's'}
+          </div>
+          {queryResult.explanation && (
+            <div style={{ fontSize: 13, color: INK, marginBottom: 10, lineHeight: 1.5 }}>{queryResult.explanation}</div>
+          )}
+          {queryResult.cypher && (
+            <details style={{ marginBottom: 10 }}>
+              <summary style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, cursor: 'pointer', letterSpacing: '0.1em' }}>CYPHER</summary>
+              <pre style={{ fontFamily: FONT_MONO, fontSize: 11, color: MUTE, margin: '8px 0 0', padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 6, overflowX: 'auto', whiteSpace: 'pre-wrap' }}>
+                {queryResult.cypher}
+              </pre>
+            </details>
+          )}
+          {queryResult.rows.length === 0 ? (
+            <div style={{ color: MUTE, fontSize: 12, fontStyle: 'italic' }}>No rows matched.</div>
+          ) : (
+            <pre style={{ fontFamily: FONT_MONO, fontSize: 11, color: INK, margin: 0, padding: 10, background: 'rgba(0,0,0,0.3)', borderRadius: 6, overflowX: 'auto', maxHeight: 320 }}>
+              {JSON.stringify(queryResult.rows, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '360px 1fr', gap: 20, alignItems: 'start' }}>
         {/* Left pane — pattern list */}

@@ -29,6 +29,10 @@ import {
   proposeOutcomeFee,
 } from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
+import { checkGuardrail } from '@/lib/agent/guardrail';
+import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
+import { getAllGenomePatterns } from '@/lib/graph/retrieval';
+import { getCurrentPerson } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,6 +51,22 @@ export async function POST(
   const engagement = await getEngagementByGraphId(engagementId);
   if (!engagement) {
     return new Response(JSON.stringify({ error: 'engagement not found' }), { status: 404 });
+  }
+
+  // Role gate: sponsors can only act on their own engagement; maestros on any.
+  // Signed-out callers pass through (auth is enforced by the proxy/middleware).
+  try {
+    const caller = await getCurrentPerson();
+    if (caller) {
+      const isMaestro = caller.role === 'maestro';
+      const isSponsor = engagement.sponsor_person_id === caller.id;
+      const isCoSponsor = engagement.co_sponsor_person_id === caller.id;
+      if (!isMaestro && !isSponsor && !isCoSponsor) {
+        return new Response(JSON.stringify({ error: 'forbidden' }), { status: 403 });
+      }
+    }
+  } catch (err) {
+    console.warn('[engage.turn.role-gate]', err);
   }
 
   // Persist user turn first
@@ -107,6 +127,34 @@ export async function POST(
           text: agentFullText,
           retrievedRefs,
         });
+        // Guardrail check (v1: log violations, don't regenerate — avoid janky UX)
+        void (async () => {
+          try {
+            const check = await checkGuardrail({
+              draftResponse: agentFullText,
+              knownContext: {
+                personName: sponsor?.name ?? 'unknown',
+                personRole: sponsor?.role ?? '',
+                personOrganization: sponsor?.organization ?? '',
+                engagementName: engagement.name,
+                engagementIndustry: engagement.industry_code,
+                currentPhase: engagement.current_phase,
+                activePatterns: activePatterns.map((p) => `${p.code} ${p.name}`),
+                personalThreads,
+              },
+            });
+            if (check.violation) {
+              console.warn('[guardrail-violation]', {
+                engagement_id: engagement.id,
+                turn_id: savedTurn.id,
+                reason: check.reason,
+              });
+            }
+          } catch (err) {
+            console.error('[guardrail-runner]', err);
+          }
+        })();
+
         // Decision logging (Phase 3) — append each block, non-blocking for stream close
         try {
           const decisions = parseDecisionBlocks(agentFullText);
@@ -179,6 +227,28 @@ export async function POST(
 
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done', turnId: savedTurn.id }) + '\n'));
         controller.close();
+
+        // Auto pattern-trigger detection — fires alongside relationship capture
+        if (userMessage.trim().length > 30) {
+          void (async () => {
+            try {
+              const allPatterns = await getAllGenomePatterns();
+              const alreadyTriggered = activePatterns.map((p) => p.code);
+              const triggers = await detectPatternTriggers({
+                userText: userMessage,
+                engagementName: engagement.name,
+                engagementIndustry: engagement.industry_code,
+                allPatterns: allPatterns.map((p) => ({ code: p.code, name: p.name, category: p.category })),
+                alreadyTriggered,
+              });
+              for (const t of triggers) {
+                await writeTriggerEdge(engagement.graph_node_id, t.code, t.evidence);
+              }
+            } catch (err) {
+              console.error('[pattern-trigger]', err);
+            }
+          })();
+        }
 
         // Fire capture loop in background — never blocks the response.
         // Skip if no sponsor, message too short, or any error inside. Missed
