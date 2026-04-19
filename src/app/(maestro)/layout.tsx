@@ -1,5 +1,5 @@
-import { MaestroChrome } from '@/components/chrome/MaestroChrome';
+import { AppChrome } from '@/components/chrome/AppChrome';
 
-export default function MaestroLayout({ children }: { children: React.ReactNode }) {
-  return <MaestroChrome>{children}</MaestroChrome>;
+export default async function MaestroLayout({ children }: { children: React.ReactNode }) {
+  return <AppChrome>{children}</AppChrome>;
 }
