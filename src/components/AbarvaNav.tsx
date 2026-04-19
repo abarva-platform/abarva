@@ -54,66 +54,14 @@ function NavInner({ activePage }: NavProps) {
 
   // ── Paths ────────────────────────────────────────────────────────────────
   const intelligencePath = `/intelligence?client=${clientId}`
-  const avrPath = (slug: string) => `/ai-strategy?module=${slug}&client=${clientId}`
 
   // ── Active states ─────────────────────────────────────────────────────────
-  const avrActive = [
-    'architecture', 'ai-pdlc', 'avr', 'data-intelligence', 'justify',
-    'contradictions', 'outcome-intelligence', 'diagnose', 'vendor-intelligence', 'ai-strategy',
-    'ai-value-realization',
-  ].includes(activePage || '')
   const intelligenceActive = activePage === 'intelligence'
-  const solutionsActive    = activePage === 'solutions'
   const adminActive        = (activePage || '').startsWith('admin')
   const platformActive     = activePage === 'platform'
   const investorActive     = activePage === 'investor'
-  const demoActive         = activePage === 'demo'
-  const maestroActive      = activePage === 'maestro'
+  const maestroActive      = activePage === 'maestro' || activePage === 'dashboard'
   const homeActive         = activePage === 'home'
-
-  // ── AVR breadcrumb ────────────────────────────────────────────────────────
-  const MODULE_CRUMBS: Record<string, { phase: number; phaseLabel: string; phaseColor: string; moduleName: string }> = {
-    'diagnose':             { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Situation Intelligence' },
-    'contradictions':       { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Contradiction Intelligence' },
-    'data-intelligence':    { phase: 1, phaseLabel: 'DIAGNOSE',          phaseColor: '#4DA3FF', moduleName: 'Data Intelligence' },
-    'vendor-intelligence':  { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Vendor Intelligence' },
-    'architecture':         { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Architecture Intelligence' },
-    'justify':              { phase: 2, phaseLabel: 'PRESCRIBE',         phaseColor: '#F59E0B', moduleName: 'Business Case Intelligence' },
-    'ai-pdlc':              { phase: 3, phaseLabel: 'VALUE REALIZATION', phaseColor: '#34D399', moduleName: 'AI Delivery Intelligence' },
-    'outcome-intelligence': { phase: 3, phaseLabel: 'VALUE REALIZATION', phaseColor: '#34D399', moduleName: 'Outcome Intelligence' },
-  }
-  const crumb = MODULE_CRUMBS[activePage || '']
-  const showBreadcrumb = (isAdmin || isMaestro) && !!crumb
-
-  // ── AVR phases ────────────────────────────────────────────────────────────
-  const AVR_PHASES = [
-    {
-      phase: 1, label: 'DIAGNOSE', color: '#4DA3FF',
-      modules: [
-        { name: 'Situation Intelligence',     num: '01', desc: 'What is broken — and what it costs',                  path: avrPath('situation') },
-        { name: 'Contradiction Intelligence', num: '02', desc: 'What was promised vs what the data shows',             path: avrPath('contradiction') },
-        { name: 'Data Intelligence',          num: '03', desc: 'Is your data ready to support AI?',                   path: avrPath('data') },
-      ],
-    },
-    {
-      phase: 2, label: 'PRESCRIBE', color: '#F59E0B',
-      modules: [
-        { name: 'Technology Intelligence',    num: '04', desc: 'Stack inventory, spend, and contract windows',         path: avrPath('technology') },
-        { name: 'Vendor Intelligence',        num: '05', desc: 'Which vendor wins in your situation — not their demo', path: avrPath('vendor') },
-        { name: 'Architecture Intelligence',  num: '06', desc: 'Target AI stack blueprint for 3 years out',           path: avrPath('architecture') },
-        { name: 'Business Case Intelligence', num: '07', desc: 'CFO-grade numbers the board will sign off on',        path: avrPath('business-case') },
-      ],
-    },
-    {
-      phase: 3, label: 'EXECUTE', color: '#34D399',
-      modules: [
-        { name: 'AI Delivery Intelligence', num: '08', desc: 'Portfolio, blockers, delivery roadmap',                 path: avrPath('ai-delivery') },
-        { name: 'Outcome Intelligence',     num: '09', desc: 'Baseline locked — verified delta — fee earned',         path: avrPath('outcome') },
-        { name: 'Monthly Actuals',          num: '10', desc: 'Are the numbers moving right now?',                     path: avrPath('actuals') },
-        { name: 'Fee Calculation',          num: '11', desc: 'What AbarVa has earned — verified',                    path: avrPath('fee') },
-      ],
-    },
-  ]
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const dropPanel: React.CSSProperties = {
@@ -209,61 +157,11 @@ function NavInner({ activePage }: NavProps) {
     </div>
   )
 
-  // AVR mega-menu
-  const avrMegaMenu = () => (
-    <div style={{ position: 'relative' }} onMouseEnter={() => openDrop('avr')} onMouseLeave={startClose}>
-      <button style={{ fontSize: '14px', fontFamily: SANS, background: 'none', border: 'none', cursor: 'pointer', padding: '8px 10px', color: avrActive ? TEAL : NAV_TEXT, borderBottom: avrActive ? `2px solid ${TEAL}` : '2px solid transparent' }}>
-        AI Value Realization ▾
-      </button>
-      {open === 'avr' && (
-        <div style={{ ...dropPanel, minWidth: '780px', padding: '0', left: '50%', transform: 'translateX(-50%)' }} onMouseEnter={cancelClose} onMouseLeave={startClose}>
-          <div style={{ padding: '14px 24px 12px', borderBottom: `1px solid ${DROP_BORD}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontFamily: SANS, fontSize: '14px', fontWeight: 700, color: DROP_HEAD }}>AI Value Realization Navigator</div>
-              <div style={{ fontFamily: SANS, fontSize: '11px', color: DROP_DESC, marginTop: '2px' }}>3 phases · 11 modules · gate-locked delivery</div>
-            </div>
-            <a href={`/ai-strategy?client=${clientId}`} onClick={() => setOpen(null)} style={{ fontFamily: SANS, fontSize: '12px', color: TEAL, fontWeight: 600, textDecoration: 'none', padding: '6px 14px', border: `1px solid rgba(45,212,200,0.35)`, borderRadius: '6px', background: 'rgba(45,212,200,0.05)' }}>
-              Open Navigator →
-            </a>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0' }}>
-            {AVR_PHASES.map((phase, pi) => (
-              <div key={phase.phase} style={{ padding: '16px 20px 20px', borderRight: pi < AVR_PHASES.length - 1 ? `1px solid ${DROP_BORD}` : 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <div style={{ width: '3px', height: '16px', borderRadius: '2px', background: phase.color, flexShrink: 0 }} />
-                  <div>
-                    <div style={{ fontFamily: MONO, fontSize: '8px', color: DROP_CAT, letterSpacing: '.1em', textTransform: 'uppercase' as const }}>Phase {phase.phase}</div>
-                    <div style={{ fontFamily: SANS, fontSize: '12px', fontWeight: 700, color: phase.color, letterSpacing: '.04em' }}>{phase.label}</div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {phase.modules.map(item => (
-                    <a key={item.name} href={item.path} onClick={() => setOpen(null)}
-                      style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '7px 8px', textDecoration: 'none', borderRadius: '6px' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <span style={{ fontFamily: MONO, fontSize: '9px', color: DROP_CAT, marginTop: '3px', flexShrink: 0, width: '16px' }}>{item.num}</span>
-                      <div>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: DROP_HEAD, fontFamily: SANS, lineHeight: 1.3 }}>{item.name}</div>
-                        <div style={{ fontSize: '10px', color: DROP_DESC, fontFamily: SANS, marginTop: '2px', lineHeight: 1.4 }}>{item.desc}</div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
       <div id="abarva-nav" style={{
         height: '60px', background: NAV_BG,
-        borderBottom: showBreadcrumb ? 'none' : `1px solid ${NAV_BORD}`,
+        borderBottom: `1px solid ${NAV_BORD}`,
         display: 'flex', alignItems: 'center', padding: '0 24px', gap: '2px',
         boxSizing: 'border-box',
       }}>
@@ -283,7 +181,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isAdmin && (
           <>
             {clientDropdown()}
-            {navLink('Maestro', '/maestro', maestroActive)}
+            {navLink('Maestro', '/dashboard', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}
@@ -295,7 +193,7 @@ function NavInner({ activePage }: NavProps) {
           <>
             {navLink('Home', '/', homeActive)}
             {clientDropdown()}
-            {navLink('Maestro', '/maestro', maestroActive)}
+            {navLink('Maestro', '/dashboard', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}
@@ -306,7 +204,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isMaestro && (
           <>
             {staticClientLabel()}
-            {navLink('Maestro', '/maestro', maestroActive)}
+            {navLink('Maestro', '/dashboard', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}
@@ -392,17 +290,6 @@ function NavInner({ activePage }: NavProps) {
         </div>
 
       </div>
-
-      {/* ── AVR breadcrumb (admin + maestro only) ─────────────────────────── */}
-      {showBreadcrumb && crumb && (
-        <div style={{ height: '30px', background: NAV_BG, borderBottom: `1px solid ${NAV_BORD}`, display: 'flex', alignItems: 'center', padding: '0 24px', gap: '8px' }}>
-          <a href={`/ai-strategy?client=${clientId}`} style={{ fontFamily: MONO, fontSize: '9px', color: TEAL, textDecoration: 'none', letterSpacing: '.06em', opacity: 0.9 }}>AI Value Realization</a>
-          <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_BORD }}>›</span>
-          <span style={{ fontFamily: MONO, fontSize: '9px', color: crumb.phaseColor, letterSpacing: '.06em', opacity: 0.85 }}>Phase {crumb.phase} — {crumb.phaseLabel}</span>
-          <span style={{ fontFamily: MONO, fontSize: '9px', color: NAV_BORD }}>›</span>
-          <span style={{ fontFamily: MONO, fontSize: '9px', color: 'rgba(255,255,255,0.45)', letterSpacing: '.06em' }}>{crumb.moduleName}</span>
-        </div>
-      )}
     </div>
   )
 }
