@@ -14,6 +14,7 @@ const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean 
   { label: 'Data setup', href: '/data', match: (p) => p === '/data' || p.startsWith('/data/') },
   { label: 'User setup', href: '/users/new', match: (p) => p === '/users/new' || p.startsWith('/users/') },
   { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
+  { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
   { label: 'Admin', href: '/admin', match: (p) => p === '/admin' || p.startsWith('/admin/') },
 ];
 
