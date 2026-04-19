@@ -7,6 +7,11 @@ import {
   saveValueOfficeEvidenceSources,
   saveValueOfficeMetricSnapshots,
 } from '@/lib/value-office/server'
+import {
+  validateEvidenceSources,
+  validateMetricSnapshots,
+  validateValueContracts,
+} from '@/lib/value-office/validation'
 
 export async function GET(
   _request: NextRequest,
@@ -41,23 +46,27 @@ export async function PUT(
       return NextResponse.json({ error: 'valueContracts, evidenceSources, metricSnapshots, or decision required' }, { status: 400 })
     }
 
-    const result = valueContracts
+    const validatedValueContracts = valueContracts ? validateValueContracts(valueContracts) : null
+    const validatedEvidenceSources = evidenceSources ? validateEvidenceSources(evidenceSources) : null
+    const validatedMetricSnapshots = metricSnapshots ? validateMetricSnapshots(metricSnapshots) : null
+
+    const result = validatedValueContracts
       ? await saveValueOfficeContracts({
           useCaseId,
           updatedBy,
-          valueContracts,
+          valueContracts: validatedValueContracts,
         })
-      : evidenceSources
+      : validatedEvidenceSources
         ? await saveValueOfficeEvidenceSources({
             useCaseId,
             updatedBy,
-            evidenceSources: evidenceSources!,
+            evidenceSources: validatedEvidenceSources,
           })
-        : metricSnapshots
+        : validatedMetricSnapshots
           ? await saveValueOfficeMetricSnapshots({
               useCaseId,
               updatedBy,
-              metricSnapshots,
+              metricSnapshots: validatedMetricSnapshots,
             })
         : await recordValueOfficeDecision({
             useCaseId,
@@ -66,7 +75,19 @@ export async function PUT(
             rationale,
           })
 
-    return NextResponse.json(result)
+    if (!result.schemaReady) {
+      return NextResponse.json({ error: 'AI Value Office schema not deployed yet' }, { status: 400 })
+    }
+
+    const refreshed = await getValueOfficeUseCase(useCaseId)
+    if (!refreshed.schemaReady || !refreshed.item) {
+      throw new Error('Unable to load updated AI Value Office use case')
+    }
+
+    return NextResponse.json({
+      schemaReady: true,
+      item: refreshed.item,
+    })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

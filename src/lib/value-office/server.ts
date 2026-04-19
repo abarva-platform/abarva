@@ -4,11 +4,18 @@ import type {
   EvidenceSourceDetails,
   EvidenceSourceDraft,
   MetricSnapshotDraft,
+  ValueContractDraft,
   ValueOfficeUseCaseRecord,
   RecommendationType,
   ValueOfficeUseCaseDetail,
 } from './types'
 import type { AbarNexusNormalizedRecord } from './ingestion'
+import {
+  clampConfidence,
+  validateEvidenceSources,
+  validateMetricSnapshots,
+  validateValueContracts,
+} from './validation'
 
 type SupabaseErrorLike = { message?: string } | null
 
@@ -26,6 +33,14 @@ function isSchemaMissing(error: SupabaseErrorLike) {
 function parseJson<T>(value: unknown, fallback: T): T {
   if (!value || typeof value !== 'object') return fallback
   return value as T
+}
+
+function getNowIso() {
+  return new Date().toISOString()
+}
+
+function toErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown error'
 }
 
 function normalizeEvidenceDetails(value: unknown): EvidenceSourceDetails {
@@ -72,6 +87,58 @@ function evidenceRowsFromAdvisorResult(useCaseId: string, advisorResult: Advisor
     system_name: source.system_name,
     owner_name: source.owner_name,
     details: source.details || {},
+  }))
+}
+
+function contractRowsFromDrafts(useCaseId: string, valueContracts: ValueContractDraft[]) {
+  return valueContracts.map((contract, index) => ({
+    use_case_id: useCaseId,
+    category: contract.category,
+    where_value_lost: contract.where_value_lost,
+    target_state: contract.target_state,
+    baseline_metric: contract.baseline_metric,
+    baseline_value: contract.baseline_value || null,
+    target_metric: contract.target_metric,
+    target_value: contract.target_value || null,
+    unit: contract.unit || null,
+    evidence_source: contract.evidence_source,
+    evidence_owner: contract.evidence_owner,
+    review_cadence: contract.review_cadence,
+    confidence_grade: contract.confidence_grade,
+    notes: contract.notes || null,
+    display_order: index,
+  }))
+}
+
+function evidenceRowsFromDrafts(useCaseId: string, evidenceSources: EvidenceSourceDraft[]) {
+  return evidenceSources.map(source => ({
+    use_case_id: useCaseId,
+    source_name: source.source_name,
+    source_type: source.source_type,
+    integration_mode: source.integration_mode,
+    status: source.status,
+    system_name: source.system_name,
+    owner_name: source.owner_name,
+    details: source.details || {},
+  }))
+}
+
+function snapshotRowsFromDrafts(
+  useCaseId: string,
+  updatedBy: string,
+  metricSnapshots: MetricSnapshotDraft[],
+) {
+  return metricSnapshots.map(snapshot => ({
+    use_case_id: useCaseId,
+    category: snapshot.category,
+    snapshot_type: snapshot.snapshot_type,
+    metric_name: snapshot.metric_name,
+    metric_value: snapshot.metric_value || null,
+    unit: snapshot.unit || null,
+    confidence_grade: snapshot.confidence_grade || null,
+    notes: snapshot.notes || null,
+    captured_at: snapshot.captured_at || getNowIso(),
+    created_by: updatedBy,
   }))
 }
 
@@ -209,7 +276,7 @@ export async function persistAdvisorResult(args: {
       status: 'recommended',
       recommendation: advisorResult.recommendation.type,
       recommendation_summary: advisorResult.recommendation.summary,
-      confidence_score: advisorResult.confidence_score,
+      confidence_score: clampConfidence(advisorResult.confidence_score),
       sponsor_name: sponsorName || null,
       sponsor_role: sponsorRole || null,
       target_users: advisorResult.target_users,
@@ -246,7 +313,7 @@ export async function persistAdvisorResult(args: {
     risks: advisorResult.recommendation.risks,
     missing_data: advisorResult.recommendation.missing_data,
     next_actions: advisorResult.recommendation.next_actions,
-    confidence_score: advisorResult.confidence_score,
+    confidence_score: clampConfidence(advisorResult.confidence_score),
     model_used: 'claude-sonnet-4-6',
     created_by: createdBy,
   }
@@ -268,7 +335,7 @@ export async function persistAdvisorResult(args: {
       created_by: createdBy,
       metadata: {
         recommendation: advisorResult.recommendation.type,
-        confidence_score: advisorResult.confidence_score,
+        confidence_score: clampConfidence(advisorResult.confidence_score),
       },
     },
   ]
@@ -320,7 +387,7 @@ export async function refineValueOfficeUseCase(args: {
       status: 'recommended',
       recommendation: advisorResult.recommendation.type,
       recommendation_summary: advisorResult.recommendation.summary,
-      confidence_score: advisorResult.confidence_score,
+      confidence_score: clampConfidence(advisorResult.confidence_score),
       target_users: advisorResult.target_users,
       workflow_summary: advisorResult.workflows_in_scope.join(' | '),
       value_hypothesis: advisorResult.value_hypothesis,
@@ -331,7 +398,7 @@ export async function refineValueOfficeUseCase(args: {
         systems_in_scope: advisorResult.systems_in_scope,
       },
       updated_by: updatedBy,
-      updated_at: new Date().toISOString(),
+      updated_at: getNowIso(),
     })
     .eq('id', useCaseId)
 
@@ -355,7 +422,7 @@ export async function refineValueOfficeUseCase(args: {
       risks: advisorResult.recommendation.risks,
       missing_data: advisorResult.recommendation.missing_data,
       next_actions: advisorResult.recommendation.next_actions,
-      confidence_score: advisorResult.confidence_score,
+      confidence_score: clampConfidence(advisorResult.confidence_score),
       model_used: 'claude-sonnet-4-6',
       created_by: updatedBy,
     }),
@@ -376,7 +443,7 @@ export async function refineValueOfficeUseCase(args: {
         created_by: updatedBy,
         metadata: {
           recommendation: advisorResult.recommendation.type,
-          confidence_score: advisorResult.confidence_score,
+          confidence_score: clampConfidence(advisorResult.confidence_score),
         },
       },
     ]),
@@ -410,37 +477,35 @@ export async function saveValueOfficeContracts(args: {
   }
   if (error || !useCase) throw error || new Error('Use case not found')
 
-  await supabase.from('value_office_value_contracts').delete().eq('use_case_id', useCaseId)
+  const validatedContracts = validateValueContracts(valueContracts)
+  const contractRows = contractRowsFromDrafts(useCaseId, validatedContracts)
 
-  const contractRows = valueContracts.map((contract, index) => ({
-    use_case_id: useCaseId,
-    category: contract.category,
-    where_value_lost: contract.where_value_lost,
-    target_state: contract.target_state,
-    baseline_metric: contract.baseline_metric,
-    baseline_value: contract.baseline_value || null,
-    target_metric: contract.target_metric,
-    target_value: contract.target_value || null,
-    unit: contract.unit || null,
-    evidence_source: contract.evidence_source,
-    evidence_owner: contract.evidence_owner,
-    review_cadence: contract.review_cadence,
-    confidence_grade: contract.confidence_grade,
-    notes: contract.notes || null,
-    display_order: index,
-  }))
+  try {
+    const { error: deleteError } = await supabase
+      .from('value_office_value_contracts')
+      .delete()
+      .eq('use_case_id', useCaseId)
+    if (deleteError) throw deleteError
 
-  if (contractRows.length) {
-    await supabase.from('value_office_value_contracts').insert(contractRows)
+    if (contractRows.length) {
+      const { error: insertError } = await supabase
+        .from('value_office_value_contracts')
+        .insert(contractRows)
+      if (insertError) throw insertError
+    }
+
+    const { error: updateError } = await supabase
+      .from('value_office_use_cases')
+      .update({
+        updated_by: updatedBy,
+        updated_at: getNowIso(),
+      })
+      .eq('id', useCaseId)
+
+    if (updateError) throw updateError
+  } catch (saveError) {
+    throw new Error(`Failed to save AI Value Office contracts: ${toErrorMessage(saveError)}`)
   }
-
-  await supabase
-    .from('value_office_use_cases')
-    .update({
-      updated_by: updatedBy,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', useCaseId)
 
   return { schemaReady: true }
 }
@@ -464,30 +529,35 @@ export async function saveValueOfficeEvidenceSources(args: {
   }
   if (error || !useCase) throw error || new Error('Use case not found')
 
-  await supabase.from('value_office_evidence_sources').delete().eq('use_case_id', useCaseId)
+  const validatedEvidenceSources = validateEvidenceSources(evidenceSources)
+  const evidenceRows = evidenceRowsFromDrafts(useCaseId, validatedEvidenceSources)
 
-  const evidenceRows = evidenceSources.map(source => ({
-    use_case_id: useCaseId,
-    source_name: source.source_name,
-    source_type: source.source_type,
-    integration_mode: source.integration_mode,
-    status: source.status,
-    system_name: source.system_name,
-    owner_name: source.owner_name,
-    details: source.details || {},
-  }))
+  try {
+    const { error: deleteError } = await supabase
+      .from('value_office_evidence_sources')
+      .delete()
+      .eq('use_case_id', useCaseId)
+    if (deleteError) throw deleteError
 
-  if (evidenceRows.length) {
-    await supabase.from('value_office_evidence_sources').insert(evidenceRows)
+    if (evidenceRows.length) {
+      const { error: insertError } = await supabase
+        .from('value_office_evidence_sources')
+        .insert(evidenceRows)
+      if (insertError) throw insertError
+    }
+
+    const { error: updateError } = await supabase
+      .from('value_office_use_cases')
+      .update({
+        updated_by: updatedBy,
+        updated_at: getNowIso(),
+      })
+      .eq('id', useCaseId)
+
+    if (updateError) throw updateError
+  } catch (saveError) {
+    throw new Error(`Failed to save AI Value Office evidence sources: ${toErrorMessage(saveError)}`)
   }
-
-  await supabase
-    .from('value_office_use_cases')
-    .update({
-      updated_by: updatedBy,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', useCaseId)
 
   return { schemaReady: true }
 }
@@ -511,32 +581,35 @@ export async function saveValueOfficeMetricSnapshots(args: {
   }
   if (error || !useCase) throw error || new Error('Use case not found')
 
-  await supabase.from('value_office_metric_snapshots').delete().eq('use_case_id', useCaseId)
+  const validatedMetricSnapshots = validateMetricSnapshots(metricSnapshots)
+  const snapshotRows = snapshotRowsFromDrafts(useCaseId, updatedBy, validatedMetricSnapshots)
 
-  const snapshotRows = metricSnapshots.map(snapshot => ({
-    use_case_id: useCaseId,
-    category: snapshot.category,
-    snapshot_type: snapshot.snapshot_type,
-    metric_name: snapshot.metric_name,
-    metric_value: snapshot.metric_value || null,
-    unit: snapshot.unit || null,
-    confidence_grade: snapshot.confidence_grade || null,
-    notes: snapshot.notes || null,
-    captured_at: snapshot.captured_at || new Date().toISOString(),
-    created_by: updatedBy,
-  }))
+  try {
+    const { error: deleteError } = await supabase
+      .from('value_office_metric_snapshots')
+      .delete()
+      .eq('use_case_id', useCaseId)
+    if (deleteError) throw deleteError
 
-  if (snapshotRows.length) {
-    await supabase.from('value_office_metric_snapshots').insert(snapshotRows)
+    if (snapshotRows.length) {
+      const { error: insertError } = await supabase
+        .from('value_office_metric_snapshots')
+        .insert(snapshotRows)
+      if (insertError) throw insertError
+    }
+
+    const { error: updateError } = await supabase
+      .from('value_office_use_cases')
+      .update({
+        updated_by: updatedBy,
+        updated_at: getNowIso(),
+      })
+      .eq('id', useCaseId)
+
+    if (updateError) throw updateError
+  } catch (saveError) {
+    throw new Error(`Failed to save AI Value Office metric snapshots: ${toErrorMessage(saveError)}`)
   }
-
-  await supabase
-    .from('value_office_use_cases')
-    .update({
-      updated_by: updatedBy,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', useCaseId)
 
   return { schemaReady: true }
 }
@@ -567,7 +640,7 @@ export async function recordValueOfficeDecision(args: {
       .update({
         status: decision,
         updated_by: updatedBy,
-        updated_at: new Date().toISOString(),
+        updated_at: getNowIso(),
       })
       .eq('id', useCaseId),
     supabase.from('value_office_decisions').insert({

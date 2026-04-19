@@ -6,6 +6,7 @@ import { buildAbarNexusProvenance } from '@/lib/value-office/abarnexus'
 import { getAdvisorClientContext, type AdvisorClientContext } from '@/lib/value-office/context'
 import { persistAdvisorResult } from '@/lib/value-office/server'
 import type { AdvisorResult } from '@/lib/value-office/types'
+import { validateAdvisorResult } from '@/lib/value-office/validation'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -170,7 +171,16 @@ export async function POST(request: NextRequest) {
     })
 
     const text = response.content[0]?.type === 'text' ? response.content[0].text : ''
-    const advisorResult = extractJson<AdvisorResult>(text)
+    let advisorResult: AdvisorResult
+    try {
+      advisorResult = validateAdvisorResult(extractJson<AdvisorResult>(text))
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: `Invalid advisor output: ${error.message}` },
+        { status: 400 },
+      )
+    }
+
     const provenance = buildAbarNexusProvenance({
       vertical: clientContext.vertical,
       datasetSummary: clientContext.dataset_summary,

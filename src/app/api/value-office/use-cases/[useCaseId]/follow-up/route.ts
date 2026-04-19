@@ -5,6 +5,7 @@ import { retrieveContext } from '@/lib/retrieval'
 import { getAdvisorClientContext, type AdvisorClientContext } from '@/lib/value-office/context'
 import { getValueOfficeUseCase, refineValueOfficeUseCase } from '@/lib/value-office/server'
 import type { AdvisorResult } from '@/lib/value-office/types'
+import { validateAdvisorResult } from '@/lib/value-office/validation'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -194,22 +195,39 @@ export async function POST(
     })
 
     const text = response.content[0]?.type === 'text' ? response.content[0].text : ''
-    const parsed = extractJson<{ assistant_message: string; advisor_result: AdvisorResult }>(text)
+    let assistantMessage = ''
+    let advisorResult: AdvisorResult
+    try {
+      const parsed = extractJson<{ assistant_message: string; advisor_result: AdvisorResult }>(text)
+      assistantMessage = String(parsed.assistant_message || '').trim()
+      if (!assistantMessage) {
+        throw new Error('assistant_message must be a non-empty string')
+      }
+      advisorResult = validateAdvisorResult(parsed.advisor_result)
+    } catch (error: any) {
+      return NextResponse.json(
+        {
+          error: 'Invalid advisor refinement output',
+          details: error.message,
+        },
+        { status: 400 },
+      )
+    }
 
     const persisted = await refineValueOfficeUseCase({
       useCaseId,
       updatedBy,
       userMessage: message,
-      assistantMessage: parsed.assistant_message,
-      advisorResult: parsed.advisor_result,
+      assistantMessage,
+      advisorResult,
     })
 
     const refreshed = persisted.schemaReady ? await getValueOfficeUseCase(useCaseId) : { schemaReady: false, item: null }
 
     return NextResponse.json({
       schemaReady: persisted.schemaReady,
-      assistantMessage: parsed.assistant_message,
-      advisorResult: parsed.advisor_result,
+      assistantMessage,
+      advisorResult,
       item: refreshed.item,
     })
   } catch (err: any) {
