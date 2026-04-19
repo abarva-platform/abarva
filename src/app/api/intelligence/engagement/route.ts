@@ -7,6 +7,10 @@ import {
   getSponsorContext,
 } from '@/lib/graph/retrieval';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
+
 export async function GET(req: NextRequest) {
   const engagementId = req.nextUrl.searchParams.get('engagementId');
   const phase = parseInt(req.nextUrl.searchParams.get('phase') ?? '2', 10);

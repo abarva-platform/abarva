@@ -13,6 +13,7 @@ import { getCurrentMaestro } from '@/lib/auth/maestro';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 const INDUSTRIES = [
   { code: 'HEALTHCARE_IDN', name: 'Healthcare IDN' },
