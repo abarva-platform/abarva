@@ -4,6 +4,7 @@ import {
   getDashboardMetrics,
   type EngagementListItem,
 } from '@/lib/db/engagement';
+import { getCurrentPerson } from '@/lib/auth/maestro';
 
 const INK = '#F5F5F0';
 const MUTE = '#8B8680';
@@ -160,9 +161,10 @@ function QuickStartCard({
 }
 
 export default async function DashboardPage() {
+  const person = await getCurrentPerson();
   const [metrics, engagements] = await Promise.all([
     getDashboardMetrics(),
-    getAllActiveEngagements(),
+    getAllActiveEngagements(person?.id),
   ]);
 
   return (

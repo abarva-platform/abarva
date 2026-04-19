@@ -5,6 +5,8 @@ import { parseUserReadyBlock } from '@/lib/agent/parse';
 import { createPerson } from '@/lib/db/person';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
+import { clerkClient } from '@clerk/nextjs/server';
+import { logAudit } from '@/lib/audit/log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +19,7 @@ export async function POST(req: NextRequest) {
   }
 
   const maestro = await getCurrentMaestro();
+  const actorMaestro = maestro;
   const system = assembleIdentitySystemPrompt({ maestro });
   const encoder = new TextEncoder();
 
@@ -43,6 +46,36 @@ export async function POST(req: NextRequest) {
             name: person.name,
             role: person.role ?? parsed.role,
             organization: person.organization ?? parsed.organization,
+          });
+          // Best-effort: sync person_id into Clerk public metadata so Clerk
+          // JWTs carry it forward for RLS. Silent no-op if no matching Clerk
+          // user exists yet (they may sign up later).
+          if (person.email) {
+            void (async () => {
+              try {
+                const clerk = await clerkClient();
+                const users = await clerk.users.getUserList({ emailAddress: [person.email!] });
+                if (users.data.length > 0) {
+                  await clerk.users.updateUserMetadata(users.data[0].id, {
+                    publicMetadata: { person_id: person.id },
+                  });
+                }
+              } catch (err) {
+                console.error('[clerk-metadata-sync]', err);
+              }
+            })();
+          }
+          await logAudit({
+            actorPersonId: actorMaestro?.id ?? null,
+            action: 'person.created',
+            targetTable: 'persons',
+            targetId: person.id,
+            newValue: {
+              name: person.name,
+              role: person.role,
+              organization: person.organization,
+              graph_node_id: person.graph_node_id,
+            },
           });
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'user_created', person }) + '\n'));
         }

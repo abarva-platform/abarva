@@ -33,6 +33,8 @@ import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
+import { logAudit } from '@/lib/audit/log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -207,6 +209,18 @@ export async function POST(
               approvalText: gateApproval.approval_text,
               summary: gateApproval.summary,
             });
+            await logAudit({
+              actorPersonId: sponsor?.id ?? null,
+              action: 'engagement.gate_approved',
+              targetTable: 'engagements',
+              targetId: engagement.id,
+              oldValue: { phase: gateApproval.phase, gate_status: 'pending' },
+              newValue: { phase: updated.current_phase, gate_status: 'approved' },
+              metadata: {
+                approval_text: gateApproval.approval_text,
+                summary: gateApproval.summary,
+              },
+            });
             controller.enqueue(
               encoder.encode(
                 JSON.stringify({
@@ -220,6 +234,18 @@ export async function POST(
             void generateDeliverableForPhase(engagement.id, gateApproval.phase).catch((err) =>
               console.error('[deliverable]', err),
             );
+
+            // Phase 4 gate with a non-zero outcome fee → auto-invoice via Stripe
+            if (
+              gateApproval.phase === 4 &&
+              engagement.outcome_fee_usd &&
+              engagement.outcome_fee_usd > 0 &&
+              isStripeConfigured()
+            ) {
+              void createOutcomeFeeInvoice(engagement.id, engagement.outcome_fee_usd).catch((err) =>
+                console.error('[outcome-invoice]', err),
+              );
+            }
           } catch (err) {
             console.error('[gate-approval]', err);
           }

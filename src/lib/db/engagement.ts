@@ -212,14 +212,27 @@ type ActiveEngagementJoinRow = {
   sponsor: { name: string | null; role: string | null } | null;
 };
 
-export async function getAllActiveEngagements(): Promise<EngagementListItem[]> {
-  const { data, error } = await getServerSupabase()
+export async function getAllActiveEngagements(
+  viewerPersonId?: string,
+): Promise<EngagementListItem[]> {
+  let query = getServerSupabase()
     .from('engagements')
     .select(
       'id, graph_node_id, name, industry_code, current_phase, status, updated_at, sponsor_person_id, sponsor:persons!engagements_sponsor_person_id_fkey(name, role)',
     )
     .eq('status', 'active')
     .order('updated_at', { ascending: false });
+
+  // Team scoping: if viewer supplied, filter to engagements visible to them
+  // (team member, sponsor, co-sponsor, or maestro on the engagement).
+  if (viewerPersonId) {
+    const { getEngagementIdsForPerson } = await import('./team');
+    const ids = await getEngagementIdsForPerson(viewerPersonId);
+    if (ids.length === 0) return [];
+    query = query.in('id', ids);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   const rows = (data ?? []) as unknown as ActiveEngagementJoinRow[];
   return rows.map((r) => ({

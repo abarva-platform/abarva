@@ -10,6 +10,7 @@ import { createPerson, getAllPersons } from '@/lib/db/person';
 import { syncEngagementToGraph } from '@/lib/graph/engagement-sync';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
+import { logAudit } from '@/lib/audit/log';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,6 +115,20 @@ export async function POST(req: NextRequest) {
             topic_code: engagement.topic_code ?? '',
             sponsor_graph_node_id: sponsorGraphId,
             maestro_graph_node_id: maestro?.graph_node_id ?? null,
+          });
+
+          await logAudit({
+            actorPersonId: maestro?.id ?? null,
+            action: 'engagement.created',
+            targetTable: 'engagements',
+            targetId: engagement.id,
+            newValue: {
+              name: engagement.name,
+              graph_node_id: engagement.graph_node_id,
+              industry_code: engagement.industry_code,
+              sponsor_person_id: engagement.sponsor_person_id,
+              current_phase: 0,
+            },
           });
 
           // Re-fetch so we return the full row (consistent with what the page expects)
