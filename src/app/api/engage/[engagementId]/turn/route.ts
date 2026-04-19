@@ -175,6 +175,21 @@ export async function POST(
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        // Pack D Principle 1 · cognitive stages. Beacons based on data that
+        // already resolved before the stream opened. Lets the UI render
+        // "thinking" italic stages above the bubble until the first delta.
+        controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Checking pattern library', detail: `${activePatterns.length} active patterns` }) + '\n'));
+        if (retrievalCtx) {
+          const chunkCount = retrievalCtx.clientChunks.length + retrievalCtx.industryChunks.length + retrievalCtx.topicChunks.length;
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling industry + client context', detail: `${chunkCount} chunks` }) + '\n'));
+        }
+        if (peerDecisions.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling peer decisions', detail: `${peerDecisions.length} precedents` }) + '\n'));
+        }
+        if (chainedPatterns.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Traversing chained patterns', detail: `${chainedPatterns.length} edges` }) + '\n'));
+        }
+
         const tStreamStart = Date.now();
         let agentFullText = '';
         const gen = streamAgentTurn({ system, messages });

@@ -45,6 +45,7 @@ export function EngagementConsole({
   const [choicesForTurnId, setChoicesForTurnId] = useState<string | null>(null);
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
   const [traceTurnId, setTraceTurnId] = useState<string | null>(null);
+  const [stages, setStages] = useState<Array<{ label: string; detail?: string }>>([]);
   const composerRef = useRef<HTMLInputElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
@@ -63,6 +64,7 @@ export function EngagementConsole({
     setChoices([]);
     setChoicesForTurnId(null);
     setError(null);
+    setStages([]);
     setIsStreaming(true);
 
     const now = new Date().toISOString();
@@ -113,13 +115,19 @@ export function EngagementConsole({
           const line = buffer.slice(0, nl).trim();
           buffer = buffer.slice(nl + 1);
           if (!line) continue;
-          let evt: { type: string; text?: string; turnId?: string; error?: string };
+          let evt: { type: string; text?: string; turnId?: string; error?: string; label?: string; detail?: string };
           try {
             evt = JSON.parse(line);
           } catch {
             continue;
           }
-          if (evt.type === 'delta' && typeof evt.text === 'string') {
+          if (evt.type === 'stage' && typeof evt.label === 'string') {
+            const stageLabel = evt.label;
+            const stageDetail = evt.detail;
+            setStages((prev) => [...prev, { label: stageLabel, detail: stageDetail }]);
+          } else if (evt.type === 'delta' && typeof evt.text === 'string') {
+            // Clear stages once real content starts streaming.
+            setStages([]);
             const delta = evt.text;
             setMessages(prev =>
               prev.map(m => (m.id === agentTurnId ? { ...m, text: m.text + delta } : m)),
@@ -244,6 +252,17 @@ export function EngagementConsole({
                     <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                       {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
                     </div>
+                    {t.sender === 'agent' && t.streaming && !t.text && stages.length > 0 && (
+                      <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {stages.map((s, i) => (
+                          <div key={i} style={{ fontSize: 12, fontStyle: 'italic', color: 'rgba(245,245,240,0.55)', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.01em' }}>
+                            <span style={{ color: '#2DD4C8', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
+                            {s.label}
+                            {s.detail && <span style={{ color: 'rgba(245,245,240,0.4)', marginLeft: 6 }}>· {s.detail}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                       {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
                       {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
