@@ -10,6 +10,8 @@ import {
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
 import { assembleRetrievalContext } from '@/lib/agent/retrieval';
 import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
+import { assembleCrossClientContext, formatCrossClientBlock } from '@/lib/graph/cross-client';
+import { getServerSupabase } from '@/lib/supabase-server';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { TurnTrace } from '@/lib/agent/trace';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
@@ -157,9 +159,30 @@ export async function POST(
     : null;
   const retrievedContextBlock = retrievalCtx ? formatRetrievedContext(retrievalCtx) : '';
 
+  // Pack K · cross-client context. Look up client via engagement.id (EngagementRow
+  // doesn't expose client_id yet). Empty-safe — if no partnerships / shared vendors,
+  // formatCrossClientBlock returns '' and the prompt assembler filters it.
+  let crossClientBlock = '';
+  try {
+    const sb = getServerSupabase();
+    const { data: engRow } = await sb
+      .from('engagements')
+      .select('client_id, client:clients(id, name)')
+      .eq('id', engagement.id)
+      .maybeSingle();
+    const client = (engRow as { client: { id: string; name: string } | null } | null)?.client;
+    if (client) {
+      const ccCtx = await assembleCrossClientContext(client.id, client.name);
+      crossClientBlock = formatCrossClientBlock(ccCtx);
+    }
+  } catch (err) {
+    console.error('[cross-client-context]', err);
+  }
+
   const system = assembleEngagementSystemPrompt({
     engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
-    maestroContextBlock, retrievedContextBlock,
+    maestroContextBlock,
+    retrievedContextBlock: [retrievedContextBlock, crossClientBlock].filter(Boolean).join('\n\n'),
   });
 
   const retrievedRefs = {
