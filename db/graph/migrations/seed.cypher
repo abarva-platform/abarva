@@ -1,0 +1,14 @@
+MERGE (i:Industry {code:'HEALTHCARE_IDN'}) ON CREATE SET i.name = 'Healthcare IDN';
+MERGE (i:Industry {code:'FINSERV'}) ON CREATE SET i.name = 'Financial Services';
+MERGE (i:Industry {code:'RETAIL'}) ON CREATE SET i.name = 'Retail';
+MERGE (f:Function {code:'FRONT_OFFICE'}) ON CREATE SET f.name = 'Front Office';
+MERGE (f:Function {code:'MIDDLE_OFFICE'}) ON CREATE SET f.name = 'Middle Office';
+MERGE (f:Function {code:'BACK_OFFICE'}) ON CREATE SET f.name = 'Back Office';
+MERGE (j:Objective {code:'GROW'}) ON CREATE SET j.name = 'Grow';
+MERGE (j:Objective {code:'OPTIMISE'}) ON CREATE SET j.name = 'Optimise';
+MERGE (j:Objective {code:'PROTECT'}) ON CREATE SET j.name = 'Protect';
+MERGE (g:GenomePattern {code:'F002'}) ON CREATE SET g.name='No active sponsor', g.failure_rate=0.84, g.category='Sponsorship';
+MERGE (g:GenomePattern {code:'F007'}) ON CREATE SET g.name='CDO vacancy through transition', g.failure_rate=0.79, g.category='Governance';
+MERGE (g:GenomePattern {code:'F008'}) ON CREATE SET g.name='AI investment without verified ROI', g.failure_rate=0.91, g.category='Outcome accountability';
+MERGE (g:GenomePattern {code:'F012'}) ON CREATE SET g.name='Post go-live data architecture rebuild', g.failure_rate=0.62, g.category='Architecture';
+MATCH (a:GenomePattern {code:'F007'}), (b:GenomePattern {code:'F012'}) MERGE (a)-[:CHAINS_TO {weight:0.71}]->(b);
