@@ -5,10 +5,65 @@ import { useRouter } from 'next/navigation';
 
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
+const PURPLE = '#9B6DFF';
+const AMBER = '#F5C54A';
+const GREEN = '#3FB27F';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
+const DIM = 'rgba(245, 245, 240, 0.48)';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
 const MONO = 'JetBrains Mono, monospace';
+
+const RECENT_KEY = 'abarva_ask_recent';
+const RECENT_LIMIT = 6;
+
+interface Suggestion {
+  q: string;
+  tag: string;
+}
+
+const SUGGESTION_GROUPS: Array<{ title: string; color: string; tag: string; items: Suggestion[] }> = [
+  {
+    title: 'Operations',
+    color: TEAL,
+    tag: 'OPS',
+    items: [
+      { q: 'How do payers typically deploy Abridge in ambient documentation?', tag: 'vendor' },
+      { q: 'What patterns precede AI contact center deflection stalls?', tag: 'pattern' },
+      { q: 'What does a realistic $ / claim denial benchmark look like at scale?', tag: 'benchmark' },
+    ],
+  },
+  {
+    title: 'Regulatory',
+    color: PURPLE,
+    tag: 'REG',
+    items: [
+      { q: 'Summarize HIPAA § 164.308 administrative safeguards', tag: 'regulation' },
+      { q: 'When does EU AI Act require human-in-the-loop for high-risk systems?', tag: 'regulation' },
+      { q: 'What are SEC marketing rule implications for AI-personalized pitches?', tag: 'regulation' },
+    ],
+  },
+  {
+    title: 'Vendors + patterns',
+    color: AMBER,
+    tag: 'VENDOR',
+    items: [
+      { q: 'Compare Glean vs Moveworks for IT copilot use cases', tag: 'vendor' },
+      { q: 'What triggers F008 enterprise AI procurement pattern?', tag: 'pattern' },
+      { q: 'How do companies reconcile Snowflake Cortex vs Databricks Mosaic?', tag: 'vendor' },
+    ],
+  },
+  {
+    title: 'Benchmarks',
+    color: GREEN,
+    tag: 'BENCH',
+    items: [
+      { q: 'Typical AI pilot-to-production conversion rates in banking', tag: 'benchmark' },
+      { q: 'Benchmark: time-to-value for RAG systems at insurers', tag: 'benchmark' },
+      { q: 'Typical shadow-AI spend as % of IT budget', tag: 'benchmark' },
+    ],
+  },
+];
 
 interface AskSource {
   type: string;
@@ -33,7 +88,32 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
   const [answer, setAnswer] = useState('');
   const [followups, setFollowups] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [recent, setRecent] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(RECENT_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as string[];
+        if (Array.isArray(parsed)) setRecent(parsed.slice(0, RECENT_LIMIT));
+      }
+    } catch {
+      // ignore corrupted storage
+    }
+  }, []);
+
+  function rememberQuery(q: string) {
+    setRecent((prev) => {
+      const next = [q, ...prev.filter((p) => p !== q)].slice(0, RECENT_LIMIT);
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        // ignore quota errors
+      }
+      return next;
+    });
+  }
 
   // Auto-run when page loads with ?q=...
   useEffect(() => {
@@ -100,8 +180,16 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
+    rememberQuery(q);
     router.replace(`/intelligence/ask?q=${encodeURIComponent(q)}`);
     await runQuery(q);
+  }
+
+  function pickQuery(q: string) {
+    setQuery(q);
+    rememberQuery(q);
+    router.replace(`/intelligence/ask?q=${encodeURIComponent(q)}`);
+    void runQuery(q);
   }
 
   return (
@@ -245,7 +333,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
       )}
 
       {followups.length > 0 && (
-        <section>
+        <section style={{ marginBottom: 24 }}>
           <div style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '0.14em', marginBottom: 10 }}>
             DIG DEEPER
           </div>
@@ -254,11 +342,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
               <button
                 key={i}
                 type="button"
-                onClick={() => {
-                  setQuery(f);
-                  router.replace(`/intelligence/ask?q=${encodeURIComponent(f)}`);
-                  void runQuery(f);
-                }}
+                onClick={() => pickQuery(f)}
                 style={{
                   padding: '8px 14px',
                   background: 'transparent',
@@ -278,10 +362,88 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
       )}
 
       {!answer && !isStreaming && !error && (
-        <div style={{ padding: 24, background: PANEL_BG, border: BORDER, borderRadius: 10, color: MUTE, fontSize: 13, lineHeight: 1.6 }}>
-          Try a question above. Ask Intelligence is <strong style={{ color: INK }}>stateless</strong> — it only reads
-          from the Library. For engagement-specific reasoning, use the engagement console.
-        </div>
+        <>
+          {recent.length > 0 && (
+            <section style={{ marginBottom: 24 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em', marginBottom: 10 }}>
+                RECENT · {recent.length}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {recent.map((r, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => pickQuery(r)}
+                    style={{
+                      padding: '6px 12px',
+                      background: PANEL_BG,
+                      border: BORDER,
+                      borderRadius: 999,
+                      color: INK,
+                      fontSize: 12,
+                      fontFamily: 'DM Sans, sans-serif',
+                      cursor: 'pointer',
+                      maxWidth: 420,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span style={{ color: DIM, marginRight: 6, fontFamily: MONO, fontSize: 10 }}>↻</span>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section style={{ marginBottom: 24 }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, letterSpacing: '0.14em', marginBottom: 14 }}>
+              SUGGESTED · try one
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 12 }}>
+              {SUGGESTION_GROUPS.map((g) => (
+                <div key={g.title} style={{ background: PANEL_BG, border: BORDER, borderRadius: 10, padding: 14 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: g.color, letterSpacing: '0.14em', marginBottom: 10 }}>
+                    ■ {g.title.toUpperCase()}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {g.items.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => pickQuery(s.q)}
+                        style={{
+                          display: 'block',
+                          textAlign: 'left',
+                          padding: '8px 10px',
+                          background: 'transparent',
+                          border: BORDER,
+                          borderRadius: 6,
+                          color: INK,
+                          fontSize: 13,
+                          fontFamily: 'DM Sans, sans-serif',
+                          cursor: 'pointer',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.1em', marginRight: 6 }}>
+                          {s.tag}
+                        </span>
+                        {s.q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div style={{ padding: 16, background: PANEL_BG, border: BORDER, borderRadius: 10, color: MUTE, fontSize: 12, lineHeight: 1.6 }}>
+            Ask Intelligence is <strong style={{ color: INK }}>stateless</strong>. It only reads from the Library
+            — no personalization, no engagement context. For engagement-specific reasoning, use the engagement console.
+          </div>
+        </>
       )}
     </div>
   );
