@@ -43,3 +43,13 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Loose design drafts — archive locally, not in repo
+abarva-ask-intelligence-spec.md
+abarva-integrated-intelligence-vip-system.md
+abarva-marketing-investor-spec.md
+abarva-pack-*.md
+abarva-page-density-plan.md
+abarva-product-map.md
+abarva-qa-checklist.md
+codex-work-queue-prat-runway.md
