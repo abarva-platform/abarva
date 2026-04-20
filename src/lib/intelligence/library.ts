@@ -176,7 +176,7 @@ export async function loadLibraryCatalog(): Promise<LibraryCatalog> {
         industryTags: t.industries ?? [],
         topicTags: [t.topic_key],
         publishedAt: null,
-        href: `/intelligence/ask?q=${encodeURIComponent(t.title)}`,
+        href: `/intelligence/topics/${encodeURIComponent(t.topic_key)}`,
         sourceUrl: null,
       });
       counts.topic += 1;
