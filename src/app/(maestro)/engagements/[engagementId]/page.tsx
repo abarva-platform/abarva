@@ -11,9 +11,11 @@ import {
   getChainedPatterns,
 } from '@/lib/graph/retrieval';
 import { EngagementConsole } from '@/components/engagement/EngagementConsole';
+import { EngagementMetaStrip } from '@/components/engagement/EngagementMetaStrip';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
+import { getServerSupabase } from '@/lib/supabase-server';
 
 export default async function EngagePage({
   params,
@@ -61,17 +63,53 @@ export default async function EngagePage({
       }>)
     : [];
 
+  // Meta-strip signals · contradictions count for the engagement's client
+  // (pulled via engagement_id → client_id join). Empty-safe.
+  let contradictionsCount = 0;
+  try {
+    const sb = getServerSupabase();
+    const { data: engClient } = await sb
+      .from('engagements')
+      .select('client_id')
+      .eq('id', engagement.id)
+      .maybeSingle();
+    const clientId = (engClient as { client_id: string | null } | null)?.client_id ?? null;
+    if (clientId) {
+      const { count } = await sb
+        .from('contradictions')
+        .select('id', { count: 'exact', head: true })
+        .eq('client_id', clientId)
+        .is('resolved_at', null);
+      contradictionsCount = count ?? 0;
+    }
+  } catch {
+    // quiet fail; meta-strip will render 0
+  }
+
+  const lastTurn = turns.length > 0 ? turns[turns.length - 1] : null;
+
   return (
-    <EngagementConsole
-      engagement={engagement}
-      sponsor={sponsor}
-      turns={turns}
-      activePatterns={activePatterns}
-      peerDecisions={peerDecisions}
-      chainedPatterns={chainedPatterns}
-      deliverables={deliverables}
-      vipGreeting={vipGreeting}
-      assignedTopics={assignedTopics}
-    />
+    <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto' }}>
+      <EngagementMetaStrip
+        engagement={engagement}
+        sponsor={sponsor}
+        turnCount={turns.length}
+        lastTurnAt={lastTurn?.created_at ?? null}
+        activePatternsCount={activePatterns.length}
+        assignedTopicsCount={assignedTopics.length}
+        contradictionsCount={contradictionsCount}
+      />
+      <EngagementConsole
+        engagement={engagement}
+        sponsor={sponsor}
+        turns={turns}
+        activePatterns={activePatterns}
+        peerDecisions={peerDecisions}
+        chainedPatterns={chainedPatterns}
+        deliverables={deliverables}
+        vipGreeting={vipGreeting}
+        assignedTopics={assignedTopics}
+      />
+    </div>
   );
 }
