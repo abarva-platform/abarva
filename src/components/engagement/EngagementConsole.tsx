@@ -82,10 +82,6 @@ interface Props {
 export function EngagementConsole({
   engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, activityEvents,
 }: Props) {
-  // Silence unused-var lint while these are consumed by the coming panel
-  // render. Remove the `void` lines once the contradictions + activity
-  // panels are wired into the sidebar.
-  void topContradictions; void activityEvents;
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const deliverablesList = deliverables ?? [];
@@ -549,6 +545,48 @@ export function EngagementConsole({
             )}
           </div>
 
+          {/* Contradictions · top 3 for this engagement's client, so-what framed */}
+          {topContradictions && topContradictions.length > 0 && (
+            <div style={{ background: 'rgba(245,197,74,0.04)', border: '0.5px solid rgba(245,197,74,0.2)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#F5C54A', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <span>Contradictions · {topContradictions.length}</span>
+                <a href="/tower" style={{ color: 'rgba(245,245,240,0.55)', textDecoration: 'none', letterSpacing: '0.1em' }}>ALL →</a>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {topContradictions.map((c) => {
+                  const sev = c.severity === 'high' ? '#FF6B4A' : c.severity === 'medium' ? '#F5C54A' : 'rgba(245,245,240,0.72)';
+                  const monthly = c.monthly_total_usd != null && c.monthly_total_usd >= 1000
+                    ? c.monthly_total_usd >= 1_000_000
+                      ? `$${(c.monthly_total_usd / 1_000_000).toFixed(1)}M/mo`
+                      : `$${Math.round(c.monthly_total_usd / 1_000)}K/mo`
+                    : null;
+                  const eliminable = c.eliminable_usd_annual != null && c.eliminable_usd_annual >= 1000
+                    ? c.eliminable_usd_annual >= 1_000_000
+                      ? `$${(c.eliminable_usd_annual / 1_000_000).toFixed(1)}M/yr eliminable`
+                      : `$${Math.round(c.eliminable_usd_annual / 1_000)}K/yr eliminable`
+                    : null;
+                  return (
+                    <div key={c.id} style={{ padding: '8px 10px', borderLeft: `2px solid ${sev}`, background: 'rgba(255,255,255,0.02)', borderRadius: 4 }}>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: sev, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+                        {c.severity}
+                        {monthly && <span style={{ color: 'rgba(245,245,240,0.72)', marginLeft: 6 }}>· {monthly}</span>}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#F5F5F0', lineHeight: 1.4, fontWeight: 500 }}>
+                        {c.one_liner ?? c.description.slice(0, 120)}
+                      </div>
+                      {(eliminable || c.owner_named === false) && (
+                        <div style={{ display: 'flex', gap: 8, fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'rgba(245,245,240,0.55)', marginTop: 4, letterSpacing: '0.04em' }}>
+                          {eliminable && <span style={{ color: sev }}>{eliminable}</span>}
+                          {c.owner_named === false && <span style={{ color: '#FF6B4A' }}>no owner</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Peer decisions */}
           <div style={{ background: 'rgba(255,107,74,0.04)', border: '0.5px solid rgba(255,107,74,0.2)', borderRadius: 10, padding: 14 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#FF6B4A', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -718,6 +756,37 @@ export function EngagementConsole({
                   <span style={{ color: 'rgba(245,245,240,0.72)' }}> · {(c.weight * 100).toFixed(0)}% chain rate</span>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Activity pulse · last 5 events · turns + gates + deliverable drafts */}
+          {activityEvents && activityEvents.length > 0 && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 10 }}>
+                Activity pulse · last {activityEvents.length}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {activityEvents.map((e, i) => {
+                  const color = e.kind === 'turn' ? '#2DD4C8' : e.kind === 'gate' ? '#3FB27F' : '#9B6DFF';
+                  const glyph = e.kind === 'turn' ? '▸' : e.kind === 'gate' ? '●' : '◆';
+                  const then = new Date(e.at).getTime();
+                  const diffMs = Date.now() - then;
+                  const m = Math.floor(diffMs / 60000);
+                  const rel = m < 60 ? `${m}m ago` : m < 60 * 24 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / (60 * 24))}d ago`;
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <span style={{ color, fontFamily: 'JetBrains Mono, monospace', fontSize: 10, width: 10, flexShrink: 0 }}>{glyph}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11.5, color: '#F5F5F0', fontWeight: 500, lineHeight: 1.3 }}>{e.label}</div>
+                        <div style={{ fontSize: 10.5, color: 'rgba(245,245,240,0.55)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {e.detail}
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'rgba(245,245,240,0.55)', flexShrink: 0, whiteSpace: 'nowrap' }}>{rel}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
