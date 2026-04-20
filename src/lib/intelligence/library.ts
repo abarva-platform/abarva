@@ -146,29 +146,71 @@ export async function loadLibraryCatalog(): Promise<LibraryCatalog> {
     console.warn('[library.patterns]', err);
   }
 
-  // ── Topic aggregation — synthetic entries from topic_tags so topics render
-  // as browsable items even without a dedicated topics table.
-  const topicCounts = new Map<string, number>();
-  for (const e of entries) {
-    for (const t of e.topicTags) {
-      topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
+  // ── Topics · prefer real engagement_topics catalog; fall back to synthetic
+  // aggregation from knowledge_sources topic_tags when the catalog is empty.
+  let topicsFromCatalog = 0;
+  try {
+    const { data: topicRows } = await sb
+      .from('engagement_topics')
+      .select('topic_key, title, tagline, industries, maturity_version, diagnostic_questions')
+      .order('maturity_version', { ascending: false })
+      .order('title', { ascending: true });
+
+    const rows = (topicRows as Array<{
+      topic_key: string;
+      title: string;
+      tagline: string | null;
+      industries: string[] | null;
+      maturity_version: number;
+      diagnostic_questions: Array<unknown> | null;
+    }> | null) ?? [];
+
+    for (const t of rows) {
+      const qCount = Array.isArray(t.diagnostic_questions) ? t.diagnostic_questions.length : 0;
+      entries.push({
+        id: `topic:${t.topic_key}`,
+        category: 'topic',
+        title: t.title,
+        subtitle: t.tagline,
+        detail: `${qCount} diagnostic Qs · v${t.maturity_version}`,
+        industryTags: t.industries ?? [],
+        topicTags: [t.topic_key],
+        publishedAt: null,
+        href: `/intelligence/ask?q=${encodeURIComponent(t.title)}`,
+        sourceUrl: null,
+      });
+      counts.topic += 1;
+      topicsFromCatalog += 1;
+      for (const i of t.industries ?? []) industrySet.add(i);
     }
+  } catch (err) {
+    console.warn('[library.topics-catalog]', err);
   }
-  for (const [topic, count] of topicCounts.entries()) {
-    if (count < 2) continue; // only surface topics that span at least 2 sources
-    entries.push({
-      id: `topic:${topic}`,
-      category: 'topic',
-      title: topic,
-      subtitle: `${count} indexed sources`,
-      detail: null,
-      industryTags: [],
-      topicTags: [topic],
-      publishedAt: null,
-      href: `/intelligence/ask?q=${encodeURIComponent(topic)}`,
-      sourceUrl: null,
-    });
-    counts.topic += 1;
+
+  if (topicsFromCatalog === 0) {
+    // Fallback · synthetic topics from topic_tags aggregation
+    const topicCounts = new Map<string, number>();
+    for (const e of entries) {
+      for (const t of e.topicTags) {
+        topicCounts.set(t, (topicCounts.get(t) ?? 0) + 1);
+      }
+    }
+    for (const [topic, count] of topicCounts.entries()) {
+      if (count < 2) continue;
+      entries.push({
+        id: `topic:${topic}`,
+        category: 'topic',
+        title: topic,
+        subtitle: `${count} indexed sources`,
+        detail: null,
+        industryTags: [],
+        topicTags: [topic],
+        publishedAt: null,
+        href: `/intelligence/ask?q=${encodeURIComponent(topic)}`,
+        sourceUrl: null,
+      });
+      counts.topic += 1;
+    }
   }
 
   // ── Vendors from the structured catalog. subtitle carries category so
