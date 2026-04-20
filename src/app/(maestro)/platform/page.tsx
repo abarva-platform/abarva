@@ -121,7 +121,7 @@ export default async function PlatformPage() {
         <Card
           label="Data coverage"
           accent={coveragePct >= 75 ? GREEN : coveragePct >= 40 ? AMBER : CORAL}
-          href="/tower/onboard"
+          href="/platform/data"
           hero={`${coveragePct}%`}
           sub={`${m.present} of ${m.of} core domains populated${activeClient ? ` for ${activeClient.name}` : ''}`}
         />
@@ -156,7 +156,7 @@ export default async function PlatformPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
           <QuickLink href="/platform/data" title="Data" sub="Upload, sources, templates" />
           <QuickLink href="/platform/users/new" title="Users" sub="Invite + role management" />
-          <QuickLink href="/tower/onboard" title="Data onboarding" sub="Wizard for new client sources" />
+          <QuickLink href="/platform/data" title="Data onboarding" sub="Wizard for new client sources" />
           <QuickLink href="/tower" title="Control Tower" sub="Portfolio dashboard" />
           <QuickLink href="/intelligence/library" title="Intelligence · Library" sub="Knowledge catalog" />
         </div>
