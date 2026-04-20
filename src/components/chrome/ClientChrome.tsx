@@ -19,22 +19,31 @@ interface ClientInfo {
   name: string;
 }
 
-const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
+// Product-map role visibility: client_viewer sees only Home / Engagements /
+// Control Tower. No Intelligence (cross-client knowledge), no Platform
+// (admin surfaces). Observer gets the same, minus Engagements.
+const ITEMS_CLIENT_VIEWER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' },
   { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
-  { label: 'Data', href: '/data', match: (p) => p === '/data' || p.startsWith('/data/') },
-  { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
+  { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
+];
+
+const ITEMS_OBSERVER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
+  { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
 ];
 
 export function ClientChrome({
   client,
+  role,
   children,
 }: {
   client: ClientInfo;
+  role?: 'client_viewer' | 'observer';
   children: React.ReactNode;
 }) {
   const pathname = usePathname() ?? '';
+  const ITEMS = role === 'observer' ? ITEMS_OBSERVER : ITEMS_CLIENT_VIEWER;
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();

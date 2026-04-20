@@ -9,7 +9,7 @@ export async function AppChrome({ children }: { children: React.ReactNode }) {
     return <MaestroChrome>{children}</MaestroChrome>;
   }
 
-  // Client viewer — collapse to single-tenant chrome keyed on their only
+  // Client viewer + observer — single-tenant chrome keyed on their only
   // accessible client. If they have zero memberships, fall through to
   // MaestroChrome so they see the standard "no data" empty state rather
   // than a broken client shell.
@@ -19,6 +19,11 @@ export async function AppChrome({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ClientChrome client={{ clientId: client.clientId, name: client.name }}>{children}</ClientChrome>
+    <ClientChrome
+      client={{ clientId: client.clientId, name: client.name }}
+      role={user.primaryRole === 'observer' ? 'observer' : 'client_viewer'}
+    >
+      {children}
+    </ClientChrome>
   );
 }
