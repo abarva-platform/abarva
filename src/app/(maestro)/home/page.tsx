@@ -86,7 +86,7 @@ function EngagementCard({ e }: { e: EngagementListItem }) {
   const phaseLabel = PHASE_LABELS[e.current_phase] ?? `Phase ${e.current_phase}`;
   return (
     <Link
-      href={`/engage/${encodeURIComponent(e.graph_node_id)}`}
+      href={`/engagements/${encodeURIComponent(e.graph_node_id)}`}
       style={{
         display: 'block',
         padding: 16,

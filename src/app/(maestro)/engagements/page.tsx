@@ -45,7 +45,7 @@ export default async function EngagementsListPage() {
           rows.map((e) => (
             <Link
               key={e.id}
-              href={`/engage/${encodeURIComponent(e.graph_node_id)}`}
+              href={`/engagements/${encodeURIComponent(e.graph_node_id)}`}
               style={{
                 display: 'block',
                 padding: 16,

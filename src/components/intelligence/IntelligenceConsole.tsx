@@ -260,7 +260,7 @@ export function IntelligenceConsole({ patterns, initialCode }: Props) {
                     {detail.engagements_triggering.map((e) => (
                       <Link
                         key={e.graph_node_id}
-                        href={`/engage/${encodeURIComponent(e.graph_node_id)}`}
+                        href={`/engagements/${encodeURIComponent(e.graph_node_id)}`}
                         style={{
                           display: 'block',
                           padding: 12,

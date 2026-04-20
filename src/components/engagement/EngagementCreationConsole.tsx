@@ -51,7 +51,7 @@ export function EngagementCreationConsole() {
   useEffect(() => {
     if (!created || redirectRef.current) return;
     redirectRef.current = true;
-    const t = setTimeout(() => router.push(`/engage/${encodeURIComponent(created.graph_node_id)}`), 1500);
+    const t = setTimeout(() => router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`), 1500);
     return () => clearTimeout(t);
   }, [created, router]);
 

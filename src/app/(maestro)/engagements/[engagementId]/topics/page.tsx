@@ -86,7 +86,7 @@ export default async function EngagementTopicsPage({
         </div>
         <div style={{ marginTop: 8 }}>
           <Link
-            href={`/engage/${encodeURIComponent(graphId)}`}
+            href={`/engagements/${encodeURIComponent(graphId)}`}
             style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textDecoration: 'none', letterSpacing: '0.08em' }}
           >
             ← back to engagement console

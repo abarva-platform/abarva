@@ -105,7 +105,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
       <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
         {c.triggered_engagement_id ? (
           <Link
-            href={`/engage/${encodeURIComponent(c.triggered_engagement_id)}`}
+            href={`/engagements/${encodeURIComponent(c.triggered_engagement_id)}`}
             style={{ fontFamily: FONT_MONO, fontSize: 11, color: TEAL, textDecoration: 'none' }}
           >
             View engagement →

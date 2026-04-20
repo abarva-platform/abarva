@@ -165,7 +165,7 @@ export default async function TopicDetailPage({
             {engagements.map((e) => (
               <Link
                 key={e.id}
-                href={`/engage/${encodeURIComponent(e.graph_node_id)}`}
+                href={`/engagements/${encodeURIComponent(e.graph_node_id)}`}
                 style={{
                   display: 'flex',
                   alignItems: 'baseline',

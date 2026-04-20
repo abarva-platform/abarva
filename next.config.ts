@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
       { source: '/data/:path*', destination: '/platform/data/:path*', permanent: true },
       { source: '/users', destination: '/platform/users', permanent: true },
       { source: '/users/:path*', destination: '/platform/users/:path*', permanent: true },
+      // Product-map spec: engagement console lives at /engagements/[id].
+      // Keep the /engage/* path alive via 308 for bookmarks + prior links.
+      { source: '/engage/:path*', destination: '/engagements/:path*', permanent: true },
     ];
   },
 };

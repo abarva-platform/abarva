@@ -70,7 +70,7 @@ export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
         summary: c.contradiction_type.replace(/_/g, ' '),
         detail: c.description,
         href: c.triggered_engagement_id
-          ? `/engage/${encodeURIComponent(c.triggered_engagement_id)}`
+          ? `/engagements/${encodeURIComponent(c.triggered_engagement_id)}`
           : c.client?.id
             ? `/tower?clientId=${encodeURIComponent(c.client.id)}`
             : '/tower',
@@ -120,7 +120,7 @@ export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
             kind: 'gate_pending',
             detail: `Phase ${gate.phase ?? '?'} gate awaiting approval`,
             updatedAt: e.updated_at,
-            href: `/engage/${encodeURIComponent(e.graph_node_id)}`,
+            href: `/engagements/${encodeURIComponent(e.graph_node_id)}`,
           });
           break;
         }
@@ -156,7 +156,7 @@ export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
             kind: 'awaiting_response',
             detail: 'Sponsor message waiting',
             updatedAt: last.created_at,
-            href: `/engage/${encodeURIComponent(e.graph_node_id)}`,
+            href: `/engagements/${encodeURIComponent(e.graph_node_id)}`,
           });
         }
       }
