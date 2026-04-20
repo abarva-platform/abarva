@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { currentUser } from '@clerk/nextjs/server'
 import AbarvaNav from '@/components/AbarvaNav'
 import {
   Copy,
@@ -92,8 +93,20 @@ export default async function InvestorsPage({
 }) {
   const { access } = await searchParams
   const expectedToken = process.env.INVESTOR_ACCESS_TOKEN?.trim()
+  const tokenMatches = !!expectedToken && access === expectedToken
 
-  if (!expectedToken || access !== expectedToken) {
+  // Signed-in investors and admins pass without the token. Warm-intro
+  // prospects without an account use /investors?access=<token>.
+  let roleUnlocks = false
+  try {
+    const user = await currentUser()
+    const role = user?.publicMetadata?.role as string | undefined
+    roleUnlocks = role === 'investor' || role === 'admin'
+  } catch {
+    // currentUser() can fail during static analysis; treat as not unlocked
+  }
+
+  if (!tokenMatches && !roleUnlocks) {
     notFound()
   }
 
