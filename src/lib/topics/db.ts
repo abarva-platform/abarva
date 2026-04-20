@@ -54,6 +54,76 @@ export interface EngagementTopicMapRow {
   notes: string | null;
 }
 
+export interface TopicRecommendation {
+  topic: TopicRow;
+  score: number;
+  reasons: string[];
+}
+
+export function recommendTopics(args: {
+  industryCode: string | null;
+  objectiveCode?: string | null;
+  functionCode?: string | null;
+  engagementName?: string | null;
+  candidates: TopicRow[];
+}): TopicRecommendation[] {
+  const industryCode = args.industryCode ?? '';
+  const objectiveCode = (args.objectiveCode ?? '').toLowerCase();
+  const functionCode = (args.functionCode ?? '').toLowerCase();
+  const nameLower = (args.engagementName ?? '').toLowerCase();
+
+  const scored: TopicRecommendation[] = args.candidates.map((t) => {
+    let score = 0;
+    const reasons: string[] = [];
+
+    if (industryCode && t.industries.includes(industryCode)) {
+      score += 40;
+      reasons.push(`industry match · ${industryCode}`);
+    } else if (t.industries.includes('GENERAL')) {
+      score += 10;
+      reasons.push('applies broadly');
+    }
+
+    if (t.maturity_version >= 2) {
+      score += 15;
+      reasons.push('spec-canonical');
+    } else {
+      score += 5;
+    }
+
+    // Objective + function + name scan against topic_key, title, tagline,
+    // trigger phrases. Cheap bag-of-words overlap.
+    const topicWords = new Set<string>();
+    for (const source of [t.topic_key, t.title, t.tagline ?? '']) {
+      for (const w of source.toLowerCase().split(/\W+/)) {
+        if (w.length >= 4) topicWords.add(w);
+      }
+    }
+    for (const trig of t.typical_triggers) {
+      const s = typeof trig === 'string'
+        ? trig
+        : ('phrase' in trig && typeof (trig as { phrase?: string }).phrase === 'string' ? (trig as { phrase: string }).phrase : ((trig as { description?: string }).description ?? ''));
+      for (const w of s.toLowerCase().split(/\W+/)) {
+        if (w.length >= 4) topicWords.add(w);
+      }
+    }
+
+    const engagementWords = new Set([...objectiveCode.split(/\W+/), ...functionCode.split(/\W+/), ...nameLower.split(/\W+/)].filter((w) => w.length >= 4));
+    let overlap = 0;
+    for (const w of engagementWords) if (topicWords.has(w)) overlap += 1;
+    if (overlap > 0) {
+      score += Math.min(30, overlap * 10);
+      reasons.push(`${overlap} word match${overlap === 1 ? '' : 'es'} w/ engagement`);
+    }
+
+    return { topic: t, score, reasons };
+  });
+
+  return scored
+    .filter((r) => r.score >= 30) // below this, not confident enough to recommend
+    .sort((a, b) => b.score - a.score);
+}
+
 export async function listAllTopics(): Promise<TopicRow[]> {
   const { data, error } = await getServerSupabase()
     .from('engagement_topics')

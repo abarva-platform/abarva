@@ -4,6 +4,7 @@ import { getEngagementByGraphId } from '@/lib/db/engagement';
 import {
   listAllTopics,
   listEngagementTopics,
+  recommendTopics,
   type TopicRow,
   type DiagnosticQuestion,
 } from '@/lib/topics/db';
@@ -50,8 +51,18 @@ export default async function EngagementTopicsPage({
     t.industries.includes(engagement.industry_code) ||
     t.industries.includes('GENERAL');
 
+  const recommendations = recommendTopics({
+    industryCode: engagement.industry_code,
+    objectiveCode: engagement.objective_code,
+    functionCode: engagement.function_code,
+    engagementName: engagement.name,
+    candidates: unassignedTopics,
+  }).slice(0, 3);
+  const recommendedKeys = new Set(recommendations.map((r) => r.topic.topic_key));
+
   const sortedUnassigned = unassignedTopics
     .slice()
+    .filter((t) => !recommendedKeys.has(t.topic_key))
     .sort((a, b) => Number(industryFit(b)) - Number(industryFit(a)) || a.title.localeCompare(b.title));
 
   return (
@@ -275,10 +286,85 @@ export default async function EngagementTopicsPage({
         )}
       </section>
 
+      {/* Recommended for this engagement */}
+      {recommendations.length > 0 && (
+        <section style={{ marginBottom: 28 }}>
+          <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 12 }}>
+            RECOMMENDED FOR THIS ENGAGEMENT · {recommendations.length}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
+            {recommendations.map((r) => (
+              <div
+                key={r.topic.topic_key}
+                style={{
+                  padding: 16,
+                  border: `0.5px solid ${PURPLE}`,
+                  borderRadius: 12,
+                  background: 'linear-gradient(135deg, rgba(155,109,255,0.06) 0%, rgba(45,212,200,0.04) 100%)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600 }}>{r.topic.title}</div>
+                  <span
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 9,
+                      color: PURPLE,
+                      letterSpacing: '0.1em',
+                      marginLeft: 'auto',
+                    }}
+                  >
+                    SCORE {r.score}
+                  </span>
+                </div>
+                {r.topic.tagline && (
+                  <div style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.45 }}>{r.topic.tagline}</div>
+                )}
+                {r.reasons.length > 0 && (
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.06em' }}>
+                    {r.reasons.slice(0, 3).map((reason, i) => (
+                      <span key={i}>
+                        {reason}
+                        {i < Math.min(r.reasons.length, 3) - 1 ? ' · ' : ''}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <form action={assignTopicAction} style={{ marginTop: 'auto' }}>
+                  <input type="hidden" name="engagementGraphId" value={graphId} />
+                  <input type="hidden" name="topicKey" value={r.topic.topic_key} />
+                  <button
+                    type="submit"
+                    style={{
+                      fontFamily: MONO,
+                      fontSize: 10,
+                      background: PURPLE,
+                      color: '#0A0A0A',
+                      border: 'none',
+                      padding: '6px 14px',
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      letterSpacing: '0.1em',
+                      fontWeight: 700,
+                    }}
+                  >
+                    ASSIGN RECOMMENDED →
+                  </button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Available to assign */}
       <section>
         <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 12 }}>
           ASSIGN · {sortedUnassigned.length} available
+          {recommendations.length > 0 ? ' · recommendations shown above excluded from fit-ranked list' : ''}
         </div>
         {sortedUnassigned.length === 0 ? (
           <div
