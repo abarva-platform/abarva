@@ -1,5 +1,6 @@
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { getSeedClient, seedClient } from './_shared/upsert';
 import { MERIDIAN_ENTERPRISE } from './meridian-enterprise';
 import { FIRSTCAPITAL_ENTERPRISE } from './firstcapital-enterprise';
@@ -15,7 +16,7 @@ const ALL: Record<string, ClientSeed> = {
   apex: APEX_ENTERPRISE,
 };
 
-function parseClients(argv: string[]): string[] {
+export function parseClients(argv: string[]): string[] {
   const idx = argv.findIndex((a) => a === '--clients');
   if (idx < 0) return Object.keys(ALL);
   const val = argv[idx + 1];
@@ -23,8 +24,7 @@ function parseClients(argv: string[]): string[] {
   return val.split(',').map((s) => s.trim().toLowerCase());
 }
 
-async function main() {
-  const clients = parseClients(process.argv);
+export async function runEnterpriseSeeds(clients: string[]) {
   const sb = getSeedClient();
 
   for (const key of clients) {
@@ -46,7 +46,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('FAILED:', err);
-  process.exit(1);
-});
+async function main() {
+  await runEnterpriseSeeds(parseClients(process.argv));
+}
+
+const isMain = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
+
+if (isMain) {
+  main().catch((err) => {
+    console.error('FAILED:', err);
+    process.exit(1);
+  });
+}
