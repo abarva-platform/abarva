@@ -141,13 +141,17 @@ export default async function DeliverablesPage({
               const critical = d.latest_version?.quality_issues?.critical ?? [];
               const remaining = d.latest_version?.quality_issues?.remaining ?? [];
               return (
-                <div
+                <Link
                   key={d.id}
+                  href={`/engagements/${encodeURIComponent(graphId)}/deliverables/${d.id}`}
                   style={{
+                    display: 'block',
                     padding: 14,
                     background: PANEL_BG,
                     border: BORDER,
                     borderRadius: 10,
+                    textDecoration: 'none',
+                    color: INK,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
@@ -181,7 +185,10 @@ export default async function DeliverablesPage({
                       )}
                     </div>
                   )}
-                </div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.1em', marginTop: 8 }}>
+                    VIEW DETAIL →
+                  </div>
+                </Link>
               );
             })}
           </div>
