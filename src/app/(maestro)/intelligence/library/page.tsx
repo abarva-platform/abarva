@@ -135,6 +135,101 @@ function Facet({
   );
 }
 
+function FeaturedRail({
+  title,
+  accent,
+  items,
+  viewAllHref,
+  emptyCopy,
+}: {
+  title: string;
+  accent: string;
+  items: LibraryEntry[];
+  viewAllHref: string;
+  emptyCopy: string;
+}) {
+  return (
+    <div
+      style={{
+        background: PANEL_BG,
+        border: BORDER,
+        borderRadius: 10,
+        padding: 14,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <div
+          style={{
+            fontFamily: MONO,
+            fontSize: 10,
+            color: accent,
+            letterSpacing: '0.14em',
+            textTransform: 'uppercase',
+          }}
+        >
+          ■ {title}
+        </div>
+        {items.length > 0 && (
+          <Link
+            href={viewAllHref}
+            style={{
+              fontFamily: MONO,
+              fontSize: 9,
+              color: accent,
+              letterSpacing: '0.1em',
+              textDecoration: 'none',
+            }}
+          >
+            VIEW ALL →
+          </Link>
+        )}
+      </div>
+      {items.length === 0 ? (
+        <div style={{ fontSize: 12, color: MUTE, fontStyle: 'italic', padding: '8px 0' }}>{emptyCopy}</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {items.map((e) => {
+            const href = e.href ?? e.sourceUrl ?? `/intelligence/ask?q=${encodeURIComponent(e.title)}`;
+            const external = !!e.sourceUrl && !e.href;
+            return (
+              <Link
+                key={`${e.category}:${e.id}`}
+                href={href}
+                target={external ? '_blank' : undefined}
+                rel={external ? 'noopener noreferrer' : undefined}
+                style={{
+                  display: 'block',
+                  padding: '8px 10px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: BORDER,
+                  borderRadius: 6,
+                  textDecoration: 'none',
+                  color: INK,
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>{e.title}</div>
+                {e.subtitle && (
+                  <div style={{ fontSize: 11, color: MUTE, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {e.subtitle}
+                  </div>
+                )}
+                {e.publishedAt && (
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginTop: 3 }}>
+                    {e.publishedAt.slice(0, 10)}
+                  </div>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EntryCard({ e }: { e: LibraryEntry }) {
   const href = e.href ?? e.sourceUrl ?? `/intelligence/ask?q=${encodeURIComponent(e.title)}`;
   const external = !!e.sourceUrl && !e.href;
@@ -244,6 +339,20 @@ export default async function LibraryPage({
   const total = Object.values(catalog.counts).reduce((s, n) => s + n, 0);
   const noIndexed = catalog.totalSources === 0 && catalog.counts.pattern === 0 && catalog.counts.vendor === 0;
 
+  // Featured shelf — only shown on the unfiltered all-view
+  const showFeatured = !activeCategory && !activeIndustry && !initialQuery && !noIndexed;
+  const byPubDate = (a: LibraryEntry, b: LibraryEntry) => {
+    const aT = a.publishedAt ? Date.parse(a.publishedAt) : 0;
+    const bT = b.publishedAt ? Date.parse(b.publishedAt) : 0;
+    return bT - aT;
+  };
+  const featuredTopics = catalog.entries.filter((e) => e.category === 'topic').slice(0, 3);
+  const featuredFresh = catalog.entries
+    .filter((e) => (e.category === 'research' || e.category === 'news' || e.category === 'benchmark') && e.publishedAt)
+    .sort(byPubDate)
+    .slice(0, 3);
+  const featuredPatterns = catalog.entries.filter((e) => e.category === 'pattern').slice(0, 3);
+
   return (
     <div
       style={{
@@ -269,6 +378,49 @@ export default async function LibraryPage({
       </div>
 
       <AskBar initialQuery={initialQuery} />
+
+      {showFeatured && (featuredTopics.length > 0 || featuredFresh.length > 0 || featuredPatterns.length > 0) && (
+        <section style={{ marginBottom: 28 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              marginBottom: 12,
+            }}
+          >
+            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em' }}>
+              FEATURED SHELF · start here
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.08em' }}>
+              {total} total · {catalog.pendingSources > 0 ? `${catalog.pendingSources} pending ingest` : 'library ready'}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 14 }}>
+            <FeaturedRail
+              title="Topics worth browsing"
+              accent={CATEGORY_COLOR.topic}
+              items={featuredTopics}
+              viewAllHref={`/intelligence/library${qsForCat('topic')}`}
+              emptyCopy="No topics published yet."
+            />
+            <FeaturedRail
+              title="Fresh research + news"
+              accent={CATEGORY_COLOR.research}
+              items={featuredFresh}
+              viewAllHref={`/intelligence/library${qsForCat('research')}`}
+              emptyCopy="No recent publications indexed."
+            />
+            <FeaturedRail
+              title="Key patterns"
+              accent={CATEGORY_COLOR.pattern}
+              items={featuredPatterns}
+              viewAllHref={`/intelligence/library${qsForCat('pattern')}`}
+              emptyCopy="Patterns land as the Genome graph seeds."
+            />
+          </div>
+        </section>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 24, alignItems: 'start' }}>
         {/* Left: facets */}
