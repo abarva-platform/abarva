@@ -42,6 +42,7 @@ import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/strip
 import { logAudit } from '@/lib/audit/log';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
 import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
+import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 
@@ -127,13 +128,27 @@ export async function POST(
     ? await getActivePersonalThreads(sponsor.id)
     : [];
 
-  const [maestroContextBlock, userContextBlock] = await Promise.all([
+  const [maestroContextBlock, userContextBlock, topicIntelligenceBlock] = await Promise.all([
     maestro
       ? assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
       : Promise.resolve(''),
     maestro
       ? assembleUserContextBlock({ personId: maestro.id, displayName: maestro.name })
       : Promise.resolve(''),
+    trace.capture(
+      'topic-intelligence assembly',
+      'graph',
+      () =>
+        assembleTopicIntelligenceBlock({
+          engagementId: engagement.id,
+          currentPhase: engagement.current_phase,
+          recentTurns: recentTurns.map((t) => ({ sender: t.sender, text: t.text })),
+        }),
+      (block) => ({
+        count: block ? 1 : 0,
+        summary: block ? `${block.split('TOPIC INTELLIGENCE:').length - 1} topic blocks` : 'no topics assigned',
+      }),
+    ),
   ]);
 
   const messages = recentTurns.map(t => ({
@@ -189,6 +204,7 @@ export async function POST(
     engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
     maestroContextBlock,
     userContextBlock,
+    topicIntelligenceBlock,
     retrievedContextBlock: [retrievedContextBlock, crossClientBlock].filter(Boolean).join('\n\n'),
   });
 
@@ -215,6 +231,10 @@ export async function POST(
         }
         if (peerDecisions.length > 0) {
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling peer decisions', detail: `${peerDecisions.length} precedents` }) + '\n'));
+        }
+        if (topicIntelligenceBlock && topicIntelligenceBlock.trim().length > 0) {
+          const topicCount = topicIntelligenceBlock.split('TOPIC INTELLIGENCE:').length - 1;
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling topic playbooks', detail: `${topicCount} assigned` }) + '\n'));
         }
         if (chainedPatterns.length > 0) {
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Traversing chained patterns', detail: `${chainedPatterns.length} edges` }) + '\n'));

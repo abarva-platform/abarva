@@ -15,6 +15,7 @@ interface AssembleArgs {
   clientDataSummary?: string[];
   maestroContextBlock?: string;
   userContextBlock?: string;
+  topicIntelligenceBlock?: string;
   /**
    * Labeled RETRIEVED CONTEXT block from formatRetrievedContext(). Empty
    * string when retrieval returned no chunks — do not pass a string with
@@ -45,6 +46,7 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
     CONVERSATION_PRINCIPLES,
     ctx.userContextBlock && ctx.userContextBlock.trim().length > 0 ? ctx.userContextBlock : null,
     ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
+    ctx.topicIntelligenceBlock && ctx.topicIntelligenceBlock.trim().length > 0 ? ctx.topicIntelligenceBlock : null,
     hasRetrieval ? ctx.retrievedContextBlock : null,
     hasRetrieval ? CITATION_INSTRUCTION : null,
     phasePrompt,
