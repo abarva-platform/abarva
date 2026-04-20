@@ -89,7 +89,11 @@ async function seedContradictions(sb: SupabaseClient, clientId: string, clientKe
     severity: item.severity,
     description: item.description,
     suggested_action: item.suggested_action,
-    evidence: { refs: item.evidence_refs, source: 'pack_j_seed' },
+    evidence: {
+      refs: item.evidence_refs,
+      source: 'pack_j_seed',
+      ...(item.impact ? { impact: item.impact } : {}),
+    },
   }))
 
   if (rows.length === 0) return 0

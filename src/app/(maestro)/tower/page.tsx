@@ -76,24 +76,101 @@ function contradictionTypeLabel(t: string): string {
   return t.replace(/_/g, ' ');
 }
 
+interface ContradictionImpact {
+  one_liner?: string;
+  monthly_total_usd?: number;
+  eliminable_usd_annual?: number;
+  eliminable_pct?: number;
+  owner_named?: boolean;
+  confidence?: string;
+}
+
+function formatUsd(n: number | undefined): string | null {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${n}`;
+}
+
 function ContradictionCard({ c }: { c: ContradictionRow }) {
   const evidence = c.evidence && typeof c.evidence === 'object' ? c.evidence : {};
-  const evidenceEntries = Object.entries(evidence).slice(0, 4);
+  const impact = (evidence as { impact?: ContradictionImpact }).impact ?? null;
+  const refsRaw = (evidence as { refs?: unknown }).refs;
+  const refs = Array.isArray(refsRaw) ? (refsRaw as string[]) : [];
+  const monthly = formatUsd(impact?.monthly_total_usd);
+  const eliminable = formatUsd(impact?.eliminable_usd_annual);
+  const sev = severityColor(c.severity);
   return (
     <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: severityColor(c.severity) }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: sev }}>
           {c.severity} · {contradictionTypeLabel(c.contradiction_type)}
         </div>
       </div>
-      <div style={{ fontSize: 13.5, color: INK, lineHeight: 1.5 }}>{c.description}</div>
-      {evidenceEntries.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
-          {evidenceEntries.map(([k, v]) => (
-            <div key={k} style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
-              <span style={{ color: MUTE }}>{k}:</span>{' '}
-              <span style={{ color: INK }}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+      {impact?.one_liner && (
+        <div
+          style={{
+            fontSize: 14,
+            color: INK,
+            lineHeight: 1.5,
+            fontWeight: 500,
+            padding: '10px 12px',
+            background: 'rgba(245,197,74,0.06)',
+            borderLeft: `2px solid ${sev}`,
+            borderRadius: 4,
+            marginBottom: 10,
+          }}
+        >
+          {impact.one_liner}
+        </div>
+      )}
+      {(monthly || eliminable || impact?.owner_named === false) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 10 }}>
+          {monthly && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              <span style={{ color: MUTE }}>monthly spend:</span>{' '}
+              <span style={{ color: INK }}>{monthly}</span>
             </div>
+          )}
+          {eliminable && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              <span style={{ color: MUTE }}>eliminable/yr:</span>{' '}
+              <span style={{ color: sev }}>{eliminable}</span>
+              {typeof impact?.eliminable_pct === 'number' && (
+                <span style={{ color: MUTE }}> · {impact.eliminable_pct}%</span>
+              )}
+            </div>
+          )}
+          {impact?.owner_named === false && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: CORAL }}>
+              no owner named
+            </div>
+          )}
+          {impact?.confidence && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              confidence: {impact.confidence}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.5 }}>{c.description}</div>
+      {refs.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {refs.slice(0, 4).map((r, i) => (
+            <span
+              key={i}
+              style={{
+                fontFamily: FONT_MONO,
+                fontSize: 9,
+                color: MUTE,
+                padding: '2px 6px',
+                border: BORDER_SOFT,
+                borderRadius: 4,
+                letterSpacing: '0.06em',
+              }}
+            >
+              {r}
+            </span>
           ))}
         </div>
       )}

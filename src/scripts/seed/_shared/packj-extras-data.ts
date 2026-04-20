@@ -190,6 +190,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Consumer Claude.ai and ChatGPT are being used by quant and research teams for market-sensitive work without governed DPA coverage.',
       suggested_action: 'Shut down consumer AI use for research workflows and move approved users onto enterprise workspaces.',
       evidence_refs: ['Desktop telemetry', 'Consumer AI expense trail', 'Research lead interviews'],
+      impact: {
+        one_liner: 'Consumer Claude.ai + ChatGPT on market-sensitive research · MNPI exposure with zero DPA cover · one subpoena away from regulatory action, remediation is a single enterprise-tenant migration.',
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',
@@ -197,6 +202,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Cresta, Observe.AI, and Verint are all still consuming budget in the contact center even though Cresta is the chosen strategic platform.',
       suggested_action: 'Retire the overlapping agent-assist platforms and consolidate contract spend onto the chosen stack.',
       evidence_refs: ['Contact center tooling inventory', 'Legacy contract list'],
+      impact: {
+        one_liner: 'Cresta chosen strategically, but Observe.AI + Verint contracts still draw · $94K/mo of paid-for-but-shadow tooling · cleanup is procurement, not engineering.',
+        monthly_total_usd: 94_000,
+        eliminable_usd_annual: 1_100_000,
+        eliminable_pct: 100,
+        owner_named: true,
+        confidence: 'high',
+      },
     },
     {
       severity: 'medium',
@@ -204,6 +217,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Hebbia is indexing sensitive deal materials, but current residency controls do not enforce the intended US-only boundary by default.',
       suggested_action: 'Apply residency restrictions and revalidate the data-handling controls before expanding the research workspace.',
       evidence_refs: ['Hebbia workspace config', 'DPA residency clause'],
+      impact: {
+        one_liner: 'Hebbia indexing deal materials without enforced US-only residency · intended boundary not configured, not monitored · cross-border exposure on every IPO workspace touched.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -211,6 +229,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Personetics is carrying a 12% deposit-growth claim, but Finance disputes the attribution because the baseline cohort and control methodology are weak.',
       suggested_action: 'Rebuild the baseline and attribution model before using the claim in executive reporting.',
       evidence_refs: ['Personetics value deck', 'Finance attribution review'],
+      impact: {
+        one_liner: 'Personetics claims 12% deposit lift, Finance disputes methodology · if this number goes to the board it rolls back the credibility of every other AI metric in the stack.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -218,6 +241,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Fourteen of thirty-four AI use cases have never been reviewed by the AI governance committee, even though the committee has existed for nine months.',
       suggested_action: 'Create a remediation sprint to review all ungoverned AI use cases before additional pilots are approved.',
       evidence_refs: ['Governance committee agenda history', 'AI inventory review status'],
+      impact: {
+        one_liner: '14 of 34 AI use cases never reviewed after 9 months of governance committee · F007 pattern · if examiner asks how AI is governed the answer is "it isn\'t."',
+        owner_named: true,
+        confidence: 'high',
+      },
     },
   ],
   apex: [
@@ -227,6 +255,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Frontline Copilot is costing $182K per month while only 32% of the 28,000-seat base is active each week.',
       suggested_action: 'Either retrain and relaunch the frontline program or cut inactive seats before scaling further.',
       evidence_refs: ['Microsoft Frontline usage export', 'Seat assignment list'],
+      impact: {
+        one_liner: 'Frontline Copilot $182K/mo at 32% weekly active on 28,000 seats · roughly $1.5M/year funding seats that haven\'t opened the tool this month.',
+        monthly_total_usd: 182_000,
+        eliminable_usd_annual: 1_480_000,
+        eliminable_pct: 68,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',
@@ -234,6 +270,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Bloomreach, Dynamic Yield, and Nosto are all running personalization or recommendation logic with unclear attribution, driving roughly $430K per month of overlap.',
       suggested_action: 'Choose the target personalization architecture and decommission the overlapping stack.',
       evidence_refs: ['Digital experimentation stack inventory', 'Vendor overlap analysis'],
+      impact: {
+        one_liner: 'Bloomreach + Dynamic Yield + Nosto all running personalization with no attribution owner · $430K/mo overlap · margin-weighted lift below benchmark because logic competes against itself.',
+        monthly_total_usd: 430_000,
+        eliminable_usd_annual: 3_400_000,
+        eliminable_pct: 66,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'medium',
@@ -241,6 +285,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Marketing is using Midjourney at enterprise scale with no formal brand compliance or prompt-governance review.',
       suggested_action: 'Bring marketing image generation into an approved workflow with brand-review controls.',
       evidence_refs: ['Midjourney invoice trend', 'Brand review process gap analysis'],
+      impact: {
+        one_liner: 'Midjourney at enterprise scale with no brand review · every unreviewed campaign is a brand-risk coin flip · policy exists in legal, hasn\'t reached marketing.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -248,6 +297,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Signifyd is receiving customer transaction data, but the subprocessor review is more than a year stale.',
       suggested_action: 'Refresh the Signifyd subprocessor review and revalidate the current PII-sharing controls.',
       evidence_refs: ['Signifyd DPA', 'Subprocessor register'],
+      impact: {
+        one_liner: 'Signifyd receiving PII with a 14-month-stale subprocessor review · state privacy regulators require annual review minimum · remediation is a procurement conversation, cost of miss is state-by-state enforcement.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -255,6 +309,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Store-level AI tools are being funded and piloted through line-of-business budgets, but they still do not appear in a central inventory or governance cadence.',
       suggested_action: 'Require every store-level AI tool to enter the central inventory before further rollout decisions.',
       evidence_refs: ['Store operations budget review', 'Central AI inventory gap list'],
+      impact: {
+        one_liner: 'Store-level AI piloted on LOB budgets, invisible to central governance · shadow AI in a regulated customer-data environment · central inventory gap is how audit findings start.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
   ],
 }
