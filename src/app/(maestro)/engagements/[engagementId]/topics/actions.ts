@@ -12,29 +12,33 @@ async function resolveEngagementId(graphId: string): Promise<string | null> {
 
 export async function assignTopicAction(formData: FormData): Promise<void> {
   const graphId = String(formData.get('engagementGraphId') ?? '');
-  const topicId = String(formData.get('topicId') ?? '');
-  if (!graphId || !topicId) return;
+  const topicKey = String(formData.get('topicKey') ?? '');
+  if (!graphId || !topicKey) return;
   const engagementId = await resolveEngagementId(graphId);
   if (!engagementId) return;
   const caller = await getCurrentPerson();
-  await assignTopic({ engagementId, topicId, assignedBy: caller?.id ?? null });
+  await assignTopic({ engagementId, topicKey, assignedBy: caller?.id ?? null });
   revalidatePath(`/engagements/${graphId}/topics`);
 }
 
 export async function unassignTopicAction(formData: FormData): Promise<void> {
   const graphId = String(formData.get('engagementGraphId') ?? '');
-  const engagementTopicId = String(formData.get('engagementTopicId') ?? '');
-  if (!graphId || !engagementTopicId) return;
-  await unassignTopic(engagementTopicId);
+  const topicKey = String(formData.get('topicKey') ?? '');
+  if (!graphId || !topicKey) return;
+  const engagementId = await resolveEngagementId(graphId);
+  if (!engagementId) return;
+  await unassignTopic({ engagementId, topicKey });
   revalidatePath(`/engagements/${graphId}/topics`);
 }
 
 export async function toggleQuestionAction(formData: FormData): Promise<void> {
   const graphId = String(formData.get('engagementGraphId') ?? '');
-  const engagementTopicId = String(formData.get('engagementTopicId') ?? '');
+  const topicKey = String(formData.get('topicKey') ?? '');
   const questionId = String(formData.get('questionId') ?? '');
   const done = formData.get('done') === 'true';
-  if (!graphId || !engagementTopicId || !questionId) return;
-  await toggleQuestionDone({ engagementTopicId, questionId, done });
+  if (!graphId || !topicKey || !questionId) return;
+  const engagementId = await resolveEngagementId(graphId);
+  if (!engagementId) return;
+  await toggleQuestionDone({ engagementId, topicKey, questionId, done });
   revalidatePath(`/engagements/${graphId}/topics`);
 }

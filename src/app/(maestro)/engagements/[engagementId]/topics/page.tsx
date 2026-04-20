@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
-import { listAllTopics, listEngagementTopics, type TopicRow } from '@/lib/topics/db';
+import {
+  listAllTopics,
+  listEngagementTopics,
+  type TopicRow,
+  type DiagnosticQuestion,
+} from '@/lib/topics/db';
 import { assignTopicAction, unassignTopicAction, toggleQuestionAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +24,10 @@ const MONO = 'JetBrains Mono, monospace';
 
 const PHASE_LABEL = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 
+function questionId(q: DiagnosticQuestion, idx: number): string {
+  return q.id ?? `q-${idx}`;
+}
+
 export default async function EngagementTopicsPage({
   params,
 }: {
@@ -33,8 +42,8 @@ export default async function EngagementTopicsPage({
     listEngagementTopics(engagement.id),
   ]);
 
-  const assignedById = new Map(assigned.map((a) => [a.topic_id, a]));
-  const unassignedTopics = allTopics.filter((t) => !assignedById.has(t.id));
+  const assignedByKey = new Map(assigned.map((a) => [a.topic_key, a]));
+  const unassignedTopics = allTopics.filter((t) => !assignedByKey.has(t.topic_key));
 
   const industryFit = (t: TopicRow) =>
     t.industries.length === 0 ||
@@ -61,8 +70,8 @@ export default async function EngagementTopicsPage({
         </div>
         <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.01em' }}>{engagement.name}</div>
         <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
-          Assigned topic playbooks drive Nexus&rsquo;s phase intelligence. v1 is schema + catalog;
-          v2 (topic-triggered retrieval injection on Nexus turns) ships next.
+          Topic playbooks drive Nexus&rsquo;s phase-aware reasoning. v1 · assignment + diagnostic workbook. v2 ·
+          topic-triggered retrieval injection on Nexus turns (queued next).
         </div>
         <div style={{ marginTop: 8 }}>
           <Link
@@ -97,16 +106,17 @@ export default async function EngagementTopicsPage({
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {assigned.map((et) => {
-              const topic = allTopics.find((t) => t.id === et.topic_id);
+              const topic = allTopics.find((t) => t.topic_key === et.topic_key);
               if (!topic) return null;
               const progress = et.progress ?? {};
-              const done = topic.diagnostic_questions.filter((q) => progress[q.id]).length;
-              const total = topic.diagnostic_questions.length;
+              const questions = topic.diagnostic_questions;
+              const done = questions.filter((q, i) => progress[questionId(q, i)]).length;
+              const total = questions.length;
               const fraction = total > 0 ? done / total : 0;
               const color = fraction === 1 ? GREEN : fraction >= 0.5 ? AMBER : TEAL;
               return (
                 <div
-                  key={et.id}
+                  key={et.topic_key}
                   style={{
                     padding: 18,
                     border: BORDER,
@@ -116,6 +126,21 @@ export default async function EngagementTopicsPage({
                 >
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 6 }}>
                     <div style={{ fontSize: 16, fontWeight: 500 }}>{topic.title}</div>
+                    {et.is_primary && (
+                      <span
+                        style={{
+                          fontFamily: MONO,
+                          fontSize: 9,
+                          color: PURPLE,
+                          background: 'rgba(155,109,255,0.08)',
+                          padding: '1px 6px',
+                          borderRadius: 3,
+                          letterSpacing: '0.1em',
+                        }}
+                      >
+                        PRIMARY
+                      </span>
+                    )}
                     <div
                       style={{
                         fontFamily: MONO,
@@ -128,7 +153,7 @@ export default async function EngagementTopicsPage({
                     </div>
                     <form action={unassignTopicAction} style={{ marginLeft: 'auto' }}>
                       <input type="hidden" name="engagementGraphId" value={graphId} />
-                      <input type="hidden" name="engagementTopicId" value={et.id} />
+                      <input type="hidden" name="topicKey" value={et.topic_key} />
                       <button
                         type="submit"
                         style={{
@@ -153,11 +178,13 @@ export default async function EngagementTopicsPage({
 
                   {/* Diagnostic questions workbook */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
-                    {topic.diagnostic_questions.map((q) => {
-                      const isDone = Boolean(progress[q.id]);
+                    {questions.map((q, i) => {
+                      const qid = questionId(q, i);
+                      const isDone = Boolean(progress[qid]);
+                      const phase = q.phase ?? 0;
                       return (
                         <form
-                          key={q.id}
+                          key={qid}
                           action={toggleQuestionAction}
                           style={{
                             display: 'flex',
@@ -169,8 +196,8 @@ export default async function EngagementTopicsPage({
                           }}
                         >
                           <input type="hidden" name="engagementGraphId" value={graphId} />
-                          <input type="hidden" name="engagementTopicId" value={et.id} />
-                          <input type="hidden" name="questionId" value={q.id} />
+                          <input type="hidden" name="topicKey" value={et.topic_key} />
+                          <input type="hidden" name="questionId" value={qid} />
                           <input type="hidden" name="done" value={isDone ? 'false' : 'true'} />
                           <button
                             type="submit"
@@ -197,9 +224,15 @@ export default async function EngagementTopicsPage({
                                 marginRight: 6,
                               }}
                             >
-                              P{q.phase} {PHASE_LABEL[q.phase]?.toUpperCase() ?? ''}
+                              P{phase} {PHASE_LABEL[phase]?.toUpperCase() ?? ''}
+                              {typeof q.probe_depth === 'number' ? ` · depth ${q.probe_depth}` : ''}
                             </span>
                             {q.question}
+                            {q.tags && q.tags.length > 0 && (
+                              <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginLeft: 8 }}>
+                                [{q.tags.join(', ')}]
+                              </span>
+                            )}
                           </div>
                         </form>
                       );
@@ -214,9 +247,10 @@ export default async function EngagementTopicsPage({
                             COMMON CONTRADICTIONS
                           </div>
                           <ul style={{ margin: 0, paddingLeft: 18, color: MUTE, fontSize: 12, lineHeight: 1.6 }}>
-                            {topic.common_contradictions.slice(0, 3).map((c, i) => (
-                              <li key={i}>{c}</li>
-                            ))}
+                            {topic.common_contradictions.slice(0, 3).map((c, i) => {
+                              const text = typeof c === 'string' ? c : c.description;
+                              return <li key={i}>{text}</li>;
+                            })}
                           </ul>
                         </div>
                       )}
@@ -265,7 +299,7 @@ export default async function EngagementTopicsPage({
               const fits = industryFit(t);
               return (
                 <div
-                  key={t.id}
+                  key={t.topic_key}
                   style={{
                     padding: 14,
                     border: BORDER,
@@ -322,7 +356,7 @@ export default async function EngagementTopicsPage({
                     </span>
                     <form action={assignTopicAction}>
                       <input type="hidden" name="engagementGraphId" value={graphId} />
-                      <input type="hidden" name="topicId" value={t.id} />
+                      <input type="hidden" name="topicKey" value={t.topic_key} />
                       <button
                         type="submit"
                         style={{
@@ -348,9 +382,6 @@ export default async function EngagementTopicsPage({
           </div>
         )}
       </section>
-
-      {/* Unused accent — lint assist */}
-      <span style={{ color: PURPLE, display: 'none' }} aria-hidden="true" />
     </div>
   );
 }

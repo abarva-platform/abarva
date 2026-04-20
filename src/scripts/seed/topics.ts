@@ -18,7 +18,7 @@ interface TopicSeed {
   typical_triggers: Array<{ phrase: string; confidence: 'high' | 'medium' | 'low' }>;
   key_patterns: string[];
   vendor_landscape: Record<string, string[]>;
-  diagnostic_questions: Array<{ id: string; question: string; phase: number }>;
+  diagnostic_questions: Array<{ id: string; question: string; phase: number; probe_depth?: number; tags?: string[] }>;
   common_contradictions: string[];
   phase_playbook: Record<string, string>;
   typical_deliverables: string[];
@@ -509,7 +509,7 @@ async function main() {
   let updated = 0;
   for (const topic of TOPICS) {
     const { data: existing } = await sb
-      .from('topics')
+      .from('engagement_topics')
       .select('id')
       .eq('topic_key', topic.topic_key)
       .maybeSingle();
@@ -532,11 +532,11 @@ async function main() {
     };
 
     if (existing) {
-      const { error } = await sb.from('topics').update(payload).eq('id', existing.id);
+      const { error } = await sb.from('engagement_topics').update(payload).eq('id', existing.id);
       if (error) throw error;
       updated += 1;
     } else {
-      const { error } = await sb.from('topics').insert(payload);
+      const { error } = await sb.from('engagement_topics').insert(payload);
       if (error) throw error;
       inserted += 1;
     }
