@@ -38,30 +38,56 @@ jobs:
       - name: Install deps
         run: npm ci
 
+      - name: Diagnostic · DB host + migration tracking state
+        continue-on-error: true
+        run: |
+          set +e
+          host=$(echo "${DATABASE_URL:-}" | sed -n 's|.*@\([^:/]*\).*|\1|p')
+          files=$(ls supabase/migrations/*.sql 2>/dev/null | grep -v RUN_THIS_ | wc -l | tr -d ' ')
+          {
+            echo "## Pre-check diagnostics"
+            echo ""
+            echo "- Host: \`${host:-unknown}\`"
+            echo "- Migration files in repo: **${files}**"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Dry-run migrations · pending means drift
         id: dry
         run: |
-          set -euo pipefail
+          set +e
           output=$(npm run --silent db:migrate:dry 2>&1)
+          rc=$?
           echo "$output"
-          # Capture output for the failure message
-          echo "output<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$output" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-          # Fail if pending migrations found
+          {
+            echo "## Runner output"
+            echo ""
+            echo '```'
+            echo "$output"
+            echo '```'
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ $rc -ne 0 ]; then
+            {
+              echo "## Result"
+              echo ""
+              echo "❌ Runner exited with code $rc"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit $rc
+          fi
           if echo "$output" | grep -q "Pending migrations"; then
+            {
+              echo "## Result"
+              echo ""
+              echo "❌ DRIFT · migrations committed but not applied on prod"
+              echo ""
+              echo "**Fix:** backfill schema_migrations, apply missing migration, or verify DATABASE_URL points to the right project."
+            } >> "$GITHUB_STEP_SUMMARY"
             echo "::error::DRIFT · migrations committed but not applied on prod"
             exit 1
           fi
-          echo "✓ No drift. All migrations applied."
-
-      - name: Summarize
-        if: always()
-        run: |
-          cat <<EOF >> "$GITHUB_STEP_SUMMARY"
-          ## Migration drift check · $(date -u +"%Y-%m-%d %H:%M UTC")
-
-          \`\`\`
-          ${{ steps.dry.outputs.output }}
-          \`\`\`
-          EOF
+          {
+            echo "## Result"
+            echo ""
+            echo "✓ No drift. All migrations applied."
+          } >> "$GITHUB_STEP_SUMMARY"

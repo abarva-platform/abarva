@@ -63,9 +63,18 @@ export default async function EngagePage({
       }>)
     : [];
 
-  // Meta-strip signals · contradictions count for the engagement's client
-  // (pulled via engagement_id → client_id join). Empty-safe.
+  // Meta-strip + console signals · contradictions (count + top-3 with impact
+  // framing) + activity events (turns + gate approvals + deliverable updates).
   let contradictionsCount = 0;
+  let topContradictions: Array<{
+    id: string;
+    severity: 'high' | 'medium' | 'low';
+    description: string;
+    one_liner: string | null;
+    monthly_total_usd: number | null;
+    eliminable_usd_annual: number | null;
+    owner_named: boolean | null;
+  }> = [];
   try {
     const sb = getServerSupabase();
     const { data: engClient } = await sb
@@ -81,12 +90,67 @@ export default async function EngagePage({
         .eq('client_id', clientId)
         .is('resolved_at', null);
       contradictionsCount = count ?? 0;
+
+      const { data: rows } = await sb
+        .from('contradictions')
+        .select('id, severity, description, evidence')
+        .eq('client_id', clientId)
+        .is('resolved_at', null)
+        .order('severity', { ascending: true })
+        .limit(3);
+      topContradictions = ((rows as Array<{
+        id: string;
+        severity: 'high' | 'medium' | 'low';
+        description: string;
+        evidence: { impact?: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } } | null;
+      }> | null) ?? []).map((c) => ({
+        id: c.id,
+        severity: c.severity,
+        description: c.description,
+        one_liner: c.evidence?.impact?.one_liner ?? null,
+        monthly_total_usd: c.evidence?.impact?.monthly_total_usd ?? null,
+        eliminable_usd_annual: c.evidence?.impact?.eliminable_usd_annual ?? null,
+        owner_named: c.evidence?.impact?.owner_named ?? null,
+      }));
     }
   } catch {
-    // quiet fail; meta-strip will render 0
+    // quiet fail; strip will render 0, console will render no panel
   }
 
   const lastTurn = turns.length > 0 ? turns[turns.length - 1] : null;
+
+  // Activity events · unify turns + gate approvals + deliverable updates
+  // into a single reverse-chron stream (last 5).
+  const events: Array<{ kind: 'turn' | 'gate' | 'deliverable'; label: string; detail: string; at: string }> = [];
+  for (const t of turns.slice(-3)) {
+    events.push({
+      kind: 'turn',
+      label: t.sender === 'agent' ? 'Nexus reply' : `${sponsor?.name ?? 'Sponsor'} turn`,
+      detail: t.text.slice(0, 72).replace(/\n/g, ' '),
+      at: t.created_at,
+    });
+  }
+  const gates = (engagement.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string; summary?: string }> | null) ?? [];
+  for (const g of gates) {
+    if (g.status === 'approved' && g.signed_at) {
+      events.push({
+        kind: 'gate',
+        label: `Phase ${g.phase} gate approved`,
+        detail: g.summary ?? 'Phase advanced',
+        at: g.signed_at,
+      });
+    }
+  }
+  for (const d of deliverables.slice(0, 3)) {
+    events.push({
+      kind: 'deliverable',
+      label: `${d.type.replace(/_/g, ' ')} drafted`,
+      detail: `Phase ${d.phase}`,
+      at: d.generated_at,
+    });
+  }
+  events.sort((a, b) => b.at.localeCompare(a.at));
+  const activityEvents = events.slice(0, 5);
 
   return (
     <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto' }}>
