@@ -486,6 +486,27 @@ export function EngagementConsole({
             )}
           </div>
 
+          {/* Topics · /engagements/[id]/topics deep-link */}
+          <a
+            href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/topics`}
+            style={{
+              display: 'block',
+              background: 'rgba(155,109,255,0.04)',
+              border: '0.5px solid rgba(155,109,255,0.2)',
+              borderRadius: 10,
+              padding: 14,
+              textDecoration: 'none',
+              color: '#F5F5F0',
+            }}
+          >
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#9B6DFF', textTransform: 'uppercase', marginBottom: 4 }}>
+              Topics · playbooks
+            </div>
+            <div style={{ color: 'rgba(245,245,240,0.82)', fontSize: 12 }}>
+              Assign diagnostic-question workbooks + topic playbooks →
+            </div>
+          </a>
+
           {/* Deliverables */}
           <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
