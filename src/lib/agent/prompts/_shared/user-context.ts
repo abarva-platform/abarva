@@ -37,6 +37,29 @@ interface VipProfileRow {
   avoid_topics: string[] | null;
 }
 
+export interface VipGreetingData {
+  displayName: string;
+  firstName: string;
+  currentTitle: string | null;
+  currentCompany: string | null;
+  emphasizeTopics: string[];
+  currentInitiatives: string[];
+}
+
+export async function loadVipGreetingData(args: UserProfileArgs): Promise<VipGreetingData | null> {
+  const profile = await loadProfile(args);
+  if (!profile) return null;
+  const firstName = profile.display_name.split(/\s+/)[0] ?? profile.display_name;
+  return {
+    displayName: profile.display_name,
+    firstName,
+    currentTitle: profile.current_title,
+    currentCompany: profile.current_company,
+    emphasizeTopics: (profile.emphasize_topics ?? []).slice(0, 3),
+    currentInitiatives: (profile.current_initiatives ?? []).slice(0, 3),
+  };
+}
+
 async function loadProfile(args: UserProfileArgs): Promise<VipProfileRow | null> {
   if (!args.personId && !args.displayName) return null;
   const sb = getServerSupabase();

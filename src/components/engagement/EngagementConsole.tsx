@@ -6,6 +6,7 @@ import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
+import type { VipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { ChoiceChips, type Choice } from './ChoiceChips';
 import { renderWithCitations } from './renderWithCitations';
 import { TraceDrawer } from './TraceDrawer';
@@ -27,10 +28,11 @@ interface Props {
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
   deliverables?: Deliverable[];
+  vipGreeting?: VipGreetingData | null;
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting,
 }: Props) {
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
@@ -236,9 +238,102 @@ export function EngagementConsole({
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {messages.length === 0 ? (
-              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 14, fontStyle: 'italic' }}>
-                No turns yet. Say something to Nexus.
-              </div>
+              vipGreeting ? (
+                <div
+                  style={{
+                    padding: 20,
+                    background: 'linear-gradient(135deg, rgba(45,212,200,0.06) 0%, rgba(155,109,255,0.04) 100%)',
+                    border: '0.5px solid rgba(45,212,200,0.25)',
+                    borderRadius: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      color: '#2DD4C8',
+                      letterSpacing: '0.14em',
+                      marginBottom: 10,
+                    }}
+                  >
+                    NEXUS · FIRST TURN
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: 20,
+                      color: '#F5F5F0',
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.35,
+                      marginBottom: 10,
+                    }}
+                  >
+                    Good to meet you, {vipGreeting.firstName}.
+                  </div>
+                  <div style={{ fontSize: 14, color: 'rgba(245,245,240,0.82)', lineHeight: 1.55, marginBottom: 14 }}>
+                    {vipGreeting.currentTitle && vipGreeting.currentCompany
+                      ? `I know you're ${vipGreeting.currentTitle.toLowerCase().startsWith('executive') ? 'the' : ''} ${vipGreeting.currentTitle} at ${vipGreeting.currentCompany}. `
+                      : ''}
+                    Before we dig in, here's what I've already pulled that might be relevant —
+                    push back hard if I've mis-prioritized.
+                  </div>
+                  {vipGreeting.emphasizeTopics.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 9,
+                          color: 'rgba(245,245,240,0.6)',
+                          letterSpacing: '0.14em',
+                          marginBottom: 6,
+                        }}
+                      >
+                        WHAT I'LL EMPHASIZE
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 20, color: 'rgba(245,245,240,0.88)', fontSize: 13.5, lineHeight: 1.6 }}>
+                        {vipGreeting.emphasizeTopics.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {vipGreeting.currentInitiatives.length > 0 && (
+                    <div style={{ marginBottom: 6 }}>
+                      <div
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 9,
+                          color: 'rgba(245,245,240,0.6)',
+                          letterSpacing: '0.14em',
+                          marginBottom: 6,
+                        }}
+                      >
+                        GIVEN YOUR CURRENT FOCUS
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 20, color: 'rgba(245,245,240,0.72)', fontSize: 12.5, lineHeight: 1.6 }}>
+                        {vipGreeting.currentInitiatives.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      marginTop: 12,
+                      fontSize: 13,
+                      color: 'rgba(245,245,240,0.65)',
+                      fontStyle: 'italic',
+                      fontFamily: 'DM Sans, sans-serif',
+                    }}
+                  >
+                    Where should we start?
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 14, fontStyle: 'italic' }}>
+                  No turns yet. Say something to Nexus.
+                </div>
+              )
             ) : (
               messages.map(t => (
                 <div key={t.id}>
