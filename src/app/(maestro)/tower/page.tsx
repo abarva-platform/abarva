@@ -243,6 +243,48 @@ export default async function TowerPage({
 
   const valueRatio = vm.cost.monthlySpendUsd > 0 ? vm.value.verifiedUsd / (vm.cost.monthlySpendUsd * 12) : 0;
 
+  // Spend trajectory · 12-month rollup from spend_breakdown (Pack J seeds)
+  let trajectory: Array<{ month: string; total: number; categoryCount: number }> = [];
+  try {
+    const { getServerSupabase } = await import('@/lib/supabase-server');
+    const sb = getServerSupabase();
+    const { data: spend } = await sb
+      .from('spend_breakdown')
+      .select('month, amount_usd, cost_center_id')
+      .eq('client_id', clientId)
+      .order('month', { ascending: true });
+    const byMonth = new Map<string, { total: number; centers: Set<string> }>();
+    for (const r of (spend as Array<{ month: string; amount_usd: number | null; cost_center_id: string | null }> | null) ?? []) {
+      const key = r.month.slice(0, 7); // YYYY-MM
+      const entry = byMonth.get(key) ?? { total: 0, centers: new Set<string>() };
+      entry.total += Number(r.amount_usd ?? 0);
+      if (r.cost_center_id) entry.centers.add(r.cost_center_id);
+      byMonth.set(key, entry);
+    }
+    trajectory = Array.from(byMonth.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, v]) => ({ month, total: v.total, categoryCount: v.centers.size }));
+  } catch {
+    // quiet fail · trajectory stays empty · section hides
+  }
+
+  // Shadow AI · from applications.business_function='Shadow AI'
+  let shadowAiFindings: Array<{ id: string; name: string; vendor: string | null; criticality: string; annual_cost_usd: number | null }> = [];
+  try {
+    const { getServerSupabase } = await import('@/lib/supabase-server');
+    const sb = getServerSupabase();
+    const { data } = await sb
+      .from('applications')
+      .select('id, name, vendor, criticality, annual_cost_usd')
+      .eq('client_id', clientId)
+      .eq('business_function', 'Shadow AI')
+      .order('criticality', { ascending: true })
+      .limit(12);
+    shadowAiFindings = ((data as Array<{ id: string; name: string; vendor: string | null; criticality: string; annual_cost_usd: number | null }> | null) ?? []);
+  } catch {
+    // quiet fail · section hides
+  }
+
   return (
     <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
@@ -368,6 +410,92 @@ export default async function TowerPage({
 
       {/* Enterprise context · Pack H Phase 5 */}
       <EnterpriseContextRow summary={enterpriseSummary} />
+
+      {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
+      {trajectory.length > 0 && (
+        <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEAL }}>
+                Spend trajectory · last 12 months
+              </div>
+              <div style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
+                Monthly rollup across {trajectory[trajectory.length - 1]?.categoryCount ?? 0} cost centers · total {dollarsM(trajectory.reduce((s, r) => s + r.total, 0))} annualized
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>LATEST MONTH</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: INK }}>
+                {dollarsM(trajectory[trajectory.length - 1]?.total ?? 0)}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 88, marginTop: 8 }}>
+            {(() => {
+              const maxV = Math.max(...trajectory.map((r) => r.total), 1);
+              return trajectory.map((r, i) => {
+                const pct = (r.total / maxV) * 100;
+                const isLast = i === trajectory.length - 1;
+                return (
+                  <div key={r.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div
+                      title={`${r.month} · ${dollarsM(r.total)}`}
+                      style={{
+                        width: '100%',
+                        height: `${Math.max(pct, 4)}%`,
+                        background: isLast ? TEAL : 'rgba(45,212,200,0.5)',
+                        borderRadius: 2,
+                      }}
+                    />
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: MUTE }}>
+                      {r.month.slice(5, 7)}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+        </section>
+      )}
+
+      {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
+      {shadowAiFindings.length > 0 && (
+        <section style={{ marginTop: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: CORAL }}>
+                Shadow AI · {shadowAiFindings.length} discovered
+              </div>
+              <div style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
+                AI in use without enterprise governance · discovered via network logs, expense trails, incident reports
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
+            {shadowAiFindings.map((s) => {
+              const critColor = s.criticality === 'critical' || s.criticality === 'high' ? CORAL : s.criticality === 'medium' ? AMBER : MUTE;
+              return (
+                <div key={s.id} style={{ padding: 14, background: 'rgba(255,107,74,0.04)', border: '0.5px solid rgba(255,107,74,0.2)', borderRadius: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: critColor, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                      {s.criticality}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: INK }}>{s.vendor ?? 'Unknown vendor'}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: INK, lineHeight: 1.4, marginBottom: 4 }}>
+                    {s.name}
+                  </div>
+                  {s.annual_cost_usd != null && s.annual_cost_usd > 0 && (
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: AMBER }}>
+                      ~{dollarsM(s.annual_cost_usd / 12)}/mo annualized
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* Contradiction engine */}
       <div style={{ marginTop: 24 }}>
