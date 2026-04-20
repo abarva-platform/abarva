@@ -5,6 +5,7 @@ import {
   type EngagementListItem,
 } from '@/lib/db/engagement';
 import { getCurrentPerson } from '@/lib/auth/maestro';
+import { loadHomeAttention, type HomeAlert, type HomeQueueItem } from '@/lib/home/aggregate';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,7 @@ const MUTE = 'rgba(245, 245, 240, 0.72)';
 const TEAL = '#2DD4C8';
 const PURPLE = '#9B6DFF';
 const CORAL = '#FF6B4A';
+const AMBER = '#F59E0B';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
 const FONT_MONO = 'JetBrains Mono, monospace';
 
@@ -162,11 +164,105 @@ function QuickStartCard({
   );
 }
 
+function severityColor(s: string): string {
+  if (s === 'high') return CORAL;
+  if (s === 'medium') return AMBER;
+  return MUTE;
+}
+
+function AlertRow({ a }: { a: HomeAlert }) {
+  return (
+    <Link
+      href={a.href}
+      style={{
+        display: 'block',
+        padding: '10px 12px',
+        background: 'rgba(255,255,255,0.02)',
+        border: BORDER_SOFT,
+        borderRadius: 8,
+        textDecoration: 'none',
+        color: INK,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+        <span
+          style={{
+            fontFamily: FONT_MONO,
+            fontSize: 9,
+            letterSpacing: '0.14em',
+            color: severityColor(a.severity),
+            textTransform: 'uppercase',
+          }}
+        >
+          {a.severity} · {a.summary}
+        </span>
+        {a.clientName && (
+          <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: MUTE, letterSpacing: '0.1em' }}>
+            {a.clientName}
+          </span>
+        )}
+        <span style={{ marginLeft: 'auto', fontFamily: FONT_MONO, fontSize: 9, color: MUTE }}>
+          {relTime(a.detectedAt)}
+        </span>
+      </div>
+      {a.detail && (
+        <div style={{ fontSize: 12.5, color: INK, lineHeight: 1.45 }}>{a.detail}</div>
+      )}
+    </Link>
+  );
+}
+
+function QueueRow({ q }: { q: HomeQueueItem }) {
+  const accent = q.kind === 'gate_pending' ? CORAL : TEAL;
+  return (
+    <Link
+      href={q.href}
+      style={{
+        display: 'block',
+        padding: '10px 12px',
+        background: 'rgba(255,255,255,0.02)',
+        border: BORDER_SOFT,
+        borderRadius: 8,
+        textDecoration: 'none',
+        color: INK,
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 3 }}>
+        <span style={{ fontSize: 13, fontWeight: 500 }}>{q.engagementName}</span>
+        <span style={{ marginLeft: 'auto', fontFamily: FONT_MONO, fontSize: 9, color: MUTE }}>
+          {relTime(q.updatedAt)}
+        </span>
+      </div>
+      <div style={{ fontSize: 11.5, color: accent, fontFamily: FONT_MONO, letterSpacing: '0.08em' }}>
+        {q.detail}
+      </div>
+    </Link>
+  );
+}
+
+function SectionLabel({ children, color }: { children: React.ReactNode; color?: string }) {
+  return (
+    <div
+      style={{
+        fontFamily: FONT_MONO,
+        fontSize: 10,
+        letterSpacing: '0.14em',
+        color: color ?? MUTE,
+        textTransform: 'uppercase',
+        marginBottom: 12,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default async function HomePage() {
   const person = await getCurrentPerson();
-  const [metrics, engagements] = await Promise.all([
+  const [metrics, engagements, attention] = await Promise.all([
     getDashboardMetrics(),
     getAllActiveEngagements(person?.id),
+    loadHomeAttention(6),
   ]);
 
   return (
@@ -206,20 +302,43 @@ export default async function HomePage() {
         <MetricCard label="Outcome fees this quarter" value={dollarsM(metrics.outcomeFeesQuarterUsd)} />
       </div>
 
+      {/* Attention row · Alerts + Queue — what needs you today */}
+      {(attention.alerts.length > 0 || attention.queue.length > 0) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+          <div>
+            <SectionLabel color={CORAL}>
+              Alerts · {attention.alerts.length}
+            </SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {attention.alerts.length === 0 ? (
+                <div style={{ color: MUTE, fontSize: 13, fontStyle: 'italic' }}>
+                  No open alerts. Either the data layer is quiet or everything's resolved.
+                </div>
+              ) : (
+                attention.alerts.map((a) => <AlertRow key={a.id} a={a} />)
+              )}
+            </div>
+          </div>
+          <div>
+            <SectionLabel color={TEAL}>
+              Your queue · {attention.queue.length}
+            </SectionLabel>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {attention.queue.length === 0 ? (
+                <div style={{ color: MUTE, fontSize: 13, fontStyle: 'italic' }}>
+                  Queue is empty. Nothing awaiting your response.
+                </div>
+              ) : (
+                attention.queue.map((q) => <QueueRow key={q.id} q={q} />)
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div>
-          <div
-            style={{
-              fontFamily: FONT_MONO,
-              fontSize: 10,
-              letterSpacing: '0.14em',
-              color: MUTE,
-              textTransform: 'uppercase',
-              marginBottom: 12,
-            }}
-          >
-            Active engagements
-          </div>
+          <SectionLabel>Active engagements</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {engagements.length === 0 ? (
               <div style={{ color: MUTE, fontSize: 14, fontStyle: 'italic' }}>No active engagements.</div>
@@ -230,18 +349,7 @@ export default async function HomePage() {
         </div>
 
         <div>
-          <div
-            style={{
-              fontFamily: FONT_MONO,
-              fontSize: 10,
-              letterSpacing: '0.14em',
-              color: MUTE,
-              textTransform: 'uppercase',
-              marginBottom: 12,
-            }}
-          >
-            Quick start
-          </div>
+          <SectionLabel>Quick start</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <QuickStartCard mode="NEXUS · ENGAGEMENT" modeColor={TEAL} title="Start new engagement" href="/engagements/new" />
             <QuickStartCard mode="NEXUS · IDENTITY" modeColor={PURPLE} title="Add a user" href="/platform/users/new" />
