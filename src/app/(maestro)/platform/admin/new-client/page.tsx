@@ -79,7 +79,7 @@ export default function NewClientWizard() {
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <a href="/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', marginBottom: '4px', display: 'block' }}>← Engagement Hub</a>
+          <a href="/platform/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', marginBottom: '4px', display: 'block' }}>← Engagement Hub</a>
           <div style={{ fontSize: '18px', fontWeight: 700 }}>New Engagement</div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -225,7 +225,7 @@ export default function NewClientWizard() {
               <strong style={{ color: T.text }}>{org.name}</strong> — {org.vertical} — {org.size}<br />
               {categories.length} data categories · {solutions.length} solutions · {team.filter(t => t.email).length} team members
             </div>
-            <a href="/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: T.teal, color: '#0D1117', textDecoration: 'none', borderRadius: '10px', padding: '14px 28px', fontSize: '15px', fontWeight: 800 }}>
+            <a href="/platform/admin" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: T.teal, color: '#0D1117', textDecoration: 'none', borderRadius: '10px', padding: '14px 28px', fontSize: '15px', fontWeight: 800 }}>
               Launch Engagement →
             </a>
           </div>

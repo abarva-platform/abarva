@@ -108,7 +108,7 @@ function NavInner({ activePage }: NavProps) {
   // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
   const adminNavItem = () => (
     <a
-      href={isAdmin ? '/admin' : undefined}
+      href={isAdmin ? '/platform' : undefined}
       key="admin-nav"
       style={{
         fontSize: '15px',
@@ -268,10 +268,10 @@ function NavInner({ activePage }: NavProps) {
                     </a>
                   )}
                   {isAdmin && (
-                    <a href="/admin" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
+                    <a href="/platform" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
                       onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                      Admin Portal
+                      Platform
                     </a>
                   )}
                   <button

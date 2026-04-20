@@ -8,12 +8,12 @@ const S = {
 }
 
 const LINKS = [
-  { href: '/admin', label: 'Engagement Hub' },
-  { href: '/admin/data', label: 'Data Loader' },
-  { href: '/admin/approvals', label: 'Approvals' },
-  { href: '/admin/outcomes', label: 'Outcome Tracker' },
-  { href: '/admin/brief', label: 'Pre-Meeting Brief' },
-  { href: '/admin/context', label: 'Business Context', active: true },
+  { href: '/platform/admin', label: 'Engagement Hub' },
+  { href: '/platform/admin/data', label: 'Data Loader' },
+  { href: '/platform/admin/approvals', label: 'Approvals' },
+  { href: '/platform/admin/outcomes', label: 'Outcome Tracker' },
+  { href: '/platform/admin/brief', label: 'Pre-Meeting Brief' },
+  { href: '/platform/admin/context', label: 'Business Context', active: true },
 ]
 
 const STAKEHOLDERS = [

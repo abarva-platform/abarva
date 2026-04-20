@@ -128,7 +128,7 @@ export default function PlaybookPage() {
     <div style={{ minHeight: '100vh', background: T.bg, fontFamily: 'Inter, sans-serif', color: T.text }}>
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '16px 24px' }}>
-        <a href="/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', display: 'block', marginBottom: '4px' }}>← Engagement Hub</a>
+        <a href="/platform/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', display: 'block', marginBottom: '4px' }}>← Engagement Hub</a>
         <div style={{ fontSize: '18px', fontWeight: 700 }}>Maestro Playbook</div>
       </div>
 

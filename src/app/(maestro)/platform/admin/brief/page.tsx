@@ -344,8 +344,8 @@ export default function PreMeetingBrief() {
               MAESTRO INTELLIGENCE · AbarVa · INTERNAL USE ONLY · MERIDIAN HEALTH SYSTEM · APRIL 2026
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <a href="/admin/context" style={{ fontFamily: T.mono, fontSize: '10px', color: T.text3, textDecoration: 'none', padding: '6px 14px', border: `1px solid ${T.border2}`, borderRadius: '5px' }}>Business Context →</a>
-              <a href="/admin" style={{ fontFamily: T.mono, fontSize: '10px', color: T.text3, textDecoration: 'none', padding: '6px 14px', border: `1px solid ${T.border2}`, borderRadius: '5px' }}>← Admin Hub</a>
+              <a href="/platform/admin/context" style={{ fontFamily: T.mono, fontSize: '10px', color: T.text3, textDecoration: 'none', padding: '6px 14px', border: `1px solid ${T.border2}`, borderRadius: '5px' }}>Business Context →</a>
+              <a href="/platform/admin" style={{ fontFamily: T.mono, fontSize: '10px', color: T.text3, textDecoration: 'none', padding: '6px 14px', border: `1px solid ${T.border2}`, borderRadius: '5px' }}>← Admin Hub</a>
             </div>
           </div>
         </div>

@@ -9,10 +9,10 @@ const S = {
 }
 
 const LINKS = [
-  { href: '/admin', label: 'Engagement Hub' },
-  { href: '/admin/data-governance', label: 'Data Governance' },
-  { href: '/admin/revenue', label: 'Revenue' },
-  { href: '/admin/outcomes', label: 'Outcome Tracker', active: true },
+  { href: '/platform/admin', label: 'Engagement Hub' },
+  { href: '/platform/admin/data-governance', label: 'Data Governance' },
+  { href: '/platform/admin/revenue', label: 'Revenue' },
+  { href: '/platform/admin/outcomes', label: 'Outcome Tracker', active: true },
 ]
 
 type TrafficLight = 'green' | 'amber' | 'red'

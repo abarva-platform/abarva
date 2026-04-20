@@ -10,7 +10,10 @@ const nextConfig: NextConfig = {
   // counterparts today, so a blanket redirect would break them).
   async redirects() {
     return [
+      // Admin: top-level → Platform overview. Sub-pages → /platform/admin/*
+      // (the old Engagement Hub surfaces stay reachable there).
       { source: '/admin', destination: '/platform', permanent: true },
+      { source: '/admin/:path*', destination: '/platform/admin/:path*', permanent: true },
       { source: '/dashboard', destination: '/home', permanent: true },
       { source: '/dashboard/:path*', destination: '/home/:path*', permanent: true },
       { source: '/data', destination: '/platform/data', permanent: true },

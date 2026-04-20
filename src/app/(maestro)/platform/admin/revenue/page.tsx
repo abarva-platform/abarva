@@ -125,7 +125,7 @@ export default function RevenueDashboard() {
       {/* Header */}
       <div style={{ background: T.surface, borderBottom: '1px solid ' + T.border, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <a href="/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', marginBottom: '4px', display: 'block' }}>← Engagement Hub</a>
+          <a href="/platform/admin" style={{ fontSize: '13px', color: T.text3, textDecoration: 'none', marginBottom: '4px', display: 'block' }}>← Engagement Hub</a>
           <div style={{ fontSize: '18px', fontWeight: 700 }}>Revenue Dashboard</div>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

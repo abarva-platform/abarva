@@ -8,7 +8,7 @@ const BG = '#0A0A0A';
 
 export function MaestroChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '';
-  const activePage = pathname.startsWith('/admin') ? 'admin' : 'dashboard';
+  const activePage = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin') ? 'admin' : 'dashboard';
 
   return (
     <div style={{ minHeight: '100vh', background: BG, color: '#F5F5F0' }}>

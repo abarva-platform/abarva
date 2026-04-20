@@ -9,13 +9,13 @@ const S = {
 }
 
 const LINKS = [
-  { href: '/admin', label: 'Engagement Hub' },
-  { href: '/admin/data', label: 'Data Loader', active: true },
-  { href: '/admin/data-guide', label: 'Data Guide' },
-  { href: '/admin/approvals', label: 'Approvals' },
-  { href: '/admin/outcomes', label: 'Outcome Tracker' },
-  { href: '/admin/brief', label: 'Pre-Meeting Brief' },
-  { href: '/admin/context', label: 'Business Context' },
+  { href: '/platform/admin', label: 'Engagement Hub' },
+  { href: '/platform/admin/data', label: 'Data Loader', active: true },
+  { href: '/platform/admin/data-guide', label: 'Data Guide' },
+  { href: '/platform/admin/approvals', label: 'Approvals' },
+  { href: '/platform/admin/outcomes', label: 'Outcome Tracker' },
+  { href: '/platform/admin/brief', label: 'Pre-Meeting Brief' },
+  { href: '/platform/admin/context', label: 'Business Context' },
 ]
 
 type FileStatus = 'approved' | 'missing' | 'processing'

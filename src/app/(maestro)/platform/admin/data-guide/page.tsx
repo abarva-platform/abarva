@@ -3,13 +3,13 @@ import { useState } from 'react'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const LINKS = [
-  { href: '/admin', label: 'Engagement Hub' },
-  { href: '/admin/data', label: 'Data Loader' },
-  { href: '/admin/data-guide', label: 'Data Guide', active: true },
-  { href: '/admin/approvals', label: 'Approvals' },
-  { href: '/admin/outcomes', label: 'Outcome Tracker' },
-  { href: '/admin/brief', label: 'Pre-Meeting Brief' },
-  { href: '/admin/context', label: 'Business Context' },
+  { href: '/platform/admin', label: 'Engagement Hub' },
+  { href: '/platform/admin/data', label: 'Data Loader' },
+  { href: '/platform/admin/data-guide', label: 'Data Guide', active: true },
+  { href: '/platform/admin/approvals', label: 'Approvals' },
+  { href: '/platform/admin/outcomes', label: 'Outcome Tracker' },
+  { href: '/platform/admin/brief', label: 'Pre-Meeting Brief' },
+  { href: '/platform/admin/context', label: 'Business Context' },
 ]
 
 const CONFIDENCE_STEPS = [
@@ -401,7 +401,7 @@ export default function DataGuidePage() {
           <button onClick={() => alert('Template package downloading...')} style={{ padding: '12px 24px', borderRadius: '8px', background: '#059669', color: '#FFFFFF', border: 'none', fontSize: '14px', fontWeight: 700, cursor: 'pointer' }}>
             ↓ Download Complete Template Package
           </button>
-          <a href="/admin/data" style={{ padding: '12px 20px', borderRadius: '8px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>← Back to Data Loader</a>
+          <a href="/platform/admin/data" style={{ padding: '12px 20px', borderRadius: '8px', background: '#F8FAFC', color: '#475569', border: '1px solid #E2E8F0', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>← Back to Data Loader</a>
         </div>
 
       </div>

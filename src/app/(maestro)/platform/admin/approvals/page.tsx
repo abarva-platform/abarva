@@ -8,7 +8,7 @@ const S = {
   subnav: { display: 'flex', gap: '8px', padding: '12px 32px', background: '#FFFFFF', borderBottom: '1px solid #E2E8F0' } as React.CSSProperties,
 }
 
-const LINKS = [{ href: '/admin', label: 'Engagement Hub' }, { href: '/admin/data', label: 'Data Loader' }, { href: '/admin/approvals', label: 'Approvals', active: true }, { href: '/admin/outcomes', label: 'Outcome Tracker' }]
+const LINKS = [{ href: '/platform/admin', label: 'Engagement Hub' }, { href: '/platform/admin/data', label: 'Data Loader' }, { href: '/platform/admin/approvals', label: 'Approvals', active: true }, { href: '/platform/admin/outcomes', label: 'Outcome Tracker' }]
 
 const PENDING = [
   { type: 'Output Review', title: 'AI Strategy Draft — Meridian Health', description: 'Full 6-step AI strategy ready for CIO review. 18-month roadmap, $292M value identified.', client: 'Meridian Health', date: 'Apr 8, 2026' },
