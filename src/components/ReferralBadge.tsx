@@ -74,7 +74,7 @@ export default function ReferralBadge({ vendorName, compact = false }: ReferralB
           <p style={{ margin: 0 }}>
             Scores are calculated from objective criteria: ecosystem fit, compliance posture, cost, client skill readiness, and historical implementation risk.{' '}
             <a
-              href="/methodology"
+              href="/intelligence/library"
               style={{ color: '#D97706', textDecoration: 'underline' }}
             >
               View scoring methodology →
