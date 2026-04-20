@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AbarvaNav from '@/components/AbarvaNav'
 import {
   AMBER,
   BODY,
@@ -10,7 +11,6 @@ import {
   Eyebrow,
   GREEN,
   INK,
-  MarketingHeader,
   MarketingStyles,
   MONO,
   MUTED,
@@ -214,7 +214,7 @@ export default function HomePage() {
   return (
     <div className="marketing-shell">
       <MarketingStyles />
-      <MarketingHeader />
+      <AbarvaNav activePage="home" />
 
       <main>
         <section className="marketing-section">

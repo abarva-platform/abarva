@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import AbarvaNav from '@/components/AbarvaNav'
 import {
   Copy,
   Eyebrow,
-  MarketingHeader,
   MarketingStyles,
   SERIF,
   TEAL,
@@ -100,7 +100,7 @@ export default async function InvestorsPage({
   return (
     <div className="marketing-shell">
       <MarketingStyles />
-      <MarketingHeader ctaHref="mailto:anand@abarva.ai?subject=AbarVa%20investor%20materials" ctaLabel="Request materials" />
+      <AbarvaNav activePage="investor" />
 
       <main>
         <section className="marketing-section">
