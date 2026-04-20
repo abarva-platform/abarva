@@ -9,6 +9,28 @@ import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/g
 import type { VipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { ChoiceChips, type Choice } from './ChoiceChips';
 import { renderWithCitations } from './renderWithCitations';
+import { CitationPill } from './CitationPill';
+
+// Extract unique citations from agent turn text so we can render a source
+// pills row below the response — visible provenance by default, Target
+// Trend Brain pattern.
+const CITATION_EXTRACT_RE = /\[([a-z][a-z0-9_]{2,})(?:\s+§\s+([^\]]+?)|,\s+page\s+(\d+))?\]/g;
+function extractCitations(text: string): Array<{ key: string; section?: string; page?: string }> {
+  const seen = new Set<string>();
+  const out: Array<{ key: string; section?: string; page?: string }> = [];
+  CITATION_EXTRACT_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = CITATION_EXTRACT_RE.exec(text)) !== null) {
+    const key = m[1];
+    const section = m[2];
+    const page = m[3];
+    const sig = `${key}|${section ?? ''}|${page ?? ''}`;
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    out.push({ key, section, page });
+  }
+  return out;
+}
 import { TraceDrawer } from './TraceDrawer';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
@@ -369,6 +391,38 @@ export function EngagementConsole({
                       {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
                       {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
                     </div>
+                    {t.sender === 'agent' && !t.streaming && (() => {
+                      const cites = extractCitations(t.text);
+                      if (cites.length === 0) return null;
+                      return (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            paddingTop: 10,
+                            borderTop: '0.5px solid rgba(45,212,200,0.12)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'JetBrains Mono, monospace',
+                              fontSize: 9,
+                              color: 'rgba(245,245,240,0.55)',
+                              letterSpacing: '0.14em',
+                              marginRight: 4,
+                            }}
+                          >
+                            SOURCES · {cites.length}
+                          </span>
+                          {cites.map((c, i) => (
+                            <CitationPill key={`${c.key}-${i}`} sourceKey={c.key} section={c.section} page={c.page} />
+                          ))}
+                        </div>
+                      );
+                    })()}
                     {t.sender === 'agent' && !t.streaming && t.id && (
                       <button
                         type="button"
