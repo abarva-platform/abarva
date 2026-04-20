@@ -18,7 +18,7 @@ type Concern = string;
 
 interface VipProfileRow {
   display_name: string;
-  current_role: string | null;
+  current_title: string | null;
   current_company: string | null;
   current_industry: string | null;
   current_company_scale: Record<string, unknown> | null;
@@ -101,9 +101,9 @@ export async function assembleUserContextBlock(args: UserProfileArgs): Promise<s
 
   const lines: string[] = [];
   lines.push(`USER CONTEXT · ${profile.display_name} · ${profile.demo_tier.toUpperCase()} tier`);
-  if (profile.current_role && profile.current_company) {
+  if (profile.current_title && profile.current_company) {
     const scale = formatScale(profile.current_company_scale);
-    lines.push(`Role · ${profile.current_role} at ${profile.current_company}${scale ? ` (${scale})` : ''}`);
+    lines.push(`Role · ${profile.current_title} at ${profile.current_company}${scale ? ` (${scale})` : ''}`);
   }
 
   const career = formatCareer(profile.career_history);

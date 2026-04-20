@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS vip_profiles (
   display_name TEXT NOT NULL,
 
   -- Identity
-  current_role TEXT,
+  current_title TEXT,
   current_company TEXT,
   current_industry TEXT,
   current_company_scale JSONB,
@@ -65,7 +65,7 @@ CREATE POLICY "service_role_all_vip_profiles" ON vip_profiles
 
 -- ── Prat Vemana seed (idempotent — skips if display_name already exists)
 INSERT INTO vip_profiles (
-  display_name, current_role, current_company, current_industry,
+  display_name, current_title, current_company, current_industry,
   current_company_scale, career_history, education, board_seats,
   current_initiatives, areas_of_expertise, recent_public_signals,
   company_principles, labor_model, cloud_posture,
