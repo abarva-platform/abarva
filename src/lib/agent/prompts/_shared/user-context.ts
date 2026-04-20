@@ -64,25 +64,62 @@ async function loadProfile(args: UserProfileArgs): Promise<VipProfileRow | null>
   if (!args.personId && !args.displayName) return null;
   const sb = getServerSupabase();
   let row: VipProfileRow | null = null;
+  let matchPath: 'person_id' | 'display_name_exact' | 'display_name_ilike' | 'miss' = 'miss';
 
   if (args.personId) {
-    const { data } = await sb
+    const { data, error } = await sb
       .from('vip_profiles')
       .select('*')
       .eq('person_id', args.personId)
       .neq('demo_tier', 'standard')
       .maybeSingle();
+    if (error) console.warn('[vip.loadProfile.person_id]', error.message);
     row = (data as VipProfileRow | null) ?? null;
+    if (row) matchPath = 'person_id';
   }
 
   if (!row && args.displayName) {
-    const { data } = await sb
+    // First: case-insensitive exact match via ilike-without-wildcard
+    const { data: exact, error: exactErr } = await sb
       .from('vip_profiles')
       .select('*')
       .ilike('display_name', args.displayName)
       .neq('demo_tier', 'standard')
       .maybeSingle();
-    row = (data as VipProfileRow | null) ?? null;
+    if (exactErr) console.warn('[vip.loadProfile.displayName_exact]', exactErr.message);
+    row = (exact as VipProfileRow | null) ?? null;
+    if (row) matchPath = 'display_name_exact';
+
+    // Fallback: first-name + last-name fuzzy match. Handles "Prat Kumar
+    // Vemana" (Clerk) against "Prat Vemana" (vip seed) by matching
+    // on the first + last tokens.
+    if (!row) {
+      const tokens = args.displayName.trim().split(/\s+/).filter((t) => t.length > 0);
+      if (tokens.length >= 2) {
+        const first = tokens[0];
+        const last = tokens[tokens.length - 1];
+        const { data: fuzzy, error: fuzzyErr } = await sb
+          .from('vip_profiles')
+          .select('*')
+          .ilike('display_name', `${first}%${last}`)
+          .neq('demo_tier', 'standard')
+          .maybeSingle();
+        if (fuzzyErr) console.warn('[vip.loadProfile.displayName_ilike]', fuzzyErr.message);
+        row = (fuzzy as VipProfileRow | null) ?? null;
+        if (row) matchPath = 'display_name_ilike';
+      }
+    }
+  }
+
+  if (process.env.VIP_DEBUG === '1') {
+    console.log('[vip.loadProfile]', {
+      personId: args.personId ?? null,
+      displayName: args.displayName ?? null,
+      matchPath,
+      matched: !!row,
+      matched_name: row?.display_name ?? null,
+      demo_tier: row?.demo_tier ?? null,
+    });
   }
 
   return row;
