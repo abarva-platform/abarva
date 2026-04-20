@@ -556,13 +556,24 @@ export function EngagementConsole({
             );
           })()}
 
-          {/* Deliverables */}
-          <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
+          {/* Deliverables · links to browser */}
+          <a
+            href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/deliverables`}
+            style={{
+              display: 'block',
+              background: 'rgba(45,212,200,0.04)',
+              border: '0.5px solid rgba(45,212,200,0.2)',
+              borderRadius: 10,
+              padding: 14,
+              textDecoration: 'none',
+              color: '#F5F5F0',
+            }}
+          >
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
               Deliverables · {deliverablesList.length}
             </div>
             {deliverablesList.length === 0 ? (
-              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved.</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved, or on-demand via Pack L generator.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {deliverablesList.map((d) => (
@@ -576,6 +587,46 @@ export function EngagementConsole({
                 ))}
               </div>
             )}
+          </a>
+
+          {/* Quick links · charter + turns */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <a
+              href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/charter`}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.02)',
+                border: '0.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                padding: '8px 10px',
+                textDecoration: 'none',
+                color: '#F5F5F0',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                letterSpacing: '0.12em',
+                textAlign: 'center',
+              }}
+            >
+              CHARTER →
+            </a>
+            <a
+              href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/turns`}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.02)',
+                border: '0.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                padding: '8px 10px',
+                textDecoration: 'none',
+                color: '#F5F5F0',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                letterSpacing: '0.12em',
+                textAlign: 'center',
+              }}
+            >
+              TURNS →
+            </a>
           </div>
 
           {/* Chained patterns */}
