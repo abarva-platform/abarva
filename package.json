@@ -25,6 +25,7 @@
     "seed:enterprise-depth": "npx tsx src/scripts/seed/run-enterprise-depth.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
+    "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:seed": "npx tsx src/scripts/run-seeds.ts",
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
     "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list"

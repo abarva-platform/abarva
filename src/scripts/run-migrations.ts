@@ -45,6 +45,7 @@ function listMigrationFiles(): string[] {
 async function main() {
   const args = process.argv.slice(2);
   const isDry = args.includes('--dry');
+  const markAllApplied = args.includes('--mark-all-applied');
   const forceIdx = args.indexOf('--force');
   const forceName = forceIdx >= 0 ? args[forceIdx + 1] : null;
 
@@ -64,6 +65,23 @@ async function main() {
     await ensureTrackingTable(client);
     const applied = await getAppliedMigrations(client);
     const all = listMigrationFiles();
+
+    // --mark-all-applied · sync tracking table without running any SQL.
+    // For repos that have historically applied migrations via paste; tags
+    // every current migration as applied. Safe (uses ON CONFLICT DO NOTHING).
+    if (markAllApplied) {
+      let inserted = 0;
+      for (const f of all) {
+        const res = await client.query(
+          'INSERT INTO schema_migrations(name) VALUES ($1) ON CONFLICT (name) DO NOTHING',
+          [f],
+        );
+        if (res.rowCount && res.rowCount > 0) inserted += 1;
+      }
+      console.log(`✓  Marked ${all.length} migration${all.length === 1 ? '' : 's'} as applied (${inserted} new rows, ${all.length - inserted} already recorded).`);
+      return;
+    }
+
     const pending = forceName
       ? all.filter((f) => f.startsWith(forceName) || f === forceName)
       : all.filter((f) => !applied.has(f));
