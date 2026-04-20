@@ -34,3 +34,55 @@ body {
   color: rgba(245, 245, 240, 0.72);
   letter-spacing: 0.01em;
 }
+
+/* ── A11y · keyboard focus ring on all interactive elements ─────────────
+   Uses :focus-visible so mouse clicks don't trigger the ring, only
+   keyboard navigation. Teal matches the product accent; 2px outline
+   + 2px offset is visible without being a "bug report." */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus {
+  outline: none;
+}
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid #2DD4C8;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── A11y · interactive element transitions ─────────────────────────────
+   Smooth color / border-color changes on hover so interactive state
+   changes don't flash. Doesn't affect layout; safe system-wide. */
+:where(a, button, [role="button"]) {
+  transition: color 120ms ease, background-color 120ms ease,
+              border-color 120ms ease, opacity 120ms ease,
+              transform 120ms ease;
+}
+
+/* ── A11y · skip-to-content link (screen readers + keyboard first hit) ──
+   Hidden until focused, then positions above the top bar. Pair with a
+   <a href="#main-content" class="skip-to-content">Skip to content</a>
+   anchor + <main id="main-content"> landmark anywhere. */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #0A0A0A;
+  color: #2DD4C8;
+  padding: 10px 16px;
+  border: 1px solid #2DD4C8;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  z-index: 9999;
+  text-decoration: none;
+}
+.skip-to-content:focus-visible {
+  left: 12px;
+  top: 12px;
+}
+
+/* ── A11y · reduced motion ─────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :where(a, button, [role="button"]) {
+    transition: none;
+  }
+}

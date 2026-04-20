@@ -12,9 +12,10 @@ export function MaestroChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <div style={{ minHeight: '100vh', background: BG, color: '#F5F5F0' }}>
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
       <AbarvaNav activePage={activePage} compact />
-      <PrimaryNav />
-      <div>{children}</div>
+      <nav aria-label="Primary"><PrimaryNav /></nav>
+      <main id="main-content">{children}</main>
     </div>
   );
 }
