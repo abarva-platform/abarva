@@ -9,8 +9,6 @@ const isPublicRoute = createRouteMatcher([
   '/auth-redirect(.*)',
   '/',
   '/demo(.*)',
-  '/intelligence(.*)',
-  '/platform(.*)',
   '/investor(.*)',
 ])
 
@@ -35,6 +33,8 @@ const authRequiredRoutes = createRouteMatcher([
   '/data(.*)',
   '/tower(.*)',
   '/sponsor(.*)',
+  '/platform(.*)',
+  '/intelligence(.*)',
 ])
 
 export const proxy = clerkMiddleware(async (auth, request: NextRequest) => {

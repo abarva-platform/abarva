@@ -7,15 +7,15 @@ const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 
-// Pack F Part 1: 6 peer items. User setup folded into Admin.
+// Product-map final: 5 peer items · Home / Engagements / Intelligence /
+// Control Tower / Platform. Data + Users + Admin all fold under Platform.
 // Design-fix override: all items render at equal primary weight — no opacity.
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' || p.startsWith('/dashboard/') },
   { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
-  { label: 'Data', href: '/data', match: (p) => p === '/data' || p.startsWith('/data/') },
   { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
-  { label: 'Admin', href: '/admin', match: (p) => p === '/admin' || p.startsWith('/admin/') || p.startsWith('/users/') },
+  { label: 'Platform', href: '/platform', match: (p) => p === '/platform' || p.startsWith('/platform/') || p.startsWith('/admin') || p.startsWith('/data') || p.startsWith('/users') },
 ];
 
 export function PrimaryNav() {
