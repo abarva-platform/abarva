@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
@@ -40,6 +40,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const { isLoaded, user } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()
+  const pathname = usePathname() ?? ''
 
   const { clientId, currentClient, allowedClients, canSwitch, switchClient } = useClientContext()
 
@@ -64,13 +65,23 @@ function NavInner({ activePage, compact = false }: NavProps) {
   // ── Paths ────────────────────────────────────────────────────────────────
   const intelligencePath = `/intelligence?client=${clientId}`
 
-  // ── Active states ─────────────────────────────────────────────────────────
-  const intelligenceActive = activePage === 'intelligence'
-  const adminActive        = (activePage || '').startsWith('admin')
-  const platformActive     = activePage === 'platform'
-  const investorActive     = activePage === 'investor'
-  const maestroActive      = activePage === 'maestro' || activePage === 'dashboard'
-  const homeActive         = activePage === 'home'
+  // ── Active states · pathname first (truth), activePage prop fallback
+  // for legacy callers.
+  const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
+                              || pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+                              || pathname === '/' || activePage === 'home'
+  const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
+                              || pathname.startsWith('/engage/') || activePage === 'engagements'
+  const intelligenceActive = pathname === '/intelligence' || pathname.startsWith('/intelligence/')
+                              || activePage === 'intelligence'
+  const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
+                              || activePage === 'tower'
+  const platformActive     = pathname === '/platform' || pathname.startsWith('/platform/')
+                              || pathname.startsWith('/admin') || activePage === 'platform'
+  const adminActive        = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')
+                              || (activePage || '').startsWith('admin')
+  const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
+  const maestroActive      = homeActive
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const dropPanel: React.CSSProperties = {
@@ -83,11 +94,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const navLink = (label: string, href: string, active: boolean) => (
     <a href={href} key={label} style={{
       fontSize: '15px',
-      fontWeight: active ? 700 : 600,
+      fontWeight: active ? 700 : 400,
       letterSpacing: '-0.01em',
       color: active ? TEAL : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-      borderBottom: active ? `1px solid ${TEAL}` : '1px solid transparent',
+      borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
       transition: 'color 120ms ease, border-color 120ms ease, font-weight 120ms ease',
     }}>
       {label}
@@ -202,10 +213,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {signedIn && isOperator && (
           <>
             {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
-            {!compact && navLink('Home', '/home', maestroActive || homeActive)}
-            {!compact && navLink('Engagements', '/engagements', activePage === 'engagements')}
+            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Engagements', '/engagements', engagementsActive)}
             {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {!compact && navLink('Control Tower', '/tower', activePage === 'tower')}
+            {!compact && navLink('Control Tower', '/tower', towerActive)}
             {!compact && navLink('Platform', '/platform', platformActive)}
           </>
         )}
