@@ -13,6 +13,7 @@ import {
 import { EngagementConsole } from '@/components/engagement/EngagementConsole';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
+import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 
 export default async function EngagePage({
   params,
@@ -24,14 +25,25 @@ export default async function EngagePage({
   const engagement = await getEngagementByGraphId(engagementId);
   if (!engagement) notFound();
 
-  const [sponsor, turns, activePatterns, peerDecisions, chainedPatterns, caller] = await Promise.all([
+  const [sponsor, turns, activePatterns, peerDecisions, chainedPatterns, caller, assignedTopicRows, allTopicRows] = await Promise.all([
     engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
     getRecentTurns(engagement.id),
     getActivePatterns(engagementId),
     getPeerDecisionsForPhase(engagementId, engagement.current_phase),
     getChainedPatterns(engagementId),
     getCurrentPerson(),
+    listEngagementTopics(engagement.id),
+    listAllTopics(),
   ]);
+
+  const topicsByKey = new Map(allTopicRows.map((t) => [t.topic_key, t]));
+  const assignedTopics = assignedTopicRows
+    .map((a) => {
+      const topic = topicsByKey.get(a.topic_key);
+      if (!topic) return null;
+      return { key: a.topic_key, title: topic.title, isPrimary: a.is_primary };
+    })
+    .filter((t): t is { key: string; title: string; isPrimary: boolean } => t !== null);
 
   // VIP greeting data — only populates when the caller matches a VIP profile.
   // Rendered as a welcome card above empty conversations; generic users see
@@ -59,6 +71,7 @@ export default async function EngagePage({
       chainedPatterns={chainedPatterns}
       deliverables={deliverables}
       vipGreeting={vipGreeting}
+      assignedTopics={assignedTopics}
     />
   );
 }

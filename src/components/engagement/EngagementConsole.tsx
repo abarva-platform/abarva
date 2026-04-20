@@ -20,6 +20,12 @@ interface Deliverable {
   content: Record<string, unknown>;
 }
 
+interface AssignedTopic {
+  key: string;
+  title: string;
+  isPrimary: boolean;
+}
+
 interface Props {
   engagement: EngagementRow;
   sponsor: PersonRow | null;
@@ -29,10 +35,11 @@ interface Props {
   chainedPatterns: ChainedPattern[];
   deliverables?: Deliverable[];
   vipGreeting?: VipGreetingData | null;
+  assignedTopics?: AssignedTopic[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics,
 }: Props) {
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
@@ -486,26 +493,68 @@ export function EngagementConsole({
             )}
           </div>
 
-          {/* Topics · /engagements/[id]/topics deep-link */}
-          <a
-            href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/topics`}
-            style={{
-              display: 'block',
-              background: 'rgba(155,109,255,0.04)',
-              border: '0.5px solid rgba(155,109,255,0.2)',
-              borderRadius: 10,
-              padding: 14,
-              textDecoration: 'none',
-              color: '#F5F5F0',
-            }}
-          >
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#9B6DFF', textTransform: 'uppercase', marginBottom: 4 }}>
-              Topics · playbooks
-            </div>
-            <div style={{ color: 'rgba(245,245,240,0.82)', fontSize: 12 }}>
-              Assign diagnostic-question workbooks + topic playbooks →
-            </div>
-          </a>
+          {/* Topics · /engagements/[id]/topics deep-link. Shows assigned
+              topics inline per product-map spec Phase 5. */}
+          {(() => {
+            const topics = assignedTopics ?? [];
+            const primaryCount = topics.filter((t) => t.isPrimary).length;
+            const secondaryCount = topics.length - primaryCount;
+            return (
+              <a
+                href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/topics`}
+                style={{
+                  display: 'block',
+                  background: 'rgba(155,109,255,0.04)',
+                  border: '0.5px solid rgba(155,109,255,0.2)',
+                  borderRadius: 10,
+                  padding: 14,
+                  textDecoration: 'none',
+                  color: '#F5F5F0',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 10,
+                    letterSpacing: '0.14em',
+                    color: '#9B6DFF',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>Topics · {topics.length} assigned</span>
+                  {topics.length > 0 && (
+                    <span>{primaryCount} primary · {secondaryCount} secondary</span>
+                  )}
+                </div>
+                {topics.length === 0 ? (
+                  <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12, lineHeight: 1.4 }}>
+                    Assign a topic to carry playbook intelligence, diagnostic questions, and vendor landscape into every Nexus turn →
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {topics.slice(0, 4).map((t) => (
+                      <div key={t.key} style={{ fontSize: 13, color: '#F5F5F0', display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                        <span>{t.title}</span>
+                        {t.isPrimary && (
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#9B6DFF', letterSpacing: '0.1em' }}>
+                            PRIMARY
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {topics.length > 4 && (
+                      <div style={{ fontSize: 11, color: 'rgba(245,245,240,0.6)', fontStyle: 'italic' }}>
+                        + {topics.length - 4} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </a>
+            );
+          })()}
 
           {/* Deliverables */}
           <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
