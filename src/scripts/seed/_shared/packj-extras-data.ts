@@ -12,6 +12,19 @@ export interface PackJContradictionSeed {
   description: string
   suggested_action: string
   evidence_refs: string[]
+  /**
+   * Prat-tuned so-what framing. Rendered prominently on Tower cards + /home
+   * alert rows. Include the bottom-line impact — dollars + owner + % eliminable
+   * — so the reader instantly knows why this contradiction matters.
+   */
+  impact?: {
+    one_liner: string
+    monthly_total_usd?: number
+    eliminable_usd_annual?: number
+    eliminable_pct?: number
+    owner_named?: boolean
+    confidence?: 'high' | 'medium' | 'low'
+  }
 }
 
 export interface PackJCostCenterSeed {
@@ -42,6 +55,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Abridge is running at $340K per month with 78% adoption in East and Central, while Nuance DAX is running at $138K per month with 62% adoption in West. The regional split was driven by separate sponsors with no single enterprise owner.',
       suggested_action: 'Run a regional ambient documentation consolidation decision and quantify the savings from standardizing on one platform.',
       evidence_refs: ['Abridge contract summary', 'Nuance DAX regional rollout metrics', 'Epic provider time-stamp data'],
+      impact: {
+        one_liner: 'Abridge + Nuance DAX regional overlap · $478K/mo combined, no consolidation owner named, likely 30–40% eliminable with a single-platform decision.',
+        monthly_total_usd: 478_000,
+        eliminable_usd_annual: 1_900_000,
+        eliminable_pct: 33,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',
@@ -49,6 +70,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Abridge, Nuance DAX, and Nabla are all deployed or lightly piloted for ambient documentation. Three overlapping vendors are solving the same documentation job with no portfolio owner reconciling terms or value.',
       suggested_action: 'Create a single ambient documentation portfolio decision with exit criteria for duplicate vendors.',
       evidence_refs: ['Ambient documentation vendor inventory', 'Regional pilot roster', 'Contract overlap review'],
+      impact: {
+        one_liner: 'Three ambient-documentation vendors competing for one job · $510K/mo aggregate, 2 of 3 likely exit candidates · $3.6M annualized eliminable.',
+        monthly_total_usd: 510_000,
+        eliminable_usd_annual: 3_600_000,
+        eliminable_pct: 55,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',
@@ -56,6 +85,12 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Sixteen shadow AI findings are now known across clinical, research, finance, marketing, and legal workflows, including multiple PHI-adjacent consumer AI use cases.',
       suggested_action: 'Assign remediation owners to all high-risk shadow AI findings and bring approved use cases into governed enterprise tools.',
       evidence_refs: ['Zscaler network logs', 'Power Platform admin logs', 'Corporate card and invoice trail', 'Named incident report'],
+      impact: {
+        one_liner: '16 shadow AI findings including PHI-adjacent workflows · governance gap has zero named remediation owner · HIPAA exposure first, $2.1M/year in ungoverned spend second.',
+        monthly_total_usd: 175_000,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',
@@ -63,6 +98,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Paige.AI is processing pathology imagery under a BAA, but the data-processing addendum still references a 2023 subprocessor list and has not been refreshed against the current vendor subprocessor roster.',
       suggested_action: 'Refresh the Paige.AI subprocessor review and revalidate the current DPA against Meridian privacy controls.',
       evidence_refs: ['Paige.AI BAA', '2023 DPA addendum', 'Current subprocessor register'],
+      impact: {
+        one_liner: 'Paige.AI DPA references a 2023 subprocessor list processing PHI · one audit finding away from enforcement action · remediation is 2 weeks of legal time, cost of miss is multi-million.',
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'medium',
@@ -70,6 +110,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'AI-related cloud spend across Bedrock, AWS, and Azure OpenAI has grown 1.8x in 12 months, projecting to roughly $2.4M per month within six months if unchecked.',
       suggested_action: 'Implement consumption governance with cost guardrails before the next seat and workload expansion wave.',
       evidence_refs: ['AWS Bedrock invoice trend', 'Azure OpenAI consumption summary', 'Cloud FinOps forecast'],
+      impact: {
+        one_liner: 'AI cloud spend on pace to $2.4M/mo by Q3 without guardrails · 1.8x growth in 12 months, no consumption attribution · FinOps flag likely turns into a CFO escalation within 90 days.',
+        monthly_total_usd: 1_333_000,
+        eliminable_usd_annual: 4_200_000,
+        eliminable_pct: 26,
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -77,6 +125,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Chart summarization achieved strong test adoption, but the use case has been paused for 90 days because liability sign-off is still unresolved.',
       suggested_action: 'Drive a legal decision memo so the organization either accepts the workflow with guardrails or stops funding it.',
       evidence_refs: ['Pilot adoption report', 'Legal review backlog', 'Product escalation notes'],
+      impact: {
+        one_liner: 'Chart summarization stalled 90 days on legal sign-off despite strong pilot adoption · either ship with guardrails or kill the burn · decision cost of ~2 hours of legal time is blocking $140K invested.',
+        owner_named: false,
+        confidence: 'medium',
+      },
     },
     {
       severity: 'medium',
@@ -84,6 +137,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'The AI governance committee meets monthly, but 18 of 42 AI use cases have never been reviewed and 4 of those are already in production.',
       suggested_action: 'Backfill governance review on the unreviewed production use cases and require committee review before further scale.',
       evidence_refs: ['Governance committee roster', 'Use case inventory review status'],
+      impact: {
+        one_liner: 'Governance theater · 18 of 42 AI use cases never reviewed, 4 already in production · committee meets but can\'t name last 3 approvals · F007 pattern active.',
+        owner_named: true,
+        confidence: 'high',
+      },
     },
     {
       severity: 'medium',
@@ -91,6 +149,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Two documented bias incidents occurred in the Paradox AI recruiting workflow in the last four months, but no cross-cohort retraining or escalation was triggered.',
       suggested_action: 'Trigger a bias review and retraining decision before the recruiting assistant expands.',
       evidence_refs: ['HR incident reports', 'Paradox AI screening logs'],
+      impact: {
+        one_liner: 'Two documented bias incidents in recruiting AI, no retraining triggered · Title VII exposure and brand risk compounding with every additional applicant screened.',
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'low',
@@ -98,6 +161,11 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'Tempus Next is supposed to remain in research-only mode, but Epic audit trails show research credentials are being used by clinical staff for PHI-adjacent workflows.',
       suggested_action: 'Re-scope access controls and separate research-only and clinical-user entitlements immediately.',
       evidence_refs: ['Epic audit trail', 'Tempus Next access logs'],
+      impact: {
+        one_liner: 'Tempus Next research credentials used for clinical PHI workflows · access-scope violation is straightforward to fix, exposure window is every patient record touched in the interim.',
+        owner_named: false,
+        confidence: 'high',
+      },
     },
   ],
   firstcapital: [
@@ -107,6 +175,14 @@ export const PACK_J_CONTRADICTIONS: Record<SupportedPackJClient, PackJContradict
       description: 'M365 Copilot is projected to rise from $672K to roughly $1.1M per month, while 34% of seats were inactive in the last 30 days.',
       suggested_action: 'Right-size the license base before approving another expansion wave.',
       evidence_refs: ['Microsoft 365 seat report', '30-day active usage export'],
+      impact: {
+        one_liner: 'M365 Copilot seats $672K/mo growing to $1.1M with 34% inactive · $3.6M/year of ghost seats funding a trajectory no one has defended.',
+        monthly_total_usd: 672_000,
+        eliminable_usd_annual: 3_600_000,
+        eliminable_pct: 34,
+        owner_named: false,
+        confidence: 'high',
+      },
     },
     {
       severity: 'high',

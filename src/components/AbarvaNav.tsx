@@ -20,9 +20,18 @@ const DROP_DESC = '#3C3C3C'
 const DROP_CAT  = '#2DD4C8'
 const DROP_HOVER = '#F9FAFB'
 
-interface NavProps { activePage?: string }
+interface NavProps {
+  activePage?: string;
+  /**
+   * When true, render only the logo + client selector + user menu.
+   * Primary nav items are hidden because a separate PrimaryNav is
+   * rendering them below (MaestroChrome). Default false = full bar
+   * for the marketing landing page.
+   */
+  compact?: boolean;
+}
 
-function NavInner({ activePage }: NavProps) {
+function NavInner({ activePage, compact = false }: NavProps) {
   const [open, setOpen] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [clientToggleOpen, setClientToggleOpen] = useState(false)
@@ -187,15 +196,17 @@ function NavInner({ activePage }: NavProps) {
             SIGNED-IN OPERATORS (admin / investor / maestro) — product-map 5 items:
             Home · Engagements · Intelligence · Control Tower · Platform
             Client dropdown stays (elevated roles switch; maestro sees static label).
+            When compact=true (MaestroChrome has PrimaryNav below), skip the
+            primary items to avoid a duplicate nav row.
         ══════════════════════════════════════════════════════════════════ */}
         {signedIn && isOperator && (
           <>
             {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
-            {navLink('Home', '/home', maestroActive || homeActive)}
-            {navLink('Engagements', '/engagements', activePage === 'engagements')}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
-            {navLink('Control Tower', '/tower', activePage === 'tower')}
-            {navLink('Platform', '/platform', platformActive)}
+            {!compact && navLink('Home', '/home', maestroActive || homeActive)}
+            {!compact && navLink('Engagements', '/engagements', activePage === 'engagements')}
+            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && navLink('Control Tower', '/tower', activePage === 'tower')}
+            {!compact && navLink('Platform', '/platform', platformActive)}
           </>
         )}
 
