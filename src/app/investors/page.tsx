@@ -95,18 +95,18 @@ export default async function InvestorsPage({
   const expectedToken = process.env.INVESTOR_ACCESS_TOKEN?.trim()
   const tokenMatches = !!expectedToken && access === expectedToken
 
-  // Signed-in investors and admins pass without the token. Warm-intro
-  // prospects without an account use /investors?access=<token>.
-  let roleUnlocks = false
+  // Any signed-in Clerk user passes · anyone with an account on
+  // app.abarva.ai is past the trust boundary already. Anonymous
+  // visitors still need /investors?access=<token> for warm-intro links.
+  let hasSession = false
   try {
     const user = await currentUser()
-    const role = user?.publicMetadata?.role as string | undefined
-    roleUnlocks = role === 'investor' || role === 'admin'
+    hasSession = !!user
   } catch {
-    // currentUser() can fail during static analysis; treat as not unlocked
+    // currentUser() can fail during static analysis; treat as no session
   }
 
-  if (!tokenMatches && !roleUnlocks) {
+  if (!tokenMatches && !hasSession) {
     notFound()
   }
 
