@@ -81,18 +81,24 @@ export default async function EngagementTopicsPage({
         </div>
         <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.01em' }}>{engagement.name}</div>
         <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
-          Topic playbooks drive Nexus&rsquo;s phase-aware reasoning. v1 · assignment + diagnostic workbook. v2 ·
-          topic-triggered retrieval injection on Nexus turns (queued next).
+          Topic playbooks drive Nexus&rsquo;s phase-aware reasoning · assignment seeds diagnostic workbook + topic-triggered retrieval injection on every Nexus turn.
         </div>
-        <div style={{ marginTop: 8 }}>
+        <div style={{ marginTop: 8, display: 'flex', gap: 14, alignItems: 'baseline' }}>
           <Link
             href={`/engagements/${encodeURIComponent(graphId)}`}
             style={{ fontFamily: MONO, fontSize: 11, color: TEAL, textDecoration: 'none', letterSpacing: '0.08em' }}
           >
             ← back to engagement console
           </Link>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.1em' }}>
+            {assigned.length} ASSIGNED · {recommendations.length} RECOMMENDED · {sortedUnassigned.length} AVAILABLE
+          </span>
         </div>
       </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: 24, alignItems: 'start' }}>
+        {/* LEFT · assigned topics · rich workbook cards */}
+        <div>
 
       {/* Assigned topics */}
       <section style={{ marginBottom: 36 }}>
@@ -325,6 +331,9 @@ export default async function EngagementTopicsPage({
           </div>
         )}
       </section>
+        </div>
+        {/* RIGHT · recommendations + library · browsable sidebar */}
+        <div style={{ position: 'sticky', top: 24, display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Recommended for this engagement */}
       {recommendations.length > 0 && (
@@ -508,6 +517,8 @@ export default async function EngagementTopicsPage({
           </div>
         )}
       </section>
+        </div>
+      </div>
     </div>
   );
 }
