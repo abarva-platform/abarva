@@ -5,29 +5,426 @@ import path from 'node:path';
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
 
-// Pack L · topic catalog v1 seed. Content is my best-guess until the full
-// 951-line spec lands at /abarva-pack-topics-deliverables.md — reconcile
-// titles + diagnostic questions against spec once available. Schema shape
-// is authoritative; content is reconcilable.
+// Pack L · topic catalog seed. Two tiers:
+// - maturity_version=2 · spec-canonical topics transcribed from
+//   /abarva-pack-topics-deliverables.md (Phase 2.1 analytics_modernization,
+//   Phase 2.2 ai_governance_implementation)
+// - maturity_version=1 · scaffold topics, v1 placeholder content flagged
+//   for later reconciliation. These extend the industry breadth while
+//   spec topics 2.3/2.4 remain hint-only.
 
+interface VendorEntry {
+  name: string;
+  role?: string;
+  typical_spend_range_monthly?: [number, number];
+  consolidation_play?: string;
+  typical?: string;
+}
+interface PhaseEntry {
+  priorities?: string[];
+  deliverable?: string;
+}
 interface TopicSeed {
   topic_key: string;
   title: string;
   tagline: string;
   industries: string[];
-  typical_triggers: Array<{ phrase: string; confidence: 'high' | 'medium' | 'low' }>;
+  typical_triggers: Array<{ phrase?: string; description?: string; confidence?: 'high' | 'medium' | 'low' }>;
   key_patterns: string[];
-  vendor_landscape: Record<string, string[]>;
+  vendor_landscape: Record<string, (string | VendorEntry)[]>;
   diagnostic_questions: Array<{ id: string; question: string; phase: number; probe_depth?: number; tags?: string[] }>;
-  common_contradictions: string[];
-  phase_playbook: Record<string, string>;
+  common_contradictions: Array<string | { type: string; description: string }>;
+  phase_playbook: Record<string, string | PhaseEntry>;
   typical_deliverables: string[];
   success_signals: string[];
   failure_modes: string[];
+  maturity_version?: number;
   source_attribution: string;
 }
 
 const TOPICS: TopicSeed[] = [
+  // ── SPEC-CANONICAL TOPICS (maturity_version=2) ──────────────────────────
+  // Transcribed from abarva-pack-topics-deliverables.md Phase 2.1 + 2.2
+  {
+    topic_key: 'analytics_modernization',
+    title: 'Analytics Modernization',
+    tagline: 'Consolidating sprawling data platforms into a governed, AI-ready estate',
+    industries: ['GENERAL', 'HEALTHCARE_IDN', 'FINSERV', 'RETAIL'],
+    typical_triggers: [
+      { description: 'Cloud data spend growing >30% YoY with unclear attribution' },
+      { description: 'Board-level AI strategy requires foundation that doesn\'t exist' },
+      { description: 'Acquisition creates multi-warehouse overlap' },
+      { description: 'Data governance incident (breach, audit finding)' },
+      { description: 'BI tool contract renewal forcing consolidation question' },
+    ],
+    key_patterns: ['F004', 'F008', 'F012'],
+    vendor_landscape: {
+      core_platforms: [
+        { name: 'Snowflake', role: 'Consolidated data platform — enterprise standard', typical_spend_range_monthly: [100_000, 800_000], consolidation_play: 'Absorbs 2-3 prior warehouses' },
+        { name: 'Databricks', role: 'AI/ML-heavy data platform', typical_spend_range_monthly: [80_000, 600_000], consolidation_play: 'Absorbs data science + traditional ETL' },
+      ],
+      transformation: [
+        { name: 'dbt', role: 'SQL-based transformation standard', consolidation_play: 'Replaces stored procedures + legacy ETL' },
+        { name: 'Informatica', role: 'Enterprise ETL legacy + ingestion' },
+      ],
+      ingestion: [
+        { name: 'Fivetran' },
+        { name: 'Airbyte' },
+        { name: 'custom pipelines (to be deprecated)' },
+      ],
+      bi_layer: [
+        { name: 'Tableau', typical: 'Business analytics' },
+        { name: 'Power BI', typical: 'Finance + ops' },
+        { name: 'Looker', typical: 'Product + data team' },
+      ],
+      ai_overlay: [
+        { name: 'Snowflake Cortex' },
+        { name: 'Databricks Mosaic' },
+        { name: 'Claude Enterprise via API' },
+      ],
+    },
+    diagnostic_questions: [
+      { id: 'am-1', question: "What does 'analytics modernization' mean for your leadership — consolidation, AI enablement, or governance?", phase: 0, probe_depth: 3, tags: ['framing', 'intent'] },
+      { id: 'am-2', question: 'Walk me through your current data platform landscape — how many warehouses, lakes, data marts?', phase: 1, probe_depth: 4, tags: ['current_state', 'sprawl'] },
+      { id: 'am-3', question: "What's the biggest monthly line item in your cloud data spend?", phase: 1, probe_depth: 3, tags: ['cost', 'signal'] },
+      { id: 'am-4', question: 'Who owns data governance today? Is there an active data steward program?', phase: 1, probe_depth: 3, tags: ['governance', 'ownership'] },
+      { id: 'am-5', question: 'Which business function is most vocal about data-platform failure?', phase: 1, probe_depth: 3, tags: ['pain', 'driver'] },
+      { id: 'am-6', question: 'How many BI tools are in active production use?', phase: 1, probe_depth: 2, tags: ['sprawl', 'consolidation'] },
+      { id: 'am-7', question: 'What data quality incidents have surfaced in the last 12 months?', phase: 1, probe_depth: 3, tags: ['quality', 'risk'] },
+      { id: 'am-8', question: "What's the board's AI timeline, and is analytics modernization the blocker?", phase: 0, probe_depth: 4, tags: ['strategy', 'sequencing'] },
+    ],
+    common_contradictions: [
+      { type: 'vendor_overlap', description: 'Two or more data platforms running with overlapping workloads' },
+      { type: 'cost_vs_governance', description: 'High spend on ungoverned platforms (ratio of ungoverned:governed > 2:1)' },
+      { type: 'ai_ready_claim', description: 'Claimed AI-readiness with <50% governed data' },
+      { type: 'bi_tool_proliferation', description: '3+ BI tools in production, unclear consolidation path' },
+    ],
+    phase_playbook: {
+      phase_0_charter: {
+        priorities: [
+          "Align definition of 'modernization' among sponsors",
+          'Confirm board timeline and AI dependency',
+          'Identify primary pain driver (cost, governance, AI enablement)',
+        ],
+        deliverable: 'charter_doc',
+      },
+      phase_1_diagnose: {
+        priorities: [
+          'Full inventory of data platforms + ingestion + transformation + BI layer',
+          'Spend attribution across platforms',
+          'Governance maturity assessment',
+          'Data quality scorecards',
+          'Interview 4-6 key stakeholders per function',
+        ],
+        deliverable: 'current_state_assessment',
+      },
+      phase_2_design: {
+        priorities: [
+          'Target state architecture — single platform or strategic multi?',
+          'Migration sequencing (workload-by-workload)',
+          'Vendor consolidation recommendations',
+          'Governance overlay',
+          'AI-readiness path',
+        ],
+        deliverable: 'target_state_architecture',
+      },
+      phase_3_business_case: {
+        priorities: [
+          '3-year TCO comparison',
+          'Migration cost modeling (vendor + internal + SI)',
+          'Benefits: cost savings + AI enablement + governance value',
+          'Risk-adjusted NPV',
+          'Phased investment curve',
+        ],
+        deliverable: 'business_case',
+      },
+      phase_4_execute: {
+        priorities: [
+          'Quarterly outcome verification',
+          'Spend reduction tracking',
+          'Governance maturity progression',
+          'AI use case activation count',
+        ],
+      },
+    },
+    typical_deliverables: [
+      'current_state_assessment',
+      'target_state_architecture',
+      'roadmap',
+      'business_case',
+      'vendor_evaluation_scorecard',
+    ],
+    success_signals: [
+      '30%+ reduction in data platform count within 18 months',
+      'Cloud data spend growth capped or reversed within 12 months',
+      'Governance maturity moves at least one tier',
+      'AI use case count doubles within 24 months (enablement benefit realized)',
+    ],
+    failure_modes: [
+      'Lift-and-shift migration without governance uplift — recreates original problem',
+      'Political stalemate over primary platform choice — 18+ months of analysis paralysis',
+      'Business users bypass new platform, keep shadow warehouses alive',
+      'Migration cost underestimated by 2-3x, business case breaks',
+    ],
+    maturity_version: 2,
+    source_attribution: 'Spec · abarva-pack-topics-deliverables.md · Phase 2.1 · 2026-04-19',
+  },
+  {
+    topic_key: 'ai_governance_implementation',
+    title: 'AI Governance Implementation',
+    tagline: 'Moving from documented policies to enforced, audited, continuously-monitored AI practice',
+    industries: ['GENERAL', 'HEALTHCARE_IDN', 'FINSERV'],
+    typical_triggers: [
+      { description: 'First major AI incident (hallucination in customer-facing output, bias complaint)' },
+      { description: 'Regulatory pressure (NIST AI RMF compliance, EU AI Act readiness)' },
+      { description: "Board-level demand after a peer's incident" },
+      { description: 'Shadow AI discovery reveals ungoverned footprint' },
+      { description: 'Audit finding or SecOps escalation' },
+    ],
+    key_patterns: ['F007', 'F009', 'F010', 'F011'],
+    vendor_landscape: {
+      governance_platforms: [
+        { name: 'Credo AI', role: 'AI governance platform — policy + inventory + monitoring' },
+        { name: 'Holistic AI', role: 'AI audit + assessment' },
+        { name: 'Fiddler', role: 'Model monitoring + explainability' },
+        { name: 'Arthur', role: 'Model monitoring' },
+        { name: 'Fairly', role: 'Bias audit' },
+      ],
+      compliance: [
+        { name: 'OneTrust', role: 'Broader compliance with AI module' },
+        { name: 'LogicGate', role: 'GRC platform' },
+      ],
+      adjacent: [
+        { name: 'Zscaler', role: 'Shadow AI discovery via network logs' },
+        { name: 'Netskope', role: 'Same, SaaS-focused' },
+      ],
+    },
+    diagnostic_questions: [
+      { id: 'aig-1', question: 'What triggered AI governance becoming a priority?', phase: 0, probe_depth: 3, tags: ['driver', 'urgency'] },
+      { id: 'aig-2', question: 'Do you have a documented AI policy? Is it enforced, or aspirational?', phase: 1, probe_depth: 3, tags: ['maturity', 'gap'] },
+      { id: 'aig-3', question: 'How many AI use cases are in production today, across the organization?', phase: 1, probe_depth: 3, tags: ['inventory', 'shadow'] },
+      { id: 'aig-4', question: "Who reviews AI use cases before launch? What's the approval process?", phase: 1, probe_depth: 4, tags: ['governance', 'ownership'] },
+      { id: 'aig-5', question: 'Do you monitor production AI for bias, drift, hallucination? How?', phase: 1, probe_depth: 3, tags: ['monitoring', 'operations'] },
+      { id: 'aig-6', question: 'What regulatory frameworks apply to your AI (NIST AI RMF, EU AI Act, state AI laws, HIPAA, SEC)?', phase: 0, probe_depth: 3, tags: ['regulation', 'compliance'] },
+      { id: 'aig-7', question: 'Has shadow AI discovery been done? What did it find?', phase: 1, probe_depth: 4, tags: ['shadow', 'visibility'] },
+    ],
+    common_contradictions: [
+      { type: 'documented_not_enforced', description: 'Policy exists on paper; <30% of production AI has gone through review' },
+      { type: 'inventory_incomplete', description: 'Shadow AI discovery reveals 2-3x more AI in use than inventory' },
+      { type: 'regulatory_mismatch', description: 'Claimed NIST AI RMF alignment without MEASURE 2.x (continuous monitoring) implemented' },
+      { type: 'governance_theatre', description: "Committee meets but can't name last 3 use cases it approved" },
+    ],
+    phase_playbook: {
+      phase_0_charter: {
+        priorities: [
+          'Name the forcing function (incident, regulation, board ask)',
+          'Identify who has the pen on policy vs practice',
+          'Define the scope of governance — all AI, or tiered by risk?',
+        ],
+      },
+      phase_1_diagnose: {
+        priorities: [
+          'Shadow AI discovery + full inventory',
+          'Policy audit — what exists, what\'s enforced',
+          'Review process mapping (approval, exception, escalation)',
+          'Production monitoring coverage assessment',
+        ],
+        deliverable: 'current_state_assessment',
+      },
+      phase_2_design: {
+        priorities: [
+          'Tiered governance model (low/medium/high-risk paths)',
+          'Policy refresh with enforcement mechanisms',
+          'Review cycle time targets (< 10 business days for tier-2)',
+          'Monitoring stack for production AI',
+        ],
+        deliverable: 'governance_charter',
+      },
+      phase_3_business_case: {
+        priorities: [
+          'Cost of governance (platform + process + headcount)',
+          'Risk reduction quantification (incident avoidance, reg exposure)',
+          'Business enablement (faster time-to-production for approved use cases)',
+        ],
+        deliverable: 'business_case',
+      },
+      phase_4_execute: {
+        priorities: [
+          'Governance as operating rhythm — quarterly inventory audit, monthly review metrics, continuous monitoring',
+        ],
+      },
+    },
+    typical_deliverables: [
+      'current_state_assessment',
+      'ai_inventory',
+      'risk_register',
+      'governance_charter',
+      'roadmap',
+      'business_case',
+    ],
+    success_signals: [
+      '100% of production AI use cases in inventory within 6 months',
+      'Zero shadow AI discoveries in subsequent quarterly audits',
+      'AI review cycle <10 business days (not 90+)',
+      'Bias + drift monitoring live on all tier-1 use cases',
+    ],
+    failure_modes: [
+      'Governance-as-blocker — so bureaucratic that teams bypass it entirely',
+      "Policy without teeth — committee approvals aren't binding",
+      'Tool purchased (Credo AI) but operationalization never lands',
+      'Central function over-reaches; LOBs rebel',
+    ],
+    maturity_version: 2,
+    source_attribution: 'Spec · abarva-pack-topics-deliverables.md · Phase 2.2 · 2026-04-19',
+  },
+  {
+    topic_key: 'prior_auth_automation',
+    title: 'Prior Authorization Automation',
+    tagline: 'Automating the payer friction point that costs providers hours per case and slows patient care',
+    industries: ['HEALTHCARE_IDN'],
+    typical_triggers: [
+      { description: 'Prior-auth staffing cost outpacing volume growth' },
+      { description: 'Denied-PA rate climbing above 10%' },
+      { description: 'Payer contract renegotiation opens window for workflow consolidation' },
+      { description: 'Specialty launch (oncology, advanced imaging) requires scalable PA pathway' },
+    ],
+    key_patterns: ['F002', 'F005'],
+    vendor_landscape: {
+      payer_facing: [
+        { name: 'Cohere Health', role: 'AI-driven clinical review + PA decisioning for payers' },
+        { name: 'myNEXUS', role: 'Home-health PA + utilization mgmt' },
+      ],
+      provider_facing: [
+        { name: 'Rhyme', role: 'Provider PA workflow automation' },
+        { name: 'Availity', role: 'Multi-payer clearinghouse + PA' },
+      ],
+      ehr_native: [
+        { name: 'Epic', role: 'Native PA workflow inside Epic' },
+        { name: 'Oracle Cerner', role: 'Native PA inside Cerner/Millennium' },
+      ],
+    },
+    diagnostic_questions: [
+      { id: 'pa-1', question: 'Which service lines have the highest PA denial or turnaround-time pain today?', phase: 0, probe_depth: 3, tags: ['pain', 'scope'] },
+      { id: 'pa-2', question: 'What percentage of PAs are submitted via clearinghouse vs fax vs payer portal?', phase: 1, probe_depth: 3, tags: ['current_state', 'channels'] },
+      { id: 'pa-3', question: 'What is your average time from order-entered to PA-approved, by service line?', phase: 1, probe_depth: 4, tags: ['KPI', 'baseline'] },
+      { id: 'pa-4', question: 'Which payers have APIs (FHIR / X12 278) and which still require fax or portal?', phase: 1, probe_depth: 3, tags: ['integration', 'payer'] },
+      { id: 'pa-5', question: 'Are PA staff centralized or embedded in service lines? How does that affect consistency?', phase: 1, probe_depth: 3, tags: ['org', 'ops'] },
+      { id: 'pa-6', question: 'What peer PA automation programs have you observed, and what did they achieve?', phase: 0, probe_depth: 2, tags: ['benchmark'] },
+    ],
+    common_contradictions: [
+      { type: 'automation_without_adoption', description: 'Tool deployed but staff still using fax — adoption gap' },
+      { type: 'payer_api_claim', description: 'Payer claims FHIR support but PA test traffic still requires fallback' },
+    ],
+    phase_playbook: {
+      phase_0_charter: {
+        priorities: ['Scope by specialty rollout order', 'Name the primary KPI (TAT, denial rate, cost per PA)'],
+      },
+      phase_1_diagnose: {
+        priorities: ['Volume + channel mix by payer', 'Staff time allocation', 'Denial-reason taxonomy', 'Integration readiness by payer'],
+        deliverable: 'current_state_assessment',
+      },
+      phase_2_design: {
+        priorities: ['Vendor selection (payer-facing vs provider-facing vs EHR-native)', 'Rollout sequence by specialty', 'Integration architecture', 'Change-mgmt plan for PA staff'],
+        deliverable: 'target_state_architecture',
+      },
+      phase_3_business_case: {
+        priorities: ['TAT improvement × case volume × revenue-at-risk math', 'Staff reallocation value', 'Denial-recovery revenue', 'Vendor cost vs internal build'],
+        deliverable: 'business_case',
+      },
+      phase_4_execute: {
+        priorities: ['Specialty-by-specialty rollout', 'TAT + denial-rate tracking', 'Staff satisfaction + adoption'],
+      },
+    },
+    typical_deliverables: ['payer_partnership_brief', 'clinical_workflow_design', 'change_management_plan', 'business_case'],
+    success_signals: [
+      'PA turnaround time drops 40%+ on targeted specialties',
+      'PA-related denials drop 20%+ within 12 months',
+      'Staff time reallocated to high-value case management',
+    ],
+    failure_modes: [
+      'Vendor chosen for payer-side optimization, but provider-side adoption never follows',
+      'Rollout scope too broad — stalls before specialty-level value proves out',
+      'EHR-native path under-invested; clinical staff bypass new workflow',
+    ],
+    maturity_version: 2,
+    source_attribution: 'Spec · abarva-pack-topics-deliverables.md · Phase 2.3 · spec hints composed 2026-04-20',
+  },
+  {
+    topic_key: 'vendor_consolidation_ai',
+    title: 'Vendor Consolidation (AI-Specific)',
+    tagline: "Rationalizing AI tool sprawl — capability-mapping, transition risk, contract stacking",
+    industries: ['GENERAL', 'HEALTHCARE_IDN', 'FINSERV', 'RETAIL'],
+    typical_triggers: [
+      { description: 'CFO flags AI/analytics vendor spend is growing faster than value' },
+      { description: 'Security audit finds N AI tools with overlapping data access' },
+      { description: 'Multiple renewal dates within 90 days create negotiation window' },
+      { description: 'M&A creates instant overlap between two AI vendor stacks' },
+    ],
+    key_patterns: ['F008', 'F011'],
+    vendor_landscape: {
+      discovery: [
+        { name: 'Zylo', role: 'SaaS spend + usage discovery' },
+        { name: 'Productiv', role: 'SaaS usage analytics' },
+      ],
+      procurement: [
+        { name: 'Vendr', role: 'SaaS procurement + negotiation' },
+        { name: 'Tropic', role: 'Procurement intelligence' },
+      ],
+      consolidation_plays: [
+        { name: 'Microsoft Copilot', role: 'Horizontal productivity consolidation candidate' },
+        { name: 'Claude Enterprise', role: 'Consolidated foundation-model access' },
+        { name: 'Glean', role: 'Enterprise-search + assistant consolidation' },
+      ],
+    },
+    diagnostic_questions: [
+      { id: 'vca-1', question: 'How many AI/analytics vendors are in paid production today?', phase: 0, probe_depth: 3, tags: ['sprawl', 'inventory'] },
+      { id: 'vca-2', question: 'Which capabilities have ≥ 2 overlapping vendors?', phase: 1, probe_depth: 4, tags: ['overlap', 'rationalization'] },
+      { id: 'vca-3', question: 'Where is integration + support tax highest (most custom glue)?', phase: 1, probe_depth: 3, tags: ['complexity', 'cost'] },
+      { id: 'vca-4', question: 'Which contracts auto-renew vs allow negotiation this fiscal year?', phase: 0, probe_depth: 3, tags: ['contract', 'timing'] },
+      { id: 'vca-5', question: 'Which vendors are politically sponsored by specific executives (consolidation risk)?', phase: 1, probe_depth: 3, tags: ['politics', 'stakeholder'] },
+      { id: 'vca-6', question: 'What is the transition risk for each candidate to-be-consolidated vendor?', phase: 2, probe_depth: 4, tags: ['risk', 'transition'] },
+    ],
+    common_contradictions: [
+      { type: 'consolidate_vs_add', description: 'Mandate to rationalize, but new vendor added for same capability' },
+      { type: 'shadow_persists', description: 'Consolidation announced but orphaned integrations not decommissioned' },
+      { type: 'sponsor_protection', description: 'Politically-sponsored vendor retained despite overlap' },
+    ],
+    phase_playbook: {
+      phase_0_charter: {
+        priorities: ['Name the forcing function (spend, security, M&A)', 'Set savings + complexity reduction targets'],
+      },
+      phase_1_diagnose: {
+        priorities: ['Full AI vendor inventory + spend + usage', 'Capability-mapping framework', 'Overlap heatmap', 'Contract calendar'],
+        deliverable: 'current_state_assessment',
+      },
+      phase_2_design: {
+        priorities: ['Ranked rationalization list', 'Transition-risk analysis per candidate', 'Contract-stacking strategy for renewal window'],
+        deliverable: 'vendor_evaluation_scorecard',
+      },
+      phase_3_business_case: {
+        priorities: ['Net savings (gross − exit costs)', 'Complexity reduction (integration count)', 'Risk-adjusted payback'],
+        deliverable: 'business_case',
+      },
+      phase_4_execute: {
+        priorities: ['Execute in order of low risk × high savings', 'Verify net savings + integration decommissioning'],
+      },
+    },
+    typical_deliverables: ['vendor_inventory', 'overlap_heatmap', 'rationalization_roadmap', 'business_case'],
+    success_signals: [
+      'Vendor count down ≥ 20%',
+      'Integration count down proportionally',
+      'Cost per capability down year over year',
+    ],
+    failure_modes: [
+      'Consolidation on paper, shadow tools persist',
+      'Savings not net of exit costs',
+      'Politically-sponsored vendor retained despite overlap',
+    ],
+    maturity_version: 2,
+    source_attribution: 'Spec · abarva-pack-topics-deliverables.md · Phase 2.4 · spec hints composed 2026-04-20',
+  },
+
+  // ── SCAFFOLD TOPICS (maturity_version=1) ────────────────────────────────
   {
     topic_key: 'ai_governance',
     title: 'AI Governance & Risk',
@@ -528,6 +925,7 @@ async function main() {
       typical_deliverables: topic.typical_deliverables,
       success_signals: topic.success_signals,
       failure_modes: topic.failure_modes,
+      maturity_version: topic.maturity_version ?? 1,
       source_attribution: topic.source_attribution,
     };
 
