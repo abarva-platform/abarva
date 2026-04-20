@@ -130,7 +130,7 @@ export default async function PlatformPage() {
         <Card
           label="Users"
           accent={BLUE}
-          href="/users/new"
+          href="/platform/users/new"
           hero={`${m.personCount}`}
           sub={`active persons · click to add`}
         />
@@ -183,9 +183,8 @@ export default async function PlatformPage() {
           SUB-SURFACES
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-          <QuickLink href="/data" title="Data" sub="Upload, sources, templates" />
-          <QuickLink href="/users/new" title="Users" sub="Invite + role management" />
-          <QuickLink href="/admin" title="Admin" sub="Legacy admin console" />
+          <QuickLink href="/platform/data" title="Data" sub="Upload, sources, templates" />
+          <QuickLink href="/platform/users/new" title="Users" sub="Invite + role management" />
           <QuickLink href="/tower/onboard" title="Data onboarding" sub="Wizard for new client sources" />
           <QuickLink href="/tower" title="Control Tower" sub="Portfolio dashboard" />
           <QuickLink href="/intelligence/library" title="Intelligence · Library" sub="Knowledge catalog" />

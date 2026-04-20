@@ -162,7 +162,7 @@ function QuickStartCard({
   );
 }
 
-export default async function DashboardPage() {
+export default async function HomePage() {
   const person = await getCurrentPerson();
   const [metrics, engagements] = await Promise.all([
     getDashboardMetrics(),
@@ -244,8 +244,8 @@ export default async function DashboardPage() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <QuickStartCard mode="NEXUS · ENGAGEMENT" modeColor={TEAL} title="Start new engagement" href="/engagements/new" />
-            <QuickStartCard mode="NEXUS · IDENTITY" modeColor={PURPLE} title="Add a user" href="/users/new" />
-            <QuickStartCard mode="NEXUS · DATA" modeColor={TEAL} title="Load client data" href="/data" />
+            <QuickStartCard mode="NEXUS · IDENTITY" modeColor={PURPLE} title="Add a user" href="/platform/users/new" />
+            <QuickStartCard mode="NEXUS · DATA" modeColor={TEAL} title="Load client data" href="/platform/data" />
           </div>
         </div>
       </div>

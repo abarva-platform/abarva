@@ -189,7 +189,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isAdmin && (
           <>
             {clientDropdown()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
+            {navLink('Maestro', '/home', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}
@@ -201,7 +201,7 @@ function NavInner({ activePage }: NavProps) {
           <>
             {navLink('Home', '/', homeActive)}
             {clientDropdown()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
+            {navLink('Maestro', '/home', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}
@@ -212,7 +212,7 @@ function NavInner({ activePage }: NavProps) {
         {signedIn && isMaestro && (
           <>
             {staticClientLabel()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
+            {navLink('Maestro', '/home', maestroActive)}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
           </>
         )}

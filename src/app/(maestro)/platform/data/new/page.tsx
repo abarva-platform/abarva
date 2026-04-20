@@ -11,13 +11,13 @@ export default async function NewDataPage({
   const clientId = (params.clientId ?? '').trim();
   if (!clientId) {
     // Default to first demo client
-    redirect(`/data/new?clientId=${DATA_CLIENTS[0].id}`);
+    redirect(`/platform/data/new?clientId=${DATA_CLIENTS[0].id}`);
   }
   const client = getDataClient(clientId);
   if (!client) {
     return (
       <div style={{ padding: '28px 28px 40px', color: 'rgba(245,245,240,0.72)' }}>
-        Unknown client: <code>{clientId}</code>. Open /data and pick one.
+        Unknown client: <code>{clientId}</code>. Open /platform/data and pick one.
       </div>
     );
   }

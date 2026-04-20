@@ -39,7 +39,7 @@ export default function DataSetupPage() {
               </div>
             </div>
             <Link
-              href={{ pathname: '/data/new', query: { clientId: c.id } }}
+              href={{ pathname: '/platform/data/new', query: { clientId: c.id } }}
               style={{
                 padding: '8px 12px',
                 background: 'transparent',

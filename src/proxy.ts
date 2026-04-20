@@ -26,6 +26,7 @@ const adminRoutes = createRouteMatcher([
 const authRequiredRoutes = createRouteMatcher([
   '/admin(.*)',
   '/maestro(.*)',
+  '/home(.*)',
   '/dashboard(.*)',
   '/engagements(.*)',
   '/engage/(.*)',

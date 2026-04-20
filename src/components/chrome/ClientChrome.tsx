@@ -23,13 +23,13 @@ interface ClientInfo {
 // Control Tower. No Intelligence (cross-client knowledge), no Platform
 // (admin surfaces). Observer gets the same, minus Engagements.
 const ITEMS_CLIENT_VIEWER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
-  { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' },
+  { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
   { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
 ];
 
 const ITEMS_OBSERVER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
-  { label: 'Home', href: '/dashboard', match: (p) => p === '/dashboard' || p === '/' },
+  { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
 ];
 
@@ -67,7 +67,7 @@ export function ClientChrome({
           gap: 24,
         }}
       >
-        <Link href="/dashboard" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: 10 }}>
+        <Link href="/home" style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', gap: 10 }}>
           <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700, color: INK, letterSpacing: '-0.01em' }}>
             {client.name}
           </span>
