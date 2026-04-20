@@ -1,6 +1,6 @@
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
-import { ALLOWED_AI_VENDORS } from '@/lib/config/vendor-whitelist';
+import { VENDOR_CATALOG } from '@/lib/config/vendor-catalog';
 
 // Library catalog loader — classifies knowledge_sources + Genome patterns +
 // vendors into the buckets the Library page renders. Empty-safe — every
@@ -171,23 +171,26 @@ export async function loadLibraryCatalog(): Promise<LibraryCatalog> {
     counts.topic += 1;
   }
 
-  // ── Vendors from the static whitelist (ALLOWED_AI_VENDORS) + tech_stack_items
-  // rows for any client-specific names not on the whitelist.
+  // ── Vendors from the structured catalog. subtitle carries category so
+  // the Library page can group vendors under collapsible sub-sections;
+  // industryTags feeds the industry facet; detail shows a pricing or
+  // contract hint when available.
   try {
-    for (const name of ALLOWED_AI_VENDORS) {
+    for (const v of VENDOR_CATALOG) {
       entries.push({
-        id: `vendor:${name}`,
+        id: `vendor:${v.name}`,
         category: 'vendor',
-        title: name,
-        subtitle: null,
-        detail: null,
-        industryTags: [],
+        title: v.name,
+        subtitle: v.category,
+        detail: v.detail ?? v.pricing ?? null,
+        industryTags: v.industries,
         topicTags: [],
         publishedAt: null,
-        href: `/intelligence/ask?q=${encodeURIComponent(name)}`,
+        href: `/intelligence/ask?q=${encodeURIComponent(v.name)}`,
         sourceUrl: null,
       });
       counts.vendor += 1;
+      for (const i of v.industries) industrySet.add(i);
     }
   } catch (err) {
     console.warn('[library.vendors]', err);

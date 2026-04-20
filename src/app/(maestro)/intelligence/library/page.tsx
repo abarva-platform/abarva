@@ -364,6 +364,90 @@ export default async function LibraryPage({
             >
               No matches for the current filter. Clear a facet or try Ask Intelligence directly.
             </div>
+          ) : activeCategory === 'vendor' ? (
+            // Vendor view: group by subtitle (sub-category). Collapsed by
+            // default with <details>/<summary> so no client JS needed.
+            (() => {
+              const groups = new Map<string, LibraryEntry[]>();
+              for (const e of filtered) {
+                const key = e.subtitle ?? 'Other';
+                if (!groups.has(key)) groups.set(key, []);
+                groups.get(key)!.push(e);
+              }
+              const groupKeys = Array.from(groups.keys()).sort((a, b) => {
+                const countA = groups.get(a)!.length;
+                const countB = groups.get(b)!.length;
+                return countB - countA;
+              });
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {groupKeys.map((key) => {
+                    const items = groups.get(key)!;
+                    return (
+                      <details
+                        key={key}
+                        style={{
+                          border: BORDER,
+                          borderRadius: 10,
+                          background: PANEL_BG,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <summary
+                          style={{
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            listStyle: 'none',
+                          }}
+                        >
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: CATEGORY_COLOR.vendor }} />
+                          <span style={{ fontSize: 14, fontWeight: 500 }}>{key}</span>
+                          <span
+                            style={{
+                              fontFamily: MONO,
+                              fontSize: 10,
+                              color: MUTE,
+                              letterSpacing: '0.12em',
+                              marginLeft: 'auto',
+                            }}
+                          >
+                            {items.length} vendor{items.length === 1 ? '' : 's'} · click to expand
+                          </span>
+                        </summary>
+                        <div
+                          style={{
+                            padding: '0 16px 16px',
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                            gap: 10,
+                          }}
+                        >
+                          {items.slice(0, 48).map((e) => (
+                            <EntryCard key={`${e.category}:${e.id}`} e={e} />
+                          ))}
+                          {items.length > 48 && (
+                            <div
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 11,
+                                color: MUTE,
+                                alignSelf: 'center',
+                                padding: 10,
+                              }}
+                            >
+                              + {items.length - 48} more (refine by industry)
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              );
+            })()
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
               {filtered.slice(0, 200).map((e) => (
@@ -371,7 +455,7 @@ export default async function LibraryPage({
               ))}
             </div>
           )}
-          {filtered.length > 200 && (
+          {activeCategory !== 'vendor' && filtered.length > 200 && (
             <div style={{ marginTop: 16, fontSize: 12, color: MUTE, fontFamily: MONO }}>
               Showing 200 of {filtered.length}. Refine by category or industry to see the rest.
             </div>
