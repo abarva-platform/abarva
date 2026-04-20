@@ -184,41 +184,23 @@ function NavInner({ activePage }: NavProps) {
         </a>
 
         {/* ══════════════════════════════════════════════════════════════════
-            ADMIN — Maestro · Intelligence · AVR · Solutions | Platform · Investor · Admin
+            SIGNED-IN OPERATORS (admin / investor / maestro) — product-map 5 items:
+            Home · Engagements · Intelligence · Control Tower · Platform
+            Client dropdown stays (elevated roles switch; maestro sees static label).
         ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isAdmin && (
+        {signedIn && isOperator && (
           <>
-            {clientDropdown()}
-            {navLink('Maestro', '/home', maestroActive)}
+            {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
+            {navLink('Home', '/home', maestroActive || homeActive)}
+            {navLink('Engagements', '/engagements', activePage === 'engagements')}
             {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {navLink('Control Tower', '/tower', activePage === 'tower')}
+            {navLink('Platform', '/platform', platformActive)}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            INVESTOR — Home · Maestro · Intelligence · AVR · Solutions | ...
-        ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isInvestor && (
-          <>
-            {navLink('Home', '/', homeActive)}
-            {clientDropdown()}
-            {navLink('Maestro', '/home', maestroActive)}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
-          </>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════
-            MAESTRO — Maestro · Intelligence · AVR · Solutions | Platform · Admin(grey)
-        ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isMaestro && (
-          <>
-            {staticClientLabel()}
-            {navLink('Maestro', '/home', maestroActive)}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
-          </>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════
-            UNAUTHENTICATED / CLIENT — Solutions | Platform · Investor · Demo
+            UNAUTHENTICATED / CLIENT — marketing surface
         ══════════════════════════════════════════════════════════════════ */}
         {(!signedIn || isClient) && (
           <>
@@ -227,12 +209,10 @@ function NavInner({ activePage }: NavProps) {
           </>
         )}
 
-        {/* ── Right side: Demo · Platform · Investor · Admin + user avatar ─── */}
+        {/* ── Right side: Admin portal shortcut + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {signedIn && demoNavItem()}
-          {signedIn && navLink('Platform', '/platform', platformActive)}
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
-          {signedIn && adminNavItem()}
+          {signedIn && isAdmin && adminNavItem()}
           <div style={{ width: '12px' }} />
 
           {signedIn ? (
