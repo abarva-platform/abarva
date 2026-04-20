@@ -173,6 +173,31 @@ export async function unassignTopic(args: {
   if (error) throw error;
 }
 
+export async function setTopicPrimary(args: {
+  engagementId: string;
+  topicKey: string;
+  isPrimary: boolean;
+}): Promise<void> {
+  const sb = getServerSupabase();
+  if (args.isPrimary) {
+    // Spec models engagement_topics_map.is_primary as nullable — one engagement
+    // can have many primaries, but a clear single primary is the typical case.
+    // Clear existing primaries before setting new one so the UI stays clean.
+    const { error: clearErr } = await sb
+      .from('engagement_topics_map')
+      .update({ is_primary: false })
+      .eq('engagement_id', args.engagementId)
+      .eq('is_primary', true);
+    if (clearErr) throw clearErr;
+  }
+  const { error } = await sb
+    .from('engagement_topics_map')
+    .update({ is_primary: args.isPrimary })
+    .eq('engagement_id', args.engagementId)
+    .eq('topic_key', args.topicKey);
+  if (error) throw error;
+}
+
 export async function toggleQuestionDone(args: {
   engagementId: string;
   topicKey: string;

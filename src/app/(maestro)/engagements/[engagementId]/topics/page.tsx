@@ -8,7 +8,7 @@ import {
   type TopicRow,
   type DiagnosticQuestion,
 } from '@/lib/topics/db';
-import { assignTopicAction, unassignTopicAction, toggleQuestionAction } from './actions';
+import { assignTopicAction, unassignTopicAction, toggleQuestionAction, togglePrimaryAction } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -162,26 +162,66 @@ export default async function EngagementTopicsPage({
                     >
                       {done}/{total} questions
                     </div>
-                    <form action={unassignTopicAction} style={{ marginLeft: 'auto' }}>
-                      <input type="hidden" name="engagementGraphId" value={graphId} />
-                      <input type="hidden" name="topicKey" value={et.topic_key} />
-                      <button
-                        type="submit"
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                      <Link
+                        href={`/intelligence/topics/${encodeURIComponent(et.topic_key)}`}
                         style={{
                           fontFamily: MONO,
                           fontSize: 10,
                           background: 'transparent',
-                          border: `0.5px solid ${CORAL}`,
-                          color: CORAL,
+                          border: `0.5px solid ${TEAL}`,
+                          color: TEAL,
                           padding: '4px 10px',
                           borderRadius: 6,
-                          cursor: 'pointer',
+                          textDecoration: 'none',
                           letterSpacing: '0.1em',
                         }}
                       >
-                        UNASSIGN
-                      </button>
-                    </form>
+                        VIEW SPEC →
+                      </Link>
+                      <form action={togglePrimaryAction}>
+                        <input type="hidden" name="engagementGraphId" value={graphId} />
+                        <input type="hidden" name="topicKey" value={et.topic_key} />
+                        <input type="hidden" name="isPrimary" value={et.is_primary ? 'false' : 'true'} />
+                        <button
+                          type="submit"
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            background: et.is_primary ? PURPLE : 'transparent',
+                            border: `0.5px solid ${PURPLE}`,
+                            color: et.is_primary ? '#0A0A0A' : PURPLE,
+                            padding: '4px 10px',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            letterSpacing: '0.1em',
+                            fontWeight: et.is_primary ? 700 : 500,
+                          }}
+                        >
+                          {et.is_primary ? 'CLEAR PRIMARY' : 'MARK PRIMARY'}
+                        </button>
+                      </form>
+                      <form action={unassignTopicAction}>
+                        <input type="hidden" name="engagementGraphId" value={graphId} />
+                        <input type="hidden" name="topicKey" value={et.topic_key} />
+                        <button
+                          type="submit"
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            background: 'transparent',
+                            border: `0.5px solid ${CORAL}`,
+                            color: CORAL,
+                            padding: '4px 10px',
+                            borderRadius: 6,
+                            cursor: 'pointer',
+                            letterSpacing: '0.1em',
+                          }}
+                        >
+                          UNASSIGN
+                        </button>
+                      </form>
+                    </div>
                   </div>
                   {topic.tagline && (
                     <div style={{ fontSize: 13, color: MUTE, marginBottom: 14, lineHeight: 1.5 }}>{topic.tagline}</div>
