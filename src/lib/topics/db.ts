@@ -129,7 +129,12 @@ export async function listAllTopics(): Promise<TopicRow[]> {
     .from('engagement_topics')
     .select('*')
     .order('title', { ascending: true });
-  if (error) throw error;
+  if (error) {
+    // Soft-fail: migration 040 may not yet be applied. Callers should
+    // treat empty list as "no topic catalog available".
+    console.warn('[topics.listAllTopics]', error.message);
+    return [];
+  }
   return (data ?? []) as TopicRow[];
 }
 
@@ -139,7 +144,10 @@ export async function listEngagementTopics(engagementId: string): Promise<Engage
     .select('*')
     .eq('engagement_id', engagementId)
     .order('added_at', { ascending: false });
-  if (error) throw error;
+  if (error) {
+    console.warn('[topics.listEngagementTopics]', error.message);
+    return [];
+  }
   return (data ?? []) as EngagementTopicMapRow[];
 }
 
