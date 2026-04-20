@@ -448,6 +448,169 @@ export default async function LibraryPage({
                 </div>
               );
             })()
+          ) : activeCategory === null ? (
+            // All view · render by CATEGORY sections so 108 vendors don't
+            // drown out 4 patterns in a flat grid. Each section gets a
+            // header + category-appropriate preview (vendors collapse to
+            // sub-category chips with counts; small categories inline).
+            (() => {
+              const byCat = new Map<LibraryCategory, LibraryEntry[]>();
+              for (const e of filtered) {
+                const arr = byCat.get(e.category) ?? [];
+                arr.push(e);
+                byCat.set(e.category, arr);
+              }
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  {CATEGORY_ORDER.map((cat) => {
+                    const items = byCat.get(cat);
+                    if (!items || items.length === 0) return null;
+                    const accent = CATEGORY_COLOR[cat];
+                    const tileCap = cat === 'vendor' ? 0 : cat === 'topic' || cat === 'pattern' ? 12 : 8;
+                    const isVendorSection = cat === 'vendor';
+
+                    // Vendor section: show sub-category chip row + click-through
+                    if (isVendorSection) {
+                      const subGroups = new Map<string, number>();
+                      for (const v of items) {
+                        const sub = v.subtitle ?? 'Other';
+                        subGroups.set(sub, (subGroups.get(sub) ?? 0) + 1);
+                      }
+                      const subs = Array.from(subGroups.entries()).sort((a, b) => b[1] - a[1]);
+                      return (
+                        <section key={cat}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              justifyContent: 'space-between',
+                              marginBottom: 10,
+                            }}
+                          >
+                            <div>
+                              <div
+                                style={{
+                                  fontFamily: MONO,
+                                  fontSize: 10,
+                                  color: accent,
+                                  letterSpacing: '0.14em',
+                                  marginBottom: 2,
+                                }}
+                              >
+                                {CATEGORY_LABEL[cat].toUpperCase()} · {items.length}
+                              </div>
+                              <div style={{ fontSize: 12.5, color: MUTE }}>
+                                Grouped by sub-category. Click a chip to browse · or filter the category facet for detail.
+                              </div>
+                            </div>
+                            <Link
+                              href={`/intelligence/library${qsForCat('vendor')}`}
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 10,
+                                color: accent,
+                                letterSpacing: '0.12em',
+                                textDecoration: 'none',
+                                border: `0.5px solid ${accent}`,
+                                padding: '5px 10px',
+                                borderRadius: 6,
+                              }}
+                            >
+                              BROWSE ALL →
+                            </Link>
+                          </div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: 6,
+                              padding: 12,
+                              background: PANEL_BG,
+                              border: BORDER,
+                              borderRadius: 10,
+                            }}
+                          >
+                            {subs.map(([sub, count]) => (
+                              <Link
+                                key={sub}
+                                href={`/intelligence/library${qsForCat('vendor')}`}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'baseline',
+                                  gap: 6,
+                                  padding: '5px 10px',
+                                  border: `0.5px solid ${accent}`,
+                                  background: 'rgba(245,197,74,0.04)',
+                                  borderRadius: 6,
+                                  textDecoration: 'none',
+                                  color: INK,
+                                }}
+                              >
+                                <span style={{ fontSize: 12, fontWeight: 500 }}>{sub}</span>
+                                <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE }}>
+                                  {count}
+                                </span>
+                              </Link>
+                            ))}
+                          </div>
+                        </section>
+                      );
+                    }
+
+                    // Other categories: normal grid, tiles first, +N more link if
+                    // exceeds cap
+                    return (
+                      <section key={cat}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'baseline',
+                            justifyContent: 'space-between',
+                            marginBottom: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontFamily: MONO,
+                              fontSize: 10,
+                              color: accent,
+                              letterSpacing: '0.14em',
+                            }}
+                          >
+                            {CATEGORY_LABEL[cat].toUpperCase()} · {items.length}
+                          </div>
+                          {items.length > tileCap && (
+                            <Link
+                              href={`/intelligence/library${qsForCat(cat)}`}
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 10,
+                                color: accent,
+                                letterSpacing: '0.1em',
+                                textDecoration: 'none',
+                              }}
+                            >
+                              VIEW ALL {items.length} →
+                            </Link>
+                          )}
+                        </div>
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                            gap: 12,
+                          }}
+                        >
+                          {items.slice(0, tileCap).map((e) => (
+                            <EntryCard key={`${e.category}:${e.id}`} e={e} />
+                          ))}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              );
+            })()
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 12 }}>
               {filtered.slice(0, 200).map((e) => (
@@ -455,7 +618,7 @@ export default async function LibraryPage({
               ))}
             </div>
           )}
-          {activeCategory !== 'vendor' && filtered.length > 200 && (
+          {activeCategory !== 'vendor' && activeCategory !== null && filtered.length > 200 && (
             <div style={{ marginTop: 16, fontSize: 12, color: MUTE, fontFamily: MONO }}>
               Showing 200 of {filtered.length}. Refine by category or industry to see the rest.
             </div>
