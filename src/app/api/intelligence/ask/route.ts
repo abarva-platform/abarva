@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { askIntelligence } from '@/lib/intelligence/ask';
+import { getCurrentPerson } from '@/lib/auth/maestro';
+import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -15,11 +17,21 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  let userContextBlock = '';
+  try {
+    const person = await getCurrentPerson();
+    if (person) {
+      userContextBlock = await assembleUserContextBlock({ personId: person.id, displayName: person.name });
+    }
+  } catch (err) {
+    console.warn('[ask.user-context]', err);
+  }
+
   const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        for await (const event of askIntelligence(query)) {
+        for await (const event of askIntelligence(query, { userContextBlock })) {
           controller.enqueue(encoder.encode(JSON.stringify(event) + '\n'));
         }
       } catch (err) {

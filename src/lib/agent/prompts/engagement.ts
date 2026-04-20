@@ -14,6 +14,7 @@ interface AssembleArgs {
   personalThreads?: string[];
   clientDataSummary?: string[];
   maestroContextBlock?: string;
+  userContextBlock?: string;
   /**
    * Labeled RETRIEVED CONTEXT block from formatRetrievedContext(). Empty
    * string when retrieval returned no chunks — do not pass a string with
@@ -42,6 +43,7 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
   // tempts the model to cite fabricated source_keys.
   return [
     CONVERSATION_PRINCIPLES,
+    ctx.userContextBlock && ctx.userContextBlock.trim().length > 0 ? ctx.userContextBlock : null,
     ctx.maestroContextBlock && ctx.maestroContextBlock.trim().length > 0 ? ctx.maestroContextBlock : null,
     hasRetrieval ? ctx.retrievedContextBlock : null,
     hasRetrieval ? CITATION_INSTRUCTION : null,

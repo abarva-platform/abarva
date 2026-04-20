@@ -41,6 +41,7 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
 import { logAudit } from '@/lib/audit/log';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
+import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 
@@ -126,9 +127,14 @@ export async function POST(
     ? await getActivePersonalThreads(sponsor.id)
     : [];
 
-  const maestroContextBlock = maestro
-    ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
-    : '';
+  const [maestroContextBlock, userContextBlock] = await Promise.all([
+    maestro
+      ? assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
+      : Promise.resolve(''),
+    maestro
+      ? assembleUserContextBlock({ personId: maestro.id, displayName: maestro.name })
+      : Promise.resolve(''),
+  ]);
 
   const messages = recentTurns.map(t => ({
     role: t.sender === 'agent' ? 'assistant' as const : 'user' as const,
@@ -182,6 +188,7 @@ export async function POST(
   const system = assembleEngagementSystemPrompt({
     engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
     maestroContextBlock,
+    userContextBlock,
     retrievedContextBlock: [retrievedContextBlock, crossClientBlock].filter(Boolean).join('\n\n'),
   });
 

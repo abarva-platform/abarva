@@ -45,6 +45,7 @@ export async function* synthesizeStream(args: {
   query: string;
   sources: AskSource[];
   intent: AskIntent;
+  userContextBlock?: string;
 }): AsyncGenerator<string> {
   const client = getClient();
   if (!client) {
@@ -54,13 +55,16 @@ export async function* synthesizeStream(args: {
     return;
   }
 
+  const system = args.userContextBlock && args.userContextBlock.trim().length > 0
+    ? `${args.userContextBlock}\n\n${SYSTEM_PROMPT}`
+    : SYSTEM_PROMPT;
   const prompt = `SOURCES PROVIDED:\n${formatSourcesBlock(args.sources)}\n\nUSER QUESTION:\n${args.query}\n\nRespond with your synthesis.`;
 
   try {
     const stream = await client.messages.create({
       model: chooseModel(args.intent),
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system,
       messages: [{ role: 'user', content: prompt }],
       stream: true,
     });
