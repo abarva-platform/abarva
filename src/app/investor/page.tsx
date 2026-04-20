@@ -1,27 +1,32 @@
-'use client'
-import { useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { usePostHog } from 'posthog-js/react'
+import { redirect } from 'next/navigation'
 
-function InvestorRedirect() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const posthog = usePostHog()
+type SearchParams = Promise<Record<string, string | string[] | undefined>>
 
-  useEffect(() => {
-    posthog?.capture('investor_page_loaded', {
-      ref: searchParams?.get('ref') ?? null,
-    })
-    router.replace('/')
-  }, [router, posthog, searchParams])
+function toQueryString(params: Record<string, string | string[] | undefined>) {
+  const query = new URLSearchParams()
 
-  return null
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'string') {
+      query.set(key, value)
+      continue
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        query.append(key, item)
+      }
+    }
+  }
+
+  const encoded = query.toString()
+  return encoded ? `?${encoded}` : ''
 }
 
-export default function InvestorPage() {
-  return (
-    <Suspense fallback={null}>
-      <InvestorRedirect />
-    </Suspense>
-  )
+export default async function InvestorRedirectPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  const params = await searchParams
+  redirect(`/investors${toQueryString(params)}`)
 }
