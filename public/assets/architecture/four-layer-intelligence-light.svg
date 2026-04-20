@@ -1,0 +1,85 @@
+<svg width="960" height="540" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AbarVa four-layer intelligence architecture</title>
+  <desc id="desc">Four horizontal context layers feed graph, vector, and structured retrieval in parallel before composing a Nexus system prompt.</desc>
+  <rect width="960" height="540" rx="28" fill="#F8F7F4"/>
+  <text x="56" y="54" fill="#0C0C0C" font-family="Georgia, serif" font-size="30" font-weight="700">Four-layer intelligence architecture</text>
+  <text x="56" y="82" fill="#4B5563" font-family="DM Sans, sans-serif" font-size="14">Every Nexus response composes four layers of context, then queries graph, vector, and structured systems in parallel.</text>
+
+  <rect x="72" y="112" width="410" height="56" rx="16" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <rect x="98" y="180" width="454" height="56" rx="16" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <rect x="72" y="248" width="524" height="56" rx="16" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <rect x="56" y="316" width="560" height="56" rx="16" fill="#FFFFFF" stroke="#D7DBE2"/>
+
+  <rect x="72" y="112" width="410" height="56" rx="16" fill="url(#tealGlow)"/>
+  <rect x="98" y="180" width="454" height="56" rx="16" fill="url(#tealGlow)"/>
+  <rect x="72" y="248" width="524" height="56" rx="16" fill="url(#tealGlow)"/>
+  <rect x="56" y="316" width="560" height="56" rx="16" fill="url(#tealGlow)"/>
+
+  <text x="92" y="133" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">L4 USER PROFILE</text>
+  <text x="92" y="155" fill="#0C0C0C" font-family="DM Sans, sans-serif" font-size="15" font-weight="600">VIP profile · role · focus · preferences</text>
+
+  <text x="118" y="201" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">L3 ENGAGEMENT CONTEXT</text>
+  <text x="118" y="223" fill="#0C0C0C" font-family="DM Sans, sans-serif" font-size="15" font-weight="600">turn history · active topic · phase · patterns</text>
+
+  <text x="92" y="269" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">L2 CLIENT DATA</text>
+  <text x="92" y="291" fill="#0C0C0C" font-family="DM Sans, sans-serif" font-size="15" font-weight="600">tech stack · use cases · costs · contradictions</text>
+
+  <text x="76" y="337" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">L1 PUBLIC KNOWLEDGE</text>
+  <text x="76" y="359" fill="#0C0C0C" font-family="DM Sans, sans-serif" font-size="15" font-weight="600">topics · patterns · vendors · research</text>
+
+  <rect x="662" y="136" width="86" height="212" rx="18" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <rect x="760" y="136" width="86" height="212" rx="18" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <rect x="858" y="136" width="46" height="212" rx="18" fill="#FFFFFF" stroke="#D7DBE2"/>
+
+  <text x="705" y="122" fill="#0F766E" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">GRAPH</text>
+  <text x="803" y="122" fill="#0F766E" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">VECTOR</text>
+  <text x="881" y="122" fill="#0F766E" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.2">DB</text>
+
+  <text x="705" y="170" fill="#111827" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">nodes</text>
+  <text x="705" y="212" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">relationships</text>
+  <text x="705" y="254" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">patterns</text>
+  <text x="705" y="296" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">dependencies</text>
+
+  <text x="803" y="170" fill="#111827" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">chunks</text>
+  <text x="803" y="212" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">citations</text>
+  <text x="803" y="254" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">benchmarks</text>
+  <text x="803" y="296" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">research</text>
+
+  <text x="881" y="170" fill="#111827" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">facts</text>
+  <text x="881" y="212" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">metrics</text>
+  <text x="881" y="254" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">state</text>
+  <text x="881" y="296" fill="#6B7280" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12">owners</text>
+
+  <path d="M482 140C566 140 610 160 662 170" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M482 140C590 140 675 190 760 190" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M482 140C636 140 758 214 858 214" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M552 208C602 208 632 214 662 224" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M552 208C628 208 692 228 760 238" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M552 208C680 208 778 254 858 266" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M596 276C618 276 638 278 662 286" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M596 276C662 276 716 286 760 286" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M596 276C720 276 792 302 858 318" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M616 344C632 344 646 340 662 338" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M616 344C676 344 724 332 760 324" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+  <path d="M616 344C744 344 808 336 858 330" stroke="#CBD5E1" stroke-width="2" stroke-linecap="round"/>
+
+  <path d="M705 348V390" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M803 348V390" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M881 348V390" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M705 390H881" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M793 390V414" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+
+  <rect x="614" y="418" width="358" height="72" rx="20" fill="#0C0C0C"/>
+  <text x="793" y="447" fill="#2DD4C8" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">FINAL COMPOSITE</text>
+  <text x="793" y="474" fill="#FFFFFF" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-weight="700">Nexus System Prompt</text>
+
+  <defs>
+    <linearGradient id="tealGlow" x1="56" y1="112" x2="616" y2="372" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2DD4C8" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#2DD4C8" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+</svg>
