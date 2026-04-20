@@ -1,11 +1,26 @@
 import { config as loadEnv } from 'dotenv';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { CLIENT_PROFILES } from './_shared/enterprise-profiles';
 import { CLIENT_DATA, VOLUMETRICS_PROFILES } from './_shared/enterprise-data';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
+
+const CLIENT_KEY_TO_NAME: Record<string, string> = {
+  meridian: 'Meridian Health',
+  firstcapital: 'First Capital',
+  apex: 'Apex Retail',
+}
+
+export function parseClients(argv: string[]): string[] {
+  const idx = argv.findIndex((a) => a === '--clients')
+  if (idx < 0) return Object.keys(CLIENT_KEY_TO_NAME)
+  const value = argv[idx + 1]
+  if (!value) return Object.keys(CLIENT_KEY_TO_NAME)
+  return value.split(',').map((item) => item.trim().toLowerCase())
+}
 
 function getSb(): SupabaseClient {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -31,11 +46,17 @@ async function wipe(sb: SupabaseClient, clientId: string) {
   await sb.from('tech_stack_items').delete().eq('client_id', clientId).eq('is_demo_data', true);
 }
 
-async function main() {
+export async function runEnterpriseDepth(clientKeys: string[]) {
   const sb = getSb();
   const days = 30;
+  const selectedNames = new Set(
+    clientKeys.map((key) => CLIENT_KEY_TO_NAME[key]).filter(Boolean),
+  );
 
   for (const profile of CLIENT_PROFILES) {
+    if (selectedNames.size > 0 && !selectedNames.has(profile.clientName)) {
+      continue;
+    }
     const { data: row, error } = await sb
       .from('clients')
       .select('id')
@@ -147,7 +168,17 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('FAILED:', err);
-  process.exit(1);
-});
+async function main() {
+  await runEnterpriseDepth(parseClients(process.argv))
+}
+
+const isMain = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
+
+if (isMain) {
+  main().catch((err) => {
+    console.error('FAILED:', err);
+    process.exit(1);
+  });
+}
