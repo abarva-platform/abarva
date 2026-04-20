@@ -42,18 +42,28 @@ function relTime(iso: string): string {
 }
 
 function dollarsM(usd: number): string {
-  return `$${Math.round(usd / 1_000_000)}M`;
+  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`;
+  if (usd >= 1_000) return `$${Math.round(usd / 1_000)}K`;
+  if (usd > 0) return `$${Math.round(usd)}`;
+  return '—';
 }
 
 function MetricCard({
   label,
   value,
+  trend,
+  target,
   emphasis,
+  empty,
 }: {
   label: string;
   value: string;
+  trend?: { delta: string; direction: 'up' | 'down' | 'flat' };
+  target?: string;
   emphasis?: 'coral' | null;
+  empty?: string;
 }) {
+  const isEmpty = !!empty && (value === '—' || value === '$0' || value === '0');
   return (
     <div
       style={{
@@ -61,6 +71,9 @@ function MetricCard({
         background: 'rgba(255,255,255,0.03)',
         border: BORDER_SOFT,
         borderRadius: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
       }}
     >
       <div
@@ -70,14 +83,28 @@ function MetricCard({
           letterSpacing: '0.14em',
           color: MUTE,
           textTransform: 'uppercase',
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         {label}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 600, color: emphasis === 'coral' ? CORAL : INK }}>
-        {value}
+      <div style={{ fontSize: 28, fontWeight: 600, color: emphasis === 'coral' ? CORAL : isEmpty ? MUTE : INK }}>
+        {isEmpty ? '—' : value}
       </div>
+      {isEmpty ? (
+        <div style={{ fontSize: 11, color: MUTE, fontStyle: 'italic', lineHeight: 1.4 }}>
+          {empty}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: 10, fontFamily: FONT_MONO, fontSize: 10, color: MUTE, letterSpacing: '0.06em' }}>
+          {trend && (
+            <span style={{ color: trend.direction === 'up' ? '#3FB27F' : trend.direction === 'down' ? CORAL : MUTE }}>
+              {trend.direction === 'up' ? '↑' : trend.direction === 'down' ? '↓' : '→'} {trend.delta}
+            </span>
+          )}
+          {target && <span>target: {target}</span>}
+        </div>
+      )}
     </div>
   );
 }
@@ -351,14 +378,27 @@ export default async function HomePage() {
       </form>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
-        <MetricCard label="Active" value={String(metrics.activeCount)} />
-        <MetricCard label="Tracked savings in-flight" value={dollarsM(metrics.trackedSavingsUsd)} />
+        <MetricCard
+          label="Active engagements"
+          value={String(engagements.length)}
+          target={engagements.length === 0 ? undefined : String(engagements.length)}
+          empty={activeClient ? `No active engagement for ${activeClient.name} · start one to begin baseline capture.` : 'No active engagements.'}
+        />
+        <MetricCard
+          label="Tracked savings YTD"
+          value={dollarsM(metrics.trackedSavingsUsd)}
+          empty="Savings populate after Phase 4 outcome verification on one or more engagements."
+        />
         <MetricCard
           label="Gates pending"
           value={String(metrics.gatesPending)}
           emphasis={metrics.gatesPending > 0 ? 'coral' : null}
         />
-        <MetricCard label="Outcome fees this quarter" value={dollarsM(metrics.outcomeFeesQuarterUsd)} />
+        <MetricCard
+          label="Outcome fees · this quarter"
+          value={dollarsM(metrics.outcomeFeesQuarterUsd)}
+          empty="Outcome fees activate when a Phase 4 verification ships in-quarter with positive verified savings."
+        />
       </div>
 
       {/* Attention row · Alerts + Queue — what needs you today */}
