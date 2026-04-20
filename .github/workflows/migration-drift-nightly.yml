@@ -1,0 +1,67 @@
+name: Migration drift · nightly prod check
+
+# Tier 3 · Run every night · compare supabase/migrations/*.sql against
+# schema_migrations table on prod. Error if any migration has been
+# committed but not applied. Alerts via GitHub Action failure +
+# notification (follows repo's configured notification path).
+
+on:
+  schedule:
+    # 07:00 UTC daily = 02:00 US-Central · well past any overnight deploy.
+    - cron: '0 7 * * *'
+  workflow_dispatch: # allow manual trigger from Actions tab
+
+jobs:
+  drift-check:
+    name: Compare migrations dir against prod schema_migrations
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard · DATABASE_URL must be set
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL secret missing. Add it in Settings → Secrets → Actions."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Dry-run migrations · pending means drift
+        id: dry
+        run: |
+          set -euo pipefail
+          output=$(npm run --silent db:migrate:dry 2>&1)
+          echo "$output"
+          # Capture output for the failure message
+          echo "output<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$output" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+          # Fail if pending migrations found
+          if echo "$output" | grep -q "Pending migrations"; then
+            echo "::error::DRIFT · migrations committed but not applied on prod"
+            exit 1
+          fi
+          echo "✓ No drift. All migrations applied."
+
+      - name: Summarize
+        if: always()
+        run: |
+          cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+          ## Migration drift check · $(date -u +"%Y-%m-%d %H:%M UTC")
+
+          \`\`\`
+          ${{ steps.dry.outputs.output }}
+          \`\`\`
+          EOF

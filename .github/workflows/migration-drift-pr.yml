@@ -1,0 +1,50 @@
+name: Migration drift · PR check
+
+# Tier 1 · Flag PRs that add migrations without an applied-on-prod note.
+# Forces visibility when schema changes land in a PR so Anand has to
+# explicitly decide when / how to apply them.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'src/scripts/run-migrations.ts'
+      - 'package.json'
+
+jobs:
+  check:
+    name: New migration drift surface
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: List new migrations in this PR
+        id: list
+        run: |
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          added=$(git diff --diff-filter=A --name-only "$base_sha" "$head_sha" -- 'supabase/migrations/*.sql' 2>/dev/null | sort || true)
+          echo "added<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$added" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Surface migrations requiring action
+        if: steps.list.outputs.added != ''
+        run: |
+          cat <<EOF
+          ::warning::New migration files detected in this PR:
+          ${{ steps.list.outputs.added }}
+
+          Post-merge action required · one of:
+            1. Paste each .sql in Supabase SQL editor (quick, one-off)
+            2. npm run db:migrate (after DATABASE_URL set in .env.local)
+
+          Nightly drift check (Tier 3) will fail until applied on prod.
+          EOF
+
+      - name: No-op when no migrations added
+        if: steps.list.outputs.added == ''
+        run: echo "✓ No new migration files in this PR."
