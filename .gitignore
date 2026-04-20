@@ -53,3 +53,6 @@ abarva-page-density-plan.md
 abarva-product-map.md
 abarva-qa-checklist.md
 codex-work-queue-prat-runway.md
+
+# Claude Code local workspace
+.claude/
