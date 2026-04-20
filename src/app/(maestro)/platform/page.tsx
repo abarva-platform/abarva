@@ -14,48 +14,46 @@ const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
 const MONO = 'JetBrains Mono, monospace';
 
-async function loadPlatformMetrics() {
+async function loadPlatformMetrics(clientId: string | null) {
   const sb = getServerSupabase();
-  const [clientsRes, personsRes, techRes, sourcesRes] = await Promise.all([
-    sb.from('clients').select('id, name, industry_code', { count: 'exact' }),
+  const [personsRes, sourcesRes] = await Promise.all([
     sb.from('persons').select('id', { count: 'exact', head: true }),
-    sb.from('tech_stack_items').select('category', { count: 'exact' }),
     sb.from('knowledge_sources').select('status', { count: 'exact' }).throwOnError().then(
       (r) => r,
       () => ({ count: 0, data: null as null | Array<{ status: string }> }),
     ),
   ]);
 
-  const clients = (clientsRes.data as Array<{ id: string; name: string; industry_code: string | null }> | null) ?? [];
+  // Scope tech stack + domain coverage to the active client only.
+  let techQ = sb.from('tech_stack_items').select('category', { count: 'exact' });
+  if (clientId) techQ = techQ.eq('client_id', clientId);
+  const techRes = await techQ;
   const techRows = (techRes.data as Array<{ category: string }> | null) ?? [];
   const categorySet = new Set(techRows.map((r) => r.category));
 
-  // Domain coverage — check per-client whether each key table has rows.
-  const coverageChecks = await Promise.all(
-    clients.map(async (c) => {
-      const [inv, apps, data, cost, eng, tech] = await Promise.all([
-        sb.from('use_cases').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-        sb.from('applications').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-        sb.from('data_sources').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-        sb.from('cost_centers').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-        sb.from('eng_teams').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-        sb.from('tech_stack_items').select('id', { count: 'exact', head: true }).eq('client_id', c.id),
-      ]);
-      const present = [inv, apps, data, cost, eng, tech].filter((r) => (r.count ?? 0) > 0).length;
-      return { clientId: c.id, clientName: c.name, industry: c.industry_code, present, of: 6 };
-    }),
-  );
+  // Single-client coverage. 6 domains: inventory, apps, data, cost, eng, tech.
+  let presentCount = 0;
+  if (clientId) {
+    const [inv, apps, data, cost, eng, tech] = await Promise.all([
+      sb.from('use_cases').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+      sb.from('applications').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+      sb.from('data_sources').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+      sb.from('cost_centers').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+      sb.from('eng_teams').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+      sb.from('tech_stack_items').select('id', { count: 'exact', head: true }).eq('client_id', clientId),
+    ]);
+    presentCount = [inv, apps, data, cost, eng, tech].filter((r) => (r.count ?? 0) > 0).length;
+  }
 
   const sourcesCount = typeof sourcesRes.count === 'number' ? sourcesRes.count : 0;
 
   return {
-    clientCount: clientsRes.count ?? clients.length,
     personCount: personsRes.count ?? 0,
     techStackTotal: techRes.count ?? techRows.length,
     techCategoryCount: categorySet.size,
     knowledgeSourceCount: sourcesCount,
-    coverage: coverageChecks,
-    clients,
+    present: presentCount,
+    of: 6,
   };
 }
 
@@ -101,15 +99,15 @@ function Card({
 }
 
 export default async function PlatformPage() {
-  const m = await loadPlatformMetrics();
-  const totalDomainsFed = m.coverage.reduce((s, c) => s + c.present, 0);
-  const totalDomainsPossible = m.coverage.reduce((s, c) => s + c.of, 0);
-  const coveragePct = totalDomainsPossible > 0 ? Math.round((totalDomainsFed / totalDomainsPossible) * 100) : 0;
+  const { getActiveClientRow } = await import('@/lib/active-client');
+  const activeClient = await getActiveClientRow();
+  const m = await loadPlatformMetrics(activeClient?.id ?? null);
+  const coveragePct = m.of > 0 ? Math.round((m.present / m.of) * 100) : 0;
 
   return (
     <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
       <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 10 }}>
-        PLATFORM
+        PLATFORM{activeClient ? ` · ${activeClient.name.toUpperCase()}` : ''}
       </div>
       <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 400, color: INK, margin: '0 0 6px' }}>
         Operational hub
@@ -118,14 +116,14 @@ export default async function PlatformPage() {
         Data onboarding, users, integrations, observability, billing. The machinery behind the three products.
       </p>
 
-      {/* Hero cards */}
+      {/* Hero cards — all metrics scoped to active client */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginBottom: 40 }}>
         <Card
           label="Data coverage"
           accent={coveragePct >= 75 ? GREEN : coveragePct >= 40 ? AMBER : CORAL}
           href="/tower/onboard"
           hero={`${coveragePct}%`}
-          sub={`${totalDomainsFed} of ${totalDomainsPossible} core domains populated across ${m.clientCount} clients`}
+          sub={`${m.present} of ${m.of} core domains populated${activeClient ? ` for ${activeClient.name}` : ''}`}
         />
         <Card
           label="Users"
@@ -149,33 +147,6 @@ export default async function PlatformPage() {
           sub={m.knowledgeSourceCount === 0 ? 'awaiting ingestion · Tier 1-4 ready to run' : 'registered sources'}
         />
       </div>
-
-      {/* Per-client coverage detail */}
-      <section style={{ marginBottom: 40 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 12 }}>
-          DATA COVERAGE PER CLIENT
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 10 }}>
-          {m.coverage.map((c) => {
-            const pct = (c.present / c.of) * 100;
-            const color = pct >= 75 ? GREEN : pct >= 40 ? AMBER : CORAL;
-            return (
-              <div key={c.clientId} style={{ padding: 14, border: BORDER, borderRadius: 8, background: PANEL_BG }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600 }}>{c.clientName}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE }}>{c.industry ?? '—'}</div>
-                </div>
-                <div style={{ height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.06)', overflow: 'hidden', marginBottom: 6 }}>
-                  <div style={{ width: `${pct}%`, height: 4, background: color }} />
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE }}>
-                  {c.present}/{c.of} domains populated
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       {/* Quick links to sub-surfaces */}
       <section>

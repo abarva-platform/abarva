@@ -213,18 +213,20 @@ export default async function TowerPage({
   searchParams: Promise<{ clientId?: string }>;
 }) {
   const params = await searchParams;
-  const clientId = params.clientId;
-
+  // Active client from top-nav dropdown is the source of truth. URL
+  // param still honored (deep links); if absent, resolve from the cookie.
+  let clientId = params.clientId;
   if (!clientId) {
-    const clients = await listTowerClients();
-    if (clients.length === 0) {
+    const { getActiveClientRow } = await import('@/lib/active-client');
+    const active = await getActiveClientRow();
+    if (!active) {
       return (
         <div style={{ padding: 40, color: MUTE, fontFamily: 'DM Sans, sans-serif' }}>
           No clients yet. Apply migration 022 and seed Tower data.
         </div>
       );
     }
-    redirect(`/tower?clientId=${encodeURIComponent(clients[0].id)}`);
+    clientId = active.id;
   }
 
   const [vm, enterpriseSummary] = await Promise.all([
@@ -253,28 +255,8 @@ export default async function TowerPage({
             {vm.client.industry_code ?? 'unclassified'}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {vm.clients.map((c) => (
-            <Link
-              key={c.id}
-              href={`/tower?clientId=${encodeURIComponent(c.id)}`}
-              style={{
-                padding: '6px 12px',
-                fontFamily: FONT_MONO,
-                fontSize: 10,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                color: c.id === vm.client.id ? TEAL : MUTE,
-                border: `0.5px solid ${c.id === vm.client.id ? TEAL : 'rgba(255,255,255,0.1)'}`,
-                borderRadius: 20,
-                background: c.id === vm.client.id ? 'rgba(45,212,200,0.08)' : 'transparent',
-              }}
-            >
-              {c.name}
-            </Link>
-          ))}
-        </div>
+        {/* Client switcher lives in the top-nav dropdown now; no duplicate
+            selector rendered here. Single-client main-window principle. */}
       </div>
 
       {/* Five dimension panels */}

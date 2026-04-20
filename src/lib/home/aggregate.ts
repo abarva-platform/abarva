@@ -37,19 +37,21 @@ function sevOrder(s: string): number {
   return 2;
 }
 
-export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
+export async function loadHomeAttention(limit = 6, clientId?: string | null): Promise<HomeAttention> {
   const sb = getServerSupabase();
 
   // ── Alerts: open contradictions + gate-pending engagements ─────────────
   const alerts: HomeAlert[] = [];
 
   try {
-    const { data: contradictions } = await sb
+    let alertsQ = sb
       .from('contradictions')
       .select('id, client_id, contradiction_type, severity, description, detected_at, triggered_engagement_id, client:clients(id, name)')
       .is('resolved_at', null)
       .order('detected_at', { ascending: false })
       .limit(limit);
+    if (clientId) alertsQ = alertsQ.eq('client_id', clientId);
+    const { data: contradictions } = await alertsQ;
 
     for (const c of (contradictions as Array<{
       id: string;
@@ -85,12 +87,14 @@ export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
   const queue: HomeQueueItem[] = [];
 
   try {
-    const { data: actives } = await sb
+    let activesQ = sb
       .from('engagements')
-      .select('id, graph_node_id, name, current_phase, status, updated_at, gates_passed')
+      .select('id, graph_node_id, name, current_phase, status, updated_at, gates_passed, client_id')
       .eq('status', 'active')
       .order('updated_at', { ascending: false })
       .limit(30);
+    if (clientId) activesQ = activesQ.eq('client_id', clientId);
+    const { data: actives } = await activesQ;
 
     const activeRows = (actives as Array<{
       id: string;
@@ -100,6 +104,7 @@ export async function loadHomeAttention(limit = 6): Promise<HomeAttention> {
       status: string;
       updated_at: string;
       gates_passed: unknown[] | null;
+      client_id: string | null;
     }> | null) ?? [];
 
     // Pending gates

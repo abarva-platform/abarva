@@ -39,6 +39,16 @@ function writeLocalStorage(id: string) {
   try { localStorage.setItem(LS_KEY, id) } catch { /* ignore */ }
 }
 
+// Mirror active client in a cookie so server components can filter data
+// without a client-round-trip. 1-year max-age; path-scoped to root so
+// every page sees it.
+function writeCookie(id: string) {
+  if (typeof document === 'undefined') return
+  try {
+    document.cookie = `abarva_active_client=${encodeURIComponent(id)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
+  } catch { /* ignore */ }
+}
+
 export function useClientContext() {
   const { user, isLoaded } = useUser()
   const searchParams = useSearchParams()
@@ -66,9 +76,10 @@ export function useClientContext() {
     clientId = metaClient
   }
 
-  // Sync URL param → localStorage so future navigations remember the choice
+  // Sync URL param → localStorage + cookie so future navigations remember
   if (urlClient && urlClient !== lsClient) {
     writeLocalStorage(urlClient)
+    writeCookie(urlClient)
   }
 
   const currentClient = ALL_CLIENTS.find(c => c.id === clientId) ?? ALL_CLIENTS[0]
@@ -76,14 +87,18 @@ export function useClientContext() {
   function switchClient(newId: string) {
     if (!allowedClients.find(c => c.id === newId)) return // silently ignore unauthorized switch
     writeLocalStorage(newId)
+    writeCookie(newId)
     // On any Maestro page, switching client navigates to that client's workspace
     if (pathname === '/maestro' || pathname.startsWith('/maestro/')) {
       router.push(`/maestro/${newId}`)
+      router.refresh()
       return
     }
     const params = new URLSearchParams(searchParams.toString())
     params.set('client', newId)
     router.push(`${pathname}?${params.toString()}`)
+    // Force server-render refresh so pages filtered by active client reload
+    router.refresh()
   }
 
   const isAdmin = isLoaded && !!user && role === 'admin'

@@ -6,6 +6,7 @@ import {
 } from '@/lib/db/engagement';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { loadHomeAttention, type HomeAlert, type HomeQueueItem } from '@/lib/home/aggregate';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -259,20 +260,31 @@ function SectionLabel({ children, color }: { children: React.ReactNode; color?: 
 
 export default async function HomePage() {
   const person = await getCurrentPerson();
+  const activeClient = await getActiveClientRow();
   const [metrics, engagements, attention] = await Promise.all([
     getDashboardMetrics(),
-    getAllActiveEngagements(person?.id),
-    loadHomeAttention(6),
+    getAllActiveEngagements(person?.id, activeClient?.id ?? null),
+    loadHomeAttention(6, activeClient?.id ?? null),
   ]);
 
   return (
     <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 500 }}>{greeting()}</div>
+          <div style={{ fontSize: 22, fontWeight: 500 }}>
+            {greeting()}
+            {activeClient && (
+              <span style={{ color: MUTE, fontWeight: 400 }}>
+                {' · '}
+                <span style={{ color: TEAL }}>{activeClient.name}</span>
+              </span>
+            )}
+          </div>
           <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
-            {metrics.activeCount} active engagement{metrics.activeCount === 1 ? '' : 's'} · {metrics.gatesPending} gate
-            {metrics.gatesPending === 1 ? '' : 's'} pending your review
+            {engagements.length} active engagement{engagements.length === 1 ? '' : 's'}
+            {activeClient ? ' for this account' : ''}
+            {' · '}
+            {metrics.gatesPending} gate{metrics.gatesPending === 1 ? '' : 's'} pending your review
           </div>
         </div>
         <Link

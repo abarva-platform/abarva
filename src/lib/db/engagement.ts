@@ -214,14 +214,21 @@ type ActiveEngagementJoinRow = {
 
 export async function getAllActiveEngagements(
   viewerPersonId?: string,
+  clientId?: string | null,
 ): Promise<EngagementListItem[]> {
   let query = getServerSupabase()
     .from('engagements')
     .select(
-      'id, graph_node_id, name, industry_code, current_phase, status, updated_at, sponsor_person_id, sponsor:persons!engagements_sponsor_person_id_fkey(name, role)',
+      'id, graph_node_id, name, industry_code, current_phase, status, updated_at, sponsor_person_id, client_id, sponsor:persons!engagements_sponsor_person_id_fkey(name, role)',
     )
     .eq('status', 'active')
     .order('updated_at', { ascending: false });
+
+  // Active-client isolation · single-client main window. When clientId
+  // supplied, scope every engagement to that account only.
+  if (clientId) {
+    query = query.eq('client_id', clientId);
+  }
 
   // Team scoping: if viewer supplied, filter to engagements visible to them
   // (team member, sponsor, co-sponsor, or maestro on the engagement).

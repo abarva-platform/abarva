@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getAllActiveEngagements } from '@/lib/db/engagement';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,14 +13,18 @@ const FONT_MONO = 'JetBrains Mono, monospace';
 const PHASE_LABELS = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
 
 export default async function EngagementsListPage() {
-  const rows = await getAllActiveEngagements();
+  const activeClient = await getActiveClientRow();
+  const rows = await getAllActiveEngagements(undefined, activeClient?.id ?? null);
   return (
     <div style={{ padding: '28px 28px 40px', maxWidth: 1100, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
-          <div style={{ fontSize: 20, fontWeight: 500 }}>Engagements</div>
+          <div style={{ fontSize: 20, fontWeight: 500 }}>
+            Engagements
+            {activeClient && <span style={{ color: MUTE, fontWeight: 400 }}> · <span style={{ color: TEAL }}>{activeClient.name}</span></span>}
+          </div>
           <div style={{ fontSize: 12, color: MUTE, marginTop: 4 }}>
-            {rows.length} active
+            {rows.length} active{activeClient ? ' for this account' : ''}
           </div>
         </div>
         <Link
