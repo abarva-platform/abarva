@@ -40,8 +40,20 @@ export async function POST(req: NextRequest) {
     return new Response(JSON.stringify({ error: 'messages array required' }), { status: 400 });
   }
 
-  const [maestro, persons] = await Promise.all([getCurrentMaestro(), getAllPersons()]);
-  const knownPersons = persons.map((p) => ({
+  const { getActiveClientRow } = await import('@/lib/active-client');
+  const [maestro, persons, activeClient] = await Promise.all([
+    getCurrentMaestro(),
+    getAllPersons(),
+    getActiveClientRow(),
+  ]);
+  // Scope sponsor candidates to the active client's organization when
+  // we can identify one. Case-insensitive substring match handles the
+  // 'Meridian Health' vs 'Meridian Health System' variance.
+  const activeOrgKeyword = activeClient?.name.split(/\s+/)[0]?.toLowerCase() ?? null;
+  const scopedPersons = activeOrgKeyword
+    ? persons.filter((p) => (p.organization ?? '').toLowerCase().includes(activeOrgKeyword))
+    : persons;
+  const knownPersons = scopedPersons.map((p) => ({
     graph_node_id: p.graph_node_id ?? '',
     name: p.name,
     role: p.role,
@@ -54,6 +66,9 @@ export async function POST(req: NextRequest) {
     industries: INDUSTRIES,
     functions: FUNCTIONS,
     objectives: OBJECTIVES,
+    activeClient: activeClient
+      ? { name: activeClient.name, industryCode: activeClient.industry_code }
+      : null,
   });
 
   const encoder = new TextEncoder();
