@@ -173,6 +173,8 @@ export default async function EngagePage({
         deliverables={deliverables}
         vipGreeting={vipGreeting}
         assignedTopics={assignedTopics}
+        topContradictions={topContradictions}
+        activityEvents={activityEvents}
       />
     </div>
   );

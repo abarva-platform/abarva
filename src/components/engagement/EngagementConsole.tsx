@@ -48,6 +48,23 @@ interface AssignedTopic {
   isPrimary: boolean;
 }
 
+interface TopContradiction {
+  id: string;
+  severity: 'high' | 'medium' | 'low';
+  description: string;
+  one_liner: string | null;
+  monthly_total_usd: number | null;
+  eliminable_usd_annual: number | null;
+  owner_named: boolean | null;
+}
+
+interface ActivityEvent {
+  kind: 'turn' | 'gate' | 'deliverable';
+  label: string;
+  detail: string;
+  at: string;
+}
+
 interface Props {
   engagement: EngagementRow;
   sponsor: PersonRow | null;
@@ -58,11 +75,17 @@ interface Props {
   deliverables?: Deliverable[];
   vipGreeting?: VipGreetingData | null;
   assignedTopics?: AssignedTopic[];
+  topContradictions?: TopContradiction[];
+  activityEvents?: ActivityEvent[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, activityEvents,
 }: Props) {
+  // Silence unused-var lint while these are consumed by the coming panel
+  // render. Remove the `void` lines once the contradictions + activity
+  // panels are wired into the sidebar.
+  void topContradictions; void activityEvents;
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const deliverablesList = deliverables ?? [];
