@@ -291,6 +291,53 @@ export default async function HomePage() {
         </Link>
       </div>
 
+      {/* Ask Intelligence · search-first reflex on Home. Stateless — posts to
+          /intelligence/ask?q= which handles the rest. */}
+      <form
+        action="/intelligence/ask"
+        method="get"
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginBottom: 24,
+          padding: '14px 18px',
+          background: 'rgba(255,255,255,0.03)',
+          border: BORDER_SOFT,
+          borderRadius: 12,
+        }}
+      >
+        <input
+          name="q"
+          placeholder="Ask anything — sources cited, honest about gaps."
+          style={{
+            flex: 1,
+            background: 'transparent',
+            border: 'none',
+            color: INK,
+            outline: 'none',
+            fontSize: 14.5,
+            fontFamily: 'DM Sans, -apple-system, sans-serif',
+          }}
+        />
+        <button
+          type="submit"
+          style={{
+            padding: '8px 18px',
+            background: TEAL,
+            color: '#0A0A0A',
+            border: 'none',
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: FONT_MONO,
+            letterSpacing: '0.1em',
+            cursor: 'pointer',
+          }}
+        >
+          ASK →
+        </button>
+      </form>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <MetricCard label="Active" value={String(metrics.activeCount)} />
         <MetricCard label="Tracked savings in-flight" value={dollarsM(metrics.trackedSavingsUsd)} />
