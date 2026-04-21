@@ -290,6 +290,19 @@ ALTER TABLE engagement_baseline ENABLE ROW LEVEL SECURITY;
 
 -- Service role bypasses RLS automatically.
 -- Add read policy for authenticated users (service role still bypasses)
+-- Idempotency: drop policies before recreating so re-runs don't trip
+-- on "already exists".
+DROP POLICY IF EXISTS "authenticated_read_engagements" ON engagements;
+DROP POLICY IF EXISTS "authenticated_read_phases" ON engagement_phases;
+DROP POLICY IF EXISTS "authenticated_read_workstreams" ON phase_workstreams;
+DROP POLICY IF EXISTS "authenticated_read_messages" ON workstream_messages;
+DROP POLICY IF EXISTS "authenticated_read_findings" ON phase_findings;
+DROP POLICY IF EXISTS "authenticated_read_outputs" ON phase_outputs;
+DROP POLICY IF EXISTS "authenticated_read_comments" ON output_comments;
+DROP POLICY IF EXISTS "authenticated_read_genome" ON genome_matches;
+DROP POLICY IF EXISTS "authenticated_read_activity" ON engagement_activity;
+DROP POLICY IF EXISTS "authenticated_read_scores" ON phase0_scores;
+
 CREATE POLICY "authenticated_read_engagements" ON engagements
   FOR SELECT TO authenticated USING (true);
 CREATE POLICY "authenticated_read_phases" ON engagement_phases

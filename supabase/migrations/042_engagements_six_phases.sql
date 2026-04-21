@@ -14,6 +14,11 @@ DO $$ BEGIN
   END;
 END $$;
 
-ALTER TABLE engagements
-  ADD CONSTRAINT engagements_current_phase_check
-  CHECK (current_phase IS NULL OR (current_phase >= 0 AND current_phase <= 5));
+DO $$ BEGIN
+  ALTER TABLE engagements
+    ADD CONSTRAINT engagements_current_phase_check
+    CHECK (current_phase IS NULL OR (current_phase >= 0 AND current_phase <= 5));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;

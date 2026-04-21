@@ -199,23 +199,38 @@ CREATE INDEX IF NOT EXISTS idx_uploaded_files_status ON uploaded_files(ingestion
 DO $$ BEGIN
   ALTER TABLE use_cases ADD CONSTRAINT fk_use_cases_source_file
     FOREIGN KEY (source_file_id) REFERENCES uploaded_files(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 DO $$ BEGIN
   ALTER TABLE use_case_usage_metrics ADD CONSTRAINT fk_usage_source_file
     FOREIGN KEY (source_file_id) REFERENCES uploaded_files(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 DO $$ BEGIN
   ALTER TABLE use_case_value_metrics ADD CONSTRAINT fk_value_source_file
     FOREIGN KEY (source_file_id) REFERENCES uploaded_files(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 DO $$ BEGIN
   ALTER TABLE use_case_risk ADD CONSTRAINT fk_risk_source_file
     FOREIGN KEY (source_file_id) REFERENCES uploaded_files(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 DO $$ BEGIN
   ALTER TABLE use_case_cost_metrics ADD CONSTRAINT fk_cost_source_file
     FOREIGN KEY (source_file_id) REFERENCES uploaded_files(id) ON DELETE SET NULL;
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 
 -- RLS (service-role-only posture)
 ALTER TABLE use_cases ENABLE ROW LEVEL SECURITY;

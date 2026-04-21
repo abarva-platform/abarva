@@ -54,7 +54,8 @@ CREATE TABLE IF NOT EXISTS vip_profiles (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_vip_profiles_person ON vip_profiles(person_id) WHERE person_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_vip_profiles_demo_tier ON vip_profiles(demo_tier) WHERE demo_tier != 'standard';
-CREATE INDEX IF NOT EXISTS idx_vip_profiles_display_name_lower ON vip_profiles(lower(display_name));
+DROP INDEX IF EXISTS idx_vip_profiles_display_name_lower;
+CREATE UNIQUE INDEX IF NOT EXISTS vip_profiles_display_name_lower_key ON vip_profiles(lower(display_name));
 
 -- RLS (service role only — VIP profiles contain sensitive public-person
 -- research; never expose to clients).
@@ -63,7 +64,7 @@ DROP POLICY IF EXISTS "service_role_all_vip_profiles" ON vip_profiles;
 CREATE POLICY "service_role_all_vip_profiles" ON vip_profiles
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
--- ── Prat Vemana seed (idempotent — skips if display_name already exists)
+-- ── Prat Vemana seed (idempotent via ON CONFLICT)
 INSERT INTO vip_profiles (
   display_name, current_title, current_company, current_industry,
   current_company_scale, career_history, education, board_seats,
@@ -109,7 +110,7 @@ SELECT
   'anand',
   'high',
   ARRAY['https://corporate.target.com/about/purpose-history/leadership/prat-vemana', 'https://nrfbigshow.nrf.com/speaker/prat-vemana', 'https://newsroom.frontier.com/board-of-directors/prat-vemana/', 'https://councils.aimmediahouse.com/prat-vemana-named-chief-information-and-product-officer-at-target/']
-WHERE NOT EXISTS (SELECT 1 FROM vip_profiles WHERE lower(display_name) = lower('Prat Vemana'));
+ON CONFLICT ((lower(display_name))) DO NOTHING;
 
 NOTIFY pgrst, 'reload schema';
 

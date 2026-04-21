@@ -80,6 +80,11 @@ ALTER TABLE system_dispositions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE erp_selection_results ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cloud_blueprints ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "tech_tracks_read" ON tech_engagement_tracks;
+DROP POLICY IF EXISTS "system_dispositions_read" ON system_dispositions;
+DROP POLICY IF EXISTS "erp_selection_read" ON erp_selection_results;
+DROP POLICY IF EXISTS "cloud_blueprints_read" ON cloud_blueprints;
+
 CREATE POLICY "tech_tracks_read" ON tech_engagement_tracks
   FOR SELECT TO authenticated USING (true);
 

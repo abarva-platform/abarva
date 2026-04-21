@@ -11,9 +11,14 @@ UPDATE relationship_notes SET subject_type = 'user' WHERE subject_type = 'maestr
 
 -- 2. Replace the CHECK constraint so 'maestro' is no longer a legal value.
 ALTER TABLE relationship_notes DROP CONSTRAINT IF EXISTS relationship_notes_subject_type_check;
-ALTER TABLE relationship_notes
-  ADD CONSTRAINT relationship_notes_subject_type_check
-  CHECK (subject_type IN ('sponsor', 'user', 'observer'));
+DO $$ BEGIN
+  ALTER TABLE relationship_notes
+    ADD CONSTRAINT relationship_notes_subject_type_check
+    CHECK (subject_type IN ('sponsor', 'user', 'observer'));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 
 -- 3. Default for new rows stays 'sponsor' (unchanged from migration 023).
 

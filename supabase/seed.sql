@@ -1,0 +1,3 @@
+-- Intentionally empty.
+-- The repo keeps seed loading enabled in supabase/config.toml so future
+-- local-only seed data can be added without another config change.

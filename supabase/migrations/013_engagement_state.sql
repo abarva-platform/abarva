@@ -3,8 +3,9 @@
 -- These become source of truth for entity state.
 -- Neo4j nodes mirror via graph_node_id fields.
 -- Existing tables client_brief (010), intake_turns (011), engagement_charters (012)
--- are not dropped — superseded but kept for now. Migration 014 will handle data migration + deprecation.
--- RLS: Not enabled. Migration 014 will add Clerk-aware RLS policies.
+-- are not dropped — superseded but kept for now. Migration 017 handles the
+-- deprecated-table cleanup, while demo seeds now live in 043/044.
+-- RLS: Not enabled. Later migrations 016 and 019 layer policies back in.
 
 BEGIN;
 
@@ -39,6 +40,8 @@ CREATE TABLE IF NOT EXISTS persons (
   last_seen_at TIMESTAMPTZ
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS persons_graph_node_id_key ON persons(graph_node_id);
+CREATE UNIQUE INDEX IF NOT EXISTS persons_email_key ON persons(email);
 CREATE INDEX IF NOT EXISTS persons_email_idx ON persons(email);
 CREATE INDEX IF NOT EXISTS persons_graph_node_idx ON persons(graph_node_id);
 
@@ -175,34 +178,14 @@ CREATE TABLE IF NOT EXISTS relationship_notes (
   captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS relationship_notes_person_note_text_key
+  ON relationship_notes(person_id, note_text);
 CREATE INDEX IF NOT EXISTS relationship_notes_person_idx ON relationship_notes(person_id);
 CREATE INDEX IF NOT EXISTS relationship_notes_category_idx ON relationship_notes(person_id, category);
 CREATE INDEX IF NOT EXISTS relationship_notes_active_idx ON relationship_notes(person_id) WHERE decay_at IS NULL;
 
--- ============================================================
--- SEED: Sarah Chen + Meridian engagement, matching graph_node_ids
--- Mirrors what's already in Neo4j (003_demo_engagements.cypher)
--- ============================================================
-INSERT INTO persons (graph_node_id, name, email, role, organization, familiarity)
-VALUES ('person_sarah_chen', 'Sarah Chen', 'sarah.chen@meridian-health.com', 'CIO', 'Meridian Health', 'first_meeting')
-ON CONFLICT (graph_node_id) DO NOTHING;
-
-INSERT INTO engagements (
-  graph_node_id, name, industry_code, function_code, objective_code, topic_code,
-  sponsor_person_id, current_phase, status, phase_0_started_at
-)
-SELECT
-  'eng_meridian_analytics_mod',
-  'Meridian Analytics Modernization',
-  'HEALTHCARE_IDN',
-  'MIDDLE_OFFICE',
-  'OPTIMISE',
-  'analytics_modernization',
-  p.id,
-  0,
-  'active',
-  NOW()
-FROM persons p WHERE p.graph_node_id = 'person_sarah_chen'
-ON CONFLICT (graph_node_id) DO NOTHING;
+-- Demo seed DML was extracted into later schema-independent migrations:
+--   047_demo_portfolio_seed.sql
+--   048_demo_relationship_note_seed.sql
 
 COMMIT;
