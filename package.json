@@ -38,6 +38,12 @@
     "db:seed:apex-intelligence": "npx tsx src/scripts/seed/seed-apex-intelligence-layer.ts",
     "db:verify:apex-intelligence": "npx tsx src/scripts/seed/verify-apex-intelligence-layer.ts",
     "db:smoke:apex-intelligence": "npx tsx src/scripts/seed/smoke-apex-intelligence-layer.ts",
+    "db:seed:meridian-intelligence": "npx tsx src/scripts/seed/seed-meridian-intelligence-layer.ts",
+    "db:verify:meridian-intelligence": "npx tsx src/scripts/seed/verify-meridian-intelligence-layer.ts",
+    "db:smoke:meridian-intelligence": "npx tsx src/scripts/seed/smoke-meridian-intelligence-layer.ts",
+    "db:seed:first-capital-intelligence": "npx tsx src/scripts/seed/seed-first-capital-intelligence-layer.ts",
+    "db:verify:first-capital-intelligence": "npx tsx src/scripts/seed/verify-first-capital-intelligence-layer.ts",
+    "db:smoke:first-capital-intelligence": "npx tsx src/scripts/seed/smoke-first-capital-intelligence-layer.ts",
     "db:seed:executive-profiles": "npx tsx src/scripts/seed/seed-executive-profiles.ts",
     "db:verify:executive-profiles": "npx tsx src/scripts/seed/verify-executive-profiles.ts",
     "db:smoke:executive-profiles": "npx tsx src/scripts/seed/smoke-executive-profiles.ts",
@@ -46,7 +52,11 @@
     "db:smoke:keystone-intelligence": "npx tsx src/scripts/seed/smoke-keystone-intelligence-layer.ts",
     "db:seed:contradictions": "npx tsx src/scripts/seed/seed-contradiction-engine.ts",
     "db:verify:contradictions": "npx tsx src/scripts/seed/verify-contradiction-engine.ts",
-    "db:smoke:contradictions": "npx tsx src/scripts/seed/smoke-contradiction-engine.ts"
+    "db:smoke:contradictions": "npx tsx src/scripts/seed/smoke-contradiction-engine.ts",
+    "db:seed:foundational-patterns": "npx tsx src/scripts/seed/seed-foundational-patterns.ts",
+    "db:verify:foundational-patterns": "npx tsx src/scripts/seed/verify-foundational-patterns.ts",
+    "db:seed:briefings": "npx tsx src/scripts/seed/seed-briefings.ts",
+    "db:verify:briefings": "npx tsx src/scripts/seed/verify-briefings.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",

@@ -25,6 +25,7 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`platform/intelligence-layer-north-star-spec.md`](./platform/intelligence-layer-north-star-spec.md) | Eight-layer intelligence north star for KPIs, pattern packs, graph depth, telemetry, and dual-scope reasoning/disclosure |
 | [`platform/executive-profile-system.md`](./platform/executive-profile-system.md) | Presence-vibe architecture for executive profiles, style-aware personalization, and composite/real-world profile governance |
 | [`platform/contradiction-engine-foundation.md`](./platform/contradiction-engine-foundation.md) | Candor-layer contradiction engine architecture, rules, scoring, surfacing, and disclosure model |
+| [`platform/whats-changed-briefing-engine.md`](./platform/whats-changed-briefing-engine.md) | Anticipation-vibe briefing engine architecture for first-touch executive briefings and change composition |
 
 ## Product surfaces
 
@@ -50,11 +51,14 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`_meta/seed-data/apex-retail-group-comprehensive-seed.md`](./_meta/seed-data/apex-retail-group-comprehensive-seed.md) | Comprehensive retail composite seed with org depth, initiatives, patterns, vendors, and benchmarks |
 | [`_meta/seed-data/apex-intelligence-layer-overlay.md`](./_meta/seed-data/apex-intelligence-layer-overlay.md) | Apex retail implementation of the intelligence-layer north star with KPI objects, pattern packs, telemetry registrations, and dual-scope examples |
 | [`_meta/seed-data/apex-intelligence-layer-validation-results.md`](./_meta/seed-data/apex-intelligence-layer-validation-results.md) | Validation artifact for Apex overlay ingestion, verification, and smoke-test results |
+| [`_meta/seed-data/meridian-intelligence-layer-overlay.md`](./_meta/seed-data/meridian-intelligence-layer-overlay.md) | Meridian healthcare implementation of the intelligence-layer north star with provider-payer KPIs, HIPAA-aware telemetry, and dual-scope examples |
 | [`_meta/seed-data/meridian-health-system-comprehensive-seed.md`](./_meta/seed-data/meridian-health-system-comprehensive-seed.md) | Comprehensive healthcare composite seed with payer arm, value-based care agenda, and benchmark layer |
+| [`_meta/seed-data/first-capital-intelligence-layer-overlay.md`](./_meta/seed-data/first-capital-intelligence-layer-overlay.md) | First Capital financial-services implementation of the intelligence-layer north star with regulatory-aware KPIs, telemetry, and legal-privileged handling |
 | [`_meta/seed-data/first-capital-financial-comprehensive-seed.md`](./_meta/seed-data/first-capital-financial-comprehensive-seed.md) | Comprehensive financial-services composite seed with regulatory context, data org, initiatives, patterns, and benchmarks |
 | [`_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md`](./_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md) | Comprehensive regulated-utility composite seed with subsidiaries, regulatory environment, patterns, and benchmark layer |
 | [`_meta/seed-data/keystone-intelligence-layer-overlay.md`](./_meta/seed-data/keystone-intelligence-layer-overlay.md) | Keystone reference implementation of the intelligence-layer north star with KPIs, pattern packs, telemetry, and dual-scope configuration |
 | [`_meta/seed-data/keystone-seed-validation-results.md`](./_meta/seed-data/keystone-seed-validation-results.md) | Validation artifact for Keystone ingestion, verification, and smoke-test results |
+| [`_meta/seed-data/pattern-pack-01-shadow-ai-governance.md`](./_meta/seed-data/pattern-pack-01-shadow-ai-governance.md) | Foundational cross-industry Shadow AI Governance pattern pack with sector variants for all four composites |
 | [`_meta/seed-data/executive-profile-validation-results.md`](./_meta/seed-data/executive-profile-validation-results.md) | Validation artifact for executive-profile schema migration, composite-profile seeding, and ethics-gated real-world profile status |
 | [`_meta/seed-data/contradiction-engine-validation-results.md`](./_meta/seed-data/contradiction-engine-validation-results.md) | Validation artifact for the contradiction-engine foundation migration, seeding, verification, and smoke tests |
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
