@@ -16,6 +16,7 @@ import { TENANTS, type TenantKey } from './seed-wave-lib';
 function buildScopeRows() {
   return (Object.keys(TENANTS) as TenantKey[]).flatMap((tenant) => [
     {
+      tenant,
       id: contradictionScopeId(tenant, 'reasoning_broad'),
       summary: `${TENANTS[tenant].canonicalName} contradiction reasoning scope`,
       scope_type: 'broad',
@@ -29,6 +30,7 @@ function buildScopeRows() {
       scope_payload: { pillar: 'candor', audience: 'internal_reasoning' },
     },
     {
+      tenant,
       id: contradictionScopeId(tenant, 'program_leadership'),
       summary: `${TENANTS[tenant].canonicalName} contradiction disclosure scope - program leadership`,
       scope_type: 'role',
@@ -42,6 +44,7 @@ function buildScopeRows() {
       scope_payload: { pillar: 'candor', audience: 'program_leadership' },
     },
     {
+      tenant,
       id: contradictionScopeId(tenant, 'executive_sponsor'),
       summary: `${TENANTS[tenant].canonicalName} contradiction disclosure scope - executive sponsor only`,
       scope_type: 'role',
@@ -55,6 +58,7 @@ function buildScopeRows() {
       scope_payload: { pillar: 'candor', audience: 'executive_sponsor_only' },
     },
     {
+      tenant,
       id: contradictionScopeId(tenant, 'reasoning_only'),
       summary: `${TENANTS[tenant].canonicalName} contradiction reasoning-only disclosure guard`,
       scope_type: 'regulatory_restricted',
@@ -75,9 +79,22 @@ async function main() {
   const clientMap = await resolveClientMap(sb);
   const peopleByName = await loadPeopleMap(sb);
 
-  const scopeRows = buildScopeRows().map((scope) => ({
+  const { data: brokenRows, error: brokenRowsError } = await sb
+    .from('contradictions')
+    .select('id')
+    .like('detection_rule_id', 'contradiction_rule_%')
+    .or('reasoning_scope_id.is.null,disclosure_scope_id.is.null');
+  if (brokenRowsError) throw brokenRowsError;
+  const brokenIds = ((brokenRows ?? []) as Array<{ id: string }>).map((row) => row.id);
+  if (brokenIds.length > 0) {
+    await sb.from('contradiction_resolution_actions').delete().in('contradiction_id', brokenIds);
+    await sb.from('contradiction_evidence').delete().in('contradiction_id', brokenIds);
+    await sb.from('contradictions').delete().in('id', brokenIds);
+  }
+
+  const scopeRows = buildScopeRows().map(({ tenant, ...scope }) => ({
     ...scope,
-    client_id: clientMap.get(scope.id.split('_')[0] as TenantKey)?.id ?? null,
+    client_id: clientMap.get(tenant)?.id ?? null,
   }));
 
   const ruleRows = FOUNDATIONAL_CONTRADICTION_RULES.map((rule) => ({
