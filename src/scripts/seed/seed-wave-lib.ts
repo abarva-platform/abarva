@@ -251,7 +251,7 @@ export function parseTenantSeed(config: TenantConfig, cwd = process.cwd()): Pars
 
   const people = dedupePeople([
     ...parseRoster(config, sections['Part 2'] ?? ''),
-    ...parseOperatingLeadership(sections['Part 2'] ?? ''),
+    ...parseOperatingLeadership(config, sections['Part 2'] ?? ''),
     ...parseExtendedPeople(config, sections['Part 4'] ?? '', sections['Part 5'] ?? ''),
   ]);
   const vips = parseVipSections(sections['Part 4'] ?? '');
@@ -315,7 +315,8 @@ function parseRoster(config: TenantConfig, partTwo: string): PersonSeed[] {
   return out;
 }
 
-function parseOperatingLeadership(partTwo: string): PersonSeed[] {
+function parseOperatingLeadership(config: TenantConfig, partTwo: string): PersonSeed[] {
+  if (config.key !== 'keystone') return [];
   const out: PersonSeed[] = [];
   const section = blockBetween(partTwo, '### 2.2', '### 2.3');
   for (const line of section.split('\n')) {
