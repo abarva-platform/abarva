@@ -46,6 +46,8 @@ Canonical specifications for AbarVa. When building, reference these over any old
 |------|---------|
 | [`_meta/seed-data/apex-reconciled.md`](./_meta/seed-data/apex-reconciled.md) | Canonical composite retail client (Apex Retail Group) seed |
 | [`_meta/seed-data/apex-retail-group-comprehensive-seed.md`](./_meta/seed-data/apex-retail-group-comprehensive-seed.md) | Comprehensive retail composite seed with org depth, initiatives, patterns, vendors, and benchmarks |
+| [`_meta/seed-data/apex-intelligence-layer-overlay.md`](./_meta/seed-data/apex-intelligence-layer-overlay.md) | Apex retail implementation of the intelligence-layer north star with KPI objects, pattern packs, telemetry registrations, and dual-scope examples |
+| [`_meta/seed-data/apex-intelligence-layer-validation-results.md`](./_meta/seed-data/apex-intelligence-layer-validation-results.md) | Validation artifact for Apex overlay ingestion, verification, and smoke-test results |
 | [`_meta/seed-data/meridian-health-system-comprehensive-seed.md`](./_meta/seed-data/meridian-health-system-comprehensive-seed.md) | Comprehensive healthcare composite seed with payer arm, value-based care agenda, and benchmark layer |
 | [`_meta/seed-data/first-capital-financial-comprehensive-seed.md`](./_meta/seed-data/first-capital-financial-comprehensive-seed.md) | Comprehensive financial-services composite seed with regulatory context, data org, initiatives, patterns, and benchmarks |
 | [`_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md`](./_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md) | Comprehensive regulated-utility composite seed with subsidiaries, regulatory environment, patterns, and benchmark layer |
