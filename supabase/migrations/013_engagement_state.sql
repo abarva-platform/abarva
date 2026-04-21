@@ -80,6 +80,34 @@ CREATE TABLE IF NOT EXISTS engagements (
   phase_4_completed_at TIMESTAMPTZ
 );
 
+-- Backfill columns when engagements was created by an earlier migration
+-- with a minimal schema (e.g. migration 002). The CREATE TABLE IF NOT
+-- EXISTS above is a no-op in that case, so the columns 013 expects must
+-- be added explicitly here. All ADD COLUMN IF NOT EXISTS — no-op on
+-- prod where columns already exist. Required for fresh preview branches.
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS graph_node_id TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS industry_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS function_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS objective_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS topic_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS sponsor_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS co_sponsor_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS maestro_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS charter JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS gates_passed JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS decisions JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS deliverables JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS sponsor_approvals JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS baseline_metrics JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS actual_metrics JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS outcome_fee_status TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS outcome_fee_usd NUMERIC(15,2);
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_0_started_at TIMESTAMPTZ;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_4_completed_at TIMESTAMPTZ;
+
 CREATE INDEX IF NOT EXISTS engagements_current_phase_idx ON engagements(current_phase);
 CREATE INDEX IF NOT EXISTS engagements_sponsor_idx ON engagements(sponsor_person_id);
 CREATE INDEX IF NOT EXISTS engagements_maestro_idx ON engagements(maestro_person_id);
