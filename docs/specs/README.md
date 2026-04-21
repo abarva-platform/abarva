@@ -15,8 +15,13 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | File | Covers |
 |------|--------|
 | [`platform/agent-architecture.md`](./platform/agent-architecture.md) | Nexus, Sentinel, Atlas · unified 3-agent spec |
-
-**Notable in-flight** (not yet migrated into repo): design-system, data-layer-future-state, data-ingestion-integration, intelligence-vip-system. When authors bring these over, place them here under `platform/`.
+| [`platform/design-system.md`](./platform/design-system.md) | Core visual system, component contracts, tokens, interaction patterns |
+| [`platform/data-layer-future-state.md`](./platform/data-layer-future-state.md) | Future-state data architecture and query model |
+| [`platform/data-ingestion-integration.md`](./platform/data-ingestion-integration.md) | Enterprise ingestion model, source handling, integration pathways |
+| [`platform/intelligence-vip-system.md`](./platform/intelligence-vip-system.md) | VIP profile system and executive context model |
+| [`platform/data-ground-truth-surface.md`](./platform/data-ground-truth-surface.md) | CXO-facing transparency surface for client ground truth, provenance, gaps, patterns |
+| [`platform/benchmarks-industry-data-architecture.md`](./platform/benchmarks-industry-data-architecture.md) | Benchmark and peer-data ingestion, classification, and refresh architecture |
+| [`platform/graph-intelligence-architecture.md`](./platform/graph-intelligence-architecture.md) | Entity, relationship, provenance, and reasoning architecture for graph intelligence |
 
 ## Product surfaces
 
@@ -30,13 +35,18 @@ Canonical specifications for AbarVa. When building, reference these over any old
 
 ## Public surfaces
 
-`public-surfaces/` is reserved for marketing + investor specs. Currently empty (migrate marketing-investor-spec here when brought over).
+| File | Covers |
+|------|--------|
+| [`public-surfaces/marketing-investor-spec.md`](./public-surfaces/marketing-investor-spec.md) | Marketing site, investor-facing narrative, public web surfaces |
 
 ## Meta
 
 | File | Purpose |
 |------|---------|
 | [`_meta/seed-data/apex-reconciled.md`](./_meta/seed-data/apex-reconciled.md) | Canonical composite retail client (Apex Retail Group) seed |
+| [`_meta/seed-data/apex-retail-group-comprehensive-seed.md`](./_meta/seed-data/apex-retail-group-comprehensive-seed.md) | Comprehensive retail composite seed with org depth, initiatives, patterns, vendors, and benchmarks |
+| [`_meta/seed-data/meridian-health-system-comprehensive-seed.md`](./_meta/seed-data/meridian-health-system-comprehensive-seed.md) | Comprehensive healthcare composite seed with payer arm, value-based care agenda, and benchmark layer |
+| [`_meta/seed-data/first-capital-financial-comprehensive-seed.md`](./_meta/seed-data/first-capital-financial-comprehensive-seed.md) | Comprehensive financial-services composite seed with regulatory context, data org, initiatives, patterns, and benchmarks |
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
 | [`_meta/BACKLOG.md`](./_meta/BACKLOG.md) | Older product backlog (may be stale) |
 | [`_meta/QA_CHECKLIST.md`](./_meta/QA_CHECKLIST.md) | Older QA checklist (may be stale) |
@@ -87,4 +97,5 @@ Organized by year-month:
 
 | Date | Change |
 |------|--------|
+| 2026-04-21 | Seed wave added 3 comprehensive composite-client seed specs + Data Ground Truth + Benchmarks architecture |
 | 2026-04-21 | Initial organization · 11 canonical moved · 17 archived · 10 reference · 5 orphaned-code archived · `main` 0-byte file deleted · 2 demo seed scripts to `scripts/` |
