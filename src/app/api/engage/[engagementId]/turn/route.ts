@@ -34,6 +34,7 @@ import {
   proposeOutcomeFee,
 } from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
+import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
@@ -403,6 +404,35 @@ export async function POST(
             void generateDeliverableForPhase(engagement.id, gateApproval.phase).catch((err) =>
               console.error('[deliverable]', err),
             );
+
+            // Auto-open the next phase · Nexus leads with the opener so the
+            // Maestro isn't left staring at an empty console after approval.
+            // The opener is persisted as a proper agent turn so the thread
+            // stays coherent on reload and is emitted via SSE so the client
+            // renders it immediately without polling.
+            const opener = phaseOpenerFor(updated.current_phase);
+            if (opener && updated.current_phase !== gateApproval.phase) {
+              try {
+                const openerTurn = await appendTurn({
+                  engagementId: engagement.id,
+                  phase: updated.current_phase,
+                  sender: 'agent',
+                  text: opener,
+                });
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({
+                      type: 'phase_opener',
+                      phase: updated.current_phase,
+                      turnId: openerTurn.id,
+                      text: opener,
+                    }) + '\n',
+                  ),
+                );
+              } catch (err) {
+                console.error('[phase-opener]', err);
+              }
+            }
 
             // Phase 4 gate with a non-zero outcome fee → auto-invoice via Stripe
             if (

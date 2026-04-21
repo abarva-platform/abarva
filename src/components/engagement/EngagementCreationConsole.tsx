@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 type LocalMsg = {
@@ -16,7 +16,27 @@ type CreatedEngagement = {
   graph_node_id: string;
   name: string;
   industry_code: string;
+  function_code: string;
+  objective_code: string;
+  topic_code: string | null;
+  current_phase: number;
   sponsor_person_id: string | null;
+};
+
+type SponsorSummary = {
+  graph_node_id: string | null;
+  name: string;
+  role: string | null;
+  organization: string | null;
+  title: string | null;
+  cxo_function: string | null;
+  primary_focus: string | null;
+};
+
+type Labels = {
+  industry: string;
+  function: string;
+  objective: string;
 };
 
 const OPENER_ID = 'opener-0';
@@ -61,16 +81,30 @@ export function EngagementCreationConsole() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedEngagement | null>(null);
+  const [sponsor, setSponsor] = useState<SponsorSummary | null>(null);
+  const [labels, setLabels] = useState<Labels | null>(null);
+  const [activeClientName, setActiveClientName] = useState<string | null>(null);
   const idRef = useRef(0);
-  const redirectRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const nextId = () => `local-${Date.now()}-${++idRef.current}`;
 
+  // Auto-resize textarea between 1 and 6 rows as the user types.
+  const MIN_ROWS = 1;
+  const MAX_ROWS = 6;
+  const LINE_HEIGHT_PX = 22; // 14px font · 1.6 line-height ≈ 22
+  const VERTICAL_PADDING_PX = 20;
   useEffect(() => {
-    if (!created || redirectRef.current) return;
-    redirectRef.current = true;
-    const t = setTimeout(() => router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`), 1500);
-    return () => clearTimeout(t);
-  }, [created, router]);
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const contentRows = Math.max(MIN_ROWS, Math.min(MAX_ROWS, Math.ceil((el.scrollHeight - VERTICAL_PADDING_PX) / LINE_HEIGHT_PX)));
+    el.style.height = `${contentRows * LINE_HEIGHT_PX + VERTICAL_PADDING_PX}px`;
+    el.style.overflowY = contentRows === MAX_ROWS ? 'auto' : 'hidden';
+  }, [input]);
+
+  // Manual advance · user must click "Start Phase 0" to enter the console so
+  // they have a chance to verify what was extracted and edit if needed. Prior
+  // behaviour auto-redirected after 1.5s which silently locked in mistakes.
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -125,6 +159,14 @@ export function EngagementCreationConsole() {
             );
           } else if (evt.type === 'engagement_created' && evt.engagement) {
             setCreated(evt.engagement);
+            const rich = evt as unknown as {
+              sponsor?: SponsorSummary;
+              labels?: Labels;
+              active_client?: string | null;
+            };
+            if (rich.sponsor) setSponsor(rich.sponsor);
+            if (rich.labels) setLabels(rich.labels);
+            if (typeof rich.active_client === 'string') setActiveClientName(rich.active_client);
           } else if (evt.type === 'done') {
             setMessages((prev) =>
               prev.map((m) =>
@@ -212,7 +254,7 @@ export function EngagementCreationConsole() {
             <div
               style={{
                 marginTop: 20,
-                padding: 16,
+                padding: 20,
                 background: 'rgba(45,212,200,0.06)',
                 border: `0.5px solid ${TEAL}4D`,
                 borderRadius: 10,
@@ -225,14 +267,105 @@ export function EngagementCreationConsole() {
                   letterSpacing: '0.14em',
                   color: TEAL,
                   textTransform: 'uppercase',
-                  marginBottom: 6,
+                  marginBottom: 10,
                 }}
               >
-                ✓ Program created
+                ✓ Program created · review before starting Phase 0
               </div>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>{created.name}</div>
-              <div style={{ fontSize: 12, color: MUTE, marginTop: 4, fontFamily: FONT_MONO }}>
-                Taking you to the console…
+              <div style={{ fontSize: 18, fontWeight: 600, fontFamily: FONT_SERIF, marginBottom: 14 }}>
+                {created.name}
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                  columnGap: 20,
+                  rowGap: 10,
+                  fontSize: 13,
+                  marginBottom: 16,
+                }}
+              >
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Client
+                  </div>
+                  <div>{activeClientName ?? sponsor?.organization ?? '—'}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Phase
+                  </div>
+                  <div>Phase 0 · Intake</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Sponsor
+                  </div>
+                  <div>
+                    {sponsor?.name ?? '—'}
+                    {sponsor?.title || sponsor?.role ? (
+                      <span style={{ color: MUTE }}>
+                        {' · '}
+                        {sponsor.title ?? sponsor.role}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Industry
+                  </div>
+                  <div>{labels?.industry ?? created.industry_code}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Function
+                  </div>
+                  <div>{labels?.function ?? created.function_code}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                    Objective
+                  </div>
+                  <div>{labels?.objective ?? created.objective_code}</div>
+                </div>
+                {created.topic_code ? (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9, letterSpacing: '0.14em', color: MUTE, textTransform: 'uppercase', marginBottom: 2 }}>
+                      Topic
+                    </div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 12 }}>{created.topic_code}</div>
+                  </div>
+                ) : null}
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`)
+                  }
+                  style={{
+                    padding: '10px 20px',
+                    background: TEAL,
+                    color: BG,
+                    border: 'none',
+                    borderRadius: 8,
+                    fontFamily: 'inherit',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Start Phase 0 →
+                </button>
+                <span style={{ fontSize: 12, color: MUTE, fontFamily: FONT_MONO }}>
+                  Something wrong?{' '}
+                  <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                    Start over
+                  </a>
+                </span>
               </div>
             </div>
           )}
@@ -255,13 +388,24 @@ export function EngagementCreationConsole() {
           )}
 
           {!created && (
-            <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-              <input
-                type="text"
+            <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+              <textarea
+                ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
+                  // Enter submits · Shift+Enter inserts a newline
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isStreaming && input.trim()) {
+                      // Submit via the form's onSubmit handler
+                      e.currentTarget.form?.requestSubmit();
+                    }
+                  }
+                }}
                 disabled={isStreaming}
                 placeholder="Describe the program…"
+                rows={1}
                 style={{
                   flex: 1,
                   padding: '10px 14px',
@@ -271,6 +415,10 @@ export function EngagementCreationConsole() {
                   color: INK,
                   fontFamily: 'inherit',
                   fontSize: 14,
+                  lineHeight: 1.6,
+                  resize: 'none',
+                  outline: 'none',
+                  overflow: 'hidden',
                 }}
               />
               <button

@@ -15,12 +15,20 @@ import { runValue } from './specialists/value';
 import { runDecision } from './specialists/decision';
 import { assemble, type CompositionBundle } from './assembler';
 import { compose } from './composer';
+import { loadSessionContext, renderSessionContextBlock, type SessionContext } from './sessionContext';
 import type {
   NexusFormat,
   NexusMode,
   NexusTurnData,
   TenancyCtx,
 } from '@/lib/intelligence/types';
+
+export interface GateSignal {
+  type: 'gate_approval' | 'phase_transition' | 'charter_generation';
+  fromPhase?: number;
+  toPhase?: number;
+  payload?: Record<string, unknown>;
+}
 
 export interface OrchestratorProgress {
   phase: 'parse' | 'plan' | 'retrieve' | 'assemble' | 'compose' | 'render';
@@ -42,8 +50,16 @@ export interface OrchestratorInput {
     preloadablePhases?: number;
   };
   capability?: 'counter' | { persona: string };
+  /**
+   * When true, loads SessionContext (user + tenant + recent engagements +
+   * VIP profile) and injects it into the composer system prompt. Defaults
+   * to true for intelligent personalization; disable only for synthetic /
+   * test runs where you want deterministic output.
+   */
+  includeSessionContext?: boolean;
   onProgress?: (p: OrchestratorProgress) => void;
   onTextDelta?: (text: string) => void;
+  onGateSignal?: (signal: GateSignal) => void;
 }
 
 export interface OrchestratorOutput {
@@ -61,13 +77,50 @@ export interface OrchestratorOutput {
   };
   strippedCount: number;
   clarifying?: ReturnType<typeof shouldClarify>;
+  session?: SessionContext;
+  gateSignals: GateSignal[];
 }
 
 const HARD_CAP_MS = 15_000;
 
+// Tags emitted by the model that signal phase-gate lifecycle actions.
+// The voiceFilter strips these from user-visible text; we separately
+// parse them here to drive phase transitions.
+const GATE_TAG_PATTERNS: Array<{ tag: string; signal: GateSignal['type'] }> = [
+  { tag: 'gate_approval', signal: 'gate_approval' },
+  { tag: 'phase_transition', signal: 'phase_transition' },
+  { tag: 'charter_generation', signal: 'charter_generation' },
+];
+
+function parseGateSignals(raw: string): GateSignal[] {
+  const out: GateSignal[] = [];
+  for (const { tag, signal } of GATE_TAG_PATTERNS) {
+    const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(raw)) !== null) {
+      const inner = match[1].trim();
+      let payload: Record<string, unknown> = {};
+      try { payload = JSON.parse(inner); } catch { /* keep empty */ }
+      out.push({
+        type: signal,
+        fromPhase: typeof payload.from_phase === 'number' ? payload.from_phase : undefined,
+        toPhase: typeof payload.to_phase === 'number' ? payload.to_phase : undefined,
+        payload,
+      });
+    }
+  }
+  return out;
+}
+
 export async function runPipeline(input: OrchestratorInput): Promise<OrchestratorOutput> {
   const started = Date.now();
   const progress = (p: OrchestratorProgress) => input.onProgress?.(p);
+
+  // Session context (Fix 6) · loaded in parallel with Phase 1 parse
+  const sessionPromise: Promise<SessionContext | undefined> =
+    input.includeSessionContext !== false
+      ? loadSessionContext(input.tenancy).catch(() => undefined)
+      : Promise.resolve(undefined);
 
   // ── Phase 1 · parse + classify ──────────────────────────────────────
   const t1 = Date.now();
@@ -114,6 +167,7 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
       latencyMs: { parse: parseMs, plan: 0, retrieve: 0, assemble: 0, compose: 0, total: Date.now() - started },
       strippedCount: 0,
       clarifying,
+      gateSignals: [],
     };
   }
 
@@ -174,8 +228,12 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
       bundle,
       latencyMs: { parse: parseMs, plan: planMs, retrieve: retrieveMs, assemble: assembleMs, compose: 0, total: elapsed },
       strippedCount: 0,
+      gateSignals: [],
     };
   }
+
+  // Session context · await before composition so the prompt carries it
+  const session = await sessionPromise;
 
   // ── Phase 5 · compose ───────────────────────────────────────────────
   const t5 = Date.now();
@@ -184,10 +242,17 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
     bundle,
     format,
     capability: input.capability,
+    sessionContextBlock: session ? renderSessionContextBlock(session) : undefined,
     onTextDelta: input.onTextDelta,
   });
   const composeMs = Date.now() - t5;
   progress({ phase: 'compose', status: 'complete', latencyMs: composeMs });
+
+  // Parse gate signals from the raw LLM output and surface them. The
+  // voiceFilter has already stripped the tags from the user-facing payload,
+  // so the only place signals survive is composed.rawText.
+  const gateSignals = parseGateSignals(composed.rawText);
+  for (const sig of gateSignals) input.onGateSignal?.(sig);
 
   // ── Phase 6 · render (payload is ready) ─────────────────────────────
   progress({ phase: 'render', status: 'complete' });
@@ -206,5 +271,7 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
       total: Date.now() - started,
     },
     strippedCount: composed.strippedCount,
+    session,
+    gateSignals,
   };
 }
