@@ -20,7 +20,7 @@ import type {
 } from './types';
 
 const EMBED_MODEL = 'text-embedding-3-large';
-const EMBED_DIMS = 3072;
+const EMBED_DIMS = 1024; // matches nexus-knowledge Pinecone index dim
 const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 const PATTERN_NAMESPACE = 'public-patterns';
 const CLASSIFIER_MODEL = process.env.CLASSIFIER_MODEL ?? 'claude-haiku-4-5-20251001';
@@ -142,7 +142,10 @@ async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 
     const index = pc.index(INDEX_NAME);
     const filter: Record<string, unknown> = {};
     if (stage1.archetype) filter.archetype = { $eq: stage1.archetype };
-    if (stage1.industry) filter.industry = { $eq: stage1.industry };
+    // Vector metadata stores `industries` as an array (multiple industry tags
+    // per pattern). Use $in semantics so the filter matches when the list
+    // contains the target industry.
+    if (stage1.industry) filter.industries = { $in: [stage1.industry] };
     const result = await index.namespace(PATTERN_NAMESPACE).query({
       vector: queryEmbed,
       topK,
