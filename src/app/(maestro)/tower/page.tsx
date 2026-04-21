@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { buildTowerViewModel, listTowerClients, type ContradictionRow } from '@/lib/tower/aggregate';
+import { buildTowerViewModel, type ContradictionRow } from '@/lib/tower/aggregate';
 import { loadEnterpriseSummary } from '@/lib/tower/enterprise-summary';
 import { TowerUploadZone } from '@/components/tower/TowerUploadZone';
 import { EnterpriseContextRow } from '@/components/tower/EnterpriseContextRow';
+import { AtlasRail } from '@/components/atlas/AtlasRail';
 
 export const dynamic = 'force-dynamic';
 
@@ -286,23 +286,25 @@ export default async function TowerPage({
   }
 
   return (
-    <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+    <div style={{ padding: '24px 24px 40px', maxWidth: 1780, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 20, alignItems: 'start' }}>
         <div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
-            Control Tower
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
+                Control Tower
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 500, marginTop: 4 }}>{vm.client.name}</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, marginTop: 2 }}>
+                {vm.client.industry_code ?? 'unclassified'}
+              </div>
+            </div>
+            {/* Client switcher lives in the top-nav dropdown now; no duplicate
+                selector rendered here. Single-client main-window principle. */}
           </div>
-          <div style={{ fontSize: 22, fontWeight: 500, marginTop: 4 }}>{vm.client.name}</div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, marginTop: 2 }}>
-            {vm.client.industry_code ?? 'unclassified'}
-          </div>
-        </div>
-        {/* Client switcher lives in the top-nav dropdown now; no duplicate
-            selector rendered here. Single-client main-window principle. */}
-      </div>
 
-      {/* Five dimension panels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14, marginBottom: 20 }}>
+          {/* Five dimension panels */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14, marginBottom: 20 }}>
         {panelFrame(
           TEAL,
           '1',
@@ -406,14 +408,14 @@ export default async function TowerPage({
             </div>
           </>,
         )}
-      </div>
+          </div>
 
-      {/* Enterprise context · Pack H Phase 5 */}
-      <EnterpriseContextRow summary={enterpriseSummary} />
+          {/* Enterprise context · Pack H Phase 5 */}
+          <EnterpriseContextRow summary={enterpriseSummary} />
 
-      {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
-      {trajectory.length > 0 && (
-        <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
+          {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
+          {trajectory.length > 0 && (
+            <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEAL }}>
@@ -455,12 +457,12 @@ export default async function TowerPage({
               });
             })()}
           </div>
-        </section>
-      )}
+            </section>
+          )}
 
-      {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
-      {shadowAiFindings.length > 0 && (
-        <section style={{ marginTop: 24 }}>
+          {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
+          {shadowAiFindings.length > 0 && (
+            <section style={{ marginTop: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: CORAL }}>
@@ -494,11 +496,11 @@ export default async function TowerPage({
               );
             })}
           </div>
-        </section>
-      )}
+            </section>
+          )}
 
-      {/* Contradiction engine */}
-      <div style={{ marginTop: 24 }}>
+          {/* Contradiction engine */}
+          <div style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
           <div>
             <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: PURPLE }}>
@@ -519,10 +521,14 @@ export default async function TowerPage({
               <ContradictionCard key={c.id} c={c} />
             ))}
           </div>
-        )}
-      </div>
+          )}
+          </div>
 
-      <TowerUploadZone clientId={vm.client.id} />
+          <TowerUploadZone clientId={vm.client.id} />
+        </div>
+
+        <AtlasRail clientName={vm.client.name} />
+      </div>
     </div>
   );
 }
