@@ -239,14 +239,51 @@ ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_locked_at TIMESTAMPTZ;
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_locked_by_user_id UUID REFERENCES persons(id) ON DELETE SET NULL;
 
 -- ── Column extensions on engagement_participants ───────────────────────
+-- Hot-filter columns kept discrete for index efficiency:
+--   approval_authority — "find sponsors across all programs" · founder dashboards
+--   last_touchpoint_at — "participants not touched in 30 days" · Maestro sweep
+-- Occasional-read state (touchpoint_count, per-user UI prefs) lives in
+-- view_state jsonb (added below from Packet 13 §13.4 canonical).
 ALTER TABLE engagement_participants ADD COLUMN IF NOT EXISTS approval_authority TEXT
   CHECK (approval_authority IS NULL OR approval_authority IN (
     'sponsor','approver','contributor','observer'
   ));
 ALTER TABLE engagement_participants ADD COLUMN IF NOT EXISTS last_touchpoint_at TIMESTAMPTZ;
-ALTER TABLE engagement_participants ADD COLUMN IF NOT EXISTS touchpoint_count INT NOT NULL DEFAULT 0;
 
--- ── Column extensions on engagement_topics (catalog) ───────────────────
-ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS linked_modules TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];
-ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS pattern_match_key TEXT;
-ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS priority_in_program INT;
+-- NOTE: engagement_topics (catalog) extensions have been REMOVED in favor
+-- of existing columns:
+--   · linked_modules → phase_playbook JSONB (already present in 040)
+--   · pattern_match_key → key_patterns TEXT[] (already present in 040)
+--   · priority_in_program → engagement_topics_map (join, not catalog)
+
+-- ── Spec-canonical columns (Packet 13 §13.4) ───────────────────────────
+-- compliance/data-governance on engagements, per-user view_state +
+-- notification_preferences on participants, pattern promotion state
+-- machine on the topics catalog (Packet 4 DRAFT → PILOT → MATURE).
+
+-- engagements · governance + soft-delete
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS data_residency_region TEXT
+  CHECK (data_residency_region IS NULL OR data_residency_region IN (
+    'us','us-east','us-west','eu','eu-west','eu-central','apac','ca','uk','au'
+  ));
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS retention_policy_years INT DEFAULT 7;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ;
+
+-- engagement_participants · role-adaptive rendering + notifications
+ALTER TABLE engagement_participants ADD COLUMN IF NOT EXISTS view_state JSONB NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE engagement_participants ADD COLUMN IF NOT EXISTS notification_preferences JSONB NOT NULL DEFAULT '{}'::jsonb;
+
+-- engagement_topics · pattern promotion state machine
+ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS promotion_state TEXT
+  DEFAULT 'draft'
+  CHECK (promotion_state IS NULL OR promotion_state IN ('draft','pilot','mature','deprecated'));
+ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS deployment_count INT NOT NULL DEFAULT 0;
+ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS successful_deployment_count INT NOT NULL DEFAULT 0;
+ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS last_successful_deployment_at TIMESTAMPTZ;
+ALTER TABLE engagement_topics ADD COLUMN IF NOT EXISTS canonical_shape_json JSONB;
+
+-- Indexes on the new governance / state columns
+CREATE INDEX IF NOT EXISTS idx_engagements_archived ON engagements(archived_at) WHERE archived_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_engagements_deleted ON engagements(deleted_at) WHERE deleted_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_engagement_topics_promotion ON engagement_topics(promotion_state, last_successful_deployment_at DESC NULLS LAST);
