@@ -1,7 +1,25 @@
-import fs from 'node:fs';
+import { config as loadEnv } from 'dotenv';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 
-type OrgKey = 'meridian' | 'arcturus' | 'apex';
+loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
+loadEnv();
+
+type TenantSeed = {
+  key: 'meridian' | 'arcturus' | 'apexretail';
+  clientNameCandidates: string[];
+  people: Array<{
+    graphNodeId: string;
+    name: string;
+    email: string;
+    title: string;
+    cxoFunction: string;
+    unit: string;
+    primaryFocus: string;
+    familiarity?: 'first_meeting' | 'returning_recent' | 'returning_dormant' | 'frequent_collaborator';
+  }>;
+};
 
 type ClientRow = {
   id: string;
@@ -10,397 +28,280 @@ type ClientRow = {
 
 type PersonRow = {
   id: string;
-  name: string;
-  email: string | null;
-  role: string | null;
-  organization: string | null;
-  communication_style: Record<string, unknown> | null;
+  graph_node_id: string | null;
 };
 
-type SponsorSeed = {
-  name: string;
-  email: string;
-  title: string;
-  cxoFunction: string;
-  unit: string;
-  primaryFocus: string;
-};
-
-type OrgSeed = {
-  key: OrgKey;
-  label: string;
-  clientNameCandidates: string[];
-  organizationForClient: (clientName: string) => string;
-  sponsors: SponsorSeed[];
-};
-
-const ORG_SEEDS: OrgSeed[] = [
+const TENANTS: TenantSeed[] = [
   {
     key: 'meridian',
-    label: 'Meridian',
     clientNameCandidates: ['Meridian Health', 'Meridian Health System'],
-    organizationForClient: () => 'Meridian Health System',
-    sponsors: [
+    people: [
       {
-        name: 'Melissa Ahn',
-        email: 'melissa.ahn@meridian-health.demo',
+        graphNodeId: 'person_meridian_maya_patel',
+        name: 'Maya Patel',
+        email: 'maya.patel@meridian-health.demo',
         title: 'VP Clinical Informatics',
-        cxoFunction: 'IT',
-        unit: 'Clinical Informatics and EHR Enablement',
-        primaryFocus:
-          'Translating physician workflow pain points into deployable Epic, ambient documentation, and analytics changes.',
-      },
-      {
-        name: 'Aaron Patel',
-        email: 'aaron.patel@meridian-health.demo',
-        title: 'Executive Director Care Management Operations',
-        cxoFunction: 'Operations',
-        unit: 'Care Management and Throughput',
-        primaryFocus:
-          'Reducing discharge delays, readmissions, and care-coordination friction across the acute-to-home transition.',
-      },
-      {
-        name: 'Rachel Dominguez',
-        email: 'rachel.dominguez@meridian-health.demo',
-        title: 'VP Revenue Cycle Transformation',
-        cxoFunction: 'Finance',
-        unit: 'Revenue Cycle and Prior Authorization',
-        primaryFocus:
-          'Tightening denial prevention, prior-auth cycle time, and cash acceleration without adding clinician burden.',
-      },
-      {
-        name: 'Dr. Naomi Mercer',
-        email: 'naomi.mercer@meridian-health.demo',
-        title: 'Head of Ambulatory Access and Service Line Growth',
         cxoFunction: 'Clinical',
-        unit: 'Ambulatory Operations',
-        primaryFocus:
-          'Improving referral conversion, clinic capacity, and patient access across high-growth specialties.',
+        unit: 'Clinical Informatics',
+        primaryFocus: 'Driving EHR-adjacent workflow modernization across ambulatory and inpatient care teams.',
+        familiarity: 'returning_recent',
+      },
+      {
+        graphNodeId: 'person_meridian_aaron_bishop',
+        name: 'Aaron Bishop',
+        email: 'aaron.bishop@meridian-health.demo',
+        title: 'Director, Revenue Cycle Transformation',
+        cxoFunction: 'Finance',
+        unit: 'Revenue Cycle',
+        primaryFocus: 'Reducing denials and manual rework across prior auth, coding, and patient billing operations.',
+        familiarity: 'returning_recent',
+      },
+      {
+        graphNodeId: 'person_meridian_lena_ortiz',
+        name: 'Lena Ortiz',
+        email: 'lena.ortiz@meridian-health.demo',
+        title: 'VP Ambulatory Operations',
+        cxoFunction: 'Operations',
+        unit: 'Ambulatory Care',
+        primaryFocus: 'Improving clinic throughput, staffing stability, and patient access across the outpatient network.',
+      },
+      {
+        graphNodeId: 'person_meridian_devon_kim',
+        name: 'Devon Kim',
+        email: 'devon.kim@meridian-health.demo',
+        title: 'Head of Data Platform Engineering',
+        cxoFunction: 'IT',
+        unit: 'Enterprise Data Platform',
+        primaryFocus: 'Stabilizing the Snowflake migration and making analytics delivery dependable for operating leaders.',
       },
     ],
   },
   {
     key: 'arcturus',
-    label: 'Arcturus',
-    clientNameCandidates: [
-      'Arcturus Financial Group',
-      'Arcturus Financial',
-      'First Capital',
-      'First Capital Financial',
-    ],
-    organizationForClient: (clientName) =>
-      /first capital/i.test(clientName) ? 'First Capital Financial' : 'Arcturus Financial Group',
-    sponsors: [
+    clientNameCandidates: ['Arcturus Financial Group', 'Arcturus Financial', 'First Capital Financial', 'First Capital'],
+    people: [
       {
-        name: 'Daniel Cho',
-        email: 'daniel.cho@firstcapital.demo',
-        title: 'VP Commercial Lending Transformation',
-        cxoFunction: 'Commercial Banking',
-        unit: 'Commercial Lending and Underwriting',
-        primaryFocus:
-          'Shortening underwriting cycle time while preserving credit discipline and relationship-manager trust.',
+        graphNodeId: 'person_arcturus_elena_marwick',
+        name: 'Elena Marwick',
+        email: 'elena.marwick@arcturus-financial.demo',
+        title: 'VP Wealth Platform Engineering',
+        cxoFunction: 'IT',
+        unit: 'Wealth Platform',
+        primaryFocus: 'Modernizing advisor and client-platform workflows without disrupting regulated portfolio operations.',
+        familiarity: 'returning_recent',
       },
       {
-        name: 'Priyanka Mehra',
-        email: 'priyanka.mehra@firstcapital.demo',
-        title: 'Managing Director Wealth Platform Product',
-        cxoFunction: 'Product',
-        unit: 'Wealth Management Platform',
-        primaryFocus:
-          'Modernizing advisor workflow, client reporting, and portfolio intelligence across the post-acquisition wealth stack.',
-      },
-      {
-        name: 'Sofia Ramirez',
-        email: 'sofia.ramirez@firstcapital.demo',
-        title: 'Director AML Investigations Optimization',
-        cxoFunction: 'Risk',
-        unit: 'BSA/AML Operations',
-        primaryFocus:
-          'Reducing false positives and investigator swivel-chair work ahead of regulator milestones.',
-      },
-      {
-        name: 'Evan Brooks',
-        email: 'evan.brooks@firstcapital.demo',
-        title: 'Head of Digital Onboarding and Servicing',
+        graphNodeId: 'person_arcturus_tom_bevan',
+        name: 'Tom Bevan',
+        email: 'tom.bevan@arcturus-financial.demo',
+        title: 'Director, Portfolio Operations',
         cxoFunction: 'Operations',
-        unit: 'Consumer Digital Banking',
-        primaryFocus:
-          'Improving account-opening completion, KYC handoffs, and servicing deflection in mobile and online banking.',
+        unit: 'Portfolio Operations',
+        primaryFocus: 'Removing reconciliation drag from investment operations and shortening handoffs between portfolio, risk, and settlements.',
+      },
+      {
+        graphNodeId: 'person_arcturus_nisha_kapur',
+        name: 'Nisha Kapur',
+        email: 'nisha.kapur@arcturus-financial.demo',
+        title: 'Head of Client Reporting Automation',
+        cxoFunction: 'Product',
+        unit: 'Client Reporting',
+        primaryFocus: 'Turning quarterly reporting and commentary production into a scalable, audit-ready workflow for relationship teams.',
+      },
+      {
+        graphNodeId: 'person_arcturus_graham_ellis',
+        name: 'Graham Ellis',
+        email: 'graham.ellis@arcturus-financial.demo',
+        title: 'VP Platform Finance',
+        cxoFunction: 'Finance',
+        unit: 'Technology Finance',
+        primaryFocus: 'Linking platform investment decisions to margin recovery, run-cost discipline, and board-level ROI scrutiny.',
       },
     ],
   },
   {
-    key: 'apex',
-    label: 'Apex',
-    clientNameCandidates: ['Apex Retail', 'Apex Retail Group'],
-    organizationForClient: () => 'Apex Retail Group',
-    sponsors: [
+    key: 'apexretail',
+    clientNameCandidates: ['Apex Retail Group', 'Apex Retail'],
+    people: [
       {
-        name: 'Maya Reyes',
-        email: 'maya.reyes@apex-retail.demo',
-        title: 'VP Customer Care',
+        graphNodeId: 'person_apex_nina_brooks',
+        name: 'Nina Brooks',
+        email: 'nina.brooks@apex-retail.demo',
+        title: 'VP Supply Chain Operations',
         cxoFunction: 'Operations',
-        unit: 'Customer Care and Contact Center',
-        primaryFocus:
-          'Raising CSAT while cutting avoidable contact volume and agent handle time across retail service channels.',
+        unit: 'Supply Chain',
+        primaryFocus: 'Improving flow-through from DCs to stores while protecting service levels during assortment and promo volatility.',
+        familiarity: 'returning_recent',
       },
       {
-        name: 'Marcus Liu',
-        email: 'marcus.liu@apex-retail.demo',
-        title: 'VP Merchandising',
+        graphNodeId: 'person_apex_omar_haddad',
+        name: 'Omar Haddad',
+        email: 'omar.haddad@apex-retail.demo',
+        title: 'Director, Merchandise Planning',
         cxoFunction: 'Product',
-        unit: 'Merchandising and Category Strategy',
-        primaryFocus:
-          'Improving assortment decisions, promo velocity, and in-season margin across core retail categories.',
+        unit: 'Merchandise Planning',
+        primaryFocus: 'Tightening category plans and forecast quality in apparel and home where margin swing is highest.',
       },
       {
-        name: 'Neil Bhandari',
-        email: 'neil.bhandari@apex-retail.demo',
-        title: 'Head of Retail Technology Delivery',
+        graphNodeId: 'person_apex_casey_lin',
+        name: 'Casey Lin',
+        email: 'casey.lin@apex-retail.demo',
+        title: 'Head of Digital Product',
         cxoFunction: 'IT',
-        unit: 'Store Systems and Retail Technology',
-        primaryFocus:
-          'Sequencing store-system rollouts that reduce associate friction without disrupting peak trading periods.',
+        unit: 'Digital Commerce',
+        primaryFocus: 'Owning customer-facing product changes across search, basket, loyalty, and digital self-service journeys.',
       },
       {
-        name: 'Olivia Chen',
-        email: 'olivia.chen@apex-retail.demo',
-        title: 'VP Inventory Finance and Margin Analytics',
+        graphNodeId: 'person_apex_felicia_grant',
+        name: 'Felicia Grant',
+        email: 'felicia.grant@apex-retail.demo',
+        title: 'VP Store Finance',
         cxoFunction: 'Finance',
-        unit: 'Inventory Finance and Margin Analytics',
-        primaryFocus:
-          'Turning inventory turns, markdown exposure, and working-capital signals into sponsor-ready decisions for merchant and supply-chain teams.',
+        unit: 'Store Finance',
+        primaryFocus: 'Translating field execution choices into margin, labor, and same-store-sales outcomes for the store portfolio.',
       },
     ],
   },
 ];
 
-function loadLocalEnv(): void {
-  const candidates = [
-    path.resolve(process.cwd(), '.env.local'),
-    path.resolve(process.cwd(), '.env'),
-  ];
-
-  for (const filePath of candidates) {
-    if (!fs.existsSync(filePath)) continue;
-    for (const line of fs.readFileSync(filePath, 'utf8').split(/\r?\n/u)) {
-      const match = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*)\s*$/u);
-      if (!match || process.env[match[1]]) continue;
-      process.env[match[1]] = match[2].replace(/^['"]|['"]$/gu, '');
-    }
-  }
+function getSb(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY required');
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing ${name}. Export it or place it in .env.local before running this script.`);
-  }
-  return value;
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/gu, '_')
-    .replace(/^_+|_+$/gu, '');
-}
-
-async function rest<T>(url: string, init: RequestInit = {}): Promise<T> {
-  const baseUrl = requireEnv('NEXT_PUBLIC_SUPABASE_URL');
-  const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-  const response = await fetch(`${baseUrl}/rest/v1/${url}`, {
-    ...init,
-    headers: {
-      apikey: serviceRoleKey,
-      Authorization: `Bearer ${serviceRoleKey}`,
-      'Content-Type': 'application/json',
-      ...(init.headers ?? {}),
-    },
-  });
-
-  const text = await response.text();
-  const payload = text ? JSON.parse(text) : null;
-
-  if (!response.ok) {
-    throw new Error(`Supabase REST error ${response.status} for ${url}: ${JSON.stringify(payload)}`);
+async function resolveClient(sb: SupabaseClient, tenant: TenantSeed): Promise<ClientRow> {
+  for (const candidate of tenant.clientNameCandidates) {
+    const { data, error } = await sb.from('clients').select('id, name').ilike('name', candidate).maybeSingle();
+    if (error) throw error;
+    if (data) return data as ClientRow;
   }
 
-  return payload as T;
+  throw new Error(`Client not found for ${tenant.key}. Tried: ${tenant.clientNameCandidates.join(', ')}`);
 }
 
-async function findClient(seed: OrgSeed): Promise<ClientRow | null> {
-  for (const candidate of seed.clientNameCandidates) {
-    const rows = await rest<ClientRow[]>(
-      `clients?select=id,name&name=eq.${encodeURIComponent(candidate)}&limit=1`,
-      { method: 'GET' },
-    );
-    if (rows[0]) return rows[0];
+async function ensurePerson(
+  sb: SupabaseClient,
+  client: ClientRow,
+  person: TenantSeed['people'][number],
+): Promise<PersonRow> {
+  const communicationStyle = {
+    title: person.title,
+    cxo_function: person.cxoFunction,
+    unit: person.unit,
+    primary_focus: person.primaryFocus,
+  };
+
+  const payload = {
+    graph_node_id: person.graphNodeId,
+    name: person.name,
+    email: person.email,
+    role: person.title,
+    organization: client.name,
+    familiarity: person.familiarity ?? 'first_meeting',
+    communication_style: communicationStyle,
+    primary_role: 'client_viewer',
+  };
+
+  const { data: existingByGraph, error: graphError } = await sb
+    .from('persons')
+    .select('id, graph_node_id')
+    .eq('graph_node_id', person.graphNodeId)
+    .maybeSingle();
+  if (graphError) throw graphError;
+
+  if (existingByGraph) {
+    const { error: updateError } = await sb.from('persons').update(payload).eq('id', (existingByGraph as PersonRow).id);
+    if (updateError) throw updateError;
+    return existingByGraph as PersonRow;
   }
 
-  for (const candidate of seed.clientNameCandidates) {
-    const rows = await rest<ClientRow[]>(
-      `clients?select=id,name&name=ilike.${encodeURIComponent(candidate)}&limit=1`,
-      { method: 'GET' },
-    );
-    if (rows[0]) return rows[0];
+  const { data: existingByEmail, error: emailError } = await sb
+    .from('persons')
+    .select('id, graph_node_id')
+    .eq('email', person.email)
+    .maybeSingle();
+  if (emailError) throw emailError;
+
+  if (existingByEmail) {
+    const { error: updateError } = await sb.from('persons').update(payload).eq('id', (existingByEmail as PersonRow).id);
+    if (updateError) throw updateError;
+    return existingByEmail as PersonRow;
   }
 
-  return null;
+  const { data: inserted, error: insertError } = await sb
+    .from('persons')
+    .insert(payload)
+    .select('id, graph_node_id')
+    .single();
+  if (insertError || !inserted) throw insertError ?? new Error(`Failed to insert ${person.email}`);
+  return inserted as PersonRow;
 }
 
-async function findPerson(email: string, name: string, organization: string): Promise<PersonRow | null> {
-  const byEmail = await rest<PersonRow[]>(
-    `persons?select=id,name,email,role,organization,communication_style&email=eq.${encodeURIComponent(email)}&limit=1`,
-    { method: 'GET' },
-  );
-  if (byEmail[0]) return byEmail[0];
-
-  const byName = await rest<PersonRow[]>(
-    `persons?select=id,name,email,role,organization,communication_style&name=eq.${encodeURIComponent(name)}&organization=eq.${encodeURIComponent(organization)}&limit=1`,
-    { method: 'GET' },
-  );
-  return byName[0] ?? null;
-}
-
-async function createPerson(payload: Record<string, unknown>): Promise<PersonRow> {
-  const rows = await rest<PersonRow[]>('persons?select=id,name,email,role,organization,communication_style', {
-    method: 'POST',
-    headers: {
-      Prefer: 'return=representation',
-    },
-    body: JSON.stringify(payload),
-  });
-  if (!rows[0]) throw new Error(`Failed to create person ${payload.name as string}`);
-  return rows[0];
-}
-
-async function updatePerson(id: string, payload: Record<string, unknown>): Promise<PersonRow> {
-  const rows = await rest<PersonRow[]>(
-    `persons?id=eq.${encodeURIComponent(id)}&select=id,name,email,role,organization,communication_style`,
-    {
-      method: 'PATCH',
-      headers: {
-        Prefer: 'return=representation',
-      },
-      body: JSON.stringify(payload),
-    },
-  );
-  if (!rows[0]) throw new Error(`Failed to update person ${id}`);
-  return rows[0];
-}
-
-async function ensureMembership(personId: string, clientId: string): Promise<void> {
-  await rest<unknown>('person_client_memberships?on_conflict=person_id,client_id', {
-    method: 'POST',
-    headers: {
-      Prefer: 'resolution=merge-duplicates,return=minimal',
-    },
-    body: JSON.stringify([
+async function ensureMembership(sb: SupabaseClient, personId: string, clientId: string): Promise<void> {
+  const { error } = await sb
+    .from('person_client_memberships')
+    .upsert(
       {
         person_id: personId,
         client_id: clientId,
         role: 'client_viewer',
       },
-    ]),
-  });
-}
-
-async function verifySponsors(organization: string, sponsors: SponsorSeed[]): Promise<void> {
-  for (const sponsor of sponsors) {
-    const person = await findPerson(sponsor.email, sponsor.name, organization);
-    if (!person) {
-      throw new Error(`Verification failed: ${sponsor.name} not found in ${organization}`);
-    }
-
-    const style = (person.communication_style ?? {}) as Record<string, unknown>;
-    const requiredFields = ['title', 'cxo_function', 'unit', 'primary_focus'] as const;
-    const missing = requiredFields.filter((field) => {
-      const value = style[field];
-      return typeof value !== 'string' || value.trim().length === 0;
-    });
-
-    if (missing.length > 0) {
-      throw new Error(`Verification failed: ${sponsor.name} missing communication_style fields ${missing.join(', ')}`);
-    }
-  }
-}
-
-async function upsertSponsor(seed: OrgSeed, client: ClientRow, sponsor: SponsorSeed): Promise<'created' | 'updated'> {
-  const organization = seed.organizationForClient(client.name);
-  const existing = await findPerson(sponsor.email, sponsor.name, organization);
-  const communicationStyle = {
-    ...((existing?.communication_style ?? {}) as Record<string, unknown>),
-    title: sponsor.title,
-    cxo_function: sponsor.cxoFunction,
-    unit: sponsor.unit,
-    primary_focus: sponsor.primaryFocus,
-  };
-
-  const payload = {
-    graph_node_id: `person_${seed.key}_${slugify(sponsor.name)}`,
-    name: sponsor.name,
-    email: sponsor.email,
-    role: sponsor.title,
-    organization,
-    familiarity: 'first_meeting',
-    communication_style: communicationStyle,
-    working_rhythm: {},
-    personal_threads: [],
-    primary_role: 'client_viewer',
-  };
-
-  const row = existing
-    ? await updatePerson(existing.id, payload)
-    : await createPerson(payload);
-
-  await ensureMembership(row.id, client.id);
-  return existing ? 'updated' : 'created';
-}
-
-async function seedOrg(seed: OrgSeed): Promise<void> {
-  const client = await findClient(seed);
-  if (!client) {
-    throw new Error(
-      `Could not find a client row for ${seed.label}. Tried: ${seed.clientNameCandidates.join(', ')}`,
+      { onConflict: 'person_id,client_id' },
     );
-  }
-
-  const organization = seed.organizationForClient(client.name);
-  console.log(`\n▸ ${seed.label} slot -> client "${client.name}" -> organization "${organization}"`);
-
-  let created = 0;
-  let updated = 0;
-
-  for (const sponsor of seed.sponsors) {
-    const result = await upsertSponsor(seed, client, sponsor);
-    if (result === 'created') created += 1;
-    else updated += 1;
-
-    console.log(`  ${result === 'created' ? '+' : '↺'} ${sponsor.name} · ${sponsor.title}`);
-  }
-
-  await verifySponsors(organization, seed.sponsors);
-  console.log(`  ✓ verified ${seed.sponsors.length} sponsor candidates with title/cxo_function/unit/primary_focus`);
-  console.log(`  ✓ summary · created=${created} updated=${updated}`);
+  if (error) throw error;
 }
 
-async function main(): Promise<void> {
-  loadLocalEnv();
-  requireEnv('NEXT_PUBLIC_SUPABASE_URL');
-  requireEnv('SUPABASE_SERVICE_ROLE_KEY');
+async function verifyTenant(sb: SupabaseClient, client: ClientRow, expectedNames: string[]): Promise<Array<{ name: string; role: string; title: string; unit: string }>> {
+  const { data, error } = await sb
+    .from('persons')
+    .select('name, role, communication_style')
+    .eq('organization', client.name)
+    .in('name', expectedNames)
+    .order('name', { ascending: true });
+  if (error) throw error;
 
-  // The active-client layer still supports the legacy "arcturus" key.
-  // On main today that key resolves to First Capital aliases, so this seed
-  // enriches whichever alias is present without creating a duplicate client.
-  for (const seed of ORG_SEEDS) {
-    await seedOrg(seed);
+  return ((data ?? []) as Array<{ name: string; role: string; communication_style?: Record<string, unknown> }>)
+    .map((row) => ({
+      name: row.name,
+      role: row.role,
+      title: String((row.communication_style ?? {}).title ?? ''),
+      unit: String((row.communication_style ?? {}).unit ?? ''),
+    }));
+}
+
+async function runTenant(sb: SupabaseClient, tenant: TenantSeed): Promise<void> {
+  const client = await resolveClient(sb, tenant);
+  for (const person of tenant.people) {
+    const row = await ensurePerson(sb, client, person);
+    await ensureMembership(sb, row.id, client.id);
   }
 
+  const verified = await verifyTenant(sb, client, tenant.people.map((person) => person.name));
+  console.log(`\n${tenant.key} · ${client.name}`);
+  console.log(`  seeded/updated · ${verified.length}`);
+  for (const row of verified) {
+    console.log(`  - ${row.name} · ${row.role} · ${row.unit}`);
+  }
+}
+
+async function main() {
+  const sb = getSb();
+  console.log('─── Non-CXO sponsor demo seed ───');
+  for (const tenant of TENANTS) {
+    await runTenant(sb, tenant);
+  }
   console.log('\nDone.');
 }
 
-main().catch((error) => {
-  console.error('FAILED:', error);
-  process.exit(1);
-});
+const isMain = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
+
+if (isMain) {
+  main().catch((err) => {
+    console.error('FAILED:', err);
+    process.exit(1);
+  });
+}
