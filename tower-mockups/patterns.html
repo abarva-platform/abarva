@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tower · Patterns</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet" />
+    <style>
+      :root { --bg:#0f172a; --border:rgba(148,163,184,.24); --text:#f8fafc; --muted:#cbd5e1; --teal:#14b8a6; --warning:#d97706; --shadow:0 22px 60px rgba(2,6,23,.34); }
+      * { box-sizing:border-box; } body { margin:0; min-width:1320px; background:radial-gradient(circle at top left, rgba(20,184,166,.1), transparent 18%), linear-gradient(180deg,#111c34 0%, #0f172a 44%, #0b1322 100%); color:var(--text); font-family:"DM Sans",system-ui,sans-serif; }
+      .mono { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--teal); } .shell { padding:24px; }
+      .topbar, .panel, .grid article { border:.5px solid var(--border); background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(20,32,52,.98)); box-shadow:var(--shadow); }
+      .topbar { display:grid; grid-template-columns:220px 1fr 120px; gap:24px; align-items:center; padding:18px 22px; border-radius:24px; } .wordmark { display:flex; align-items:baseline; gap:2px; } .abar { font-family:Georgia,serif; font-size:17px; font-weight:800; color:#fff; } .va { font-family:Georgia,serif; font-size:23px; font-weight:900; color:var(--teal); } .nav { display:flex; justify-content:center; gap:28px; font-size:14px; font-weight:600; } .nav .active { color:var(--teal); position:relative; } .nav .active::after { content:""; position:absolute; left:0; right:0; bottom:-10px; height:2px; border-radius:999px; background:var(--teal); } .profile { justify-self:end; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:rgba(20,184,166,.12); border:.5px solid rgba(20,184,166,.35); color:var(--teal); font-weight:700; }
+      .panel { margin-top:18px; border-radius:24px; padding:20px 22px; } .headline { margin:10px 0 8px; font-family:Georgia,serif; font-size:30px; font-weight:700; }
+      .grid { margin-top:18px; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; } .grid article { border-radius:22px; padding:18px; } .grid h3 { margin:10px 0 8px; font-size:18px; } .grid p { margin:0; color:var(--muted); font-size:14px; line-height:1.55; } .tag { display:inline-block; margin-top:12px; padding:8px 10px; border-radius:999px; background:rgba(217,119,6,.12); border:.5px solid rgba(217,119,6,.24); color:#fdba74; font-size:12px; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar"><div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div><nav class="nav"><span>Intelligence</span><span>Programs</span><span class="active">Tower</span><span>Patterns</span><span>Settings</span></nav><div class="profile">SR</div></header>
+      <section class="panel"><div class="mono">Patterns · Apex applicability</div><div class="headline">Genome patterns most relevant to the current Apex portfolio</div></section>
+      <section class="grid">
+        <article><div class="mono">Matched pattern</div><h3>Vendor Consolidation + Governance</h3><p>Most relevant to the Shadow AI signal. Four prior deployments, median $1.8M recovered, usually triggered by unmanaged AI sprawl.</p><span class="tag">High confidence</span></article>
+        <article><div class="mono">Matched pattern</div><h3>Unified customer identity activation</h3><p>Most relevant to the Unified Customer Data Platform charter. Repeats across retail cohorts where merchandising and marketing split audiences.</p><span class="tag">Pattern shape</span></article>
+        <article><div class="mono">Gap pattern</div><h3>No direct Genome shape for store-associate productivity</h3><p>This is why Store Associate Productivity remains a custom-shape program with Maestro oversight and extra phase-gate scrutiny.</p><span class="tag">Requires custom path</span></article>
+      </section>
+    </div>
+  </body>
+</html>

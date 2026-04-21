@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tower · Settings · Users</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet" />
+    <style>
+      :root { --bg:#0f172a; --border:rgba(148,163,184,.24); --text:#f8fafc; --muted:#cbd5e1; --teal:#14b8a6; --shadow:0 22px 60px rgba(2,6,23,.34); }
+      * { box-sizing:border-box; } body { margin:0; min-width:1320px; background:radial-gradient(circle at top left, rgba(20,184,166,.1), transparent 18%), linear-gradient(180deg,#111c34 0%, #0f172a 44%, #0b1322 100%); color:var(--text); font-family:"DM Sans",system-ui,sans-serif; }
+      .mono { font-family:"JetBrains Mono",ui-monospace,monospace; font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--teal); } .shell { padding:24px; }
+      .topbar, .panel, .table { border:.5px solid var(--border); background:linear-gradient(180deg, rgba(30,41,59,.98), rgba(20,32,52,.98)); box-shadow:var(--shadow); }
+      .topbar { display:grid; grid-template-columns:220px 1fr 120px; gap:24px; align-items:center; padding:18px 22px; border-radius:24px; } .wordmark { display:flex; align-items:baseline; gap:2px; } .abar { font-family:Georgia,serif; font-size:17px; font-weight:800; color:#fff; } .va { font-family:Georgia,serif; font-size:23px; font-weight:900; color:var(--teal); } .nav { display:flex; justify-content:center; gap:28px; font-size:14px; font-weight:600; } .nav .active { color:var(--teal); position:relative; } .nav .active::after { content:""; position:absolute; left:0; right:0; bottom:-10px; height:2px; border-radius:999px; background:var(--teal); } .profile { justify-self:end; width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:rgba(20,184,166,.12); border:.5px solid rgba(20,184,166,.35); color:var(--teal); font-weight:700; }
+      .panel { margin-top:18px; border-radius:24px; padding:20px 22px; } .headline { margin:10px 0 8px; font-family:Georgia,serif; font-size:30px; font-weight:700; } .table { margin-top:18px; border-radius:24px; padding:18px; } table { width:100%; border-collapse:collapse; } th, td { padding:12px 10px; border-bottom:.5px solid rgba(148,163,184,.12); text-align:left; } th { color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:.08em; } td { color:var(--muted); font-size:13px; } td strong { color:#fff; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar"><div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div><nav class="nav"><span>Intelligence</span><span>Programs</span><span>Tower</span><span>Patterns</span><span class="active">Settings</span></nav><div class="profile">SR</div></header>
+      <section class="panel"><div class="mono">Settings · Users and roles</div><div class="headline">Who can attest, who can respond, and who can suppress</div></section>
+      <section class="table">
+        <table>
+          <thead><tr><th>Name</th><th>Role</th><th>Tower access</th><th>Attest</th><th>Signals</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Sarah Reynolds</strong></td><td>CIO</td><td>All Tower views</td><td>Yes</td><td>Shadow AI, vendor concentration</td><td>Primary executive owner</td></tr>
+            <tr><td><strong>Maya Reyes</strong></td><td>VP Customer Care</td><td>Contact Center AI, support portfolio</td><td>Yes</td><td>Contact center adoption, service risk</td><td>Sponsor + attester</td></tr>
+            <tr><td><strong>Jake Chen</strong></td><td>Chief Digital Officer</td><td>CDP, digital growth, campaign stack</td><td>No</td><td>Shadow AI, identity, campaign activation</td><td>Co-owner with CMO</td></tr>
+            <tr><td><strong>Anand Sundaram</strong></td><td>Maestro</td><td>Full assigned-client read</td><td>No</td><td>Approves sensitive suppressions</td><td>Operational steward</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </body>
+</html>
