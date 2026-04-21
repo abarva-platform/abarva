@@ -284,3 +284,43 @@ export const severityColor = (
     : value >= benchmark
   return isBad ? COLORS.red : isGood ? COLORS.green : COLORS.amber
 }
+
+// ─── MOTION ────────────────────────────────────────────────────────────────
+// Tokens mirror docs/specs/platform/design-system.md § 1.6. Inlined here so
+// components can compose them without a CSS-in-JS switch. prefers-reduced-
+// motion handling lives in useReducedMotion (src/hooks).
+
+export const MOTION = {
+  duration: {
+    instant:    '75ms',
+    fast:       '150ms',
+    default:    '250ms',
+    slow:       '400ms',
+    deliberate: '600ms',
+  },
+  easing: {
+    linear:    'cubic-bezier(0, 0, 1, 1)',
+    easeOut:   'cubic-bezier(0, 0, 0.2, 1)',   // enter
+    easeIn:    'cubic-bezier(0.4, 0, 1, 1)',   // exit
+    easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)', // in-place
+    overshoot: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+  },
+} as const
+
+// Common transition recipes keyed to spec usage rules.
+export const TRANSITIONS = {
+  hover:  `${MOTION.duration.fast} ${MOTION.easing.easeOut}`,
+  focus:  `${MOTION.duration.fast} ${MOTION.easing.easeOut}`,
+  press:  `${MOTION.duration.instant} ${MOTION.easing.easeIn}`,
+  inPlace: `${MOTION.duration.fast} ${MOTION.easing.easeInOut}`,
+  enter:  `${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+  exit:   `${MOTION.duration.instant} ${MOTION.easing.easeIn}`,
+  slide:  `${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+} as const
+
+// Focus ring — teal glow, respects :focus-visible (no click-flash).
+export const FOCUS_RING = {
+  // Direct shadow application · use inside style={{ boxShadow: FOCUS_RING.brand }}
+  brand:  `0 0 0 2px ${COLORS.pageBg}, 0 0 0 4px ${COLORS.teal}`,
+  danger: `0 0 0 2px ${COLORS.pageBg}, 0 0 0 4px ${COLORS.red}`,
+} as const
