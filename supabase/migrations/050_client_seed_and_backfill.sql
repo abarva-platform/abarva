@@ -3,17 +3,21 @@
 
 BEGIN;
 
+-- clients has a CREATE UNIQUE INDEX on name (from 020), but the
+-- ON CONFLICT planner rejects it — can happen when the index was
+-- created via CREATE UNIQUE INDEX rather than ALTER TABLE ADD
+-- CONSTRAINT UNIQUE. Use WHERE NOT EXISTS for re-run safety regardless.
 INSERT INTO clients (name, legal_name, industry_code)
-VALUES ('Meridian Health', 'Meridian Health System, Inc.', 'HEALTHCARE_IDN')
-ON CONFLICT (name) DO NOTHING;
+SELECT 'Meridian Health', 'Meridian Health System, Inc.', 'HEALTHCARE_IDN'
+WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Meridian Health');
 
 INSERT INTO clients (name, legal_name, industry_code)
-VALUES ('First Capital', 'First Capital Financial Corporation', 'FINSERV')
-ON CONFLICT (name) DO NOTHING;
+SELECT 'First Capital', 'First Capital Financial Corporation', 'FINSERV'
+WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'First Capital');
 
 INSERT INTO clients (name, legal_name, industry_code)
-VALUES ('Apex Retail', 'Apex Retail Group LLC', 'RETAIL')
-ON CONFLICT (name) DO NOTHING;
+SELECT 'Apex Retail', 'Apex Retail Group LLC', 'RETAIL'
+WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Apex Retail');
 
 UPDATE engagements
 SET client_id = c.id
