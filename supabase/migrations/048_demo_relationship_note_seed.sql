@@ -17,10 +17,16 @@ WITH notes AS (
   ) AS v(graph_node_id, category, note_text, decay_interval)
     ON p.graph_node_id = v.graph_node_id
 )
+-- relationship_notes has no (person_id, note_text) unique constraint, so
+-- ON CONFLICT won't work. Guard with WHERE NOT EXISTS on (person_id, note_text)
+-- for re-run safety instead.
 INSERT INTO relationship_notes (person_id, category, note_text, decay_at, surfaced_count)
-SELECT person_id, category, note_text, NOW() + decay_interval, 0
-FROM notes
-ON CONFLICT (person_id, note_text) DO NOTHING;
+SELECT n.person_id, n.category, n.note_text, NOW() + n.decay_interval, 0
+FROM notes n
+WHERE NOT EXISTS (
+  SELECT 1 FROM relationship_notes rn
+  WHERE rn.person_id = n.person_id AND rn.note_text = n.note_text
+);
 
 UPDATE persons
 SET personal_threads = ARRAY[

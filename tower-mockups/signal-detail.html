@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tower Mockup · Shadow AI Signal Detail</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --line: rgba(148, 163, 184, 0.24);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --soft: #94a3b8;
+        --teal: #14b8a6;
+        --atlas: #f59e0b;
+        --critical: #dc2626;
+        --warning: #d97706;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 1280px;
+        background:
+          radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 22%),
+          linear-gradient(180deg, #101a31 0%, #0f172a 65%, #0c1424 100%);
+        color: var(--text);
+        font-family: "DM Sans", system-ui, sans-serif;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--teal);
+      }
+
+      .scene {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .background {
+        padding: 28px;
+        filter: blur(1.6px) saturate(0.9);
+        opacity: 0.42;
+      }
+
+      .chrome,
+      .mock-card,
+      .panel {
+        border: 0.5px solid var(--line);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(20, 32, 52, 0.96));
+        box-shadow: 0 24px 60px rgba(2, 6, 23, 0.45);
+      }
+
+      .chrome {
+        border-radius: 24px;
+        padding: 18px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 18px;
+      }
+
+      .mock-card {
+        border-radius: 24px;
+        padding: 22px;
+      }
+
+      .mock-card h2,
+      .panel h2,
+      .panel h3,
+      .panel h4 {
+        margin: 0;
+      }
+
+      .mock-list {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .mock-row {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.42);
+        border-left: 4px solid rgba(220, 38, 38, 0.9);
+      }
+
+      .overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.48);
+      }
+
+      .panel-wrap {
+        position: absolute;
+        top: 32px;
+        right: 28px;
+        bottom: 32px;
+        width: 400px;
+      }
+
+      .panel {
+        height: 100%;
+        border-radius: 28px 0 0 28px;
+        overflow: auto;
+      }
+
+      .severity-band {
+        height: 8px;
+        background: linear-gradient(90deg, rgba(220, 38, 38, 1), rgba(248, 113, 113, 0.95));
+      }
+
+      .panel-body {
+        padding: 22px 22px 28px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .close-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .close {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        color: var(--muted);
+      }
+
+      .signal-title {
+        display: grid;
+        gap: 8px;
+      }
+
+      .signal-title .amount {
+        font-size: 34px;
+        line-height: 1;
+        font-weight: 800;
+        color: #fca5a5;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .section {
+        padding-top: 16px;
+        border-top: 0.5px solid rgba(148, 163, 184, 0.16);
+        display: grid;
+        gap: 12px;
+      }
+
+      .section p,
+      .section li {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .evidence-list,
+      .context-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .evidence-item {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.44);
+        border: 0.5px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .evidence-item strong {
+        display: block;
+        margin-bottom: 4px;
+        color: #fff;
+      }
+
+      .impact-box,
+      .action-box {
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.46);
+        border: 0.5px solid rgba(148, 163, 184, 0.14);
+      }
+
+      .stat {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .cta {
+        margin-top: 14px;
+        width: 100%;
+        padding: 15px 18px;
+        border: 0;
+        border-radius: 18px;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.98), rgba(37, 99, 235, 0.9));
+        color: #041521;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .secondary {
+        display: grid;
+        gap: 8px;
+      }
+
+      .secondary div {
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 0.5px solid rgba(148, 163, 184, 0.18);
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.34);
+        font-size: 13px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene">
+      <div class="background">
+        <div class="chrome">
+          <div class="mono">Tower · Apex Retail Group</div>
+          <div>Dashboard background context</div>
+        </div>
+
+        <div class="grid">
+          <section class="mock-card">
+            <div class="mono">Demands Your Attention</div>
+            <h2 style="margin-top: 10px; font-size: 28px">Critical signal stack</h2>
+            <div class="mock-list">
+              <div class="mock-row">
+                <strong>Shadow AI detected</strong>
+                <div style="margin-top: 6px; color: var(--muted)">Jasper, Abridge, Grammarly Business · $2.3M annualized</div>
+              </div>
+              <div class="mock-row" style="border-left-color: rgba(217,119,6,0.92)">
+                <strong>Demand Forecasting stale attestation</strong>
+                <div style="margin-top: 6px; color: var(--muted)">31 days overdue</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="mock-card">
+            <div class="mono">Pillar snapshot</div>
+            <div style="margin-top: 16px; display: grid; gap: 12px">
+              <div style="padding: 14px; border-radius: 16px; background: rgba(15,23,42,0.44)">Inventory · 13 use cases</div>
+              <div style="padding: 14px; border-radius: 16px; background: rgba(15,23,42,0.44)">Adoption · 54% average penetration</div>
+              <div style="padding: 14px; border-radius: 16px; background: rgba(15,23,42,0.44)">Value · $8.13M realized</div>
+              <div style="padding: 14px; border-radius: 16px; background: rgba(15,23,42,0.44)">Cost · $277K/mo tracked</div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="overlay"></div>
+
+      <div class="panel-wrap">
+        <aside class="panel" aria-label="Open signal detail side panel">
+          <div class="severity-band"></div>
+          <div class="panel-body">
+            <div class="close-row">
+              <div class="mono">Signal Detail</div>
+              <div class="close">×</div>
+            </div>
+
+            <section class="signal-title">
+              <div class="mono" style="color: #fca5a5">Critical</div>
+              <h2 style="font-size: 28px; line-height: 1.15">Shadow AI detected</h2>
+              <div class="amount">$2.3M annualized</div>
+              <div class="meta">
+                <span>Inventory + Cost</span>
+                <span>Fired Apr 12, 2026</span>
+                <span>Age 8 days</span>
+                <span>Status: NEW</span>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="mono">Evidence Chain</h3>
+              <div class="evidence-list">
+                <div class="evidence-item">
+                  <strong>Jasper · $800K / year</strong>
+                  <p>Marketing-issued invoices sit outside approved inventory and outside the CMO's governed vendor list.</p>
+                </div>
+                <div class="evidence-item">
+                  <strong>Abridge · $900K / year</strong>
+                  <p>Specialty retail health &amp; wellness division pilot across 3 clinics; HIPAA-adjacent workflow noted with no BAA recorded.</p>
+                </div>
+                <div class="evidence-item">
+                  <strong>Grammarly Business · $600K / year</strong>
+                  <p>Workforce-wide deployment predates the 2025 AI governance policy and never re-entered procurement review.</p>
+                </div>
+                <div class="evidence-item">
+                  <strong>Source record chain</strong>
+                  <p>AP invoices → SaaS expense audit → identity-access roster → inventory registry mismatch.</p>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="mono">Cohort Context</h3>
+              <div class="impact-box">
+                <p>Retail peers with $10B-$50B revenue run a median <strong>$1.1M</strong> in shadow AI exposure.</p>
+                <div class="stat">
+                  <span>Apex position</span>
+                  <strong style="color: #fca5a5">2.1× median</strong>
+                </div>
+                <div class="stat">
+                  <span>Shadow AI as share of total AI spend</span>
+                  <strong style="color: #fca5a5">19%</strong>
+                </div>
+                <div class="stat">
+                  <span>Top quartile target</span>
+                  <strong>&lt;10%</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="mono">Recommended Action</h3>
+              <div class="action-box">
+                <h4 style="font-size: 17px; margin-bottom: 8px">AI Supplier Consolidation · Managed Procurement</h4>
+                <p>
+                  Start a retail-specific consolidation program that routes the CIO, CMO, VP Store Ops, and Head of Digital through one managed vendor-inventory sprint, procurement policy reset, and governed renewal path.
+                </p>
+                <div class="context-list" style="margin-top: 12px">
+                  <p>Median recovery in prior matched deployments: <strong>$1.8M</strong></p>
+                  <p>Typical duration: <strong>6 months</strong></p>
+                  <p>Immediate savings at risk in next 180 days: <strong>$980K</strong></p>
+                </div>
+                <button class="cta" type="button">Originate program</button>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="mono">Other Options</h3>
+              <div class="secondary">
+                <div>Acknowledge signal and assign responder</div>
+                <div>Ask Atlas to brief the CIO and CMO on evidence</div>
+                <div>Suppress with reason after governance review</div>
+              </div>
+            </section>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>
