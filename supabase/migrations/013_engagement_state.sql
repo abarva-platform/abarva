@@ -108,15 +108,17 @@ ALTER TABLE engagements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_0_started_at TIMESTAMPTZ;
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_4_completed_at TIMESTAMPTZ;
 
--- 002's engagements.client_id TEXT NOT NULL is legacy. Later migrations
--- use a UUID client_id FK to clients(id). Drop the NOT NULL so the
--- 013 demo seed (which only knows Sarah Chen) can insert a row.
--- No-op on prod if the constraint was already dropped.
+-- 002's engagements has client_id TEXT NOT NULL + solution TEXT NOT NULL.
+-- Both are legacy — later migrations use UUID client_id FK to clients(id)
+-- and dropped the solution column entirely. The 013 demo seed (Sarah
+-- Chen + Meridian Analytics Modernization) doesn't provide either, so
+-- drop the NOT NULL constraints to let the seed insert succeed.
+-- No-op on prod where constraints were already removed.
 DO $$ BEGIN
-  BEGIN
-    ALTER TABLE engagements ALTER COLUMN client_id DROP NOT NULL;
-  EXCEPTION WHEN undefined_column THEN NULL;
-  END;
+  BEGIN ALTER TABLE engagements ALTER COLUMN client_id DROP NOT NULL;
+  EXCEPTION WHEN undefined_column THEN NULL; END;
+  BEGIN ALTER TABLE engagements ALTER COLUMN solution DROP NOT NULL;
+  EXCEPTION WHEN undefined_column THEN NULL; END;
 END $$;
 
 -- graph_node_id UNIQUE constraint was defined column-level inside the
