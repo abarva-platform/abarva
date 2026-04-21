@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const INK = '#F5F5F0';
 const TEAL = '#2DD4C8';
@@ -89,7 +91,11 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
   const [followups, setFollowups] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [recent, setRecent] = useState<string[]>([]);
+  const [inputFocused, setInputFocused] = useState(false);
+  const [askHovered, setAskHovered] = useState(false);
+  const [askPressed, setAskPressed] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     try {
@@ -194,6 +200,48 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
 
   return (
     <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1000, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
+      <style jsx>{`
+        @keyframes askStreamPulse {
+          0%, 100% { opacity: 0.35; }
+          50%      { opacity: 0.9; }
+        }
+        .ask-chip,
+        .ask-card,
+        .ask-source {
+          transition: background-color ${TRANSITIONS.hover}, border-color ${TRANSITIONS.hover}, color ${TRANSITIONS.hover};
+        }
+        @media (hover: hover) {
+          .ask-chip:hover {
+            background: rgba(45,212,200,0.12) !important;
+            color: #F5F5F0 !important;
+            border-color: rgba(45,212,200,0.4) !important;
+          }
+          .ask-followup:hover {
+            background: #2DD4C8 !important;
+            color: #0A0A0A !important;
+          }
+          .ask-card:hover {
+            background: rgba(255,255,255,0.04) !important;
+            border-color: rgba(45,212,200,0.25) !important;
+          }
+          .ask-source:hover {
+            background: rgba(255,255,255,0.04) !important;
+            border-color: rgba(45,212,200,0.25) !important;
+          }
+        }
+        .ask-chip:focus-visible,
+        .ask-card:focus-visible,
+        .ask-source:focus-visible,
+        .ask-followup:focus-visible {
+          outline: none;
+          box-shadow: ${FOCUS_RING.brand};
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .ask-chip, .ask-card, .ask-source, .ask-followup {
+            transition: none !important;
+          }
+        }
+      `}</style>
       <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 10 }}>
         INTELLIGENCE · ASK
       </div>
@@ -210,6 +258,8 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => setInputFocused(true)}
+          onBlur={() => setInputFocused(false)}
           placeholder="e.g., How is Abridge typically deployed? · What triggers F008? · HIPAA § 164.308 summary"
           style={{
             width: '100%',
@@ -221,6 +271,10 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
             fontSize: 16,
             fontFamily: 'DM Sans, sans-serif',
             outline: 'none',
+            transition: reducedMotion
+              ? undefined
+              : `box-shadow ${TRANSITIONS.focus}`,
+            boxShadow: inputFocused ? FOCUS_RING.brand : 'none',
           }}
           disabled={isStreaming}
           autoFocus
@@ -229,16 +283,24 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
           <button
             type="submit"
             disabled={isStreaming || !query.trim()}
+            onMouseEnter={() => setAskHovered(true)}
+            onMouseLeave={() => { setAskHovered(false); setAskPressed(false); }}
+            onMouseDown={() => setAskPressed(true)}
+            onMouseUp={() => setAskPressed(false)}
             style={{
               padding: '8px 18px',
-              background: TEAL,
+              background: askPressed ? '#0F766E' : askHovered ? '#0D9488' : TEAL,
               border: 'none',
               borderRadius: 6,
               color: '#0A0A0A',
               fontSize: 14,
               fontWeight: 700,
-              cursor: isStreaming ? 'default' : 'pointer',
+              cursor: isStreaming || !query.trim() ? 'not-allowed' : 'pointer',
               opacity: isStreaming || !query.trim() ? 0.5 : 1,
+              transform: askPressed ? 'translateY(1px)' : 'translateY(0)',
+              transition: reducedMotion
+                ? undefined
+                : `background-color ${TRANSITIONS.hover}, transform ${TRANSITIONS.press}`,
             }}
           >
             {isStreaming ? 'Asking…' : 'Ask'}
@@ -277,7 +339,18 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
             }}
           >
             {answer}
-            {isStreaming && <span style={{ color: TEAL, opacity: 0.7 }}>▊</span>}
+            {isStreaming && (
+              <span
+                aria-hidden="true"
+                style={{
+                  color: TEAL,
+                  opacity: 0.7,
+                  animation: reducedMotion ? undefined : `askStreamPulse 1.2s ${MOTION.easing.easeInOut} infinite`,
+                }}
+              >
+                ▊
+              </span>
+            )}
           </div>
         </section>
       )}
@@ -302,6 +375,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                 <a
                   key={i}
                   href={s.url}
+                  className="ask-source"
                   style={{
                     display: 'block',
                     padding: '12px 16px',
@@ -343,6 +417,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                 key={i}
                 type="button"
                 onClick={() => pickQuery(f)}
+                className="ask-followup"
                 style={{
                   padding: '8px 14px',
                   background: 'transparent',
@@ -374,6 +449,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                     key={i}
                     type="button"
                     onClick={() => pickQuery(r)}
+                    className="ask-chip"
                     style={{
                       padding: '6px 12px',
                       background: PANEL_BG,
@@ -413,6 +489,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                         key={i}
                         type="button"
                         onClick={() => pickQuery(s.q)}
+                        className="ask-card"
                         style={{
                           display: 'block',
                           textAlign: 'left',
