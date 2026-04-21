@@ -10,7 +10,7 @@ for (const line of fs.readFileSync(path.join(process.cwd(), '.env.local'), 'utf-
 
 import('@/lib/programs/queries').then(async ({ getProgramPortfolio }) => {
   const { createClient } = await import('@supabase/supabase-js');
-  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 
   const { data: client } = await sb.from('clients').select('id').ilike('name', 'Apex Retail').maybeSingle();
   const { data: person } = await sb.from('persons').select('id, name').limit(1).maybeSingle();
