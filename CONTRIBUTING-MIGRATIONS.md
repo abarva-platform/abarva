@@ -144,6 +144,30 @@ node scripts/audit-migrations.mjs
 
 It flags files with the 8 risky patterns. False positives exist (multi-line INSERTs can confuse the heuristic) but zero output = zero high-severity risk.
 
+## When `supabase db push` fails with "prepared statement already exists"
+
+Transaction-pooler connections (port 6543, `?pgbouncer=true`) can't safely run Supabase's migration runner — the CLI issues prepared statements that collide across pooled connections:
+
+```
+ERROR: prepared statement "xxx" already exists (SQLSTATE 42P05)
+```
+
+**Workaround:** use the session pooler (port 5432) via `psql` directly. Session pooler gives each connection its own server backend, so prepared statements don't collide.
+
+```bash
+# From .env.local
+SESSION_POOLER_URL=postgresql://postgres.<ref>:<password>@aws-<n>-<region>.pooler.supabase.com:5432/postgres
+
+# Apply pending migrations one by one
+for f in supabase/migrations/20260421151*.sql; do
+  psql "$SESSION_POOLER_URL" -f "$f"
+done
+```
+
+**Preview-branch side effect:** if Supabase's auto-migrator hits this bug when creating a preview branch, the control-plane status shows `MIGRATIONS_FAILED` permanently — even after you apply the migrations manually. `supabase branches get <name>` will correctly report `ACTIVE_HEALTHY`, but `supabase branches list` still shows failed. That mismatch is a Supabase dashboard issue, not a DB issue. The database is correct; ignore the stale label or create a fresh preview branch under a different name.
+
+First documented hit: 2026-04-21 · `migration-audit-013-020` preview branch during Tower W3 schema push.
+
 ## Testing your migration on a preview branch
 
 Every PR that touches `supabase/migrations/**` triggers a Supabase preview branch deploy. Watch the logs:
