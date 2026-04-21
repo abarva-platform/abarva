@@ -22,9 +22,16 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS billing_email TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS industry_code TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+-- ADD CONSTRAINT UNIQUE creates an underlying index. If a prior failed
+-- run left either the constraint or the index in place, recreating
+-- raises duplicate_object (constraint name) OR duplicate_table (index
+-- name). Catch both. CREATE UNIQUE INDEX IF NOT EXISTS would be
+-- cleaner long-term but we keep the constraint form for prod parity.
 DO $$ BEGIN
   ALTER TABLE clients ADD CONSTRAINT clients_stripe_customer_id_key UNIQUE (stripe_customer_id);
-EXCEPTION WHEN duplicate_object THEN NULL;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
 END $$;
 
 DROP TRIGGER IF EXISTS clients_set_updated_at ON clients;
