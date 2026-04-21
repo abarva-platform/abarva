@@ -1,6 +1,6 @@
 -- Migration 018 · Teams + team_memberships, scope engagements to teams
--- Idempotent. Seeds AbarVa HQ + admin membership for Anand, backfills all
--- existing engagements to the default team.
+-- Idempotent schema-only migration. Demo team seed/backfill moved to
+-- 049_team_seed_and_backfill.sql.
 
 BEGIN;
 
@@ -11,6 +11,13 @@ CREATE TABLE IF NOT EXISTS teams (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE teams ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+CREATE UNIQUE INDEX IF NOT EXISTS teams_slug_key ON teams(slug);
 
 DROP TRIGGER IF EXISTS teams_set_updated_at ON teams;
 CREATE TRIGGER teams_set_updated_at BEFORE UPDATE ON teams
@@ -25,21 +32,15 @@ CREATE TABLE IF NOT EXISTS team_memberships (
   UNIQUE (team_id, person_id)
 );
 
+ALTER TABLE team_memberships ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id) ON DELETE CASCADE;
+ALTER TABLE team_memberships ADD COLUMN IF NOT EXISTS person_id UUID REFERENCES persons(id) ON DELETE CASCADE;
+ALTER TABLE team_memberships ADD COLUMN IF NOT EXISTS role TEXT;
+ALTER TABLE team_memberships ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+CREATE UNIQUE INDEX IF NOT EXISTS team_memberships_team_id_person_id_key
+  ON team_memberships(team_id, person_id);
+
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS team_id UUID REFERENCES teams(id);
-
-INSERT INTO teams (name, slug) VALUES ('AbarVa HQ', 'abarva-hq')
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO team_memberships (team_id, person_id, role)
-SELECT
-  (SELECT id FROM teams WHERE slug = 'abarva-hq'),
-  (SELECT id FROM persons WHERE graph_node_id = 'person_anand_sundaram'),
-  'admin'
-WHERE EXISTS (SELECT 1 FROM persons WHERE graph_node_id = 'person_anand_sundaram')
-ON CONFLICT (team_id, person_id) DO NOTHING;
-
-UPDATE engagements SET team_id = (SELECT id FROM teams WHERE slug = 'abarva-hq')
-WHERE team_id IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_engagements_team_id ON engagements(team_id);
 CREATE INDEX IF NOT EXISTS idx_team_memberships_person ON team_memberships(person_id);

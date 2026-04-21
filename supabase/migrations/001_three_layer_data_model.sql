@@ -109,6 +109,15 @@ ALTER TABLE engagement_data ENABLE ROW LEVEL SECURITY;
 ALTER TABLE genome_patterns ENABLE ROW LEVEL SECURITY;
 ALTER TABLE data_audit_log ENABLE ROW LEVEL SECURITY;
 
+-- Idempotency guards: drop policies before recreating so re-runs (preview
+-- branches across failed attempts) don't trip on "already exists".
+DROP POLICY IF EXISTS "org_master_data_org_isolation" ON org_master_data;
+DROP POLICY IF EXISTS "org_master_data_service_role_all" ON org_master_data;
+DROP POLICY IF EXISTS "engagement_data_engagement_isolation" ON engagement_data;
+DROP POLICY IF EXISTS "engagement_data_service_role_all" ON engagement_data;
+DROP POLICY IF EXISTS "genome_patterns_read_all_authenticated" ON genome_patterns;
+DROP POLICY IF EXISTS "audit_log_org_isolation" ON data_audit_log;
+
 -- Layer 1: users see only their org's data
 -- Sensitivity tier filtered by role (enforced at application layer via DATA_ACCESS_MATRIX)
 CREATE POLICY "org_master_data_org_isolation"
@@ -169,10 +178,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS trigger_bump_org_data_version_master ON org_master_data;
 CREATE TRIGGER trigger_bump_org_data_version_master
   AFTER INSERT OR UPDATE ON org_master_data
   FOR EACH ROW EXECUTE FUNCTION bump_org_data_version();
 
+DROP TRIGGER IF EXISTS trigger_bump_org_data_version_engagement ON engagement_data;
 CREATE TRIGGER trigger_bump_org_data_version_engagement
   AFTER INSERT OR UPDATE ON engagement_data
   FOR EACH ROW EXECUTE FUNCTION bump_org_data_version();

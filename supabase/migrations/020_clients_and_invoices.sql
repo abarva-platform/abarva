@@ -1,5 +1,6 @@
 -- Migration 020 · clients + invoices + engagements.client_id
--- Seeds the 3 demo clients and backfills existing engagement client_id.
+-- Schema-only migration. Demo client seed/backfill moved to
+-- 050_client_seed_and_backfill.sql.
 
 BEGIN;
 
@@ -17,51 +18,22 @@ CREATE TABLE IF NOT EXISTS clients (
 -- Defensive column adds — if clients was created by a prior migration with a
 -- narrower schema, CREATE TABLE IF NOT EXISTS above is a no-op and we need
 -- to ensure the billing columns exist before the INSERTs below.
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS legal_name TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS billing_email TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT;
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS industry_code TEXT;
+ALTER TABLE clients ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
 ALTER TABLE clients ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
--- ADD CONSTRAINT UNIQUE creates an underlying index. If a prior failed
--- run left either the constraint or the index in place, recreating
--- raises duplicate_object (constraint name) OR duplicate_table (index
--- name). Catch both. CREATE UNIQUE INDEX IF NOT EXISTS would be
--- cleaner long-term but we keep the constraint form for prod parity.
-DO $$ BEGIN
-  ALTER TABLE clients ADD CONSTRAINT clients_stripe_customer_id_key UNIQUE (stripe_customer_id);
-EXCEPTION
-  WHEN duplicate_object THEN NULL;
-  WHEN duplicate_table THEN NULL;
-END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS clients_name_key ON clients(name);
+CREATE UNIQUE INDEX IF NOT EXISTS clients_stripe_customer_id_key ON clients(stripe_customer_id);
 
 DROP TRIGGER IF EXISTS clients_set_updated_at ON clients;
 CREATE TRIGGER clients_set_updated_at BEFORE UPDATE ON clients
   FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
 
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id);
-
--- Seed demo clients (idempotent by name — not using a unique constraint
--- since name collisions across real clients are plausible, but safe here)
-INSERT INTO clients (name, legal_name, industry_code)
-SELECT 'Meridian Health', 'Meridian Health System, Inc.', 'HEALTHCARE_IDN'
-WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Meridian Health');
-
-INSERT INTO clients (name, legal_name, industry_code)
-SELECT 'First Capital', 'First Capital Financial Corporation', 'FINSERV'
-WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'First Capital');
-
-INSERT INTO clients (name, legal_name, industry_code)
-SELECT 'Apex Retail', 'Apex Retail Group LLC', 'RETAIL'
-WHERE NOT EXISTS (SELECT 1 FROM clients WHERE name = 'Apex Retail');
-
-UPDATE engagements SET client_id = (SELECT id FROM clients WHERE name = 'Meridian Health')
-WHERE graph_node_id = 'eng_meridian_analytics_mod' AND client_id IS NULL;
-
-UPDATE engagements SET client_id = (SELECT id FROM clients WHERE name = 'First Capital')
-WHERE graph_node_id = 'eng_arcturus_wealth_platform' AND client_id IS NULL;
-
-UPDATE engagements SET client_id = (SELECT id FROM clients WHERE name = 'Apex Retail')
-WHERE graph_node_id = 'eng_apex_retail_hr_erp' AND client_id IS NULL;
 
 CREATE TABLE IF NOT EXISTS invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,6 +49,20 @@ CREATE TABLE IF NOT EXISTS invoices (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS engagement_id UUID REFERENCES engagements(id);
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id);
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS stripe_invoice_id TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS amount_usd NUMERIC(14,2);
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS status TEXT;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS issued_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS due_at TIMESTAMPTZ;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+CREATE UNIQUE INDEX IF NOT EXISTS invoices_stripe_invoice_id_key ON invoices(stripe_invoice_id);
 
 DROP TRIGGER IF EXISTS invoices_set_updated_at ON invoices;
 CREATE TRIGGER invoices_set_updated_at BEFORE UPDATE ON invoices

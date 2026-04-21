@@ -22,7 +22,10 @@ DO $$ BEGIN
   ALTER TABLE relationship_notes
     ADD CONSTRAINT relationship_notes_subject_type_check
     CHECK (subject_type IN ('sponsor', 'maestro', 'observer'));
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN duplicate_table THEN NULL;
+END $$;
 
 NOTIFY pgrst, 'reload schema';
 
