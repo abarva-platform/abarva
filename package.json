@@ -31,7 +31,10 @@
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:seed": "npx tsx src/scripts/run-seeds.ts",
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
-    "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list"
+    "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list",
+    "db:seed:wave": "npx tsx src/scripts/seed/seed-wave.ts",
+    "db:verify:wave": "npx tsx src/scripts/seed/verify-seed-wave.ts",
+    "db:smoke:wave": "npx tsx src/scripts/seed/smoke-seed-wave.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
