@@ -7,7 +7,7 @@ export interface SponsorSeed {
   email: string;
   role: string;
   organization: string;
-  familiarity: string;
+  familiarity: 'first_meeting' | 'returning_recent' | 'returning_dormant' | 'frequent_collaborator';
   communicationStyle: Record<string, unknown>;
 }
 

@@ -16,7 +16,7 @@ const FIXTURE = {
     email: 'e2e.priya.patel@abarva.test',
     role: 'VP, Store Operations',
     organization: 'Apex Retail Group',
-    familiarity: 'active_program',
+    familiarity: 'frequent_collaborator' as const,
     communicationStyle: {
       title: 'VP, Store Operations',
       cxo_function: 'Operations',

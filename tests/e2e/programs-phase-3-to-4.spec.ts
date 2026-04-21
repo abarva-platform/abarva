@@ -21,7 +21,7 @@ const FIXTURE = {
     email: 'e2e.mina.shah@abarva.test',
     role: 'Head of Commercial Banking Operations',
     organization: 'First Capital Financial',
-    familiarity: 'active_program',
+    familiarity: 'frequent_collaborator' as const,
     communicationStyle: {
       title: 'Head of Commercial Banking Operations',
       cxo_function: 'Operations',

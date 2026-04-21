@@ -16,7 +16,7 @@ const FIXTURE = {
     email: 'e2e.priya.raman@abarva.test',
     role: 'VP, Revenue Cycle Transformation',
     organization: 'Meridian Health System',
-    familiarity: 'first_meeting',
+    familiarity: 'first_meeting' as const,
     communicationStyle: {
       title: 'VP, Revenue Cycle Transformation',
       cxo_function: 'Operations',

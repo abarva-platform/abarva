@@ -16,7 +16,7 @@ const FIXTURE = {
     email: 'e2e.alex.navarro@abarva.test',
     role: 'Director, Patient Access',
     organization: 'Meridian Health System',
-    familiarity: 'active_program',
+    familiarity: 'frequent_collaborator' as const,
     communicationStyle: {
       title: 'Director, Patient Access',
       cxo_function: 'Operations',
