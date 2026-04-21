@@ -23,6 +23,7 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`platform/benchmarks-industry-data-architecture.md`](./platform/benchmarks-industry-data-architecture.md) | Benchmark and peer-data ingestion, classification, and refresh architecture |
 | [`platform/graph-intelligence-architecture.md`](./platform/graph-intelligence-architecture.md) | Entity, relationship, provenance, and reasoning architecture for graph intelligence |
 | [`platform/intelligence-layer-north-star-spec.md`](./platform/intelligence-layer-north-star-spec.md) | Eight-layer intelligence north star for KPIs, pattern packs, graph depth, telemetry, and dual-scope reasoning/disclosure |
+| [`platform/executive-profile-system.md`](./platform/executive-profile-system.md) | Presence-vibe architecture for executive profiles, style-aware personalization, and composite/real-world profile governance |
 
 ## Product surfaces
 
@@ -53,6 +54,7 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md`](./_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md) | Comprehensive regulated-utility composite seed with subsidiaries, regulatory environment, patterns, and benchmark layer |
 | [`_meta/seed-data/keystone-intelligence-layer-overlay.md`](./_meta/seed-data/keystone-intelligence-layer-overlay.md) | Keystone reference implementation of the intelligence-layer north star with KPIs, pattern packs, telemetry, and dual-scope configuration |
 | [`_meta/seed-data/keystone-seed-validation-results.md`](./_meta/seed-data/keystone-seed-validation-results.md) | Validation artifact for Keystone ingestion, verification, and smoke-test results |
+| [`_meta/seed-data/executive-profile-validation-results.md`](./_meta/seed-data/executive-profile-validation-results.md) | Validation artifact for executive-profile schema migration, composite-profile seeding, and ethics-gated real-world profile status |
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
 | [`_meta/BACKLOG.md`](./_meta/BACKLOG.md) | Older product backlog (may be stale) |
 | [`_meta/QA_CHECKLIST.md`](./_meta/QA_CHECKLIST.md) | Older QA checklist (may be stale) |

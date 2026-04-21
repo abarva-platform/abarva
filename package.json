@@ -38,6 +38,9 @@
     "db:seed:apex-intelligence": "npx tsx src/scripts/seed/seed-apex-intelligence-layer.ts",
     "db:verify:apex-intelligence": "npx tsx src/scripts/seed/verify-apex-intelligence-layer.ts",
     "db:smoke:apex-intelligence": "npx tsx src/scripts/seed/smoke-apex-intelligence-layer.ts",
+    "db:seed:executive-profiles": "npx tsx src/scripts/seed/seed-executive-profiles.ts",
+    "db:verify:executive-profiles": "npx tsx src/scripts/seed/verify-executive-profiles.ts",
+    "db:smoke:executive-profiles": "npx tsx src/scripts/seed/smoke-executive-profiles.ts",
     "db:seed:keystone-intelligence": "npx tsx src/scripts/seed/seed-keystone-intelligence-layer.ts",
     "db:verify:keystone-intelligence": "npx tsx src/scripts/seed/verify-keystone-intelligence-layer.ts",
     "db:smoke:keystone-intelligence": "npx tsx src/scripts/seed/smoke-keystone-intelligence-layer.ts"
