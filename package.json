@@ -31,7 +31,8 @@
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",
     "db:seed": "npx tsx src/scripts/run-seeds.ts",
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
-    "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list"
+    "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list",
+    "seed:tower": "npx tsx scripts/seed/tower/run.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
