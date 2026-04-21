@@ -18,9 +18,9 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { charterDeliverableType } from '@/lib/deliverables/templates/charter';
-import { designBriefDeliverableType } from '@/lib/deliverables/templates/designBrief';
-import { executionPlanDeliverableType } from '@/lib/deliverables/templates/executionPlan';
-import { outcomeReportDeliverableType } from '@/lib/deliverables/templates/outcomeReport';
+import { designBriefDeliverableType } from '@/lib/deliverables/templates/design_brief';
+import { executionPlanDeliverableType } from '@/lib/deliverables/templates/execution_plan';
+import { outcomeReportDeliverableType } from '@/lib/deliverables/templates/outcome_report';
 
 // Load .env.local manually so the script runs standalone
 try {

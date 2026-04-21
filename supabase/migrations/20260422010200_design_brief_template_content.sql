@@ -1,36 +1,13 @@
--- Migration 20260421153200 · design brief template content
+-- Migration 20260422010200 · design brief template content
 --
--- Why: populate the design_brief deliverable_type with a real template,
--- rubric, and generation prompt for Phase 2 sign-off.
--- Safety: insert-or-fill-only. Existing populated rows are preserved.
+-- Why: populate template content for the existing design_brief deliverable
+-- type without overwriting rows that are already populated.
 
 BEGIN;
 
-INSERT INTO deliverable_types (
-  type_key,
-  title,
-  description,
-  applicable_phases,
-  applicable_topics,
-  template_structure,
-  required_data_inputs,
-  quality_rubric,
-  generation_prompt_template,
-  output_format,
-  maturity
-)
-VALUES (
-  'design_brief',
-  'Design Brief',
-  'Phase 2 design brief covering solution shape, options, tradeoffs, data flow, and the decision to lock before Execute',
-  ARRAY[2, 3],
-  ARRAY[
-    'analytics_modernization',
-    'ai_governance_implementation',
-    'prior_auth_automation',
-    'vendor_consolidation_ai'
-  ],
-  '{
+UPDATE deliverable_types
+SET
+  template_structure = '{
     "sections": [
       {
         "key": "design_objective",
@@ -92,24 +69,7 @@ VALUES (
     "format": "markdown",
     "rendering_notes": "Optimize for design sign-off. Keep the brief commercially sharp, explicit about tradeoffs, and free of generic architecture filler."
   }'::jsonb,
-  '{
-    "engagement": [
-      "phase_1.findings",
-      "phase_2.design_decisions",
-      "sponsor.name"
-    ],
-    "client": [
-      "name",
-      "industry"
-    ],
-    "topic": [
-      "topic_key",
-      "vendor_landscape",
-      "phase_playbook",
-      "failure_modes"
-    ]
-  }'::jsonb,
-  '[
+  quality_rubric = '[
     {
       "criterion": "architecture_is_specific",
       "rationale": "The brief must name the actual solution components and boundaries; vague architecture language is not actionable.",
@@ -141,7 +101,7 @@ VALUES (
       "severity": "minor"
     }
   ]'::jsonb,
-  $prompt$
+  generation_prompt_template = $prompt$
 You are drafting a Design Brief in Markdown.
 
 ENGAGEMENT
@@ -177,26 +137,10 @@ RULES
 - Keep the tone sponsor-ready, commercially grounded, and decisive.
 
 Write the full design brief now.
-  $prompt$,
-  'markdown',
-  'production'
-)
-ON CONFLICT (type_key) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  applicable_phases = EXCLUDED.applicable_phases,
-  applicable_topics = EXCLUDED.applicable_topics,
-  template_structure = EXCLUDED.template_structure,
-  required_data_inputs = EXCLUDED.required_data_inputs,
-  quality_rubric = EXCLUDED.quality_rubric,
-  generation_prompt_template = EXCLUDED.generation_prompt_template,
-  output_format = EXCLUDED.output_format,
-  maturity = EXCLUDED.maturity
+  $prompt$
 WHERE
-  deliverable_types.template_structure = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '[]'::jsonb
-  OR COALESCE(deliverable_types.generation_prompt_template, '') = '';
+  type_key = 'design_brief'
+  AND (template_structure = '{}'::jsonb OR template_structure IS NULL);
 
 NOTIFY pgrst, 'reload schema';
 

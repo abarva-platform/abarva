@@ -1,36 +1,13 @@
--- Migration 20260421153400 · outcome report template content
+-- Migration 20260422010400 · outcome report template content
 --
--- Why: populate the outcome_report deliverable_type with a real template,
--- rubric, and generation prompt for verified outcome reporting.
--- Safety: insert-or-fill-only. Existing populated rows are preserved.
+-- Why: populate template content for the existing outcome_report deliverable
+-- type without overwriting rows that are already populated.
 
 BEGIN;
 
-INSERT INTO deliverable_types (
-  type_key,
-  title,
-  description,
-  applicable_phases,
-  applicable_topics,
-  template_structure,
-  required_data_inputs,
-  quality_rubric,
-  generation_prompt_template,
-  output_format,
-  maturity
-)
-VALUES (
-  'outcome_report',
-  'Outcome Report',
-  'Phase 4 outcome report comparing baseline to results, quantified value, variance, and the actions required to sustain gains',
-  ARRAY[4, 5],
-  ARRAY[
-    'analytics_modernization',
-    'ai_governance_implementation',
-    'prior_auth_automation',
-    'vendor_consolidation_ai'
-  ],
-  '{
+UPDATE deliverable_types
+SET
+  template_structure = '{
     "sections": [
       {
         "key": "executive_outcome_summary",
@@ -92,23 +69,7 @@ VALUES (
     "format": "markdown",
     "rendering_notes": "Favor evidence and outcome clarity over celebration. The report should stand up to sponsor, finance, and operations review."
   }'::jsonb,
-  '{
-    "engagement": [
-      "baseline_metrics",
-      "actual_metrics",
-      "phase_4.outcomes",
-      "sponsor.name"
-    ],
-    "client": [
-      "name",
-      "industry"
-    ],
-    "topic": [
-      "topic_key",
-      "success_signals"
-    ]
-  }'::jsonb,
-  '[
+  quality_rubric = '[
     {
       "criterion": "results_are_measured_against_baseline",
       "rationale": "An outcome report is not credible without direct baseline-to-actual comparison on the metrics the program promised to move.",
@@ -140,7 +101,7 @@ VALUES (
       "severity": "minor"
     }
   ]'::jsonb,
-  $prompt$
+  generation_prompt_template = $prompt$
 You are drafting an Outcome Report in Markdown.
 
 ENGAGEMENT
@@ -167,26 +128,10 @@ RULES
 - Keep the tone executive-ready, rigorous, and balanced.
 
 Write the full outcome report now.
-  $prompt$,
-  'markdown',
-  'production'
-)
-ON CONFLICT (type_key) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  applicable_phases = EXCLUDED.applicable_phases,
-  applicable_topics = EXCLUDED.applicable_topics,
-  template_structure = EXCLUDED.template_structure,
-  required_data_inputs = EXCLUDED.required_data_inputs,
-  quality_rubric = EXCLUDED.quality_rubric,
-  generation_prompt_template = EXCLUDED.generation_prompt_template,
-  output_format = EXCLUDED.output_format,
-  maturity = EXCLUDED.maturity
+  $prompt$
 WHERE
-  deliverable_types.template_structure = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '[]'::jsonb
-  OR COALESCE(deliverable_types.generation_prompt_template, '') = '';
+  type_key = 'outcome_report'
+  AND (template_structure = '{}'::jsonb OR template_structure IS NULL);
 
 NOTIFY pgrst, 'reload schema';
 

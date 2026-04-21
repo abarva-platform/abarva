@@ -1,36 +1,13 @@
--- Migration 20260421153100 · diagnostic charter template content
+-- Migration 20260422010100 · diagnostic charter template content
 --
--- Why: populate the diagnostic_charter deliverable_type with a real template,
--- rubric, and generation prompt so Phase 1 output generation has a usable spec.
--- Safety: insert-or-fill-only. Existing populated rows are preserved.
+-- Why: populate template content for the existing diagnostic_charter
+-- deliverable type without overwriting rows that are already populated.
 
 BEGIN;
 
-INSERT INTO deliverable_types (
-  type_key,
-  title,
-  description,
-  applicable_phases,
-  applicable_topics,
-  template_structure,
-  required_data_inputs,
-  quality_rubric,
-  generation_prompt_template,
-  output_format,
-  maturity
-)
-VALUES (
-  'diagnostic_charter',
-  'Diagnostic Charter',
-  'Phase 1 diagnostic charter with baselines, hypotheses, bounded first-win scope, and explicit design gate decision',
-  ARRAY[1, 2],
-  ARRAY[
-    'analytics_modernization',
-    'ai_governance_implementation',
-    'prior_auth_automation',
-    'vendor_consolidation_ai'
-  ],
-  '{
+UPDATE deliverable_types
+SET
+  template_structure = '{
     "sections": [
       {
         "key": "problem_definition",
@@ -92,28 +69,7 @@ VALUES (
     "format": "markdown",
     "rendering_notes": "Keep the document concise and sponsor-readable. Mark uncertain points as hypotheses, not facts, and preserve section order exactly."
   }'::jsonb,
-  '{
-    "engagement": [
-      "phase_1.findings",
-      "sponsor.name",
-      "objective_code",
-      "function_code"
-    ],
-    "client": [
-      "name",
-      "industry"
-    ],
-    "topic": [
-      "topic_key",
-      "failure_modes",
-      "phase_playbook"
-    ],
-    "graph": [
-      "active_patterns",
-      "peer_decisions"
-    ]
-  }'::jsonb,
-  '[
+  quality_rubric = '[
     {
       "criterion": "baseline_is_quantified",
       "rationale": "The diagnostic charter is not useful unless it locks quantified baselines that can be carried into Design and Verify.",
@@ -145,7 +101,7 @@ VALUES (
       "severity": "minor"
     }
   ]'::jsonb,
-  $prompt$
+  generation_prompt_template = $prompt$
 You are drafting a Diagnostic Charter in Markdown.
 
 ENGAGEMENT
@@ -178,26 +134,10 @@ RULES
 - Keep the tone crisp, sponsor-ready, and diagnostic rather than solution-heavy.
 
 Write the full diagnostic charter now.
-  $prompt$,
-  'markdown',
-  'production'
-)
-ON CONFLICT (type_key) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  applicable_phases = EXCLUDED.applicable_phases,
-  applicable_topics = EXCLUDED.applicable_topics,
-  template_structure = EXCLUDED.template_structure,
-  required_data_inputs = EXCLUDED.required_data_inputs,
-  quality_rubric = EXCLUDED.quality_rubric,
-  generation_prompt_template = EXCLUDED.generation_prompt_template,
-  output_format = EXCLUDED.output_format,
-  maturity = EXCLUDED.maturity
+  $prompt$
 WHERE
-  deliverable_types.template_structure = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '[]'::jsonb
-  OR COALESCE(deliverable_types.generation_prompt_template, '') = '';
+  type_key = 'diagnostic_charter'
+  AND (template_structure = '{}'::jsonb OR template_structure IS NULL);
 
 NOTIFY pgrst, 'reload schema';
 

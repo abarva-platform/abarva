@@ -1,36 +1,13 @@
--- Migration 20260421153300 · execution plan template content
+-- Migration 20260422010300 · execution plan template content
 --
--- Why: populate the execution_plan deliverable_type with a real template,
--- rubric, and generation prompt for the Execute phase.
--- Safety: insert-or-fill-only. Existing populated rows are preserved.
+-- Why: populate template content for the existing execution_plan deliverable
+-- type without overwriting rows that are already populated.
 
 BEGIN;
 
-INSERT INTO deliverable_types (
-  type_key,
-  title,
-  description,
-  applicable_phases,
-  applicable_topics,
-  template_structure,
-  required_data_inputs,
-  quality_rubric,
-  generation_prompt_template,
-  output_format,
-  maturity
-)
-VALUES (
-  'execution_plan',
-  'Execution Plan',
-  'Phase 3 execution plan with owners, dates, milestones, dependencies, risk controls, and explicit go-live readiness',
-  ARRAY[3, 4],
-  ARRAY[
-    'analytics_modernization',
-    'ai_governance_implementation',
-    'prior_auth_automation',
-    'vendor_consolidation_ai'
-  ],
-  '{
+UPDATE deliverable_types
+SET
+  template_structure = '{
     "sections": [
       {
         "key": "outcome_target_recap",
@@ -92,23 +69,7 @@ VALUES (
     "format": "markdown",
     "rendering_notes": "This is an execution document, not a strategy memo. Prioritize owners, dates, dependencies, and actionability over exposition."
   }'::jsonb,
-  '{
-    "engagement": [
-      "phase_2.design_decisions",
-      "phase_3.execution_inputs",
-      "sponsor.name"
-    ],
-    "client": [
-      "name",
-      "industry"
-    ],
-    "topic": [
-      "topic_key",
-      "phase_playbook",
-      "failure_modes"
-    ]
-  }'::jsonb,
-  '[
+  quality_rubric = '[
     {
       "criterion": "owners_and_dates_are_named",
       "rationale": "An execution plan fails if milestones, workstreams, or mitigations do not have clear owners and dates.",
@@ -140,7 +101,7 @@ VALUES (
       "severity": "minor"
     }
   ]'::jsonb,
-  $prompt$
+  generation_prompt_template = $prompt$
 You are drafting an Execution Plan in Markdown.
 
 ENGAGEMENT
@@ -173,26 +134,10 @@ RULES
 - Keep the tone operational, direct, and useful to a delivery lead.
 
 Write the full execution plan now.
-  $prompt$,
-  'markdown',
-  'production'
-)
-ON CONFLICT (type_key) DO UPDATE SET
-  title = EXCLUDED.title,
-  description = EXCLUDED.description,
-  applicable_phases = EXCLUDED.applicable_phases,
-  applicable_topics = EXCLUDED.applicable_topics,
-  template_structure = EXCLUDED.template_structure,
-  required_data_inputs = EXCLUDED.required_data_inputs,
-  quality_rubric = EXCLUDED.quality_rubric,
-  generation_prompt_template = EXCLUDED.generation_prompt_template,
-  output_format = EXCLUDED.output_format,
-  maturity = EXCLUDED.maturity
+  $prompt$
 WHERE
-  deliverable_types.template_structure = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '{}'::jsonb
-  OR deliverable_types.quality_rubric = '[]'::jsonb
-  OR COALESCE(deliverable_types.generation_prompt_template, '') = '';
+  type_key = 'execution_plan'
+  AND (template_structure = '{}'::jsonb OR template_structure IS NULL);
 
 NOTIFY pgrst, 'reload schema';
 
