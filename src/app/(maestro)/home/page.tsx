@@ -18,6 +18,7 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getAllActiveEngagements } from '@/lib/db/engagement';
 import { getActiveClientRow } from '@/lib/active-client';
 import { getAllPersons } from '@/lib/db/person';
+import { getAllPrograms } from '@/lib/programs/mock';
 import { PageShell } from '@/components/shared/layout/PageShell';
 import { OpeningGreeting } from '@/components/home/composite/OpeningGreeting';
 import { BriefingSurface, type BriefingSummary } from '@/components/home/composite/BriefingSurface';
@@ -63,17 +64,49 @@ export default async function HomePage() {
     activeClientId,
   );
 
-  const portfolio: PortfolioProgram[] = engagements.map((e) => ({
-    id: e.id,
-    graphNodeId: e.graph_node_id,
-    name: e.name,
-    currentPhase: e.current_phase ?? 0,
-    sponsorName: e.sponsor_name,
-    sponsorTitle: e.sponsor_role,
-    objective: null, // outcome-objective column coming in a later seed pass
-    outcomeFeeUsd: null,
-    healthSignal: healthFromPhase(e.current_phase ?? 0),
-  }));
+  // Portfolio source precedence for demo flow:
+  // 1. Mock programs scoped to the active client · route cleanly to C17
+  //    at /programs/[mockId] with deep data (phases, deliverables,
+  //    activity, stakeholders). Preferred when any match.
+  // 2. Real engagements table fallback · route to /engagements/[graphId]
+  //    which is the older EngagementConsole. Used for clients that
+  //    don't yet have composite mock data.
+  const allMockPrograms = getAllPrograms();
+  const activeClientName = activeClient?.name ?? null;
+  const matchesMockTenant = (tenant: string) => {
+    if (!activeClientName) return false;
+    const keyword = activeClientName.split(/\s+/)[0]?.toLowerCase() ?? '';
+    return keyword.length > 0 && tenant.toLowerCase().includes(keyword);
+  };
+  const mockForActive = allMockPrograms.filter((p) => matchesMockTenant(p.clientName));
+
+  const portfolio: PortfolioProgram[] = mockForActive.length > 0
+    ? mockForActive.map((p) => ({
+        id: p.id,
+        graphNodeId: p.id, // programs/[id] route uses the same id
+        routePrefix: '/programs' as const,
+        name: p.name,
+        currentPhase: p.currentPhase,
+        sponsorName: p.sponsorPerson.name,
+        sponsorTitle: p.sponsorPerson.title,
+        objective: p.archetype.replace(/_/g, ' ').toUpperCase(),
+        outcomeFeeUsd: null,
+        healthSignal: p.gateStatus === 'blocked' ? 'attention' as const
+          : p.gateStatus === 'cleared' ? 'healthy' as const
+          : 'watch' as const,
+      }))
+    : engagements.map((e) => ({
+        id: e.id,
+        graphNodeId: e.graph_node_id,
+        routePrefix: '/engagements' as const,
+        name: e.name,
+        currentPhase: e.current_phase ?? 0,
+        sponsorName: e.sponsor_name,
+        sponsorTitle: e.sponsor_role,
+        objective: null,
+        outcomeFeeUsd: null,
+        healthSignal: healthFromPhase(e.current_phase ?? 0),
+      }));
 
   const scopedPersons = scopePersonsToOrg(allPersons, activeClient?.name ?? null);
 

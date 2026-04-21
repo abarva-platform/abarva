@@ -5,7 +5,15 @@ import { ProgramCard } from '@/components/shared/entities/ProgramCard';
 
 export interface PortfolioProgram {
   id: string;
+  // Identifier used in the nav target URL. Demo/composite rows pass the
+  // program's mock id so the link resolves to /programs/[id] (C17). Real
+  // engagement rows pass the graph_node_id and use the engagement console
+  // fallback route.
   graphNodeId: string;
+  // Override for the link target · '/programs' for the new C17 route,
+  // '/engagements' for the legacy EngagementConsole. Defaults to
+  // '/programs' because the demo path is the Wave 3 flow.
+  routePrefix?: '/programs' | '/engagements';
   name: string;
   currentPhase: number;
   sponsorName: string | null;
@@ -57,20 +65,24 @@ export function PortfolioGlance({ programs, totalCount }: Props) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {top.map((p) => (
-          <ProgramCard
-            key={p.id}
-            programName={p.name}
-            currentPhase={p.currentPhase}
-            sponsorName={p.sponsorName}
-            sponsorTitle={p.sponsorTitle}
-            objective={p.objective}
-            outcomeFeeUsd={p.outcomeFeeUsd}
-            healthSignal={p.healthSignal}
-            href={`/engagements/${encodeURIComponent(p.graphNodeId)}`}
-            size="compact"
-          />
-        ))}
+        {top.map((p) => {
+          const root = p.routePrefix ?? '/programs';
+          const slug = root === '/programs' ? p.id : p.graphNodeId;
+          return (
+            <ProgramCard
+              key={p.id}
+              programName={p.name}
+              currentPhase={p.currentPhase}
+              sponsorName={p.sponsorName}
+              sponsorTitle={p.sponsorTitle}
+              objective={p.objective}
+              outcomeFeeUsd={p.outcomeFeeUsd}
+              healthSignal={p.healthSignal}
+              href={`${root}/${encodeURIComponent(slug)}`}
+              size="compact"
+            />
+          );
+        })}
       </div>
     </aside>
   );
