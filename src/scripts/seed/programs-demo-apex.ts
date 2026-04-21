@@ -296,14 +296,17 @@ const PROGRAMS: ProgramSeed[] = [
       { flagType: 'quality_concern', severity: 'info', headline: 'Custom shape · Maestro oversight required at each phase gate' },
     ],
   },
-  // 4 · Demand Forecasting AI — Phase 6 complete · historical
+  // 4 · Demand Forecasting AI — completed · historical
+  // Note: current_phase clamped to 4 · migration 013's CHECK(0-4)
+  // predates the 6-phase Programs spec. status='complete' carries the
+  // "done" semantics. Follow-up migration should relax the check to 0-5.
   {
     name: 'Demand Forecasting AI',
     archetype: 'ai_product_enablement',
     shape: 'pattern',
     patternKey: 'demand_forecasting_ai',
-    currentPhase: 5,
-    status: 'complete',
+    currentPhase: 4,
+    status: 'completed',
     originSource: 'user_initiated',
     founderApprovalRequired: true,
     maestroOversightLevel: 'partial',
@@ -331,6 +334,38 @@ const PROGRAMS: ProgramSeed[] = [
 ];
 
 // ─── 3. Seed runner ───────────────────────────────────────────────────
+// Minimal deliverable_types entries needed for the Programs demo. FK-required
+// before any deliverables_v2 inserts land.
+const DEMO_DELIVERABLE_TYPES: Array<{ type_key: string; title: string; applicable_phases: number[] }> = [
+  { type_key: 'charter', title: 'Program Charter', applicable_phases: [1, 2] },
+  { type_key: 'design_spec', title: 'Design Specification', applicable_phases: [3] },
+  { type_key: 'vendor_selection', title: 'Vendor Selection', applicable_phases: [3] },
+  { type_key: 'execution_plan', title: 'Execution Plan', applicable_phases: [4] },
+  { type_key: 'outcome_report', title: 'Outcome Report', applicable_phases: [5] },
+];
+
+async function ensureDeliverableTypes(): Promise<void> {
+  for (const t of DEMO_DELIVERABLE_TYPES) {
+    const { error } = await sb.from('deliverable_types').upsert(
+      {
+        type_key: t.type_key,
+        title: t.title,
+        description: `${t.title} (demo seed)`,
+        applicable_phases: t.applicable_phases,
+        applicable_topics: [],
+        template_structure: {},
+        required_data_inputs: {},
+        quality_rubric: {},
+        generation_prompt_template: '',
+        output_format: 'markdown',
+        maturity: 'pilot',
+      },
+      { onConflict: 'type_key' },
+    );
+    if (error) throw new Error(`deliverable_type ${t.type_key}: ${error.message}`);
+  }
+}
+
 async function ensureApexClient(): Promise<string> {
   for (const n of APEX_NAMES) {
     const { data } = await sb.from('clients').select('id').ilike('name', n).maybeSingle();
@@ -384,7 +419,6 @@ async function seedProgram(clientId: string, seed: ProgramSeed): Promise<string>
       industry_code: 'RETAIL',
       function_code: 'FRONT_OFFICE',
       objective_code: 'GROW',
-      solution: 'program',
       status: seed.status,
       current_phase: seed.currentPhase,
       program_archetype: seed.archetype,
@@ -393,7 +427,6 @@ async function seedProgram(clientId: string, seed: ProgramSeed): Promise<string>
       founder_approval_required: seed.founderApprovalRequired,
       data_residency_region: 'us',
       retention_policy_years: 7,
-      is_demo_data: true,
     })
     .select('id')
     .single();
@@ -548,6 +581,8 @@ async function main() {
   console.log('─── Programs demo seed · Apex Retail ───');
   await ensureRetailPatterns();
   console.log(`✓ ${RETAIL_PATTERNS.length} retail patterns upserted`);
+  await ensureDeliverableTypes();
+  console.log(`✓ ${DEMO_DELIVERABLE_TYPES.length} deliverable types upserted`);
   const clientId = await ensureApexClient();
   console.log(`✓ Apex client · ${clientId}`);
   for (const seed of PROGRAMS) {
