@@ -1,14 +1,14 @@
 // Vector retrieval via Pinecone. Per spec §7.3 metadata filters enforce
 // tenancy on every query. Spec calls for Voyage-3 embeddings; repo
-// currently uses OpenAI text-embedding-3-large (3072 dims). We use the
-// existing infra and flag Voyage migration as a follow-up.
+// currently uses OpenAI text-embedding-3-large at 1024 dims (matches
+// nexus-knowledge Pinecone index). Voyage-3 migration remains a follow-up.
 
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
 import type { RetrievalResult, Source, TenancyCtx } from '../types';
 
 const EMBED_MODEL = 'text-embedding-3-large';
-const EMBED_DIMS = 3072;
+const EMBED_DIMS = 1024;
 const INDEX_NAME = process.env.PINECONE_INDEX ?? 'nexus-knowledge';
 
 let _openai: OpenAI | null = null;
