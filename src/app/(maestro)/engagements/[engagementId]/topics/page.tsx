@@ -77,7 +77,7 @@ export default async function EngagementTopicsPage({
     >
       <div style={{ marginBottom: 20 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 4 }}>
-          ENGAGEMENT · TOPICS
+          PROGRAM · TOPICS
         </div>
         <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: '-0.01em' }}>{engagement.name}</div>
         <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
@@ -339,7 +339,7 @@ export default async function EngagementTopicsPage({
       {recommendations.length > 0 && (
         <section style={{ marginBottom: 28 }}>
           <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 12 }}>
-            RECOMMENDED FOR THIS ENGAGEMENT · {recommendations.length}
+            RECOMMENDED FOR THIS PROGRAM · {recommendations.length}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 12 }}>
             {recommendations.map((r) => (

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tower Mockup · Dashboard</title>
+    <title>Tower · Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -157,19 +157,25 @@
         display: grid;
         gap: 12px;
         align-content: start;
+        background:
+          linear-gradient(180deg, rgba(18, 28, 46, 0.98), rgba(10, 18, 32, 0.98));
       }
 
       .rail-item {
         border-radius: 18px;
         padding: 12px 8px;
         text-align: center;
-        color: var(--muted);
+        color: #b7c4d8;
+        border: 0.5px solid rgba(148, 163, 184, 0.12);
+        background: rgba(15, 23, 42, 0.28);
       }
 
       .rail-item.active {
-        background: rgba(20, 184, 166, 0.12);
+        background:
+          linear-gradient(180deg, rgba(20, 184, 166, 0.22), rgba(20, 184, 166, 0.1));
         color: #fff;
-        outline: 0.5px solid rgba(20, 184, 166, 0.35);
+        border-color: rgba(20, 184, 166, 0.45);
+        box-shadow: inset 3px 0 0 rgba(20, 184, 166, 0.92);
       }
 
       .rail-item svg {
@@ -219,6 +225,37 @@
         border: 0.5px solid rgba(20, 184, 166, 0.32);
         background: rgba(20, 184, 166, 0.08);
         font-size: 13px;
+      }
+
+      .toggle-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(245, 158, 11, 0.28);
+        background: rgba(245, 158, 11, 0.08);
+        font-size: 13px;
+        color: #fde68a;
+      }
+
+      .toggle-switch {
+        width: 34px;
+        height: 20px;
+        padding: 2px;
+        border-radius: 999px;
+        background: rgba(245, 158, 11, 0.22);
+        display: inline-flex;
+        justify-content: flex-end;
+        align-items: center;
+      }
+
+      .toggle-switch::after {
+        content: "";
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #f59e0b;
       }
 
       .stack {
@@ -285,8 +322,7 @@
         color: #fdba74;
       }
 
-      .ghost-link,
-      .cta {
+      .button {
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -296,16 +332,34 @@
         font-weight: 700;
       }
 
-      .cta {
+      .button-primary {
         margin-top: 12px;
         background: linear-gradient(135deg, rgba(20, 184, 166, 0.95), rgba(37, 99, 235, 0.88));
         color: #05131f;
+        border: 0;
       }
 
-      .ghost-link {
+      .button-secondary {
         margin-top: 12px;
         border: 0.5px solid rgba(148, 163, 184, 0.24);
+        color: #e2e8f0;
+        background: rgba(15, 23, 42, 0.24);
+      }
+
+      .button-tertiary {
+        margin-top: 12px;
+        padding-left: 0;
+        padding-right: 0;
+        border: 0;
+        background: transparent;
         color: var(--muted);
+      }
+
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
       }
 
       .pillar-grid {
@@ -537,7 +591,7 @@
             <div class="header-band">
               <div>
                 <div class="mono">Tower · Apex Retail Group</div>
-                <div class="headline">Portfolio dashboard · review anchor for Tower M1</div>
+                <div class="headline">Portfolio overview for this week</div>
                 <div class="meta">
                   <span>Last refresh: 6:47 AM</span>
                   <span>13 use cases in portfolio</span>
@@ -547,7 +601,7 @@
               </div>
               <div class="stack">
                 <span class="pill">Retail peers · $10B-$50B · n=7</span>
-                <span class="pill">Composite client only</span>
+                <span class="toggle-pill"><span>Composite demo data</span><span class="toggle-switch" aria-hidden="true"></span></span>
               </div>
             </div>
           </section>
@@ -562,12 +616,15 @@
                     Expense and access traces show AI spend sitting outside governed inventory across marketing, specialty retail health &amp; wellness, and workforce-wide writing workflows.
                     Atlas recommends an originate-program motion for AI supplier consolidation and managed procurement.
                   </p>
-                  <span class="cta">Originate program</span>
+                  <div class="action-row">
+                    <span class="button button-primary">Originate program</span>
+                    <span class="button button-secondary">Open evidence</span>
+                  </div>
                 </div>
                 <div class="signal-impact">
                   <strong class="critical-text">$2.3M</strong>
                   <div class="tiny critical-text">annualized shadow spend</div>
-                  <div class="ghost-link">2.1× retail-peer median</div>
+                  <div class="button button-tertiary">2.1× retail-peer median</div>
                 </div>
               </article>
 
@@ -577,7 +634,10 @@
                   <p>
                     The AI-Powered Demand Forecasting use case is 31 days overdue on executive attestation. The value story remains strong, but trustworthiness is now lagging the standard Sarah and the CIO expect ahead of Q2 board prep.
                   </p>
-                  <span class="ghost-link">Review attestation</span>
+                  <div class="action-row">
+                    <span class="button button-secondary">Review attestation</span>
+                    <span class="button button-tertiary">See full record</span>
+                  </div>
                 </div>
                 <div class="signal-impact">
                   <strong class="warning-text">31 days</strong>
@@ -591,7 +651,10 @@
                   <p>
                     Accuracy slipped from 94% to 87% over six months. Loss Prevention has the issue triaged, but the model still needs the May retraining window before the back-to-school spike.
                   </p>
-                  <span class="ghost-link">See signal detail</span>
+                  <div class="action-row">
+                    <span class="button button-secondary">See signal detail</span>
+                    <span class="button button-tertiary">Brief Atlas</span>
+                  </div>
                 </div>
                 <div class="signal-impact">
                   <strong class="warning-text">$240K</strong>
@@ -742,7 +805,7 @@
           </div>
 
           <section class="atlas-summary">
-            <h4>Scripted opening message</h4>
+            <h4>Atlas · 6:47 AM</h4>
             <p>
               Good morning, Sarah. One thing is clearly worth your first call: Shadow AI is sitting at
               <strong class="critical-text">$2.3M annualized</strong> across Jasper, Abridge, and Grammarly Business,
@@ -762,7 +825,7 @@
           </section>
 
           <p class="atlas-footnote">
-            Retail framing for review: same-store sales pressure sits behind the portfolio, but the fastest visible fix is spend governance before it leaks into basket-size and conversion economics.
+            Same-store sales pressure sits behind the portfolio, but the fastest visible fix is spend governance before it leaks into basket-size and conversion economics.
           </p>
 
           <div class="atlas-input">

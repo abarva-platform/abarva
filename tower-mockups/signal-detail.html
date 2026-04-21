@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Tower Mockup · Shadow AI Signal Detail</title>
+    <title>Tower · Shadow AI</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -108,7 +108,7 @@
       .overlay {
         position: absolute;
         inset: 0;
-        background: rgba(2, 6, 23, 0.48);
+        background: rgba(2, 6, 23, 0.4);
       }
 
       .panel-wrap {
@@ -122,7 +122,9 @@
       .panel {
         height: 100%;
         border-radius: 28px 0 0 28px;
-        overflow: auto;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .severity-band {
@@ -130,8 +132,13 @@
         background: linear-gradient(90deg, rgba(220, 38, 38, 1), rgba(248, 113, 113, 0.95));
       }
 
+      .panel-scroll {
+        flex: 1;
+        overflow-y: auto;
+      }
+
       .panel-body {
-        padding: 22px 22px 28px;
+        padding: 22px 22px 18px;
         display: grid;
         gap: 18px;
       }
@@ -221,31 +228,49 @@
         margin-top: 8px;
       }
 
-      .cta {
-        margin-top: 14px;
+      .button {
         width: 100%;
         padding: 15px 18px;
-        border: 0;
         border-radius: 18px;
-        background: linear-gradient(135deg, rgba(20, 184, 166, 0.98), rgba(37, 99, 235, 0.9));
-        color: #041521;
         font-family: inherit;
         font-size: 15px;
         font-weight: 800;
       }
 
-      .secondary {
-        display: grid;
-        gap: 8px;
+      .button-primary {
+        border: 0;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.98), rgba(37, 99, 235, 0.9));
+        color: #041521;
       }
 
-      .secondary div {
-        padding: 12px 14px;
-        border-radius: 14px;
-        border: 0.5px solid rgba(148, 163, 184, 0.18);
+      .button-secondary {
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.32);
+        color: #e2e8f0;
+      }
+
+      .button-tertiary {
+        padding: 0;
+        border: 0;
+        background: transparent;
         color: var(--muted);
-        background: rgba(15, 23, 42, 0.34);
+        text-align: left;
         font-size: 13px;
+        font-weight: 700;
+      }
+
+      .panel-footer {
+        padding: 16px 22px 22px;
+        border-top: 0.5px solid rgba(148, 163, 184, 0.16);
+        background: linear-gradient(180deg, rgba(20, 32, 52, 0.98), rgba(14, 24, 39, 0.98));
+        display: grid;
+        gap: 10px;
+      }
+
+      .footer-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
       }
     </style>
   </head>
@@ -254,7 +279,7 @@
       <div class="background">
         <div class="chrome">
           <div class="mono">Tower · Apex Retail Group</div>
-          <div>Dashboard background context</div>
+          <div>6:47 AM snapshot</div>
         </div>
 
         <div class="grid">
@@ -290,89 +315,89 @@
       <div class="panel-wrap">
         <aside class="panel" aria-label="Open signal detail side panel">
           <div class="severity-band"></div>
-          <div class="panel-body">
-            <div class="close-row">
-              <div class="mono">Signal Detail</div>
-              <div class="close">×</div>
+          <div class="panel-scroll">
+            <div class="panel-body">
+              <div class="close-row">
+                <div class="mono">Signal Detail</div>
+                <div class="close">×</div>
+              </div>
+
+              <section class="signal-title">
+                <div class="mono" style="color: #fca5a5">Critical</div>
+                <h2 style="font-size: 28px; line-height: 1.15">Shadow AI detected</h2>
+                <div class="amount">$2.3M annualized</div>
+                <div class="meta">
+                  <span>Inventory + Cost</span>
+                  <span>Fired Apr 12, 2026</span>
+                  <span>Age 8 days</span>
+                  <span>Status: NEW</span>
+                </div>
+              </section>
+
+              <section class="section">
+                <h3 class="mono">Evidence Chain</h3>
+                <div class="evidence-list">
+                  <div class="evidence-item">
+                    <strong>Jasper · $800K / year</strong>
+                    <p>Marketing-issued invoices sit outside approved inventory and outside the CMO's governed vendor list.</p>
+                  </div>
+                  <div class="evidence-item">
+                    <strong>Abridge · $900K / year</strong>
+                    <p>Specialty retail health &amp; wellness division pilot across 3 clinics; HIPAA-adjacent workflow noted with no BAA recorded.</p>
+                  </div>
+                  <div class="evidence-item">
+                    <strong>Grammarly Business · $600K / year</strong>
+                    <p>Workforce-wide deployment predates the 2025 AI governance policy and never re-entered procurement review.</p>
+                  </div>
+                  <div class="evidence-item">
+                    <strong>Source record chain</strong>
+                    <p>AP invoices → SaaS expense audit → identity-access roster → inventory registry mismatch.</p>
+                  </div>
+                </div>
+              </section>
+
+              <section class="section">
+                <h3 class="mono">Cohort Context</h3>
+                <div class="impact-box">
+                  <p>Retail peers with $10B-$50B revenue run a median <strong>$1.1M</strong> in shadow AI exposure.</p>
+                  <div class="stat">
+                    <span>Apex position</span>
+                    <strong style="color: #fca5a5">2.1× median</strong>
+                  </div>
+                  <div class="stat">
+                    <span>Shadow AI as share of total AI spend</span>
+                    <strong style="color: #fca5a5">19%</strong>
+                  </div>
+                  <div class="stat">
+                    <span>Top quartile target</span>
+                    <strong>&lt;10%</strong>
+                  </div>
+                </div>
+              </section>
+
+              <section class="section">
+                <h3 class="mono">Recommended Action</h3>
+                <div class="action-box">
+                  <h4 style="font-size: 17px; margin-bottom: 8px">AI Supplier Consolidation · Managed Procurement</h4>
+                  <p>
+                    Start a retail-specific consolidation program that routes the CIO, CMO, VP Store Ops, and Head of Digital through one managed vendor-inventory sprint, procurement policy reset, and governed renewal path.
+                  </p>
+                  <div class="context-list" style="margin-top: 12px">
+                    <p>Median recovery in prior matched deployments: <strong>$1.8M</strong></p>
+                    <p>Typical duration: <strong>6 months</strong></p>
+                    <p>Immediate savings at risk in next 180 days: <strong>$980K</strong></p>
+                  </div>
+                </div>
+              </section>
             </div>
-
-            <section class="signal-title">
-              <div class="mono" style="color: #fca5a5">Critical</div>
-              <h2 style="font-size: 28px; line-height: 1.15">Shadow AI detected</h2>
-              <div class="amount">$2.3M annualized</div>
-              <div class="meta">
-                <span>Inventory + Cost</span>
-                <span>Fired Apr 12, 2026</span>
-                <span>Age 8 days</span>
-                <span>Status: NEW</span>
-              </div>
-            </section>
-
-            <section class="section">
-              <h3 class="mono">Evidence Chain</h3>
-              <div class="evidence-list">
-                <div class="evidence-item">
-                  <strong>Jasper · $800K / year</strong>
-                  <p>Marketing-issued invoices sit outside approved inventory and outside the CMO's governed vendor list.</p>
-                </div>
-                <div class="evidence-item">
-                  <strong>Abridge · $900K / year</strong>
-                  <p>Specialty retail health &amp; wellness division pilot across 3 clinics; HIPAA-adjacent workflow noted with no BAA recorded.</p>
-                </div>
-                <div class="evidence-item">
-                  <strong>Grammarly Business · $600K / year</strong>
-                  <p>Workforce-wide deployment predates the 2025 AI governance policy and never re-entered procurement review.</p>
-                </div>
-                <div class="evidence-item">
-                  <strong>Source record chain</strong>
-                  <p>AP invoices → SaaS expense audit → identity-access roster → inventory registry mismatch.</p>
-                </div>
-              </div>
-            </section>
-
-            <section class="section">
-              <h3 class="mono">Cohort Context</h3>
-              <div class="impact-box">
-                <p>Retail peers with $10B-$50B revenue run a median <strong>$1.1M</strong> in shadow AI exposure.</p>
-                <div class="stat">
-                  <span>Apex position</span>
-                  <strong style="color: #fca5a5">2.1× median</strong>
-                </div>
-                <div class="stat">
-                  <span>Shadow AI as share of total AI spend</span>
-                  <strong style="color: #fca5a5">19%</strong>
-                </div>
-                <div class="stat">
-                  <span>Top quartile target</span>
-                  <strong>&lt;10%</strong>
-                </div>
-              </div>
-            </section>
-
-            <section class="section">
-              <h3 class="mono">Recommended Action</h3>
-              <div class="action-box">
-                <h4 style="font-size: 17px; margin-bottom: 8px">AI Supplier Consolidation · Managed Procurement</h4>
-                <p>
-                  Start a retail-specific consolidation program that routes the CIO, CMO, VP Store Ops, and Head of Digital through one managed vendor-inventory sprint, procurement policy reset, and governed renewal path.
-                </p>
-                <div class="context-list" style="margin-top: 12px">
-                  <p>Median recovery in prior matched deployments: <strong>$1.8M</strong></p>
-                  <p>Typical duration: <strong>6 months</strong></p>
-                  <p>Immediate savings at risk in next 180 days: <strong>$980K</strong></p>
-                </div>
-                <button class="cta" type="button">Originate program</button>
-              </div>
-            </section>
-
-            <section class="section">
-              <h3 class="mono">Other Options</h3>
-              <div class="secondary">
-                <div>Acknowledge signal and assign responder</div>
-                <div>Ask Atlas to brief the CIO and CMO on evidence</div>
-                <div>Suppress with reason after governance review</div>
-              </div>
-            </section>
+          </div>
+          <div class="panel-footer">
+            <button class="button button-primary" type="button">Originate program</button>
+            <div class="footer-row">
+              <button class="button button-secondary" type="button">Ask Atlas</button>
+              <button class="button button-secondary" type="button">Acknowledge</button>
+            </div>
+            <button class="button button-tertiary" type="button">Suppress with reason after governance review</button>
           </div>
         </aside>
       </div>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Tower Mockup · Mobile CXO View</title>
+    <title>Tower · Mobile</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -31,8 +31,6 @@
       body {
         margin: 0;
         min-height: 100vh;
-        display: grid;
-        place-items: start center;
         background:
           radial-gradient(circle at top center, rgba(20, 184, 166, 0.12), transparent 20%),
           linear-gradient(180deg, #101a31 0%, #0f172a 55%, #0b1220 100%);
@@ -41,10 +39,12 @@
       }
 
       .phone {
-        width: 375px;
+        width: 100%;
+        max-width: 390px;
         min-height: 100vh;
         padding: calc(14px + env(safe-area-inset-top)) 16px calc(98px + env(safe-area-inset-bottom));
         position: relative;
+        margin: 0 auto;
       }
 
       .mono {
@@ -123,20 +123,20 @@
       .tile p {
         margin: 0;
         color: var(--muted);
-        font-size: 14px;
-        line-height: 1.55;
+        font-size: 13px;
+        line-height: 1.5;
       }
 
       .atlas-card h1 {
         margin: 10px 0 12px;
-        font-size: 26px;
-        line-height: 1.05;
+        font-size: 23px;
+        line-height: 1.12;
       }
 
       .subhead {
         margin-top: 4px;
         color: var(--soft);
-        font-size: 13px;
+        font-size: 12px;
       }
 
       .atlas-actions {
@@ -147,15 +147,31 @@
         padding-bottom: 4px;
       }
 
-      .chip {
+      .button-chip {
         white-space: nowrap;
         padding: 10px 12px;
         border-radius: 999px;
-        border: 0.5px solid rgba(20, 184, 166, 0.24);
-        background: rgba(20, 184, 166, 0.08);
-        color: #d1fae5;
         font-size: 13px;
         font-weight: 700;
+      }
+
+      .button-chip.primary {
+        border: 0;
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.98), rgba(37, 99, 235, 0.9));
+        color: #041521;
+      }
+
+      .button-chip.secondary {
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.24);
+        color: #e2e8f0;
+      }
+
+      .button-chip.tertiary {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        padding-left: 0;
       }
 
       .carousel {
@@ -191,7 +207,7 @@
 
       .signal-card .amount {
         margin-top: 10px;
-        font-size: 26px;
+        font-size: 24px;
         font-weight: 800;
       }
 
@@ -212,13 +228,13 @@
 
       .tile h3 {
         margin: 10px 0 6px;
-        font-size: 16px;
+        font-size: 15px;
       }
 
       .tile strong {
         display: block;
         margin-top: 10px;
-        font-size: 24px;
+        font-size: 22px;
       }
 
       .dot {
@@ -248,7 +264,7 @@
         left: 50%;
         bottom: calc(14px + env(safe-area-inset-bottom));
         transform: translateX(-50%);
-        width: calc(375px - 24px);
+        width: calc(min(100vw, 390px) - 24px);
         padding: 12px 14px;
         border-radius: 999px;
         display: grid;
@@ -260,14 +276,14 @@
       .dock-item {
         text-align: center;
         color: var(--soft);
-        font-size: 11px;
+        font-size: 10px;
       }
 
       .dock-item strong {
         display: block;
         margin-top: 6px;
         color: inherit;
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 600;
       }
 
@@ -289,20 +305,20 @@
 
       <section class="section">
         <div class="mono">Apex Retail Group</div>
-        <div class="subhead">Monday, Apr 20 · 6:47 AM · Mobile CXO view</div>
+        <div class="subhead">Monday, Apr 20 · 6:47 AM · 3 new alerts</div>
       </section>
 
       <section class="section atlas-card">
-        <div class="mono" style="color: #f59e0b">Atlas Morning Summary</div>
+        <div class="mono" style="color: #f59e0b">Atlas · 6:47 AM</div>
         <h1>Three things need attention before the first executive call.</h1>
         <p>
           Shadow AI is still the loudest issue at <strong style="color:#fca5a5">$2.3M annualized</strong>. Demand Forecasting is 31 days late on attestation.
           Returns Fraud remains yellow after drift triage. The VP Store Ops and Head of Digital both have follow-up work if you want to move today.
         </p>
         <div class="atlas-actions">
-          <div class="chip">Tell me more</div>
-          <div class="chip">Brief the CIO</div>
-          <div class="chip">Open Shadow AI</div>
+          <div class="button-chip primary">Tell me more</div>
+          <div class="button-chip secondary">Brief the CIO</div>
+          <div class="button-chip tertiary">Open Shadow AI</div>
         </div>
       </section>
 

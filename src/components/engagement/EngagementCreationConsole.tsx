@@ -20,7 +20,7 @@ type CreatedEngagement = {
 };
 
 const OPENER_ID = 'opener-0';
-const OPENER_CONTENT = "Let's start a new engagement. Who are we working with?";
+const OPENER_CONTENT = "Let's start a new Program. Who are we working with?";
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
@@ -31,8 +31,25 @@ const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const FONT_MONO = 'JetBrains Mono, monospace';
 const FONT_SERIF = 'Georgia, serif';
 
+// Strip the full <engagement_ready>...</engagement_ready> block. Applied to
+// the final content after stream completes.
 function stripBlock(text: string): string {
   return text.replace(/<engagement_ready>[\s\S]*?<\/engagement_ready>/g, '').trim();
+}
+
+// Live-strip for the streaming delta feed. A partial stream may contain just
+// `<engagement_ready>` with the closing tag still pending — we cut the view at
+// the opener so the user never sees the JSON scaffolding as it arrives. Also
+// trims any trailing whitespace the cut produces.
+function liveStrip(text: string): string {
+  const openIdx = text.indexOf('<engagement_ready>');
+  if (openIdx === -1) return text;
+  const closeIdx = text.indexOf('</engagement_ready>');
+  if (closeIdx !== -1) {
+    return (text.slice(0, openIdx) + text.slice(closeIdx + '</engagement_ready>'.length)).trimEnd();
+  }
+  // Opening tag streamed but closing hasn't arrived yet — hide from opener on
+  return text.slice(0, openIdx).trimEnd();
 }
 
 export function EngagementCreationConsole() {
@@ -139,7 +156,7 @@ export function EngagementCreationConsole() {
             <span style={{ color: TEAL, fontSize: 23, fontWeight: 900 }}>Va</span>
           </div>
           <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: TEAL, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-            Engagement · New
+            Program · New
           </div>
         </div>
 
@@ -181,10 +198,10 @@ export function EngagementCreationConsole() {
                     marginBottom: 4,
                   }}
                 >
-                  {m.role === 'assistant' ? `NEXUS · ENGAGEMENT${m.streaming ? ' · streaming' : ''}` : 'YOU'}
+                  {m.role === 'assistant' ? `NEXUS${m.streaming ? ' · streaming' : ''}` : 'YOU'}
                 </div>
                 <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                  {m.content}
+                  {m.role === 'assistant' ? liveStrip(m.content) : m.content}
                   {m.streaming && <span style={{ color: TEAL, opacity: 0.7 }}>▊</span>}
                 </div>
               </div>
@@ -211,7 +228,7 @@ export function EngagementCreationConsole() {
                   marginBottom: 6,
                 }}
               >
-                ✓ Engagement created
+                ✓ Program created
               </div>
               <div style={{ fontSize: 14, fontWeight: 500 }}>{created.name}</div>
               <div style={{ fontSize: 12, color: MUTE, marginTop: 4, fontFamily: FONT_MONO }}>
@@ -244,7 +261,7 @@ export function EngagementCreationConsole() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isStreaming}
-                placeholder="Describe the engagement…"
+                placeholder="Describe the program…"
                 style={{
                   flex: 1,
                   padding: '10px 14px',
