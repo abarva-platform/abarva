@@ -1035,7 +1035,297 @@ Action cells:      right-aligned, icon buttons
 - Sort indicators: arrow glyph in header cell, teal when active.
 - Pagination at bottom-right of table, standard pattern: "1-20 of 147" + prev/next.
 
-## 2.15 Decisions locked in Packet 2
+## 2.15 Signal slide-in panel
+
+Tower's canonical signal-investigation component. This is not a generic drawer; it is a specialized operational panel layered on top of the base `slide-in panel` pattern. It exists to let an executive investigate a signal without losing the originating dashboard or list context.
+
+### Relationship to 2.8 Slide-in panel
+
+- `2.8 Slide-in panel` remains the generic container pattern.
+- `2.15 Signal slide-in panel` is the Tower specialization of that pattern.
+- Programs, Intelligence, or future surfaces may reuse 2.8 without inheriting Tower-specific severity chrome or evidence layout.
+
+### Specification
+
+```
+Position:             fixed right, full height
+Width:                400px desktop default
+Wide desktop:         432px allowed when evidence density requires it
+Tablet/mobile:        full-screen takeover below 640px
+Background:           color.surface.raised
+Border left:          1px solid color.border.subtle
+Context overlay:      rgba(15, 23, 42, 0.40) over originating surface
+Shadow:               shadow.raised on leading edge only
+Z-index:              z.drawer
+Header severity band: 8px tall, full width
+Body padding:         space.4 (16px) for dense sections, space.6 (24px) outer shell
+Footer:               sticky, pinned to bottom, background color.surface.raised
+```
+
+### Severity header band
+
+```
+Critical:   color.severity.critical
+Warning:    color.severity.warning
+Info:       color.severity.info
+Resolved:   color.severity.success
+```
+
+Rule: the severity band is the only full-width color treatment. The rest of the panel stays dark and restrained.
+
+### Anatomy
+
+```
+┌───────────────────────────────────┐
+│ severity band                     │
+│ [signal label]              [✕]   │
+│ [headline]                         │
+│ [impact] [severity badge]          │
+│ [type] [fired] [age] [state]       │
+│ ──────────────────────────────── │
+│ [3-part narrative summary]         │
+│ ──────────────────────────────── │
+│ [evidence chain cards stack]       │
+│ ──────────────────────────────── │
+│ [cohort peer visualization]        │
+│ ──────────────────────────────── │
+│ [recommended action summary]       │
+│                                   │
+│ ──────────────────────────────── │
+│ [secondary actions] [primary CTA] │
+└───────────────────────────────────┘
+```
+
+### States
+
+**Closed**
+- Panel not mounted in DOM, focus returned to trigger.
+
+**Opening**
+- Panel translates from `translateX(100%)` to `translateX(0)`.
+- Duration: `motion.duration.default`
+- Easing: `motion.easing.ease-out`
+- Overlay fades from 0 to 40% opacity in sync.
+
+**Open**
+- Focus trap active.
+- Body scrolls independently.
+- Footer remains visible.
+
+**Closing**
+- Reverse transition using `motion.easing.ease-in`.
+- Duration may shorten to `motion.duration.fast` if closed via Escape.
+
+### Variants
+
+**Dashboard-origin variant**
+- Opens over dashboard cards or signals feed.
+- Keeps enough background visible to preserve user orientation.
+
+**Signals-table variant**
+- Same width, but body prioritizes metadata and event history above impact prose.
+
+**Mobile full-screen variant**
+- Replaces side-slide with bottom-safe full-screen sheet.
+- Header becomes 56px tall with larger tap target on close.
+- Footer buttons stack vertically with primary first.
+
+### Keyboard and accessibility behavior
+
+- `Escape` closes the panel.
+- Focus moves to panel heading on open.
+- Focus trap is mandatory while open.
+- Close button has `aria-label="Close signal detail"`.
+- Opening trigger exposes `aria-controls` and `aria-expanded`.
+- Severity must never be color-only; badge text always names the level.
+- Reduced motion: panel appears instantly, overlay snaps to final opacity.
+
+### Usage rules
+
+- Use only for signal-level detail, not for generic record editing.
+- Keep the primary CTA singular and explicit. In Tower this is usually `Originate program`.
+- Secondary actions live above the footer or as footer-left outline buttons; they never compete visually with the primary.
+- If more than three evidence items exist, evidence region scrolls inside the body while the footer stays pinned.
+
+### Demo composition
+
+```
+[Critical severity band]
+[SHADOW AI DETECTED]
+[$2.3M annualized exposure]
+[Evidence chain cards × 4]
+[Cohort peer visualization: Apex at 2.1x median, n=7]
+[Primary: Originate program] [Secondary: Ask Atlas]
+```
+
+## 2.16 Evidence chain card
+
+Canonical card for showing one piece of evidence in the value chain of custody or in a signal investigation. Used in Tower signal panels, attestation detail, and future Intelligence source audit views.
+
+### Specification
+
+```
+Background:        color.surface.elevated
+Border:            1px solid color.border.subtle
+Border radius:     radius.lg
+Padding:           space.4
+Gap:               space.3 between internal rows
+Title:             type.heading.sm
+Metadata row:      type.meta / JetBrains Mono for source IDs or spend amounts
+Body prose:        type.body.sm
+```
+
+### Anatomy
+
+```
+┌───────────────────────────────────┐
+│ [source badge] [amount/value]     │
+│ [title]                           │
+│ [1-2 sentence explanation]        │
+│ [artifact link / timestamp]       │
+│ [expand-collapse affordance]      │
+└───────────────────────────────────┘
+```
+
+### Variants
+
+**Expanded**
+- Full prose visible.
+- Supporting metadata rows visible.
+- Artifact links or source refs visible.
+
+**Collapsed**
+- Single-line title + amount/value summary.
+- One-line explanation truncates after 2 lines.
+- Chevron indicates expandable state.
+
+**Stacked**
+- Multiple cards shown in a vertical pile with `space.3` gap.
+- Highest-confidence or largest-dollar evidence first.
+- Maximum 5 visible before collapsing the remainder behind "Show more evidence (n)".
+
+**Contradiction evidence**
+- Uses a severity-tinted left rule:
+  - critical = `color.severity.critical`
+  - warning = `color.severity.warning`
+  - info = `color.severity.info`
+
+### Typography rules
+
+- Title and explanatory prose use DM Sans.
+- Currency, percentages, invoice IDs, vendor IDs, and document refs use JetBrains Mono where alignment helps scanning.
+- Dollar impact or benchmark deltas should be visually grouped with the source, not floated as decorative numerals.
+- Prose should answer one of three questions: what was found, where it came from, why it matters.
+
+### Interaction rules
+
+- Entire card is not clickable by default; only explicit artifact links or expand controls are interactive.
+- Expand/collapse motion uses `motion.duration.fast`.
+- If the card opens supporting details inline, the parent stack does not re-order while the card is open.
+
+### Accessibility
+
+- Expand/collapse control is a button with `aria-expanded`.
+- Truncated prose must still be fully accessible to screen readers.
+- Source badges use text labels, not icon-only vendor logos.
+
+### Demo composition
+
+```
+[AP invoice data] [$1.1M/yr]
+Abridge ambient scribe renewals
+Detected in uploaded AP ledger and absent from governed inventory.
+[Uploaded Apr 15, 2026] [Invoice set 04-15]
+```
+
+## 2.17 Cohort peer visualization
+
+Canonical benchmark comparison component for Tower. Shows the client's position against a peer cohort with enough transparency that the user understands how trustworthy the comparison is.
+
+### Purpose
+
+This component answers: "How are we performing relative to comparable peers, and how much should we trust the comparison?"
+
+### Expected data shape
+
+```ts
+type CohortPeerVisualizationData = {
+  label: string;                  // "Shadow AI as % of total AI spend"
+  clientName: string;             // "Apex Retail Group"
+  clientValue: number;            // 19
+  clientUnit: 'percent' | 'usd' | 'count' | 'score' | 'days';
+  medianValue: number;            // 9
+  p25Value?: number;
+  p75Value?: number;
+  direction: 'higher_is_better' | 'lower_is_better' | 'neutral';
+  sampleSize: number;             // 7
+  cohortLabel: string;            // "Retail peers · $50B+ revenue"
+  updatedAtLabel: string;         // "Updated monthly"
+  caveat?: string;                // "Tech stack filter dropped"
+};
+```
+
+### Specification
+
+```
+Container:         standard card body or panel section
+Primary mark:      horizontal comparison bar
+Client marker:     filled brand or agent-accent point
+Median marker:     neutral vertical rule
+Interquartile band: subtle fill between p25 and p75 when available
+Transparency chip: badge-like pill showing "n = X peers"
+Supporting text:   type.caption / type.body.sm
+```
+
+### Anatomy
+
+```
+[label]
+[client value] vs [peer median]
+[horizontal bar with markers]
+[transparency chip] [cohort label]
+[optional caveat / update vintage]
+```
+
+### Variants
+
+**Inline compact**
+- For signal panel or dashboard drill-down.
+- Single comparison bar, one transparency chip, one caveat line max.
+
+**Detailed**
+- Adds p25/p75 context, percentile callout, and explanatory copy.
+- Used on dedicated cohort pages or pillar drill-downs.
+
+**Low-sample warning**
+- Triggered when `sampleSize < 3`.
+- Comparison bar de-emphasized.
+- Transparency chip switches to warning styling and reads `Limited cohort data · n=2`.
+- Supporting copy explains that Tower is falling back to broader peer logic or absolute thresholds.
+
+### Usage rules
+
+- Always display the transparency chip. Cohort comparisons without `n` are not allowed.
+- When direction is `lower_is_better`, better performance is shown visually to the left with copy clarifying that lower is favorable.
+- If p25/p75 are unavailable, render only client and median markers; do not fake a distribution.
+- Never label a cohort as anonymous if it is actually composite; use explicit composite-language where appropriate.
+
+### Accessibility
+
+- Numeric delta is rendered in text, not only via bar position.
+- Color does not carry the whole comparison. Include labels like `2.1x median` or `13pp below median`.
+- The detailed variant includes a text summary suitable for screen readers.
+
+### Demo composition
+
+```
+Shadow AI as % of total AI spend
+19% for Apex Retail Group vs 9% peer median
+[client marker far right] [median rule center] [IQR band 7%-12%]
+[n = 7 peers] [Retail peers · $50B+ revenue]
+```
+
+## 2.18 Decisions locked in Packet 2
 
 | # | Decision | Rationale |
 |---|---|---|
@@ -1050,6 +1340,9 @@ Action cells:      right-aligned, icon buttons
 | 2.L9 | Slide-in panels have no backdrop — context stays visible | UX choice specific to AbarVa |
 | 2.L10 | Agent chat panel is standardized with per-agent accent + context line | Unified across agents |
 | 2.L11 | Empty states always intentional, with action when possible | No blank screens |
+| 2.L12 | Tower signal detail panel specializes the generic slide-in with a 40% contextual overlay + pinned primary CTA | Preserve context without losing focus |
+| 2.L13 | Evidence chain cards are the canonical unit of proof across Tower | Auditable claims need a visible chain of custody |
+| 2.L14 | Cohort comparisons always expose sample size and caveat logic | Benchmark transparency is a product promise |
 
 ---
 
@@ -1057,7 +1350,7 @@ Action cells:      right-aligned, icon buttons
 
 **STATUS · Track A, Packet 2 of 5 complete**
 
-Component patterns specified: button, input, card, badge, tabs, modal, slide-in panel, navigation, toast, loading, empty, agent chat, table. Every component has anatomy, states, variants, usage rules. Ready for Track B (application patterns).
+Component patterns specified: button, input, card, badge, tabs, modal, slide-in panel, navigation, toast, loading, empty, agent chat, table, signal slide-in panel, evidence chain card, cohort peer visualization. Every component has anatomy, states, variants, usage rules. Ready for Track B (application patterns).
 
 ---
 
