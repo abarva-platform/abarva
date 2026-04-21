@@ -10,6 +10,8 @@
 import { NextRequest } from 'next/server';
 import { streamAgentTurn } from '@/lib/agent/stream';
 import { assembleContext, describePendingComposerCall, draftModuleDeliverable } from '@/lib/programs/nexus';
+import { runQualityGates } from '@/lib/programs/quality-gates';
+import { raiseMaestroFlag } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 
 export const runtime = 'nodejs';
@@ -57,17 +59,55 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       content += chunk;
     }
 
+    // Quality gates per Packet 8 §8.7 — provenance, voice, pattern adherence, length.
+    // Hard failures block draft from landing as a deliverable; raise a Maestro
+    // oversight flag for review. Soft failures pass through with metadata.
+    const expectedShape =
+      body.deliverableTypeKey === 'charter' ? 'charter' :
+      body.deliverableTypeKey === 'outcome_report' ? 'outcome' :
+      body.deliverableTypeKey === 'design_spec' ? 'design' :
+      body.deliverableTypeKey === 'execution_plan' ? 'free' :
+      'free';
+    const gates = runQualityGates(content, { expectedShape });
+
+    if (!gates.pass) {
+      await raiseMaestroFlag(ctx, programId, {
+        flagType: 'quality_concern',
+        severity: 'warning',
+        raisedBy: 'nexus',
+        headline: `Nexus draft for ${body.moduleKey} blocked at quality gate (${gates.issues.filter((i) => i.severity === 'hard').length} hard issue${gates.issues.filter((i) => i.severity === 'hard').length === 1 ? '' : 's'})`,
+        context: {
+          module_key: body.moduleKey,
+          deliverable_type_key: body.deliverableTypeKey,
+          issues: gates.issues,
+          word_count: gates.metadata.wordCount,
+          provenance_hints: gates.metadata.provenanceHints,
+        },
+      });
+      return Response.json(
+        {
+          error: 'quality_gate_failed',
+          issues: gates.issues,
+          metadata: gates.metadata,
+          rawContent: content,
+          detail: 'Draft did not pass Nexus quality gates. Maestro flag raised for review.',
+        },
+        { status: 422 },
+      );
+    }
+
     const { deliverableId, versionId } = await draftModuleDeliverable(ctx, {
       programId,
       moduleKey: body.moduleKey,
       deliverableTypeKey: body.deliverableTypeKey,
       title: body.title,
-      draftContent: content,
-      structuredData: { prompt: body.prompt, mode: 'module_drafting' },
+      draftContent: gates.cleanedContent,
+      structuredData: { prompt: body.prompt, mode: 'module_drafting', gate_metadata: gates.metadata },
       provenanceMap: {
         pattern_key: (context.patternPreload?.topic_key as string | undefined) ?? null,
         module: body.moduleKey,
         program: context.program.name,
+        provenance_hints: gates.metadata.provenanceHints,
       },
       contextHash: hashContext(context),
     });
@@ -75,7 +115,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
     return Response.json({
       deliverableId,
       versionId,
-      content,
+      content: gates.cleanedContent,
+      qualityGates: gates,
       provenance: {
         patternAttached: !!context.patternPreload,
         moduleCount: context.modules.length,
