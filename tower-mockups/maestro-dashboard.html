@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tower · Maestro Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --card-2: #172335;
+        --border: rgba(148, 163, 184, 0.24);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --soft: #94a3b8;
+        --teal: #14b8a6;
+        --atlas: #f59e0b;
+        --critical: #dc2626;
+        --warning: #d97706;
+        --success: #059669;
+        --info: #2563eb;
+        --shadow: 0 22px 60px rgba(2, 6, 23, 0.34);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 1320px;
+        background:
+          radial-gradient(circle at top left, rgba(20, 184, 166, 0.12), transparent 18%),
+          radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 20%),
+          linear-gradient(180deg, #111c34 0%, #0f172a 44%, #0b1322 100%);
+        color: var(--text);
+        font-family: "DM Sans", system-ui, sans-serif;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--teal);
+      }
+
+      .shell { padding: 24px; }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 240px 1fr 220px;
+        gap: 20px;
+        align-items: center;
+        padding: 18px 22px;
+        border: 0.5px solid var(--border);
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.76);
+        box-shadow: var(--shadow);
+      }
+
+      .wordmark {
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+      }
+
+      .abar { font-family: Georgia, serif; font-size: 17px; font-weight: 800; color: #fff; }
+      .va { font-family: Georgia, serif; font-size: 23px; font-weight: 900; color: var(--teal); }
+
+      .nav {
+        display: flex;
+        justify-content: center;
+        gap: 28px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .nav .active {
+        color: var(--teal);
+        position: relative;
+      }
+
+      .nav .active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--teal);
+      }
+
+      .coverage {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.28);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .pill.active {
+        border-color: rgba(20, 184, 166, 0.4);
+        background: rgba(20, 184, 166, 0.12);
+        color: #e6fffb;
+      }
+
+      .workspace {
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) 332px;
+        gap: 18px;
+      }
+
+      .left-rail,
+      .panel,
+      .atlas,
+      .card,
+      .queue,
+      .program-row {
+        border: 0.5px solid var(--border);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+        box-shadow: var(--shadow);
+      }
+
+      .left-rail {
+        border-radius: 22px;
+        padding: 18px 10px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+        background: linear-gradient(180deg, rgba(18, 28, 46, 0.98), rgba(10, 18, 32, 0.98));
+      }
+
+      .rail-item {
+        border-radius: 18px;
+        padding: 12px 8px;
+        text-align: center;
+        color: #b7c4d8;
+        border: 0.5px solid rgba(148, 163, 184, 0.12);
+        background: rgba(15, 23, 42, 0.28);
+        font-size: 12px;
+      }
+
+      .rail-item.active {
+        background: linear-gradient(180deg, rgba(20, 184, 166, 0.22), rgba(20, 184, 166, 0.1));
+        color: #fff;
+        border-color: rgba(20, 184, 166, 0.45);
+        box-shadow: inset 3px 0 0 rgba(20, 184, 166, 0.92);
+      }
+
+      .main {
+        display: grid;
+        gap: 16px;
+      }
+
+      .panel,
+      .atlas {
+        border-radius: 26px;
+        padding: 22px;
+      }
+
+      .headline {
+        margin: 10px 0 8px;
+        font-family: Georgia, serif;
+        font-size: 30px;
+        font-weight: 700;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        gap: 16px;
+      }
+
+      .card {
+        border-radius: 22px;
+        padding: 18px;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .stat {
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(15, 23, 42, 0.34);
+        border: 0.5px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .stat strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .button.primary {
+        background: linear-gradient(135deg, rgba(20, 184, 166, 0.96), rgba(37, 99, 235, 0.9));
+        color: #041521;
+      }
+
+      .button.secondary {
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.24);
+        color: #e2e8f0;
+      }
+
+      .button.tertiary {
+        padding-left: 0;
+        padding-right: 0;
+        color: var(--muted);
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .queue {
+        border-radius: 18px;
+        padding: 14px 16px;
+      }
+
+      .queue.critical {
+        border-left: 4px solid var(--critical);
+        background:
+          linear-gradient(90deg, rgba(220, 38, 38, 0.14), transparent 30%),
+          linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+      }
+
+      .queue.warning {
+        border-left: 4px solid var(--warning);
+        background:
+          linear-gradient(90deg, rgba(217, 119, 6, 0.14), transparent 30%),
+          linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+      }
+
+      .queue h3,
+      .program-row h3 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .queue p,
+      .program-row p,
+      .soft {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .section-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+        gap: 16px;
+      }
+
+      .program-list,
+      .timeline {
+        display: grid;
+        gap: 12px;
+        margin-top: 14px;
+      }
+
+      .program-row {
+        border-radius: 18px;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+      }
+
+      .severity-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+      }
+
+      .critical { background: var(--critical); }
+      .warning { background: var(--warning); }
+      .success { background: var(--success); }
+      .info { background: var(--info); }
+
+      .score {
+        min-width: 82px;
+        text-align: right;
+      }
+
+      .score strong {
+        display: block;
+        font-size: 24px;
+      }
+
+      .atlas {
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 16px;
+      }
+
+      .atlas-note {
+        padding: 16px;
+        border-radius: 20px;
+        border: 0.5px solid rgba(245, 158, 11, 0.24);
+        background: rgba(245, 158, 11, 0.08);
+      }
+
+      .atlas-note p,
+      .atlas ol {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.6;
+      }
+
+      .atlas ol {
+        padding-left: 18px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .atlas-input {
+        padding: 14px 16px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.56);
+        color: var(--soft);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+        <nav class="nav" aria-label="Primary">
+          <span>Intelligence</span>
+          <span>Programs</span>
+          <span class="active">Tower</span>
+          <span>Patterns</span>
+          <span>Settings</span>
+        </nav>
+        <div class="coverage">
+          <span class="pill active">Apex Retail Group</span>
+          <span class="pill">First Capital Financial</span>
+          <span class="pill">Meridian Health System</span>
+        </div>
+      </header>
+
+      <div class="workspace">
+        <aside class="left-rail" aria-label="Tower sub-navigation">
+          <div class="rail-item active">Dashboard</div>
+          <div class="rail-item">Pipeline</div>
+          <div class="rail-item">Use Cases</div>
+          <div class="rail-item">Signals</div>
+          <div class="rail-item">Data</div>
+        </aside>
+
+        <main class="main">
+          <section class="panel">
+            <div class="mono">Tower · Maestro coverage</div>
+            <div class="headline">Apex Retail Group · operating view</div>
+            <div class="meta">
+              <span>Assigned Maestro: Anand Sundaram</span>
+              <span>4 in-flight programs</span>
+              <span>3 active signals</span>
+              <span>Next review: Thursday 2:00 PM CT</span>
+            </div>
+          </section>
+
+          <section class="hero">
+            <article class="card">
+              <div class="mono">Coverage summary</div>
+              <div class="stat-grid">
+                <div class="stat">
+                  <div class="soft">Client portfolio</div>
+                  <strong>13</strong>
+                  <div class="soft">Use cases tracked in Tower</div>
+                </div>
+                <div class="stat">
+                  <div class="soft">Programs in flight</div>
+                  <strong>4</strong>
+                  <div class="soft">1 Execute · 2 Charter · 1 Verify/Complete</div>
+                </div>
+                <div class="stat">
+                  <div class="soft">Signals to resolve</div>
+                  <strong>3</strong>
+                  <div class="soft">1 critical · 2 warning</div>
+                </div>
+                <div class="stat">
+                  <div class="soft">Sponsor touchpoints</div>
+                  <strong>6</strong>
+                  <div class="soft">Required this week across CIO, CMO, VP Store Ops, CFO</div>
+                </div>
+              </div>
+              <div class="button-row">
+                <span class="button primary">Open signals queue</span>
+                <span class="button secondary">Review program health</span>
+                <span class="button tertiary">Switch client</span>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="mono">Requires Maestro action</div>
+              <div class="stack" style="margin-top: 14px">
+                <div class="queue critical">
+                  <h3>Shadow AI cleanup path needs owner alignment</h3>
+                  <p>Atlas wants the supplier-consolidation program originated today, but the CIO, CMO, and Head of Digital are not yet on one execution owner.</p>
+                </div>
+                <div class="queue warning">
+                  <h3>Demand Forecasting attestation now 31 days late</h3>
+                  <p>Marcus Liu has not closed the governance loop. CFO board-prep pressure is likely to rise by Thursday.</p>
+                </div>
+                <div class="queue warning">
+                  <h3>Store Associate Productivity needs custom-shape review</h3>
+                  <p>The custom program shape is still viable, but the task-audit framing needs a Maestro pass before charter sign-off.</p>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section class="section-grid">
+            <article class="card">
+              <div class="mono">Programs in flight</div>
+              <div class="program-list">
+                <div class="program-row">
+                  <div>
+                    <h3><span class="severity-dot warning"></span>Contact Center AI Transformation</h3>
+                    <p>Phase 5 Execute · Maya Reyes · vendor stack Glia + Observe.AI · Spanish-language quality still below threshold.</p>
+                  </div>
+                  <div class="score"><strong>81%</strong><span class="soft">target track</span></div>
+                </div>
+                <div class="program-row">
+                  <div>
+                    <h3><span class="severity-dot info"></span>Unified Customer Data Platform</h3>
+                    <p>Phase 2 Charter · Jake Chen + CMO · 6 customer-data silos still unresolved · Snowflake and Salesforce Commerce are central.</p>
+                  </div>
+                  <div class="score"><strong>2</strong><span class="soft">approvals needed</span></div>
+                </div>
+                <div class="program-row">
+                  <div>
+                    <h3><span class="severity-dot warning"></span>Store Associate Productivity</h3>
+                    <p>Phase 2 Charter · Priya Patel · custom shape · 40K associate workflow audit still defining success metric.</p>
+                  </div>
+                  <div class="score"><strong>1</strong><span class="soft">custom gate</span></div>
+                </div>
+                <div class="program-row">
+                  <div>
+                    <h3><span class="severity-dot success"></span>Demand Forecasting AI</h3>
+                    <p>Historical complete · Marcus Liu · outcome report signed off · value story now feeds Tower steady-state tracking.</p>
+                  </div>
+                  <div class="score"><strong>$8.4M</strong><span class="soft">annualized benefit</span></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <div class="mono">This week</div>
+              <div class="timeline">
+                <div class="queue">
+                  <h3>Tuesday · 8:30 AM</h3>
+                  <p>CIO + CMO decision call on Shadow AI supplier consolidation and governance reset.</p>
+                </div>
+                <div class="queue">
+                  <h3>Wednesday · 11:00 AM</h3>
+                  <p>Unified CDP sponsor review with Jake Chen, CMO, and Head of Digital. Need cleaner single-view story.</p>
+                </div>
+                <div class="queue">
+                  <h3>Thursday · 2:00 PM</h3>
+                  <p>Maestro portfolio review. Focus: shadow spend, attestation lag, and retail metrics tied to basket-size lift.</p>
+                </div>
+                <div class="queue">
+                  <h3>Friday · 4:00 PM</h3>
+                  <p>Prep notes for same-store-sales board narrative: where AI is helping conversion, inventory turns, and service cost.</p>
+                </div>
+              </div>
+            </article>
+          </section>
+        </main>
+
+        <aside class="atlas">
+          <div class="mono" style="color: var(--atlas)">Atlas · Maestro mode</div>
+          <div class="atlas-note">
+            <p>
+              Apex does not need a broad portfolio lecture right now. The operating risk is narrower: one critical spend-governance issue, one overdue attestation, and one custom-shape program that still needs a cleaner proof path for Priya Patel.
+            </p>
+          </div>
+          <ol>
+            <li>Keep the Shadow AI conversation on procurement control and avoided renewal leakage, not AI philosophy.</li>
+            <li>Use the Snowflake and Salesforce Commerce integration gaps to sharpen the Unified CDP charter into a single-view story the CMO can defend.</li>
+            <li>Anchor Store Associate Productivity in measurable same-store sales and task-cycle savings before the next review.</li>
+          </ol>
+          <div class="atlas-input">Ask Atlas to prep a sponsor brief...</div>
+        </aside>
+      </div>
+    </div>
+  </body>
+</html>

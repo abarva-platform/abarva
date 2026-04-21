@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tower · Pipeline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --border: rgba(148, 163, 184, 0.24);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --soft: #94a3b8;
+        --teal: #14b8a6;
+        --critical: #dc2626;
+        --warning: #d97706;
+        --success: #059669;
+        --shadow: 0 22px 60px rgba(2, 6, 23, 0.34);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-width: 1480px;
+        background:
+          radial-gradient(circle at top left, rgba(20, 184, 166, 0.1), transparent 18%),
+          linear-gradient(180deg, #111c34 0%, #0f172a 44%, #0b1322 100%);
+        color: var(--text);
+        font-family: "DM Sans", system-ui, sans-serif;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--teal);
+      }
+
+      .shell { padding: 24px; }
+
+      .topbar,
+      .toolbar,
+      .board,
+      .column,
+      .card {
+        border: 0.5px solid var(--border);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+        box-shadow: var(--shadow);
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: 220px 1fr 120px;
+        gap: 24px;
+        align-items: center;
+        padding: 18px 22px;
+        border-radius: 24px;
+      }
+
+      .wordmark {
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+      }
+
+      .abar { font-family: Georgia, serif; font-size: 17px; font-weight: 800; color: #fff; }
+      .va { font-family: Georgia, serif; font-size: 23px; font-weight: 900; color: var(--teal); }
+
+      .nav {
+        display: flex;
+        justify-content: center;
+        gap: 28px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .nav .active {
+        color: var(--teal);
+        position: relative;
+      }
+
+      .nav .active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        height: 2px;
+        border-radius: 999px;
+        background: var(--teal);
+      }
+
+      .profile {
+        justify-self: end;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: rgba(20, 184, 166, 0.12);
+        border: 0.5px solid rgba(20, 184, 166, 0.35);
+        display: grid;
+        place-items: center;
+        color: var(--teal);
+        font-weight: 700;
+      }
+
+      .toolbar {
+        margin-top: 18px;
+        border-radius: 24px;
+        padding: 18px 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .headline {
+        margin: 10px 0 6px;
+        font-family: Georgia, serif;
+        font-size: 30px;
+        font-weight: 700;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .control {
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.26);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .board {
+        margin-top: 18px;
+        border-radius: 28px;
+        padding: 18px;
+        overflow-x: auto;
+      }
+
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(9, 240px);
+        gap: 14px;
+      }
+
+      .column {
+        border-radius: 20px;
+        padding: 14px;
+        min-height: 680px;
+      }
+
+      .column h3 {
+        margin: 8px 0 4px;
+        font-size: 16px;
+      }
+
+      .count {
+        color: var(--soft);
+        font-size: 13px;
+      }
+
+      .list {
+        margin-top: 14px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .card {
+        border-radius: 18px;
+        padding: 14px;
+      }
+
+      .card.critical { border-left: 4px solid var(--critical); }
+      .card.warning { border-left: 4px dashed var(--warning); }
+      .card.healthy { border-left: 4px solid rgba(148, 163, 184, 0.28); }
+      .card.sunset {
+        border-left: 4px solid rgba(148, 163, 184, 0.28);
+        background:
+          linear-gradient(135deg, rgba(148, 163, 184, 0.06) 25%, transparent 25%, transparent 50%, rgba(148, 163, 184, 0.06) 50%, rgba(148, 163, 184, 0.06) 75%, transparent 75%, transparent),
+          linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+        background-size: 18px 18px, auto;
+      }
+
+      .card h4 {
+        margin: 0 0 8px;
+        font-size: 15px;
+        line-height: 1.3;
+      }
+
+      .card p {
+        margin: 4px 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .signal {
+        margin-top: 10px;
+        color: #fecaca;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .signal.warning-text { color: #fdba74; }
+      .signal.success-text { color: #86efac; }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+        <nav class="nav" aria-label="Primary">
+          <span>Intelligence</span>
+          <span>Programs</span>
+          <span class="active">Tower</span>
+          <span>Patterns</span>
+          <span>Settings</span>
+        </nav>
+        <div class="profile">SR</div>
+      </header>
+
+      <section class="toolbar">
+        <div>
+          <div class="mono">Pipeline · Apex Retail Group</div>
+          <div class="headline">13 use cases across backlog, program, steady state, and sunset</div>
+          <div class="meta">
+            <span>Default grouping: Stage</span>
+            <span>Alerts follow the record into the board</span>
+            <span>Programs remain authoritative for in-flight execution state</span>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="control">Filter ▾</div>
+          <div class="control">Group: Stage ▾</div>
+          <div class="control">Search</div>
+          <div class="control">Refresh ↻</div>
+        </div>
+      </section>
+
+      <section class="board">
+        <div class="columns">
+          <article class="column">
+            <div class="mono">Backlog</div>
+            <h3>Backlog</h3>
+            <div class="count">2 use cases</div>
+            <div class="list">
+              <div class="card healthy">
+                <h4>Personalized Email Campaigns · LLM Subject Lines</h4>
+                <p>Front Office · CMO</p>
+                <p>Estimated annual value: $1.8M</p>
+                <p>Vendor direction: Anthropic + Salesforce Marketing Cloud</p>
+              </div>
+              <div class="card healthy">
+                <h4>In-Store Conversational Kiosk · Product Discovery</h4>
+                <p>Front Office · Head of Digital</p>
+                <p>Estimated annual value: $2.4M</p>
+                <p>Store experience concept · medium priority</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Ideation / Validate</div>
+            <h3>Ideate</h3>
+            <div class="count">0 use cases</div>
+            <div class="list"></div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Charter</div>
+            <h3>Charter</h3>
+            <div class="count">2 use cases</div>
+            <div class="list">
+              <div class="card healthy">
+                <h4>Unified Customer Data Platform</h4>
+                <p>Phase 2 Charter · Jake Chen + CMO</p>
+                <p>Single customer ID across POS, e-com, loyalty, app, CRM, email</p>
+                <div class="signal success-text">Info · Charter ready for sponsor review</div>
+              </div>
+              <div class="card warning">
+                <h4>Store Associate Productivity</h4>
+                <p>Phase 2 Charter · Priya Patel</p>
+                <p>Custom shape for 40K store associates · task-audit still being framed</p>
+                <div class="signal warning-text">Warning · custom gate requires Maestro review</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Diagnose</div>
+            <h3>Diagnose</h3>
+            <div class="count">0 use cases</div>
+            <div class="list"></div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Design</div>
+            <h3>Design</h3>
+            <div class="count">0 use cases</div>
+            <div class="list"></div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Build / Execute</div>
+            <h3>Build</h3>
+            <div class="count">1 use case</div>
+            <div class="list">
+              <div class="card warning">
+                <h4>Contact Center AI Transformation</h4>
+                <p>Phase 5 Execute · Maya Reyes</p>
+                <p>Voice + chat deflection, agent assist, QA loop</p>
+                <p>Target: $4.2M annualized savings</p>
+                <div class="signal warning-text">Warning · Spanish-language accuracy pilot 78%</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Verify</div>
+            <h3>Verify</h3>
+            <div class="count">1 use case</div>
+            <div class="list">
+              <div class="card healthy">
+                <h4>Demand Forecasting AI</h4>
+                <p>Historical complete · Marcus Liu</p>
+                <p>28% stockout reduction · 19% markdown reduction</p>
+                <div class="signal success-text">Healthy · outcome report signed off</div>
+              </div>
+            </div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Steady State</div>
+            <h3>Steady State</h3>
+            <div class="count">5 use cases</div>
+            <div class="list">
+              <div class="card warning">
+                <h4>AI-Powered Demand Forecasting</h4>
+                <p>Steady state · Dan Okonkwo</p>
+                <p>$1.8M realized / $2.4M target · trust 62</p>
+                <div class="signal warning-text">Warning · stale attestation 31 days overdue</div>
+              </div>
+              <div class="card healthy">
+                <h4>AI-Driven Inventory Rebalancing</h4>
+                <p>Steady state · Dan Okonkwo</p>
+                <p>$3.47M realized / $5.6M target · trust 78</p>
+              </div>
+              <div class="card warning">
+                <h4>Returns Fraud Detection</h4>
+                <p>Steady state · Henry Zhang</p>
+                <p>$1.1M realized / $890K target · trust 73</p>
+                <div class="signal warning-text">Warning · drift 94% → 87%</div>
+              </div>
+              <div class="card healthy">
+                <h4>Store Staff Scheduling Optimization</h4>
+                <p>Steady state · VP Store Operations</p>
+                <p>$972K realized / $1.2M target · 1,240 active users</p>
+              </div>
+              <div class="card healthy">
+                <h4>Marketing Copy A/B Testing</h4>
+                <p>Steady state · VP Marketing</p>
+                <p>$790K realized / $840K target · trust 91</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="column">
+            <div class="mono">Sunset</div>
+            <h3>Sunset</h3>
+            <div class="count">2 use cases</div>
+            <div class="list">
+              <div class="card sunset">
+                <h4>HR Resume Screening AI</h4>
+                <p>Sunset · bias review failed · EEOC risk too high</p>
+                <p>Former vendor: HireVue</p>
+              </div>
+              <div class="card sunset">
+                <h4>Supply Chain Disruption Alert System</h4>
+                <p>Sunset · replaced by SAP IBP workflow</p>
+                <p>Former vendor: Everstream Analytics</p>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
