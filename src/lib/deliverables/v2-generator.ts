@@ -34,7 +34,7 @@ export interface DeliverableTypeRow {
   applicable_topics: string[];
   template_structure: Record<string, unknown>;
   required_data_inputs: Record<string, unknown>;
-  quality_rubric: Record<string, unknown>;
+  quality_rubric: Record<string, unknown> | Array<Record<string, unknown>>;
   generation_prompt_template: string | null;
   output_format: string;
   maturity: string;
@@ -219,7 +219,7 @@ export async function assembleGenerationContext(
   // Recent turn summary · last 10 turns compacted
   const recentTurnSummary = recentTurns
     .slice(-10)
-    .map((t) => `[${t.sender}] ${t.text.slice(0, 240)}`)
+    .map((t, index) => `[turn ${String(index + 1).padStart(2, '0')} | ${t.sender} | phase ${t.phase}] ${t.text.slice(0, 240)}`)
     .join('\n');
 
   return {
@@ -309,15 +309,24 @@ function renderStructureOutline(structure: Record<string, unknown>): string {
       const required = s.required === true ? ' (required)' : ' (optional)';
       const length = Array.isArray(s.length_words) ? ` · ${(s.length_words as number[]).join('-')} words` : '';
       const components = Array.isArray(s.components) ? ` · components: ${JSON.stringify(s.components)}` : '';
-      return `${i + 1}. ${title}${required}${length}${components}`;
+      const description = typeof s.description === 'string' ? ` · ${s.description}` : '';
+      const example = typeof s.example_completed === 'string' ? ` · example: ${s.example_completed}` : '';
+      return `${i + 1}. ${title}${required}${length}${components}${description}${example}`;
     })
     .join('\n');
 }
 
-function renderRubricCriteria(rubric: Record<string, unknown>): string {
-  const dims = (rubric.dimensions as Array<Record<string, unknown>> | undefined) ?? [];
+function renderRubricCriteria(rubric: Record<string, unknown> | Array<Record<string, unknown>>): string {
+  const dims = Array.isArray(rubric)
+    ? rubric
+    : (rubric.dimensions as Array<Record<string, unknown>> | undefined) ?? [];
   return dims
-    .map((d) => `- ${d.name as string} (weight ${d.weight as number}): ${d.criteria as string}`)
+    .map((d, i) => {
+      const name = (d.criterion as string) ?? (d.name as string) ?? `criterion_${i + 1}`;
+      const rationale = (d.rationale as string) ?? (d.criteria as string) ?? '';
+      const severity = (d.severity as string) ?? (typeof d.weight === 'number' ? `weight ${d.weight}` : null);
+      return `- ${name}${severity ? ` [${severity}]` : ''}: ${rationale}`;
+    })
     .join('\n');
 }
 
@@ -344,7 +353,7 @@ const RUBRIC_REVIEW_SYSTEM = `You are reviewing a deliverable against a quality 
 
 export async function reviewAgainstRubric(args: {
   content: string;
-  rubric: Record<string, unknown>;
+  rubric: Record<string, unknown> | Array<Record<string, unknown>>;
 }): Promise<QualityReview> {
   const client = getAnthropicClient();
   const prompt = `DELIVERABLE CONTENT
