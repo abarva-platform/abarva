@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tower Mockup · Mobile CXO View</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --line: rgba(148, 163, 184, 0.24);
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+        --soft: #94a3b8;
+        --teal: #14b8a6;
+        --atlas: #f59e0b;
+        --critical: #dc2626;
+        --warning: #d97706;
+        --success: #059669;
+        --info: #2563eb;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: start center;
+        background:
+          radial-gradient(circle at top center, rgba(20, 184, 166, 0.12), transparent 20%),
+          linear-gradient(180deg, #101a31 0%, #0f172a 55%, #0b1220 100%);
+        color: var(--text);
+        font-family: "DM Sans", system-ui, sans-serif;
+      }
+
+      .phone {
+        width: 375px;
+        min-height: 100vh;
+        padding: calc(14px + env(safe-area-inset-top)) 16px calc(98px + env(safe-area-inset-bottom));
+        position: relative;
+      }
+
+      .mono {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--teal);
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .wordmark {
+        display: flex;
+        align-items: baseline;
+        gap: 2px;
+      }
+
+      .abar {
+        font-family: Georgia, serif;
+        font-size: 17px;
+        font-weight: 800;
+        color: #fff;
+      }
+
+      .va {
+        font-family: Georgia, serif;
+        font-size: 23px;
+        font-weight: 900;
+        color: var(--teal);
+      }
+
+      .badge {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(245, 158, 11, 0.26);
+        background: rgba(245, 158, 11, 0.1);
+        display: grid;
+        place-items: center;
+        color: #fde68a;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .section {
+        margin-top: 18px;
+      }
+
+      .atlas-card,
+      .signal-card,
+      .tile,
+      .banner,
+      .dock {
+        border: 0.5px solid var(--line);
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+        box-shadow: 0 22px 40px rgba(2, 6, 23, 0.34);
+      }
+
+      .atlas-card {
+        border-radius: 24px;
+        padding: 18px;
+        background:
+          radial-gradient(circle at top right, rgba(245, 158, 11, 0.16), transparent 28%),
+          linear-gradient(180deg, rgba(30, 41, 59, 0.98), rgba(20, 32, 52, 0.98));
+      }
+
+      .atlas-card p,
+      .signal-card p,
+      .tile p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.55;
+      }
+
+      .atlas-card h1 {
+        margin: 10px 0 12px;
+        font-size: 26px;
+        line-height: 1.05;
+      }
+
+      .subhead {
+        margin-top: 4px;
+        color: var(--soft);
+        font-size: 13px;
+      }
+
+      .atlas-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+
+      .chip {
+        white-space: nowrap;
+        padding: 10px 12px;
+        border-radius: 999px;
+        border: 0.5px solid rgba(20, 184, 166, 0.24);
+        background: rgba(20, 184, 166, 0.08);
+        color: #d1fae5;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .carousel {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scroll-snap-type: x proximity;
+      }
+
+      .signal-card {
+        min-width: 284px;
+        border-radius: 22px;
+        padding: 16px;
+        scroll-snap-align: start;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .signal-card::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--critical);
+      }
+
+      .signal-card.warning::before {
+        background: var(--warning);
+      }
+
+      .signal-card .amount {
+        margin-top: 10px;
+        font-size: 26px;
+        font-weight: 800;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .tile {
+        border-radius: 20px;
+        padding: 16px;
+      }
+
+      .tile.wide {
+        grid-column: 1 / -1;
+      }
+
+      .tile h3 {
+        margin: 10px 0 6px;
+        font-size: 16px;
+      }
+
+      .tile strong {
+        display: block;
+        margin-top: 10px;
+        font-size: 24px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 6px;
+      }
+
+      .green { background: var(--success); }
+      .red { background: var(--critical); }
+      .amber { background: var(--warning); }
+      .blue { background: var(--info); }
+
+      .banner {
+        border-radius: 18px;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .dock {
+        position: fixed;
+        left: 50%;
+        bottom: calc(14px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        width: calc(375px - 24px);
+        padding: 12px 14px;
+        border-radius: 999px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        backdrop-filter: blur(18px);
+      }
+
+      .dock-item {
+        text-align: center;
+        color: var(--soft);
+        font-size: 11px;
+      }
+
+      .dock-item strong {
+        display: block;
+        margin-top: 6px;
+        color: inherit;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .dock-item.active {
+        color: #fff;
+      }
+
+      .dock-item.atlas-active {
+        color: #fde68a;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone">
+      <header class="topbar">
+        <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+        <div class="badge">3</div>
+      </header>
+
+      <section class="section">
+        <div class="mono">Apex Retail Group</div>
+        <div class="subhead">Monday, Apr 20 · 6:47 AM · Mobile CXO view</div>
+      </section>
+
+      <section class="section atlas-card">
+        <div class="mono" style="color: #f59e0b">Atlas Morning Summary</div>
+        <h1>Three things need attention before the first executive call.</h1>
+        <p>
+          Shadow AI is still the loudest issue at <strong style="color:#fca5a5">$2.3M annualized</strong>. Demand Forecasting is 31 days late on attestation.
+          Returns Fraud remains yellow after drift triage. The VP Store Ops and Head of Digital both have follow-up work if you want to move today.
+        </p>
+        <div class="atlas-actions">
+          <div class="chip">Tell me more</div>
+          <div class="chip">Brief the CIO</div>
+          <div class="chip">Open Shadow AI</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="mono">Signals</div>
+        <div class="carousel" style="margin-top: 12px">
+          <article class="signal-card">
+            <div class="mono" style="color:#fca5a5">Critical</div>
+            <h2 style="margin: 10px 0 6px; font-size: 20px">Shadow AI</h2>
+            <p>Jasper, Abridge, and Grammarly Business remain outside governed inventory.</p>
+            <div class="amount" style="color:#fca5a5">$2.3M</div>
+            <p>Retail peers median $1.1M · Apex at 2.1×</p>
+          </article>
+
+          <article class="signal-card warning">
+            <div class="mono" style="color:#fdba74">Warning</div>
+            <h2 style="margin: 10px 0 6px; font-size: 20px">Stale attestation</h2>
+            <p>AI-Powered Demand Forecasting is overdue and now drags governance confidence.</p>
+            <div class="amount" style="color:#fdba74">31 days</div>
+            <p>Next board-prep packet will surface the gap.</p>
+          </article>
+
+          <article class="signal-card warning">
+            <div class="mono" style="color:#fdba74">Warning</div>
+            <h2 style="margin: 10px 0 6px; font-size: 20px">Returns Fraud drift</h2>
+            <p>Accuracy moved from 94% to 87%; retraining is planned for May.</p>
+            <div class="amount" style="color:#fdba74">$240K</div>
+            <p>Loss Prevention has already triaged the case.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="mono">Portfolio Health</div>
+        <div class="grid" style="margin-top: 12px">
+          <article class="tile">
+            <div class="mono">Inventory</div>
+            <h3>Use cases <span class="dot blue"></span></h3>
+            <strong>13</strong>
+            <p>4 active · 5 steady · 2 sunset · 2 backlog</p>
+          </article>
+
+          <article class="tile">
+            <div class="mono">Adoption</div>
+            <h3>Penetration <span class="dot red"></span></h3>
+            <strong>54%</strong>
+            <p>1,540 tracked active users · p18 vs cohort</p>
+          </article>
+
+          <article class="tile">
+            <div class="mono">Value</div>
+            <h3>Realized <span class="dot green"></span></h3>
+            <strong>$8.13M</strong>
+            <p>74.4% attainment vs $10.93M target</p>
+          </article>
+
+          <article class="tile">
+            <div class="mono">Risk</div>
+            <h3>Trust <span class="dot amber"></span></h3>
+            <strong>78</strong>
+            <p>1 critical · 2 warning · 1 overdue attestation</p>
+          </article>
+
+          <article class="tile wide">
+            <div class="mono">Cost</div>
+            <h3>Tracked run-rate <span class="dot amber"></span></h3>
+            <strong>$277K/mo</strong>
+            <p>$2.3M annualized shadow spend · 11 vendors vs cohort median 8 · spend intensity 0.11% of revenue</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section banner">
+        <div>
+          <div style="font-weight: 700">Retail context</div>
+          <div style="font-size: 13px; color: var(--muted)">Same-store sales pressure, conversion, basket size, and inventory turns sit behind today’s signal mix.</div>
+        </div>
+        <div class="mono">View all</div>
+      </section>
+    </main>
+
+    <nav class="dock" aria-label="Atlas bottom dock">
+      <div class="dock-item active">⌂<strong>Home</strong></div>
+      <div class="dock-item atlas-active">✦<strong>Atlas</strong></div>
+      <div class="dock-item">◫<strong>Inbox</strong></div>
+      <div class="dock-item">⋯<strong>More</strong></div>
+    </nav>
+  </body>
+</html>
