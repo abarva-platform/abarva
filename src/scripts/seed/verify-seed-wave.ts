@@ -61,6 +61,10 @@ async function verifyTenant(tenant: TenantConfig): Promise<void> {
     'prior_program_history',
   ];
 
+  if (tenant.key === 'keystone') {
+    requiredCategories.push('subsidiary_structure', 'regulatory_environment', 'industry_external_sources');
+  }
+
   const missingCategories = requiredCategories.filter((category) => !orgByCategory.has(category));
   if (missingCategories.length > 0) {
     throw new Error(`${tenant.canonicalName}: missing org_master_data categories ${missingCategories.join(', ')}`);
@@ -94,6 +98,22 @@ async function verifyTenant(tenant: TenantConfig): Promise<void> {
     const missingAttribution = benchmarkData.filter((benchmark) => !benchmark.sourceAttribution || benchmark.sourceAttribution.length === 0);
     if (missingAttribution.length > 0) {
       throw new Error(`${tenant.canonicalName}: org benchmark entries missing attribution ${missingAttribution.map((row) => row.title).join(', ')}`);
+    }
+  }
+
+  if (tenant.key === 'keystone') {
+    const subsidiaries = ((orgByCategory.get('subsidiary_structure') as { subsidiaries?: Array<{ name: string }> } | undefined)?.subsidiaries) ?? [];
+    const regulators = ((orgByCategory.get('regulatory_environment') as { regulators?: Array<{ name: string }> } | undefined)?.regulators) ?? [];
+    const externalSources = ((orgByCategory.get('industry_external_sources') as { sources?: string[] } | undefined)?.sources) ?? [];
+
+    if (subsidiaries.length !== 6) {
+      throw new Error(`${tenant.canonicalName}: expected 6 subsidiaries, found ${subsidiaries.length}`);
+    }
+    if (regulators.length < 8) {
+      throw new Error(`${tenant.canonicalName}: expected at least 8 regulators, found ${regulators.length}`);
+    }
+    if (externalSources.length < 10) {
+      throw new Error(`${tenant.canonicalName}: expected rich external source coverage, found ${externalSources.length}`);
     }
   }
 
