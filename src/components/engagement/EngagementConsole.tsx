@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
@@ -10,6 +10,8 @@ import type { VipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { ChoiceChips, type Choice } from './ChoiceChips';
 import { renderWithCitations } from './renderWithCitations';
 import { CitationPill } from './CitationPill';
+import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // Extract unique citations from agent turn text so we can render a source
 // pills row below the response — visible provenance by default, Target
@@ -96,9 +98,29 @@ export function EngagementConsole({
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
   const [traceTurnId, setTraceTurnId] = useState<string | null>(null);
   const [stages, setStages] = useState<Array<{ label: string; detail?: string }>>([]);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [sendPressed, setSendPressed] = useState(false);
+  const [sendHovered, setSendHovered] = useState(false);
   const composerRef = useRef<HTMLInputElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const reducedMotion = useReducedMotion();
+
+  // Auto-scroll to the latest turn whenever messages or stages update. Use
+  // smooth scroll unless the user has opted out via OS-level reduced-motion.
+  useEffect(() => {
+    const el = messagesEndRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' });
+  }, [messages, stages.length, reducedMotion]);
+
+  // Gate toast auto-dismiss · cleans up after the UI reads the event.
+  useEffect(() => {
+    if (!gateToast) return;
+    const t = setTimeout(() => setGateToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [gateToast]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -249,21 +271,44 @@ export function EngagementConsole({
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif', position: 'relative' }}>
       {gateToast && (
-        <div style={{
-          position: 'fixed', top: 80, right: 24, zIndex: 50,
-          padding: '12px 18px',
-          background: 'rgba(45,212,200,0.12)',
-          border: '0.5px solid rgba(45,212,200,0.4)',
-          borderRadius: 10,
-          color: '#2DD4C8',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 12,
-          letterSpacing: '0.08em',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        }}>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed', top: 80, right: 24, zIndex: 60,
+            padding: '12px 18px',
+            background: 'rgba(45,212,200,0.12)',
+            border: '0.5px solid rgba(45,212,200,0.4)',
+            borderRadius: 10,
+            color: '#2DD4C8',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 12,
+            letterSpacing: '0.08em',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: reducedMotion
+              ? undefined
+              : `toastEnter ${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+          }}
+        >
           ✓ Phase {gateToast.phase} approved · advancing to Phase {gateToast.newPhase}…
         </div>
       )}
+      {/* Scoped keyframes for the toast + stage reveal. Defined once at
+          the root so we don't ship a global stylesheet from a client page. */}
+      <style jsx>{`
+        @keyframes toastEnter {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stageFade {
+          from { opacity: 0; transform: translateX(-4px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes streamPulse {
+          0%, 100% { opacity: 0.35; }
+          50%      { opacity: 0.9; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{ padding: '16px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
@@ -284,6 +329,7 @@ export function EngagementConsole({
               borderRadius: 8,
               background: i === engagement.current_phase ? 'rgba(45,212,200,0.12)' : 'rgba(255,255,255,0.03)',
               border: `0.5px solid ${i === engagement.current_phase ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+              transition: reducedMotion ? undefined : `background-color ${TRANSITIONS.inPlace}, border-color ${TRANSITIONS.inPlace}`,
             }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                 PHASE {i}
@@ -418,7 +464,20 @@ export function EngagementConsole({
                     {t.sender === 'agent' && t.streaming && !t.text && stages.length > 0 && (
                       <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
                         {stages.map((s, i) => (
-                          <div key={i} style={{ fontSize: 12, fontStyle: 'italic', color: 'rgba(245,245,240,0.55)', fontFamily: 'DM Sans, sans-serif', letterSpacing: '-0.01em' }}>
+                          <div
+                            key={i}
+                            style={{
+                              fontSize: 12,
+                              fontStyle: 'italic',
+                              color: 'rgba(245,245,240,0.55)',
+                              fontFamily: 'DM Sans, sans-serif',
+                              letterSpacing: '-0.01em',
+                              animation: reducedMotion
+                                ? undefined
+                                : `stageFade ${MOTION.duration.default} ${MOTION.easing.easeOut} both`,
+                              animationDelay: reducedMotion ? undefined : `${i * 80}ms`,
+                            }}
+                          >
                             <span style={{ color: '#2DD4C8', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
                             {s.label}
                             {s.detail && <span style={{ color: 'rgba(245,245,240,0.4)', marginLeft: 6 }}>· {s.detail}</span>}
@@ -428,7 +487,18 @@ export function EngagementConsole({
                     )}
                     <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                       {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
-                      {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
+                      {t.streaming && (
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            color: '#2DD4C8',
+                            opacity: 0.7,
+                            animation: reducedMotion ? undefined : `streamPulse 1.2s ${MOTION.easing.easeInOut} infinite`,
+                          }}
+                        >
+                          ▊
+                        </span>
+                      )}
                     </div>
                     {t.sender === 'agent' && !t.streaming && (() => {
                       const cites = extractCitations(t.text);
@@ -498,10 +568,24 @@ export function EngagementConsole({
                 </div>
               ))
             )}
+            {/* Scroll anchor — autoscroll keeps the latest turn visible */}
+            <div ref={messagesEndRef} aria-hidden="true" />
           </div>
 
           {error && (
-            <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(255,107,74,0.08)', border: '0.5px solid rgba(255,107,74,0.3)', borderRadius: 8, color: '#FF6B4A', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>
+            <div
+              role="alert"
+              style={{
+                marginTop: 12,
+                padding: '8px 12px',
+                background: 'rgba(255,107,74,0.08)',
+                border: '0.5px solid rgba(255,107,74,0.3)',
+                borderRadius: 8,
+                color: '#FF6B4A',
+                fontSize: 12,
+                fontFamily: 'JetBrains Mono, monospace',
+              }}
+            >
               {error}
             </div>
           )}
@@ -512,11 +596,50 @@ export function EngagementConsole({
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
               disabled={isStreaming}
               placeholder={composerPlaceholder}
-              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#F5F5F0', fontFamily: 'inherit', fontSize: 14 }}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                background: 'rgba(255,255,255,0.06)',
+                border: `0.5px solid ${composerFocused ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+                borderRadius: 8,
+                color: '#F5F5F0',
+                fontFamily: 'inherit',
+                fontSize: 14,
+                outline: 'none',
+                transition: reducedMotion
+                  ? undefined
+                  : `border-color ${TRANSITIONS.focus}, box-shadow ${TRANSITIONS.focus}`,
+                boxShadow: composerFocused ? FOCUS_RING.brand : 'none',
+              }}
             />
-            <button type="submit" disabled={isStreaming || !input.trim()} style={{ padding: '10px 18px', background: '#2DD4C8', color: '#0A0A0A', border: 'none', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: isStreaming || !input.trim() ? 'default' : 'pointer', opacity: isStreaming || !input.trim() ? 0.5 : 1 }}>
+            <button
+              type="submit"
+              disabled={isStreaming || !input.trim()}
+              onMouseEnter={() => setSendHovered(true)}
+              onMouseLeave={() => { setSendHovered(false); setSendPressed(false); }}
+              onMouseDown={() => setSendPressed(true)}
+              onMouseUp={() => setSendPressed(false)}
+              style={{
+                padding: '10px 18px',
+                background: sendPressed ? '#0F766E' : sendHovered ? '#0D9488' : '#2DD4C8',
+                color: '#0A0A0A',
+                border: 'none',
+                borderRadius: 8,
+                fontFamily: 'inherit',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: isStreaming || !input.trim() ? 'not-allowed' : 'pointer',
+                opacity: isStreaming || !input.trim() ? 0.5 : 1,
+                transform: sendPressed ? 'translateY(1px)' : 'translateY(0)',
+                transition: reducedMotion
+                  ? undefined
+                  : `background-color ${TRANSITIONS.hover}, transform ${TRANSITIONS.press}`,
+              }}
+            >
               {isStreaming ? 'Nexus...' : 'Send'}
             </button>
           </form>

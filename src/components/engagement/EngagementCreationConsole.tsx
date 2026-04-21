@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 type LocalMsg = {
   id: string;
@@ -86,7 +88,14 @@ export function EngagementCreationConsole() {
   const [activeClientName, setActiveClientName] = useState<string | null>(null);
   const idRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [sendPressed, setSendPressed] = useState(false);
+  const [sendHovered, setSendHovered] = useState(false);
+  const [startHovered, setStartHovered] = useState(false);
+  const [startPressed, setStartPressed] = useState(false);
   const nextId = () => `local-${Date.now()}-${++idRef.current}`;
+  const reducedMotion = useReducedMotion();
 
   // Auto-resize textarea between 1 and 6 rows as the user types.
   const MIN_ROWS = 1;
@@ -105,6 +114,13 @@ export function EngagementCreationConsole() {
   // Manual advance · user must click "Start Phase 0" to enter the console so
   // they have a chance to verify what was extracted and edit if needed. Prior
   // behaviour auto-redirected after 1.5s which silently locked in mistakes.
+
+  // Auto-scroll to the latest bubble or to the readout as it appears.
+  useEffect(() => {
+    const el = messagesEndRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' });
+  }, [messages, created, reducedMotion]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -191,6 +207,16 @@ export function EngagementCreationConsole() {
 
   return (
     <div style={{ minHeight: 'calc(100vh - 100px)', background: BG, color: INK, fontFamily: FONT_BODY }}>
+      <style jsx>{`
+        @keyframes creationStreamPulse {
+          0%, 100% { opacity: 0.35; }
+          50%      { opacity: 0.9; }
+        }
+        @keyframes creationReadoutEnter {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
       <div style={{ padding: 24, maxWidth: 820, margin: '0 auto' }}>
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontFamily: FONT_SERIF, marginBottom: 4 }}>
@@ -244,10 +270,22 @@ export function EngagementCreationConsole() {
                 </div>
                 <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                   {m.role === 'assistant' ? liveStrip(m.content) : m.content}
-                  {m.streaming && <span style={{ color: TEAL, opacity: 0.7 }}>▊</span>}
+                  {m.streaming && (
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        color: TEAL,
+                        opacity: 0.7,
+                        animation: reducedMotion ? undefined : `creationStreamPulse 1.2s ${MOTION.easing.easeInOut} infinite`,
+                      }}
+                    >
+                      ▊
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
+            <div ref={messagesEndRef} aria-hidden="true" />
           </div>
 
           {created && (
@@ -258,6 +296,9 @@ export function EngagementCreationConsole() {
                 background: 'rgba(45,212,200,0.06)',
                 border: `0.5px solid ${TEAL}4D`,
                 borderRadius: 10,
+                animation: reducedMotion
+                  ? undefined
+                  : `creationReadoutEnter ${MOTION.duration.default} ${MOTION.easing.easeOut} both`,
               }}
             >
               <div
@@ -346,9 +387,13 @@ export function EngagementCreationConsole() {
                   onClick={() =>
                     router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`)
                   }
+                  onMouseEnter={() => setStartHovered(true)}
+                  onMouseLeave={() => { setStartHovered(false); setStartPressed(false); }}
+                  onMouseDown={() => setStartPressed(true)}
+                  onMouseUp={() => setStartPressed(false)}
                   style={{
                     padding: '10px 20px',
-                    background: TEAL,
+                    background: startPressed ? '#0F766E' : startHovered ? '#0D9488' : TEAL,
                     color: BG,
                     border: 'none',
                     borderRadius: 8,
@@ -356,6 +401,10 @@ export function EngagementCreationConsole() {
                     fontSize: 13,
                     fontWeight: 600,
                     cursor: 'pointer',
+                    transform: startPressed ? 'translateY(1px)' : 'translateY(0)',
+                    transition: reducedMotion
+                      ? undefined
+                      : `background-color ${TRANSITIONS.hover}, transform ${TRANSITIONS.press}`,
                   }}
                 >
                   Start Phase 0 →
@@ -404,13 +453,15 @@ export function EngagementCreationConsole() {
                   }
                 }}
                 disabled={isStreaming}
+                onFocus={() => setComposerFocused(true)}
+                onBlur={() => setComposerFocused(false)}
                 placeholder="Describe the program…"
                 rows={1}
                 style={{
                   flex: 1,
                   padding: '10px 14px',
                   background: 'rgba(255,255,255,0.06)',
-                  border: '0.5px solid rgba(255,255,255,0.12)',
+                  border: `0.5px solid ${composerFocused ? TEAL : 'rgba(255,255,255,0.12)'}`,
                   borderRadius: 8,
                   color: INK,
                   fontFamily: 'inherit',
@@ -419,22 +470,34 @@ export function EngagementCreationConsole() {
                   resize: 'none',
                   outline: 'none',
                   overflow: 'hidden',
+                  transition: reducedMotion
+                    ? undefined
+                    : `border-color ${TRANSITIONS.focus}, box-shadow ${TRANSITIONS.focus}`,
+                  boxShadow: composerFocused ? FOCUS_RING.brand : 'none',
                 }}
               />
               <button
                 type="submit"
                 disabled={isStreaming || !input.trim()}
+                onMouseEnter={() => setSendHovered(true)}
+                onMouseLeave={() => { setSendHovered(false); setSendPressed(false); }}
+                onMouseDown={() => setSendPressed(true)}
+                onMouseUp={() => setSendPressed(false)}
                 style={{
                   padding: '10px 18px',
-                  background: TEAL,
+                  background: sendPressed ? '#0F766E' : sendHovered ? '#0D9488' : TEAL,
                   color: BG,
                   border: 'none',
                   borderRadius: 8,
                   fontFamily: 'inherit',
                   fontSize: 13,
                   fontWeight: 500,
-                  cursor: isStreaming || !input.trim() ? 'default' : 'pointer',
+                  cursor: isStreaming || !input.trim() ? 'not-allowed' : 'pointer',
                   opacity: isStreaming || !input.trim() ? 0.5 : 1,
+                  transform: sendPressed ? 'translateY(1px)' : 'translateY(0)',
+                  transition: reducedMotion
+                    ? undefined
+                    : `background-color ${TRANSITIONS.hover}, transform ${TRANSITIONS.press}`,
                 }}
               >
                 {isStreaming ? 'Nexus...' : 'Send'}
