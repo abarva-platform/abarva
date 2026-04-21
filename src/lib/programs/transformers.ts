@@ -1,0 +1,568 @@
+// Transformers · DB types → view-model types (Codex contracts).
+//
+// Per the Phase-3 API rule in memory (project_programs_api_transformer_rule):
+// API routes under src/app/api/v1/programs/** return the view-model
+// types from Codex's section of types.ts (ProgramSummary,
+// ProgramFullState, ModuleState, PatternMatch, etc.), never the DB
+// types (ProgramCore, ProgramModuleRow, etc.). Transformers in this
+// file are the crossing point.
+//
+// Where the DB doesn't yet carry a view-model field, we resolve it by
+// calling back into queries.ts or return a stable default. Gaps are
+// flagged with TODO comments so we can backfill as DB evolves.
+
+import { getServerSupabase } from '@/lib/supabase-server';
+import type {
+  ActivityEntry,
+  ArchetypeKey,
+  AttentionVariant,
+  CharterSummary,
+  DeliverableSummary,
+  ExecuteSurfaceProps,
+  ModuleState,
+  NexusPanelProps,
+  ParticipantRef,
+  PatternMatch,
+  PatternClassifierMatch,
+  PersonRef,
+  PhaseState,
+  ProgramCore,
+  ProgramFullState,
+  ProgramMilestoneRow,
+  ProgramModuleRow,
+  ProgramRiskRow,
+  ProgramSummary,
+  ProgramThread,
+  ProgramWorkItemRow,
+  TenancyCtx,
+  ThreadRef,
+  ViewerRole,
+} from './types';
+import {
+  getMilestones,
+  getModuleState,
+  getOpenMaestroFlags,
+  getPendingApprovals,
+  getRisks,
+  getWorkItems,
+} from './queries';
+import { PHASE_LABELS } from './types';
+
+// ── Client name mapping ────────────────────────────────────────────────
+const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([
+  ['meridian health', 'Meridian Health System'],
+  ['meridian health system', 'Meridian Health System'],
+  ['first capital', 'First Capital Financial'],
+  ['first capital financial', 'First Capital Financial'],
+  ['first capital financial group', 'First Capital Financial'],
+  ['arcturus financial', 'First Capital Financial'],
+  ['apex retail', 'Apex Retail Group'],
+  ['apex retail group', 'Apex Retail Group'],
+]);
+
+async function resolveClientName(clientId: string): Promise<ProgramSummary['clientName']> {
+  const sb = getServerSupabase();
+  const { data } = await sb.from('clients').select('name').eq('id', clientId).maybeSingle();
+  const raw = (data as { name: string } | null)?.name ?? '';
+  const key = raw.trim().toLowerCase();
+  return KNOWN_CLIENT_NAMES.get(key) ?? 'Apex Retail Group';
+}
+
+// ── Person → PersonRef ─────────────────────────────────────────────────
+const AVATAR_COLORS = ['#2DD4C8', '#9B6DFF', '#F5C54A', '#FF6B4A', '#3FB27F', '#4DA3FF'];
+function colorForId(id: string): string {
+  let hash = 0;
+  for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+function initialsOf(name: string | null | undefined): string {
+  if (!name) return '·';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function placeholderPerson(id = 'unknown'): PersonRef {
+  return { id, name: '—', title: '', initials: '·', avatarColor: '#888' };
+}
+
+async function resolvePerson(userId: string | null, fallbackClientName?: string): Promise<PersonRef> {
+  if (!userId) return placeholderPerson();
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('persons')
+    .select('id, name, role')
+    .eq('id', userId)
+    .maybeSingle();
+  const p = data as { id: string; name: string | null; role: string | null } | null;
+  if (!p) return placeholderPerson(userId);
+  return {
+    id: p.id,
+    name: p.name ?? '—',
+    title: p.role ?? '',
+    initials: initialsOf(p.name),
+    avatarColor: colorForId(p.id),
+    clientName: fallbackClientName,
+  };
+}
+
+// ── Participants → team[] ──────────────────────────────────────────────
+interface ParticipantRow {
+  user_id: string;
+  approval_authority: string | null;
+  last_touchpoint_at: string | null;
+  role: string | null;
+}
+
+function authorityToViewerRole(auth: string | null, fallback: ViewerRole = 'team_member'): ViewerRole {
+  if (auth === 'sponsor') return 'sponsor';
+  if (auth === 'approver') return 'lead';
+  if (auth === 'contributor') return 'team_member';
+  return fallback;
+}
+
+async function resolveTeam(engagementId: string): Promise<ParticipantRef[]> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('engagement_participants')
+    .select('user_id, approval_authority, last_touchpoint_at, role')
+    .eq('engagement_id', engagementId);
+
+  const rows = (data as ParticipantRow[] | null) ?? [];
+  const personIds = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+  if (personIds.length === 0) return [];
+  const { data: persons } = await sb
+    .from('persons')
+    .select('id, name, role, email')
+    .in('id', personIds);
+  const personById = new Map<string, { id: string; name: string | null; role: string | null }>();
+  for (const p of (persons as Array<{ id: string; name: string | null; role: string | null; email: string | null }> | null) ?? []) {
+    personById.set(p.id, { id: p.id, name: p.name, role: p.role });
+  }
+
+  return rows
+    .filter((r) => personById.has(r.user_id))
+    .map((r) => {
+      const p = personById.get(r.user_id)!;
+      return {
+        id: p.id,
+        name: p.name ?? '—',
+        title: p.role ?? r.role ?? '',
+        initials: initialsOf(p.name),
+        avatarColor: colorForId(p.id),
+        role: authorityToViewerRole(r.approval_authority),
+      } satisfies ParticipantRef;
+    });
+}
+
+async function resolveSponsorAndLead(engagementId: string): Promise<{ sponsor: PersonRef; lead: PersonRef }> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('engagement_participants')
+    .select('user_id, approval_authority, role')
+    .eq('engagement_id', engagementId)
+    .in('approval_authority', ['sponsor', 'approver']);
+  const rows = (data as Array<{ user_id: string; approval_authority: string | null; role: string | null }> | null) ?? [];
+  const sponsorRow = rows.find((r) => r.approval_authority === 'sponsor');
+  const leadRow = rows.find((r) => r.approval_authority === 'approver');
+  const [sponsor, lead] = await Promise.all([
+    sponsorRow ? resolvePerson(sponsorRow.user_id) : Promise.resolve(placeholderPerson('sponsor_missing')),
+    leadRow ? resolvePerson(leadRow.user_id) : Promise.resolve(placeholderPerson('lead_missing')),
+  ]);
+  return { sponsor, lead };
+}
+
+// ── Phase state ────────────────────────────────────────────────────────
+function phaseStatesFor(program: ProgramCore, modules: ProgramModuleRow[]): PhaseState[] {
+  const totalPhases = 6;
+  const current = program.currentPhase ?? 0;
+  const out: PhaseState[] = [];
+  for (let i = 0; i < totalPhases; i += 1) {
+    const phaseModules = modules.filter((m) => m.phaseNumber === i);
+    const allDone = phaseModules.length > 0 && phaseModules.every((m) => m.status === 'completed' || m.status === 'skipped');
+    let state: PhaseState['state'];
+    if (i < current) state = 'complete';
+    else if (i === current) state = allDone ? 'pending_gate' : 'active';
+    else state = 'locked';
+    const gateType: PhaseState['gateType'] = i === 2 || i === 4 || i === 5 ? 'hard' : i === 0 ? 'none' : 'soft';
+    out.push({
+      canonicalPhase: i,
+      name: PHASE_LABELS[i] ?? `Phase ${i}`,
+      state,
+      gateType,
+      summary:
+        state === 'complete' ? 'Signed off'
+        : state === 'pending_gate' ? 'Ready for gate review'
+        : state === 'active' ? `${phaseModules.filter((m) => m.status === 'in_progress').length} modules active`
+        : 'Locked until prior phases complete',
+    });
+  }
+  return out;
+}
+
+function programPhaseStatus(program: ProgramCore, phases: PhaseState[]): ProgramSummary['phaseStatus'] {
+  if (program.currentPhase == null) return 'active';
+  if (program.currentPhase >= 5 && phases[5]?.state === 'complete') return 'complete';
+  const current = phases[program.currentPhase];
+  if (current?.state === 'pending_gate') return 'awaiting_gate';
+  // Blocked if any module in current phase is blocked
+  return 'active';
+}
+
+// ── Module state transform ─────────────────────────────────────────────
+function moduleRowToState(r: ProgramModuleRow, deliverables: Array<{ id: string; module_key: string | null; status: string; current_version: number }> = []): ModuleState {
+  const linked = deliverables.filter((d) => d.module_key === r.moduleKey || (r.state?.deliverableKey as string | undefined) === d.module_key);
+  const current = linked.find((d) => d.status !== 'superseded');
+  const vm: ModuleState = {
+    moduleKey: r.moduleKey,
+    name: r.moduleName,
+    phase: r.phaseNumber,
+    status: mapModuleStatus(r.status, current?.status),
+    currentVersion: current?.current_version,
+    lastEditedAt: r.completedAt ? new Date(r.completedAt) : r.startedAt ? new Date(r.startedAt) : undefined,
+    nexusDraftPending: !!(r.state?.nexus_draft_pending),
+    blockerReason: (r.state?.blocker_reason as string | undefined) ?? undefined,
+    deliverableIds: linked.map((d) => d.id),
+  };
+  return vm;
+}
+
+function mapModuleStatus(dbStatus: ProgramModuleRow['status'], deliverableStatus: string | undefined): ModuleState['status'] {
+  if (dbStatus === 'blocked') return 'blocked';
+  if (dbStatus === 'skipped') return 'skipped';
+  if (dbStatus === 'completed') {
+    if (deliverableStatus === 'signed_off') return 'signed_off';
+    if (deliverableStatus === 'in_review') return 'in_review';
+    return 'signed_off';
+  }
+  if (dbStatus === 'in_progress') {
+    if (deliverableStatus === 'in_review') return 'in_review';
+    if (deliverableStatus === 'draft') return 'draft';
+    return 'in_progress';
+  }
+  return 'not_started';
+}
+
+// ── Classifier → view-model PatternMatch ───────────────────────────────
+export function classifierMatchToViewModel(
+  match: PatternClassifierMatch,
+  catalog: {
+    title?: string;
+    deployment_count?: number;
+    successful_deployment_count?: number;
+    median_outcome_usd?: number;
+    typical_duration_months?: number;
+    canonical_shape_json?: Record<string, unknown> | null;
+  } | null,
+  isTopMatch: boolean,
+): PatternMatch {
+  const deploymentCount = catalog?.deployment_count ?? 0;
+  const successfulDeploymentCount = catalog?.successful_deployment_count ?? 0;
+  const successRatePct = deploymentCount > 0 ? Math.round((successfulDeploymentCount / deploymentCount) * 100) : 0;
+  const band = (match.band === 'no_match' ? 'low' : match.band) as 'high' | 'medium' | 'low';
+  const canonical = (catalog?.canonical_shape_json ?? match.canonicalShape ?? {}) as Record<string, unknown>;
+  const phases = Array.isArray(canonical.phases)
+    ? (canonical.phases as Array<{ canonicalPhase: number; name: string }>)
+    : Object.entries(PHASE_LABELS).map(([k, v]) => ({ canonicalPhase: Number(k), name: v }));
+  const modules = Array.isArray(canonical.modules)
+    ? (canonical.modules as Array<{ moduleKey: string; name: string }>)
+    : [];
+
+  return {
+    patternKey: match.patternKey,
+    patternName: catalog?.title ?? match.patternKey,
+    confidence: match.confidence,
+    confidenceBand: band,
+    deploymentCount,
+    successfulDeploymentCount,
+    medianOutcomeUsd: catalog?.median_outcome_usd,
+    typicalDurationMonths: catalog?.typical_duration_months ?? 0,
+    successRatePct,
+    preloadDepthPct: (canonical.preload_depth_pct as number | undefined) ?? (match.band === 'high' ? 80 : match.band === 'medium' ? 60 : 40),
+    proposedShape: { phases, modules },
+    isTopMatch,
+  };
+}
+
+// ── ProgramCore → ProgramSummary ───────────────────────────────────────
+export async function buildProgramSummary(program: ProgramCore): Promise<ProgramSummary> {
+  const sb = getServerSupabase();
+  const [{ sponsor, lead }, clientName, patternMatchRow, charterRow, lastActivityRow, openFlagsCount, pendingApprovalsCount] = await Promise.all([
+    resolveSponsorAndLead(program.id),
+    resolveClientName(program.clientId),
+    sb.from('pattern_match_logs').select('pattern_key').eq('engagement_id', program.id).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1).maybeSingle(),
+    sb.from('deliverables_v2').select('title, status').eq('engagement_id', program.id).eq('deliverable_type_key', 'charter').maybeSingle(),
+    sb.from('module_state_log').select('created_at').eq('engagement_id', program.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    sb.from('maestro_oversight_flags').select('id', { count: 'exact', head: true }).eq('engagement_id', program.id).is('resolved_at', null).eq('severity', 'critical'),
+    sb.from('founder_approval_requests').select('id', { count: 'exact', head: true }).eq('engagement_id', program.id).eq('status', 'pending'),
+  ]);
+
+  const patternKey = (patternMatchRow.data as { pattern_key: string } | null)?.pattern_key ?? undefined;
+  let patternName: string | undefined;
+  if (patternKey) {
+    const { data: topic } = await sb.from('engagement_topics').select('title').eq('topic_key', patternKey).maybeSingle();
+    patternName = (topic as { title: string } | null)?.title;
+  }
+
+  const charterData = charterRow.data as { title: string; status: string } | null;
+  const charterSummary = charterData?.title ?? `${program.name} charter in draft`;
+
+  const shape: ProgramSummary['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
+
+  const lastActivityAt = (lastActivityRow.data as { created_at: string } | null)?.created_at ?? program.createdAt;
+
+  const modules = await getModuleState({ clientId: program.clientId, userId: '_sys_' } as TenancyCtx, program.id).catch(() => [] as ProgramModuleRow[]);
+  const phases = phaseStatesFor(program, modules);
+  const phaseStatus = programPhaseStatus(program, phases);
+
+  const critical = openFlagsCount.count ?? 0;
+  const pending = pendingApprovalsCount.count ?? 0;
+  const attentionBadge = critical > 0
+    ? { label: `${critical} critical flag${critical === 1 ? '' : 's'}`, variant: 'danger' as AttentionVariant }
+    : pending > 0
+      ? { label: `${pending} pending approval${pending === 1 ? '' : 's'}`, variant: 'warning' as AttentionVariant }
+      : phaseStatus === 'awaiting_gate'
+        ? { label: 'Gate review ready', variant: 'info' as AttentionVariant }
+        : undefined;
+
+  return {
+    id: program.id,
+    name: program.name,
+    archetype: (program.archetype as ArchetypeKey) ?? 'strategic_transformation',
+    patternKey,
+    patternName,
+    charterSummary,
+    currentPhase: program.currentPhase ?? 0,
+    phaseStatus,
+    sponsorPerson: sponsor,
+    leadPerson: lead,
+    lastActivityAt: new Date(lastActivityAt),
+    attentionBadge,
+    shape,
+    clientName,
+  };
+}
+
+// ── ProgramCore → ProgramFullState ─────────────────────────────────────
+export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCore): Promise<ProgramFullState> {
+  const sb = getServerSupabase();
+  const [{ sponsor, lead }, clientName, team, moduleRows, workItems, milestones, risks, deliverables, threadRows, patternMatchRow] = await Promise.all([
+    resolveSponsorAndLead(program.id),
+    resolveClientName(program.clientId),
+    resolveTeam(program.id),
+    getModuleState(ctx, program.id),
+    getWorkItems(ctx, program.id),
+    getMilestones(ctx, program.id),
+    getRisks(ctx, program.id),
+    sb.from('deliverables_v2').select('id, module_key:deliverable_type_key, status, current_version, title, updated_at, created_by').eq('engagement_id', program.id).order('updated_at', { ascending: false }),
+    sb.from('program_threads').select('id, title, metadata_jsonb, last_turn_at').eq('engagement_id', program.id).is('archived_at', null).order('last_turn_at', { ascending: false }),
+    sb.from('pattern_match_logs').select('pattern_key').eq('engagement_id', program.id).eq('acted_upon', true).order('acted_upon_at', { ascending: false }).limit(1).maybeSingle(),
+  ]);
+
+  const delivRows = (deliverables.data as Array<{ id: string; module_key: string | null; status: string; current_version: number; title: string; updated_at: string; created_by: string | null }> | null) ?? [];
+  const modules: ModuleState[] = moduleRows.map((r) => moduleRowToState(r, delivRows));
+  const phases = phaseStatesFor(program, moduleRows);
+  const phaseStatus = programPhaseStatus(program, phases);
+
+  const patternKey = (patternMatchRow.data as { pattern_key: string } | null)?.pattern_key ?? undefined;
+  let patternName: string | undefined;
+  if (patternKey) {
+    const { data: topic } = await sb.from('engagement_topics').select('title').eq('topic_key', patternKey).maybeSingle();
+    patternName = (topic as { title: string } | null)?.title;
+  }
+
+  const shape: ProgramFullState['shape'] = patternKey ? 'pattern' : program.archetype ? 'custom' : 'template';
+
+  const charter: CharterSummary = await buildCharterSummary(program.id, program.name);
+
+  const activity = await buildActivity(program.id);
+  const deliverableSummaries: DeliverableSummary[] = await Promise.all(
+    delivRows.slice(0, 20).map(async (d) => {
+      const owner = d.created_by === 'nexus' ? placeholderNexus() : await resolvePerson(d.created_by ?? null);
+      return {
+        id: d.id,
+        title: d.title,
+        moduleKey: d.module_key ?? 'unknown',
+        version: d.current_version,
+        status: (d.status === 'draft' || d.status === 'in_review' || d.status === 'signed_off') ? d.status : 'draft',
+        updatedAt: new Date(d.updated_at),
+        owner,
+        summary: '',
+      };
+    }),
+  );
+
+  const threads: ThreadRef[] = ((threadRows.data as Array<{ id: string; title: string | null; metadata_jsonb: Record<string, unknown> | null; last_turn_at: string | null }> | null) ?? [])
+    .map((t) => ({
+      id: t.id,
+      title: t.title ?? '—',
+      source: 'manual' as const,
+      lastTouchedAt: new Date(t.last_turn_at ?? program.createdAt),
+    }));
+
+  const gateSummary = phaseStatus === 'awaiting_gate' ? `Phase ${program.currentPhase ?? 0} gate ready` : 'Not at a gate';
+  const gateStatus: ProgramFullState['gateStatus'] = phaseStatus === 'awaiting_gate' ? 'pending' : phaseStatus === 'complete' ? 'cleared' : 'pending';
+
+  const openDecisions = risks.filter((r) => r.status === 'open' && r.likelihood === 'high').slice(0, 3).map((r) => r.title);
+  const milestoneBullets = milestones.slice(0, 3).map((m) => `${m.name} · ${m.status}`);
+  const keyFindings = moduleRows
+    .filter((m) => m.status === 'completed')
+    .slice(0, 3)
+    .map((m) => `${m.moduleName} completed`);
+
+  return {
+    id: program.id,
+    name: program.name,
+    charter,
+    currentPhase: program.currentPhase ?? 0,
+    shape,
+    patternKey,
+    phases,
+    modules,
+    team,
+    activity,
+    linkedIntelligenceThreads: threads,
+    archetype: (program.archetype as ArchetypeKey) ?? 'strategic_transformation',
+    clientName,
+    sponsorPerson: sponsor,
+    leadPerson: lead,
+    phaseStatus,
+    patternName,
+    gateSummary,
+    gateStatus,
+    deliverables: deliverableSummaries,
+    metrics: buildMetrics(milestones, workItems, risks),
+    sponsorDashboard: {
+      openDecisions,
+      milestones: milestoneBullets,
+      keyFindings,
+      outcomeSignal:
+        phaseStatus === 'complete' ? 'Program complete' : 'In flight',
+    },
+    nexusPanel: buildNexusPanelDefault(program.id),
+    moduleContent: {},
+    executeData: buildExecuteData(program.id, milestones, workItems, risks, deliverableSummaries),
+  };
+}
+
+function placeholderNexus(): PersonRef {
+  return { id: 'nexus', name: 'Nexus', title: 'Embedded delivery agent', initials: 'NX', avatarColor: '#2DD4C8' };
+}
+
+async function buildCharterSummary(engagementId: string, programName: string): Promise<CharterSummary> {
+  const sb = getServerSupabase();
+  const { data: charter } = await sb
+    .from('deliverables_v2')
+    .select('title, status')
+    .eq('engagement_id', engagementId)
+    .eq('deliverable_type_key', 'charter')
+    .maybeSingle();
+  const c = charter as { title: string; status: string } | null;
+  if (!c) {
+    return {
+      headline: `${programName} · charter pending`,
+      bullets: ['Charter draft has not been produced yet'],
+      sponsorDecision: 'Pending sponsor pickup',
+      baselineNeed: 'Baseline to be captured in Phase 2',
+    };
+  }
+  return {
+    headline: c.title,
+    bullets: [`Status: ${c.status}`],
+    sponsorDecision: c.status === 'signed_off' ? 'Signed off' : 'Awaiting sponsor decision',
+    baselineNeed: 'Baseline captured',
+  };
+}
+
+async function buildActivity(engagementId: string): Promise<ActivityEntry[]> {
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('module_state_log')
+    .select('id, module_key, previous_state, new_state, changed_by_user_id, notes, created_at')
+    .eq('engagement_id', engagementId)
+    .order('created_at', { ascending: false })
+    .limit(15);
+  const rows = (data as Array<{ id: string; module_key: string; previous_state: string | null; new_state: string; changed_by_user_id: string | null; notes: string | null; created_at: string }> | null) ?? [];
+  return Promise.all(
+    rows.map(async (r) => ({
+      id: r.id,
+      type: classifyActivityType(r.module_key),
+      title: `${r.module_key} · ${r.new_state}${r.previous_state ? ` (was ${r.previous_state})` : ''}`,
+      detail: r.notes ?? '',
+      at: new Date(r.created_at),
+      actor: r.changed_by_user_id ? await resolvePerson(r.changed_by_user_id) : placeholderNexus(),
+    })),
+  );
+}
+
+function classifyActivityType(moduleKey: string): ActivityEntry['type'] {
+  if (moduleKey.startsWith('phase_')) return 'gate';
+  if (moduleKey.includes('risk')) return 'risk';
+  if (moduleKey.includes('milestone')) return 'milestone';
+  if (moduleKey.includes('approval')) return 'approval';
+  if (moduleKey.includes('nexus') || moduleKey.includes('cxo')) return 'nexus';
+  return 'deliverable';
+}
+
+function buildMetrics(milestones: ProgramMilestoneRow[], workItems: ProgramWorkItemRow[], risks: ProgramRiskRow[]): ProgramFullState['metrics'] {
+  const atRisk = milestones.filter((m) => m.status === 'at_risk').length;
+  const blocked = workItems.filter((w) => w.status === 'blocked').length;
+  const openHighRisks = risks.filter((r) => (r.status === 'open' || r.status === 'mitigating') && r.likelihood === 'high').length;
+  return [
+    { label: 'Milestones at risk', value: String(atRisk), tone: atRisk > 0 ? 'amber' : 'default' },
+    { label: 'Blocked items', value: String(blocked), tone: blocked > 0 ? 'red' : 'default' },
+    { label: 'Open high risks', value: String(openHighRisks), tone: openHighRisks > 0 ? 'red' : 'teal' },
+  ];
+}
+
+function buildExecuteData(programId: string, milestones: ProgramMilestoneRow[], workItems: ProgramWorkItemRow[], risks: ProgramRiskRow[], deliverables: DeliverableSummary[]): ExecuteSurfaceProps {
+  return {
+    programId,
+    activeTab: 'milestones',
+    milestones: milestones.map((m) => ({
+      id: m.id,
+      name: m.name,
+      owner: m.ownerUserId ? placeholderPerson(m.ownerUserId) : placeholderPerson(),
+      status: m.status === 'hit' ? 'done' : m.status === 'at_risk' ? 'at_risk' : m.status === 'missed' ? 'at_risk' : m.actualDate ? 'in_progress' : 'not_started',
+      plannedWindow: m.targetDate ?? '—',
+      actualWindow: m.actualDate ?? undefined,
+      progressLabel: m.status,
+      evidenceCount: 0,
+    })),
+    workItems: workItems.map((w) => ({
+      id: w.id,
+      title: w.title,
+      milestoneId: (w.metadata?.milestone_id as string | undefined) ?? '',
+      assignee: w.assignedUserId ? placeholderPerson(w.assignedUserId) : placeholderPerson(),
+      status: w.status === 'done' ? 'done' : w.status === 'blocked' ? 'blocked' : w.status === 'in_progress' ? 'in_progress' : w.status === 'cancelled' ? 'cancelled' : 'not_started',
+      dueLabel: w.dueDate ?? '—',
+      dependency: (w.metadata?.dependency as string | undefined) ?? undefined,
+      nexusDrafted: !!(w.metadata?.nexus_drafted),
+    })),
+    risks: risks.map((r) => ({
+      id: r.id,
+      severity: r.likelihood === 'high' && r.impact === 'high' ? 'critical' : r.likelihood === 'high' || r.impact === 'high' ? 'high' : r.likelihood === 'medium' || r.impact === 'medium' ? 'medium' : 'low',
+      title: r.title,
+      owner: r.ownerUserId ? placeholderPerson(r.ownerUserId) : placeholderPerson(),
+      mitigation: r.mitigationPlan ?? '—',
+      status: r.status === 'closed' || r.status === 'transferred' || r.status === 'accepted' ? 'resolved' : r.status === 'mitigating' ? 'watching' : 'open',
+    })),
+    evidence: [],
+    reports: [],
+    viewerRole: 'lead',
+  };
+}
+
+function buildNexusPanelDefault(programId: string): NexusPanelProps {
+  const emptyThread: ProgramThread = { id: 'default', title: 'Program Nexus', turns: [] };
+  return {
+    programId,
+    mode: 'collapsed',
+    activeTab: 'chat',
+    thread: emptyThread,
+    drafts: [],
+    flags: [],
+    sources: [],
+  };
+}
