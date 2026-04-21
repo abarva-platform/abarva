@@ -23,7 +23,7 @@ export default function ProgramsLayout({
           </div>
           <div className="programs-route-meta">
             <span>Mocked frontend contracts only</span>
-            <span>Meridian / First Capital / Apex composite tenants</span>
+            <span>Apex demo anchor · composite client naming only</span>
           </div>
         </div>
         {children}

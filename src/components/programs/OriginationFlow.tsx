@@ -30,12 +30,12 @@ export function OriginationFlow({
       source === 'intelligence_thread'
         ? {
             name: 'Scoped from Intelligence',
-            useCase: 'Scale ambient documentation across Meridian service lines with a clean sponsor path.',
-            targetOutcome: 'Reduce after-hours charting and compress pilot-to-scale time.',
+            useCase: 'Scale an Apex retail growth program into a governed operating surface with a clean sponsor path.',
+            targetOutcome: 'Lift customer outcomes while improving productivity and operating leverage.',
             sponsorPersonId: getSponsorOptions()[0].id,
             leadPersonId: getLeadOptions()[0].id,
-            industryHint: 'Healthcare',
-            functionHint: 'Clinical operations',
+            industryHint: 'Retail',
+            functionHint: 'Store and digital operations',
           }
         : source === 'tower_signal'
           ? {
