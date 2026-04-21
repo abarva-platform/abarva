@@ -186,7 +186,7 @@ export default async function EngagementsListPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 500 }}>
-            Engagements
+            Programs
             {activeClient && <span style={{ color: MUTE, fontWeight: 400 }}> · <span style={{ color: TEAL }}>{activeClient.name}</span></span>}
           </div>
           <div style={{ fontSize: 12, color: MUTE, marginTop: 4 }}>

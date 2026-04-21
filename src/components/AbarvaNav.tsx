@@ -214,7 +214,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
           <>
             {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
-            {!compact && navLink('Engagements', '/engagements', engagementsActive)}
+            {!compact && navLink('Programs', '/engagements', engagementsActive)}
             {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && navLink('Control Tower', '/tower', towerActive)}
             {!compact && navLink('Platform', '/platform', platformActive)}
@@ -222,9 +222,24 @@ function NavInner({ activePage, compact = false }: NavProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            UNAUTHENTICATED / CLIENT — marketing surface
+            SIGNED-IN CLIENT (Prat, Priya, Dan) — 4 product items only.
+            No Platform, no Investor, no Admin. Client's own org is implicit;
+            no client switcher. Matches post-test-drive corrections doc §P0-4.
         ══════════════════════════════════════════════════════════════════ */}
-        {(!signedIn || isClient) && (
+        {signedIn && isClient && (
+          <>
+            {staticClientLabel()}
+            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Programs', '/engagements', engagementsActive)}
+            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && navLink('Control Tower', '/tower', towerActive)}
+          </>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════
+            UNAUTHENTICATED — marketing surface only
+        ══════════════════════════════════════════════════════════════════ */}
+        {!signedIn && (
           <>
             {navLink('Investor', '/investor', investorActive)}
             {demoNavItem()}

@@ -308,7 +308,7 @@ export default async function HomePage() {
             )}
           </div>
           <div style={{ fontSize: 13, color: MUTE, marginTop: 4 }}>
-            {engagements.length} active engagement{engagements.length === 1 ? '' : 's'}
+            {engagements.length} active Program{engagements.length === 1 ? '' : 's'}
             {activeClient ? ' for this account' : ''}
             {' · '}
             {metrics.gatesPending} gate{metrics.gatesPending === 1 ? '' : 's'} pending your review
@@ -326,7 +326,7 @@ export default async function HomePage() {
             textDecoration: 'none',
           }}
         >
-          + New engagement
+          + New Program
         </Link>
       </div>
 
@@ -379,15 +379,15 @@ export default async function HomePage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <MetricCard
-          label="Active engagements"
+          label="Active Programs"
           value={String(engagements.length)}
           target={engagements.length === 0 ? undefined : String(engagements.length)}
-          empty={activeClient ? `No active engagement for ${activeClient.name} · start one to begin baseline capture.` : 'No active engagements.'}
+          empty={activeClient ? `No active Program for ${activeClient.name} · start one to begin baseline capture.` : 'No active Programs.'}
         />
         <MetricCard
           label="Tracked savings YTD"
           value={dollarsM(metrics.trackedSavingsUsd)}
-          empty="Savings populate after Phase 4 outcome verification on one or more engagements."
+          empty="Savings populate after Phase 4 outcome verification on one or more Programs."
         />
         <MetricCard
           label="Gates pending"
@@ -437,10 +437,10 @@ export default async function HomePage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
         <div>
-          <SectionLabel>Active engagements</SectionLabel>
+          <SectionLabel>Active Programs</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {engagements.length === 0 ? (
-              <div style={{ color: MUTE, fontSize: 14, fontStyle: 'italic' }}>No active engagements.</div>
+              <div style={{ color: MUTE, fontSize: 14, fontStyle: 'italic' }}>No active Programs.</div>
             ) : (
               engagements.map((e) => <EngagementCard key={e.id} e={e} />)
             )}
@@ -450,7 +450,7 @@ export default async function HomePage() {
         <div>
           <SectionLabel>Quick start</SectionLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <QuickStartCard mode="NEXUS · ENGAGEMENT" modeColor={TEAL} title="Start new engagement" href="/engagements/new" />
+            <QuickStartCard mode="NEXUS" modeColor={TEAL} title="Start new Program" href="/engagements/new" />
             <QuickStartCard mode="NEXUS · IDENTITY" modeColor={PURPLE} title="Add a user" href="/platform/users/new" />
             <QuickStartCard mode="NEXUS · DATA" modeColor={TEAL} title="Load client data" href="/platform/data" />
           </div>
