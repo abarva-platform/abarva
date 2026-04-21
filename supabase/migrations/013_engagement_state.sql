@@ -108,6 +108,13 @@ ALTER TABLE engagements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_0_started_at TIMESTAMPTZ;
 ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_4_completed_at TIMESTAMPTZ;
 
+-- graph_node_id UNIQUE constraint was defined column-level inside the
+-- CREATE TABLE above. When the CREATE TABLE is a no-op (table already
+-- exists from 002), the constraint is never created and the ON CONFLICT
+-- clause below fails. CREATE UNIQUE INDEX IF NOT EXISTS is the
+-- idempotent equivalent — works with ON CONFLICT, safe to re-run.
+CREATE UNIQUE INDEX IF NOT EXISTS engagements_graph_node_id_key ON engagements(graph_node_id);
+
 CREATE INDEX IF NOT EXISTS engagements_current_phase_idx ON engagements(current_phase);
 CREATE INDEX IF NOT EXISTS engagements_sponsor_idx ON engagements(sponsor_person_id);
 CREATE INDEX IF NOT EXISTS engagements_maestro_idx ON engagements(maestro_person_id);
