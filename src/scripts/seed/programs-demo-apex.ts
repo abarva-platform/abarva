@@ -17,6 +17,7 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { charterDeliverableType } from '@/lib/deliverables/templates/charter';
 
 // Load .env.local manually so the script runs standalone
 try {
@@ -417,19 +418,41 @@ async function ensureProgramTeam(programId: string, programName: string, personI
 
 async function ensureDeliverableTypes(): Promise<void> {
   for (const t of DEMO_DELIVERABLE_TYPES) {
+    const basePayload = t.type_key === 'charter'
+      ? {
+          description: charterDeliverableType.description,
+          applicable_topics: [...charterDeliverableType.applicable_topics],
+          template_structure: charterDeliverableType.template_structure,
+          required_data_inputs: charterDeliverableType.required_data_inputs,
+          quality_rubric: charterDeliverableType.quality_rubric,
+          generation_prompt_template: charterDeliverableType.generation_prompt_template,
+          output_format: charterDeliverableType.output_format,
+          maturity: charterDeliverableType.maturity,
+        }
+      : {
+          description: `${t.title} (demo seed)`,
+          applicable_topics: [],
+          template_structure: {},
+          required_data_inputs: {},
+          quality_rubric: {},
+          generation_prompt_template: '',
+          output_format: 'markdown' as const,
+          maturity: 'pilot' as const,
+        };
+
     const { error } = await sb.from('deliverable_types').upsert(
       {
         type_key: t.type_key,
         title: t.title,
-        description: `${t.title} (demo seed)`,
+        description: basePayload.description,
         applicable_phases: t.applicable_phases,
-        applicable_topics: [],
-        template_structure: {},
-        required_data_inputs: {},
-        quality_rubric: {},
-        generation_prompt_template: '',
-        output_format: 'markdown',
-        maturity: 'pilot',
+        applicable_topics: basePayload.applicable_topics,
+        template_structure: basePayload.template_structure,
+        required_data_inputs: basePayload.required_data_inputs,
+        quality_rubric: basePayload.quality_rubric,
+        generation_prompt_template: basePayload.generation_prompt_template,
+        output_format: basePayload.output_format,
+        maturity: basePayload.maturity,
       },
       { onConflict: 'type_key' },
     );

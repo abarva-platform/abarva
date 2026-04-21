@@ -196,6 +196,26 @@ export function EngagementConsole({
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
             setGateToast({ phase, newPhase });
             setTimeout(() => router.refresh(), 1800);
+          } else if (evt.type === 'phase_opener') {
+            // Server has advanced the phase and pre-seeded the next-phase
+            // opener as an agent turn. Render it inline so the console doesn't
+            // feel blank after gate approval.
+            const raw = evt as unknown as { phase?: number; turnId?: string; text?: string };
+            if (typeof raw.text === 'string' && raw.text.length > 0) {
+              const openerId = raw.turnId ?? `opener-${Date.now()}`;
+              const openerPhase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase + 1;
+              const openerTurn: LocalTurn = {
+                id: openerId,
+                engagement_id: engagement.id,
+                phase: openerPhase,
+                sender: 'agent',
+                text: raw.text,
+                mode_label: null,
+                retrieved_refs: {},
+                created_at: new Date().toISOString(),
+              };
+              setMessages((prev) => [...prev, openerTurn]);
+            }
           } else if (evt.type === 'choices') {
             const raw = evt as unknown as { choices?: Choice[] };
             if (Array.isArray(raw.choices) && raw.choices.length > 0) {

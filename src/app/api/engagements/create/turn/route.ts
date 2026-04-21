@@ -53,12 +53,26 @@ export async function POST(req: NextRequest) {
   const scopedPersons = activeOrgKeyword
     ? persons.filter((p) => (p.organization ?? '').toLowerCase().includes(activeOrgKeyword))
     : persons;
-  const knownPersons = scopedPersons.map((p) => ({
-    graph_node_id: p.graph_node_id ?? '',
-    name: p.name,
-    role: p.role,
-    organization: p.organization,
-  }));
+  // Expose richer role/title/unit metadata so Nexus can surface non-CXO
+  // sponsors (VPs, directors, functional heads) alongside C-suite.
+  const knownPersons = scopedPersons.map((p) => {
+    const style = (p.communication_style ?? {}) as {
+      title?: string;
+      cxo_function?: string;
+      primary_focus?: string;
+      unit?: string;
+    };
+    return {
+      graph_node_id: p.graph_node_id ?? '',
+      name: p.name,
+      role: p.role,
+      organization: p.organization,
+      title: style.title ?? null,
+      cxo_function: style.cxo_function ?? null,
+      primary_focus: style.primary_focus ?? null,
+      unit: style.unit ?? null,
+    };
+  });
 
   const system = assembleEngagementCreateSystemPrompt({
     maestro,
@@ -149,8 +163,52 @@ export async function POST(req: NextRequest) {
           // Re-fetch so we return the full row (consistent with what the page expects)
           const hydrated = (await getEngagementByGraphId(engagement.graph_node_id)) ?? engagement;
 
+          // Denormalise sponsor + label data for the confirmation readout so
+          // the client doesn't need a second round-trip to render it.
+          const sponsorRow = sponsorRowId ? persons.find((p) => p.id === sponsorRowId) ?? null : null;
+          const sponsorStyle = ((sponsorRow?.communication_style ?? {}) as {
+            title?: string;
+            cxo_function?: string;
+            primary_focus?: string;
+          });
+          const sponsorSummary = sponsorRow
+            ? {
+                graph_node_id: sponsorRow.graph_node_id,
+                name: sponsorRow.name,
+                role: sponsorRow.role,
+                organization: sponsorRow.organization,
+                title: sponsorStyle.title ?? null,
+                cxo_function: sponsorStyle.cxo_function ?? null,
+                primary_focus: sponsorStyle.primary_focus ?? null,
+              }
+            : parsed.sponsor_creation_needed && parsed.sponsor_payload
+              ? {
+                  graph_node_id: sponsorGraphId,
+                  name: parsed.sponsor_payload.name,
+                  role: parsed.sponsor_payload.role,
+                  organization: parsed.sponsor_payload.organization,
+                  title: parsed.sponsor_payload.title ?? null,
+                  cxo_function: parsed.sponsor_payload.cxo_function ?? null,
+                  primary_focus: parsed.sponsor_payload.primary_focus ?? null,
+                }
+              : null;
+
+          const labels = {
+            industry: INDUSTRIES.find((i) => i.code === parsed.industry_code)?.name ?? parsed.industry_code,
+            function: FUNCTIONS.find((f) => f.code === parsed.function_code)?.name ?? parsed.function_code,
+            objective: OBJECTIVES.find((o) => o.code === parsed.objective_code)?.name ?? parsed.objective_code,
+          };
+
           controller.enqueue(
-            encoder.encode(JSON.stringify({ type: 'engagement_created', engagement: hydrated }) + '\n'),
+            encoder.encode(
+              JSON.stringify({
+                type: 'engagement_created',
+                engagement: hydrated,
+                sponsor: sponsorSummary,
+                labels,
+                active_client: activeClient?.name ?? null,
+              }) + '\n',
+            ),
           );
         }
 

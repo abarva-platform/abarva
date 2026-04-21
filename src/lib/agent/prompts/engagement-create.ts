@@ -2,7 +2,16 @@ import type { PersonRow } from '@/lib/db/person';
 
 export interface EngagementCreateContext {
   maestro: PersonRow | null;
-  knownPersons: { graph_node_id: string; name: string; role: string | null; organization: string | null }[];
+  knownPersons: {
+    graph_node_id: string;
+    name: string;
+    role: string | null;
+    organization: string | null;
+    title?: string | null;
+    cxo_function?: string | null;
+    primary_focus?: string | null;
+    unit?: string | null;
+  }[];
   industries: { code: string; name: string }[];
   functions: { code: string; name: string }[];
   objectives: { code: string; name: string }[];
@@ -50,14 +59,22 @@ Gather minimum viable information to create a new Program:
 - topic_code (short slug like 'analytics_modernization', 'wealth_platform_rebuild')
 
 KNOWN PERSONS ${ctx.activeClient ? `AT ${ctx.activeClient.name.toUpperCase()}` : 'IN THE SYSTEM'}
+Sponsors are NOT limited to the C-suite. Any executive, VP, director, or functional head who owns the outcome and can approve the charter is a valid sponsor. Prefer the person the Maestro names — resolve against this list before falling back to inline creation.
 ${
   ctx.knownPersons.length === 0
     ? `- None yet${ctx.activeClient ? ` on record for ${ctx.activeClient.name}` : ''}. If the Maestro names a sponsor, create them inline with the sponsor_creation_needed flag.`
     : ctx.knownPersons
-        .map(
-          (p) =>
-            `- ${p.graph_node_id}: ${p.name}${p.role ? ', ' + p.role : ''}${p.organization ? ' at ' + p.organization : ''}`,
-        )
+        .map((p) => {
+          const roleBits: string[] = [];
+          if (p.title) roleBits.push(p.title);
+          else if (p.role) roleBits.push(p.role);
+          if (p.cxo_function) roleBits.push(p.cxo_function);
+          if (p.unit) roleBits.push(p.unit);
+          const roleStr = roleBits.filter(Boolean).join(' · ');
+          const focusStr = p.primary_focus ? ` — ${p.primary_focus}` : '';
+          const orgStr = p.organization ? ` at ${p.organization}` : '';
+          return `- ${p.graph_node_id}: ${p.name}${roleStr ? ', ' + roleStr : ''}${orgStr}${focusStr}`;
+        })
         .join('\n')
 }
 
