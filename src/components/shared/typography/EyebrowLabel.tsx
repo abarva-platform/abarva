@@ -6,12 +6,13 @@ interface Props {
   tone?: 'teal' | 'muted' | 'amber' | 'red';
   size?: 'xs' | 'sm' | 'md';
   style?: CSSProperties;
+  id?: string;
 }
 
 // JetBrains Mono eyebrow. Always uppercase, letterspaced. Signals "section
 // starts here" or "category tag". Teal tone for identity; muted for
 // descriptive tags; amber/red for signal severity on cards.
-export function EyebrowLabel({ children, tone = 'teal', size = 'sm', style }: Props) {
+export function EyebrowLabel({ children, tone = 'teal', size = 'sm', style, id }: Props) {
   const color =
     tone === 'teal' ? COLORS.teal
       : tone === 'amber' ? COLORS.amber
@@ -20,6 +21,7 @@ export function EyebrowLabel({ children, tone = 'teal', size = 'sm', style }: Pr
   const fontSize = size === 'xs' ? 9 : size === 'md' ? 11 : 10;
   return (
     <div
+      id={id}
       style={{
         fontFamily: 'JetBrains Mono, monospace',
         fontSize,
