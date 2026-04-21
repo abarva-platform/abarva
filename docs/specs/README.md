@@ -22,6 +22,7 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`platform/data-ground-truth-surface.md`](./platform/data-ground-truth-surface.md) | CXO-facing transparency surface for client ground truth, provenance, gaps, patterns |
 | [`platform/benchmarks-industry-data-architecture.md`](./platform/benchmarks-industry-data-architecture.md) | Benchmark and peer-data ingestion, classification, and refresh architecture |
 | [`platform/graph-intelligence-architecture.md`](./platform/graph-intelligence-architecture.md) | Entity, relationship, provenance, and reasoning architecture for graph intelligence |
+| [`platform/intelligence-layer-north-star-spec.md`](./platform/intelligence-layer-north-star-spec.md) | Eight-layer intelligence north star for KPIs, pattern packs, graph depth, telemetry, and dual-scope reasoning/disclosure |
 
 ## Product surfaces
 
@@ -47,6 +48,9 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`_meta/seed-data/apex-retail-group-comprehensive-seed.md`](./_meta/seed-data/apex-retail-group-comprehensive-seed.md) | Comprehensive retail composite seed with org depth, initiatives, patterns, vendors, and benchmarks |
 | [`_meta/seed-data/meridian-health-system-comprehensive-seed.md`](./_meta/seed-data/meridian-health-system-comprehensive-seed.md) | Comprehensive healthcare composite seed with payer arm, value-based care agenda, and benchmark layer |
 | [`_meta/seed-data/first-capital-financial-comprehensive-seed.md`](./_meta/seed-data/first-capital-financial-comprehensive-seed.md) | Comprehensive financial-services composite seed with regulatory context, data org, initiatives, patterns, and benchmarks |
+| [`_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md`](./_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md) | Comprehensive regulated-utility composite seed with subsidiaries, regulatory environment, patterns, and benchmark layer |
+| [`_meta/seed-data/keystone-intelligence-layer-overlay.md`](./_meta/seed-data/keystone-intelligence-layer-overlay.md) | Keystone reference implementation of the intelligence-layer north star with KPIs, pattern packs, telemetry, and dual-scope configuration |
+| [`_meta/seed-data/keystone-seed-validation-results.md`](./_meta/seed-data/keystone-seed-validation-results.md) | Validation artifact for Keystone ingestion, verification, and smoke-test results |
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
 | [`_meta/BACKLOG.md`](./_meta/BACKLOG.md) | Older product backlog (may be stale) |
 | [`_meta/QA_CHECKLIST.md`](./_meta/QA_CHECKLIST.md) | Older QA checklist (may be stale) |
