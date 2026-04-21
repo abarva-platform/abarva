@@ -92,14 +92,15 @@ function NavInner({ activePage, compact = false }: NavProps) {
   }
 
   const navLink = (label: string, href: string, active: boolean) => (
-    <a href={href} key={label} style={{
+    <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
       fontWeight: active ? 700 : 400,
       letterSpacing: '-0.01em',
       color: active ? TEAL : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
       borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
-      transition: 'color 120ms ease, border-color 120ms ease, font-weight 120ms ease',
+      transition: 'color 150ms cubic-bezier(0, 0, 0.2, 1), border-color 150ms cubic-bezier(0, 0, 0.2, 1)',
+      borderRadius: '6px',
     }}>
       {label}
     </a>
@@ -150,6 +151,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
     <div style={{ position: 'relative', marginRight: '16px' }}>
       <button
         onClick={() => setClientToggleOpen(o => !o)}
+        className="abarva-client-btn"
+        aria-label={`Current client: ${currentClient.shortName}. Change client.`}
+        aria-haspopup="listbox"
+        aria-expanded={clientToggleOpen}
         style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: 'pointer' }}
       >
         <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
@@ -187,6 +192,36 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
+      {/* Scoped hover + focus styling for the nav. Pure polish · no
+          behavior changes. Honors prefers-reduced-motion. */}
+      <style jsx global>{`
+        .abarva-nav-link:not(.abarva-nav-link--active):hover {
+          color: #2DD4C8;
+        }
+        .abarva-nav-link:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #2DD4C8;
+        }
+        .abarva-avatar-btn:focus-visible,
+        .abarva-client-btn:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #2DD4C8;
+          border-radius: 8px;
+        }
+        .abarva-menu-item:hover {
+          background: #F9FAFB !important;
+        }
+        .abarva-menu-item:focus-visible {
+          outline: none;
+          background: #F9FAFB !important;
+          box-shadow: inset 2px 0 0 #2DD4C8;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .abarva-nav-link {
+            transition: none !important;
+          }
+        }
+      `}</style>
       <div id="abarva-nav" style={{
         height: '60px', background: NAV_BG,
         borderBottom: `1px solid ${NAV_BORD}`,
@@ -256,6 +291,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setUserMenuOpen(o => !o)}
+                className="abarva-avatar-btn"
+                aria-label={`Account menu for ${displayName}`}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }}
               >
                 <div style={{ textAlign: 'right' }}>
@@ -278,24 +317,19 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
-                    <a href="/maestro" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <a href="/maestro" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Maestro Workspace
                     </a>
                   )}
                   {isAdmin && (
-                    <a href="/platform" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <a href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Platform
                     </a>
                   )}
                   <button
                     onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
+                    className="abarva-menu-item"
                     style={{ width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: '13px', color: DROP_HEAD, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     Sign out
                   </button>
