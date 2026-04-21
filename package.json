@@ -43,7 +43,10 @@
     "db:smoke:executive-profiles": "npx tsx src/scripts/seed/smoke-executive-profiles.ts",
     "db:seed:keystone-intelligence": "npx tsx src/scripts/seed/seed-keystone-intelligence-layer.ts",
     "db:verify:keystone-intelligence": "npx tsx src/scripts/seed/verify-keystone-intelligence-layer.ts",
-    "db:smoke:keystone-intelligence": "npx tsx src/scripts/seed/smoke-keystone-intelligence-layer.ts"
+    "db:smoke:keystone-intelligence": "npx tsx src/scripts/seed/smoke-keystone-intelligence-layer.ts",
+    "db:seed:contradictions": "npx tsx src/scripts/seed/seed-contradiction-engine.ts",
+    "db:verify:contradictions": "npx tsx src/scripts/seed/verify-contradiction-engine.ts",
+    "db:smoke:contradictions": "npx tsx src/scripts/seed/smoke-contradiction-engine.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",
