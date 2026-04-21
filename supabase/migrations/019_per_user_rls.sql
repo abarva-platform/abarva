@@ -11,6 +11,18 @@ DROP POLICY IF EXISTS "allow service role all on engagements" ON engagements;
 DROP POLICY IF EXISTS "allow service role all on turns" ON turns;
 DROP POLICY IF EXISTS "allow service role all on relationship_notes" ON relationship_notes;
 
+-- Drop any policies this migration creates so re-runs (preview branches
+-- across failed attempts) don't trip on "already exists". DROP IF EXISTS
+-- is idempotent on prod where the policies already exist.
+DROP POLICY IF EXISTS "service_role_all_persons" ON persons;
+DROP POLICY IF EXISTS "service_role_all_engagements" ON engagements;
+DROP POLICY IF EXISTS "service_role_all_turns" ON turns;
+DROP POLICY IF EXISTS "service_role_all_notes" ON relationship_notes;
+DROP POLICY IF EXISTS "authenticated_read_persons" ON persons;
+DROP POLICY IF EXISTS "authenticated_read_engagements" ON engagements;
+DROP POLICY IF EXISTS "authenticated_read_turns" ON turns;
+DROP POLICY IF EXISTS "authenticated_read_own_notes" ON relationship_notes;
+
 -- Service role: still gets everything (server-side API routes)
 CREATE POLICY "service_role_all_persons" ON persons
   FOR ALL TO service_role USING (true) WITH CHECK (true);
