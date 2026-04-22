@@ -5,9 +5,9 @@
 This document inventories every page across Intelligence, Programs, and Tower. Each page is tiered by priority, tagged with its surface and active agent, mapped to the components it uses, and cross-referenced to the spec that defines its behavior. This is what Codex pulls from when idle. This is what a future human designer works through.
 
 Reads alongside:
-- `abarva-design-system-spec.md` — canonical tokens and components
-- `abarva-intelligence-design-spec.md`, `abarva-programs-design-spec.md`, `abarva-tower-design-spec.md` — surface specs
-- `abarva-agent-architecture-spec.md` — agent behavior per surface
+- `docs/specs/platform/design-system.md` — canonical tokens and components
+- `docs/specs/intelligence/design-spec.md`, `docs/specs/programs/design-spec.md`, `docs/specs/tower/design-spec.md` — surface specs
+- `docs/specs/platform/agent-architecture.md` — agent behavior per surface
 
 ## Document structure
 
