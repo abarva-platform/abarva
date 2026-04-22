@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type FormEvent } from 'react';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 type LocalMsg = {
   id: string;
@@ -300,14 +301,21 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-            <input
-              type="text"
+          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <AutosizeTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
               disabled={isStreaming}
               placeholder="Type a reply..."
-              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: INK, fontFamily: 'inherit', fontSize: 14 }}
+              minRows={1}
+              maxRows={5}
+              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: INK, fontFamily: 'inherit', fontSize: 14, lineHeight: 1.6 }}
             />
             <button
               type="submit"

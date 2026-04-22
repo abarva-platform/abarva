@@ -31,7 +31,19 @@ export function AskIntelligenceBar({
           placeholder="What are health systems like us doing on ambient documentation?"
           value={query}
           disabled={disabled}
+          spellCheck
+          autoCorrect="on"
+          autoCapitalize="sentences"
           onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+              event.preventDefault();
+              if (!disabled && query.trim()) {
+                onSubmit(query.trim());
+                setQuery('');
+              }
+            }
+          }}
         />
         {attachments.length > 0 ? (
           <div className="intel-inline-list" style={{ marginTop: 10 }}>

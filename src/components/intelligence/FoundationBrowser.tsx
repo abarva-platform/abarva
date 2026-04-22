@@ -69,7 +69,7 @@ export function FoundationBrowser({
           </div>
         ) : (
           items.slice(0, 12).map((item) => {
-            const href = item.href ?? item.sourceUrl ?? '#';
+            const href = item.href ?? item.sourceUrl ?? `/intelligence/ask?q=${encodeURIComponent(item.title)}`;
             const external = !!item.sourceUrl && !item.href;
             return (
               <Link

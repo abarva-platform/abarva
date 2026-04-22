@@ -12,6 +12,7 @@ import { renderWithCitations } from './renderWithCitations';
 import { CitationPill } from './CitationPill';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 // Extract unique citations from agent turn text so we can render a source
 // pills row below the response — visible provenance by default, Target
@@ -42,6 +43,7 @@ interface Deliverable {
   phase: number;
   generated_at: string;
   content: Record<string, unknown>;
+  label?: string;
 }
 
 interface AssignedTopic {
@@ -112,7 +114,7 @@ export function EngagementConsole({
   const [composerFocused, setComposerFocused] = useState(false);
   const [sendPressed, setSendPressed] = useState(false);
   const [sendHovered, setSendHovered] = useState(false);
-  const composerRef = useRef<HTMLInputElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
@@ -759,16 +761,23 @@ export function EngagementConsole({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-            <input
+          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <AutosizeTextarea
               ref={composerRef}
-              type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
               onFocus={() => setComposerFocused(true)}
               onBlur={() => setComposerFocused(false)}
               disabled={isStreaming || phaseTransition !== null}
               placeholder={phaseTransition ? 'Creating your program…' : composerPlaceholder}
+              minRows={1}
+              maxRows={6}
               style={{
                 flex: 1,
                 padding: '10px 14px',
@@ -778,6 +787,7 @@ export function EngagementConsole({
                 color: '#F5F5F0',
                 fontFamily: 'inherit',
                 fontSize: 14,
+                lineHeight: 1.6,
                 outline: 'none',
                 transition: reducedMotion
                   ? undefined
@@ -1005,15 +1015,17 @@ export function EngagementConsole({
               <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved, or on-demand via Pack L generator.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {deliverablesList.map((d) => (
-                  <div key={`${d.type}-${d.phase}`} style={{ fontSize: 12, lineHeight: 1.5 }}>
+                {deliverablesList.map((d, index) => {
+                  const label = d.label ?? d.type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+                  return (
+                  <div key={`${d.type}-${d.phase}-${index}`} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <span style={{ color: '#14B8A6', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>PHASE {d.phase}</span>
-                    <span style={{ color: '#F5F5F0' }}> · {d.type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>
+                    <span style={{ color: '#F5F5F0' }}> · {label}</span>
                     <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
                       {new Date(d.generated_at).toLocaleDateString()}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </a>

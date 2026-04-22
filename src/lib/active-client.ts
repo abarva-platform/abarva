@@ -19,26 +19,32 @@ import {
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 
 export async function getActiveClientKey(): Promise<ClientKey> {
+  let role: string | undefined;
+  let meta: string | undefined;
+  try {
+    const user = await currentUser();
+    role = user?.publicMetadata?.role as string | undefined;
+    meta = user?.publicMetadata?.clientId as string | undefined;
+  } catch {
+    // currentUser() fails outside Clerk context — fall through to cookie/default
+  }
+
+  // Locked accounts are pinned to Clerk metadata regardless of any stale
+  // client cookie so the server and nav cannot drift across tenants.
+  const isLockedRole = role === 'client' || role === 'maestro';
+  if (isLockedRole && isClientKey(meta)) return meta;
+
   // 1 · cookie
   try {
     const store = await cookies();
     const fromCookie = store.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
     if (isClientKey(fromCookie)) return fromCookie;
   } catch {
-    // cookies() fails outside request scope — fall through to metadata
+    // cookies() fails outside request scope — fall through to metadata/default
   }
 
   // 2 · Clerk metadata
-  try {
-    const user = await currentUser();
-    const role = user?.publicMetadata?.role as string | undefined;
-    const meta = user?.publicMetadata?.clientId as string | undefined;
-    const isLockedRole = role === 'client' || role === 'maestro';
-    if (isLockedRole && isClientKey(meta)) return meta;
-    if (isClientKey(meta)) return meta;
-  } catch {
-    // currentUser() fails outside Clerk context — fall through to default
-  }
+  if (isClientKey(meta)) return meta;
 
   // 3 · fallback
   return DEFAULT_CLIENT_KEY;

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { loadLibraryCatalog, type LibraryCategory, type LibraryEntry } from '@/lib/intelligence/library';
+import { getActiveClientRow } from '@/lib/active-client';
 
 export const dynamic = 'force-dynamic';
 
@@ -314,7 +315,11 @@ export default async function LibraryPage({
   const activeIndustry = params.industry ?? null;
   const initialQuery = params.q ?? '';
 
-  const catalog = await loadLibraryCatalog();
+  const activeClient = await getActiveClientRow();
+  const catalog = await loadLibraryCatalog({
+    clientId: activeClient?.id ?? null,
+    clientIndustryCode: activeClient?.industry_code ?? null,
+  });
 
   const filtered = catalog.entries.filter((e) => {
     if (activeCategory && e.category !== activeCategory) return false;

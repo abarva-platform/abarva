@@ -20,12 +20,12 @@ const LAYER_CATEGORIES: Record<string, string[]> = {
 
 export async function GET(req: NextRequest) {
   try {
-    await requireTenancy();
+    const ctx = await requireTenancy();
     const url = new URL(req.url);
     const layer = (url.searchParams.get('layer') ?? 'L1') as 'L1' | 'L2' | 'L3' | 'L4';
     const facet = url.searchParams.get('facet');
 
-    const catalog = await loadLibraryCatalog();
+    const catalog = await loadLibraryCatalog({ clientId: ctx.clientId });
     const allowed = LAYER_CATEGORIES[layer] ?? [];
 
     let items = catalog.entries.filter((e) => allowed.includes(e.category));

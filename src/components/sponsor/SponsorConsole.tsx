@@ -4,6 +4,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -205,14 +206,21 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-            <input
-              type="text"
+          <form onSubmit={handleSubmit} style={{ marginTop: 16, display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <AutosizeTextarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  e.currentTarget.form?.requestSubmit();
+                }
+              }}
               disabled={isStreaming}
               placeholder="Your reply…"
-              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: INK, fontFamily: 'inherit', fontSize: 14 }}
+              minRows={1}
+              maxRows={5}
+              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: INK, fontFamily: 'inherit', fontSize: 14, lineHeight: 1.6 }}
             />
             <button
               type="submit"

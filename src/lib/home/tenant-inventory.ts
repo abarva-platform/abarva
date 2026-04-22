@@ -146,9 +146,48 @@ const APEX_DATA: UploadedDataRow[] = [
 // Keep these light · the demo focus is Apex. When the other composites
 // move to full demo depth, extend these arrays the same way.
 
-const MERIDIAN_IT: ITStackRow[] = APEX_IT.slice(0, 10).map((r, i) => ({ ...r, id: `mer-it-${i}`, vendor: r.vendor.includes('Retail') ? 'Epic' : r.vendor }));
-const MERIDIAN_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 8).map((r, i) => ({ ...r, id: `mer-v-${i}` }));
-const MERIDIAN_DATA: UploadedDataRow[] = APEX_DATA.slice(0, 8).map((r, i) => ({ ...r, id: `mer-d-${i}` }));
+const MERIDIAN_IT: ITStackRow[] = [
+  { id: 'mer-it-01', name: 'Epic EHR Platform', category: 'Data', vendor: 'Epic', segment: 'Tier 1 · Strategic', budgetAnnual: 68_000_000, renewalDate: d(320), health: 'Healthy', aiCapability: 'Extension', integrations: 94 },
+  { id: 'mer-it-02', name: 'Abridge Ambient Documentation', category: 'AI/ML', vendor: 'Abridge', segment: 'Tier 1 · Strategic', budgetAnnual: 4_080_000, renewalDate: d(74), health: 'Overutilized', aiCapability: 'Native', integrations: 12 },
+  { id: 'mer-it-03', name: 'Nuance DAX', category: 'AI/ML', vendor: 'Microsoft', segment: 'Tier 2 · Operational', budgetAnnual: 1_656_000, renewalDate: d(118), health: 'Underutilized', aiCapability: 'Native', integrations: 8 },
+  { id: 'mer-it-04', name: 'Aidoc Radiology AI', category: 'AI/ML', vendor: 'Aidoc', segment: 'Tier 2 · Operational', budgetAnnual: 720_000, renewalDate: d(188), health: 'Healthy', aiCapability: 'Native', integrations: 6 },
+  { id: 'mer-it-05', name: 'Paige AI Pathology', category: 'AI/ML', vendor: 'Paige', segment: 'Tier 2 · Operational', budgetAnnual: 610_000, renewalDate: d(143), health: 'At risk', aiCapability: 'Native', integrations: 4 },
+  { id: 'mer-it-06', name: 'Cohere Health Prior Auth', category: 'IT Ops', vendor: 'Cohere Health', segment: 'Tier 1 · Strategic', budgetAnnual: 2_040_000, renewalDate: d(101), health: 'Healthy', aiCapability: 'Native', integrations: 10 },
+  { id: 'mer-it-07', name: 'Azure Enterprise Cloud', category: 'Data', vendor: 'Microsoft Azure', segment: 'Tier 1 · Strategic', budgetAnnual: 8_400_000, renewalDate: d(212), health: 'Healthy', aiCapability: 'Extension', integrations: 36 },
+  { id: 'mer-it-08', name: 'Azure OpenAI', category: 'AI/ML', vendor: 'Microsoft Azure', segment: 'Tier 2 · Operational', budgetAnnual: 1_920_000, renewalDate: d(91), health: 'Healthy', aiCapability: 'Native', integrations: 15 },
+  { id: 'mer-it-09', name: 'Workday HCM', category: 'HR', vendor: 'Workday', segment: 'Tier 1 · Strategic', budgetAnnual: 2_240_000, renewalDate: d(175), health: 'Healthy', aiCapability: 'None', integrations: 18 },
+  { id: 'mer-it-10', name: 'UKG Workforce Management', category: 'HR', vendor: 'UKG', segment: 'Tier 2 · Operational', budgetAnnual: 1_340_000, renewalDate: d(63), health: 'Healthy', aiCapability: 'Extension', integrations: 9 },
+  { id: 'mer-it-11', name: 'ServiceNow ITSM + HRSD', category: 'IT Ops', vendor: 'ServiceNow', segment: 'Tier 2 · Operational', budgetAnnual: 1_180_000, renewalDate: d(132), health: 'Healthy', aiCapability: 'Extension', integrations: 22 },
+  { id: 'mer-it-12', name: 'CrowdStrike Falcon', category: 'Security', vendor: 'CrowdStrike', segment: 'Tier 1 · Strategic', budgetAnnual: 940_000, renewalDate: d(168), health: 'Healthy', aiCapability: 'Native', integrations: 5 },
+  { id: 'mer-it-13', name: 'Palo Alto Prisma Access', category: 'Security', vendor: 'Palo Alto Networks', segment: 'Tier 1 · Strategic', budgetAnnual: 1_260_000, renewalDate: d(204), health: 'Healthy', aiCapability: 'Extension', integrations: 7 },
+  { id: 'mer-it-14', name: 'Zscaler Zero Trust', category: 'Security', vendor: 'Zscaler', segment: 'Tier 2 · Operational', budgetAnnual: 860_000, renewalDate: d(156), health: 'Healthy', aiCapability: 'Extension', integrations: 11 },
+  { id: 'mer-it-15', name: 'Glean Enterprise Search', category: 'Data', vendor: 'Glean', segment: 'Tier 3 · Tactical', budgetAnnual: 380_000, renewalDate: d(84), health: 'Healthy', aiCapability: 'Native', integrations: 6 },
+  { id: 'mer-it-16', name: 'Anthropic Claude Enterprise', category: 'AI/ML', vendor: 'Anthropic', segment: 'Tier 3 · Tactical', budgetAnnual: 540_000, renewalDate: d(58), health: 'At risk', aiCapability: 'Native', integrations: 3 },
+];
+
+const MERIDIAN_VENDORS: VendorRow[] = [
+  { id: 'mer-v-01', name: 'Epic', category: 'Technology', relationshipTier: 'Strategic partner', annualSpend: 68_000_000, contractEnd: d(320), relationshipOwner: 'CIO · Sarah Chen', riskScore: 'Low', aiExposure: 'Indirect' },
+  { id: 'mer-v-02', name: 'Abridge', category: 'Technology', relationshipTier: 'Strategic partner', annualSpend: 4_080_000, contractEnd: d(74), relationshipOwner: 'CMIO · Maya Patel', riskScore: 'Medium', aiExposure: 'Direct · sanctioned' },
+  { id: 'mer-v-03', name: 'Microsoft Nuance', category: 'Technology', relationshipTier: 'Preferred', annualSpend: 1_656_000, contractEnd: d(118), relationshipOwner: 'CMIO · Maya Patel', riskScore: 'Medium', aiExposure: 'Direct · sanctioned' },
+  { id: 'mer-v-04', name: 'Cohere Health', category: 'Technology', relationshipTier: 'Strategic partner', annualSpend: 2_040_000, contractEnd: d(101), relationshipOwner: 'President Health Plans · Linda Chen-Winters', riskScore: 'Low', aiExposure: 'Direct · sanctioned' },
+  { id: 'mer-v-05', name: 'Aidoc', category: 'Technology', relationshipTier: 'Preferred', annualSpend: 720_000, contractEnd: d(188), relationshipOwner: 'Radiology Operations · Melissa Ahn', riskScore: 'Low', aiExposure: 'Direct · sanctioned' },
+  { id: 'mer-v-06', name: 'Paige AI', category: 'Technology', relationshipTier: 'Under review', annualSpend: 610_000, contractEnd: d(143), relationshipOwner: 'Pathology Service Line · Dr. Priya Venkataraman', riskScore: 'High', aiExposure: 'Direct · sanctioned' },
+  { id: 'mer-v-07', name: 'Palo Alto Networks', category: 'Technology', relationshipTier: 'Strategic partner', annualSpend: 1_260_000, contractEnd: d(204), relationshipOwner: 'CISO · Aaron Bishop', riskScore: 'Low', aiExposure: 'Indirect' },
+  { id: 'mer-v-08', name: 'CrowdStrike', category: 'Technology', relationshipTier: 'Strategic partner', annualSpend: 940_000, contractEnd: d(168), relationshipOwner: 'CISO · Aaron Bishop', riskScore: 'Low', aiExposure: 'Indirect' },
+  { id: 'mer-v-09', name: 'Zscaler', category: 'Technology', relationshipTier: 'Preferred', annualSpend: 860_000, contractEnd: d(156), relationshipOwner: 'CISO · Aaron Bishop', riskScore: 'Low', aiExposure: 'Indirect' },
+  { id: 'mer-v-10', name: 'Glean', category: 'Technology', relationshipTier: 'Standard', annualSpend: 380_000, contractEnd: d(84), relationshipOwner: 'VP Data Platform · Devon Kim', riskScore: 'Medium', aiExposure: 'Direct · sanctioned' },
+];
+
+const MERIDIAN_DATA: UploadedDataRow[] = [
+  { id: 'mer-d-01', name: 'Ambient Documentation Adoption Dashboard · East/Central/West', type: 'System export', sourceSystem: 'Abridge + Nuance admin consoles', sourceOwner: 'CMIO · Maya Patel', qualityRating: 'High', sensitivityMarking: 'Confidential', uploadedDate: d(-4), currencyStatus: 'Current', citedByCount: 21, chainOfCustody: 'Complete' },
+  { id: 'mer-d-02', name: 'Prior Authorization Denial Baseline · Commercial + MA', type: 'Financial record', sourceSystem: 'Epic + Cohere Health', sourceOwner: 'Health Plans Ops', qualityRating: 'Audit-grade', sensitivityMarking: 'Restricted', uploadedDate: d(-8), currencyStatus: 'Current', citedByCount: 17, chainOfCustody: 'Complete' },
+  { id: 'mer-d-03', name: 'Epic AI Use Case Inventory · FY26 Q2', type: 'Document', sourceSystem: 'Epic governance workspace', sourceOwner: 'CIO · Sarah Chen', qualityRating: 'High', sensitivityMarking: 'Internal', uploadedDate: d(-12), currencyStatus: 'Current', citedByCount: 13, chainOfCustody: 'Complete' },
+  { id: 'mer-d-04', name: 'Abridge Contract Summary + Renewal Notes', type: 'Contract', sourceSystem: 'Legal contract vault', sourceOwner: 'General Counsel office', qualityRating: 'Audit-grade', sensitivityMarking: 'Restricted', uploadedDate: d(-18), currencyStatus: 'Current', citedByCount: 11, chainOfCustody: 'Complete' },
+  { id: 'mer-d-05', name: 'Nuance DAX Regional Rollout Deck', type: 'Document', sourceSystem: 'Clinical operations SharePoint', sourceOwner: 'CMIO · Maya Patel', qualityRating: 'Medium', sensitivityMarking: 'Internal', uploadedDate: d(-22), currencyStatus: 'Stale', citedByCount: 8, chainOfCustody: 'Complete' },
+  { id: 'mer-d-06', name: 'PHI-adjacent Shadow AI Incident Review', type: 'Meeting notes', sourceSystem: 'Security review archive', sourceOwner: 'CISO · Aaron Bishop', qualityRating: 'High', sensitivityMarking: 'Restricted', uploadedDate: d(-6), currencyStatus: 'Current', citedByCount: 14, chainOfCustody: 'Complete' },
+  { id: 'mer-d-07', name: 'Pathology AI DPA + Subprocessor Review', type: 'Contract', sourceSystem: 'Vendor risk repository', sourceOwner: 'Vendor Risk Office', qualityRating: 'High', sensitivityMarking: 'Restricted', uploadedDate: d(-15), currencyStatus: 'Current', citedByCount: 7, chainOfCustody: 'Complete' },
+  { id: 'mer-d-08', name: 'Board Packet Rebuild Effort Study', type: 'Interview', sourceSystem: 'Nexus interview log', sourceOwner: 'Nexus', qualityRating: 'High', sensitivityMarking: 'Confidential', uploadedDate: d(-3), currencyStatus: 'Current', citedByCount: 19, chainOfCustody: 'Complete' },
+];
 
 const FIRST_CAPITAL_IT: ITStackRow[] = APEX_IT.slice(0, 12).map((r, i) => ({ ...r, id: `fc-it-${i}` }));
 const FIRST_CAPITAL_VENDORS: VendorRow[] = APEX_VENDORS.slice(0, 9).map((r, i) => ({ ...r, id: `fc-v-${i}` }));

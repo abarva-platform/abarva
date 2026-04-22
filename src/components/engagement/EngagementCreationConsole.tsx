@@ -522,6 +522,9 @@ export function EngagementCreationConsole() {
                 onBlur={() => setComposerFocused(false)}
                 placeholder="Describe the program…"
                 rows={1}
+                spellCheck
+                autoCorrect="on"
+                autoCapitalize="sentences"
                 style={{
                   flex: 1,
                   padding: '10px 14px',

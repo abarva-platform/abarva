@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { PATTERN_DEPTH_OVERLAYS } from '@/lib/intelligence/fix-spec-v3-content';
 import type { GenomePatternDetail, GenomePatternSummary } from '@/lib/graph/types';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 interface Props {
   patterns: GenomePatternSummary[];
@@ -111,13 +112,20 @@ export function IntelligenceConsole({ patterns, initialCode }: Props) {
       </div>
 
       {/* Free-text Genome query bar */}
-      <form onSubmit={handleQuery} style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-        <input
-          type="text"
+      <form onSubmit={handleQuery} style={{ display: 'flex', gap: 8, alignItems: 'flex-end', marginBottom: 16 }}>
+        <AutosizeTextarea
           value={queryInput}
           onChange={(e) => setQueryInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
           disabled={querying}
           placeholder='Ask the Genome — e.g., "which patterns chain from CDO transitions?"'
+          minRows={1}
+          maxRows={5}
           style={{
             flex: 1,
             padding: '10px 14px',
@@ -127,6 +135,7 @@ export function IntelligenceConsole({ patterns, initialCode }: Props) {
             color: INK,
             fontFamily: 'inherit',
             fontSize: 13,
+            lineHeight: 1.6,
           }}
         />
         <button
