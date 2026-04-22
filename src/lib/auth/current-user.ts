@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export type UserRole = 'maestro' | 'client_viewer' | 'observer';
@@ -30,13 +31,15 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
         emailAddress?: string;
       }
     | undefined;
-  const personId = claims?.publicMetadata?.person_id ?? null;
+  const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
   const legacyRole = claims?.publicMetadata?.role ?? null;
   const fallbackName =
     [claims?.firstName, claims?.lastName].filter(Boolean).join(' ') ||
     claims?.emailAddress ||
     'User';
   const fallbackEmail = claims?.emailAddress ?? null;
+  const resolvedPerson = personIdFromClaims ? null : await getCurrentPerson();
+  const personId = personIdFromClaims ?? resolvedPerson?.id ?? null;
 
   if (!personId) {
     // No linked persons row yet. Best-effort fallback based on legacy Clerk role.
@@ -89,9 +92,9 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   const defaultClientId = accessibleClients[0]?.clientId ?? null;
 
   return {
-    personId: (person as { id?: string } | null)?.id ?? personId,
-    name: (person as { name?: string } | null)?.name ?? fallbackName,
-    email: (person as { email?: string | null } | null)?.email ?? fallbackEmail,
+    personId: (person as { id?: string } | null)?.id ?? resolvedPerson?.id ?? personId,
+    name: (person as { name?: string } | null)?.name ?? resolvedPerson?.name ?? fallbackName,
+    email: (person as { email?: string | null } | null)?.email ?? resolvedPerson?.email ?? fallbackEmail,
     primaryRole,
     accessibleClients,
     defaultClientId,
