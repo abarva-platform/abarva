@@ -77,10 +77,15 @@ function NavInner({ activePage, compact = false }: NavProps) {
                               || activePage === 'intelligence'
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
                               || activePage === 'tower'
-  const platformActive     = pathname === '/platform' || pathname.startsWith('/platform/')
-                              || pathname.startsWith('/admin') || activePage === 'platform'
+  // Admin takes precedence · when the pathname is under /platform/admin,
+  // only the Admin pill should light up, not both Platform and Admin.
   const adminActive        = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')
                               || (activePage || '').startsWith('admin')
+  const platformActive     = !adminActive && (
+                              pathname === '/platform'
+                                || pathname.startsWith('/platform/')
+                                || activePage === 'platform'
+                            )
   const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
   const maestroActive      = homeActive
 
