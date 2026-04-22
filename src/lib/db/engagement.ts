@@ -85,6 +85,7 @@ export async function proposeOutcomeFee(
 export interface CreateEngagementArgs {
   name: string;
   sponsor_person_id: string;
+  client_id?: string | null;
   industry_code: string;
   function_code: string;
   objective_code: string;
@@ -148,6 +149,7 @@ export async function createEngagement(args: CreateEngagementArgs): Promise<Enga
     .insert({
       graph_node_id: graphNodeId,
       name: args.name,
+      client_id: args.client_id ?? null,
       industry_code: args.industry_code,
       function_code: args.function_code,
       objective_code: args.objective_code,

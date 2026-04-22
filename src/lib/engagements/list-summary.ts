@@ -24,11 +24,13 @@ export interface EngagementSummaryExtras {
   assignedTopicsCount: number;
   primaryTopicTitle: string | null;
   contradictionsCount: number;
+  contradictionsScope: 'program' | 'client' | 'none';
   valueAtStakeUsd: number | null;
   baselineLockedAt: string | null;
   nextGateDate: string | null;
   clientId: string | null;
   clientScale: { employees: number | null; revenue_usd: number | null } | null;
+  topicCode: string | null;
 }
 
 function jsonNumber(obj: Record<string, unknown> | null | undefined, key: string): number {
@@ -37,24 +39,91 @@ function jsonNumber(obj: Record<string, unknown> | null | undefined, key: string
   return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
+function parseCurrencyToUsd(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+
+  const normalized = value.replace(/,/g, '').trim();
+  const match = normalized.match(/\$?\s*(-?\d+(?:\.\d+)?)\s*([kmb])?/i);
+  if (!match) return null;
+
+  const base = Number(match[1]);
+  if (!Number.isFinite(base)) return null;
+  const suffix = (match[2] ?? '').toLowerCase();
+  const multiplier =
+    suffix === 'b' ? 1_000_000_000 :
+    suffix === 'm' ? 1_000_000 :
+    suffix === 'k' ? 1_000 :
+    1;
+  return base * multiplier;
+}
+
+function extractValueAtStakeUsd(metrics: Record<string, unknown> | null | undefined): number | null {
+  const direct = jsonNumber(metrics, 'savings_usd');
+  if (direct > 0) return direct;
+
+  const items = Array.isArray(metrics?.items)
+    ? (metrics?.items as Array<Record<string, unknown>>)
+    : [];
+  for (const item of items) {
+    const fromSavings = parseCurrencyToUsd(item.savings_usd);
+    if (fromSavings && fromSavings > 0) return fromSavings;
+    const fromBaseline = parseCurrencyToUsd(item.baseline_value);
+    if (fromBaseline && fromBaseline > 0) return fromBaseline;
+    const fromActual = parseCurrencyToUsd(item.actual_value);
+    if (fromActual && fromActual > 0) return fromActual;
+  }
+  return null;
+}
+
+function extractBaselineLockedAt(
+  metrics: Record<string, unknown> | null | undefined,
+  gates: Array<{ phase?: number; signed_at?: string; status?: string }>,
+): string | null {
+  const capturedAt = typeof metrics?.captured_at === 'string' ? metrics.captured_at : null;
+  if (capturedAt) return capturedAt;
+
+  const hasBaselineItems = Array.isArray(metrics?.items) && metrics.items.length > 0;
+  if (hasBaselineItems) {
+    const phase2Gate = gates.find((g) => g.phase === 2 && g.status === 'approved');
+    return phase2Gate?.signed_at ?? null;
+  }
+
+  const directSavings = jsonNumber(metrics, 'savings_usd');
+  if (directSavings > 0) {
+    const phase2Gate = gates.find((g) => g.phase === 2 && g.status === 'approved');
+    return phase2Gate?.signed_at ?? null;
+  }
+
+  return null;
+}
+
+function canonicalDeliverableKey(type: string | null | undefined): string | null {
+  if (!type) return null;
+  if (type === 'engagement_charter') return 'charter';
+  return type;
+}
+
 export async function loadEngagementSummaries(
   engagementIds: string[],
 ): Promise<Record<string, EngagementSummaryExtras>> {
   if (engagementIds.length === 0) return {};
   const sb = getServerSupabase();
   const out: Record<string, EngagementSummaryExtras> = {};
+  const deliverableKeysByEngagement = new Map<string, Set<string>>();
 
   // ── Engagements meta in one round-trip (deliverables JSONB, baseline,
   //    actual metrics, gates_passed, client linkage) ─────────────────────
   const { data: engRows } = await sb
     .from('engagements')
-    .select('id, client_id, deliverables, baseline_metrics, actual_metrics, gates_passed, current_phase')
+    .select('id, client_id, topic_code, deliverables, baseline_metrics, actual_metrics, gates_passed, current_phase')
     .in('id', engagementIds);
 
   const clientIds = new Set<string>();
   for (const e of (engRows as Array<{
     id: string;
     client_id: string | null;
+    topic_code: string | null;
     deliverables: Array<Record<string, unknown>> | null;
     baseline_metrics: Record<string, unknown> | null;
     actual_metrics: Record<string, unknown> | null;
@@ -63,17 +132,21 @@ export async function loadEngagementSummaries(
   }> | null) ?? []) {
     const deliverables = Array.isArray(e.deliverables) ? e.deliverables : [];
     const topDeliverable = deliverables[0] as { type?: string; content?: { quality_score?: number } } | undefined;
+    const deliverableKeys = new Set<string>();
+    for (const deliverable of deliverables) {
+      const key = canonicalDeliverableKey(typeof deliverable.type === 'string' ? deliverable.type : null);
+      if (key) deliverableKeys.add(key);
+    }
+    deliverableKeysByEngagement.set(e.id, deliverableKeys);
 
     // Baseline locked · Phase 2 gate approval date (phase advancement from
     // 2 → 3 locks the baseline per AbarVa's outcome-accountable model).
     const gates = (e.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string }> | null) ?? [];
-    const phase2Gate = gates.find((g) => g.phase === 2 && g.status === 'approved');
-    const baselineLockedAt = phase2Gate?.signed_at ?? null;
 
     // Value at stake · annualize baseline savings forecast, or 18mo if no
     // clearer proxy exists
-    const baselineSavings = jsonNumber(e.baseline_metrics, 'savings_usd');
-    const valueAtStake = baselineSavings > 0 ? baselineSavings : null;
+    const valueAtStake = extractValueAtStakeUsd(e.baseline_metrics);
+    const baselineLockedAt = extractBaselineLockedAt(e.baseline_metrics, gates);
 
     // Next gate estimate · + 30d from last gate signed_at
     const latestGate = gates
@@ -85,8 +158,8 @@ export async function loadEngagementSummaries(
 
     out[e.id] = {
       engagementId: e.id,
-      deliverablesCount: deliverables.length,
-      topDeliverableType: topDeliverable?.type ?? null,
+      deliverablesCount: deliverableKeys.size,
+      topDeliverableType: canonicalDeliverableKey(topDeliverable?.type) ?? null,
       topDeliverableQuality: typeof topDeliverable?.content?.quality_score === 'number'
         ? topDeliverable.content.quality_score
         : null,
@@ -95,13 +168,41 @@ export async function loadEngagementSummaries(
       assignedTopicsCount: 0,
       primaryTopicTitle: null,
       contradictionsCount: 0,
+      contradictionsScope: 'none',
       valueAtStakeUsd: valueAtStake,
       baselineLockedAt,
       nextGateDate,
       clientId: e.client_id,
       clientScale: null,
+      topicCode: e.topic_code,
     };
     if (e.client_id) clientIds.add(e.client_id);
+  }
+
+  // ── deliverables_v2 count + top deliverable type ─────────────────────
+  try {
+    const { data: v2Rows } = await sb
+      .from('deliverables_v2')
+      .select('id, engagement_id, deliverable_type_key, updated_at')
+      .in('engagement_id', engagementIds)
+      .order('updated_at', { ascending: false });
+    const seen = new Set<string>();
+    for (const row of (v2Rows as Array<{ id: string; engagement_id: string; deliverable_type_key: string; updated_at: string }> | null) ?? []) {
+      const current = out[row.engagement_id];
+      if (!current) continue;
+      const keys = deliverableKeysByEngagement.get(row.engagement_id) ?? new Set<string>();
+      if (!keys.has(row.deliverable_type_key)) {
+        keys.add(row.deliverable_type_key);
+        current.deliverablesCount = keys.size;
+      }
+      deliverableKeysByEngagement.set(row.engagement_id, keys);
+      if (!seen.has(row.engagement_id)) {
+        current.topDeliverableType = row.deliverable_type_key;
+        seen.add(row.engagement_id);
+      }
+    }
+  } catch (err) {
+    console.warn('[engagement-summary.deliverables_v2]', err);
   }
 
   // ── Turn counts + last turn ─────────────────────────────────────────
@@ -163,22 +264,67 @@ export async function loadEngagementSummaries(
     console.warn('[engagement-summary.topics]', err);
   }
 
-  // ── Contradictions + client scale (per client, not per engagement) ──
+  // Fallback · if the newer topic mapping table is empty, still surface the
+  // engagement's canonical topic_code so seeded and freshly-created programs
+  // don't misleadingly show zero topical context.
+  try {
+    const fallbackTopicCodes = Array.from(
+      new Set(
+        Object.values(out)
+          .map((entry) => entry.topicCode)
+          .filter((value): value is string => Boolean(value)),
+      ),
+    );
+    if (fallbackTopicCodes.length > 0) {
+      const { data: fallbackRows } = await sb
+        .from('engagement_topics')
+        .select('topic_key, title')
+        .in('topic_key', fallbackTopicCodes);
+      const fallbackTitles = new Map<string, string>();
+      for (const row of (fallbackRows as Array<{ topic_key: string; title: string }> | null) ?? []) {
+        fallbackTitles.set(row.topic_key, row.title);
+      }
+      for (const entry of Object.values(out)) {
+        if (entry.assignedTopicsCount > 0 || !entry.topicCode) continue;
+        entry.assignedTopicsCount = 1;
+        entry.primaryTopicTitle = fallbackTitles.get(entry.topicCode) ?? entry.topicCode;
+      }
+    }
+  } catch (err) {
+    console.warn('[engagement-summary.topics-fallback]', err);
+  }
+
+  // ── Contradictions + client scale ────────────────────────────────────
   if (clientIds.size > 0) {
     const ids = Array.from(clientIds);
     try {
       const { data: contra } = await sb
         .from('contradictions')
-        .select('client_id')
+        .select('client_id, triggered_engagement_id')
         .in('client_id', ids)
         .is('resolved_at', null);
-      const counts = new Map<string, number>();
-      for (const c of (contra as Array<{ client_id: string }> | null) ?? []) {
-        counts.set(c.client_id, (counts.get(c.client_id) ?? 0) + 1);
+      const clientCounts = new Map<string, number>();
+      const programCounts = new Map<string, number>();
+      for (const c of (contra as Array<{ client_id: string; triggered_engagement_id: string | null }> | null) ?? []) {
+        clientCounts.set(c.client_id, (clientCounts.get(c.client_id) ?? 0) + 1);
+        if (c.triggered_engagement_id) {
+          programCounts.set(
+            c.triggered_engagement_id,
+            (programCounts.get(c.triggered_engagement_id) ?? 0) + 1,
+          );
+        }
       }
       for (const engId of Object.keys(out)) {
+        if (programCounts.has(engId)) {
+          out[engId].contradictionsCount = programCounts.get(engId) ?? 0;
+          out[engId].contradictionsScope = 'program';
+          continue;
+        }
         const cid = out[engId].clientId;
-        if (cid && counts.has(cid)) out[engId].contradictionsCount = counts.get(cid) ?? 0;
+        if (cid && clientCounts.has(cid)) {
+          out[engId].contradictionsCount = clientCounts.get(cid) ?? 0;
+          out[engId].contradictionsScope = 'client';
+        }
       }
     } catch (err) {
       console.warn('[engagement-summary.contradictions]', err);

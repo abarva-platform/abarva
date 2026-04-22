@@ -78,11 +78,12 @@ interface Props {
   vipGreeting?: VipGreetingData | null;
   assignedTopics?: AssignedTopic[];
   topContradictions?: TopContradiction[];
+  contradictionsScope?: 'program' | 'client' | 'none';
   activityEvents?: ActivityEvent[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, activityEvents,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, contradictionsScope = 'client', activityEvents,
 }: Props) {
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
@@ -701,11 +702,13 @@ export function EngagementConsole({
             )}
           </div>
 
-          {/* Contradictions · top 3 for this engagement's client, so-what framed */}
+          {/* Contradictions · prefer program-scoped rows, fall back to client-scoped */}
           {topContradictions && topContradictions.length > 0 && (
             <div style={{ background: 'rgba(245,197,74,0.04)', border: '0.5px solid rgba(245,197,74,0.2)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#F5C54A', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Contradictions · {topContradictions.length}</span>
+                <span>
+                  {contradictionsScope === 'program' ? 'Program contradictions' : 'Client contradictions'} · {topContradictions.length}
+                </span>
                 <a href="/tower" style={{ color: 'rgba(245,245,240,0.55)', textDecoration: 'none', letterSpacing: '0.1em' }}>ALL →</a>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
