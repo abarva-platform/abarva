@@ -2,8 +2,7 @@
 
 import { Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
-import type { ModuleContent } from '@/lib/programs/types';
+import type { ModuleContent } from '@/lib/programs/types.ui';
 import { getDeliverable, getProgramByIdSync, getViewerRole } from '@/lib/programs/mock';
 import { ProgramShell } from '@/components/programs/ProgramSurface';
 import { TimelineResourceEstimateView } from '@/components/programs/TimelineResourceEstimateView';
@@ -171,11 +170,7 @@ function ProgramDeliverablePageContent({
   const viewerRole = getViewerRole(searchParams.get('role'));
   const program = getProgramByIdSync(programId);
   const deliverable = getDeliverable(programId, id);
-<<<<<<< codex/deliverables-full-spec
   const programModule = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
-=======
-  const deliverableModule = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
->>>>>>> main
   const moduleContent = deliverable && program ? program.moduleContent[deliverable.moduleKey] ?? null : null;
 
   if (!program || !deliverable) {
@@ -191,13 +186,8 @@ function ProgramDeliverablePageContent({
           <span className="programs-chip">{deliverable.status}</span>
           <span className="programs-chip">v{deliverable.version}</span>
           <span className="programs-chip">{deliverable.owner.name}</span>
-<<<<<<< codex/deliverables-full-spec
           {programModule ? <span className="programs-chip">{programModule.name}</span> : null}
           {programModule ? <span className="programs-chip">Phase {programModule.phase}</span> : null}
-=======
-          {deliverableModule ? <span className="programs-chip">{deliverableModule.name}</span> : null}
-          {deliverableModule ? <span className="programs-chip">Phase {deliverableModule.phase}</span> : null}
->>>>>>> main
         </div>
         <div className="programs-card programs-section" style={{ marginTop: 18 }}>
           <div className="programs-eyebrow">Summary</div>

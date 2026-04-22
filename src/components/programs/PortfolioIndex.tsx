@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { getAllPrograms, getPatterns, getPrograms, getRoleDefaults, getViewerRole } from '@/lib/programs/mock';
-import type { PatternLibraryItem, PortfolioFilters, PortfolioIndexProps, ProgramSummary, ViewerRole } from '@/lib/programs/types';
+import type { PatternLibraryItem, PortfolioFilters, PortfolioIndexProps, ProgramSummary, ViewerRole } from '@/lib/programs/types.ui';
 import { ProgramCard } from '@/components/programs/common';
 
 function serializeFilters(filters: PortfolioFilters) {

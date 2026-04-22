@@ -23,21 +23,23 @@ import type {
   NexusPanelProps,
   ParticipantRef,
   PatternMatch,
-  PatternClassifierMatch,
   PersonRef,
   PhaseState,
-  ProgramCore,
   ProgramFullState,
+  ProgramSummary,
+  ProgramThread,
+  ThreadRef,
+  ViewerRole,
+} from './types.ui';
+import type {
+  PatternClassifierMatch,
+  ProgramCore,
   ProgramMilestoneRow,
   ProgramModuleRow,
   ProgramRiskRow,
-  ProgramSummary,
-  ProgramThread,
   ProgramWorkItemRow,
   TenancyCtx,
-  ThreadRef,
-  ViewerRole,
-} from './types';
+} from './types.db';
 import {
   getMilestones,
   getModuleState,
@@ -46,7 +48,7 @@ import {
   getRisks,
   getWorkItems,
 } from './queries';
-import { PHASE_LABELS } from './types';
+import { PHASE_LABELS } from './types.db';
 
 // ── Client name mapping ────────────────────────────────────────────────
 const KNOWN_CLIENT_NAMES = new Map<string, ProgramSummary['clientName']>([

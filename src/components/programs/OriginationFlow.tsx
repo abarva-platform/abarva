@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createProgram, getLeadOptions, getSponsorOptions, originateProgram } from '@/lib/programs/mock';
-import type { OriginationForm, PatternMatch } from '@/lib/programs/types';
+import type { OriginationForm, PatternMatch } from '@/lib/programs/types.ui';
 
 function emptyForm(prefill?: Partial<OriginationForm>): OriginationForm {
   return {
