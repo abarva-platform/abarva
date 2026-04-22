@@ -381,10 +381,13 @@ export default function PlatformPage() {
                 style={{
                   margin: '14px 0 0',
                   fontFamily: SERIF,
-                  fontSize: 'clamp(64px, 9vw, 142px)',
-                  lineHeight: 0.88,
-                  letterSpacing: '-0.065em',
-                  maxWidth: 980,
+                  // Shrunk from clamp(64, 9vw, 142) · "Transformation" was
+                  // clipping at desktop widths when the right-side schematic
+                  // claims ~45% of the grid column.
+                  fontSize: 'clamp(52px, 6.2vw, 108px)',
+                  lineHeight: 0.92,
+                  letterSpacing: '-0.045em',
+                  maxWidth: 820,
                   color: INK,
                 }}
               >
@@ -737,17 +740,19 @@ function ArchitectureConstellation() {
 
   return (
     <div className="schematic-shell">
-      <div className="schematic-header">
-        <span>Architecture</span>
+      {/* Top header · ARCHITECTURE label shares the row with the agents
+          count so the first thing the eye reads is the agent chips right
+          below — no orphaned eyebrow rows eating vertical space. */}
+      <div className="schematic-header schematic-header-top">
+        <span>
+          <strong>Architecture</strong>
+          <em>· Agents 4 · specialist surfaces</em>
+        </span>
         <span>Live governance spine</span>
       </div>
 
       {/* ─── AGENTS BANK ─────────────────────────────────────────────── */}
       <div className="schematic-section schematic-section-agents" aria-label="Specialist agents">
-        <div className="schematic-row-label">
-          <span>Agents · 4</span>
-          <span>specialist surfaces</span>
-        </div>
         <div className="schematic-agent-row">
           {AGENTS.map((agent) => (
             <div key={agent.id} className="schematic-agent-chip">
@@ -1285,6 +1290,21 @@ const platformCss = `
     letter-spacing: 0.14em;
     text-transform: uppercase;
     color: rgba(247,242,234,0.58);
+  }
+
+  .schematic-header-top span:first-child {
+    display: inline-flex;
+    gap: 8px;
+    align-items: baseline;
+  }
+  .schematic-header-top strong {
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    color: rgba(20,184,166,0.95);
+  }
+  .schematic-header-top em {
+    font-style: normal;
+    color: rgba(247,242,234,0.48);
   }
 
   .schematic-footer {
