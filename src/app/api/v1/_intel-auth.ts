@@ -16,11 +16,21 @@ export class TenancyError extends Error {
 
 export async function requireTenancy(): Promise<TenancyCtx> {
   const [person, user] = await Promise.all([getCurrentPerson(), getCurrentUser()]);
-  const clerkUser = user ? null : await currentUser().catch(() => null);
-  if (!person && !user?.personId && !clerkUser) throw new TenancyError('unauthenticated');
+  // Signed-in check · getCurrentUser returns null only when Clerk auth() has
+  // no userId. If either the persons row or the Clerk session is present,
+  // treat the request as authenticated. Demo / test Clerk users often have
+  // no linked persons row — they must still be able to read intelligence.
+  const clerkUser = !user ? await currentUser().catch(() => null) : null;
+  if (!person && !user && !clerkUser) throw new TenancyError('unauthenticated');
   const client = await getActiveClientRow();
   if (!client) throw new TenancyError('no_client');
-  const userId = person?.id ?? user?.personId ?? null;
+  // Prefer persons.id (needed when downstream code joins on graph nodes).
+  // Fall back to a stable Clerk-derived token so thread / audit tables still
+  // scope per signed-in user when no persons row exists.
+  const userId = person?.id
+    ?? user?.personId
+    ?? (user?.clerkUserId ? `clerk:${user.clerkUserId}` : null)
+    ?? (clerkUser?.id ? `clerk:${clerkUser.id}` : null);
   if (!userId) throw new TenancyError('unauthenticated');
   return { clientId: client.id, userId };
 }
