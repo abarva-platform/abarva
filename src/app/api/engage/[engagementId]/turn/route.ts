@@ -368,19 +368,25 @@ export async function POST(
           console.error('[outcome-fee]', err);
         }
 
-        // Gate approval detection — emit event BEFORE 'done' so UI can show toast
+        // Gate approval detection — emit event BEFORE 'done' so UI can show toast.
+        // Approver fallback chain: sponsor → maestro → caller → null. Intake-
+        // created engagements frequently have no sponsor linked yet (inline
+        // persona creation races the gate approval), so gating processing on
+        // sponsor-present silently drops the approval. Prefer the most
+        // authoritative signer we can find; the gate advances either way.
         const gateApproval = parseGateApprovalBlock(agentFullText);
-        if (gateApproval && sponsor) {
+        if (gateApproval) {
+          const approverId = sponsor?.id ?? maestro?.id ?? null;
           try {
             const updated = await recordGateApproval({
               engagementId: engagement.id,
               phase: gateApproval.phase,
-              approvedByPersonId: sponsor.id,
+              approvedByPersonId: approverId,
               approvalText: gateApproval.approval_text,
               summary: gateApproval.summary,
             });
             await logAudit({
-              actorPersonId: sponsor?.id ?? null,
+              actorPersonId: approverId,
               action: 'engagement.gate_approved',
               targetTable: 'engagements',
               targetId: engagement.id,
@@ -389,6 +395,7 @@ export async function POST(
               metadata: {
                 approval_text: gateApproval.approval_text,
                 summary: gateApproval.summary,
+                approver_fallback: sponsor ? 'sponsor' : maestro ? 'maestro' : 'none',
               },
             });
             controller.enqueue(

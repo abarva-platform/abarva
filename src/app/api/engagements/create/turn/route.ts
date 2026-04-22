@@ -11,6 +11,7 @@ import { syncEngagementToGraph } from '@/lib/graph/engagement-sync';
 import { syncPersonToGraph } from '@/lib/graph/mutations';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { logAudit } from '@/lib/audit/log';
+import { assignTopic } from '@/lib/topics/db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -89,6 +90,11 @@ export async function POST(req: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        console.info('[program.create.start]', {
+          messageCount: body.messages?.length ?? 0,
+          activeClientId: activeClient?.id ?? null,
+          activeClientName: activeClient?.name ?? null,
+        });
         let full = '';
         for await (const delta of streamAgentTurn({ system, messages: body.messages! })) {
           full += delta;
@@ -128,11 +134,18 @@ export async function POST(req: NextRequest) {
           const engagement = await createEngagement({
             name: parsed.name,
             sponsor_person_id: sponsorRowId,
+            client_id: activeClient?.id ?? null,
             industry_code: parsed.industry_code,
             function_code: parsed.function_code,
             objective_code: parsed.objective_code,
             topic_code: parsed.topic_code,
             maestro_person_id: maestro?.id ?? null,
+          });
+          console.info('[program.create.committed]', {
+            id: engagement.id,
+            graph_node_id: engagement.graph_node_id,
+            client_id: activeClient?.id ?? null,
+            sponsor_person_id: sponsorRowId,
           });
 
           await syncEngagementToGraph({
@@ -145,6 +158,23 @@ export async function POST(req: NextRequest) {
             sponsor_graph_node_id: sponsorGraphId,
             maestro_graph_node_id: maestro?.graph_node_id ?? null,
           });
+          console.info('[program.create.graph_synced]', {
+            graph_node_id: engagement.graph_node_id,
+            sponsor_graph_node_id: sponsorGraphId,
+          });
+
+          if (parsed.topic_code) {
+            await assignTopic({
+              engagementId: engagement.id,
+              topicKey: parsed.topic_code,
+              assignedBy: maestro?.id ?? null,
+              isPrimary: true,
+            });
+            console.info('[program.create.topic_assigned]', {
+              engagement_id: engagement.id,
+              topic_key: parsed.topic_code,
+            });
+          }
 
           await logAudit({
             actorPersonId: maestro?.id ?? null,
@@ -162,6 +192,9 @@ export async function POST(req: NextRequest) {
 
           // Re-fetch so we return the full row (consistent with what the page expects)
           const hydrated = (await getEngagementByGraphId(engagement.graph_node_id)) ?? engagement;
+          if (!hydrated?.graph_node_id) {
+            throw new Error('engagement_persisted_without_graph_node_id');
+          }
 
           // Denormalise sponsor + label data for the confirmation readout so
           // the client doesn't need a second round-trip to render it.
@@ -210,12 +243,18 @@ export async function POST(req: NextRequest) {
               }) + '\n',
             ),
           );
+          console.info('[program.create.response_sent]', {
+            id: hydrated.id,
+            graph_node_id: hydrated.graph_node_id,
+            active_client: activeClient?.name ?? null,
+          });
         }
 
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));
         controller.close();
       } catch (err) {
         const message = err instanceof Error ? err.message : 'unknown error';
+        console.error('[program.create.error]', err);
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'error', error: message }) + '\n'));
         controller.close();
       }

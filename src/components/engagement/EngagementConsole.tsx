@@ -78,11 +78,12 @@ interface Props {
   vipGreeting?: VipGreetingData | null;
   assignedTopics?: AssignedTopic[];
   topContradictions?: TopContradiction[];
+  contradictionsScope?: 'program' | 'client' | 'none';
   activityEvents?: ActivityEvent[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, activityEvents,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, contradictionsScope = 'client', activityEvents,
 }: Props) {
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
@@ -93,6 +94,16 @@ export function EngagementConsole({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gateToast, setGateToast] = useState<{ phase: number; newPhase: number } | null>(null);
+  // Phase transition ceremony · activates when the server emits
+  // gate_approved, walks through three status lines (logging approval ·
+  // generating charter · opening next phase) and dismisses once the
+  // phase_opener arrives or after a 4s cap, whichever first.
+  const [phaseTransition, setPhaseTransition] = useState<{
+    fromPhase: number;
+    toPhase: number;
+    phaseName: string;
+    stage: 0 | 1 | 2 | 3; // 0: approving · 1: drafting · 2: opening · 3: complete
+  } | null>(null);
   const [choices, setChoices] = useState<Choice[]>([]);
   const [choicesForTurnId, setChoicesForTurnId] = useState<string | null>(null);
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
@@ -121,6 +132,33 @@ export function EngagementConsole({
     const t = setTimeout(() => setGateToast(null), 4000);
     return () => clearTimeout(t);
   }, [gateToast]);
+
+  // Phase transition ceremony · advance through status lines so the
+  // user sees progression rather than a blank pause. The server's
+  // phase_opener SSE event flips `stage` to 3; if that never arrives
+  // (server-side hiccup) we still complete after 4s and call
+  // router.refresh to pull the new phase state. Lines are:
+  //   0 → 1 (~400ms): "Phase N complete" becomes "Generating charter"
+  //   1 → 2 (~900ms): "Generating charter" becomes "Opening Phase N+1"
+  //   2 → 3 (on phase_opener OR 4s cap): dismiss + refresh server data
+  useEffect(() => {
+    if (!phaseTransition) return;
+    const { stage } = phaseTransition;
+    if (stage === 3) {
+      const refreshT = setTimeout(() => {
+        router.refresh();
+        setPhaseTransition(null);
+      }, 600);
+      return () => clearTimeout(refreshT);
+    }
+    const delay = stage === 0 ? 700 : stage === 1 ? 1100 : 1800;
+    const t = setTimeout(() => {
+      setPhaseTransition((prev) =>
+        prev && prev.stage < 3 ? { ...prev, stage: (prev.stage + 1) as 0 | 1 | 2 | 3 } : prev,
+      );
+    }, delay);
+    return () => clearTimeout(t);
+  }, [phaseTransition, router]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -216,13 +254,21 @@ export function EngagementConsole({
             const raw = evt as unknown as { phase?: number; new_phase?: number };
             const phase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase;
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
+            const phaseName = phaseLabels[newPhase] ?? `Phase ${newPhase}`;
             setGateToast({ phase, newPhase });
-            setTimeout(() => router.refresh(), 1800);
+            setPhaseTransition({ fromPhase: phase, toPhase: newPhase, phaseName, stage: 0 });
+            // Safety net · if the server never emits phase_opener for any
+            // reason, force-complete the ceremony after 4s so the user
+            // isn't stuck on the overlay forever.
+            setTimeout(() => {
+              setPhaseTransition((prev) => (prev && prev.stage < 3 ? { ...prev, stage: 3 } : prev));
+            }, 4000);
           } else if (evt.type === 'phase_opener') {
             // Server has advanced the phase and pre-seeded the next-phase
-            // opener as an agent turn. Render it inline so the console doesn't
-            // feel blank after gate approval.
+            // opener as an agent turn. Render it inline · also flips the
+            // transition ceremony to `stage: 3` so the overlay can fade.
             const raw = evt as unknown as { phase?: number; turnId?: string; text?: string };
+            setPhaseTransition((prev) => (prev ? { ...prev, stage: 3 } : prev));
             if (typeof raw.text === 'string' && raw.text.length > 0) {
               const openerId = raw.turnId ?? `opener-${Date.now()}`;
               const openerPhase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase + 1;
@@ -270,6 +316,108 @@ export function EngagementConsole({
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif', position: 'relative' }}>
+      {/* Phase transition ceremony overlay. Renders full-viewport when a gate
+          approval fires; walks three status lines then fades once the
+          phase_opener arrives. Keeps the user's attention on the handoff
+          instead of silently reloading the console. */}
+      {phaseTransition && phaseTransition.stage < 3 && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 70,
+            background: 'rgba(10,10,10,0.94)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 32,
+            animation: reducedMotion ? undefined : `transitionFade ${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 11,
+              letterSpacing: '0.2em',
+              color: '#2DD4C8',
+              textTransform: 'uppercase',
+            }}
+          >
+            Phase {phaseTransition.fromPhase} complete
+          </div>
+          <div
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: 38,
+              fontWeight: 400,
+              color: '#F5F5F0',
+              textAlign: 'center',
+              maxWidth: 640,
+              lineHeight: 1.2,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Creating your program.
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              minWidth: 320,
+              alignItems: 'flex-start',
+            }}
+          >
+            {[
+              { label: 'Logging approval + locking charter', doneAt: 1 },
+              { label: 'Generating Phase ' + phaseTransition.fromPhase + ' deliverable', doneAt: 2 },
+              { label: 'Opening Phase ' + phaseTransition.toPhase + ' · ' + phaseTransition.phaseName, doneAt: 3 },
+            ].map((line, i) => {
+              const isDone = phaseTransition.stage >= line.doneAt;
+              const isActive = phaseTransition.stage === i;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    opacity: isActive || isDone ? 1 : 0.35,
+                    transition: reducedMotion ? undefined : `opacity ${TRANSITIONS.inPlace}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 14,
+                      display: 'inline-flex',
+                      justifyContent: 'center',
+                      color: isDone ? '#2DD4C8' : isActive ? '#2DD4C8' : 'rgba(245,245,240,0.4)',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 13,
+                      animation: isActive && !reducedMotion ? `transitionPulse 1s ${MOTION.easing.easeInOut} infinite` : undefined,
+                    }}
+                  >
+                    {isDone ? '✓' : isActive ? '◆' : '·'}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'DM Sans, sans-serif',
+                      fontSize: 14,
+                      color: isDone ? 'rgba(245,245,240,0.85)' : isActive ? '#F5F5F0' : 'rgba(245,245,240,0.55)',
+                    }}
+                  >
+                    {line.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {gateToast && (
         <div
           role="status"
@@ -307,6 +455,14 @@ export function EngagementConsole({
         @keyframes streamPulse {
           0%, 100% { opacity: 0.35; }
           50%      { opacity: 0.9; }
+        }
+        @keyframes transitionFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes transitionPulse {
+          0%, 100% { opacity: 0.5; }
+          50%      { opacity: 1; }
         }
       `}</style>
       {/* Header */}
@@ -611,8 +767,8 @@ export function EngagementConsole({
               onChange={e => setInput(e.target.value)}
               onFocus={() => setComposerFocused(true)}
               onBlur={() => setComposerFocused(false)}
-              disabled={isStreaming}
-              placeholder={composerPlaceholder}
+              disabled={isStreaming || phaseTransition !== null}
+              placeholder={phaseTransition ? 'Creating your program…' : composerPlaceholder}
               style={{
                 flex: 1,
                 padding: '10px 14px',
@@ -631,7 +787,7 @@ export function EngagementConsole({
             />
             <button
               type="submit"
-              disabled={isStreaming || !input.trim()}
+              disabled={isStreaming || phaseTransition !== null || !input.trim()}
               onMouseEnter={() => setSendHovered(true)}
               onMouseLeave={() => { setSendHovered(false); setSendPressed(false); }}
               onMouseDown={() => setSendPressed(true)}
@@ -701,11 +857,13 @@ export function EngagementConsole({
             )}
           </div>
 
-          {/* Contradictions · top 3 for this engagement's client, so-what framed */}
+          {/* Contradictions · prefer program-scoped rows, fall back to client-scoped */}
           {topContradictions && topContradictions.length > 0 && (
             <div style={{ background: 'rgba(245,197,74,0.04)', border: '0.5px solid rgba(245,197,74,0.2)', borderRadius: 10, padding: 14 }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#F5C54A', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-                <span>Contradictions · {topContradictions.length}</span>
+                <span>
+                  {contradictionsScope === 'program' ? 'Program contradictions' : 'Client contradictions'} · {topContradictions.length}
+                </span>
                 <a href="/tower" style={{ color: 'rgba(245,245,240,0.55)', textDecoration: 'none', letterSpacing: '0.1em' }}>ALL →</a>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

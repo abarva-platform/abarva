@@ -466,14 +466,14 @@ export function EngagementCreationConsole() {
                   {autoAdvanceCancelled ? (
                     <>
                       Auto-advance cancelled. Click Start Phase 0 when ready.{' '}
-                      <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                      <a href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
                         Start over
                       </a>
                     </>
                   ) : (
                     <>
                       Something wrong?{' '}
-                      <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                      <a href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
                         Start over
                       </a>
                     </>
