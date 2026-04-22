@@ -18,7 +18,9 @@ export function EyebrowLabel({ children, tone = 'teal', size = 'sm', style, id }
       : tone === 'amber' ? COLORS.amber
       : tone === 'red' ? COLORS.red
       : 'rgba(245,245,240,0.55)';
-  const fontSize = size === 'xs' ? 9 : size === 'md' ? 11 : 10;
+  // Fix Spec v3 §1 · eyebrow sizes bumped one step so labels stay legible
+  // on 13" laptops: xs 9→10, sm 10→11, md 11→12.
+  const fontSize = size === 'xs' ? 10 : size === 'md' ? 12 : 11;
   return (
     <div
       id={id}

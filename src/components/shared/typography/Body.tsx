@@ -10,12 +10,13 @@ interface Props {
   style?: CSSProperties;
 }
 
-// DM Sans body text. Default 14/1.6 which is the product default. Use sm
-// (13) for supporting copy; lg (16) for opening paragraphs on content-heavy
-// pages; xs (11) only for metadata — use MetaLabel for most small cases.
+// DM Sans body text. Default 15/1.6 (Fix Spec v3 §1 · 13-15" laptop
+// readability). Use sm (13) for supporting copy; lg (17) for opening
+// paragraphs on content-heavy pages; xs (12) only for metadata — use
+// MetaLabel for most small cases.
 export function Body({ children, size = 'md', weight = 400, tone = 'primary', as = 'p', style }: Props) {
   const Tag = as;
-  const fontSize = size === 'xs' ? 11 : size === 'sm' ? 13 : size === 'lg' ? 16 : 14;
+  const fontSize = size === 'xs' ? 12 : size === 'sm' ? 13 : size === 'lg' ? 17 : 15;
   const color =
     tone === 'secondary' ? COLORS.textSecondary
       : tone === 'muted' ? COLORS.textMuted

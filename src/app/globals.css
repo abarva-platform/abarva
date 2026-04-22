@@ -23,8 +23,66 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'DM Sans', -apple-system, sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
+}
+
+/* ── Fix Spec v3 · §1 · global page width + readability ────────────────
+   Most authenticated product surfaces default to a 1280px centered
+   content column so 13–15" laptop users don't get edge-to-edge text.
+   Marketing pages already own their own width; this class is an
+   explicit opt-in for product surfaces. Use .full-bleed to opt out
+   when a section genuinely wants edge-to-edge (5-phase viz, data
+   tables, Atlas rail). */
+.product-shell {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: 24px;
+  padding-right: 24px;
+  box-sizing: border-box;
+}
+.product-shell--wide {
+  max-width: 1480px;
+}
+.product-shell--narrow {
+  max-width: 960px;
+}
+.full-bleed {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+@media (min-width: 1600px) {
+  .product-shell {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+}
+@media (max-width: 640px) {
+  .product-shell {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Fix Spec v3 · §1 · eyebrow + side-panel bumps ─────────────────────
+   Bumps JetBrains Mono eyebrows 11→12 and side-panel body copy one
+   step so 13" laptops stay readable without forcing users to zoom.
+   Explicit utility classes · opt-in from components that previously
+   inlined these sizes. Existing shared typography primitives
+   (EyebrowLabel, Body, MetaLabel) already honour the new base. */
+.ds-eyebrow--mono,
+.product-shell [data-mono-eyebrow] {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ds-side-panel {
+  font-size: 14px;
+}
+.ds-side-panel [data-label] {
+  font-size: 12px;
 }
 
 .caption,
