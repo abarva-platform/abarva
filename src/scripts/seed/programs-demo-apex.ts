@@ -21,6 +21,8 @@ import { charterDeliverableType } from '@/lib/deliverables/templates/charter';
 import { designBriefDeliverableType } from '@/lib/deliverables/templates/design_brief';
 import { executionPlanDeliverableType } from '@/lib/deliverables/templates/execution_plan';
 import { outcomeReportDeliverableType } from '@/lib/deliverables/templates/outcome_report';
+import { timelineResourceEstimateDeliverableType } from '@/lib/deliverables/templates/timeline_resource_estimate';
+import { executionRoadmapTrackerDeliverableType } from '@/lib/deliverables/templates/execution_roadmap_tracker';
 
 // Load .env.local manually so the script runs standalone
 try {
@@ -344,7 +346,9 @@ const DEMO_DELIVERABLE_TYPES: Array<{ type_key: string; title: string; applicabl
   { type_key: 'charter', title: 'Program Charter', applicable_phases: [1, 2] },
   { type_key: 'design_spec', title: 'Design Specification', applicable_phases: [3] },
   { type_key: 'vendor_selection', title: 'Vendor Selection', applicable_phases: [3] },
+  { type_key: 'timeline_resource_estimate', title: 'Timeline + Resource Estimate', applicable_phases: [3, 4] },
   { type_key: 'execution_plan', title: 'Execution Plan', applicable_phases: [4] },
+  { type_key: 'execution_roadmap_tracker', title: 'Execution Roadmap Tracker', applicable_phases: [4, 5] },
   { type_key: 'outcome_report', title: 'Outcome Report', applicable_phases: [5] },
 ];
 
@@ -463,6 +467,26 @@ async function ensureDeliverableTypes(): Promise<void> {
       generation_prompt_template: executionPlanDeliverableType.generation_prompt_template,
       output_format: executionPlanDeliverableType.output_format,
       maturity: executionPlanDeliverableType.maturity,
+    },
+    timeline_resource_estimate: {
+      description: timelineResourceEstimateDeliverableType.description,
+      applicable_topics: [...timelineResourceEstimateDeliverableType.applicable_topics],
+      template_structure: timelineResourceEstimateDeliverableType.template_structure,
+      required_data_inputs: timelineResourceEstimateDeliverableType.required_data_inputs,
+      quality_rubric: timelineResourceEstimateDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: timelineResourceEstimateDeliverableType.generation_prompt_template,
+      output_format: timelineResourceEstimateDeliverableType.output_format,
+      maturity: timelineResourceEstimateDeliverableType.maturity,
+    },
+    execution_roadmap_tracker: {
+      description: executionRoadmapTrackerDeliverableType.description,
+      applicable_topics: [...executionRoadmapTrackerDeliverableType.applicable_topics],
+      template_structure: executionRoadmapTrackerDeliverableType.template_structure,
+      required_data_inputs: executionRoadmapTrackerDeliverableType.required_data_inputs,
+      quality_rubric: executionRoadmapTrackerDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: executionRoadmapTrackerDeliverableType.generation_prompt_template,
+      output_format: executionRoadmapTrackerDeliverableType.output_format,
+      maturity: executionRoadmapTrackerDeliverableType.maturity,
     },
     outcome_report: {
       description: outcomeReportDeliverableType.description,
