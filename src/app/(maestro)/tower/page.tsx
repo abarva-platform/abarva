@@ -48,15 +48,15 @@ function panelFrame(
   children: React.ReactNode,
 ) {
   return (
-    <div style={{ background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12, padding: 18, display: 'flex', flexDirection: 'column', gap: 12, minHeight: 200 }}>
+    <div style={{ background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, minHeight: 224 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: accent, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: accent, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             {number} · {title}
           </div>
-          <div style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>{subtitle}</div>
+          <div style={{ fontSize: 14, color: MUTE, marginTop: 4, lineHeight: 1.5 }}>{subtitle}</div>
         </div>
-        <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: MUTE }}>
           <span style={{ color: freshnessColor(freshness), marginRight: 4 }}>●</span>
           {freshnessLabel(freshness)}
         </div>
@@ -101,20 +101,20 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
   const eliminable = formatUsd(impact?.eliminable_usd_annual);
   const sev = severityColor(c.severity);
   return (
-    <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 10 }}>
+    <div style={{ padding: 16, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: sev }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: sev }}>
           {c.severity} · {contradictionTypeLabel(c.contradiction_type)}
         </div>
       </div>
       {impact?.one_liner && (
         <div
           style={{
-            fontSize: 14,
+            fontSize: 16,
             color: INK,
             lineHeight: 1.5,
             fontWeight: 500,
-            padding: '10px 12px',
+            padding: '12px 14px',
             background: 'rgba(245,197,74,0.06)',
             borderLeft: `2px solid ${sev}`,
             borderRadius: 4,
@@ -127,13 +127,13 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
       {(monthly || eliminable || impact?.owner_named === false) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 10 }}>
           {monthly && (
-            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: MUTE }}>
               <span style={{ color: MUTE }}>monthly spend:</span>{' '}
               <span style={{ color: INK }}>{monthly}</span>
             </div>
           )}
           {eliminable && (
-            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: MUTE }}>
               <span style={{ color: MUTE }}>eliminable/yr:</span>{' '}
               <span style={{ color: sev }}>{eliminable}</span>
               {typeof impact?.eliminable_pct === 'number' && (
@@ -142,18 +142,18 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
             </div>
           )}
           {impact?.owner_named === false && (
-            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: CORAL }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: CORAL }}>
               no owner named
             </div>
           )}
           {impact?.confidence && (
-            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+            <div style={{ fontFamily: FONT_MONO, fontSize: 11, color: MUTE }}>
               confidence: {impact.confidence}
             </div>
           )}
         </div>
       )}
-      <div style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.5 }}>{c.description}</div>
+      <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.65 }}>{c.description}</div>
       {refs.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
           {refs.slice(0, 4).map((r, i) => (
@@ -161,7 +161,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
               key={i}
               style={{
                 fontFamily: FONT_MONO,
-                fontSize: 9,
+                fontSize: 10,
                 color: MUTE,
                 padding: '2px 6px',
                 border: BORDER_SOFT,
@@ -175,7 +175,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
         </div>
       )}
       {c.suggested_action && (
-        <div style={{ marginTop: 10, fontSize: 12, color: MUTE, fontStyle: 'italic' }}>
+        <div style={{ marginTop: 10, fontSize: 13, color: MUTE, fontStyle: 'italic' }}>
           Suggested: {c.suggested_action}
         </div>
       )}
@@ -183,7 +183,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
         {c.triggered_engagement_id ? (
           <Link
             href={`/engagements/${encodeURIComponent(c.triggered_engagement_id)}`}
-            style={{ fontFamily: FONT_MONO, fontSize: 11, color: TEAL, textDecoration: 'none' }}
+            style={{ fontFamily: FONT_MONO, fontSize: 12, color: TEAL, textDecoration: 'none' }}
           >
             View engagement →
           </Link>
@@ -192,7 +192,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
             title="Auto-trigger lands in Pack 15"
             style={{
               fontFamily: FONT_MONO,
-              fontSize: 11,
+              fontSize: 12,
               color: MUTE,
               padding: '4px 10px',
               border: '0.5px solid rgba(255,255,255,0.12)',
@@ -291,11 +291,11 @@ export default async function TowerPage({
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
             <div>
-              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 12, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
                 Control Tower
               </div>
-              <div style={{ fontSize: 22, fontWeight: 500, marginTop: 4 }}>{vm.client.name}</div>
-              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, marginTop: 2 }}>
+              <div style={{ fontSize: 'clamp(28px, 2vw + 18px, 36px)', fontWeight: 500, marginTop: 6, lineHeight: 1.1 }}>{vm.client.name}</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: MUTE, marginTop: 4 }}>
                 {vm.client.industry_code ?? 'unclassified'}
               </div>
             </div>
@@ -315,10 +315,10 @@ export default async function TowerPage({
           vm.inventory.freshness,
           <>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 500, color: INK }}>{vm.inventory.total}</span>
-              <span style={{ fontSize: 12, color: MUTE, marginLeft: 6 }}>use cases</span>
+              <span style={{ fontSize: 'clamp(32px, 2.4vw + 18px, 44px)', fontWeight: 500, color: INK }}>{vm.inventory.total}</span>
+              <span style={{ fontSize: 14, color: MUTE, marginLeft: 6 }}>use cases</span>
             </div>
-            <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.7 }}>
               <div><span style={{ color: GREEN }}>●</span> In production: <span style={{ color: INK }}>{vm.inventory.inProduction}</span></div>
               <div><span style={{ color: AMBER }}>●</span> In pilot: <span style={{ color: INK }}>{vm.inventory.inPilot}</span></div>
               <div><span style={{ color: CORAL }}>●</span> Stalled: <span style={{ color: INK }}>{vm.inventory.stalled}</span></div>
@@ -333,12 +333,12 @@ export default async function TowerPage({
           vm.adoption.freshness,
           <>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 500, color: INK }}>
+              <span style={{ fontSize: 'clamp(32px, 2.4vw + 18px, 44px)', fontWeight: 500, color: INK }}>
                 {vm.adoption.avgPenetrationPct > 0 ? `${Math.round(vm.adoption.avgPenetrationPct)}%` : '—'}
               </span>
-              <span style={{ fontSize: 12, color: MUTE, marginLeft: 6 }}>avg penetration</span>
+              <span style={{ fontSize: 14, color: MUTE, marginLeft: 6 }}>avg penetration</span>
             </div>
-            <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.7 }}>
               <div>DAU: <span style={{ color: INK }}>{vm.adoption.totalDau.toLocaleString()}</span></div>
               <div>WAU: <span style={{ color: INK }}>{vm.adoption.totalWau.toLocaleString()}</span></div>
               <div>Avg drop-off: <span style={{ color: vm.adoption.avgDropOffPct > 40 ? CORAL : INK }}>
@@ -355,10 +355,10 @@ export default async function TowerPage({
           vm.value.freshness,
           <>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 500, color: INK }}>{dollarsM(vm.value.verifiedUsd)}</span>
-              <span style={{ fontSize: 12, color: MUTE, marginLeft: 6 }}>verified</span>
+              <span style={{ fontSize: 'clamp(32px, 2.4vw + 18px, 44px)', fontWeight: 500, color: INK }}>{dollarsM(vm.value.verifiedUsd)}</span>
+              <span style={{ fontSize: 14, color: MUTE, marginLeft: 6 }}>verified</span>
             </div>
-            <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.7 }}>
               <div>Projected: <span style={{ color: INK }}>{dollarsM(vm.value.projectedUsd)}</span></div>
               <div>Drivers tracked: <span style={{ color: INK }}>{Object.keys(vm.value.byDriver).length}</span></div>
               <div>Use cases with baseline: <span style={{ color: INK }}>{vm.value.coveredUseCaseCount}</span></div>
@@ -373,12 +373,12 @@ export default async function TowerPage({
           vm.risk.freshness,
           <>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 500, color: INK }}>
+              <span style={{ fontSize: 'clamp(32px, 2.4vw + 18px, 44px)', fontWeight: 500, color: INK }}>
                 {vm.risk.approved}/{vm.risk.totalAssessed || 0}
               </span>
-              <span style={{ fontSize: 12, color: MUTE, marginLeft: 6 }}>approved</span>
+              <span style={{ fontSize: 14, color: MUTE, marginLeft: 6 }}>approved</span>
             </div>
-            <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.7 }}>
               <div>Conditional / pending: <span style={{ color: INK }}>{vm.risk.conditional} · {vm.risk.pending}</span></div>
               <div>High risk: <span style={{ color: vm.risk.highRisk > 0 ? CORAL : INK }}>{vm.risk.highRisk}</span></div>
               <div>PHI classified: <span style={{ color: INK }}>{vm.risk.phiCount}</span></div>
@@ -394,10 +394,10 @@ export default async function TowerPage({
           vm.cost.freshness,
           <>
             <div>
-              <span style={{ fontSize: 28, fontWeight: 500, color: INK }}>{dollarsM(vm.cost.monthlySpendUsd)}</span>
-              <span style={{ fontSize: 12, color: MUTE, marginLeft: 6 }}>/month</span>
+              <span style={{ fontSize: 'clamp(32px, 2.4vw + 18px, 44px)', fontWeight: 500, color: INK }}>{dollarsM(vm.cost.monthlySpendUsd)}</span>
+              <span style={{ fontSize: 14, color: MUTE, marginLeft: 6 }}>/month</span>
             </div>
-            <div style={{ fontSize: 12, color: MUTE, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 14, color: MUTE, lineHeight: 1.7 }}>
               <div>LLM: <span style={{ color: INK }}>{dollarsM(vm.cost.byCategory.llm)}</span></div>
               <div>Compute: <span style={{ color: INK }}>{dollarsM(vm.cost.byCategory.compute)}</span></div>
               <div>License: <span style={{ color: INK }}>{dollarsM(vm.cost.byCategory.license)}</span></div>

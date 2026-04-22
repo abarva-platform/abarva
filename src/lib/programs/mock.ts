@@ -24,6 +24,8 @@ import type {
   Turn,
   ViewerRole,
 } from '@/lib/programs/types.ui';
+import { buildTimelineResourceEstimateModuleContent } from '@/lib/deliverables/timeline-resource-estimate';
+import { buildExecutionRoadmapTrackerModuleContent } from '@/lib/deliverables/execution-roadmap-tracker';
 
 const PEOPLE: Record<string, PersonRef> = {
   dana: { id: 'person-dana-mercer', name: 'Dana Mercer', title: 'VP Store Ops', initials: 'DM', avatarColor: '#0f766e', clientName: 'Apex Retail Group' },

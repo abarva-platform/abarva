@@ -200,27 +200,65 @@ export default function HomePage() {
             "The transformation value gap" ($800B + 73%) and
             "Our commitment" (0% + 48h). Stats belong where their
             narrative lives. */}
-        <section className="marketing-section">
-          <div className="marketing-container" style={{ maxWidth: 820 }}>
-            <Eyebrow>Enterprise transformation · AI-native · Outcome-accountable</Eyebrow>
-            <Title>
-              Act on intelligence.
-              <br />
-              Before the window closes.
-            </Title>
-            <Copy style={{ maxWidth: 640, marginBottom: 28 }}>
-              AbarVa is an AI-native enterprise transformation platform. We replace the $800B global consulting category and augment the internal labor teams that do not use consulting — with outcome-based engagements, private-cloud deployment, and a four-layer intelligence system that gets smarter with every engagement.
-            </Copy>
-            <div className="marketing-actions">
-              <Link className="marketing-button marketing-button--primary" href="/sign-in">
-                Request demo →
-              </Link>
-              <a
-                className="marketing-button marketing-button--secondary"
-                href="mailto:partners@abarva.ai?subject=Meridian%20case%20request"
-              >
-                Read Meridian case →
-              </a>
+        <section className="marketing-section hero-section">
+          <div className="marketing-container hero-grid">
+            <div className="hero-content">
+              <div>
+                <Eyebrow>Enterprise transformation · AI-native · Outcome-accountable</Eyebrow>
+                <Title style={{ maxWidth: 12 * 60 }}>
+                  Act on intelligence.
+                  <br />
+                  Before the window closes.
+                </Title>
+              </div>
+              <Copy className="prose-column" style={{ marginBottom: 4 }}>
+                AbarVa is an AI-native enterprise transformation platform. We replace the $800B global consulting category and augment the internal labor teams that do not use consulting — with outcome-based engagements, private-cloud deployment, and a four-layer intelligence system that gets smarter with every engagement.
+              </Copy>
+              <div className="marketing-actions">
+                <Link className="marketing-button marketing-button--primary" href="/sign-in">
+                  Request demo →
+                </Link>
+                <a
+                  className="marketing-button marketing-button--secondary"
+                  href="mailto:partners@abarva.ai?subject=Meridian%20case%20request"
+                >
+                  Read Meridian case →
+                </a>
+              </div>
+            </div>
+
+            <div className="hero-visual">
+              <div className="hero-visual-card">
+                <div className="marketing-meta">Live operating picture</div>
+                <div className="marketing-card-title" style={{ marginTop: 10, marginBottom: 6 }}>
+                  The platform reads like a serious operating system, not a landing-page collage.
+                </div>
+                <Copy style={{ color: MUTED }}>
+                  Strategy, execution, and verification need one surface with enough width and type scale to feel credible in a boardroom, not cramped on first impression.
+                </Copy>
+                <div className="hero-visual-grid">
+                  <div className="hero-kpi">
+                    <div className="hero-kpi__value">$800B</div>
+                    <div className="hero-kpi__label">Consulting spend</div>
+                    <div className="hero-kpi__body">Category AbarVa is designed to replace or compress.</div>
+                  </div>
+                  <div className="hero-kpi">
+                    <div className="hero-kpi__value">73%</div>
+                    <div className="hero-kpi__label">Unverified AI ROI</div>
+                    <div className="hero-kpi__body">Programs funded without proof they worked.</div>
+                  </div>
+                  <div className="hero-kpi">
+                    <div className="hero-kpi__value">5</div>
+                    <div className="hero-kpi__label">Engagement phases</div>
+                    <div className="hero-kpi__body">From charter to verification with one continuous memory.</div>
+                  </div>
+                  <div className="hero-kpi">
+                    <div className="hero-kpi__value">4</div>
+                    <div className="hero-kpi__label">Intelligence layers</div>
+                    <div className="hero-kpi__body">Public patterns, client data, engagement context, and user memory.</div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -275,7 +313,7 @@ export default function HomePage() {
               {problemCards.map((card) => (
                 <div className="marketing-card marketing-card--dark" key={card.title}>
                   <div className="marketing-stat" style={{ color: card.color, marginBottom: 12 }}>{card.value}</div>
-                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>{card.title}</div>
+                  <div className="marketing-card-title">{card.title}</div>
                   <Copy>{card.body}</Copy>
                 </div>
               ))}
@@ -295,7 +333,7 @@ export default function HomePage() {
             <div className="marketing-grid-3" style={{ marginTop: 28 }}>
               {products.map((product) => (
                 <div className="marketing-card" key={product.name}>
-                  <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  <div className="marketing-meta" style={{ marginBottom: 12 }}>
                     {product.name}
                   </div>
                   <Copy>{product.body}</Copy>
@@ -325,7 +363,7 @@ export default function HomePage() {
             </Copy>
             <div className="marketing-grid-3" style={{ marginTop: 12 }}>
               <div className="marketing-card">
-                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                <div className="marketing-meta" style={{ marginBottom: 12 }}>
                   You own it
                 </div>
                 <Copy>
@@ -333,7 +371,7 @@ export default function HomePage() {
                 </Copy>
               </div>
               <div className="marketing-card">
-                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                <div className="marketing-meta" style={{ marginBottom: 12 }}>
                   You build it
                 </div>
                 <Copy>
@@ -341,7 +379,7 @@ export default function HomePage() {
                 </Copy>
               </div>
               <div className="marketing-card">
-                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                <div className="marketing-meta" style={{ marginBottom: 12 }}>
                   You keep it
                 </div>
                 <Copy>
@@ -370,7 +408,7 @@ export default function HomePage() {
               <div className="marketing-grid-2">
                 {layers.map((layer) => (
                   <div className="marketing-card marketing-card--dark" key={layer.name}>
-                    <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 10 }}>
+                    <div className="marketing-meta" style={{ marginBottom: 10 }}>
                       {layer.name}
                     </div>
                     <Copy>{layer.body}</Copy>
@@ -393,10 +431,10 @@ export default function HomePage() {
             <div className="marketing-grid-4" style={{ marginTop: 28 }}>
               {phases.map((phase) => (
                 <div className="marketing-card" key={phase.num}>
-                  <div style={{ color: TEAL, fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+                  <div className="marketing-meta" style={{ marginBottom: 10 }}>
                     {phase.num}
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{phase.title}</div>
+                  <div className="marketing-card-title" style={{ marginBottom: 8 }}>{phase.title}</div>
                   <Copy>{phase.body}</Copy>
                 </div>
               ))}
@@ -418,7 +456,7 @@ export default function HomePage() {
             <div className="marketing-grid-3" style={{ marginTop: 28 }}>
               {towerLenses.map((lens) => (
                 <div className="marketing-card marketing-card--dark" key={lens.name}>
-                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{lens.name}</div>
+                  <div className="marketing-card-title">{lens.name}</div>
                   <Copy>{lens.body}</Copy>
                 </div>
               ))}
@@ -440,7 +478,7 @@ export default function HomePage() {
             <div className="marketing-grid-3" style={{ marginTop: 28 }}>
               {intelligenceModes.map((mode) => (
                 <div className="marketing-card" key={mode.title}>
-                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{mode.title}</div>
+                  <div className="marketing-card-title">{mode.title}</div>
                   <Copy>{mode.body}</Copy>
                 </div>
               ))}

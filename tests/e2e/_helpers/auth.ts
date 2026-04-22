@@ -27,6 +27,16 @@ export function missingClerkPrereqs(): string[] {
   return AUTH_TOKEN || CLERK_SECRET_KEY ? [] : ['CLERK_SESSION_TOKEN or CLERK_SECRET_KEY'];
 }
 
+export async function clerkUserExists(email: string): Promise<boolean> {
+  if (!CLERK_SECRET_KEY) {
+    return false;
+  }
+
+  const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
+  const users = await clerk.users.getUserList({ emailAddress: [email], limit: 1 });
+  return Boolean(users.data[0]);
+}
+
 export function missingSupabasePrereqs(): string[] {
   return [
     !SUPABASE_URL ? 'NEXT_PUBLIC_SUPABASE_URL' : null,

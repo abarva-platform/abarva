@@ -13,7 +13,9 @@ interface Props {
 // line on each page. Never use for section breaks — use SectionHeading.
 export function PageTitle({ children, as = 'h1', size = 'page', style, id }: Props) {
   const Tag = as;
-  const fontSize = size === 'display' ? 48 : 32;
+  const fontSize = size === 'display'
+    ? 'clamp(40px, 4.5vw + 18px, 64px)'
+    : 'clamp(34px, 3vw + 16px, 48px)';
   return (
     <Tag
       id={id}

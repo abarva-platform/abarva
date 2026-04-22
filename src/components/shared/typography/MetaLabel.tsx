@@ -13,8 +13,8 @@ export function MetaLabel({ children, style }: Props) {
     <span
       style={{
         fontFamily: 'DM Sans, -apple-system, sans-serif',
-        fontSize: 11,
-        fontWeight: 400,
+        fontSize: 'clamp(12px, 0.7vw + 9px, 14px)',
+        fontWeight: 500,
         color: 'rgba(245,245,240,0.60)',
         lineHeight: 1.5,
         letterSpacing: '0.01em',
