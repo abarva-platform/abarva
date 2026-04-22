@@ -6,20 +6,20 @@ import type { AtlasTenancyCtx } from '@/lib/atlas/types';
 
 export async function requireAtlasTenancy(clientId?: string | null): Promise<AtlasTenancyCtx> {
   const person = await getCurrentPerson();
-  if (!person) throw new TenancyError('unauthenticated');
+  const user = await getCurrentUser();
+  if (!user) throw new TenancyError('unauthenticated');
 
   const requestedClientId = clientId?.trim() || null;
   if (requestedClientId) {
-    const user = await getCurrentUser();
     if (!userCanAccessClient(user, requestedClientId)) {
       throw new TenancyError('no_client');
     }
-    return { clientId: requestedClientId, userId: person.id };
+    return { clientId: requestedClientId, userId: person?.id ?? user.personId ?? null };
   }
 
   const client = await getActiveClientRow();
   if (!client) throw new TenancyError('no_client');
-  return { clientId: client.id, userId: person.id };
+  return { clientId: client.id, userId: person?.id ?? user.personId ?? null };
 }
 
 export { tenancyErrorResponse };

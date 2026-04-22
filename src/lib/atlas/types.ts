@@ -13,7 +13,7 @@ export type AtlasIntent =
 
 export interface AtlasTenancyCtx {
   clientId: string;
-  userId: string;
+  userId: string | null;
 }
 
 export interface AtlasSuggestion {
