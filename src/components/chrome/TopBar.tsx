@@ -37,7 +37,7 @@ export function TopBar() {
       }}
     >
       <a
-        href="/dashboard"
+        href="/home"
         style={{ textDecoration: 'none', display: 'flex', alignItems: 'baseline', lineHeight: 1 }}
       >
         <span style={{ fontFamily: FONT_SERIF, color: INK, fontSize: 17, fontWeight: 800 }}>Abar</span>

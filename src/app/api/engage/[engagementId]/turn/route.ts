@@ -8,7 +8,12 @@ import {
   getChainedPatterns,
 } from '@/lib/graph/retrieval';
 import { assembleEngagementSystemPrompt } from '@/lib/agent/prompts/engagement';
+import { assembleRetrievalContext } from '@/lib/agent/retrieval';
+import { formatRetrievedContext } from '@/lib/agent/retrieval-format';
+import { assembleCrossClientContext, formatCrossClientBlock } from '@/lib/graph/cross-client';
+import { getServerSupabase } from '@/lib/supabase-server';
 import { streamAgentTurn } from '@/lib/agent/stream';
+import { TurnTrace } from '@/lib/agent/trace';
 import { getCurrentMaestro } from '@/lib/auth/maestro';
 import { captureRelationshipNotes } from '@/lib/agent/capture';
 import { appendPersonalThreads } from '@/lib/db/person';
@@ -29,6 +34,8 @@ import {
   proposeOutcomeFee,
 } from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
+import { syncPhaseOneArtifactsFromTurns } from '@/lib/deliverables/live-sync';
+import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
@@ -36,6 +43,8 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { createOutcomeFeeInvoice, isStripeConfigured } from '@/lib/billing/stripe';
 import { logAudit } from '@/lib/audit/log';
 import { assembleMaestroContextBlock } from '@/lib/agent/prompts/_shared/maestro-context';
+import { assembleUserContextBlock } from '@/lib/agent/prompts/_shared/user-context';
+import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { updateMaestroProfile } from '@/lib/agent/maestro-extractor';
 import { parseChoicesFromText } from '@/lib/agent/parse-choices';
 
@@ -82,6 +91,11 @@ export async function POST(
     text: userMessage,
   });
 
+  // Trace captures retrieval + graph + stream steps for the "why did Nexus
+  // say this?" drawer. Persisted post-stream via trace.persist().
+  const trace = new TurnTrace(null, engagement.id);
+  const tRetrievalStart = Date.now();
+
   // Retrieve all three layers + maestro context + personal threads
   const [sponsor, recentTurns, activePatterns, peerDecisions, chainedPatterns, maestro] = await Promise.all([
     engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
@@ -92,22 +106,109 @@ export async function POST(
     getCurrentMaestro(),
   ]);
 
+  trace.record({
+    label: 'cypher.active_patterns',
+    kind: 'graph',
+    latencyMs: Date.now() - tRetrievalStart,
+    count: activePatterns.length,
+    summary: activePatterns.map((p) => p.code).join(', ') || 'none active',
+  });
+  trace.record({
+    label: 'cypher.peer_decisions',
+    kind: 'graph',
+    latencyMs: 0,
+    count: peerDecisions.length,
+  });
+  trace.record({
+    label: 'cypher.chained_patterns',
+    kind: 'graph',
+    latencyMs: 0,
+    count: chainedPatterns.length,
+  });
+
   const personalThreads = sponsor
     ? await getActivePersonalThreads(sponsor.id)
     : [];
 
-  const maestroContextBlock = maestro
-    ? await assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
-    : '';
-
-  const system = assembleEngagementSystemPrompt({
-    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads, maestroContextBlock,
-  });
+  const [maestroContextBlock, userContextBlock, topicIntelligenceBlock] = await Promise.all([
+    maestro
+      ? assembleMaestroContextBlock({ personId: maestro.id, personName: maestro.name })
+      : Promise.resolve(''),
+    maestro
+      ? assembleUserContextBlock({ personId: maestro.id, displayName: maestro.name })
+      : Promise.resolve(''),
+    trace.capture(
+      'topic-intelligence assembly',
+      'graph',
+      () =>
+        assembleTopicIntelligenceBlock({
+          engagementId: engagement.id,
+          currentPhase: engagement.current_phase,
+          recentTurns: recentTurns.map((t) => ({ sender: t.sender, text: t.text })),
+        }),
+      (block) => ({
+        count: block ? 1 : 0,
+        summary: block ? `${block.split('TOPIC INTELLIGENCE:').length - 1} topic blocks` : 'no topics assigned',
+      }),
+    ),
+  ]);
 
   const messages = recentTurns.map(t => ({
     role: t.sender === 'agent' ? 'assistant' as const : 'user' as const,
     content: t.text,
   }));
+
+  // Pack B Phase 6 · retrieval merge. Empty-safe — returns empty chunks when
+  // OPENAI_API_KEY / PINECONE_API_KEY missing, or when namespaces are empty.
+  const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+  const retrievalCtx = lastUser
+    ? await trace.capture(
+        'pinecone.global+client fan-out',
+        'retrieval',
+        () =>
+          assembleRetrievalContext({
+            engagementId: engagement.id,
+            clientId: null,
+            industry: (engagement.industry_code as 'HEALTHCARE_IDN' | 'FINSERV' | 'RETAIL' | 'GENERAL' | null) ?? null,
+            currentPhase: engagement.current_phase,
+            userQuery: lastUser.content,
+            turnHistory: messages,
+          }),
+        (ctx) => ({
+          count: ctx.clientChunks.length + ctx.industryChunks.length + ctx.topicChunks.length,
+          summary: `client:${ctx.clientChunks.length} industry:${ctx.industryChunks.length} topic:${ctx.topicChunks.length}`,
+        }),
+      )
+    : null;
+  const retrievedContextBlock = retrievalCtx ? formatRetrievedContext(retrievalCtx) : '';
+
+  // Pack K · cross-client context. Look up client via engagement.id (EngagementRow
+  // doesn't expose client_id yet). Empty-safe — if no partnerships / shared vendors,
+  // formatCrossClientBlock returns '' and the prompt assembler filters it.
+  let crossClientBlock = '';
+  try {
+    const sb = getServerSupabase();
+    const { data: engRow } = await sb
+      .from('engagements')
+      .select('client_id, client:clients(id, name)')
+      .eq('id', engagement.id)
+      .maybeSingle();
+    const client = (engRow as { client: { id: string; name: string } | null } | null)?.client;
+    if (client) {
+      const ccCtx = await assembleCrossClientContext(client.id, client.name);
+      crossClientBlock = formatCrossClientBlock(ccCtx);
+    }
+  } catch (err) {
+    console.error('[cross-client-context]', err);
+  }
+
+  const system = assembleEngagementSystemPrompt({
+    engagement, sponsor, activePatterns, peerDecisions, chainedPatterns, maestro, personalThreads,
+    maestroContextBlock,
+    userContextBlock,
+    topicIntelligenceBlock,
+    retrievedContextBlock: [retrievedContextBlock, crossClientBlock].filter(Boolean).join('\n\n'),
+  });
 
   const retrievedRefs = {
     sponsor_id: sponsor?.id ?? null,
@@ -122,12 +223,39 @@ export async function POST(
   const stream = new ReadableStream({
     async start(controller) {
       try {
+        // Pack D Principle 1 · cognitive stages. Beacons based on data that
+        // already resolved before the stream opened. Lets the UI render
+        // "thinking" italic stages above the bubble until the first delta.
+        controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Checking pattern library', detail: `${activePatterns.length} active patterns` }) + '\n'));
+        if (retrievalCtx) {
+          const chunkCount = retrievalCtx.clientChunks.length + retrievalCtx.industryChunks.length + retrievalCtx.topicChunks.length;
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling industry + client context', detail: `${chunkCount} chunks` }) + '\n'));
+        }
+        if (peerDecisions.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling peer decisions', detail: `${peerDecisions.length} precedents` }) + '\n'));
+        }
+        if (topicIntelligenceBlock && topicIntelligenceBlock.trim().length > 0) {
+          const topicCount = topicIntelligenceBlock.split('TOPIC INTELLIGENCE:').length - 1;
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Pulling topic playbooks', detail: `${topicCount} assigned` }) + '\n'));
+        }
+        if (chainedPatterns.length > 0) {
+          controller.enqueue(encoder.encode(JSON.stringify({ type: 'stage', label: 'Traversing chained patterns', detail: `${chainedPatterns.length} edges` }) + '\n'));
+        }
+
+        const tStreamStart = Date.now();
         let agentFullText = '';
         const gen = streamAgentTurn({ system, messages });
         for await (const delta of gen) {
           agentFullText += delta;
           controller.enqueue(encoder.encode(JSON.stringify({ type: 'delta', text: delta }) + '\n'));
         }
+        trace.record({
+          label: 'claude-opus stream',
+          kind: 'stream',
+          latencyMs: Date.now() - tStreamStart,
+          count: agentFullText.length,
+          summary: `~${Math.round(agentFullText.length / 4)} output tokens`,
+        });
         // Extract <choices> block before persisting + emit to client
         const { text: cleanedAgentText, choices: turnChoices } = parseChoicesFromText(agentFullText);
         if (turnChoices.length > 0) {
@@ -143,6 +271,18 @@ export async function POST(
           text: cleanedAgentText,
           retrievedRefs,
         });
+
+        // Persist reasoning trace keyed to the agent turn. Non-blocking from
+        // the client's POV — fire-and-forget so we don't block the 'done' event.
+        void (async () => {
+          try {
+            const traceForTurn = new TurnTrace(savedTurn.id, engagement.id);
+            for (const step of trace.snapshot().steps) traceForTurn.record(step);
+            await traceForTurn.persist();
+          } catch (err) {
+            console.error('[trace-persist]', err);
+          }
+        })();
 
         // Background: Maestro profile extraction on the user's input
         if (maestro && userMessage.trim().length > 30) {
@@ -229,19 +369,45 @@ export async function POST(
           console.error('[outcome-fee]', err);
         }
 
-        // Gate approval detection — emit event BEFORE 'done' so UI can show toast
+        // Phase 1 starter artifacts should keep pace with the live diagnostic
+        // thread rather than freezing at the gate-passed seed content.
+        try {
+          const syncedArtifacts = await syncPhaseOneArtifactsFromTurns({
+            engagementId: engagement.id,
+            currentPhase: engagement.current_phase,
+            userTurn: savedUserTurn,
+            agentTurn: savedTurn,
+            decisions: parseDecisionBlocks(agentFullText),
+            gateApproval: parseGateApprovalBlock(agentFullText),
+          });
+          if (syncedArtifacts > 0) {
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'deliverables_live_synced', count: syncedArtifacts }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[deliverables-live-sync]', err);
+        }
+
+        // Gate approval detection — emit event BEFORE 'done' so UI can show toast.
+        // Approver fallback chain: sponsor → maestro → caller → null. Intake-
+        // created engagements frequently have no sponsor linked yet (inline
+        // persona creation races the gate approval), so gating processing on
+        // sponsor-present silently drops the approval. Prefer the most
+        // authoritative signer we can find; the gate advances either way.
         const gateApproval = parseGateApprovalBlock(agentFullText);
-        if (gateApproval && sponsor) {
+        if (gateApproval) {
+          const approverId = sponsor?.id ?? maestro?.id ?? null;
           try {
             const updated = await recordGateApproval({
               engagementId: engagement.id,
               phase: gateApproval.phase,
-              approvedByPersonId: sponsor.id,
+              approvedByPersonId: approverId,
               approvalText: gateApproval.approval_text,
               summary: gateApproval.summary,
             });
             await logAudit({
-              actorPersonId: sponsor?.id ?? null,
+              actorPersonId: approverId,
               action: 'engagement.gate_approved',
               targetTable: 'engagements',
               targetId: engagement.id,
@@ -250,6 +416,7 @@ export async function POST(
               metadata: {
                 approval_text: gateApproval.approval_text,
                 summary: gateApproval.summary,
+                approver_fallback: sponsor ? 'sponsor' : maestro ? 'maestro' : 'none',
               },
             });
             controller.enqueue(
@@ -265,6 +432,35 @@ export async function POST(
             void generateDeliverableForPhase(engagement.id, gateApproval.phase).catch((err) =>
               console.error('[deliverable]', err),
             );
+
+            // Auto-open the next phase · Nexus leads with the opener so the
+            // Maestro isn't left staring at an empty console after approval.
+            // The opener is persisted as a proper agent turn so the thread
+            // stays coherent on reload and is emitted via SSE so the client
+            // renders it immediately without polling.
+            const opener = phaseOpenerFor(updated.current_phase);
+            if (opener && updated.current_phase !== gateApproval.phase) {
+              try {
+                const openerTurn = await appendTurn({
+                  engagementId: engagement.id,
+                  phase: updated.current_phase,
+                  sender: 'agent',
+                  text: opener,
+                });
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({
+                      type: 'phase_opener',
+                      phase: updated.current_phase,
+                      turnId: openerTurn.id,
+                      text: opener,
+                    }) + '\n',
+                  ),
+                );
+              } catch (err) {
+                console.error('[phase-opener]', err);
+              }
+            }
 
             // Phase 4 gate with a non-zero outcome fee → auto-invoice via Stripe
             if (

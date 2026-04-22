@@ -62,6 +62,10 @@ ALTER TABLE engagement_scope ENABLE ROW LEVEL SECURITY;
 ALTER TABLE data_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE margin_opportunity_status ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "engagement_scope_read" ON engagement_scope;
+DROP POLICY IF EXISTS "data_requests_read" ON data_requests;
+DROP POLICY IF EXISTS "margin_opportunity_status_read" ON margin_opportunity_status;
+
 CREATE POLICY "engagement_scope_read" ON engagement_scope
   FOR SELECT TO authenticated USING (true);
 

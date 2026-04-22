@@ -1,0 +1,93 @@
+name: Migration drift · nightly prod check
+
+# Tier 3 · Run every night · compare supabase/migrations/*.sql against
+# schema_migrations table on prod. Error if any migration has been
+# committed but not applied. Alerts via GitHub Action failure +
+# notification (follows repo's configured notification path).
+
+on:
+  schedule:
+    # 07:00 UTC daily = 02:00 US-Central · well past any overnight deploy.
+    - cron: '0 7 * * *'
+  workflow_dispatch: # allow manual trigger from Actions tab
+
+jobs:
+  drift-check:
+    name: Compare migrations dir against prod schema_migrations
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Guard · DATABASE_URL must be set
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL secret missing. Add it in Settings → Secrets → Actions."
+            exit 1
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Diagnostic · DB host + migration tracking state
+        continue-on-error: true
+        run: |
+          set +e
+          host=$(echo "${DATABASE_URL:-}" | sed -n 's|.*@\([^:/]*\).*|\1|p')
+          files=$(ls supabase/migrations/*.sql 2>/dev/null | grep -v RUN_THIS_ | wc -l | tr -d ' ')
+          {
+            echo "## Pre-check diagnostics"
+            echo ""
+            echo "- Host: \`${host:-unknown}\`"
+            echo "- Migration files in repo: **${files}**"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Dry-run migrations · pending means drift
+        id: dry
+        run: |
+          set +e
+          output=$(npm run --silent db:migrate:dry 2>&1)
+          rc=$?
+          echo "$output"
+          {
+            echo "## Runner output"
+            echo ""
+            echo '```'
+            echo "$output"
+            echo '```'
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ $rc -ne 0 ]; then
+            {
+              echo "## Result"
+              echo ""
+              echo "❌ Runner exited with code $rc"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit $rc
+          fi
+          if echo "$output" | grep -q "Pending migrations"; then
+            {
+              echo "## Result"
+              echo ""
+              echo "❌ DRIFT · migrations committed but not applied on prod"
+              echo ""
+              echo "**Fix:** backfill schema_migrations, apply missing migration, or verify DATABASE_URL points to the right project."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::DRIFT · migrations committed but not applied on prod"
+            exit 1
+          fi
+          {
+            echo "## Result"
+            echo ""
+            echo "✓ No drift. All migrations applied."
+          } >> "$GITHUB_STEP_SUMMARY"

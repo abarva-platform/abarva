@@ -1,28 +1,37 @@
 'use client'
 import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
-const NAV_BG    = '#020408'
+const NAV_BG    = 'var(--color-page-bg)'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
-const TEAL      = '#2DD4C8'
-const NAV_TEXT  = '#EFF6FF'
-const NAV_MUTE  = 'rgba(239,246,255,0.85)'
-const SANS      = 'DM Sans, sans-serif'
-const MONO      = 'JetBrains Mono, monospace'
-const SERIF     = 'Georgia, serif'
+const TEAL      = 'var(--color-teal)'
+const NAV_TEXT  = 'var(--color-text-primary)'
+const NAV_MUTE  = 'var(--color-text-secondary)'
+const SANS      = 'var(--font-body-sans)'
+const MONO      = 'var(--font-body-mono)'
+const SERIF     = 'var(--font-body-serif)'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'
 const DROP_DESC = '#3C3C3C'
-const DROP_CAT  = '#2DD4C8'
+const DROP_CAT  = 'var(--color-teal)'
 const DROP_HOVER = '#F9FAFB'
 
-interface NavProps { activePage?: string }
+interface NavProps {
+  activePage?: string;
+  /**
+   * When true, render only the logo + client selector + user menu.
+   * Primary nav items are hidden because a separate PrimaryNav is
+   * rendering them below (MaestroChrome). Default false = full bar
+   * for the marketing landing page.
+   */
+  compact?: boolean;
+}
 
-function NavInner({ activePage }: NavProps) {
+function NavInner({ activePage, compact = false }: NavProps) {
   const [open, setOpen] = useState<string | null>(null)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [clientToggleOpen, setClientToggleOpen] = useState(false)
@@ -31,6 +40,7 @@ function NavInner({ activePage }: NavProps) {
   const { isLoaded, user } = useUser()
   const { signOut } = useClerk()
   const router = useRouter()
+  const pathname = usePathname() ?? ''
 
   const { clientId, currentClient, allowedClients, canSwitch, switchClient } = useClientContext()
 
@@ -55,13 +65,23 @@ function NavInner({ activePage }: NavProps) {
   // ── Paths ────────────────────────────────────────────────────────────────
   const intelligencePath = `/intelligence?client=${clientId}`
 
-  // ── Active states ─────────────────────────────────────────────────────────
-  const intelligenceActive = activePage === 'intelligence'
-  const adminActive        = (activePage || '').startsWith('admin')
-  const platformActive     = activePage === 'platform'
-  const investorActive     = activePage === 'investor'
-  const maestroActive      = activePage === 'maestro' || activePage === 'dashboard'
-  const homeActive         = activePage === 'home'
+  // ── Active states · pathname first (truth), activePage prop fallback
+  // for legacy callers.
+  const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
+                              || pathname === '/dashboard' || pathname.startsWith('/dashboard/')
+                              || pathname === '/' || activePage === 'home'
+  const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
+                              || pathname.startsWith('/engage/') || activePage === 'engagements'
+  const intelligenceActive = pathname === '/intelligence' || pathname.startsWith('/intelligence/')
+                              || activePage === 'intelligence'
+  const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
+                              || activePage === 'tower'
+  const platformActive     = pathname === '/platform' || pathname.startsWith('/platform/')
+                              || pathname.startsWith('/admin') || activePage === 'platform'
+  const adminActive        = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')
+                              || (activePage || '').startsWith('admin')
+  const investorActive     = pathname.startsWith('/investor') || activePage === 'investor'
+  const maestroActive      = homeActive
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const dropPanel: React.CSSProperties = {
@@ -72,14 +92,15 @@ function NavInner({ activePage }: NavProps) {
   }
 
   const navLink = (label: string, href: string, active: boolean) => (
-    <a href={href} key={label} style={{
+    <a href={href} key={label} className={active ? 'abarva-nav-link abarva-nav-link--active' : 'abarva-nav-link'} style={{
       fontSize: '15px',
-      fontWeight: active ? 700 : 600,
+      fontWeight: active ? 700 : 400,
       letterSpacing: '-0.01em',
       color: active ? TEAL : NAV_TEXT,
       padding: '8px 20px', fontFamily: SANS, textDecoration: 'none', flexShrink: 0,
-      borderBottom: active ? `1px solid ${TEAL}` : '1px solid transparent',
-      transition: 'color 120ms ease, border-color 120ms ease, font-weight 120ms ease',
+      borderBottom: active ? `2px solid ${TEAL}` : '2px solid transparent',
+      transition: 'color 150ms cubic-bezier(0, 0, 0.2, 1), border-color 150ms cubic-bezier(0, 0, 0.2, 1)',
+      borderRadius: '6px',
     }}>
       {label}
     </a>
@@ -108,7 +129,7 @@ function NavInner({ activePage }: NavProps) {
   // Admin nav item — clickable for admin, hidden visually-only for non-admin via disabled state
   const adminNavItem = () => (
     <a
-      href={isAdmin ? '/admin' : undefined}
+      href={isAdmin ? '/platform' : undefined}
       key="admin-nav"
       style={{
         fontSize: '15px',
@@ -130,6 +151,10 @@ function NavInner({ activePage }: NavProps) {
     <div style={{ position: 'relative', marginRight: '16px' }}>
       <button
         onClick={() => setClientToggleOpen(o => !o)}
+        className="abarva-client-btn"
+        aria-label={`Current client: ${currentClient.shortName}. Change client.`}
+        aria-haspopup="listbox"
+        aria-expanded={clientToggleOpen}
         style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'none', border: 'none', padding: '4px 8px 4px 0', cursor: 'pointer' }}
       >
         <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: currentClient.color, flexShrink: 0 }} />
@@ -167,6 +192,36 @@ function NavInner({ activePage }: NavProps) {
 
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 200 }}>
+      {/* Scoped hover + focus styling for the nav. Pure polish · no
+          behavior changes. Honors prefers-reduced-motion. */}
+      <style jsx global>{`
+        .abarva-nav-link:not(.abarva-nav-link--active):hover {
+          color: var(--color-teal);
+        }
+        .abarva-nav-link:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
+        }
+        .abarva-avatar-btn:focus-visible,
+        .abarva-client-btn:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
+          border-radius: 8px;
+        }
+        .abarva-menu-item:hover {
+          background: #F9FAFB !important;
+        }
+        .abarva-menu-item:focus-visible {
+          outline: none;
+          background: #F9FAFB !important;
+          box-shadow: inset 2px 0 0 var(--color-teal);
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .abarva-nav-link {
+            transition: none !important;
+          }
+        }
+      `}</style>
       <div id="abarva-nav" style={{
         height: '60px', background: NAV_BG,
         borderBottom: `1px solid ${NAV_BORD}`,
@@ -178,67 +233,68 @@ function NavInner({ activePage }: NavProps) {
         <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
           <AbarvaMark size={36} />
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: NAV_TEXT }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
         </a>
 
         {/* ══════════════════════════════════════════════════════════════════
-            ADMIN — Maestro · Intelligence · AVR · Solutions | Platform · Investor · Admin
+            SIGNED-IN OPERATORS (admin / investor / maestro) — product-map 5 items:
+            Home · Engagements · Intelligence · Control Tower · Platform
+            Client dropdown stays (elevated roles switch; maestro sees static label).
+            When compact=true (MaestroChrome has PrimaryNav below), skip the
+            primary items to avoid a duplicate nav row.
         ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isAdmin && (
+        {signedIn && isOperator && (
           <>
-            {clientDropdown()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
+            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Programs', '/engagements', engagementsActive)}
+            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && navLink('Control Tower', '/tower', towerActive)}
+            {!compact && navLink('Platform', '/platform', platformActive)}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            INVESTOR — Home · Maestro · Intelligence · AVR · Solutions | ...
+            SIGNED-IN CLIENT (Prat, Priya, Dan) — 4 product items only.
+            No Platform, no Investor, no Admin. Client's own org is implicit;
+            no client switcher. Matches post-test-drive corrections doc §P0-4.
         ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isInvestor && (
-          <>
-            {navLink('Home', '/', homeActive)}
-            {clientDropdown()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
-          </>
-        )}
-
-        {/* ══════════════════════════════════════════════════════════════════
-            MAESTRO — Maestro · Intelligence · AVR · Solutions | Platform · Admin(grey)
-        ══════════════════════════════════════════════════════════════════ */}
-        {signedIn && isMaestro && (
+        {signedIn && isClient && (
           <>
             {staticClientLabel()}
-            {navLink('Maestro', '/dashboard', maestroActive)}
-            {navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && navLink('Home', '/home', homeActive)}
+            {!compact && navLink('Programs', '/engagements', engagementsActive)}
+            {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
+            {!compact && navLink('Control Tower', '/tower', towerActive)}
           </>
         )}
 
         {/* ══════════════════════════════════════════════════════════════════
-            UNAUTHENTICATED / CLIENT — Solutions | Platform · Investor · Demo
+            UNAUTHENTICATED — marketing surface only
         ══════════════════════════════════════════════════════════════════ */}
-        {(!signedIn || isClient) && (
+        {!signedIn && (
           <>
             {navLink('Investor', '/investor', investorActive)}
             {demoNavItem()}
           </>
         )}
 
-        {/* ── Right side: Demo · Platform · Investor · Admin + user avatar ─── */}
+        {/* ── Right side: Admin portal shortcut + user avatar ─── */}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
-          {signedIn && demoNavItem()}
-          {signedIn && navLink('Platform', '/platform', platformActive)}
           {signedIn && (isAdmin || isInvestor) && navLink('Investor', '/investor', investorActive)}
-          {signedIn && adminNavItem()}
+          {signedIn && isAdmin && adminNavItem()}
           <div style={{ width: '12px' }} />
 
           {signedIn ? (
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setUserMenuOpen(o => !o)}
+                className="abarva-avatar-btn"
+                aria-label={`Account menu for ${displayName}`}
+                aria-haspopup="menu"
+                aria-expanded={userMenuOpen}
                 style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }}
               >
                 <div style={{ textAlign: 'right' }}>
@@ -247,7 +303,7 @@ function NavInner({ activePage }: NavProps) {
                     {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
                   </div>
                 </div>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(45,212,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--color-teal-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
                   {initials}
                 </div>
               </button>
@@ -261,24 +317,19 @@ function NavInner({ activePage }: NavProps) {
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
-                    <a href="/maestro" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <a href="/maestro" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Maestro Workspace
                     </a>
                   )}
                   {isAdmin && (
-                    <a href="/admin" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                      Admin Portal
+                    <a href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                      Platform
                     </a>
                   )}
                   <button
                     onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
+                    className="abarva-menu-item"
                     style={{ width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: '13px', color: DROP_HEAD, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = DROP_HOVER)}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     Sign out
                   </button>
@@ -287,7 +338,7 @@ function NavInner({ activePage }: NavProps) {
             </div>
           ) : (
             <>
-              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: NAV_MUTE, textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
                 Login
               </a>
               <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
@@ -304,7 +355,7 @@ function NavInner({ activePage }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: '#020408', borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
+    <Suspense fallback={<div style={{ height: '60px', background: NAV_BG, borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
       <NavInner {...props} />
     </Suspense>
   )

@@ -3,8 +3,9 @@
 -- These become source of truth for entity state.
 -- Neo4j nodes mirror via graph_node_id fields.
 -- Existing tables client_brief (010), intake_turns (011), engagement_charters (012)
--- are not dropped — superseded but kept for now. Migration 014 will handle data migration + deprecation.
--- RLS: Not enabled. Migration 014 will add Clerk-aware RLS policies.
+-- are not dropped — superseded but kept for now. Migration 017 handles the
+-- deprecated-table cleanup, while demo seeds now live in 043/044.
+-- RLS: Not enabled. Later migrations 016 and 019 layer policies back in.
 
 BEGIN;
 
@@ -39,6 +40,8 @@ CREATE TABLE IF NOT EXISTS persons (
   last_seen_at TIMESTAMPTZ
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS persons_graph_node_id_key ON persons(graph_node_id);
+CREATE UNIQUE INDEX IF NOT EXISTS persons_email_key ON persons(email);
 CREATE INDEX IF NOT EXISTS persons_email_idx ON persons(email);
 CREATE INDEX IF NOT EXISTS persons_graph_node_idx ON persons(graph_node_id);
 
@@ -79,6 +82,54 @@ CREATE TABLE IF NOT EXISTS engagements (
   phase_0_started_at TIMESTAMPTZ,
   phase_4_completed_at TIMESTAMPTZ
 );
+
+-- Backfill columns when engagements was created by an earlier migration
+-- with a minimal schema (e.g. migration 002). The CREATE TABLE IF NOT
+-- EXISTS above is a no-op in that case, so the columns 013 expects must
+-- be added explicitly here. All ADD COLUMN IF NOT EXISTS — no-op on
+-- prod where columns already exist. Required for fresh preview branches.
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS graph_node_id TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS industry_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS function_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS objective_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS topic_code TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS sponsor_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS co_sponsor_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS maestro_person_id UUID REFERENCES persons(id) ON DELETE SET NULL;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS charter JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS gates_passed JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS decisions JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS deliverables JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS sponsor_approvals JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS baseline_metrics JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS actual_metrics JSONB;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS outcome_fee_status TEXT;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS outcome_fee_usd NUMERIC(15,2);
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_0_started_at TIMESTAMPTZ;
+ALTER TABLE engagements ADD COLUMN IF NOT EXISTS phase_4_completed_at TIMESTAMPTZ;
+
+-- 002's engagements has client_id TEXT NOT NULL + solution TEXT NOT NULL.
+-- Both are legacy — later migrations use UUID client_id FK to clients(id)
+-- and dropped the solution column entirely. The 013 demo seed (Sarah
+-- Chen + Meridian Analytics Modernization) doesn't provide either, so
+-- drop the NOT NULL constraints to let the seed insert succeed.
+-- No-op on prod where constraints were already removed.
+DO $$ BEGIN
+  BEGIN ALTER TABLE engagements ALTER COLUMN client_id DROP NOT NULL;
+  EXCEPTION WHEN undefined_column THEN NULL; END;
+  BEGIN ALTER TABLE engagements ALTER COLUMN solution DROP NOT NULL;
+  EXCEPTION WHEN undefined_column THEN NULL; END;
+END $$;
+
+-- graph_node_id UNIQUE constraint was defined column-level inside the
+-- CREATE TABLE above. When the CREATE TABLE is a no-op (table already
+-- exists from 002), the constraint is never created and the ON CONFLICT
+-- clause below fails. CREATE UNIQUE INDEX IF NOT EXISTS is the
+-- idempotent equivalent — works with ON CONFLICT, safe to re-run.
+CREATE UNIQUE INDEX IF NOT EXISTS engagements_graph_node_id_key ON engagements(graph_node_id);
 
 CREATE INDEX IF NOT EXISTS engagements_current_phase_idx ON engagements(current_phase);
 CREATE INDEX IF NOT EXISTS engagements_sponsor_idx ON engagements(sponsor_person_id);
@@ -127,34 +178,14 @@ CREATE TABLE IF NOT EXISTS relationship_notes (
   captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS relationship_notes_person_note_text_key
+  ON relationship_notes(person_id, note_text);
 CREATE INDEX IF NOT EXISTS relationship_notes_person_idx ON relationship_notes(person_id);
 CREATE INDEX IF NOT EXISTS relationship_notes_category_idx ON relationship_notes(person_id, category);
 CREATE INDEX IF NOT EXISTS relationship_notes_active_idx ON relationship_notes(person_id) WHERE decay_at IS NULL;
 
--- ============================================================
--- SEED: Sarah Chen + Meridian engagement, matching graph_node_ids
--- Mirrors what's already in Neo4j (003_demo_engagements.cypher)
--- ============================================================
-INSERT INTO persons (graph_node_id, name, email, role, organization, familiarity)
-VALUES ('person_sarah_chen', 'Sarah Chen', 'sarah.chen@meridian-health.com', 'CIO', 'Meridian Health', 'first_meeting')
-ON CONFLICT (graph_node_id) DO NOTHING;
-
-INSERT INTO engagements (
-  graph_node_id, name, industry_code, function_code, objective_code, topic_code,
-  sponsor_person_id, current_phase, status, phase_0_started_at
-)
-SELECT
-  'eng_meridian_analytics_mod',
-  'Meridian Analytics Modernization',
-  'HEALTHCARE_IDN',
-  'MIDDLE_OFFICE',
-  'OPTIMISE',
-  'analytics_modernization',
-  p.id,
-  0,
-  'active',
-  NOW()
-FROM persons p WHERE p.graph_node_id = 'person_sarah_chen'
-ON CONFLICT (graph_node_id) DO NOTHING;
+-- Demo seed DML was extracted into later schema-independent migrations:
+--   047_demo_portfolio_seed.sql
+--   048_demo_relationship_note_seed.sql
 
 COMMIT;

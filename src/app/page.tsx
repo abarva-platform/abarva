@@ -1,340 +1,683 @@
-'use client'
-import { useState } from 'react'
-import { useUser } from '@clerk/nextjs'
+import Link from 'next/link'
 import AbarvaNav from '@/components/AbarvaNav'
+import {
+  AMBER,
+  BODY,
+  BORDER,
+  Copy,
+  CREAM,
+  DARK,
+  DARK_BODY,
+  Eyebrow,
+  GREEN,
+  INK,
+  MarketingStyles,
+  MONO,
+  MUTED,
+  RED,
+  SERIF,
+  TEAL,
+  Title,
+} from '@/components/marketing/site'
 
-const LBG   = '#F8F7F4'
-const LTEXT = '#0C0C0C'
-const LBODY = '#3C3C3C'
-const LMUTE = '#6B7280'
-const LBDR  = '#E5E7EB'
+const problemCards = [
+  {
+    value: '$200B',
+    color: RED,
+    title: 'Consulting spend with no outcome accountability',
+    body: 'Firms deliver decks and leave. No baseline locked. No outcome tracking. Same firm returns next year to clean up the mess they helped cause.',
+  },
+  {
+    value: '73%',
+    color: RED,
+    title: 'AI spend with no verified outcome',
+    body: 'The money was spent. The board has been briefed. Nobody can prove it worked. AbarVa closes the measurement, evidence, and governance gap.',
+  },
+  {
+    value: '$400B',
+    color: AMBER,
+    title: 'Internal labor and staff-aug spend under pressure',
+    body: 'Even companies that avoid consulting still run huge transformation teams. The analyst, diagnostic, and synthesis work is now pattern-matchable.',
+  },
+]
 
-const DBG   = '#060A12'
-const DCARD = '#0D1520'
-const DBODY = '#9CA3AF'
-const DMUTE = 'rgba(255,255,255,0.46)'
+const products = [
+  {
+    name: 'AbarVa Engagements',
+    body: 'The transformation workspace. Five-phase consultative engagements — charter, diagnose, design, execute, verify — delivered by Nexus. Outcome-based pricing ties us to verified results.',
+  },
+  {
+    name: 'AbarVa Control Tower',
+    body: 'The CIO cockpit. Live portfolio view of production, pilot, stalled, and shadow AI, with contradictions surfaced in real time across adoption, value, risk, and cost.',
+  },
+  {
+    name: 'AbarVa Intelligence',
+    body: 'The cross-client learning layer. Topics, patterns, vendors, regulations, benchmarks, and research surfaced through Ask Intelligence with citations and honest provenance.',
+  },
+]
 
-const TEAL  = '#2DD4C8'
-const RED   = '#EF4444'
-const AMB   = '#F59E0B'
-const SANS  = 'DM Sans, sans-serif'
-const MONO  = 'JetBrains Mono, monospace'
-const SERIF = 'Georgia, serif'
+const layers = [
+  {
+    name: 'L4 User profile',
+    body: 'Role, history, focus areas, and preferences so Nexus knows who is asking and calibrates the answer.',
+  },
+  {
+    name: 'L3 Engagement',
+    body: 'Turn history, active topic, phase, and active patterns so continuity survives a six-month program.',
+  },
+  {
+    name: 'L2 Client data',
+    body: 'Tech stack, use cases, costs, and contradictions so every answer is grounded in the client’s real operating environment.',
+  },
+  {
+    name: 'L1 Public knowledge',
+    body: 'Topics, patterns, vendors, regulations, and research so cross-client learning compounds into each new answer.',
+  },
+]
 
-export default function Homepage() {
-  const [activeStep, setActiveStep] = useState(0)
-  const { user, isLoaded } = useUser()
+const phases = [
+  {
+    num: 'Phase 0',
+    title: 'Charter',
+    body: 'Value case, scope, and sponsor alignment.',
+  },
+  {
+    num: 'Phase 1',
+    title: 'Diagnose',
+    body: 'Quantified problem, opportunity size, and value at risk.',
+  },
+  {
+    num: 'Phase 2',
+    title: 'Design',
+    body: 'Options with economics, peer comparables, and baseline locked.',
+  },
+  {
+    num: 'Phase 3',
+    title: 'Execute',
+    body: 'Decisions logged, milestones tracked, and risk alerts surfaced.',
+  },
+  {
+    num: 'Phase 4',
+    title: 'Verify',
+    body: 'Baseline versus actuals, then fee proposal tied to measurable outcome.',
+  },
+]
 
-  const role       = user?.publicMetadata?.role       as string | undefined
-  const metaClient = user?.publicMetadata?.clientId   as string | undefined
+const towerLenses = [
+  {
+    name: 'Inventory',
+    body: 'Every use case, including shadow AI discovered through network, SaaS admin, and expense signals.',
+  },
+  {
+    name: 'Adoption',
+    body: 'Who is actually using what, how often, and where the drop-off risk is forming.',
+  },
+  {
+    name: 'Value',
+    body: 'Baseline, target, and observed outcome lines with attribution confidence scored.',
+  },
+  {
+    name: 'Risk',
+    body: 'Data classification, governance posture, vendor posture, and escalation issues in one place.',
+  },
+  {
+    name: 'Cost',
+    body: 'LLM consumption, compute, licenses, and trajectory before spend drifts out of bounds.',
+  },
+]
 
-  // Admin and investor can access any client workspace
-  const isElevated = isLoaded && !!user && (role === 'admin' || role === 'investor')
-  // Restricted roles (maestro/client) are locked to their assigned client
-  const isRestricted = isLoaded && !!user && !isElevated
+const intelligenceModes = [
+  {
+    title: 'Library',
+    body: 'Browse Topics, Genome patterns, vendors, regulations, frameworks, benchmarks, research, and news by industry or problem class.',
+  },
+  {
+    title: 'Insights',
+    body: 'Auto-detected meta-patterns across engagements, with evidence, confidence, and the conditions that make them true.',
+  },
+  {
+    title: 'Live',
+    body: 'Operational pulse of new contradictions, new sources, and new signals hitting the system in real time.',
+  },
+]
 
-  // "See it live" target: assigned client for restricted users, meridian for everyone else
-  const seeItLiveHref = isRestricted && metaClient
-    ? `/maestro/${metaClient}`
-    : '/maestro/meridian'
+const agentRows = [
+  ['Nexus', 'Engagement console', 'Consultative partner', 'Opus 4.7 · Sonnet · Haiku', '1.5–5s'],
+  ['Ask Intelligence', 'Intelligence page', 'Stateless librarian', 'Opus 4.7 · Sonnet', '1.2–3s'],
+  ['Onboarding Companion', 'Tower onboarding', 'Data upload helper', 'Haiku + Sonnet', '<2s'],
+  ['Deliverable Engine', 'On demand', 'Structured deliverables', 'Opus 4.7', '15–45s'],
+  ['Quality Reviewer', 'Paired with Deliverable', 'Rubric-based review', 'Opus 4.7', '5–15s'],
+  ['Graph Extractor', 'Ingestion pipeline', 'Entity extraction', 'Opus 4.7', '30s–3m batch'],
+  ['Insight Detector', 'Nightly worker', 'Cross-engagement meta-patterns', 'Haiku + Sonnet', 'Nightly batch'],
+  ['Anticipation Worker', 'Inside Nexus', 'Next-turn chip generation', 'Haiku', '<300ms'],
+  ['Upload Classifier', 'Inside Onboarding', 'File type detection', 'Haiku', '<800ms'],
+  ['Intent Router', 'Inside Ask Intelligence', 'Query classification', 'Haiku', '<80ms'],
+]
 
-  // Which explore cards are accessible
-  const canAccessMeridian = !isRestricted || metaClient === 'meridian'
-  const canAccessArcturus = !isRestricted || metaClient === 'arcturus'
+const proofPoints = [
+  'Data residency — Postgres, Neo4j, and Pinecone stay inside the customer VPC.',
+  'Audit retention — every platform update ships through a controlled deploy pipeline with customer-owned audit logs.',
+  'Model flexibility — Claude, OpenAI, or self-hosted open-weight models via a configuration layer rather than a rebuild.',
+]
 
+const whyNow = [
+  'Enterprise AI spend exploded — every Fortune 2000 has a meaningful AI budget now.',
+  'Board pressure caught up — “what are we getting for AI spend?” is in every serious board pack.',
+  'Models got good enough — the quality threshold for consultant-grade synthesis crossed in the last six months.',
+]
+
+const footerCtas = [
+  {
+    title: 'Request a demo',
+    body: '30-minute walkthrough of Nexus, Control Tower, and Intelligence with your use case loaded in.',
+    href: '/sign-in',
+    label: 'Request →',
+  },
+  {
+    title: 'Become a design partner',
+    body: '90 minutes a month, direct product influence, and early access to shape the category.',
+    href: 'mailto:partners@abarva.ai?subject=Design%20partner%20interest',
+    label: 'Apply →',
+  },
+  {
+    title: 'Investor relations',
+    body: 'For warm-intro conversations and investor materials. Access is controlled and routed intentionally.',
+    href: '/investors',
+    label: 'Access →',
+  },
+]
+
+export default function HomePage() {
   return (
-    <div style={{ minHeight: '100vh', fontFamily: SANS }}>
+    <div className="marketing-shell">
+      <MarketingStyles />
       <AbarvaNav activePage="home" />
 
-      {/* ── SECTION 1: HERO ─────────────────────────────────────────────────── */}
-      <section style={{ background: LBG, padding: '72px 48px 64px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, minHeight: 480 }}>
-        <div style={{ paddingRight: 48, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>
-            Enterprise Transformation · AI-Native · Outcome-Accountable
-          </div>
-          <h1 style={{ fontFamily: SERIF, fontSize: 60, fontWeight: 700, lineHeight: 1.05, color: LTEXT, margin: '0 0 24px' }}>
-            Act on intelligence.<br />Before the window closes.
-          </h1>
-          <p style={{ fontSize: 18, color: LBODY, lineHeight: 1.6, margin: '0 0 32px', maxWidth: 480 }}>
-            AbarVa is the first platform that arrives knowing your data, embeds Maestros through execution, and charges a platform fee, an engagement fee, and 15–20% of verified savings above the locked baseline.
-          </p>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <a href={seeItLiveHref} style={{ background: LTEXT, color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'pointer', textDecoration: 'none' }}>
-              See it live →
-            </a>
-            <span title="Demo temporarily unavailable — new version coming soon" style={{ background: 'transparent', color: 'rgba(0,0,0,0.35)', fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid rgba(0,0,0,0.18)`, cursor: 'default' }}>
-              Watch a demo · soon
-            </span>
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: 16, alignContent: 'center' }}>
-          {[
-            { label: 'Consulting spend wasted',      value: '$200B', body: 'Global annual market with no outcome accountability' },
-            { label: 'Enterprise AI with zero ROI',  value: '73%',   body: 'Of AI investments produce no verified outcome' },
-            { label: 'OUTCOME-ACCOUNTABLE FEES',        value: '15–20%', body: 'Platform fee + engagement fee. Then 15–20% of verified savings — only if outcomes achieved.' },
-            { label: 'Time to first intelligence',   value: '48hrs', body: 'From kickoff to your first Situation Brief' },
-          ].map(s => (
-            <div key={s.label} style={{ background: '#fff', border: `1px solid ${LBDR}`, borderRadius: 8, padding: '24px 20px' }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: TEAL, marginBottom: 8 }}>{s.label}</div>
-              <div style={{ fontFamily: SERIF, fontSize: 36, fontWeight: 700, color: LTEXT, lineHeight: 1, marginBottom: 6 }}>{s.value}</div>
-              <div style={{ fontSize: 13, color: LMUTE, lineHeight: 1.4 }}>{s.body}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── SECTION 2: THE PROBLEM ──────────────────────────────────────────── */}
-      <section style={{ background: DBG, padding: '72px 48px' }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 32 }}>
-          The Problem · In Real Organisations · Right Now
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24, marginBottom: 40 }}>
-          {[
-            { num: '73%',    numColor: RED, title: 'AI spend with zero verified outcome',       body: 'Of enterprise AI programmes produce no measurable result. The money was spent. The board has been briefed. Nobody can prove it worked.' },
-            { num: '$200B',  numColor: AMB, title: 'Consulting spend with no accountability',   body: 'Consulting firms deliver decks and leave. No baseline. No outcome tracking. No skin in the game. The same firm comes back next year.' },
-            { num: '4 weeks',numColor: AMB, title: 'Before a consultant knows your business',  body: 'Every engagement starts from scratch. Weeks 1–4 are learning the client. Your data, your patterns, your history — locked in their heads. Gone when they leave.' },
-          ].map(c => (
-            <div key={c.title} style={{ background: DCARD, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: '36px 28px' }}>
-              <div style={{ fontFamily: SERIF, fontSize: 64, fontWeight: 700, color: c.numColor, lineHeight: 1, marginBottom: 16 }}>{c.num}</div>
-              <div style={{ fontSize: 18, fontWeight: 600, color: '#fff', marginBottom: 10 }}>{c.title}</div>
-              <div style={{ fontSize: 14, color: DBODY, lineHeight: 1.6 }}>{c.body}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ textAlign: 'center', fontSize: 17, color: 'rgba(255,255,255,0.6)', fontStyle: 'italic' }}>
-          AbarVa was built because none of this should still be true in 2026.
-        </div>
-      </section>
-
-      {/* ── SECTION 3: WHAT WE ARE ──────────────────────────────────────────── */}
-      <section style={{ background: LBG, padding: '72px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
-        <div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>What We Are</div>
-          <h2 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 700, color: LTEXT, lineHeight: 1.1, margin: '0 0 20px' }}>
-            Not a consulting firm.<br />Not a software vendor.<br />The layer that connects your data to verified outcomes.
-          </h2>
-          <p style={{ fontSize: 17, color: LBODY, lineHeight: 1.7, margin: 0 }}>
-            AbarVa is an intelligence platform with embedded operators — Maestros — who govern delivery from inside and earn only when outcomes are verified.
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-          {[
-            { num: '01', title: 'Your data tells us everything before we arrive.',    body: '48 hours. Every gap quantified, every failure pattern matched before the first Maestro meeting. No surveys. No guesses.' },
-            { num: '02', title: 'Maestros embed and hold delivery accountable.',       body: 'Operators govern execution from inside. Vendors held to SLAs. Knowledge transfers to your team — not back to us.' },
-            { num: '03', title: 'We earn more when you save more.',                   body: 'Platform fee. Engagement fee. Then 15–20% of verified savings above the locked Day 0 baseline. No outcome — no fee. No exceptions.' },
-          ].map(p => (
-            <div key={p.num} style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: TEAL, minWidth: 28, marginTop: 3 }}>{p.num}</div>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: LTEXT, marginBottom: 4 }}>{p.title}</div>
-                <div style={{ fontSize: 14, color: LMUTE, lineHeight: 1.55 }}>{p.body}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── SECTION 4: THE GENOME ───────────────────────────────────────────── */}
-      <section style={{ background: DBG, padding: '72px 48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }}>
-        <div>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>The Transformation Genome</div>
-          <h2 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 700, color: '#fff', lineHeight: 1.1, margin: '0 0 24px' }}>
-            340+ patterns from real transformations.<br />Getting smarter with every engagement.
-          </h2>
-          <p style={{ fontSize: 16, color: DBODY, lineHeight: 1.7, margin: '0 0 32px' }}>
-            The Genome is AbarVa&apos;s core competitive advantage. Built from real transformations — published research, KLAS, Everest Group, Gartner, and 15 years of founder engagement experience.<br /><br />
-            Advisory firms carry this in partners&apos; heads. It walks out when they retire. Ours compounds permanently. Every engagement adds patterns. Every client benefits from what every other client learned.
-          </p>
-          <div style={{ display: 'flex', gap: 32, marginBottom: 32 }}>
-            {[
-              { val: '340+', label: 'Genome patterns' },
-              { val: '89%',  label: 'Prediction accuracy' },
-              { val: '79%',  label: 'CDO vacancy failure rate' },
-            ].map(s => (
-              <div key={s.val}>
-                <div style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 700, color: TEAL }}>{s.val}</div>
-                <div style={{ fontSize: 12, color: LMUTE, marginTop: 2 }}>{s.label}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ padding: '20px 24px', border: '1px solid rgba(45,212,200,0.3)', borderRadius: 8, background: 'rgba(45,212,200,0.05)' }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 8 }}>Why AbarVa wins over time</div>
-            <div style={{ fontSize: 14, color: DBODY, lineHeight: 1.6 }}>
-              <span style={{ color: TEAL, fontWeight: 600 }}>Being the 50th client is better than being the first.</span> The Genome compounds with every engagement. Traditional consulting firms reset to zero each time. AbarVa never does.
-            </div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {[
-            { id: 'F002', pct: '84%', pctColor: RED, title: 'No named executive sponsor',    body: 'Margin programmes without a C-suite owner stall at implementation in 84% of cases.' },
-            { id: 'F007', pct: '79%', pctColor: AMB, title: 'CDO vacancy at go-live',        body: 'AI programmes with CDO role vacant at go-live fail to scale in 79% of Genome cases.' },
-            { id: 'F019', pct: '68%', pctColor: AMB, title: 'Migration before rationalisation', body: 'Analytics teams that migrate before rationalising waste 40%+ of migration budget on redundant tooling.' },
-          ].map(c => (
-            <div key={c.id} style={{ background: DCARD, border: '1px solid rgba(45,212,200,0.2)', borderLeft: `3px solid ${TEAL}`, borderRadius: '0 8px 8px 0', padding: '20px 24px' }}>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, marginBottom: 6 }}>{c.id}</div>
-              <div style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 700, color: c.pctColor, lineHeight: 1, marginBottom: 6 }}>{c.pct}</div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>{c.title}</div>
-              <div style={{ fontSize: 13, color: LMUTE }}>{c.body}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── SECTION 5: HOW IT WORKS ─────────────────────────────────────────── */}
-      <section style={{ background: LBG, padding: '72px 48px' }}>
-        <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 48px' }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>How It Works</div>
-          <h2 style={{ fontFamily: SERIF, fontSize: 44, fontWeight: 700, color: LTEXT, lineHeight: 1.1, margin: '0 0 16px' }}>
-            From first signal to verified outcome. Every step governed.
-          </h2>
-          <p style={{ fontSize: 17, color: LMUTE, margin: 0 }}>
-            Click each step to explore.{' '}
-            <a href="/platform" style={{ color: TEAL, textDecoration: 'none', fontWeight: 600 }}>See the full engagement model →</a>
-          </p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr' }}>
-          {[
-            { num: '01', title: 'Diagnose',  sub: 'Situation product · 48hrs · your data',       body: 'Every gap in your organisation quantified against industry benchmarks and 340+ Genome patterns. Situation Brief delivered in 48 hours.' },
-            { num: '02', title: 'Prescribe', sub: 'Strategy + Vendor + Business Case',            body: '3–5 specific interventions, sequenced by impact and feasibility. Each with a CFO-grade business case and Genome validation from comparable outcomes.' },
-            { num: '03', title: 'Execute',   sub: 'Maestro team embeds · knowledge stays',       body: 'Maestros govern delivery from inside. Vendors held to SLAs. Every decision recorded. Knowledge transfers to your team — not back to us.' },
-            { num: '04', title: 'Verify',    sub: 'Baseline vs actuals · outcome share earned',  body: 'Baseline locked Day 0. Immutable. Monthly actuals tracked. Fee activates only on verified savings above the locked baseline.' },
-          ].map((step, i) => {
-            const isActive = activeStep === i
-            return (
-              <div
-                key={step.num}
-                onClick={() => setActiveStep(i)}
-                style={{
-                  padding: '32px 28px',
-                  borderTop: `3px solid ${isActive ? TEAL : 'transparent'}`,
-                  background: isActive ? 'rgba(45,212,200,0.04)' : 'transparent',
-                  position: 'relative',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s',
-                }}
+      <main>
+        {/* Section 1 · Hero · narrative-only per Fix Spec v3 §2. The four
+            hero-stat cards that previously rendered on the right of this
+            section now live in two purpose-built sections below:
+            "The transformation value gap" ($800B + 73%) and
+            "Our commitment" (0% + 48h). Stats belong where their
+            narrative lives. */}
+        <section className="marketing-section">
+          <div className="marketing-container" style={{ maxWidth: 820 }}>
+            <Eyebrow>Enterprise transformation · AI-native · Outcome-accountable</Eyebrow>
+            <Title>
+              Act on intelligence.
+              <br />
+              Before the window closes.
+            </Title>
+            <Copy style={{ maxWidth: 640, marginBottom: 28 }}>
+              AbarVa is an AI-native enterprise transformation platform. We replace the $800B global consulting category and augment the internal labor teams that do not use consulting — with outcome-based engagements, private-cloud deployment, and a four-layer intelligence system that gets smarter with every engagement.
+            </Copy>
+            <div className="marketing-actions">
+              <Link className="marketing-button marketing-button--primary" href="/sign-in">
+                Request demo →
+              </Link>
+              <a
+                className="marketing-button marketing-button--secondary"
+                href="mailto:partners@abarva.ai?subject=Meridian%20case%20request"
               >
-                <div style={{ fontFamily: MONO, fontSize: 12, color: TEAL, marginBottom: 12 }}>{step.num}</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: LTEXT, marginBottom: 8 }}>{step.title}</div>
-                <div style={{ fontFamily: MONO, fontSize: 12, color: DBODY, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>{step.sub}</div>
-                <div style={{ fontSize: 14, color: LMUTE, lineHeight: 1.6 }}>{step.body}</div>
-                {i < 3 && <div style={{ position: 'absolute', right: 0, top: 32, width: 1, height: 'calc(100% - 64px)', background: LBDR }} />}
-              </div>
-            )
-          })}
-        </div>
-        <div style={{ marginTop: 40, padding: '20px 28px', background: '#0C0C0C', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 16 }}>
-          <span style={{ fontSize: 20 }}>🔒</span>
-          <div style={{ fontSize: 15, color: 'rgba(255,255,255,0.8)', lineHeight: 1.5 }}>
-            The baseline is locked on Day 0 and is <strong style={{ color: TEAL }}>immutable</strong>. Every metric. Every assumption. Verified by the CXO. We cannot move the goalposts — and <strong style={{ color: TEAL }}>neither can you</strong>.
+                Read Meridian case →
+              </a>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── SECTION 6: LIVE CLIENTS ─────────────────────────────────────────── */}
-      <section style={{ background: DBG, padding: '72px 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 48 }}>
-          <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>See It Working · No Signup Required</div>
-          <h2 style={{ fontFamily: SERIF, fontSize: 40, fontWeight: 700, color: '#fff', margin: '0 0 12px' }}>
-            Two organisations. Real data.<br />Live intelligence — right now.
-          </h2>
-          <p style={{ fontSize: 16, color: LMUTE, margin: 0 }}>
-            Composite organisations built from real-world datasets across healthcare and financial services.
-          </p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-          {[
-            {
-              vertical: 'Healthcare · IDN · $4.2B',
-              dotColor: TEAL,
-              name: 'Meridian Health System',
-              size: '28,000 employees · 47 facilities · Epic go-live Q3 2026',
-              quote: '"$94M AI spend. Zero with a documented ROI. We are adding to cost, not value."',
-              signals: [
-                'Denial rate 18.2% vs 11.4% benchmark — $94M annual gap',
-                'Epic go-live Q3 2026 — no AI integration path confirmed',
-                'Travel nurse cost $20M above target — F011 pattern active',
-              ],
-              href: '/maestro/meridian',
-              cta: 'Explore Meridian →',
-              canAccess: canAccessMeridian,
-            },
-            {
-              vertical: 'Financial Services · $8.4B AUM',
-              dotColor: TEAL,
-              name: 'Arcturus Financial Group',
-              size: 'Wealth management · FinServ benchmarks · MAS FEAT compliance',
-              quote: '"C/I ratio 71% against a 58% peer target. $840M efficiency gap. AI spend growing — outcomes not."',
-              signals: [
-                'C/I ratio 71% vs 58% peer median — $840M efficiency gap',
-                '$94M AI committed — zero with documented baseline',
-                'CDO role vacant 11 months — F007 pattern active',
-              ],
-              href: '/maestro/arcturus',
-              cta: 'Explore Arcturus →',
-              canAccess: canAccessArcturus,
-            },
-          ].map(c => (
-            <div key={c.name} style={{ background: DCARD, border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 36, opacity: c.canAccess ? 1 : 0.45 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 20 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: c.dotColor }} />
-                <span style={{ fontFamily: MONO, fontSize: 11, color: LMUTE, textTransform: 'uppercase', letterSpacing: '.1em' }}>{c.vertical}</span>
+        {/* Section 2 · The transformation value gap (NEW · Fix Spec v3 §2).
+            Two problem-anchored numbers side by side with narrative
+            connection. Separates "the world's problem" from "our
+            commitment" (those live below, before closing CTA). */}
+        <section className="marketing-section" id="value-gap">
+          <div className="marketing-container">
+            <Eyebrow>The transformation value gap</Eyebrow>
+            <Title section>
+              The economics are broken at the category level.
+            </Title>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 24,
+                marginTop: 32,
+                marginBottom: 28,
+              }}
+            >
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10 }}>Global consulting spend</div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56 }}>$800B</div>
+                <Copy style={{ color: MUTED }}>
+                  Annual transformation spend across the industry · most of it delivered as decks and handoffs, none of it held to a verified outcome.
+                </Copy>
               </div>
-              <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 700, color: '#fff', marginBottom: 8 }}>{c.name}</div>
-              <div style={{ fontSize: 14, color: LMUTE, marginBottom: 20 }}>{c.size}</div>
-              <div style={{ fontSize: 15, color: DBODY, fontStyle: 'italic', lineHeight: 1.6, marginBottom: 20, paddingLeft: 16, borderLeft: `2px solid ${TEAL}` }}>{c.quote}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
-                {c.signals.map(sig => (
-                  <div key={sig} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: RED, marginTop: 6, flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, color: DBODY, lineHeight: 1.4 }}>{sig}</span>
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10 }}>Enterprise AI with no verified ROI</div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56 }}>73%</div>
+                <Copy style={{ color: MUTED }}>
+                  Portion of enterprise AI programs where the money was spent, the board was briefed, and nobody can prove it worked.
+                </Copy>
+              </div>
+            </div>
+            <Copy style={{ maxWidth: 820, color: 'rgba(255,255,255,0.82)' }}>
+              The transformation market is structurally broken. Value leaks between strategy, programs, and outcomes. The way enterprises build, buy, and verify change has not caught up to what AI makes possible — and what boards, markets, and customers are now asking for.
+            </Copy>
+          </div>
+        </section>
+
+        <section className="marketing-section marketing-section--dark">
+          <div className="marketing-container">
+            <Eyebrow>The problem</Eyebrow>
+            <Title section>
+              The economics of enterprise transformation are broken.
+            </Title>
+            <div className="marketing-grid-3" style={{ marginTop: 28 }}>
+              {problemCards.map((card) => (
+                <div className="marketing-card marketing-card--dark" key={card.title}>
+                  <div className="marketing-stat" style={{ color: card.color, marginBottom: 12 }}>{card.value}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 10 }}>{card.title}</div>
+                  <Copy>{card.body}</Copy>
+                </div>
+              ))}
+            </div>
+            <Copy style={{ color: 'rgba(255,255,255,0.72)', marginTop: 28, maxWidth: 960 }}>
+              AbarVa was built because none of this should still be true in 2026. We replace the consulting category for organizations that use it. We augment the internal-labor intelligence layer for organizations that do not. Same outcome logic either way.
+            </Copy>
+          </div>
+        </section>
+
+        <section className="marketing-section" id="products">
+          <div className="marketing-container">
+            <Eyebrow>What AbarVa is</Eyebrow>
+            <Title section>
+              Not a consulting firm. Not an LLM wrapper. Three products, one compounding loop.
+            </Title>
+            <div className="marketing-grid-3" style={{ marginTop: 28 }}>
+              {products.map((product) => (
+                <div className="marketing-card" key={product.name}>
+                  <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                    {product.name}
+                  </div>
+                  <Copy>{product.body}</Copy>
+                </div>
+              ))}
+            </div>
+            <div className="marketing-card" style={{ marginTop: 20 }}>
+              <Copy>
+                Tower surfaces contradictions. Engagements solve them. Intelligence learns from both. The customer becomes permanently sticky because every loop produces more evidence, more memory, and better future judgment.
+              </Copy>
+            </div>
+          </div>
+        </section>
+
+        {/* Own it · Build it · Keep it — three-beat narrative spine per Prat
+            Demo Readiness Sprint §Homepage narrative. Sits between the
+            product intro and the architecture depth so the buyer reads the
+            relationship frame before the technical one. */}
+        <section className="marketing-section" id="journey">
+          <div className="marketing-container">
+            <Eyebrow>How it works</Eyebrow>
+            <Title section>
+              Own it · Build it · Keep it.
+            </Title>
+            <Copy style={{ maxWidth: 900, marginBottom: 32 }}>
+              Transformation is your accountability. We make it executable. The intelligence compounds inside your cloud — and stays there.
+            </Copy>
+            <div className="marketing-grid-3" style={{ marginTop: 12 }}>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You own it
+                </div>
+                <Copy>
+                  Your strategy. Your priorities. Your decisions. Transformation accountability sits with you — boards, markets, and customers don&apos;t accept anyone else carrying it. AbarVa doesn&apos;t take it. We make it workable.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You build it
+                </div>
+                <Copy>
+                  AbarVa deploys into your cloud. Your identity, your data residency, your compliance posture. Nine intelligences run against your real operating truth — your telemetry, your financial reality, your executive voice. The transformation you build is yours, end to end.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You keep it
+                </div>
+                <Copy>
+                  Your Transformation Genome lives inside your tenant. Every decision, pattern, and outcome compounds as institutional intelligence. Your data never leaves your cloud. Your intelligence never becomes ours. Year over year, the asset deepens — in your hands.
+                </Copy>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section marketing-section--dark" id="architecture">
+          <div className="marketing-container">
+            <Eyebrow>Four-layer intelligence</Eyebrow>
+            <Title section>
+              Four layers. Every turn. No other platform does this.
+            </Title>
+            <Copy style={{ maxWidth: 980, marginBottom: 28 }}>
+              Every response Nexus produces — every Ask Intelligence answer, every deliverable we generate — weaves four layers of context into a single prompt. Graph, vector, and structured queries fire in parallel across all four. The result is consultant-grade specificity with platform-scale memory.
+            </Copy>
+            <div className="marketing-grid-2" style={{ alignItems: 'start' }}>
+              <img
+                className="marketing-diagram"
+                src="/assets/architecture/four-layer-intelligence-light.svg"
+                alt="Four-layer intelligence architecture"
+              />
+              <div className="marketing-grid-2">
+                {layers.map((layer) => (
+                  <div className="marketing-card marketing-card--dark" key={layer.name}>
+                    <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 10 }}>
+                      {layer.name}
+                    </div>
+                    <Copy>{layer.body}</Copy>
                   </div>
                 ))}
               </div>
-              {c.canAccess ? (
-                <a href={c.href} style={{ fontSize: 14, fontWeight: 600, color: TEAL, border: '1px solid rgba(45,212,200,0.4)', padding: '10px 20px', borderRadius: 6, background: 'transparent', cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
-                  {c.cta}
-                </a>
-              ) : (
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.1)', padding: '10px 20px', borderRadius: 6, display: 'inline-block', cursor: 'not-allowed' }}>
-                  {c.cta}
-                </span>
-              )}
             </div>
-          ))}
-        </div>
-      </section>
+            <Copy style={{ color: 'rgba(255,255,255,0.72)', marginTop: 24, maxWidth: 900 }}>
+              The architecture enforces privacy. Ask Intelligence can stay scoped to public knowledge. Nexus can be scoped per engagement. There is no path between client data silos by default.
+            </Copy>
+          </div>
+        </section>
 
-      {/* ── SECTION 7: CTA ──────────────────────────────────────────────────── */}
-      <section style={{ background: LBG, padding: '80px 48px', textAlign: 'center' }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 16 }}>Ready to Act</div>
-        <h2 style={{ fontFamily: SERIF, fontSize: 48, fontWeight: 700, color: LTEXT, margin: '0 0 16px' }}>
-          Ready to see your organisation in here?
-        </h2>
-        <p style={{ fontSize: 17, color: LMUTE, margin: '0 0 36px' }}>No sales calls. A Maestro responds within 24 hours.</p>
-        <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-          <span title="Demo temporarily unavailable — new version coming soon" style={{ background: 'rgba(0,0,0,0.18)', color: '#fff', fontSize: 15, fontWeight: 700, padding: '14px 28px', borderRadius: 6, border: 'none', cursor: 'default' }}>
-            See a live demo · soon
-          </span>
-          <a href="/sign-in" style={{ background: 'transparent', color: LTEXT, fontSize: 15, fontWeight: 600, padding: '14px 28px', borderRadius: 6, border: `1.5px solid ${LTEXT}`, cursor: 'pointer', textDecoration: 'none' }}>
-            Request a conversation
-          </a>
-        </div>
-      </section>
+        <section className="marketing-section">
+          <div className="marketing-container">
+            <Eyebrow>The engagement</Eyebrow>
+            <Title section>
+              Five phases. One agent. Zero decks.
+            </Title>
+            <div className="marketing-grid-4" style={{ marginTop: 28 }}>
+              {phases.map((phase) => (
+                <div className="marketing-card" key={phase.num}>
+                  <div style={{ color: TEAL, fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+                    {phase.num}
+                  </div>
+                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{phase.title}</div>
+                  <Copy>{phase.body}</Copy>
+                </div>
+              ))}
+            </div>
+            <div className="marketing-card" style={{ marginTop: 20 }}>
+              <Copy>
+                Nexus carries the engagement turn by turn. CXOs engage when judgment matters. The engagement itself is the product, and the pricing stays tied to the measured outcome, not the calendar.
+              </Copy>
+            </div>
+          </div>
+        </section>
 
-      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <div style={{ background: DBG, borderTop: '1px solid rgba(255,255,255,0.08)', padding: '32px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-        <div>
-          <span style={{ fontFamily: SERIF, fontSize: 18, fontWeight: 700, color: '#fff' }}>Abar</span>
-          <span style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 900, color: TEAL }}>Va</span>
-        </div>
-        <div style={{ display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'wrap' }}>
-          <a href="/intelligence" style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Intelligence</a>
-          <a href="/investor"     style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Investors</a>
-          <a href="/sign-in"      style={{ fontSize: 13, color: DBODY, textDecoration: 'none' }}>Login</a>
-          <span style={{ fontSize: 12, color: DMUTE }}>© 2026 AbarVa</span>
-        </div>
-      </div>
+        <section className="marketing-section marketing-section--dark" id="customers">
+          <div className="marketing-container">
+            <Eyebrow>AbarVa Control Tower</Eyebrow>
+            <Title section>
+              A cockpit for every AI use case in your enterprise.
+            </Title>
+            <div className="marketing-grid-3" style={{ marginTop: 28 }}>
+              {towerLenses.map((lens) => (
+                <div className="marketing-card marketing-card--dark" key={lens.name}>
+                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{lens.name}</div>
+                  <Copy>{lens.body}</Copy>
+                </div>
+              ))}
+            </div>
+            <div className="marketing-card marketing-card--dark" style={{ marginTop: 20 }}>
+              <Copy>
+                Most tools track one dimension. AbarVa cross-checks. When Copilot is at $180K a month with 45% drop-off and no baseline, that is a contradiction. When claims triage claims $2M in savings but has no measurement, that is a contradiction. One click turns the contradiction into a governed engagement with the context already loaded.
+              </Copy>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section">
+          <div className="marketing-container">
+            <Eyebrow>AbarVa Intelligence</Eyebrow>
+            <Title section>
+              Patterns, topics, vendors, regulations, and benchmarks — synthesized on demand.
+            </Title>
+            <div className="marketing-grid-3" style={{ marginTop: 28 }}>
+              {intelligenceModes.map((mode) => (
+                <div className="marketing-card" key={mode.title}>
+                  <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 10 }}>{mode.title}</div>
+                  <Copy>{mode.body}</Copy>
+                </div>
+              ))}
+            </div>
+            <div className="marketing-card" style={{ marginTop: 20 }}>
+              <Copy>
+                Ask Intelligence is not a chat toy. Type any question — vendor comparisons, pattern lookups, research synthesis — and it returns cited answers, provenance, and an honest boundary around what is still unknown.
+              </Copy>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section marketing-section--dark">
+          <div className="marketing-container">
+            <Eyebrow>Agent orchestration</Eyebrow>
+            <Title section>
+              Three agents you’ll use. Seven that work behind them.
+            </Title>
+            <Copy style={{ maxWidth: 900, marginBottom: 28 }}>
+              AbarVa is not one LLM with a wrapper. It is a coordinated agent system, each with defined scope, model tier, latency budget, and access discipline.
+            </Copy>
+            <div className="marketing-card marketing-card--dark">
+              <table className="marketing-table">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Where</th>
+                    <th>Purpose</th>
+                    <th>Model tier</th>
+                    <th>Latency</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {agentRows.map((row) => (
+                    <tr key={row[0]}>
+                      {row.map((cell) => (
+                        <td key={cell}>{cell}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Copy style={{ color: 'rgba(255,255,255,0.72)', marginTop: 20 }}>
+              Model tiers are matched to stakes. Opus only where reasoning quality is the product. Smaller models where the job is narrow and fast. Cost discipline, not cost theater.
+            </Copy>
+          </div>
+        </section>
+
+        <section className="marketing-section">
+          <div className="marketing-container">
+            <Eyebrow>Deployment</Eyebrow>
+            <Title section>
+              Your cloud. Your data. Your audit logs.
+            </Title>
+            <div className="marketing-grid-2" style={{ alignItems: 'start', marginTop: 28 }}>
+              <img
+                className="marketing-diagram"
+                src="/assets/architecture/cloud-deployment-light.svg"
+                alt="Cloud deployment architecture"
+              />
+              <div className="marketing-grid-3" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+                {proofPoints.map((point) => (
+                  <div className="marketing-card" key={point}>
+                    <Copy>{point}</Copy>
+                  </div>
+                ))}
+                <div className="marketing-card">
+                  <Copy>
+                    Built for organizations that build internally. If your model relies on in-house engineering with offshore scale-out, AbarVa becomes your transformation intelligence capability, not another opaque vendor layer.
+                  </Copy>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section marketing-section--dark">
+          <div className="marketing-container marketing-grid-2" style={{ alignItems: 'start' }}>
+            <div>
+              <Eyebrow>Why now</Eyebrow>
+              <Title section>
+                The window for category creation is open now, not forever.
+              </Title>
+              <Copy>
+                The next 18–24 months belong to the company that can turn enterprise AI noise into governed, measurable transformation. Someone will build this category. The question is who compounds the data first.
+              </Copy>
+            </div>
+            <div className="marketing-grid-3" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+              {whyNow.map((item) => (
+                <div className="marketing-card marketing-card--dark" key={item}>
+                  <Copy>{item}</Copy>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section">
+          <div className="marketing-container marketing-grid-2" style={{ alignItems: 'start' }}>
+            <div>
+              <Eyebrow>Who’s building this</Eyebrow>
+              <Title section>
+                Built by practitioners who have already run the work.
+              </Title>
+              <Copy>
+                Anand Sundaram spent 15 years leading enterprise transformation and AI delivery inside a top consulting firm. AbarVa exists because the work is pattern-matchable, outcome-accountable, and too important to leave inside hourly-service economics.
+              </Copy>
+            </div>
+            <div className="marketing-grid-3" style={{ gridTemplateColumns: '1fr', gap: 16 }}>
+              <div className="marketing-card">
+                <Copy>
+                  Founder-led, product-native, and shipping with unusual velocity across platform, data model, intelligence layer, and commercial narrative.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <Copy>
+                  Supported by warm design-partner conversations with a Fortune 40 CIO and a growing circle of operators who care about the category window.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <Copy>
+                  Small, senior team. Building the platform and the operating model together, not bolting one onto the other.
+                </Copy>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section · Our commitment (NEW · Fix Spec v3 §2). Commercial
+            commitments split out from the hero-stats grid so they sit
+            beside the control-tower narrative on page-exit. */}
+        <section className="marketing-section" id="our-commitment">
+          <div className="marketing-container">
+            <Eyebrow>Our commitment</Eyebrow>
+            <Title section>
+              No retainer. No hourly. No vaporware diagnostics.
+            </Title>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 24,
+                marginTop: 32,
+                marginBottom: 28,
+              }}
+            >
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10, color: TEAL }}>
+                  Fee before verified outcome
+                </div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56, color: TEAL }}>
+                  0%
+                </div>
+                <Copy style={{ color: MUTED }}>
+                  We only get paid after a result you can attest to — baseline locked, outcome tracked, attribution scored. Skin in the game by construction, not by promise.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10, color: TEAL }}>
+                  To first situation intelligence
+                </div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56, color: TEAL }}>
+                  48h
+                </div>
+                <Copy style={{ color: MUTED }}>
+                  From kickoff to your first situation brief. Substance in forty-eight hours, not a twelve-week read-in. The platform does the diagnostic so the humans can spend their time on judgment.
+                </Copy>
+              </div>
+            </div>
+            <Copy style={{ maxWidth: 820, color: 'rgba(255,255,255,0.82)' }}>
+              Outcome-accountable pricing is not a discount or a guarantee — it is the commercial structure that makes the rest of the platform honest. Measurement runs through the Control Tower. Attribution is evidence-backed. Disputes collapse to one source of truth.
+            </Copy>
+          </div>
+        </section>
+
+        {/* Control Tower · value capture narrative per Prat Demo Readiness
+            Sprint §Control tower framing. Sits right before the commercial
+            CTA so the buyer reads "how do we know it's working?" without
+            having to ask. */}
+        <section className="marketing-section marketing-section--dark" id="control-tower">
+          <div className="marketing-container">
+            <Eyebrow>Control tower</Eyebrow>
+            <Title section>
+              Every dollar of value, tracked to source.
+            </Title>
+            <div className="marketing-grid-2" style={{ alignItems: 'start', marginTop: 24, gap: 24 }}>
+              <Copy style={{ maxWidth: 640 }}>
+                AbarVa&apos;s Outcome Intelligence layer baselines transformation value at program initiation, tracks realization over time, and attributes outcome to intervention with explicit confidence notation. You see what worked, what didn&apos;t, and why — not consulting-vintage self-reported impact, but measured, attributable, defensible value capture.
+              </Copy>
+              <Copy style={{ maxWidth: 640, color: 'rgba(255,255,255,0.72)' }}>
+                For outcome-participation engagements, the control tower is also the shared source of truth. The value AbarVa captures a share of is the value you can prove. No black box, no disputes, no end-of-quarter surprises.
+              </Copy>
+            </div>
+          </div>
+        </section>
+
+        <section className="marketing-section">
+          <div className="marketing-container">
+            <Eyebrow>Next step</Eyebrow>
+            <Title section>
+              Three paths into AbarVa.
+            </Title>
+            <div className="marketing-grid-3" style={{ marginTop: 28 }}>
+              {footerCtas.map((cta) => (
+                <div className="marketing-card" key={cta.title}>
+                  <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>{cta.title}</div>
+                  <Copy style={{ marginBottom: 18 }}>{cta.body}</Copy>
+                  {cta.href.startsWith('mailto:') ? (
+                    <a href={cta.href} className="marketing-button marketing-button--primary">
+                      {cta.label}
+                    </a>
+                  ) : (
+                    <Link href={cta.href} className="marketing-button marketing-button--primary">
+                      {cta.label}
+                    </Link>
+                  )}
+                </div>
+              ))}
+            </div>
+            <footer className="marketing-footer">
+              <div className="marketing-footer__meta">
+                <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 700 }}>
+                  <span style={{ color: INK }}>Abar</span>
+                  <span style={{ color: TEAL }}>Va</span>
+                </div>
+                <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+                  <a href="https://www.linkedin.com" style={{ color: BODY, fontSize: 13, textDecoration: 'none' }}>LinkedIn</a>
+                  <a href="mailto:partners@abarva.ai?subject=Careers" style={{ color: BODY, fontSize: 13, textDecoration: 'none' }}>Careers</a>
+                  <a href="mailto:anand@abarva.ai?subject=Privacy" style={{ color: BODY, fontSize: 13, textDecoration: 'none' }}>Privacy</a>
+                  <a href="mailto:anand@abarva.ai?subject=Terms" style={{ color: BODY, fontSize: 13, textDecoration: 'none' }}>Terms</a>
+                </div>
+              </div>
+            </footer>
+          </div>
+        </section>
+      </main>
     </div>
   )
 }

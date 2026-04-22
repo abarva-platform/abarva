@@ -1,12 +1,39 @@
 'use client';
 
-import { useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
 import type { TurnRow } from '@/lib/db/turn';
 import type { ActivePattern, PeerDecisionSummary, ChainedPattern } from '@/lib/graph/types';
+import type { VipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { ChoiceChips, type Choice } from './ChoiceChips';
+import { renderWithCitations } from './renderWithCitations';
+import { CitationPill } from './CitationPill';
+import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+// Extract unique citations from agent turn text so we can render a source
+// pills row below the response — visible provenance by default, Target
+// Trend Brain pattern.
+const CITATION_EXTRACT_RE = /\[([a-z][a-z0-9_]{2,})(?:\s+§\s+([^\]]+?)|,\s+page\s+(\d+))?\]/g;
+function extractCitations(text: string): Array<{ key: string; section?: string; page?: string }> {
+  const seen = new Set<string>();
+  const out: Array<{ key: string; section?: string; page?: string }> = [];
+  CITATION_EXTRACT_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = CITATION_EXTRACT_RE.exec(text)) !== null) {
+    const key = m[1];
+    const section = m[2];
+    const page = m[3];
+    const sig = `${key}|${section ?? ''}|${page ?? ''}`;
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    out.push({ key, section, page });
+  }
+  return out;
+}
+import { TraceDrawer } from './TraceDrawer';
 
 type LocalTurn = TurnRow & { streaming?: boolean; errored?: boolean };
 
@@ -17,6 +44,29 @@ interface Deliverable {
   content: Record<string, unknown>;
 }
 
+interface AssignedTopic {
+  key: string;
+  title: string;
+  isPrimary: boolean;
+}
+
+interface TopContradiction {
+  id: string;
+  severity: 'high' | 'medium' | 'low';
+  description: string;
+  one_liner: string | null;
+  monthly_total_usd: number | null;
+  eliminable_usd_annual: number | null;
+  owner_named: boolean | null;
+}
+
+interface ActivityEvent {
+  kind: 'turn' | 'gate' | 'deliverable';
+  label: string;
+  detail: string;
+  at: string;
+}
+
 interface Props {
   engagement: EngagementRow;
   sponsor: PersonRow | null;
@@ -25,10 +75,15 @@ interface Props {
   peerDecisions: PeerDecisionSummary[];
   chainedPatterns: ChainedPattern[];
   deliverables?: Deliverable[];
+  vipGreeting?: VipGreetingData | null;
+  assignedTopics?: AssignedTopic[];
+  topContradictions?: TopContradiction[];
+  contradictionsScope?: 'program' | 'client' | 'none';
+  activityEvents?: ActivityEvent[];
 }
 
 export function EngagementConsole({
-  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables,
+  engagement, sponsor, turns, activePatterns, peerDecisions, chainedPatterns, deliverables, vipGreeting, assignedTopics, topContradictions, contradictionsScope = 'client', activityEvents,
 }: Props) {
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
@@ -39,12 +94,71 @@ export function EngagementConsole({
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gateToast, setGateToast] = useState<{ phase: number; newPhase: number } | null>(null);
+  // Phase transition ceremony · activates when the server emits
+  // gate_approved, walks through three status lines (logging approval ·
+  // generating charter · opening next phase) and dismisses once the
+  // phase_opener arrives or after a 4s cap, whichever first.
+  const [phaseTransition, setPhaseTransition] = useState<{
+    fromPhase: number;
+    toPhase: number;
+    phaseName: string;
+    stage: 0 | 1 | 2 | 3; // 0: approving · 1: drafting · 2: opening · 3: complete
+  } | null>(null);
   const [choices, setChoices] = useState<Choice[]>([]);
   const [choicesForTurnId, setChoicesForTurnId] = useState<string | null>(null);
   const [composerPlaceholder, setComposerPlaceholder] = useState('Your reply…');
+  const [traceTurnId, setTraceTurnId] = useState<string | null>(null);
+  const [stages, setStages] = useState<Array<{ label: string; detail?: string }>>([]);
+  const [composerFocused, setComposerFocused] = useState(false);
+  const [sendPressed, setSendPressed] = useState(false);
+  const [sendHovered, setSendHovered] = useState(false);
   const composerRef = useRef<HTMLInputElement>(null);
   const localIdRef = useRef(0);
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const reducedMotion = useReducedMotion();
+
+  // Auto-scroll to the latest turn whenever messages or stages update. Use
+  // smooth scroll unless the user has opted out via OS-level reduced-motion.
+  useEffect(() => {
+    const el = messagesEndRef.current;
+    if (!el) return;
+    el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' });
+  }, [messages, stages.length, reducedMotion]);
+
+  // Gate toast auto-dismiss · cleans up after the UI reads the event.
+  useEffect(() => {
+    if (!gateToast) return;
+    const t = setTimeout(() => setGateToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [gateToast]);
+
+  // Phase transition ceremony · advance through status lines so the
+  // user sees progression rather than a blank pause. The server's
+  // phase_opener SSE event flips `stage` to 3; if that never arrives
+  // (server-side hiccup) we still complete after 4s and call
+  // router.refresh to pull the new phase state. Lines are:
+  //   0 → 1 (~400ms): "Phase N complete" becomes "Generating charter"
+  //   1 → 2 (~900ms): "Generating charter" becomes "Opening Phase N+1"
+  //   2 → 3 (on phase_opener OR 4s cap): dismiss + refresh server data
+  useEffect(() => {
+    if (!phaseTransition) return;
+    const { stage } = phaseTransition;
+    if (stage === 3) {
+      const refreshT = setTimeout(() => {
+        router.refresh();
+        setPhaseTransition(null);
+      }, 600);
+      return () => clearTimeout(refreshT);
+    }
+    const delay = stage === 0 ? 700 : stage === 1 ? 1100 : 1800;
+    const t = setTimeout(() => {
+      setPhaseTransition((prev) =>
+        prev && prev.stage < 3 ? { ...prev, stage: (prev.stage + 1) as 0 | 1 | 2 | 3 } : prev,
+      );
+    }, delay);
+    return () => clearTimeout(t);
+  }, [phaseTransition, router]);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,6 +174,7 @@ export function EngagementConsole({
     setChoices([]);
     setChoicesForTurnId(null);
     setError(null);
+    setStages([]);
     setIsStreaming(true);
 
     const now = new Date().toISOString();
@@ -110,13 +225,19 @@ export function EngagementConsole({
           const line = buffer.slice(0, nl).trim();
           buffer = buffer.slice(nl + 1);
           if (!line) continue;
-          let evt: { type: string; text?: string; turnId?: string; error?: string };
+          let evt: { type: string; text?: string; turnId?: string; error?: string; label?: string; detail?: string };
           try {
             evt = JSON.parse(line);
           } catch {
             continue;
           }
-          if (evt.type === 'delta' && typeof evt.text === 'string') {
+          if (evt.type === 'stage' && typeof evt.label === 'string') {
+            const stageLabel = evt.label;
+            const stageDetail = evt.detail;
+            setStages((prev) => [...prev, { label: stageLabel, detail: stageDetail }]);
+          } else if (evt.type === 'delta' && typeof evt.text === 'string') {
+            // Clear stages once real content starts streaming.
+            setStages([]);
             const delta = evt.text;
             setMessages(prev =>
               prev.map(m => (m.id === agentTurnId ? { ...m, text: m.text + delta } : m)),
@@ -133,8 +254,36 @@ export function EngagementConsole({
             const raw = evt as unknown as { phase?: number; new_phase?: number };
             const phase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase;
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
+            const phaseName = phaseLabels[newPhase] ?? `Phase ${newPhase}`;
             setGateToast({ phase, newPhase });
-            setTimeout(() => router.refresh(), 1800);
+            setPhaseTransition({ fromPhase: phase, toPhase: newPhase, phaseName, stage: 0 });
+            // Safety net · if the server never emits phase_opener for any
+            // reason, force-complete the ceremony after 4s so the user
+            // isn't stuck on the overlay forever.
+            setTimeout(() => {
+              setPhaseTransition((prev) => (prev && prev.stage < 3 ? { ...prev, stage: 3 } : prev));
+            }, 4000);
+          } else if (evt.type === 'phase_opener') {
+            // Server has advanced the phase and pre-seeded the next-phase
+            // opener as an agent turn. Render it inline · also flips the
+            // transition ceremony to `stage: 3` so the overlay can fade.
+            const raw = evt as unknown as { phase?: number; turnId?: string; text?: string };
+            setPhaseTransition((prev) => (prev ? { ...prev, stage: 3 } : prev));
+            if (typeof raw.text === 'string' && raw.text.length > 0) {
+              const openerId = raw.turnId ?? `opener-${Date.now()}`;
+              const openerPhase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase + 1;
+              const openerTurn: LocalTurn = {
+                id: openerId,
+                engagement_id: engagement.id,
+                phase: openerPhase,
+                sender: 'agent',
+                text: raw.text,
+                mode_label: null,
+                retrieved_refs: {},
+                created_at: new Date().toISOString(),
+              };
+              setMessages((prev) => [...prev, openerTurn]);
+            }
           } else if (evt.type === 'choices') {
             const raw = evt as unknown as { choices?: Choice[] };
             if (Array.isArray(raw.choices) && raw.choices.length > 0) {
@@ -167,42 +316,178 @@ export function EngagementConsole({
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif', position: 'relative' }}>
+      {/* Phase transition ceremony overlay. Renders full-viewport when a gate
+          approval fires; walks three status lines then fades once the
+          phase_opener arrives. Keeps the user's attention on the handoff
+          instead of silently reloading the console. */}
+      {phaseTransition && phaseTransition.stage < 3 && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 70,
+            background: 'rgba(10,10,10,0.94)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 32,
+            animation: reducedMotion ? undefined : `transitionFade ${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 11,
+              letterSpacing: '0.2em',
+              color: '#2DD4C8',
+              textTransform: 'uppercase',
+            }}
+          >
+            Phase {phaseTransition.fromPhase} complete
+          </div>
+          <div
+            style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: 38,
+              fontWeight: 400,
+              color: '#F5F5F0',
+              textAlign: 'center',
+              maxWidth: 640,
+              lineHeight: 1.2,
+              letterSpacing: '-0.01em',
+            }}
+          >
+            Creating your program.
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14,
+              minWidth: 320,
+              alignItems: 'flex-start',
+            }}
+          >
+            {[
+              { label: 'Logging approval + locking charter', doneAt: 1 },
+              { label: 'Generating Phase ' + phaseTransition.fromPhase + ' deliverable', doneAt: 2 },
+              { label: 'Opening Phase ' + phaseTransition.toPhase + ' · ' + phaseTransition.phaseName, doneAt: 3 },
+            ].map((line, i) => {
+              const isDone = phaseTransition.stage >= line.doneAt;
+              const isActive = phaseTransition.stage === i;
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    opacity: isActive || isDone ? 1 : 0.35,
+                    transition: reducedMotion ? undefined : `opacity ${TRANSITIONS.inPlace}`,
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 14,
+                      display: 'inline-flex',
+                      justifyContent: 'center',
+                      color: isDone ? '#2DD4C8' : isActive ? '#2DD4C8' : 'rgba(245,245,240,0.4)',
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 13,
+                      animation: isActive && !reducedMotion ? `transitionPulse 1s ${MOTION.easing.easeInOut} infinite` : undefined,
+                    }}
+                  >
+                    {isDone ? '✓' : isActive ? '◆' : '·'}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'DM Sans, sans-serif',
+                      fontSize: 14,
+                      color: isDone ? 'rgba(245,245,240,0.85)' : isActive ? '#F5F5F0' : 'rgba(245,245,240,0.55)',
+                    }}
+                  >
+                    {line.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
       {gateToast && (
-        <div style={{
-          position: 'fixed', top: 80, right: 24, zIndex: 50,
-          padding: '12px 18px',
-          background: 'rgba(45,212,200,0.12)',
-          border: '0.5px solid rgba(45,212,200,0.4)',
-          borderRadius: 10,
-          color: '#2DD4C8',
-          fontFamily: 'JetBrains Mono, monospace',
-          fontSize: 12,
-          letterSpacing: '0.08em',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-        }}>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed', top: 80, right: 24, zIndex: 60,
+            padding: '12px 18px',
+            background: 'rgba(45,212,200,0.12)',
+            border: '0.5px solid rgba(45,212,200,0.4)',
+            borderRadius: 10,
+            color: '#2DD4C8',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 12,
+            letterSpacing: '0.08em',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: reducedMotion
+              ? undefined
+              : `toastEnter ${MOTION.duration.default} ${MOTION.easing.easeOut}`,
+          }}
+        >
           ✓ Phase {gateToast.phase} approved · advancing to Phase {gateToast.newPhase}…
         </div>
       )}
+      {/* Scoped keyframes for the toast + stage reveal. Defined once at
+          the root so we don't ship a global stylesheet from a client page. */}
+      <style jsx>{`
+        @keyframes toastEnter {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes stageFade {
+          from { opacity: 0; transform: translateX(-4px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes streamPulse {
+          0%, 100% { opacity: 0.35; }
+          50%      { opacity: 0.9; }
+        }
+        @keyframes transitionFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        @keyframes transitionPulse {
+          0%, 100% { opacity: 0.5; }
+          50%      { opacity: 1; }
+        }
+      `}</style>
       {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
-          <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
-          <span style={{ color: '#2DD4C8', fontSize: 23, fontWeight: 900 }}>Va</span>
-        </div>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#2DD4C8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-          {engagement.name} · {sponsor?.name ?? 'unassigned'} · {sponsor?.role ?? '—'}
+      <div style={{ padding: '18px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+          <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
+            <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
+            <span style={{ color: '#2DD4C8', fontSize: 23, fontWeight: 900 }}>Va</span>
+          </div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#2DD4C8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Program · {engagement.name} · {sponsor?.name ?? 'unassigned'} · {sponsor?.role ?? '—'}
+          </div>
         </div>
       </div>
 
       {/* Phase indicator */}
-      <div style={{ padding: '16px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+      <div style={{ padding: '18px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
           {phaseLabels.map((label, i) => (
             <div key={i} style={{
               padding: '10px 12px',
               borderRadius: 8,
               background: i === engagement.current_phase ? 'rgba(45,212,200,0.12)' : 'rgba(255,255,255,0.03)',
               border: `0.5px solid ${i === engagement.current_phase ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+              transition: reducedMotion ? undefined : `background-color ${TRANSITIONS.inPlace}, border-color ${TRANSITIONS.inPlace}`,
             }}>
               <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                 PHASE {i}
@@ -216,18 +501,113 @@ export function EngagementConsole({
       </div>
 
       {/* Three-column layout: conversation placeholder | context sidebar */}
-      <div style={{ padding: '0 24px 24px 24px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div style={{ padding: '0 24px 24px 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
 
-        {/* Conversation + composer */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+        {/* Conversation + composer · minWidth:0 keeps flex/grid children
+            honouring the 1fr track so long unbroken text wraps inside the
+            panel instead of pushing the column beyond the viewport. */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 28, minHeight: 400, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 16 }}>
             Conversation · {messages.length} turns
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
             {messages.length === 0 ? (
-              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 14, fontStyle: 'italic' }}>
-                No turns yet. Say something to Nexus.
-              </div>
+              vipGreeting ? (
+                <div
+                  style={{
+                    padding: 20,
+                    background: 'linear-gradient(135deg, rgba(45,212,200,0.06) 0%, rgba(155,109,255,0.04) 100%)',
+                    border: '0.5px solid rgba(45,212,200,0.25)',
+                    borderRadius: 12,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      color: '#2DD4C8',
+                      letterSpacing: '0.14em',
+                      marginBottom: 10,
+                    }}
+                  >
+                    NEXUS · FIRST TURN
+                  </div>
+                  <div
+                    style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: 20,
+                      color: '#F5F5F0',
+                      letterSpacing: '-0.01em',
+                      lineHeight: 1.35,
+                      marginBottom: 10,
+                    }}
+                  >
+                    Good to meet you, {vipGreeting.firstName}.
+                  </div>
+                  <div style={{ fontSize: 14, color: 'rgba(245,245,240,0.82)', lineHeight: 1.55, marginBottom: 14 }}>
+                    {vipGreeting.currentTitle && vipGreeting.currentCompany
+                      ? `I know you're ${vipGreeting.currentTitle.toLowerCase().startsWith('executive') ? 'the' : ''} ${vipGreeting.currentTitle} at ${vipGreeting.currentCompany}. `
+                      : ''}
+                    Before we dig in, here's what I've already pulled that might be relevant —
+                    push back hard if I've mis-prioritized.
+                  </div>
+                  {vipGreeting.emphasizeTopics.length > 0 && (
+                    <div style={{ marginBottom: 10 }}>
+                      <div
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 9,
+                          color: 'rgba(245,245,240,0.6)',
+                          letterSpacing: '0.14em',
+                          marginBottom: 6,
+                        }}
+                      >
+                        WHAT I'LL EMPHASIZE
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 20, color: 'rgba(245,245,240,0.88)', fontSize: 13.5, lineHeight: 1.6 }}>
+                        {vipGreeting.emphasizeTopics.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {vipGreeting.currentInitiatives.length > 0 && (
+                    <div style={{ marginBottom: 6 }}>
+                      <div
+                        style={{
+                          fontFamily: 'JetBrains Mono, monospace',
+                          fontSize: 9,
+                          color: 'rgba(245,245,240,0.6)',
+                          letterSpacing: '0.14em',
+                          marginBottom: 6,
+                        }}
+                      >
+                        GIVEN YOUR CURRENT FOCUS
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 20, color: 'rgba(245,245,240,0.72)', fontSize: 12.5, lineHeight: 1.6 }}>
+                        {vipGreeting.currentInitiatives.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <div
+                    style={{
+                      marginTop: 12,
+                      fontSize: 13,
+                      color: 'rgba(245,245,240,0.65)',
+                      fontStyle: 'italic',
+                      fontFamily: 'DM Sans, sans-serif',
+                    }}
+                  >
+                    Where should we start?
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 14, fontStyle: 'italic' }}>
+                  No turns yet. Say something to Nexus.
+                </div>
+              )
             ) : (
               messages.map(t => (
                 <div key={t.id}>
@@ -241,10 +621,106 @@ export function EngagementConsole({
                     <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                       {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
                     </div>
-                    <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      {t.text}
-                      {t.streaming && <span style={{ color: '#2DD4C8', opacity: 0.7 }}>▊</span>}
+                    {t.sender === 'agent' && t.streaming && !t.text && stages.length > 0 && (
+                      <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        {stages.map((s, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              fontSize: 12,
+                              fontStyle: 'italic',
+                              color: 'rgba(245,245,240,0.55)',
+                              fontFamily: 'DM Sans, sans-serif',
+                              letterSpacing: '-0.01em',
+                              animation: reducedMotion
+                                ? undefined
+                                : `stageFade ${MOTION.duration.default} ${MOTION.easing.easeOut} both`,
+                              animationDelay: reducedMotion ? undefined : `${i * 80}ms`,
+                            }}
+                          >
+                            <span style={{ color: '#2DD4C8', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
+                            {s.label}
+                            {s.detail && <span style={{ color: 'rgba(245,245,240,0.4)', marginLeft: 6 }}>· {s.detail}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div
+                      style={{
+                        fontSize: 15,
+                        lineHeight: 1.7,
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                        minWidth: 0,
+                      }}
+                    >
+                      {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
+                      {t.streaming && (
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            color: '#2DD4C8',
+                            opacity: 0.7,
+                            animation: reducedMotion ? undefined : `streamPulse 1.2s ${MOTION.easing.easeInOut} infinite`,
+                          }}
+                        >
+                          ▊
+                        </span>
+                      )}
                     </div>
+                    {t.sender === 'agent' && !t.streaming && (() => {
+                      const cites = extractCitations(t.text);
+                      if (cites.length === 0) return null;
+                      return (
+                        <div
+                          style={{
+                            marginTop: 10,
+                            paddingTop: 10,
+                            borderTop: '0.5px solid rgba(45,212,200,0.12)',
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 6,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontFamily: 'JetBrains Mono, monospace',
+                              fontSize: 9,
+                              color: 'rgba(245,245,240,0.55)',
+                              letterSpacing: '0.14em',
+                              marginRight: 4,
+                            }}
+                          >
+                            SOURCES · {cites.length}
+                          </span>
+                          {cites.map((c, i) => (
+                            <CitationPill key={`${c.key}-${i}`} sourceKey={c.key} section={c.section} page={c.page} />
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {t.sender === 'agent' && !t.streaming && t.id && (
+                      <button
+                        type="button"
+                        onClick={() => setTraceTurnId(t.id)}
+                        title="Why did Nexus say this?"
+                        style={{
+                          marginTop: 8,
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'rgba(245,245,240,0.55)',
+                          fontSize: 13,
+                          fontFamily: 'JetBrains Mono, monospace',
+                          cursor: 'pointer',
+                          padding: 0,
+                          letterSpacing: '0.08em',
+                        }}
+                      >
+                        ◎ trace
+                      </button>
+                    )}
                   </div>
                   {t.id === choicesForTurnId && choices.length > 0 && (
                     <ChoiceChips
@@ -261,10 +737,24 @@ export function EngagementConsole({
                 </div>
               ))
             )}
+            {/* Scroll anchor — autoscroll keeps the latest turn visible */}
+            <div ref={messagesEndRef} aria-hidden="true" />
           </div>
 
           {error && (
-            <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(255,107,74,0.08)', border: '0.5px solid rgba(255,107,74,0.3)', borderRadius: 8, color: '#FF6B4A', fontSize: 12, fontFamily: 'JetBrains Mono, monospace' }}>
+            <div
+              role="alert"
+              style={{
+                marginTop: 12,
+                padding: '8px 12px',
+                background: 'rgba(255,107,74,0.08)',
+                border: '0.5px solid rgba(255,107,74,0.3)',
+                borderRadius: 8,
+                color: '#FF6B4A',
+                fontSize: 12,
+                fontFamily: 'JetBrains Mono, monospace',
+              }}
+            >
               {error}
             </div>
           )}
@@ -275,11 +765,50 @@ export function EngagementConsole({
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              disabled={isStreaming}
-              placeholder={composerPlaceholder}
-              style={{ flex: 1, padding: '10px 14px', background: 'rgba(255,255,255,0.06)', border: '0.5px solid rgba(255,255,255,0.12)', borderRadius: 8, color: '#F5F5F0', fontFamily: 'inherit', fontSize: 14 }}
+              onFocus={() => setComposerFocused(true)}
+              onBlur={() => setComposerFocused(false)}
+              disabled={isStreaming || phaseTransition !== null}
+              placeholder={phaseTransition ? 'Creating your program…' : composerPlaceholder}
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                background: 'rgba(255,255,255,0.06)',
+                border: `0.5px solid ${composerFocused ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+                borderRadius: 8,
+                color: '#F5F5F0',
+                fontFamily: 'inherit',
+                fontSize: 14,
+                outline: 'none',
+                transition: reducedMotion
+                  ? undefined
+                  : `border-color ${TRANSITIONS.focus}, box-shadow ${TRANSITIONS.focus}`,
+                boxShadow: composerFocused ? FOCUS_RING.brand : 'none',
+              }}
             />
-            <button type="submit" disabled={isStreaming || !input.trim()} style={{ padding: '10px 18px', background: '#2DD4C8', color: '#0A0A0A', border: 'none', borderRadius: 8, fontFamily: 'inherit', fontSize: 13, fontWeight: 500, cursor: isStreaming || !input.trim() ? 'default' : 'pointer', opacity: isStreaming || !input.trim() ? 0.5 : 1 }}>
+            <button
+              type="submit"
+              disabled={isStreaming || phaseTransition !== null || !input.trim()}
+              onMouseEnter={() => setSendHovered(true)}
+              onMouseLeave={() => { setSendHovered(false); setSendPressed(false); }}
+              onMouseDown={() => setSendPressed(true)}
+              onMouseUp={() => setSendPressed(false)}
+              style={{
+                padding: '10px 18px',
+                background: sendPressed ? '#0F766E' : sendHovered ? '#0D9488' : '#2DD4C8',
+                color: '#0A0A0A',
+                border: 'none',
+                borderRadius: 8,
+                fontFamily: 'inherit',
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: isStreaming || !input.trim() ? 'not-allowed' : 'pointer',
+                opacity: isStreaming || !input.trim() ? 0.5 : 1,
+                transform: sendPressed ? 'translateY(1px)' : 'translateY(0)',
+                transition: reducedMotion
+                  ? undefined
+                  : `background-color ${TRANSITIONS.hover}, transform ${TRANSITIONS.press}`,
+              }}
+            >
               {isStreaming ? 'Nexus...' : 'Send'}
             </button>
           </form>
@@ -328,6 +857,50 @@ export function EngagementConsole({
             )}
           </div>
 
+          {/* Contradictions · prefer program-scoped rows, fall back to client-scoped */}
+          {topContradictions && topContradictions.length > 0 && (
+            <div style={{ background: 'rgba(245,197,74,0.04)', border: '0.5px solid rgba(245,197,74,0.2)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#F5C54A', textTransform: 'uppercase', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
+                <span>
+                  {contradictionsScope === 'program' ? 'Program contradictions' : 'Client contradictions'} · {topContradictions.length}
+                </span>
+                <a href="/tower" style={{ color: 'rgba(245,245,240,0.55)', textDecoration: 'none', letterSpacing: '0.1em' }}>ALL →</a>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {topContradictions.map((c) => {
+                  const sev = c.severity === 'high' ? '#FF6B4A' : c.severity === 'medium' ? '#F5C54A' : 'rgba(245,245,240,0.72)';
+                  const monthly = c.monthly_total_usd != null && c.monthly_total_usd >= 1000
+                    ? c.monthly_total_usd >= 1_000_000
+                      ? `$${(c.monthly_total_usd / 1_000_000).toFixed(1)}M/mo`
+                      : `$${Math.round(c.monthly_total_usd / 1_000)}K/mo`
+                    : null;
+                  const eliminable = c.eliminable_usd_annual != null && c.eliminable_usd_annual >= 1000
+                    ? c.eliminable_usd_annual >= 1_000_000
+                      ? `$${(c.eliminable_usd_annual / 1_000_000).toFixed(1)}M/yr eliminable`
+                      : `$${Math.round(c.eliminable_usd_annual / 1_000)}K/yr eliminable`
+                    : null;
+                  return (
+                    <div key={c.id} style={{ padding: '8px 10px', borderLeft: `2px solid ${sev}`, background: 'rgba(255,255,255,0.02)', borderRadius: 4 }}>
+                      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: sev, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 4 }}>
+                        {c.severity}
+                        {monthly && <span style={{ color: 'rgba(245,245,240,0.72)', marginLeft: 6 }}>· {monthly}</span>}
+                      </div>
+                      <div style={{ fontSize: 12, color: '#F5F5F0', lineHeight: 1.4, fontWeight: 500 }}>
+                        {c.one_liner ?? c.description.slice(0, 120)}
+                      </div>
+                      {(eliminable || c.owner_named === false) && (
+                        <div style={{ display: 'flex', gap: 8, fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'rgba(245,245,240,0.55)', marginTop: 4, letterSpacing: '0.04em' }}>
+                          {eliminable && <span style={{ color: sev }}>{eliminable}</span>}
+                          {c.owner_named === false && <span style={{ color: '#FF6B4A' }}>no owner</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Peer decisions */}
           <div style={{ background: 'rgba(255,107,74,0.04)', border: '0.5px solid rgba(255,107,74,0.2)', borderRadius: 10, padding: 14 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#FF6B4A', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -341,7 +914,7 @@ export function EngagementConsole({
                   <div key={d.choice} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <div style={{ color: '#F5F5F0' }}>{d.choice.replace(/_/g, ' ')}</div>
                     <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 11 }}>
-                      {d.engagement_count} engagements · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
+                      {d.engagement_count} programs · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
                     </div>
                   </div>
                 ))}
@@ -349,13 +922,87 @@ export function EngagementConsole({
             )}
           </div>
 
-          {/* Deliverables */}
-          <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
+          {/* Topics · /engagements/[id]/topics deep-link. Shows assigned
+              topics inline per product-map spec Phase 5. */}
+          {(() => {
+            const topics = assignedTopics ?? [];
+            const primaryCount = topics.filter((t) => t.isPrimary).length;
+            const secondaryCount = topics.length - primaryCount;
+            return (
+              <a
+                href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/topics`}
+                style={{
+                  display: 'block',
+                  background: 'rgba(155,109,255,0.04)',
+                  border: '0.5px solid rgba(155,109,255,0.2)',
+                  borderRadius: 10,
+                  padding: 14,
+                  textDecoration: 'none',
+                  color: '#F5F5F0',
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 10,
+                    letterSpacing: '0.14em',
+                    color: '#9B6DFF',
+                    textTransform: 'uppercase',
+                    marginBottom: 6,
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <span>Topics · {topics.length} assigned</span>
+                  {topics.length > 0 && (
+                    <span>{primaryCount} primary · {secondaryCount} secondary</span>
+                  )}
+                </div>
+                {topics.length === 0 ? (
+                  <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12, lineHeight: 1.4 }}>
+                    Assign a topic to carry playbook intelligence, diagnostic questions, and vendor landscape into every Nexus turn →
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {topics.slice(0, 4).map((t) => (
+                      <div key={t.key} style={{ fontSize: 13, color: '#F5F5F0', display: 'flex', alignItems: 'baseline', gap: 6 }}>
+                        <span>{t.title}</span>
+                        {t.isPrimary && (
+                          <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: '#9B6DFF', letterSpacing: '0.1em' }}>
+                            PRIMARY
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                    {topics.length > 4 && (
+                      <div style={{ fontSize: 11, color: 'rgba(245,245,240,0.6)', fontStyle: 'italic' }}>
+                        + {topics.length - 4} more
+                      </div>
+                    )}
+                  </div>
+                )}
+              </a>
+            );
+          })()}
+
+          {/* Deliverables · links to browser */}
+          <a
+            href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/deliverables`}
+            style={{
+              display: 'block',
+              background: 'rgba(45,212,200,0.04)',
+              border: '0.5px solid rgba(45,212,200,0.2)',
+              borderRadius: 10,
+              padding: 14,
+              textDecoration: 'none',
+              color: '#F5F5F0',
+            }}
+          >
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
               Deliverables · {deliverablesList.length}
             </div>
             {deliverablesList.length === 0 ? (
-              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved.</div>
+              <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>None yet. Generated when a phase gate is approved, or on-demand via Pack L generator.</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {deliverablesList.map((d) => (
@@ -369,6 +1016,46 @@ export function EngagementConsole({
                 ))}
               </div>
             )}
+          </a>
+
+          {/* Quick links · charter + turns */}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <a
+              href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/charter`}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.02)',
+                border: '0.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                padding: '8px 10px',
+                textDecoration: 'none',
+                color: '#F5F5F0',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                letterSpacing: '0.12em',
+                textAlign: 'center',
+              }}
+            >
+              CHARTER →
+            </a>
+            <a
+              href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/turns`}
+              style={{
+                flex: 1,
+                background: 'rgba(255,255,255,0.02)',
+                border: '0.5px solid rgba(255,255,255,0.08)',
+                borderRadius: 8,
+                padding: '8px 10px',
+                textDecoration: 'none',
+                color: '#F5F5F0',
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                letterSpacing: '0.12em',
+                textAlign: 'center',
+              }}
+            >
+              TURNS →
+            </a>
           </div>
 
           {/* Chained patterns */}
@@ -386,8 +1073,43 @@ export function EngagementConsole({
             </div>
           )}
 
+          {/* Activity pulse · last 5 events · turns + gates + deliverable drafts */}
+          {activityEvents && activityEvents.length > 0 && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 10 }}>
+                Activity pulse · last {activityEvents.length}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {activityEvents.map((e, i) => {
+                  const color = e.kind === 'turn' ? '#2DD4C8' : e.kind === 'gate' ? '#3FB27F' : '#9B6DFF';
+                  const glyph = e.kind === 'turn' ? '▸' : e.kind === 'gate' ? '●' : '◆';
+                  const then = new Date(e.at).getTime();
+                  const diffMs = Date.now() - then;
+                  const m = Math.floor(diffMs / 60000);
+                  const rel = m < 60 ? `${m}m ago` : m < 60 * 24 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / (60 * 24))}d ago`;
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
+                      <span style={{ color, fontFamily: 'JetBrains Mono, monospace', fontSize: 10, width: 10, flexShrink: 0 }}>{glyph}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 11.5, color: '#F5F5F0', fontWeight: 500, lineHeight: 1.3 }}>{e.label}</div>
+                        <div style={{ fontSize: 10.5, color: 'rgba(245,245,240,0.55)', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {e.detail}
+                        </div>
+                      </div>
+                      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: 'rgba(245,245,240,0.55)', flexShrink: 0, whiteSpace: 'nowrap' }}>{rel}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
+
+      {traceTurnId && (
+        <TraceDrawer turnId={traceTurnId} open={true} onClose={() => setTraceTurnId(null)} />
+      )}
     </div>
   );
 }

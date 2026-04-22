@@ -1,0 +1,51 @@
+<svg width="960" height="540" viewBox="0 0 960 540" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">AbarVa cloud deployment architecture</title>
+  <desc id="desc">AbarVa web, API, and agent runtime run inside the customer cloud boundary with data stores inside the customer VPC, while only foundation model API calls leave the boundary.</desc>
+  <rect width="960" height="540" rx="28" fill="#F8F7F4"/>
+  <text x="56" y="54" fill="#0C0C0C" font-family="Georgia, serif" font-size="30" font-weight="700">Cloud deployment architecture</text>
+  <text x="56" y="82" fill="#4B5563" font-family="DM Sans, sans-serif" font-size="14">AbarVa deploys inside the customer cloud account. Client and engagement data stay in the VPC. Only model API calls leave the boundary.</text>
+
+  <rect x="56" y="110" width="848" height="316" rx="28" fill="#FFFFFF" stroke="#D7DBE2" stroke-width="2"/>
+  <text x="84" y="144" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">CUSTOMER CLOUD — e.g., Target AWS</text>
+
+  <rect x="90" y="170" width="214" height="82" rx="18" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="374" y="170" width="214" height="82" rx="18" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <rect x="658" y="170" width="214" height="82" rx="18" fill="#FFFFFF" stroke="#CBD5E1"/>
+  <text x="197" y="202" text-anchor="middle" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">APP SURFACE</text>
+  <text x="197" y="228" text-anchor="middle" fill="#0C0C0C" font-family="Georgia, serif" font-size="24" font-weight="700">AbarVa Web</text>
+  <text x="197" y="246" text-anchor="middle" fill="#6B7280" font-family="DM Sans, sans-serif" font-size="12">Next.js</text>
+  <text x="481" y="202" text-anchor="middle" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">SERVICE LAYER</text>
+  <text x="481" y="228" text-anchor="middle" fill="#0C0C0C" font-family="Georgia, serif" font-size="24" font-weight="700">AbarVa API</text>
+  <text x="481" y="246" text-anchor="middle" fill="#6B7280" font-family="DM Sans, sans-serif" font-size="12">Node / TypeScript</text>
+  <text x="765" y="202" text-anchor="middle" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">ORCHESTRATION</text>
+  <text x="765" y="228" text-anchor="middle" fill="#0C0C0C" font-family="Georgia, serif" font-size="24" font-weight="700">Agent Runtime</text>
+  <text x="765" y="246" text-anchor="middle" fill="#6B7280" font-family="DM Sans, sans-serif" font-size="12">Nexus · Ask IQ</text>
+
+  <rect x="108" y="286" width="744" height="106" rx="20" fill="#0C0C0C"/>
+  <text x="132" y="316" fill="#2DD4C8" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1.4">CUSTOMER VPC — data stores</text>
+  <text x="132" y="336" fill="#94A3B8" font-family="DM Sans, sans-serif" font-size="12">All client and engagement data stays in the VPC.</text>
+
+  <rect x="140" y="348" width="180" height="28" rx="10" fill="#111827" stroke="#334155"/>
+  <rect x="390" y="348" width="180" height="28" rx="10" fill="#111827" stroke="#334155"/>
+  <rect x="640" y="348" width="180" height="28" rx="10" fill="#111827" stroke="#334155"/>
+  <text x="230" y="367" text-anchor="middle" fill="#EFF6FF" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">Postgres</text>
+  <text x="480" y="367" text-anchor="middle" fill="#EFF6FF" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">Neo4j</text>
+  <text x="730" y="367" text-anchor="middle" fill="#EFF6FF" font-family="DM Sans, sans-serif" font-size="13" font-weight="600">Pinecone</text>
+
+  <path d="M197 252V286" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M481 252V286" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M765 252V286" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+
+  <path d="M904 268H932C942 268 950 276 950 286V314C950 324 942 332 932 332H904" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M904 332L916 324L904 316" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="912" y="254" text-anchor="end" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">FOUNDATION MODEL APIs ONLY</text>
+
+  <rect x="748" y="442" width="156" height="60" rx="18" fill="#0C0C0C"/>
+  <text x="826" y="468" text-anchor="middle" fill="#2DD4C8" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">EXTERNAL</text>
+  <text x="826" y="490" text-anchor="middle" fill="#FFFFFF" font-family="DM Sans, sans-serif" font-size="14" font-weight="600">Anthropic · OpenAI · configurable</text>
+  <path d="M826 426V442" stroke="#2DD4C8" stroke-width="2.5" stroke-linecap="round"/>
+
+  <rect x="56" y="442" width="636" height="60" rx="18" fill="#FFFFFF" stroke="#D7DBE2"/>
+  <text x="82" y="468" fill="#0F766E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing="1.2">CONTROLLED OPERATIONS</text>
+  <text x="82" y="490" fill="#0C0C0C" font-family="DM Sans, sans-serif" font-size="14" font-weight="600">AbarVa engineering access · controlled deploy pipeline · customer retains audit logs</text>
+</svg>

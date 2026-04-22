@@ -125,7 +125,7 @@ export default function PlatformEvaluator({ platforms, clientName, context }: Pl
         <span style={{ color: '#D97706' }}>★</span>
         <span>
           AbarVa earns referral fees from vendors marked ★. Referral relationships do not affect scores. Methodology is auditable.{' '}
-          <a href="/methodology" style={{ color: '#6B7280', textDecoration: 'underline' }}>View methodology →</a>
+          <a href="/intelligence/library" style={{ color: '#6B7280', textDecoration: 'underline' }}>View methodology →</a>
         </span>
       </div>
     </div>

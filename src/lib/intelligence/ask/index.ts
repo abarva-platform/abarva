@@ -1,0 +1,95 @@
+import { classifyIntent } from './classifier';
+import { route } from './router';
+import { synthesizeStream } from './synthesizer';
+import { generateFollowups } from './followups';
+import type { AskSource, IntentClassification, AskIntent } from './types';
+
+export type { AskIntent, AskSource, IntentClassification } from './types';
+
+export interface AskEvent {
+  type: 'classified' | 'sources' | 'delta' | 'followups' | 'done' | 'error';
+  classification?: IntentClassification;
+  sources?: AskSource[];
+  text?: string;
+  followups?: string[];
+  error?: string;
+}
+
+export interface AskOptions {
+  userContextBlock?: string;
+}
+
+function emptyStateMessage(intent: AskIntent): string {
+  switch (intent) {
+    case 'vendor_lookup':
+      return "No vendor matches that name in the current index. The vendor graph populates as Pack J + Pack K portfolios land — try a capability or industry instead, or browse /platform → Vendors.";
+    case 'vendor_comparison':
+      return "We don't have indexed vendor data that matches that comparison. Vendor pricing + performance records populate as Pack K + Pack J portfolios land. For now, browse /platform → Vendors for the current vendor graph.";
+    case 'pattern_inquiry':
+      return "No matching Genome pattern is indexed yet. The library currently holds failure patterns across AI-program governance, vendor SLAs, data readiness, and change management — try one of those angles, or browse /library for the full list.";
+    case 'topic_synthesis':
+      return "That topic isn't yet synthesized in the knowledge layer. Pack L (topics + deliverables) is staged to fill this in the next slice — for now the Library has source-level material.";
+    case 'research_query':
+      return "No research match. The research index covers AI-program ROI benchmarks, data readiness, vendor SLAs, change management, and executive-mandate patterns — try one of those angles.";
+    case 'regulation_query':
+      return "No regulatory source indexed for that query. Regulation coverage is limited to healthcare (HIPAA/42 CFR Part 2), finserv (GLBA/CFPB/FINRA/SR 11-7), and retail (PCI DSS/state privacy) — try narrowing to a specific regime.";
+    case 'benchmark_query':
+      return "No benchmark matches. The benchmark library skews industry-wide (AI programs, cost-to-income, cloud adoption) — try broadening to a category or peer cohort.";
+    case 'insight_query':
+      return "No insight matches that query yet. Insights build up from engagement outcomes — the library grows as more Phase 2/4 gates close.";
+    case 'general_synthesis':
+    default:
+      return "We don't have indexed data that answers that directly. Try narrowing to a specific vendor, pattern, client, or metric — or browse /library for what's currently indexed.";
+  }
+}
+
+export async function* askIntelligence(query: string, opts: AskOptions = {}): AsyncGenerator<AskEvent> {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    yield { type: 'error', error: 'empty query' };
+    return;
+  }
+
+  try {
+    const classification = await classifyIntent(trimmed);
+    yield { type: 'classified', classification };
+
+    const { sources, averageConfidence } = await route(classification.intent, classification.entities);
+    yield { type: 'sources', sources };
+
+    if (sources.length === 0) {
+      const msg = emptyStateMessage(classification.intent);
+      for (const chunk of msg.match(/.{1,40}/g) ?? []) yield { type: 'delta', text: chunk };
+      yield { type: 'done' };
+      return;
+    }
+
+    let answer = '';
+    let confidencePrefixDone = false;
+    for await (const delta of synthesizeStream({
+      query: trimmed,
+      sources,
+      intent: classification.intent,
+      userContextBlock: opts.userContextBlock,
+    })) {
+      if (!confidencePrefixDone && averageConfidence < 0.6) {
+        const prefix = 'Limited indexed data — confidence is moderate. ';
+        yield { type: 'delta', text: prefix };
+        answer += prefix;
+        confidencePrefixDone = true;
+      }
+      answer += delta;
+      yield { type: 'delta', text: delta };
+    }
+
+    const followups = await generateFollowups({
+      query: trimmed,
+      answer,
+      entities: classification.entities,
+    });
+    yield { type: 'followups', followups };
+    yield { type: 'done' };
+  } catch (err) {
+    yield { type: 'error', error: err instanceof Error ? err.message : 'unknown' };
+  }
+}

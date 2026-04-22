@@ -23,7 +23,7 @@ export default function AuthRedirect() {
     }
 
     if (role === 'admin') {
-      router.push('/admin')
+      router.push('/home')
       return
     }
 
@@ -33,7 +33,7 @@ export default function AuthRedirect() {
     }
 
     // Default fallback
-    router.push('/admin')
+    router.push('/home')
   }, [isLoaded, user, router])
 
   return (

@@ -12,12 +12,25 @@ async function main() {
   const session = driver.session();
   try {
     for (const file of files) {
-      const content = readFileSync(join(dir, file), 'utf8');
-      const statements = content.split(';').map(s => s.trim()).filter(Boolean);
+      const raw = readFileSync(join(dir, file), 'utf8');
+      // Strip // line comments BEFORE splitting on ';' so semicolons inside
+      // comments (e.g., "// foo; bar") don't falsely terminate statements.
+      const stripped = raw
+        .split('\n')
+        .map(line => {
+          const commentIdx = line.indexOf('//');
+          return commentIdx >= 0 ? line.slice(0, commentIdx) : line;
+        })
+        .join('\n');
+      const statements = stripped
+        .split(';')
+        .map(s => s.trim())
+        .filter(Boolean);
       console.log(`\n--- ${file} (${statements.length} statements) ---`);
       for (const stmt of statements) {
         await session.run(stmt);
-        console.log(`  ✓ ${stmt.split('\n')[0].slice(0, 80)}...`);
+        const firstLine = stmt.split('\n')[0];
+        console.log(`  ✓ ${firstLine.slice(0, 80)}${firstLine.length > 80 ? '...' : ''}`);
       }
     }
     const verify = await session.run(

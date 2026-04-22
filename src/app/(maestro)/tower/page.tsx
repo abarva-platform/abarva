@@ -1,7 +1,9 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { buildTowerViewModel, listTowerClients, type ContradictionRow } from '@/lib/tower/aggregate';
+import { buildTowerViewModel, type ContradictionRow } from '@/lib/tower/aggregate';
+import { loadEnterpriseSummary } from '@/lib/tower/enterprise-summary';
 import { TowerUploadZone } from '@/components/tower/TowerUploadZone';
+import { EnterpriseContextRow } from '@/components/tower/EnterpriseContextRow';
+import { AtlasRail } from '@/components/atlas/AtlasRail';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,24 +76,101 @@ function contradictionTypeLabel(t: string): string {
   return t.replace(/_/g, ' ');
 }
 
+interface ContradictionImpact {
+  one_liner?: string;
+  monthly_total_usd?: number;
+  eliminable_usd_annual?: number;
+  eliminable_pct?: number;
+  owner_named?: boolean;
+  confidence?: string;
+}
+
+function formatUsd(n: number | undefined): string | null {
+  if (typeof n !== 'number' || !Number.isFinite(n)) return null;
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${n}`;
+}
+
 function ContradictionCard({ c }: { c: ContradictionRow }) {
   const evidence = c.evidence && typeof c.evidence === 'object' ? c.evidence : {};
-  const evidenceEntries = Object.entries(evidence).slice(0, 4);
+  const impact = (evidence as { impact?: ContradictionImpact }).impact ?? null;
+  const refsRaw = (evidence as { refs?: unknown }).refs;
+  const refs = Array.isArray(refsRaw) ? (refsRaw as string[]) : [];
+  const monthly = formatUsd(impact?.monthly_total_usd);
+  const eliminable = formatUsd(impact?.eliminable_usd_annual);
+  const sev = severityColor(c.severity);
   return (
     <div style={{ padding: 14, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 10 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: severityColor(c.severity) }}>
+        <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: sev }}>
           {c.severity} · {contradictionTypeLabel(c.contradiction_type)}
         </div>
       </div>
-      <div style={{ fontSize: 13.5, color: INK, lineHeight: 1.5 }}>{c.description}</div>
-      {evidenceEntries.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
-          {evidenceEntries.map(([k, v]) => (
-            <div key={k} style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
-              <span style={{ color: MUTE }}>{k}:</span>{' '}
-              <span style={{ color: INK }}>{typeof v === 'object' ? JSON.stringify(v) : String(v)}</span>
+      {impact?.one_liner && (
+        <div
+          style={{
+            fontSize: 14,
+            color: INK,
+            lineHeight: 1.5,
+            fontWeight: 500,
+            padding: '10px 12px',
+            background: 'rgba(245,197,74,0.06)',
+            borderLeft: `2px solid ${sev}`,
+            borderRadius: 4,
+            marginBottom: 10,
+          }}
+        >
+          {impact.one_liner}
+        </div>
+      )}
+      {(monthly || eliminable || impact?.owner_named === false) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginBottom: 10 }}>
+          {monthly && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              <span style={{ color: MUTE }}>monthly spend:</span>{' '}
+              <span style={{ color: INK }}>{monthly}</span>
             </div>
+          )}
+          {eliminable && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              <span style={{ color: MUTE }}>eliminable/yr:</span>{' '}
+              <span style={{ color: sev }}>{eliminable}</span>
+              {typeof impact?.eliminable_pct === 'number' && (
+                <span style={{ color: MUTE }}> · {impact.eliminable_pct}%</span>
+              )}
+            </div>
+          )}
+          {impact?.owner_named === false && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: CORAL }}>
+              no owner named
+            </div>
+          )}
+          {impact?.confidence && (
+            <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>
+              confidence: {impact.confidence}
+            </div>
+          )}
+        </div>
+      )}
+      <div style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.5 }}>{c.description}</div>
+      {refs.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {refs.slice(0, 4).map((r, i) => (
+            <span
+              key={i}
+              style={{
+                fontFamily: FONT_MONO,
+                fontSize: 9,
+                color: MUTE,
+                padding: '2px 6px',
+                border: BORDER_SOFT,
+                borderRadius: 4,
+                letterSpacing: '0.06em',
+              }}
+            >
+              {r}
+            </span>
           ))}
         </div>
       )}
@@ -103,7 +182,7 @@ function ContradictionCard({ c }: { c: ContradictionRow }) {
       <div style={{ marginTop: 10, display: 'flex', justifyContent: 'flex-end' }}>
         {c.triggered_engagement_id ? (
           <Link
-            href={`/engage/${encodeURIComponent(c.triggered_engagement_id)}`}
+            href={`/engagements/${encodeURIComponent(c.triggered_engagement_id)}`}
             style={{ fontFamily: FONT_MONO, fontSize: 11, color: TEAL, textDecoration: 'none' }}
           >
             View engagement →
@@ -134,21 +213,26 @@ export default async function TowerPage({
   searchParams: Promise<{ clientId?: string }>;
 }) {
   const params = await searchParams;
-  const clientId = params.clientId;
-
+  // Active client from top-nav dropdown is the source of truth. URL
+  // param still honored (deep links); if absent, resolve from the cookie.
+  let clientId = params.clientId;
   if (!clientId) {
-    const clients = await listTowerClients();
-    if (clients.length === 0) {
+    const { getActiveClientRow } = await import('@/lib/active-client');
+    const active = await getActiveClientRow();
+    if (!active) {
       return (
         <div style={{ padding: 40, color: MUTE, fontFamily: 'DM Sans, sans-serif' }}>
           No clients yet. Apply migration 022 and seed Tower data.
         </div>
       );
     }
-    redirect(`/tower?clientId=${encodeURIComponent(clients[0].id)}`);
+    clientId = active.id;
   }
 
-  const vm = await buildTowerViewModel(clientId);
+  const [vm, enterpriseSummary] = await Promise.all([
+    buildTowerViewModel(clientId),
+    loadEnterpriseSummary(clientId),
+  ]);
   if (!vm) {
     return (
       <div style={{ padding: 40, color: MUTE, fontFamily: 'DM Sans, sans-serif' }}>
@@ -159,44 +243,70 @@ export default async function TowerPage({
 
   const valueRatio = vm.cost.monthlySpendUsd > 0 ? vm.value.verifiedUsd / (vm.cost.monthlySpendUsd * 12) : 0;
 
-  return (
-    <div style={{ padding: '24px 24px 40px', maxWidth: 1400, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
-        <div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
-            Control Tower
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 500, marginTop: 4 }}>{vm.client.name}</div>
-          <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, marginTop: 2 }}>
-            {vm.client.industry_code ?? 'unclassified'}
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {vm.clients.map((c) => (
-            <Link
-              key={c.id}
-              href={`/tower?clientId=${encodeURIComponent(c.id)}`}
-              style={{
-                padding: '6px 12px',
-                fontFamily: FONT_MONO,
-                fontSize: 10,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                color: c.id === vm.client.id ? TEAL : MUTE,
-                border: `0.5px solid ${c.id === vm.client.id ? TEAL : 'rgba(255,255,255,0.1)'}`,
-                borderRadius: 20,
-                background: c.id === vm.client.id ? 'rgba(45,212,200,0.08)' : 'transparent',
-              }}
-            >
-              {c.name}
-            </Link>
-          ))}
-        </div>
-      </div>
+  // Spend trajectory · 12-month rollup from spend_breakdown (Pack J seeds)
+  let trajectory: Array<{ month: string; total: number; categoryCount: number }> = [];
+  try {
+    const { getServerSupabase } = await import('@/lib/supabase-server');
+    const sb = getServerSupabase();
+    const { data: spend } = await sb
+      .from('spend_breakdown')
+      .select('month, amount_usd, cost_center_id')
+      .eq('client_id', clientId)
+      .order('month', { ascending: true });
+    const byMonth = new Map<string, { total: number; centers: Set<string> }>();
+    for (const r of (spend as Array<{ month: string; amount_usd: number | null; cost_center_id: string | null }> | null) ?? []) {
+      const key = r.month.slice(0, 7); // YYYY-MM
+      const entry = byMonth.get(key) ?? { total: 0, centers: new Set<string>() };
+      entry.total += Number(r.amount_usd ?? 0);
+      if (r.cost_center_id) entry.centers.add(r.cost_center_id);
+      byMonth.set(key, entry);
+    }
+    trajectory = Array.from(byMonth.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, v]) => ({ month, total: v.total, categoryCount: v.centers.size }));
+  } catch {
+    // quiet fail · trajectory stays empty · section hides
+  }
 
-      {/* Five dimension panels */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14, marginBottom: 20 }}>
+  // Shadow AI · from applications.business_function='Shadow AI'
+  let shadowAiFindings: Array<{ id: string; name: string; vendor: string | null; criticality: string; annual_cost_usd: number | null }> = [];
+  try {
+    const { getServerSupabase } = await import('@/lib/supabase-server');
+    const sb = getServerSupabase();
+    const { data } = await sb
+      .from('applications')
+      .select('id, name, vendor, criticality, annual_cost_usd')
+      .eq('client_id', clientId)
+      .eq('business_function', 'Shadow AI')
+      .order('criticality', { ascending: true })
+      .limit(12);
+    shadowAiFindings = ((data as Array<{ id: string; name: string; vendor: string | null; criticality: string; annual_cost_usd: number | null }> | null) ?? []);
+  } catch {
+    // quiet fail · section hides
+  }
+
+  return (
+    <div style={{ padding: '24px 24px 40px', maxWidth: 1780, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 20, alignItems: 'start' }}>
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
+                Control Tower
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 500, marginTop: 4 }}>{vm.client.name}</div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE, marginTop: 2 }}>
+                {vm.client.industry_code ?? 'unclassified'}
+              </div>
+            </div>
+            {/* Client switcher lives in the top-nav dropdown now; no duplicate
+                selector rendered here. Single-client main-window principle. */}
+          </div>
+
+          {/* Five dimension panels · force 5 columns so Cost never orphans
+              on its own row. Drops to 3 columns below 1280px and 1 column
+              below 640px via media query in the style-jsx block below. */}
+          <div className="tower-dimension-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 14, marginBottom: 20 }}>
         {panelFrame(
           TEAL,
           '1',
@@ -300,10 +410,99 @@ export default async function TowerPage({
             </div>
           </>,
         )}
-      </div>
+          </div>
 
-      {/* Contradiction engine */}
-      <div style={{ marginTop: 24 }}>
+          {/* Enterprise context · Pack H Phase 5 */}
+          <EnterpriseContextRow summary={enterpriseSummary} />
+
+          {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
+          {trajectory.length > 0 && (
+            <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEAL }}>
+                Spend trajectory · last 12 months
+              </div>
+              <div style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
+                Monthly rollup across {trajectory[trajectory.length - 1]?.categoryCount ?? 0} cost centers · total {dollarsM(trajectory.reduce((s, r) => s + r.total, 0))} annualized
+              </div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: MUTE }}>LATEST MONTH</div>
+              <div style={{ fontSize: 18, fontWeight: 500, color: INK }}>
+                {dollarsM(trajectory[trajectory.length - 1]?.total ?? 0)}
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 88, marginTop: 8 }}>
+            {(() => {
+              const maxV = Math.max(...trajectory.map((r) => r.total), 1);
+              return trajectory.map((r, i) => {
+                const pct = (r.total / maxV) * 100;
+                const isLast = i === trajectory.length - 1;
+                return (
+                  <div key={r.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                    <div
+                      title={`${r.month} · ${dollarsM(r.total)}`}
+                      style={{
+                        width: '100%',
+                        height: `${Math.max(pct, 4)}%`,
+                        background: isLast ? TEAL : 'rgba(45,212,200,0.5)',
+                        borderRadius: 2,
+                      }}
+                    />
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: MUTE }}>
+                      {r.month.slice(5, 7)}
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+            </section>
+          )}
+
+          {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
+          {shadowAiFindings.length > 0 && (
+            <section style={{ marginTop: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+            <div>
+              <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: CORAL }}>
+                Shadow AI · {shadowAiFindings.length} discovered
+              </div>
+              <div style={{ fontSize: 12, color: MUTE, marginTop: 2 }}>
+                AI in use without enterprise governance · discovered via network logs, expense trails, incident reports
+              </div>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 10 }}>
+            {shadowAiFindings.map((s) => {
+              const critColor = s.criticality === 'critical' || s.criticality === 'high' ? CORAL : s.criticality === 'medium' ? AMBER : MUTE;
+              return (
+                <div key={s.id} style={{ padding: 14, background: 'rgba(255,107,74,0.04)', border: '0.5px solid rgba(255,107,74,0.2)', borderRadius: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 4 }}>
+                    <span style={{ fontFamily: FONT_MONO, fontSize: 9, color: critColor, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+                      {s.criticality}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 500, color: INK }}>{s.vendor ?? 'Unknown vendor'}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: INK, lineHeight: 1.4, marginBottom: 4 }}>
+                    {s.name}
+                  </div>
+                  {s.annual_cost_usd != null && s.annual_cost_usd > 0 && (
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: AMBER }}>
+                      ~{dollarsM(s.annual_cost_usd / 12)}/mo annualized
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+            </section>
+          )}
+
+          {/* Contradiction engine */}
+          <div style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
           <div>
             <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: PURPLE }}>
@@ -324,10 +523,23 @@ export default async function TowerPage({
               <ContradictionCard key={c.id} c={c} />
             ))}
           </div>
-        )}
+          )}
+          </div>
+
+          <TowerUploadZone clientId={vm.client.id} />
+        </div>
+
+        <AtlasRail clientId={clientId} clientName={vm.client.name} />
       </div>
 
-      <TowerUploadZone clientId={vm.client.id} />
+      <style>{`
+        @media (max-width: 1280px) {
+          .tower-dimension-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 720px) {
+          .tower-dimension-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
