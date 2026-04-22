@@ -303,8 +303,10 @@ export default async function TowerPage({
                 selector rendered here. Single-client main-window principle. */}
           </div>
 
-          {/* Five dimension panels */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 14, marginBottom: 20 }}>
+          {/* Five dimension panels · force 5 columns so Cost never orphans
+              on its own row. Drops to 3 columns below 1280px and 1 column
+              below 640px via media query in the style-jsx block below. */}
+          <div className="tower-dimension-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 14, marginBottom: 20 }}>
         {panelFrame(
           TEAL,
           '1',
@@ -529,6 +531,15 @@ export default async function TowerPage({
 
         <AtlasRail clientName={vm.client.name} />
       </div>
+
+      <style>{`
+        @media (max-width: 1280px) {
+          .tower-dimension-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 720px) {
+          .tower-dimension-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
