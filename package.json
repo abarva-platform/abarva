@@ -36,6 +36,7 @@
     "db:seed:wave": "npx tsx src/scripts/seed/seed-wave.ts",
     "db:verify:wave": "npx tsx src/scripts/seed/verify-seed-wave.ts",
     "db:smoke:wave": "npx tsx src/scripts/seed/smoke-seed-wave.ts",
+    "seed:demo-turns": "npx tsx src/scripts/seed/demo-turn-history.ts",
     "db:seed:apex-intelligence": "npx tsx src/scripts/seed/seed-apex-intelligence-layer.ts",
     "db:verify:apex-intelligence": "npx tsx src/scripts/seed/verify-apex-intelligence-layer.ts",
     "db:smoke:apex-intelligence": "npx tsx src/scripts/seed/smoke-apex-intelligence-layer.ts",
