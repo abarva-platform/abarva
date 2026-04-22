@@ -189,7 +189,7 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
                   }}
                 >
                   <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: m.sender === 'agent' ? TEAL : MUTE, letterSpacing: '0.14em', marginBottom: 4 }}>
-                    {m.sender === 'agent' ? `NEXUS${m.streaming ? ' · streaming' : ''}` : 'YOU'}
+                    {m.sender === 'agent' ? 'NEXUS' : 'YOU'}
                   </div>
                   <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                     {m.text}

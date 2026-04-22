@@ -425,6 +425,7 @@ export async function POST(
                   type: 'gate_approved',
                   phase: gateApproval.phase,
                   new_phase: updated.current_phase,
+                  summary: gateApproval.summary,
                 }) + '\n',
               ),
             );

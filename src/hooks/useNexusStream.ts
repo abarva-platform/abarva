@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import type { ContradictionFlag, NexusFormat, NexusMode, NexusTurnData, NexusTurnPayload, Source } from '@/lib/intelligence/types';
+import { applyVoiceFilter, filterPayload, liveStripInternalTags } from '@/lib/nexus/voiceFilter';
 
 type ProgressEvent = {
   phase: string;
@@ -67,9 +68,10 @@ function tryParseJson(raw: string): Record<string, unknown> | null {
 export function parseTurnPayload(raw: string, fallback?: Partial<NexusTurnPayload>): NexusTurnPayload {
   const parsed = tryParseJson(raw);
   if (parsed) return parsed as NexusTurnPayload;
+  const cleaned = applyVoiceFilter(raw.trim() || fallback?.answer || 'Nexus returned an unreadable payload.').cleaned;
   return {
     format: 'idk',
-    answer: raw.trim() || fallback?.answer || 'Nexus returned an unreadable payload.',
+    answer: cleaned,
     why_dont_know: raw.trim() ? undefined : 'The streaming payload did not include a complete renderable body.',
     ...fallback,
   } as NexusTurnPayload;
@@ -215,7 +217,7 @@ export function useNexusStream() {
             setStreamState((prev) => ({ ...prev, progress: [...prev.progress, next] }));
           } else if (event.type === 'content_delta') {
             raw += String(event.text ?? '');
-            setStreamState((prev) => ({ ...prev, raw }));
+            setStreamState((prev) => ({ ...prev, raw: liveStripInternalTags(raw) }));
           } else if (event.type === 'source_attached' && event.source) {
             sources = [...sources, event.source as Source];
             setStreamState((prev) => ({ ...prev, sources }));
@@ -238,14 +240,16 @@ export function useNexusStream() {
       setIsStreaming(false);
     }
 
-    const payload =
-      clarification && !raw
-        ? ({
-            format: 'clarification',
-            question: clarification.question,
-            options: clarification.options,
-          } as NexusTurnPayload)
-        : parseTurnPayload(raw);
+    const payload = clarification && !raw
+      ? ({
+          format: 'clarification',
+          question: clarification.question,
+          options: clarification.options,
+        } as NexusTurnPayload)
+      : (() => {
+          const parsed = parseTurnPayload(raw);
+          return filterPayload(parsed as Record<string, any>).filtered as NexusTurnPayload;
+        })();
 
     if (!completion.threadId) {
       return null;

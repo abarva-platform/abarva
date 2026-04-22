@@ -82,7 +82,7 @@ export function AtlasChatPanel({
             </div>
           </div>
         ))}
-        {pending && <div style={{ fontSize: 12, color: SOFT }}>Atlas is thinking…</div>}
+        {pending && <div style={{ fontSize: 12, color: SOFT }}>Responding…</div>}
       </div>
 
       {suggestions.length > 0 && (

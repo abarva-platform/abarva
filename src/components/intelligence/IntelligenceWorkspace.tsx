@@ -19,15 +19,21 @@ import { NexusConversation } from '@/components/nexus/NexusConversation';
 type BrowserResponse = {
   layer: 'L1' | 'L2' | 'L3' | 'L4';
   activeLayer: 'L1' | 'L2' | 'L3' | 'L4';
-  tiles: Array<{ id: string; label: string; count: number; active: boolean }>;
-  items: Array<{ id: string; title: string; subtitle: string | null; detail: string | null; href: string | null; sourceUrl: string | null }>;
+  title: string;
+  description: string;
+  emptyState: string;
+  tiles: Array<{ id: string; label: string; count: number; active: boolean; support: 'published' | 'generated' | 'empty' }>;
+  items: Array<{
+    id: string;
+    title: string;
+    subtitle: string | null;
+    detail: string | null;
+    href: string | null;
+    sourceUrl: string | null;
+    actionLabel: string | null;
+    support: 'published' | 'generated' | 'reference';
+  }>;
 };
-
-const SUGGESTED = [
-  'What are health systems like us doing on ambient documentation?',
-  'DAX vs Abridge for Meridian',
-  'What would our CFO push back on here?',
-];
 
 async function fetchJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: false; status: number; body: Record<string, unknown> }> {
   const res = await fetch(url, { credentials: 'include' });
@@ -99,6 +105,8 @@ export function IntelligenceWorkspace({
   const [authState, setAuthState] = useState<'ready' | 'unauthenticated' | 'no_client'>('ready');
   const [loadingThread, setLoadingThread] = useState(false);
   const initialQueryFired = useRef(false);
+  const browserRef = useRef<HTMLDivElement | null>(null);
+  const signalsRef = useRef<HTMLDivElement | null>(null);
 
   const {
     isStreaming,
@@ -192,6 +200,68 @@ export function IntelligenceWorkspace({
 
   const activeTurnId = selectedTurnId ?? turns[turns.length - 1]?.id ?? null;
   const programFit = useMemo(() => programFitFromTurns(turns), [turns]);
+  const suggestedQueries = useMemo(() => {
+    const industry = foundation?.client.industry ?? '';
+    const clientName = foundation?.client.name ?? 'our client';
+
+    if (industry.includes('HEALTHCARE')) {
+      return [
+        `What are health systems like ${clientName} doing on ambient documentation?`,
+        `Abridge vs DAX for ${clientName}`,
+        'What would our CMIO push back on here?',
+      ];
+    }
+
+    if (industry.includes('RETAIL')) {
+      return [
+        `Where is ${clientName} paying twice across merchandising, service, and personalization?`,
+        `What is the retail benchmark on store-associate productivity and markdown recovery?`,
+        'What would our COO push back on here?',
+      ];
+    }
+
+    if (industry.includes('UTILITIES') || industry.includes('ENERGY')) {
+      return [
+        `Where is ${clientName} carrying duplicate spend across field operations and reliability?`,
+        'What does the benchmark say about outage response automation?',
+        'What would our operations chief push back on here?',
+      ];
+    }
+
+    if (industry.includes('FINSERV')) {
+      return [
+        `Which vendor overlaps matter most for ${clientName} right now?`,
+        'What benchmark pressure is building in fraud, service, and underwriting?',
+        'What would our CFO push back on here?',
+      ];
+    }
+
+    return [
+      `What does AbarVa already know about ${clientName}?`,
+      'Where are the strongest pattern matches right now?',
+      'What would the executive team push back on here?',
+    ];
+  }, [foundation?.client.industry, foundation?.client.name]);
+
+  function scrollToRef(ref: { current: HTMLDivElement | null }) {
+    requestAnimationFrame(() => {
+      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  function handleFoundationJump(
+    jump:
+      | { kind: 'browser'; layer: 'L1' | 'L2' | 'L3' | 'L4'; facet: string | null }
+      | { kind: 'signals' },
+  ) {
+    if (jump.kind === 'signals') {
+      scrollToRef(signalsRef);
+      return;
+    }
+    setBrowserLayer(jump.layer);
+    setBrowserFacet(jump.facet);
+    scrollToRef(browserRef);
+  }
 
   async function handleSubmitQuery(query: string) {
     const userTurn = buildUserTurn(query, threadId);
@@ -344,7 +414,11 @@ export function IntelligenceWorkspace({
           </section>
         ) : null}
 
-        {state === 'A' ? <FoundationReadout foundation={foundation} loading={!foundation} /> : <FoundationStrip foundation={foundation} onExpand={() => reset()} />}
+        {state === 'A' ? (
+          <FoundationReadout foundation={foundation} loading={!foundation} onJump={handleFoundationJump} />
+        ) : (
+          <FoundationStrip foundation={foundation} onExpand={() => reset()} />
+        )}
 
         <div className={`intel-shell-grid state-${state.toLowerCase()}`}>
           {state === 'C' ? (
@@ -360,33 +434,40 @@ export function IntelligenceWorkspace({
             {(state === 'A' || turns.length === 0) ? (
               <>
                 <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
+                  suggestedQueries={suggestedQueries}
                   onSubmit={handleSubmitQuery}
                   onSuggestedTap={handleSubmitQuery}
                   onFileSelected={handleUpload}
                   attachments={attachments}
                   disabled={isStreaming}
                 />
-                <PortfolioSignalFeed
-                  signals={signals}
-                  programCount={foundation?.metrics.engagements ?? 0}
-                  onSignalClick={setSelectedSignalId}
-                />
-                <FoundationBrowser
-                  activeLayer={browser?.activeLayer ?? browserLayer}
-                  onLayerChange={(layer) => {
-                    setBrowserLayer(layer);
-                    setBrowserFacet(null);
-                  }}
-                  tiles={browser?.tiles ?? []}
-                  items={browser?.items ?? []}
-                  onFacetChange={setBrowserFacet}
-                />
+                <div ref={signalsRef}>
+                  <PortfolioSignalFeed
+                    signals={signals}
+                    programCount={foundation?.metrics.engagements ?? 0}
+                    onSignalClick={setSelectedSignalId}
+                  />
+                </div>
+                <div ref={browserRef}>
+                  <FoundationBrowser
+                    activeLayer={browser?.activeLayer ?? browserLayer}
+                    title={browser?.title ?? 'Browse the grounded foundation'}
+                    description={browser?.description ?? 'Open only the sections we can really support from the current tenant context.'}
+                    emptyState={browser?.emptyState ?? 'No content is indexed for this slice yet.'}
+                    onLayerChange={(layer) => {
+                      setBrowserLayer(layer);
+                      setBrowserFacet(null);
+                    }}
+                    tiles={browser?.tiles ?? []}
+                    items={browser?.items ?? []}
+                    onFacetChange={setBrowserFacet}
+                  />
+                </div>
               </>
             ) : (
               <>
                 <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
+                  suggestedQueries={suggestedQueries}
                   onSubmit={handleSubmitQuery}
                   onSuggestedTap={handleSubmitQuery}
                   onFileSelected={handleUpload}

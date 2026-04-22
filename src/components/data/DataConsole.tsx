@@ -283,7 +283,7 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
                       }}
                     >
                       <div style={{ fontFamily: FONT_MONO, fontSize: 9, color: m.role === 'assistant' ? TEAL : MUTE, letterSpacing: '0.14em', marginBottom: 4 }}>
-                        {m.role === 'assistant' ? `NEXUS · DATA${m.streaming ? ' · streaming' : ''}` : 'YOU'}
+                        {m.role === 'assistant' ? 'NEXUS' : 'YOU'}
                       </div>
                       <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                         {m.content}

@@ -69,13 +69,10 @@ export function NexusTurn({
   }
 
   return (
-    <article className="intel-turn nexus" role="article" aria-label={`Nexus ${turn.mode ?? 'answer'} ${turn.format ?? 'format'}`}>
+    <article className="intel-turn nexus" role="article" aria-label="Nexus response">
       <div className="intel-turn-header">
         <div className="intel-inline-list">
           <span className="intel-chip mono teal">Nexus</span>
-          {turn.mode ? <span className={`intel-chip mono ${turn.mode === 'grounded' ? 'green' : turn.mode === 'pivot' ? 'amber' : 'teal'}`}>{turn.mode}</span> : null}
-          {turn.format ? <span className="intel-chip mono">{turn.format.replace('_', ' ')}</span> : null}
-          {turn.confidence ? <span className="intel-chip mono">{turn.confidence}</span> : null}
           {turn.personaKey ? <span className="intel-chip mono blue">{turn.personaKey}</span> : null}
         </div>
         <div className="intel-subtle" style={{ fontSize: 12 }}>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { applyVoiceFilter, liveStripInternalTags } from '@/lib/nexus/voiceFilter';
 
 type LocalMsg = {
   id: string;
@@ -53,27 +54,6 @@ const CORAL = '#FF6B4A';
 const FONT_BODY = 'var(--font-body-sans)';
 const FONT_MONO = 'var(--font-body-mono)';
 const FONT_SERIF = 'var(--font-body-serif)';
-
-// Strip the full <engagement_ready>...</engagement_ready> block. Applied to
-// the final content after stream completes.
-function stripBlock(text: string): string {
-  return text.replace(/<engagement_ready>[\s\S]*?<\/engagement_ready>/g, '').trim();
-}
-
-// Live-strip for the streaming delta feed. A partial stream may contain just
-// `<engagement_ready>` with the closing tag still pending — we cut the view at
-// the opener so the user never sees the JSON scaffolding as it arrives. Also
-// trims any trailing whitespace the cut produces.
-function liveStrip(text: string): string {
-  const openIdx = text.indexOf('<engagement_ready>');
-  if (openIdx === -1) return text;
-  const closeIdx = text.indexOf('</engagement_ready>');
-  if (closeIdx !== -1) {
-    return (text.slice(0, openIdx) + text.slice(closeIdx + '</engagement_ready>'.length)).trimEnd();
-  }
-  // Opening tag streamed but closing hasn't arrived yet — hide from opener on
-  return text.slice(0, openIdx).trimEnd();
-}
 
 export function EngagementCreationConsole() {
   const router = useRouter();
@@ -200,7 +180,9 @@ export function EngagementCreationConsole() {
           if (evt.type === 'delta' && typeof evt.text === 'string') {
             const delta = evt.text;
             setMessages((prev) =>
-              prev.map((m) => (m.id === agentId ? { ...m, content: m.content + delta } : m)),
+              prev.map((m) =>
+                m.id === agentId ? { ...m, content: liveStripInternalTags(m.content + delta) } : m,
+              ),
             );
           } else if (evt.type === 'engagement_created' && evt.engagement) {
             setCreated(evt.engagement);
@@ -215,7 +197,7 @@ export function EngagementCreationConsole() {
           } else if (evt.type === 'done') {
             setMessages((prev) =>
               prev.map((m) =>
-                m.id === agentId ? { ...m, content: stripBlock(m.content), streaming: false } : m,
+                m.id === agentId ? { ...m, content: applyVoiceFilter(m.content).cleaned, streaming: false } : m,
               ),
             );
           } else if (evt.type === 'error') {
@@ -295,10 +277,10 @@ export function EngagementCreationConsole() {
                     marginBottom: 4,
                   }}
                 >
-                  {m.role === 'assistant' ? `NEXUS${m.streaming ? ' · streaming' : ''}` : 'YOU'}
+                  {m.role === 'assistant' ? 'NEXUS' : 'YOU'}
                 </div>
                 <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                  {m.role === 'assistant' ? liveStrip(m.content) : m.content}
+                  {m.content}
                   {m.streaming && (
                     <span
                       aria-hidden="true"

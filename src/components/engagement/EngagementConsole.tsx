@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EngagementRow } from '@/lib/db/engagement';
 import type { PersonRow } from '@/lib/db/person';
@@ -13,6 +13,7 @@ import { CitationPill } from './CitationPill';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
+import { applyVoiceFilter, liveStripInternalTags } from '@/lib/nexus/voiceFilter';
 
 // Extract unique citations from agent turn text so we can render a source
 // pills row below the response — visible provenance by default, Target
@@ -69,6 +70,29 @@ interface ActivityEvent {
   at: string;
 }
 
+interface ApprovedGateSummary {
+  phase: number;
+  summary: string;
+  signedAt?: string;
+}
+
+function getLatestApprovedGateSummary(gatesPassed: unknown[]): ApprovedGateSummary | null {
+  const approved: ApprovedGateSummary[] = [];
+  for (const gate of gatesPassed) {
+    if (typeof gate !== 'object' || gate === null) continue;
+    const record = gate as { phase?: unknown; status?: unknown; summary?: unknown; signed_at?: unknown };
+    const phase = typeof record.phase === 'number' ? record.phase : null;
+    const status = typeof record.status === 'string' ? record.status : null;
+    const summary = typeof record.summary === 'string' ? record.summary.trim() : '';
+    const signedAt = typeof record.signed_at === 'string' ? record.signed_at : undefined;
+    if (phase === null || status !== 'approved' || summary.length === 0) continue;
+    approved.push({ phase, summary, signedAt });
+  }
+
+  approved.sort((a, b) => b.phase - a.phase);
+  return approved[0] ?? null;
+}
+
 interface Props {
   engagement: EngagementRow;
   sponsor: PersonRow | null;
@@ -90,11 +114,16 @@ export function EngagementConsole({
   const router = useRouter();
   const phaseLabels = ['Start', 'Diagnose', 'Design', 'Execute', 'Verify'];
   const deliverablesList = deliverables ?? [];
+  const latestApprovedGate = useMemo(
+    () => getLatestApprovedGateSummary(engagement.gates_passed),
+    [engagement.gates_passed],
+  );
 
   const [messages, setMessages] = useState<LocalTurn[]>(turns);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previousPhaseSummary, setPreviousPhaseSummary] = useState<ApprovedGateSummary | null>(latestApprovedGate);
   const [gateToast, setGateToast] = useState<{ phase: number; newPhase: number } | null>(null);
   // Phase transition ceremony · activates when the server emits
   // gate_approved, walks through three status lines (logging approval ·
@@ -119,6 +148,51 @@ export function EngagementConsole({
   const nextLocalId = () => `local-${Date.now()}-${++localIdRef.current}`;
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const reducedMotion = useReducedMotion();
+  const liveStatus = useMemo(() => {
+    if (error) {
+      return {
+        label: 'Needs attention',
+        detail: error,
+        color: '#FF6B4A',
+        background: 'rgba(255,107,74,0.06)',
+        border: 'rgba(255,107,74,0.22)',
+      };
+    }
+    if (phaseTransition) {
+      return {
+        label: `Opening Phase ${phaseTransition.toPhase}`,
+        detail: `${phaseTransition.phaseName} is being prepared with a fresh opener.`,
+        color: '#14B8A6',
+        background: 'rgba(20,184,166,0.06)',
+        border: 'rgba(20,184,166,0.22)',
+      };
+    }
+    if (isStreaming) {
+      return {
+        label: 'Responding',
+        detail: 'Nexus is drafting the next turn now.',
+        color: '#14B8A6',
+        background: 'rgba(20,184,166,0.06)',
+        border: 'rgba(20,184,166,0.22)',
+      };
+    }
+    if (choices.length > 0) {
+      return {
+        label: 'Awaiting your decision',
+        detail: 'Pick one of the suggested paths or type your own reply.',
+        color: '#F5C54A',
+        background: 'rgba(245,197,74,0.06)',
+        border: 'rgba(245,197,74,0.22)',
+      };
+    }
+    return {
+      label: `Phase ${engagement.current_phase} · ${phaseLabels[engagement.current_phase] ?? 'Active'}`,
+      detail: 'Ready for your next reply.',
+      color: '#9B6DFF',
+      background: 'rgba(155,109,255,0.06)',
+      border: 'rgba(155,109,255,0.2)',
+    };
+  }, [choices.length, engagement.current_phase, error, isStreaming, phaseLabels, phaseTransition]);
 
   // Auto-scroll to the latest turn whenever messages or stages update. Use
   // smooth scroll unless the user has opted out via OS-level reduced-motion.
@@ -127,6 +201,10 @@ export function EngagementConsole({
     if (!el) return;
     el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'end' });
   }, [messages, stages.length, reducedMotion]);
+
+  useEffect(() => {
+    setPreviousPhaseSummary(latestApprovedGate);
+  }, [latestApprovedGate]);
 
   // Gate toast auto-dismiss · cleans up after the UI reads the event.
   useEffect(() => {
@@ -227,7 +305,7 @@ export function EngagementConsole({
           const line = buffer.slice(0, nl).trim();
           buffer = buffer.slice(nl + 1);
           if (!line) continue;
-          let evt: { type: string; text?: string; turnId?: string; error?: string; label?: string; detail?: string };
+          let evt: { type: string; text?: string; turnId?: string; error?: string; label?: string; detail?: string; summary?: string };
           try {
             evt = JSON.parse(line);
           } catch {
@@ -242,22 +320,32 @@ export function EngagementConsole({
             setStages([]);
             const delta = evt.text;
             setMessages(prev =>
-              prev.map(m => (m.id === agentTurnId ? { ...m, text: m.text + delta } : m)),
+              prev.map(m =>
+                m.id === agentTurnId ? { ...m, text: liveStripInternalTags(m.text + delta) } : m,
+              ),
             );
           } else if (evt.type === 'done') {
             setMessages(prev =>
               prev.map(m =>
                 m.id === agentTurnId
-                  ? { ...m, id: evt.turnId ?? m.id, streaming: false }
+                  ? { ...m, id: evt.turnId ?? m.id, text: applyVoiceFilter(m.text).cleaned, streaming: false }
                   : m,
               ),
             );
           } else if (evt.type === 'gate_approved') {
-            const raw = evt as unknown as { phase?: number; new_phase?: number };
+            const raw = evt as unknown as { phase?: number; new_phase?: number; summary?: string };
             const phase = typeof raw.phase === 'number' ? raw.phase : engagement.current_phase;
             const newPhase = typeof raw.new_phase === 'number' ? raw.new_phase : phase + 1;
             const phaseName = phaseLabels[newPhase] ?? `Phase ${newPhase}`;
+            const summary = typeof raw.summary === 'string' ? raw.summary.trim() : '';
             setGateToast({ phase, newPhase });
+            if (summary) {
+              setPreviousPhaseSummary({
+                phase,
+                summary,
+                signedAt: new Date().toISOString(),
+              });
+            }
             setPhaseTransition({ fromPhase: phase, toPhase: newPhase, phaseName, stage: 0 });
             // Safety net · if the server never emits phase_opener for any
             // reason, force-complete the ceremony after 4s so the user
@@ -266,9 +354,8 @@ export function EngagementConsole({
               setPhaseTransition((prev) => (prev && prev.stage < 3 ? { ...prev, stage: 3 } : prev));
             }, 4000);
           } else if (evt.type === 'phase_opener') {
-            // Server has advanced the phase and pre-seeded the next-phase
-            // opener as an agent turn. Render it inline · also flips the
-            // transition ceremony to `stage: 3` so the overlay can fade.
+            // Reset the visible conversation to the new phase opener so each
+            // phase starts as a fresh chapter instead of one endless log.
             const raw = evt as unknown as { phase?: number; turnId?: string; text?: string };
             setPhaseTransition((prev) => (prev ? { ...prev, stage: 3 } : prev));
             if (typeof raw.text === 'string' && raw.text.length > 0) {
@@ -284,7 +371,10 @@ export function EngagementConsole({
                 retrieved_refs: {},
                 created_at: new Date().toISOString(),
               };
-              setMessages((prev) => [...prev, openerTurn]);
+              setMessages([openerTurn]);
+              setChoices([]);
+              setChoicesForTurnId(null);
+              setStages([]);
             }
           } else if (evt.type === 'choices') {
             const raw = evt as unknown as { choices?: Choice[] };
@@ -318,10 +408,8 @@ export function EngagementConsole({
 
   return (
     <div style={{ minHeight: '100vh', background: '#0A0A0A', color: '#F5F5F0', fontFamily: 'DM Sans, -apple-system, sans-serif', position: 'relative' }}>
-      {/* Phase transition ceremony overlay. Renders full-viewport when a gate
-          approval fires; walks three status lines then fades once the
-          phase_opener arrives. Keeps the user's attention on the handoff
-          instead of silently reloading the console. */}
+      {/* Keep the phase handoff visible, but never narrate internal processing
+          steps back to the user. */}
       {phaseTransition && phaseTransition.stage < 3 && (
         <div
           role="status"
@@ -349,7 +437,7 @@ export function EngagementConsole({
               textTransform: 'uppercase',
             }}
           >
-            Phase {phaseTransition.fromPhase} complete
+            Phase {phaseTransition.toPhase} · {phaseTransition.phaseName}
           </div>
           <div
             style={{
@@ -363,60 +451,19 @@ export function EngagementConsole({
               letterSpacing: '-0.01em',
             }}
           >
-            Creating your program.
+            Opening the next phase.
           </div>
           <div
             style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 14,
-              minWidth: 320,
-              alignItems: 'flex-start',
+              fontFamily: 'DM Sans, sans-serif',
+              fontSize: 15,
+              color: 'rgba(245,245,240,0.72)',
+              textAlign: 'center',
+              maxWidth: 520,
+              lineHeight: 1.55,
             }}
           >
-            {[
-              { label: 'Logging approval + locking charter', doneAt: 1 },
-              { label: 'Generating Phase ' + phaseTransition.fromPhase + ' deliverable', doneAt: 2 },
-              { label: 'Opening Phase ' + phaseTransition.toPhase + ' · ' + phaseTransition.phaseName, doneAt: 3 },
-            ].map((line, i) => {
-              const isDone = phaseTransition.stage >= line.doneAt;
-              const isActive = phaseTransition.stage === i;
-              return (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    opacity: isActive || isDone ? 1 : 0.35,
-                    transition: reducedMotion ? undefined : `opacity ${TRANSITIONS.inPlace}`,
-                  }}
-                >
-                  <span
-                    style={{
-                      width: 14,
-                      display: 'inline-flex',
-                      justifyContent: 'center',
-                      color: isDone ? '#14B8A6' : isActive ? '#14B8A6' : 'rgba(245,245,240,0.4)',
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: 13,
-                      animation: isActive && !reducedMotion ? `transitionPulse 1s ${MOTION.easing.easeInOut} infinite` : undefined,
-                    }}
-                  >
-                    {isDone ? '✓' : isActive ? '◆' : '·'}
-                  </span>
-                  <span
-                    style={{
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize: 14,
-                      color: isDone ? 'rgba(245,245,240,0.85)' : isActive ? '#F5F5F0' : 'rgba(245,245,240,0.55)',
-                    }}
-                  >
-                    {line.label}
-                  </span>
-                </div>
-              );
-            })}
+            The next phase is ready with a fresh opening turn.
           </div>
         </div>
       )}
@@ -440,7 +487,7 @@ export function EngagementConsole({
               : `toastEnter ${MOTION.duration.default} ${MOTION.easing.easeOut}`,
           }}
         >
-          ✓ Phase {gateToast.phase} approved · advancing to Phase {gateToast.newPhase}…
+          ✓ Phase {gateToast.phase} approved
         </div>
       )}
       {/* Scoped keyframes for the toast + stage reveal. Defined once at
@@ -621,32 +668,8 @@ export function EngagementConsole({
                     opacity: t.streaming && !t.text ? 0.6 : 1,
                   }}>
                     <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#14B8A6' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
-                      {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
+                      {t.sender === 'agent' ? 'NEXUS' : 'YOU'}
                     </div>
-                    {t.sender === 'agent' && t.streaming && !t.text && stages.length > 0 && (
-                      <div style={{ marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                        {stages.map((s, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              fontSize: 12,
-                              fontStyle: 'italic',
-                              color: 'rgba(245,245,240,0.55)',
-                              fontFamily: 'DM Sans, sans-serif',
-                              letterSpacing: '-0.01em',
-                              animation: reducedMotion
-                                ? undefined
-                                : `stageFade ${MOTION.duration.default} ${MOTION.easing.easeOut} both`,
-                              animationDelay: reducedMotion ? undefined : `${i * 80}ms`,
-                            }}
-                          >
-                            <span style={{ color: '#14B8A6', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
-                            {s.label}
-                            {s.detail && <span style={{ color: 'rgba(245,245,240,0.4)', marginLeft: 6 }}>· {s.detail}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     <div
                       style={{
                         fontSize: 15,
@@ -775,7 +798,7 @@ export function EngagementConsole({
               onFocus={() => setComposerFocused(true)}
               onBlur={() => setComposerFocused(false)}
               disabled={isStreaming || phaseTransition !== null}
-              placeholder={phaseTransition ? 'Creating your program…' : composerPlaceholder}
+              placeholder={phaseTransition ? 'Preparing next phase…' : composerPlaceholder}
               minRows={1}
               maxRows={6}
               style={{
@@ -827,6 +850,18 @@ export function EngagementConsole({
         {/* Context sidebar — what the agent knows but doesn't flex */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
 
+          <div style={{ background: liveStatus.background, border: `0.5px solid ${liveStatus.border}`, borderRadius: 10, padding: 14 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: liveStatus.color, textTransform: 'uppercase', marginBottom: 8 }}>
+              Program status
+            </div>
+            <div style={{ fontSize: 13, color: '#F5F5F0', fontWeight: 600, marginBottom: 6 }}>
+              {liveStatus.label}
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(245,245,240,0.72)', lineHeight: 1.55 }}>
+              {liveStatus.detail}
+            </div>
+          </div>
+
           {/* Sponsor */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
             <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#14B8A6', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -844,6 +879,22 @@ export function EngagementConsole({
               <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 12 }}>No sponsor linked</div>
             )}
           </div>
+
+          {previousPhaseSummary && (
+            <div style={{ background: 'rgba(20,184,166,0.04)', border: '0.5px solid rgba(20,184,166,0.2)', borderRadius: 10, padding: 14 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#14B8A6', textTransform: 'uppercase', marginBottom: 8 }}>
+                Phase {previousPhaseSummary.phase} locked
+              </div>
+              <div style={{ fontSize: 12.5, color: '#F5F5F0', lineHeight: 1.6 }}>
+                {previousPhaseSummary.summary}
+              </div>
+              {previousPhaseSummary.signedAt && (
+                <div style={{ color: 'rgba(245,245,240,0.6)', fontSize: 10.5, marginTop: 8, fontFamily: 'JetBrains Mono, monospace' }}>
+                  approved {new Date(previousPhaseSummary.signedAt).toLocaleString()}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Active patterns */}
           <div style={{ background: 'rgba(155,109,255,0.04)', border: '0.5px solid rgba(155,109,255,0.2)', borderRadius: 10, padding: 14 }}>

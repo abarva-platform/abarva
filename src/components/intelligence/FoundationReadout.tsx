@@ -2,12 +2,18 @@
 
 import type { FoundationReadout as FoundationReadoutData } from '@/lib/intelligence/types';
 
+type ReadoutJump =
+  | { kind: 'browser'; layer: 'L1' | 'L2' | 'L3' | 'L4'; facet: string | null }
+  | { kind: 'signals' };
+
 export function FoundationReadout({
   foundation,
   loading,
+  onJump,
 }: {
   foundation: FoundationReadoutData | null;
   loading?: boolean;
+  onJump: (jump: ReadoutJump) => void;
 }) {
   if (loading || !foundation) {
     return (
@@ -18,13 +24,13 @@ export function FoundationReadout({
     );
   }
 
-  const metrics = [
-    ['Use cases', foundation.metrics.useCases],
-    ['Vendors', foundation.metrics.vendors],
-    ['Contradictions', foundation.metrics.contradictions],
-    ['Patterns', foundation.metrics.patterns],
-    ['Benchmarks', foundation.metrics.benchmarks],
-    ['Programs', foundation.metrics.engagements],
+  const metrics: Array<{ label: string; value: number; jump: ReadoutJump }> = [
+    { label: 'Use cases', value: foundation.metrics.useCases, jump: { kind: 'browser', layer: 'L2', facet: 'use_case' } },
+    { label: 'Vendors', value: foundation.metrics.vendors, jump: { kind: 'browser', layer: 'L1', facet: 'vendor' } },
+    { label: 'Contradictions', value: foundation.metrics.contradictions, jump: { kind: 'signals' } },
+    { label: 'Patterns', value: foundation.metrics.patterns, jump: { kind: 'browser', layer: 'L1', facet: 'pattern' } },
+    { label: 'Benchmarks', value: foundation.metrics.benchmarks, jump: { kind: 'browser', layer: 'L1', facet: 'benchmark' } },
+    { label: 'Programs', value: foundation.metrics.engagements, jump: { kind: 'browser', layer: 'L3', facet: 'program' } },
   ];
 
   return (
@@ -33,14 +39,32 @@ export function FoundationReadout({
         <div className="intel-stack">
           <div className="intel-eyebrow">Zone 1 · Foundation readout</div>
           <div className="intel-title">
-            AbarVa already knows the shape of {foundation.client.name}.
+            {foundation.client.name} is already grounded as a working context.
           </div>
           <div className="intel-subtle" style={{ maxWidth: 620 }}>
-            Four layers are already grounded before the first question: user context, programs, enterprise facts, and the public foundation.
+            Before the first question, this workspace already has a viewer lock, live programs, enterprise facts, and public foundation material that can be opened or challenged.
           </div>
           <div className="intel-foundation-architecture">
             {foundation.layers.map((layer) => (
-              <div key={layer.key} className="intel-layer-row">
+              <button
+                key={layer.key}
+                type="button"
+                className="intel-layer-row intel-layer-button"
+                onClick={() =>
+                  onJump({
+                    kind: 'browser',
+                    layer: layer.key,
+                    facet:
+                      layer.key === 'L1'
+                        ? 'pattern'
+                        : layer.key === 'L2'
+                          ? 'use_case'
+                          : layer.key === 'L3'
+                            ? 'program'
+                            : 'viewer',
+                  })
+                }
+              >
                 <span className="intel-chip mono teal">{layer.key}</span>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 700 }}>{layer.label}</div>
@@ -60,7 +84,7 @@ export function FoundationReadout({
                     {layer.asOf ? 'fresh' : 'live'}
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
@@ -85,14 +109,19 @@ export function FoundationReadout({
           </div>
 
           <div className="intel-foundation-metrics">
-            {metrics.map(([label, value]) => (
-              <div key={label} className="intel-card-soft intel-section">
-                <div className="intel-eyebrow">{label}</div>
-                <div style={{ marginTop: 8, fontSize: 28, fontWeight: 700 }}>{value}</div>
+            {metrics.map((metric) => (
+              <button
+                key={metric.label}
+                type="button"
+                className="intel-card-soft intel-section intel-foundation-metric-button"
+                onClick={() => onJump(metric.jump)}
+              >
+                <div className="intel-eyebrow">{metric.label}</div>
+                <div style={{ marginTop: 8, fontSize: 28, fontWeight: 700 }}>{metric.value}</div>
                 <div className="intel-subtle" style={{ fontSize: 12 }}>
-                  as of {new Date(foundation.asOf).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                  browse
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </div>
