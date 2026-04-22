@@ -151,7 +151,7 @@ function ProgramDeliverablePageContent({
   const viewerRole = getViewerRole(searchParams.get('role'));
   const program = getProgramByIdSync(programId);
   const deliverable = getDeliverable(programId, id);
-  const module = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
+  const moduleState = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
   const moduleContent = deliverable && program ? program.moduleContent[deliverable.moduleKey] ?? null : null;
 
   if (!program || !deliverable) {
@@ -167,8 +167,8 @@ function ProgramDeliverablePageContent({
           <span className="programs-chip">{deliverable.status}</span>
           <span className="programs-chip">v{deliverable.version}</span>
           <span className="programs-chip">{deliverable.owner.name}</span>
-          {module ? <span className="programs-chip">{module.name}</span> : null}
-          {module ? <span className="programs-chip">Phase {module.phase}</span> : null}
+          {moduleState ? <span className="programs-chip">{moduleState.name}</span> : null}
+          {moduleState ? <span className="programs-chip">Phase {moduleState.phase}</span> : null}
         </div>
         <div className="programs-card programs-section" style={{ marginTop: 18 }}>
           <div className="programs-eyebrow">Summary</div>

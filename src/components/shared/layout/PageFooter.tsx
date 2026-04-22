@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { EyebrowLabel } from '../typography/EyebrowLabel';
 
@@ -32,15 +33,15 @@ export function PageFooter({ variant = 'authenticated', style }: Props) {
           <div>
             <EyebrowLabel tone="muted" size="xs">Product</EyebrowLabel>
             <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <li><a href="/intelligence" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Intelligence Suite</a></li>
-              <li><a href="/tower" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Control Tower</a></li>
-              <li><a href="/engagements" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Programs</a></li>
+              <li><Link href="/intelligence" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Intelligence Suite</Link></li>
+              <li><Link href="/tower" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Control Tower</Link></li>
+              <li><Link href="/engagements" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Programs</Link></li>
             </ul>
           </div>
           <div>
             <EyebrowLabel tone="muted" size="xs">Company</EyebrowLabel>
             <ul style={{ margin: '8px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <li><a href="/investor" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Investors</a></li>
+              <li><Link href="/investor" style={{ color: 'rgba(245,245,240,0.85)', fontSize: 13, textDecoration: 'none' }}>Investors</Link></li>
             </ul>
           </div>
           <div>

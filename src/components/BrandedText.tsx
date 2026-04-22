@@ -3,7 +3,6 @@ import React from 'react'
 
 const TEAL = '#2DD4C8'
 const SERIF = 'Georgia, "Times New Roman", serif'
-const RE = /(AbarNexus|AbarVa)/g
 
 function Word({ kind, color }: { kind: 'AbarNexus' | 'AbarVa'; color?: string }) {
   const second = kind === 'AbarNexus' ? 'Nexus' : 'Va'
@@ -17,12 +16,12 @@ function Word({ kind, color }: { kind: 'AbarNexus' | 'AbarVa'; color?: string })
 
 export function BrandedText({ children, color }: { children: string; color?: string }) {
   if (typeof children !== 'string') return <>{children}</>
+  const re = /(AbarNexus|AbarVa)/g
   const parts: React.ReactNode[] = []
   let last = 0
   let key = 0
   let m: RegExpExecArray | null
-  RE.lastIndex = 0
-  while ((m = RE.exec(children)) !== null) {
+  while ((m = re.exec(children)) !== null) {
     if (m.index > last) parts.push(<React.Fragment key={key++}>{children.slice(last, m.index)}</React.Fragment>)
     parts.push(<Word key={key++} kind={m[0] as 'AbarNexus' | 'AbarVa'} color={color} />)
     last = m.index + m[0].length

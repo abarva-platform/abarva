@@ -36,8 +36,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ program
     if (!program) return Response.json({ error: 'not_found' }, { status: 404 });
 
     const modules = await getModuleState(ctx, programId);
-    const module = modules.find((m) => m.moduleKey === key);
-    if (!module) return Response.json({ error: 'module_not_found' }, { status: 404 });
+    const moduleState = modules.find((m) => m.moduleKey === key);
+    if (!moduleState) return Response.json({ error: 'module_not_found' }, { status: 404 });
 
     // Pull the active deliverable + latest version for provenance + draft content
     const sb = getServerSupabase();
@@ -69,20 +69,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ program
     }
 
     const state: ModuleState = {
-      moduleKey: module.moduleKey,
-      name: module.moduleName,
-      phase: module.phaseNumber,
-      status: mapStatus(module.status, deliverable?.status),
+      moduleKey: moduleState.moduleKey,
+      name: moduleState.moduleName,
+      phase: moduleState.phaseNumber,
+      status: mapStatus(moduleState.status, deliverable?.status),
       currentVersion: deliverable?.current_version,
       lastEditedAt: lastEditedAt
         ? new Date(lastEditedAt)
-        : module.completedAt
-          ? new Date(module.completedAt)
-          : module.startedAt
-            ? new Date(module.startedAt)
+        : moduleState.completedAt
+          ? new Date(moduleState.completedAt)
+          : moduleState.startedAt
+            ? new Date(moduleState.startedAt)
             : undefined,
-      nexusDraftPending: !!(module.state?.nexus_draft_pending),
-      blockerReason: (module.state?.blocker_reason as string | undefined) ?? undefined,
+      nexusDraftPending: !!(moduleState.state?.nexus_draft_pending),
+      blockerReason: (moduleState.state?.blocker_reason as string | undefined) ?? undefined,
       deliverableIds: deliverable ? [deliverable.id] : [],
     };
 

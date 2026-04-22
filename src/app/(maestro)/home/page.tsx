@@ -146,13 +146,12 @@ export default async function HomePage() {
     if (!acc || t > acc) return t;
     return acc;
   }, null);
+  const now = new Date();
   const minutesSinceRefresh = mostRecent
-    ? Math.max(0, Math.round((Date.now() - mostRecent.getTime()) / 60000))
+    ? Math.max(0, Math.round((now.getTime() - mostRecent.getTime()) / 60000))
     : null;
 
   const displayName = maestro?.name?.split(/\s+/)[0] ?? null;
-
-  const now = new Date();
 
   // Tenant data breadth row · Fix Spec v3 §7. Counts derive from real
   // relational reads where available, fall back to tenant-sized

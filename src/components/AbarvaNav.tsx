@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
@@ -230,13 +231,13 @@ function NavInner({ activePage, compact = false }: NavProps) {
       }}>
 
         {/* ── Wordmark ─────────────────────────────────────────────────────── */}
-        <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
+        <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
           <AbarvaMark size={36} />
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
             <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
-        </a>
+        </Link>
 
         {/* ══════════════════════════════════════════════════════════════════
             SIGNED-IN OPERATORS (admin / investor / maestro) — product-map 5 items:
@@ -317,14 +318,14 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
-                    <a href="/maestro" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                    <Link href="/maestro" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Maestro Workspace
-                    </a>
+                    </Link>
                   )}
                   {isAdmin && (
-                    <a href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
+                    <Link href="/platform" className="abarva-menu-item" style={{ display: 'block', padding: '9px 14px', textDecoration: 'none', fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, borderRadius: '8px', margin: '0 4px' }}>
                       Platform
-                    </a>
+                    </Link>
                   )}
                   <button
                     onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
@@ -338,9 +339,9 @@ function NavInner({ activePage, compact = false }: NavProps) {
             </div>
           ) : (
             <>
-              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+              <Link href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
                 Login
-              </a>
+              </Link>
               <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
                 Demo soon
               </span>

@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const BG     = '#F8F7F4'
@@ -28,15 +29,15 @@ export default function DemoDisabledPage() {
             We&apos;re shipping a new version with tighter narration, cleaner panel rotation, and the in-app interactions QA&apos;d end-to-end. It&apos;ll be back here shortly.
           </p>
           <p style={{ fontSize: 14, color: DIM, lineHeight: 1.6, margin: '0 0 32px' }}>
-            In the meantime, the platform itself is live — explore <a href="/platform" style={{ color: TEXT, textDecoration: 'underline' }}>The Platform</a> or have a Maestro walk you through it directly.
+            In the meantime, the platform itself is live — explore <Link href="/platform" style={{ color: TEXT, textDecoration: 'underline' }}>The Platform</Link> or have a Maestro walk you through it directly.
           </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <a href="/platform" style={{ background: TEXT, color: '#fff', fontSize: 14, fontWeight: 600, padding: '11px 22px', borderRadius: 6, textDecoration: 'none' }}>
+            <Link href="/platform" style={{ background: TEXT, color: '#fff', fontSize: 14, fontWeight: 600, padding: '11px 22px', borderRadius: 6, textDecoration: 'none' }}>
               Explore the platform →
-            </a>
-            <a href="/" style={{ background: 'transparent', color: TEXT, fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 6, border: `1px solid ${TEXT}`, textDecoration: 'none' }}>
+            </Link>
+            <Link href="/" style={{ background: 'transparent', color: TEXT, fontSize: 14, fontWeight: 600, padding: '10px 22px', borderRadius: 6, border: `1px solid ${TEXT}`, textDecoration: 'none' }}>
               ← Home
-            </a>
+            </Link>
           </div>
         </div>
       </div>

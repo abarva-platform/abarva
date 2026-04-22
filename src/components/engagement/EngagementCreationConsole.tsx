@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -466,16 +467,16 @@ export function EngagementCreationConsole() {
                   {autoAdvanceCancelled ? (
                     <>
                       Auto-advance cancelled. Click Start Phase 0 when ready.{' '}
-                      <a href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                      <Link href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
                         Start over
-                      </a>
+                      </Link>
                     </>
                   ) : (
                     <>
                       Something wrong?{' '}
-                      <a href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                      <Link href="/programs/new" style={{ color: TEAL, textDecoration: 'underline' }}>
                         Start over
-                      </a>
+                      </Link>
                     </>
                   )}
                 </span>
