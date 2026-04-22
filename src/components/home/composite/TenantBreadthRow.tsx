@@ -80,7 +80,7 @@ function BreadthChipCard({ chip }: { chip: BreadthChip }) {
     padding: '14px 16px',
     borderRadius: 10,
     background: hovered ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
-    border: `0.5px solid ${hovered ? 'rgba(45,212,200,0.25)' : 'rgba(255,255,255,0.08)'}`,
+    border: `0.5px solid ${hovered ? 'rgba(20,184,166,0.25)' : 'rgba(255,255,255,0.08)'}`,
     color: 'inherit',
     textDecoration: 'none',
     outline: 'none',

@@ -105,8 +105,8 @@ export function ProgramJourneyView({ program }: Props) {
             padding: 16,
             borderRadius: 10,
             background:
-              state === 'current' ? 'rgba(45,212,200,0.08)'
-                : state === 'complete' ? 'rgba(45,212,200,0.03)'
+              state === 'current' ? 'rgba(20,184,166,0.08)'
+                : state === 'complete' ? 'rgba(20,184,166,0.03)'
                 : state === 'blocked' ? 'rgba(245,158,11,0.06)'
                 : 'rgba(255,255,255,0.02)',
             border: `${state === 'current' ? 1 : 0.5}px ${state === 'upcoming' ? 'dashed' : 'solid'} ${state === 'current' ? tone : state === 'blocked' ? COLORS.amber : 'rgba(255,255,255,0.08)'}`,
@@ -208,8 +208,8 @@ export function ProgramJourneyView({ program }: Props) {
             key={`expansion-${phase.canonicalPhase}`}
             style={{
               padding: 20,
-              background: 'rgba(45,212,200,0.04)',
-              border: '0.5px solid rgba(45,212,200,0.2)',
+              background: 'rgba(20,184,166,0.04)',
+              border: '0.5px solid rgba(20,184,166,0.2)',
               borderRadius: 12,
               display: 'flex',
               flexDirection: 'column',

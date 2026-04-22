@@ -75,7 +75,7 @@ export function ProgramCard({
         padding: isProminent ? 20 : isCompact ? 12 : 16,
         borderRadius: 10,
         background: hovered ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.02)',
-        border: `0.5px solid ${hovered ? 'rgba(45,212,200,0.25)' : 'rgba(255,255,255,0.08)'}`,
+        border: `0.5px solid ${hovered ? 'rgba(20,184,166,0.25)' : 'rgba(255,255,255,0.08)'}`,
         textDecoration: 'none',
         color: 'inherit',
         outline: 'none',

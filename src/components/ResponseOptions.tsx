@@ -44,7 +44,7 @@ export default function ResponseOptions({ options, onSelect, disabled = false }:
               minHeight: '52px',
               padding: '10px 12px',
               borderRadius: '8px',
-              border: hoveredIdx === i ? '1.5px solid #2DD4C8' : '1px solid #E2E8F0',
+              border: hoveredIdx === i ? '1.5px solid #14B8A6' : '1px solid #E2E8F0',
               background: hoveredIdx === i ? '#F0FFFE' : '#FFFFFF',
               textAlign: 'left',
               cursor: disabled ? 'not-allowed' : 'pointer',
@@ -84,7 +84,7 @@ export default function ResponseOptions({ options, onSelect, disabled = false }:
             fontFamily: 'Inter, sans-serif',
             opacity: disabled ? 0.5 : 1,
           }}
-          onFocus={e => (e.target as HTMLInputElement).style.borderColor = '#2DD4C8'}
+          onFocus={e => (e.target as HTMLInputElement).style.borderColor = '#14B8A6'}
           onBlur={e => (e.target as HTMLInputElement).style.borderColor = '#E2E8F0'}
         />
         <button

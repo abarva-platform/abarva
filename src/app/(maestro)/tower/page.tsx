@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const CORAL = '#FF6B4A';
 const AMBER = '#F5C54A';
@@ -447,7 +447,7 @@ export default async function TowerPage({
                       style={{
                         width: '100%',
                         height: `${Math.max(pct, 4)}%`,
-                        background: isLast ? TEAL : 'rgba(45,212,200,0.5)',
+                        background: isLast ? TEAL : 'rgba(20,184,166,0.5)',
                         borderRadius: 2,
                       }}
                     />

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { EnterpriseSummary } from '@/lib/tower/enterprise-summary';
 
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const AMBER = '#F59E0B';
 const BLUE = '#4DA3FF';

@@ -106,13 +106,13 @@ export function BriefingSurface({ briefing }: Props) {
               {item.recommendedAction ? (
                 <div
                   style={{
-                    borderLeft: '2px solid #2DD4C8',
+                    borderLeft: '2px solid #14B8A6',
                     paddingLeft: 12,
                     marginTop: 4,
                   }}
                 >
                   <Body size="md" weight={500} tone="primary" style={{ fontStyle: 'italic' }}>
-                    <MetaLabel style={{ marginRight: 6, color: 'rgba(45,212,200,0.9)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontStyle: 'normal' }}>
+                    <MetaLabel style={{ marginRight: 6, color: 'rgba(20,184,166,0.9)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: 'JetBrains Mono, monospace', fontSize: 10, fontStyle: 'normal' }}>
                       RECOMMEND ·
                     </MetaLabel>
                     {item.recommendedAction}

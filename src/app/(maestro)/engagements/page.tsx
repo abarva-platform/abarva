@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';

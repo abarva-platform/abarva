@@ -1,7 +1,7 @@
 // Pack D Principle 5 · inline micro-visualizations. 40px SVG primitives
 // rendered inline with surrounding text. Tiny, monochrome, aligned to baseline.
 
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.55)';
 const BG_FILL = 'rgba(45, 212, 200, 0.14)';

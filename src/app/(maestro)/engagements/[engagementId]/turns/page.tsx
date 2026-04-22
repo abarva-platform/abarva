@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
@@ -185,8 +185,8 @@ export default async function TurnsPage({
             key={t.id}
             style={{
               padding: 14,
-              background: t.sender === 'agent' ? 'rgba(45,212,200,0.04)' : 'rgba(255,255,255,0.02)',
-              border: `0.5px solid ${t.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.08)'}`,
+              background: t.sender === 'agent' ? 'rgba(20,184,166,0.04)' : 'rgba(255,255,255,0.02)',
+              border: `0.5px solid ${t.sender === 'agent' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.08)'}`,
               borderRadius: 8,
             }}
           >

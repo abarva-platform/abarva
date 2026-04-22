@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 
@@ -43,7 +43,7 @@ export function DemoDataBanner({ clientId, demoRowCount, realRowCount }: Props) 
   return (
     <div
       style={{
-        background: 'rgba(45,212,200,0.06)',
+        background: 'rgba(20,184,166,0.06)',
         border: `0.5px solid ${TEAL}`,
         borderRadius: 10,
         padding: '12px 18px',

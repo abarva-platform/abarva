@@ -44,10 +44,10 @@ type Labels = {
 const OPENER_ID = 'opener-0';
 const OPENER_CONTENT = "Let's start a new Program. Who are we working with?";
 
-const BG = 'var(--color-page-bg)';
-const INK = 'var(--color-text-primary)';
-const TEAL = 'var(--color-teal)';
-const MUTE = 'var(--color-text-secondary)';
+const BG = '#0A0A0A';
+const INK = '#F5F5F0';
+const TEAL = '#14B8A6';
+const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const FONT_BODY = 'var(--font-body-sans)';
 const FONT_MONO = 'var(--font-body-mono)';
@@ -274,12 +274,12 @@ export function EngagementCreationConsole() {
                 style={{
                   padding: '10px 14px',
                   borderRadius: 10,
-                  background: m.role === 'assistant' ? 'var(--color-teal-dim)' : 'rgba(255,255,255,0.06)',
+                  background: m.role === 'assistant' ? 'rgba(20,184,166,0.05)' : 'rgba(255,255,255,0.06)',
                   border: `0.5px solid ${
                     m.errored
                       ? 'rgba(255,107,74,0.5)'
                       : m.role === 'assistant'
-                      ? 'var(--color-teal-border)'
+                      ? 'rgba(20,184,166,0.2)'
                       : 'rgba(255,255,255,0.12)'
                   }`,
                   opacity: m.streaming && !m.content ? 0.6 : 1,
@@ -321,8 +321,8 @@ export function EngagementCreationConsole() {
               style={{
                 marginTop: 20,
                 padding: 20,
-                background: 'var(--color-teal-dim)',
-                border: `0.5px solid var(--color-teal-border)`,
+                background: 'rgba(20,184,166,0.06)',
+                border: `0.5px solid ${TEAL}4D`,
                 borderRadius: 10,
                 animation: reducedMotion
                   ? undefined

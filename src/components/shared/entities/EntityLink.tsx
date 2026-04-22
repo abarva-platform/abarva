@@ -46,7 +46,7 @@ export function EntityLink({ href, children, variant = 'inline', target = '_self
       style={{
         color: hovered ? hoverColor : baseColor,
         textDecoration: isInline ? 'underline' : 'none',
-        textDecorationColor: isInline ? (hovered ? hoverColor : 'rgba(45,212,200,0.45)') : 'transparent',
+        textDecorationColor: isInline ? (hovered ? hoverColor : 'rgba(20,184,166,0.45)') : 'transparent',
         textUnderlineOffset: isInline ? '3px' : undefined,
         textDecorationThickness: isInline ? '0.5px' : undefined,
         fontWeight: variant === 'nav' ? 500 : 'inherit',
