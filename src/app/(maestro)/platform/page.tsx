@@ -448,6 +448,29 @@ export default function PlatformPage() {
                         </span>
                       ))}
                     </div>
+                    <p style={{ margin: '12px 0 0', fontSize: 15, lineHeight: 1.65, color: index === 0 ? 'rgba(247,242,234,0.78)' : INK_SOFT }}>
+                      Not — {layer.whatThisIsNot}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                      {layer.artifacts.map((a) => (
+                        <span
+                          key={a}
+                          style={{
+                            display: 'inline-block',
+                            padding: '6px 10px',
+                            background: index === 0 ? 'rgba(255,255,255,0.06)' : '#FFF8F0',
+                            border: `1px solid ${index === 0 ? DARK_LINE : LINE}`,
+                            borderRadius: 999,
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            color: index === 0 ? 'rgba(247,242,234,0.74)' : INK_MUTED,
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="layer-band-panel">
@@ -1694,7 +1717,7 @@ const platformCss = `
     color: ${INK_MUTED};
   }
 
-  .composition-tile-value {
+  .composition-tile-value { 
     margin-top: 10px;
     font-size: 15px;
     line-height: 1.65;
