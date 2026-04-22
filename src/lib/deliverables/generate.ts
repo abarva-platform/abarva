@@ -6,6 +6,7 @@ import {
 import { getRecentTurns } from '@/lib/db/turn';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { generateDeliverable as generateDeliverableV2 } from './v2-generator';
 
 export interface EngagementCharter {
   problem_statement: string;
@@ -30,6 +31,99 @@ export interface DiagnosticCharter {
   peer_comparables: Array<{ engagement_name: string; industry: string; outcome: string }>;
   hypotheses: string[];
   generated_at: string;
+}
+
+const PHASE_TO_V2_DELIVERABLE: Record<number, string> = {
+  0: 'charter',
+  1: 'diagnostic_charter',
+  2: 'design_brief',
+  3: 'execution_plan',
+  4: 'outcome_report',
+};
+
+const PHASE_TO_LEGACY_DELIVERABLE: Record<number, string> = {
+  0: 'engagement_charter',
+  1: 'diagnostic_charter',
+  2: 'solution_design',
+  3: 'execution_dashboard',
+  4: 'outcome_verification',
+};
+
+function legacyContentFromV2(args: {
+  content: string;
+  structuredData: unknown;
+}): Record<string, unknown> {
+  const sections = Array.isArray((args.structuredData as { sections?: unknown[] } | null)?.sections)
+    ? ((args.structuredData as {
+        sections: Array<{ key?: string; title?: string; body?: string; citations?: string[] }>;
+      }).sections)
+    : [];
+
+  if (sections.length === 0) {
+    return { markdown: args.content };
+  }
+
+  const mapped = Object.fromEntries(
+    sections
+      .filter((section) => typeof section.key === 'string')
+      .map((section) => [
+        section.key as string,
+        {
+          title: section.title ?? section.key ?? 'Section',
+          body: section.body ?? '',
+          citations: Array.isArray(section.citations) ? section.citations : [],
+        },
+      ]),
+  );
+
+  return {
+    ...mapped,
+    markdown: args.content,
+  };
+}
+
+async function syncLegacyArtifacts(args: {
+  engagementId: string;
+  phase: number;
+  content: string;
+  structuredData: unknown;
+}): Promise<void> {
+  const engagement = await getEngagementById(args.engagementId);
+  if (!engagement) return;
+
+  const legacyType = PHASE_TO_LEGACY_DELIVERABLE[args.phase];
+  if (!legacyType) return;
+
+  const legacyContent = legacyContentFromV2({
+    content: args.content,
+    structuredData: args.structuredData,
+  });
+
+  const existing = ((engagement.deliverables as Array<Record<string, unknown>> | null) ?? []);
+  const deliverables = [
+    ...existing.filter((deliverable) => deliverable.type !== legacyType),
+    {
+      type: legacyType,
+      phase: args.phase,
+      generated_at: new Date().toISOString(),
+      content: legacyContent,
+    },
+  ];
+
+  const updates: Record<string, unknown> = { deliverables };
+  if (args.phase === 0) {
+    updates.charter = legacyContent;
+  }
+  if (args.phase === 4) {
+    updates.status = 'completed';
+    updates.outcome_fee_status = engagement.outcome_fee_usd && engagement.outcome_fee_usd > 0 ? 'approved' : 'not_triggered';
+    updates.phase_4_completed_at = new Date().toISOString();
+  }
+
+  await getServerSupabase()
+    .from('engagements')
+    .update(updates)
+    .eq('id', args.engagementId);
 }
 
 function assembleCharterPrompt(engagementName: string, turnHistory: string): string {
@@ -257,13 +351,13 @@ async function runHaiku(prompt: string): Promise<Record<string, unknown> | null>
     messages: [{ role: 'user', content: prompt }],
   });
   const text = response.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { text: string }).text)
+    .filter((b: { type: string }) => b.type === 'text')
+    .map((b: { text: string }) => b.text)
     .join('');
   return parseJsonFromResponse(text);
 }
 
-export async function generateDeliverableForPhase(engagementId: string, phase: number): Promise<void> {
+async function generateLegacyDeliverableForPhase(engagementId: string, phase: number): Promise<void> {
   const engagement = (await getEngagementById(engagementId)) as EngagementRow | null;
   if (!engagement) return;
 
@@ -394,4 +488,31 @@ export async function generateDeliverableForPhase(engagementId: string, phase: n
     },
   ];
   await sb.from('engagements').update({ deliverables: newDeliverables }).eq('id', engagementId);
+}
+
+export async function generateDeliverableForPhase(engagementId: string, phase: number): Promise<void> {
+  const deliverableTypeKey = PHASE_TO_V2_DELIVERABLE[phase];
+
+  if (deliverableTypeKey) {
+    try {
+      const result = await generateDeliverableV2({
+        engagementId,
+        deliverableTypeKey,
+        persist: true,
+      });
+
+      await syncLegacyArtifacts({
+        engagementId,
+        phase,
+        content: result.content,
+        structuredData: result.structured_data,
+      });
+
+      return;
+    } catch (err) {
+      console.warn('[generateDeliverableForPhase.v2]', err);
+    }
+  }
+
+  await generateLegacyDeliverableForPhase(engagementId, phase);
 }
