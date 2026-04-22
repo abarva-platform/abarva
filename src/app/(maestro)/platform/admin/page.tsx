@@ -1,6 +1,19 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useMemo, useState, type MouseEvent } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import AdminApprovals from './approvals/page'
+import PreMeetingBrief from './brief/page'
+import BusinessContext from './context/page'
+import AdminDataGuide from './data-guide/page'
+import AdminDataLoader from './data/page'
+import DataGovernance from './data-governance/page'
+import AdminIntelligence from './intelligence/page'
+import NewClientWizard from './new-client/page'
+import AdminOutcomes from './outcomes/page'
+import PlaybookPage from './playbook/page'
+import AdminQualityOps from './quality/page'
+import RevenueDashboard from './revenue/page'
 
 // ── Design tokens (spec-exact) ────────────────────────────────────────────
 const BG     = '#FAFAF9'
@@ -26,6 +39,9 @@ type Section =
   | 'clients'  | 'contracts'
   | 'sensitive-data' | 'quality' | 'access-logs' | 'pending-requests'
   | 'audit-log' | 'api-keys' | 'compliance'
+  | 'data-loader' | 'data-guide' | 'approvals' | 'outcomes'
+  | 'brief' | 'context' | 'data-governance' | 'revenue'
+  | 'intelligence' | 'playbook' | 'new-client'
 
 // ── Sidebar config ────────────────────────────────────────────────────────
 const SIDEBAR_GROUPS: Array<{
@@ -251,10 +267,87 @@ function QualityOpsJumpView() {
   )
 }
 
+const ADMIN_ROUTE_TO_SECTION: Record<string, Section> = {
+  '/platform/admin': 'maestros',
+  '/platform/admin/data': 'data-loader',
+  '/platform/admin/data-guide': 'data-guide',
+  '/platform/admin/quality': 'quality',
+  '/platform/admin/approvals': 'approvals',
+  '/platform/admin/outcomes': 'outcomes',
+  '/platform/admin/brief': 'brief',
+  '/platform/admin/context': 'context',
+  '/platform/admin/data-governance': 'data-governance',
+  '/platform/admin/revenue': 'revenue',
+  '/platform/admin/intelligence': 'intelligence',
+  '/platform/admin/playbook': 'playbook',
+  '/platform/admin/new-client': 'new-client',
+}
+
+const SECTION_QUERY_ALLOWLIST = new Set<Section>([
+  'maestros',
+  'data-loader',
+  'data-guide',
+  'quality',
+  'approvals',
+  'outcomes',
+  'brief',
+  'context',
+  'data-governance',
+  'revenue',
+  'intelligence',
+  'playbook',
+  'new-client',
+])
+
+function getSectionFromPath(pathname: string): Section | null {
+  return ADMIN_ROUTE_TO_SECTION[pathname] ?? null
+}
+
+function getSectionFromQuery(value: string | null): Section | null {
+  if (!value) return null
+  return SECTION_QUERY_ALLOWLIST.has(value as Section) ? (value as Section) : null
+}
+
+function EmbeddedAdminSurface({
+  children,
+  onNavigate,
+}: {
+  children: React.ReactNode
+  onNavigate: (section: Section) => void
+}) {
+  function handleClickCapture(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement | null
+    const link = target?.closest('a[href]') as HTMLAnchorElement | null
+    if (!link) return
+    if (link.target && link.target !== '_self') return
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+
+    const url = new URL(link.href, window.location.origin)
+    const nextSection = getSectionFromPath(url.pathname)
+    if (!nextSection) return
+
+    event.preventDefault()
+    onNavigate(nextSection)
+  }
+
+  return (
+    <div onClickCapture={handleClickCapture}>
+      {children}
+    </div>
+  )
+}
+
 // ── Admin Portal — standalone, no maestro imports ─────────────────────────
 export default function AdminPortal() {
   const { isLoaded, user } = useUser()
-  const [active, setActive] = useState<Section>('maestros')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const initialActive = useMemo(
+    () => getSectionFromQuery(searchParams.get('view')) ?? getSectionFromPath(pathname) ?? 'maestros',
+    [pathname, searchParams],
+  )
+  const [active, setActive] = useState<Section>(initialActive)
 
   const role = user?.publicMetadata?.role as string | undefined
   const fallbackRole =
@@ -279,6 +372,19 @@ export default function AdminPortal() {
     )
   }
 
+  useEffect(() => {
+    setActive(initialActive)
+  }, [initialActive])
+
+  function navigate(section: Section) {
+    setActive(section)
+    const params = new URLSearchParams(searchParams.toString())
+    if (section === 'maestros') params.delete('view')
+    else params.set('view', section)
+    const next = params.toString() ? `${pathname}?${params.toString()}` : pathname
+    router.replace(next, { scroll: false })
+  }
+
   function renderContent() {
     switch (active) {
       case 'maestros':         return <MaestrosView />
@@ -286,8 +392,19 @@ export default function AdminPortal() {
       case 'security':         return <PlaceholderView title="Security"                  sub="Security settings and authentication." />
       case 'clients':          return <PlaceholderView title="Active Clients"            sub="Client accounts and contract status." />
       case 'contracts':        return <PlaceholderView title="Contract Terms"            sub="Contract terms and SLA management." />
-      case 'sensitive-data':   return <PlaceholderView title="Sensitive Data Approvals"  sub="Review and approve data access requests." />
-      case 'quality':          return <QualityOpsJumpView />
+      case 'sensitive-data':   return <EmbeddedAdminSurface onNavigate={navigate}><AdminApprovals /></EmbeddedAdminSurface>
+      case 'data-loader':      return <EmbeddedAdminSurface onNavigate={navigate}><AdminDataLoader /></EmbeddedAdminSurface>
+      case 'data-guide':       return <EmbeddedAdminSurface onNavigate={navigate}><AdminDataGuide /></EmbeddedAdminSurface>
+      case 'quality':          return <EmbeddedAdminSurface onNavigate={navigate}><AdminQualityOps /></EmbeddedAdminSurface>
+      case 'approvals':        return <EmbeddedAdminSurface onNavigate={navigate}><AdminApprovals /></EmbeddedAdminSurface>
+      case 'outcomes':         return <EmbeddedAdminSurface onNavigate={navigate}><AdminOutcomes /></EmbeddedAdminSurface>
+      case 'brief':            return <EmbeddedAdminSurface onNavigate={navigate}><PreMeetingBrief /></EmbeddedAdminSurface>
+      case 'context':          return <EmbeddedAdminSurface onNavigate={navigate}><BusinessContext /></EmbeddedAdminSurface>
+      case 'data-governance':  return <EmbeddedAdminSurface onNavigate={navigate}><DataGovernance /></EmbeddedAdminSurface>
+      case 'revenue':          return <EmbeddedAdminSurface onNavigate={navigate}><RevenueDashboard /></EmbeddedAdminSurface>
+      case 'intelligence':     return <EmbeddedAdminSurface onNavigate={navigate}><AdminIntelligence /></EmbeddedAdminSurface>
+      case 'playbook':         return <EmbeddedAdminSurface onNavigate={navigate}><PlaybookPage /></EmbeddedAdminSurface>
+      case 'new-client':       return <EmbeddedAdminSurface onNavigate={navigate}><NewClientWizard /></EmbeddedAdminSurface>
       case 'access-logs':      return <PlaceholderView title="Access Logs"               sub="Data access audit trail by user and dataset." />
       case 'pending-requests': return <PlaceholderView title="Pending Requests"          sub="Maestro requests for elevated data access." />
       case 'audit-log':        return <PlaceholderView title="Audit Log"                 sub="Complete platform activity log." />
@@ -326,7 +443,7 @@ export default function AdminPortal() {
                 return (
                   <div
                     key={item.key}
-                    onClick={() => setActive(item.key)}
+                    onClick={() => navigate(item.key)}
                     style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(20,184,166,0.1)' : 'transparent', transition: 'background 0.15s' }}
                     onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
                     onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}

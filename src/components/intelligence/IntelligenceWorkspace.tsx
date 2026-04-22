@@ -23,12 +23,6 @@ type BrowserResponse = {
   items: Array<{ id: string; title: string; subtitle: string | null; detail: string | null; href: string | null; sourceUrl: string | null }>;
 };
 
-const SUGGESTED = [
-  'What are health systems like us doing on ambient documentation?',
-  'DAX vs Abridge for Meridian',
-  'What would our CFO push back on here?',
-];
-
 async function fetchJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: false; status: number; body: Record<string, unknown> }> {
   const res = await fetch(url, { credentials: 'include' });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -71,6 +65,55 @@ function programFitFromTurns(turns: NexusTurnData[]) {
   return { score: 'low' as const, dotsFilled: 1, preloadablePhases: 1, rationale: 'This still reads as research-first. Keep exploring unless the scope needs ownership and sequencing.' };
 }
 
+function buildSuggestedQueries(foundation: FoundationReadoutData | null) {
+  if (!foundation) {
+    return [
+      'What is most important in this tenant right now?',
+      'What contradictions are unresolved?',
+      'What would an executive challenge in this story?',
+    ];
+  }
+
+  const clientName = foundation.client.name;
+  const industry = (foundation.client.industry ?? '').toLowerCase();
+
+  if (industry.includes('health') || industry.includes('clinical')) {
+    return [
+      `What are peer health systems doing on ambient documentation for ${clientName}?`,
+      `Where are the biggest contradictions inside ${clientName} right now?`,
+      `What would the CFO or CMO push back on in this intelligence stack?`,
+    ];
+  }
+
+  if (industry.includes('retail')) {
+    return [
+      `Where is ${clientName} overspending across vendors or overlapping AI bets?`,
+      `What operating signals matter most for ${clientName} this quarter?`,
+      `What would a retail CFO challenge before approving more AI spend?`,
+    ];
+  }
+
+  if (industry.includes('financial')) {
+    return [
+      `Which vendor or benchmark signals are most material for ${clientName}?`,
+      `What contradictions inside ${clientName} matter for leadership decisions?`,
+      `What would the board challenge before trusting this intelligence?`,
+    ];
+  }
+
+  return [
+    `What does AbarVa already know about ${clientName}?`,
+    `Where are the highest-risk contradictions inside ${clientName}?`,
+    `What would an executive push back on here?`,
+  ];
+}
+
+function askPlaceholder(foundation: FoundationReadoutData | null) {
+  if (!foundation) return 'Ask a grounded question about this tenant, program, or signal.'
+
+  return `Ask about ${foundation.client.name}, a live contradiction, a vendor, a benchmark, or a program decision…`
+}
+
 export function IntelligenceWorkspace({
   initialQuery,
   initialThreadId,
@@ -99,6 +142,8 @@ export function IntelligenceWorkspace({
   const [authState, setAuthState] = useState<'ready' | 'unauthenticated' | 'no_client'>('ready');
   const [loadingThread, setLoadingThread] = useState(false);
   const initialQueryFired = useRef(false);
+  const browserSectionRef = useRef<HTMLDivElement | null>(null);
+  const signalSectionRef = useRef<HTMLDivElement | null>(null);
 
   const {
     isStreaming,
@@ -119,6 +164,8 @@ export function IntelligenceWorkspace({
     () => signals.find((signal) => signal.id === selectedSignalId) ?? null,
     [selectedSignalId, signals],
   );
+  const suggestedQueries = useMemo(() => buildSuggestedQueries(foundation), [foundation]);
+  const askPromptPlaceholder = useMemo(() => askPlaceholder(foundation), [foundation]);
 
   useEffect(() => {
     let cancelled = false;
@@ -192,6 +239,17 @@ export function IntelligenceWorkspace({
 
   const activeTurnId = selectedTurnId ?? turns[turns.length - 1]?.id ?? null;
   const programFit = useMemo(() => programFitFromTurns(turns), [turns]);
+
+  function navigateFoundation(target: { kind: 'browser' | 'signals'; layer?: 'L1' | 'L2' | 'L3' | 'L4'; facet?: string | null }) {
+    if (target.kind === 'signals') {
+      signalSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+
+    if (target.layer) setBrowserLayer(target.layer);
+    setBrowserFacet(target.facet ?? null);
+    browserSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
   async function handleSubmitQuery(query: string) {
     const userTurn = buildUserTurn(query, threadId);
@@ -344,7 +402,9 @@ export function IntelligenceWorkspace({
           </section>
         ) : null}
 
-        {state === 'A' ? <FoundationReadout foundation={foundation} loading={!foundation} /> : <FoundationStrip foundation={foundation} onExpand={() => reset()} />}
+        {state === 'A'
+          ? <FoundationReadout foundation={foundation} loading={!foundation} onNavigate={navigateFoundation} />
+          : <FoundationStrip foundation={foundation} onExpand={() => reset()} />}
 
         <div className={`intel-shell-grid state-${state.toLowerCase()}`}>
           {state === 'C' ? (
@@ -359,34 +419,40 @@ export function IntelligenceWorkspace({
           <div className="intel-stack">
             {(state === 'A' || turns.length === 0) ? (
               <>
+                <div ref={browserSectionRef}>
+                  <FoundationBrowser
+                    activeLayer={browser?.activeLayer ?? browserLayer}
+                    onLayerChange={(layer) => {
+                      setBrowserLayer(layer);
+                      setBrowserFacet(null);
+                    }}
+                    tiles={browser?.tiles ?? []}
+                    items={browser?.items ?? []}
+                    onFacetChange={setBrowserFacet}
+                  />
+                </div>
                 <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
+                  suggestedQueries={suggestedQueries}
+                  placeholder={askPromptPlaceholder}
                   onSubmit={handleSubmitQuery}
                   onSuggestedTap={handleSubmitQuery}
                   onFileSelected={handleUpload}
                   attachments={attachments}
                   disabled={isStreaming}
                 />
-                <PortfolioSignalFeed
-                  signals={signals}
-                  programCount={foundation?.metrics.engagements ?? 0}
-                  onSignalClick={setSelectedSignalId}
-                />
-                <FoundationBrowser
-                  activeLayer={browser?.activeLayer ?? browserLayer}
-                  onLayerChange={(layer) => {
-                    setBrowserLayer(layer);
-                    setBrowserFacet(null);
-                  }}
-                  tiles={browser?.tiles ?? []}
-                  items={browser?.items ?? []}
-                  onFacetChange={setBrowserFacet}
-                />
+                <div ref={signalSectionRef}>
+                  <PortfolioSignalFeed
+                    signals={signals}
+                    programCount={foundation?.metrics.engagements ?? 0}
+                    onSignalClick={setSelectedSignalId}
+                  />
+                </div>
               </>
             ) : (
               <>
                 <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
+                  suggestedQueries={suggestedQueries}
+                  placeholder={askPromptPlaceholder}
                   onSubmit={handleSubmitQuery}
                   onSuggestedTap={handleSubmitQuery}
                   onFileSelected={handleUpload}

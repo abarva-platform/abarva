@@ -6,6 +6,7 @@ import type { UploadedAttachment } from '@/hooks/useNexusStream';
 
 export function AskIntelligenceBar({
   suggestedQueries,
+  placeholder,
   onSubmit,
   onSuggestedTap,
   onFileSelected,
@@ -13,6 +14,7 @@ export function AskIntelligenceBar({
   disabled,
 }: {
   suggestedQueries: string[];
+  placeholder?: string;
   onSubmit: (query: string) => void;
   onSuggestedTap: (query: string) => void;
   onFileSelected: (file: File) => void;
@@ -28,7 +30,7 @@ export function AskIntelligenceBar({
       <div className="intel-askbar" style={{ marginTop: 12 }}>
         <textarea
           className="intel-askbar-input"
-          placeholder="What are health systems like us doing on ambient documentation?"
+          placeholder={placeholder ?? 'Ask a grounded question about this tenant, program, or signal.'}
           value={query}
           disabled={disabled}
           onChange={(event) => setQuery(event.target.value)}
