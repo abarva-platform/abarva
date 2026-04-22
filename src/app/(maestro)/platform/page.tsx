@@ -381,17 +381,13 @@ export default function PlatformPage() {
                 style={{
                   margin: '14px 0 0',
                   fontFamily: SERIF,
-                  // "Transformation" is 14 characters · at ~0.6× em advance
-                  // the word needs ~8× the font-size in pixels. With the
-                  // schematic panel claiming ~45% of the grid column, the
-                  // headline block is only ~720-760px wide at desktop · so
-                  // max font-size has to land around 80-84px to keep the
-                  // first word on one line. Kept `text-wrap: balance` as a
-                  // safety net for the two shorter following words.
-                  fontSize: 'clamp(44px, 5vw, 82px)',
-                  lineHeight: 0.95,
-                  letterSpacing: '-0.035em',
-                  maxWidth: 760,
+                  // Shrunk another 20% · still clipping at 1600-1800px
+                  // because the hero column is narrower than the max-width
+                  // constraint once the schematic panel takes its share.
+                  fontSize: 'clamp(36px, 4vw, 66px)',
+                  lineHeight: 0.98,
+                  letterSpacing: '-0.03em',
+                  maxWidth: 680,
                   color: INK,
                   textWrap: 'balance' as const,
                 }}
@@ -729,11 +725,15 @@ function ArchitectureConstellation() {
   // Evidence Ledger; the ledger feeds knowledge upward (Client → Emergent →
   // Genome); outcome proof exits on the right. Animated with CSS pulses that
   // respect prefers-reduced-motion.
-  const AGENTS: Array<{ id: string; name: string; role: string }> = [
-    { id: 'maestro', name: 'Maestro', role: 'orchestrator' },
-    { id: 'diagnostic', name: 'Diagnostic', role: 'hypothesis ↔ evidence' },
-    { id: 'design', name: 'Design', role: 'intervention synthesis' },
-    { id: 'auditor', name: 'Auditor', role: 'chain-of-custody' },
+  // Each agent sits directly above its "home" phase gate (5-column grid).
+  // Maestro orchestrates charter (col 1); Diagnostic owns diagnose (col 2);
+  // Design owns design (col 3); Decide (col 4) is shared orchestration · no
+  // dedicated agent; Auditor owns the execute checkpoint (col 5).
+  const AGENTS: Array<{ id: string; name: string; role: string; col: number }> = [
+    { id: 'maestro', name: 'Maestro', role: 'orchestrator', col: 1 },
+    { id: 'diagnostic', name: 'Diagnostic', role: 'hypothesis ↔ evidence', col: 2 },
+    { id: 'design', name: 'Design', role: 'intervention synthesis', col: 3 },
+    { id: 'auditor', name: 'Auditor', role: 'chain-of-custody', col: 5 },
   ];
   const PHASES: Array<{ id: string; num: string; title: string; refuse: string }> = [
     { id: 'p0', num: '0', title: 'Charter', refuse: 'no sponsor · no go' },
@@ -756,18 +756,22 @@ function ArchitectureConstellation() {
         <span>Live governance spine</span>
       </div>
 
-      {/* ─── AGENTS BANK ─────────────────────────────────────────────── */}
+      {/* ─── AGENTS BANK ·  5-col grid matching phase gates below ──── */}
       <div className="schematic-section schematic-section-agents" aria-label="Specialist agents">
         <div className="schematic-agent-row">
           {AGENTS.map((agent) => (
-            <div key={agent.id} className="schematic-agent-chip">
+            <div key={agent.id} className="schematic-agent-chip" style={{ gridColumn: agent.col }}>
               <span className="schematic-agent-dot" aria-hidden="true" />
-              <div>
+              <div className="schematic-agent-copy">
                 <strong>{agent.name}</strong>
                 <small>{agent.role}</small>
               </div>
             </div>
           ))}
+          {/* Col 4 · Decide is orchestration-only, no dedicated agent */}
+          <div className="schematic-agent-slot-empty" style={{ gridColumn: 4 }} aria-hidden="true">
+            <span>shared orchestration</span>
+          </div>
         </div>
       </div>
 
@@ -1341,40 +1345,77 @@ const platformCss = `
     color: rgba(20,184,166,0.85);
   }
 
-  /* AGENTS · horizontal chip row */
+  /* AGENTS · 5-column grid matching the phases row exactly so each
+     chip sits directly above its home gate. */
   .schematic-agent-row {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 0 4px;
   }
 
   .schematic-agent-chip {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border: 1px solid rgba(20,184,166,0.2);
-    border-radius: 12px;
-    background: linear-gradient(180deg, rgba(20,184,166,0.1), rgba(20,184,166,0.02));
-    min-height: 48px;
+    gap: 6px;
+    padding: 8px 8px;
+    border: 1px solid rgba(20,184,166,0.25);
+    border-radius: 10px;
+    background: linear-gradient(180deg, rgba(20,184,166,0.12), rgba(20,184,166,0.03));
+    min-height: 44px;
+    min-width: 0;
+  }
+
+  .schematic-agent-copy {
+    min-width: 0;
+    flex: 1;
   }
 
   .schematic-agent-chip strong {
     display: block;
-    font-family: ${SERIF};
-    font-size: 15px;
-    line-height: 1;
+    font-family: ${MONO};
+    font-size: 11px;
+    line-height: 1.1;
     color: ${CREAM};
-    letter-spacing: -0.01em;
+    letter-spacing: 0.02em;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .schematic-agent-chip small {
     display: block;
     margin-top: 2px;
     font-family: ${MONO};
-    font-size: 9px;
+    font-size: 8px;
+    letter-spacing: 0.04em;
+    color: rgba(247,242,234,0.58);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .schematic-agent-slot-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 4px;
+    border: 1px dashed rgba(247,242,234,0.12);
+    border-radius: 10px;
+    background: transparent;
+    min-height: 44px;
+  }
+
+  .schematic-agent-slot-empty span {
+    font-family: ${MONO};
+    font-size: 8px;
     letter-spacing: 0.06em;
-    color: rgba(247,242,234,0.62);
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.32);
+    text-align: center;
+    line-height: 1.2;
   }
 
   .schematic-agent-dot {
