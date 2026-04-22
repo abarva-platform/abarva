@@ -493,6 +493,12 @@
   transition: width 180ms ease;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .programs-nexus-panel {
+    transition: none;
+  }
+}
+
 .programs-nexus-tabs {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

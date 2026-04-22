@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TOPIC_DEPTH_OVERLAYS } from '@/lib/intelligence/fix-spec-v3-content';
+import { getTopicIndustryCompositions } from '@/lib/intelligence/industry-compositions';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { TopicRow, VendorEntry } from '@/lib/topics/db';
 
@@ -101,16 +102,21 @@ export default async function TopicDetailPage({
 }) {
   const { topicKey } = await params;
   const topic = await loadTopic(topicKey);
-  if (!topic) notFound();
-  const engagements = await loadEngagementsOnTopic(topicKey);
   const overlay = TOPIC_DEPTH_OVERLAYS[topicKey] ?? null;
+
+  // Either a DB row or an overlay is sufficient to render — patterns route
+  // has the same shape. Overlay-only topics (e.g. spec additions that ship
+  // ahead of the seed-pipeline migration) still get a full-depth page.
+  if (!topic && !overlay) notFound();
+  const engagements = topic ? await loadEngagementsOnTopic(topicKey) : [];
+  const industryCompositions = getTopicIndustryCompositions(topicKey);
   const triggerItems =
     overlay?.triggers && overlay.triggers.length > 0
       ? overlay.triggers
-      : topic.typical_triggers.map((t) => (typeof t === 'string' ? t : (t.phrase ?? t.description ?? ''))).filter(Boolean);
+      : (topic?.typical_triggers ?? []).map((t) => (typeof t === 'string' ? t : (t.phrase ?? t.description ?? ''))).filter(Boolean);
 
-  const questionsByPhase = new Map<number, typeof topic.diagnostic_questions>();
-  for (const q of topic.diagnostic_questions) {
+  const questionsByPhase = new Map<number, NonNullable<TopicRow>['diagnostic_questions']>();
+  for (const q of topic?.diagnostic_questions ?? []) {
     const phase = q.phase ?? 0;
     if (!questionsByPhase.has(phase)) questionsByPhase.set(phase, []);
     questionsByPhase.get(phase)!.push(q);
@@ -136,26 +142,40 @@ export default async function TopicDetailPage({
       </div>
       <div style={{ marginBottom: 24 }}>
         <div style={{ fontFamily: MONO, fontSize: 10, color: PURPLE, letterSpacing: '0.14em', marginBottom: 6 }}>
-          ENGAGEMENT TOPIC · {topic.industries.join(' · ')}
+          ENGAGEMENT TOPIC{topic?.industries?.length ? ` · ${topic.industries.join(' · ')}` : overlay?.industriesLabel ? ` · ${overlay.industriesLabel}` : ''}
         </div>
         <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 34, fontWeight: 400, margin: 0, letterSpacing: '-0.01em' }}>
-          {topic.title}
+          {topic?.title ?? overlay?.title ?? topicKey}
         </h1>
-        {topic.tagline && (
+        {(topic?.tagline || overlay?.tagline) && (
           <div style={{ fontSize: 15, color: MUTE, marginTop: 8, lineHeight: 1.5, maxWidth: 760 }}>
-            {topic.tagline}
+            {topic?.tagline ?? overlay?.tagline}
           </div>
         )}
         <div style={{ display: 'flex', gap: 12, marginTop: 12, fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.1em' }}>
-          <span>MATURITY v{topic.maturity_version}</span>
-          <span>·</span>
-          <span>{topic.diagnostic_questions.length} DIAGNOSTIC Qs</span>
-          {topic.key_patterns.length > 0 && (
+          {topic ? (
             <>
+              <span>MATURITY v{topic.maturity_version}</span>
               <span>·</span>
-              <span>{topic.key_patterns.length} LINKED PATTERNS</span>
+              <span>{topic.diagnostic_questions.length} DIAGNOSTIC Qs</span>
+              {topic.key_patterns.length > 0 && (
+                <>
+                  <span>·</span>
+                  <span>{topic.key_patterns.length} LINKED PATTERNS</span>
+                </>
+              )}
             </>
-          )}
+          ) : overlay ? (
+            <>
+              <span>MATURITY v3 · OVERLAY</span>
+              {overlay.patternCards?.length ? (
+                <>
+                  <span>·</span>
+                  <span>{overlay.patternCards.length} LINKED PATTERNS</span>
+                </>
+              ) : null}
+            </>
+          ) : null}
           {engagements.length > 0 && (
             <>
               <span>·</span>
@@ -191,6 +211,37 @@ export default async function TopicDetailPage({
                 <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginLeft: 'auto' }}>
                   Phase {e.current_phase} {PHASE_LABELS[e.current_phase]}
                 </span>
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {industryCompositions.length > 0 && (
+        <Section label="INDUSTRY LENSES" color={TEAL}>
+          <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            {industryCompositions.map((composition) => (
+              <Link
+                key={composition.slug}
+                href={`/intelligence/topics/${encodeURIComponent(topicKey)}/${encodeURIComponent(composition.verticalKey)}`}
+                style={{
+                  display: 'block',
+                  padding: 14,
+                  borderRadius: 10,
+                  border: `0.5px solid ${TEAL}55`,
+                  background: 'rgba(20,184,166,0.08)',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.12em', marginBottom: 8 }}>
+                  {composition.verticalLabel.toUpperCase()} · INDUSTRY KNOWLEDGE LAYER
+                </div>
+                <div style={{ color: INK, fontSize: 14, fontWeight: 600, marginBottom: 6 }}>
+                  {composition.title}
+                </div>
+                <div style={{ color: MUTE, fontSize: 12.5, lineHeight: 1.55 }}>
+                  {composition.subtitle}
+                </div>
               </Link>
             ))}
           </div>
@@ -268,7 +319,7 @@ export default async function TopicDetailPage({
             ))}
           </div>
         </Section>
-      ) : topic.key_patterns.length > 0 && (
+      ) : topic && topic.key_patterns.length > 0 && (
         <Section label="KEY PATTERNS" color={CORAL}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {topic.key_patterns.map((code) => (
@@ -294,13 +345,44 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {Object.keys(topic.vendor_landscape).length > 0 && (
+      {topic && Object.keys(topic.vendor_landscape).length > 0 ? (
         <Section label="VENDOR LANDSCAPE" color={AMBER}>
           {Object.entries(topic.vendor_landscape).map(([category, vendors]) => (
             <VendorGroup key={category} category={category} vendors={vendors ?? []} />
           ))}
         </Section>
-      )}
+      ) : overlay?.vendorLandscape?.length ? (
+        <Section label="VENDOR + CAPABILITY LANDSCAPE · 2026" color={AMBER}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            {overlay.vendorLandscape.map((group) => (
+              <div key={group.layer} style={{ padding: 16, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+                <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.12em', marginBottom: 4 }}>
+                  {group.layer.toUpperCase()}
+                </div>
+                <div style={{ fontSize: 14, color: INK, fontWeight: 500, marginBottom: 8 }}>{group.title}</div>
+                {group.pointOfView && (
+                  <div style={{ fontSize: 13, color: MUTE, fontStyle: 'italic', borderLeft: `2px solid ${TEAL}`, paddingLeft: 10, marginBottom: 12, lineHeight: 1.55 }}>
+                    {group.pointOfView}
+                  </div>
+                )}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 8 }}>
+                  {group.vendors.map((v, i) => (
+                    <div key={i} style={{ padding: '10px 12px', background: 'rgba(20,184,166,0.04)', border: `0.5px solid rgba(20,184,166,0.18)`, borderRadius: 8 }}>
+                      <div style={{ fontSize: 13, color: INK, fontWeight: 500 }}>{v.name}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginTop: 3 }}>{v.descriptor}</div>
+                      {v.opinion && (
+                        <div style={{ fontSize: 12, color: MUTE, fontStyle: 'italic', marginTop: 6, lineHeight: 1.5 }}>
+                          {v.opinion}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      ) : null}
 
       {questionsByPhase.size > 0 && (
         <Section label="DIAGNOSTIC QUESTIONS · BY PHASE">
@@ -337,7 +419,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.common_contradictions.length > 0 && (
+      {topic && topic.common_contradictions.length > 0 && (
         <Section label="COMMON CONTRADICTIONS" color={AMBER}>
           <ul style={{ margin: 0, paddingLeft: 20, color: INK, fontSize: 13, lineHeight: 1.6 }}>
             {topic.common_contradictions.map((c, i) => {
@@ -393,7 +475,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {Object.keys(topic.phase_playbook).length > 0 && (
+      {topic && Object.keys(topic.phase_playbook).length > 0 && (
         <Section label="PHASE PLAYBOOK">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {PHASE_KEYS.map((key, phase) => {
@@ -429,7 +511,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.typical_deliverables.length > 0 && (
+      {topic && topic.typical_deliverables.length > 0 && (
         <Section label="TYPICAL DELIVERABLES" color={PURPLE}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {topic.typical_deliverables.map((d) => (
@@ -453,7 +535,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.success_signals.length > 0 && (
+      {topic && topic.success_signals.length > 0 && (
         <Section label="SUCCESS SIGNALS" color={GREEN}>
           <ul style={{ margin: 0, paddingLeft: 20, color: INK, fontSize: 13, lineHeight: 1.6 }}>
             {topic.success_signals.map((s, i) => (
@@ -463,7 +545,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.failure_modes.length > 0 && (
+      {topic && topic.failure_modes.length > 0 && (
         <Section label="FAILURE MODES" color={CORAL}>
           <ul style={{ margin: 0, paddingLeft: 20, color: INK, fontSize: 13, lineHeight: 1.6 }}>
             {topic.failure_modes.map((f, i) => (
@@ -473,7 +555,7 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.source_attribution && (
+      {topic?.source_attribution && (
         <div style={{ marginTop: 40, paddingTop: 20, borderTop: BORDER, fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.08em' }}>
           SOURCE · {topic.source_attribution}
         </div>
