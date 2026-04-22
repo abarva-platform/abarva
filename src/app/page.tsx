@@ -298,6 +298,48 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Own it · Build it · Keep it — three-beat narrative spine per Prat
+            Demo Readiness Sprint §Homepage narrative. Sits between the
+            product intro and the architecture depth so the buyer reads the
+            relationship frame before the technical one. */}
+        <section className="marketing-section" id="journey">
+          <div className="marketing-container">
+            <Eyebrow>How it works</Eyebrow>
+            <Title section>
+              Own it · Build it · Keep it.
+            </Title>
+            <Copy style={{ maxWidth: 900, marginBottom: 32 }}>
+              Transformation is your accountability. We make it executable. The intelligence compounds inside your cloud — and stays there.
+            </Copy>
+            <div className="marketing-grid-3" style={{ marginTop: 12 }}>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You own it
+                </div>
+                <Copy>
+                  Your strategy. Your priorities. Your decisions. Transformation accountability sits with you — boards, markets, and customers don&apos;t accept anyone else carrying it. AbarVa doesn&apos;t take it. We make it workable.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You build it
+                </div>
+                <Copy>
+                  AbarVa deploys into your cloud. Your identity, your data residency, your compliance posture. Nine intelligences run against your real operating truth — your telemetry, your financial reality, your executive voice. The transformation you build is yours, end to end.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You keep it
+                </div>
+                <Copy>
+                  Your Transformation Genome lives inside your tenant. Every decision, pattern, and outcome compounds as institutional intelligence. Your data never leaves your cloud. Your intelligence never becomes ours. Year over year, the asset deepens — in your hands.
+                </Copy>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="marketing-section marketing-section--dark" id="architecture">
           <div className="marketing-container">
             <Eyebrow>Four-layer intelligence</Eyebrow>
@@ -512,6 +554,27 @@ export default function HomePage() {
                   Small, senior team. Building the platform and the operating model together, not bolting one onto the other.
                 </Copy>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Control Tower · value capture narrative per Prat Demo Readiness
+            Sprint §Control tower framing. Sits right before the commercial
+            CTA so the buyer reads "how do we know it's working?" without
+            having to ask. */}
+        <section className="marketing-section marketing-section--dark" id="control-tower">
+          <div className="marketing-container">
+            <Eyebrow>Control tower</Eyebrow>
+            <Title section>
+              Every dollar of value, tracked to source.
+            </Title>
+            <div className="marketing-grid-2" style={{ alignItems: 'start', marginTop: 24, gap: 24 }}>
+              <Copy style={{ maxWidth: 640 }}>
+                AbarVa&apos;s Outcome Intelligence layer baselines transformation value at program initiation, tracks realization over time, and attributes outcome to intervention with explicit confidence notation. You see what worked, what didn&apos;t, and why — not consulting-vintage self-reported impact, but measured, attributable, defensible value capture.
+              </Copy>
+              <Copy style={{ maxWidth: 640, color: 'rgba(255,255,255,0.72)' }}>
+                For outcome-participation engagements, the control tower is also the shared source of truth. The value AbarVa captures a share of is the value you can prove. No black box, no disputes, no end-of-quarter surprises.
+              </Copy>
             </div>
           </div>
         </section>
