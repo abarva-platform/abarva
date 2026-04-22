@@ -22,6 +22,7 @@ type KnowledgeLayer = {
   counters: string[];
   artifacts: string[];
   whatThisIsNot: string;
+  flowNote: string;
 };
 
 const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
@@ -37,6 +38,7 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     artifacts: ['Pattern library (F001-F047)', 'Intervention library (n=124 · success-rated)', 'Comparator class library · industry × function × scale'],
     whatThisIsNot:
       '"Best practices PDFs," "consulting playbooks," or "AI knowledge graph" (whatever that means). This is observed-and-validated patterns with n-counts and success rates per intervention.',
+    flowNote: 'Receives only promoted patterns after threshold, evidence review, and legal anonymization sign-off.',
   },
   {
     name: 'Client-contributed',
@@ -49,6 +51,7 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     artifacts: ['Tenant Evidence Ledger', 'Tenant Decision Archive', 'Tenant Stakeholder Map'],
     whatThisIsNot:
       'Document repository, knowledge base, or "AI-searchable corpus." This is structured working memory that earns audit-grade trust through provenance discipline.',
+    flowNote: 'Feeds anonymized, verified signals upward into Emergent once contribution rules and sensitivity checks pass.',
   },
   {
     name: 'Emergent',
@@ -61,6 +64,7 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     artifacts: ['Pattern Match Log · per-program cross-references', 'Genome Contribution Package · per-program output', 'Cross-Program Pattern Signals dashboard'],
     whatThisIsNot:
       '"Network effects" hand-waving. This is observed pattern emergence from program contribution with explicit promotion thresholds and legal sign-off on anonymization.',
+    flowNote: 'Promotes upward only when repeated observations clear threshold and the contribution package is audit-complete.',
   },
 ];
 
@@ -109,54 +113,76 @@ const PHASES: PhaseBlock[] = [
     phase: '4 · Verify',
     entry: 'Outcome measurement window opened · attribution analysis prepped',
     deliverables: ['Outcome Baseline Report (locked)', 'Outcome Measurement Report', 'Learning Memo', 'Genome Contribution Package'],
-    exit: 'Outcome economics settlement · learning captured · Genome contribution submitted',
+    exit: 'Outcome verification complete · learning captured · Genome contribution submitted',
     cannotPass:
-      'Outcome claims without attribution analysis. Settlements where evidence chain-of-custody is incomplete. Programs that claim patterns "didn\'t apply" without Learning Memo accounting for Pattern Match Log entries.',
+      'Outcome claims without attribution analysis. Verification packages where evidence chain-of-custody is incomplete. Programs that claim patterns "didn\'t apply" without Learning Memo accounting for Pattern Match Log entries.',
   },
 ];
 
 type Agent = {
   name: string;
   role: string;
+  capabilities: string[];
   refusals: string[];
+  outputs: string[];
 };
 
 const AGENTS: Agent[] = [
   {
     name: 'Nexus',
-    role: 'Runs programs · drives intake, diagnosis, design, execution turns.',
+    role: 'Runs programs · intake, diagnosis, design, execution turns.',
+    capabilities: [
+      'Orchestrates program state across all 5 phases',
+      'Drafts Hypothesis Trees, Intervention Charters, and Business Cases',
+      'Facilitates stakeholder turns and sponsor alignment',
+    ],
     refusals: [
       'Refuses to generate intervention recommendations without an evidence basis traceable to the Evidence Ledger.',
-      'Refuses to mark a workstream complete without Outcome Baseline lock and acceptance signature.',
       'Refuses to advance through a phase gate when entry criteria are unmet, regardless of stakeholder pressure.',
     ],
+    outputs: ['Program Charter', 'Hypothesis Tree', 'Intervention Charter', 'Decision Brief', 'Timeline + Resource Estimate'],
   },
   {
     name: 'Sentinel',
-    role: 'Curates patterns · cross-program intelligence, contradiction surfacing, pattern matching.',
+    role: 'Curates patterns · cross-program intelligence, contradiction surfacing.',
+    capabilities: [
+      'Runs continuous pattern detection across the Genome library (currently 47 patterns)',
+      'Surfaces contradictions between stated strategy and observed behavior',
+      'Maintains Pattern Match Log and Contradiction Log per program',
+    ],
     refusals: [
       'Refuses to mark a pattern resolved without confirmed outcome evidence and a sustained confidence drop below threshold.',
       'Refuses to recommend an intervention without n ≥ 5 prior Genome observations of the pattern.',
-      'Refuses to suppress a Contradiction Log entry on stakeholder request without an explicit accept-as-constraint or escalate-to-resolve path.',
     ],
+    outputs: ['Pattern Match Log', 'Contradiction Log', 'Genome Contribution Package'],
   },
   {
     name: 'Atlas',
     role: 'Holds the tower view · cross-program orchestration, leading indicators, executive surface.',
+    capabilities: [
+      'Operates Control Tower as the cross-portfolio cockpit',
+      'Surfaces leading indicators and early warning signals',
+      'Aggregates cross-program signals with anonymization preserved',
+    ],
     refusals: [
       'Refuses to allow a program to drift past a hard gate without recorded gate-decision and dissent capture.',
       'Refuses to surface a leading indicator as "green" when underlying evidence is stale beyond freshness threshold.',
-      'Refuses to consolidate cross-program signals without anonymization-status verification.',
     ],
+    outputs: ['Control Tower dashboard', 'Early Warning Dashboard', 'Cross-Program Signals'],
   },
   {
     name: 'Steward',
-    role: 'Enforces platform discipline · evidence provenance, decision archive, access governance.',
+    role: 'Enforces platform discipline · evidence provenance, decision archive, access.',
+    capabilities: [
+      'Registers evidence with source + owner + chain-of-custody',
+      'Maintains Decision Archive with dissent capture and evidence weighting',
+      'Enforces access control and sensitivity-tier governance',
+    ],
     refusals: [
       'Refuses to register evidence in the Evidence Ledger without source-of-record citation and chain-of-custody completeness.',
-      'Refuses to allow a Decision Archive entry without dissent capture and evidence-basis weighting.',
       'Refuses to promote a pattern from candidate to Genome without legal sign-off on anonymization.',
     ],
+    outputs: ['Evidence Ledger', 'Decision Archive', 'Access Control audit trail'],
   },
 ];
 
@@ -165,6 +191,7 @@ type CompoundingAsset = {
   primary: string;
   secondary: string[];
   whyCompounds: string;
+  ipCharacter: string;
 };
 
 const COMPOUNDING: CompoundingAsset[] = [
@@ -174,6 +201,8 @@ const COMPOUNDING: CompoundingAsset[] = [
     secondary: ['1,247 anonymized observations', 'F018 most-cited (31 program contributions)', 'Growth rate ~3 patterns / quarter'],
     whyCompounds:
       'Every program adds to the corpus. Every pattern match strengthens or refines a Genome entry. Patterns at n ≥ 5 promote to recommend-intervention status. The library only gets sharper.',
+    ipCharacter:
+      'Not licensed from elsewhere. Built from observed transformation programs. AbarVa’s curation discipline is the moat.',
   },
   {
     name: 'Adaptive Strategy Intelligence',
@@ -181,13 +210,17 @@ const COMPOUNDING: CompoundingAsset[] = [
     secondary: ['19 pattern matches today', '14 contradictions surfaced this week', '1 critical pattern at second-degree (F022 Co-Sponsor Pace Divergence)'],
     whyCompounds:
       'Cross-program signal density increases with program count. By program N, every new program inherits N-1 programs\' worth of pattern intelligence — including timing windows and intervention success rates that didn\'t exist at program 1.',
+    ipCharacter:
+      'Agent behavior, contradiction-detection logic, and pattern-matching prompts are proprietary. This cannot be recreated by swapping in a stronger base model.',
   },
   {
     name: 'Outcome Interpretability Layer',
     primary: '187 audit-grade evidence items',
-    secondary: ['100% chain-of-custody completeness across active programs', '2 settlement-ready outcome reports', 'Avg 5.4 evidence artifacts per material decision'],
+    secondary: ['100% chain-of-custody completeness across active programs', '2 board-ready outcome reports', 'Avg 5.4 evidence artifacts per material decision'],
     whyCompounds:
-      'Provenance discipline is the moat. As Evidence Ledger volume grows, so does the credibility of attribution claims at outcome settlement. This is what makes outcome-as-a-service pricing structurally defensible.',
+      'Provenance discipline is the moat. As Evidence Ledger volume grows, so does the credibility of attribution claims. Audit-grade evidence chain is what makes program claims defensible to boards and auditors.',
+    ipCharacter:
+      'Evidence Ledger schema, chain-of-custody enforcement, and sensitivity tiering are AbarVa-built. There is no off-the-shelf equivalent.',
   },
   {
     name: 'Research Publication Program',
@@ -199,7 +232,23 @@ const COMPOUNDING: CompoundingAsset[] = [
     ],
     whyCompounds:
       'Published research becomes inbound. Inbound from senior decision-makers who already trust the methodology before first contact. Customer co-authorship makes the research authoritative and the customer relationship durable.',
+    ipCharacter:
+      'Research is written against live program observations — something consulting firms and tool vendors structurally cannot produce.',
   },
+];
+
+const PLATFORM_PROVIDES = [
+  'Program Operating System · 28 deliverables generated dynamically across 5 phases. Dynamic generation based on program context, not static templates.',
+  'Cross-program intelligence · patterns, contradictions, and decisions observed across all programs feed back into each individual program’s guidance.',
+  'Evidence discipline · every finding, every decision, every pattern match traceable to source-of-record through the Evidence Ledger.',
+  'Agent orchestration · 4 named agents with defined refusal behaviors. Agents do not freelance; they operate within the governance spine.',
+];
+
+const PLATFORM_DOES_NOT = [
+  'Not a data platform. We consume tenant data; we do not replace Snowflake, Databricks, or the modern data stack.',
+  'Not an RPA platform. We orchestrate decisions and intelligence; task automation is not our surface.',
+  'Not an LLM wrapper. Base models are infrastructure; the differentiated product is the agents, the Genome, the Evidence Ledger, and the governance discipline on top.',
+  'Not a consulting replacement. We augment expertise with platform infrastructure; senior human judgment still anchors material decisions.',
 ];
 
 type ComparisonRow = {
@@ -212,21 +261,21 @@ type ComparisonRow = {
 
 const COMPARISON: ComparisonRow[] = [
   {
-    dimension: 'Engagement model',
-    consulting: 'T&M · retainer · fixed-fee',
-    dataStack: 'SaaS subscription',
-    rpa: 'Per-bot license',
-    abarva: 'Outcome economics · 30% of measured savings',
+    dimension: 'Operating core',
+    consulting: 'Human project team + deck cadence',
+    dataStack: 'Warehouse + compute + semantic layer',
+    rpa: 'Bot fleet + process scripts',
+    abarva: 'Agents + Genome + Evidence Ledger + governance spine',
   },
   {
     dimension: 'Time to first evidence',
     consulting: '6-12 weeks',
     dataStack: '2-4 weeks (data wired)',
     rpa: '4-8 weeks (process scoped)',
-    abarva: '48 hours · intelligence before invoice',
+    abarva: '48 hours · structured intelligence surface',
   },
   {
-    dimension: 'Scales with',
+    dimension: 'What compounds',
     consulting: 'Bodies on the engagement',
     dataStack: 'Data volume + queries',
     rpa: 'Bot count',
@@ -240,7 +289,7 @@ const COMPARISON: ComparisonRow[] = [
     abarva: 'Genome (cross-tenant, anonymized) + Tenant Evidence Ledger',
   },
   {
-    dimension: 'Audit trail at outcome',
+    dimension: 'Audit trail',
     consulting: 'Engagement deliverables (slides)',
     dataStack: 'Dashboard snapshots',
     rpa: 'Bot execution logs',
@@ -358,9 +407,9 @@ export default function PlatformPage() {
                 color: INK_SOFT,
               }}
             >
-              Seven architectural layers. Four agents with defined refusals. Outcome economics that make
-              attribution auditable. Built for organizations that treat transformation as accountable work,
-              not consulting theater.
+              AbarVa is a transformation-intelligence platform. Four specialist agents coordinate across
+              three knowledge layers with a governance spine enforcing evidence discipline. Built for
+              organizations that want architecture, IP, and operating substance instead of consulting theater.
             </p>
             <div style={{ marginTop: 28 }}>
               <SectionLinkTOC />
@@ -371,67 +420,93 @@ export default function PlatformPage() {
             <div style={sectionEyebrow}>Knowledge architecture · 3 layers</div>
             <h2 style={sectionTitle}>Knowledge that compounds across every program.</h2>
             <p style={sectionBody}>
-              The knowledge model remains the moat. What changes here is the reading experience: lighter
-              canvas, darker ink, and more confidence that dense enterprise material can still feel composed.
+              Three knowledge layers work in sequence. Tenant working memory contributes upward only after
+              provenance, anonymization, and threshold checks. Decorative graphs do not earn trust; labeled
+              layers with explicit promotion rules do.
             </p>
             <div
               style={{
-                display: 'grid',
-                gap: 18,
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
                 marginTop: 26,
               }}
             >
-              {KNOWLEDGE_LAYERS.map((layer) => (
+              {KNOWLEDGE_LAYERS.map((layer, index) => (
                 <article
                   key={layer.name}
                   style={{
                     padding: 24,
-                    background: PANEL_BG,
-                    border: `1px solid ${LINE}`,
+                    background: index === 0 ? `linear-gradient(180deg, ${DARK_PANEL} 0%, ${DARK} 100%)` : PANEL_BG,
+                    border: `1px solid ${index === 0 ? DARK_LINE : LINE}`,
                     borderRadius: 22,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 14,
-                    boxShadow: '0 12px 32px rgba(23,20,17,0.05)',
+                    display: 'grid',
+                    gap: 18,
+                    gridTemplateColumns: 'minmax(0, 1.15fr) minmax(260px, 0.85fr)',
+                    alignItems: 'start',
+                    boxShadow: index === 0 ? '0 20px 48px rgba(23,20,17,0.12)' : '0 12px 32px rgba(23,20,17,0.05)',
                   }}
                 >
                   <div>
-                    <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>{layer.scope}</div>
-                    <div style={{ marginTop: 10, fontFamily: SERIF, fontSize: 34, lineHeight: 1.02, color: INK }}>
+                    <div style={{ ...sectionEyebrow, fontSize: 10, color: index === 0 ? 'rgba(247,242,234,0.62)' : INK_MUTED }}>{layer.scope}</div>
+                    <div style={{ marginTop: 10, fontFamily: SERIF, fontSize: 36, lineHeight: 1.02, color: index === 0 ? CREAM : INK }}>
                       {layer.name}
                     </div>
+                    <p style={{ margin: '12px 0 0', fontSize: 15, lineHeight: 1.65, color: index === 0 ? 'rgba(247,242,234,0.78)' : INK_SOFT }}>
+                      Not — {layer.whatThisIsNot}
+                    </p>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
+                      {layer.artifacts.map((a) => (
+                        <span
+                          key={a}
+                          style={{
+                            display: 'inline-block',
+                            padding: '6px 10px',
+                            background: index === 0 ? 'rgba(255,255,255,0.06)' : '#FFF8F0',
+                            border: `1px solid ${index === 0 ? DARK_LINE : LINE}`,
+                            borderRadius: 999,
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            color: index === 0 ? 'rgba(247,242,234,0.74)' : INK_MUTED,
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {a}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    {layer.counters.map((c) => (
-                      <li key={c} style={{ fontFamily: MONO, fontSize: 12, color: TEAL, letterSpacing: '0.02em' }}>
-                        · {c}
-                      </li>
-                    ))}
-                  </ul>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {layer.artifacts.map((a) => (
-                      <span
-                        key={a}
-                        style={{
-                          display: 'inline-block',
-                          padding: '6px 10px',
-                          background: '#FFF8F0',
-                          border: `1px solid ${LINE}`,
-                          borderRadius: 999,
-                          fontFamily: MONO,
-                          fontSize: 10,
-                          color: INK_MUTED,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {a}
-                      </span>
-                    ))}
+                  <div
+                    style={{
+                      padding: 18,
+                      borderRadius: 18,
+                      border: `1px solid ${index === 0 ? 'rgba(14,159,140,0.24)' : LINE}`,
+                      background: index === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.7)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 14,
+                    }}
+                  >
+                    <div style={{ ...sectionEyebrow, fontSize: 10, color: index === 0 ? TEAL : INK_MUTED }}>Current state</div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {layer.counters.map((c) => (
+                        <li key={c} style={{ fontFamily: MONO, fontSize: 12, color: index === 0 ? CREAM : TEAL, letterSpacing: '0.02em', lineHeight: 1.55 }}>
+                          · {c}
+                        </li>
+                      ))}
+                    </ul>
+                    <div
+                      style={{
+                        paddingTop: 12,
+                        borderTop: `1px solid ${index === 0 ? DARK_LINE : LINE}`,
+                        fontSize: 14,
+                        lineHeight: 1.58,
+                        color: index === 0 ? 'rgba(247,242,234,0.72)' : INK_SOFT,
+                      }}
+                    >
+                      {layer.flowNote}
+                    </div>
                   </div>
-                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
-                    Not — {layer.whatThisIsNot}
-                  </p>
                 </article>
               ))}
             </div>
@@ -550,41 +625,50 @@ export default function PlatformPage() {
                   }}
                 >
                   <div>
-                    <div style={{ ...sectionEyebrow, fontSize: 11 }}>{agent.name}</div>
-                    <p style={{ margin: '8px 0 0', fontSize: 18, lineHeight: 1.55, color: INK_SOFT }}>{agent.role}</p>
+                    <div style={{ fontFamily: SERIF, fontSize: 34, lineHeight: 1.02, color: INK }}>{agent.name}</div>
+                    <p style={{ margin: '10px 0 0', fontSize: 17, lineHeight: 1.6, color: INK_SOFT }}>{agent.role}</p>
                   </div>
-                  <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {agent.refusals.map((r, i) => (
-                      <li
-                        key={i}
-                        style={{
-                          fontFamily: SANS,
-                          fontSize: 15,
-                          color: INK,
-                          lineHeight: 1.62,
-                          paddingLeft: 32,
-                          position: 'relative',
-                        }}
-                      >
+                  <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))' }}>
+                    <div>
+                      <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>Capabilities</div>
+                      <ul style={{ margin: '10px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {agent.capabilities.map((cap) => (
+                          <li key={cap} style={{ fontSize: 15, lineHeight: 1.6, color: INK_SOFT }}>{cap}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div style={{ ...sectionEyebrow, fontSize: 10, color: WARM }}>Refuses</div>
+                      <ul style={{ margin: '10px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {agent.refusals.map((refusal) => (
+                          <li key={refusal} style={{ fontSize: 15, lineHeight: 1.6, color: INK }}>{refusal}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>Named outputs</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                      {agent.outputs.map((output) => (
                         <span
-                          aria-hidden
+                          key={output}
                           style={{
-                            position: 'absolute',
-                            left: 0,
-                            top: 2,
-                            width: 22,
+                            display: 'inline-block',
+                            padding: '6px 10px',
+                            background: '#FFF8F0',
+                            border: `1px solid ${LINE}`,
+                            borderRadius: 999,
                             fontFamily: MONO,
-                            fontSize: 11,
-                            color: TEAL,
+                            fontSize: 10,
+                            color: INK_MUTED,
                             letterSpacing: '0.04em',
                           }}
                         >
-                          {String(i + 1).padStart(2, '0')}
+                          {output}
                         </span>
-                        {r}
-                      </li>
-                    ))}
-                  </ol>
+                      ))}
+                    </div>
+                  </div>
                 </article>
               ))}
             </div>
@@ -628,13 +712,24 @@ export default function PlatformPage() {
                   <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
                     {asset.whyCompounds}
                   </p>
+                  <div
+                    style={{
+                      paddingTop: 12,
+                      borderTop: `1px solid ${LINE}`,
+                      fontSize: 14,
+                      lineHeight: 1.58,
+                      color: INK_MUTED,
+                    }}
+                  >
+                    {asset.ipCharacter}
+                  </div>
                 </article>
               ))}
             </div>
           </section>
 
           <section
-            id="outcome-economics"
+            id="architecture-ip"
             style={{
               scrollMarginTop: 40,
               borderRadius: 30,
@@ -643,30 +738,46 @@ export default function PlatformPage() {
               padding: '34px 30px 30px',
             }}
           >
-            <div style={sectionEyebrow}>Pricing · outcome economics · 30%</div>
-            <h2 style={sectionTitle}>We&apos;re paid only after measured outcomes.</h2>
+            <div style={sectionEyebrow}>Platform · architecture · IP</div>
+            <h2 style={sectionTitle}>What AbarVa is made of.</h2>
             <p style={{ ...sectionBody, maxWidth: 760 }}>
-              Worked example · Morrison Owned Brand Margin Recovery (composite organization built from real-world data).
+              AbarVa is a transformation-intelligence platform. Four specialist agents coordinate across
+              three knowledge layers with a governance spine enforcing evidence discipline. Below is the
+              condensed answer to what the platform actually provides, and where its boundaries are explicit.
             </p>
-            <div style={{ display: 'grid', gap: 14, maxWidth: 920, marginTop: 24 }}>
-              <FinancialRow label="Investment · AbarVa platform cost (Y1)" amount="$5.2M" note="Paid by client · regardless of outcome. Covers tenant provisioning, agent operations, cross-program intelligence access, evidence infrastructure." />
-              <FinancialRow label="Modeled return" amount="$99M central · $73M-$128M range" note="Basis · Diagnostic Findings v4 + Business Case v3 · Genome analogous program library (n=14) supports range." />
-              <FinancialRow label="Realized outcome at Phase 4" amount="$87M (annualized)" note="Measurement basis · Outcome Measurement Report (D19) with attribution analysis · auditor sign-off obtained." />
-              <FinancialRow label="AbarVa settlement · 30% of attributable measured lift" amount="$26.1M" note="Settlement basis · Outcome Baseline (locked Phase 2) · Outcome Measurement · Attribution Analysis · settled 90 days post-Phase 4." bold />
-            </div>
-            <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 820 }}>
-              <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>What this means</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li style={mean}>We are paid only after outcome is measured.</li>
-                <li style={mean}>We are paid only on attributable lift · not aspirational claims.</li>
-                <li style={mean}>We are paid only with audit-grade evidence chain.</li>
-                <li style={mean}>If pilot fails the gate, we don&apos;t scale and we don&apos;t get paid the scale economics.</li>
-              </ul>
-            </div>
-            <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 1100 }}>
-              <WhyColumn title="For client" body="Alignment of incentive · AbarVa wins only when client wins." />
-              <WhyColumn title="For AbarVa" body="Revenue multiples 4-6x typical SaaS based on outcome capture · defensible vs. consulting because attribution is proven." />
-              <WhyColumn title="For investors" body="Evidence-of-value delivery becomes contractually load-bearing · impossible to fake." />
+            <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', marginTop: 28 }}>
+              <div
+                style={{
+                  padding: 22,
+                  background: PANEL_BG,
+                  border: `1px solid ${LINE}`,
+                  borderRadius: 20,
+                  boxShadow: '0 12px 30px rgba(23,20,17,0.04)',
+                }}
+              >
+                <div style={{ ...sectionEyebrow, fontSize: 10 }}>What AbarVa provides</div>
+                <ul style={{ margin: '12px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {PLATFORM_PROVIDES.map((item) => (
+                    <li key={item} style={{ fontSize: 15, lineHeight: 1.65, color: INK_SOFT }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div
+                style={{
+                  padding: 22,
+                  background: `linear-gradient(180deg, ${DARK_PANEL} 0%, ${DARK} 100%)`,
+                  border: `1px solid ${DARK_LINE}`,
+                  borderRadius: 20,
+                  boxShadow: '0 18px 42px rgba(23,20,17,0.12)',
+                }}
+              >
+                <div style={{ ...sectionEyebrow, fontSize: 10, color: TEAL }}>What AbarVa does not do</div>
+                <ul style={{ margin: '12px 0 0', paddingLeft: 18, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {PLATFORM_DOES_NOT.map((item) => (
+                    <li key={item} style={{ fontSize: 15, lineHeight: 1.65, color: 'rgba(247,242,234,0.82)' }}>{item}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </section>
 
@@ -800,51 +911,13 @@ function KeyValue({ k, v, bold, dark }: { k: string; v: string; bold?: boolean; 
   );
 }
 
-function FinancialRow({ label, amount, note, bold }: { label: string; amount: string; note: string; bold?: boolean }) {
-  return (
-    <div
-      style={{
-        padding: bold ? 20 : 16,
-        background: bold ? 'rgba(14,159,140,0.08)' : 'rgba(255,253,252,0.82)',
-        border: `1px solid ${bold ? 'rgba(14,159,140,0.28)' : LINE}`,
-        borderRadius: 18,
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
-        gap: 20,
-        alignItems: 'baseline',
-      }}
-    >
-      <div>
-        <div style={{ fontFamily: MONO, fontSize: 11, color: INK_MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          {label}
-        </div>
-        <div style={{ marginTop: 8, maxWidth: 640, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>
-          {note}
-        </div>
-      </div>
-      <div style={{ fontFamily: SERIF, fontSize: bold ? 36 : 28, color: bold ? TEAL : INK, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-        {amount}
-      </div>
-    </div>
-  );
-}
-
-function WhyColumn({ title, body }: { title: string; body: string }) {
-  return (
-    <div style={{ padding: 18, background: PANEL_BG, border: `1px solid ${LINE}`, borderRadius: 18 }}>
-      <div style={{ ...sectionEyebrow, fontSize: 10 }}>{title.toUpperCase()}</div>
-      <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>{body}</div>
-    </div>
-  );
-}
-
 function SectionLinkTOC() {
   const links = [
     { href: '#knowledge-architecture', label: 'Knowledge architecture' },
     { href: '#methodology', label: 'Methodology' },
     { href: '#agents', label: 'Agents' },
     { href: '#compounding-assets', label: 'Compounding assets' },
-    { href: '#outcome-economics', label: 'Outcome economics' },
+    { href: '#architecture-ip', label: 'Architecture + IP' },
     { href: '#composability', label: 'Composability' },
     { href: '#comparison', label: 'Comparison' },
   ];
@@ -900,15 +973,4 @@ const cellStyle: CSSProperties = {
 const rowAccent: CSSProperties = {
   background: 'rgba(213,155,106,0.08)',
   fontStyle: 'italic',
-};
-
-const mean: CSSProperties = {
-  padding: '12px 14px',
-  background: 'rgba(255,255,255,0.78)',
-  border: `1px solid ${LINE}`,
-  borderRadius: 12,
-  fontFamily: MONO,
-  fontSize: 12,
-  color: INK_SOFT,
-  letterSpacing: '0.02em',
 };
