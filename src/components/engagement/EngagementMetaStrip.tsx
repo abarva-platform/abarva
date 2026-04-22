@@ -56,6 +56,24 @@ interface Props {
   activePatternsCount: number;
   assignedTopicsCount: number;
   contradictionsCount: number;
+  contradictionsScope?: 'program' | 'client' | 'none';
+}
+
+function parseCurrencyToUsd(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/,/g, '').trim();
+  const match = normalized.match(/\$?\s*(-?\d+(?:\.\d+)?)\s*([kmb])?/i);
+  if (!match) return null;
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) return null;
+  const suffix = (match[2] ?? '').toLowerCase();
+  const multiplier =
+    suffix === 'b' ? 1_000_000_000 :
+    suffix === 'm' ? 1_000_000 :
+    suffix === 'k' ? 1_000 :
+    1;
+  return amount * multiplier;
 }
 
 // Dense meta-strip that sits at the top of the engagement console.
@@ -70,12 +88,30 @@ export function EngagementMetaStrip({
   activePatternsCount,
   assignedTopicsCount,
   contradictionsCount,
+  contradictionsScope = 'client',
 }: Props) {
   const gates = (engagement.gates_passed as Array<{ phase?: number; signed_at?: string; status?: string }> | null) ?? [];
-  const baseline = engagement.baseline_metrics as { items?: Array<{ metric: string; baseline_value: string }>; savings_usd?: number } | null;
-  const valueAtStake = typeof baseline?.savings_usd === 'number' ? baseline.savings_usd : null;
+  const baseline = engagement.baseline_metrics as {
+    items?: Array<{ metric: string; baseline_value?: string | number; actual_value?: string | number; savings_usd?: string | number }>;
+    savings_usd?: number;
+    captured_at?: string;
+  } | null;
+  const valueAtStake =
+    typeof baseline?.savings_usd === 'number'
+      ? baseline.savings_usd
+      : (() => {
+          for (const item of baseline?.items ?? []) {
+            const fromSavings = parseCurrencyToUsd(item.savings_usd);
+            if (fromSavings && fromSavings > 0) return fromSavings;
+            const fromBaseline = parseCurrencyToUsd(item.baseline_value);
+            if (fromBaseline && fromBaseline > 0) return fromBaseline;
+          }
+          return null;
+        })();
   const phase2Gate = gates.find((g) => g.phase === 2 && g.status === 'approved');
-  const baselineLockedAt = phase2Gate?.signed_at ?? null;
+  const baselineLockedAt =
+    baseline?.captured_at
+      ?? (Array.isArray(baseline?.items) && baseline.items.length > 0 ? phase2Gate?.signed_at ?? null : phase2Gate?.signed_at ?? null);
   const latestGate = gates
     .filter((g) => g.status === 'approved' && g.signed_at)
     .sort((a, b) => (b.signed_at ?? '').localeCompare(a.signed_at ?? ''))[0];
@@ -170,7 +206,7 @@ export function EngagementMetaStrip({
         <MetaCell
           eyebrow="PATTERNS"
           value={String(activePatternsCount)}
-          sub="active on this engagement"
+          sub="active on this program"
           accent={activePatternsCount > 0 ? CORAL : MUTE}
         />
         <MetaCell
@@ -182,7 +218,7 @@ export function EngagementMetaStrip({
         <MetaCell
           eyebrow="CONTRADICTIONS"
           value={String(contradictionsCount)}
-          sub="on this client"
+          sub={contradictionsScope === 'program' ? 'on this program' : 'on this client'}
           accent={contradictionsCount > 0 ? AMBER : MUTE}
         />
       </div>

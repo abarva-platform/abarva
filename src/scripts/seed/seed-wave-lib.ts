@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-export type TenantKey = 'apex' | 'meridian' | 'first_capital';
+export type TenantKey = 'apex' | 'meridian' | 'first_capital' | 'keystone';
 
 export interface TenantConfig {
   key: TenantKey;
@@ -73,6 +73,19 @@ export interface BenchmarkSeed {
   sourceAttribution: string[];
 }
 
+export interface SubsidiarySeed {
+  name: string;
+  abbreviation?: string | null;
+  geography?: string | null;
+  description: string;
+}
+
+export interface RegulatorSeed {
+  name: string;
+  jurisdiction?: string | null;
+  scope: string;
+}
+
 export interface ParsedTenantSeed {
   tenant: TenantConfig;
   markdown: string;
@@ -85,6 +98,9 @@ export interface ParsedTenantSeed {
   vendors: Array<{ section: string; item: string }>;
   priorPrograms: PriorProgramSeed[];
   benchmarks: BenchmarkSeed[];
+  subsidiaries: SubsidiarySeed[];
+  regulators: RegulatorSeed[];
+  externalDataSources: string[];
 }
 
 export const TENANTS: Record<TenantKey, TenantConfig> = {
@@ -165,6 +181,33 @@ export const TENANTS: Record<TenantKey, TenantConfig> = {
       dataRoom: 'Part 10',
     },
   },
+  keystone: {
+    key: 'keystone',
+    shortName: 'Keystone Energy Holdings',
+    canonicalName: 'Keystone Energy Holdings',
+    legalName: 'Keystone Energy Holdings, Inc.',
+    industryCode: 'UTILITIES',
+    industryTag: 'UTILITIES',
+    vertical: 'utilities',
+    domain: 'keystone-energy.example',
+    specPath: 'docs/specs/_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md',
+    companyScale: {
+      revenue_usd: 22_600_000_000,
+      assets_usd: 78_400_000_000,
+      market_cap_usd: 41_000_000_000,
+      customers: 10_400_000,
+      employees: 19_800,
+      headquarters: 'Cleveland, OH',
+    },
+    parts: {
+      initiatives: 'Part 6',
+      patterns: 'Part 7',
+      vendors: 'Part 8',
+      priorPrograms: 'Part 9',
+      benchmarks: 'Part 10',
+      dataRoom: 'Part 11',
+    },
+  },
 };
 
 export function loadSeedEnv(cwd = process.cwd()): void {
@@ -208,6 +251,7 @@ export function parseTenantSeed(config: TenantConfig, cwd = process.cwd()): Pars
 
   const people = dedupePeople([
     ...parseRoster(config, sections['Part 2'] ?? ''),
+    ...parseOperatingLeadership(config, sections['Part 2'] ?? ''),
     ...parseExtendedPeople(config, sections['Part 4'] ?? '', sections['Part 5'] ?? ''),
   ]);
   const vips = parseVipSections(sections['Part 4'] ?? '');
@@ -217,6 +261,9 @@ export function parseTenantSeed(config: TenantConfig, cwd = process.cwd()): Pars
   const vendors = parseVendorLandscape(sections[config.parts.vendors] ?? '');
   const priorPrograms = parsePriorPrograms(config, sections[config.parts.priorPrograms] ?? '');
   const benchmarks = parseBenchmarks(config, sections[config.parts.benchmarks] ?? '');
+  const subsidiaries = parseSubsidiaries(sections['Part 1'] ?? '');
+  const regulators = parseRegulators(sections['Part 1'] ?? '');
+  const externalDataSources = parseExternalDataSources(sections[config.parts.benchmarks] ?? '');
 
   return {
     tenant: config,
@@ -230,6 +277,9 @@ export function parseTenantSeed(config: TenantConfig, cwd = process.cwd()): Pars
     vendors,
     priorPrograms,
     benchmarks,
+    subsidiaries,
+    regulators,
+    externalDataSources,
   };
 }
 
@@ -260,6 +310,23 @@ function parseRoster(config: TenantConfig, partTwo: string): PersonSeed[] {
       role,
       reportsToName: isChiefExecutiveRole(role) ? null : extractChiefExecutiveName(config, partTwo),
       functionGroup: role,
+    });
+  }
+  return out;
+}
+
+function parseOperatingLeadership(config: TenantConfig, partTwo: string): PersonSeed[] {
+  if (config.key !== 'keystone') return [];
+  const out: PersonSeed[] = [];
+  const section = blockBetween(partTwo, '### 2.2', '### 2.3');
+  for (const line of section.split('\n')) {
+    const match = line.match(/^- (.+?) — (.+)$/);
+    if (!match) continue;
+    out.push({
+      name: match[1].trim(),
+      role: match[2].trim(),
+      reportsToName: 'Nicole Hargrave-Park',
+      functionGroup: 'Operating subsidiary leadership',
     });
   }
   return out;
@@ -300,7 +367,7 @@ function parseExtendedPeople(config: TenantConfig, partFour: string, partFive: s
   for (const section of parseHeadingBlocks(partFive)) {
     const manager = inferManagerForExtendedSection(config, section.title);
     for (const line of section.body.split('\n')) {
-      const match = line.match(/^- \*\*(.+?)\*\* — (.+)$/);
+      const match = line.match(/^- \*\*(.+?)\*\*(?: \([^)]+\))? — (.+)$/);
       if (!match) continue;
       const name = match[1].trim();
       const role = match[2].split('(reports to')[0].trim().replace(/\.$/, '');
@@ -356,6 +423,9 @@ function parsePriorityBullets(partThree: string): string[] {
 }
 
 function parseInitiatives(section: string): InitiativeSeed[] {
+  const inlineInitiatives = parseInlineInitiatives(section);
+  if (inlineInitiatives.length > 0) return inlineInitiatives;
+
   return parseHeadingBlocks(section)
     .filter((block) => !/\bThrough\b/i.test(block.title))
     .map((block) => ({
@@ -367,10 +437,44 @@ function parseInitiatives(section: string): InitiativeSeed[] {
     }));
 }
 
+function parseInlineInitiatives(section: string): InitiativeSeed[] {
+  const regex = /^\*\*Initiative [^\n]+?\*\*$/gm;
+  const matches = [...section.matchAll(regex)];
+  if (matches.length === 0) return [];
+
+  const out: InitiativeSeed[] = [];
+  for (let i = 0; i < matches.length; i += 1) {
+    const rawHeading = matches[i][0];
+    const start = (matches[i].index ?? 0) + rawHeading.length;
+    const end = i + 1 < matches.length ? (matches[i + 1].index ?? section.length) : section.length;
+    const body = section.slice(start, end).trim();
+    const title = rawHeading
+      .replace(/^\*\*|\*\*$/g, '')
+      .replace(/^Initiative\s+\d+(?:\.\d+)*\s+·\s+/, '')
+      .trim();
+
+    out.push({
+      title,
+      sponsorLine:
+        captureSimpleField(body, 'Executive sponsor') ??
+        captureSimpleField(body, 'Sponsor') ??
+        captureSimpleField(body, 'Owner'),
+      scope: captureSimpleField(body, 'Scope'),
+      currentPhase:
+        captureSimpleField(body, 'Current phase') ??
+        captureSimpleField(body, 'Current status') ??
+        captureSimpleField(body, 'Timeline'),
+      body,
+    });
+  }
+
+  return out;
+}
+
 function parsePatterns(config: TenantConfig, section: string): PatternSeed[] {
   return parseHeadingBlocks(section).map((block) => ({
     title: block.title,
-    summary: captureLabeledParagraph(block.body, 'Summary'),
+    summary: captureLabeledParagraph(block.body, 'Summary') ?? captureLabeledParagraph(block.body, 'Narrative'),
     severity: captureLabeledParagraph(block.body, 'Severity'),
     evidence: extractEvidenceLines(config, block.body),
     body: block.body.trim(),
@@ -410,27 +514,105 @@ function parsePriorPrograms(config: TenantConfig, section: string): PriorProgram
 
 function parseBenchmarks(config: TenantConfig, section: string): BenchmarkSeed[] {
   const sourceAttribution = extractBenchmarkSources(section);
-  const demoSection = blockBetween(section, '### 9.4', '### 10.') || blockBetween(section, '### 10.4', '## Part');
-  const lines = demoSection
+  const shortNameToken = config.shortName.split(' ')[0];
+  const candidateSections = [
+    blockBetween(section, '### 10.4', '## Part'),
+    blockBetween(section, '### 10.3', '### 10.4'),
+    blockBetween(section, '### 9.4', '### 10.'),
+  ].filter(Boolean);
+
+  const lines = [...new Set(
+    candidateSections
+      .flatMap((candidate) => candidate
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) =>
+          line.startsWith('- ')
+          && new RegExp(`\\b${escapeRegExp(shortNameToken)}\\b`, 'i').test(line)
+          && /(peer|leaders?|quartile|%|\bat\b|:)/i.test(line),
+        )),
+  )];
+
+  return lines
+    .map((line) => {
+    const boldTitleMatch = line.match(/^- \*\*(.+?)\*\*: (.+)$/);
+    const parenTitleMatch = line.match(/^- (.+?)\s+\((.+)\)$/);
+    const title = boldTitleMatch?.[1]?.trim() ?? parenTitleMatch?.[1]?.trim() ?? line.replace(/^- /, '');
+    const raw = boldTitleMatch?.[2]?.trim() ?? parenTitleMatch?.[2]?.trim() ?? line.replace(/^- /, '');
+    const peerMedian = parseFirstNumber(
+      raw.match(/peer median[: ]+([\d.]+)/i)?.[1]
+      ?? raw.match(/peer average[: ]+([\d.]+)/i)?.[1]
+      ?? null,
+    );
+    const clientValue = parseFirstNumber(
+      raw.match(new RegExp(`${escapeRegExp(shortNameToken)}(?: [A-Za-z]+)?(?: at|:)\\s*([\\d.]+)`, 'i'))?.[1]
+      ?? null,
+    );
+    return { title, raw, clientValue, peerMedian, sourceAttribution };
+    })
+    .filter((benchmark) => benchmark.clientValue !== null || benchmark.peerMedian !== null || /top quartile|mid-pack/i.test(benchmark.raw));
+}
+
+function parseSubsidiaries(partOne: string): SubsidiarySeed[] {
+  const section = blockBetween(partOne, '### 1.3', '### 1.4');
+  return section
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line.startsWith('- **'));
+    .filter((line) => line.startsWith('- **'))
+    .map((line) => {
+      const match = line.match(/^- \*\*(.+?)\s+\(([^)]+)\)\*\*\s+—\s+(.+?)\s+—\s+(.+)$/);
+      if (!match) {
+        return {
+          name: line.replace(/^- /, '').replace(/\*\*/g, '').trim(),
+          description: line.replace(/^- /, '').replace(/\*\*/g, '').trim(),
+        };
+      }
 
-  return lines.map((line) => {
-    const titleMatch = line.match(/^- \*\*(.+?)\*\*: (.+)$/);
-    const title = titleMatch?.[1]?.trim() ?? line;
-    const raw = titleMatch?.[2]?.trim() ?? '';
-    const peerMedian = parseFirstNumber(raw);
-    const clientRegex = new RegExp(`${escapeRegExp(config.shortName.split(' ')[0])}(?: [A-Za-z]+)? at ([\\d.]+)`, 'i');
-    const clientValue = parseFirstNumber(raw.match(clientRegex)?.[1] ?? null);
-    return { title, raw, clientValue, peerMedian, sourceAttribution };
-  });
+      return {
+        name: match[1].trim(),
+        abbreviation: match[2].trim(),
+        geography: match[3].trim(),
+        description: match[4].trim(),
+      };
+    });
+}
+
+function parseRegulators(partOne: string): RegulatorSeed[] {
+  const section = blockBetween(partOne, '### 1.4', '### 1.5');
+  return section
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- **'))
+    .map((line) => {
+      const match = line.match(/^- \*\*(.+?)\*\*\s+\(([^)]+)\)\s+—\s+(.+)$/);
+      if (!match) {
+        return {
+          name: line.replace(/^- /, '').replace(/\*\*/g, '').trim(),
+          scope: line.replace(/^- /, '').replace(/\*\*/g, '').trim(),
+        };
+      }
+
+      return {
+        name: match[1].trim(),
+        jurisdiction: match[2].trim(),
+        scope: match[3].trim(),
+      };
+    });
+}
+
+function parseExternalDataSources(section: string): string[] {
+  const sourceSection = blockBetween(section, '### 10.4', '## Part');
+  return sourceSection
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.startsWith('- '))
+    .map((line) => line.replace(/^- /, '').trim());
 }
 
 function extractBenchmarkSources(section: string): string[] {
   const blocks = parseHeadingBlocks(section);
-  const sourceBlock = blocks.find((block) => /Public data sources/i.test(block.title));
-  if (!sourceBlock) return [];
+  const sourceBlock = blocks.find((block) => /Public data sources|Non-peer data sources seeded/i.test(block.title));
+  if (!sourceBlock) return parseExternalDataSources(section);
   return sourceBlock.body
     .split('\n')
     .map((line) => line.trim())
@@ -489,14 +671,22 @@ function extractEvidenceLines(config: TenantConfig, body: string): string[] {
 }
 
 function splitNameRole(title: string): [string, string] {
-  const parts = title.split(' · ');
+  const normalized = title.replace(/^\d+(?:\.\d+)?\s+·\s+/, '').trim();
+  if (normalized.includes(' — ')) {
+    const [name, ...rest] = normalized.split(' — ');
+    return [name?.trim() ?? '', rest.join(' — ').trim()];
+  }
+
+  const parts = normalized.split(' · ');
   if (parts.length < 2) return ['', ''];
-  const name = parts[1]?.trim() ?? '';
-  const role = parts.slice(2).join(' · ').trim();
+  const name = parts[0]?.trim() ?? '';
+  const role = parts.slice(1).join(' · ').trim();
   return [name, role];
 }
 
 function inferManagerForExtendedSection(config: TenantConfig, title: string): string | null {
+  const explicit = title.match(/\(under ([^)]+)\)/i)?.[1]?.trim();
+  if (explicit) return explicit;
   if (config.key === 'apex') {
     if (/Merchandising/i.test(title)) return 'Jordan Alkaev';
     if (/Supply Chain/i.test(title)) return 'Maria Delgado';
@@ -512,6 +702,7 @@ function extractChiefExecutiveName(config: TenantConfig, content: string): strin
   if (explicit) return explicit.trim();
   if (config.key === 'apex') return 'Vincent Okafor';
   if (config.key === 'meridian') return 'Dr. Elena Vasquez';
+  if (config.key === 'keystone') return 'Marcus W. Kittrell';
   return 'Robert "Bo" Hargrove III';
 }
 

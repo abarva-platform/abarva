@@ -148,12 +148,104 @@ async function firstCapitalChecks(): Promise<CheckResult[]> {
   ];
 }
 
+async function keystoneChecks(): Promise<CheckResult[]> {
+  const sb = createSeedClient();
+  const clientId = await resolveClientId(TENANTS.keystone.shortName, TENANTS.keystone.legalName);
+  const [
+    { data: people },
+    patterns,
+    subsidiaries,
+    priorities,
+    sourceDocument,
+  ] = await Promise.all([
+    sb
+      .from('persons')
+      .select('name, role')
+      .eq('organization', TENANTS.keystone.canonicalName),
+    loadCategory<{ patterns: Array<{ title: string; summary?: string | null; evidence?: string[] }> }>(clientId, 'active_patterns'),
+    loadCategory<{ subsidiaries: Array<{ name: string }> }>(clientId, 'subsidiary_structure'),
+    loadCategory<{ priorities: string[] }>(clientId, 'strategic_priorities'),
+    loadCategory<{ markdown: string }>(clientId, 'source_document'),
+  ]);
+
+  const peopleRows = (people ?? []) as Array<{ name: string; role: string | null }>;
+  const ceo = peopleRows.find((person) => /Marcus W\. Kittrell/i.test(person.name));
+  const ccto = peopleRows.find((person) => /Chief Customer and Technology Officer/i.test(person.role ?? ''));
+  const kegPresident = peopleRows.find((person) => /Reginald Chatmon/i.test(person.name));
+
+  const queuePattern = patterns.patterns.find((pattern) => /interconnection queue|data center load/i.test(pattern.title));
+  const queueAnswer = queuePattern
+    ? `${queuePattern.title} — ${queuePattern.summary ?? ''} — ${(queuePattern.evidence ?? []).join(' | ')}`
+    : 'missing';
+
+  const capitalPlanAnswer = sourceDocument.markdown.match(/\*\*Capital investment plan \(2025-2028\):\*\* [^\n]+/i)?.[0]
+    ?? sourceDocument.markdown.match(/capital investment plan[^.\n]*\$37B[^.\n]*2028/i)?.[0]
+    ?? 'missing';
+
+  const shadowPattern = patterns.patterns.find((pattern) => /shadow ai/i.test(pattern.title));
+  const shadowAnswer = shadowPattern
+    ? `${shadowPattern.title} — ${shadowPattern.summary ?? ''} — ${(shadowPattern.evidence ?? []).join(' | ')}`
+    : 'missing';
+
+  const subsidiaryAnswer = subsidiaries.subsidiaries.map((item) => item.name).join(' | ');
+  const cleanEnergyAnswer = priorities.priorities.find((item) => /Scope 1 and Scope 2 net zero by 2040/i.test(item))
+    ?? sourceDocument.markdown.match(/Scope 1 and Scope 2 net zero by 2040, Scope 3 net zero by 2050/i)?.[0]
+    ?? 'missing';
+
+  return [
+    {
+      question: 'Who is the CEO of Keystone?',
+      answer: ceo ? `${ceo.name} — ${ceo.role}` : 'missing',
+      passed: Boolean(ceo && /President and Chief Executive Officer/i.test(ceo.role ?? '')),
+    },
+    {
+      question: 'Who is the Chief Customer and Technology Officer?',
+      answer: ccto ? `${ccto.name} — ${ccto.role}` : 'missing',
+      passed: Boolean(ccto && /Jonathan Aldridge/i.test(ccto.name ?? '')),
+    },
+    {
+      question: "What is Keystone's large load interconnection queue?",
+      answer: queueAnswer,
+      passed: /32 GW/i.test(queueAnswer),
+    },
+    {
+      question: 'What is the capital investment plan?',
+      answer: capitalPlanAnswer,
+      passed: /\$37B/i.test(capitalPlanAnswer) && /2028/i.test(capitalPlanAnswer),
+    },
+    {
+      question: "Tell me about Keystone's shadow AI pattern.",
+      answer: shadowAnswer,
+      passed: /\$1\.6M/i.test(shadowAnswer) && /11/i.test(shadowAnswer) && /Jonathan Aldridge|Aldridge/i.test(shadowAnswer),
+    },
+    {
+      question: 'How many operating subsidiaries does Keystone have?',
+      answer: subsidiaryAnswer,
+      passed:
+        subsidiaries.subsidiaries.length === 6 &&
+        /Riverbend Electric Company/i.test(subsidiaryAnswer) &&
+        /Keystone Electric & Gas/i.test(subsidiaryAnswer),
+    },
+    {
+      question: 'Who is the CEO of Keystone Electric & Gas?',
+      answer: kegPresident ? `${kegPresident.name} — ${kegPresident.role}` : 'missing',
+      passed: Boolean(kegPresident && /President, Keystone Electric & Gas/i.test(kegPresident.role ?? '')),
+    },
+    {
+      question: "What is Keystone's clean energy commitment?",
+      answer: cleanEnergyAnswer,
+      passed: /2040/i.test(cleanEnergyAnswer) && /2050/i.test(cleanEnergyAnswer),
+    },
+  ];
+}
+
 async function main() {
   loadSeedEnv();
   const results = [
     ...(await apexChecks()),
     ...(await meridianChecks()),
     ...(await firstCapitalChecks()),
+    ...(await keystoneChecks()),
   ];
 
   for (const result of results) {

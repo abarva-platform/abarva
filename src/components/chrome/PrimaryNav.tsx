@@ -12,7 +12,7 @@ const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 // Design-fix override: all items render at equal primary weight — no opacity.
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/' || p.startsWith('/home/') || p === '/dashboard' || p.startsWith('/dashboard/') },
-  { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
+  { label: 'Programs', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
   { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
   { label: 'Platform', href: '/platform', match: (p) => p === '/platform' || p.startsWith('/platform/') || p.startsWith('/admin') || p.startsWith('/data') || p.startsWith('/users') },

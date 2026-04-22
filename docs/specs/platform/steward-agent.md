@@ -9,7 +9,7 @@ Steward exists because the control-plane work of platform administration is dens
 This spec reads alongside:
 
 - `docs/specs/platform/agent-architecture.md` — the master agent pattern (scripted + LLM, tool belt, voice lock)
-- `docs/specs/platform/platform-administration-architecture.md` — the infrastructure Steward operates within
+- `docs/specs/platform/administration-architecture.md` — the infrastructure Steward operates within
 - `docs/specs/intelligence/design-spec.md` — Sentinel's comparable agent design for cross-reference
 - `docs/specs/programs/design-spec.md` — Nexus's comparable agent design for cross-reference
 - `docs/specs/tower/design-spec.md` — Atlas's comparable agent design for cross-reference

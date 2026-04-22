@@ -15,13 +15,19 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | File | Covers |
 |------|--------|
 | [`platform/agent-architecture.md`](./platform/agent-architecture.md) | Nexus, Sentinel, Atlas · unified 3-agent spec |
+| [`platform/administration-architecture.md`](./platform/administration-architecture.md) | Platform administration, tenancy, access control, governance, and audit architecture |
 | [`platform/design-system.md`](./platform/design-system.md) | Core visual system, component contracts, tokens, interaction patterns |
+| `platform/runtime-contracts/` | Shipped runtime contracts for Nexus orchestration, voice filtering, and gate lifecycle behavior |
 | [`platform/data-layer-future-state.md`](./platform/data-layer-future-state.md) | Future-state data architecture and query model |
 | [`platform/data-ingestion-integration.md`](./platform/data-ingestion-integration.md) | Enterprise ingestion model, source handling, integration pathways |
 | [`platform/intelligence-vip-system.md`](./platform/intelligence-vip-system.md) | VIP profile system and executive context model |
+| [`platform/steward-agent.md`](./platform/steward-agent.md) | Steward agent spec for administration workflows, governance actions, and operator assist |
 | [`platform/data-ground-truth-surface.md`](./platform/data-ground-truth-surface.md) | CXO-facing transparency surface for client ground truth, provenance, gaps, patterns |
 | [`platform/benchmarks-industry-data-architecture.md`](./platform/benchmarks-industry-data-architecture.md) | Benchmark and peer-data ingestion, classification, and refresh architecture |
 | [`platform/graph-intelligence-architecture.md`](./platform/graph-intelligence-architecture.md) | Entity, relationship, provenance, and reasoning architecture for graph intelligence |
+| [`platform/intelligence-layer-north-star-spec.md`](./platform/intelligence-layer-north-star-spec.md) | Eight-layer intelligence north star for KPIs, pattern packs, graph depth, telemetry, and dual-scope reasoning/disclosure |
+| [`platform/executive-profile-system.md`](./platform/executive-profile-system.md) | Presence-vibe architecture for executive profiles, style-aware personalization, and composite/real-world profile governance |
+| [`platform/contradiction-engine-foundation.md`](./platform/contradiction-engine-foundation.md) | Candor-layer contradiction engine architecture, rules, scoring, surfacing, and disclosure model |
 
 ## Product surfaces
 
@@ -45,11 +51,22 @@ Canonical specifications for AbarVa. When building, reference these over any old
 |------|---------|
 | [`_meta/seed-data/apex-reconciled.md`](./_meta/seed-data/apex-reconciled.md) | Canonical composite retail client (Apex Retail Group) seed |
 | [`_meta/seed-data/apex-retail-group-comprehensive-seed.md`](./_meta/seed-data/apex-retail-group-comprehensive-seed.md) | Comprehensive retail composite seed with org depth, initiatives, patterns, vendors, and benchmarks |
+| [`_meta/seed-data/apex-intelligence-layer-overlay.md`](./_meta/seed-data/apex-intelligence-layer-overlay.md) | Apex retail implementation of the intelligence-layer north star with KPI objects, pattern packs, telemetry registrations, and dual-scope examples |
+| [`_meta/seed-data/apex-intelligence-layer-validation-results.md`](./_meta/seed-data/apex-intelligence-layer-validation-results.md) | Validation artifact for Apex overlay ingestion, verification, and smoke-test results |
 | [`_meta/seed-data/meridian-health-system-comprehensive-seed.md`](./_meta/seed-data/meridian-health-system-comprehensive-seed.md) | Comprehensive healthcare composite seed with payer arm, value-based care agenda, and benchmark layer |
 | [`_meta/seed-data/first-capital-financial-comprehensive-seed.md`](./_meta/seed-data/first-capital-financial-comprehensive-seed.md) | Comprehensive financial-services composite seed with regulatory context, data org, initiatives, patterns, and benchmarks |
+| [`_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md`](./_meta/seed-data/keystone-energy-holdings-comprehensive-seed.md) | Comprehensive regulated-utility composite seed with subsidiaries, regulatory environment, patterns, and benchmark layer |
+| [`_meta/seed-data/keystone-intelligence-layer-overlay.md`](./_meta/seed-data/keystone-intelligence-layer-overlay.md) | Keystone reference implementation of the intelligence-layer north star with KPIs, pattern packs, telemetry, and dual-scope configuration |
+| [`_meta/seed-data/keystone-seed-validation-results.md`](./_meta/seed-data/keystone-seed-validation-results.md) | Validation artifact for Keystone ingestion, verification, and smoke-test results |
+| [`_meta/seed-data/keystone-intelligence-layer-validation-results.md`](./_meta/seed-data/keystone-intelligence-layer-validation-results.md) | Validation artifact for Keystone north-star schema migration, overlay ingestion, and compatibility verification |
+| [`_meta/seed-data/seed-wave-validation-results.md`](./_meta/seed-data/seed-wave-validation-results.md) | Validation artifact for Apex, Meridian, and First Capital seed-wave ingestion and smoke tests |
+| [`_meta/seed-data/executive-profile-validation-results.md`](./_meta/seed-data/executive-profile-validation-results.md) | Validation artifact for executive-profile schema migration, composite-profile seeding, and ethics-gated real-world profile status |
+| [`_meta/seed-data/contradiction-engine-validation-results.md`](./_meta/seed-data/contradiction-engine-validation-results.md) | Validation artifact for the contradiction-engine foundation migration, seeding, verification, and smoke tests |
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
 | [`_meta/BACKLOG.md`](./_meta/BACKLOG.md) | Older product backlog (may be stale) |
 | [`_meta/QA_CHECKLIST.md`](./_meta/QA_CHECKLIST.md) | Older QA checklist (may be stale) |
+| [`_meta/page-design-backlog.md`](./_meta/page-design-backlog.md) | Page-by-page design work queue across Intelligence, Programs, and Tower |
+| [`_meta/product-reframe.md`](./_meta/product-reframe.md) | Strategic framing for the four product surfaces through the buyer lens |
 
 ## Active corrections
 
@@ -69,7 +86,6 @@ Older specs kept for context. Never treat as canonical.
 - `_reference/AbarVa_Workflow_Narrative_Spec.md`
 - `_reference/TECH_MODERNIZATION_SPEC.md`
 - `_reference/INVESTOR_PAGE_SPEC.md`
-- `_reference/packs/` — reserved for Pack A–L documents if brought into repo
 
 ## Archive
 
