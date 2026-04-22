@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { TOPIC_DEPTH_OVERLAYS } from '@/lib/intelligence/fix-spec-v3-content';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { TopicRow, VendorEntry } from '@/lib/topics/db';
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const CORAL = '#FF6B4A';
@@ -102,6 +103,11 @@ export default async function TopicDetailPage({
   const topic = await loadTopic(topicKey);
   if (!topic) notFound();
   const engagements = await loadEngagementsOnTopic(topicKey);
+  const overlay = TOPIC_DEPTH_OVERLAYS[topicKey] ?? null;
+  const triggerItems =
+    overlay?.triggers && overlay.triggers.length > 0
+      ? overlay.triggers
+      : topic.typical_triggers.map((t) => (typeof t === 'string' ? t : (t.phrase ?? t.description ?? ''))).filter(Boolean);
 
   const questionsByPhase = new Map<number, typeof topic.diagnostic_questions>();
   for (const q of topic.diagnostic_questions) {
@@ -191,18 +197,78 @@ export default async function TopicDetailPage({
         </Section>
       )}
 
-      {topic.typical_triggers.length > 0 && (
+      {overlay?.concept && overlay.concept.length > 0 && (
+        <Section label="THE CONCEPT" color={TEAL}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {overlay.concept.map((paragraph, index) => (
+              <p key={index} style={{ margin: 0, color: INK, fontSize: 13.5, lineHeight: 1.7, maxWidth: 920 }}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {triggerItems.length > 0 && (
         <Section label="TYPICAL TRIGGERS">
           <ul style={{ margin: 0, paddingLeft: 20, color: INK, fontSize: 13.5, lineHeight: 1.7 }}>
-            {topic.typical_triggers.map((t, i) => {
-              const text = typeof t === 'string' ? t : (t.phrase ?? t.description ?? '');
-              return <li key={i}>{text}</li>;
-            })}
+            {triggerItems.map((text, i) => <li key={i}>{text}</li>)}
           </ul>
         </Section>
       )}
 
-      {topic.key_patterns.length > 0 && (
+      {overlay?.conceptualLandscape && overlay.conceptualLandscape.length > 0 && (
+        <Section label="CONCEPTUAL LANDSCAPE" color={PURPLE}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {overlay.conceptualLandscape.map((item) => (
+              <div key={item.name} style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+                <div style={{ color: INK, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{item.name}</div>
+                <div style={{ color: MUTE, fontSize: 12.5, lineHeight: 1.55 }}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {overlay?.practitionerLandscape && overlay.practitionerLandscape.length > 0 && (
+        <Section label="PRACTITIONER LANDSCAPE" color={AMBER}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {overlay.practitionerLandscape.map((item) => (
+              <div key={item.name} style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+                <div style={{ color: INK, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{item.name}</div>
+                <div style={{ color: MUTE, fontSize: 12.5, lineHeight: 1.55 }}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {overlay?.patternCards && overlay.patternCards.length > 0 ? (
+        <Section label="KEY PATTERNS" color={CORAL}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {overlay.patternCards.map((pattern) => (
+              <Link
+                key={pattern.code}
+                href={`/intelligence/patterns?code=${encodeURIComponent(pattern.code)}`}
+                style={{
+                  display: 'block',
+                  padding: 12,
+                  background: 'rgba(255,107,74,0.06)',
+                  border: `0.5px solid ${CORAL}55`,
+                  borderRadius: 10,
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ fontFamily: MONO, fontSize: 10, color: CORAL, letterSpacing: '0.1em', marginBottom: 6 }}>
+                  {pattern.code}
+                </div>
+                <div style={{ fontSize: 13, color: INK, fontWeight: 600, marginBottom: 6 }}>{pattern.name}</div>
+                <div style={{ fontSize: 12.5, color: MUTE, lineHeight: 1.55 }}>{pattern.description}</div>
+              </Link>
+            ))}
+          </div>
+        </Section>
+      ) : topic.key_patterns.length > 0 && (
         <Section label="KEY PATTERNS" color={CORAL}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {topic.key_patterns.map((code) => (
@@ -286,6 +352,44 @@ export default async function TopicDetailPage({
               );
             })}
           </ul>
+        </Section>
+      )}
+
+      {overlay?.evidenceBase && overlay.evidenceBase.length > 0 && (
+        <Section label="EVIDENCE BASE" color={GREEN}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 10 }}>
+            {overlay.evidenceBase.map((item) => (
+              <div key={item.name} style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+                <div style={{ color: INK, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{item.name}</div>
+                <div style={{ color: MUTE, fontSize: 12.5, lineHeight: 1.55 }}>{item.note}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {overlay?.maestroRubric && (
+        <Section label="MAESTRO RUBRIC" color={TEAL}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10 }}>
+            <div style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.12em', marginBottom: 8 }}>PROBE FOR</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: INK, fontSize: 12.5, lineHeight: 1.55 }}>
+                {overlay.maestroRubric.probeFor.map((item, index) => <li key={index}>{item}</li>)}
+              </ul>
+            </div>
+            <div style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: AMBER, letterSpacing: '0.12em', marginBottom: 8 }}>CONFIRMING SIGNALS</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: INK, fontSize: 12.5, lineHeight: 1.55 }}>
+                {overlay.maestroRubric.confirmingSignals.map((item, index) => <li key={index}>{item}</li>)}
+              </ul>
+            </div>
+            <div style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 10 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: GREEN, letterSpacing: '0.12em', marginBottom: 8 }}>RESOLUTION SIGNALS</div>
+              <ul style={{ margin: 0, paddingLeft: 18, color: INK, fontSize: 12.5, lineHeight: 1.55 }}>
+                {overlay.maestroRubric.resolutionSignals.map((item, index) => <li key={index}>{item}</li>)}
+              </ul>
+            </div>
+          </div>
         </Section>
       )}
 
