@@ -4,6 +4,7 @@ import { loadEnterpriseSummary } from '@/lib/tower/enterprise-summary';
 import { TowerUploadZone } from '@/components/tower/TowerUploadZone';
 import { EnterpriseContextRow } from '@/components/tower/EnterpriseContextRow';
 import { AtlasRail } from '@/components/atlas/AtlasRail';
+import { PageShell } from '@/components/shared/layout/PageShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -286,9 +287,10 @@ export default async function TowerPage({
   }
 
   return (
-    <div style={{ padding: '24px 24px 40px', maxWidth: 1780, margin: '0 auto', color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 20, alignItems: 'start' }}>
-        <div>
+    <PageShell width="wide" style={{ paddingTop: 24, paddingBottom: 40 }}>
+      <div style={{ color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
+        <div className="tower-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 20, alignItems: 'start' }}>
+          <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
             <div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 12, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
@@ -529,17 +531,25 @@ export default async function TowerPage({
           <TowerUploadZone clientId={vm.client.id} />
         </div>
 
-        <AtlasRail clientId={clientId} clientName={vm.client.name} />
-      </div>
+          <AtlasRail clientId={clientId} clientName={vm.client.name} />
+        </div>
 
-      <style>{`
-        @media (max-width: 1280px) {
-          .tower-dimension-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-        }
-        @media (max-width: 720px) {
-          .tower-dimension-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
-    </div>
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              @media (max-width: 1360px) {
+                .tower-main-grid { grid-template-columns: 1fr !important; }
+              }
+              @media (max-width: 1280px) {
+                .tower-dimension-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+              }
+              @media (max-width: 720px) {
+                .tower-dimension-grid { grid-template-columns: 1fr !important; }
+              }
+            `,
+          }}
+        />
+      </div>
+    </PageShell>
   );
 }

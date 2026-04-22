@@ -2,8 +2,10 @@
 // /threads/**, /artifacts/**. Every route MUST call requireTenancy()
 // first and scope queries by the returned TenancyCtx.
 
+import { currentUser } from '@clerk/nextjs/server';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import type { TenancyCtx } from '@/lib/intelligence/types';
 
 export class TenancyError extends Error {
@@ -13,11 +15,14 @@ export class TenancyError extends Error {
 }
 
 export async function requireTenancy(): Promise<TenancyCtx> {
-  const person = await getCurrentPerson();
-  if (!person) throw new TenancyError('unauthenticated');
+  const [person, user] = await Promise.all([getCurrentPerson(), getCurrentUser()]);
+  const clerkUser = user ? null : await currentUser().catch(() => null);
+  if (!person && !user?.personId && !clerkUser) throw new TenancyError('unauthenticated');
   const client = await getActiveClientRow();
   if (!client) throw new TenancyError('no_client');
-  return { clientId: client.id, userId: person.id };
+  const userId = person?.id ?? user?.personId ?? null;
+  if (!userId) throw new TenancyError('unauthenticated');
+  return { clientId: client.id, userId };
 }
 
 export function tenancyErrorResponse(err: unknown): Response {
