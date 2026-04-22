@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { config as loadEnv } from 'dotenv';
 import path from 'node:path';
+import { timelineResourceEstimateDeliverableType } from '@/lib/deliverables/templates/timeline_resource_estimate';
+import { executionRoadmapTrackerDeliverableType } from '@/lib/deliverables/templates/execution_roadmap_tracker';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -21,7 +23,7 @@ interface DeliverableTypeSeed {
   applicable_topics: string[];
   template_structure: Record<string, unknown>;
   required_data_inputs: Record<string, unknown>;
-  quality_rubric: Record<string, unknown>;
+  quality_rubric: Record<string, unknown> | Array<Record<string, unknown>>;
   generation_prompt_template: string;
   output_format: 'markdown' | 'docx' | 'pptx' | 'xlsx' | 'pdf';
   maturity: 'draft' | 'pilot' | 'production' | 'deprecated';
@@ -720,6 +722,39 @@ Generate the scorecard now.`,
     maturity: 'pilot',
   },
 ];
+
+function toSeedFromTemplate(template: {
+  type_key: string;
+  title: string;
+  description: string;
+  applicable_phases: readonly number[];
+  applicable_topics: readonly string[];
+  template_structure: unknown;
+  required_data_inputs: unknown;
+  quality_rubric: unknown;
+  generation_prompt_template: string;
+  output_format: 'markdown' | 'docx' | 'pptx' | 'xlsx' | 'pdf';
+  maturity: 'draft' | 'pilot' | 'production' | 'deprecated';
+}): DeliverableTypeSeed {
+  return {
+    type_key: template.type_key,
+    title: template.title,
+    description: template.description,
+    applicable_phases: [...template.applicable_phases],
+    applicable_topics: [...template.applicable_topics],
+    template_structure: template.template_structure as Record<string, unknown>,
+    required_data_inputs: template.required_data_inputs as Record<string, unknown>,
+    quality_rubric: template.quality_rubric as DeliverableTypeSeed['quality_rubric'],
+    generation_prompt_template: template.generation_prompt_template,
+    output_format: template.output_format,
+    maturity: template.maturity,
+  };
+}
+
+TYPES.push(
+  toSeedFromTemplate(timelineResourceEstimateDeliverableType),
+  toSeedFromTemplate(executionRoadmapTrackerDeliverableType),
+);
 
 function getSb() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
