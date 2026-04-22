@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 export default function NotFound() {
   return (
     <div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }}>
@@ -41,12 +43,12 @@ export default function NotFound() {
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="/" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #14B8A6', color: '#14B8A6', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+          <Link href="/" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#2DD4C8', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             ← Go Home
-          </a>
-          <a href="/investor" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #14B8A6', color: '#0D1117', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: '#14B8A6' }}>
+          </Link>
+          <Link href="/investor" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#0D1117', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: '#2DD4C8' }}>
             Open Investor View →
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -382,7 +382,7 @@ function buildPhasePairs(
   const phaseLabel = PHASE_LABELS[phase] ?? `Phase ${phase}`;
 
   if (phase === 0) {
-    let pair6Agent = appendDecisionBlock(
+    const pair6Agent = appendDecisionBlock(
       `That's helpful. I'm locking the success lens around ${profile.baselineLens}. That gives us a way to talk about ${profile.objective} without drifting into generic transformation language.`,
       {
         summary: `Use ${profile.baselineLens} as the Phase 0 success lens`,
@@ -391,7 +391,7 @@ function buildPhasePairs(
         impact: 'Charter and first diagnostic cuts will anchor on this metric spine.',
       },
     );
-    let pair7Agent = appendDecisionBlock(
+    const pair7Agent = appendDecisionBlock(
       `Good. I also want the working team constrained to ${profile.firstWin}. That's small enough to move quickly and big enough to prove the program has teeth.`,
       {
         summary: `Bound the first wave to ${profile.firstWin}`,
@@ -450,7 +450,7 @@ function buildPhasePairs(
   }
 
   if (phase === 1) {
-    let pair5Agent = appendDecisionBlock(
+    const pair5Agent = appendDecisionBlock(
       `The first-win scope should be ${profile.firstWin}. It is narrow enough to diagnose honestly and broad enough to reveal whether ${profile.rootCause}.`,
       {
         summary: `Constrain Phase 1 to ${profile.firstWin}`,
@@ -511,7 +511,7 @@ function buildPhasePairs(
   }
 
   if (phase === 2) {
-    let pair4Agent = appendDecisionBlock(
+    const pair4Agent = appendDecisionBlock(
       `I would recommend ${profile.recommendation}. It matches the constraints, gives us a faster proof point, and avoids pretending the organization can absorb every change at once.`,
       {
         summary: `Recommend ${profile.recommendation}`,
@@ -520,7 +520,7 @@ function buildPhasePairs(
         impact: 'The design brief can now converge on one preferred path with explicit tradeoffs.',
       },
     );
-    let pair6Agent = appendDecisionBlock(
+    const pair6Agent = appendDecisionBlock(
       `I'm also locking the first execution target around ${profile.thirtyDayTarget}. If the team cannot hit that, the design was not actionable enough.`,
       {
         summary: `Use ${profile.thirtyDayTarget} as the first execution proving point`,
@@ -581,7 +581,7 @@ function buildPhasePairs(
   }
 
   if (phase === 3) {
-    let pair4Agent = appendDecisionBlock(
+    const pair4Agent = appendDecisionBlock(
       `I'm logging the execution decision this way: ${profile.thirtyDayTarget}. That's the line I want every workstream lead repeating back.`,
       {
         summary: `Anchor Phase 3 on ${profile.thirtyDayTarget}`,

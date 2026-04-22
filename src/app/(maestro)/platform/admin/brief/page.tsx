@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import AbarvaNav from '@/components/AbarvaNav'
 
 const T = {
@@ -276,9 +277,9 @@ export default function PreMeetingBrief() {
               <div style={{ fontFamily: T.mono, fontSize: '9px', fontWeight: 700, color: T.amber, letterSpacing: '1.5px', marginBottom: '5px', textTransform: 'uppercase' as const }}>Understand the History First</div>
               <div style={{ fontFamily: T.sans, fontSize: '12px', color: T.text3, lineHeight: 1.65 }}>Every answer above connects to a decision Meridian made before Marcus arrived. Open the Decision Timeline before the Q&amp;A starts — CIOs recognize themselves in it immediately.</div>
             </div>
-            <a href="/engagements" style={{ fontFamily: T.mono, fontSize: '10px', padding: '8px 16px', borderRadius: '6px', background: 'rgba(245,158,11,0.07)', color: T.amber, border: `1px solid rgba(245,158,11,0.2)`, textDecoration: 'none', flexShrink: 0, marginLeft: '20px', whiteSpace: 'nowrap' as const }}>
+            <Link href="/engagements" style={{ fontFamily: T.mono, fontSize: '10px', padding: '8px 16px', borderRadius: '6px', background: 'rgba(245,158,11,0.07)', color: T.amber, border: `1px solid rgba(245,158,11,0.2)`, textDecoration: 'none', flexShrink: 0, marginLeft: '20px', whiteSpace: 'nowrap' as const }}>
               Decision Timeline →
-            </a>
+            </Link>
           </div>
 
           {/* ── 3. WHAT TO SHOW (blue) ── */}
