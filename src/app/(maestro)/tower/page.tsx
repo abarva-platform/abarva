@@ -4,9 +4,18 @@ import { loadEnterpriseSummary } from '@/lib/tower/enterprise-summary';
 import { TowerUploadZone } from '@/components/tower/TowerUploadZone';
 import { EnterpriseContextRow } from '@/components/tower/EnterpriseContextRow';
 import { AtlasRail } from '@/components/atlas/AtlasRail';
-import { PageShell } from '@/components/shared/layout/PageShell';
 
 export const dynamic = 'force-dynamic';
+
+const PAGE_BG = '#F6F1E8';
+const PAGE_PANEL = '#FFFDFC';
+const PAGE_SOFT = '#F3EBDD';
+const PAGE_LINE = 'rgba(23,20,17,0.1)';
+const PAGE_INK = '#171411';
+const PAGE_MUTE = '#6B5B52';
+const PAGE_TEAL = '#0E9F8C';
+const PAGE_SHADOW = '0 24px 72px rgba(23,20,17,0.08)';
+const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
@@ -287,23 +296,214 @@ export default async function TowerPage({
   }
 
   return (
-    <PageShell width="wide" style={{ paddingTop: 24, paddingBottom: 40 }}>
-      <div style={{ color: INK, fontFamily: 'DM Sans, -apple-system, sans-serif' }}>
-        <div className="tower-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 20, alignItems: 'start' }}>
-          <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: `radial-gradient(circle at top left, rgba(14,159,140,0.08), transparent 28%), ${PAGE_BG}`,
+        color: PAGE_INK,
+        fontFamily: SANS,
+      }}
+    >
+      <div style={{ maxWidth: 1480, margin: '0 auto', padding: '28px 24px 56px' }}>
+        <section
+          className="tower-hero-grid"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.4fr) minmax(320px, 0.7fr)',
+            gap: 24,
+            alignItems: 'stretch',
+            marginBottom: 26,
+          }}
+        >
+          <div
+            style={{
+              padding: '28px clamp(24px, 3vw, 40px)',
+              background: PAGE_PANEL,
+              border: `1px solid ${PAGE_LINE}`,
+              borderRadius: 28,
+              boxShadow: PAGE_SHADOW,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: FONT_MONO,
+                fontSize: 11,
+                letterSpacing: '0.14em',
+                color: PAGE_TEAL,
+                textTransform: 'uppercase',
+              }}
+            >
+              Control Tower
+            </div>
+            <div
+              style={{
+                fontFamily: '"Fraunces", Georgia, serif',
+                fontSize: 'clamp(46px, 6vw, 84px)',
+                lineHeight: 0.92,
+                letterSpacing: '-0.05em',
+                color: PAGE_INK,
+                marginTop: 14,
+                maxWidth: 760,
+              }}
+            >
+              {vm.client.name}
+            </div>
+            <div
+              style={{
+                marginTop: 18,
+                maxWidth: 760,
+                fontSize: 'clamp(17px, 1.2vw + 12px, 22px)',
+                lineHeight: 1.55,
+                color: PAGE_MUTE,
+              }}
+            >
+              The operating view for adoption, value, risk, spend, and contradiction pressure.
+              This page should read like a leadership cockpit, not a system dump.
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 22 }}>
+              {[
+                `${vm.client.industry_code ?? 'UNCLASSIFIED'} tenant`,
+                `${vm.inventory.total} mapped use cases`,
+                `${vm.contradictions.length} contradictions active`,
+                `${dollarsM(vm.cost.monthlySpendUsd)} monthly spend`,
+              ].map((pill) => (
+                <span
+                  key={pill}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 999,
+                    background: PAGE_SOFT,
+                    border: `1px solid ${PAGE_LINE}`,
+                    fontFamily: FONT_MONO,
+                    fontSize: 10,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: PAGE_MUTE,
+                  }}
+                >
+                  {pill}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: 24,
+              background: `linear-gradient(180deg, ${PAGE_PANEL}, ${PAGE_SOFT})`,
+              border: `1px solid ${PAGE_LINE}`,
+              borderRadius: 28,
+              boxShadow: PAGE_SHADOW,
+              display: 'grid',
+              gap: 16,
+              alignContent: 'start',
+            }}
+          >
             <div>
-              <div style={{ fontFamily: FONT_MONO, fontSize: 12, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
-                Control Tower
+              <div
+                style={{
+                  fontFamily: FONT_MONO,
+                  fontSize: 10,
+                  letterSpacing: '0.14em',
+                  color: PAGE_TEAL,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Portfolio read
               </div>
-              <div style={{ fontSize: 'clamp(28px, 2vw + 18px, 36px)', fontWeight: 500, marginTop: 6, lineHeight: 1.1 }}>{vm.client.name}</div>
-              <div style={{ fontFamily: FONT_MONO, fontSize: 12, color: MUTE, marginTop: 4 }}>
-                {vm.client.industry_code ?? 'unclassified'}
+              <div
+                style={{
+                  marginTop: 10,
+                  fontSize: 15,
+                  lineHeight: 1.65,
+                  color: PAGE_MUTE,
+                }}
+              >
+                Atlas sits alongside the dashboard, but the left surface should already be legible in the
+                room without narration. The core question is simple: where is the program reality drifting from
+                the story leadership thinks it is telling?
               </div>
             </div>
-            {/* Client switcher lives in the top-nav dropdown now; no duplicate
-                selector rendered here. Single-client main-window principle. */}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
+              <div style={{ padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.56)', border: `1px solid ${PAGE_LINE}` }}>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: PAGE_TEAL }}>Verified value</div>
+                <div style={{ marginTop: 6, fontSize: 28, fontWeight: 700, color: PAGE_INK }}>{dollarsM(vm.value.verifiedUsd)}</div>
+              </div>
+              <div style={{ padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.56)', border: `1px solid ${PAGE_LINE}` }}>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: PAGE_TEAL }}>High risk</div>
+                <div style={{ marginTop: 6, fontSize: 28, fontWeight: 700, color: PAGE_INK }}>{vm.risk.highRisk}</div>
+              </div>
+              <div style={{ padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.56)', border: `1px solid ${PAGE_LINE}` }}>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: PAGE_TEAL }}>Use cases</div>
+                <div style={{ marginTop: 6, fontSize: 28, fontWeight: 700, color: PAGE_INK }}>{vm.inventory.total}</div>
+              </div>
+              <div style={{ padding: '14px 16px', borderRadius: 18, background: 'rgba(255,255,255,0.56)', border: `1px solid ${PAGE_LINE}` }}>
+                <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.12em', textTransform: 'uppercase', color: PAGE_TEAL }}>Value ratio</div>
+                <div style={{ marginTop: 6, fontSize: 28, fontWeight: 700, color: PAGE_INK }}>
+                  {valueRatio > 0 ? `${valueRatio.toFixed(1)}x` : '—'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              <Link
+                href="/tower/tech-stack"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  background: PAGE_INK,
+                  color: PAGE_BG,
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                Open tech stack
+              </Link>
+              <Link
+                href="/programs"
+                style={{
+                  padding: '10px 14px',
+                  borderRadius: 999,
+                  border: `1px solid ${PAGE_LINE}`,
+                  color: PAGE_INK,
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: 14,
+                }}
+              >
+                Review programs
+              </Link>
+            </div>
           </div>
+        </section>
+
+        <section
+          style={{
+            padding: '22px 22px 28px',
+            background: '#15110F',
+            borderRadius: 30,
+            boxShadow: '0 28px 72px rgba(23,20,17,0.16)',
+          }}
+        >
+          <div style={{ color: INK, fontFamily: SANS }}>
+            <div className="tower-main-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 360px', gap: 24, alignItems: 'start' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 22 }}>
+                  <div>
+                    <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase' }}>
+                      Live system
+                    </div>
+                    <div style={{ fontSize: 'clamp(28px, 2vw + 18px, 36px)', fontWeight: 500, marginTop: 6, lineHeight: 1.1 }}>
+                      Portfolio state, contradiction pressure, and enterprise footprint
+                    </div>
+                    <div style={{ fontSize: 14, color: MUTE, marginTop: 8, maxWidth: 720, lineHeight: 1.6 }}>
+                      The top strip answers whether the current estate is real, adopted, valuable, safe, and worth
+                      the spend. The sections below make that answer inspectable.
+                    </div>
+                  </div>
+                </div>
 
           {/* Five dimension panels · force 5 columns so Cost never orphans
               on its own row. Drops to 3 columns below 1280px and 1 column
@@ -412,14 +612,14 @@ export default async function TowerPage({
             </div>
           </>,
         )}
-          </div>
+                </div>
 
-          {/* Enterprise context · Pack H Phase 5 */}
-          <EnterpriseContextRow summary={enterpriseSummary} />
+                {/* Enterprise context · Pack H Phase 5 */}
+                <EnterpriseContextRow summary={enterpriseSummary} />
 
-          {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
-          {trajectory.length > 0 && (
-            <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
+                {/* 12-month spend trajectory · sparkline bars from spend_breakdown */}
+                {trajectory.length > 0 && (
+                  <section style={{ marginTop: 24, padding: 18, background: 'rgba(255,255,255,0.03)', border: BORDER_SOFT, borderRadius: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
             <div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: TEAL }}>
@@ -461,12 +661,12 @@ export default async function TowerPage({
               });
             })()}
           </div>
-            </section>
-          )}
+                  </section>
+                )}
 
-          {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
-          {shadowAiFindings.length > 0 && (
-            <section style={{ marginTop: 24 }}>
+                {/* Shadow AI inventory · from applications where business_function='Shadow AI' */}
+                {shadowAiFindings.length > 0 && (
+                  <section style={{ marginTop: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <div>
               <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: CORAL }}>
@@ -500,11 +700,11 @@ export default async function TowerPage({
               );
             })}
           </div>
-            </section>
-          )}
+                  </section>
+                )}
 
-          {/* Contradiction engine */}
-          <div style={{ marginTop: 24 }}>
+                {/* Contradiction engine */}
+                <div style={{ marginTop: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
           <div>
             <div style={{ fontFamily: FONT_MONO, fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: PURPLE }}>
@@ -526,13 +726,15 @@ export default async function TowerPage({
             ))}
           </div>
           )}
+                </div>
+
+                <TowerUploadZone clientId={vm.client.id} />
+              </div>
+
+              <AtlasRail clientId={clientId} clientName={vm.client.name} />
+            </div>
           </div>
-
-          <TowerUploadZone clientId={vm.client.id} />
-        </div>
-
-          <AtlasRail clientId={clientId} clientName={vm.client.name} />
-        </div>
+        </section>
 
         <style
           dangerouslySetInnerHTML={{
@@ -543,6 +745,9 @@ export default async function TowerPage({
               @media (max-width: 1280px) {
                 .tower-dimension-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
               }
+              @media (max-width: 980px) {
+                .tower-hero-grid { grid-template-columns: 1fr !important; }
+              }
               @media (max-width: 720px) {
                 .tower-dimension-grid { grid-template-columns: 1fr !important; }
               }
@@ -550,6 +755,6 @@ export default async function TowerPage({
           }}
         />
       </div>
-    </PageShell>
+    </div>
   );
 }

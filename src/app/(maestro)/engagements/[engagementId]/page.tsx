@@ -17,6 +17,86 @@ import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 import { getServerSupabase } from '@/lib/supabase-server';
 
+type NormalizedDeliverable = {
+  type: string;
+  phase: number;
+  generated_at: string;
+  content: Record<string, unknown>;
+  label?: string;
+};
+
+type ContradictionRow = {
+  id: string;
+  severity: 'high' | 'medium' | 'low';
+  description: string;
+  evidence: {
+    impact?: {
+      one_liner?: string;
+      monthly_total_usd?: number;
+      eliminable_usd_annual?: number;
+      owner_named?: boolean;
+    };
+  } | null;
+  impact: {
+    one_liner?: string;
+    monthly_total_usd?: number;
+    eliminable_usd_annual?: number;
+    owner_named?: boolean;
+  } | null;
+};
+
+function slugifyLabel(value: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+  return slug || 'legacy_deliverable';
+}
+
+function normalizeDeliverables(
+  rawDeliverables: unknown[],
+  fallbackPhase: number,
+  fallbackGeneratedAt: string,
+): NormalizedDeliverable[] {
+  return rawDeliverables.flatMap((entry, index) => {
+    if (!entry || typeof entry !== 'object') return [];
+    const record = entry as Record<string, unknown>;
+    const title = typeof record.title === 'string' ? record.title : null;
+    const type = typeof record.type === 'string' && record.type.length > 0
+      ? record.type
+      : title
+        ? slugifyLabel(title)
+        : `legacy_deliverable_${index + 1}`;
+    const phase = typeof record.phase === 'number' ? record.phase : fallbackPhase;
+    const generatedAt = typeof record.generated_at === 'string' && record.generated_at.length > 0
+      ? record.generated_at
+      : fallbackGeneratedAt;
+    const content = record.content && typeof record.content === 'object'
+      ? (record.content as Record<string, unknown>)
+      : record;
+
+    return [{
+      type,
+      phase,
+      generated_at: generatedAt,
+      content,
+      label: title ?? undefined,
+    }];
+  });
+}
+
+function dedupeTopContradictions<T extends { description: string; one_liner: string | null }>(rows: T[]): T[] {
+  const seen = new Set<string>();
+  const output: T[] = [];
+  for (const row of rows) {
+    const signature = `${row.description.trim().toLowerCase()}|${(row.one_liner ?? '').trim().toLowerCase()}`;
+    if (seen.has(signature)) continue;
+    seen.add(signature);
+    output.push(row);
+  }
+  return output;
+}
+
 export default async function EngagePage({
   params,
 }: {
@@ -76,12 +156,7 @@ export default async function EngagePage({
 
   const sb = getServerSupabase();
   const deliverables = Array.isArray(engagement.deliverables)
-    ? (engagement.deliverables as Array<{
-        type: string;
-        phase: number;
-        generated_at: string;
-        content: Record<string, unknown>;
-      }>)
+    ? normalizeDeliverables(engagement.deliverables, engagement.current_phase, engagement.updated_at)
     : [];
   try {
     const { data: v2Rows } = await sb
@@ -122,15 +197,7 @@ export default async function EngagePage({
       .eq('id', engagement.id)
       .maybeSingle();
     const clientId = (engClient as { client_id: string | null } | null)?.client_id ?? null;
-    const mapContradictions = (
-      rows: Array<{
-        id: string;
-        severity: 'high' | 'medium' | 'low';
-        description: string;
-        evidence: { impact?: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } } | null;
-        impact: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } | null;
-      }>,
-    ) =>
+    const mapContradictions = (rows: ContradictionRow[]) =>
       rows.map((c) => ({
         id: c.id,
         severity: c.severity,
@@ -152,15 +219,9 @@ export default async function EngagePage({
     if ((programCount ?? 0) > 0) {
       contradictionsCount = programCount ?? 0;
       contradictionsScope = 'program';
-      topContradictions = mapContradictions(
-        ((programRows as Array<{
-          id: string;
-          severity: 'high' | 'medium' | 'low';
-          description: string;
-          evidence: { impact?: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } } | null;
-          impact: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } | null;
-        }> | null) ?? []),
-      );
+      const typedProgramRows = ((programRows as ContradictionRow[] | null) ?? []);
+      const programContradictions = dedupeTopContradictions(mapContradictions(typedProgramRows));
+      topContradictions = programContradictions.slice(0, 3);
     } else if (clientId) {
       const { count, data: rows } = await sb
         .from('contradictions')
@@ -169,15 +230,9 @@ export default async function EngagePage({
         .is('resolved_at', null);
       contradictionsCount = count ?? 0;
       contradictionsScope = contradictionsCount > 0 ? 'client' : 'none';
-      topContradictions = mapContradictions(
-        ((rows as Array<{
-          id: string;
-          severity: 'high' | 'medium' | 'low';
-          description: string;
-          evidence: { impact?: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } } | null;
-          impact: { one_liner?: string; monthly_total_usd?: number; eliminable_usd_annual?: number; owner_named?: boolean } | null;
-        }> | null) ?? []).slice(0, 3),
-      );
+      const typedClientRows = ((rows as ContradictionRow[] | null) ?? []);
+      const clientContradictions = dedupeTopContradictions(mapContradictions(typedClientRows));
+      topContradictions = clientContradictions.slice(0, 3);
     }
   } catch {
     // quiet fail; strip will render 0, console will render no panel
@@ -208,9 +263,10 @@ export default async function EngagePage({
     }
   }
   for (const d of deliverables.slice(0, 3)) {
+    const deliverableLabel = d.label ?? d.type.replace(/_/g, ' ');
     events.push({
       kind: 'deliverable',
-      label: `${d.type.replace(/_/g, ' ')} drafted`,
+      label: `${deliverableLabel} drafted`,
       detail: `Phase ${d.phase}`,
       at: d.generated_at,
     });

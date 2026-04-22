@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 const INK = '#F5F5F0';
 const TEAL = '#14B8A6';
@@ -256,13 +257,20 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
       </p>
 
       <form onSubmit={handleSubmit} style={{ marginBottom: 24 }}>
-        <input
-          type="text"
+        <AutosizeTextarea
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              e.currentTarget.form?.requestSubmit();
+            }
+          }}
           onFocus={() => setInputFocused(true)}
           onBlur={() => setInputFocused(false)}
           placeholder="e.g., How is Abridge typically deployed? · What triggers F008? · HIPAA § 164.308 summary"
+          minRows={1}
+          maxRows={5}
           style={{
             width: '100%',
             padding: '14px 18px',
@@ -271,6 +279,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
             borderRadius: 8,
             color: INK,
             fontSize: 16,
+            lineHeight: 1.6,
             fontFamily: BODY,
             outline: 'none',
             transition: reducedMotion

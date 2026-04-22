@@ -121,12 +121,17 @@ export async function POST(req: NextRequest) {
             });
             sponsorRowId = newPerson.id;
             sponsorGraphId = newPerson.graph_node_id ?? parsed.sponsor_graph_node_id;
-            await syncPersonToGraph({
+            const personSync = await Promise.allSettled([
+              syncPersonToGraph({
               graph_node_id: sponsorGraphId,
               name: newPerson.name,
               role: newPerson.role ?? parsed.sponsor_payload.role,
               organization: newPerson.organization ?? parsed.sponsor_payload.organization,
-            });
+              }),
+            ]);
+            if (personSync[0]?.status === 'rejected') {
+              console.warn('[program.create.person_graph_sync_failed]', personSync[0].reason);
+            }
           } else {
             throw new Error(`sponsor ${parsed.sponsor_graph_node_id} not found and no creation payload supplied`);
           }
@@ -146,48 +151,6 @@ export async function POST(req: NextRequest) {
             graph_node_id: engagement.graph_node_id,
             client_id: activeClient?.id ?? null,
             sponsor_person_id: sponsorRowId,
-          });
-
-          await syncEngagementToGraph({
-            graph_node_id: engagement.graph_node_id,
-            name: engagement.name,
-            industry_code: engagement.industry_code,
-            function_code: engagement.function_code,
-            objective_code: engagement.objective_code,
-            topic_code: engagement.topic_code ?? '',
-            sponsor_graph_node_id: sponsorGraphId,
-            maestro_graph_node_id: maestro?.graph_node_id ?? null,
-          });
-          console.info('[program.create.graph_synced]', {
-            graph_node_id: engagement.graph_node_id,
-            sponsor_graph_node_id: sponsorGraphId,
-          });
-
-          if (parsed.topic_code) {
-            await assignTopic({
-              engagementId: engagement.id,
-              topicKey: parsed.topic_code,
-              assignedBy: maestro?.id ?? null,
-              isPrimary: true,
-            });
-            console.info('[program.create.topic_assigned]', {
-              engagement_id: engagement.id,
-              topic_key: parsed.topic_code,
-            });
-          }
-
-          await logAudit({
-            actorPersonId: maestro?.id ?? null,
-            action: 'engagement.created',
-            targetTable: 'engagements',
-            targetId: engagement.id,
-            newValue: {
-              name: engagement.name,
-              graph_node_id: engagement.graph_node_id,
-              industry_code: engagement.industry_code,
-              sponsor_person_id: engagement.sponsor_person_id,
-              current_phase: 0,
-            },
           });
 
           // Re-fetch so we return the full row (consistent with what the page expects)
@@ -248,6 +211,56 @@ export async function POST(req: NextRequest) {
             graph_node_id: hydrated.graph_node_id,
             active_client: activeClient?.name ?? null,
           });
+
+          const sideEffects = await Promise.allSettled([
+            syncEngagementToGraph({
+              graph_node_id: engagement.graph_node_id,
+              name: engagement.name,
+              industry_code: engagement.industry_code,
+              function_code: engagement.function_code,
+              objective_code: engagement.objective_code,
+              topic_code: engagement.topic_code ?? '',
+              sponsor_graph_node_id: sponsorGraphId,
+              maestro_graph_node_id: maestro?.graph_node_id ?? null,
+            }).then(() => {
+              console.info('[program.create.graph_synced]', {
+                graph_node_id: engagement.graph_node_id,
+                sponsor_graph_node_id: sponsorGraphId,
+              });
+            }),
+            parsed.topic_code
+              ? assignTopic({
+                  engagementId: engagement.id,
+                  topicKey: parsed.topic_code,
+                  assignedBy: maestro?.id ?? null,
+                  isPrimary: true,
+                }).then(() => {
+                  console.info('[program.create.topic_assigned]', {
+                    engagement_id: engagement.id,
+                    topic_key: parsed.topic_code,
+                  });
+                })
+              : Promise.resolve(),
+            logAudit({
+              actorPersonId: maestro?.id ?? null,
+              action: 'engagement.created',
+              targetTable: 'engagements',
+              targetId: engagement.id,
+              newValue: {
+                name: engagement.name,
+                graph_node_id: engagement.graph_node_id,
+                industry_code: engagement.industry_code,
+                sponsor_person_id: engagement.sponsor_person_id,
+                current_phase: 0,
+              },
+            }),
+          ]);
+
+          for (const effect of sideEffects) {
+            if (effect.status === 'rejected') {
+              console.warn('[program.create.side_effect_failed]', effect.reason);
+            }
+          }
         }
 
         controller.enqueue(encoder.encode(JSON.stringify({ type: 'done' }) + '\n'));

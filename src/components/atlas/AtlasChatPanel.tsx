@@ -1,6 +1,7 @@
 'use client';
 
 import type { AtlasSuggestion } from '@/lib/atlas/types';
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea';
 
 const INK = '#F8FAFC';
 const MUTE = '#CBD5E1';
@@ -111,14 +112,14 @@ export function AtlasChatPanel({
         style={{
           display: 'flex',
           gap: 8,
-          alignItems: 'center',
+          alignItems: 'flex-end',
           padding: 10,
           borderRadius: 18,
           border: '0.5px solid rgba(148,163,184,0.18)',
           background: 'rgba(15,23,42,0.42)',
         }}
       >
-        <input
+        <AutosizeTextarea
           value={input}
           onChange={(event) => onInputChange(event.target.value)}
           onKeyDown={(event) => {
@@ -128,6 +129,8 @@ export function AtlasChatPanel({
             }
           }}
           placeholder="Ask Atlas about portfolio state…"
+          minRows={1}
+          maxRows={5}
           style={{
             flex: 1,
             background: 'transparent',
@@ -135,6 +138,9 @@ export function AtlasChatPanel({
             outline: 'none',
             color: INK,
             fontSize: 13,
+            lineHeight: 1.55,
+            minHeight: 44,
+            padding: '11px 0',
           }}
         />
         <button

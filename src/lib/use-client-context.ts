@@ -10,6 +10,7 @@
  * Switching via the nav dropdown writes to localStorage so selection survives page navigation.
  */
 
+import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, isClientKey, type ClientOption } from '@/lib/client-config'
@@ -56,24 +57,35 @@ export function useClientContext() {
     : ALL_CLIENTS.filter(c => c.id === metaClient)
 
   // Resolve active client: URL param → localStorage → user metadata → default to first allowed
-  const urlClient   = searchParams.get('client')
-  const lsClient    = readLocalStorage()
-  let clientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
+  const urlClient = searchParams.get('client')
+  const lsClient = readLocalStorage()
+  const requestedClientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
+  let clientId = requestedClientId
 
   // Enforce isolation: if the resolved client is one the user can't see, override
   if (!isElevated && metaClient && clientId !== metaClient) {
     clientId = metaClient
   }
 
-  if (!isClientKey(clientId)) {
+  if (!isClientKey(clientId) || !allowedClients.find((c) => c.id === clientId)) {
     clientId = allowedClients[0]?.id || DEFAULT_CLIENT_KEY
   }
 
-  // Sync URL param → localStorage + cookie so future navigations remember
-  if (urlClient && urlClient !== lsClient) {
-    writeLocalStorage(urlClient)
-    writeCookie(urlClient)
-  }
+  // Persist the resolved client only after authorization has been applied.
+  // This prevents a stale or unauthorized ?client= value from poisoning the
+  // cookie the server reads for locked tenant users.
+  useEffect(() => {
+    writeLocalStorage(clientId)
+    writeCookie(clientId)
+  }, [clientId])
+
+  useEffect(() => {
+    if (!urlClient || urlClient === clientId) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('client', clientId)
+    const targetPath = pathname || '/home'
+    router.replace(`${targetPath}?${params.toString()}`)
+  }, [clientId, pathname, router, searchParams, urlClient])
 
   const currentClient = ALL_CLIENTS.find(c => c.id === clientId) ?? ALL_CLIENTS[0]
 

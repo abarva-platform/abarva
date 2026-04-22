@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { AutosizeTextarea } from '@/components/shared/AutosizeTextarea'
 
 export interface ResponseOption {
   icon: string
@@ -65,13 +66,15 @@ export default function ResponseOptions({ options, onSelect, disabled = false }:
       </div>
 
       {/* Free text input */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <input
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+        <AutosizeTextarea
           value={freeText}
           onChange={e => setFreeText(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
           placeholder="Ask your own follow-up..."
           disabled={disabled}
+          minRows={1}
+          maxRows={4}
           style={{
             flex: 1,
             padding: '9px 14px',
@@ -82,10 +85,11 @@ export default function ResponseOptions({ options, onSelect, disabled = false }:
             background: '#FFFFFF',
             color: '#0F172A',
             fontFamily: 'Inter, sans-serif',
+            lineHeight: 1.5,
             opacity: disabled ? 0.5 : 1,
           }}
-          onFocus={e => (e.target as HTMLInputElement).style.borderColor = '#14B8A6'}
-          onBlur={e => (e.target as HTMLInputElement).style.borderColor = '#E2E8F0'}
+          onFocus={e => (e.target as HTMLTextAreaElement).style.borderColor = '#14B8A6'}
+          onBlur={e => (e.target as HTMLTextAreaElement).style.borderColor = '#E2E8F0'}
         />
         <button
           onClick={handleSend}
