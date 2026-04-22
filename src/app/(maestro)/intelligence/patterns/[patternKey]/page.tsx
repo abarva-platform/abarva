@@ -14,6 +14,7 @@
 // "full depth" bar without blocking less-developed ones.
 
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import {
@@ -21,6 +22,7 @@ import {
   type PatternAugmentation,
   type VendorGroup,
 } from '@/lib/intelligence/pattern-augmentations';
+import { getPatternIndustryCompositions } from '@/lib/intelligence/industry-compositions';
 import { PageShell } from '@/components/shared/layout/PageShell';
 import { PageTitle } from '@/components/shared/typography/PageTitle';
 import { SectionHeading } from '@/components/shared/typography/SectionHeading';
@@ -135,6 +137,7 @@ export default async function PatternDetailPage({
   const activeClient = await getActiveClientRow();
   const row = await loadPatternRow(patternKey, activeClient?.id ?? null);
   const augmentation = getPatternAugmentation(patternKey);
+  const industryCompositions = getPatternIndustryCompositions(patternKey);
 
   // If neither a DB row nor an augmentation exists, the route is genuinely
   // 404 · patterns without either have nothing to render.
@@ -186,6 +189,41 @@ export default async function PatternDetailPage({
             ) : null}
           </div>
         </header>
+
+        {industryCompositions.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">INDUSTRY LENSES</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 16 }}>
+              Vertical context pages composed against this pattern
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+              {industryCompositions.map((composition) => (
+                <Link
+                  key={composition.slug}
+                  href={`/intelligence/patterns/${encodeURIComponent(patternKey)}/${encodeURIComponent(composition.verticalKey)}`}
+                  style={{
+                    display: 'block',
+                    padding: '16px 18px',
+                    borderRadius: 12,
+                    textDecoration: 'none',
+                    background: 'rgba(20,184,166,0.08)',
+                    border: '0.5px solid rgba(20,184,166,0.26)',
+                  }}
+                >
+                  <EyebrowLabel tone="teal" size="xs" style={{ marginBottom: 8 }}>
+                    {composition.verticalLabel.toUpperCase()} · INDUSTRY KNOWLEDGE LAYER
+                  </EyebrowLabel>
+                  <Body size="md" weight={600} tone="primary" as="div">
+                    {composition.title}
+                  </Body>
+                  <Body size="sm" tone="secondary" as="div" style={{ marginTop: 6 }}>
+                    {composition.subtitle}
+                  </Body>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {/* Hero impact viz (Fix Spec v4 §2/§3) · renders when we have
             keyed data for this pattern. Quantifies the cost of doing

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { TOPIC_DEPTH_OVERLAYS } from '@/lib/intelligence/fix-spec-v3-content';
+import { getTopicIndustryCompositions } from '@/lib/intelligence/industry-compositions';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type { TopicRow, VendorEntry } from '@/lib/topics/db';
 
@@ -101,9 +102,10 @@ export default async function TopicDetailPage({
 }) {
   const { topicKey } = await params;
   const topic = await loadTopic(topicKey);
-  if (!topic) notFound();
+  if (topic === null) notFound();
   const engagements = await loadEngagementsOnTopic(topicKey);
   const overlay = TOPIC_DEPTH_OVERLAYS[topicKey] ?? null;
+  const industryCompositions = getTopicIndustryCompositions(topicKey);
   const triggerItems =
     overlay?.triggers && overlay.triggers.length > 0
       ? overlay.triggers
@@ -191,6 +193,37 @@ export default async function TopicDetailPage({
                 <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginLeft: 'auto' }}>
                   Phase {e.current_phase} {PHASE_LABELS[e.current_phase]}
                 </span>
+              </Link>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {industryCompositions.length > 0 && (
+        <Section label="INDUSTRY LENSES" color={TEAL}>
+          <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+            {industryCompositions.map((composition) => (
+              <Link
+                key={composition.slug}
+                href={`/intelligence/topics/${encodeURIComponent(topicKey)}/${encodeURIComponent(composition.verticalKey)}`}
+                style={{
+                  display: 'block',
+                  padding: 14,
+                  borderRadius: 10,
+                  border: `0.5px solid ${TEAL}55`,
+                  background: 'rgba(20,184,166,0.08)',
+                  textDecoration: 'none',
+                }}
+              >
+                <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.12em', marginBottom: 8 }}>
+                  {composition.verticalLabel.toUpperCase()} · INDUSTRY KNOWLEDGE LAYER
+                </div>
+                <div style={{ color: INK, fontSize: 14, fontWeight: 600, marginBottom: 6 }}>
+                  {composition.title}
+                </div>
+                <div style={{ color: MUTE, fontSize: 12.5, lineHeight: 1.55 }}>
+                  {composition.subtitle}
+                </div>
               </Link>
             ))}
           </div>
