@@ -368,6 +368,7 @@ export interface PatternLibraryItem {
 
 export interface ModuleContent {
   summary: string;
+  structuredDocument?: Record<string, unknown>;
   formFields?: Array<{ label: string; value: string; hint?: string }>;
   narrativeBlocks?: Array<{ title: string; body: string }>;
   matrix?: {
