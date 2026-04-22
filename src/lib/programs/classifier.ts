@@ -13,11 +13,11 @@ import Anthropic from '@anthropic-ai/sdk';
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
-  ArchetypeKey,
   ClassifierInput,
   ClassifierOutput,
   PatternClassifierMatch,
-} from './types';
+} from './types.db';
+import type { ArchetypeKey } from './types.ui';
 
 const EMBED_MODEL = 'text-embedding-3-large';
 const EMBED_DIMS = 1024; // matches nexus-knowledge Pinecone index dim

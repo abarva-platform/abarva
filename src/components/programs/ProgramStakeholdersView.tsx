@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { ParticipantRef, ProgramFullState } from '@/lib/programs/types';
+import type { ParticipantRef, ProgramFullState } from '@/lib/programs/types.ui';
 import { EyebrowLabel } from '@/components/shared/typography/EyebrowLabel';
 import { Body } from '@/components/shared/typography/Body';
 import { ExecutiveCard } from '@/components/shared/entities/ExecutiveCard';

@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
 import { getProgramById } from '@/lib/programs/queries';
-import type { RiskImpact, RiskLikelihood, RiskStatus } from '@/lib/programs/types';
+import type { RiskImpact, RiskLikelihood, RiskStatus } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { closeCxoTakeover } from '@/lib/programs/mock';
-import type { CxoTakeoverProps, NexusPanelProps } from '@/lib/programs/types';
+import type { CxoTakeoverProps, NexusPanelProps } from '@/lib/programs/types.ui';
 
 const TABS: Array<NexusPanelProps['activeTab']> = ['chat', 'drafts', 'flags', 'sources'];
 

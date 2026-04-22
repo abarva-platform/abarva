@@ -2,7 +2,7 @@
 
 import { Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { ModuleContent } from '@/lib/programs/types';
+import type { ModuleContent } from '@/lib/programs/types.ui';
 import { getDeliverable, getProgramByIdSync, getViewerRole } from '@/lib/programs/mock';
 import { ProgramShell } from '@/components/programs/ProgramSurface';
 

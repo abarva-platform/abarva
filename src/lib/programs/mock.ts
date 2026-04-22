@@ -23,7 +23,7 @@ import type {
   Synthesis,
   Turn,
   ViewerRole,
-} from '@/lib/programs/types';
+} from '@/lib/programs/types.ui';
 
 const PEOPLE: Record<string, PersonRef> = {
   dana: { id: 'person-dana-mercer', name: 'Dana Mercer', title: 'VP Store Ops', initials: 'DM', avatarColor: '#0f766e', clientName: 'Apex Retail Group' },
