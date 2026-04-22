@@ -18,11 +18,15 @@ interface Props {
 // wraps content with safe-area-respecting horizontal padding. Every Wave 3
 // page starts with <PageShell>. Does NOT render nav — compose with
 // AuthenticatedNav / MarketingNav at the route level.
+//
+// Widths tuned per Fix Spec v3 §1 · standard = 1280 (13-15" laptop sweet
+// spot), wide = 1480 (dashboards + engagement console with rail),
+// narrow = 820 (investor briefings + long-form reading).
 export function PageShell({ children, width = 'standard', padding = 'comfortable', style }: Props) {
   const maxWidth =
     width === 'narrow' ? 820
-      : width === 'standard' ? 1200
-      : width === 'wide' ? 1440
+      : width === 'standard' ? 1280
+      : width === 'wide' ? 1480
       : '100%';
   const paddingY =
     padding === 'tight' ? '16px'
