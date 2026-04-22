@@ -20,11 +20,13 @@ function dollars(value: number | null | undefined): string {
 }
 
 export function AtlasSignalDetailPanel({
+  clientId,
   signalId,
   open,
   onClose,
   onAskAtlas,
 }: {
+  clientId: string;
   signalId: string | null;
   open: boolean;
   onClose: () => void;
@@ -38,7 +40,10 @@ export function AtlasSignalDetailPanel({
     async function load() {
       if (!open || !signalId) return;
       setLoading(true);
-      const res = await fetch(`/api/v1/atlas/signals/${encodeURIComponent(signalId)}`, { cache: 'no-store' });
+      const res = await fetch(
+        `/api/v1/atlas/signals/${encodeURIComponent(signalId)}?clientId=${encodeURIComponent(clientId)}`,
+        { cache: 'no-store' },
+      );
       const json = (await res.json().catch(() => ({}))) as { signal?: AtlasSignalDetail };
       if (!cancelled) {
         setSignal(res.ok ? (json.signal ?? null) : null);
@@ -49,7 +54,7 @@ export function AtlasSignalDetailPanel({
     return () => {
       cancelled = true;
     };
-  }, [open, signalId]);
+  }, [clientId, open, signalId]);
 
   if (!open) return null;
 

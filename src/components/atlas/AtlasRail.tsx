@@ -52,7 +52,7 @@ type LoadState =
   | { kind: 'error'; message: string }
   | { kind: 'ready'; payload: AtlasRailPayload };
 
-export function AtlasRail({ clientName }: { clientName: string }) {
+export function AtlasRail({ clientId, clientName }: { clientId: string; clientName: string }) {
   const [expanded, setExpanded] = useState(true);
   const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [messages, setMessages] = useState<AtlasMessage[]>([]);
@@ -69,7 +69,9 @@ export function AtlasRail({ clientName }: { clientName: string }) {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch('/api/v1/atlas/observations', { cache: 'no-store' });
+        const res = await fetch(`/api/v1/atlas/observations?clientId=${encodeURIComponent(clientId)}`, {
+          cache: 'no-store',
+        });
         const json = (await res.json().catch(() => ({}))) as Partial<AtlasRailPayload> & { error?: string; detail?: string };
         if (cancelled) return;
         if (!res.ok) {
@@ -114,7 +116,7 @@ export function AtlasRail({ clientName }: { clientName: string }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [clientId]);
 
   async function sendMessage(message: string, signalId?: string | null) {
     const trimmed = message.trim();
@@ -126,7 +128,7 @@ export function AtlasRail({ clientName }: { clientName: string }) {
     const res = await fetch('/api/v1/atlas/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: trimmed, threadId, signalId }),
+      body: JSON.stringify({ message: trimmed, threadId, signalId, clientId }),
     });
     const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
 
@@ -384,6 +386,7 @@ export function AtlasRail({ clientName }: { clientName: string }) {
       </aside>
 
       <AtlasSignalDetailPanel
+        clientId={clientId}
         signalId={activeSignalId}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}

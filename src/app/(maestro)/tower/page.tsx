@@ -529,7 +529,7 @@ export default async function TowerPage({
           <TowerUploadZone clientId={vm.client.id} />
         </div>
 
-        <AtlasRail clientName={vm.client.name} />
+        <AtlasRail clientId={clientId} clientName={vm.client.name} />
       </div>
 
       <style>{`
