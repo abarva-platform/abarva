@@ -15,6 +15,10 @@ const AMBER  = '#B45309'
 const GREEN  = '#166534'
 const MONO   = "'Courier New', monospace"
 const SANS   = 'DM Sans, sans-serif'
+const ADMIN_EMAIL_ALLOWLIST = new Set([
+  'anand+clerk_test@abarva.com',
+  'anand.sundaram@thesundaram.com',
+])
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Section =
@@ -253,10 +257,18 @@ export default function AdminPortal() {
   const [active, setActive] = useState<Section>('maestros')
 
   const role = user?.publicMetadata?.role as string | undefined
+  const fallbackRole =
+    (user?.unsafeMetadata?.role as string | undefined)
+    ?? (user?.publicMetadata?.legacyRole as string | undefined)
+  const primaryEmail = user?.primaryEmailAddress?.emailAddress?.toLowerCase()
+  const isAdmin =
+    role === 'admin'
+    || fallbackRole === 'admin'
+    || (!!primaryEmail && ADMIN_EMAIL_ALLOWLIST.has(primaryEmail))
 
   if (!isLoaded) return null
 
-  if (!user || role !== 'admin') {
+  if (!user || !isAdmin) {
     return (
       <div style={{ background: BG, fontFamily: SANS, minHeight: 'calc(100vh - 104px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>
