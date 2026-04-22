@@ -5,31 +5,63 @@ const DEMO_USERS = [
   {
     email: 'af+clerk_test@abarva.com',
     metadata: {
-      role: 'client',
+      role: 'maestro',
       clientId: 'arcturus',
       clientName: 'Arcturus Financial Group',
+      defaultClientId: 'arcturus',
+      clientLocked: true,
       preferredSolution: 'margin',
     },
   },
   {
     email: 'mh+clerk_test@abarva.com',
     metadata: {
-      role: 'client',
+      role: 'maestro',
       clientId: 'meridian',
       clientName: 'Meridian Health System',
+      defaultClientId: 'meridian',
+      clientLocked: true,
       preferredSolution: 'tech',
+    },
+  },
+  {
+    email: 'apex+clerk_test@abarva.com',
+    metadata: {
+      role: 'maestro',
+      clientId: 'apexretail',
+      clientName: 'Apex Retail Group',
+      defaultClientId: 'apexretail',
+      clientLocked: true,
+      preferredSolution: 'growth',
+    },
+  },
+  {
+    email: 'keystone+clerk_test@abarva.com',
+    metadata: {
+      role: 'maestro',
+      clientId: 'keystone',
+      clientName: 'Keystone Energy Holdings',
+      defaultClientId: 'keystone',
+      clientLocked: true,
+      preferredSolution: 'grid',
     },
   },
   {
     email: 'investor+clerk_test@abarva.com',
     metadata: {
       role: 'investor',
+      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
+      defaultClientId: 'meridian',
+      clientLocked: false,
     },
   },
   {
     email: 'anand+clerk_test@abarva.com',
     metadata: {
       role: 'admin',
+      clientIds: ['meridian', 'arcturus', 'apexretail', 'keystone'],
+      defaultClientId: 'meridian',
+      clientLocked: false,
     },
   },
 ]

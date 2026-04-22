@@ -1,37 +1,29 @@
 import { cookies } from 'next/headers';
 import { currentUser } from '@clerk/nextjs/server';
+import {
+  CLIENT_KEY_TO_DB_NAME,
+  DEFAULT_CLIENT_KEY,
+  isClientKey,
+  type ClientKey,
+} from '@/lib/client-config';
 
 // Server-side resolution of the active client for the signed-in user.
 // Mirrors useClientContext's precedence but reads from cookie (not
 // localStorage) so server components can filter without a round-trip.
 //
-// Precedence: cookie → Clerk metadata.clientId → first allowed fallback
-// (meridian, since Pack J + Pack H + VIP demo all ride on Meridian).
+// Precedence: cookie → Clerk metadata.clientId → first allowed fallback.
 //
-// Isolation: role='client' users are pinned to their clientId regardless
+// Isolation: locked account users are pinned to their clientId regardless
 // of cookie. Admin + investor can switch via the top-nav dropdown.
 
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
-export const ALLOWED_CLIENT_KEYS = ['meridian', 'arcturus', 'apexretail'] as const;
-export type ClientKey = (typeof ALLOWED_CLIENT_KEYS)[number];
-
-export const CLIENT_KEY_TO_DB_NAME: Record<ClientKey, string[]> = {
-  // Multiple candidate names per key handles naming variance in Pack H/J seeds
-  meridian: ['Meridian Health', 'Meridian Health System'],
-  arcturus: ['Arcturus Financial', 'Arcturus Financial Group', 'First Capital', 'First Capital Financial'],
-  apexretail: ['Apex Retail', 'Apex Retail Group'],
-};
-
-function isAllowedKey(k: string | null | undefined): k is ClientKey {
-  return !!k && (ALLOWED_CLIENT_KEYS as readonly string[]).includes(k);
-}
 
 export async function getActiveClientKey(): Promise<ClientKey> {
   // 1 · cookie
   try {
     const store = await cookies();
     const fromCookie = store.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
-    if (isAllowedKey(fromCookie)) return fromCookie;
+    if (isClientKey(fromCookie)) return fromCookie;
   } catch {
     // cookies() fails outside request scope — fall through to metadata
   }
@@ -41,15 +33,15 @@ export async function getActiveClientKey(): Promise<ClientKey> {
     const user = await currentUser();
     const role = user?.publicMetadata?.role as string | undefined;
     const meta = user?.publicMetadata?.clientId as string | undefined;
-    // Client role: always pinned to their metadata regardless of cookie
-    if (role === 'client' && isAllowedKey(meta)) return meta;
-    if (isAllowedKey(meta)) return meta;
+    const isLockedRole = role === 'client' || role === 'maestro';
+    if (isLockedRole && isClientKey(meta)) return meta;
+    if (isClientKey(meta)) return meta;
   } catch {
     // currentUser() fails outside Clerk context — fall through to default
   }
 
   // 3 · fallback
-  return 'meridian';
+  return DEFAULT_CLIENT_KEY;
 }
 
 /**

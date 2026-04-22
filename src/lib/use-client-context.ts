@@ -4,7 +4,7 @@
  *
  * Single source of truth for the active client selection across all module pages.
  * Enforces account isolation: role='client' users are locked to their assigned account.
- * Admin and investor users can toggle freely between all 3 accounts.
+ * Admin and investor users can toggle freely between the canonical 4 accounts.
  *
  * Persistence order: URL param → localStorage → user metadata → first allowed client
  * Switching via the nav dropdown writes to localStorage so selection survives page navigation.
@@ -12,20 +12,9 @@
 
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, isClientKey, type ClientOption } from '@/lib/client-config'
 
-export interface ClientOption {
-  id: string
-  name: string
-  shortName: string
-  color: string
-  vertical: string
-}
-
-export const ALL_CLIENTS: ClientOption[] = [
-  { id: 'meridian',   name: 'Meridian Health System',  shortName: 'Meridian Health',     color: '#14B8A6', vertical: 'Healthcare'         },
-  { id: 'arcturus',   name: 'Arcturus Financial Group', shortName: 'Arcturus Financial',  color: '#818CF8', vertical: 'Financial Services' },
-  { id: 'apexretail', name: 'Apex Retail Group',        shortName: 'Apex Retail',         color: '#F59E0B', vertical: 'Retail'             },
-]
+export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
 
 const LS_KEY = 'abarva_selected_client'
 
@@ -69,11 +58,15 @@ export function useClientContext() {
   // Resolve active client: URL param → localStorage → user metadata → default to first allowed
   const urlClient   = searchParams.get('client')
   const lsClient    = readLocalStorage()
-  let clientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || 'meridian'
+  let clientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
 
   // Enforce isolation: if the resolved client is one the user can't see, override
   if (!isElevated && metaClient && clientId !== metaClient) {
     clientId = metaClient
+  }
+
+  if (!isClientKey(clientId)) {
+    clientId = allowedClients[0]?.id || DEFAULT_CLIENT_KEY
   }
 
   // Sync URL param → localStorage + cookie so future navigations remember
@@ -88,15 +81,10 @@ export function useClientContext() {
     if (!allowedClients.find(c => c.id === newId)) return // silently ignore unauthorized switch
     writeLocalStorage(newId)
     writeCookie(newId)
-    // On any Maestro page, switching client navigates to that client's workspace
-    if (pathname === '/maestro' || pathname.startsWith('/maestro/')) {
-      router.push(`/maestro/${newId}`)
-      router.refresh()
-      return
-    }
     const params = new URLSearchParams(searchParams.toString())
     params.set('client', newId)
-    router.push(`${pathname}?${params.toString()}`)
+    const targetPath = pathname || '/home'
+    router.replace(`${targetPath}?${params.toString()}`)
     // Force server-render refresh so pages filtered by active client reload
     router.refresh()
   }
