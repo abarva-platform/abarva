@@ -1815,11 +1815,11 @@ Four scale phases defined. Phase 0 investment specified (synthetic cohort). Phas
 
 ## Companion specs
 
-- `abarva-intelligence-design-spec.md` (Sentinel surface; consumer of this data layer)
-- `abarva-programs-design-spec.md` (Nexus surface; consumer of this data layer)
-- `abarva-tower-design-spec.md` (Atlas surface; consumer of this data layer)
-- `abarva-agent-architecture-spec.md` (how agents interact with this data layer)
-- `abarva-apex-seed-data-reconciled.md` (Phase 0 synthetic data that this spec future-proofs)
+- `docs/specs/intelligence/design-spec.md` (Sentinel surface; consumer of this data layer)
+- `docs/specs/programs/design-spec.md` (Nexus surface; consumer of this data layer)
+- `docs/specs/tower/design-spec.md` (Atlas surface; consumer of this data layer)
+- `docs/specs/platform/agent-architecture.md` (how agents interact with this data layer)
+- `docs/specs/_meta/seed-data/apex-reconciled.md` (Phase 0 synthetic data that this spec future-proofs)
 
 ## Phase 0 investment worth making now
 

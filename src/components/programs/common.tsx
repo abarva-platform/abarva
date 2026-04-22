@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import type { ActivityEntry, AttentionVariant, DeliverableSummary, Milestone, PersonRef, ProgramSummary } from '@/lib/programs/types';
+import type { ActivityEntry, AttentionVariant, DeliverableSummary, Milestone, PersonRef, ProgramSummary } from '@/lib/programs/types.ui';
 
 export function formatRelative(date: Date) {
   const diff = Date.now() - date.getTime();

@@ -1,0 +1,74 @@
+{
+  "template_version": "1.0",
+  "client_reference": null,
+  "as_of_date": null,
+  "notes": "Populate client_reference (your internal slug) and as_of_date (YYYY-MM-DD). Each array below mirrors the matching CSV template. POST the completed JSON to /api/tower/ingest.",
+  "inventory": [
+    {
+      "use_case_id": "uc_001",
+      "name": "Copilot Clinical Documentation",
+      "description": "Ambient clinical documentation for providers.",
+      "status": "production",
+      "business_owner": "Dr. Sarah Chen",
+      "technical_owner": "IT Platform Team",
+      "vendor": "Microsoft",
+      "product": "Copilot Clinical",
+      "data_classes": "PHI|clinical_notes",
+      "launch_date": "2024-11-15",
+      "last_reviewed": "2025-09-22"
+    }
+  ],
+  "adoption": [
+    {
+      "use_case_id": "uc_001",
+      "period_start": "2025-10-01",
+      "period_end": "2025-10-31",
+      "dau": "1240",
+      "wau": "3850",
+      "mau": "6200",
+      "eligible_population": "8200",
+      "penetration_pct": "47.2",
+      "drop_off_rate_pct": "18.4"
+    }
+  ],
+  "value": [
+    {
+      "use_case_id": "uc_001",
+      "value_driver": "documentation_time",
+      "metric_name": "Minutes per encounter",
+      "unit": "minutes",
+      "baseline": "12.5",
+      "observed": "8.2",
+      "confidence": "high",
+      "as_of_date": "2025-10-31"
+    }
+  ],
+  "risk": [
+    {
+      "use_case_id": "uc_001",
+      "governance_approval_status": "approved",
+      "model_risk_level": "medium",
+      "data_classification": "PHI|clinical_notes",
+      "vendor_hipaa_baa": "true",
+      "vendor_soc2": "true",
+      "data_residency": "US",
+      "bias_incidents_count": "0",
+      "as_of_date": "2025-10-31"
+    }
+  ],
+  "cost": [
+    {
+      "use_case_id": "uc_001",
+      "period_start": "2025-10-01",
+      "period_end": "2025-10-31",
+      "vendor": "Microsoft",
+      "total_spend_usd": "45000",
+      "llm_spend_usd": "12000",
+      "compute_spend_usd": "8000",
+      "storage_spend_usd": "2000",
+      "vendor_license_spend_usd": "20000",
+      "integration_spend_usd": "3000",
+      "projected_6mo_spend_usd": "310000"
+    }
+  ]
+}

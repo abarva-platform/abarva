@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 import { getWorkItems } from '@/lib/programs/queries';
 import { createWorkItem } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
-import type { WorkItemType } from '@/lib/programs/types';
+import type { WorkItemType } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

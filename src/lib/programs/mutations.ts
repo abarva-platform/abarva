@@ -5,7 +5,6 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
-  ArchetypeKey,
   MilestoneStatus,
   ModuleStatus,
   OriginSource,
@@ -16,7 +15,8 @@ import type {
   TenancyCtx,
   WorkItemStatus,
   WorkItemType,
-} from './types';
+} from './types.db';
+import type { ArchetypeKey } from './types.ui';
 import { getProgramById } from './queries';
 
 function assertTenancy(ctx: TenancyCtx): void {

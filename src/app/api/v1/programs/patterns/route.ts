@@ -6,7 +6,7 @@
 import { NextRequest } from 'next/server';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../_auth';
-import type { ArchetypeKey, PatternLibraryItem } from '@/lib/programs/types';
+import type { ArchetypeKey, PatternLibraryItem } from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

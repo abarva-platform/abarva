@@ -36,13 +36,25 @@ function severityColor(severity: string | null | undefined): string {
 
 function topSummary(payload: AtlasRailPayload | null): string {
   if (!payload) return 'Atlas will load portfolio context once Tower data is available.';
-  return payload.observations[0]?.summary
-    ?? `Atlas is ready. ${payload.portfolio.activeUseCaseCount} use cases are active and ${payload.portfolio.criticalSignalCount} critical signal is open.`;
+  if (payload.observations[0]?.summary) return payload.observations[0].summary;
+  const { activeUseCaseCount, criticalSignalCount, warningSignalCount, shadowAiSpendUsd } = payload.portfolio;
+  const pieces: string[] = [];
+  if (activeUseCaseCount > 0) pieces.push(`${activeUseCaseCount} active use case${activeUseCaseCount === 1 ? '' : 's'}`);
+  if (criticalSignalCount > 0) pieces.push(`${criticalSignalCount} critical`);
+  else if (warningSignalCount > 0) pieces.push(`${warningSignalCount} warning signal${warningSignalCount === 1 ? '' : 's'}`);
+  else pieces.push('no critical signals open');
+  if (shadowAiSpendUsd > 0) pieces.push(`${dollars(shadowAiSpendUsd)} shadow AI tracked`);
+  return `Atlas is reading ${pieces.join(' · ')}.`;
 }
 
-export function AtlasRail({ clientName }: { clientName: string }) {
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; payload: AtlasRailPayload };
+
+export function AtlasRail({ clientId, clientName }: { clientId: string; clientName: string }) {
   const [expanded, setExpanded] = useState(true);
-  const [payload, setPayload] = useState<AtlasRailPayload | null>(null);
+  const [state, setState] = useState<LoadState>({ kind: 'loading' });
   const [messages, setMessages] = useState<AtlasMessage[]>([]);
   const [suggestions, setSuggestions] = useState<AtlasSuggestion[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -51,14 +63,36 @@ export function AtlasRail({ clientName }: { clientName: string }) {
   const [activeSignalId, setActiveSignalId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
+  const payload = state.kind === 'ready' ? state.payload : null;
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch('/api/v1/atlas/observations', { cache: 'no-store' });
-      const json = (await res.json().catch(() => ({}))) as Partial<AtlasRailPayload>;
-      if (!cancelled && res.ok && json.portfolio && json.observations && json.signals) {
-        const data = json as AtlasRailPayload;
-        setPayload(data);
+      try {
+        const res = await fetch(`/api/v1/atlas/observations?clientId=${encodeURIComponent(clientId)}`, {
+          cache: 'no-store',
+        });
+        const json = (await res.json().catch(() => ({}))) as Partial<AtlasRailPayload> & { error?: string; detail?: string };
+        if (cancelled) return;
+        if (!res.ok) {
+          const msg = json.detail || json.error || `Atlas API returned ${res.status}`;
+          setState({ kind: 'error', message: msg });
+          return;
+        }
+        // Minimum viable signal · portfolio is guaranteed by the server-side
+        // fallback (buildTowerViewModel). Observations / signals may legitimately
+        // be empty arrays for quiet tenants — treat them as optional, not
+        // blocking.
+        if (!json.portfolio) {
+          setState({ kind: 'error', message: 'Atlas observations endpoint returned no portfolio summary' });
+          return;
+        }
+        const data: AtlasRailPayload = {
+          portfolio: json.portfolio,
+          observations: json.observations ?? [],
+          signals: json.signals ?? [],
+        };
+        setState({ kind: 'ready', payload: data });
         setMessages([
           {
             id: 'atlas-opener',
@@ -72,13 +106,17 @@ export function AtlasRail({ clientName }: { clientName: string }) {
           { label: 'Peer position', value: 'How do we compare to peers?', kind: 'message' },
           { label: 'Program roster', value: 'Show active programs', kind: 'message' },
         ]);
+      } catch (err) {
+        if (!cancelled) {
+          setState({ kind: 'error', message: (err as Error).message ?? 'Atlas request failed' });
+        }
       }
     }
     void load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [clientId]);
 
   async function sendMessage(message: string, signalId?: string | null) {
     const trimmed = message.trim();
@@ -90,7 +128,7 @@ export function AtlasRail({ clientName }: { clientName: string }) {
     const res = await fetch('/api/v1/atlas/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: trimmed, threadId, signalId }),
+      body: JSON.stringify({ message: trimmed, threadId, signalId, clientId }),
     });
     const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
 
@@ -171,8 +209,12 @@ export function AtlasRail({ clientName }: { clientName: string }) {
               Atlas · Tower
             </div>
             <div style={{ marginTop: 6, fontSize: 20, fontWeight: 700, color: INK }}>{clientName}</div>
-            <div style={{ marginTop: 2, fontSize: 12, color: SOFT }}>
-              {payload ? `${payload.portfolio.activeUseCaseCount} active use cases` : 'Loading portfolio context…'}
+            <div style={{ marginTop: 2, fontSize: 12, color: state.kind === 'error' ? CRITICAL : SOFT }}>
+              {state.kind === 'ready'
+                ? `${state.payload.portfolio.activeUseCaseCount} active use cases`
+                : state.kind === 'error'
+                  ? 'Atlas unavailable'
+                  : 'Loading portfolio context…'}
             </div>
           </div>
 
@@ -204,7 +246,11 @@ export function AtlasRail({ clientName }: { clientName: string }) {
                 gap: 10,
               }}
             >
-              <div style={{ fontSize: 14, lineHeight: 1.6, color: INK }}>{topSummary(payload)}</div>
+              <div style={{ fontSize: 14, lineHeight: 1.6, color: INK }}>
+                {state.kind === 'error'
+                  ? `Atlas can't reach the observations endpoint right now · ${state.message}. Tower tiles on the left are server-rendered and still accurate.`
+                  : topSummary(payload)}
+              </div>
               {payload?.signals[0] && (
                 <button
                   type="button"
@@ -340,6 +386,7 @@ export function AtlasRail({ clientName }: { clientName: string }) {
       </aside>
 
       <AtlasSignalDetailPanel
+        clientId={clientId}
         signalId={activeSignalId}
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
