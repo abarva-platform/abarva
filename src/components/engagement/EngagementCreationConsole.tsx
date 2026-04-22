@@ -94,6 +94,12 @@ export function EngagementCreationConsole() {
   const [sendHovered, setSendHovered] = useState(false);
   const [startHovered, setStartHovered] = useState(false);
   const [startPressed, setStartPressed] = useState(false);
+  // Countdown to auto-advance into the engagement console. Starts at 3 once
+  // the engagement is created; ticks down once per second; user can click
+  // "Start Phase 0 →" to skip, or "Review first" to cancel.
+  const [autoAdvanceSeconds, setAutoAdvanceSeconds] = useState<number | null>(null);
+  const [autoAdvanceCancelled, setAutoAdvanceCancelled] = useState(false);
+  const redirectRef = useRef(false);
   const nextId = () => `local-${Date.now()}-${++idRef.current}`;
   const reducedMotion = useReducedMotion();
 
@@ -111,9 +117,31 @@ export function EngagementCreationConsole() {
     el.style.overflowY = contentRows === MAX_ROWS ? 'auto' : 'hidden';
   }, [input]);
 
-  // Manual advance · user must click "Start Phase 0" to enter the console so
-  // they have a chance to verify what was extracted and edit if needed. Prior
-  // behaviour auto-redirected after 1.5s which silently locked in mistakes.
+  // Auto-advance with countdown · user sees the readout for ~3 seconds,
+  // then the console loads automatically unless they click "Review first".
+  // Kicks off once `created` fires and stays honoured until cancelled. Fix
+  // for the PR #20 regression that left automated testers + humans who
+  // didn't know about the button stuck on this page indefinitely.
+  useEffect(() => {
+    if (!created || autoAdvanceCancelled) return;
+    if (redirectRef.current) return;
+    setAutoAdvanceSeconds(3);
+    const interval = setInterval(() => {
+      setAutoAdvanceSeconds((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (!redirectRef.current) {
+            redirectRef.current = true;
+            router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [created, autoAdvanceCancelled, router]);
 
   // Auto-scroll to the latest bubble or to the readout as it appears.
   useEffect(() => {
@@ -381,12 +409,13 @@ export function EngagementCreationConsole() {
                 ) : null}
               </div>
 
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
                 <button
                   type="button"
-                  onClick={() =>
-                    router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`)
-                  }
+                  onClick={() => {
+                    redirectRef.current = true;
+                    router.push(`/engagements/${encodeURIComponent(created.graph_node_id)}`);
+                  }}
                   onMouseEnter={() => setStartHovered(true)}
                   onMouseLeave={() => { setStartHovered(false); setStartPressed(false); }}
                   onMouseDown={() => setStartPressed(true)}
@@ -408,12 +437,47 @@ export function EngagementCreationConsole() {
                   }}
                 >
                   Start Phase 0 →
+                  {autoAdvanceSeconds !== null && autoAdvanceSeconds > 0 && !autoAdvanceCancelled ? (
+                    <span style={{ marginLeft: 8, fontFamily: FONT_MONO, fontSize: 11, opacity: 0.7 }}>
+                      ({autoAdvanceSeconds})
+                    </span>
+                  ) : null}
                 </button>
+                {autoAdvanceSeconds !== null && autoAdvanceSeconds > 0 && !autoAdvanceCancelled ? (
+                  <button
+                    type="button"
+                    onClick={() => setAutoAdvanceCancelled(true)}
+                    style={{
+                      padding: '10px 16px',
+                      background: 'transparent',
+                      color: MUTE,
+                      border: '0.5px solid rgba(255,255,255,0.2)',
+                      borderRadius: 8,
+                      fontFamily: 'inherit',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      transition: reducedMotion ? undefined : `color ${TRANSITIONS.hover}, border-color ${TRANSITIONS.hover}`,
+                    }}
+                  >
+                    Review first
+                  </button>
+                ) : null}
                 <span style={{ fontSize: 12, color: MUTE, fontFamily: FONT_MONO }}>
-                  Something wrong?{' '}
-                  <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
-                    Start over
-                  </a>
+                  {autoAdvanceCancelled ? (
+                    <>
+                      Auto-advance cancelled. Click Start Phase 0 when ready.{' '}
+                      <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                        Start over
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      Something wrong?{' '}
+                      <a href="/engagements/new" style={{ color: TEAL, textDecoration: 'underline' }}>
+                        Start over
+                      </a>
+                    </>
+                  )}
                 </span>
               </div>
             </div>

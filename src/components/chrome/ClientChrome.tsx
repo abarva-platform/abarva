@@ -24,7 +24,7 @@ interface ClientInfo {
 // (admin surfaces). Observer gets the same, minus Engagements.
 const ITEMS_CLIENT_VIEWER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
-  { label: 'Engagements', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') },
+  { label: 'Programs', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
 ];
 
