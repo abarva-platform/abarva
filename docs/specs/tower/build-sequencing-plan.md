@@ -2,7 +2,7 @@
 
 **Purpose:** Dependency-chained work order for building the AbarVa Control Tower product. Ordered so Codex and Claude Code can always have next actions queued without blocking on each other. Not time-bound; structured around what unlocks what.
 
-**Prerequisites:** Tower design spec (`abarva-tower-design-spec.md`, 5,969 lines) defines what Tower is. This document defines how it gets built. Read that first if you haven't.
+**Prerequisites:** Tower design spec (`docs/specs/tower/design-spec.md`, 5,969 lines) defines what Tower is. This document defines how it gets built. Read that first if you haven't.
 
 **Context:** As of April 21, Tower exists as three visual mockups (`tower-mockups/` branch). The broader 19-page Tower surface isn't designed or built. The backend primitives (signals table, engagements, patterns, persons) exist. Atlas agent doesn't exist. Cohort benchmark computation doesn't exist. Signal firing engine doesn't exist. Roughly 15 new backend tables needed. Roughly 16 additional mockups needed before frontend work.
 
@@ -164,7 +164,7 @@ Each workstream: purpose, outputs, dependencies, unlocks, concrete sub-tasks.
 
 **Purpose:** Author three new shared components into the Design System spec before frontend work uses them. Prevents divergence between Tower-built-in-isolation and the rest of the platform.
 
-**Output:** Three new component specs added to `abarva-design-system-spec.md` Packet 2 (Components):
+**Output:** Three new component specs added to `docs/specs/platform/design-system.md` Packet 2 (Components):
 
 1. **Signal slide-in panel** — 400px right-side panel, overlays dashboard, has close button, action pinned at bottom, supports severity header band
 2. **Evidence chain card** — card component showing a vendor/source/artifact with title, dollar amount, descriptive prose, collapsible for multiple in a stack

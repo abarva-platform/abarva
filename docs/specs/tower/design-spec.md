@@ -1,15 +1,15 @@
 # AbarVa AI Control Tower · Design Specification
 
-**Document:** `abarva-tower-design-spec.md`
+**Document:** `docs/specs/tower/design-spec.md`
 **Product surface:** AI Control Tower (public name: **Tower**)
 **Agent:** Atlas
 **Session:** April 20-21, 2026 design session
 **Status:** In progress — 13 packets planned across 4 tracks
 **Author:** Claude (chat) in collaboration with Anand Sundaram
 **Related specs:**
-- `abarva-intelligence-design-spec.md` (Sentinel agent lives here)
-- `abarva-programs-design-spec.md` (Nexus agent lives here)
-- `abarva-agent-architecture-spec.md` (cross-cutting, written after Tower Track A lands)
+- `docs/specs/intelligence/design-spec.md` (Sentinel agent lives here)
+- `docs/specs/programs/design-spec.md` (Nexus agent lives here)
+- `docs/specs/platform/agent-architecture.md` (cross-cutting, written after Tower Track A lands)
 
 ---
 
@@ -2085,7 +2085,7 @@ Desktop IA locked: top nav with Tower as primary surface, 5 internal sub-surface
 
 ## 6.1 Design system reference
 
-Tower uses AbarVa's established design system. This packet specifies surface layouts; visual specifics inherit from `abarva-design-system.md` (locked decisions):
+Tower uses AbarVa's established design system. This packet specifies surface layouts; visual specifics inherit from `docs/specs/platform/design-system.md` (locked decisions):
 
 - **Wordmark:** Georgia serif — *Abar* 17px 800 white, *Va* 23px 900 teal
 - **Intelligence names:** JetBrains Mono 11px 600 teal uppercase
@@ -4285,7 +4285,7 @@ Atlas is Tower's agent. It is one of three named agents in AbarVa's product, eac
 | **Sentinel** | Intelligence | Research companion and strategic framing | Thread-scoped memory; knows domain depth; delicate refusal of execution asks |
 | **Atlas** | Tower | Portfolio state tracker and decision-engine surface | Short context; real-time data access; answers questions, doesn't strategize |
 
-This packet specifies Atlas in depth. The cross-cutting agent architecture document (`abarva-agent-architecture-spec.md`) specifies all three comparatively; Atlas's sections there derive from this packet.
+This packet specifies Atlas in depth. The cross-cutting agent architecture document (`docs/specs/platform/agent-architecture.md`) specifies all three comparatively; Atlas's sections there derive from this packet.
 
 ## 11.2 What Atlas is designed to be
 
