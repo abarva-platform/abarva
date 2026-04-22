@@ -128,13 +128,14 @@ function PhaseChip({ phase, label }: { phase: number; label: string }) {
     <span
       style={{
         display: 'inline-block',
-        padding: '3px 10px',
+        padding: '5px 12px',
         background: 'rgba(45,212,200,0.1)',
         border: '0.5px solid rgba(45,212,200,0.35)',
         borderRadius: 999,
         color: tone,
         fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 10,
+        fontSize: 12,
+        fontWeight: 600,
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
       }}
@@ -157,7 +158,8 @@ function StatusBadge({ row }: { row: ProgramRow }) {
         alignItems: 'center',
         gap: 6,
         fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 10,
+        fontSize: 12,
+        fontWeight: 600,
         color: tone,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
@@ -174,12 +176,12 @@ function TenantBadge({ tenant }: { tenant: string }) {
     <span
       style={{
         display: 'inline-block',
-        padding: '2px 8px',
+        padding: '4px 10px',
         background: 'rgba(255,255,255,0.05)',
         border: '0.5px solid rgba(255,255,255,0.12)',
         borderRadius: 6,
         fontFamily: 'JetBrains Mono, monospace',
-        fontSize: 9,
+        fontSize: 11,
         color: 'rgba(245,245,240,0.7)',
         letterSpacing: '0.1em',
         textTransform: 'uppercase',
@@ -203,7 +205,7 @@ function PatternChips({ patterns }: { patterns: string[] }) {
             border: '0.5px solid rgba(155,109,255,0.25)',
             borderRadius: 4,
             fontFamily: 'JetBrains Mono, monospace',
-            fontSize: 9,
+            fontSize: 11,
             color: '#B49BFF',
             letterSpacing: '0.05em',
           }}
@@ -211,20 +213,20 @@ function PatternChips({ patterns }: { patterns: string[] }) {
           {p.slice(0, 28)}
         </span>
       ))}
-      {patterns.length > 2 ? <span style={{ fontSize: 11, color: 'rgba(245,245,240,0.5)' }}>+{patterns.length - 2}</span> : null}
+      {patterns.length > 2 ? <span style={{ fontSize: 12, color: 'rgba(245,245,240,0.5)' }}>+{patterns.length - 2}</span> : null}
     </div>
   );
 }
 
 function OutcomeSparkline({ baseline, current }: { baseline: number | null; current: number | null }) {
   if (baseline == null || current == null) {
-    return <span style={{ fontSize: 11, color: 'rgba(245,245,240,0.45)', fontStyle: 'italic' }}>baseline pending</span>;
+    return <span style={{ fontSize: 13, color: 'rgba(245,245,240,0.45)', fontStyle: 'italic' }}>baseline pending</span>;
   }
   const pct = baseline !== 0 ? Math.round(((current - baseline) / baseline) * 100) : 0;
   const sign = pct >= 0 ? '+' : '';
   const tone = pct >= 10 ? COLORS.teal : pct >= 0 ? COLORS.amber : COLORS.red;
   return (
-    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: tone }}>
+    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: tone, fontWeight: 600 }}>
       {sign}{pct}%
     </span>
   );
@@ -249,7 +251,7 @@ export function ProgramsGrid() {
       defaultVisible: true,
       render: (_v, row) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
-          <span style={{ fontWeight: 500, color: COLORS.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <span style={{ fontWeight: 600, fontSize: 19, lineHeight: 1.2, color: COLORS.textPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {row.name}
           </span>
           <TenantBadge tenant={row.tenant} />
@@ -279,9 +281,9 @@ export function ProgramsGrid() {
       render: (_v, row) =>
         row.sponsor ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span>{row.sponsor}</span>
+            <span style={{ fontSize: 15 }}>{row.sponsor}</span>
             {row.sponsorTitle ? (
-              <span style={{ fontSize: 11, color: 'rgba(245,245,240,0.55)' }}>{row.sponsorTitle}</span>
+              <span style={{ fontSize: 13, color: 'rgba(245,245,240,0.55)' }}>{row.sponsorTitle}</span>
             ) : null}
           </div>
         ) : (
@@ -301,7 +303,7 @@ export function ProgramsGrid() {
       defaultVisible: true,
       accessor: (r) => r.lastUpdated.getTime(),
       render: (_v, row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(245,245,240,0.65)' }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: 'rgba(245,245,240,0.65)' }}>
           {relTime(row.lastUpdated)}
         </span>
       ),
@@ -334,7 +336,7 @@ export function ProgramsGrid() {
       toggleable: true,
       accessor: (r) => (r.pilotGateDate ? r.pilotGateDate.getTime() : Number.MAX_SAFE_INTEGER),
       render: (_v, row) => (
-        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
+        <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12 }}>
           {fmtDate(row.pilotGateDate)}
         </span>
       ),
@@ -412,17 +414,17 @@ export function ProgramsGrid() {
       mobileCard={(r) => (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-            <span style={{ fontWeight: 500, fontSize: 14 }}>{r.name}</span>
+            <span style={{ fontWeight: 600, fontSize: 18 }}>{r.name}</span>
             <StatusBadge row={r} />
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <PhaseChip phase={r.phase} label={r.phaseLabel} />
             <TenantBadge tenant={r.tenant} />
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(245,245,240,0.7)' }}>
+          <div style={{ fontSize: 14, color: 'rgba(245,245,240,0.7)' }}>
             {r.sponsor ?? 'No sponsor'}{r.sponsorTitle ? ` · ${r.sponsorTitle}` : ''}
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(245,245,240,0.55)' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(245,245,240,0.55)' }}>
             Updated {relTime(r.lastUpdated)}
           </div>
         </div>

@@ -14,7 +14,10 @@ interface Props {
 // present (eyebrow first, heading below).
 export function SectionHeading({ children, as = 'h2', size = 'md', style, id }: Props) {
   const Tag = as;
-  const fontSize = size === 'lg' ? 24 : size === 'md' ? 20 : 17;
+  const fontSize =
+    size === 'lg' ? 'clamp(26px, 2vw + 16px, 34px)'
+      : size === 'md' ? 'clamp(22px, 1.6vw + 14px, 30px)'
+      : 'clamp(18px, 1.1vw + 12px, 22px)';
   return (
     <Tag
       id={id}

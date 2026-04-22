@@ -56,7 +56,7 @@ function AskBar({ initialQuery }: { initialQuery: string }) {
         display: 'flex',
         gap: 8,
         marginBottom: 28,
-        padding: '14px 18px',
+        padding: '16px 20px',
         background: PANEL_BG,
         border: BORDER,
         borderRadius: 12,
@@ -71,7 +71,7 @@ function AskBar({ initialQuery }: { initialQuery: string }) {
           background: 'transparent',
           border: 'none',
           color: INK,
-          fontSize: 14,
+          fontSize: 16,
           outline: 'none',
           fontFamily: 'DM Sans, -apple-system, sans-serif',
         }}
@@ -79,12 +79,12 @@ function AskBar({ initialQuery }: { initialQuery: string }) {
       <button
         type="submit"
         style={{
-          padding: '8px 16px',
+          padding: '10px 18px',
           background: TEAL,
           color: '#0A0A0A',
           border: 'none',
           borderRadius: 8,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: 600,
           fontFamily: MONO,
           letterSpacing: '0.08em',
@@ -118,7 +118,7 @@ function Facet({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '8px 12px',
+        padding: '10px 14px',
         borderRadius: 8,
         background: active ? 'rgba(20,184,166,0.08)' : 'transparent',
         border: active ? `0.5px solid ${TEAL}` : '0.5px solid transparent',
@@ -126,11 +126,11 @@ function Facet({
         color: active ? INK : MUTE,
       }}
     >
-      <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: color, opacity: count > 0 ? 1 : 0.3 }} />
-        <span style={{ fontSize: 13, fontWeight: active ? 600 : 500 }}>{label}</span>
-      </span>
-      <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE }}>{count}</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: color, opacity: count > 0 ? 1 : 0.3 }} />
+          <span style={{ fontSize: 14, fontWeight: active ? 600 : 500 }}>{label}</span>
+        </span>
+      <span style={{ fontFamily: MONO, fontSize: 11, color: MUTE }}>{count}</span>
     </Link>
   );
 }
@@ -154,7 +154,7 @@ function FeaturedRail({
         background: PANEL_BG,
         border: BORDER,
         borderRadius: 10,
-        padding: 14,
+        padding: 18,
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
@@ -164,7 +164,7 @@ function FeaturedRail({
         <div
           style={{
             fontFamily: MONO,
-            fontSize: 10,
+            fontSize: 11,
             color: accent,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
@@ -177,7 +177,7 @@ function FeaturedRail({
             href={viewAllHref}
             style={{
               fontFamily: MONO,
-              fontSize: 9,
+              fontSize: 10,
               color: accent,
               letterSpacing: '0.1em',
               textDecoration: 'none',
@@ -188,7 +188,7 @@ function FeaturedRail({
         )}
       </div>
       {items.length === 0 ? (
-        <div style={{ fontSize: 12, color: MUTE, fontStyle: 'italic', padding: '8px 0' }}>{emptyCopy}</div>
+        <div style={{ fontSize: 14, color: MUTE, fontStyle: 'italic', padding: '8px 0' }}>{emptyCopy}</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {items.map((e) => {
@@ -202,7 +202,7 @@ function FeaturedRail({
                 rel={external ? 'noopener noreferrer' : undefined}
                 style={{
                   display: 'block',
-                  padding: '8px 10px',
+                  padding: '10px 12px',
                   background: 'rgba(255,255,255,0.02)',
                   border: BORDER,
                   borderRadius: 6,
@@ -210,14 +210,14 @@ function FeaturedRail({
                   color: INK,
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.3, marginBottom: 3 }}>{e.title}</div>
+                <div style={{ fontSize: 16, fontWeight: 600, lineHeight: 1.3, marginBottom: 4 }}>{e.title}</div>
                 {e.subtitle && (
-                  <div style={{ fontSize: 11, color: MUTE, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: 13, color: MUTE, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {e.subtitle}
                   </div>
                 )}
                 {e.publishedAt && (
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginTop: 3 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginTop: 4 }}>
                     {e.publishedAt.slice(0, 10)}
                   </div>
                 )}
@@ -243,20 +243,20 @@ function EntryCard({ e }: { e: LibraryEntry }) {
       style={{
         display: 'flex',
         flexDirection: 'column',
-        padding: 14,
+        padding: 18,
         background: PANEL_BG,
         border: BORDER,
         borderRadius: 10,
         textDecoration: 'none',
         color: INK,
-        minHeight: 100,
+        minHeight: 124,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
         <span
           style={{
             fontFamily: MONO,
-            fontSize: 9,
+            fontSize: 10,
             color,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
@@ -265,17 +265,17 @@ function EntryCard({ e }: { e: LibraryEntry }) {
           {CATEGORY_LABEL[e.category]}
         </span>
         {e.publishedAt && (
-          <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginLeft: 'auto' }}>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginLeft: 'auto' }}>
             {e.publishedAt.slice(0, 10)}
           </span>
         )}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, marginBottom: 4 }}>{e.title}</div>
+      <div style={{ fontSize: 19, fontWeight: 600, lineHeight: 1.3, marginBottom: 6 }}>{e.title}</div>
       {e.subtitle && (
-        <div style={{ fontSize: 12, color: MUTE, marginBottom: 6 }}>{e.subtitle}</div>
+        <div style={{ fontSize: 14, color: MUTE, marginBottom: 8 }}>{e.subtitle}</div>
       )}
       {e.detail && (
-        <div style={{ fontSize: 11.5, color: MUTE, marginTop: 'auto', fontFamily: MONO }}>{e.detail}</div>
+        <div style={{ fontSize: 13, color: MUTE, marginTop: 'auto', fontFamily: MONO, lineHeight: 1.5 }}>{e.detail}</div>
       )}
       {e.industryTags.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
@@ -284,8 +284,8 @@ function EntryCard({ e }: { e: LibraryEntry }) {
               key={t}
               style={{
                 fontFamily: MONO,
-                fontSize: 9,
-                padding: '2px 6px',
+                fontSize: 10,
+                padding: '4px 8px',
                 background: 'rgba(255,255,255,0.04)',
                 border: BORDER,
                 borderRadius: 4,
@@ -364,13 +364,13 @@ export default async function LibraryPage({
       }}
     >
       <div style={{ marginBottom: 18 }}>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 6 }}>
+        <div style={{ fontFamily: MONO, fontSize: 12, color: TEAL, letterSpacing: '0.14em', marginBottom: 8 }}>
           INTELLIGENCE · LIBRARY
         </div>
-        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 30, fontWeight: 400, margin: 0, letterSpacing: '-0.01em' }}>
+        <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 'clamp(34px, 2.6vw + 18px, 42px)', fontWeight: 400, margin: 0, letterSpacing: '-0.01em', lineHeight: 1.08 }}>
           What AbarVa knows
         </h1>
-        <div style={{ fontSize: 13.5, color: MUTE, marginTop: 6, maxWidth: 720 }}>
+        <div style={{ fontSize: 16, color: MUTE, marginTop: 8, maxWidth: 820, lineHeight: 1.65 }}>
           Browsable catalog across topics, patterns, vendors, regulations, frameworks, benchmarks, research, and news.
           Cross-engagement knowledge, cited. {total} entries indexed
           {catalog.pendingSources > 0 ? ` · ${catalog.pendingSources} sources pending ingestion` : ''}.
@@ -389,10 +389,10 @@ export default async function LibraryPage({
               marginBottom: 12,
             }}
           >
-            <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: TEAL, letterSpacing: '0.14em' }}>
               FEATURED SHELF · start here
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.08em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 11, color: MUTE, letterSpacing: '0.08em' }}>
               {total} total · {catalog.pendingSources > 0 ? `${catalog.pendingSources} pending ingest` : 'library ready'}
             </div>
           </div>
@@ -422,10 +422,10 @@ export default async function LibraryPage({
         </section>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 24, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '256px 1fr', gap: 28, alignItems: 'start' }}>
         {/* Left: facets */}
         <aside style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 4, padding: '0 12px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 11, color: MUTE, letterSpacing: '0.14em', marginBottom: 6, padding: '0 12px' }}>
             CATEGORY
           </div>
           <Facet
@@ -451,7 +451,7 @@ export default async function LibraryPage({
               <div
                 style={{
                   fontFamily: MONO,
-                  fontSize: 10,
+                  fontSize: 11,
                   color: MUTE,
                   letterSpacing: '0.14em',
                   margin: '14px 0 4px',

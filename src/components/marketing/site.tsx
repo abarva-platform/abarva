@@ -30,8 +30,16 @@ export function MarketingStyles() {
       }
 
       .marketing-container {
-        width: min(1240px, calc(100vw - 48px));
+        width: min(1280px, calc(100vw - 56px));
         margin: 0 auto;
+      }
+
+      .prose-column {
+        max-width: 68ch;
+      }
+
+      .content-wide {
+        max-width: 100%;
       }
 
       .marketing-header {
@@ -133,7 +141,7 @@ export function MarketingStyles() {
         background: white;
         border: 1px solid ${BORDER};
         border-radius: 18px;
-        padding: 24px;
+        padding: 28px;
       }
 
       .marketing-card--dark {
@@ -144,7 +152,8 @@ export function MarketingStyles() {
       .marketing-eyebrow {
         margin-bottom: 16px;
         font-family: ${MONO};
-        font-size: 11px;
+        font-size: 13px;
+        font-weight: 600;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: ${TEAL};
@@ -159,13 +168,13 @@ export function MarketingStyles() {
       }
 
       .marketing-title--section {
-        font-size: clamp(28px, 4vw, 44px);
+        font-size: clamp(32px, 4vw, 48px);
       }
 
       .marketing-copy {
         margin: 0;
-        font-size: 17px;
-        line-height: 1.7;
+        font-size: clamp(17px, 1.2vw + 12px, 19px);
+        line-height: 1.72;
         color: ${BODY};
       }
 
@@ -189,6 +198,93 @@ export function MarketingStyles() {
         display: flex;
         gap: 14px;
         flex-wrap: wrap;
+      }
+
+      .marketing-card-title {
+        font-size: clamp(18px, 1vw + 14px, 22px);
+        font-weight: 700;
+        line-height: 1.3;
+        margin-bottom: 10px;
+        color: ${INK};
+      }
+
+      .marketing-meta {
+        font-family: ${MONO};
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: ${TEAL};
+      }
+
+      .hero-section {
+        padding-top: 96px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+        gap: 32px;
+        align-items: stretch;
+      }
+
+      .hero-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 22px;
+      }
+
+      .hero-visual {
+        display: flex;
+        align-items: stretch;
+      }
+
+      .hero-visual-card {
+        width: 100%;
+        min-height: 100%;
+        background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,247,244,0.96) 100%);
+        border: 1px solid rgba(12, 12, 12, 0.08);
+        border-radius: 28px;
+        padding: 28px;
+        box-shadow: 0 24px 64px rgba(12, 12, 12, 0.08);
+      }
+
+      .hero-visual-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .hero-kpi {
+        border-radius: 18px;
+        border: 1px solid rgba(12, 12, 12, 0.08);
+        background: rgba(255, 255, 255, 0.82);
+        padding: 18px;
+      }
+
+      .hero-kpi__value {
+        font-family: ${SERIF};
+        font-size: clamp(26px, 2vw + 12px, 38px);
+        line-height: 1;
+        color: ${INK};
+      }
+
+      .hero-kpi__label {
+        margin-top: 8px;
+        font-family: ${MONO};
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: ${TEAL};
+      }
+
+      .hero-kpi__body {
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 1.55;
+        color: ${BODY};
       }
 
       .marketing-button {
@@ -290,11 +386,15 @@ export function MarketingStyles() {
         .marketing-grid-2 {
           grid-template-columns: 1fr;
         }
+
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       @media (max-width: 760px) {
         .marketing-container {
-          width: min(100vw - 28px, 1240px);
+          width: min(100vw - 28px, 1280px);
         }
 
         .marketing-header__inner {
@@ -316,6 +416,14 @@ export function MarketingStyles() {
 
         .marketing-section {
           padding: 64px 0;
+        }
+
+        .hero-section {
+          padding-top: 72px;
+        }
+
+        .hero-visual-grid {
+          grid-template-columns: 1fr;
         }
       }
     `}</style>
@@ -394,9 +502,17 @@ export function Title({
   )
 }
 
-export function Copy({ children, style }: { children: ReactNode; style?: CSSProperties }) {
+export function Copy({
+  children,
+  style,
+  className,
+}: {
+  children: ReactNode
+  style?: CSSProperties
+  className?: string
+}) {
   return (
-    <p className="marketing-copy" style={style}>
+    <p className={`marketing-copy${className ? ` ${className}` : ''}`} style={style}>
       {children}
     </p>
   )

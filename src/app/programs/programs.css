@@ -45,9 +45,10 @@
 
 .programs-route-title {
   font-family: var(--programs-serif);
-  font-size: 30px;
+  font-size: clamp(32px, 2.5vw + 18px, 42px);
   font-weight: 400;
   letter-spacing: -0.02em;
+  line-height: 1.08;
 }
 
 .programs-route-meta {
@@ -55,13 +56,13 @@
   gap: 10px;
   flex-wrap: wrap;
   color: var(--programs-muted);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .programs-route-meta span {
   border: 0.5px solid var(--programs-border);
   border-radius: 999px;
-  padding: 7px 12px;
+  padding: 8px 14px;
   background: rgba(255, 255, 255, 0.66);
 }
 
@@ -90,7 +91,7 @@
 
 .programs-eyebrow {
   font-family: var(--programs-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -100,7 +101,7 @@
 
 .programs-mono-label {
   font-family: var(--programs-mono);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -111,6 +112,7 @@
   font-family: var(--programs-serif);
   font-weight: 400;
   letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .programs-muted {
@@ -221,8 +223,9 @@
   gap: 6px;
   border-radius: 999px;
   border: 0.5px solid var(--programs-border);
-  padding: 7px 10px;
-  font-size: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--programs-muted);
   background: rgba(255, 255, 255, 0.84);
 }

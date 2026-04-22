@@ -7,6 +7,7 @@ import { getDeliverable, getProgramByIdSync, getViewerRole } from '@/lib/program
 import { ProgramShell } from '@/components/programs/ProgramSurface';
 import { TimelineResourceEstimateView } from '@/components/programs/TimelineResourceEstimateView';
 import { ExecutionRoadmapTrackerView } from '@/components/programs/ExecutionRoadmapTrackerView';
+import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
 
 function ModuleContentView({ content }: { content: ModuleContent }) {
   return (

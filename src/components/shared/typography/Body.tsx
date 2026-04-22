@@ -10,13 +10,16 @@ interface Props {
   style?: CSSProperties;
 }
 
-// DM Sans body text. Default 15/1.6 (Fix Spec v3 §1 · 13-15" laptop
-// readability). Use sm (13) for supporting copy; lg (17) for opening
-// paragraphs on content-heavy pages; xs (12) only for metadata — use
-// MetaLabel for most small cases.
+// DM Sans body text. Fix Spec v5 raises the floor on 13–16" laptop
+// readability with responsive clamp() sizing: xs 11→13, sm 13→15,
+// md 15→17, lg 17→19.
 export function Body({ children, size = 'md', weight = 400, tone = 'primary', as = 'p', style }: Props) {
   const Tag = as;
-  const fontSize = size === 'xs' ? 12 : size === 'sm' ? 13 : size === 'lg' ? 17 : 15;
+  const fontSize =
+    size === 'xs' ? 'clamp(11px, 0.6vw + 8px, 13px)'
+      : size === 'sm' ? 'clamp(13px, 0.9vw + 10px, 15px)'
+      : size === 'lg' ? 'clamp(17px, 1.2vw + 12px, 19px)'
+      : 'clamp(15px, 1vw + 11px, 17px)';
   const color =
     tone === 'secondary' ? COLORS.textSecondary
       : tone === 'muted' ? COLORS.textMuted
@@ -28,7 +31,7 @@ export function Body({ children, size = 'md', weight = 400, tone = 'primary', as
         fontSize,
         fontWeight: weight,
         color,
-        lineHeight: 1.6,
+        lineHeight: size === 'lg' ? 1.65 : 1.6,
         margin: 0,
         ...style,
       }}
