@@ -3,7 +3,7 @@ import type { PersonRow } from '@/lib/db/person';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
@@ -142,7 +142,7 @@ export function EngagementMetaStrip({
             color: TEAL,
             letterSpacing: '0.14em',
             padding: '3px 8px',
-            background: 'rgba(45,212,200,0.08)',
+            background: 'rgba(20,184,166,0.08)',
             border: `0.5px solid ${TEAL}`,
             borderRadius: 4,
           }}
@@ -165,8 +165,8 @@ export function EngagementMetaStrip({
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                background: 'rgba(45,212,200,0.12)',
-                border: '0.5px solid rgba(45,212,200,0.3)',
+                background: 'rgba(20,184,166,0.12)',
+                border: '0.5px solid rgba(20,184,166,0.3)',
                 color: TEAL,
                 fontSize: 11,
                 fontFamily: MONO,
@@ -242,7 +242,7 @@ export function EngagementMetaStrip({
                         borderRadius: '50%',
                         background: dotColor,
                         border: isCurrent ? `2px solid ${PHASE_COLORS[i]}` : 'none',
-                        boxShadow: isCurrent ? `0 0 0 3px rgba(45,212,200,0.12)` : 'none',
+                        boxShadow: isCurrent ? `0 0 0 3px rgba(20,184,166,0.12)` : 'none',
                       }}
                     />
                     <div

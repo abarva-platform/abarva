@@ -16,7 +16,7 @@ const CONFIDENCE_STEPS = [
   { files: '5 files', label: 'Minimum viable', pct: 70, color: '#D97706', bg: '#FFFBEB' },
   { files: '8 files', label: 'Good', pct: 84, color: '#2563EB', bg: '#EFF6FF' },
   { files: '12 files', label: 'Gold standard', pct: 94, color: '#059669', bg: '#ECFDF5' },
-  { files: '12 + interviews', label: 'Full intelligence', pct: 99, color: '#2DD4C8', bg: '#F0FDFA' },
+  { files: '12 + interviews', label: 'Full intelligence', pct: 99, color: '#14B8A6', bg: '#F0FDFA' },
 ]
 
 const CIO_QUESTIONS = [
@@ -290,13 +290,13 @@ export default function DataGuidePage() {
 
         {/* Confidence impact banner */}
         <div style={{ background: '#0C0C0C', borderRadius: '12px', padding: '28px 32px', marginBottom: '32px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Confidence Impact</div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#14B8A6', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Confidence Impact</div>
           <div style={{ fontSize: '14px', color: '#888888', marginBottom: '24px' }}>Every additional file reduces the risk of a wrong recommendation</div>
 
           {/* Progress visualization */}
           <div style={{ position: 'relative' as const, marginBottom: '20px' }}>
             <div style={{ height: '8px', background: '#1F2937', borderRadius: '4px', position: 'relative' as const, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute' as const, left: 0, top: 0, height: '100%', width: '99%', background: 'linear-gradient(90deg, #D97706 0%, #D97706 20%, #2563EB 20%, #2563EB 50%, #059669 50%, #059669 85%, #2DD4C8 85%, #2DD4C8 100%)', borderRadius: '4px' }} />
+              <div style={{ position: 'absolute' as const, left: 0, top: 0, height: '100%', width: '99%', background: 'linear-gradient(90deg, #D97706 0%, #D97706 20%, #2563EB 20%, #2563EB 50%, #059669 50%, #059669 85%, #14B8A6 85%, #14B8A6 100%)', borderRadius: '4px' }} />
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px' }}>
               {CONFIDENCE_STEPS.map((step, i) => (
@@ -363,14 +363,14 @@ export default function DataGuidePage() {
 
         {/* Incremental data strategy */}
         <div style={{ background: '#0C0C0C', borderRadius: '12px', padding: '28px 32px', marginBottom: '24px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Staying Current</div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: '#14B8A6', letterSpacing: '0.12em', textTransform: 'uppercase' as const, marginBottom: '6px' }}>Staying Current</div>
           <div style={{ fontSize: '16px', fontWeight: 700, color: '#F9FAFB', marginBottom: '6px' }}>Data loaded once gets stale. Here is how AbarVa stays current.</div>
           <div style={{ fontSize: '13px', color: '#3C3C3C', marginBottom: '24px' }}>Three-tier refresh model — most is automated.</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
             {[
               {
-                freq: 'Automated', sub: 'Monthly — no Maestro action required', color: '#2DD4C8',
+                freq: 'Automated', sub: 'Monthly — no Maestro action required', color: '#14B8A6',
                 items: ['CMS regulatory updates and deadlines', 'KLAS scores and peer benchmarks', 'Vendor announcement monitoring', 'Public financial data enrichment'],
               },
               {

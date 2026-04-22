@@ -71,7 +71,7 @@ async function resolveClientName(clientId: string): Promise<ProgramSummary['clie
 }
 
 // ── Person → PersonRef ─────────────────────────────────────────────────
-const AVATAR_COLORS = ['#2DD4C8', '#9B6DFF', '#F5C54A', '#FF6B4A', '#3FB27F', '#4DA3FF'];
+const AVATAR_COLORS = ['#14B8A6', '#9B6DFF', '#F5C54A', '#FF6B4A', '#3FB27F', '#4DA3FF'];
 function colorForId(id: string): string {
   let hash = 0;
   for (let i = 0; i < id.length; i += 1) hash = (hash * 31 + id.charCodeAt(i)) | 0;
@@ -449,7 +449,7 @@ export async function buildProgramFullState(ctx: TenancyCtx, program: ProgramCor
 }
 
 function placeholderNexus(): PersonRef {
-  return { id: 'nexus', name: 'Nexus', title: 'Embedded delivery agent', initials: 'NX', avatarColor: '#2DD4C8' };
+  return { id: 'nexus', name: 'Nexus', title: 'Embedded delivery agent', initials: 'NX', avatarColor: '#14B8A6' };
 }
 
 async function buildCharterSummary(engagementId: string, programName: string): Promise<CharterSummary> {

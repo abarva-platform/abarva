@@ -4,7 +4,7 @@ import { useUser } from '@clerk/nextjs';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const FONT_SERIF = 'Georgia, serif';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
@@ -53,8 +53,8 @@ export function TopBar() {
                 width: 30,
                 height: 30,
                 borderRadius: '50%',
-                background: 'rgba(45,212,200,0.12)',
-                border: '0.5px solid rgba(45,212,200,0.3)',
+                background: 'rgba(20,184,166,0.12)',
+                border: '0.5px solid rgba(20,184,166,0.3)',
                 color: TEAL,
                 fontSize: 11,
                 fontWeight: 600,

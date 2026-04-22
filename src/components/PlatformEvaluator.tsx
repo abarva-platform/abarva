@@ -37,7 +37,7 @@ function Circles({ value, max = 5 }: { value: number; max?: number }) {
   return (
     <span style={{ display: 'inline-flex', gap: '2px', fontFamily: 'monospace', fontSize: '13px' }}>
       {Array.from({ length: max }, (_, i) => (
-        <span key={i} style={{ color: i < value ? '#2DD4C8' : '#D1D5DB' }}>●</span>
+        <span key={i} style={{ color: i < value ? '#14B8A6' : '#D1D5DB' }}>●</span>
       ))}
     </span>
   )
@@ -91,7 +91,7 @@ export default function PlatformEvaluator({ platforms, clientName, context }: Pl
                           <span style={{ color: '#D97706', fontSize: '11px' }} title="AbarVa referral partner — disclosed, does not affect scoring">★</span>
                         )}
                         {isBest && (
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#2DD4C8', background: '#E0FDFA', border: '1px solid #2DD4C8', borderRadius: '4px', padding: '1px 6px', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: '#14B8A6', background: '#E0FDFA', border: '1px solid #14B8A6', borderRadius: '4px', padding: '1px 6px', whiteSpace: 'nowrap' }}>
                             Best fit for {clientName}
                           </span>
                         )}

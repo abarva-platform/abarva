@@ -442,7 +442,7 @@ export default async function DeliverableDetailPage({
                       key={v.id}
                       style={{
                         padding: 10,
-                        background: isLatest ? 'rgba(45,212,200,0.05)' : PANEL_BG,
+                        background: isLatest ? 'rgba(20,184,166,0.05)' : PANEL_BG,
                         border: isLatest ? `0.5px solid ${TEAL}40` : BORDER,
                         borderRadius: 8,
                       }}

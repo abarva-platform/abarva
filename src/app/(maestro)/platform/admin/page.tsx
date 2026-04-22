@@ -9,7 +9,7 @@ const TEXT   = '#3D3B38'
 const MUTED  = '#706D66'
 const BORDER = '#E8E6E3'
 const BG2    = '#F2F1F0'
-const TEAL   = '#2DD4C8'
+const TEAL   = '#14B8A6'
 const RED    = '#C53030'
 const AMBER  = '#B45309'
 const GREEN  = '#166534'
@@ -287,7 +287,7 @@ export default function AdminPortal() {
                   <div
                     key={item.key}
                     onClick={() => setActive(item.key)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(45,212,200,0.1)' : 'transparent', transition: 'background 0.15s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(20,184,166,0.1)' : 'transparent', transition: 'background 0.15s' }}
                     onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
                     onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >

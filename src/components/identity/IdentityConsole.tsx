@@ -24,7 +24,7 @@ const OPENER_CONTENT = 'Adding someone new. Who am I setting up?';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
@@ -164,7 +164,7 @@ export function IdentityConsole() {
           </div>
 
           {createdPerson && (
-            <div style={{ marginTop: 20, padding: 16, background: 'rgba(45,212,200,0.05)', border: `0.5px solid ${TEAL}4D`, borderRadius: 10 }}>
+            <div style={{ marginTop: 20, padding: 16, background: 'rgba(20,184,166,0.05)', border: `0.5px solid ${TEAL}4D`, borderRadius: 10 }}>
               <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase', marginBottom: 6 }}>
                 User created
               </div>

@@ -133,7 +133,7 @@ body {
   outline: none;
 }
 :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
-  outline: 2px solid var(--color-teal);
+  outline: 2px solid #14B8A6;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -155,10 +155,10 @@ body {
   position: absolute;
   left: -9999px;
   top: 0;
-  background: var(--color-page-bg);
-  color: var(--color-teal);
+  background: #0A0A0A;
+  color: #14B8A6;
   padding: 10px 16px;
-  border: 1px solid var(--color-teal);
+  border: 1px solid #14B8A6;
   border-radius: 6px;
   font-family: var(--font-body-mono);
   font-size: 12px;

@@ -343,7 +343,7 @@ export function EngagementConsole({
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: 11,
               letterSpacing: '0.2em',
-              color: '#2DD4C8',
+              color: '#14B8A6',
               textTransform: 'uppercase',
             }}
           >
@@ -395,7 +395,7 @@ export function EngagementConsole({
                       width: 14,
                       display: 'inline-flex',
                       justifyContent: 'center',
-                      color: isDone ? '#2DD4C8' : isActive ? '#2DD4C8' : 'rgba(245,245,240,0.4)',
+                      color: isDone ? '#14B8A6' : isActive ? '#14B8A6' : 'rgba(245,245,240,0.4)',
                       fontFamily: 'JetBrains Mono, monospace',
                       fontSize: 13,
                       animation: isActive && !reducedMotion ? `transitionPulse 1s ${MOTION.easing.easeInOut} infinite` : undefined,
@@ -425,10 +425,10 @@ export function EngagementConsole({
           style={{
             position: 'fixed', top: 80, right: 24, zIndex: 60,
             padding: '12px 18px',
-            background: 'rgba(45,212,200,0.12)',
-            border: '0.5px solid rgba(45,212,200,0.4)',
+            background: 'rgba(20,184,166,0.12)',
+            border: '0.5px solid rgba(20,184,166,0.4)',
             borderRadius: 10,
-            color: '#2DD4C8',
+            color: '#14B8A6',
             fontFamily: 'JetBrains Mono, monospace',
             fontSize: 12,
             letterSpacing: '0.08em',
@@ -470,9 +470,9 @@ export function EngagementConsole({
         <div style={{ maxWidth: 1480, margin: '0 auto', width: '100%' }}>
           <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
             <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
-            <span style={{ color: '#2DD4C8', fontSize: 23, fontWeight: 900 }}>Va</span>
+            <span style={{ color: '#14B8A6', fontSize: 23, fontWeight: 900 }}>Va</span>
           </div>
-          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#2DD4C8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#14B8A6', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
             Program · {engagement.name} · {sponsor?.name ?? 'unassigned'} · {sponsor?.role ?? '—'}
           </div>
         </div>
@@ -485,11 +485,11 @@ export function EngagementConsole({
             <div key={i} style={{
               padding: '10px 12px',
               borderRadius: 8,
-              background: i === engagement.current_phase ? 'rgba(45,212,200,0.12)' : 'rgba(255,255,255,0.03)',
-              border: `0.5px solid ${i === engagement.current_phase ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+              background: i === engagement.current_phase ? 'rgba(20,184,166,0.12)' : 'rgba(255,255,255,0.03)',
+              border: `0.5px solid ${i === engagement.current_phase ? '#14B8A6' : 'rgba(255,255,255,0.12)'}`,
               transition: reducedMotion ? undefined : `background-color ${TRANSITIONS.inPlace}, border-color ${TRANSITIONS.inPlace}`,
             }}>
-              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: i === engagement.current_phase ? '#14B8A6' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                 PHASE {i}
               </div>
               <div style={{ fontSize: 13, color: i === engagement.current_phase ? '#F5F5F0' : 'rgba(245,245,240,0.72)' }}>
@@ -516,8 +516,8 @@ export function EngagementConsole({
                 <div
                   style={{
                     padding: 20,
-                    background: 'linear-gradient(135deg, rgba(45,212,200,0.06) 0%, rgba(155,109,255,0.04) 100%)',
-                    border: '0.5px solid rgba(45,212,200,0.25)',
+                    background: 'linear-gradient(135deg, rgba(20,184,166,0.06) 0%, rgba(155,109,255,0.04) 100%)',
+                    border: '0.5px solid rgba(20,184,166,0.25)',
                     borderRadius: 12,
                   }}
                 >
@@ -525,7 +525,7 @@ export function EngagementConsole({
                     style={{
                       fontFamily: 'JetBrains Mono, monospace',
                       fontSize: 9,
-                      color: '#2DD4C8',
+                      color: '#14B8A6',
                       letterSpacing: '0.14em',
                       marginBottom: 10,
                     }}
@@ -614,11 +614,11 @@ export function EngagementConsole({
                   <div style={{
                     padding: '10px 14px',
                     borderRadius: 10,
-                    background: t.sender === 'agent' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
-                    border: `0.5px solid ${t.errored ? 'rgba(255,107,74,0.5)' : t.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'}`,
+                    background: t.sender === 'agent' ? 'rgba(20,184,166,0.05)' : 'rgba(255,255,255,0.06)',
+                    border: `0.5px solid ${t.errored ? 'rgba(255,107,74,0.5)' : t.sender === 'agent' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.12)'}`,
                     opacity: t.streaming && !t.text ? 0.6 : 1,
                   }}>
-                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#2DD4C8' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
+                    <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: t.sender === 'agent' ? '#14B8A6' : 'rgba(245,245,240,0.72)', letterSpacing: '0.14em', marginBottom: 4 }}>
                       {t.sender === 'agent' ? `NEXUS${t.mode_label ? ' · ' + t.mode_label : ''}${t.streaming ? ' · streaming' : ''}` : 'YOU'}
                     </div>
                     {t.sender === 'agent' && t.streaming && !t.text && stages.length > 0 && (
@@ -638,7 +638,7 @@ export function EngagementConsole({
                               animationDelay: reducedMotion ? undefined : `${i * 80}ms`,
                             }}
                           >
-                            <span style={{ color: '#2DD4C8', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
+                            <span style={{ color: '#14B8A6', marginRight: 6, fontFamily: 'JetBrains Mono, monospace' }}>▸</span>
                             {s.label}
                             {s.detail && <span style={{ color: 'rgba(245,245,240,0.4)', marginLeft: 6 }}>· {s.detail}</span>}
                           </div>
@@ -660,7 +660,7 @@ export function EngagementConsole({
                         <span
                           aria-hidden="true"
                           style={{
-                            color: '#2DD4C8',
+                            color: '#14B8A6',
                             opacity: 0.7,
                             animation: reducedMotion ? undefined : `streamPulse 1.2s ${MOTION.easing.easeInOut} infinite`,
                           }}
@@ -677,7 +677,7 @@ export function EngagementConsole({
                           style={{
                             marginTop: 10,
                             paddingTop: 10,
-                            borderTop: '0.5px solid rgba(45,212,200,0.12)',
+                            borderTop: '0.5px solid rgba(20,184,166,0.12)',
                             display: 'flex',
                             flexWrap: 'wrap',
                             gap: 6,
@@ -773,7 +773,7 @@ export function EngagementConsole({
                 flex: 1,
                 padding: '10px 14px',
                 background: 'rgba(255,255,255,0.06)',
-                border: `0.5px solid ${composerFocused ? '#2DD4C8' : 'rgba(255,255,255,0.12)'}`,
+                border: `0.5px solid ${composerFocused ? '#14B8A6' : 'rgba(255,255,255,0.12)'}`,
                 borderRadius: 8,
                 color: '#F5F5F0',
                 fontFamily: 'inherit',
@@ -794,7 +794,7 @@ export function EngagementConsole({
               onMouseUp={() => setSendPressed(false)}
               style={{
                 padding: '10px 18px',
-                background: sendPressed ? '#0F766E' : sendHovered ? '#0D9488' : '#2DD4C8',
+                background: sendPressed ? '#0F766E' : sendHovered ? '#0D9488' : '#14B8A6',
                 color: '#0A0A0A',
                 border: 'none',
                 borderRadius: 8,
@@ -819,7 +819,7 @@ export function EngagementConsole({
 
           {/* Sponsor */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, padding: 14 }}>
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#14B8A6', textTransform: 'uppercase', marginBottom: 8 }}>
               Sponsor
             </div>
             {sponsor ? (
@@ -990,15 +990,15 @@ export function EngagementConsole({
             href={`/engagements/${encodeURIComponent(engagement.graph_node_id)}/deliverables`}
             style={{
               display: 'block',
-              background: 'rgba(45,212,200,0.04)',
-              border: '0.5px solid rgba(45,212,200,0.2)',
+              background: 'rgba(20,184,166,0.04)',
+              border: '0.5px solid rgba(20,184,166,0.2)',
               borderRadius: 10,
               padding: 14,
               textDecoration: 'none',
               color: '#F5F5F0',
             }}
           >
-            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#2DD4C8', textTransform: 'uppercase', marginBottom: 8 }}>
+            <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: '#14B8A6', textTransform: 'uppercase', marginBottom: 8 }}>
               Deliverables · {deliverablesList.length}
             </div>
             {deliverablesList.length === 0 ? (
@@ -1007,7 +1007,7 @@ export function EngagementConsole({
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {deliverablesList.map((d) => (
                   <div key={`${d.type}-${d.phase}`} style={{ fontSize: 12, lineHeight: 1.5 }}>
-                    <span style={{ color: '#2DD4C8', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>PHASE {d.phase}</span>
+                    <span style={{ color: '#14B8A6', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>PHASE {d.phase}</span>
                     <span style={{ color: '#F5F5F0' }}> · {d.type.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join(' ')}</span>
                     <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 10, fontFamily: 'JetBrains Mono, monospace' }}>
                       {new Date(d.generated_at).toLocaleDateString()}
@@ -1081,7 +1081,7 @@ export function EngagementConsole({
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {activityEvents.map((e, i) => {
-                  const color = e.kind === 'turn' ? '#2DD4C8' : e.kind === 'gate' ? '#3FB27F' : '#9B6DFF';
+                  const color = e.kind === 'turn' ? '#14B8A6' : e.kind === 'gate' ? '#3FB27F' : '#9B6DFF';
                   const glyph = e.kind === 'turn' ? '▸' : e.kind === 'gate' ? '●' : '◆';
                   const then = new Date(e.at).getTime();
                   const diffMs = Date.now() - then;

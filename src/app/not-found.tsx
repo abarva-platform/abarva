@@ -17,17 +17,17 @@ export default function NotFound() {
             <circle cx="16"   cy="26" r="2.2" fill="#60A5FA" />
             <circle cx="7.3"  cy="21" r="2.2" fill="#60A5FA" />
             <circle cx="7.3"  cy="11" r="2.2" fill="#60A5FA" />
-            <circle cx="16" cy="16" r="5.5" fill="#2DD4C8" />
+            <circle cx="16" cy="16" r="5.5" fill="#14B8A6" />
           </svg>
         </div>
 
         {/* AbarVA wordmark */}
         <div style={{ fontFamily: "'IBM Plex Mono', 'Courier New', monospace", fontWeight: 900, fontSize: '22px', letterSpacing: '-0.02em', marginBottom: '24px' }}>
-          <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#2DD4C8' }}>VA</span>
+          <span style={{ color: '#F0F6FF' }}>Abar</span><span style={{ color: '#14B8A6' }}>VA</span>
         </div>
 
         {/* 404 */}
-        <div style={{ fontSize: '96px', fontWeight: 800, color: '#2DD4C8', fontFamily: "'IBM Plex Mono', 'Courier New', monospace", lineHeight: 1, marginBottom: '24px' }}>
+        <div style={{ fontSize: '96px', fontWeight: 800, color: '#14B8A6', fontFamily: "'IBM Plex Mono', 'Courier New', monospace", lineHeight: 1, marginBottom: '24px' }}>
           404
         </div>
 
@@ -41,10 +41,10 @@ export default function NotFound() {
 
         {/* Buttons */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <a href="/" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#2DD4C8', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+          <a href="/" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #14B8A6', color: '#14B8A6', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             ← Go Home
           </a>
-          <a href="/investor" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#0D1117', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: '#2DD4C8' }}>
+          <a href="/investor" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #14B8A6', color: '#0D1117', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: '#14B8A6' }}>
             Open Investor View →
           </a>
         </div>

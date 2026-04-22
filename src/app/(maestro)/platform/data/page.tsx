@@ -43,9 +43,9 @@ export default function DataSetupPage() {
               style={{
                 padding: '8px 12px',
                 background: 'transparent',
-                border: '0.5px solid rgba(45,212,200,0.35)',
+                border: '0.5px solid rgba(20,184,166,0.35)',
                 borderRadius: 8,
-                color: '#2DD4C8',
+                color: '#14B8A6',
                 fontSize: 12,
                 fontWeight: 500,
                 textDecoration: 'none',

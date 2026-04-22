@@ -244,8 +244,8 @@ export default async function DeliverablesPage({
                 key={`${d.type}-${d.phase}-${i}`}
                 style={{
                   padding: 14,
-                  background: 'rgba(45,212,200,0.04)',
-                  border: `0.5px solid rgba(45,212,200,0.2)`,
+                  background: 'rgba(20,184,166,0.04)',
+                  border: `0.5px solid rgba(20,184,166,0.2)`,
                   borderRadius: 10,
                 }}
               >

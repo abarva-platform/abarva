@@ -23,9 +23,9 @@ export function ChoiceChips({ choices, onPick, onFreeType, disabled }: Props) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, marginLeft: 4 }}>
       {choices.map((c, i) => {
-        const border = c.freeType ? 'rgba(139,134,128,0.4)' : 'rgba(45,212,200,0.5)';
+        const border = c.freeType ? 'rgba(139,134,128,0.4)' : 'rgba(20,184,166,0.5)';
         const color = c.freeType ? 'rgba(245,245,240,0.72)' : '#F5F5F0';
-        const hoverBg = c.freeType ? 'rgba(139,134,128,0.1)' : 'rgba(45,212,200,0.08)';
+        const hoverBg = c.freeType ? 'rgba(139,134,128,0.1)' : 'rgba(20,184,166,0.08)';
         return (
           <button
             key={`${c.label}-${i}`}

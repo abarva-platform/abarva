@@ -5,7 +5,7 @@ import { getActiveClientRow } from '@/lib/active-client';
 export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const BLUE = '#4DA3FF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';

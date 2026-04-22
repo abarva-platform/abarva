@@ -1,0 +1,9 @@
+# AbarVa Control Tower · Cost Template v1.0
+# Monthly AI spend by vendor × category × use case.
+# Required columns marked with *.
+# Update templates: npm run templates:build
+# In-app catalog: /tower/onboard/cost
+
+use_case_id*,period_start*,period_end*,vendor,total_spend_usd*,llm_spend_usd,compute_spend_usd,storage_spend_usd,vendor_license_spend_usd,integration_spend_usd,projected_6mo_spend_usd
+# Example row (delete before uploading):
+uc_001,2025-10-01,2025-10-31,Microsoft,45000,12000,8000,2000,20000,3000,310000

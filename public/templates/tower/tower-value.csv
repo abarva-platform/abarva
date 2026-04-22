@@ -1,0 +1,11 @@
+# AbarVa Control Tower · Value Template v1.0
+# Baseline vs observed on the metrics that matter.
+# Required columns marked with *.
+# Update templates: npm run templates:build
+# In-app catalog: /tower/onboard/value
+#
+# confidence: high | medium | low
+
+use_case_id*,value_driver*,metric_name*,unit,baseline*,observed*,confidence,as_of_date
+# Example row (delete before uploading):
+uc_001,documentation_time,Minutes per encounter,minutes,12.5,8.2,high,2025-10-31

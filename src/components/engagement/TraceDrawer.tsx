@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const INK = '#F5F5F0';
 const BG_DARK = '#0A0A0A';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
@@ -45,7 +45,7 @@ const KIND_LABEL: Record<TraceStep['kind'], string> = {
 const KIND_COLOR: Record<TraceStep['kind'], string> = {
   retrieval: '#4DA3FF',
   graph: '#F59E0B',
-  prompt: '#2DD4C8',
+  prompt: '#14B8A6',
   stream: '#3FB27F',
   background: '#8B8680',
 };

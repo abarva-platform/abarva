@@ -22,7 +22,7 @@ export interface ClientOption {
 }
 
 export const ALL_CLIENTS: ClientOption[] = [
-  { id: 'meridian',   name: 'Meridian Health System',  shortName: 'Meridian Health',     color: '#2DD4C8', vertical: 'Healthcare'         },
+  { id: 'meridian',   name: 'Meridian Health System',  shortName: 'Meridian Health',     color: '#14B8A6', vertical: 'Healthcare'         },
   { id: 'arcturus',   name: 'Arcturus Financial Group', shortName: 'Arcturus Financial',  color: '#818CF8', vertical: 'Financial Services' },
   { id: 'apexretail', name: 'Apex Retail Group',        shortName: 'Apex Retail',         color: '#F59E0B', vertical: 'Retail'             },
 ]
