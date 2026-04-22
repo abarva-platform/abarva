@@ -890,7 +890,7 @@ const TENANT_ENGAGEMENT_LOOKUPS: Record<TenantKey, Array<{ graph?: string; name?
 };
 
 async function resolveEngagementRefs(
-  sb: ReturnType<typeof createClient>,
+  sb: ReturnType<typeof getSupabaseClient>,
   clientIds: Map<TenantKey, string>,
 ): Promise<Map<TenantKey, EngagementRef[]>> {
   const out = new Map<TenantKey, EngagementRef[]>();
