@@ -104,12 +104,75 @@ const SHADOW_AI: PatternImpactData = {
   ],
 };
 
+// ─── Data-Owner Bottleneck (F015 · cross-sector · governance) ─────────
+const DATA_OWNER_BOTTLENECK: PatternImpactData = {
+  patternKey: 'F015',
+  eyebrow: 'PROGRAM VELOCITY LOSS × CAPACITY DEBT',
+  title: 'Each AI program loses ~6 weeks. With no capacity fix, portfolio velocity halves inside 12 months.',
+  composition: [
+    { label: 'Access-request queue wait', rangeLow: 35, rangeHigh: 50, unit: '% of velocity loss', color: TEAL_500 },
+    { label: 'Shadow-copy rework + compliance', rangeLow: 20, rangeHigh: 30, unit: '% of velocity loss', color: TEAL_400 },
+    { label: 'Serial program scheduling', rangeLow: 15, rangeHigh: 25, unit: '% of velocity loss', color: TEAL_300 },
+    { label: 'Escalation + re-scope cycles', rangeLow: 10, rangeHigh: 20, unit: '% of velocity loss', color: TEAL_200 },
+  ],
+  timeline: {
+    monthsOut: [0, 3, 6, 9, 12, 15, 18],
+    severityCurve: [100, 118, 138, 162, 190, 222, 258],
+    baseline: 100,
+    annotation: {
+      monthMark: 9,
+      label: 'Velocity halving point (n=11 observed instances)',
+    },
+  },
+  caption:
+    'Velocity loss is indexed (baseline = 100 at first AI program launch). Composition reflects source-team attribution across n=11 enterprises in the Genome library. Compounding rate assumes no owner-team capacity expansion; fix at month 6-9 is materially cheaper than fix at month 12+.',
+  evidenceLink: '/intelligence/evidence?pattern=F015',
+  captionTiles: [
+    { label: 'n=11 enterprises · 5 resolved', href: '/intelligence/patterns/F015#historical-instances' },
+    { label: 'Fix at month 6 vs month 12 · 3× cost delta', href: '/intelligence/patterns/F015#interventions' },
+    { label: 'Data-owner team capacity · the only durable fix', href: '/intelligence/patterns/F015#interventions' },
+  ],
+};
+
+// ─── Co-Sponsor Pace Divergence (F022 · cross-sector · governance) ─────
+const CO_SPONSOR_PACE_DIVERGENCE: PatternImpactData = {
+  patternKey: 'F022',
+  eyebrow: 'DECISION-CYCLE DRAG × SCOPE COMPRESSION',
+  title: 'Median program slips 6 months before pattern surfaces. Scope compresses ~30% by the time tiebreaker is named.',
+  composition: [
+    { label: 'Joint-decision cadence gap', rangeLow: 30, rangeHigh: 45, unit: '% of pace drag', color: TEAL_500 },
+    { label: 'Parked disagreements re-surfacing', rangeLow: 20, rangeHigh: 30, unit: '% of pace drag', color: TEAL_400 },
+    { label: 'Optionality-heavy recommendation cycles', rangeLow: 15, rangeHigh: 25, unit: '% of pace drag', color: TEAL_300 },
+    { label: 'Scope-refinement re-work', rangeLow: 10, rangeHigh: 20, unit: '% of pace drag', color: TEAL_200 },
+  ],
+  timeline: {
+    monthsOut: [0, 3, 6, 9, 12, 15, 18],
+    severityCurve: [0, 4, 10, 18, 28, 40, 55],
+    annotation: {
+      monthMark: 6,
+      label: 'Pattern typically surfaces · charter amendment window',
+    },
+  },
+  caption:
+    'Severity measured as program-slippage weeks accumulated (0 = on-plan at launch). Composition reflects drag-source attribution across n=13 enterprises in the Genome library. Early charter intervention (month ≤2) prevents the curve; remediation at month 9+ recovers pace but not original scope.',
+  evidenceLink: '/intelligence/evidence?pattern=F022',
+  captionTiles: [
+    { label: 'n=13 enterprises · 6 resolved', href: '/intelligence/patterns/F022#historical-instances' },
+    { label: 'Named tiebreaker · 88% effectiveness', href: '/intelligence/patterns/F022#interventions' },
+    { label: 'RAPID framework (Bain) · the canonical reference', href: '/intelligence/patterns/F022#evidence-base' },
+  ],
+};
+
 export const PATTERN_IMPACT_DATA: Record<string, PatternImpactData> = {
   [OWNED_BRAND_MARGIN.patternKey]: OWNED_BRAND_MARGIN,
   // Apex composite uses the long slug as the primary key in PATTERN_AUGMENTATIONS.
   apex_pattern_owned_brand_margin_underperformance: OWNED_BRAND_MARGIN,
   [SHADOW_AI.patternKey]: SHADOW_AI,
   F008: SHADOW_AI,
+  [DATA_OWNER_BOTTLENECK.patternKey]: DATA_OWNER_BOTTLENECK,
+  f015: DATA_OWNER_BOTTLENECK,
+  [CO_SPONSOR_PACE_DIVERGENCE.patternKey]: CO_SPONSOR_PACE_DIVERGENCE,
+  f022: CO_SPONSOR_PACE_DIVERGENCE,
 };
 
 export function getPatternImpactData(patternKey: string): PatternImpactData | null {
