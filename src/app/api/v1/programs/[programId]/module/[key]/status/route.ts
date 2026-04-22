@@ -5,7 +5,7 @@
 import { NextRequest } from 'next/server';
 import { setModuleStatus } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../../../_auth';
-import type { ModuleStatus } from '@/lib/programs/types';
+import type { ModuleStatus } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

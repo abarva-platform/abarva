@@ -4,7 +4,7 @@
 
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getActiveClientRow } from '@/lib/active-client';
-import type { TenancyCtx } from '@/lib/programs/types';
+import type { TenancyCtx } from '@/lib/programs/types.db';
 
 export class TenancyError extends Error {
   constructor(public readonly code: 'unauthenticated' | 'no_client') {

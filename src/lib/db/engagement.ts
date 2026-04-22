@@ -85,6 +85,7 @@ export async function proposeOutcomeFee(
 export interface CreateEngagementArgs {
   name: string;
   sponsor_person_id: string;
+  client_id?: string | null;
   industry_code: string;
   function_code: string;
   objective_code: string;
@@ -95,7 +96,10 @@ export interface CreateEngagementArgs {
 export interface RecordGateApprovalArgs {
   engagementId: string;
   phase: number;
-  approvedByPersonId: string;
+  // Nullable · intake-created engagements may not yet have a sponsor row
+  // or the sponsor may not match the approving user. Callers should prefer
+  // sponsor → maestro → caller; pass null only if none are available.
+  approvedByPersonId: string | null;
   approvalText: string;
   summary: string;
 }
@@ -148,6 +152,7 @@ export async function createEngagement(args: CreateEngagementArgs): Promise<Enga
     .insert({
       graph_node_id: graphNodeId,
       name: args.name,
+      client_id: args.client_id ?? null,
       industry_code: args.industry_code,
       function_code: args.function_code,
       objective_code: args.objective_code,

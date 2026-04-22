@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { ExecuteSurfaceProps } from '@/lib/programs/types';
+import type { ExecuteSurfaceProps } from '@/lib/programs/types.ui';
 import { MilestoneSummary, PersonBadge } from '@/components/programs/common';
 
 export function ExecuteSurface(props: ExecuteSurfaceProps) {

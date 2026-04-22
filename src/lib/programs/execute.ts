@@ -16,7 +16,7 @@ import type {
   RiskImpact,
   RiskLikelihood,
   TenancyCtx,
-} from './types';
+} from './types.db';
 import { getMilestones, getRisks, getWorkItems } from './queries';
 import { raiseMaestroFlag } from './governance';
 

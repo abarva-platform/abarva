@@ -15,10 +15,13 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | File | Covers |
 |------|--------|
 | [`platform/agent-architecture.md`](./platform/agent-architecture.md) | Nexus, Sentinel, Atlas · unified 3-agent spec |
+| [`platform/administration-architecture.md`](./platform/administration-architecture.md) | Platform administration, tenancy, access control, governance, and audit architecture |
 | [`platform/design-system.md`](./platform/design-system.md) | Core visual system, component contracts, tokens, interaction patterns |
+| `platform/runtime-contracts/` | Shipped runtime contracts for Nexus orchestration, voice filtering, and gate lifecycle behavior |
 | [`platform/data-layer-future-state.md`](./platform/data-layer-future-state.md) | Future-state data architecture and query model |
 | [`platform/data-ingestion-integration.md`](./platform/data-ingestion-integration.md) | Enterprise ingestion model, source handling, integration pathways |
 | [`platform/intelligence-vip-system.md`](./platform/intelligence-vip-system.md) | VIP profile system and executive context model |
+| [`platform/steward-agent.md`](./platform/steward-agent.md) | Steward agent spec for administration workflows, governance actions, and operator assist |
 | [`platform/data-ground-truth-surface.md`](./platform/data-ground-truth-surface.md) | CXO-facing transparency surface for client ground truth, provenance, gaps, patterns |
 | [`platform/benchmarks-industry-data-architecture.md`](./platform/benchmarks-industry-data-architecture.md) | Benchmark and peer-data ingestion, classification, and refresh architecture |
 | [`platform/graph-intelligence-architecture.md`](./platform/graph-intelligence-architecture.md) | Entity, relationship, provenance, and reasoning architecture for graph intelligence |
@@ -64,6 +67,8 @@ Canonical specifications for AbarVa. When building, reference these over any old
 | [`_meta/spec-inventory-cleanup-plan.md`](./_meta/spec-inventory-cleanup-plan.md) | How this directory got organized (April 21) |
 | [`_meta/BACKLOG.md`](./_meta/BACKLOG.md) | Older product backlog (may be stale) |
 | [`_meta/QA_CHECKLIST.md`](./_meta/QA_CHECKLIST.md) | Older QA checklist (may be stale) |
+| [`_meta/page-design-backlog.md`](./_meta/page-design-backlog.md) | Page-by-page design work queue across Intelligence, Programs, and Tower |
+| [`_meta/product-reframe.md`](./_meta/product-reframe.md) | Strategic framing for the four product surfaces through the buyer lens |
 
 ## Active corrections
 
@@ -83,7 +88,6 @@ Older specs kept for context. Never treat as canonical.
 - `_reference/AbarVa_Workflow_Narrative_Spec.md`
 - `_reference/TECH_MODERNIZATION_SPEC.md`
 - `_reference/INVESTOR_PAGE_SPEC.md`
-- `_reference/packs/` — reserved for Pack A–L documents if brought into repo
 
 ## Archive
 

@@ -477,7 +477,7 @@ function BaselineAgreementOutput({ content, clientName, approvedBy, approvedAt }
           </div>
           <div>
             <div style={{ fontSize: '13px', color: T.text, fontWeight: 600 }}>{approvedBy || 'Anand Sundaram'}</div>
-            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal }}>Engagement Lead · AbarVa</div>
+            <div style={{ fontFamily: T.mono, fontSize: '9px', color: T.teal }}>Program Lead · AbarVa</div>
             <div style={{ height: '1px', background: T.border, margin: '10px 0' }} />
           </div>
         </div>

@@ -137,7 +137,13 @@ function EngagementCard({ e, x }: { e: EngagementListItem; x: EngagementSummaryE
         <MiniMetric
           label="Contradictions"
           value={String(x?.contradictionsCount ?? 0)}
-          sub={x?.contradictionsCount ? 'on this client' : undefined}
+          sub={
+            x?.contradictionsCount
+              ? x.contradictionsScope === 'program'
+                ? 'on this program'
+                : 'on this client'
+              : undefined
+          }
           accent={x?.contradictionsCount ? AMBER : MUTE}
         />
       </div>
@@ -194,7 +200,7 @@ export default async function EngagementsListPage() {
           </div>
         </div>
         <Link
-          href="/engagements/new"
+          href="/programs/new"
           style={{
             padding: '10px 16px',
             background: TEAL,
@@ -205,14 +211,14 @@ export default async function EngagementsListPage() {
             textDecoration: 'none',
           }}
         >
-          + New engagement
+          + New program
         </Link>
       </div>
 
       <div style={{ display: 'grid', gap: 12 }}>
         {rows.length === 0 ? (
           <div style={{ padding: 20, border: BORDER_SOFT, borderRadius: 10, color: MUTE, fontSize: 14, fontStyle: 'italic' }}>
-            No active engagements yet{activeClient ? ` for ${activeClient.name}` : ''}. Click + New engagement to begin.
+            No active programs yet{activeClient ? ` for ${activeClient.name}` : ''}. Click + New program to begin.
           </div>
         ) : (
           rows.map((e) => <EngagementCard key={e.id} e={e} x={extras[e.id]} />)
