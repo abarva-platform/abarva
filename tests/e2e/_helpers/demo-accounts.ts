@@ -1,31 +1,31 @@
 export const DEMO_ROLE_ACCOUNTS = {
   admin: {
     email: 'anand+clerk_test@abarva.com',
-    expectedPath: /\/home$/,
+    expectedPath: /\/home\?client=meridian$/,
     pageMarker: { kind: 'link', label: 'Admin' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform', 'Investor', 'Admin'],
     hiddenNav: [],
   },
   maestro: {
-    email: 'af@abarva.com',
-    expectedPath: /\/home$/,
+    email: 'af+clerk_test@abarva.com',
+    expectedPath: /\/home\?client=arcturus$/,
     pageMarker: { kind: 'text', label: 'Maestro' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
     hiddenNav: ['Investor', 'Admin'],
   },
   investor: {
     email: 'investor+clerk_test@abarva.com',
-    expectedPath: /\/investors$/,
+    expectedPath: /\/investor\?client=meridian$/,
     pageMarker: { kind: 'text', label: 'Warm-intro investor materials' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform', 'Investor'],
     hiddenNav: ['Admin'],
   },
   client: {
     email: 'mh+clerk_test@abarva.com',
-    expectedPath: /\/client-view\?client=meridian$/,
-    pageMarker: { kind: 'text', label: '404' },
-    visibleNav: [],
-    hiddenNav: [],
+    expectedPath: /\/home\?client=meridian$/,
+    pageMarker: { kind: 'text', label: 'Meridian Health' },
+    visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
+    hiddenNav: ['Investor', 'Admin'],
   },
 } as const;
 
