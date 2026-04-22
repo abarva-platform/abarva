@@ -96,7 +96,10 @@ export interface CreateEngagementArgs {
 export interface RecordGateApprovalArgs {
   engagementId: string;
   phase: number;
-  approvedByPersonId: string;
+  // Nullable · intake-created engagements may not yet have a sponsor row
+  // or the sponsor may not match the approving user. Callers should prefer
+  // sponsor → maestro → caller; pass null only if none are available.
+  approvedByPersonId: string | null;
   approvalText: string;
   summary: string;
 }
