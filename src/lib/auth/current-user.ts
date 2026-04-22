@@ -12,6 +12,14 @@ export interface AccessibleClient {
 
 export interface CurrentUser {
   personId: string | null;
+  // Clerk user id · always present for signed-in users. Used as a stable
+  // userId fallback by tenancy resolvers when the Clerk account has no
+  // linked `persons` row yet (common for demo / test accounts).
+  clerkUserId: string;
+  // Clerk publicMetadata.clientId · the tenant key pinned to the Clerk
+  // session (e.g. `meridian`). Used as a client-access fallback when the
+  // user has no rows in `person_client_memberships`.
+  metadataClientKey: string | null;
   name: string;
   email: string | null;
   primaryRole: UserRole;
@@ -25,7 +33,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   const claims = sessionClaims as
     | {
-        publicMetadata?: { person_id?: string; role?: string };
+        publicMetadata?: { person_id?: string; role?: string; clientId?: string };
         firstName?: string;
         lastName?: string;
         emailAddress?: string;
@@ -33,6 +41,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     | undefined;
   const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
   const legacyRole = claims?.publicMetadata?.role ?? null;
+  const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
   const fallbackName =
     [claims?.firstName, claims?.lastName].filter(Boolean).join(' ') ||
     claims?.emailAddress ||
@@ -43,11 +52,17 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   if (!personId) {
     // No linked persons row yet. Best-effort fallback based on legacy Clerk role.
+    // Demo/test Clerk users routinely hit this path — they are signed in and
+    // scoped to a clientId via publicMetadata, but the graph's `persons` table
+    // has no matching row. The tenancy resolvers still treat them as
+    // authenticated and scope their client via Clerk metadata.
     const role: UserRole = legacyRole === 'maestro' || legacyRole === 'admin' || legacyRole === 'investor'
       ? 'maestro'
       : 'client_viewer';
     return {
       personId: null,
+      clerkUserId: userId,
+      metadataClientKey,
       name: fallbackName,
       email: fallbackEmail,
       primaryRole: role,
@@ -93,6 +108,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
 
   return {
     personId: (person as { id?: string } | null)?.id ?? resolvedPerson?.id ?? personId,
+    clerkUserId: userId,
+    metadataClientKey,
     name: (person as { name?: string } | null)?.name ?? resolvedPerson?.name ?? fallbackName,
     email: (person as { email?: string | null } | null)?.email ?? resolvedPerson?.email ?? fallbackEmail,
     primaryRole,
