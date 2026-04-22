@@ -20,7 +20,7 @@ const SANS   = 'DM Sans, sans-serif'
 type Section =
   | 'maestros' | 'roles' | 'security'
   | 'clients'  | 'contracts'
-  | 'sensitive-data' | 'access-logs' | 'pending-requests'
+  | 'sensitive-data' | 'quality' | 'access-logs' | 'pending-requests'
   | 'audit-log' | 'api-keys' | 'compliance'
 
 // ── Sidebar config ────────────────────────────────────────────────────────
@@ -47,6 +47,7 @@ const SIDEBAR_GROUPS: Array<{
     label: 'Data Governance',
     items: [
       { key: 'sensitive-data',    icon: '⚠️',  label: 'Sensitive Data Approvals', badge: 3, badgeAmber: false },
+      { key: 'quality',           icon: '📈',  label: 'Quality Ops' },
       { key: 'access-logs',       icon: '📊',  label: 'Access Logs' },
       { key: 'pending-requests',  icon: '📥',  label: 'Pending Requests',          badge: 2, badgeAmber: true },
     ],
@@ -220,6 +221,32 @@ function PlaceholderView({ title, sub }: { title: string; sub: string }) {
   )
 }
 
+function QualityOpsJumpView() {
+  return (
+    <div>
+      <div style={{ paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Quality Ops</div>
+        <div style={{ fontSize: '13px', color: MUTED }}>Score the corpus, inspect gaps, and resolve the actions that improve intelligence quality.</div>
+      </div>
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '28px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: MONO, marginBottom: '10px' }}>
+          New internal surface
+        </div>
+        <div style={{ fontSize: '18px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Open the Quality Ops page</div>
+        <div style={{ fontSize: '14px', color: MUTED, lineHeight: 1.7, marginBottom: '16px', maxWidth: '720px' }}>
+          This page separates Data Quality, Evidence Integrity, Intelligence Quality, and Knowledge Health, then ties each score to concrete actions operators can resolve.
+        </div>
+        <a
+          href="/platform/admin/quality"
+          style={{ display: 'inline-block', background: DARK, color: BG, fontSize: '13px', fontWeight: 600, padding: '10px 16px', borderRadius: '6px', textDecoration: 'none' }}
+        >
+          Open Quality Ops →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ── Admin Portal — standalone, no maestro imports ─────────────────────────
 export default function AdminPortal() {
   const { isLoaded, user } = useUser()
@@ -248,6 +275,7 @@ export default function AdminPortal() {
       case 'clients':          return <PlaceholderView title="Active Clients"            sub="Client accounts and contract status." />
       case 'contracts':        return <PlaceholderView title="Contract Terms"            sub="Contract terms and SLA management." />
       case 'sensitive-data':   return <PlaceholderView title="Sensitive Data Approvals"  sub="Review and approve data access requests." />
+      case 'quality':          return <QualityOpsJumpView />
       case 'access-logs':      return <PlaceholderView title="Access Logs"               sub="Data access audit trail by user and dataset." />
       case 'pending-requests': return <PlaceholderView title="Pending Requests"          sub="Maestro requests for elevated data access." />
       case 'audit-log':        return <PlaceholderView title="Audit Log"                 sub="Complete platform activity log." />
