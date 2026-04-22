@@ -11,14 +11,6 @@
 
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
-import { PageShell } from '@/components/shared/layout/PageShell';
-import { PageTitle } from '@/components/shared/typography/PageTitle';
-import { SectionHeading } from '@/components/shared/typography/SectionHeading';
-import { EyebrowLabel } from '@/components/shared/typography/EyebrowLabel';
-import { Body } from '@/components/shared/typography/Body';
-import { MetaLabel } from '@/components/shared/typography/MetaLabel';
-import { EntityLink } from '@/components/shared/entities/EntityLink';
-import { COLORS } from '@/lib/design-system';
 
 export const dynamic = 'force-dynamic';
 
@@ -270,363 +262,540 @@ const COMPARISON: ComparisonRow[] = [
   },
 ];
 
+const PAGE_BG = '#F6F1E8';
+const PANEL_BG = '#FFFDFC';
+const PANEL_ALT = '#F1E7DA';
+const INK = '#171411';
+const INK_SOFT = '#3A312A';
+const INK_MUTED = '#5B4D43';
+const LINE = 'rgba(23,20,17,0.12)';
+const TEAL = '#0E9F8C';
+const SKY = '#5AA6F8';
+const WARM = '#D59B6A';
+const DARK = '#111315';
+const DARK_PANEL = '#171A1D';
+const DARK_LINE = 'rgba(255,255,255,0.1)';
+const CREAM = '#F7F2EA';
+const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const SERIF = '"Fraunces", Georgia, serif';
+const MONO = '"JetBrains Mono", "Fira Code", monospace';
+
+const sectionEyebrow: CSSProperties = {
+  fontFamily: MONO,
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  color: TEAL,
+};
+
+const sectionTitle: CSSProperties = {
+  margin: '10px 0 0',
+  fontFamily: SERIF,
+  fontSize: 'clamp(28px, 2.2vw + 16px, 46px)',
+  lineHeight: 1.06,
+  letterSpacing: '-0.03em',
+  color: INK,
+};
+
+const sectionBody: CSSProperties = {
+  margin: '14px 0 0',
+  maxWidth: 820,
+  fontFamily: SANS,
+  fontSize: 'clamp(16px, 1vw + 12px, 19px)',
+  lineHeight: 1.65,
+  color: INK_SOFT,
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────
 
 export default function PlatformPage() {
   return (
-    <PageShell width="wide" padding="spacious">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
-        {/* Header */}
-        <header style={{ maxWidth: 900 }}>
-          <EyebrowLabel tone="teal" size="sm">PLATFORM</EyebrowLabel>
-          <PageTitle size="display" style={{ marginTop: 8 }}>
-            Transformation infrastructure with refusals.
-          </PageTitle>
-          <Body size="lg" tone="secondary" style={{ marginTop: 14, maxWidth: 780 }}>
-            Seven architectural layers · four agents with defined refusals · outcome economics that make attribution auditable.
-            Built for organizations that treat transformation as accountable work, not consulting theater.
-          </Body>
-          <div style={{ marginTop: 18 }}>
-            <SectionLinkTOC />
-          </div>
-        </header>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: PAGE_BG,
+        color: INK,
+        fontFamily: SANS,
+      }}
+    >
+      <div style={{ maxWidth: 1360, margin: '0 auto', padding: '28px 28px 96px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <header
+            style={{
+              position: 'relative',
+              overflow: 'hidden',
+              borderRadius: 30,
+              border: `1px solid ${LINE}`,
+              background:
+                `radial-gradient(circle at top left, rgba(90,166,248,0.22), transparent 34%),
+                 radial-gradient(circle at top right, rgba(14,159,140,0.16), transparent 28%),
+                 linear-gradient(180deg, ${PANEL_BG} 0%, ${PAGE_BG} 100%)`,
+              padding: '56px 56px 48px',
+              boxShadow: '0 24px 80px rgba(23,20,17,0.07)',
+            }}
+          >
+            <div style={sectionEyebrow}>Platform</div>
+            <h1
+              style={{
+                margin: '10px 0 0',
+                fontFamily: SERIF,
+                fontSize: 'clamp(50px, 6vw, 96px)',
+                lineHeight: 0.93,
+                letterSpacing: '-0.05em',
+                maxWidth: 920,
+                color: INK,
+              }}
+            >
+              Transformation infrastructure with refusals.
+            </h1>
+            <p
+              style={{
+                margin: '22px 0 0',
+                maxWidth: 860,
+                fontSize: 'clamp(20px, 1.8vw, 30px)',
+                lineHeight: 1.38,
+                color: INK_SOFT,
+              }}
+            >
+              Seven architectural layers. Four agents with defined refusals. Outcome economics that make
+              attribution auditable. Built for organizations that treat transformation as accountable work,
+              not consulting theater.
+            </p>
+            <div style={{ marginTop: 28 }}>
+              <SectionLinkTOC />
+            </div>
+          </header>
 
-        {/* Section 1 · Knowledge architecture */}
-        <section id="knowledge-architecture" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">KNOWLEDGE ARCHITECTURE · 3 LAYERS</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 24 }}>
-            Knowledge that compounds across every program.
-          </SectionHeading>
-          <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-            {KNOWLEDGE_LAYERS.map((layer) => (
-              <article
-                key={layer.name}
-                style={{
-                  padding: 20,
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '0.5px solid rgba(45,212,200,0.18)',
-                  borderRadius: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 14,
-                }}
-              >
-                <div>
-                  <EyebrowLabel tone="muted" size="xs">{layer.scope}</EyebrowLabel>
-                  <div style={{ marginTop: 8, fontFamily: 'Georgia, serif', fontSize: 22, color: COLORS.textPrimary, letterSpacing: '-0.005em' }}>
-                    {layer.name}
+          <section id="knowledge-architecture" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Knowledge architecture · 3 layers</div>
+            <h2 style={sectionTitle}>Knowledge that compounds across every program.</h2>
+            <p style={sectionBody}>
+              The knowledge model remains the moat. What changes here is the reading experience: lighter
+              canvas, darker ink, and more confidence that dense enterprise material can still feel composed.
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gap: 18,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                marginTop: 26,
+              }}
+            >
+              {KNOWLEDGE_LAYERS.map((layer) => (
+                <article
+                  key={layer.name}
+                  style={{
+                    padding: 24,
+                    background: PANEL_BG,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 22,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 14,
+                    boxShadow: '0 12px 32px rgba(23,20,17,0.05)',
+                  }}
+                >
+                  <div>
+                    <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>{layer.scope}</div>
+                    <div style={{ marginTop: 10, fontFamily: SERIF, fontSize: 34, lineHeight: 1.02, color: INK }}>
+                      {layer.name}
+                    </div>
                   </div>
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {layer.counters.map((c) => (
-                    <li key={c} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: COLORS.teal, letterSpacing: '0.04em' }}>
-                      · {c}
-                    </li>
-                  ))}
-                </ul>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {layer.artifacts.map((a) => (
-                    <span
-                      key={a}
-                      style={{
-                        display: 'inline-block',
-                        padding: '4px 8px',
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '0.5px solid rgba(255,255,255,0.1)',
-                        borderRadius: 6,
-                        fontFamily: 'JetBrains Mono, monospace',
-                        fontSize: 10,
-                        color: 'rgba(245,245,240,0.75)',
-                        letterSpacing: '0.04em',
-                      }}
-                    >
-                      {a}
-                    </span>
-                  ))}
-                </div>
-                <Body size="sm" tone="muted" style={{ fontStyle: 'italic', lineHeight: 1.55 }}>
-                  Not — {layer.whatThisIsNot}
-                </Body>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 2 · Methodology */}
-        <section id="methodology" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">METHODOLOGY · 5 PHASES · HARD GATES</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 24 }}>
-            Transformation has a shape. We enforce it.
-          </SectionHeading>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {PHASES.map((phase) => (
-              <article
-                key={phase.phase}
-                style={{
-                  padding: 20,
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '0.5px solid rgba(255,255,255,0.08)',
-                  borderLeft: `3px solid ${COLORS.teal}`,
-                  borderRadius: 10,
-                  display: 'grid',
-                  gap: 14,
-                  gridTemplateColumns: '180px 1fr',
-                }}
-              >
-                <div>
-                  <EyebrowLabel tone="teal" size="xs">PHASE</EyebrowLabel>
-                  <div style={{ marginTop: 4, fontFamily: 'Georgia, serif', fontSize: 22, color: COLORS.textPrimary, letterSpacing: '-0.005em' }}>
-                    {phase.phase}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <KeyValue k="Entry" v={phase.entry} />
-                  <KeyValue k="Deliverables" v={phase.deliverables.join(' · ')} />
-                  <KeyValue k="Exit gate" v={phase.exit} bold />
-                  <div
-                    style={{
-                      marginTop: 4,
-                      padding: '12px 14px',
-                      background: 'rgba(20,184,166,0.08)',
-                      borderLeft: `3px solid ${COLORS.teal}`,
-                      borderRadius: 4,
-                      fontFamily: 'JetBrains Mono, monospace',
-                      fontSize: 13,
-                      color: 'rgba(245,245,240,0.9)',
-                      letterSpacing: '0.02em',
-                      lineHeight: 1.65,
-                    }}
-                  >
-                    <span style={{ display: 'block', textTransform: 'uppercase', letterSpacing: '0.14em', color: COLORS.teal, fontSize: 11, marginBottom: 6, fontWeight: 700 }}>
-                      What cannot pass
-                    </span>
-                    {phase.cannotPass}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 3 · Agents with refusals */}
-        <section id="agents" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">AGENTS · 4 SPECIALISTS · DEFINED REFUSALS</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 24 }}>
-            What our agents won&apos;t do is what makes them useful.
-          </SectionHeading>
-          <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))' }}>
-            {AGENTS.map((agent) => (
-              <article
-                key={agent.name}
-                style={{
-                  padding: 20,
-                  background: 'rgba(255,255,255,0.02)',
-                  border: '0.5px solid rgba(255,255,255,0.08)',
-                  borderRadius: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 14,
-                }}
-              >
-                <div>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: COLORS.teal, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-                    {agent.name}
-                  </div>
-                  <Body size="md" tone="primary" style={{ marginTop: 4 }}>
-                    {agent.role}
-                  </Body>
-                </div>
-                <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {agent.refusals.map((r, i) => (
-                    <li
-                      key={i}
-                      style={{
-                        fontFamily: 'DM Sans, sans-serif',
-                        fontSize: 13.5,
-                        color: COLORS.textPrimary,
-                        lineHeight: 1.55,
-                        paddingLeft: 28,
-                        position: 'relative',
-                      }}
-                    >
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    {layer.counters.map((c) => (
+                      <li key={c} style={{ fontFamily: MONO, fontSize: 12, color: TEAL, letterSpacing: '0.02em' }}>
+                        · {c}
+                      </li>
+                    ))}
+                  </ul>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {layer.artifacts.map((a) => (
                       <span
-                        aria-hidden
+                        key={a}
                         style={{
-                          position: 'absolute',
-                          left: 0,
-                          top: 3,
-                          width: 20,
-                          fontFamily: 'JetBrains Mono, monospace',
-                          fontSize: 11,
-                          color: COLORS.teal,
+                          display: 'inline-block',
+                          padding: '6px 10px',
+                          background: '#FFF8F0',
+                          border: `1px solid ${LINE}`,
+                          borderRadius: 999,
+                          fontFamily: MONO,
+                          fontSize: 10,
+                          color: INK_MUTED,
                           letterSpacing: '0.04em',
                         }}
                       >
-                        {String(i + 1).padStart(2, '0')}
+                        {a}
                       </span>
-                      {r}
-                    </li>
-                  ))}
-                </ol>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 4 · Compounding assets */}
-        <section id="compounding-assets" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">COMPOUNDING ASSETS · LIVE</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 24 }}>
-            Four assets that get more valuable with every program.
-          </SectionHeading>
-          <div style={{ display: 'grid', gap: 16, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-            {COMPOUNDING.map((asset) => (
-              <article
-                key={asset.name}
-                style={{
-                  padding: 22,
-                  background: 'rgba(45,212,200,0.04)',
-                  border: '0.5px solid rgba(45,212,200,0.2)',
-                  borderRadius: 12,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 14,
-                }}
-              >
-                <EyebrowLabel tone="teal" size="xs">{asset.name.toUpperCase()}</EyebrowLabel>
-                <div style={{ fontFamily: 'Georgia, serif', fontSize: 34, color: COLORS.teal, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
-                  {asset.primary}
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  {asset.secondary.map((s) => (
-                    <li key={s} style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(245,245,240,0.75)', letterSpacing: '0.02em' }}>
-                      · {s}
-                    </li>
-                  ))}
-                </ul>
-                <Body size="sm" tone="secondary" style={{ fontStyle: 'italic', lineHeight: 1.55 }}>
-                  {asset.whyCompounds}
-                </Body>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Section 5 · Outcome economics worked example */}
-        <section id="outcome-economics" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">PRICING · OUTCOME ECONOMICS · 30%</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 14 }}>
-            We&apos;re paid only after measured outcomes.
-          </SectionHeading>
-          <Body size="sm" tone="muted" style={{ marginBottom: 24, maxWidth: 760 }}>
-            Worked example · Morrison Owned Brand Margin Recovery (composite organization built from real-world data).
-          </Body>
-          <div style={{ display: 'grid', gap: 12, maxWidth: 860 }}>
-            <FinancialRow label="Investment · AbarVa platform cost (Y1)" amount="$5.2M" note="Paid by client · regardless of outcome. Covers tenant provisioning, agent operations, cross-program intelligence access, evidence infrastructure." />
-            <FinancialRow label="Modeled return" amount="$99M central · $73M-$128M range" note="Basis · Diagnostic Findings v4 + Business Case v3 · Genome analogous program library (n=14) supports range." />
-            <FinancialRow label="Realized outcome at Phase 4" amount="$87M (annualized)" note="Measurement basis · Outcome Measurement Report (D19) with attribution analysis · auditor sign-off obtained." />
-            <FinancialRow label="AbarVa settlement · 30% of attributable measured lift" amount="$26.1M" note="Settlement basis · Outcome Baseline (locked Phase 2) · Outcome Measurement · Attribution Analysis · settled 90 days post-Phase 4." bold />
-          </div>
-
-          <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 820 }}>
-            <EyebrowLabel tone="muted" size="xs" style={{ letterSpacing: '0.14em' }}>WHAT THIS MEANS</EyebrowLabel>
-            <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <li style={mean}>We are paid only after outcome is measured.</li>
-              <li style={mean}>We are paid only on attributable lift · not aspirational claims.</li>
-              <li style={mean}>We are paid only with audit-grade evidence chain.</li>
-              <li style={mean}>If pilot fails the gate, we don&apos;t scale and we don&apos;t get paid the scale economics.</li>
-            </ul>
-          </div>
-
-          <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 1100 }}>
-            <WhyColumn title="For client" body="Alignment of incentive · AbarVa wins only when client wins." />
-            <WhyColumn title="For AbarVa" body="Revenue multiples 4-6x typical SaaS based on outcome capture · defensible vs. consulting because attribution is proven." />
-            <WhyColumn title="For investors" body="Evidence-of-value delivery becomes contractually load-bearing · impossible to fake." />
-          </div>
-        </section>
-
-        {/* Section 6 · Composability */}
-        <section id="composability" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">ARCHITECTURE · GENERATIVE</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 14 }}>
-            17 modules × 5 archetypes × 4 tenants × 9 solutions = 30,600 unique program shapes.
-          </SectionHeading>
-          <Body size="md" tone="secondary" style={{ maxWidth: 820, lineHeight: 1.6 }}>
-            Programs are not products. The platform is generative, not a fixed product surface. Each program composes the modules, archetypes, and solutions it needs and rejects what it doesn&apos;t.
-            With Maestro custom-path generation, the space is effectively unbounded.
-          </Body>
-
-          <div style={{ marginTop: 20, padding: 20, background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 1100 }}>
-            <EyebrowLabel tone="muted" size="xs">WORKED COMPOSITION · MORRISON OWNED BRAND MARGIN RECOVERY</EyebrowLabel>
-            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-              <KeyValue k="Archetype" v="Operational Optimization" />
-              <KeyValue k="Solution match" v="Retail × Middle Office × Optimize" />
-              <KeyValue k="Modules active" v="Hypothesis Tree · Workstream Charter (×3) · Evidence Ledger · Pattern Match (Sentinel) · Decision Brief · Intervention Charter (×2) · Business Case · Operating Review Rhythm · Early Warning Dashboard · Outcome Baseline · Outcome Measurement · Genome Contribution" />
-              <KeyValue k="Customization" v="Q3 2026 contracting cycle window forced custom Phase 3 timeline · F022 active pattern triggered joint sponsor turn protocol." />
+                    ))}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
+                    Not — {layer.whatThisIsNot}
+                  </p>
+                </article>
+              ))}
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Section 7 · Comparison table */}
-        <section id="comparison" style={{ scrollMarginTop: 40 }}>
-          <EyebrowLabel tone="teal" size="sm">COMPARISON · CATEGORY POSITIONING</EyebrowLabel>
-          <SectionHeading size="lg" style={{ marginTop: 10, marginBottom: 24 }}>
-            Where we win. Where we don&apos;t compete.
-          </SectionHeading>
-          <div style={{ overflowX: 'auto', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10, background: 'rgba(255,255,255,0.02)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 960 }}>
-              <thead>
-                <tr>
-                  <th style={headStyle}>Dimension</th>
-                  <th style={headStyle}>Top-3 consulting firm engagement model</th>
-                  <th style={headStyle}>Modern data stack tool</th>
-                  <th style={headStyle}>RPA platform</th>
-                  <th style={{ ...headStyle, color: COLORS.teal }}>AbarVa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARISON.map((row, i) => (
-                  <tr key={row.dimension}>
-                    <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dimension}</td>
-                    <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.consulting}</td>
-                    <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dataStack}</td>
-                    <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.rpa}</td>
-                    <td style={{ ...cellStyle, color: COLORS.teal, fontWeight: 500, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.abarva}</td>
+          <section
+            id="methodology"
+            style={{
+              scrollMarginTop: 40,
+              borderRadius: 30,
+              background: `linear-gradient(180deg, ${DARK_PANEL} 0%, ${DARK} 100%)`,
+              color: CREAM,
+              padding: '34px 30px 30px',
+              boxShadow: '0 28px 80px rgba(23,20,17,0.16)',
+            }}
+          >
+            <div style={{ ...sectionEyebrow, color: TEAL }}>Methodology · 5 phases · hard gates</div>
+            <h2
+              style={{
+                margin: '10px 0 0',
+                fontFamily: SERIF,
+                fontSize: 'clamp(30px, 3vw, 50px)',
+                lineHeight: 1.02,
+                letterSpacing: '-0.03em',
+                color: CREAM,
+              }}
+            >
+              Transformation has a shape. We enforce it.
+            </h2>
+            <p style={{ ...sectionBody, color: 'rgba(247,242,234,0.78)', maxWidth: 900 }}>
+              This is one of the sections that benefits from going darker. It feels more like an operating
+              surface, and the gate logic reads with more gravity than it did on an all-dark page.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 26 }}>
+              {PHASES.map((phase) => (
+                <article
+                  key={phase.phase}
+                  style={{
+                    padding: 22,
+                    background: 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${DARK_LINE}`,
+                    borderRadius: 18,
+                    display: 'grid',
+                    gap: 16,
+                    gridTemplateColumns: '190px 1fr',
+                  }}
+                >
+                  <div>
+                    <div style={{ ...sectionEyebrow, fontSize: 10 }}>Phase</div>
+                    <div style={{ marginTop: 6, fontFamily: SERIF, fontSize: 30, lineHeight: 1.04, color: CREAM }}>
+                      {phase.phase}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <KeyValue k="Entry" v={phase.entry} dark />
+                    <KeyValue k="Deliverables" v={phase.deliverables.join(' · ')} dark />
+                    <KeyValue k="Exit gate" v={phase.exit} bold dark />
+                    <div
+                      style={{
+                        marginTop: 4,
+                        padding: '14px 16px',
+                        background: 'rgba(14,159,140,0.08)',
+                        border: `1px solid rgba(14,159,140,0.24)`,
+                        borderRadius: 14,
+                        fontFamily: SANS,
+                        fontSize: 15,
+                        color: 'rgba(247,242,234,0.9)',
+                        lineHeight: 1.65,
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'block',
+                          fontFamily: MONO,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.14em',
+                          color: TEAL,
+                          fontSize: 11,
+                          marginBottom: 8,
+                          fontWeight: 700,
+                        }}
+                      >
+                        What cannot pass
+                      </span>
+                      {phase.cannotPass}
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section id="agents" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Agents · 4 specialists · defined refusals</div>
+            <h2 style={sectionTitle}>What our agents won&apos;t do is what makes them useful.</h2>
+            <div
+              style={{
+                display: 'grid',
+                gap: 16,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+                marginTop: 24,
+              }}
+            >
+              {AGENTS.map((agent) => (
+                <article
+                  key={agent.name}
+                  style={{
+                    padding: 24,
+                    background: PANEL_BG,
+                    border: `1px solid ${LINE}`,
+                    borderRadius: 22,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 16,
+                    boxShadow: '0 12px 32px rgba(23,20,17,0.04)',
+                  }}
+                >
+                  <div>
+                    <div style={{ ...sectionEyebrow, fontSize: 11 }}>{agent.name}</div>
+                    <p style={{ margin: '8px 0 0', fontSize: 18, lineHeight: 1.55, color: INK_SOFT }}>{agent.role}</p>
+                  </div>
+                  <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {agent.refusals.map((r, i) => (
+                      <li
+                        key={i}
+                        style={{
+                          fontFamily: SANS,
+                          fontSize: 15,
+                          color: INK,
+                          lineHeight: 1.62,
+                          paddingLeft: 32,
+                          position: 'relative',
+                        }}
+                      >
+                        <span
+                          aria-hidden
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            top: 2,
+                            width: 22,
+                            fontFamily: MONO,
+                            fontSize: 11,
+                            color: TEAL,
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {String(i + 1).padStart(2, '0')}
+                        </span>
+                        {r}
+                      </li>
+                    ))}
+                  </ol>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section id="compounding-assets" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Compounding assets · live</div>
+            <h2 style={sectionTitle}>Four assets that get more valuable with every program.</h2>
+            <div
+              style={{
+                display: 'grid',
+                gap: 18,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                marginTop: 24,
+              }}
+            >
+              {COMPOUNDING.map((asset) => (
+                <article
+                  key={asset.name}
+                  style={{
+                    padding: 24,
+                    background: asset.name === 'Transformation Genome' ? PANEL_ALT : PANEL_BG,
+                    border: `1px solid ${asset.name === 'Transformation Genome' ? 'rgba(14,159,140,0.24)' : LINE}`,
+                    borderRadius: 22,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 14,
+                  }}
+                >
+                  <div style={{ ...sectionEyebrow, fontSize: 10 }}>{asset.name.toUpperCase()}</div>
+                  <div style={{ fontFamily: SERIF, fontSize: 42, color: asset.name === 'Transformation Genome' ? TEAL : INK, letterSpacing: '-0.03em', lineHeight: 1.02 }}>
+                    {asset.primary}
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {asset.secondary.map((s) => (
+                      <li key={s} style={{ fontFamily: MONO, fontSize: 11, color: INK_MUTED, letterSpacing: '0.02em' }}>
+                        · {s}
+                      </li>
+                    ))}
+                  </ul>
+                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
+                    {asset.whyCompounds}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section
+            id="outcome-economics"
+            style={{
+              scrollMarginTop: 40,
+              borderRadius: 30,
+              background: `linear-gradient(180deg, rgba(90,166,248,0.14), rgba(14,159,140,0.08))`,
+              border: `1px solid ${LINE}`,
+              padding: '34px 30px 30px',
+            }}
+          >
+            <div style={sectionEyebrow}>Pricing · outcome economics · 30%</div>
+            <h2 style={sectionTitle}>We&apos;re paid only after measured outcomes.</h2>
+            <p style={{ ...sectionBody, maxWidth: 760 }}>
+              Worked example · Morrison Owned Brand Margin Recovery (composite organization built from real-world data).
+            </p>
+            <div style={{ display: 'grid', gap: 14, maxWidth: 920, marginTop: 24 }}>
+              <FinancialRow label="Investment · AbarVa platform cost (Y1)" amount="$5.2M" note="Paid by client · regardless of outcome. Covers tenant provisioning, agent operations, cross-program intelligence access, evidence infrastructure." />
+              <FinancialRow label="Modeled return" amount="$99M central · $73M-$128M range" note="Basis · Diagnostic Findings v4 + Business Case v3 · Genome analogous program library (n=14) supports range." />
+              <FinancialRow label="Realized outcome at Phase 4" amount="$87M (annualized)" note="Measurement basis · Outcome Measurement Report (D19) with attribution analysis · auditor sign-off obtained." />
+              <FinancialRow label="AbarVa settlement · 30% of attributable measured lift" amount="$26.1M" note="Settlement basis · Outcome Baseline (locked Phase 2) · Outcome Measurement · Attribution Analysis · settled 90 days post-Phase 4." bold />
+            </div>
+            <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 820 }}>
+              <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>What this means</div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <li style={mean}>We are paid only after outcome is measured.</li>
+                <li style={mean}>We are paid only on attributable lift · not aspirational claims.</li>
+                <li style={mean}>We are paid only with audit-grade evidence chain.</li>
+                <li style={mean}>If pilot fails the gate, we don&apos;t scale and we don&apos;t get paid the scale economics.</li>
+              </ul>
+            </div>
+            <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 1100 }}>
+              <WhyColumn title="For client" body="Alignment of incentive · AbarVa wins only when client wins." />
+              <WhyColumn title="For AbarVa" body="Revenue multiples 4-6x typical SaaS based on outcome capture · defensible vs. consulting because attribution is proven." />
+              <WhyColumn title="For investors" body="Evidence-of-value delivery becomes contractually load-bearing · impossible to fake." />
+            </div>
+          </section>
+
+          <section id="composability" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Architecture · generative</div>
+            <h2 style={sectionTitle}>17 modules × 5 archetypes × 4 tenants × 9 solutions = 30,600 unique program shapes.</h2>
+            <p style={sectionBody}>
+              Programs are not products. The platform is generative, not a fixed product surface. Each program
+              composes the modules, archetypes, and solutions it needs and rejects what it doesn&apos;t. With Maestro
+              custom-path generation, the space is effectively unbounded.
+            </p>
+            <div
+              style={{
+                marginTop: 22,
+                padding: 24,
+                background: PANEL_BG,
+                border: `1px solid ${LINE}`,
+                borderRadius: 22,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 14,
+                maxWidth: 1180,
+              }}
+            >
+              <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>Worked composition · Morrison Owned Brand Margin Recovery</div>
+              <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
+                <KeyValue k="Archetype" v="Operational Optimization" />
+                <KeyValue k="Solution match" v="Retail × Middle Office × Optimize" />
+                <KeyValue k="Modules active" v="Hypothesis Tree · Workstream Charter (×3) · Evidence Ledger · Pattern Match (Sentinel) · Decision Brief · Intervention Charter (×2) · Business Case · Operating Review Rhythm · Early Warning Dashboard · Outcome Baseline · Outcome Measurement · Genome Contribution" />
+                <KeyValue k="Customization" v="Q3 2026 contracting cycle window forced custom Phase 3 timeline · F022 active pattern triggered joint sponsor turn protocol." />
+              </div>
+            </div>
+          </section>
+
+          <section id="comparison" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Comparison · category positioning</div>
+            <h2 style={sectionTitle}>Where we win. Where we don&apos;t compete.</h2>
+            <div
+              style={{
+                overflowX: 'auto',
+                border: `1px solid ${LINE}`,
+                borderRadius: 22,
+                background: PANEL_BG,
+                boxShadow: '0 12px 32px rgba(23,20,17,0.05)',
+                marginTop: 24,
+              }}
+            >
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 960 }}>
+                <thead>
+                  <tr>
+                    <th style={headStyle}>Dimension</th>
+                    <th style={headStyle}>Top-3 consulting firm engagement model</th>
+                    <th style={headStyle}>Modern data stack tool</th>
+                    <th style={headStyle}>RPA platform</th>
+                    <th style={{ ...headStyle, color: TEAL }}>AbarVa</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <MetaLabel style={{ marginTop: 14, display: 'block' }}>
-            Structural-class column labels · we don&apos;t name specific competitor firms or tools. The &quot;where AbarVa explicitly does NOT compete&quot; row is the trust move · it tells you where to go for those needs.
-          </MetaLabel>
-        </section>
+                </thead>
+                <tbody>
+                  {COMPARISON.map((row, i) => (
+                    <tr key={row.dimension}>
+                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dimension}</td>
+                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.consulting}</td>
+                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dataStack}</td>
+                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.rpa}</td>
+                      <td style={{ ...cellStyle, color: TEAL, fontWeight: 600, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.abarva}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ marginTop: 14, display: 'block', fontSize: 14, lineHeight: 1.55, color: INK_MUTED }}>
+              Structural-class column labels · we don&apos;t name specific competitor firms or tools. The
+              &quot;where AbarVa explicitly does NOT compete&quot; row is the trust move · it tells you where to
+              go for those needs.
+            </div>
+          </section>
 
-        {/* Closing · operator admin link */}
-        <footer style={{ marginTop: 20, paddingTop: 24, borderTop: '0.5px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-          <MetaLabel>
-            Platform operators · the admin hub lives at <EntityLink href="/platform/admin" variant="inline">/platform/admin</EntityLink>.
-          </MetaLabel>
-          <MetaLabel>
-            Composite organizations (Apex Retail, Meridian Health, First Capital, Keystone Energy, Morrison) are built from real-world data.
-          </MetaLabel>
-        </footer>
+          <footer
+            style={{
+              marginTop: 12,
+              paddingTop: 24,
+              borderTop: `1px solid ${LINE}`,
+              display: 'flex',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 12,
+              fontSize: 14,
+              lineHeight: 1.55,
+              color: INK_MUTED,
+            }}
+          >
+            <span>
+              Platform operators · the admin hub lives at{' '}
+              <Link href="/platform/admin" style={{ color: INK, fontWeight: 600, textDecoration: 'underline' }}>
+                /platform/admin
+              </Link>
+              .
+            </span>
+            <span>
+              Composite organizations (Apex Retail, Meridian Health, First Capital, Keystone Energy, Morrison) are built
+              from real-world data.
+            </span>
+          </footer>
+        </div>
       </div>
-    </PageShell>
+    </div>
   );
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────
 
-function KeyValue({ k, v, bold }: { k: string; v: string; bold?: boolean }) {
+function KeyValue({ k, v, bold, dark }: { k: string; v: string; bold?: boolean; dark?: boolean }) {
   return (
     <div>
-      <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: 'rgba(45,212,200,0.85)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+      <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
         {k}
       </span>
-      <Body size="md" tone="primary" weight={bold ? 500 : 400} style={{ marginTop: 4 }}>
+      <div
+        style={{
+          marginTop: 6,
+          fontFamily: SANS,
+          fontSize: 'clamp(15px, 1vw + 11px, 17px)',
+          fontWeight: bold ? 600 : 400,
+          color: dark ? CREAM : INK,
+          lineHeight: 1.58,
+        }}
+      >
         {v}
-      </Body>
+      </div>
     </div>
   );
 }
@@ -636,9 +805,9 @@ function FinancialRow({ label, amount, note, bold }: { label: string; amount: st
     <div
       style={{
         padding: bold ? 20 : 16,
-        background: bold ? 'rgba(45,212,200,0.08)' : 'rgba(255,255,255,0.02)',
-        border: `0.5px solid ${bold ? COLORS.teal : 'rgba(255,255,255,0.08)'}`,
-        borderRadius: 10,
+        background: bold ? 'rgba(14,159,140,0.08)' : 'rgba(255,253,252,0.82)',
+        border: `1px solid ${bold ? 'rgba(14,159,140,0.28)' : LINE}`,
+        borderRadius: 18,
         display: 'grid',
         gridTemplateColumns: '1fr auto',
         gap: 20,
@@ -646,14 +815,14 @@ function FinancialRow({ label, amount, note, bold }: { label: string; amount: st
       }}
     >
       <div>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(245,245,240,0.85)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: INK_MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
           {label}
         </div>
-        <Body size="sm" tone="secondary" style={{ marginTop: 6, lineHeight: 1.55, maxWidth: 640 }}>
+        <div style={{ marginTop: 8, maxWidth: 640, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>
           {note}
-        </Body>
+        </div>
       </div>
-      <div style={{ fontFamily: 'Georgia, serif', fontSize: bold ? 32 : 24, color: bold ? COLORS.teal : COLORS.textPrimary, letterSpacing: '-0.005em', whiteSpace: 'nowrap' }}>
+      <div style={{ fontFamily: SERIF, fontSize: bold ? 36 : 28, color: bold ? TEAL : INK, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
         {amount}
       </div>
     </div>
@@ -662,9 +831,9 @@ function FinancialRow({ label, amount, note, bold }: { label: string; amount: st
 
 function WhyColumn({ title, body }: { title: string; body: string }) {
   return (
-    <div style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10 }}>
-      <EyebrowLabel tone="teal" size="xs">{title.toUpperCase()}</EyebrowLabel>
-      <Body size="sm" tone="secondary" style={{ marginTop: 8, lineHeight: 1.55 }}>{body}</Body>
+    <div style={{ padding: 18, background: PANEL_BG, border: `1px solid ${LINE}`, borderRadius: 18 }}>
+      <div style={{ ...sectionEyebrow, fontSize: 10 }}>{title.toUpperCase()}</div>
+      <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>{body}</div>
     </div>
   );
 }
@@ -687,13 +856,13 @@ function SectionLinkTOC() {
           href={l.href}
           style={{
             display: 'inline-block',
-            padding: '6px 12px',
-            background: 'rgba(255,255,255,0.03)',
-            border: '0.5px solid rgba(45,212,200,0.2)',
+            padding: '9px 14px',
+            background: 'rgba(255,255,255,0.72)',
+            border: `1px solid ${LINE}`,
             borderRadius: 999,
-            fontFamily: 'JetBrains Mono, monospace',
+            fontFamily: MONO,
             fontSize: 10,
-            color: 'rgba(245,245,240,0.75)',
+            color: INK_SOFT,
             letterSpacing: '0.08em',
             textDecoration: 'none',
           }}
@@ -708,38 +877,38 @@ function SectionLinkTOC() {
 const headStyle: CSSProperties = {
   textAlign: 'left',
   padding: '14px 14px',
-  background: 'rgba(10,10,10,0.5)',
-  fontFamily: 'JetBrains Mono, monospace',
+  background: '#FFF8F0',
+  fontFamily: MONO,
   fontSize: 10,
-  color: 'rgba(245,245,240,0.75)',
+  color: INK_MUTED,
   letterSpacing: '0.14em',
   textTransform: 'uppercase',
-  borderBottom: '0.5px solid rgba(45,212,200,0.25)',
+  borderBottom: `1px solid ${LINE}`,
   whiteSpace: 'nowrap',
 };
 
 const cellStyle: CSSProperties = {
   padding: '14px 14px',
-  fontFamily: 'DM Sans, sans-serif',
-  fontSize: 13,
-  color: 'rgba(245,245,240,0.85)',
+  fontFamily: SANS,
+  fontSize: 14,
+  color: INK,
   lineHeight: 1.55,
-  borderBottom: '0.5px solid rgba(255,255,255,0.05)',
+  borderBottom: `1px solid ${LINE}`,
   verticalAlign: 'top',
 };
 
 const rowAccent: CSSProperties = {
-  background: 'rgba(245,158,11,0.04)',
+  background: 'rgba(213,155,106,0.08)',
   fontStyle: 'italic',
 };
 
 const mean: CSSProperties = {
-  padding: '10px 14px',
-  background: 'rgba(255,255,255,0.02)',
-  border: '0.5px solid rgba(45,212,200,0.12)',
-  borderRadius: 6,
-  fontFamily: 'JetBrains Mono, monospace',
+  padding: '12px 14px',
+  background: 'rgba(255,255,255,0.78)',
+  border: `1px solid ${LINE}`,
+  borderRadius: 12,
+  fontFamily: MONO,
   fontSize: 12,
-  color: 'rgba(245,245,240,0.9)',
+  color: INK_SOFT,
   letterSpacing: '0.02em',
 };
