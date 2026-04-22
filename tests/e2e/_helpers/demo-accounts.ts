@@ -15,7 +15,7 @@ export const DEMO_ROLE_ACCOUNTS = {
   },
   investor: {
     email: 'investor+clerk_test@abarva.com',
-    expectedPath: /\/investor(s)?$/,
+    expectedPath: /\/investors$/,
     pageMarker: { kind: 'text', label: 'Warm-intro investor materials' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform', 'Investor'],
     hiddenNav: ['Admin'],
