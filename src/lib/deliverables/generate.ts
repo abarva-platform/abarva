@@ -1,4 +1,5 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
+import type { ContentBlock, TextBlock } from '@anthropic-ai/sdk/resources/messages/messages';
 import {
   getEngagementById,
   type EngagementRow,
@@ -48,6 +49,10 @@ const PHASE_TO_LEGACY_DELIVERABLE: Record<number, string> = {
   3: 'execution_dashboard',
   4: 'outcome_verification',
 };
+
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === 'text';
+}
 
 function legacyContentFromV2(args: {
   content: string;
@@ -351,8 +356,8 @@ async function runHaiku(prompt: string): Promise<Record<string, unknown> | null>
     messages: [{ role: 'user', content: prompt }],
   });
   const text = response.content
-    .filter((b: { type: string }) => b.type === 'text')
-    .map((b: { text: string }) => b.text)
+    .filter(isTextBlock)
+    .map((block) => block.text)
     .join('');
   return parseJsonFromResponse(text);
 }

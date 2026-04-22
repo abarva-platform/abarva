@@ -1,4 +1,5 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
+import type { ContentBlock, TextBlock } from '@anthropic-ai/sdk/resources/messages/messages';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getEngagementById } from '@/lib/db/engagement';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
@@ -90,6 +91,10 @@ export interface GenerateResult {
   quality: QualityReview;
   issues: string[];
   persisted: { deliverable_id: string; version: number } | null;
+}
+
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === 'text';
 }
 
 // ── Step 1 · Load spec ───────────────────────────────────────────────────
@@ -379,8 +384,8 @@ export async function generateDraft(prompt: string): Promise<string> {
     messages: [{ role: 'user', content: prompt }],
   });
   const text = resp.content
-    .filter((b: { type: string }) => b.type === 'text')
-    .map((b: { type: 'text'; text: string }) => b.text)
+    .filter(isTextBlock)
+    .map((block) => block.text)
     .join('\n');
   return text;
 }
@@ -426,8 +431,8 @@ Return JSON only with schema:
       messages: [{ role: 'user', content: prompt }],
     });
     const text = resp.content
-      .filter((b: { type: string }) => b.type === 'text')
-      .map((b: { type: 'text'; text: string }) => b.text)
+      .filter(isTextBlock)
+      .map((block) => block.text)
       .join('\n');
 
     // Strip markdown code fences if present
@@ -497,8 +502,8 @@ ${renderRubricCriteria(args.spec.quality_rubric)}`;
     messages: [{ role: 'user', content: prompt }],
   });
   const text = resp.content
-    .filter((b: { type: string }) => b.type === 'text')
-    .map((b: { type: 'text'; text: string }) => b.text)
+    .filter(isTextBlock)
+    .map((block) => block.text)
     .join('\n');
   return text;
 }
