@@ -6,6 +6,7 @@ const LINKS = [
   { href: '/platform/admin', label: 'Engagement Hub' },
   { href: '/platform/admin/data', label: 'Data Loader' },
   { href: '/platform/admin/data-guide', label: 'Data Guide', active: true },
+  { href: '/platform/admin/quality', label: 'Quality Ops' },
   { href: '/platform/admin/approvals', label: 'Approvals' },
   { href: '/platform/admin/outcomes', label: 'Outcome Tracker' },
   { href: '/platform/admin/brief', label: 'Pre-Meeting Brief' },

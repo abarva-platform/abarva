@@ -11,6 +11,7 @@ const S = {
 const LINKS = [
   { href: '/platform/admin', label: 'Engagement Hub' },
   { href: '/platform/admin/data-governance', label: 'Data Governance' },
+  { href: '/platform/admin/quality', label: 'Quality Ops' },
   { href: '/platform/admin/revenue', label: 'Revenue' },
   { href: '/platform/admin/outcomes', label: 'Outcome Tracker', active: true },
 ]
