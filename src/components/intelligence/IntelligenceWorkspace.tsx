@@ -23,12 +23,6 @@ type BrowserResponse = {
   items: Array<{ id: string; title: string; subtitle: string | null; detail: string | null; href: string | null; sourceUrl: string | null }>;
 };
 
-const SUGGESTED = [
-  'What are health systems like us doing on ambient documentation?',
-  'DAX vs Abridge for Meridian',
-  'What would our CFO push back on here?',
-];
-
 async function fetchJson<T>(url: string): Promise<{ ok: true; data: T } | { ok: false; status: number; body: Record<string, unknown> }> {
   const res = await fetch(url, { credentials: 'include' });
   const body = (await res.json().catch(() => ({}))) as Record<string, unknown>;
@@ -99,6 +93,12 @@ export function IntelligenceWorkspace({
   const [authState, setAuthState] = useState<'ready' | 'unauthenticated' | 'no_client'>('ready');
   const [loadingThread, setLoadingThread] = useState(false);
   const initialQueryFired = useRef(false);
+  const overviewRef = useRef<HTMLElement | null>(null);
+  const layersRef = useRef<HTMLElement | null>(null);
+  const patternsRef = useRef<HTMLElement | null>(null);
+  const vendorsRef = useRef<HTMLElement | null>(null);
+  const contradictionsRef = useRef<HTMLElement | null>(null);
+  const askRef = useRef<HTMLElement | null>(null);
 
   const {
     isStreaming,
@@ -192,6 +192,61 @@ export function IntelligenceWorkspace({
 
   const activeTurnId = selectedTurnId ?? turns[turns.length - 1]?.id ?? null;
   const programFit = useMemo(() => programFitFromTurns(turns), [turns]);
+  const tenantLabel = foundation?.client.name ?? 'this account';
+  const suggestedQueries = useMemo(() => {
+    const industry = (foundation?.client.industry ?? '').toLowerCase();
+    if (industry.includes('health')) {
+      return [
+        `What are health systems like ${tenantLabel} doing on ambient documentation?`,
+        `Abridge vs DAX for ${tenantLabel}`,
+        `What would our CFO push back on here?`,
+      ];
+    }
+    if (industry.includes('retail')) {
+      return [
+        `What are retailers like ${tenantLabel} doing on AI personalization?`,
+        `Where is vendor overlap hurting margin or speed?`,
+        `What would the COO challenge in this story?`,
+      ];
+    }
+    if (industry.includes('financial') || industry.includes('bank')) {
+      return [
+        `What are peers like ${tenantLabel} doing on AI governance and operating risk?`,
+        `Where is vendor overlap creating compliance drag?`,
+        `What would the CFO or CRO push back on first?`,
+      ];
+    }
+    return [
+      `What is moving across ${tenantLabel} right now?`,
+      'Which contradictions matter most?',
+      'Where would leadership push back first?',
+    ];
+  }, [foundation, tenantLabel]);
+  const askPlaceholder = useMemo(() => {
+    const industry = (foundation?.client.industry ?? '').toLowerCase();
+    if (industry.includes('health')) return 'What are health systems like us doing on ambient documentation?';
+    if (industry.includes('retail')) return 'Where are retailers like us seeing AI margin lift right now?';
+    if (industry.includes('financial') || industry.includes('bank')) return 'Where are banks like us carrying AI risk without enough evidence?';
+    return 'What is changing fastest across our operating environment right now?';
+  }, [foundation]);
+
+  function scrollToSection(section: 'overview' | 'layers' | 'patterns' | 'vendors' | 'contradictions' | 'ask') {
+    const refMap = {
+      overview: overviewRef,
+      layers: layersRef,
+      patterns: patternsRef,
+      vendors: vendorsRef,
+      contradictions: contradictionsRef,
+      ask: askRef,
+    } as const;
+    refMap[section].current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function handleLandingNavigate(target: { section: 'patterns' | 'vendors' | 'contradictions' | 'ask' | 'layers'; layer?: 'L1' | 'L2' | 'L3' | 'L4'; facet?: string | null }) {
+    if (target.layer) setBrowserLayer(target.layer);
+    if (typeof target.facet !== 'undefined') setBrowserFacet(target.facet);
+    scrollToSection(target.section);
+  }
 
   async function handleSubmitQuery(query: string) {
     const userTurn = buildUserTurn(query, threadId);
@@ -333,7 +388,7 @@ export function IntelligenceWorkspace({
   }
 
   return (
-    <div className="intel-page">
+    <div className={state === 'A' ? 'intel-page intel-page-landing' : 'intel-page'}>
       <div className="intel-shell intel-stack">
         {pageError || streamError ? (
           <section className="intel-card intel-section" style={{ borderColor: 'rgba(255,107,74,0.35)' }}>
@@ -344,7 +399,8 @@ export function IntelligenceWorkspace({
           </section>
         ) : null}
 
-        {state === 'A' ? <FoundationReadout foundation={foundation} loading={!foundation} /> : <FoundationStrip foundation={foundation} onExpand={() => reset()} />}
+        {state !== 'A' ? <FoundationStrip foundation={foundation} onExpand={() => reset()} /> : null}
+        
 
         <div className={`intel-shell-grid state-${state.toLowerCase()}`}>
           {state === 'C' ? (
@@ -359,34 +415,166 @@ export function IntelligenceWorkspace({
           <div className="intel-stack">
             {(state === 'A' || turns.length === 0) ? (
               <>
-                <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
-                  onSubmit={handleSubmitQuery}
-                  onSuggestedTap={handleSubmitQuery}
-                  onFileSelected={handleUpload}
-                  attachments={attachments}
-                  disabled={isStreaming}
-                />
-                <PortfolioSignalFeed
-                  signals={signals}
-                  programCount={foundation?.metrics.engagements ?? 0}
-                  onSignalClick={setSelectedSignalId}
-                />
-                <FoundationBrowser
-                  activeLayer={browser?.activeLayer ?? browserLayer}
-                  onLayerChange={(layer) => {
-                    setBrowserLayer(layer);
-                    setBrowserFacet(null);
-                  }}
-                  tiles={browser?.tiles ?? []}
-                  items={browser?.items ?? []}
-                  onFacetChange={setBrowserFacet}
-                />
+                <div className="intel-workspace-layout">
+                  <aside className="intel-workspace-sidebar">
+                    <div className="intel-workspace-sidebar-head">
+                      <div className="intel-eyebrow">Persistent rail</div>
+                      <div className="intel-workspace-sidebar-title">Intelligence should feel like an operating console.</div>
+                      <div className="intel-subtle" style={{ fontSize: 13, lineHeight: 1.6 }}>
+                        One page, fixed navigation, and every major count opens a real in-page section instead of a dead card or a jump-out route.
+                      </div>
+                    </div>
+                    <div className="intel-browser-sidebar-group">
+                      <div className="intel-browser-sidebar-label">Primary sections</div>
+                      {[
+                        ['overview', 'Overview', 'Ground the tenant and the page'],
+                        ['layers', 'Layer navigator', 'Switch L1–L4 as work modes'],
+                        ['patterns', 'Patterns & benchmarks', 'Evidence, comparables, and promotion depth'],
+                        ['vendors', 'Vendor landscape', 'Where overlap and pressure sit'],
+                        ['contradictions', 'Contradictions', 'What is blocking value or trust'],
+                        ['ask', 'Ask AbarVa', 'Persistent composer and next action'],
+                      ].map(([key, label, detail]) => (
+                        <button key={key} type="button" className="intel-browser-rail-item" onClick={() => scrollToSection(key as 'overview' | 'layers' | 'patterns' | 'vendors' | 'contradictions' | 'ask')}>
+                          <div>
+                            <strong>{label}</strong>
+                            <span>{detail}</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="intel-browser-sidebar-group">
+                      <div className="intel-browser-sidebar-label">Working filters</div>
+                      <button type="button" className="intel-browser-rail-item" onClick={() => handleLandingNavigate({ section: 'patterns', layer: 'L1', facet: 'pattern' })}>
+                        <div><strong>Pattern</strong><span>{foundation?.metrics.patterns ?? 0} promoted or candidate</span></div>
+                      </button>
+                      <button type="button" className="intel-browser-rail-item" onClick={() => handleLandingNavigate({ section: 'patterns', layer: 'L1', facet: 'benchmark' })}>
+                        <div><strong>Benchmark</strong><span>{foundation?.metrics.benchmarks ?? 0} market references</span></div>
+                      </button>
+                      <button type="button" className="intel-browser-rail-item" onClick={() => handleLandingNavigate({ section: 'vendors', layer: 'L1', facet: 'vendor' })}>
+                        <div><strong>Vendor</strong><span>{foundation?.metrics.vendors ?? 0} mapped to the tenant</span></div>
+                      </button>
+                      <button type="button" className="intel-browser-rail-item" onClick={() => scrollToSection('contradictions')}>
+                        <div><strong>Contradictions</strong><span>{foundation?.metrics.contradictions ?? 0} client-level flags</span></div>
+                      </button>
+                    </div>
+                  </aside>
+
+                  <div className="intel-workspace-main">
+                    <section ref={overviewRef} className="intel-stack">
+                      <FoundationReadout foundation={foundation} loading={!foundation} onNavigate={handleLandingNavigate} />
+                    </section>
+
+                    <section ref={layersRef} className="intel-card intel-section intel-warm-section">
+                      <div className="intel-warm-section-head">
+                        <div>
+                          <div className="intel-eyebrow">Layer navigator</div>
+                          <div className="intel-title" style={{ maxWidth: 760 }}>One page, six sections, no dead-end clicks.</div>
+                          <div className="intel-subtle" style={{ marginTop: 12, maxWidth: 760 }}>
+                            The left rail stays fixed. The center updates with real content. Top boxes become navigation, not decoration.
+                          </div>
+                        </div>
+                      </div>
+                      <FoundationBrowser
+                        activeLayer={browser?.activeLayer ?? browserLayer}
+                        onLayerChange={(layer) => {
+                          setBrowserLayer(layer);
+                          setBrowserFacet(null);
+                        }}
+                        tiles={browser?.tiles ?? []}
+                        items={browser?.items ?? []}
+                        onFacetChange={setBrowserFacet}
+                      />
+                    </section>
+
+                    <section ref={patternsRef} className="intel-card intel-section intel-dark-band">
+                      <div className="intel-band-head">
+                        <div>
+                          <div className="intel-eyebrow">Patterns & benchmarks</div>
+                          <div className="intel-title intel-band-title">The middle of the page becomes the evidence engine.</div>
+                          <div className="intel-subtle intel-band-copy">
+                            This is where the page earns trust: named pattern cards, benchmark references, and what the evidence depth actually supports.
+                          </div>
+                        </div>
+                      </div>
+                      <FoundationBrowser
+                        activeLayer={browser?.activeLayer ?? browserLayer}
+                        onLayerChange={(layer) => {
+                          setBrowserLayer(layer);
+                          setBrowserFacet(null);
+                        }}
+                        tiles={browser?.tiles ?? []}
+                        items={browser?.items ?? []}
+                        onFacetChange={setBrowserFacet}
+                      />
+                    </section>
+
+                    <section ref={vendorsRef} className="intel-card intel-section intel-warm-section">
+                      <div className="intel-warm-section-head">
+                        <div>
+                          <div className="intel-eyebrow">Vendor landscape</div>
+                          <div className="intel-title" style={{ maxWidth: 760 }}>Vendor should become a map, not a count.</div>
+                          <div className="intel-subtle" style={{ marginTop: 12, maxWidth: 760 }}>
+                            Named vendors, active overlaps, and strategic pressure should sit in one visible place instead of hiding behind a single metric chip.
+                          </div>
+                        </div>
+                      </div>
+                      <FoundationBrowser
+                        activeLayer={browser?.activeLayer ?? browserLayer}
+                        onLayerChange={(layer) => {
+                          setBrowserLayer(layer);
+                          setBrowserFacet('vendor');
+                        }}
+                        tiles={browser?.tiles ?? []}
+                        items={browser?.items ?? []}
+                        onFacetChange={setBrowserFacet}
+                      />
+                    </section>
+
+                    <section ref={contradictionsRef} className="intel-card intel-section intel-dark-band">
+                      <div className="intel-band-head">
+                        <div>
+                          <div className="intel-eyebrow">Contradictions ledger</div>
+                          <div className="intel-title intel-band-title">The strongest content in the product should feel like a control room.</div>
+                          <div className="intel-subtle intel-band-copy">
+                            Contradictions deserve real click depth, named tension, and a visible route to next action.
+                          </div>
+                        </div>
+                      </div>
+                      <PortfolioSignalFeed
+                        signals={signals}
+                        programCount={foundation?.metrics.engagements ?? 0}
+                        onSignalClick={setSelectedSignalId}
+                      />
+                    </section>
+
+                    <section ref={askRef} className="intel-card intel-section intel-dark-band">
+                      <div className="intel-band-head">
+                        <div>
+                          <div className="intel-eyebrow">Ask AbarVa</div>
+                          <div className="intel-title intel-band-title">The chat area should feel like a real tool, not a debug console.</div>
+                          <div className="intel-subtle intel-band-copy">
+                            Wrapped text, visible citations, no leaked trace blocks, and a composer that stays usable on a 13-inch screen.
+                          </div>
+                        </div>
+                      </div>
+                      <AskIntelligenceBar
+                        suggestedQueries={suggestedQueries}
+                        placeholder={askPlaceholder}
+                        onSubmit={handleSubmitQuery}
+                        onSuggestedTap={handleSubmitQuery}
+                        onFileSelected={handleUpload}
+                        attachments={attachments}
+                        disabled={isStreaming}
+                      />
+                    </section>
+                  </div>
+                </div>
               </>
             ) : (
               <>
                 <AskIntelligenceBar
-                  suggestedQueries={SUGGESTED}
+                  suggestedQueries={suggestedQueries}
+                  placeholder={askPlaceholder}
                   onSubmit={handleSubmitQuery}
                   onSuggestedTap={handleSubmitQuery}
                   onFileSelected={handleUpload}
