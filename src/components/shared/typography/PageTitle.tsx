@@ -14,8 +14,8 @@ interface Props {
 export function PageTitle({ children, as = 'h1', size = 'page', style, id }: Props) {
   const Tag = as;
   const fontSize = size === 'display'
-    ? 'clamp(40px, 4.5vw + 18px, 64px)'
-    : 'clamp(34px, 3vw + 16px, 48px)';
+    ? 'clamp(34px, 3.2vw + 16px, 56px)'
+    : 'clamp(30px, 2.2vw + 15px, 42px)';
   return (
     <Tag
       id={id}
@@ -24,7 +24,7 @@ export function PageTitle({ children, as = 'h1', size = 'page', style, id }: Pro
         fontSize,
         fontWeight: 400,
         color: COLORS.textPrimary,
-        lineHeight: 1.2,
+        lineHeight: 1.16,
         letterSpacing: '-0.01em',
         margin: 0,
         ...style,
