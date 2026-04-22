@@ -716,47 +716,124 @@ export default function PlatformPage() {
 }
 
 function ArchitectureConstellation() {
+  // Live operational schematic. Four zones wired to the same spine · agents
+  // at the top tap into the phase pipeline; phase gates write into the
+  // Evidence Ledger; the ledger feeds knowledge upward (Client → Emergent →
+  // Genome); outcome proof exits on the right. Animated with CSS pulses that
+  // respect prefers-reduced-motion.
+  const AGENTS: Array<{ id: string; name: string; role: string }> = [
+    { id: 'maestro', name: 'Maestro', role: 'orchestrator' },
+    { id: 'diagnostic', name: 'Diagnostic', role: 'hypothesis ↔ evidence' },
+    { id: 'design', name: 'Design', role: 'intervention synthesis' },
+    { id: 'auditor', name: 'Auditor', role: 'chain-of-custody' },
+  ];
+  const PHASES: Array<{ id: string; num: string; title: string; refuse: string }> = [
+    { id: 'p0', num: '0', title: 'Charter', refuse: 'no sponsor · no go' },
+    { id: 'p1', num: '1', title: 'Diagnose', refuse: 'thin evidence · no pass' },
+    { id: 'p2', num: '2', title: 'Design', refuse: 'no diagnostic link · refuse' },
+    { id: 'p3', num: '3', title: 'Decide', refuse: 'scope drift · refuse' },
+    { id: 'p4', num: '4', title: 'Execute', refuse: 'missing baseline · refuse' },
+  ];
+
   return (
-    <div className="constellation-shell">
-      <div className="constellation-header">
+    <div className="schematic-shell">
+      <div className="schematic-header">
         <span>Architecture</span>
         <span>Live governance spine</span>
       </div>
 
-      <div className="constellation-grid">
-        <div className="constellation-column">
-          <div className="constellation-card constellation-card-teal">
-            <strong>Agents</strong>
-            <span>4 specialist surfaces</span>
-          </div>
-          <div className="constellation-card">
-            <strong>Phases</strong>
-            <span>5 gates with refusal logic</span>
-          </div>
+      {/* ─── AGENTS BANK ─────────────────────────────────────────────── */}
+      <div className="schematic-section schematic-section-agents" aria-label="Specialist agents">
+        <div className="schematic-row-label">
+          <span>Agents · 4</span>
+          <span>specialist surfaces</span>
         </div>
-
-        <div className="constellation-center">
-          <div className="constellation-core">Evidence Ledger</div>
-          <div className="constellation-ring constellation-ring-a" />
-          <div className="constellation-ring constellation-ring-b" />
-          <div className="constellation-node constellation-node-a" />
-          <div className="constellation-node constellation-node-b" />
-          <div className="constellation-node constellation-node-c" />
+        <div className="schematic-agent-row">
+          {AGENTS.map((agent) => (
+            <div key={agent.id} className="schematic-agent-chip">
+              <span className="schematic-agent-dot" aria-hidden="true" />
+              <div>
+                <strong>{agent.name}</strong>
+                <small>{agent.role}</small>
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="constellation-column">
-          <div className="constellation-card constellation-card-amber">
-            <strong>Genome</strong>
-            <span>47 promoted patterns</span>
+      {/* ─── PHASE PIPELINE ──────────────────────────────────────────── */}
+      <div className="schematic-section" aria-label="Phase pipeline">
+        <div className="schematic-row-label">
+          <span>Phases · 5</span>
+          <span>hard gates · refusal logic</span>
+        </div>
+        <div className="schematic-phase-rail">
+          <div className="schematic-phase-track" aria-hidden="true" />
+          <div className="schematic-phase-flow" aria-hidden="true" />
+          {PHASES.map((phase, idx) => (
+            <div key={phase.id} className="schematic-phase-node" style={{ ['--delay' as string]: `${idx * 0.35}s` }}>
+              <div className="schematic-phase-circle">
+                <strong>{phase.num}</strong>
+              </div>
+              <div className="schematic-phase-label">{phase.title}</div>
+              <div className="schematic-phase-refuse" title={phase.refuse}>
+                <span aria-hidden="true">✕</span>
+                <small>{phase.refuse}</small>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ─── EVIDENCE LEDGER SPINE ───────────────────────────────────── */}
+      <div className="schematic-section schematic-section-spine" aria-label="Evidence Ledger spine">
+        <div className="schematic-spine">
+          <div className="schematic-spine-meta">
+            <span>Evidence Ledger</span>
+            <small>append-only · chain of custody · sensitivity-marked</small>
           </div>
-          <div className="constellation-card">
-            <strong>Outcome proof</strong>
-            <span>Audit-ready attribution</span>
+          <div className="schematic-spine-bar" aria-hidden="true">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span key={i} style={{ ['--tick' as string]: `${i}` }} />
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="constellation-footer">
+      {/* ─── KNOWLEDGE LAYERS · PROMOTION FLOW ───────────────────────── */}
+      <div className="schematic-section" aria-label="Knowledge layers">
+        <div className="schematic-row-label">
+          <span>Knowledge · 3 layers</span>
+          <span>compounds upward</span>
+        </div>
+        <div className="schematic-knowledge-stack">
+          <div className="schematic-knowledge-band schematic-knowledge-genome">
+            <div className="schematic-knowledge-name">Genome</div>
+            <div className="schematic-knowledge-count">47 promoted patterns</div>
+          </div>
+          <div className="schematic-knowledge-arrow" aria-hidden="true" />
+          <div className="schematic-knowledge-band schematic-knowledge-emergent">
+            <div className="schematic-knowledge-name">Emergent</div>
+            <div className="schematic-knowledge-count">12 signals · awaiting promotion</div>
+          </div>
+          <div className="schematic-knowledge-arrow" aria-hidden="true" />
+          <div className="schematic-knowledge-band schematic-knowledge-client">
+            <div className="schematic-knowledge-name">Client-contributed</div>
+            <div className="schematic-knowledge-count">tenant memory · per-engagement</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── OUTCOME PORT ────────────────────────────────────────────── */}
+      <div className="schematic-outcome" aria-label="Outcome proof output">
+        <div className="schematic-outcome-line" aria-hidden="true" />
+        <div className="schematic-outcome-port">
+          <strong>Outcome proof</strong>
+          <small>Audit-ready attribution · board-defensible</small>
+        </div>
+      </div>
+
+      <div className="schematic-footer">
         <span>Client-contributed</span>
         <span>Emergent</span>
         <span>Genome</span>
@@ -1162,6 +1239,485 @@ const platformCss = `
     background: ${AMBER};
     box-shadow: 0 0 18px rgba(213,155,106,0.4);
     animation-delay: 2.2s;
+  }
+
+  /* ── Live architecture schematic (hero visual rewrite) ──────────── */
+  .schematic-shell {
+    position: relative;
+    width: 100%;
+    min-height: 620px;
+    padding: 22px 22px 24px;
+    border-radius: 28px;
+    border: 1px solid rgba(23,20,17,0.12);
+    background:
+      linear-gradient(180deg, rgba(16,18,20,0.98), rgba(18,22,26,0.96)),
+      radial-gradient(circle at 15% 20%, rgba(20,184,166,0.18), transparent 35%),
+      radial-gradient(circle at 90% 80%, rgba(90,166,248,0.12), transparent 40%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 28px 60px rgba(23,20,17,0.18);
+    overflow: hidden;
+    color: ${CREAM};
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .schematic-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.4;
+    pointer-events: none;
+  }
+
+  .schematic-header,
+  .schematic-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.58);
+  }
+
+  .schematic-footer {
+    margin-top: auto;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(247,242,234,0.1);
+  }
+
+  .schematic-section {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .schematic-row-label {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-family: ${MONO};
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.48);
+  }
+
+  .schematic-row-label span:first-child {
+    color: rgba(20,184,166,0.85);
+  }
+
+  /* AGENTS · horizontal chip row */
+  .schematic-agent-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .schematic-agent-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border: 1px solid rgba(20,184,166,0.2);
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(20,184,166,0.1), rgba(20,184,166,0.02));
+    min-height: 48px;
+  }
+
+  .schematic-agent-chip strong {
+    display: block;
+    font-family: ${SERIF};
+    font-size: 15px;
+    line-height: 1;
+    color: ${CREAM};
+    letter-spacing: -0.01em;
+  }
+
+  .schematic-agent-chip small {
+    display: block;
+    margin-top: 2px;
+    font-family: ${MONO};
+    font-size: 9px;
+    letter-spacing: 0.06em;
+    color: rgba(247,242,234,0.62);
+  }
+
+  .schematic-agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: ${TEAL};
+    box-shadow: 0 0 10px rgba(20,184,166,0.7);
+    animation: schematic-agent-pulse 2.6s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  .schematic-agent-chip:nth-child(2) .schematic-agent-dot { animation-delay: 0.65s; }
+  .schematic-agent-chip:nth-child(3) .schematic-agent-dot { animation-delay: 1.3s; }
+  .schematic-agent-chip:nth-child(4) .schematic-agent-dot { animation-delay: 1.95s; }
+
+  /* PHASES · horizontal rail with 5 gates */
+  .schematic-phase-rail {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 18px 4px 8px;
+  }
+
+  .schematic-phase-track {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 36px;
+    height: 2px;
+    background: linear-gradient(90deg,
+      rgba(20,184,166,0.15) 0%,
+      rgba(20,184,166,0.35) 20%,
+      rgba(20,184,166,0.35) 80%,
+      rgba(20,184,166,0.15) 100%);
+    border-radius: 999px;
+  }
+
+  .schematic-phase-flow {
+    position: absolute;
+    top: 33px;
+    left: 6%;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: ${TEAL};
+    box-shadow: 0 0 12px rgba(20,184,166,0.8);
+    animation: schematic-phase-flow 7s linear infinite;
+  }
+
+  .schematic-phase-node {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 1;
+  }
+
+  .schematic-phase-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    border: 1.5px solid rgba(20,184,166,0.42);
+    background: rgba(16,18,20,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 4px rgba(20,184,166,0.05), inset 0 0 12px rgba(20,184,166,0.1);
+    animation: schematic-gate-pulse 3.2s ease-in-out infinite;
+    animation-delay: var(--delay, 0s);
+  }
+
+  .schematic-phase-circle strong {
+    font-family: ${SERIF};
+    font-size: 16px;
+    color: ${CREAM};
+    letter-spacing: -0.02em;
+  }
+
+  .schematic-phase-label {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: rgba(247,242,234,0.82);
+    text-transform: uppercase;
+  }
+
+  .schematic-phase-refuse {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: rgba(213,155,106,0.1);
+    border: 1px solid rgba(213,155,106,0.25);
+    font-family: ${MONO};
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    color: rgba(213,155,106,0.95);
+    max-width: 100%;
+  }
+
+  .schematic-phase-refuse span {
+    font-size: 7px;
+    line-height: 1;
+  }
+
+  .schematic-phase-refuse small {
+    font-size: 8px;
+    letter-spacing: 0.05em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 90px;
+  }
+
+  /* EVIDENCE LEDGER · horizontal spine */
+  .schematic-section-spine {
+    padding: 8px 0 6px;
+  }
+
+  .schematic-spine {
+    position: relative;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid rgba(20,184,166,0.28);
+    background: linear-gradient(90deg,
+      rgba(20,184,166,0.14) 0%,
+      rgba(20,184,166,0.2) 50%,
+      rgba(20,184,166,0.14) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.05),
+      0 0 28px rgba(20,184,166,0.16);
+  }
+
+  .schematic-spine-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .schematic-spine-meta span {
+    font-family: ${SERIF};
+    font-size: 16px;
+    color: ${CREAM};
+    letter-spacing: -0.01em;
+  }
+
+  .schematic-spine-meta small {
+    font-family: ${MONO};
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.62);
+    align-self: center;
+  }
+
+  .schematic-spine-bar {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    height: 14px;
+    border-radius: 999px;
+    background: rgba(0,0,0,0.25);
+    overflow: hidden;
+  }
+
+  .schematic-spine-bar span {
+    background: rgba(20,184,166,0.8);
+    height: 100%;
+    margin: 0 1px;
+    border-radius: 2px;
+    opacity: 0.3;
+    animation: schematic-tick 2.8s ease-in-out infinite;
+    animation-delay: calc(var(--tick) * 0.12s);
+  }
+
+  /* KNOWLEDGE · three stacked bands with upward arrows */
+  .schematic-knowledge-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .schematic-knowledge-band {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+  }
+
+  .schematic-knowledge-genome {
+    border-color: rgba(20,184,166,0.32);
+    background: linear-gradient(90deg, rgba(20,184,166,0.12), rgba(20,184,166,0.03));
+  }
+
+  .schematic-knowledge-emergent {
+    border-color: rgba(213,155,106,0.28);
+    background: linear-gradient(90deg, rgba(213,155,106,0.08), rgba(213,155,106,0.02));
+  }
+
+  .schematic-knowledge-client {
+    border-color: rgba(247,242,234,0.14);
+    background: rgba(247,242,234,0.04);
+  }
+
+  .schematic-knowledge-name {
+    font-family: ${SERIF};
+    font-size: 14px;
+    letter-spacing: -0.01em;
+    color: ${CREAM};
+  }
+
+  .schematic-knowledge-count {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: rgba(247,242,234,0.7);
+  }
+
+  .schematic-knowledge-arrow {
+    position: relative;
+    height: 12px;
+    margin: 0 auto;
+    width: 12px;
+  }
+
+  .schematic-knowledge-arrow::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, rgba(20,184,166,0.9), rgba(20,184,166,0.2));
+  }
+
+  .schematic-knowledge-arrow::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 5px solid rgba(20,184,166,0.9);
+    animation: schematic-promote 2.4s ease-in-out infinite;
+  }
+
+  /* OUTCOME PROOF · right-flowing port */
+  .schematic-outcome {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 10px 0 4px;
+  }
+
+  .schematic-outcome-line {
+    flex: 1;
+    height: 1.5px;
+    background: linear-gradient(90deg, rgba(20,184,166,0.2), rgba(20,184,166,0.75));
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .schematic-outcome-line::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -20px;
+    width: 20px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(247,242,234,0.95), transparent);
+    transform: translateY(-50%);
+    animation: schematic-outcome-flow 3.2s linear infinite;
+  }
+
+  .schematic-outcome-port {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(20,184,166,0.35);
+    background: linear-gradient(180deg, rgba(20,184,166,0.15), rgba(20,184,166,0.04));
+    position: relative;
+  }
+
+  .schematic-outcome-port::before {
+    content: '▸';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(20,184,166,0.95);
+    font-size: 12px;
+  }
+
+  .schematic-outcome-port strong {
+    font-family: ${SERIF};
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    color: ${CREAM};
+  }
+
+  .schematic-outcome-port small {
+    margin-top: 2px;
+    font-family: ${MONO};
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.68);
+  }
+
+  @keyframes schematic-agent-pulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.15); }
+  }
+
+  @keyframes schematic-gate-pulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(20,184,166,0.05), inset 0 0 12px rgba(20,184,166,0.1); }
+    50% { box-shadow: 0 0 0 6px rgba(20,184,166,0.14), inset 0 0 16px rgba(20,184,166,0.2); }
+  }
+
+  @keyframes schematic-phase-flow {
+    0% { left: 6%; opacity: 0; }
+    5% { opacity: 1; }
+    95% { opacity: 1; }
+    100% { left: 94%; opacity: 0; }
+  }
+
+  @keyframes schematic-tick {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.95; }
+  }
+
+  @keyframes schematic-promote {
+    0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.7; }
+    50% { transform: translateX(-50%) translateY(-2px); opacity: 1; }
+  }
+
+  @keyframes schematic-outcome-flow {
+    0% { left: -20px; }
+    100% { left: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .schematic-agent-dot,
+    .schematic-phase-flow,
+    .schematic-phase-circle,
+    .schematic-spine-bar span,
+    .schematic-knowledge-arrow::after,
+    .schematic-outcome-line::after {
+      animation: none !important;
+    }
+    .schematic-spine-bar span { opacity: 0.6; }
   }
 
   .dark-stage {
