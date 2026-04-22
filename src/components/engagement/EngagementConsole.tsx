@@ -310,19 +310,21 @@ export function EngagementConsole({
         }
       `}</style>
       {/* Header */}
-      <div style={{ padding: '16px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-        <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
-          <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
-          <span style={{ color: '#2DD4C8', fontSize: 23, fontWeight: 900 }}>Va</span>
-        </div>
-        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#2DD4C8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-          {engagement.name} · {sponsor?.name ?? 'unassigned'} · {sponsor?.role ?? '—'}
+      <div style={{ padding: '18px 24px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ maxWidth: 1480, margin: '0 auto', width: '100%' }}>
+          <div style={{ fontFamily: 'Georgia, serif', marginBottom: 4 }}>
+            <span style={{ color: '#F5F5F0', fontSize: 17, fontWeight: 800 }}>Abar</span>
+            <span style={{ color: '#2DD4C8', fontSize: 23, fontWeight: 900 }}>Va</span>
+          </div>
+          <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#2DD4C8', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+            Program · {engagement.name} · {sponsor?.name ?? 'unassigned'} · {sponsor?.role ?? '—'}
+          </div>
         </div>
       </div>
 
       {/* Phase indicator */}
-      <div style={{ padding: '16px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 6 }}>
+      <div style={{ padding: '18px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
           {phaseLabels.map((label, i) => (
             <div key={i} style={{
               padding: '10px 12px',
@@ -343,10 +345,12 @@ export function EngagementConsole({
       </div>
 
       {/* Three-column layout: conversation placeholder | context sidebar */}
-      <div style={{ padding: '0 24px 24px 24px', display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20 }}>
+      <div style={{ padding: '0 24px 24px 24px', display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24, maxWidth: 1480, margin: '0 auto', width: '100%' }}>
 
-        {/* Conversation + composer */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 24, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+        {/* Conversation + composer · minWidth:0 keeps flex/grid children
+            honouring the 1fr track so long unbroken text wraps inside the
+            panel instead of pushing the column beyond the viewport. */}
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 28, minHeight: 400, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
           <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: 'rgba(245,245,240,0.72)', textTransform: 'uppercase', marginBottom: 16 }}>
             Conversation · {messages.length} turns
           </div>
@@ -485,7 +489,16 @@ export function EngagementConsole({
                         ))}
                       </div>
                     )}
-                    <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                    <div
+                      style={{
+                        fontSize: 15,
+                        lineHeight: 1.7,
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'anywhere',
+                        wordBreak: 'break-word',
+                        minWidth: 0,
+                      }}
+                    >
                       {t.sender === 'agent' ? renderWithCitations(t.text) : t.text}
                       {t.streaming && (
                         <span
@@ -743,7 +756,7 @@ export function EngagementConsole({
                   <div key={d.choice} style={{ fontSize: 12, lineHeight: 1.5 }}>
                     <div style={{ color: '#F5F5F0' }}>{d.choice.replace(/_/g, ' ')}</div>
                     <div style={{ color: 'rgba(245,245,240,0.72)', fontSize: 11 }}>
-                      {d.engagement_count} engagements · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
+                      {d.engagement_count} programs · avg ${Math.round(d.avg_outcome_usd / 1000000)}M outcome
                     </div>
                   </div>
                 ))}

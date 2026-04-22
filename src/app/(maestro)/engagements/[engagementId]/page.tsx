@@ -27,15 +27,26 @@ export default async function EngagePage({
   const engagement = await getEngagementByGraphId(engagementId);
   if (!engagement) notFound();
 
+  // Defensive fetches · graph-backed helpers talk to Neo4j/AGE which may be
+  // unreachable or the engagement may lack a graph node yet for freshly-
+  // seeded rows. A single thrown promise 500s the whole page; catch-and-
+  // default keeps the console usable when graph retrieval is soft-broken.
+  // Real errors still surface to server logs.
+  const safe = <T,>(label: string, p: Promise<T>, fallback: T): Promise<T> =>
+    p.catch((err) => {
+      console.warn(`[engagement-page] ${label} failed:`, err);
+      return fallback;
+    });
+
   const [sponsor, turns, activePatterns, peerDecisions, chainedPatterns, caller, assignedTopicRows, allTopicRows] = await Promise.all([
-    engagement.sponsor_person_id ? getPersonById(engagement.sponsor_person_id) : Promise.resolve(null),
-    getRecentTurns(engagement.id),
-    getActivePatterns(engagementId),
-    getPeerDecisionsForPhase(engagementId, engagement.current_phase),
-    getChainedPatterns(engagementId),
-    getCurrentPerson(),
-    listEngagementTopics(engagement.id),
-    listAllTopics(),
+    engagement.sponsor_person_id ? safe('sponsor', getPersonById(engagement.sponsor_person_id), null) : Promise.resolve(null),
+    safe('turns', getRecentTurns(engagement.id), []),
+    safe('activePatterns', getActivePatterns(engagementId), []),
+    safe('peerDecisions', getPeerDecisionsForPhase(engagementId, engagement.current_phase), []),
+    safe('chainedPatterns', getChainedPatterns(engagementId), []),
+    safe('caller', getCurrentPerson(), null),
+    safe('assignedTopics', listEngagementTopics(engagement.id), []),
+    safe('allTopics', listAllTopics(), []),
   ]);
 
   const topicsByKey = new Map(allTopicRows.map((t) => [t.topic_key, t]));

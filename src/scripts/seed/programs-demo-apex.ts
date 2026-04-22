@@ -505,9 +505,17 @@ async function seedProgram(clientId: string, seed: ProgramSeed): Promise<string>
     return existing;
   }
 
+  // Deterministic graph_node_id so /engagements/[graphId] deep-links
+  // resolve · omitting this leaves the row navigable only by UUID and
+  // breaks the dashboard card → detail-page path. Slug is client-scoped
+  // so 'Apex Retail HR ERP' seeded under both demo + integration tenants
+  // stays unique without an id suffix.
+  const graphNodeId = `eng_apex_${seed.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')}`;
+
   const { data: inserted, error: eErr } = await sb
     .from('engagements')
     .insert({
+      graph_node_id: graphNodeId,
       client_id: clientId,
       name: seed.name,
       industry_code: 'RETAIL',

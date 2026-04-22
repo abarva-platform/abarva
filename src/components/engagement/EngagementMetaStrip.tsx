@@ -170,7 +170,7 @@ export function EngagementMetaStrip({
         <MetaCell
           eyebrow="PATTERNS"
           value={String(activePatternsCount)}
-          sub="active on this engagement"
+          sub="active on this program"
           accent={activePatternsCount > 0 ? CORAL : MUTE}
         />
         <MetaCell
