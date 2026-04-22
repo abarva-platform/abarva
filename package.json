@@ -34,6 +34,7 @@
     "db:seed:all": "npx tsx src/scripts/run-seeds.ts --all",
     "db:seed:list": "npx tsx src/scripts/run-seeds.ts --list",
     "db:seed:wave": "npx tsx src/scripts/seed/seed-wave.ts",
+    "seed:peer-contradictions": "npx tsx src/scripts/seed/peer-contradictions-expansion.ts",
     "db:verify:wave": "npx tsx src/scripts/seed/verify-seed-wave.ts",
     "db:smoke:wave": "npx tsx src/scripts/seed/smoke-seed-wave.ts",
     "seed:demo-turns": "npx tsx src/scripts/seed/demo-turn-history.ts",
