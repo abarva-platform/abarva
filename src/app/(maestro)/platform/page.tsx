@@ -1,20 +1,7 @@
-// Fix Spec v4 §1 · Platform page rebuild.
-//
-// Seven opinionated sections · Vendor Knowledge Layer design DNA
-// applied to platform architecture instead of pattern content. Replaces
-// the prior admin-metrics dashboard · those metrics move to
-// /platform/admin (already the operator hub).
-//
-// Audience: investors + prospects · "structurally different from
-// consulting and SaaS" is the rhetorical move. Each section must carry
-// current 2026 knowledge + architectural opinion + specificity.
-
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 export const dynamic = 'force-dynamic';
-
-// ─── Section-level content · author-editable ──────────────────────────
 
 type KnowledgeLayer = {
   name: string;
@@ -22,6 +9,43 @@ type KnowledgeLayer = {
   counters: string[];
   artifacts: string[];
   whatThisIsNot: string;
+  flowNote: string;
+  metric: string;
+};
+
+type PhaseBlock = {
+  phase: string;
+  entry: string;
+  deliverables: string[];
+  exit: string;
+  cannotPass: string;
+};
+
+type Agent = {
+  name: string;
+  role: string;
+  tagline: string;
+  accent: string;
+  capabilities: string[];
+  refusals: string[];
+  outputs: string[];
+};
+
+type CompoundingAsset = {
+  name: string;
+  primary: string;
+  secondary: string[];
+  whyCompounds: string;
+  ipCharacter: string;
+  visual: 'sparkline' | 'radar' | 'chain' | 'publication';
+};
+
+type ComparisonRow = {
+  dimension: string;
+  consulting: string;
+  dataStack: string;
+  rpa: string;
+  abarva: string;
 };
 
 const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
@@ -36,7 +60,9 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     ],
     artifacts: ['Pattern library (F001-F047)', 'Intervention library (n=124 · success-rated)', 'Comparator class library · industry × function × scale'],
     whatThisIsNot:
-      '"Best practices PDFs," "consulting playbooks," or "AI knowledge graph" (whatever that means). This is observed-and-validated patterns with n-counts and success rates per intervention.',
+      '"Best practices PDFs," "consulting playbooks," or "AI knowledge graph." This is observed-and-validated pattern capital with n-counts and intervention success rates.',
+    flowNote: 'Receives only promoted patterns after threshold, evidence review, and legal anonymization sign-off.',
+    metric: '47 live patterns',
   },
   {
     name: 'Client-contributed',
@@ -49,6 +75,8 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     artifacts: ['Tenant Evidence Ledger', 'Tenant Decision Archive', 'Tenant Stakeholder Map'],
     whatThisIsNot:
       'Document repository, knowledge base, or "AI-searchable corpus." This is structured working memory that earns audit-grade trust through provenance discipline.',
+    flowNote: 'Feeds anonymized, verified signals upward into Emergent once contribution rules and sensitivity checks pass.',
+    metric: 'Audit-grade memory',
   },
   {
     name: 'Emergent',
@@ -61,16 +89,10 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     artifacts: ['Pattern Match Log · per-program cross-references', 'Genome Contribution Package · per-program output', 'Cross-Program Pattern Signals dashboard'],
     whatThisIsNot:
       '"Network effects" hand-waving. This is observed pattern emergence from program contribution with explicit promotion thresholds and legal sign-off on anonymization.',
+    flowNote: 'Promotes upward only when repeated observations clear threshold and the contribution package is audit-complete.',
+    metric: '3 promotions this quarter',
   },
 ];
-
-type PhaseBlock = {
-  phase: string;
-  entry: string;
-  deliverables: string[];
-  exit: string;
-  cannotPass: string;
-};
 
 const PHASES: PhaseBlock[] = [
   {
@@ -85,9 +107,9 @@ const PHASES: PhaseBlock[] = [
     phase: '1 · Diagnose',
     entry: 'Charter approved · workstream charters · data request log seeded',
     deliverables: ['Hypothesis Tree', 'Workstream Charters', 'Data Request Log', 'Stakeholder Interview Log', 'Diagnostic Findings Document'],
-    exit: 'Findings v4 adoption + Hypothesis Tree resolved + Evidence Ledger audit-grade for all material findings',
+    exit: 'Findings adopted + Hypothesis Tree resolved + Evidence Ledger audit-grade for all material findings',
     cannotPass:
-      'Findings with thin evidence basis. Hypotheses unresolved without explicit "deferred to Phase 5 candidate" classification. Findings that contradict Evidence Ledger.',
+      'Findings with thin evidence basis. Hypotheses unresolved without explicit "deferred to Phase 5 candidate" classification. Findings that contradict the Evidence Ledger.',
   },
   {
     phase: '2 · Design',
@@ -95,77 +117,92 @@ const PHASES: PhaseBlock[] = [
     deliverables: ['Option Set with Tradeoffs', 'Decision Brief', 'Intervention Charter (per intervention)', 'Business Case'],
     exit: 'Sponsor decision on option · charters approved · Business Case board-committed · Outcome Baseline locked',
     cannotPass:
-      'Decisions without dissent capture. Intervention charters without pilot decision gates. Business Cases without sensitivity analysis. Outcome Baselines that haven\'t passed auditor review.',
+      'Decisions without dissent capture. Intervention charters without pilot decision gates. Business cases without sensitivity analysis. Outcome baselines that have not passed reviewer scrutiny.',
   },
   {
     phase: '3 · Execute',
     entry: 'Phase 2 gates cleared · Program Plan adopted · Operating Review Rhythm established',
     deliverables: ['Program Plan', 'Commitment Tracker', 'Operating Review Rhythm', 'Early Warning Dashboard', 'Intervention Status Reports'],
-    exit: 'Pilot decision gate cleared on data (not politically pre-committed) · scale criteria met',
+    exit: 'Pilot decision gate cleared on data · scale criteria met',
     cannotPass:
-      'Scale decisions made without pilot evidence clearing pre-defined gate criteria. Programs where Sentinel pattern matches show second-degree+ severity unaddressed. Programs where Operating Review cadence has lapsed >2 cycles.',
+      'Scale decisions made without pilot evidence clearing pre-defined gate criteria. Programs where Sentinel pattern matches show second-degree+ severity unaddressed. Programs where operating review cadence has lapsed more than two cycles.',
   },
   {
     phase: '4 · Verify',
     entry: 'Outcome measurement window opened · attribution analysis prepped',
     deliverables: ['Outcome Baseline Report (locked)', 'Outcome Measurement Report', 'Learning Memo', 'Genome Contribution Package'],
-    exit: 'Outcome economics settlement · learning captured · Genome contribution submitted',
+    exit: 'Outcome verification complete · learning captured · Genome contribution submitted',
     cannotPass:
-      'Outcome claims without attribution analysis. Settlements where evidence chain-of-custody is incomplete. Programs that claim patterns "didn\'t apply" without Learning Memo accounting for Pattern Match Log entries.',
+      'Outcome claims without attribution analysis. Verification packages where evidence chain-of-custody is incomplete. Programs that claim patterns "did not apply" without a Learning Memo accounting for Pattern Match Log entries.',
   },
 ];
-
-type Agent = {
-  name: string;
-  role: string;
-  refusals: string[];
-};
 
 const AGENTS: Agent[] = [
   {
     name: 'Nexus',
-    role: 'Runs programs · drives intake, diagnosis, design, execution turns.',
+    role: 'Runs programs · intake, diagnosis, design, execution turns.',
+    tagline: 'The program operating core.',
+    accent: '#14B8A6',
+    capabilities: [
+      'Orchestrates program state across all 5 phases',
+      'Drafts Hypothesis Trees, Intervention Charters, and Business Cases',
+      'Facilitates sponsor alignment and stakeholder turns',
+    ],
     refusals: [
       'Refuses to generate intervention recommendations without an evidence basis traceable to the Evidence Ledger.',
-      'Refuses to mark a workstream complete without Outcome Baseline lock and acceptance signature.',
       'Refuses to advance through a phase gate when entry criteria are unmet, regardless of stakeholder pressure.',
     ],
+    outputs: ['Program Charter', 'Hypothesis Tree', 'Intervention Charter', 'Decision Brief', 'Timeline + Resource Estimate'],
   },
   {
     name: 'Sentinel',
-    role: 'Curates patterns · cross-program intelligence, contradiction surfacing, pattern matching.',
+    role: 'Curates patterns · contradiction surfacing · cross-program intelligence.',
+    tagline: 'The pattern memory with teeth.',
+    accent: '#55A7FF',
+    capabilities: [
+      'Runs continuous pattern detection across the Genome library',
+      'Surfaces contradictions between stated strategy and observed behavior',
+      'Maintains Pattern Match Log and Contradiction Log per program',
+    ],
     refusals: [
       'Refuses to mark a pattern resolved without confirmed outcome evidence and a sustained confidence drop below threshold.',
       'Refuses to recommend an intervention without n ≥ 5 prior Genome observations of the pattern.',
-      'Refuses to suppress a Contradiction Log entry on stakeholder request without an explicit accept-as-constraint or escalate-to-resolve path.',
     ],
+    outputs: ['Pattern Match Log', 'Contradiction Log', 'Genome Contribution Package'],
   },
   {
     name: 'Atlas',
-    role: 'Holds the tower view · cross-program orchestration, leading indicators, executive surface.',
+    role: 'Holds the tower view · leading indicators · executive surface.',
+    tagline: 'The cross-program control room.',
+    accent: '#D59B6A',
+    capabilities: [
+      'Operates Control Tower as the cross-portfolio cockpit',
+      'Surfaces leading indicators and early warning signals',
+      'Aggregates cross-program signals with anonymization preserved',
+    ],
     refusals: [
       'Refuses to allow a program to drift past a hard gate without recorded gate-decision and dissent capture.',
       'Refuses to surface a leading indicator as "green" when underlying evidence is stale beyond freshness threshold.',
-      'Refuses to consolidate cross-program signals without anonymization-status verification.',
     ],
+    outputs: ['Control Tower dashboard', 'Early Warning Dashboard', 'Cross-Program Signals'],
   },
   {
     name: 'Steward',
-    role: 'Enforces platform discipline · evidence provenance, decision archive, access governance.',
+    role: 'Enforces platform discipline · evidence provenance · archive governance.',
+    tagline: 'The discipline that makes the rest believable.',
+    accent: '#F2B75E',
+    capabilities: [
+      'Registers evidence with source + owner + chain-of-custody',
+      'Maintains Decision Archive with dissent capture and evidence weighting',
+      'Enforces access control and sensitivity-tier governance',
+    ],
     refusals: [
       'Refuses to register evidence in the Evidence Ledger without source-of-record citation and chain-of-custody completeness.',
-      'Refuses to allow a Decision Archive entry without dissent capture and evidence-basis weighting.',
       'Refuses to promote a pattern from candidate to Genome without legal sign-off on anonymization.',
     ],
+    outputs: ['Evidence Ledger', 'Decision Archive', 'Access Control audit trail'],
   },
 ];
-
-type CompoundingAsset = {
-  name: string;
-  primary: string;
-  secondary: string[];
-  whyCompounds: string;
-};
 
 const COMPOUNDING: CompoundingAsset[] = [
   {
@@ -174,20 +211,29 @@ const COMPOUNDING: CompoundingAsset[] = [
     secondary: ['1,247 anonymized observations', 'F018 most-cited (31 program contributions)', 'Growth rate ~3 patterns / quarter'],
     whyCompounds:
       'Every program adds to the corpus. Every pattern match strengthens or refines a Genome entry. Patterns at n ≥ 5 promote to recommend-intervention status. The library only gets sharper.',
+    ipCharacter:
+      'Not licensed from elsewhere. Built from observed transformation programs. AbarVa’s curation discipline is the moat.',
+    visual: 'sparkline',
   },
   {
     name: 'Adaptive Strategy Intelligence',
     primary: '4 active programs',
-    secondary: ['19 pattern matches today', '14 contradictions surfaced this week', '1 critical pattern at second-degree (F022 Co-Sponsor Pace Divergence)'],
+    secondary: ['19 pattern matches today', '14 contradictions surfaced this week', '1 critical pattern at second-degree'],
     whyCompounds:
-      'Cross-program signal density increases with program count. By program N, every new program inherits N-1 programs\' worth of pattern intelligence — including timing windows and intervention success rates that didn\'t exist at program 1.',
+      'Cross-program signal density increases with program count. By program N, every new program inherits N-1 programs worth of timing windows, warning signatures, and intervention success rates.',
+    ipCharacter:
+      'Agent behavior, contradiction-detection logic, and pattern-matching prompts are proprietary. This cannot be recreated by swapping in a stronger base model.',
+    visual: 'radar',
   },
   {
     name: 'Outcome Interpretability Layer',
     primary: '187 audit-grade evidence items',
-    secondary: ['100% chain-of-custody completeness across active programs', '2 settlement-ready outcome reports', 'Avg 5.4 evidence artifacts per material decision'],
+    secondary: ['100% chain-of-custody completeness across active programs', '2 board-ready outcome reports', 'Avg 5.4 evidence artifacts per material decision'],
     whyCompounds:
-      'Provenance discipline is the moat. As Evidence Ledger volume grows, so does the credibility of attribution claims at outcome settlement. This is what makes outcome-as-a-service pricing structurally defensible.',
+      'Provenance discipline is the moat. As Evidence Ledger volume grows, so does the credibility of attribution claims. Audit-grade evidence chain is what makes program claims defensible to boards and auditors.',
+    ipCharacter:
+      'Evidence Ledger schema, chain-of-custody enforcement, and sensitivity tiering are AbarVa-built. There is no off-the-shelf equivalent.',
+    visual: 'chain',
   },
   {
     name: 'Research Publication Program',
@@ -198,35 +244,44 @@ const COMPOUNDING: CompoundingAsset[] = [
       'Forthcoming: Shadow AI Surfacing Patterns in Fortune-100 Enterprise IT',
     ],
     whyCompounds:
-      'Published research becomes inbound. Inbound from senior decision-makers who already trust the methodology before first contact. Customer co-authorship makes the research authoritative and the customer relationship durable.',
+      'Published research becomes inbound from decision-makers who already trust the methodology before first contact. Customer co-authorship makes the research authoritative and the relationship durable.',
+    ipCharacter:
+      'Research is written against live program observations, something consulting firms and tool vendors structurally cannot produce.',
+    visual: 'publication',
   },
 ];
 
-type ComparisonRow = {
-  dimension: string;
-  consulting: string;
-  dataStack: string;
-  rpa: string;
-  abarva: string;
-};
+const PLATFORM_PROVIDES = [
+  'Program Operating System · 28 deliverables generated dynamically across 5 phases, based on program context rather than static templates.',
+  'Cross-program intelligence · patterns, contradictions, and decisions observed across all programs feed back into each individual program’s guidance.',
+  'Evidence discipline · every finding, every decision, every pattern match traceable to source-of-record through the Evidence Ledger.',
+  'Agent orchestration · 4 named agents with defined refusal behaviors. Agents do not freelance; they operate within the governance spine.',
+];
+
+const PLATFORM_DOES_NOT = [
+  'Not a data platform. We consume tenant data; we do not replace Snowflake, Databricks, or the modern data stack.',
+  'Not an RPA platform. We orchestrate decisions and intelligence; task automation is not our surface.',
+  'Not an LLM wrapper. Base models are infrastructure; the differentiated product is the agents, the Genome, the Evidence Ledger, and the governance discipline on top.',
+  'Not a consulting replacement. We augment expertise with platform infrastructure; senior human judgment still anchors material decisions.',
+];
 
 const COMPARISON: ComparisonRow[] = [
   {
-    dimension: 'Engagement model',
-    consulting: 'T&M · retainer · fixed-fee',
-    dataStack: 'SaaS subscription',
-    rpa: 'Per-bot license',
-    abarva: 'Outcome economics · 30% of measured savings',
+    dimension: 'Operating core',
+    consulting: 'Human project team + deck cadence',
+    dataStack: 'Warehouse + compute + semantic layer',
+    rpa: 'Bot fleet + process scripts',
+    abarva: 'Agents + Genome + Evidence Ledger + governance spine',
   },
   {
     dimension: 'Time to first evidence',
     consulting: '6-12 weeks',
     dataStack: '2-4 weeks (data wired)',
     rpa: '4-8 weeks (process scoped)',
-    abarva: '48 hours · intelligence before invoice',
+    abarva: '48 hours · structured intelligence surface',
   },
   {
-    dimension: 'Scales with',
+    dimension: 'What compounds',
     consulting: 'Bodies on the engagement',
     dataStack: 'Data volume + queries',
     rpa: 'Bot count',
@@ -235,46 +290,39 @@ const COMPARISON: ComparisonRow[] = [
   {
     dimension: 'Knowledge persists as',
     consulting: 'Engagement memory + slide deck',
-    dataStack: 'Customer\'s BI surface',
+    dataStack: 'Customer BI surface',
     rpa: 'Bot logs',
-    abarva: 'Genome (cross-tenant, anonymized) + Tenant Evidence Ledger',
+    abarva: 'Genome + Tenant Evidence Ledger',
   },
   {
-    dimension: 'Audit trail at outcome',
-    consulting: 'Engagement deliverables (slides)',
+    dimension: 'Audit trail',
+    consulting: 'Engagement deliverables',
     dataStack: 'Dashboard snapshots',
     rpa: 'Bot execution logs',
-    abarva: 'Outcome Baseline (locked) + Outcome Measurement + Attribution Analysis (audit-grade)',
-  },
-  {
-    dimension: 'Where they win',
-    consulting: 'Stakeholder access · political navigation · optionality framing',
-    dataStack: 'Data engineering depth · query performance',
-    rpa: 'Repetitive task automation at scale',
-    abarva: 'Decision-grade transformation programs with audit trail',
+    abarva: 'Outcome Baseline + Measurement + Attribution analysis',
   },
   {
     dimension: 'Where AbarVa explicitly does NOT compete',
-    consulting: 'Pure strategy advisory · M&A diligence · board representation',
+    consulting: 'Pure strategy advisory · M&A diligence',
     dataStack: 'Data warehouse · ETL · BI tooling',
-    rpa: 'Bot-level task automation · screen scraping',
-    abarva: 'We don\'t compete on these dimensions; we integrate with them.',
+    rpa: 'Task automation · screen scraping',
+    abarva: 'We do not compete on these dimensions; we integrate with them.',
   },
 ];
 
-const PAGE_BG = '#F6F1E8';
+const PAGE_BG = '#F6F0E6';
 const PANEL_BG = '#FFFDFC';
-const PANEL_ALT = '#F1E7DA';
+const PANEL_SOFT = '#F3E8DA';
 const INK = '#171411';
-const INK_SOFT = '#3A312A';
-const INK_MUTED = '#5B4D43';
+const INK_SOFT = '#382F29';
+const INK_MUTED = '#5C4E45';
 const LINE = 'rgba(23,20,17,0.12)';
-const TEAL = '#0E9F8C';
+const TEAL = '#14B8A6';
 const SKY = '#5AA6F8';
-const WARM = '#D59B6A';
-const DARK = '#111315';
+const AMBER = '#D59B6A';
+const DARK = '#101214';
 const DARK_PANEL = '#171A1D';
-const DARK_LINE = 'rgba(255,255,255,0.1)';
+const DARK_LINE = 'rgba(255,255,255,0.12)';
 const CREAM = '#F7F2EA';
 const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const SERIF = '"Fraunces", Georgia, serif';
@@ -282,32 +330,30 @@ const MONO = '"JetBrains Mono", "Fira Code", monospace';
 
 const sectionEyebrow: CSSProperties = {
   fontFamily: MONO,
-  fontSize: 12,
-  fontWeight: 600,
-  letterSpacing: '0.16em',
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.18em',
   textTransform: 'uppercase',
   color: TEAL,
 };
 
 const sectionTitle: CSSProperties = {
-  margin: '10px 0 0',
+  margin: '12px 0 0',
   fontFamily: SERIF,
-  fontSize: 'clamp(28px, 2.2vw + 16px, 46px)',
-  lineHeight: 1.06,
-  letterSpacing: '-0.03em',
+  fontSize: 'clamp(34px, 2.5vw + 16px, 62px)',
+  lineHeight: 0.98,
+  letterSpacing: '-0.04em',
   color: INK,
 };
 
 const sectionBody: CSSProperties = {
-  margin: '14px 0 0',
-  maxWidth: 820,
+  margin: '16px 0 0',
+  maxWidth: 840,
   fontFamily: SANS,
-  fontSize: 'clamp(16px, 1vw + 12px, 19px)',
+  fontSize: 'clamp(17px, 1vw + 12px, 21px)',
   lineHeight: 1.65,
   color: INK_SOFT,
 };
-
-// ─── Page ─────────────────────────────────────────────────────────────
 
 export default function PlatformPage() {
   return (
@@ -317,207 +363,128 @@ export default function PlatformPage() {
         background: PAGE_BG,
         color: INK,
         fontFamily: SANS,
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
-      <div style={{ maxWidth: 1360, margin: '0 auto', padding: '28px 28px 96px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <header
-            style={{
-              position: 'relative',
-              overflow: 'hidden',
-              borderRadius: 30,
-              border: `1px solid ${LINE}`,
-              background:
-                `radial-gradient(circle at top left, rgba(90,166,248,0.22), transparent 34%),
-                 radial-gradient(circle at top right, rgba(14,159,140,0.16), transparent 28%),
-                 linear-gradient(180deg, ${PANEL_BG} 0%, ${PAGE_BG} 100%)`,
-              padding: '56px 56px 48px',
-              boxShadow: '0 24px 80px rgba(23,20,17,0.07)',
-            }}
-          >
-            <div style={sectionEyebrow}>Platform</div>
-            <h1
-              style={{
-                margin: '10px 0 0',
-                fontFamily: SERIF,
-                fontSize: 'clamp(50px, 6vw, 96px)',
-                lineHeight: 0.93,
-                letterSpacing: '-0.05em',
-                maxWidth: 920,
-                color: INK,
-              }}
-            >
-              Transformation infrastructure with refusals.
-            </h1>
-            <p
-              style={{
-                margin: '22px 0 0',
-                maxWidth: 860,
-                fontSize: 'clamp(20px, 1.8vw, 30px)',
-                lineHeight: 1.38,
-                color: INK_SOFT,
-              }}
-            >
-              Seven architectural layers. Four agents with defined refusals. Outcome economics that make
-              attribution auditable. Built for organizations that treat transformation as accountable work,
-              not consulting theater.
-            </p>
-            <div style={{ marginTop: 28 }}>
-              <SectionLinkTOC />
+      <style>{platformCss}</style>
+      <div className="platform-grid" />
+      <div className="platform-orb platform-orb-a" />
+      <div className="platform-orb platform-orb-b" />
+
+      <main style={{ maxWidth: 1520, margin: '0 auto', padding: '28px 24px 112px', position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 42 }}>
+          <header className="platform-hero">
+            <div className="platform-hero-copy">
+              <div style={sectionEyebrow}>Platform</div>
+              <h1
+                style={{
+                  margin: '14px 0 0',
+                  fontFamily: SERIF,
+                  fontSize: 'clamp(64px, 9vw, 142px)',
+                  lineHeight: 0.88,
+                  letterSpacing: '-0.065em',
+                  maxWidth: 980,
+                  color: INK,
+                }}
+              >
+                Transformation architecture with visible discipline.
+              </h1>
+              <p
+                style={{
+                  margin: '28px 0 0',
+                  maxWidth: 820,
+                  fontSize: 'clamp(20px, 1.5vw + 12px, 30px)',
+                  lineHeight: 1.4,
+                  color: INK_SOFT,
+                }}
+              >
+                Four agents. Three knowledge layers. A governance spine that refuses hand-waving.
+                This page is intentionally editorial up front and operational once you scroll: warm
+                canvas for legibility, darker bands for the dense surfaces that should feel more
+                like instruments than brochures.
+              </p>
+              <div style={{ marginTop: 26 }}>
+                <SectionLinkTOC />
+              </div>
+              <div className="hero-stat-strip">
+                <MetricChip label="Agents" value="4 named" />
+                <MetricChip label="Knowledge layers" value="3-tier" />
+                <MetricChip label="Pattern capital" value="47 live" />
+                <MetricChip label="Proof discipline" value="Audit-grade" />
+              </div>
+            </div>
+
+            <div className="platform-hero-visual" aria-hidden="true">
+              <ArchitectureConstellation />
             </div>
           </header>
 
-          <section id="knowledge-architecture" style={{ scrollMarginTop: 40 }}>
-            <div style={sectionEyebrow}>Knowledge architecture · 3 layers</div>
-            <h2 style={sectionTitle}>Knowledge that compounds across every program.</h2>
-            <p style={sectionBody}>
-              The knowledge model remains the moat. What changes here is the reading experience: lighter
-              canvas, darker ink, and more confidence that dense enterprise material can still feel composed.
+          <section id="knowledge-architecture" className="dark-stage" style={{ scrollMarginTop: 40 }}>
+            <div style={{ ...sectionEyebrow, color: TEAL }}>Knowledge architecture · 3 layers</div>
+            <h2 style={{ ...sectionTitle, color: CREAM }}>Knowledge that compounds upward, not sideways.</h2>
+            <p style={{ ...sectionBody, color: 'rgba(247,242,234,0.78)', maxWidth: 920 }}>
+              The visual move here is deliberate: not floating cards, but stacked bands with a visible
+              flow rail. Client memory feeds emergent signals. Emergent signals promote into the Genome.
+              The system looks like a machine because it behaves like one.
             </p>
-            <div
-              style={{
-                display: 'grid',
-                gap: 18,
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                marginTop: 26,
-              }}
-            >
-              {KNOWLEDGE_LAYERS.map((layer) => (
-                <article
-                  key={layer.name}
-                  style={{
-                    padding: 24,
-                    background: PANEL_BG,
-                    border: `1px solid ${LINE}`,
-                    borderRadius: 22,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 14,
-                    boxShadow: '0 12px 32px rgba(23,20,17,0.05)',
-                  }}
-                >
+
+            <div className="layer-stack">
+              <div className="layer-flow-rail">
+                <span />
+                <span />
+                <span />
+              </div>
+              {KNOWLEDGE_LAYERS.map((layer, index) => (
+                <article key={layer.name} className="layer-band">
                   <div>
-                    <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>{layer.scope}</div>
-                    <div style={{ marginTop: 10, fontFamily: SERIF, fontSize: 34, lineHeight: 1.02, color: INK }}>
-                      {layer.name}
+                    <div style={{ ...sectionEyebrow, fontSize: 10, color: 'rgba(247,242,234,0.55)' }}>{layer.scope}</div>
+                    <div className="layer-band-title">{layer.name}</div>
+                    <p className="layer-band-copy">{layer.whatThisIsNot}</p>
+                    <div className="token-row">
+                      {layer.artifacts.map((artifact) => (
+                        <span key={artifact} className="dark-token">
+                          {artifact}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
-                    {layer.counters.map((c) => (
-                      <li key={c} style={{ fontFamily: MONO, fontSize: 12, color: TEAL, letterSpacing: '0.02em' }}>
-                        · {c}
-                      </li>
-                    ))}
-                  </ul>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {layer.artifacts.map((a) => (
-                      <span
-                        key={a}
-                        style={{
-                          display: 'inline-block',
-                          padding: '6px 10px',
-                          background: '#FFF8F0',
-                          border: `1px solid ${LINE}`,
-                          borderRadius: 999,
-                          fontFamily: MONO,
-                          fontSize: 10,
-                          color: INK_MUTED,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
-                        {a}
-                      </span>
-                    ))}
+
+                  <div className="layer-band-panel">
+                    <div className="layer-band-metric">{layer.metric}</div>
+                    <div className="layer-band-rule">{layer.flowNote}</div>
+                    <ul className="counter-list">
+                      {layer.counters.map((counter) => (
+                        <li key={counter}>{counter}</li>
+                      ))}
+                    </ul>
                   </div>
-                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
-                    Not — {layer.whatThisIsNot}
-                  </p>
                 </article>
               ))}
             </div>
           </section>
 
-          <section
-            id="methodology"
-            style={{
-              scrollMarginTop: 40,
-              borderRadius: 30,
-              background: `linear-gradient(180deg, ${DARK_PANEL} 0%, ${DARK} 100%)`,
-              color: CREAM,
-              padding: '34px 30px 30px',
-              boxShadow: '0 28px 80px rgba(23,20,17,0.16)',
-            }}
-          >
-            <div style={{ ...sectionEyebrow, color: TEAL }}>Methodology · 5 phases · hard gates</div>
-            <h2
-              style={{
-                margin: '10px 0 0',
-                fontFamily: SERIF,
-                fontSize: 'clamp(30px, 3vw, 50px)',
-                lineHeight: 1.02,
-                letterSpacing: '-0.03em',
-                color: CREAM,
-              }}
-            >
-              Transformation has a shape. We enforce it.
-            </h2>
-            <p style={{ ...sectionBody, color: 'rgba(247,242,234,0.78)', maxWidth: 900 }}>
-              This is one of the sections that benefits from going darker. It feels more like an operating
-              surface, and the gate logic reads with more gravity than it did on an all-dark page.
+          <section id="methodology" style={{ scrollMarginTop: 40 }}>
+            <div style={sectionEyebrow}>Methodology · 5 phases · hard gates</div>
+            <h2 style={sectionTitle}>Transformation has a shape. We enforce it.</h2>
+            <p style={sectionBody}>
+              The page stays bright here because this is reading-heavy material, but the cards remain
+              crisp and high-contrast. Every phase shows entry, output, exit, and the exact kind of
+              slippage the system refuses to bless.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 26 }}>
+
+            <div className="phase-grid">
               {PHASES.map((phase) => (
-                <article
-                  key={phase.phase}
-                  style={{
-                    padding: 22,
-                    background: 'rgba(255,255,255,0.04)',
-                    border: `1px solid ${DARK_LINE}`,
-                    borderRadius: 18,
-                    display: 'grid',
-                    gap: 16,
-                    gridTemplateColumns: '190px 1fr',
-                  }}
-                >
-                  <div>
-                    <div style={{ ...sectionEyebrow, fontSize: 10 }}>Phase</div>
-                    <div style={{ marginTop: 6, fontFamily: SERIF, fontSize: 30, lineHeight: 1.04, color: CREAM }}>
-                      {phase.phase}
-                    </div>
+                <article key={phase.phase} className="phase-card">
+                  <div className="phase-label">{phase.phase}</div>
+                  <div className="phase-block">
+                    <RuleItem label="Entry" value={phase.entry} />
+                    <RuleItem label="Deliverables" value={phase.deliverables.join(' · ')} />
+                    <RuleItem label="Exit gate" value={phase.exit} emphasis />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    <KeyValue k="Entry" v={phase.entry} dark />
-                    <KeyValue k="Deliverables" v={phase.deliverables.join(' · ')} dark />
-                    <KeyValue k="Exit gate" v={phase.exit} bold dark />
-                    <div
-                      style={{
-                        marginTop: 4,
-                        padding: '14px 16px',
-                        background: 'rgba(14,159,140,0.08)',
-                        border: `1px solid rgba(14,159,140,0.24)`,
-                        borderRadius: 14,
-                        fontFamily: SANS,
-                        fontSize: 15,
-                        color: 'rgba(247,242,234,0.9)',
-                        lineHeight: 1.65,
-                      }}
-                    >
-                      <span
-                        style={{
-                          display: 'block',
-                          fontFamily: MONO,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.14em',
-                          color: TEAL,
-                          fontSize: 11,
-                          marginBottom: 8,
-                          fontWeight: 700,
-                        }}
-                      >
-                        What cannot pass
-                      </span>
-                      {phase.cannotPass}
-                    </div>
+                  <div className="phase-warning">
+                    <span>Cannot pass</span>
+                    {phase.cannotPass}
                   </div>
                 </article>
               ))}
@@ -526,65 +493,50 @@ export default function PlatformPage() {
 
           <section id="agents" style={{ scrollMarginTop: 40 }}>
             <div style={sectionEyebrow}>Agents · 4 specialists · defined refusals</div>
-            <h2 style={sectionTitle}>What our agents won&apos;t do is what makes them useful.</h2>
-            <div
-              style={{
-                display: 'grid',
-                gap: 16,
-                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-                marginTop: 24,
-              }}
-            >
+            <h2 style={sectionTitle}>Useful because they refuse the wrong work.</h2>
+            <p style={sectionBody}>
+              Each card is split like an operating panel: identity on the left, behavior and boundaries
+              on the right. The amber refusal panel is not decorative. It is the trust mechanic.
+            </p>
+
+            <div className="agent-grid">
               {AGENTS.map((agent) => (
-                <article
-                  key={agent.name}
-                  style={{
-                    padding: 24,
-                    background: PANEL_BG,
-                    border: `1px solid ${LINE}`,
-                    borderRadius: 22,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 16,
-                    boxShadow: '0 12px 32px rgba(23,20,17,0.04)',
-                  }}
-                >
-                  <div>
-                    <div style={{ ...sectionEyebrow, fontSize: 11 }}>{agent.name}</div>
-                    <p style={{ margin: '8px 0 0', fontSize: 18, lineHeight: 1.55, color: INK_SOFT }}>{agent.role}</p>
+                <article key={agent.name} className="agent-card" style={{ ['--agent-accent' as string]: agent.accent }}>
+                  <div className="agent-card-bg" />
+                  <div className="agent-card-main">
+                    <div className="agent-id">
+                      <div className="agent-eyebrow">{agent.tagline}</div>
+                      <div className="agent-name">{agent.name}</div>
+                      <p className="agent-role">{agent.role}</p>
+                      <div className="token-row">
+                        {agent.outputs.map((output) => (
+                          <span key={output} className="dark-token dark-token-quiet">
+                            {output}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="agent-behavior">
+                      <div className="agent-panel">
+                        <div className="agent-panel-label">Capabilities</div>
+                        <ul className="agent-list">
+                          {agent.capabilities.map((capability) => (
+                            <li key={capability}>{capability}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="agent-panel agent-panel-refusal">
+                        <div className="agent-panel-label agent-panel-label-amber">Refuses</div>
+                        <ul className="agent-list">
+                          {agent.refusals.map((refusal) => (
+                            <li key={refusal}>{refusal}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
                   </div>
-                  <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                    {agent.refusals.map((r, i) => (
-                      <li
-                        key={i}
-                        style={{
-                          fontFamily: SANS,
-                          fontSize: 15,
-                          color: INK,
-                          lineHeight: 1.62,
-                          paddingLeft: 32,
-                          position: 'relative',
-                        }}
-                      >
-                        <span
-                          aria-hidden
-                          style={{
-                            position: 'absolute',
-                            left: 0,
-                            top: 2,
-                            width: 22,
-                            fontFamily: MONO,
-                            fontSize: 11,
-                            color: TEAL,
-                            letterSpacing: '0.04em',
-                          }}
-                        >
-                          {String(i + 1).padStart(2, '0')}
-                        </span>
-                        {r}
-                      </li>
-                    ))}
-                  </ol>
                 </article>
               ))}
             </div>
@@ -592,129 +544,96 @@ export default function PlatformPage() {
 
           <section id="compounding-assets" style={{ scrollMarginTop: 40 }}>
             <div style={sectionEyebrow}>Compounding assets · live</div>
-            <h2 style={sectionTitle}>Four assets that get more valuable with every program.</h2>
-            <div
-              style={{
-                display: 'grid',
-                gap: 18,
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                marginTop: 24,
-              }}
-            >
+            <h2 style={sectionTitle}>Assets that become more defensible as the corpus grows.</h2>
+            <p style={sectionBody}>
+              These are not generic benefit cards. Each block carries its own visual logic so the page
+              feels designed, not templated: sparkline for the Genome, pulse radar for strategy, linked
+              chain for interpretability, publication cover for research.
+            </p>
+
+            <div className="asset-grid">
               {COMPOUNDING.map((asset) => (
-                <article
-                  key={asset.name}
-                  style={{
-                    padding: 24,
-                    background: asset.name === 'Transformation Genome' ? PANEL_ALT : PANEL_BG,
-                    border: `1px solid ${asset.name === 'Transformation Genome' ? 'rgba(14,159,140,0.24)' : LINE}`,
-                    borderRadius: 22,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 14,
-                  }}
-                >
-                  <div style={{ ...sectionEyebrow, fontSize: 10 }}>{asset.name.toUpperCase()}</div>
-                  <div style={{ fontFamily: SERIF, fontSize: 42, color: asset.name === 'Transformation Genome' ? TEAL : INK, letterSpacing: '-0.03em', lineHeight: 1.02 }}>
-                    {asset.primary}
+                <article key={asset.name} className="asset-card">
+                  <div className="asset-card-top">
+                    <div>
+                      <div style={{ ...sectionEyebrow, fontSize: 10 }}>{asset.name}</div>
+                      <div className="asset-primary">{asset.primary}</div>
+                    </div>
+                    <AssetVisual visual={asset.visual} />
                   </div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {asset.secondary.map((s) => (
-                      <li key={s} style={{ fontFamily: MONO, fontSize: 11, color: INK_MUTED, letterSpacing: '0.02em' }}>
-                        · {s}
-                      </li>
+                  <ul className="asset-secondary">
+                    {asset.secondary.map((item) => (
+                      <li key={item}>{item}</li>
                     ))}
                   </ul>
-                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.62, color: INK_SOFT, fontStyle: 'italic' }}>
-                    {asset.whyCompounds}
-                  </p>
+                  <p className="asset-body">{asset.whyCompounds}</p>
+                  <div className="asset-footer">{asset.ipCharacter}</div>
                 </article>
               ))}
             </div>
           </section>
 
-          <section
-            id="outcome-economics"
-            style={{
-              scrollMarginTop: 40,
-              borderRadius: 30,
-              background: `linear-gradient(180deg, rgba(90,166,248,0.14), rgba(14,159,140,0.08))`,
-              border: `1px solid ${LINE}`,
-              padding: '34px 30px 30px',
-            }}
-          >
-            <div style={sectionEyebrow}>Pricing · outcome economics · 30%</div>
-            <h2 style={sectionTitle}>We&apos;re paid only after measured outcomes.</h2>
-            <p style={{ ...sectionBody, maxWidth: 760 }}>
-              Worked example · Morrison Owned Brand Margin Recovery (composite organization built from real-world data).
+          <section id="architecture-ip" className="dark-stage" style={{ scrollMarginTop: 40 }}>
+            <div style={{ ...sectionEyebrow, color: TEAL }}>Architecture · product boundaries</div>
+            <h2 style={{ ...sectionTitle, color: CREAM }}>What AbarVa provides. What it explicitly does not.</h2>
+            <p style={{ ...sectionBody, color: 'rgba(247,242,234,0.78)' }}>
+              This section should feel dense and declarative. The warm-canvas hero earns attention; the
+              dark boundary section earns trust by being specific about where the platform stops.
             </p>
-            <div style={{ display: 'grid', gap: 14, maxWidth: 920, marginTop: 24 }}>
-              <FinancialRow label="Investment · AbarVa platform cost (Y1)" amount="$5.2M" note="Paid by client · regardless of outcome. Covers tenant provisioning, agent operations, cross-program intelligence access, evidence infrastructure." />
-              <FinancialRow label="Modeled return" amount="$99M central · $73M-$128M range" note="Basis · Diagnostic Findings v4 + Business Case v3 · Genome analogous program library (n=14) supports range." />
-              <FinancialRow label="Realized outcome at Phase 4" amount="$87M (annualized)" note="Measurement basis · Outcome Measurement Report (D19) with attribution analysis · auditor sign-off obtained." />
-              <FinancialRow label="AbarVa settlement · 30% of attributable measured lift" amount="$26.1M" note="Settlement basis · Outcome Baseline (locked Phase 2) · Outcome Measurement · Attribution Analysis · settled 90 days post-Phase 4." bold />
-            </div>
-            <div style={{ marginTop: 28, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 820 }}>
-              <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>What this means</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '6px 0 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <li style={mean}>We are paid only after outcome is measured.</li>
-                <li style={mean}>We are paid only on attributable lift · not aspirational claims.</li>
-                <li style={mean}>We are paid only with audit-grade evidence chain.</li>
-                <li style={mean}>If pilot fails the gate, we don&apos;t scale and we don&apos;t get paid the scale economics.</li>
-              </ul>
-            </div>
-            <div style={{ marginTop: 32, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16, maxWidth: 1100 }}>
-              <WhyColumn title="For client" body="Alignment of incentive · AbarVa wins only when client wins." />
-              <WhyColumn title="For AbarVa" body="Revenue multiples 4-6x typical SaaS based on outcome capture · defensible vs. consulting because attribution is proven." />
-              <WhyColumn title="For investors" body="Evidence-of-value delivery becomes contractually load-bearing · impossible to fake." />
+
+            <div className="boundary-stack">
+              <div className="boundary-column">
+                <div className="boundary-column-title">What AbarVa provides</div>
+                {PLATFORM_PROVIDES.map((item) => (
+                  <div key={item} className="boundary-row">
+                    <span className="boundary-tag">Provides</span>
+                    <div>{item}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="boundary-column">
+                <div className="boundary-column-title">What AbarVa does not do</div>
+                {PLATFORM_DOES_NOT.map((item) => (
+                  <div key={item} className="boundary-row boundary-row-not">
+                    <span className="boundary-tag boundary-tag-not">Not a</span>
+                    <div>{item}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
           <section id="composability" style={{ scrollMarginTop: 40 }}>
             <div style={sectionEyebrow}>Architecture · generative</div>
-            <h2 style={sectionTitle}>17 modules × 5 archetypes × 4 tenants × 9 solutions = 30,600 unique program shapes.</h2>
+            <h2 style={sectionTitle}>17 modules × 5 archetypes × 4 tenants × 9 solutions.</h2>
             <p style={sectionBody}>
-              Programs are not products. The platform is generative, not a fixed product surface. Each program
-              composes the modules, archetypes, and solutions it needs and rejects what it doesn&apos;t. With Maestro
-              custom-path generation, the space is effectively unbounded.
+              Programs are not fixed products. The platform is generative. Each program composes the
+              modules, archetypes, and solutions it needs and rejects what it does not. This section uses
+              more width because composition diagrams want lateral room.
             </p>
-            <div
-              style={{
-                marginTop: 22,
-                padding: 24,
-                background: PANEL_BG,
-                border: `1px solid ${LINE}`,
-                borderRadius: 22,
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 14,
-                maxWidth: 1180,
-              }}
-            >
-              <div style={{ ...sectionEyebrow, fontSize: 10, color: INK_MUTED }}>Worked composition · Morrison Owned Brand Margin Recovery</div>
-              <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-                <KeyValue k="Archetype" v="Operational Optimization" />
-                <KeyValue k="Solution match" v="Retail × Middle Office × Optimize" />
-                <KeyValue k="Modules active" v="Hypothesis Tree · Workstream Charter (×3) · Evidence Ledger · Pattern Match (Sentinel) · Decision Brief · Intervention Charter (×2) · Business Case · Operating Review Rhythm · Early Warning Dashboard · Outcome Baseline · Outcome Measurement · Genome Contribution" />
-                <KeyValue k="Customization" v="Q3 2026 contracting cycle window forced custom Phase 3 timeline · F022 active pattern triggered joint sponsor turn protocol." />
+
+            <div className="composition-shell">
+              <div className="composition-grid">
+                <CompositionTile title="Archetype" value="Operational Optimization" />
+                <CompositionTile title="Solution match" value="Retail × Middle Office × Optimize" />
+                <CompositionTile
+                  title="Modules active"
+                  value="Hypothesis Tree · Workstream Charter (×3) · Evidence Ledger · Pattern Match · Decision Brief · Intervention Charter (×2) · Business Case · Operating Review Rhythm · Outcome Baseline"
+                />
+                <CompositionTile
+                  title="Customization"
+                  value="Q3 contracting cycle forced a custom Phase 3 timeline · F022 triggered a joint sponsor turn protocol."
+                />
               </div>
             </div>
           </section>
 
-          <section id="comparison" style={{ scrollMarginTop: 40 }}>
+          <section id="comparison" className="comparison-stage" style={{ scrollMarginTop: 40 }}>
             <div style={sectionEyebrow}>Comparison · category positioning</div>
-            <h2 style={sectionTitle}>Where we win. Where we don&apos;t compete.</h2>
-            <div
-              style={{
-                overflowX: 'auto',
-                border: `1px solid ${LINE}`,
-                borderRadius: 22,
-                background: PANEL_BG,
-                boxShadow: '0 12px 32px rgba(23,20,17,0.05)',
-                marginTop: 24,
-              }}
-            >
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 960 }}>
+            <h2 style={sectionTitle}>Where we win. Where we do not compete.</h2>
+            <div className="comparison-shell">
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 980 }}>
                 <thead>
                   <tr>
                     <th style={headStyle}>Dimension</th>
@@ -725,28 +644,26 @@ export default function PlatformPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {COMPARISON.map((row, i) => (
+                  {COMPARISON.map((row, index) => (
                     <tr key={row.dimension}>
-                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dimension}</td>
-                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.consulting}</td>
-                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dataStack}</td>
-                      <td style={{ ...cellStyle, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.rpa}</td>
-                      <td style={{ ...cellStyle, color: TEAL, fontWeight: 600, ...(i === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.abarva}</td>
+                      <td style={{ ...cellStyle, ...(index === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dimension}</td>
+                      <td style={{ ...cellStyle, ...(index === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.consulting}</td>
+                      <td style={{ ...cellStyle, ...(index === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.dataStack}</td>
+                      <td style={{ ...cellStyle, ...(index === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.rpa}</td>
+                      <td style={{ ...cellStyle, color: TEAL, fontWeight: 700, ...(index === COMPARISON.length - 1 ? rowAccent : {}) }}>{row.abarva}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <div style={{ marginTop: 14, display: 'block', fontSize: 14, lineHeight: 1.55, color: INK_MUTED }}>
-              Structural-class column labels · we don&apos;t name specific competitor firms or tools. The
-              &quot;where AbarVa explicitly does NOT compete&quot; row is the trust move · it tells you where to
-              go for those needs.
+            <div style={{ marginTop: 14, fontSize: 14, lineHeight: 1.58, color: INK_MUTED }}>
+              Structural-class labels only. The point is clarity, not chest-thumping.
             </div>
           </section>
 
           <footer
             style={{
-              marginTop: 12,
+              marginTop: 6,
               paddingTop: 24,
               borderTop: `1px solid ${LINE}`,
               display: 'flex',
@@ -760,80 +677,139 @@ export default function PlatformPage() {
           >
             <span>
               Platform operators · the admin hub lives at{' '}
-              <Link href="/platform/admin" style={{ color: INK, fontWeight: 600, textDecoration: 'underline' }}>
+              <Link href="/platform/admin" style={{ color: INK, fontWeight: 700, textDecoration: 'underline' }}>
                 /platform/admin
               </Link>
               .
             </span>
             <span>
-              Composite organizations (Apex Retail, Meridian Health, First Capital, Keystone Energy, Morrison) are built
-              from real-world data.
+              Composite organizations (Apex Retail, Meridian Health, First Capital, Keystone Energy, Morrison) are built from real-world data.
             </span>
           </footer>
         </div>
+      </main>
+    </div>
+  );
+}
+
+function ArchitectureConstellation() {
+  return (
+    <div className="constellation-shell">
+      <div className="constellation-header">
+        <span>Architecture</span>
+        <span>Live governance spine</span>
+      </div>
+
+      <div className="constellation-grid">
+        <div className="constellation-column">
+          <div className="constellation-card constellation-card-teal">
+            <strong>Agents</strong>
+            <span>4 specialist surfaces</span>
+          </div>
+          <div className="constellation-card">
+            <strong>Phases</strong>
+            <span>5 gates with refusal logic</span>
+          </div>
+        </div>
+
+        <div className="constellation-center">
+          <div className="constellation-core">Evidence Ledger</div>
+          <div className="constellation-ring constellation-ring-a" />
+          <div className="constellation-ring constellation-ring-b" />
+          <div className="constellation-node constellation-node-a" />
+          <div className="constellation-node constellation-node-b" />
+          <div className="constellation-node constellation-node-c" />
+        </div>
+
+        <div className="constellation-column">
+          <div className="constellation-card constellation-card-amber">
+            <strong>Genome</strong>
+            <span>47 promoted patterns</span>
+          </div>
+          <div className="constellation-card">
+            <strong>Outcome proof</strong>
+            <span>Audit-ready attribution</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="constellation-footer">
+        <span>Client-contributed</span>
+        <span>Emergent</span>
+        <span>Genome</span>
       </div>
     </div>
   );
 }
 
-// ─── Small helpers ────────────────────────────────────────────────────
-
-function KeyValue({ k, v, bold, dark }: { k: string; v: string; bold?: boolean; dark?: boolean }) {
+function RuleItem({ label, value, emphasis }: { label: string; value: string; emphasis?: boolean }) {
   return (
     <div>
-      <span style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
-        {k}
-      </span>
-      <div
-        style={{
-          marginTop: 6,
-          fontFamily: SANS,
-          fontSize: 'clamp(15px, 1vw + 11px, 17px)',
-          fontWeight: bold ? 600 : 400,
-          color: dark ? CREAM : INK,
-          lineHeight: 1.58,
-        }}
-      >
-        {v}
-      </div>
+      <div style={{ ...sectionEyebrow, fontSize: 10, color: emphasis ? TEAL : INK_MUTED }}>{label}</div>
+      <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.62, color: emphasis ? INK : INK_SOFT, fontWeight: emphasis ? 700 : 500 }}>{value}</div>
     </div>
   );
 }
 
-function FinancialRow({ label, amount, note, bold }: { label: string; amount: string; note: string; bold?: boolean }) {
+function CompositionTile({ title, value }: { title: string; value: string }) {
   return (
-    <div
-      style={{
-        padding: bold ? 20 : 16,
-        background: bold ? 'rgba(14,159,140,0.08)' : 'rgba(255,253,252,0.82)',
-        border: `1px solid ${bold ? 'rgba(14,159,140,0.28)' : LINE}`,
-        borderRadius: 18,
-        display: 'grid',
-        gridTemplateColumns: '1fr auto',
-        gap: 20,
-        alignItems: 'baseline',
-      }}
-    >
-      <div>
-        <div style={{ fontFamily: MONO, fontSize: 11, color: INK_MUTED, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-          {label}
-        </div>
-        <div style={{ marginTop: 8, maxWidth: 640, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>
-          {note}
-        </div>
-      </div>
-      <div style={{ fontFamily: SERIF, fontSize: bold ? 36 : 28, color: bold ? TEAL : INK, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-        {amount}
-      </div>
+    <article className="composition-tile">
+      <div className="composition-tile-label">{title}</div>
+      <div className="composition-tile-value">{value}</div>
+    </article>
+  );
+}
+
+function MetricChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="metric-chip">
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
 
-function WhyColumn({ title, body }: { title: string; body: string }) {
+function AssetVisual({ visual }: { visual: CompoundingAsset['visual'] }) {
+  if (visual === 'sparkline') {
+    return (
+      <div className="asset-visual sparkline" aria-hidden="true">
+        <div className="sparkline-bars">
+          {[26, 38, 34, 52, 48, 66, 72, 68, 84].map((height, index) => (
+            <span key={index} style={{ height }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (visual === 'radar') {
+    return (
+      <div className="asset-visual radar" aria-hidden="true">
+        <div className="radar-ring radar-ring-1" />
+        <div className="radar-ring radar-ring-2" />
+        <div className="radar-pulse" />
+      </div>
+    );
+  }
+
+  if (visual === 'chain') {
+    return (
+      <div className="asset-visual chain" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+    );
+  }
+
   return (
-    <div style={{ padding: 18, background: PANEL_BG, border: `1px solid ${LINE}`, borderRadius: 18 }}>
-      <div style={{ ...sectionEyebrow, fontSize: 10 }}>{title.toUpperCase()}</div>
-      <div style={{ marginTop: 8, fontSize: 15, lineHeight: 1.58, color: INK_SOFT }}>{body}</div>
+    <div className="asset-visual publication" aria-hidden="true">
+      <div className="publication-cover">
+        <div className="publication-line publication-line-short" />
+        <div className="publication-line" />
+        <div className="publication-line" />
+      </div>
     </div>
   );
 }
@@ -844,30 +820,16 @@ function SectionLinkTOC() {
     { href: '#methodology', label: 'Methodology' },
     { href: '#agents', label: 'Agents' },
     { href: '#compounding-assets', label: 'Compounding assets' },
-    { href: '#outcome-economics', label: 'Outcome economics' },
+    { href: '#architecture-ip', label: 'Architecture + IP' },
     { href: '#composability', label: 'Composability' },
     { href: '#comparison', label: 'Comparison' },
   ];
+
   return (
     <nav aria-label="Platform sections" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-      {links.map((l) => (
-        <Link
-          key={l.href}
-          href={l.href}
-          style={{
-            display: 'inline-block',
-            padding: '9px 14px',
-            background: 'rgba(255,255,255,0.72)',
-            border: `1px solid ${LINE}`,
-            borderRadius: 999,
-            fontFamily: MONO,
-            fontSize: 10,
-            color: INK_SOFT,
-            letterSpacing: '0.08em',
-            textDecoration: 'none',
-          }}
-        >
-          {l.label}
+      {links.map((link) => (
+        <Link key={link.href} href={link.href} className="toc-link">
+          {link.label}
         </Link>
       ))}
     </nav>
@@ -876,8 +838,8 @@ function SectionLinkTOC() {
 
 const headStyle: CSSProperties = {
   textAlign: 'left',
-  padding: '14px 14px',
-  background: '#FFF8F0',
+  padding: '16px 16px',
+  background: '#F2E7D9',
   fontFamily: MONO,
   fontSize: 10,
   color: INK_MUTED,
@@ -888,27 +850,967 @@ const headStyle: CSSProperties = {
 };
 
 const cellStyle: CSSProperties = {
-  padding: '14px 14px',
+  padding: '16px 16px',
   fontFamily: SANS,
   fontSize: 14,
   color: INK,
-  lineHeight: 1.55,
+  lineHeight: 1.6,
   borderBottom: `1px solid ${LINE}`,
   verticalAlign: 'top',
 };
 
 const rowAccent: CSSProperties = {
-  background: 'rgba(213,155,106,0.08)',
+  background: 'rgba(213,155,106,0.1)',
   fontStyle: 'italic',
 };
 
-const mean: CSSProperties = {
-  padding: '12px 14px',
-  background: 'rgba(255,255,255,0.78)',
-  border: `1px solid ${LINE}`,
-  borderRadius: 12,
-  fontFamily: MONO,
-  fontSize: 12,
-  color: INK_SOFT,
-  letterSpacing: '0.02em',
-};
+const platformCss = `
+  .platform-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(23,20,17,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(23,20,17,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: linear-gradient(180deg, rgba(0,0,0,0.32), transparent 18%);
+    pointer-events: none;
+  }
+
+  .platform-orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(80px);
+    opacity: 0.26;
+    pointer-events: none;
+    animation: drift 18s ease-in-out infinite;
+  }
+
+  .platform-orb-a {
+    width: 34rem;
+    height: 34rem;
+    top: -10rem;
+    right: -8rem;
+    background: radial-gradient(circle, rgba(20,184,166,0.38), rgba(20,184,166,0));
+  }
+
+  .platform-orb-b {
+    width: 28rem;
+    height: 28rem;
+    top: 24rem;
+    left: -10rem;
+    background: radial-gradient(circle, rgba(90,166,248,0.18), rgba(90,166,248,0));
+    animation-duration: 24s;
+  }
+
+  .platform-hero {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    gap: 28px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+    padding: 64px 56px 56px;
+    border: 1px solid rgba(23,20,17,0.12);
+    border-radius: 34px;
+    background:
+      linear-gradient(180deg, rgba(255,253,252,0.94), rgba(246,240,230,0.88)),
+      radial-gradient(circle at top right, rgba(20,184,166,0.12), transparent 34%),
+      radial-gradient(circle at bottom left, rgba(90,166,248,0.14), transparent 30%);
+    box-shadow: 0 30px 100px rgba(23,20,17,0.08);
+  }
+
+  .platform-hero-copy {
+    position: relative;
+    z-index: 1;
+  }
+
+  .platform-hero-visual {
+    display: flex;
+    align-items: stretch;
+  }
+
+  .hero-stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .metric-chip {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 132px;
+    padding: 14px 16px;
+    border: 1px solid rgba(23,20,17,0.12);
+    border-radius: 18px;
+    background: rgba(255,255,255,0.72);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+  }
+
+  .metric-chip span {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: ${INK_MUTED};
+  }
+
+  .metric-chip strong {
+    font-size: 16px;
+    line-height: 1.2;
+    color: ${INK};
+  }
+
+  .toc-link {
+    display: inline-block;
+    padding: 10px 14px;
+    border: 1px solid rgba(23,20,17,0.12);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.68);
+    color: ${INK_SOFT};
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: transform 180ms ease, border-color 180ms ease, color 180ms ease;
+  }
+
+  .toc-link:hover {
+    transform: translateY(-1px);
+    border-color: rgba(20,184,166,0.35);
+    color: ${INK};
+  }
+
+  .constellation-shell {
+    position: relative;
+    width: 100%;
+    min-height: 520px;
+    padding: 24px;
+    border-radius: 28px;
+    border: 1px solid rgba(23,20,17,0.12);
+    background:
+      linear-gradient(180deg, rgba(16,18,20,0.96), rgba(20,24,29,0.94)),
+      radial-gradient(circle at top right, rgba(20,184,166,0.18), transparent 28%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 28px 60px rgba(23,20,17,0.16);
+    overflow: hidden;
+  }
+
+  .constellation-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .constellation-header,
+  .constellation-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.58);
+  }
+
+  .constellation-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: 1fr 1.2fr 1fr;
+    align-items: center;
+    min-height: 420px;
+  }
+
+  .constellation-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .constellation-card {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04);
+    color: ${CREAM};
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .constellation-card strong {
+    font-family: ${SERIF};
+    font-size: 28px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+
+  .constellation-card span {
+    color: rgba(247,242,234,0.7);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .constellation-card-teal {
+    box-shadow: inset 0 0 0 1px rgba(20,184,166,0.18), 0 0 32px rgba(20,184,166,0.12);
+  }
+
+  .constellation-card-amber {
+    box-shadow: inset 0 0 0 1px rgba(213,155,106,0.18), 0 0 32px rgba(213,155,106,0.12);
+  }
+
+  .constellation-center {
+    position: relative;
+    min-height: 280px;
+    display: grid;
+    place-items: center;
+  }
+
+  .constellation-core {
+    position: relative;
+    z-index: 2;
+    padding: 24px 28px;
+    border-radius: 22px;
+    border: 1px solid rgba(20,184,166,0.28);
+    background: rgba(255,255,255,0.06);
+    color: ${CREAM};
+    font-family: ${SERIF};
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    box-shadow: 0 0 34px rgba(20,184,166,0.18);
+  }
+
+  .constellation-ring {
+    position: absolute;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .constellation-ring-a {
+    width: 260px;
+    height: 260px;
+    animation: pulse 8s ease-in-out infinite;
+  }
+
+  .constellation-ring-b {
+    width: 360px;
+    height: 360px;
+    border-color: rgba(20,184,166,0.15);
+    animation: pulse 10s ease-in-out infinite reverse;
+  }
+
+  .constellation-node {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: ${TEAL};
+    box-shadow: 0 0 18px rgba(20,184,166,0.42);
+    animation: traverse 7s ease-in-out infinite;
+  }
+
+  .constellation-node-a {
+    top: 12%;
+    left: 48%;
+  }
+
+  .constellation-node-b {
+    right: 20%;
+    bottom: 24%;
+    background: ${SKY};
+    box-shadow: 0 0 18px rgba(90,166,248,0.4);
+    animation-delay: 1.2s;
+  }
+
+  .constellation-node-c {
+    left: 18%;
+    bottom: 22%;
+    background: ${AMBER};
+    box-shadow: 0 0 18px rgba(213,155,106,0.4);
+    animation-delay: 2.2s;
+  }
+
+  .dark-stage {
+    padding: 36px 30px 32px;
+    border-radius: 32px;
+    background: linear-gradient(180deg, ${DARK_PANEL}, ${DARK});
+    box-shadow: 0 30px 90px rgba(23,20,17,0.16);
+    color: ${CREAM};
+  }
+
+  .layer-stack {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 28px;
+    padding-left: 34px;
+  }
+
+  .layer-flow-rail {
+    position: absolute;
+    left: 8px;
+    top: 18px;
+    bottom: 18px;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(20,184,166,0.22), rgba(90,166,248,0.18));
+  }
+
+  .layer-flow-rail span {
+    position: absolute;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: ${TEAL};
+    box-shadow: 0 0 18px rgba(20,184,166,0.4);
+    animation: flow 7.2s linear infinite;
+  }
+
+  .layer-flow-rail span:nth-child(1) { top: 4%; }
+  .layer-flow-rail span:nth-child(2) { top: 36%; animation-delay: 1.6s; }
+  .layer-flow-rail span:nth-child(3) { top: 70%; animation-delay: 3.2s; }
+
+  .layer-band {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+    padding: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 24px;
+    background:
+      radial-gradient(circle at right top, rgba(20,184,166,0.12), transparent 24%),
+      rgba(255,255,255,0.035);
+    backdrop-filter: blur(10px);
+  }
+
+  .layer-band-title {
+    margin-top: 8px;
+    font-family: ${SERIF};
+    font-size: clamp(34px, 3vw, 54px);
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    color: ${CREAM};
+  }
+
+  .layer-band-copy {
+    margin: 12px 0 0;
+    max-width: 680px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: rgba(247,242,234,0.74);
+  }
+
+  .layer-band-panel {
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid rgba(20,184,166,0.18);
+    background: rgba(255,255,255,0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .layer-band-metric {
+    font-family: ${SERIF};
+    font-size: 38px;
+    line-height: 0.96;
+    letter-spacing: -0.04em;
+    color: ${CREAM};
+  }
+
+  .layer-band-rule {
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 14px;
+    line-height: 1.6;
+    color: rgba(247,242,234,0.72);
+  }
+
+  .counter-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-family: ${MONO};
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: ${TEAL};
+  }
+
+  .token-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .dark-token {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.05);
+    color: rgba(247,242,234,0.76);
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  .dark-token-quiet {
+    background: rgba(255,255,255,0.03);
+    color: rgba(247,242,234,0.62);
+  }
+
+  .phase-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    margin-top: 28px;
+  }
+
+  .phase-card {
+    padding: 22px;
+    border: 1px solid ${LINE};
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,253,252,0.98));
+    box-shadow: 0 18px 40px rgba(23,20,17,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .phase-label {
+    font-family: ${SERIF};
+    font-size: 34px;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    color: ${INK};
+  }
+
+  .phase-block {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .phase-warning {
+    margin-top: auto;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(213,155,106,0.28);
+    background: rgba(213,155,106,0.08);
+    color: ${INK_SOFT};
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .phase-warning span {
+    display: block;
+    margin-bottom: 8px;
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: ${AMBER};
+    font-weight: 700;
+  }
+
+  .agent-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    margin-top: 28px;
+  }
+
+  .agent-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(180deg, ${DARK_PANEL}, ${DARK});
+    box-shadow: 0 24px 70px rgba(23,20,17,0.14);
+    color: ${CREAM};
+  }
+
+  .agent-card-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top right, color-mix(in srgb, var(--agent-accent) 30%, transparent), transparent 28%),
+      linear-gradient(135deg, rgba(255,255,255,0.04), transparent 46%);
+    opacity: 0.9;
+    animation: glow 10s ease-in-out infinite;
+  }
+
+  .agent-card-main {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    padding: 24px;
+  }
+
+  .agent-id {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .agent-eyebrow {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--agent-accent);
+  }
+
+  .agent-name {
+    margin-top: 10px;
+    font-family: ${SERIF};
+    font-size: 48px;
+    line-height: 0.92;
+    letter-spacing: -0.05em;
+  }
+
+  .agent-role {
+    margin: 14px 0 0;
+    font-size: 16px;
+    line-height: 1.65;
+    color: rgba(247,242,234,0.78);
+  }
+
+  .agent-behavior {
+    display: grid;
+    gap: 14px;
+  }
+
+  .agent-panel {
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .agent-panel-refusal {
+    border-color: rgba(213,155,106,0.24);
+    background: rgba(213,155,106,0.08);
+  }
+
+  .agent-panel-label {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(247,242,234,0.62);
+    font-weight: 700;
+  }
+
+  .agent-panel-label-amber {
+    color: ${AMBER};
+  }
+
+  .agent-list {
+    margin: 12px 0 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 1.62;
+    color: rgba(247,242,234,0.84);
+  }
+
+  .asset-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    margin-top: 28px;
+  }
+
+  .asset-card {
+    padding: 22px;
+    border-radius: 24px;
+    border: 1px solid ${LINE};
+    background: linear-gradient(180deg, ${PANEL_BG}, rgba(255,252,248,0.94));
+    box-shadow: 0 18px 42px rgba(23,20,17,0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .asset-card-top {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 128px;
+    align-items: start;
+  }
+
+  .asset-primary {
+    margin-top: 8px;
+    font-family: ${SERIF};
+    font-size: 44px;
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+    color: ${INK};
+  }
+
+  .asset-secondary {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    font-family: ${MONO};
+    font-size: 11px;
+    color: ${INK_MUTED};
+    letter-spacing: 0.03em;
+  }
+
+  .asset-body {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.65;
+    color: ${INK_SOFT};
+  }
+
+  .asset-footer {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid ${LINE};
+    font-size: 14px;
+    line-height: 1.6;
+    color: ${INK_MUTED};
+  }
+
+  .asset-visual {
+    position: relative;
+    width: 128px;
+    height: 128px;
+    border-radius: 24px;
+    border: 1px solid rgba(23,20,17,0.1);
+    background:
+      radial-gradient(circle at top right, rgba(20,184,166,0.2), transparent 30%),
+      linear-gradient(180deg, rgba(23,20,17,0.04), rgba(23,20,17,0.01));
+    overflow: hidden;
+  }
+
+  .sparkline-bars {
+    position: absolute;
+    inset: 18px;
+    display: flex;
+    align-items: end;
+    gap: 6px;
+  }
+
+  .sparkline-bars span {
+    flex: 1;
+    border-radius: 999px 999px 8px 8px;
+    background: linear-gradient(180deg, rgba(90,166,248,0.8), rgba(20,184,166,0.86));
+    animation: rise 6s ease-in-out infinite;
+  }
+
+  .sparkline-bars span:nth-child(2n) { animation-delay: 0.6s; }
+  .sparkline-bars span:nth-child(3n) { animation-delay: 1.2s; }
+
+  .radar-ring {
+    position: absolute;
+    inset: 50%;
+    border-radius: 999px;
+    border: 1px solid rgba(20,184,166,0.22);
+    transform: translate(-50%, -50%);
+  }
+
+  .radar-ring-1 { width: 54px; height: 54px; }
+  .radar-ring-2 { width: 92px; height: 92px; }
+
+  .radar-pulse {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: ${TEAL};
+    box-shadow: 0 0 0 0 rgba(20,184,166,0.35);
+    animation: radar 2.8s ease-out infinite;
+  }
+
+  .chain {
+    display: grid;
+    place-items: center;
+  }
+
+  .chain span {
+    position: absolute;
+    top: 50%;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    border: 2px solid ${TEAL};
+    transform: translateY(-50%);
+  }
+
+  .chain span::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: calc(100% + 2px);
+    width: 18px;
+    height: 2px;
+    background: rgba(20,184,166,0.42);
+    transform: translateY(-50%);
+  }
+
+  .chain span:nth-child(1) { left: 18px; }
+  .chain span:nth-child(2) { left: 44px; }
+  .chain span:nth-child(3) { left: 70px; }
+  .chain span:nth-child(4) { left: 96px; }
+  .chain span:nth-child(4)::after { display: none; }
+
+  .publication {
+    display: grid;
+    place-items: center;
+  }
+
+  .publication-cover {
+    width: 76px;
+    height: 96px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(20,184,166,0.2), rgba(90,166,248,0.16));
+    border: 1px solid rgba(23,20,17,0.08);
+    box-shadow: 0 18px 30px rgba(23,20,17,0.12);
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .publication-line {
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(23,20,17,0.18);
+  }
+
+  .publication-line-short {
+    width: 58%;
+  }
+
+  .boundary-stack {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    margin-top: 28px;
+  }
+
+  .boundary-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .boundary-column-title {
+    font-family: ${SERIF};
+    font-size: 36px;
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+    color: ${CREAM};
+  }
+
+  .boundary-row {
+    display: grid;
+    gap: 14px;
+    grid-template-columns: 84px 1fr;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.04);
+    color: rgba(247,242,234,0.84);
+    font-size: 15px;
+    line-height: 1.62;
+  }
+
+  .boundary-row-not {
+    border-color: rgba(213,155,106,0.22);
+    background: rgba(213,155,106,0.08);
+  }
+
+  .boundary-tag {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: ${TEAL};
+    font-weight: 700;
+  }
+
+  .boundary-tag-not {
+    color: ${AMBER};
+  }
+
+  .composition-shell {
+    margin-top: 26px;
+    padding: 24px;
+    border-radius: 26px;
+    border: 1px solid ${LINE};
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.84), rgba(255,253,252,0.98)),
+      radial-gradient(circle at top right, rgba(20,184,166,0.12), transparent 26%);
+    box-shadow: 0 18px 48px rgba(23,20,17,0.06);
+  }
+
+  .composition-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .composition-tile {
+    padding: 18px;
+    border-radius: 18px;
+    border: 1px solid ${LINE};
+    background: rgba(255,255,255,0.76);
+  }
+
+  .composition-tile-label {
+    font-family: ${MONO};
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: ${INK_MUTED};
+  }
+
+  .composition-tile-value {
+    margin-top: 10px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: ${INK_SOFT};
+  }
+
+  .comparison-stage {
+    padding: 6px 0 0;
+  }
+
+  .comparison-shell {
+    overflow-x: auto;
+    margin-top: 26px;
+    border-radius: 24px;
+    border: 1px solid ${LINE};
+    background: ${PANEL_BG};
+    box-shadow: 0 18px 44px rgba(23,20,17,0.05);
+  }
+
+  @keyframes drift {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(18px, -14px, 0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.04); opacity: 0.55; }
+  }
+
+  @keyframes traverse {
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50% { transform: translate3d(4px, -6px, 0); }
+  }
+
+  @keyframes flow {
+    0% { transform: translateY(0); opacity: 0.4; }
+    50% { opacity: 1; }
+    100% { transform: translateY(12px); opacity: 0.4; }
+  }
+
+  @keyframes glow {
+    0%, 100% { transform: scale(1); opacity: 0.88; }
+    50% { transform: scale(1.03); opacity: 1; }
+  }
+
+  @keyframes rise {
+    0%, 100% { transform: scaleY(0.94); opacity: 0.8; }
+    50% { transform: scaleY(1.08); opacity: 1; }
+  }
+
+  @keyframes radar {
+    0% { box-shadow: 0 0 0 0 rgba(20,184,166,0.34); }
+    100% { box-shadow: 0 0 0 22px rgba(20,184,166,0); }
+  }
+
+  @media (max-width: 1180px) {
+    .platform-hero {
+      grid-template-columns: 1fr;
+      padding: 48px 30px 36px;
+    }
+
+    .platform-hero-visual {
+      min-height: 460px;
+    }
+
+    .layer-band,
+    .agent-card-main {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 820px) {
+    .phase-grid,
+    .asset-grid,
+    .agent-grid,
+    .boundary-stack {
+      grid-template-columns: 1fr;
+    }
+
+    .asset-card-top {
+      grid-template-columns: 1fr;
+    }
+
+    .boundary-row {
+      grid-template-columns: 1fr;
+    }
+
+    .constellation-grid {
+      grid-template-columns: 1fr;
+      min-height: unset;
+    }
+
+    .constellation-center {
+      min-height: 220px;
+    }
+
+    .dark-stage,
+    .comparison-stage {
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .platform-orb,
+    .constellation-ring,
+    .constellation-node,
+    .layer-flow-rail span,
+    .agent-card-bg,
+    .sparkline-bars span,
+    .radar-pulse {
+      animation: none !important;
+    }
+
+    .toc-link {
+      transition: none;
+    }
+  }
+`;
