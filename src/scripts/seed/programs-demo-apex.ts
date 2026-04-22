@@ -18,6 +18,9 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { charterDeliverableType } from '@/lib/deliverables/templates/charter';
+import { designBriefDeliverableType } from '@/lib/deliverables/templates/design_brief';
+import { executionPlanDeliverableType } from '@/lib/deliverables/templates/execution_plan';
+import { outcomeReportDeliverableType } from '@/lib/deliverables/templates/outcome_report';
 
 // Load .env.local manually so the script runs standalone
 try {
@@ -417,28 +420,73 @@ async function ensureProgramTeam(programId: string, programName: string, personI
 }
 
 async function ensureDeliverableTypes(): Promise<void> {
+  const templatePayloads: Record<string, {
+    description: string;
+    applicable_topics: string[];
+    template_structure: Record<string, unknown>;
+    required_data_inputs: Record<string, unknown>;
+    quality_rubric: Record<string, unknown> | Array<Record<string, unknown>>;
+    generation_prompt_template: string;
+    output_format: 'markdown';
+    maturity: 'draft' | 'pilot' | 'production' | 'deprecated';
+  }> = {
+    charter: {
+      description: charterDeliverableType.description,
+      applicable_topics: [...charterDeliverableType.applicable_topics],
+      template_structure: charterDeliverableType.template_structure,
+      required_data_inputs: charterDeliverableType.required_data_inputs,
+      quality_rubric: charterDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: charterDeliverableType.generation_prompt_template,
+      output_format: charterDeliverableType.output_format,
+      maturity: charterDeliverableType.maturity,
+    },
+    // Compatibility alias: the live Programs drafting flow currently uses
+    // `design_spec`, while the richer template taxonomy names it
+    // `design_brief`. Mirror the brief content here without changing the
+    // runtime contract in this seed pass.
+    design_spec: {
+      description: designBriefDeliverableType.description,
+      applicable_topics: [...designBriefDeliverableType.applicable_topics],
+      template_structure: designBriefDeliverableType.template_structure,
+      required_data_inputs: designBriefDeliverableType.required_data_inputs,
+      quality_rubric: designBriefDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: designBriefDeliverableType.generation_prompt_template,
+      output_format: designBriefDeliverableType.output_format,
+      maturity: designBriefDeliverableType.maturity,
+    },
+    execution_plan: {
+      description: executionPlanDeliverableType.description,
+      applicable_topics: [...executionPlanDeliverableType.applicable_topics],
+      template_structure: executionPlanDeliverableType.template_structure,
+      required_data_inputs: executionPlanDeliverableType.required_data_inputs,
+      quality_rubric: executionPlanDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: executionPlanDeliverableType.generation_prompt_template,
+      output_format: executionPlanDeliverableType.output_format,
+      maturity: executionPlanDeliverableType.maturity,
+    },
+    outcome_report: {
+      description: outcomeReportDeliverableType.description,
+      applicable_topics: [...outcomeReportDeliverableType.applicable_topics],
+      template_structure: outcomeReportDeliverableType.template_structure,
+      required_data_inputs: outcomeReportDeliverableType.required_data_inputs,
+      quality_rubric: outcomeReportDeliverableType.quality_rubric as unknown as Array<Record<string, unknown>>,
+      generation_prompt_template: outcomeReportDeliverableType.generation_prompt_template,
+      output_format: outcomeReportDeliverableType.output_format,
+      maturity: outcomeReportDeliverableType.maturity,
+    },
+  };
+
   for (const t of DEMO_DELIVERABLE_TYPES) {
-    const basePayload = t.type_key === 'charter'
-      ? {
-          description: charterDeliverableType.description,
-          applicable_topics: [...charterDeliverableType.applicable_topics],
-          template_structure: charterDeliverableType.template_structure,
-          required_data_inputs: charterDeliverableType.required_data_inputs,
-          quality_rubric: charterDeliverableType.quality_rubric,
-          generation_prompt_template: charterDeliverableType.generation_prompt_template,
-          output_format: charterDeliverableType.output_format,
-          maturity: charterDeliverableType.maturity,
-        }
-      : {
-          description: `${t.title} (demo seed)`,
-          applicable_topics: [],
-          template_structure: {},
-          required_data_inputs: {},
-          quality_rubric: {},
-          generation_prompt_template: '',
-          output_format: 'markdown' as const,
-          maturity: 'pilot' as const,
-        };
+    const basePayload = templatePayloads[t.type_key] ?? {
+      description: `${t.title} (demo seed)`,
+      applicable_topics: [],
+      template_structure: {},
+      required_data_inputs: {},
+      quality_rubric: {},
+      generation_prompt_template: '',
+      output_format: 'markdown' as const,
+      maturity: 'pilot' as const,
+    };
 
     const { error } = await sb.from('deliverable_types').upsert(
       {
