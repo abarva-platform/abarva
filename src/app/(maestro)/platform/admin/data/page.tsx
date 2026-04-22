@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: "'DM Sans', -apple-system, sans-serif" } as React.CSSProperties,
@@ -265,7 +264,6 @@ export default function AdminData() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav activePage="admin" />
       <div style={{ display: 'flex', gap: '8px', padding: '12px 32px', background: '#FFFFFF', borderBottom: '1px solid #E8E6E3', overflowX: 'auto' as const }}>
         {LINKS.map(l => <a key={l.href} href={l.href} style={{ padding: '6px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, textDecoration: 'none', background: (l as any).active ? '#0C0C0C' : 'transparent', color: (l as any).active ? '#FFFFFF' : '#6B7280', flexShrink: 0, whiteSpace: 'nowrap' as const }}>{l.label}</a>)}
       </div>

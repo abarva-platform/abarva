@@ -1,5 +1,4 @@
 'use client'
-import AbarvaNav from '@/components/AbarvaNav'
 
 const S = {
   page: { minHeight: '100vh', background: '#F8FAFC', fontFamily: 'Inter, -apple-system, sans-serif' } as React.CSSProperties,
@@ -110,8 +109,6 @@ function SectionHeader({ n, label, meta }: { n: string; label: string; meta?: st
 export default function BusinessContext() {
   return (
     <div style={S.page}>
-      <AbarvaNav activePage="admin" />
-
       {/* Subnav */}
       <div style={S.subnav}>
         {LINKS.map(link => (

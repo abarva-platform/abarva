@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
-import AbarvaNav from '@/components/AbarvaNav'
 import { calculateConfidence } from '@/lib/confidence'
 
 const S = {
@@ -26,6 +25,8 @@ type TenantKey = 'meridian' | 'firstcapital' | 'apexretail' | 'keystone'
 type Pillar = 'data' | 'evidence' | 'intelligence' | 'knowledge'
 type Severity = 'critical' | 'high' | 'medium'
 type Readiness = 'Exploratory' | 'Decision-support' | 'Board-ready' | 'Settlement-ready'
+type BacklogTrack = 'intelligence' | 'chat' | 'design' | 'admin'
+type BacklogStatus = 'done' | 'in_progress' | 'queued' | 'blocked'
 
 type TenantSeed = {
   key: TenantKey
@@ -50,6 +51,18 @@ type QualityAction = {
   delta: number
   owner: string
   cta: string
+}
+
+type BacklogItem = {
+  id: string
+  track: BacklogTrack
+  surface: string
+  title: string
+  status: BacklogStatus
+  progress: number
+  counter: string
+  outcome: string
+  nextStep: string
 }
 
 const confidenceMeridian = calculateConfidence('meridian', 'clinical')
@@ -263,6 +276,97 @@ const QUALITY_ACTIONS: QualityAction[] = [
   },
 ]
 
+const BACKLOG_ITEMS: BacklogItem[] = [
+  {
+    id: 'intel-auth',
+    track: 'intelligence',
+    surface: 'Intelligence · Atlas · tenancy',
+    title: 'Close demo-user auth and client-resolution leaks',
+    status: 'done',
+    progress: 100,
+    counter: '2 merged fixes / 2 deployed',
+    outcome: 'Signed-in Clerk demo users can resolve tenant context without the old no-client dead end.',
+    nextStep: 'Smoke-test the live app with Meridian and First Capital demo users.',
+  },
+  {
+    id: 'chat-inputs',
+    track: 'chat',
+    surface: 'All chat composers',
+    title: 'Replace single-line inputs with multiline autosizing composer',
+    status: 'done',
+    progress: 100,
+    counter: '6 chat surfaces / 6 upgraded',
+    outcome: 'Composers now wrap, support Shift+Enter, and enable spellcheck/autocorrect across agent surfaces.',
+    nextStep: 'Keep an eye on any remaining hardcoded input fields outside the shared composer.',
+  },
+  {
+    id: 'admin-nav',
+    track: 'admin',
+    surface: 'Top navigation · admin access',
+    title: 'Restore direct Admin navigation and demo-admin fallback',
+    status: 'done',
+    progress: 100,
+    counter: '1 route fix / 1 deployed',
+    outcome: 'Admin now routes to /platform/admin instead of dropping users back on the generic platform page.',
+    nextStep: 'Verify the live deploy with the two known demo-admin accounts.',
+  },
+  {
+    id: 'warm-ui-rollout',
+    track: 'design',
+    surface: 'Programs · Tower · Platform hero',
+    title: 'Roll out the warm editorial UI system to operational pages',
+    status: 'in_progress',
+    progress: 62,
+    counter: '3 major surfaces / 5 redesigned',
+    outcome: 'The design language is live on several priority pages, but page-to-page consistency is still incomplete.',
+    nextStep: 'Apply the same light-canvas grammar to Intelligence, Data, Investor, and remaining admin surfaces.',
+  },
+  {
+    id: 'phase-chat',
+    track: 'chat',
+    surface: 'Program chat · phase transitions',
+    title: 'Reset program chat by phase and preserve prior-phase summary in the rail',
+    status: 'in_progress',
+    progress: 72,
+    counter: '3 interaction fixes / 4 shipped',
+    outcome: 'Phase handoff logic and right-rail summaries are in code, but the end-to-end live UX still needs smoke-testing.',
+    nextStep: 'Confirm Phase 0 approval cleanly opens a fresh Phase 1 thread in the deployed app.',
+  },
+  {
+    id: 'intel-left-rail',
+    track: 'intelligence',
+    surface: 'Intelligence landing page',
+    title: 'Replace the current Intelligence shell with a real left-rail navigation layout',
+    status: 'in_progress',
+    progress: 38,
+    counter: '1 new browser component / 1 full-page IA rewrite pending',
+    outcome: 'Foundation browser building blocks exist, but the actual landing page still reads as the old workspace.',
+    nextStep: 'Promote the browser into the primary layout, add the persistent left rail, and retire the duplicated library path.',
+  },
+  {
+    id: 'intel-links',
+    track: 'intelligence',
+    surface: 'Intelligence cards · benchmarks · patterns · vendors',
+    title: 'Make every Intelligence section and card navigate to real supporting content',
+    status: 'queued',
+    progress: 18,
+    counter: '0 dead-link pages acceptable / content audit still required',
+    outcome: 'The IA is not trustworthy until every top box and content card either opens a real page or is removed.',
+    nextStep: 'Audit patterns, benchmarks, vendors, frameworks, and regulations; generate content where the route is empty.',
+  },
+  {
+    id: 'backlog-tracker',
+    track: 'admin',
+    surface: 'Quality Ops · execution tracker',
+    title: 'Display a live backlog tracker with item-by-item status and counters',
+    status: 'done',
+    progress: 100,
+    counter: '1 operator tracker / now live on this page',
+    outcome: 'Progress is now visible in-product instead of being trapped in chat history and PR archaeology.',
+    nextStep: 'Keep this table current as each backlog item is merged and verified.',
+  },
+]
+
 function readinessLabel(score: number): Readiness {
   if (score >= 90) return 'Settlement-ready'
   if (score >= 80) return 'Board-ready'
@@ -297,6 +401,20 @@ function pillarAccent(pillar: Pillar) {
   return '#7C3AED'
 }
 
+function backlogStatusTheme(status: BacklogStatus) {
+  if (status === 'done') return { bg: '#ECFDF5', text: '#166534', border: '#A7F3D0', label: 'Done' }
+  if (status === 'in_progress') return { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'In progress' }
+  if (status === 'blocked') return { bg: '#FEF2F2', text: '#B91C1C', border: '#FECACA', label: 'Blocked' }
+  return { bg: '#FFFBEB', text: '#B45309', border: '#FDE68A', label: 'Queued' }
+}
+
+function trackLabel(track: BacklogTrack) {
+  if (track === 'intelligence') return 'Intelligence'
+  if (track === 'chat') return 'Chat + agents'
+  if (track === 'design') return 'Design system'
+  return 'Admin + ops'
+}
+
 function average(values: number[]) {
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
@@ -304,6 +422,7 @@ function average(values: number[]) {
 export default function AdminQualityOps() {
   const [selectedTenant, setSelectedTenant] = useState<TenantKey | 'all'>('all')
   const [resolvedIds, setResolvedIds] = useState<string[]>([])
+  const [selectedTrack, setSelectedTrack] = useState<BacklogTrack | 'all'>('all')
 
   const scopedTenants = selectedTenant === 'all' ? TENANTS : TENANTS.filter((tenant) => tenant.key === selectedTenant)
   const scopedActions = QUALITY_ACTIONS.filter((action) => selectedTenant === 'all' || action.tenant === selectedTenant)
@@ -350,6 +469,15 @@ export default function AdminQualityOps() {
   const totalPotentialLift = topActions.slice(0, 5).reduce((sum, action) => sum + action.delta, 0)
   const readiness = readinessLabel(overallScore)
   const readinessTheme = readinessColor(readiness)
+  const backlogItems = selectedTrack === 'all'
+    ? BACKLOG_ITEMS
+    : BACKLOG_ITEMS.filter((item) => item.track === selectedTrack)
+  const doneCount = backlogItems.filter((item) => item.status === 'done').length
+  const inProgressCount = backlogItems.filter((item) => item.status === 'in_progress').length
+  const queuedCount = backlogItems.filter((item) => item.status === 'queued').length
+  const blockedCount = backlogItems.filter((item) => item.status === 'blocked').length
+  const backlogCompletion = average(backlogItems.map((item) => item.progress))
+  const nextBacklogItem = backlogItems.find((item) => item.status === 'in_progress') ?? backlogItems.find((item) => item.status === 'queued') ?? backlogItems[0]
 
   function toggleResolved(id: string) {
     setResolvedIds((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]))
@@ -357,8 +485,6 @@ export default function AdminQualityOps() {
 
   return (
     <div style={S.page}>
-      <AbarvaNav activePage="admin" />
-
       <div style={{ display: 'flex', gap: '8px', padding: '12px 32px', background: '#FFFFFF', borderBottom: '1px solid #E8E6E3', overflowX: 'auto' }}>
         {LINKS.map((link) => (
           <a
@@ -438,6 +564,161 @@ export default function AdminQualityOps() {
             </div>
           ))}
         </div>
+
+        <section
+          style={{
+            ...S.card,
+            marginBottom: '24px',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1.15fr 0.85fr',
+              gap: '0',
+            }}
+          >
+            <div style={{ padding: '24px 24px 20px', borderRight: '1px solid #F0EEEA' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                <div style={{ maxWidth: '760px' }}>
+                  <div style={{ ...S.label, color: '#14B8A6', marginBottom: '10px' }}>Execution tracker</div>
+                  <div style={{ fontSize: '28px', lineHeight: 1.04, letterSpacing: '-0.03em', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>
+                    Execute the backlog one item at a time, with status always visible.
+                  </div>
+                  <div style={{ marginTop: '12px', fontSize: '15px', lineHeight: 1.75, color: '#4B5563', maxWidth: '720px' }}>
+                    This is the operator view for Intelligence and backlog rollout. Every item below carries a status,
+                    percent complete, live counter, current outcome, and next action so we always know what shipped and what is still pending.
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    minWidth: '220px',
+                    padding: '18px 20px',
+                    borderRadius: '16px',
+                    background: '#0F172A',
+                    color: '#F8FAFC',
+                  }}
+                >
+                  <div style={{ ...S.label, color: '#14B8A6', marginBottom: '8px' }}>Backlog completion</div>
+                  <div style={{ fontSize: '40px', fontWeight: 800, lineHeight: 1 }}>{backlogCompletion}%</div>
+                  <div style={{ marginTop: '8px', fontSize: '14px', fontWeight: 700 }}>Visible tracker progress</div>
+                  <div style={{ marginTop: '8px', fontSize: '12px', lineHeight: 1.6, color: 'rgba(248,250,252,0.76)' }}>
+                    {doneCount} done · {inProgressCount} in progress · {queuedCount} queued · {blockedCount} blocked
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '12px', marginTop: '18px' }}>
+                {[
+                  { label: 'Done', value: doneCount, sub: 'Merged or shipped', accent: '#166534', bg: '#ECFDF5' },
+                  { label: 'In progress', value: inProgressCount, sub: 'Active execution', accent: '#1D4ED8', bg: '#EFF6FF' },
+                  { label: 'Queued', value: queuedCount, sub: 'Next up', accent: '#B45309', bg: '#FFFBEB' },
+                  { label: 'Blocked', value: blockedCount, sub: 'Needs unblock', accent: '#B91C1C', bg: '#FEF2F2' },
+                  { label: 'Tracked items', value: backlogItems.length, sub: 'Visible in this filter', accent: '#0F172A', bg: '#F8F7F4' },
+                ].map((card) => (
+                  <div key={card.label} style={{ padding: '16px', borderRadius: '14px', border: '1px solid #E8E6E3', background: card.bg }}>
+                    <div style={S.label}>{card.label}</div>
+                    <div style={{ fontSize: '30px', fontWeight: 800, lineHeight: 1, color: card.accent }}>{card.value}</div>
+                    <div style={{ marginTop: '8px', fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>{card.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ padding: '24px', background: '#FFFEFC' }}>
+              <div style={S.label}>Next highest-priority action</div>
+              <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827', marginBottom: '10px' }}>
+                {nextBacklogItem?.title ?? 'No tracked work'}
+              </div>
+              <div style={{ fontSize: '14px', lineHeight: 1.7, color: '#4B5563', marginBottom: '12px' }}>
+                {nextBacklogItem?.nextStep ?? 'Everything in the current filter is complete.'}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px' }}>
+                {([{ key: 'all', label: 'All tracks' }, { key: 'intelligence', label: 'Intelligence' }, { key: 'chat', label: 'Chat + agents' }, { key: 'design', label: 'Design system' }, { key: 'admin', label: 'Admin + ops' }] as const).map((option) => (
+                  <button
+                    key={option.key}
+                    onClick={() => setSelectedTrack(option.key)}
+                    style={{
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      border: '1px solid #E8E6E3',
+                      background: selectedTrack === option.key ? '#0F172A' : '#FFFFFF',
+                      color: selectedTrack === option.key ? '#FFFFFF' : '#374151',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: '13px', color: '#6B7280', lineHeight: 1.7 }}>
+                Use this strip as the single source of truth during rollout. If an item is done, mark it as done here.
+                If it is still debated, it stays in progress or queued until the shipped experience changes.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid #F0EEEA', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '1180px' }}>
+              <thead>
+                <tr style={{ background: '#FAFAF9', textAlign: 'left' }}>
+                  {['Track', 'Surface', 'Backlog item', 'Status', 'Progress', 'Live counter', 'Outcome now', 'Next step'].map((label) => (
+                    <th
+                      key={label}
+                      style={{
+                        padding: '12px 16px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        color: '#6B7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        borderBottom: '1px solid #F0EEEA',
+                      }}
+                    >
+                      {label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {backlogItems.map((item) => {
+                  const status = backlogStatusTheme(item.status)
+                  return (
+                    <tr key={item.id} style={{ borderBottom: '1px solid #F5F3EF', verticalAlign: 'top' }}>
+                      <td style={{ padding: '16px', fontSize: '13px', fontWeight: 700, color: '#111827' }}>{trackLabel(item.track)}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#4B5563', lineHeight: 1.6 }}>{item.surface}</td>
+                      <td style={{ padding: '16px' }}>
+                        <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>{item.title}</div>
+                      </td>
+                      <td style={{ padding: '16px' }}>
+                        <span style={{ display: 'inline-block', padding: '4px 10px', borderRadius: '999px', background: status.bg, color: status.text, border: `1px solid ${status.border}`, fontSize: '12px', fontWeight: 700 }}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td style={{ padding: '16px', minWidth: '150px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '12px', color: '#6B7280', marginBottom: '8px' }}>
+                          <span>{item.progress}%</span>
+                          <span>{item.progress === 100 ? 'Complete' : 'Active'}</span>
+                        </div>
+                        <div style={{ height: '10px', borderRadius: '999px', background: '#EDEAE6', overflow: 'hidden' }}>
+                          <div style={{ width: `${item.progress}%`, height: '100%', borderRadius: '999px', background: status.text }} />
+                        </div>
+                      </td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#111827', fontWeight: 600 }}>{item.counter}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#4B5563', lineHeight: 1.7 }}>{item.outcome}</td>
+                      <td style={{ padding: '16px', fontSize: '13px', color: '#4B5563', lineHeight: 1.7 }}>{item.nextStep}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <section style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.9fr', gap: '18px', marginBottom: '24px' }}>
           <div style={{ ...S.card, padding: '22px' }}>
