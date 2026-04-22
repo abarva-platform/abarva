@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
@@ -23,6 +23,33 @@ interface LegacyDeliverable {
   phase: number;
   generated_at: string;
   content: Record<string, unknown>;
+}
+
+function legacyTitle(type: string): string {
+  return type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+}
+
+function legacyPreview(deliverable: LegacyDeliverable): string {
+  const content = deliverable.content ?? {};
+  if (typeof content.problem_statement === 'string' && content.problem_statement.trim()) return content.problem_statement;
+  if (typeof content.current_state_summary === 'string' && content.current_state_summary.trim()) return content.current_state_summary;
+  if (typeof content.recommendation_rationale === 'string' && content.recommendation_rationale.trim()) return content.recommendation_rationale;
+  if (Array.isArray(content.root_causes) && content.root_causes.length > 0) return `Root causes: ${content.root_causes.slice(0, 2).join(' · ')}`;
+  if (Array.isArray(content.hypotheses) && content.hypotheses.length > 0) return `Hypotheses: ${content.hypotheses.slice(0, 2).join(' · ')}`;
+  if (Array.isArray(content.metrics_compared) && content.metrics_compared.length > 0) return `Metrics compared: ${content.metrics_compared.length}`;
+  return `${Object.keys(content).length} structured fields available`;
+}
+
+function legacySignals(deliverable: LegacyDeliverable): string[] {
+  const content = deliverable.content ?? {};
+  const signals: string[] = [];
+  if (Array.isArray(content.stakeholders) && content.stakeholders.length > 0) signals.push(`${content.stakeholders.length} stakeholders`);
+  if (Array.isArray(content.success_criteria) && content.success_criteria.length > 0) signals.push(`${content.success_criteria.length} success criteria`);
+  if (Array.isArray(content.quantified_problem) && content.quantified_problem.length > 0) signals.push(`${content.quantified_problem.length} quantified metrics`);
+  if (Array.isArray(content.active_genome_patterns) && content.active_genome_patterns.length > 0) signals.push(`${content.active_genome_patterns.length} genome patterns`);
+  if (Array.isArray(content.roadmap) && content.roadmap.length > 0) signals.push(`${content.roadmap.length} roadmap milestones`);
+  if (Array.isArray(content.metrics_compared) && content.metrics_compared.length > 0) signals.push(`${content.metrics_compared.length} verified outcomes`);
+  return signals;
 }
 
 interface V2Deliverable {
@@ -227,14 +254,37 @@ export default async function DeliverablesPage({
                     PHASE {d.phase} · {PHASE_LABELS[d.phase]?.toUpperCase()}
                   </span>
                   <span style={{ fontSize: 14, fontWeight: 500 }}>
-                    {d.type.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
+                    {legacyTitle(d.type)}
                   </span>
                   <span style={{ fontFamily: MONO, fontSize: 9, color: MUTE, marginLeft: 'auto' }}>
                     {new Date(d.generated_at).toLocaleDateString()}
                   </span>
                 </div>
-                <div style={{ fontSize: 12, color: MUTE }}>
-                  {Object.keys(d.content ?? {}).length} content fields
+                <div style={{ fontSize: 12.5, color: INK, lineHeight: 1.55, marginBottom: 8 }}>
+                  {legacyPreview(d)}
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {legacySignals(d).length > 0 ? legacySignals(d).map((signal) => (
+                    <span
+                      key={signal}
+                      style={{
+                        fontFamily: MONO,
+                        fontSize: 9,
+                        color: MUTE,
+                        letterSpacing: '0.08em',
+                        padding: '3px 7px',
+                        borderRadius: 999,
+                        border: BORDER,
+                        background: 'rgba(255,255,255,0.03)',
+                      }}
+                    >
+                      {signal.toUpperCase()}
+                    </span>
+                  )) : (
+                    <span style={{ fontSize: 12, color: MUTE }}>
+                      {Object.keys(d.content ?? {}).length} structured fields
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

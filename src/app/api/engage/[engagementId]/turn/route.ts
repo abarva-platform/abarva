@@ -34,6 +34,7 @@ import {
   proposeOutcomeFee,
 } from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
+import { syncPhaseOneArtifactsFromTurns } from '@/lib/deliverables/live-sync';
 import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
@@ -366,6 +367,26 @@ export async function POST(
           }
         } catch (err) {
           console.error('[outcome-fee]', err);
+        }
+
+        // Phase 1 starter artifacts should keep pace with the live diagnostic
+        // thread rather than freezing at the gate-passed seed content.
+        try {
+          const syncedArtifacts = await syncPhaseOneArtifactsFromTurns({
+            engagementId: engagement.id,
+            currentPhase: engagement.current_phase,
+            userTurn: savedUserTurn,
+            agentTurn: savedTurn,
+            decisions: parseDecisionBlocks(agentFullText),
+            gateApproval: parseGateApprovalBlock(agentFullText),
+          });
+          if (syncedArtifacts > 0) {
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'deliverables_live_synced', count: syncedArtifacts }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[deliverables-live-sync]', err);
         }
 
         // Gate approval detection — emit event BEFORE 'done' so UI can show toast.

@@ -3,7 +3,7 @@
 import { useState, type CSSProperties } from 'react';
 import { TRANSITIONS, FOCUS_RING, COLORS } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
-import type { PhaseState, ProgramFullState } from '@/lib/programs/types';
+import type { PhaseState, ProgramFullState } from '@/lib/programs/types.ui';
 import { EyebrowLabel } from '@/components/shared/typography/EyebrowLabel';
 import { Body } from '@/components/shared/typography/Body';
 import { SectionHeading } from '@/components/shared/typography/SectionHeading';

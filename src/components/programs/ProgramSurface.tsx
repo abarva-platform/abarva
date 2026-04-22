@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { advancePhase, answerCxoTakeover, getCxoQuestionBank, getModuleName } from '@/lib/programs/mock';
-import type { ProgramDetailProps, ProgramFullState, ViewerRole } from '@/lib/programs/types';
+import type { ProgramDetailProps, ProgramFullState, ViewerRole } from '@/lib/programs/types.ui';
 import { ActivityFeed, DeliverableList, MetricCard, ProgressSegments } from '@/components/programs/common';
 import { CxoTakeover, NexusPanel } from '@/components/programs/NexusPanel';
 import { ExecuteSurface } from '@/components/programs/ExecuteSurface';

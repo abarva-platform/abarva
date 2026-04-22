@@ -5,16 +5,18 @@ import { useRouter } from 'next/navigation';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const INK = 'var(--color-text-primary)';
+const TEAL = 'var(--color-teal)';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
-const MUTE = 'rgba(245, 245, 240, 0.72)';
+const MUTE = 'var(--color-text-secondary)';
 const DIM = 'rgba(245, 245, 240, 0.48)';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
 const PANEL_BG = 'rgba(255,255,255,0.02)';
-const MONO = 'JetBrains Mono, monospace';
+const MONO = 'var(--font-body-mono)';
+const BODY = 'var(--font-body-sans)';
+const SERIF = 'var(--font-body-serif)';
 
 const RECENT_KEY = 'abarva_ask_recent';
 const RECENT_LIMIT = 6;
@@ -199,7 +201,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
   }
 
   return (
-    <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1000, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
+    <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1000, margin: '0 auto', color: INK, fontFamily: BODY }}>
       <style jsx>{`
         @keyframes askStreamPulse {
           0%, 100% { opacity: 0.35; }
@@ -212,21 +214,21 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
         }
         @media (hover: hover) {
           .ask-chip:hover {
-            background: rgba(45,212,200,0.12) !important;
-            color: #F5F5F0 !important;
-            border-color: rgba(45,212,200,0.4) !important;
+            background: var(--color-teal-dim) !important;
+            color: var(--color-text-primary) !important;
+            border-color: var(--color-teal-border) !important;
           }
           .ask-followup:hover {
-            background: #2DD4C8 !important;
-            color: #0A0A0A !important;
+            background: var(--color-teal) !important;
+            color: var(--color-page-bg) !important;
           }
           .ask-card:hover {
             background: rgba(255,255,255,0.04) !important;
-            border-color: rgba(45,212,200,0.25) !important;
+            border-color: var(--color-teal-border) !important;
           }
           .ask-source:hover {
             background: rgba(255,255,255,0.04) !important;
-            border-color: rgba(45,212,200,0.25) !important;
+            border-color: var(--color-teal-border) !important;
           }
         }
         .ask-chip:focus-visible,
@@ -245,7 +247,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
       <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 10 }}>
         INTELLIGENCE · ASK
       </div>
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 400, color: INK, margin: '0 0 8px' }}>
+      <h1 style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 400, color: INK, margin: '0 0 8px' }}>
         Ask the knowledge layer
       </h1>
       <p style={{ fontSize: 14, color: MUTE, marginBottom: 24, maxWidth: 720 }}>
@@ -269,7 +271,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
             borderRadius: 8,
             color: INK,
             fontSize: 16,
-            fontFamily: 'DM Sans, sans-serif',
+            fontFamily: BODY,
             outline: 'none',
             transition: reducedMotion
               ? undefined
@@ -292,7 +294,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
               background: askPressed ? '#0F766E' : askHovered ? '#0D9488' : TEAL,
               border: 'none',
               borderRadius: 6,
-              color: '#0A0A0A',
+              color: 'var(--color-page-bg)',
               fontSize: 14,
               fontWeight: 700,
               cursor: isStreaming || !query.trim() ? 'not-allowed' : 'pointer',
@@ -425,7 +427,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                   borderRadius: 999,
                   color: TEAL,
                   fontSize: 12,
-                  fontFamily: 'DM Sans, sans-serif',
+                  fontFamily: BODY,
                   cursor: 'pointer',
                 }}
               >
@@ -457,7 +459,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                       borderRadius: 999,
                       color: INK,
                       fontSize: 12,
-                      fontFamily: 'DM Sans, sans-serif',
+                      fontFamily: BODY,
                       cursor: 'pointer',
                       maxWidth: 420,
                       whiteSpace: 'nowrap',
@@ -499,7 +501,7 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
                           borderRadius: 6,
                           color: INK,
                           fontSize: 13,
-                          fontFamily: 'DM Sans, sans-serif',
+                          fontFamily: BODY,
                           cursor: 'pointer',
                           lineHeight: 1.4,
                         }}

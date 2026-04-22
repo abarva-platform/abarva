@@ -35,6 +35,337 @@ const ALL_SPEC_TOPICS = [
 ];
 
 const TYPES: DeliverableTypeSeed[] = [
+  // ── Phase 0 · Start + Phase 1 · Diagnose core artifacts ───────────────
+  {
+    type_key: 'stakeholder_map',
+    title: 'Stakeholder Map',
+    description: 'Structured view of sponsor, co-sponsor, data owners, and influence dynamics around the program',
+    applicable_phases: [0, 1],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'stakeholder_roster', title: 'Stakeholder Roster', required: true, components: ['name', 'role', 'relationship_to_program', 'commitment_status'] },
+        { key: 'engagement_strategy', title: 'Engagement Strategy', required: true, components: ['what_we_need', 'how_to_approach', 'sensitivities', 'timing', 'intermediary'] },
+        { key: 'power_interest_view', title: 'Power / Interest View', required: true, components: ['quadrant_assignment', 'influence_notes'] },
+        { key: 'org_graph_view', title: 'Org Graph View', required: false, components: ['reporting_lines', 'influence_network'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_0.intake_turns', 'sponsor', 'co_sponsors', 'decision_rights'],
+      client: ['org_context', 'known_stakeholders'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'stakeholder_specificity', weight: 30, criteria: 'Stakeholders are named with specific roles, asks, and sensitivities rather than generic placeholders' },
+        { name: 'actionability', weight: 25, criteria: 'Each stakeholder has an explicit engagement strategy, timing, and what the team needs from them' },
+        { name: 'political_honesty', weight: 25, criteria: 'Influence dynamics and likely resistance are named clearly, not softened into generic collaboration language' },
+        { name: 'structural_completeness', weight: 20, criteria: 'Roster, engagement strategy, and power-interest view are all populated' },
+      ],
+    },
+    generation_prompt_template: `Produce a Stakeholder Map for \${engagement.id} (\${client.name}), topic: \${topic?.title ?? 'program-wide'}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_0_turns}
+\${recent_turn_summary}
+\${client.org_context}
+
+RULES
+- Name real stakeholders only when the conversation or client context supports them.
+- Every stakeholder needs a concrete ask and a practical engagement strategy.
+- Explicitly call out sensitivities, likely resistance, and who should make the introduction.
+- Use [DATA GAP: description] if a required section lacks signal.
+
+Generate the full stakeholder map now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'risk_register',
+    title: 'Risk Register',
+    description: 'Early warning register covering political, data, timing, scope, stakeholder, and technical risks',
+    applicable_phases: [0, 1, 2, 3, 4],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'risk_table', title: 'Risk Table', required: true, components: [{ table: { columns: ['id', 'category', 'description', 'likelihood', 'impact', 'mitigation', 'owner', 'status'] } }] },
+        { key: 'triggering_signals', title: 'Triggering Signals', required: true, components: ['risk_id', 'signal_list'] },
+        { key: 'contingencies', title: 'Contingencies', required: true, components: ['risk_id', 'contingency_plan'] },
+        { key: 'history', title: 'History', required: false, components: ['timestamp', 'event', 'owner'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_0.intake_turns', 'current_phase', 'open_decisions'],
+      topic: ['failure_modes'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'risk_honesty', weight: 35, criteria: 'Names realistic high-probability risks, including political and data-access risks, not just generic delivery boilerplate' },
+        { name: 'signal_quality', weight: 25, criteria: 'Each meaningful risk has concrete triggering signals that a program lead could watch for in real time' },
+        { name: 'mitigation_actionability', weight: 25, criteria: 'Mitigations and contingencies have named owners and practical steps' },
+        { name: 'coverage', weight: 15, criteria: 'Register spans multiple categories relevant to the current phase and topic' },
+      ],
+    },
+    generation_prompt_template: `Produce a Risk Register for \${engagement.id} (\${client.name}), topic: \${topic?.title ?? 'program-wide'}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_0_turns}
+\${recent_turn_summary}
+\${topic.failure_modes}
+
+RULES
+- Include political, stakeholder, data, timing, scope, and technical risks where supported.
+- Each material risk needs triggering signals, mitigation owner, and contingency plan.
+- Do not dilute severity; call out the few risks most likely to derail the program.
+- Use [DATA GAP: description] when required information is missing.
+
+Generate the full risk register now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'hypothesis_tree',
+    title: 'Hypothesis Tree',
+    description: 'Living decomposition of the root problem into testable hypotheses, evidence, and open questions',
+    applicable_phases: [1],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'root_question', title: 'Root Question', required: true, components: ['question', 'initial_hypothesis', 'status'] },
+        { key: 'branches', title: 'Branches', required: true, components: ['hypothesis', 'status', 'estimated_magnitude', 'confidence', 'evidence_supporting', 'evidence_contradicting', 'key_questions'] },
+        { key: 'diagnostic_methodology', title: 'Diagnostic Methodology', required: true },
+        { key: 'exclusions', title: 'Exclusions', required: false },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_1.turns', 'phase_0.problem_statement'],
+      topic: ['failure_modes', 'success_signals'],
+      peer_decisions: ['phase_cohort'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'causal_specificity', weight: 30, criteria: 'Hypotheses are concrete and causal, not vague restatements of the problem' },
+        { name: 'evidence_balance', weight: 25, criteria: 'Each branch includes both supporting and contradicting evidence where available' },
+        { name: 'magnitude_discipline', weight: 25, criteria: 'Estimated magnitude and confidence are explicit rather than implied' },
+        { name: 'diagnostic_logic', weight: 20, criteria: 'Tree structure shows how the investigation will narrow the problem rather than just listing ideas' },
+      ],
+    },
+    generation_prompt_template: `Produce a Hypothesis Tree for \${engagement.id} (\${client.name}), topic: \${topic.title}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_0_turns}
+\${engagement.phase_1_turns}
+\${topic.failure_modes}
+\${recent_turn_summary}
+
+RULES
+- Root question must match the sponsor's actual problem statement.
+- Branches must be causal, testable, and framed with status + confidence.
+- Include contradicting evidence when it exists; do not force a tidy story.
+- Use [DATA GAP: description] if evidence is still missing for a required branch.
+
+Generate the full hypothesis tree now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'workstream_charter',
+    title: 'Workstream Charter',
+    description: 'Detailed charter for a diagnostic workstream tied to one or more hypothesis branches',
+    applicable_phases: [1],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'objective', title: 'Objective', required: true },
+        { key: 'scope', title: 'Scope', required: true, components: ['in_scope', 'out_of_scope'] },
+        { key: 'analytical_approach', title: 'Analytical Approach', required: true, components: ['methodology', 'data_sources', 'techniques', 'deliverables'] },
+        { key: 'timeline', title: 'Timeline', required: true, components: ['start_date', 'end_date', 'milestones'] },
+        { key: 'team', title: 'Team', required: true, components: ['lead', 'contributors', 'data_providers', 'interview_subjects'] },
+        { key: 'current_status', title: 'Current Status', required: true, components: ['phase', 'completion_pct', 'blockers', 'key_findings_so_far'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_1.turns', 'phase_1.hypotheses', 'stakeholders'],
+      topic: ['phase_playbook'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'workstream_focus', weight: 30, criteria: 'Workstream objective is narrow and tied to specific hypothesis branches rather than broad consulting boilerplate' },
+        { name: 'execution_clarity', weight: 25, criteria: 'Timeline, team, and analytical approach are specific enough that an operator could run the workstream from the charter' },
+        { name: 'scope_discipline', weight: 25, criteria: 'In-scope and out-of-scope are explicit so the workstream does not sprawl' },
+        { name: 'status_signal', weight: 20, criteria: 'Current status names blockers and early findings, not just generic progress language' },
+      ],
+    },
+    generation_prompt_template: `Produce a Workstream Charter for \${engagement.id} (\${client.name}), topic: \${topic.title}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_1_turns}
+\${engagement.phase_1_hypotheses}
+\${topic.phase_playbook}
+
+RULES
+- Tie the charter to named hypothesis branches where possible.
+- Scope must be explicit and bounded.
+- Timeline must include milestones with dates or sequencing logic.
+- Current status must name blockers honestly if the workstream is not clean.
+
+Generate the workstream charter now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'data_request_log',
+    title: 'Data Request Log',
+    description: 'Central log of required data requests, status history, access strategy, and governance notes',
+    applicable_phases: [1, 2],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'requests', title: 'Requests', required: true, components: ['data_needed', 'granularity', 'format', 'purpose', 'requested_from', 'status', 'access_strategy', 'expected_date'] },
+        { key: 'status_history', title: 'Status History', required: true, components: ['request_id', 'timestamp', 'status', 'note', 'owner'] },
+        { key: 'access_governance', title: 'Access Governance', required: true, components: ['who_can_see_raw_data', 'who_can_see_analysis', 'data_retention_policy', 'compliance_notes'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_1.turns', 'data_needs', 'stakeholders'],
+      client: ['compliance_requirements'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'request_specificity', weight: 30, criteria: 'Requests are concrete about granularity, format, purpose, and requester rather than generic asks for data' },
+        { name: 'political_realism', weight: 25, criteria: 'Access strategy reflects how the request actually gets made in the organization' },
+        { name: 'governance_completeness', weight: 25, criteria: 'Raw-data access, analysis access, retention, and compliance notes are covered where relevant' },
+        { name: 'status_accuracy', weight: 20, criteria: 'Status and history reflect the real current state, including blocked or denied requests' },
+      ],
+    },
+    generation_prompt_template: `Produce a Data Request Log for \${engagement.id} (\${client.name}), topic: \${topic.title}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_1_turns}
+\${recent_turn_summary}
+\${client.compliance_requirements}
+
+RULES
+- Each request must say what data is needed, why, from whom, and how the team plans to get it.
+- Keep blocked or denied requests visible; do not sanitize them away.
+- Governance section must specify access boundaries if the data is sensitive.
+- Use [DATA GAP: description] when required information is missing.
+
+Generate the data request log now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'interview_log',
+    title: 'Stakeholder Interview Log',
+    description: 'Running log of stakeholder interviews, notes, synthesis, hypothesis updates, and follow-ups',
+    applicable_phases: [1],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'interviews', title: 'Interviews', required: true, components: ['subject', 'status', 'scheduled_date', 'purpose', 'related_hypotheses'] },
+        { key: 'pre_interview_brief', title: 'Pre-Interview Brief', required: true, components: ['background', 'sensitivities', 'approach', 'key_questions', 'avoid'] },
+        { key: 'interview_notes', title: 'Interview Notes', required: false, components: ['raw_notes', 'key_quotes', 'body_language_observations', 'follow_ups_mentioned'] },
+        { key: 'synthesis', title: 'Synthesis', required: false, components: ['key_findings', 'hypothesis_updates', 'pattern_observations', 'data_requests_generated', 'relationship_assessment'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_1.turns', 'stakeholders', 'hypothesis_tree'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'interview_preparation', weight: 25, criteria: 'Pre-brief is specific about background, sensitivities, and the right opening angle' },
+        { name: 'note_quality', weight: 25, criteria: 'Notes capture actual quotes, observations, and follow-ups rather than generic summaries' },
+        { name: 'diagnostic_linkage', weight: 30, criteria: 'Synthesis updates hypotheses or data requests explicitly rather than standing alone as an interview memo' },
+        { name: 'relationship_signal', weight: 20, criteria: 'Log captures how the stakeholder now feels about the program, not just what they said' },
+      ],
+    },
+    generation_prompt_template: `Produce a Stakeholder Interview Log for \${engagement.id} (\${client.name}), topic: \${topic.title}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_1_turns}
+\${engagement.hypothesis_tree}
+\${engagement.stakeholders}
+
+RULES
+- Distinguish scheduled, conducted, and synthesized interviews clearly.
+- Include actual quotes and concrete follow-ups when the conversation supports them.
+- Synthesis must update hypotheses, data requests, or relationship assessments explicitly.
+- Do not invent interview notes for interviews that have not happened.
+
+Generate the interview log now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+  {
+    type_key: 'diagnostic_findings',
+    title: 'Diagnostic Findings Document',
+    description: 'Living synthesis of the Phase 1 diagnostic, including executive summary, workstream findings, pattern matches, and recommendations',
+    applicable_phases: [1, 2],
+    applicable_topics: ALL_SPEC_TOPICS,
+    template_structure: {
+      sections: [
+        { key: 'executive_summary', title: 'Executive Summary', required: true, components: ['problem_restatement', 'current_working_attribution', 'key_insights', 'unexpected_findings', 'open_questions'] },
+        { key: 'findings_by_workstream', title: 'Findings by Workstream', required: true, components: ['workstream_id', 'finding', 'evidence_summary', 'confidence', 'implications'] },
+        { key: 'pattern_matches', title: 'Pattern Matches', required: true, components: ['pattern_id', 'pattern_name', 'confidence', 'evidence', 'implications'] },
+        { key: 'contradictions_surfaced', title: 'Contradictions Surfaced', required: false, components: ['contradiction_type', 'description', 'stakes'] },
+        { key: 'recommendations', title: 'Recommendations', required: true, components: ['phase_2_scope_implications', 'intervention_candidates', 'decision_needed'] },
+      ],
+    },
+    required_data_inputs: {
+      engagement: ['phase_1.findings', 'workstream_outputs', 'hypothesis_tree', 'interview_log'],
+      topic: ['failure_modes', 'success_signals'],
+      peer_decisions: ['phase_cohort'],
+    },
+    quality_rubric: {
+      dimensions: [
+        { name: 'executive_clarity', weight: 25, criteria: 'Exec summary explains the current working picture quickly and concretely' },
+        { name: 'evidence_density', weight: 30, criteria: 'Findings cite evidence, confidence, and implications rather than reading like unsupported narrative' },
+        { name: 'pattern_relevance', weight: 20, criteria: 'Pattern matches are tied to actual evidence and explain why they matter for next-phase design' },
+        { name: 'decision_orientation', weight: 25, criteria: 'Recommendations clearly set up the Phase 2 decision rather than merely recapping findings' },
+      ],
+    },
+    generation_prompt_template: `Produce a Diagnostic Findings Document for \${engagement.id} (\${client.name}), topic: \${topic.title}.
+
+STRUCTURE
+\${structure_as_outline}
+
+SOURCE CONTEXT
+\${engagement.phase_1_findings}
+\${engagement.workstream_outputs}
+\${engagement.hypothesis_tree}
+\${engagement.interview_log}
+\${topic.failure_modes}
+\${peer_cohort_summary}
+
+RULES
+- Executive summary must state the current working attribution and open questions explicitly.
+- Findings by workstream must include evidence summary, confidence, and implications.
+- Pattern matches must cite the evidence that triggered them.
+- Recommendations must set up a concrete Phase 2 decision.
+
+Generate the diagnostic findings document now.`,
+    output_format: 'markdown',
+    maturity: 'pilot',
+  },
+
   // ── 3.1 · Business Case (spec-canonical) ──────────────────────────────
   {
     type_key: 'business_case',

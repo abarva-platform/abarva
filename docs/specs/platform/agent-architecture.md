@@ -5,9 +5,9 @@
 This document specifies the three AI agents that power AbarVa — **Nexus**, **Sentinel**, and **Atlas** — as a unified system. Each agent has its own surface (Programs, Intelligence, Tower), its own memory profile, its own tool belt, and its own failure modes to guard against. Together they cover the full enterprise transformation lifecycle from strategy research through steady-state value tracking.
 
 This spec sits alongside the three product specs:
-- `abarva-programs-design-spec.md` (the Nexus surface)
-- `abarva-intelligence-design-spec.md` (the Sentinel surface)
-- `abarva-tower-design-spec.md` (the Atlas surface)
+- `docs/specs/programs/design-spec.md` (the Nexus surface)
+- `docs/specs/intelligence/design-spec.md` (the Sentinel surface)
+- `docs/specs/tower/design-spec.md` (the Atlas surface)
 
 Read this document when: designing cross-agent handoffs, specifying shared agent infrastructure, implementing refusal patterns, building multi-agent orchestration, or training new people on the AbarVa mental model.
 
@@ -3215,11 +3215,10 @@ Build phasing fully specified across all three agents and all four Tower milesto
 - **Maestros / operators** reference Packet 1 for the "why three agents" mental model with clients
 
 ### Companion specs
-- `abarva-intelligence-design-spec.md` (Sentinel surface detail)
-- `abarva-programs-design-spec.md` (Nexus surface detail)
-- `abarva-tower-design-spec.md` (Atlas surface detail)
+- `docs/specs/intelligence/design-spec.md` (Sentinel surface detail)
+- `docs/specs/programs/design-spec.md` (Nexus surface detail)
+- `docs/specs/tower/design-spec.md` (Atlas surface detail)
 
 This spec is the connective tissue across those three product specs — the unified agent architecture that makes the three surfaces feel like one platform.
 
 ---
-

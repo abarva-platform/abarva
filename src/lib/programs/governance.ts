@@ -19,7 +19,7 @@ import type {
   FounderApprovalRequestRow,
   GateCheck,
   TenancyCtx,
-} from './types';
+} from './types.db';
 import { getProgramById } from './queries';
 
 function assertTenancy(ctx: TenancyCtx): void {

@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 import { createThread, listThreads } from '@/lib/programs/nexus';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
-import type { NexusThreadMode } from '@/lib/programs/types';
+import type { NexusThreadMode } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

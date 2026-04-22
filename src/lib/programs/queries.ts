@@ -4,7 +4,6 @@
 
 import { getServerSupabase } from '@/lib/supabase-server';
 import type {
-  ArchetypeKey,
   FounderApprovalRequestRow,
   MaestroFlag,
   ModuleStatus,
@@ -17,7 +16,8 @@ import type {
   ProgramRiskRow,
   ProgramWorkItemRow,
   TenancyCtx,
-} from './types';
+} from './types.db';
+import type { ArchetypeKey } from './types.ui';
 
 function assertTenancy(ctx: TenancyCtx): void {
   if (!ctx?.clientId || !ctx?.userId) {

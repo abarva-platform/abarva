@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { requireTenancy, tenancyErrorResponse } from '@/app/api/v1/_intel-auth';
+import { requireAtlasTenancy, tenancyErrorResponse } from '@/app/api/v1/atlas/_auth';
 import { runAtlasTurn } from '@/lib/atlas/orchestrator';
 
 export const runtime = 'nodejs';
@@ -7,13 +7,14 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    const ctx = await requireTenancy();
     const body = (await req.json().catch(() => ({}))) as {
       message?: string;
       threadId?: string | null;
       signalId?: string | null;
+      clientId?: string | null;
     };
 
+    const ctx = await requireAtlasTenancy(body.clientId);
     const message = body.message?.trim();
     if (!message) {
       return Response.json({ error: 'bad_request', detail: 'message required' }, { status: 400 });
