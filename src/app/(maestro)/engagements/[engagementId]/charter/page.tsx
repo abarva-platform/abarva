@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const CORAL = '#FF6B4A';
 const AMBER = '#F5C54A';
@@ -29,7 +29,13 @@ export default async function CharterPage({
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
 
-  const charter = (engagement.charter ?? {}) as {
+  const legacyCharter = ((Array.isArray(engagement.deliverables) ? engagement.deliverables : []) as Array<{
+    type?: string;
+    generated_at?: string;
+    content?: Record<string, unknown>;
+  }>).find((item) => item.type === 'engagement_charter' || item.type === 'charter');
+
+  const charter = ((engagement.charter ?? legacyCharter?.content ?? {}) as {
     problem_statement?: string;
     forcing_event?: string;
     scope_in?: string[];
@@ -38,7 +44,7 @@ export default async function CharterPage({
     success_criteria?: string[];
     constraints?: string[];
     generated_at?: string;
-  };
+  });
 
   const isEmpty = Object.keys(charter).length === 0;
 
@@ -70,15 +76,16 @@ export default async function CharterPage({
         </h1>
         <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.1em', marginTop: 6 }}>
           {engagement.industry_code} · {engagement.function_code} · Phase {engagement.current_phase}
-          {charter.generated_at && <> · LOCKED {new Date(charter.generated_at).toLocaleDateString()}</>}
+          {(charter.generated_at || legacyCharter?.generated_at) && <> · LOCKED {new Date(charter.generated_at ?? legacyCharter!.generated_at!).toLocaleDateString()}</>}
         </div>
       </div>
 
       {isEmpty ? (
         <div style={{ padding: 24, border: BORDER, borderRadius: 10, background: PANEL_BG, color: MUTE, fontSize: 14, lineHeight: 1.6 }}>
-          Charter not yet generated. It lands when Phase 0 is approved by the sponsor —
-          Nexus will emit a charter deliverable with problem statement, scope, stakeholders,
-          success criteria, and constraints.
+          Charter not yet generated. It lands when Phase 0 is approved by the sponsor or when the
+          charter generator is re-run for this engagement. Once available, this view renders the
+          problem statement, scope, stakeholder map, success criteria, and constraints directly from
+          the generated artifact.
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
