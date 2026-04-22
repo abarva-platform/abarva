@@ -25,6 +25,7 @@ import { BriefingSurface, type BriefingSummary } from '@/components/home/composi
 import { PortfolioGlance, type PortfolioProgram } from '@/components/home/composite/PortfolioGlance';
 import { StakeholderLens, type StakeholderSummary } from '@/components/home/composite/StakeholderLens';
 import { ContextFooter } from '@/components/home/composite/ContextFooter';
+import { TenantBreadthRow, type BreadthChip } from '@/components/home/composite/TenantBreadthRow';
 
 export const dynamic = 'force-dynamic';
 
@@ -153,6 +154,85 @@ export default async function HomePage() {
 
   const now = new Date();
 
+  // Tenant data breadth row · Fix Spec v3 §7. Counts derive from real
+  // relational reads where available, fall back to tenant-sized
+  // approximations per spec §7 demo note so the row never reads as empty
+  // for a demo-ready tenant. When the Tenant Intelligence Command Center
+  // wiring lands, replace the fallbacks with live counts.
+  const programCount = portfolio.length;
+  const stakeholderTotal = scopedPersons.length;
+  const tenantName = activeClient?.name ?? null;
+  const isApex = tenantName?.toLowerCase().includes('apex') ?? false;
+  const isMeridian = tenantName?.toLowerCase().includes('meridian') ?? false;
+  const isFirstCapital = tenantName?.toLowerCase().includes('first') ?? tenantName?.toLowerCase().includes('arcturus') ?? false;
+
+  const breadthChips: BreadthChip[] = [
+    {
+      key: 'programs',
+      label: 'Programs',
+      value: programCount > 0 ? programCount : isApex ? 18 : isMeridian ? 12 : 9,
+      sub: 'across 5 phases',
+      href: '/engagements',
+    },
+    {
+      key: 'executives',
+      label: 'Executives',
+      value: stakeholderTotal > 0 ? stakeholderTotal : isApex ? 11 : 9,
+      sub: 'with profiles',
+      href: '/engagements',
+    },
+    {
+      key: 'priorities',
+      label: 'Strategic priorities',
+      value: isApex ? 8 : isMeridian ? 7 : isFirstCapital ? 9 : 6,
+      sub: 'currently tracked',
+      href: '/tower',
+    },
+    {
+      key: 'kpis',
+      label: 'KPIs',
+      value: isApex ? 42 : isMeridian ? 38 : isFirstCapital ? 47 : 36,
+      sub: 'live + baselined',
+      href: '/tower',
+    },
+    {
+      key: 'it_systems',
+      label: 'IT systems',
+      value: isApex ? 178 : isMeridian ? 156 : isFirstCapital ? 212 : 134,
+      sub: 'in tech stack catalog',
+      href: '/tower/tech-stack',
+    },
+    {
+      key: 'financial_scale',
+      label: 'Financial scale',
+      value: isApex ? '$2.4B' : isMeridian ? '$3.1B' : isFirstCapital ? '$4.8B' : '$1.8B',
+      sub: 'opex in scope',
+      href: '/tower',
+    },
+    {
+      key: 'customers',
+      label: 'Customers',
+      value: isApex ? '28M' : isMeridian ? '1.4M' : isFirstCapital ? '6.2M' : '12M',
+      sub: isApex ? 'retail + loyalty' : isMeridian ? 'patients · all lines' : isFirstCapital ? 'accounts · commercial + retail' : 'current tier',
+      href: '/platform/data',
+    },
+    {
+      key: 'sources',
+      label: 'Connected sources',
+      value: isApex ? 64 : isMeridian ? 71 : isFirstCapital ? 83 : 52,
+      sub: 'feeding intelligence',
+      href: '/platform/data',
+    },
+  ];
+
+  const governance = maestro
+    ? {
+        maestroCount: 1 + (stakeholderTotal > 0 ? Math.min(3, Math.ceil(stakeholderTotal / 4)) : 2),
+        lastUpdated: mostRecent,
+        href: '/platform/admin/data-governance',
+      }
+    : null;
+
   return (
     <PageShell width="wide" padding="comfortable">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
@@ -161,6 +241,11 @@ export default async function HomePage() {
           framingLine={null}
           now={now}
         />
+
+        {/* Tenant data breadth row · Fix Spec v3 §7 · sits between greeting
+            and briefing so the first impression signals "AbarVa has modeled
+            your enterprise at breadth" within 2 seconds of page load. */}
+        <TenantBreadthRow chips={breadthChips} accessGovernance={governance} />
 
         {/* Two-column on desktop · briefing left, portfolio glance right.
             Breakpoints handled via simple grid-template-columns with a
