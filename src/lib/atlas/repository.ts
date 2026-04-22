@@ -495,7 +495,7 @@ export async function getOrCreateAtlasThread(
     .from('atlas_threads')
     .insert({
       client_id: ctx.clientId,
-      person_id: ctx.userId,
+      person_id: ctx.userId ?? null,
       title: input.title ?? null,
       signal_firing_id: input.signalId ?? null,
       context_scope: input.signalId ? 'signal' : 'portfolio',
