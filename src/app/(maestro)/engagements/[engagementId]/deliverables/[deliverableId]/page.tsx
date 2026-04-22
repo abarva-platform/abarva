@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import {
   getMissingRequiredSections,
@@ -118,6 +119,14 @@ export default async function DeliverableDetailPage({
   const sections = getStructuredSections(latest?.structured_data, latest?.content);
   const evidenceRefs = getStructuredEvidenceRefs(latest?.structured_data, latest?.content);
   const missingRequiredSections = getMissingRequiredSections(latest?.structured_data);
+  const structuredDocument = (() => {
+    const raw = latest?.structured_data;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const candidate = raw as { content?: unknown };
+    return candidate.content && typeof candidate.content === 'object' && !Array.isArray(candidate.content)
+      ? (candidate.content as Record<string, unknown>)
+      : null;
+  })();
 
   return (
     <div
@@ -266,7 +275,19 @@ export default async function DeliverableDetailPage({
             <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 10 }}>
               CONTENT · v{latest?.version ?? '—'}
             </div>
-            {sections.length > 0 ? (
+            {structuredDocument ? (
+              <StructuredArtifactView
+                title="Structured Artifact"
+                document={structuredDocument}
+                ink={INK}
+                mute={MUTE}
+                dim={DIM}
+                teal={TEAL}
+                border={BORDER}
+                panelBg={PANEL_BG}
+                mono={MONO}
+              />
+            ) : sections.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {sections.map((s, i) => (
                   <details

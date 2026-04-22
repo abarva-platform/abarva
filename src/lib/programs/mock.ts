@@ -160,6 +160,54 @@ const charterModules: ModuleState[] = [
 const cdpContent: Record<string, ModuleContent> = {
   'problem-framing': {
     summary: 'Pattern-preloaded framing for unifying customer data across Apex channels into one governed view.',
+    structuredDocument: {
+      program_name: 'Unified Customer Data Platform',
+      archetype: 'Platform Modernization',
+      sponsor: {
+        name: 'Arjun Patel',
+        role: 'Chief Information Officer',
+        organization: 'Apex Retail Group',
+      },
+      business_context: {
+        forcing_event: 'Holiday planning and retail-media reforecasting both require a single customer view before Q4 launch sequencing locks.',
+        business_pain: 'Customer identity, behavior, and activation data live across seven systems, so store, ecommerce, and marketing teams cannot trust a shared audience definition.',
+        sponsor_pressure: 'Arjun needs a governed answer that reads as commercial enablement rather than another infrastructure spend request.',
+      },
+      scope: {
+        in_scope: [
+          'Shopify orders and customer events',
+          'Salesforce Commerce profiles',
+          'Store POS basket data',
+          'CRM and loyalty identity stitching',
+          'Snowflake landing-zone governance',
+        ],
+        out_of_scope: [
+          'New martech procurement before Phase 3',
+          'Store labor workflow redesign',
+          'Media buying process changes outside the customer-data dependency chain',
+        ],
+      },
+      phase_1_entry_commitments: {
+        diagnostic_workstreams: [
+          'Identity and profile unification baseline',
+          'Source-to-target data contract readiness',
+          'Activation use-case value proof for store and digital sponsors',
+        ],
+        first_milestone: 'Within 10 business days, reconcile Salesforce Commerce and store POS keys into a sponsor-approved baseline request.',
+      },
+      decision_rights: {
+        sponsor_decisions: [
+          'Source-owner assignments',
+          'Phase 3 entry approval',
+          'Escalation if baseline alignment slips',
+        ],
+        maestro_decisions: [
+          'Evidence standard for Diagnose',
+          'Pattern preload quality bar',
+          'Cross-functional sequencing recommendations',
+        ],
+      },
+    },
     formFields: [
       { label: 'Core problem', value: 'Customer identity and behavior data live in seven disconnected systems, slowing personalization and store-to-digital coordination.' },
       { label: 'Why now', value: 'Apex wants one customer view before holiday planning and paid-media reforecasting lock.' },
@@ -168,6 +216,53 @@ const cdpContent: Record<string, ModuleContent> = {
   },
   'stakeholder-map': {
     summary: 'Eight retail stakeholders pre-populated across store ops, digital, marketing, data, and merchandising.',
+    structuredDocument: {
+      stakeholders: [
+        {
+          name: 'Arjun Patel',
+          role: 'Chief Information Officer',
+          relationship_to_program: 'sponsor',
+          commitment_status: 'committed',
+          what_we_need: 'Approve source-owner assignments and the Snowflake landing-zone decision path.',
+          approach: 'Keep the case commercial: one trusted customer record tied to retail outcomes, not an infrastructure refresh.',
+        },
+        {
+          name: 'Elena Cruz',
+          role: 'Chief Marketing Officer',
+          relationship_to_program: 'co_sponsor',
+          commitment_status: 'engaged',
+          what_we_need: 'Confirm activation use cases and the first audience segments that justify the business case.',
+          approach: 'Frame this as faster retail-media and lifecycle activation, not a delay to campaign execution.',
+        },
+        {
+          name: 'Dana Mercer',
+          role: 'VP Store Ops',
+          relationship_to_program: 'decision_influencer',
+          commitment_status: 'aware',
+          what_we_need: 'Validate store-side use cases and confirm the in-store data quality bar.',
+          approach: 'Lead with how a shared customer view reduces store-to-digital friction and improves basket conversion.',
+        },
+        {
+          name: 'Sofia Ramirez',
+          role: 'Data Platform Director',
+          relationship_to_program: 'data_owner',
+          commitment_status: 'engaged',
+          what_we_need: 'Own schema alignment and landing-zone readiness across Salesforce Commerce and store POS.',
+          approach: 'Treat her as the technical pacing item and keep sponsor air cover close.',
+        },
+      ],
+      org_graph_view: {
+        reporting_lines: [
+          'Elena Cruz and Arjun Patel both report into the enterprise steering group for holiday readiness.',
+          'Sofia Ramirez owns the Snowflake landing-zone workstream.',
+          'Dana Mercer governs store-side operational adoption and trust.',
+        ],
+        influence_network: [
+          'Marketing will accelerate adoption if activation use cases stay first-class.',
+          'Store ops becomes resistant if identity quality looks like a marketing-only initiative.',
+        ],
+      },
+    },
     formFields: [
       { label: 'Decision owner', value: 'Arjun Patel confirms architecture and sponsor sequencing with Elena Cruz and Dana Mercer.' },
       { label: 'Cross-functional tension', value: 'Marketing wants speed, store ops wants trust in the in-store view, and digital wants identity resolution before Q4 launches.' },
@@ -186,6 +281,39 @@ const cdpContent: Record<string, ModuleContent> = {
   },
   'baseline-data-request': {
     summary: 'Blocked baseline request centered on channel data consolidation across Shopify, Salesforce Commerce, loyalty, service, media, POS, and product systems.',
+    structuredDocument: {
+      requests: [
+        {
+          data_needed: 'Salesforce Commerce profile extract',
+          granularity: 'Customer-level, trailing 12 months',
+          requested_from: 'Sofia Ramirez',
+          status: 'blocked',
+          purpose: 'Identity stitching baseline for Diagnose entry',
+          access_strategy: 'Resolve source-key mapping before requesting the full export',
+        },
+        {
+          data_needed: 'Store POS basket logs',
+          granularity: 'Transaction-level, 12 months trailing',
+          requested_from: 'Dana Mercer',
+          status: 'requested',
+          purpose: 'Tie customer identity to basket and store-behavior outcomes',
+          access_strategy: 'Route through store-ops analytics to avoid reads as a platform-only ask',
+        },
+        {
+          data_needed: 'Loyalty ID crosswalk',
+          granularity: 'Member-level identity graph',
+          requested_from: 'Elena Cruz',
+          status: 'approved',
+          purpose: 'Match digital activation audiences to in-store profiles',
+          access_strategy: 'Position as the minimum viable identity spine for Q4 activation',
+        },
+      ],
+      access_governance: {
+        who_can_see_raw_data: ['Arjun Patel', 'Sofia Ramirez', 'AbarVa Maestro'],
+        who_can_see_analysis: ['Dana Mercer', 'Elena Cruz', 'Alex Kim'],
+        data_retention_policy: 'Program duration plus 90 days, with pattern learnings retained only in aggregated form.',
+      },
+    },
     formFields: [
       { label: 'Requested datasets', value: 'Shopify orders, Salesforce Commerce profiles, store POS basket logs, loyalty IDs, CRM audiences, call-center interactions, product master mappings.' },
       { label: 'Target landing zone', value: 'Snowflake unified customer layer with identity stitching and source-level traceability.' },
@@ -246,8 +374,59 @@ const executeMilestones: Milestone[] = [
 ];
 
 const executeContent: Record<string, ModuleContent> = {
+  'implementation-plan': {
+    summary: 'Signed-off execution plan with owners, dependencies, and review cadence for the current service transformation wave.',
+    structuredDocument: {
+      program_plan: {
+        workstreams: [
+          { name: 'Platform integration', owner: 'Sofia Ramirez', status: 'in_progress', target_date: 'Apr 24' },
+          { name: 'Agent-assist tuning', owner: 'Marcus Hale', status: 'at_risk', target_date: 'May 2' },
+          { name: 'Enablement + supervisor readiness', owner: 'Maya Brooks', status: 'in_progress', target_date: 'Apr 29' },
+        ],
+        dependencies: [
+          'Model evaluation signoff before production tuning',
+          'Supervisor enablement before Wave 2 launch',
+          'Attribution workbook before Verify pack assembly',
+        ],
+        thirty_day_target: 'Recover the one-week tuning slip while preserving CSAT and completing the evidence pack for sponsor review.',
+      },
+    },
+  },
   'build-integration-tracking': {
     summary: 'Execution tracker tying milestones, assignees, savings, and evidence to the retail transformation plan.',
+    structuredDocument: {
+      program_plan: {
+        thirty_day_target: 'Clear the tuning blocker, complete Wave 2 readiness, and lock the sponsor evidence pack for the next operating review.',
+        milestones: [
+          { name: 'Agent-assist operating model locked', owner: 'Alex Kim', date: 'Apr 8', status: 'complete' },
+          { name: 'Commerce + service integration wave', owner: 'Sofia Ramirez', date: 'Apr 24', status: 'in_progress' },
+          { name: 'NVIDIA tuning sprint', owner: 'Marcus Hale', date: 'May 2', status: 'at_risk' },
+        ],
+        dependencies: [
+          'Model evaluation signoff before Wave 2 tuning',
+          'Supervisor enablement pack before rollout expansion',
+          'Attribution evidence before Verify handoff',
+        ],
+      },
+      commitment_tracker: [
+        {
+          commitment: 'Publish sponsor report each Sunday',
+          owner: 'Alex Kim',
+          status: 'in_progress',
+          latest_note: 'Draft is ready; waiting on final attribution line items.',
+        },
+        {
+          commitment: 'Resolve tuning signoff path',
+          owner: 'Marcus Hale',
+          status: 'blocked',
+          latest_note: 'Evaluation signoff remains the pacing constraint.',
+        },
+      ],
+      early_warning_dashboard: [
+        { signal: 'Model tuning drift', severity: 'high', owner: 'Marcus Hale', mitigation: 'Escalate signoff and split safe production phases.' },
+        { signal: 'Supervisor readiness lag', severity: 'medium', owner: 'Maya Brooks', mitigation: 'Collapse enablement into two field-ready packs.' },
+      ],
+    },
     tracker: [
       { label: 'Milestones complete', baseline: '0', target: '6', current: '3', trend: 'On pace' },
       { label: 'Tracked cost reduction', baseline: '0%', target: '30%', current: '18% tracked', trend: 'Positive' },
@@ -256,6 +435,29 @@ const executeContent: Record<string, ModuleContent> = {
   },
   'change-management-plan': {
     summary: 'Change-management sequencing is the strongest risk signal in the Execute view.',
+    structuredDocument: {
+      operating_review_rhythm: {
+        cadence: 'Weekly sponsor review, twice-weekly execution standup, daily integration huddle.',
+        decisions: [
+          'Escalate blocker after 48h unresolved',
+          'Freeze rollout changes 24h before sponsor review',
+          'Attach new evidence before any benefits claim enters the report',
+        ],
+      },
+      intervention_status_report: {
+        intervention: 'Retail contact-center AI rollout',
+        status: 'Active with one material blocker',
+        accomplishments: [
+          'Integration wave is 64% complete',
+          'Three execution milestones have evidence attached',
+          'CSAT uplift remains positive while cost takeout tracks',
+        ],
+        next_risks: [
+          'Supervisor readiness must catch up before Wave 2',
+          'Tuning signoff cannot drift another week without sponsor involvement',
+        ],
+      },
+    },
     formFields: [
       { label: 'Store rollout cadence', value: 'Wave-based launch with digital service pods before full retail-service coverage.' },
       { label: 'Enablement motion', value: 'Manager briefings, agent coaching, and escalation playbooks are staged weekly.' },
@@ -267,6 +469,22 @@ const executeContent: Record<string, ModuleContent> = {
 const verifyContent: Record<string, ModuleContent> = {
   'outcome-measurement': {
     summary: 'Signed-off historical outcome dashboard linking forecasting accuracy to retail operating outcomes.',
+    structuredDocument: {
+      outcome_baseline_report: {
+        attestor: 'Arjun Patel',
+        baseline_metrics: [
+          { metric: 'Forecast accuracy', baseline: '68%', actual: '85%', target: '82%' },
+          { metric: 'Inventory turns', baseline: '6.4x', actual: '7.3x', target: '7.1x' },
+          { metric: 'Same-store sales', baseline: '0.6%', actual: '1.7%', target: '1.4%' },
+        ],
+        measurement_window: 'Holiday planning through end-of-season closeout',
+      },
+      outcome_measurement_report: {
+        attestation_bar: 'All three Verify thresholds must exceed target with signed evidence in the archive.',
+        verified_savings: '$5.9M equivalent operating value from turns, markdown reduction, and sales lift',
+        residual_questions: ['Sustain planner override discipline as category ownership rotates.'],
+      },
+    },
     tracker: [
       { label: 'Forecast accuracy', baseline: '68%', target: '82%', current: '85%', trend: 'Ahead' },
       { label: 'Inventory turns', baseline: '6.4x', target: '7.1x', current: '7.3x', trend: 'Ahead' },
@@ -275,6 +493,29 @@ const verifyContent: Record<string, ModuleContent> = {
   },
   'benefits-realization': {
     summary: 'Historical texture program with signed-off outcomes and pattern feedback already captured.',
+    structuredDocument: {
+      learning_memo: {
+        what_worked: [
+          'Planner override review cadence stayed tied to commercial outcomes.',
+          'Snowflake demand-feature template shortened data-to-model iteration.',
+        ],
+        what_we_would_do_differently: [
+          'Pull supplier volatility signals earlier into the baseline.',
+          'Promote the override exception playbook sooner for regional planners.',
+        ],
+      },
+      genome_contribution_package: {
+        promoted_patterns: [
+          'Planner override review cadence',
+          'Demand-feature template for seasonal forecasting',
+        ],
+        evidence_ledger: [
+          'Signed sponsor attestation memo',
+          'Inventory-turns dashboard export',
+          'Same-store sales closeout pack',
+        ],
+      },
+    },
     narrativeBlocks: [
       { title: 'Outcome attestation', body: 'Apex signed off that forecast accuracy, turns, and same-store sales all exceeded the agreed Verify thresholds.' },
       { title: 'Benefits realized', body: 'The program reduced markdown pressure, lifted in-stock reliability, and improved planner confidence in seasonal buys.' },
@@ -365,6 +606,8 @@ const programs: ProgramFullState[] = [
     gateStatus: 'blocked',
     deliverables: [
       makeDeliverable('deliv-ccai-report', 'Week 16 Sponsor Report', 'build-integration-tracking', 3, PEOPLE.alex, 'Sponsor-facing status report with cost reduction, CSAT, productivity, and risk signals.', 'in_review'),
+      makeDeliverable('deliv-ccai-plan', 'Execution Program Plan', 'implementation-plan', 2, PEOPLE.alex, 'Locked execution sequence, owners, and milestone pacing for the retail service rollout.', 'signed_off'),
+      makeDeliverable('deliv-ccai-change', 'Operating Review Rhythm', 'change-management-plan', 1, PEOPLE.maya, 'Change-management cadence and intervention status for the current execute wave.', 'draft'),
     ],
     metrics: [
       { label: 'Cost reduction tracked', value: '18%', tone: 'teal' },
@@ -636,6 +879,7 @@ const programs: ProgramFullState[] = [
     gateStatus: 'cleared',
     deliverables: [
       makeDeliverable('deliv-forecast-verify', 'Forecasting Outcome Pack', 'outcome-measurement', 2, PEOPLE.tori, 'Signed-off outcome dashboard and benefits realization pack.', 'signed_off'),
+      makeDeliverable('deliv-forecast-learning', 'Learning Memo + Genome Contribution', 'benefits-realization', 1, PEOPLE.arjun, 'Closeout memo documenting what worked, what to change, and what to promote into the pattern library.', 'signed_off'),
     ],
     metrics: [
       { label: 'Forecast accuracy', value: '85%', tone: 'teal' },
