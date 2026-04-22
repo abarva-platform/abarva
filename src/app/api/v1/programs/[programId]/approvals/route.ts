@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 import { getPendingApprovals, getProgramById } from '@/lib/programs/queries';
 import { requestFounderApproval } from '@/lib/programs/governance';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
-import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types';
+import type { ApprovalAuthority, FounderApprovalRequestRow } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -14,6 +14,12 @@ export interface ComposerInput {
   bundle: CompositionBundle;
   format: NexusFormat;
   capability?: 'counter' | { persona: string };
+  /**
+   * Rendered session-context block appended to the system prompt so the
+   * model knows the invoking user, tenant, VIP status, and recent
+   * engagements without being asked.
+   */
+  sessionContextBlock?: string;
   onTextDelta?: (delta: string) => void;
 }
 
@@ -25,6 +31,7 @@ export interface ComposerOutput {
 
 function buildSystemPrompt(input: ComposerInput): string {
   const parts: string[] = [NEXUS_IDENTITY, MODE_INSTRUCTIONS[input.bundle.mode], FORMAT_INSTRUCTIONS[input.format]];
+  if (input.sessionContextBlock) parts.push(input.sessionContextBlock);
   if (input.capability === 'counter') parts.push(COUNTER_ARGUMENT_INSTRUCTIONS);
   else if (input.capability && typeof input.capability === 'object') {
     parts.push(PERSONA_LENS_INSTRUCTIONS(input.capability.persona));

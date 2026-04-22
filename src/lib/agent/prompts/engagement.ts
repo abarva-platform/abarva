@@ -58,19 +58,37 @@ export function assembleEngagementSystemPrompt(ctx: AssembleArgs): string {
 // ─── Gate approval block (shared across phases) ────────────────────────────
 function gateBlockInstruction(phase: number): string {
   return `GATE APPROVAL BLOCK FORMAT
-ONLY emit this block when the sponsor EXPLICITLY approves advancing the phase — "approved", "yes let's advance", "sign it off", "move forward". Do NOT emit when the sponsor is merely discussing or asking about the gate. If unsure, ask for an explicit approval.
+Emit this block the moment the user gives you any clear "yes, advance" signal after
+you've proposed the gate. Accepted signals include:
+- "approved" / "approve it" / "sign it off" / "sign off"
+- "yes" / "yes let's go" / "go ahead" / "let's advance" / "let's move on"
+- "looks good" / "that's right" / "lock it in" / "run with this"
+- "green light" / "ship it" / "send it" / "we're good"
+- Any clear affirmative in response to your proposal, even one word
 
-When the sponsor explicitly approves, write a plain-language confirmation ("Got it. Logging Phase ${phase} gate as approved. Generating the deliverable now.") then emit on its own lines:
+You do NOT need to prompt again for a second confirmation once you've already
+proposed the charter and the user has affirmed. Re-asking is annoying and breaks
+the flow. Trust the first clear yes.
+
+Do NOT emit when the user is:
+- Asking clarifying questions about the gate
+- Revising the scope mid-discussion
+- Expressing reservations ("I'm not sure", "let me think", "come back to this")
+
+When you hit the approval signal, write a brief plain-language confirmation
+("Got it — logging Phase ${phase} as approved. Charter generating now.") then emit
+on its own lines with no surrounding chatter:
 
 <gate_approval>
 {
   "phase": ${phase},
-  "approval_text": "Exact quote or paraphrase of what the sponsor said to approve",
+  "approval_text": "Exact quote or paraphrase of what the user said to approve",
   "summary": "One-sentence summary of what's being approved"
 }
 </gate_approval>
 
-After the block, stop. The server processes the approval, generates the deliverable for that phase, and advances the engagement to the next phase.`;
+After the block, stop. The server processes the approval, generates the deliverable
+for that phase, and auto-opens the next phase with a fresh opener.`;
 }
 
 // ─── Phase 0 · Start ──────────────────────────────────────────────────────
@@ -120,15 +138,30 @@ PEER DECISION INTELLIGENCE
 ${peerDecisions.length === 0 ? '- No comparable decisions yet.' : peerDecisions.map((d) => `- "${d.choice.replace(/_/g, ' ')}" — ${d.engagement_count} engagements, avg $${Math.round(d.avg_outcome_usd / 1000000)}M`).join('\n')}
 
 GATE READINESS CHECK (Phase 0)
-Phase 0 is complete when you have:
-- Understood the forcing event
-- Scoped the problem (in/out)
-- Named stakeholders and sponsor dynamics
-- Surfaced success criteria
-- Noted political or organizational constraints
+Phase 0 is complete when you have SUBSTANTIVE material on at least FOUR of:
+- The forcing event (what kicked this off, why now)
+- Problem scope (in-scope / out-of-scope)
+- Key stakeholders and sponsor dynamics
+- Success criteria (what "done" looks like)
+- Constraints (political, organizational, budget, timeline)
 
-When ALL covered (usually 6-12 substantive turns), propose the gate:
-"I think we have enough to call Phase 0 complete. Here's what I'd put in the charter..." — list problem, scope, stakeholders, success criteria — and ask for explicit approval.
+You do NOT need all five to be deep — a thin-but-named answer on any item counts.
+4-6 substantive turns is normally enough. Do not drag Phase 0 past 8 turns unless
+the user explicitly asks to keep exploring.
+
+As soon as the readiness bar is met, proactively propose the charter:
+
+"I think we have enough to call Phase 0 complete. Here's what I'd put in the charter:
+• Problem: …
+• Scope: in — …; out — …
+• Stakeholders: …
+• Success criteria: …
+• Constraints: …
+
+Do you want me to lock this in and move to Phase 1 Diagnose?"
+
+Wait for the user's response. If they affirm (see approval signals below), emit the
+gate_approval block. If they want to revise, adjust and re-propose.
 
 ${gateBlockInstruction(0)}
 

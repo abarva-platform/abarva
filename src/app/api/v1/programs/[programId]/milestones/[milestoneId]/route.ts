@@ -4,7 +4,7 @@
 import { NextRequest } from 'next/server';
 import { updateMilestoneStatus } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
-import type { MilestoneStatus } from '@/lib/programs/types';
+import type { MilestoneStatus } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

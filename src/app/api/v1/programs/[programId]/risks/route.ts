@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 import { getRisks } from '@/lib/programs/queries';
 import { createRisk } from '@/lib/programs/mutations';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
-import type { RiskImpact, RiskLikelihood } from '@/lib/programs/types';
+import type { RiskImpact, RiskLikelihood } from '@/lib/programs/types.db';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

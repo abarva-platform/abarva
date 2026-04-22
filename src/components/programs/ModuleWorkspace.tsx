@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { requestNexusDraft } from '@/lib/programs/mock';
-import type { ModuleContent, ModuleState, ModuleWorkspaceProps, ProgramFullState, ViewerRole } from '@/lib/programs/types';
+import type { ModuleContent, ModuleState, ModuleWorkspaceProps, ProgramFullState, ViewerRole } from '@/lib/programs/types.ui';
 
 function renderStatusTone(status: ModuleState['status']) {
   if (status === 'blocked') return 'red';

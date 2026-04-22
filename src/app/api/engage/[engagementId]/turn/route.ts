@@ -34,6 +34,8 @@ import {
   proposeOutcomeFee,
 } from '@/lib/db/engagement';
 import { generateDeliverableForPhase } from '@/lib/deliverables/generate';
+import { syncPhaseOneArtifactsFromTurns } from '@/lib/deliverables/live-sync';
+import { phaseOpenerFor } from '@/lib/nexus/gateLifecycle';
 import { checkGuardrail } from '@/lib/agent/guardrail';
 import { detectPatternTriggers, writeTriggerEdge } from '@/lib/agent/pattern-trigger';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
@@ -367,19 +369,45 @@ export async function POST(
           console.error('[outcome-fee]', err);
         }
 
-        // Gate approval detection — emit event BEFORE 'done' so UI can show toast
+        // Phase 1 starter artifacts should keep pace with the live diagnostic
+        // thread rather than freezing at the gate-passed seed content.
+        try {
+          const syncedArtifacts = await syncPhaseOneArtifactsFromTurns({
+            engagementId: engagement.id,
+            currentPhase: engagement.current_phase,
+            userTurn: savedUserTurn,
+            agentTurn: savedTurn,
+            decisions: parseDecisionBlocks(agentFullText),
+            gateApproval: parseGateApprovalBlock(agentFullText),
+          });
+          if (syncedArtifacts > 0) {
+            controller.enqueue(
+              encoder.encode(JSON.stringify({ type: 'deliverables_live_synced', count: syncedArtifacts }) + '\n'),
+            );
+          }
+        } catch (err) {
+          console.error('[deliverables-live-sync]', err);
+        }
+
+        // Gate approval detection — emit event BEFORE 'done' so UI can show toast.
+        // Approver fallback chain: sponsor → maestro → caller → null. Intake-
+        // created engagements frequently have no sponsor linked yet (inline
+        // persona creation races the gate approval), so gating processing on
+        // sponsor-present silently drops the approval. Prefer the most
+        // authoritative signer we can find; the gate advances either way.
         const gateApproval = parseGateApprovalBlock(agentFullText);
-        if (gateApproval && sponsor) {
+        if (gateApproval) {
+          const approverId = sponsor?.id ?? maestro?.id ?? null;
           try {
             const updated = await recordGateApproval({
               engagementId: engagement.id,
               phase: gateApproval.phase,
-              approvedByPersonId: sponsor.id,
+              approvedByPersonId: approverId,
               approvalText: gateApproval.approval_text,
               summary: gateApproval.summary,
             });
             await logAudit({
-              actorPersonId: sponsor?.id ?? null,
+              actorPersonId: approverId,
               action: 'engagement.gate_approved',
               targetTable: 'engagements',
               targetId: engagement.id,
@@ -388,6 +416,7 @@ export async function POST(
               metadata: {
                 approval_text: gateApproval.approval_text,
                 summary: gateApproval.summary,
+                approver_fallback: sponsor ? 'sponsor' : maestro ? 'maestro' : 'none',
               },
             });
             controller.enqueue(
@@ -403,6 +432,35 @@ export async function POST(
             void generateDeliverableForPhase(engagement.id, gateApproval.phase).catch((err) =>
               console.error('[deliverable]', err),
             );
+
+            // Auto-open the next phase · Nexus leads with the opener so the
+            // Maestro isn't left staring at an empty console after approval.
+            // The opener is persisted as a proper agent turn so the thread
+            // stays coherent on reload and is emitted via SSE so the client
+            // renders it immediately without polling.
+            const opener = phaseOpenerFor(updated.current_phase);
+            if (opener && updated.current_phase !== gateApproval.phase) {
+              try {
+                const openerTurn = await appendTurn({
+                  engagementId: engagement.id,
+                  phase: updated.current_phase,
+                  sender: 'agent',
+                  text: opener,
+                });
+                controller.enqueue(
+                  encoder.encode(
+                    JSON.stringify({
+                      type: 'phase_opener',
+                      phase: updated.current_phase,
+                      turnId: openerTurn.id,
+                      text: opener,
+                    }) + '\n',
+                  ),
+                );
+              } catch (err) {
+                console.error('[phase-opener]', err);
+              }
+            }
 
             // Phase 4 gate with a non-zero outcome fee → auto-invoice via Stripe
             if (

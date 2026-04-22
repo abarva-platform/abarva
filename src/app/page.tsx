@@ -20,29 +20,6 @@ import {
   Title,
 } from '@/components/marketing/site'
 
-const heroStats = [
-  {
-    label: 'Global consulting spend',
-    value: '$800B',
-    body: 'Outcome-accountable displacement in progress',
-  },
-  {
-    label: 'Enterprise AI with no verified ROI',
-    value: '73%',
-    body: 'Measurement and governance gap AbarVa closes',
-  },
-  {
-    label: 'Fee only after outcomes verified',
-    value: '0%',
-    body: 'No retainer, no hourly — skin in the game',
-  },
-  {
-    label: 'Time to first intelligence',
-    value: '48h',
-    body: 'From kickoff to your first situation brief',
-  },
-]
-
 const problemCards = [
   {
     value: '$200B',
@@ -217,39 +194,74 @@ export default function HomePage() {
       <AbarvaNav activePage="home" />
 
       <main>
+        {/* Section 1 · Hero · narrative-only per Fix Spec v3 §2. The four
+            hero-stat cards that previously rendered on the right of this
+            section now live in two purpose-built sections below:
+            "The transformation value gap" ($800B + 73%) and
+            "Our commitment" (0% + 48h). Stats belong where their
+            narrative lives. */}
         <section className="marketing-section">
-          <div className="marketing-container marketing-grid-2" style={{ alignItems: 'center' }}>
-            <div>
-              <Eyebrow>Enterprise transformation · AI-native · Outcome-accountable</Eyebrow>
-              <Title>
-                Act on intelligence.
-                <br />
-                Before the window closes.
-              </Title>
-              <Copy style={{ maxWidth: 560, marginBottom: 28 }}>
-                AbarVa is an AI-native enterprise transformation platform. We replace the $800B global consulting category and augment the internal labor teams that do not use consulting — with outcome-based engagements, private-cloud deployment, and a four-layer intelligence system that gets smarter with every engagement.
-              </Copy>
-              <div className="marketing-actions">
-                <Link className="marketing-button marketing-button--primary" href="/sign-in">
-                  Request demo →
-                </Link>
-                <a
-                  className="marketing-button marketing-button--secondary"
-                  href="mailto:partners@abarva.ai?subject=Meridian%20case%20request"
-                >
-                  Read Meridian case →
-                </a>
+          <div className="marketing-container" style={{ maxWidth: 820 }}>
+            <Eyebrow>Enterprise transformation · AI-native · Outcome-accountable</Eyebrow>
+            <Title>
+              Act on intelligence.
+              <br />
+              Before the window closes.
+            </Title>
+            <Copy style={{ maxWidth: 640, marginBottom: 28 }}>
+              AbarVa is an AI-native enterprise transformation platform. We replace the $800B global consulting category and augment the internal labor teams that do not use consulting — with outcome-based engagements, private-cloud deployment, and a four-layer intelligence system that gets smarter with every engagement.
+            </Copy>
+            <div className="marketing-actions">
+              <Link className="marketing-button marketing-button--primary" href="/sign-in">
+                Request demo →
+              </Link>
+              <a
+                className="marketing-button marketing-button--secondary"
+                href="mailto:partners@abarva.ai?subject=Meridian%20case%20request"
+              >
+                Read Meridian case →
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2 · The transformation value gap (NEW · Fix Spec v3 §2).
+            Two problem-anchored numbers side by side with narrative
+            connection. Separates "the world's problem" from "our
+            commitment" (those live below, before closing CTA). */}
+        <section className="marketing-section" id="value-gap">
+          <div className="marketing-container">
+            <Eyebrow>The transformation value gap</Eyebrow>
+            <Title section>
+              The economics are broken at the category level.
+            </Title>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 24,
+                marginTop: 32,
+                marginBottom: 28,
+              }}
+            >
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10 }}>Global consulting spend</div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56 }}>$800B</div>
+                <Copy style={{ color: MUTED }}>
+                  Annual transformation spend across the industry · most of it delivered as decks and handoffs, none of it held to a verified outcome.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10 }}>Enterprise AI with no verified ROI</div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56 }}>73%</div>
+                <Copy style={{ color: MUTED }}>
+                  Portion of enterprise AI programs where the money was spent, the board was briefed, and nobody can prove it worked.
+                </Copy>
               </div>
             </div>
-            <div className="marketing-grid-4">
-              {heroStats.map((item) => (
-                <div className="marketing-card" key={item.label}>
-                  <div className="marketing-eyebrow" style={{ marginBottom: 10 }}>{item.label}</div>
-                  <div className="marketing-stat" style={{ marginBottom: 8 }}>{item.value}</div>
-                  <div style={{ color: MUTED, fontSize: 13, lineHeight: 1.5 }}>{item.body}</div>
-                </div>
-              ))}
-            </div>
+            <Copy style={{ maxWidth: 820, color: 'rgba(255,255,255,0.82)' }}>
+              The transformation market is structurally broken. Value leaks between strategy, programs, and outcomes. The way enterprises build, buy, and verify change has not caught up to what AI makes possible — and what boards, markets, and customers are now asking for.
+            </Copy>
           </div>
         </section>
 
@@ -294,6 +306,48 @@ export default function HomePage() {
               <Copy>
                 Tower surfaces contradictions. Engagements solve them. Intelligence learns from both. The customer becomes permanently sticky because every loop produces more evidence, more memory, and better future judgment.
               </Copy>
+            </div>
+          </div>
+        </section>
+
+        {/* Own it · Build it · Keep it — three-beat narrative spine per Prat
+            Demo Readiness Sprint §Homepage narrative. Sits between the
+            product intro and the architecture depth so the buyer reads the
+            relationship frame before the technical one. */}
+        <section className="marketing-section" id="journey">
+          <div className="marketing-container">
+            <Eyebrow>How it works</Eyebrow>
+            <Title section>
+              Own it · Build it · Keep it.
+            </Title>
+            <Copy style={{ maxWidth: 900, marginBottom: 32 }}>
+              Transformation is your accountability. We make it executable. The intelligence compounds inside your cloud — and stays there.
+            </Copy>
+            <div className="marketing-grid-3" style={{ marginTop: 12 }}>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You own it
+                </div>
+                <Copy>
+                  Your strategy. Your priorities. Your decisions. Transformation accountability sits with you — boards, markets, and customers don&apos;t accept anyone else carrying it. AbarVa doesn&apos;t take it. We make it workable.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You build it
+                </div>
+                <Copy>
+                  AbarVa deploys into your cloud. Your identity, your data residency, your compliance posture. Nine intelligences run against your real operating truth — your telemetry, your financial reality, your executive voice. The transformation you build is yours, end to end.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEAL, marginBottom: 12 }}>
+                  You keep it
+                </div>
+                <Copy>
+                  Your Transformation Genome lives inside your tenant. Every decision, pattern, and outcome compounds as institutional intelligence. Your data never leaves your cloud. Your intelligence never becomes ours. Year over year, the asset deepens — in your hands.
+                </Copy>
+              </div>
             </div>
           </div>
         </section>
@@ -512,6 +566,74 @@ export default function HomePage() {
                   Small, senior team. Building the platform and the operating model together, not bolting one onto the other.
                 </Copy>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section · Our commitment (NEW · Fix Spec v3 §2). Commercial
+            commitments split out from the hero-stats grid so they sit
+            beside the control-tower narrative on page-exit. */}
+        <section className="marketing-section" id="our-commitment">
+          <div className="marketing-container">
+            <Eyebrow>Our commitment</Eyebrow>
+            <Title section>
+              No retainer. No hourly. No vaporware diagnostics.
+            </Title>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: 24,
+                marginTop: 32,
+                marginBottom: 28,
+              }}
+            >
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10, color: TEAL }}>
+                  Fee before verified outcome
+                </div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56, color: TEAL }}>
+                  0%
+                </div>
+                <Copy style={{ color: MUTED }}>
+                  We only get paid after a result you can attest to — baseline locked, outcome tracked, attribution scored. Skin in the game by construction, not by promise.
+                </Copy>
+              </div>
+              <div className="marketing-card">
+                <div className="marketing-eyebrow" style={{ marginBottom: 10, color: TEAL }}>
+                  To first situation intelligence
+                </div>
+                <div className="marketing-stat" style={{ marginBottom: 8, fontSize: 56, color: TEAL }}>
+                  48h
+                </div>
+                <Copy style={{ color: MUTED }}>
+                  From kickoff to your first situation brief. Substance in forty-eight hours, not a twelve-week read-in. The platform does the diagnostic so the humans can spend their time on judgment.
+                </Copy>
+              </div>
+            </div>
+            <Copy style={{ maxWidth: 820, color: 'rgba(255,255,255,0.82)' }}>
+              Outcome-accountable pricing is not a discount or a guarantee — it is the commercial structure that makes the rest of the platform honest. Measurement runs through the Control Tower. Attribution is evidence-backed. Disputes collapse to one source of truth.
+            </Copy>
+          </div>
+        </section>
+
+        {/* Control Tower · value capture narrative per Prat Demo Readiness
+            Sprint §Control tower framing. Sits right before the commercial
+            CTA so the buyer reads "how do we know it's working?" without
+            having to ask. */}
+        <section className="marketing-section marketing-section--dark" id="control-tower">
+          <div className="marketing-container">
+            <Eyebrow>Control tower</Eyebrow>
+            <Title section>
+              Every dollar of value, tracked to source.
+            </Title>
+            <div className="marketing-grid-2" style={{ alignItems: 'start', marginTop: 24, gap: 24 }}>
+              <Copy style={{ maxWidth: 640 }}>
+                AbarVa&apos;s Outcome Intelligence layer baselines transformation value at program initiation, tracks realization over time, and attributes outcome to intervention with explicit confidence notation. You see what worked, what didn&apos;t, and why — not consulting-vintage self-reported impact, but measured, attributable, defensible value capture.
+              </Copy>
+              <Copy style={{ maxWidth: 640, color: 'rgba(255,255,255,0.72)' }}>
+                For outcome-participation engagements, the control tower is also the shared source of truth. The value AbarVa captures a share of is the value you can prove. No black box, no disputes, no end-of-quarter surprises.
+              </Copy>
             </div>
           </div>
         </section>

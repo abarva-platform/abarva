@@ -1,4 +1,8 @@
 import { getServerSupabase } from '@/lib/supabase-server';
+import {
+  assembleExecutiveUserContextBlock,
+  loadExecutiveGreetingData,
+} from '@/lib/executive-profiles/loadExecutiveProfile';
 
 // Layer 4 · USER CONTEXT block for Nexus + Ask Intelligence prompts.
 // Pulls from vip_profiles (migration 038). Empty-safe: returns '' if no
@@ -48,7 +52,18 @@ export interface VipGreetingData {
 
 export async function loadVipGreetingData(args: UserProfileArgs): Promise<VipGreetingData | null> {
   const profile = await loadProfile(args);
-  if (!profile) return null;
+  if (!profile) {
+    const executiveGreeting = await loadExecutiveGreetingData(args);
+    if (!executiveGreeting) return null;
+    return {
+      displayName: executiveGreeting.displayName,
+      firstName: executiveGreeting.firstName,
+      currentTitle: executiveGreeting.currentTitle,
+      currentCompany: executiveGreeting.currentCompany,
+      emphasizeTopics: executiveGreeting.emphasizeTopics,
+      currentInitiatives: executiveGreeting.currentInitiatives,
+    };
+  }
   const firstName = profile.display_name.split(/\s+/)[0] ?? profile.display_name;
   return {
     displayName: profile.display_name,
@@ -157,7 +172,7 @@ function formatStyle(style: Record<string, unknown> | null): string {
 
 export async function assembleUserContextBlock(args: UserProfileArgs): Promise<string> {
   const profile = await loadProfile(args);
-  if (!profile) return '';
+  if (!profile) return assembleExecutiveUserContextBlock(args);
 
   const lines: string[] = [];
   lines.push(`USER CONTEXT · ${profile.display_name} · ${profile.demo_tier.toUpperCase()} tier`);
