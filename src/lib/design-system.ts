@@ -15,12 +15,12 @@ export const COLORS = {
   cardBg:     '#0D1520',  // card background
   surfaceBg:  '#060A12',  // inset surface (inside cards)
   border:     '#1C2D45',  // all borders
-  borderHover:'#2DD4C8',  // border on hover
+  borderHover:'#14B8A6',  // border on hover
 
   // Brand
-  teal:       '#2DD4C8',  // primary brand color
-  tealDim:    'rgba(45,212,200,0.12)', // teal background dim
-  tealBorder: 'rgba(45,212,200,0.25)', // teal border dim
+  teal:       '#14B8A6',  // primary brand color
+  tealDim:    'rgba(20,184,166,0.12)', // teal background dim
+  tealBorder: 'rgba(20,184,166,0.25)', // teal border dim
 
   // Text — ALL white on dark background
   textPrimary:   '#EFF6FF',  // main text — white
@@ -247,7 +247,7 @@ export const COMPONENTS = {
 // ─── CHARTS ────────────────────────────────────────────────────────────────
 
 export const CHART_COLORS = {
-  teal:   '#2DD4C8',  // positive, on track, teal line
+  teal:   '#14B8A6',  // positive, on track, teal line
   red:    '#EF4444',  // critical, declining, red line
   amber:  '#F59E0B',  // warning, amber
   gray:   '#1C2D45',  // benchmark/peer bars

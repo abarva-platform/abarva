@@ -7,7 +7,7 @@
 
 const T = {
   bg: '#060A12', surface: '#0D1520', border: '#1C2D45',
-  teal: '#2DD4C8', tealDim: 'rgba(45,212,200,0.08)', tealBorder: 'rgba(45,212,200,0.20)',
+  teal: '#14B8A6', tealDim: 'rgba(20,184,166,0.08)', tealBorder: 'rgba(20,184,166,0.20)',
   text: '#EFF6FF', text2: 'rgba(255,255,255,0.75)', muted: 'rgba(255,255,255,0.6)',
   red: '#EF4444', redDim: 'rgba(239,68,68,0.10)',
   amber: '#F59E0B', amberDim: 'rgba(245,158,11,0.10)',
@@ -587,7 +587,7 @@ function GenericOutput({ content, outputType }: { content: any; outputType: stri
 
   return (
     <div>
-      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#2DD4C8', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
+      <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '9px', color: '#14B8A6', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: '12px' }}>
         {outputType.replace(/_/g, ' ')}
       </div>
       {Object.entries(content).map(([key, val]) => (

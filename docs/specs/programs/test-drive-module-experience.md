@@ -11,11 +11,11 @@ This document has two related purposes.
 Both purposes are the same work from different angles. Test-Drive Readiness tells Claude Code what to unblock. Module Experience tells Codex what to design and Claude Code what to build. The two tracks compose into a product that holds up to real use.
 
 Reads alongside:
-- `abarva-programs-design-spec.md` — surface-level design, phase structure, artifact inventory
-- `abarva-agent-architecture-spec.md` — Nexus's tool belt, system prompt, refusal patterns
-- `abarva-design-system-spec.md` — canonical tokens and components
-- `abarva-data-layer-future-state-spec.md` — Genome lifecycle that backs Nexus's pattern surfacing
-- `abarva-page-design-backlog.md` — page inventory where this spec's designs become concrete
+- `docs/specs/programs/design-spec.md` — surface-level design, phase structure, artifact inventory
+- `docs/specs/platform/agent-architecture.md` — Nexus's tool belt, system prompt, refusal patterns
+- `docs/specs/platform/design-system.md` — canonical tokens and components
+- `docs/specs/platform/data-layer-future-state.md` — Genome lifecycle that backs Nexus's pattern surfacing
+- `docs/specs/_meta/page-design-backlog.md` — page inventory where this spec's designs become concrete
 
 ## Document structure
 

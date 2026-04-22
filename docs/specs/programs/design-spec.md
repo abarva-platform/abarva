@@ -4,7 +4,7 @@
 **Status:** Track A Packet 1 in progress · 13 packets total
 **Purpose:** Implementation-grade reference for the Programs surface. Intended for engineers and agentic execution (Claude Code, Codex). Companion to Intelligence spec.
 **Companion docs:**
-- `abarva-intelligence-design-spec.md` — Intelligence design (9 packets, complete)
+- `docs/specs/intelligence/design-spec.md` — Intelligence design (9 packets, complete)
 - `abarva-intelligence-session-handoff-apr20.md` — session state
 
 ## Table of contents

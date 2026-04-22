@@ -205,7 +205,7 @@ export default function AdminOutcomes() {
         {/* Client filter */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
           {['all', ...clients].map(c => (
-            <button key={c} onClick={() => setClientFilter(c)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, borderRadius: '20px', border: '1px solid #E2E8F0', cursor: 'pointer', background: clientFilter === c ? '#F0FDF4' : '#FFFFFF', color: clientFilter === c ? '#059669' : '#3C3C3C', borderColor: clientFilter === c ? '#2DD4C8' : '#E2E8F0' }}>
+            <button key={c} onClick={() => setClientFilter(c)} style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, borderRadius: '20px', border: '1px solid #E2E8F0', cursor: 'pointer', background: clientFilter === c ? '#F0FDF4' : '#FFFFFF', color: clientFilter === c ? '#059669' : '#3C3C3C', borderColor: clientFilter === c ? '#14B8A6' : '#E2E8F0' }}>
               {c === 'all' ? 'All Clients' : c.split(' ').slice(0, 2).join(' ')}
             </button>
           ))}

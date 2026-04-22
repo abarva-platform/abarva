@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const CORAL = '#FF6B4A';
@@ -349,7 +349,7 @@ export default async function EngagementTopicsPage({
                   padding: 16,
                   border: `0.5px solid ${PURPLE}`,
                   borderRadius: 12,
-                  background: 'linear-gradient(135deg, rgba(155,109,255,0.06) 0%, rgba(45,212,200,0.04) 100%)',
+                  background: 'linear-gradient(135deg, rgba(155,109,255,0.06) 0%, rgba(20,184,166,0.04) 100%)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 10,
@@ -454,7 +454,7 @@ export default async function EngagementTopicsPage({
                           fontFamily: MONO,
                           fontSize: 9,
                           color: TEAL,
-                          background: 'rgba(45,212,200,0.08)',
+                          background: 'rgba(20,184,166,0.08)',
                           padding: '1px 6px',
                           borderRadius: 3,
                           letterSpacing: '0.1em',

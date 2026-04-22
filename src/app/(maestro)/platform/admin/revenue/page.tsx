@@ -5,7 +5,7 @@ const T = {
   bg: '#0D1117', surface: '#161B22', surface2: '#1C2128',
   border: '#21262D', border2: '#30363D',
   text: '#E6EDF3', text2: '#C9D1D9', text3: '#8B949E',
-  teal: '#2DD4C8', blue: '#4DA3FF', green: '#6EE7B7', amber: '#F59E0B', red: '#EF4444',
+  teal: '#14B8A6', blue: '#4DA3FF', green: '#6EE7B7', amber: '#F59E0B', red: '#EF4444',
   purple: '#A78BFA',
 }
 

@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import { TRANSITIONS, MOTION, FOCUS_RING } from '@/lib/design-system';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-const INK = 'var(--color-text-primary)';
-const TEAL = 'var(--color-teal)';
+const INK = '#F5F5F0';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
@@ -214,21 +214,21 @@ export function AskIntelligenceConsole({ initialQuery }: { initialQuery: string 
         }
         @media (hover: hover) {
           .ask-chip:hover {
-            background: var(--color-teal-dim) !important;
-            color: var(--color-text-primary) !important;
-            border-color: var(--color-teal-border) !important;
+            background: rgba(20,184,166,0.12) !important;
+            color: #F5F5F0 !important;
+            border-color: rgba(20,184,166,0.4) !important;
           }
           .ask-followup:hover {
-            background: var(--color-teal) !important;
-            color: var(--color-page-bg) !important;
+            background: #14B8A6 !important;
+            color: #0A0A0A !important;
           }
           .ask-card:hover {
             background: rgba(255,255,255,0.04) !important;
-            border-color: var(--color-teal-border) !important;
+            border-color: rgba(20,184,166,0.25) !important;
           }
           .ask-source:hover {
             background: rgba(255,255,255,0.04) !important;
-            border-color: var(--color-teal-border) !important;
+            border-color: rgba(20,184,166,0.25) !important;
           }
         }
         .ask-chip:focus-visible,

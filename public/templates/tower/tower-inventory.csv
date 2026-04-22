@@ -1,0 +1,12 @@
+# AbarVa Control Tower · Inventory Template v1.0
+# One row per AI use case. What, who, and where each AI capability lives.
+# Required columns marked with *.
+# Update templates: npm run templates:build
+# In-app catalog: /tower/onboard/inventory
+#
+# status: pilot | production | stalled | sunset
+# data_classes: pipe-separated list (|)
+
+use_case_id*,name*,description,status*,business_owner,technical_owner,vendor,product,data_classes,launch_date,last_reviewed
+# Example row (delete before uploading):
+uc_001,Copilot Clinical Documentation,Ambient clinical documentation for providers.,production,Dr. Sarah Chen,IT Platform Team,Microsoft,Copilot Clinical,PHI|clinical_notes,2024-11-15,2025-09-22

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const INK = '#F5F5F0';
 const BG_DARK = '#0A0A0A';
 const BORDER = '0.5px solid rgba(255,255,255,0.08)';
@@ -72,7 +72,7 @@ export function CitationPill({ sourceKey, section, page }: CitationPillProps) {
           gap: 4,
           padding: '1px 8px',
           margin: '0 2px',
-          background: 'rgba(45,212,200,0.08)',
+          background: 'rgba(20,184,166,0.08)',
           border: `0.5px solid ${TEAL}`,
           borderRadius: 999,
           color: TEAL,

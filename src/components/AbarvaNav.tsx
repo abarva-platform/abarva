@@ -8,17 +8,17 @@ import AbarvaMark from './AbarvaMark'
 
 const NAV_BG    = 'var(--color-page-bg)'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
-const TEAL      = 'var(--color-teal)'
-const NAV_TEXT  = 'var(--color-text-primary)'
-const NAV_MUTE  = 'var(--color-text-secondary)'
-const SANS      = 'var(--font-body-sans)'
-const MONO      = 'var(--font-body-mono)'
-const SERIF     = 'var(--font-body-serif)'
+const TEAL      = '#14B8A6'
+const NAV_TEXT  = '#EFF6FF'
+const NAV_MUTE  = 'rgba(239,246,255,0.85)'
+const SANS      = 'DM Sans, sans-serif'
+const MONO      = 'JetBrains Mono, monospace'
+const SERIF     = 'Georgia, serif'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'
 const DROP_DESC = '#3C3C3C'
-const DROP_CAT  = 'var(--color-teal)'
+const DROP_CAT  = '#14B8A6'
 const DROP_HOVER = '#F9FAFB'
 
 interface NavProps {
@@ -197,16 +197,16 @@ function NavInner({ activePage, compact = false }: NavProps) {
           behavior changes. Honors prefers-reduced-motion. */}
       <style jsx global>{`
         .abarva-nav-link:not(.abarva-nav-link--active):hover {
-          color: var(--color-teal);
+          color: #14B8A6;
         }
         .abarva-nav-link:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
+          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #14B8A6;
         }
         .abarva-avatar-btn:focus-visible,
         .abarva-client-btn:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
+          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #14B8A6;
           border-radius: 8px;
         }
         .abarva-menu-item:hover {
@@ -215,7 +215,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         .abarva-menu-item:focus-visible {
           outline: none;
           background: #F9FAFB !important;
-          box-shadow: inset 2px 0 0 var(--color-teal);
+          box-shadow: inset 2px 0 0 #14B8A6;
         }
         @media (prefers-reduced-motion: reduce) {
           .abarva-nav-link {
@@ -304,7 +304,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
                   </div>
                 </div>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--color-teal-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
                   {initials}
                 </div>
               </button>

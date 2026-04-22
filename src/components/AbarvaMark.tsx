@@ -1,6 +1,6 @@
 'use client'
 
-export default function AbarvaMark({ size = 26, hub = '#2DD4C8', nodes = '#60A5FA' }: {
+export default function AbarvaMark({ size = 26, hub = '#14B8A6', nodes = '#60A5FA' }: {
   size?: number
   hub?: string
   nodes?: string

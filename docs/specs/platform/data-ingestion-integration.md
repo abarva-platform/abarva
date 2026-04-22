@@ -9,11 +9,11 @@ Ingestion is not a utility layer. For an enterprise platform claiming "every eng
 This document extends — and in two places supersedes — the Tower spec's Packet 8 (Upload & Integrations). Wherever extension vs supersede applies, the text is flagged.
 
 Reads alongside:
-- `abarva-tower-design-spec.md` Packet 8 (current-state ingestion surface, being extended here)
-- `abarva-programs-design-spec.md` (Programs-side ingestion paths)
-- `abarva-data-layer-future-state-spec.md` Packet 5 (evidence provenance, which ingestion feeds)
-- `abarva-design-system-spec.md` (UI patterns for all surfaces described)
-- `abarva-agent-architecture-spec.md` (agent behaviors that consume ingested data)
+- `docs/specs/tower/design-spec.md` Packet 8 (current-state ingestion surface, being extended here)
+- `docs/specs/programs/design-spec.md` (Programs-side ingestion paths)
+- `docs/specs/platform/data-layer-future-state.md` Packet 5 (evidence provenance, which ingestion feeds)
+- `docs/specs/platform/design-system.md` (UI patterns for all surfaces described)
+- `docs/specs/platform/agent-architecture.md` (agent behaviors that consume ingested data)
 
 ## Document structure
 

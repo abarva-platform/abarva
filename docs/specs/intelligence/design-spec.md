@@ -1842,7 +1842,7 @@ Context carried forward from memory + handoff + prior specs:
 This doc is canonical reference for the Intelligence page. Implementation should flow from here. Visualizations mentioned as `[VIZ reference — name]` are canonical HTML mockups rendered during the design session and should be consulted alongside this text.
 
 **Next steps:**
-1. Commit this doc to the AbarVa repo at `docs/abarva-intelligence-design-spec.md`
+1. Commit this doc to the AbarVa repo at `docs/specs/intelligence/design-spec.md`
 2. Deliver Packet 9 (Claude Code build execution packet)
 3. Pivot to Programs page 9-packet design
 

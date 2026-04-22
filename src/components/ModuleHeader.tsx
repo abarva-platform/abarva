@@ -5,7 +5,7 @@ import React from 'react'
 // Same tokens as AbarvaNav / SolutionLayout
 const CARD   = '#0D1520'
 const BORDER = '#1C2D45'
-const TEAL   = '#2DD4C8'
+const TEAL   = '#14B8A6'
 const WHITE  = '#EFF6FF'
 const MUTED  = 'rgba(255,255,255,0.85)'
 const MONO   = 'JetBrains Mono, monospace'
