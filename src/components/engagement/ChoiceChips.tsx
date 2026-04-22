@@ -1,5 +1,8 @@
 'use client';
 
+import { TRANSITIONS } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+
 export interface Choice {
   label: string;
   value: string;
@@ -14,6 +17,8 @@ interface Props {
 }
 
 export function ChoiceChips({ choices, onPick, onFreeType, disabled }: Props) {
+  const reducedMotion = useReducedMotion();
+
   if (choices.length === 0) return null;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 10, marginLeft: 4 }}>
@@ -37,7 +42,7 @@ export function ChoiceChips({ choices, onPick, onFreeType, disabled }: Props) {
               cursor: disabled ? 'default' : 'pointer',
               opacity: disabled ? 0.4 : 1,
               fontFamily: 'inherit',
-              transition: 'background 120ms ease',
+              transition: reducedMotion ? undefined : `background-color ${TRANSITIONS.hover}`,
             }}
             onMouseEnter={(e) => {
               if (disabled) return;

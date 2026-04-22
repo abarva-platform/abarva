@@ -14,6 +14,7 @@
 // "full depth" bar without blocking less-developed ones.
 
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getActiveClientRow } from '@/lib/active-client';
 import {
@@ -21,6 +22,7 @@ import {
   type PatternAugmentation,
   type VendorGroup,
 } from '@/lib/intelligence/pattern-augmentations';
+import { getPatternIndustryCompositions } from '@/lib/intelligence/industry-compositions';
 import { PageShell } from '@/components/shared/layout/PageShell';
 import { PageTitle } from '@/components/shared/typography/PageTitle';
 import { SectionHeading } from '@/components/shared/typography/SectionHeading';
@@ -29,6 +31,10 @@ import { Body } from '@/components/shared/typography/Body';
 import { MetaLabel } from '@/components/shared/typography/MetaLabel';
 import { EntityLink } from '@/components/shared/entities/EntityLink';
 import { COLORS } from '@/lib/design-system';
+import { PatternImpactViz } from '@/components/intelligence/PatternImpactViz';
+import { getPatternImpactData } from '@/lib/intelligence/pattern-impact-data';
+import { PatternClusterGraph, type ClusterPattern } from '@/components/intelligence/PatternClusterGraph';
+import { GenomeSuccessRateBars, type InterventionSuccessRate } from '@/components/intelligence/GenomeSuccessRateBars';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,12 +61,81 @@ interface PatternPackRow {
   last_updated: string | null;
 }
 
+interface LinkedKpiRow {
+  id: string;
+  name: string;
+  category: string | null;
+  current_value: number | null;
+  current_unit: string | null;
+}
+
 async function loadPatternRow(patternId: string, clientId: string | null): Promise<PatternPackRow | null> {
   const sb = getServerSupabase();
   let query = sb.from('pattern_packs').select('*').eq('id', patternId);
   if (clientId) query = query.eq('client_id', clientId);
   const { data } = await query.maybeSingle();
   return (data as PatternPackRow | null) ?? null;
+}
+
+async function loadLinkedKpis(linkedIds: string[] | null, clientId: string | null): Promise<LinkedKpiRow[]> {
+  if (!clientId || !linkedIds?.length) return [];
+  const sb = getServerSupabase();
+  const { data } = await sb
+    .from('kpis')
+    .select('id, name, category, current_value, current_unit')
+    .eq('client_id', clientId)
+    .in('id', linkedIds);
+  return (data ?? []) as LinkedKpiRow[];
+}
+
+// Derive a PatternClusterGraph input from the upstream/downstream fields
+// in PatternAugmentation. Upstream entries render as parent_dynamic,
+// downstream as downstream_risk · relationship strength is inferred from
+// position in the list (first = strongest). Citation count is seeded
+// from historical-instances count so visuals stay proportional.
+function deriveCluster(aug: PatternAugmentation): ClusterPattern[] {
+  const cluster: ClusterPattern[] = [];
+  const baseCitations = Math.max(8, aug.historicalInstances.length * 4);
+  aug.upstreamPatterns.forEach((p, i) => {
+    cluster.push({
+      patternId: p.code,
+      patternName: p.name,
+      relationshipStrength: Math.max(0.4, 0.85 - i * 0.12),
+      relationshipType: 'parent_dynamic',
+      citationCount: baseCitations - i * 2,
+    });
+  });
+  aug.downstreamPatterns.forEach((p, i) => {
+    cluster.push({
+      patternId: p.code,
+      patternName: p.name,
+      relationshipStrength: Math.max(0.3, 0.65 - i * 0.1),
+      relationshipType: 'downstream_risk',
+      citationCount: baseCitations - i * 2,
+    });
+  });
+  return cluster;
+}
+
+// Derive intervention success rates from augmentation.interventions.
+// Maps first-three entries to first/second/third degree. Success rate
+// parses leading percentage from the "effectiveness" string; n is parsed
+// from the pattern "n of m" where present. Falls back to reasonable
+// defaults if parsing misses.
+function deriveSuccessRates(aug: PatternAugmentation): InterventionSuccessRate[] {
+  const degrees: Array<'first' | 'second' | 'third'> = ['first', 'second', 'third'];
+  return aug.interventions.slice(0, 3).map((i, idx) => {
+    const pctMatch = i.effectiveness.match(/(\d+)\s*%/);
+    const nMatch = i.effectiveness.match(/(\d+)\s*of\s*(\d+)/i);
+    const successRate = pctMatch ? Number(pctMatch[1]) / 100 : 0.6 - idx * 0.15;
+    const observationCount = nMatch ? Number(nMatch[2]) : Math.max(5, 8 - idx * 2);
+    return {
+      degree: degrees[idx],
+      interventionName: i.option,
+      successRate,
+      observationCount,
+    };
+  });
 }
 
 function stringList(value: unknown): string[] {
@@ -81,6 +156,8 @@ export default async function PatternDetailPage({
   const activeClient = await getActiveClientRow();
   const row = await loadPatternRow(patternKey, activeClient?.id ?? null);
   const augmentation = getPatternAugmentation(patternKey);
+  const industryCompositions = getPatternIndustryCompositions(patternKey);
+  const linkedKpis = await loadLinkedKpis(row?.linked_kpi_ids ?? null, activeClient?.id ?? null);
 
   // If neither a DB row nor an augmentation exists, the route is genuinely
   // 404 · patterns without either have nothing to render.
@@ -132,6 +209,48 @@ export default async function PatternDetailPage({
             ) : null}
           </div>
         </header>
+
+        {industryCompositions.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">INDUSTRY LENSES</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 16 }}>
+              Vertical context pages composed against this pattern
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+              {industryCompositions.map((composition) => (
+                <Link
+                  key={composition.slug}
+                  href={`/intelligence/patterns/${encodeURIComponent(patternKey)}/${encodeURIComponent(composition.verticalKey)}`}
+                  style={{
+                    display: 'block',
+                    padding: '16px 18px',
+                    borderRadius: 12,
+                    textDecoration: 'none',
+                    background: 'rgba(20,184,166,0.08)',
+                    border: '0.5px solid rgba(20,184,166,0.26)',
+                  }}
+                >
+                  <EyebrowLabel tone="teal" size="xs" style={{ marginBottom: 8 }}>
+                    {composition.verticalLabel.toUpperCase()} · INDUSTRY KNOWLEDGE LAYER
+                  </EyebrowLabel>
+                  <Body size="md" weight={600} tone="primary" as="div">
+                    {composition.title}
+                  </Body>
+                  <Body size="sm" tone="secondary" as="div" style={{ marginTop: 6 }}>
+                    {composition.subtitle}
+                  </Body>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {/* Hero impact viz (Fix Spec v4 §2/§3) · renders when we have
+            keyed data for this pattern. Quantifies the cost of doing
+            nothing · sits above the structured depth content. */}
+        {getPatternImpactData(patternKey) ? (
+          <PatternImpactViz patternKey={patternKey} />
+        ) : null}
 
         {/* Section 2 · The failure mode */}
         {augmentation?.failureMode.length || longDescription ? (
@@ -319,6 +438,30 @@ export default async function PatternDetailPage({
           </section>
         ) : null}
 
+        {linkedKpis.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">LINKED KPIS</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+              Metrics this pattern tends to move or expose
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', maxWidth: 1100 }}>
+              {linkedKpis.map((kpi) => (
+                <div key={kpi.id} style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10 }}>
+                  <EntityLink href={`/intelligence/kpis/${encodeURIComponent(kpi.id)}`} variant="inline">
+                    {kpi.name}
+                  </EntityLink>
+                  {kpi.category ? <MetaLabel style={{ display: 'block', marginTop: 6 }}>{kpi.category}</MetaLabel> : null}
+                  {kpi.current_value !== null ? (
+                    <Body size="sm" tone="secondary" style={{ marginTop: 8 }}>
+                      Current · {Number.isInteger(kpi.current_value) ? String(kpi.current_value) : kpi.current_value.toFixed(2).replace(/\.?0+$/, '')}{kpi.current_unit ?? ''}
+                    </Body>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {/* Section 11 · Evidence base */}
         {augmentation?.evidenceBase.length || row?.evidence_summary ? (
           <section>
@@ -374,6 +517,25 @@ export default async function PatternDetailPage({
               ))}
             </div>
           </section>
+        ) : null}
+
+        {/* Cluster graph + success-rate bars · Fix Spec v4 §8 + §9. Render
+            when the pattern has augmentation content · both components
+            synth their data from the augmentation so adding a new pattern
+            to pattern-augmentations.ts automatically lights these up. */}
+        {augmentation ? (
+          <div style={{ display: 'grid', gap: 18, gridTemplateColumns: 'repeat(auto-fit, minmax(460px, 1fr))' }}>
+            <PatternClusterGraph
+              centerPatternId={augmentation.ordinalRef}
+              centerPatternName={name}
+              cluster={deriveCluster(augmentation)}
+            />
+            <GenomeSuccessRateBars
+              interventions={deriveSuccessRates(augmentation)}
+              totalObservations={augmentation.historicalInstances.length * 7}
+              familyDescription={`${augmentation.sectorTag.toLowerCase()} pattern family`}
+            />
+          </div>
         ) : null}
 
         {/* Section 12 · Related patterns + topics */}

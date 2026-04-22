@@ -49,9 +49,9 @@ const INK = '#F5F5F0';
 const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
-const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
-const FONT_MONO = 'JetBrains Mono, monospace';
-const FONT_SERIF = 'Georgia, serif';
+const FONT_BODY = 'var(--font-body-sans)';
+const FONT_MONO = 'var(--font-body-mono)';
+const FONT_SERIF = 'var(--font-body-serif)';
 
 // Strip the full <engagement_ready>...</engagement_ready> block. Applied to
 // the final content after stream completes.

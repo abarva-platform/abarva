@@ -13,7 +13,7 @@
 // a clear attachment point.
 
 import { getServerSupabase } from '@/lib/supabase-server';
-import type { NexusThreadMode, TenancyCtx } from './types';
+import type { NexusThreadMode, TenancyCtx } from './types.db';
 import { getProgramById, getModuleState } from './queries';
 
 function assertTenancy(ctx: TenancyCtx): void {

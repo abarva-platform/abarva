@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
-const NAV_BG    = '#020408'
+const NAV_BG    = 'var(--color-page-bg)'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
 const TEAL      = '#14B8A6'
 const NAV_TEXT  = '#EFF6FF'
@@ -233,7 +233,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         <a href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
           <AbarvaMark size={36} />
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: NAV_TEXT }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
         </a>
@@ -338,7 +338,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
             </div>
           ) : (
             <>
-              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
+              <a href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: NAV_MUTE, textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
                 Login
               </a>
               <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
@@ -355,7 +355,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: '#020408', borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
+    <Suspense fallback={<div style={{ height: '60px', background: NAV_BG, borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
       <NavInner {...props} />
     </Suspense>
   )

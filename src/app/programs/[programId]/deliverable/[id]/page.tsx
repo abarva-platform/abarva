@@ -2,17 +2,36 @@
 
 import { Suspense, use } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { ModuleContent } from '@/lib/programs/types';
+import type { ModuleContent } from '@/lib/programs/types.ui';
 import { getDeliverable, getProgramByIdSync, getViewerRole } from '@/lib/programs/mock';
 import { ProgramShell } from '@/components/programs/ProgramSurface';
+import { TimelineResourceEstimateView } from '@/components/programs/TimelineResourceEstimateView';
+import { ExecutionRoadmapTrackerView } from '@/components/programs/ExecutionRoadmapTrackerView';
 
 function ModuleContentView({ content }: { content: ModuleContent }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 18 }}>
+      {content.timelineEstimate ? <TimelineResourceEstimateView estimate={content.timelineEstimate} /> : null}
+      {content.executionRoadmapTracker ? <ExecutionRoadmapTrackerView tracker={content.executionRoadmapTracker} /> : null}
+
       <div className="programs-card programs-section">
         <div className="programs-eyebrow">Module summary</div>
         <div className="programs-muted">{content.summary}</div>
       </div>
+
+      {content.structuredDocument ? (
+        <StructuredArtifactView
+          title="Structured Artifact"
+          document={content.structuredDocument}
+          ink="var(--programs-text-primary, #F5F5F0)"
+          mute="var(--programs-text-secondary, rgba(245,245,240,0.72))"
+          dim="rgba(245,245,240,0.48)"
+          teal="var(--programs-accent, #14B8A6)"
+          border="1px solid rgba(255,255,255,0.08)"
+          panelBg="rgba(255,255,255,0.02)"
+          mono="JetBrains Mono, monospace"
+        />
+      ) : null}
 
       {content.formFields && content.formFields.length > 0 && (
         <div className="programs-card programs-section">
@@ -151,7 +170,7 @@ function ProgramDeliverablePageContent({
   const viewerRole = getViewerRole(searchParams.get('role'));
   const program = getProgramByIdSync(programId);
   const deliverable = getDeliverable(programId, id);
-  const module = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
+  const programModule = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
   const moduleContent = deliverable && program ? program.moduleContent[deliverable.moduleKey] ?? null : null;
 
   if (!program || !deliverable) {
@@ -167,8 +186,8 @@ function ProgramDeliverablePageContent({
           <span className="programs-chip">{deliverable.status}</span>
           <span className="programs-chip">v{deliverable.version}</span>
           <span className="programs-chip">{deliverable.owner.name}</span>
-          {module ? <span className="programs-chip">{module.name}</span> : null}
-          {module ? <span className="programs-chip">Phase {module.phase}</span> : null}
+          {programModule ? <span className="programs-chip">{programModule.name}</span> : null}
+          {programModule ? <span className="programs-chip">Phase {programModule.phase}</span> : null}
         </div>
         <div className="programs-card programs-section" style={{ marginTop: 18 }}>
           <div className="programs-eyebrow">Summary</div>

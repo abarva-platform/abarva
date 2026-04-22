@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { COLORS } from '@/lib/design-system';
-import type { ActivityEntry, ProgramFullState } from '@/lib/programs/types';
+import type { ActivityEntry, ProgramFullState } from '@/lib/programs/types.ui';
 import { EyebrowLabel } from '@/components/shared/typography/EyebrowLabel';
 import { Body } from '@/components/shared/typography/Body';
 import { MetaLabel } from '@/components/shared/typography/MetaLabel';

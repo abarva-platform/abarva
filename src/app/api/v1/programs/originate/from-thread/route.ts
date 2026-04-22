@@ -12,7 +12,7 @@ import { classifyOrigination } from '@/lib/programs/classifier';
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../_auth';
-import type { ArchetypeKey, OriginationForm, PatternMatch } from '@/lib/programs/types';
+import type { ArchetypeKey, OriginationForm, PatternMatch } from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

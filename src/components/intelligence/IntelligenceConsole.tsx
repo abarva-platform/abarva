@@ -10,16 +10,16 @@ interface Props {
   initialCode: string | null;
 }
 
-const BG = '#0A0A0A';
-const INK = '#F5F5F0';
-const TEAL = '#14B8A6';
+const BG = 'var(--color-page-bg)';
+const INK = 'var(--color-text-primary)';
+const TEAL = 'var(--color-teal)';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
-const MUTE = 'rgba(245, 245, 240, 0.72)';
+const MUTE = 'var(--color-text-secondary)';
 const CORAL = '#FF6B4A';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
-const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
-const FONT_MONO = 'JetBrains Mono, monospace';
+const FONT_BODY = 'var(--font-body-sans)';
+const FONT_MONO = 'var(--font-body-mono)';
 
 type QueryResult = {
   cypher: string | null;

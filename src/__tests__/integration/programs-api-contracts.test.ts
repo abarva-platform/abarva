@@ -12,7 +12,7 @@
  */
 
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
-import type { PatternClassifierMatch } from '@/lib/programs/types';
+import type { PatternClassifierMatch } from '@/lib/programs/types.db';
 
 describe('Programs API · route module shapes', () => {
   it('exports GET + POST on /api/v1/programs', async () => {

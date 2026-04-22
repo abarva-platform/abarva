@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { getProgramModuleSync, getViewerRole } from '@/lib/programs/mock';
 import { ModuleWorkspaceShell } from '@/components/programs/ModuleWorkspace';
 import { ProgramShell } from '@/components/programs/ProgramSurface';
-import type { ModuleWorkspaceProps } from '@/lib/programs/types';
+import type { ModuleWorkspaceProps } from '@/lib/programs/types.ui';
 
 function inferPattern(moduleKey: string): ModuleWorkspaceProps['renderPattern'] {
   if (['problem-framing', 'stakeholder-map', 'success-criteria', 'baseline-data-request', 'diagnostic-instrument', 'implementation-plan', 'change-management-plan'].includes(moduleKey)) {

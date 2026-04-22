@@ -1,28 +1,60 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #060a12;
+  --foreground: #eff6ff;
+
+  --color-page-bg: #060a12;
+  --color-card-bg: #0d1520;
+  --color-surface-bg: #060a12;
+  --color-border: #1c2d45;
+  --color-border-hover: #14b8a6;
+
+  --color-teal: #14b8a6;
+  --color-teal-dim: rgba(20, 184, 166, 0.12);
+  --color-teal-border: rgba(20, 184, 166, 0.25);
+
+  --color-text-primary: #eff6ff;
+  --color-text-secondary: rgba(255, 255, 255, 0.75);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
+  --color-text-disabled: #374151;
+
+  --color-red: #ef4444;
+  --color-red-dim: rgba(239, 68, 68, 0.12);
+  --color-amber: #f59e0b;
+  --color-amber-dim: rgba(245, 158, 11, 0.12);
+  --color-green: #34d399;
+  --color-green-dim: rgba(52, 211, 153, 0.12);
+  --color-indigo: #818cf8;
+  --color-indigo-dim: rgba(129, 140, 248, 0.12);
+
+  --font-body-sans: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-body-serif: "Fraunces", Georgia, serif;
+
+  --space-page-inline: 24px;
+  --space-page-inline-wide: 32px;
+  --space-page-inline-mobile: 16px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body-sans);
+  --font-mono: var(--font-body-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: var(--color-page-bg);
+    --foreground: var(--color-text-primary);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'DM Sans', -apple-system, sans-serif;
+  font-family: var(--font-body-sans);
   font-size: 16px;
   line-height: 1.55;
 }
@@ -37,8 +69,8 @@ body {
 .product-shell {
   max-width: 1280px;
   margin: 0 auto;
-  padding-left: 24px;
-  padding-right: 24px;
+  padding-left: var(--space-page-inline);
+  padding-right: var(--space-page-inline);
   box-sizing: border-box;
 }
 .product-shell--wide {
@@ -54,14 +86,14 @@ body {
 }
 @media (min-width: 1600px) {
   .product-shell {
-    padding-left: 32px;
-    padding-right: 32px;
+    padding-left: var(--space-page-inline-wide);
+    padding-right: var(--space-page-inline-wide);
   }
 }
 @media (max-width: 640px) {
   .product-shell {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: var(--space-page-inline-mobile);
+    padding-right: var(--space-page-inline-mobile);
   }
 }
 
@@ -73,7 +105,7 @@ body {
    (EyebrowLabel, Body, MetaLabel) already honour the new base. */
 .ds-eyebrow--mono,
 .product-shell [data-mono-eyebrow] {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-body-mono);
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -89,7 +121,7 @@ body {
 .metadata,
 .timestamp {
   font-size: 12px;
-  color: rgba(245, 245, 240, 0.72);
+  color: var(--color-text-secondary);
   letter-spacing: 0.01em;
 }
 
@@ -128,7 +160,7 @@ body {
   padding: 10px 16px;
   border: 1px solid #14B8A6;
   border-radius: 6px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-body-mono);
   font-size: 12px;
   z-index: 9999;
   text-decoration: none;

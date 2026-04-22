@@ -26,6 +26,7 @@ import { PortfolioGlance, type PortfolioProgram } from '@/components/home/compos
 import { StakeholderLens, type StakeholderSummary } from '@/components/home/composite/StakeholderLens';
 import { ContextFooter } from '@/components/home/composite/ContextFooter';
 import { TenantBreadthRow, type BreadthChip } from '@/components/home/composite/TenantBreadthRow';
+import { CommandCenter } from '@/components/home/command-center/CommandCenter';
 
 export const dynamic = 'force-dynamic';
 
@@ -246,6 +247,10 @@ export default async function HomePage() {
             and briefing so the first impression signals "AbarVa has modeled
             your enterprise at breadth" within 2 seconds of page load. */}
         <TenantBreadthRow chips={breadthChips} accessGovernance={governance} />
+
+        {/* Command center · Fix Spec v4 §10/§11/§12 · IT Stack · Vendors ·
+            Uploaded Data tabs under a single section below breadth row. */}
+        <CommandCenter tenantKey={activeClient?.name ?? null} />
 
         {/* Two-column on desktop · briefing left, portfolio glance right.
             Breakpoints handled via simple grid-template-columns with a

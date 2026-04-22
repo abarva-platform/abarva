@@ -1,5 +1,24 @@
+// Fix Spec v4 §1 · Platform page rebuild.
+//
+// Seven opinionated sections · Vendor Knowledge Layer design DNA
+// applied to platform architecture instead of pattern content. Replaces
+// the prior admin-metrics dashboard · those metrics move to
+// /platform/admin (already the operator hub).
+//
+// Audience: investors + prospects · "structurally different from
+// consulting and SaaS" is the rhetorical move. Each section must carry
+// current 2026 knowledge + architectural opinion + specificity.
+
 import Link from 'next/link';
-import { getServerSupabase } from '@/lib/supabase-server';
+import type { CSSProperties } from 'react';
+import { PageShell } from '@/components/shared/layout/PageShell';
+import { PageTitle } from '@/components/shared/typography/PageTitle';
+import { SectionHeading } from '@/components/shared/typography/SectionHeading';
+import { EyebrowLabel } from '@/components/shared/typography/EyebrowLabel';
+import { Body } from '@/components/shared/typography/Body';
+import { MetaLabel } from '@/components/shared/typography/MetaLabel';
+import { EntityLink } from '@/components/shared/entities/EntityLink';
+import { COLORS } from '@/lib/design-system';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,130 +76,115 @@ async function loadPlatformMetrics(clientId: string | null) {
   };
 }
 
-function Card({
-  label,
-  accent,
-  href,
-  hero,
-  sub,
-  children,
-}: {
-  label: string;
-  accent: string;
-  href: string;
-  hero: React.ReactNode;
-  sub: React.ReactNode;
-  children?: React.ReactNode;
-}) {
+function FinancialRow({ label, amount, note, bold }: { label: string; amount: string; note: string; bold?: boolean }) {
   return (
-    <Link
-      href={href}
+    <div
       style={{
-        display: 'block',
-        padding: '18px 20px',
-        background: PANEL_BG,
-        border: BORDER,
+        padding: bold ? 20 : 16,
+        background: bold ? 'rgba(45,212,200,0.08)' : 'rgba(255,255,255,0.02)',
+        border: `0.5px solid ${bold ? COLORS.teal : 'rgba(255,255,255,0.08)'}`,
         borderRadius: 10,
-        color: INK,
-        textDecoration: 'none',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto',
+        gap: 20,
+        alignItems: 'baseline',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-        <span style={{ width: 5, height: 5, borderRadius: '50%', background: accent }} />
-        <span style={{ fontFamily: MONO, fontSize: 9, color: accent, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+      <div>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: 'rgba(245,245,240,0.85)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
           {label}
-        </span>
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 500, color: INK, letterSpacing: '-0.01em' }}>{hero}</div>
-      <div style={{ fontSize: 12, color: MUTE, marginTop: 4 }}>{sub}</div>
-      {children}
-    </Link>
-  );
-}
-
-export default async function PlatformPage() {
-  const { getActiveClientRow } = await import('@/lib/active-client');
-  const activeClient = await getActiveClientRow();
-  const m = await loadPlatformMetrics(activeClient?.id ?? null);
-  const coveragePct = m.of > 0 ? Math.round((m.present / m.of) * 100) : 0;
-
-  return (
-    <div style={{ padding: '40px 40px 64px', width: '100%', maxWidth: 1800, margin: '0 auto', color: INK, fontFamily: 'DM Sans, sans-serif' }}>
-      <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 10 }}>
-        PLATFORM{activeClient ? ` · ${activeClient.name.toUpperCase()}` : ''}
-      </div>
-      <h1 style={{ fontFamily: 'Georgia, serif', fontSize: 32, fontWeight: 400, color: INK, margin: '0 0 6px' }}>
-        Operational hub
-      </h1>
-      <p style={{ fontSize: 14, color: MUTE, marginBottom: 32, maxWidth: 720 }}>
-        Data onboarding, users, integrations, observability, billing. The machinery behind the three products.
-      </p>
-
-      {/* Hero cards — all metrics scoped to active client */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12, marginBottom: 40 }}>
-        <Card
-          label="Data coverage"
-          accent={coveragePct >= 75 ? GREEN : coveragePct >= 40 ? AMBER : CORAL}
-          href="/platform/data"
-          hero={`${coveragePct}%`}
-          sub={`${m.present} of ${m.of} core domains populated${activeClient ? ` for ${activeClient.name}` : ''}`}
-        />
-        <Card
-          label="Users"
-          accent={BLUE}
-          href="/platform/users/new"
-          hero={`${m.personCount}`}
-          sub={`active persons · click to add`}
-        />
-        <Card
-          label="Tech stack catalog"
-          accent={TEAL}
-          href="/tower/tech-stack"
-          hero={`${m.techStackTotal}`}
-          sub={`items across ${m.techCategoryCount} categories`}
-        />
-        <Card
-          label="Knowledge sources"
-          accent={AMBER}
-          href="/intelligence/library"
-          hero={`${m.knowledgeSourceCount}`}
-          sub={m.knowledgeSourceCount === 0 ? 'awaiting ingestion · Tier 1-4 ready to run' : 'registered sources'}
-        />
-      </div>
-
-      {/* Quick links to sub-surfaces */}
-      <section>
-        <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 12 }}>
-          SUB-SURFACES
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-          <QuickLink href="/platform/data" title="Data" sub="Upload, sources, templates" />
-          <QuickLink href="/platform/users/new" title="Users" sub="Invite + role management" />
-          <QuickLink href="/platform/data" title="Data onboarding" sub="Wizard for new client sources" />
-          <QuickLink href="/tower" title="Control Tower" sub="Portfolio dashboard" />
-          <QuickLink href="/intelligence/library" title="Intelligence · Library" sub="Knowledge catalog" />
-        </div>
-      </section>
+        <Body size="sm" tone="secondary" style={{ marginTop: 6, lineHeight: 1.55, maxWidth: 640 }}>
+          {note}
+        </Body>
+      </div>
+      <div style={{ fontFamily: 'Georgia, serif', fontSize: bold ? 32 : 24, color: bold ? COLORS.teal : COLORS.textPrimary, letterSpacing: '-0.005em', whiteSpace: 'nowrap' }}>
+        {amount}
+      </div>
     </div>
   );
 }
 
-function QuickLink({ href, title, sub }: { href: string; title: string; sub: string }) {
+function WhyColumn({ title, body }: { title: string; body: string }) {
   return (
-    <Link
-      href={href}
-      style={{
-        display: 'block',
-        padding: '14px 16px',
-        background: PANEL_BG,
-        border: BORDER,
-        borderRadius: 8,
-        color: INK,
-        textDecoration: 'none',
-      }}
-    >
-      <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 12, color: MUTE }}>{sub}</div>
-    </Link>
+    <div style={{ padding: 16, background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 10 }}>
+      <EyebrowLabel tone="teal" size="xs">{title.toUpperCase()}</EyebrowLabel>
+      <Body size="sm" tone="secondary" style={{ marginTop: 8, lineHeight: 1.55 }}>{body}</Body>
+    </div>
   );
 }
+
+function SectionLinkTOC() {
+  const links = [
+    { href: '#knowledge-architecture', label: 'Knowledge architecture' },
+    { href: '#methodology', label: 'Methodology' },
+    { href: '#agents', label: 'Agents' },
+    { href: '#compounding-assets', label: 'Compounding assets' },
+    { href: '#outcome-economics', label: 'Outcome economics' },
+    { href: '#composability', label: 'Composability' },
+    { href: '#comparison', label: 'Comparison' },
+  ];
+  return (
+    <nav aria-label="Platform sections" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {links.map((l) => (
+        <Link
+          key={l.href}
+          href={l.href}
+          style={{
+            display: 'inline-block',
+            padding: '6px 12px',
+            background: 'rgba(255,255,255,0.03)',
+            border: '0.5px solid rgba(45,212,200,0.2)',
+            borderRadius: 999,
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            color: 'rgba(245,245,240,0.75)',
+            letterSpacing: '0.08em',
+            textDecoration: 'none',
+          }}
+        >
+          {l.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+const headStyle: CSSProperties = {
+  textAlign: 'left',
+  padding: '14px 14px',
+  background: 'rgba(10,10,10,0.5)',
+  fontFamily: 'JetBrains Mono, monospace',
+  fontSize: 10,
+  color: 'rgba(245,245,240,0.75)',
+  letterSpacing: '0.14em',
+  textTransform: 'uppercase',
+  borderBottom: '0.5px solid rgba(45,212,200,0.25)',
+  whiteSpace: 'nowrap',
+};
+
+const cellStyle: CSSProperties = {
+  padding: '14px 14px',
+  fontFamily: 'DM Sans, sans-serif',
+  fontSize: 13,
+  color: 'rgba(245,245,240,0.85)',
+  lineHeight: 1.55,
+  borderBottom: '0.5px solid rgba(255,255,255,0.05)',
+  verticalAlign: 'top',
+};
+
+const rowAccent: CSSProperties = {
+  background: 'rgba(245,158,11,0.04)',
+  fontStyle: 'italic',
+};
+
+const mean: CSSProperties = {
+  padding: '10px 14px',
+  background: 'rgba(255,255,255,0.02)',
+  border: '0.5px solid rgba(45,212,200,0.12)',
+  borderRadius: 6,
+  fontFamily: 'JetBrains Mono, monospace',
+  fontSize: 12,
+  color: 'rgba(245,245,240,0.9)',
+  letterSpacing: '0.02em',
+};
