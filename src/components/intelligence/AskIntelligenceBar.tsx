@@ -10,6 +10,7 @@ export function AskIntelligenceBar({
   onSuggestedTap,
   onFileSelected,
   attachments,
+  placeholder,
   disabled,
 }: {
   suggestedQueries: string[];
@@ -17,6 +18,7 @@ export function AskIntelligenceBar({
   onSuggestedTap: (query: string) => void;
   onFileSelected: (file: File) => void;
   attachments: UploadedAttachment[];
+  placeholder?: string;
   disabled?: boolean;
 }) {
   const [query, setQuery] = useState('');
@@ -28,7 +30,7 @@ export function AskIntelligenceBar({
       <div className="intel-askbar" style={{ marginTop: 12 }}>
         <textarea
           className="intel-askbar-input"
-          placeholder="What are health systems like us doing on ambient documentation?"
+          placeholder={placeholder ?? 'What are health systems like us doing on ambient documentation?'}
           value={query}
           disabled={disabled}
           spellCheck
