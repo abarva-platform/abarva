@@ -381,14 +381,19 @@ export default function PlatformPage() {
                 style={{
                   margin: '14px 0 0',
                   fontFamily: SERIF,
-                  // Shrunk from clamp(64, 9vw, 142) · "Transformation" was
-                  // clipping at desktop widths when the right-side schematic
-                  // claims ~45% of the grid column.
-                  fontSize: 'clamp(52px, 6.2vw, 108px)',
-                  lineHeight: 0.92,
-                  letterSpacing: '-0.045em',
-                  maxWidth: 820,
+                  // "Transformation" is 14 characters · at ~0.6× em advance
+                  // the word needs ~8× the font-size in pixels. With the
+                  // schematic panel claiming ~45% of the grid column, the
+                  // headline block is only ~720-760px wide at desktop · so
+                  // max font-size has to land around 80-84px to keep the
+                  // first word on one line. Kept `text-wrap: balance` as a
+                  // safety net for the two shorter following words.
+                  fontSize: 'clamp(44px, 5vw, 82px)',
+                  lineHeight: 0.95,
+                  letterSpacing: '-0.035em',
+                  maxWidth: 760,
                   color: INK,
+                  textWrap: 'balance' as const,
                 }}
               >
                 Transformation architecture with visible discipline.
