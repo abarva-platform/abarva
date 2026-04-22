@@ -5,10 +5,15 @@ import { useSearchParams } from 'next/navigation';
 import type { ModuleContent } from '@/lib/programs/types';
 import { getDeliverable, getProgramByIdSync, getViewerRole } from '@/lib/programs/mock';
 import { ProgramShell } from '@/components/programs/ProgramSurface';
+import { TimelineResourceEstimateView } from '@/components/programs/TimelineResourceEstimateView';
+import { ExecutionRoadmapTrackerView } from '@/components/programs/ExecutionRoadmapTrackerView';
 
 function ModuleContentView({ content }: { content: ModuleContent }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 18 }}>
+      {content.timelineEstimate ? <TimelineResourceEstimateView estimate={content.timelineEstimate} /> : null}
+      {content.executionRoadmapTracker ? <ExecutionRoadmapTrackerView tracker={content.executionRoadmapTracker} /> : null}
+
       <div className="programs-card programs-section">
         <div className="programs-eyebrow">Module summary</div>
         <div className="programs-muted">{content.summary}</div>
@@ -151,7 +156,7 @@ function ProgramDeliverablePageContent({
   const viewerRole = getViewerRole(searchParams.get('role'));
   const program = getProgramByIdSync(programId);
   const deliverable = getDeliverable(programId, id);
-  const module = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
+  const deliverableModule = program?.modules.find((item) => item.moduleKey === deliverable?.moduleKey) ?? null;
   const moduleContent = deliverable && program ? program.moduleContent[deliverable.moduleKey] ?? null : null;
 
   if (!program || !deliverable) {
@@ -167,8 +172,8 @@ function ProgramDeliverablePageContent({
           <span className="programs-chip">{deliverable.status}</span>
           <span className="programs-chip">v{deliverable.version}</span>
           <span className="programs-chip">{deliverable.owner.name}</span>
-          {module ? <span className="programs-chip">{module.name}</span> : null}
-          {module ? <span className="programs-chip">Phase {module.phase}</span> : null}
+          {deliverableModule ? <span className="programs-chip">{deliverableModule.name}</span> : null}
+          {deliverableModule ? <span className="programs-chip">Phase {deliverableModule.phase}</span> : null}
         </div>
         <div className="programs-card programs-section" style={{ marginTop: 18 }}>
           <div className="programs-eyebrow">Summary</div>
