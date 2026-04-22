@@ -83,6 +83,18 @@ interface Stage1Result {
   objectives: string[];
 }
 
+function normalizeIndustry(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  const upper = raw.toUpperCase();
+  if (upper === 'FINSERV' || upper.includes('FINANCIAL')) return 'FINSERV';
+  if (upper === 'HEALTHCARE_IDN' || upper.includes('HEALTHCARE') || upper.includes('IDN')) return 'HEALTHCARE_IDN';
+  if (upper === 'RETAIL') return 'RETAIL';
+  if (upper === 'GENERAL' || upper === 'ENTERPRISE' || upper === 'CROSS_INDUSTRY') return 'GENERAL';
+  return raw;
+}
+
 async function extractIntent(input: ClassifierInput): Promise<Stage1Result> {
   const anthropic = getAnthropic();
   if (!anthropic) {
@@ -106,12 +118,17 @@ async function extractIntent(input: ClassifierInput): Promise<Stage1Result> {
     const parsed = JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, '')) as Partial<Stage1Result>;
     return {
       archetype: (parsed.archetype as ArchetypeKey) ?? input.archetypeHint ?? null,
-      industry: parsed.industry ?? input.industry ?? null,
+      industry: normalizeIndustry(input.industry) ?? normalizeIndustry(parsed.industry) ?? null,
       entities: Array.isArray(parsed.entities) ? parsed.entities : input.entities ?? [],
       objectives: Array.isArray(parsed.objectives) ? parsed.objectives : [],
     };
   } catch {
-    return { archetype: input.archetypeHint ?? null, industry: input.industry ?? null, entities: input.entities ?? [], objectives: [] };
+    return {
+      archetype: input.archetypeHint ?? null,
+      industry: normalizeIndustry(input.industry) ?? null,
+      entities: input.entities ?? [],
+      objectives: [],
+    };
   }
 }
 
@@ -120,6 +137,14 @@ interface VectorMatchRaw {
   patternKey: string;
   score: number;
   metadata: Record<string, unknown>;
+}
+
+function metadataString(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
+
+function metadataStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string' && item.length > 0) : [];
 }
 
 async function embed(text: string): Promise<number[] | null> {
@@ -140,23 +165,31 @@ async function vectorMatch(input: ClassifierInput, stage1: Stage1Result, topK = 
   if (!queryEmbed) return [];
   try {
     const index = pc.index(INDEX_NAME);
-    const filter: Record<string, unknown> = {};
-    if (stage1.archetype) filter.archetype = { $eq: stage1.archetype };
-    // Vector metadata stores `industries` as an array (multiple industry tags
-    // per pattern). Use $in semantics so the filter matches when the list
-    // contains the target industry.
-    if (stage1.industry) filter.industries = { $in: [stage1.industry] };
-    const result = await index.namespace(PATTERN_NAMESPACE).query({
-      vector: queryEmbed,
-      topK,
-      includeMetadata: true,
-      filter: Object.keys(filter).length ? filter : undefined,
-    });
-    return (result.matches ?? []).map((m) => ({
-      patternKey: (m.metadata?.pattern_key as string) ?? m.id,
-      score: m.score ?? 0,
-      metadata: (m.metadata ?? {}) as Record<string, unknown>,
-    }));
+    const filters: Array<Record<string, unknown> | undefined> = [];
+    if (stage1.archetype || stage1.industry) {
+      const strict: Record<string, unknown> = {};
+      if (stage1.archetype) strict.archetype = { $eq: stage1.archetype };
+      if (stage1.industry) strict.industries = { $in: [stage1.industry] };
+      filters.push(strict);
+    }
+    if (stage1.industry) filters.push({ industries: { $in: [stage1.industry] } });
+    filters.push(undefined);
+
+    for (const filter of filters) {
+      const result = await index.namespace(PATTERN_NAMESPACE).query({
+        vector: queryEmbed,
+        topK,
+        includeMetadata: true,
+        filter,
+      });
+      const matches = (result.matches ?? []).map((m) => ({
+        patternKey: (m.metadata?.pattern_key as string) ?? m.id,
+        score: m.score ?? 0,
+        metadata: (m.metadata ?? {}) as Record<string, unknown>,
+      }));
+      if (matches.length > 0) return matches;
+    }
+    return [];
   } catch {
     return [];
   }
@@ -185,15 +218,32 @@ async function scoreAndRank(
   for (const vm of vectorMatches) {
     const cat = byKey.get(vm.patternKey);
     const vectorSim = vm.score;
-    const archMatch = cat && stage1.archetype && ((cat.archetype as string) ?? '') === stage1.archetype ? 1 : 0;
-    const industryList = (cat?.industries as string[] | undefined) ?? [];
+    const metadataArchetype = metadataString(vm.metadata.archetype);
+    const catalogArchetype =
+      ((cat?.canonical_shape_json as Record<string, unknown> | undefined)?.archetype as string | undefined) ?? null;
+    const resolvedArchetype = catalogArchetype ?? metadataArchetype;
+    const archMatch = stage1.archetype && resolvedArchetype === stage1.archetype ? 1 : 0;
+
+    const metadataIndustries = metadataStringArray(vm.metadata.industries);
+    const industryList = ((cat?.industries as string[] | undefined) ?? metadataIndustries);
     const industryMatch = stage1.industry && industryList.includes(stage1.industry) ? 1 : 0;
-    const deployments = Number(cat?.deployment_count ?? 0);
-    const successes = Number(cat?.successful_deployment_count ?? 0);
+
+    const deployments = Number(cat?.deployment_count ?? vm.metadata.deployment_count ?? 0);
+    const successes = Number(cat?.successful_deployment_count ?? vm.metadata.successful_deployment_count ?? 0);
     const successRate = deployments > 0 ? successes / deployments : 0;
     const keyPatterns = (cat?.key_patterns as string[] | undefined) ?? [];
+    const entityCorpus = [
+      ...keyPatterns,
+      metadataString(vm.metadata.title) ?? '',
+      metadataString(vm.metadata.tagline) ?? '',
+      metadataString(vm.metadata.text) ?? '',
+      ...metadataStringArray(vm.metadata.vendor_examples),
+      ...metadataStringArray(vm.metadata.failure_modes),
+    ]
+      .join(' ')
+      .toLowerCase();
     const entityOverlap = stage1.entities.length
-      ? stage1.entities.filter((e) => keyPatterns.some((kp) => kp.toLowerCase().includes(e.toLowerCase()))).length /
+      ? stage1.entities.filter((e) => entityCorpus.includes(e.toLowerCase())).length /
         stage1.entities.length
       : 0;
 
@@ -220,7 +270,7 @@ async function scoreAndRank(
     scored.push({
       patternKey: vm.patternKey,
       confidence: Math.min(1, composite),
-      archetype: (cat?.archetype as ArchetypeKey | undefined) ?? stage1.archetype ?? null,
+      archetype: (resolvedArchetype as ArchetypeKey | null) ?? stage1.archetype ?? null,
       industry: industryList[0] ?? stage1.industry,
       canonicalShape: (cat?.canonical_shape_json as Record<string, unknown> | null) ?? null,
       band,
