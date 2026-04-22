@@ -18,7 +18,7 @@ export {
 
 export const DEMO_ACCOUNTS = {
   meridian: { email: 'mh+clerk_test@abarva.com', password: 'Demo2026!' },
-  arcturus: { email: 'af@abarva.com', password: 'Demo2026!' },
+  arcturus: { email: 'af+clerk_test@abarva.com', password: 'Demo2026!' },
   admin: { email: 'anand+clerk_test@abarva.com', password: 'AbarVa2026!' },
   investor: { email: 'investor+clerk_test@abarva.com', password: 'Demo2026!' },
 } as const;
@@ -39,6 +39,16 @@ export function missingEngagementPrereqs(): string[] {
 }
 
 export const missingAuthPrereqs = missingClerkPrereqs();
+
+export async function clerkUserExists(email: string): Promise<boolean> {
+  if (!CLERK_SECRET_KEY) {
+    return false;
+  }
+
+  const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
+  const users = await clerk.users.getUserList({ emailAddress: [email], limit: 1 });
+  return Boolean(users.data[0]);
+}
 
 async function signInWithServerTicket(page: Page, email: string): Promise<void> {
   if (!CLERK_SECRET_KEY) {
