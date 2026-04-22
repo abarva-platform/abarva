@@ -40,16 +40,6 @@ export function missingEngagementPrereqs(): string[] {
 
 export const missingAuthPrereqs = missingClerkPrereqs();
 
-export async function clerkUserExists(email: string): Promise<boolean> {
-  if (!CLERK_SECRET_KEY) {
-    return false;
-  }
-
-  const clerk = createClerkClient({ secretKey: CLERK_SECRET_KEY });
-  const users = await clerk.users.getUserList({ emailAddress: [email], limit: 1 });
-  return Boolean(users.data[0]);
-}
-
 async function signInWithServerTicket(page: Page, email: string): Promise<void> {
   if (!CLERK_SECRET_KEY) {
     throw new Error('CLERK_SECRET_KEY missing');
