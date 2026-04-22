@@ -381,13 +381,13 @@ export default function PlatformPage() {
                 style={{
                   margin: '14px 0 0',
                   fontFamily: SERIF,
-                  // Shrunk another 20% · still clipping at 1600-1800px
-                  // because the hero column is narrower than the max-width
-                  // constraint once the schematic panel takes its share.
-                  fontSize: 'clamp(36px, 4vw, 66px)',
-                  lineHeight: 0.98,
-                  letterSpacing: '-0.03em',
-                  maxWidth: 680,
+                  // Another 20% cut · "Transformation" has to fit on one
+                  // line inside the hero column which is constrained by
+                  // the right-side schematic. Max = 52px.
+                  fontSize: 'clamp(32px, 3.4vw, 52px)',
+                  lineHeight: 1.02,
+                  letterSpacing: '-0.025em',
+                  maxWidth: 620,
                   color: INK,
                   textWrap: 'balance' as const,
                 }}
@@ -725,39 +725,63 @@ function ArchitectureConstellation() {
   // Evidence Ledger; the ledger feeds knowledge upward (Client → Emergent →
   // Genome); outcome proof exits on the right. Animated with CSS pulses that
   // respect prefers-reduced-motion.
+  // AI agents · canonical names from the rest of the platform page.
   // Each agent sits directly above its "home" phase gate (5-column grid).
-  // Maestro orchestrates charter (col 1); Diagnostic owns diagnose (col 2);
-  // Design owns design (col 3); Decide (col 4) is shared orchestration · no
-  // dedicated agent; Auditor owns the execute checkpoint (col 5).
+  //   Nexus     · Program Operating Core    → Start (col 1)
+  //   Sentinel  · Pattern Memory With Teeth → Diagnose (col 2)
+  //   Steward   · Discipline + Evidence     → Execute (col 4)
+  //   Atlas     · Cross-Program Control Room → Verify (col 5)
+  // Design (col 3) is shared orchestration — Nexus drafts, Sentinel
+  // contradicts, Steward registers · no single home agent.
   const AGENTS: Array<{ id: string; name: string; role: string; col: number }> = [
-    { id: 'maestro', name: 'Maestro', role: 'orchestrator', col: 1 },
-    { id: 'diagnostic', name: 'Diagnostic', role: 'hypothesis ↔ evidence', col: 2 },
-    { id: 'design', name: 'Design', role: 'intervention synthesis', col: 3 },
-    { id: 'auditor', name: 'Auditor', role: 'chain-of-custody', col: 5 },
+    { id: 'nexus', name: 'Nexus', role: 'program operating core', col: 1 },
+    { id: 'sentinel', name: 'Sentinel', role: 'pattern memory · contradictions', col: 2 },
+    { id: 'steward', name: 'Steward', role: 'evidence · chain-of-custody', col: 4 },
+    { id: 'atlas', name: 'Atlas', role: 'cross-program control room', col: 5 },
   ];
+  // Canonical 5-phase model · Start · Diagnose · Design · Execute · Verify.
   const PHASES: Array<{ id: string; num: string; title: string; refuse: string }> = [
-    { id: 'p0', num: '0', title: 'Charter', refuse: 'no sponsor · no go' },
-    { id: 'p1', num: '1', title: 'Diagnose', refuse: 'thin evidence · no pass' },
+    { id: 'p0', num: '0', title: 'Start', refuse: 'no sponsor · no go' },
+    { id: 'p1', num: '1', title: 'Diagnose', refuse: 'thin evidence · refuse' },
     { id: 'p2', num: '2', title: 'Design', refuse: 'no diagnostic link · refuse' },
-    { id: 'p3', num: '3', title: 'Decide', refuse: 'scope drift · refuse' },
-    { id: 'p4', num: '4', title: 'Execute', refuse: 'missing baseline · refuse' },
+    { id: 'p3', num: '3', title: 'Execute', refuse: 'scope drift · refuse' },
+    { id: 'p4', num: '4', title: 'Verify', refuse: 'baseline missing · refuse' },
   ];
 
   return (
     <div className="schematic-shell">
-      {/* Top header · ARCHITECTURE label shares the row with the agents
-          count so the first thing the eye reads is the agent chips right
-          below — no orphaned eyebrow rows eating vertical space. */}
+      {/* Top header · architecture label on left, governance on right */}
       <div className="schematic-header schematic-header-top">
         <span>
           <strong>Architecture</strong>
-          <em>· Agents 4 · specialist surfaces</em>
+          <em>· Maestro-driven · 4 AI agents</em>
         </span>
         <span>Live governance spine</span>
       </div>
 
-      {/* ─── AGENTS BANK ·  5-col grid matching phase gates below ──── */}
-      <div className="schematic-section schematic-section-agents" aria-label="Specialist agents">
+      {/* ─── MAESTRO TRAVELLER · human operator moving phase 0 → 4 ───── */}
+      <div className="schematic-section schematic-section-maestro" aria-label="Maestro human operator">
+        <div className="schematic-row-label">
+          <span>Maestro · human operator</span>
+          <span>drives program phase 0 → 4</span>
+        </div>
+        <div className="schematic-maestro-track">
+          <div className="schematic-maestro-rail" aria-hidden="true" />
+          <div className="schematic-maestro-avatar" aria-hidden="true">
+            <svg viewBox="0 0 28 28" fill="none">
+              <circle cx="14" cy="9" r="4.2" fill="rgba(245,158,11,0.95)" />
+              <path d="M4 26 C 4 18 8 15 14 15 C 20 15 24 18 24 26 Z" fill="rgba(245,158,11,0.88)" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* ─── AI AGENTS · 5-col grid aligned with phase gates ────────── */}
+      <div className="schematic-section schematic-section-agents" aria-label="Specialist AI agents">
+        <div className="schematic-row-label">
+          <span>AI agents · 4</span>
+          <span>aligned with home phase</span>
+        </div>
         <div className="schematic-agent-row">
           {AGENTS.map((agent) => (
             <div key={agent.id} className="schematic-agent-chip" style={{ gridColumn: agent.col }}>
@@ -768,8 +792,8 @@ function ArchitectureConstellation() {
               </div>
             </div>
           ))}
-          {/* Col 4 · Decide is orchestration-only, no dedicated agent */}
-          <div className="schematic-agent-slot-empty" style={{ gridColumn: 4 }} aria-hidden="true">
+          {/* Col 3 · Design is shared orchestration, no single home agent */}
+          <div className="schematic-agent-slot-empty" style={{ gridColumn: 3 }} aria-hidden="true">
             <span>shared orchestration</span>
           </div>
         </div>
@@ -1343,6 +1367,71 @@ const platformCss = `
 
   .schematic-row-label span:first-child {
     color: rgba(20,184,166,0.85);
+  }
+
+  /* MAESTRO TRAVELLER · human figure traversing phase 0 → 4 */
+  .schematic-section-maestro {
+    padding-bottom: 2px;
+  }
+
+  .schematic-maestro-track {
+    position: relative;
+    height: 36px;
+    padding: 0;
+  }
+
+  .schematic-maestro-rail {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    top: 50%;
+    height: 1px;
+    background: linear-gradient(90deg,
+      rgba(245,158,11,0) 0%,
+      rgba(245,158,11,0.32) 8%,
+      rgba(245,158,11,0.32) 92%,
+      rgba(245,158,11,0) 100%);
+    transform: translateY(-50%);
+  }
+
+  .schematic-maestro-avatar {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 28px;
+    height: 28px;
+    transform: translate(-50%, -50%);
+    animation: maestro-travel 16s ease-in-out infinite;
+    filter: drop-shadow(0 0 8px rgba(245,158,11,0.4));
+  }
+
+  .schematic-maestro-avatar svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Stop at each of the 5 phase columns (10%, 30%, 50%, 70%, 90%),
+     dwell briefly, then continue. 16s loop · ~3.2s per phase. */
+  @keyframes maestro-travel {
+    0%   { left: 10%; }
+    15%  { left: 10%; }
+    20%  { left: 30%; }
+    35%  { left: 30%; }
+    40%  { left: 50%; }
+    55%  { left: 50%; }
+    60%  { left: 70%; }
+    75%  { left: 70%; }
+    80%  { left: 90%; }
+    95%  { left: 90%; }
+    100% { left: 10%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .schematic-maestro-avatar {
+      animation: none !important;
+      left: 10% !important;
+    }
   }
 
   /* AGENTS · 5-column grid matching the phases row exactly so each
