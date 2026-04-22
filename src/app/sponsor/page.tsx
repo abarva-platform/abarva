@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const FONT_SERIF = 'Georgia, serif';
 const FONT_MONO = 'JetBrains Mono, monospace';

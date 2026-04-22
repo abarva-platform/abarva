@@ -11,7 +11,7 @@ const T = {
   text2: '#C9D1D9',
   text3: '#8B949E',
   blue: '#4DA3FF',
-  teal: '#2DD4C8',
+  teal: '#14B8A6',
   green: '#6EE7B7',
   amber: '#F59E0B',
   red: '#EF4444',
@@ -195,7 +195,7 @@ export default function PreMeetingBrief() {
 
               {/* Profile column */}
               <div>
-                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(45,212,200,0.12)', border: `2px solid rgba(45,212,200,0.35)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.mono, fontWeight: 700, fontSize: '16px', color: T.teal, marginBottom: '14px' }}>MW</div>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(20,184,166,0.12)', border: `2px solid rgba(20,184,166,0.35)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: T.mono, fontWeight: 700, fontSize: '16px', color: T.teal, marginBottom: '14px' }}>MW</div>
                 <div style={{ fontFamily: T.sans, fontSize: '18px', fontWeight: 700, color: T.text, marginBottom: '3px' }}>Marcus Webb</div>
                 <div style={{ fontFamily: T.mono, fontSize: '10px', color: T.teal, letterSpacing: '1px', marginBottom: '4px' }}>Chief Information Officer</div>
                 <div style={{ fontFamily: T.sans, fontSize: '11px', color: T.text3, marginBottom: '18px' }}>8 months in role · from Atrium Health</div>
@@ -239,7 +239,7 @@ export default function PreMeetingBrief() {
             </div>
 
             {/* What keeps him up */}
-            <div style={{ marginTop: '24px', background: 'rgba(45,212,200,0.04)', border: '1px solid rgba(45,212,200,0.18)', borderRadius: '8px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ marginTop: '24px', background: 'rgba(20,184,166,0.04)', border: '1px solid rgba(20,184,166,0.18)', borderRadius: '8px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '20px' }}>
               <span style={{ fontFamily: T.mono, fontSize: '9px', fontWeight: 700, color: T.teal, letterSpacing: '2px', flexShrink: 0, textTransform: 'uppercase' as const }}>What Keeps Him Up</span>
               <div style={{ width: '1px', height: '24px', background: T.border2, flexShrink: 0 }} />
               <div style={{ fontFamily: T.sans, fontSize: '13px', color: T.text2, lineHeight: 1.65 }}>

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
@@ -120,7 +120,7 @@ function Facet({
         alignItems: 'center',
         padding: '8px 12px',
         borderRadius: 8,
-        background: active ? 'rgba(45,212,200,0.08)' : 'transparent',
+        background: active ? 'rgba(20,184,166,0.08)' : 'transparent',
         border: active ? `0.5px solid ${TEAL}` : '0.5px solid transparent',
         textDecoration: 'none',
         color: active ? INK : MUTE,

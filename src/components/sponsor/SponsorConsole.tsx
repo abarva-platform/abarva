@@ -24,7 +24,7 @@ interface Props {
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const BORDER_SOFT = '0.5px solid rgba(255,255,255,0.08)';
@@ -151,7 +151,7 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
               style={{
                 padding: '10px 12px',
                 borderRadius: 8,
-                background: i === engagement.current_phase ? 'rgba(45,212,200,0.12)' : 'rgba(255,255,255,0.03)',
+                background: i === engagement.current_phase ? 'rgba(20,184,166,0.12)' : 'rgba(255,255,255,0.03)',
                 border: `0.5px solid ${i === engagement.current_phase ? TEAL : 'rgba(255,255,255,0.12)'}`,
               }}
             >
@@ -180,9 +180,9 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
                   style={{
                     padding: '10px 14px',
                     borderRadius: 10,
-                    background: m.sender === 'agent' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
+                    background: m.sender === 'agent' ? 'rgba(20,184,166,0.05)' : 'rgba(255,255,255,0.06)',
                     border: `0.5px solid ${
-                      m.errored ? 'rgba(255,107,74,0.5)' : m.sender === 'agent' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'
+                      m.errored ? 'rgba(255,107,74,0.5)' : m.sender === 'agent' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.12)'
                     }`,
                     opacity: m.streaming && !m.text ? 0.6 : 1,
                   }}
@@ -236,7 +236,7 @@ export function SponsorConsole({ engagement, viewer, maestro, turns, deliverable
             </div>
           </div>
 
-          <div style={{ background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.2)', borderRadius: 10, padding: 14 }}>
+          <div style={{ background: 'rgba(20,184,166,0.04)', border: '0.5px solid rgba(20,184,166,0.2)', borderRadius: 10, padding: 14 }}>
             <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase', marginBottom: 8 }}>
               Deliverables · {deliverables.length}
             </div>

@@ -101,7 +101,7 @@ body {
   outline: none;
 }
 :where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
-  outline: 2px solid #2DD4C8;
+  outline: 2px solid #14B8A6;
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -124,9 +124,9 @@ body {
   left: -9999px;
   top: 0;
   background: #0A0A0A;
-  color: #2DD4C8;
+  color: #14B8A6;
   padding: 10px 16px;
-  border: 1px solid #2DD4C8;
+  border: 1px solid #14B8A6;
   border-radius: 6px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 
 // Product-map final: 5 peer items · Home / Engagements / Intelligence /

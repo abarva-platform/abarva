@@ -46,7 +46,7 @@ const OPENER_CONTENT = "Let's start a new Program. Who are we working with?";
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
@@ -274,12 +274,12 @@ export function EngagementCreationConsole() {
                 style={{
                   padding: '10px 14px',
                   borderRadius: 10,
-                  background: m.role === 'assistant' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
+                  background: m.role === 'assistant' ? 'rgba(20,184,166,0.05)' : 'rgba(255,255,255,0.06)',
                   border: `0.5px solid ${
                     m.errored
                       ? 'rgba(255,107,74,0.5)'
                       : m.role === 'assistant'
-                      ? 'rgba(45,212,200,0.2)'
+                      ? 'rgba(20,184,166,0.2)'
                       : 'rgba(255,255,255,0.12)'
                   }`,
                   opacity: m.streaming && !m.content ? 0.6 : 1,
@@ -321,7 +321,7 @@ export function EngagementCreationConsole() {
               style={{
                 marginTop: 20,
                 padding: 20,
-                background: 'rgba(45,212,200,0.06)',
+                background: 'rgba(20,184,166,0.06)',
                 border: `0.5px solid ${TEAL}4D`,
                 borderRadius: 10,
                 animation: reducedMotion

@@ -431,7 +431,7 @@ function VendorLayerCard({ group }: { group: VendorGroup }) {
       </Body>
       <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
         {group.vendors.map((v, i) => (
-          <div key={i} style={{ padding: '12px 14px', background: 'rgba(45,212,200,0.04)', border: '0.5px solid rgba(45,212,200,0.14)', borderRadius: 8 }}>
+          <div key={i} style={{ padding: '12px 14px', background: 'rgba(20,184,166,0.04)', border: '0.5px solid rgba(20,184,166,0.14)', borderRadius: 8 }}>
             <Body size="md" weight={600} tone="primary">{v.name}</Body>
             <MetaLabel style={{ marginTop: 4 }}>{v.descriptor}</MetaLabel>
             {v.opinion ? (

@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
 
-const TEAL = '#2DD4C8'
+const TEAL = '#14B8A6'
 const SERIF = 'Georgia, "Times New Roman", serif'
 const RE = /(AbarNexus|AbarVa)/g
 

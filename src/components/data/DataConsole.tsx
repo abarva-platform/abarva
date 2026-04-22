@@ -27,7 +27,7 @@ interface Props {
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
 const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
@@ -206,7 +206,7 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
           style={{
             padding: 20,
             marginBottom: 16,
-            background: dragActive ? 'rgba(45,212,200,0.08)' : 'rgba(255,255,255,0.03)',
+            background: dragActive ? 'rgba(20,184,166,0.08)' : 'rgba(255,255,255,0.03)',
             border: `1px dashed ${dragActive ? TEAL : 'rgba(255,255,255,0.2)'}`,
             borderRadius: 12,
             textAlign: 'center',
@@ -234,8 +234,8 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
                 key={f.id}
                 style={{
                   padding: '6px 12px',
-                  background: f.status === 'error' ? 'rgba(255,107,74,0.08)' : 'rgba(45,212,200,0.06)',
-                  border: `0.5px solid ${f.status === 'error' ? 'rgba(255,107,74,0.35)' : 'rgba(45,212,200,0.25)'}`,
+                  background: f.status === 'error' ? 'rgba(255,107,74,0.08)' : 'rgba(20,184,166,0.06)',
+                  border: `0.5px solid ${f.status === 'error' ? 'rgba(255,107,74,0.35)' : 'rgba(20,184,166,0.25)'}`,
                   borderRadius: 20,
                   fontSize: 11,
                   fontFamily: FONT_MONO,
@@ -276,8 +276,8 @@ export function DataConsole({ clientId, clientName, industry, industryLabel }: P
                       style={{
                         padding: '10px 14px',
                         borderRadius: 10,
-                        background: m.role === 'assistant' ? 'rgba(45,212,200,0.05)' : 'rgba(255,255,255,0.06)',
-                        border: `0.5px solid ${m.errored ? 'rgba(255,107,74,0.5)' : m.role === 'assistant' ? 'rgba(45,212,200,0.2)' : 'rgba(255,255,255,0.12)'}`,
+                        background: m.role === 'assistant' ? 'rgba(20,184,166,0.05)' : 'rgba(255,255,255,0.06)',
+                        border: `0.5px solid ${m.errored ? 'rgba(255,107,74,0.5)' : m.role === 'assistant' ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.12)'}`,
                         opacity: m.streaming && !m.content ? 0.6 : 1,
                       }}
                     >

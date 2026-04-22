@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
 const BG = '#060A12'
-const TEAL = '#2DD4C8'
+const TEAL = '#14B8A6'
 const MONO = 'JetBrains Mono, monospace'
 
 export default function AuthRedirect() {

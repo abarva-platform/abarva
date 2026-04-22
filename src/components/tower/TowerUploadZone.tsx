@@ -6,7 +6,7 @@ interface Props {
   clientId: string;
 }
 
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const CORAL = '#FF6B4A';
@@ -70,8 +70,8 @@ export function TowerUploadZone({ clientId }: Props) {
         onClick={() => inputRef.current?.click()}
         style={{
           padding: 24,
-          background: dragActive ? 'rgba(45,212,200,0.08)' : 'rgba(45,212,200,0.04)',
-          border: `1px dashed ${dragActive ? TEAL : 'rgba(45,212,200,0.4)'}`,
+          background: dragActive ? 'rgba(20,184,166,0.08)' : 'rgba(20,184,166,0.04)',
+          border: `1px dashed ${dragActive ? TEAL : 'rgba(20,184,166,0.4)'}`,
           borderRadius: 12,
           textAlign: 'center',
           cursor: 'pointer',
@@ -106,8 +106,8 @@ export function TowerUploadZone({ clientId }: Props) {
         <div style={{
           marginTop: 12,
           padding: 14,
-          background: result.status === 'parsed' ? 'rgba(45,212,200,0.06)' : 'rgba(245,197,74,0.08)',
-          border: `0.5px solid ${result.status === 'parsed' ? 'rgba(45,212,200,0.3)' : 'rgba(245,197,74,0.3)'}`,
+          background: result.status === 'parsed' ? 'rgba(20,184,166,0.06)' : 'rgba(245,197,74,0.08)',
+          border: `0.5px solid ${result.status === 'parsed' ? 'rgba(20,184,166,0.3)' : 'rgba(245,197,74,0.3)'}`,
           borderRadius: 10,
         }}>
           <div style={{ fontFamily: FONT_MONO, fontSize: 10, letterSpacing: '0.14em', color: result.status === 'parsed' ? TEAL : '#F5C54A', textTransform: 'uppercase', marginBottom: 6 }}>
