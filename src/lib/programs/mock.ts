@@ -24,6 +24,12 @@ import type {
   Turn,
   ViewerRole,
 } from '@/lib/programs/types';
+import {
+  buildExecutionRoadmapTrackerModuleContent,
+} from '@/lib/deliverables/execution-roadmap-tracker';
+import {
+  buildTimelineResourceEstimateModuleContent,
+} from '@/lib/deliverables/timeline-resource-estimate';
 
 const PEOPLE: Record<string, PersonRef> = {
   dana: { id: 'person-dana-mercer', name: 'Dana Mercer', title: 'VP Store Ops', initials: 'DM', avatarColor: '#0f766e', clientName: 'Apex Retail Group' },
@@ -59,7 +65,9 @@ const MODULE_NAMES: Record<string, string> = {
   'vendor-tech-evaluation': 'Vendor/Tech Evaluation',
   'tradeoff-matrix': 'Tradeoff Matrix + Recommendation',
   'business-case-roi': 'Business Case + ROI',
+  'timeline-resource-estimate': 'Timeline + Resource Estimate',
   'implementation-plan': 'Implementation Plan',
+  'execution-roadmap-tracker': 'Execution Roadmap Tracker',
   'build-integration-tracking': 'Build + Integration Tracking',
   'change-management-plan': 'Change Management Plan',
   'outcome-measurement': 'Outcome Measurement',
@@ -524,6 +532,11 @@ const verifyContent: Record<string, ModuleContent> = {
   },
 };
 
+const estimateContent: Record<string, ModuleContent> = {
+  'timeline-resource-estimate': buildTimelineResourceEstimateModuleContent(),
+  'execution-roadmap-tracker': buildExecutionRoadmapTrackerModuleContent(),
+};
+
 const executeData: ProgramFullState['executeData'] = {
   programId: 'contact-center-ai-transformation',
   activeTab: 'work',
@@ -832,6 +845,98 @@ const programs: ProgramFullState[] = [
     moduleContent: associateContent,
   },
   {
+    id: 'owned-brand-margin-acceleration',
+    name: 'Owned Brand Margin Acceleration',
+    clientName: 'Apex Retail Group',
+    archetype: 'operational_optimization',
+    currentPhase: 5,
+    shape: 'pattern',
+    patternKey: 'owned-brand-margin',
+    patternName: 'Owned Brand Margin',
+    charter: {
+      headline: 'Lift owned-brand margin with an execution path that makes decision latency, analyst effort, and agent economics explicit before rollout.',
+      bullets: [
+        'Lock a dual-ledger estimate before scale commitments are made.',
+        'Track estimate-vs-actual through Execute with explicit stall and reestimation discipline.',
+        'Feed timing and effort learnings back into Genome instead of treating them as one-off project noise.',
+      ],
+      sponsorDecision: 'Hold the P80 commitment at lock and keep the contracting-cycle decision moments on the sponsor calendar.',
+      baselineNeed: 'Pilot cohort, outcome baseline, and contracting-cycle dependencies are already wired into the tracker.',
+    },
+    phases: [
+      phaseState(1, 'Origination', 'complete', 'Intervention scope and commercial thesis aligned.', 'none'),
+      phaseState(2, 'Charter', 'complete', 'Program framing and sponsor constraints captured.', 'hard'),
+      phaseState(3, 'Diagnose', 'complete', 'Findings and contradiction set locked.', 'hard'),
+      phaseState(4, 'Design', 'complete', 'Estimate and recommendation locked at P80.', 'hard'),
+      phaseState(5, 'Execute', 'active', 'Tracker is live and monitoring drift against the commitment envelope.', 'soft'),
+      phaseState(6, 'Verify', 'locked', 'Verify opens after pilot decision gate and outcome attestation.', 'hard'),
+    ],
+    modules: [
+      { moduleKey: 'timeline-resource-estimate', name: MODULE_NAMES['timeline-resource-estimate'], phase: 4, status: 'signed_off', currentVersion: 1, lastEditedBy: PEOPLE.alex, lastEditedAt: daysAgo(12), deliverableIds: ['deliv-obr-estimate'] },
+      { moduleKey: 'execution-roadmap-tracker', name: MODULE_NAMES['execution-roadmap-tracker'], phase: 5, status: 'in_progress', currentVersion: 1, lastEditedBy: PEOPLE.alex, lastEditedAt: hoursAgo(4), deliverableIds: ['deliv-obr-tracker'] },
+      { moduleKey: 'change-management-plan', name: MODULE_NAMES['change-management-plan'], phase: 5, status: 'in_review', currentVersion: 1, lastEditedBy: PEOPLE.maya, lastEditedAt: hoursAgo(9) },
+    ],
+    team: [
+      { ...PEOPLE.dana, role: 'sponsor', workstream: 'Commercial sponsor', activitySummary: 'Owns the locked percentile commitment and pilot decision gate.', notificationState: 'priority' },
+      { ...PEOPLE.elena, role: 'team_member', workstream: 'Brand + marketing', activitySummary: 'Owns category prioritization and margin narrative.', notificationState: 'all' },
+      { ...PEOPLE.arjun, role: 'team_member', workstream: 'Technology + data', activitySummary: 'Owns the instrumentation and outcome-baseline spine.', notificationState: 'priority' },
+      { ...PEOPLE.alex, role: 'lead', workstream: 'Program orchestration', activitySummary: 'Maintains the estimate lock, tracker discipline, and reestimations.', notificationState: 'all' },
+      { ...PEOPLE.lena, role: 'maestro', workstream: 'Genome oversight', activitySummary: 'Curates feedback candidates and watches for new stall patterns.', notificationState: 'priority' },
+    ],
+    activity: [
+      { id: 'act-obr-1', type: 'deliverable', title: 'Timeline + Resource Estimate locked', detail: 'Sponsor committed to the P80 path with dissent captured in the lock memo.', at: daysAgo(11), actor: PEOPLE.alex },
+      { id: 'act-obr-2', type: 'risk', title: 'Pilot SKU selection bias detected', detail: 'A new stall scenario surfaced and entered mitigation without breaking the P80 envelope.', at: hoursAgo(20), actor: PEOPLE.tori },
+      { id: 'act-obr-3', type: 'milestone', title: 'Tracker refreshed through week 31', detail: 'Estimate-vs-actual ledgers and reestimation events are current.', at: hoursAgo(6), actor: PEOPLE.alex },
+    ],
+    sponsorPerson: PEOPLE.dana,
+    leadPerson: PEOPLE.alex,
+    phaseStatus: 'active',
+    gateSummary: 'Execute is active and still inside the P80 commitment envelope, but the pilot-decision gate remains the next hard sponsor moment.',
+    gateStatus: 'pending',
+    deliverables: [
+      makeDeliverable('deliv-obr-estimate', 'Timeline + Resource Estimate', 'timeline-resource-estimate', 1, PEOPLE.alex, 'Locked dual-ledger estimate with percentile commitment, flex modes, and named stall scenarios.', 'signed_off'),
+      makeDeliverable('deliv-obr-tracker', 'Execution Roadmap Tracker', 'execution-roadmap-tracker', 1, PEOPLE.alex, 'Living estimate-vs-actual tracker across calendar, effort, cost, gates, and Genome feedback.', 'in_review'),
+    ],
+    metrics: [
+      { label: 'Commitment', value: 'P80 / 48w', tone: 'teal' },
+      { label: 'Weeks elapsed', value: '31', tone: 'default' },
+      { label: 'Cost delta', value: '+3%', tone: 'amber' },
+      { label: 'Unexpected stalls', value: '1', tone: 'red' },
+    ],
+    sponsorDashboard: {
+      openDecisions: ['Keep the P80 commitment intact through the pilot-decision gate.', 'Decide whether the unexpected pilot-bias scenario requires a scope amendment or stays in mitigation.'],
+      milestones: ['Estimate lock complete.', 'Tracker refreshed through week 31.', 'Genome feedback candidates ready for Verify.'],
+      keyFindings: ['Calendar drift is still inside the commitment envelope.', 'Specialist-agent demand is the hottest effort ledger.', 'Decision latency remains visible and budgeted rather than hidden in the schedule.'],
+      outcomeSignal: 'The program is still on a sponsor-defensible path as long as the pilot gate stays inside the current reestimation envelope.',
+    },
+    nexusPanel: {
+      programId: 'owned-brand-margin-acceleration',
+      mode: 'collapsed',
+      activeTab: 'sources',
+      thread: {
+        id: 'program-thread-obr',
+        title: 'Owned-brand margin roadmap thread',
+        turns: [
+          { id: 'turn-obr-1', speaker: 'lead', text: 'Is the commitment still defensible after the pilot-bias signal surfaced?' },
+          { id: 'turn-obr-2', speaker: 'nexus', text: 'Yes. The tracker shows the program still inside the locked P80 envelope, with the new stall scenario contained in mitigation.' },
+        ],
+      },
+      drafts: [
+        { id: 'draft-obr-1', title: 'Reestimation note', moduleKey: 'execution-roadmap-tracker', status: 'ready', summary: 'Week-31 refresh with updated stall probabilities and no sponsor re-approval required.' },
+      ],
+      flags: [
+        { id: 'flag-obr-1', severity: 'medium', title: 'Specialist-agent drift', detail: 'Structured-scoring iteration is running 9% over the baseline model.' },
+        { id: 'flag-obr-2', severity: 'medium', title: 'Unexpected stall scenario', detail: 'Pilot SKU selection bias is in mitigation and needs weekly watch until resolved.' },
+      ],
+      sources: [
+        { id: 'source-obr-1', label: 'Timeline + Resource Estimate', sourceType: 'l3', detail: 'Locked estimate with phase breakdown, work units, and flex modes.' },
+        { id: 'source-obr-2', label: 'Execution Roadmap Tracker', sourceType: 'l3', detail: 'Week-31 tracker with estimate-vs-actual ledgers and reestimation log.' },
+        { id: 'source-obr-3', label: 'Genome calibration notes', sourceType: 'pattern', detail: 'Retail margin timing and effort refinements applied at lock.' },
+      ],
+    },
+    moduleContent: estimateContent,
+  },
+  {
     id: 'demand-forecasting-ai',
     name: 'Demand Forecasting AI',
     clientName: 'Apex Retail Group',
@@ -938,6 +1043,8 @@ function buildProgramSummary(program: ProgramFullState): ProgramSummary {
         ? { label: 'Awaiting approval', variant: 'warning' }
         : program.id === 'contact-center-ai-transformation'
           ? { label: 'Blocked', variant: 'danger' }
+          : program.id === 'owned-brand-margin-acceleration'
+            ? { label: 'Tracking to commit', variant: 'warning' }
           : program.id === 'store-associate-productivity'
             ? { label: 'Quality flag', variant: 'info' }
             : { label: 'Signed off', variant: 'success' },

@@ -1,3 +1,6 @@
+import type { TimelineResourceEstimate } from '@/types/estimation';
+import type { ExecutionRoadmapTracker } from '@/types/tracker';
+
 export type ViewerRole = 'sponsor' | 'lead' | 'team_member' | 'maestro' | 'founder';
 
 export type ArchetypeKey =
@@ -382,6 +385,8 @@ export interface ModuleContent {
     y: number;
     quadrant: 'manage_closely' | 'keep_satisfied' | 'keep_informed' | 'monitor';
   }>;
+  timelineEstimate?: TimelineResourceEstimate;
+  executionRoadmapTracker?: ExecutionRoadmapTracker;
 }
 
 export interface OriginationStageEvent {
