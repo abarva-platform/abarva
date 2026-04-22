@@ -45,7 +45,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
       return NextResponse.redirect(new URL('/sign-in', request.url))
     }
     if (role === 'client') {
-      return NextResponse.redirect(new URL('/client-view', request.url))
+      return NextResponse.redirect(new URL('/home', request.url))
     }
   }
 

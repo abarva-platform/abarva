@@ -28,7 +28,7 @@ export default function AuthRedirect() {
     }
 
     if (role === 'client' && clientId) {
-      router.push(`/client-view?client=${clientId}`)
+      router.push('/home')
       return
     }
 
