@@ -1,6 +1,12 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
+import {
+  getMissingRequiredSections,
+  getStructuredEvidenceRefs,
+  getStructuredSections,
+} from '@/lib/deliverables/structured';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +14,7 @@ export const dynamic = 'force-dynamic';
 const INK = '#F5F5F0';
 const MUTE = 'rgba(245, 245, 240, 0.72)';
 const DIM = 'rgba(245, 245, 240, 0.48)';
-const TEAL = '#2DD4C8';
+const TEAL = '#14B8A6';
 const PURPLE = '#9B6DFF';
 const AMBER = '#F5C54A';
 const GREEN = '#3FB27F';
@@ -110,15 +116,17 @@ export default async function DeliverableDetailPage({
   const resolved = latest?.quality_issues?.resolved ?? [];
 
   // Extract sections from structured_data when present; fall back to content
-  const sections: Array<{ heading: string; body: string }> = [];
-  const structured = latest?.structured_data as Record<string, unknown> | null | undefined;
-  if (structured && typeof structured === 'object' && !Array.isArray(structured)) {
-    for (const [key, value] of Object.entries(structured)) {
-      if (value == null) continue;
-      const body = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-      sections.push({ heading: key, body });
-    }
-  }
+  const sections = getStructuredSections(latest?.structured_data, latest?.content);
+  const evidenceRefs = getStructuredEvidenceRefs(latest?.structured_data, latest?.content);
+  const missingRequiredSections = getMissingRequiredSections(latest?.structured_data);
+  const structuredDocument = (() => {
+    const raw = latest?.structured_data;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+    const candidate = raw as { content?: unknown };
+    return candidate.content && typeof candidate.content === 'object' && !Array.isArray(candidate.content)
+      ? (candidate.content as Record<string, unknown>)
+      : null;
+  })();
 
   return (
     <div
@@ -210,16 +218,80 @@ export default async function DeliverableDetailPage({
             </section>
           )}
 
+          {(evidenceRefs.length > 0 || missingRequiredSections.length > 0) && (
+            <section style={{ marginBottom: 20 }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 10 }}>
+                TRACEABILITY
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 8 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', marginBottom: 8 }}>
+                    EVIDENCE REFS · {evidenceRefs.length}
+                  </div>
+                  {evidenceRefs.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {evidenceRefs.map((ref) => (
+                        <span
+                          key={ref}
+                          style={{
+                            fontFamily: MONO,
+                            fontSize: 10,
+                            padding: '4px 7px',
+                            borderRadius: 999,
+                            background: 'rgba(20,184,166,0.08)',
+                            border: `0.5px solid ${TEAL}40`,
+                            color: TEAL,
+                            letterSpacing: '0.08em',
+                          }}
+                        >
+                          {ref.toUpperCase()}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 12, color: DIM }}>No citations extracted.</div>
+                  )}
+                </div>
+                <div style={{ padding: 12, background: PANEL_BG, border: BORDER, borderRadius: 8 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, color: missingRequiredSections.length > 0 ? CORAL : GREEN, letterSpacing: '0.14em', marginBottom: 8 }}>
+                    REQUIRED SECTIONS
+                  </div>
+                  {missingRequiredSections.length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: 18, color: INK, fontSize: 12, lineHeight: 1.6 }}>
+                      {missingRequiredSections.map((section) => (
+                        <li key={section}>{section.replace(/_/g, ' ')}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div style={{ fontSize: 12, color: GREEN }}>All required sections populated.</div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Sections preview */}
           <section>
             <div style={{ fontFamily: MONO, fontSize: 10, color: MUTE, letterSpacing: '0.14em', marginBottom: 10 }}>
               CONTENT · v{latest?.version ?? '—'}
             </div>
-            {sections.length > 0 ? (
+            {structuredDocument ? (
+              <StructuredArtifactView
+                title="Structured Artifact"
+                document={structuredDocument}
+                ink={INK}
+                mute={MUTE}
+                dim={DIM}
+                teal={TEAL}
+                border={BORDER}
+                panelBg={PANEL_BG}
+                mono={MONO}
+              />
+            ) : sections.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {sections.map((s, i) => (
                   <details
-                    key={i}
+                    key={s.key}
                     open={i < 2}
                     style={{
                       background: PANEL_BG,
@@ -241,30 +313,47 @@ export default async function DeliverableDetailPage({
                       <span style={{ fontFamily: MONO, fontSize: 9, color: TEAL, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
-                      <span style={{ fontSize: 14, fontWeight: 500, textTransform: 'capitalize' }}>{s.heading.replace(/_/g, ' ')}</span>
+                      <span style={{ fontSize: 14, fontWeight: 500 }}>{s.title}</span>
                       <span style={{ fontFamily: MONO, fontSize: 10, color: MUTE, marginLeft: 'auto' }}>
-                        {s.body.length.toLocaleString()} chars
+                        {s.citations.length} cite{s.citations.length === 1 ? '' : 's'}
                       </span>
                     </summary>
                     <div style={{ padding: '0 14px 14px' }}>
-                      <pre
+                      <div
                         style={{
-                          margin: 0,
                           padding: 12,
                           background: 'rgba(0,0,0,0.25)',
                           borderRadius: 6,
                           fontSize: 12,
                           lineHeight: 1.5,
-                          color: MUTE,
+                          color: INK,
                           whiteSpace: 'pre-wrap',
                           wordBreak: 'break-word',
-                          fontFamily: MONO,
-                          maxHeight: 420,
-                          overflowY: 'auto',
                         }}
                       >
                         {s.body}
-                      </pre>
+                      </div>
+                      {s.citations.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                          {s.citations.map((citation) => (
+                            <span
+                              key={citation}
+                              style={{
+                                fontFamily: MONO,
+                                fontSize: 9,
+                                color: TEAL,
+                                letterSpacing: '0.08em',
+                                padding: '3px 6px',
+                                borderRadius: 999,
+                                background: 'rgba(20,184,166,0.08)',
+                                border: `0.5px solid ${TEAL}30`,
+                              }}
+                            >
+                              {citation.toUpperCase()}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </details>
                 ))}

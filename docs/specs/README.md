@@ -16,6 +16,7 @@ Canonical specifications for AbarVa. When building, reference these over any old
 |------|--------|
 | [`platform/agent-architecture.md`](./platform/agent-architecture.md) | Nexus, Sentinel, Atlas · unified 3-agent spec |
 | [`platform/design-system.md`](./platform/design-system.md) | Core visual system, component contracts, tokens, interaction patterns |
+| `platform/runtime-contracts/` | Shipped runtime contracts for Nexus orchestration, voice filtering, and gate lifecycle behavior |
 | [`platform/data-layer-future-state.md`](./platform/data-layer-future-state.md) | Future-state data architecture and query model |
 | [`platform/data-ingestion-integration.md`](./platform/data-ingestion-integration.md) | Enterprise ingestion model, source handling, integration pathways |
 | [`platform/intelligence-vip-system.md`](./platform/intelligence-vip-system.md) | VIP profile system and executive context model |

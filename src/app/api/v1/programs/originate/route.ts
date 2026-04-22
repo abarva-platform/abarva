@@ -16,7 +16,8 @@ import { classifyOrigination } from '@/lib/programs/classifier';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { classifierMatchToViewModel } from '@/lib/programs/transformers';
 import { requireTenancy, TenancyError } from '../_auth';
-import type { ArchetypeKey, ClassifierInput, OriginationForm } from '@/lib/programs/types';
+import type { ClassifierInput } from '@/lib/programs/types.db';
+import type { ArchetypeKey, OriginationForm } from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

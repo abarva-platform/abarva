@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getPatterns, getViewerRole } from '@/lib/programs/mock';
-import type { PatternLibraryItem } from '@/lib/programs/types';
+import type { PatternLibraryItem } from '@/lib/programs/types.ui';
 
 export default function ProgramsPatternsPage() {
   const [patterns, setPatterns] = useState<PatternLibraryItem[]>([]);

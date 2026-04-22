@@ -1,6 +1,8 @@
 'use client';
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
+import { TRANSITIONS } from '@/lib/design-system';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface Props {
   clientId: string;
@@ -29,6 +31,7 @@ export function TowerUploadZone({ clientId }: Props) {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const reducedMotion = useReducedMotion();
 
   async function handleFile(file: File) {
     setUploading(true);
@@ -75,7 +78,7 @@ export function TowerUploadZone({ clientId }: Props) {
           borderRadius: 12,
           textAlign: 'center',
           cursor: 'pointer',
-          transition: 'background 120ms ease, border-color 120ms ease',
+          transition: reducedMotion ? undefined : `background-color ${TRANSITIONS.hover}, border-color ${TRANSITIONS.hover}`,
         }}
       >
         <div style={{ fontFamily: FONT_MONO, fontSize: 10, color: TEAL, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8 }}>

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
-import type { ProgramFullState } from '@/lib/programs/types';
+import type { ProgramFullState } from '@/lib/programs/types.ui';
 import { getAllPrograms } from '@/lib/programs/mock';
 import { DataGrid, type DataGridColumn, type DataGridFilter, type SavedView } from '@/components/grid/DataGrid';
 import { COLORS } from '@/lib/design-system';

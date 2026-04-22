@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import type { PortfolioFilters } from '@/lib/programs/types';
+import type { PortfolioFilters } from '@/lib/programs/types.ui';
 import { PortfolioIndexScreen } from '@/components/programs/PortfolioIndex';
 import { ProgramsGrid } from '@/components/programs/ProgramsGrid';
 

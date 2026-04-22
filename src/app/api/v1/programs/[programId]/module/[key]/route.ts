@@ -4,7 +4,8 @@
 import { getModuleState, getProgramById } from '@/lib/programs/queries';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from '../../../_auth';
-import type { ModuleState, ProgramModuleRow } from '@/lib/programs/types';
+import type { ProgramModuleRow } from '@/lib/programs/types.db';
+import type { ModuleState } from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

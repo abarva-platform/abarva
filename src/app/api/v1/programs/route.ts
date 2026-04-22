@@ -12,12 +12,14 @@ import { raiseMaestroFlag } from '@/lib/programs/governance';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, tenancyErrorResponse } from './_auth';
 import type {
-  ArchetypeKey,
-  CreateProgramRequest,
   OriginSource,
   PatternClassifierMatch,
+} from '@/lib/programs/types.db';
+import type {
+  ArchetypeKey,
+  CreateProgramRequest,
   ProgramSummary,
-} from '@/lib/programs/types';
+} from '@/lib/programs/types.ui';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

@@ -6,19 +6,19 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
-const NAV_BG    = '#020408'
+const NAV_BG    = 'var(--color-page-bg)'
 const NAV_BORD  = 'rgba(255,255,255,0.08)'
-const TEAL      = '#2DD4C8'
-const NAV_TEXT  = '#EFF6FF'
-const NAV_MUTE  = 'rgba(239,246,255,0.85)'
-const SANS      = 'DM Sans, sans-serif'
-const MONO      = 'JetBrains Mono, monospace'
-const SERIF     = 'Georgia, serif'
+const TEAL      = 'var(--color-teal)'
+const NAV_TEXT  = 'var(--color-text-primary)'
+const NAV_MUTE  = 'var(--color-text-secondary)'
+const SANS      = 'var(--font-body-sans)'
+const MONO      = 'var(--font-body-mono)'
+const SERIF     = 'var(--font-body-serif)'
 const DROP_BG   = '#FFFFFF'
 const DROP_BORD = '#E5E7EB'
 const DROP_HEAD = '#0C0C0C'
 const DROP_DESC = '#3C3C3C'
-const DROP_CAT  = '#2DD4C8'
+const DROP_CAT  = 'var(--color-teal)'
 const DROP_HOVER = '#F9FAFB'
 
 interface NavProps {
@@ -197,16 +197,16 @@ function NavInner({ activePage, compact = false }: NavProps) {
           behavior changes. Honors prefers-reduced-motion. */}
       <style jsx global>{`
         .abarva-nav-link:not(.abarva-nav-link--active):hover {
-          color: #2DD4C8;
+          color: var(--color-teal);
         }
         .abarva-nav-link:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #2DD4C8;
+          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
         }
         .abarva-avatar-btn:focus-visible,
         .abarva-client-btn:focus-visible {
           outline: none;
-          box-shadow: 0 0 0 2px #020408, 0 0 0 4px #2DD4C8;
+          box-shadow: 0 0 0 2px var(--color-page-bg), 0 0 0 4px var(--color-teal);
           border-radius: 8px;
         }
         .abarva-menu-item:hover {
@@ -215,7 +215,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         .abarva-menu-item:focus-visible {
           outline: none;
           background: #F9FAFB !important;
-          box-shadow: inset 2px 0 0 #2DD4C8;
+          box-shadow: inset 2px 0 0 var(--color-teal);
         }
         @media (prefers-reduced-motion: reduce) {
           .abarva-nav-link {
@@ -234,7 +234,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '12px', marginRight: '24px', flexShrink: 0 }}>
           <AbarvaMark size={36} />
           <div style={{ display: 'flex', alignItems: 'baseline', lineHeight: 1 }}>
-            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: '#FFFFFF' }}>Abar</span>
+            <span style={{ fontFamily: SERIF, fontSize: '21px', fontWeight: 700, color: NAV_TEXT }}>Abar</span>
             <span style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 900, color: TEAL }}>Va</span>
           </div>
         </Link>
@@ -304,7 +304,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
                   </div>
                 </div>
-                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(45,212,200,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
+                <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'var(--color-teal-dim)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
                   {initials}
                 </div>
               </button>
@@ -356,7 +356,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
 export default function AbarvaNav(props: NavProps) {
   return (
-    <Suspense fallback={<div style={{ height: '60px', background: '#020408', borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
+    <Suspense fallback={<div style={{ height: '60px', background: NAV_BG, borderBottom: '1px solid rgba(255,255,255,0.08)' }} />}>
       <NavInner {...props} />
     </Suspense>
   )

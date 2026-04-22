@@ -1,9 +1,11 @@
 import { getAnthropicClient } from '@/lib/agent/stream';
+import type { ContentBlock, TextBlock } from '@anthropic-ai/sdk/resources/messages/messages';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getEngagementById } from '@/lib/db/engagement';
 import { getActivePatterns, getPeerDecisionsForPhase } from '@/lib/graph/retrieval';
 import { assembleTopicIntelligenceBlock } from '@/lib/agent/prompts/_shared/topic-intelligence';
 import { getRecentTurns } from '@/lib/db/turn';
+import { buildStructuredDeliverableData, type StructuredDeliverableData } from './structured';
 
 // Pack L Phase 4 · deliverable generation pipeline. Takes {engagementId,
 // deliverable_type_key}; returns generated content + quality score + any
@@ -63,6 +65,7 @@ export interface GenerationContext {
   peerDecisions: Array<{ choice: string; engagement_count: number; avg_outcome_usd: number }>;
   topicIntelligenceBlock: string;
   recentTurnSummary: string;
+  deliverableSummaries: Record<string, string>;
 }
 
 export interface QualityScoreDimension {
@@ -84,10 +87,14 @@ export interface GenerateResult {
   deliverable_type_key: string;
   engagement_id: string;
   content: string;
-  structured_data: Record<string, unknown> | null;
+  structured_data: StructuredDeliverableData | null;
   quality: QualityReview;
   issues: string[];
   persisted: { deliverable_id: string; version: number } | null;
+}
+
+function isTextBlock(block: ContentBlock): block is TextBlock {
+  return block.type === 'text';
 }
 
 // ── Step 1 · Load spec ───────────────────────────────────────────────────
@@ -222,6 +229,8 @@ export async function assembleGenerationContext(
     .map((t, index) => `[turn ${String(index + 1).padStart(2, '0')} | ${t.sender} | phase ${t.phase}] ${t.text.slice(0, 240)}`)
     .join('\n');
 
+  const deliverableSummaries = await loadDeliverableSummaries(engagement.id);
+
   return {
     engagement: {
       id: engagement.id,
@@ -238,7 +247,36 @@ export async function assembleGenerationContext(
     peerDecisions: peerDecisions.map((d) => ({ choice: d.choice, engagement_count: d.engagement_count, avg_outcome_usd: d.avg_outcome_usd })),
     topicIntelligenceBlock,
     recentTurnSummary,
+    deliverableSummaries,
   };
+}
+
+async function loadDeliverableSummaries(engagementId: string): Promise<Record<string, string>> {
+  const sb = getServerSupabase();
+  const { data: deliverables } = await sb
+    .from('deliverables_v2')
+    .select('id, deliverable_type_key, current_version')
+    .eq('engagement_id', engagementId);
+
+  const rows = (deliverables as Array<{ id: string; deliverable_type_key: string; current_version: number }> | null) ?? [];
+  if (rows.length === 0) return {};
+
+  const summaries: Record<string, string> = {};
+
+  for (const row of rows) {
+    const { data: latest } = await sb
+      .from('deliverable_versions')
+      .select('content')
+      .eq('deliverable_id', row.id)
+      .eq('version', row.current_version)
+      .maybeSingle();
+
+    const content = (latest as { content?: string } | null)?.content?.trim();
+    if (!content) continue;
+    summaries[row.deliverable_type_key] = content.slice(0, 1800);
+  }
+
+  return summaries;
 }
 
 async function loadPrimaryTopicKey(engagementId: string): Promise<string | null> {
@@ -258,6 +296,10 @@ export function interpolateTemplate(
   ctx: GenerationContext,
   spec: DeliverableTypeRow,
 ): string {
+  const phase1Summary = ctx.deliverableSummaries.diagnostic_charter ?? ctx.deliverableSummaries.charter;
+  const phase2Summary = ctx.deliverableSummaries.design_brief;
+  const phase3Summary = ctx.deliverableSummaries.execution_plan;
+
   const replacements: Record<string, string> = {
     '${engagement.id}': ctx.engagement.id,
     '${client.name}': ctx.client?.name ?? '[DATA GAP: client]',
@@ -266,8 +308,8 @@ export function interpolateTemplate(
     '${sponsor.decision_authority}': ctx.sponsor?.decision_authority ?? '[DATA GAP: decision authority]',
     '${structure_as_outline}': renderStructureOutline(spec.template_structure),
     '${client.financial_profile}': '[DATA GAP: financial profile — load from clients.financial_columns when Pack H depth seeded]',
-    '${current_state_baseline_from_phase_1}': ctx.recentTurnSummary.length > 0 ? ctx.recentTurnSummary : '[DATA GAP: no phase-1 findings recorded in turns]',
-    '${target_state_from_phase_2}': '[DATA GAP: phase-2 design — derive from deliverables or turn history]',
+    '${current_state_baseline_from_phase_1}': phase1Summary ?? (ctx.recentTurnSummary.length > 0 ? ctx.recentTurnSummary : '[DATA GAP: no phase-1 findings recorded in turns]'),
+    '${target_state_from_phase_2}': phase2Summary ?? '[DATA GAP: phase-2 design — derive from deliverables or turn history]',
     '${topic.vendor_landscape}': ctx.topic ? JSON.stringify(ctx.topic.vendor_landscape, null, 2) : '[DATA GAP: no topic]',
     '${topic.success_signals}': ctx.topic ? ctx.topic.success_signals.join('\n- ') : '[DATA GAP: no topic]',
     '${topic.failure_modes}': ctx.topic ? ctx.topic.failure_modes.join('\n- ') : '[DATA GAP: no topic]',
@@ -279,10 +321,10 @@ export function interpolateTemplate(
     '${peer_cohort_summary}': ctx.peerDecisions.length === 0
       ? '[no peer decisions available]'
       : ctx.peerDecisions.map((d) => `"${d.choice.replace(/_/g, ' ')}" · ${d.engagement_count} engagements · avg $${Math.round(d.avg_outcome_usd / 1_000_000)}M`).join('\n'),
-    '${engagement.phase_1_findings}': ctx.recentTurnSummary.length > 0 ? ctx.recentTurnSummary : '[DATA GAP: no phase-1 findings]',
-    '${engagement.phase_2_design_decisions}': '[DATA GAP: phase-2 design — see engagement.deliverables or ask the sponsor for the locked design]',
-    '${engagement.phase_1_requirements}': '[DATA GAP: phase-1 requirements]',
-    '${engagement.phase_2_design}': '[DATA GAP: phase-2 design]',
+    '${engagement.phase_1_findings}': phase1Summary ?? (ctx.recentTurnSummary.length > 0 ? ctx.recentTurnSummary : '[DATA GAP: no phase-1 findings]'),
+    '${engagement.phase_2_design_decisions}': phase2Summary ?? '[DATA GAP: phase-2 design — see engagement deliverables or ask the sponsor for the locked design]',
+    '${engagement.phase_1_requirements}': ctx.deliverableSummaries.charter ?? '[DATA GAP: phase-1 requirements]',
+    '${engagement.phase_2_design}': phase2Summary ?? '[DATA GAP: phase-2 design]',
     '${client.tech_stack}': '[DATA GAP: tech_stack_items for this client]',
     '${client.data_sources}': '[DATA GAP: data_sources for this client]',
     '${client.cost_breakdown}': '[DATA GAP: cost_centers for this client]',
@@ -291,6 +333,7 @@ export function interpolateTemplate(
     '${client.compliance_requirements}': '[DATA GAP: client compliance requirements]',
     '${current_state_summary}': ctx.recentTurnSummary.length > 0 ? ctx.recentTurnSummary : '[DATA GAP: no current state summary]',
     '${topic.phase_playbook}': ctx.topic ? JSON.stringify(ctx.topic.phase_playbook, null, 2) : '[DATA GAP: no topic]',
+    '${delivery_history}': phase3Summary ?? phase2Summary ?? phase1Summary ?? ctx.recentTurnSummary,
   };
 
   let out = template;
@@ -341,8 +384,8 @@ export async function generateDraft(prompt: string): Promise<string> {
     messages: [{ role: 'user', content: prompt }],
   });
   const text = resp.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: 'text'; text: string }).text)
+    .filter(isTextBlock)
+    .map((block) => block.text)
     .join('\n');
   return text;
 }
@@ -388,8 +431,8 @@ Return JSON only with schema:
       messages: [{ role: 'user', content: prompt }],
     });
     const text = resp.content
-      .filter((b) => b.type === 'text')
-      .map((b) => (b as { type: 'text'; text: string }).text)
+      .filter(isTextBlock)
+      .map((block) => block.text)
       .join('\n');
 
     // Strip markdown code fences if present
@@ -459,8 +502,8 @@ ${renderRubricCriteria(args.spec.quality_rubric)}`;
     messages: [{ role: 'user', content: prompt }],
   });
   const text = resp.content
-    .filter((b) => b.type === 'text')
-    .map((b) => (b as { type: 'text'; text: string }).text)
+    .filter(isTextBlock)
+    .map((block) => block.text)
     .join('\n');
   return text;
 }
@@ -576,6 +619,12 @@ export async function generateDeliverable(args: {
   const finalReview = finalContent === draft
     ? review
     : await reviewAgainstRubric({ content: finalContent, rubric: spec.quality_rubric });
+  const structuredData = buildStructuredDeliverableData({
+    content: finalContent,
+    deliverableTypeKey: args.deliverableTypeKey,
+    title: `${spec.title} · ${ctx.topic?.title ?? ctx.engagement.name}`,
+    templateStructure: spec.template_structure,
+  });
 
   const persisted = args.persist !== false
     ? await persistVersion({
@@ -583,6 +632,7 @@ export async function generateDeliverable(args: {
         deliverableTypeKey: args.deliverableTypeKey,
         content: finalContent,
         qualityReview: finalReview,
+        structuredData: structuredData as unknown as Record<string, unknown>,
         title: `${spec.title} · ${ctx.topic?.title ?? ctx.engagement.name}`,
       })
     : null;
@@ -591,7 +641,7 @@ export async function generateDeliverable(args: {
     deliverable_type_key: args.deliverableTypeKey,
     engagement_id: args.engagementId,
     content: finalContent,
-    structured_data: null,
+    structured_data: structuredData,
     quality: finalReview,
     issues: [...validation.dataGaps, ...finalReview.remaining_issues],
     persisted,
