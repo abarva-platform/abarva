@@ -519,7 +519,7 @@ export function ProgramsIridescentShell({ programs, activeClientName = null }: P
             {mode === 'phase' ? (
               <div className="pis-inline-signals">
                 <span className="pis-inline-signal">
-                  <span className="pis-inline-dot amber" /> 3 contradictions surfaced · <a href="#">view all</a>
+                  <span className="pis-inline-dot amber" /> 3 contradictions surfaced · <Link href="/preview/intelligence?view=contradictions">view all</Link>
                 </span>
               </div>
             ) : null}

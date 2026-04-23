@@ -1,0 +1,140 @@
+{
+  "generatedAt": "2026-04-23T12:05:07.884Z",
+  "summary": {
+    "filesScanned": 525,
+    "violations": 18,
+    "byKind": {
+      "placeholder_text": 10,
+      "pre_canon_url": 4,
+      "placeholder_href": 4
+    }
+  },
+  "violations": [
+    {
+      "page": "src/app/(maestro)/intelligence/patterns/[patternKey]/page.tsx",
+      "line": 689,
+      "kind": "placeholder_text",
+      "snippet": "['Confidence floor', pattern.confidenceFloor === null ? 'TBD' : `${Math.round(pattern.confidenceFloor * 100)}%`],",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/app/(maestro)/platform/admin/page.tsx",
+      "line": 72,
+      "kind": "placeholder_text",
+      "snippet": "{ name: 'TBD — Hire 1',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pendin",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/app/(maestro)/platform/admin/page.tsx",
+      "line": 73,
+      "kind": "placeholder_text",
+      "snippet": "{ name: 'TBD — Hire 2',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pendin",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/app/(maestro)/preview/investor/page.tsx",
+      "line": 174,
+      "kind": "pre_canon_url",
+      "snippet": "'Live at app.abarva.ai · preview at nexus-vert-kappa.vercel.app',",
+      "detail": "Pre-canon preview URL leaked into rendered content — use relative paths."
+    },
+    {
+      "page": "src/app/layout.tsx",
+      "line": 17,
+      "kind": "pre_canon_url",
+      "snippet": "url: 'https://nexus-vert-kappa.vercel.app',",
+      "detail": "Pre-canon preview URL leaked into rendered content — use relative paths."
+    },
+    {
+      "page": "src/components/AbarvaNav.tsx",
+      "line": 119,
+      "kind": "placeholder_text",
+      "snippet": "title=\"Demo temporarily unavailable — new version coming soon\"",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/components/AbarvaNav.tsx",
+      "line": 350,
+      "kind": "placeholder_text",
+      "snippet": "<span title=\"Demo temporarily unavailable — new version coming soon\" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/components/intelligence/SentinelIntelligenceShell.tsx",
+      "line": 647,
+      "kind": "placeholder_text",
+      "snippet": "value={entry.confidenceFloor === null ? 'TBD' : `${Math.round(entry.confidenceFloor * 100)}%`}",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/components/programs/ProgramsCanonShell.tsx",
+      "line": 289,
+      "kind": "placeholder_href",
+      "snippet": "<a href=\"#\">Portfolio</a>",
+      "detail": "href=\"#\" is a placeholder — replace with a real route or remove the link."
+    },
+    {
+      "page": "src/components/programs/ProgramsCanonShell.tsx",
+      "line": 356,
+      "kind": "placeholder_href",
+      "snippet": "<a href=\"#\">{program.clientName}</a>",
+      "detail": "href=\"#\" is a placeholder — replace with a real route or remove the link."
+    },
+    {
+      "page": "src/components/programs/ProgramsCanonShell.tsx",
+      "line": 358,
+      "kind": "placeholder_href",
+      "snippet": "<a href=\"#\">Programs</a>",
+      "detail": "href=\"#\" is a placeholder — replace with a real route or remove the link."
+    },
+    {
+      "page": "src/components/programs/ProgramsIridescentShell.tsx",
+      "line": 522,
+      "kind": "placeholder_href",
+      "snippet": "<span className=\"pis-inline-dot amber\" /> 3 contradictions surfaced · <a href=\"#\">view all</a>",
+      "detail": "href=\"#\" is a placeholder — replace with a real route or remove the link."
+    },
+    {
+      "page": "src/data/arcturus/ai.ts",
+      "line": 288,
+      "kind": "placeholder_text",
+      "snippet": "{ name: 'Daily Stress Testing Automation', status: 'In Planning', category: 'Middle Office', scope: 'Aladdin configuration — no migration required', monthsStuck: 0, investment: 2400000, annualValueCom",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/data/firstcapital/ai.ts",
+      "line": 7,
+      "kind": "placeholder_text",
+      "snippet": "{ name: \"Fraud Detection ML\", status: \"In Development\", scope: \"Credit card only\", monthsStuck: 6, investment: 400000, outcome: \"TBD\" },",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/data/firstcapital/ai.ts",
+      "line": 9,
+      "kind": "placeholder_text",
+      "snippet": "{ name: \"Credit Underwriting AI\", status: \"Concept Only\", scope: \"None\", monthsStuck: 8, investment: 0, outcome: \"TBD\" },",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/data/nexora/technology.ts",
+      "line": 376,
+      "kind": "placeholder_text",
+      "snippet": "owner: 'TBD — CIO/CMO ownership dispute unresolved',",
+      "detail": "Placeholder text still in the rendered output."
+    },
+    {
+      "page": "src/lib/integrity/link-crawler.ts",
+      "line": 78,
+      "kind": "pre_canon_url",
+      "snippet": "if (link.targetPath.includes('abarva.local') || link.targetPath.includes('localhost')) {",
+      "detail": "abarva.local reference — local dev host should not appear in shipped code."
+    },
+    {
+      "page": "src/lib/intelligence/library.ts",
+      "line": 79,
+      "kind": "pre_canon_url",
+      "snippet": "return new URL(value).hostname === 'abarva.local';",
+      "detail": "abarva.local reference — local dev host should not appear in shipped code."
+    }
+  ]
+}

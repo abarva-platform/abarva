@@ -25,6 +25,9 @@ jobs:
       - name: Link crawler
         run: npm run integrity:link-crawler
 
+      - name: DOM integrity linter
+        run: npm run integrity:dom
+
       - name: Composite disclaimer audit
         run: npm run integrity:disclaimers
 

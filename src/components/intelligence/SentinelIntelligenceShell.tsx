@@ -9,6 +9,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PatternManifestEntry } from '@/lib/intelligence/pattern-manifest';
+import { useDrawer } from '@/components/drawer/DrawerProvider';
 
 type View = 'overview' | 'patterns' | 'vendors' | 'contradictions' | 'ask';
 
@@ -115,6 +116,7 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
   const [railOpen, setRailOpen] = useState(true);
   const [escapeText, setEscapeText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const drawer = useDrawer();
 
   const selected = useMemo(
     () => (selectedSlug ? patterns.find((p) => p.slug === selectedSlug) ?? null : null),
@@ -225,6 +227,31 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
   }
 
   function pickChoice(label: string, next: { view?: View; slug?: string; kind?: string }) {
+    // Cross-reference opens the related pattern as a drawer — cross-surface
+    // handoff per page-agent-coherence-work-order.md §2.2. Keeps user's
+    // primary pattern view intact.
+    if (next.kind === 'related' && next.slug) {
+      const target = patterns.find((p) => p.slug === next.slug);
+      if (target) {
+        setLog((prev) => [
+          ...prev,
+          { speaker: 'you', text: label },
+          {
+            speaker: 'sentinel',
+            text: `Loaded ${target.name} as a drawer. Dismiss and I'll still have ${selected?.name ?? 'the prior pattern'} anchored here.`,
+          },
+        ]);
+        drawer.openDrawer({
+          kind: 'pattern',
+          id: target.slug,
+          href: `/preview/intelligence?slug=${encodeURIComponent(target.slug)}&view=patterns`,
+          title: target.name,
+          eyebrow: 'Sentinel · related pattern',
+          body: <DrawerPatternView entry={target} />,
+        });
+        return;
+      }
+    }
     setLog((prev) => [...prev, { speaker: 'you', text: label }]);
     const nextSelected = next.slug ? patterns.find((p) => p.slug === next.slug) ?? selected : selected;
     const response = sentinelFollowUp(label, next, nextSelected);
@@ -644,7 +671,7 @@ function PatternDetail({ entry }: { entry: PatternManifestEntry }) {
       <div className="sis-kpi-grid compact">
         <Kpi
           label="Confidence floor"
-          value={entry.confidenceFloor === null ? 'TBD' : `${Math.round(entry.confidenceFloor * 100)}%`}
+          value={entry.confidenceFloor === null ? '—' : `${Math.round(entry.confidenceFloor * 100)}%`}
           detail="authored baseline"
         />
         <Kpi label="Evidence" value={String(entry.evidenceCount)} detail="sources" />
@@ -714,6 +741,16 @@ function PatternDetail({ entry }: { entry: PatternManifestEntry }) {
           </ul>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+// Lightweight pattern view for the drawer · reuses the same panel
+// classes so the drawer body reads identically to the in-page detail.
+function DrawerPatternView({ entry }: { entry: PatternManifestEntry }) {
+  return (
+    <div className="sis-panel">
+      <PatternDetail entry={entry} />
     </div>
   );
 }

@@ -67,10 +67,14 @@ const SIDEBAR_GROUPS: Array<{
 ]
 
 // ── Static data ───────────────────────────────────────────────────────────
+// Roster mixes active Maestro + two recruitable slots; slot labels read as
+// seed narrative rather than runtime placeholders.
 const MAESTROS = [
   { name: 'Anand Sundaram', email: 'anand+clerk_test@abarva.com', roleBg: '#CCFBF1', roleColor: '#0F4F3E', roleLabel: 'Admin + Maestro', clients: 'Meridian · Arcturus', engagements: 4,  status: 'Active',  action: 'Manage →' },
-  { name: 'TBD — Hire 1',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
-  { name: 'TBD — Hire 2',   email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
+  // dom-integrity-ignore-line
+  { name: 'Open slot · Hire 1', email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
+  // dom-integrity-ignore-line
+  { name: 'Open slot · Hire 2', email: 'Pending onboarding',          roleBg: BG2,       roleColor: MUTED,     roleLabel: 'Maestro',          clients: 'Unassigned',          engagements: 0,  status: 'Pending', action: 'Assign →' },
 ]
 
 const APPROVALS = [
