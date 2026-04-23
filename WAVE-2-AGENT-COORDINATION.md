@@ -47,18 +47,31 @@
 ## Agent C · Stream 3 · Morrison Rich Authoring
 
 **Owner path:** `src/content/deliverables/apex-retail/morrison/`
-**Status:** C1 in-flight (spawned 2026-04-23, branch `design/wave-2-agent-c1-morrison-p1`), C2-C4 pending
+**Status:** C1 done (branch `design/wave-2-agent-c1-morrison-p1`) · C2-C4 pending
 **Shared references (read-only):** `wireframe-d17-morrison-decision-memo.html`, `morrison-rich-authoring-work-order.md`, `intelligence-layer-pattern-design-pack-FULL.md` (Owned Brand Margin Recovery pattern)
 **Shared JSON (Agent C owns, sub-agents append-only):**
 - `src/content/deliverables/apex-retail/morrison/_timeline.json` — canonical chronology
 - `src/content/deliverables/apex-retail/morrison/_evidence-base.json` — E1/E2/... resolution
 **Sub-agent split:**
-- **C1** · Phase 1 · D01 Charter, D02 Stakeholder Map, D03 Success Metric Tree, D04 Intake Synthesis
+- **C1** · Phase 1 · D01 Charter, D02 Stakeholder Map, D03 Success Metric Tree, D04 Intake Synthesis · **done 2026-04-23**
 - **C2** · Phase 2 · D07 Financial Baseline, D08 Pain Points, D09 RCA, D10 Benchmark, D11 Hypotheses
 - **C3** · Phase 3 · D12 Roadmap, D15 Intervention Portfolio, D16 Business Case, D18 Risk Register (D17 already done)
 - **C4** · Phase 4 · D19 Delivery Plan, D20 Sprint Artifacts, D22 Change Management, D24 Outcome Measurement Plan
 **Sequencing recommendation:** Tier A first (D01, D03, D07, D09, D15, D16, D19 — demo spine) · Tier B next (remaining Phase 1-3) · Tier C last (Phase 4).
-**Next:** create `_timeline.json` + `_evidence-base.json` seeds before any deliverable authoring begins.
+
+### C1 · Phase 1 · status: done
+- **Files authored:**
+  - `src/content/deliverables/apex-retail/morrison/D01-d01-program-charter.md`
+  - `src/content/deliverables/apex-retail/morrison/D02-d02-stakeholder-map.md`
+  - `src/content/deliverables/apex-retail/morrison/D03-d03-success-metric-tree.md`
+  - `src/content/deliverables/apex-retail/morrison/D04-d04-intake-synthesis.md`
+- **New evidence IDs added to `_evidence-base.json`:** E10 (Marcus pricing-exclusion framing), E11 (Lena 15% assortment tolerance threshold), E12 (Reese category-lead resistance pattern). All additive; no existing entries modified.
+- **Timeline:** no new `_timeline.json` entries needed · all C1 decision-log dates resolve to existing Phase 1 entries (2026-01-14, -16, -18, -22, -27).
+- **Notes for downstream agents:**
+  - **Agent A:** Nexus orchestrator agent carries formal PMO/reconciliation duties in D01 governance and D03 dual-ledger architecture · posture voice contract should align with this PMO role.
+  - **Agent C2:** E10/E11/E12 are available for Phase 2 citation reuse · Lena's 15% threshold in particular anchors the assortment RCA arc toward D09.
+  - **Agent C3:** Dual-sponsor veto architecture described in D02 is load-bearing for D15/D17 intervention-portfolio decisions · Katherine's veto domain is specifically named.
+  - **Agent C4:** Dual-ledger reconciliation architecture in D03 flows directly into D24 outcome measurement · architecture is set; C4 operationalizes.
 
 ---
 

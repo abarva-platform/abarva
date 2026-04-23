@@ -79,6 +79,30 @@
       "reference": "AbarVa Transformation Genome pattern · 8 canonical levers · 3 selected for Morrison (supplier renegotiation, assortment rationalization, promo discipline) · average steady-state impact per lever in pattern library: 60-120 bps",
       "evidence_confidence": "high",
       "first_cited_in": "D15"
+    },
+    "E10": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Marcus T. (CFO) transcript · pricing-action exclusion",
+      "deliverable_code": "D04",
+      "reference": "CFO framing: 'a program that tries to recover margin through pricing action is not available without breaking the banner's value proposition · I want cost-side and promo-discipline work, not pricing architecture changes'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E11": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Lena G. (Director, Brand Strategy) transcript · assortment tolerance threshold",
+      "deliverable_code": "D04",
+      "reference": "Brand strategy framing: owned-brand perception is robust to category SKU depth cuts ≤15%; cuts beyond 15% in a single category trigger consumer perception drag with 2-3 quarter recovery cycle · Katherine P.'s veto arithmetic uses this threshold",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E12": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Reese A. (VP Merchandising, Owned Brand) transcript · category-lead resistance pattern",
+      "deliverable_code": "D04",
+      "reference": "Merchandising framing: category leads protect SKU counts because headcount allocations are partly tied to SKU complexity · rationalization sponsored at category level feasible but requires Diane R. air cover on first two category rollouts",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
     }
   }
 }
