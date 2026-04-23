@@ -2,7 +2,7 @@
   "program_code": "APX-01",
   "program_name": "Morrison Owned Brand Margin Recovery",
   "schema_version": "1.0",
-  "last_updated": "2026-04-23",
+  "last_updated": "2026-04-23-c2",
   "append_only": true,
 
   "integrity_note": "Every inline citation chip (E1, E2, ...) in any Morrison deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. The integrity linter will flag any citation chip that does not resolve.",
@@ -79,6 +79,110 @@
       "reference": "AbarVa Transformation Genome pattern · 8 canonical levers · 3 selected for Morrison (supplier renegotiation, assortment rationalization, promo discipline) · average steady-state impact per lever in pattern library: 60-120 bps",
       "evidence_confidence": "high",
       "first_cited_in": "D15"
+    },
+    "E20": {
+      "type": "financial_baseline",
+      "source": "D07 Financial Baseline · §2.2 category-level compression detail",
+      "deliverable_code": "D07",
+      "reference": "8 of 12 active owned-brand categories show statistically significant compression (p < 0.05 vs. 2-year control baseline). Packaged goods -510 bps, household essentials -480 bps lead the decline. Fresh bakery and specialty condiments expanded (+60 and +80 bps). Personal care flat.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D07"
+    },
+    "E21": {
+      "type": "financial_baseline",
+      "source": "D07 Financial Baseline · §4 revenue waterfall + cost decomposition",
+      "deliverable_code": "D07",
+      "reference": "Decomposition of 340 bps compression: ~65% cost-side (220 bps unit cost inflation net of recovery), ~25% promotional depth creep (85 bps), ~10% mix drift (35 bps). Reconciles to Apex Finance closing ledger within 3 bp band.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D07"
+    },
+    "E22": {
+      "type": "interview",
+      "source": "D08 decision-log workshop · Marcus T. (CFO) sponsor comms framing",
+      "deliverable_code": "D08",
+      "reference": "CFO reframed the problem as 'Apex-specific capability gap' rather than 'tough environment' after 2026-02-11 prioritization review. Framing retained in subsequent sponsor communications through Phase 3.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D07"
+    },
+    "E23": {
+      "type": "interview",
+      "source": "D08 Pain Point Register · operator interview corpus",
+      "deliverable_code": "D08",
+      "reference": "18 structured interviews, 4 store walk-alongs, 6 category-manager shadows conducted Feb 5-20, 2026. Interview pool: merchandising (6), supply chain (4), pricing (3), store operations (4), category leadership (1). 23 distinct pain points surfaced; synthesized into 4 clusters.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D08"
+    },
+    "E24": {
+      "type": "model",
+      "source": "D08 Pain Point Register · severity and feasibility scoring matrix",
+      "deliverable_code": "D08",
+      "reference": "Two-axis scoring: severity (operator-reported bps impact) × feasibility (12-month recoverability, effort + dependencies). 9 pain points scored high/high, 11 medium, 3 low. Top 3 by recoverable value: supplier concentration ($5-8M/yr), assortment long-tail ($4-6M/yr), promotional depth creep ($3-5M/yr).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D08"
+    },
+    "E25": {
+      "type": "interview",
+      "source": "D08 Pain Point Register · pricing-analyst shadow",
+      "deliverable_code": "D08",
+      "reference": "Pricing analyst surfaced supplier-led trade-fund timing pain: suppliers negotiate depth commitments before Apex's internal category-margin data closes (T+14 lag vs. supplier engagement window). Also surfaced: biweekly manual competitive price scan misses ~30% of in-flight depth events; promotional post-mortems done manually on drifting cadence.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D08"
+    },
+    "E26": {
+      "type": "workshop",
+      "source": "D09 RCA · validation workshop minutes",
+      "deliverable_code": "D09",
+      "reference": "2026-02-19 validation workshop · Marcus T., Katherine P., Diane R., Nexus Maestro. Three root causes ratified: supplier consolidation gap, assortment bloat, promotional depth creep. Promotion calendar inefficiency demoted to supporting driver. Category management capability gap added as upstream cause (not primary).",
+      "evidence_confidence": "high",
+      "first_cited_in": "D09"
+    },
+    "E27": {
+      "type": "benchmark",
+      "source": "D09 RCA · upstream cause analysis · measurement lag comparison",
+      "deliverable_code": "D09",
+      "reference": "Peer retailers with faster category margin close cycles (T+7 or faster) caught owned-brand margin drift at 150-200 bps compression; Apex's T+14 close cycle meant the 340 bps compression was only diagnosable in retrospect. 4 of 6 cohort peers close on T+7 or faster.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D09"
+    },
+    "E28": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · cohort detail and transferable-practice review",
+      "deliverable_code": "D10",
+      "reference": "6-retailer composite cohort: Peer A expanded owned-brand margin +220 bps through volume-tier supplier restructure; Peer B +180 bps via SKU rationalisation; Peers C/D held flat; Peer E -90 bps; Peer F -180 bps. Apex -340 bps is cohort outlier. Apex scorecard: 2nd quartile unit cost, 4th quartile SKU density, 3rd quartile promo discipline. 3 transferable practices: volume-tier contracts, tier-2 SKU rationalisation, margin-gated promotional calendar.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E29": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · category-level sub-cohort analysis",
+      "deliverable_code": "D10",
+      "reference": "Category-level benchmark across 3 cohort peers disclosing comparable data: packaged goods gap -240 bps, household essentials gap -190 bps, dairy ambient -110 bps, canned goods -170 bps, frozen prepared within 50 bps of cohort median.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E30": {
+      "type": "model",
+      "source": "D10 Benchmark Comparison · recovery envelope quantification",
+      "deliverable_code": "D10",
+      "reference": "Gap-to-median recovery: 180 bps = ~$38M/yr on $2.1B owned-brand revenue. Gap-to-top-quartile: 310 bps = ~$65M/yr. Morrison business case targets 40-55% of gap-to-median = $14-22M/yr steady state, representing recovery to ~65th percentile of cohort.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E31": {
+      "type": "workshop",
+      "source": "D11 Hypothesis Backlog · resolution workshop minutes",
+      "deliverable_code": "D11",
+      "reference": "2026-03-05 resolution workshop. 14 hypotheses resolved: 9 validated, 3 rejected (H15 national-brand scope, H16 loyalty margin, H17 store-format resegmentation), 2 deferred to Phase 5 (H7 planogram redesign 1,200 stores, H13 supplier cost master unification). Parallel-track sequencing selected over sequential.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D11"
+    },
+    "E32": {
+      "type": "model",
+      "source": "D11 Hypothesis Backlog · portfolio-compounding analysis",
+      "deliverable_code": "D11",
+      "reference": "Pattern-library portfolio-compounding estimate: parallel execution of supplier + assortment + promotional levers recovers margin +30-40% faster than sequential execution of the same levers. Mechanism: supplier leverage highest when volume commitments are being renegotiated alongside SKU consolidation. Morrison high-scenario ($22M/yr) models the compounding lift; low-scenario ($14M/yr) assumes additive-only.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D11"
     }
   }
 }
