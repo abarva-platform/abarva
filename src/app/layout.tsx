@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: 'AbarVa — Intelligence. Now act on it.',
     description: 'AbarVa gives you what consultants never could — intelligence from your own data, accountable to your actual outcomes.',
     type: 'website',
-    url: 'https://nexus-vert-kappa.vercel.app',
+    url: 'https://app.abarva.ai',
   },
 }
 

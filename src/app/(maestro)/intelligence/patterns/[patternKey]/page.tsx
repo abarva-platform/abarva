@@ -686,7 +686,7 @@ function ManifestPatternDetail({
     .sort((a, b) => Number(b.renderTier === 'rich') - Number(a.renderTier === 'rich') || a.code.localeCompare(b.code))
     .slice(0, 10);
   const stats = [
-    ['Confidence floor', pattern.confidenceFloor === null ? 'TBD' : `${Math.round(pattern.confidenceFloor * 100)}%`],
+    ['Confidence floor', pattern.confidenceFloor === null ? '—' : `${Math.round(pattern.confidenceFloor * 100)}%`],
     ['Evidence sources', String(pattern.evidenceCount)],
     ['Observations', String(pattern.observationCount || pattern.nObservationsFloor || pattern.observations.length)],
     ['Last updated', formatFreshness(pattern.lastUpdatedAt)],

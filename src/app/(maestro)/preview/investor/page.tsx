@@ -171,7 +171,7 @@ export default function InvestorPreviewPage() {
             <div className="canon-honesty-col real">
               <div className="canon-callout teal" style={{ marginBottom: 16 }}>● REAL TODAY · Apr 22, 2026</div>
               <HonestyItem label="Product" lines={[
-                'Live at app.abarva.ai · preview at nexus-vert-kappa.vercel.app',
+                'Live at app.abarva.ai',
                 'Four composite reference tenants in the build',
                 'Morrison program being built to Rich fidelity',
                 'Control Tower with editorial POV live in preview',

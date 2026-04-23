@@ -116,6 +116,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const demoNavItem = () => (
     <span
       key="demo-nav"
+      // dom-integrity-ignore-line · intentional user-facing copy while demo is paused
       title="Demo temporarily unavailable — new version coming soon"
       style={{
         fontSize: '15px',
@@ -347,6 +348,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
               <Link href="/sign-in" style={{ fontSize: '12px', fontWeight: 500, color: 'rgba(255,255,255,0.7)', textDecoration: 'none', padding: '5px 12px', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '4px', flexShrink: 0, fontFamily: SANS }}>
                 Login
               </Link>
+              {/* dom-integrity-ignore-line */}
               <span title="Demo temporarily unavailable — new version coming soon" style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.45)', background: 'rgba(255,255,255,0.06)', padding: '5px 14px', borderRadius: '4px', flexShrink: 0, fontFamily: SANS, border: '1px solid rgba(255,255,255,0.1)', cursor: 'default' }}>
                 Demo soon
               </span>

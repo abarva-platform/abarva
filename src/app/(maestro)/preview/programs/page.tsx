@@ -1,16 +1,21 @@
 import { getAllPrograms } from '@/lib/programs/mock';
+import { getActiveClientRow } from '@/lib/active-client';
 import { ProgramsIridescentShell } from '@/components/programs/ProgramsIridescentShell';
 
 export const dynamic = 'force-dynamic';
 
-// /preview/programs · iridescent canon build · matches
-// abarva_program_page_in_new_aesthetic.html (Apr 23, 2026).
-// Two zones: iridescent cream hero (radial glow) + dark content
-// where the conversation is the primary left-column star.
-// Deliverables render as a compact chip row, not a column.
-// Phase-pop animation preserved across tab switches.
+// /preview/programs · iridescent canon build · Nexus chat-first.
+// Scoped to the signed-in user's active tenant — programs from other
+// tenants never leak in here. Empty state renders when the active
+// tenant has no programs yet (new Keystone/Meridian seats, etc.); the
+// "+ New Program" pill inside the shell is the primary call to action.
 
-export default function ProgramsPreviewPage() {
-  const programs = getAllPrograms();
-  return <ProgramsIridescentShell programs={programs} />;
+export default async function ProgramsPreviewPage() {
+  const activeClient = await getActiveClientRow();
+  const all = getAllPrograms();
+  const programs = activeClient
+    ? all.filter((p) => p.clientName === activeClient.name)
+    : all;
+  const activeClientName = activeClient?.name ?? null;
+  return <ProgramsIridescentShell programs={programs} activeClientName={activeClientName} />;
 }

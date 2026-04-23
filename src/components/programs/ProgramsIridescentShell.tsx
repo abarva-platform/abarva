@@ -99,7 +99,7 @@ const PHASE_CONVERSATIONS: Record<PhaseKey, Array<{ speaker: 'you' | 'nexus'; te
   p4: [
     { speaker: 'nexus', text: 'Dual-ledger reconciling. AbarVa ledger: $6.2M annualized cognitive-load recovery across cohorts. Client finance ledger: $5.8M (they exclude one overhead line). Delta reconciled · attestation draft ready for CFO sign-off.' },
     { speaker: 'you', text: 'Push the attestation. Ready to promote the pattern?' },
-    { speaker: 'nexus', text: 'Legal anonymization review in progress · 3 days. Once cleared, pattern promotes with 47 observations and a recommended starter charter for analogous programs. First Meridian pattern contribution.' },
+    { speaker: 'nexus', text: 'Legal anonymization review in progress · 3 days. Once cleared, pattern promotes with 47 observations and a recommended starter charter for analogous programs. First pattern contribution from this program.' },
   ],
 };
 
@@ -209,11 +209,12 @@ const INTAKE_OPTIONS: Record<IntakeStep, { prompt: string; options: Array<{ id: 
     ],
   },
   sponsor: {
-    prompt: 'Who is the executive sponsor? I will pull their communication style from the graph.',
+    prompt: 'Who sponsors the decision? I will pull their communication style from the graph once you confirm.',
     options: [
-      { id: 'sarah-chen-cio', label: 'Sarah Chen · CIO', sub: 'Meridian Health · returning · first-meeting framing recommended' },
-      { id: 'marcus-t-cfo', label: 'Marcus T. · CFO', sub: 'Apex Retail Group · cost-side framing · weekly cadence' },
-      { id: 'priya-raman-vp-rcm', label: 'Priya Raman · VP Revenue Cycle', sub: 'Meridian · middle-office focus · throughput-oriented' },
+      { id: 'sponsor-cfo', label: 'CFO', sub: 'Cost-side framing · weekly cadence · board-facing' },
+      { id: 'sponsor-cio', label: 'CIO / CTO', sub: 'Platform + data seat · cross-portfolio view' },
+      { id: 'sponsor-cmo', label: 'CMO / CCO', sub: 'Revenue-side framing · customer-outcome pressure' },
+      { id: 'sponsor-coo', label: 'COO / Ops lead', sub: 'Throughput + reliability framing · operational cadence' },
     ],
   },
   value: {
@@ -241,9 +242,10 @@ const INTAKE_LABELS: Record<string, string> = {
   'retail-owned-brand': 'Retail · Owned-Brand Margin Recovery',
   'finserv-cost-income': 'FinServ · Cost-to-Income Compression',
   'energy-asset-reliability': 'Energy · Asset Reliability & Downtime',
-  'sarah-chen-cio': 'Sarah Chen · CIO · Meridian Health',
-  'marcus-t-cfo': 'Marcus T. · CFO · Apex Retail Group',
-  'priya-raman-vp-rcm': 'Priya Raman · VP Revenue Cycle · Meridian Health',
+  'sponsor-cfo': 'CFO',
+  'sponsor-cio': 'CIO / CTO',
+  'sponsor-cmo': 'CMO / CCO',
+  'sponsor-coo': 'COO / Ops lead',
   'v-small': '$2-5M annual impact',
   'v-medium': '$5-15M annual impact',
   'v-large': '$15M+ annual impact',
@@ -253,9 +255,17 @@ const INTAKE_LABELS: Record<string, string> = {
   's-enterprise': 'Enterprise-wide · co-sponsored',
 };
 
-export function ProgramsIridescentShell({ programs }: { programs: ProgramFullState[] }) {
+interface ProgramsIridescentShellProps {
+  programs: ProgramFullState[];
+  // Display name of the signed-in user's active tenant. Used for the
+  // empty state when the tenant has no programs yet — keeps the page
+  // coherent with the nav dropdown.
+  activeClientName?: string | null;
+}
+
+export function ProgramsIridescentShell({ programs, activeClientName = null }: ProgramsIridescentShellProps) {
   const initialPhase = phaseKeyFor(programs[0] ?? null);
-  const [mode, setMode] = useState<Mode>('phase');
+  const [mode, setMode] = useState<Mode>(programs.length === 0 ? 'intake' : 'phase');
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id ?? null);
   const [activePhase, setActivePhase] = useState<PhaseKey>(initialPhase);
   const [visitedPhases, setVisitedPhases] = useState<Set<number>>(new Set([PHASE_NAMES[initialPhase].num]));
@@ -299,13 +309,12 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
   const conversation = PHASE_CONVERSATIONS[activePhase];
   const phaseMeta = PHASE_NAMES[activePhase];
 
-  if (!selectedProgram) {
-    return <div style={{ padding: 40, fontFamily: 'DM Sans, sans-serif' }}>No program available.</div>;
-  }
-
-  const sponsorName = selectedProgram.sponsorPerson.name;
-  const sponsorTitle = selectedProgram.sponsorPerson.title ?? 'Sponsor';
+  const sponsorName = selectedProgram?.sponsorPerson.name ?? 'New sponsor';
+  const sponsorTitle = selectedProgram?.sponsorPerson.title ?? 'Sponsor';
   const sponsorInitials = initialsOf(sponsorName);
+  const clientLabel = selectedProgram?.clientName ?? activeClientName ?? 'Your organization';
+  const titleText = selectedProgram?.name ?? (activeClientName ? `Start your first program for ${activeClientName}` : 'Start your first program');
+  const showEmptyState = !selectedProgram;
 
   return (
     <div className="pis-root">
@@ -324,10 +333,12 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
         {/* Program title + program switcher · one compact row */}
         <div className="pis-chat-topline">
           <div className="pis-topline-left">
-            <h1 className="pis-program-title">{selectedProgram.name}</h1>
+            <h1 className="pis-program-title">{titleText}</h1>
             <div className="pis-program-meta">
               <span className="pis-program-meta-dot" />
-              {selectedProgram.clientName} · Sponsor {sponsorName}, {sponsorTitle}
+              {selectedProgram
+                ? `${clientLabel} · Sponsor ${sponsorName}, ${sponsorTitle}`
+                : `${clientLabel} · No programs yet · use + New program to intake one`}
             </div>
           </div>
           {programs.length > 1 ? (
@@ -402,19 +413,33 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
         <div className="pis-chat-layout" key={transitionKey}>
           <div className="pis-chat-window">
             <div className="pis-chat-messages">
-              {(mode === 'phase' ? conversation : intakeLog).map((turn, i) => (
-                <div key={i} className={`pis-bubble ${turn.speaker}`}>
-                  <div className="pis-bubble-avatar">
-                    {turn.speaker === 'you' ? sponsorInitials : '✱'}
-                  </div>
+              {showEmptyState && mode === 'phase' ? (
+                <div className="pis-bubble nexus">
+                  <div className="pis-bubble-avatar">✱</div>
                   <div className="pis-bubble-content">
-                    <div className="pis-bubble-speaker">
-                      {turn.speaker === 'you' ? 'You' : 'Nexus'}
+                    <div className="pis-bubble-speaker">Nexus</div>
+                    <div className="pis-bubble-body">
+                      {activeClientName
+                        ? `No programs yet for ${activeClientName}. Use + New program at the left of the phase journey to intake one — four questions, all guided choice, and you land in Phase 0 with a charter.`
+                        : 'No programs yet in this workspace. Use + New program at the left of the phase journey to intake one — four questions, all guided choice, and you land in Phase 0 with a charter.'}
                     </div>
-                    <div className="pis-bubble-body">{turn.text}</div>
                   </div>
                 </div>
-              ))}
+              ) : (
+                (mode === 'phase' ? conversation : intakeLog).map((turn, i) => (
+                  <div key={i} className={`pis-bubble ${turn.speaker}`}>
+                    <div className="pis-bubble-avatar">
+                      {turn.speaker === 'you' ? sponsorInitials : '✱'}
+                    </div>
+                    <div className="pis-bubble-content">
+                      <div className="pis-bubble-speaker">
+                        {turn.speaker === 'you' ? 'You' : 'Nexus'}
+                      </div>
+                      <div className="pis-bubble-body">{turn.text}</div>
+                    </div>
+                  </div>
+                ))
+              )}
               <div ref={chatEndRef} />
             </div>
 
@@ -494,7 +519,7 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
             {mode === 'phase' ? (
               <div className="pis-inline-signals">
                 <span className="pis-inline-signal">
-                  <span className="pis-inline-dot amber" /> 3 contradictions surfaced · <a href="#">view all</a>
+                  <span className="pis-inline-dot amber" /> 3 contradictions surfaced · <Link href="/preview/intelligence?view=contradictions">view all</Link>
                 </span>
               </div>
             ) : null}
