@@ -6,12 +6,22 @@
 
 ## Agent A · Stream 1 · Agent Posture Spec
 
-**Owner file:** `page-strategic-purpose-definition.md` (design package)
-**Status:** not started
-**Blocks:** Streams 2, 4
-**Completed:** —
-**Next:** Author agent posture sections for Programs (Nexus), Intelligence (Sentinel), Tower (Atlas), Admin (Steward). Each posture = agent name + domain, voice contract (one paragraph), guided-choice style, cross-agent handoff protocol, conversation state scope.
-**Blockers:** none · but depends on the design package md file being available at a writable path under the repo. Currently it lives in `/Users/anand/Library/Mobile Documents/...` which is outside the repo. Need to either (a) copy the package into the repo as a tracked asset, or (b) treat Agent A's output as a package PR back to the design package author.
+**Owner file:** `docs/design-canon/page-strategic-purpose-definition.md` (in-repo canon)
+**Status:** done (branch `design/wave-2-agent-a-posture`)
+**Blocks:** Streams 2 (voice polish), 4 (interaction exemplar) — now unblocked
+**Completed:**
+- "Agent postures" top-level section added to the strategic purpose doc, placed after the shared design principles / priority ranking and before the end marker. Additive-only; no existing sections rewritten.
+- Four authoritative agent subsections authored (Nexus ✱ / Sentinel ◈ / Atlas ▲ / Steward ◆), each covering: domain, voice contract (~100-130 words each, dialogue-grade), guided-choice style (closed vs generative options, escape-hatch behaviour), cross-agent handoff protocol (explicit triggers + chip phrasing), conversation state scope (per-surface / per-program / per-tenant / global + persistence rules).
+- Cross-agent orchestration notes appended (mutual exclusivity, handoff-as-chip semantics, Steward as audit floor, voice-blending prohibition).
+- Fixed agent ↔ surface ↔ glyph ↔ accent mapping reiterated at the top of the new section so the posture chapter is readable standalone.
+- Total new content: ~2,070 words.
+**Flag for Agent B:** The stub voice strings in `src/components/agent-rail/AgentRail.tsx` `AGENTS` const can now be replaced with canonical one-line descriptors drawn from the new posture sections. Suggested replacements (Agent B owns the final wording, but these fit the ~60-character rail tooltip budget and track the posture voice contracts):
+- `nexus.voice`: `"Maestro-collegial · sketches trade-offs, names the next decision"`
+- `sentinel.voice`: `"Forensic · reads telemetry aloud, names confidence and freshness"`
+- `atlas.voice`: `"Operational · leads with what's hot, cuts to the relevant surface"`
+- `steward.voice`: `"Utility-clerical · confirms what changed, by whom, when"`
+**Next:** none in Agent A's scope · posture spec is complete and authoritative.
+**Blockers:** none.
 
 ---
 
@@ -36,19 +46,32 @@
 
 ## Agent C · Stream 3 · Morrison Rich Authoring
 
-**Owner path:** `src/content/deliverables/apex-retail/morrison/` (to be created)
-**Status:** not started · unblocked
+**Owner path:** `src/content/deliverables/apex-retail/morrison/`
+**Status:** C1 done (branch `design/wave-2-agent-c1-morrison-p1`) · C2-C4 pending
 **Shared references (read-only):** `wireframe-d17-morrison-decision-memo.html`, `morrison-rich-authoring-work-order.md`, `intelligence-layer-pattern-design-pack-FULL.md` (Owned Brand Margin Recovery pattern)
 **Shared JSON (Agent C owns, sub-agents append-only):**
 - `src/content/deliverables/apex-retail/morrison/_timeline.json` — canonical chronology
 - `src/content/deliverables/apex-retail/morrison/_evidence-base.json` — E1/E2/... resolution
 **Sub-agent split:**
-- **C1** · Phase 1 · D01 Charter, D02 Stakeholder Map, D03 Success Metric Tree, D04 Intake Synthesis
+- **C1** · Phase 1 · D01 Charter, D02 Stakeholder Map, D03 Success Metric Tree, D04 Intake Synthesis · **done 2026-04-23**
 - **C2** · Phase 2 · D07 Financial Baseline, D08 Pain Points, D09 RCA, D10 Benchmark, D11 Hypotheses
 - **C3** · Phase 3 · D12 Roadmap, D15 Intervention Portfolio, D16 Business Case, D18 Risk Register (D17 already done)
 - **C4** · Phase 4 · D19 Delivery Plan, D20 Sprint Artifacts, D22 Change Management, D24 Outcome Measurement Plan
 **Sequencing recommendation:** Tier A first (D01, D03, D07, D09, D15, D16, D19 — demo spine) · Tier B next (remaining Phase 1-3) · Tier C last (Phase 4).
-**Next:** create `_timeline.json` + `_evidence-base.json` seeds before any deliverable authoring begins.
+
+### C1 · Phase 1 · status: done
+- **Files authored:**
+  - `src/content/deliverables/apex-retail/morrison/D01-d01-program-charter.md`
+  - `src/content/deliverables/apex-retail/morrison/D02-d02-stakeholder-map.md`
+  - `src/content/deliverables/apex-retail/morrison/D03-d03-success-metric-tree.md`
+  - `src/content/deliverables/apex-retail/morrison/D04-d04-intake-synthesis.md`
+- **New evidence IDs added to `_evidence-base.json`:** E10 (Marcus pricing-exclusion framing), E11 (Lena 15% assortment tolerance threshold), E12 (Reese category-lead resistance pattern). All additive; no existing entries modified.
+- **Timeline:** no new `_timeline.json` entries needed · all C1 decision-log dates resolve to existing Phase 1 entries (2026-01-14, -16, -18, -22, -27).
+- **Notes for downstream agents:**
+  - **Agent A:** Nexus orchestrator agent carries formal PMO/reconciliation duties in D01 governance and D03 dual-ledger architecture · posture voice contract should align with this PMO role.
+  - **Agent C2:** E10/E11/E12 are available for Phase 2 citation reuse · Lena's 15% threshold in particular anchors the assortment RCA arc toward D09.
+  - **Agent C3:** Dual-sponsor veto architecture described in D02 is load-bearing for D15/D17 intervention-portfolio decisions · Katherine's veto domain is specifically named.
+  - **Agent C4:** Dual-ledger reconciliation architecture in D03 flows directly into D24 outcome measurement · architecture is set; C4 operationalizes.
 
 ---
 

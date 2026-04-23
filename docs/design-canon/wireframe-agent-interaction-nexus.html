@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nexus Interaction Exemplar · Meridian New Program Intake · AbarVa</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --cream: #F5F1EB;
+    --ink: #1a1612;
+    --muted: #6d625a;
+    --line: rgba(26,22,18,0.10);
+    --teal: #0E9F8C;
+    --teal-soft: rgba(14,159,140,0.10);
+    --amber: #F59E0B;
+    --purple: #9B6DFF;
+    --purple-soft: rgba(155,109,255,0.12);
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; font-family: var(--sans); background: var(--cream); color: var(--ink); }
+  body { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* Navbar · matches programs-page.html */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 32px; border-bottom: 1px solid var(--line);
+    background: #FFFFFF; position: sticky; top: 0; z-index: 10;
+  }
+  .nav-brand { font-family: var(--serif); font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .nav-links { display: flex; gap: 28px; }
+  .nav-links a { color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 500; }
+  .nav-links a.active { color: var(--teal); }
+  .nav-user { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+
+  /* Breadcrumb */
+  .crumb {
+    display: flex; gap: 8px; align-items: center;
+    padding: 18px 32px 8px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .crumb a { color: var(--muted); text-decoration: none; }
+  .crumb a:hover { color: var(--teal); }
+  .crumb-sep { opacity: 0.5; }
+
+  /* Main grid · left 640px doc + right 380px agent rail */
+  .main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 0;
+    flex: 1;
+  }
+
+  /* Left: partially-drafted D01 charter */
+  .doc {
+    max-width: 720px;
+    padding: 28px 32px 48px;
+  }
+  .doc-eyebrow {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em;
+    text-transform: uppercase; color: var(--teal); font-weight: 700; margin-bottom: 10px;
+  }
+  .doc-title {
+    font-family: var(--serif); font-size: clamp(36px, 4vw, 48px);
+    letter-spacing: -0.025em; line-height: 1.05; margin: 0 0 16px; font-weight: 700;
+  }
+  .doc-summary {
+    font-family: var(--serif); font-size: 19px; line-height: 1.55; color: var(--ink);
+    max-width: 640px; margin: 0 0 28px;
+  }
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+    background: #FFFFFF; margin: 8px 0 32px;
+  }
+  .kpi {
+    padding: 16px 14px; border-right: 1px solid var(--line);
+  }
+  .kpi:last-child { border-right: 0; }
+  .kpi-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-family: var(--serif); font-size: 22px; letter-spacing: -0.025em;
+    line-height: 1.05; font-weight: 700;
+  }
+  .kpi-value.pending { color: var(--muted); font-style: italic; font-weight: 400; font-size: 14px; }
+  .kpi-detail { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  .doc-section { margin: 28px 0; }
+  .doc-section h2 {
+    font-family: var(--serif); font-size: 24px; letter-spacing: -0.02em;
+    margin: 0 0 10px; font-weight: 700;
+  }
+  .doc-section p {
+    font-size: 15px; line-height: 1.7; color: var(--muted); margin: 0 0 10px;
+  }
+
+  .doc-next {
+    border: 1px dashed var(--teal); border-radius: 14px;
+    padding: 16px 18px; background: var(--teal-soft);
+    margin: 28px 0;
+  }
+  .doc-next-label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--teal); font-weight: 700; margin-bottom: 6px;
+  }
+  .doc-next-text {
+    font-size: 14px; line-height: 1.6; color: var(--ink);
+  }
+
+  .doc-footer {
+    margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line);
+    font-size: 12px; line-height: 1.7; color: var(--muted);
+  }
+  .doc-footer p { margin: 0 0 4px; }
+
+  /* Right: agent rail · expanded 380px */
+  .rail {
+    width: 380px;
+    background: #FFFFFF;
+    border-left: 1px solid var(--line);
+    display: flex; flex-direction: column;
+    box-shadow: -12px 0 40px rgba(10,10,11,0.04);
+    align-self: stretch;
+    position: sticky; top: 56px; height: calc(100vh - 56px);
+  }
+
+  .rail-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 18px 14px; border-bottom: 1px solid var(--line);
+  }
+  .rail-header-left { display: flex; align-items: center; gap: 11px; }
+  .rail-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--teal); color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 20px;
+  }
+  .rail-name { font-family: var(--serif); font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .rail-domain {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--teal); font-weight: 700;
+  }
+  .rail-state-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 4px 9px; border-radius: 999px;
+    background: var(--teal-soft); color: var(--teal); font-weight: 700;
+  }
+  .rail-state-dot {
+    display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--teal); box-shadow: 0 0 0 2px var(--teal-soft);
+    animation: halo 1.4s ease-in-out infinite;
+  }
+  @keyframes halo {
+    0%, 100% { box-shadow: 0 0 0 2px var(--teal-soft); opacity: 1; }
+    50%      { box-shadow: 0 0 0 8px transparent; opacity: 0.7; }
+  }
+
+  .rail-context {
+    margin: 12px 18px 0; padding: 7px 11px;
+    background: var(--teal-soft); border: 1px solid var(--teal-soft);
+    border-radius: 7px;
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--teal); font-weight: 700;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .rail-context-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--teal);
+  }
+
+  .rail-voice {
+    padding: 8px 18px 12px; font-size: 12px; color: var(--muted);
+    font-style: italic; line-height: 1.5; border-bottom: 1px solid var(--line);
+  }
+
+  .rail-messages {
+    flex: 1; overflow-y: auto; padding: 16px 18px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .bubble { display: flex; gap: 10px; }
+  .bubble-avatar {
+    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .bubble.you .bubble-avatar { background: rgba(26,22,18,0.08); color: var(--ink); }
+  .bubble.agent .bubble-avatar { background: var(--teal); color: #FFFFFF; font-family: var(--serif); font-size: 15px; }
+  .bubble-content { flex: 1; min-width: 0; }
+  .bubble-speaker {
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .bubble.agent .bubble-speaker { color: var(--teal); font-weight: 700; }
+  .streaming-tag {
+    font-size: 8px; padding: 2px 5px; border-radius: 3px;
+    background: var(--teal); color: #FFFFFF; letter-spacing: 0.14em;
+  }
+  .bubble-body {
+    font-size: 13.5px; line-height: 1.6; color: var(--ink);
+  }
+  .bubble-body strong { font-weight: 700; }
+  .cursor {
+    display: inline-block; margin-left: 2px; color: var(--teal);
+    animation: blink 1s steps(2) infinite; font-weight: 400;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Guided choice block */
+  .guided {
+    border-top: 1px solid var(--line);
+    padding: 14px 18px 16px;
+    background: #FAF7F1;
+  }
+  .guided-prompt {
+    font-size: 12px; color: #544b42; margin-bottom: 10px; font-weight: 500;
+  }
+  .chips { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    text-align: left; padding: 9px 11px;
+    background: #FFFFFF; border: 1px solid var(--line); border-radius: 8px;
+    cursor: pointer; font-family: var(--sans);
+    transition: all 0.15s;
+    display: block;
+    position: relative;
+  }
+  .chip:hover { background: var(--teal-soft); border-color: var(--teal); transform: translateX(-1px); }
+  .chip-label { display: block; font-weight: 500; font-size: 12.5px; color: var(--ink); line-height: 1.4; }
+  .chip-sub { display: block; margin-top: 2px; font-size: 10.5px; color: var(--muted); line-height: 1.4; }
+  .chip.handoff {
+    border-color: var(--purple);
+    background: var(--purple-soft);
+  }
+  .chip.handoff:hover { background: var(--purple-soft); border-color: var(--purple); transform: translateX(-1px); }
+  .chip.handoff .chip-label { color: var(--purple); font-weight: 700; }
+  .chip-route {
+    position: absolute; top: 9px; right: 11px;
+    font-family: var(--mono); font-size: 9px; letter-spacing: 0.14em;
+    color: var(--purple); font-weight: 700;
+  }
+
+  .escape {
+    display: flex; gap: 6px; padding: 7px;
+    background: #FFFFFF; border: 1px solid var(--line); border-radius: 10px;
+  }
+  .escape-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-family: inherit; font-size: 13px; color: var(--ink); padding: 4px 6px;
+  }
+  .escape-input::placeholder { color: var(--muted); }
+  .escape-send {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--teal); color: #FFFFFF; border: none; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor, .rail-state-dot { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">AbarVa</div>
+  <div class="nav-links">
+    <a href="#" class="active">Programs</a>
+    <a href="#">Intelligence</a>
+    <a href="#">Control Tower</a>
+    <a href="#">Admin</a>
+  </div>
+  <div class="nav-user">MT · Meridian Health</div>
+</nav>
+
+<div class="crumb">
+  <a href="#">Home</a><span class="crumb-sep">/</span>
+  <a href="#">Meridian Health</a><span class="crumb-sep">/</span>
+  <a href="#">Programs</a><span class="crumb-sep">/</span>
+  <span>Clinical Documentation AI Governance · Draft</span>
+</div>
+
+<div class="main">
+
+  <!-- Left · partially-drafted D01 Charter (document-centric, collapsed to the side) -->
+  <div class="doc">
+    <div class="doc-eyebrow">Meridian Health · New Program · Phase 0 · Intake</div>
+    <h1 class="doc-title">Clinical Documentation AI Governance Program</h1>
+    <p class="doc-summary">
+      Charter draft in progress. Nexus is walking Maya through the four intake questions that anchor the
+      program to the pattern library and lock sponsor alignment before Phase 1 begins. Numbers land once
+      the scope and measurement decisions are made — not before.
+    </p>
+
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">Phase</div>
+        <div class="kpi-value">0</div>
+        <div class="kpi-detail">Intake in progress</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Sponsor</div>
+        <div class="kpi-value pending">— to be established</div>
+        <div class="kpi-detail">CMO or CIO pending Q3</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Value at stake</div>
+        <div class="kpi-value pending">— to be established</div>
+        <div class="kpi-detail">Anchored once scope locks</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Pattern anchor</div>
+        <div class="kpi-value" style="font-size:16px;line-height:1.2;">Ambient Clinical (partial)</div>
+        <div class="kpi-detail">Burnout-branch of 3 peers</div>
+      </div>
+    </div>
+
+    <div class="doc-section">
+      <h2>Why this program exists</h2>
+      <p>
+        Meridian's CMO has flagged clinician burnout correlated with documentation time — 18 months of
+        Epic data exists to characterize the relationship. The program aims to govern AI interventions
+        across the documentation workflow (draft generation, ambient scribe, discrete data extraction,
+        specialty-note templating) rather than deploy any single tool. Governance first, tooling second.
+      </p>
+    </div>
+
+    <div class="doc-section">
+      <h2>Scope · pending Nexus intake</h2>
+      <p>
+        Nexus is anchoring scope to one of three peer patterns. The choice determines benchmarks,
+        measurement instruments, and phase-gate thresholds. Charter will populate once the current
+        guided-choice turn resolves.
+      </p>
+    </div>
+
+    <div class="doc-next">
+      <div class="doc-next-label">Next in this document</div>
+      <div class="doc-next-text">
+        Sponsor alignment block · Success metric tree (North-star = pajama-time reduction or cognitive-load
+        proxy, depending on Nexus's recommendation) · Phase-gate commit · Risk register seeds.
+      </div>
+    </div>
+
+    <footer class="doc-footer">
+      <p>Composite organization built from real-world data.</p>
+      <p>This document is a demo rendering, not a deliverable for a real engagement.</p>
+    </footer>
+  </div>
+
+  <!-- Right · Agent rail · EXPANDED · Nexus mid-stream -->
+  <aside class="rail" role="dialog" aria-label="Nexus conversation">
+
+    <div class="rail-header">
+      <div class="rail-header-left">
+        <div class="rail-avatar">✱</div>
+        <div>
+          <div class="rail-name">Nexus</div>
+          <div class="rail-domain">Programs</div>
+        </div>
+      </div>
+      <span class="rail-state-chip" role="status" aria-live="polite">
+        <span class="rail-state-dot" aria-hidden="true"></span>
+        Responding
+      </span>
+    </div>
+
+    <div class="rail-context">
+      <span class="rail-context-dot"></span>
+      New program intake · Meridian Health
+    </div>
+
+    <div class="rail-voice">
+      Maestro-collegial · sketches trade-offs, names the next decision
+    </div>
+
+    <div class="rail-messages">
+      <!-- Turn 1 · agent done -->
+      <div class="bubble agent">
+        <div class="bubble-avatar">✱</div>
+        <div class="bubble-content">
+          <div class="bubble-speaker">Nexus</div>
+          <div class="bubble-body">
+            I checked the pattern library for clinical-documentation governance at scale. The closest match is
+            <strong>Ambient Clinical Value Chain Automation</strong> — which Meridian is already running on the
+            ambient side (MRD-01). Your new ask extends that pattern into documentation governance proper. That's
+            a partial match, not an exact one. Four peers have run the extension. I want to anchor the charter to
+            the partial-match branch so we inherit their benchmark cohort. Before we lock the sponsor, tell me
+            what's the primary trigger — regulatory pressure, revenue protection, clinician burnout, or a new
+            executive mandate?
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn 2 · user -->
+      <div class="bubble you">
+        <div class="bubble-avatar">MT</div>
+        <div class="bubble-content">
+          <div class="bubble-speaker">You</div>
+          <div class="bubble-body">
+            Clinician burnout is what the CMO cares about. Burnout correlates with documentation time,
+            and we have 18 months of Epic data to back that up.
+          </div>
+        </div>
+      </div>
+
+      <!-- Turn 3 · agent streaming -->
+      <div class="bubble agent">
+        <div class="bubble-avatar">✱</div>
+        <div class="bubble-content">
+          <div class="bubble-speaker">
+            Nexus
+            <span class="streaming-tag">Streaming</span>
+          </div>
+          <div class="bubble-body">
+            Good. That routes us to the <strong>clinician-burnout branch</strong> of the pattern — three peers,
+            all payer-provider hybrids like Meridian. Before we draft the charter I need three things:
+            (1) scope boundaries — are we including outpatient specialty, or just primary care plus inpatient?
+            (2) Measurement — pajama-time hours, after-hours EHR minutes, or NLP-derived cognitive load?
+            (3) Sponsor alignment — is the CMO sponsor, or is the CIO sponsor with CMO as co-sponsor?
+            <strong>I can ask Sentinel for a read on how peer-3 handled the inpatient decision if you want
+            peer-evidence before you answer (2).</strong><span class="cursor">▋</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="guided">
+      <div class="guided-prompt">Pick one. I'll anchor the next question to your choice.</div>
+      <div class="chips">
+        <button class="chip" type="button">
+          <span class="chip-label">Scope: outpatient specialty + primary care + inpatient</span>
+          <span class="chip-sub">broadest · matches peer-1 baseline</span>
+        </button>
+        <button class="chip" type="button">
+          <span class="chip-label">Scope: primary care + inpatient only</span>
+          <span class="chip-sub">narrower · lower diagnostic surface area</span>
+        </button>
+        <button class="chip" type="button">
+          <span class="chip-label">Scope: ambulatory only</span>
+          <span class="chip-sub">highest-signal · smallest transformation footprint</span>
+        </button>
+        <button class="chip handoff" type="button">
+          <span class="chip-label">Ask Sentinel first · I want peer-3 evidence</span>
+          <span class="chip-sub">cross-agent handoff · pattern library deep read</span>
+          <span class="chip-route">→ Sentinel ◈</span>
+        </button>
+      </div>
+      <form class="escape" onsubmit="event.preventDefault();">
+        <input class="escape-input" placeholder="Something else…" aria-label="Free-text reply">
+        <button class="escape-send" type="submit" aria-label="Send">↵</button>
+      </form>
+    </div>
+
+  </aside>
+
+</div>
+
+</body>
+</html>
