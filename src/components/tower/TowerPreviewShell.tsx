@@ -168,10 +168,10 @@ export function TowerPreviewShell({
         style={{
           background: INK,
           color: PAGE_BG,
-          padding: '8px 24px',
+          padding: '10px 24px',
           fontFamily: MONO,
-          fontSize: 10,
-          letterSpacing: '0.14em',
+          fontSize: 11,
+          letterSpacing: '0.12em',
           textTransform: 'uppercase',
           display: 'flex',
           justifyContent: 'space-between',
@@ -185,7 +185,7 @@ export function TowerPreviewShell({
         </span>
         <Link
           href="/tower"
-          style={{ color: PAGE_BG, opacity: 0.8, textDecoration: 'underline', fontSize: 10 }}
+          style={{ color: PAGE_BG, opacity: 0.85, textDecoration: 'underline', fontSize: 11 }}
         >
           ← Compare with current /tower
         </Link>
@@ -208,11 +208,12 @@ export function TowerPreviewShell({
           <div
             style={{
               fontFamily: MONO,
-              fontSize: 10,
+              fontSize: 11,
               letterSpacing: '0.16em',
               textTransform: 'uppercase',
               color: TEAL,
               marginBottom: 6,
+              fontWeight: 600,
             }}
           >
             Tower · Control room
@@ -221,14 +222,14 @@ export function TowerPreviewShell({
             style={{
               margin: 0,
               fontFamily: SERIF,
-              fontSize: 32,
+              fontSize: 34,
               letterSpacing: '-0.02em',
               lineHeight: 1.05,
               color: INK,
             }}
           >
             {clientName}
-            <span style={{ color: INK_FAINT, fontSize: 20, marginLeft: 12, fontFamily: SANS, fontWeight: 400 }}>
+            <span style={{ color: INK_FAINT, fontSize: 22, marginLeft: 12, fontFamily: SANS, fontWeight: 400 }}>
               · {dateStr} · {timeStr}
             </span>
           </h1>
@@ -238,7 +239,7 @@ export function TowerPreviewShell({
               gap: 14,
               flexWrap: 'wrap',
               marginTop: 12,
-              fontSize: 13,
+              fontSize: 14,
               color: INK_SOFT,
             }}
           >
@@ -255,12 +256,12 @@ export function TowerPreviewShell({
             type="button"
             onClick={() => setAtlasOpen(true)}
             style={{
-              padding: '10px 16px',
+              padding: '10px 18px',
               background: 'transparent',
               border: `1px solid ${LINE}`,
               borderRadius: 999,
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: INK_SOFT,
@@ -273,12 +274,12 @@ export function TowerPreviewShell({
           <Link
             href="/programs"
             style={{
-              padding: '10px 16px',
+              padding: '10px 18px',
               background: INK,
               color: PAGE_BG,
               borderRadius: 999,
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               textDecoration: 'none',
@@ -295,7 +296,7 @@ export function TowerPreviewShell({
         <div
           style={{
             fontFamily: MONO,
-            fontSize: 10,
+            fontSize: 12,
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: CORAL,
@@ -419,7 +420,7 @@ export function TowerPreviewShell({
               <div
                 style={{
                   fontFamily: MONO,
-                  fontSize: 10,
+                  fontSize: 11,
                   letterSpacing: '0.14em',
                   textTransform: 'uppercase',
                   color: INK_MUTED,
@@ -427,18 +428,18 @@ export function TowerPreviewShell({
               >
                 Active programs
               </div>
-              <div style={{ fontSize: 13, color: INK, marginTop: 4 }}>
+              <div style={{ fontSize: 14, color: INK, marginTop: 4 }}>
                 <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
                   Meridian AI Readiness
                 </Link>
-                <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 10, marginLeft: 6 }}>
+                <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
                   · Phase 1 · Diagnose
                 </span>
                 {' · '}
                 <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
                   Ambient Documentation Vendor Strategy
                 </Link>
-                <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 10, marginLeft: 6 }}>
+                <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
                   · Phase 0 · Start
                 </span>
               </div>
@@ -448,12 +449,12 @@ export function TowerPreviewShell({
             href="/programs"
             style={{
               fontFamily: MONO,
-              fontSize: 11,
+              fontSize: 12,
               letterSpacing: '0.08em',
               textTransform: 'uppercase',
               color: TEAL,
               textDecoration: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
             }}
           >
             Open all →
@@ -485,9 +486,9 @@ function HeaderPill({
     <span
       style={{
         display: 'inline-flex',
-        gap: 6,
+        gap: 8,
         alignItems: 'baseline',
-        padding: '4px 10px',
+        padding: '6px 12px',
         background: PANEL_BG,
         border: `1px solid ${LINE}`,
         borderRadius: 999,
@@ -496,7 +497,7 @@ function HeaderPill({
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 9,
+          fontSize: 11,
           letterSpacing: '0.12em',
           textTransform: 'uppercase',
           color: INK_MUTED,
@@ -504,7 +505,7 @@ function HeaderPill({
       >
         {label}
       </span>
-      <strong style={{ fontSize: 13, fontWeight: 600, color: valueColor }}>{value}</strong>
+      <strong style={{ fontSize: 14, fontWeight: 600, color: valueColor }}>{value}</strong>
     </span>
   );
 }
@@ -529,13 +530,13 @@ function PressureRow({ item }: { item: PressureItem }) {
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 9,
+          fontSize: 11,
           letterSpacing: '0.14em',
           textTransform: 'uppercase',
           fontWeight: 700,
           color: severityColor,
           background: severityBg,
-          padding: '4px 8px',
+          padding: '5px 10px',
           borderRadius: 6,
         }}
       >
@@ -544,7 +545,7 @@ function PressureRow({ item }: { item: PressureItem }) {
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: 700,
           color: INK,
           textAlign: 'right',
@@ -552,11 +553,11 @@ function PressureRow({ item }: { item: PressureItem }) {
       >
         {fmtUsd(item.monthlyUsd)}/mo
       </span>
-      <span style={{ fontSize: 14, color: INK, lineHeight: 1.4 }}>{item.title}</span>
+      <span style={{ fontSize: 15, color: INK, lineHeight: 1.45 }}>{item.title}</span>
       <span
         style={{
           fontFamily: MONO,
-          fontSize: 11,
+          fontSize: 12,
           color: item.unowned ? CORAL : INK_MUTED,
           fontWeight: item.unowned ? 700 : 500,
           letterSpacing: '0.04em',
@@ -569,12 +570,12 @@ function PressureRow({ item }: { item: PressureItem }) {
           href={item.programHref}
           style={{
             fontFamily: MONO,
-            fontSize: 11,
+            fontSize: 12,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: TEAL,
             textDecoration: 'none',
-            fontWeight: 600,
+            fontWeight: 700,
           }}
         >
           Open →
@@ -584,14 +585,14 @@ function PressureRow({ item }: { item: PressureItem }) {
           type="button"
           style={{
             fontFamily: MONO,
-            fontSize: 11,
+            fontSize: 12,
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: CORAL,
             border: `1px solid ${CORAL_SOFT}`,
             background: 'transparent',
             borderRadius: 999,
-            padding: '4px 10px',
+            padding: '6px 12px',
             cursor: 'pointer',
             fontWeight: 700,
           }}
@@ -646,7 +647,7 @@ function PillarCard({
         <span
           style={{
             fontFamily: MONO,
-            fontSize: 10,
+            fontSize: 12,
             letterSpacing: '0.14em',
             textTransform: 'uppercase',
             fontWeight: 700,
@@ -655,26 +656,26 @@ function PillarCard({
         >
           {label}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: INK_FAINT }}>{expanded ? '▾' : '▸'}</span>
+        <span style={{ fontFamily: MONO, fontSize: 12, color: INK_FAINT }}>{expanded ? '▾' : '▸'}</span>
       </div>
       <div
         style={{
           fontFamily: SERIF,
-          fontSize: 36,
+          fontSize: 38,
           lineHeight: 1,
           letterSpacing: '-0.03em',
           color: INK,
         }}
       >
         {value}{' '}
-        <span style={{ fontSize: 13, color: INK_MUTED, fontWeight: 400, letterSpacing: 0 }}>{unit}</span>
+        <span style={{ fontSize: 14, color: INK_MUTED, fontWeight: 400, letterSpacing: 0 }}>{unit}</span>
       </div>
-      <div style={{ fontSize: 12, color: INK_MUTED, fontStyle: 'italic' }}>{subtitle}</div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+      <div style={{ fontSize: 13, color: INK_MUTED, fontStyle: 'italic' }}>{subtitle}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
         {breakdown.map((b) => (
           <div
             key={b.label}
-            style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontFamily: MONO }}
+            style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontFamily: MONO }}
           >
             <span style={{ color: INK_MUTED, letterSpacing: '0.02em' }}>{b.label}</span>
             <span style={{ color: b.tone === 'coral' ? CORAL : b.tone === 'amber' ? AMBER : INK, fontWeight: 600 }}>
