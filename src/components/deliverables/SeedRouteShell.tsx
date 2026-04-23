@@ -152,6 +152,7 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
           </CardGrid>
         </>
       ) : null}
+      <PatternObservationsPipelinePanel />
       {pattern?.observations.length ? (
         <>
           <SectionTitle label="Composite observations" />
@@ -196,6 +197,7 @@ export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
           {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
         </p>
       </div>
+      <PatternObservationsPipelinePanel />
     </SeedPageFrame>
   );
 }
@@ -258,6 +260,32 @@ export function SeedOperationsPortfolio() {
       <MetricGrid metrics={[['Tenants', plan.summary.tenantCount.toString(), 'portfolio'], ['Programs', plan.summary.programCount.toString(), 'seeded'], ['Deliverables', plan.summary.deliverableCount.toString(), 'canonical routes'], ['Rich', plan.summary.richDeliverableCount.toString(), 'full render'], ['Outline', plan.summary.outlineDeliverableCount.toString(), 'draft render'], ['Stub', plan.summary.stubDeliverableCount.toString(), 'scheduled']]} />
       <CardGrid>{plan.tenants.map((tenant) => <LinkCard key={tenant.tenantKey} href={tenantDashboardPath(tenant)} label={tenant.tenantKey} title={tenant.displayName} description={`${tenant.programs.length} programs · ${summarizeTenant(tenant).deliverables} deliverables`} />)}</CardGrid>
     </SeedPageFrame>
+  );
+}
+
+function PatternObservationsPipelinePanel() {
+  return (
+    <div className="del-panel" style={{ borderColor: 'rgba(14, 159, 140, 0.24)', background: 'rgba(14, 159, 140, 0.05)' }}>
+      <div className="del-eyebrow">Observations pipeline</div>
+      <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+        This pattern receives observations from completed Phase 5 programs. When Morrison reaches Phase 5 outcome attestation, observations will be anonymized, composite-tagged, and contributed back to this pattern.
+      </p>
+      <div
+        style={{
+          marginTop: 12,
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 10,
+          padding: '9px 12px',
+          borderRadius: 999,
+          border: '1px solid rgba(14, 159, 140, 0.16)',
+          background: 'rgba(255,255,255,0.56)',
+        }}
+      >
+        <span className="del-eyebrow" style={{ color: 'var(--del-teal)' }}>Zero state</span>
+        <span style={{ color: 'var(--del-ink)', fontSize: 13, lineHeight: 1.4 }}>0 observations contributed to date. Pipeline schema ready.</span>
+      </div>
+    </div>
   );
 }
 

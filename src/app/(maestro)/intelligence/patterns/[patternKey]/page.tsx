@@ -228,6 +228,7 @@ export default async function PatternDetailPage({
         </header>
 
         <PatternObservationDisclaimer />
+        <PatternObservationPipeline />
 
         {industryCompositions.length > 0 ? (
           <section>
@@ -617,6 +618,42 @@ function PatternObservationDisclaimer() {
   );
 }
 
+function PatternObservationPipeline() {
+  return (
+    <section
+      style={{
+        padding: 18,
+        borderRadius: 12,
+        border: '0.5px solid rgba(20, 184, 166, 0.24)',
+        background: 'rgba(20, 184, 166, 0.05)',
+      }}
+    >
+      <EyebrowLabel tone="teal" size="xs">OBSERVATIONS PIPELINE</EyebrowLabel>
+      <SectionHeading size="sm" style={{ marginTop: 8, marginBottom: 10 }}>
+        How completed Phase 5 work compounds back into this pattern
+      </SectionHeading>
+      <Body size="sm" tone="secondary">
+        This pattern receives observations from completed Phase 5 programs. When Morrison reaches Phase 5 outcome attestation, observations will be anonymized, composite-tagged, and contributed back to this pattern.
+      </Body>
+      <div
+        style={{
+          marginTop: 12,
+          display: 'inline-flex',
+          gap: 10,
+          alignItems: 'center',
+          padding: '8px 12px',
+          borderRadius: 999,
+          border: '0.5px solid rgba(20, 184, 166, 0.18)',
+          background: 'rgba(255,255,255,0.03)',
+        }}
+      >
+        <MetaLabel style={{ color: COLORS.teal }}>ZERO STATE</MetaLabel>
+        <Body size="sm" tone="primary">0 observations contributed to date. Pipeline schema ready.</Body>
+      </div>
+    </section>
+  );
+}
+
 function VendorLayerCard({ group }: { group: VendorGroup }) {
   return (
     <div style={{ padding: 20, background: 'rgba(255,255,255,0.02)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: 12, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -735,6 +772,7 @@ function ManifestPatternDetail({
         </header>
 
         <PatternObservationDisclaimer />
+        <PatternObservationPipeline />
 
         {pattern.longDescription ? (
           <section>
