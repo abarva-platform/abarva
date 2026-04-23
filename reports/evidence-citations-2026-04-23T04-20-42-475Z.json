@@ -1,0 +1,21 @@
+{
+  "generatedAt": "2026-04-23T04:20:42.476Z",
+  "summary": {
+    "evidenceBaseCount": 1,
+    "referenceCount": 57,
+    "renderModelReferenceCount": 57,
+    "authoredContentReferenceCount": 0,
+    "unresolvedCount": 0,
+    "resolutionRate": 1
+  },
+  "evidenceBases": [
+    {
+      "tenantSlug": "apex-retail",
+      "programCode": "APX-01",
+      "programSlug": "morrison-owned-brand-margin-recovery",
+      "path": "/Users/anand/Projects/nexus-overnight-tier1/src/content/deliverables/apex-retail/morrison/_evidence-base.json",
+      "entryCount": 9
+    }
+  ],
+  "unresolved": []
+}

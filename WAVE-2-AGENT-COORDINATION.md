@@ -92,13 +92,13 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 | --- | --- | --- |
 | 1.1 Link crawler expansion | complete | `npm run integrity:link-crawler` passed with 696 routes, 8,492 internal links, 0 broken routes, 0 broken links, 0 redirect-chain violations. Report: `reports/link-crawler-2026-04-23T04-05-35-790Z.json`. |
 | 1.2 Composite disclaimer audit | complete | Exact disclaimer constants centralized; rendered checks added in `src/__tests__/integration/composite-disclaimer-presence.test.ts`; CI workflow added in `.github/workflows/integrity.yml`. |
-| 1.3 Evidence citation resolution check | pending | Not started. |
+| 1.3 Evidence citation resolution check | complete | `npm run integrity:evidence-citations` passed with 1 evidence base, 57 rendered refs, 0 unresolved, 100% resolution. Report: `reports/evidence-citations-2026-04-23T04-20-42-475Z.json`. |
 | 1.4 Tenant switcher re-scope validation | pending | Not started. |
 | 1.5 Tower sub-surface stub routes | pending | Minimal generic route added in 1.1 to let the crawler include Tower sub-surfaces without false 404s; 1.5 will harden explicit scheduled-state coverage. |
 | 1.6 Route-level integrity tests | pending | Not started. |
 | 1.7 Seed integrity report generator | pending | Not started. |
 
-**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npx tsc --noEmit --pretty false`
+**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npm run integrity:evidence-citations` · `npx tsc --noEmit --pretty false`
 
 ---
 

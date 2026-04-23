@@ -27,3 +27,6 @@ jobs:
 
       - name: Composite disclaimer audit
         run: npm run integrity:disclaimers
+
+      - name: Evidence citation resolution
+        run: npm run integrity:evidence-citations
