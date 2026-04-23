@@ -67,7 +67,8 @@
     "intel:patterns:generate": "npx tsx src/scripts/intelligence/generate-pattern-manifest.ts",
     "integrity:link-crawler": "npx tsx src/scripts/integrity/run-link-crawler.ts",
     "integrity:disclaimers": "jest src/__tests__/integration/composite-disclaimer-presence.test.ts",
-    "integrity:evidence-citations": "npx tsx src/scripts/integrity/check-evidence-citations.ts && jest src/__tests__/integration/evidence-citation-resolution.test.ts"
+    "integrity:evidence-citations": "npx tsx src/scripts/integrity/check-evidence-citations.ts && jest src/__tests__/integration/evidence-citation-resolution.test.ts",
+    "integrity:tenant-rescope": "jest src/__tests__/integration/tenant-rescope-validation.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",

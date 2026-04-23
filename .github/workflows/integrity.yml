@@ -30,3 +30,6 @@ jobs:
 
       - name: Evidence citation resolution
         run: npm run integrity:evidence-citations
+
+      - name: Tenant re-scope validation
+        run: npm run integrity:tenant-rescope
