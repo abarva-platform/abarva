@@ -1,0 +1,35 @@
+{
+  "cycle_id": "cycle-2026-04-23-1",
+  "persona": "Marcus T · Apex CFO",
+  "session_start": "2026-04-23T09:00:00.000Z",
+  "session_end": "2026-04-23T09:25:00.000Z",
+  "narrative": "The core surfaces load, but the creation path and state persistence still create visible trust debt for a finance-oriented operator.",
+  "criteria_results": [
+    {
+      "criterion_key": "creation_flow",
+      "label": "Creation flow opens cleanly",
+      "status": "fail",
+      "category": "A",
+      "notes": "New program CTA does not open an intake surface."
+    },
+    {
+      "criterion_key": "phase_progression",
+      "label": "Phase progression persists",
+      "status": "fail",
+      "category": "B",
+      "notes": "Phase state resets after refresh."
+    },
+    {
+      "criterion_key": "nexus_quality",
+      "label": "Nexus answers with program context",
+      "status": "watch",
+      "category": "D",
+      "notes": "Answers are coherent but not context-rich enough yet."
+    }
+  ],
+  "overall_recommendation": "hold",
+  "top_blockers": [
+    "Creation flow drops the user back to the list.",
+    "Phase progression does not persist on refresh."
+  ]
+}

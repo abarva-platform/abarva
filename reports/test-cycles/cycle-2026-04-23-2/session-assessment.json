@@ -1,0 +1,42 @@
+{
+  "cycle_id": "cycle-2026-04-23-2",
+  "persona": "Marcus T · Apex CFO",
+  "session_start": "2026-04-23T14:00:00.000Z",
+  "session_end": "2026-04-23T14:30:00.000Z",
+  "narrative": "The creation path is fixed, but the session still cannot be recommended because state integrity and content depth regressions remain visible.",
+  "criteria_results": [
+    {
+      "criterion_key": "creation_flow",
+      "label": "Creation flow opens cleanly",
+      "status": "pass",
+      "category": "A",
+      "notes": "Creation path now opens correctly."
+    },
+    {
+      "criterion_key": "phase_progression",
+      "label": "Phase progression persists",
+      "status": "fail",
+      "category": "B",
+      "notes": "Phase refresh issue still unresolved."
+    },
+    {
+      "criterion_key": "nexus_quality",
+      "label": "Nexus answers with program context",
+      "status": "fail",
+      "category": "D",
+      "notes": "Answers now cite the wrong tenant."
+    },
+    {
+      "criterion_key": "state_isolation",
+      "label": "Tenant state remains isolated",
+      "status": "fail",
+      "category": "E",
+      "notes": "Meridian pressure leaked into the Apex Tower view."
+    }
+  ],
+  "overall_recommendation": "hold",
+  "top_blockers": [
+    "Cross-tenant state leak in Tower view.",
+    "Benchmark drilldown opens without supporting content."
+  ]
+}

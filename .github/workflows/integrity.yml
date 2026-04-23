@@ -45,3 +45,6 @@ jobs:
 
       - name: Seed integrity report
         run: npm run integrity:seed-report
+
+      - name: Findings harness
+        run: npm run test:findings-harness

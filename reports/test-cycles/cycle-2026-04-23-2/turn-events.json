@@ -1,0 +1,62 @@
+[
+  {
+    "cycle_id": "cycle-2026-04-23-2",
+    "persona": "Marcus T · Apex CFO",
+    "timestamp": "2026-04-23T14:00:00.000Z",
+    "url": "/tenant/apexretail/programs",
+    "action": "Click + New program from Programs index",
+    "expected": "Phase 0 intake opens immediately inside the scoped Apex tenant.",
+    "actual": "Phase 0 intake opens immediately inside the scoped Apex tenant.",
+    "mismatch_severity": "none",
+    "category": "A",
+    "notes": "Creation flow fixed in cycle 2."
+  },
+  {
+    "cycle_id": "cycle-2026-04-23-2",
+    "persona": "Marcus T · Apex CFO",
+    "timestamp": "2026-04-23T14:07:00.000Z",
+    "url": "/tenant/apexretail/programs/store-associate-productivity/phase/2",
+    "action": "Advance from Phase 1 to Phase 2",
+    "expected": "Phase summary persists and the next phase rail becomes active.",
+    "actual": "The screen returns to Phase 1 state after a refresh.",
+    "mismatch_severity": "medium",
+    "category": "B",
+    "notes": "Persistence defect still open."
+  },
+  {
+    "cycle_id": "cycle-2026-04-23-2",
+    "persona": "Marcus T · Apex CFO",
+    "timestamp": "2026-04-23T14:12:00.000Z",
+    "url": "/tenant/apexretail/programs/store-associate-productivity",
+    "action": "Ask Nexus for a sponsor-ready recommendation",
+    "expected": "Context-aware guidance tied to the active program and phase.",
+    "actual": "Nexus cites the wrong tenant and repeats prior language.",
+    "mismatch_severity": "high",
+    "category": "D",
+    "notes": "Response regressed from generic to actively wrong."
+  },
+  {
+    "cycle_id": "cycle-2026-04-23-2",
+    "persona": "Marcus T · Apex CFO",
+    "timestamp": "2026-04-23T14:18:00.000Z",
+    "url": "/tenant/apexretail/tower",
+    "action": "Verify active tenant in Tower",
+    "expected": "Apex-only pressures and spend views remain scoped after navigation.",
+    "actual": "Meridian pressure card appears after tenant switching.",
+    "mismatch_severity": "high",
+    "category": "E",
+    "notes": "Tenant state leak introduced during cross-surface navigation."
+  },
+  {
+    "cycle_id": "cycle-2026-04-23-2",
+    "persona": "Marcus T · Apex CFO",
+    "timestamp": "2026-04-23T14:22:00.000Z",
+    "url": "/tenant/apexretail/intelligence",
+    "action": "Open the pattern grid and drill into benchmarks",
+    "expected": "Every section card opens populated benchmark content.",
+    "actual": "Benchmark panel opens with empty copy and no linked evidence.",
+    "mismatch_severity": "high",
+    "category": "C",
+    "notes": "Content exists structurally but does not support the navigation."
+  }
+]
