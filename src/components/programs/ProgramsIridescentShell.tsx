@@ -1,9 +1,8 @@
 'use client';
 
-// ProgramsIridescentShell · Nexus-chat-first · the conversation is the
-// anchor, phase journey flows through it. Phase pills below the composer
-// are the navigation — click one and the chat switches to that phase's
-// thread. No competing heroes. The agent is the center of attention.
+// ProgramsIridescentShell · Nexus-chat-first, cream aesthetic.
+// The (maestro) layout already renders AbarvaNav · this component does
+// NOT render its own navbar. Just the chat + phase journey + side rail.
 
 import { useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -134,7 +133,6 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
       return next;
     });
     setTransitionKey((k) => k + 1);
-    // Scroll chat to bottom on phase change
     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
   }, [activePhase]);
 
@@ -153,50 +151,46 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
     <div className="pis-root">
       <style>{iridescentCss}</style>
 
-      {/* Minimal navbar · one strip · AbarVa + tenant + Programs active */}
-      <nav className="pis-navbar">
-        <div className="pis-navbar-left">
-          <div className="pis-wordmark">
-            <span className="dot" />
-            <span><span className="abar">Abar</span><span className="va">Va</span></span>
-          </div>
-          <select
-            className="pis-nav-select"
-            value={selectedProgramId ?? ''}
-            onChange={(e) => {
-              const id = e.target.value;
-              setSelectedProgramId(id);
-              const prog = programs.find((x) => x.id === id);
-              setActivePhase(phaseKeyFor(prog ?? null));
-              setVisitedPhases(new Set([Number(phaseKeyFor(prog ?? null).slice(1))]));
-            }}
-            aria-label="Program"
-          >
-            {programs.map((p) => (
-              <option key={p.id} value={p.id}>{p.clientName} · {p.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="pis-navbar-center">
-          <Link href="/home">Home</Link>
-          <Link href="/preview/programs" className="active">Programs</Link>
-          <Link href="/preview/intelligence">Intelligence</Link>
-          <Link href="/preview/tower">Control Tower</Link>
-        </div>
-        <div className="pis-navbar-right">
-          <Link href="/programs" className="pis-nav-compare">Current ↗</Link>
-          <div className="pis-user-avatar" title={`${sponsorName} · ${sponsorTitle}`}>{sponsorInitials}</div>
-        </div>
-      </nav>
+      {/* NO local navbar · the (maestro) layout provides AbarvaNav */}
 
-      {/* ─── CHAT STAGE · pure Nexus focus ─────────────────────────── */}
+      {/* Preview banner · thin */}
+      <div className="pis-banner">
+        <span><strong>● PROGRAMS · NEXUS-FIRST</strong> Chat anchors the 5-phase journey</span>
+        <Link href="/programs">← Compare with current /programs</Link>
+      </div>
+
+      {/* ─── CHAT STAGE · cream, pure Nexus focus ──────────────────── */}
       <main className="pis-chat-stage">
-        {/* One line · program title · small, not a hero */}
+        {/* Program title + program switcher · one compact row */}
         <div className="pis-chat-topline">
-          <h1 className="pis-program-title">{selectedProgram.name}</h1>
+          <div className="pis-topline-left">
+            <h1 className="pis-program-title">{selectedProgram.name}</h1>
+            <div className="pis-program-meta">
+              <span className="pis-program-meta-dot" />
+              {selectedProgram.clientName} · Sponsor {sponsorName}, {sponsorTitle}
+            </div>
+          </div>
+          {programs.length > 1 ? (
+            <select
+              className="pis-program-select"
+              value={selectedProgramId ?? ''}
+              onChange={(e) => {
+                const id = e.target.value;
+                setSelectedProgramId(id);
+                const prog = programs.find((x) => x.id === id);
+                setActivePhase(phaseKeyFor(prog ?? null));
+                setVisitedPhases(new Set([Number(phaseKeyFor(prog ?? null).slice(1))]));
+              }}
+              aria-label="Switch program"
+            >
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>{p.clientName} · {p.name}</option>
+              ))}
+            </select>
+          ) : null}
         </div>
 
-        {/* Phase-journey pills · the ONE navigation */}
+        {/* Phase-journey pills · single navigation · above chat */}
         <div className="pis-phase-anchors" role="tablist" aria-label="Phase journey">
           {PHASE_KEYS.map((pk) => {
             const meta = PHASE_NAMES[pk];
@@ -219,7 +213,7 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
           })}
         </div>
 
-        {/* 2-col · chat (main, wide, tall) + deliverables rail (only) */}
+        {/* 2-col · chat (main) + deliverables rail (side) */}
         <div className="pis-chat-layout" key={transitionKey}>
           <div className="pis-chat-window">
             <div className="pis-chat-messages">
@@ -229,7 +223,9 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                     {turn.speaker === 'you' ? sponsorInitials : '✱'}
                   </div>
                   <div className="pis-bubble-content">
-                    <div className="pis-bubble-speaker">{turn.speaker === 'you' ? 'You' : 'Nexus'}</div>
+                    <div className="pis-bubble-speaker">
+                      {turn.speaker === 'you' ? 'You' : 'Nexus'}
+                    </div>
                     <div className="pis-bubble-body">{turn.text}</div>
                   </div>
                 </div>
@@ -237,7 +233,6 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
               <div ref={chatEndRef} />
             </div>
 
-            {/* Composer · anchored at bottom */}
             <form
               className="pis-chat-composer"
               onSubmit={(e) => { e.preventDefault(); setInput(''); }}
@@ -256,7 +251,6 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
               </div>
             </form>
 
-            {/* Subtle contradictions link · no card chrome */}
             <div className="pis-inline-signals">
               <span className="pis-inline-signal">
                 <span className="pis-inline-dot amber" /> 3 contradictions surfaced · <a href="#">view all</a>
@@ -264,7 +258,6 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
             </div>
           </div>
 
-          {/* SIDE RAIL · deliverables only · nothing else */}
           <aside className="pis-side-rail">
             <div className="pis-side-heading">Phase {phaseMeta.num} deliverables</div>
             <div className="pis-side-deliverables">
@@ -283,166 +276,156 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
           </aside>
         </div>
       </main>
-
-      {/* Composite footer */}
-      <div className="pis-footer">
-        <span>Composite organization built from real-world data · not a real customer</span>
-        <span>Nexus-first design · chat anchors the 5-phase journey</span>
-      </div>
     </div>
   );
 }
 
 const iridescentCss = `
   :root {
-    --pis-dark: #0a0a0a;
-    --pis-dark-panel: #111111;
-    --pis-dark-card: #161616;
+    --pis-bg: #F5F1EB;
+    --pis-bg-deep: #F1ECE2;
+    --pis-surface: #FFFFFF;
+    --pis-surface-soft: #FAF7F1;
     --pis-ink: #1a1612;
-    --pis-cream: #F5F1EB;
-    --pis-cream-deep: #F1ECE2;
-    --pis-teal: #14B8A6;
+    --pis-ink-muted: #544b42;
+    --pis-ink-faint: #8a7e72;
+    --pis-line: rgba(26,22,18,0.12);
+    --pis-line-soft: rgba(26,22,18,0.06);
+    --pis-teal: #0E9F8C;
     --pis-teal-dark: #0a5849;
-    --pis-amber: #F59E0B;
-    --pis-purple: #A78BFA;
-    --pis-pink: #F472B6;
+    --pis-teal-soft: rgba(14,159,140,0.1);
+    --pis-amber: #BA7517;
+    --pis-amber-soft: rgba(186,117,23,0.1);
   }
-
-  /* Minimal navbar · single strip · program select · Programs tab active */
-  .pis-navbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 32px;
-    background: var(--pis-dark);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .pis-navbar-left { display: flex; align-items: center; gap: 24px; }
-  .pis-navbar-center { display: flex; gap: 28px; }
-  .pis-navbar-center a {
-    font-size: 14px; color: rgba(255,255,255,0.55); text-decoration: none;
-    transition: color 0.15s;
-  }
-  .pis-navbar-center a:hover { color: #f4f4f2; }
-  .pis-navbar-center a.active {
-    color: var(--pis-teal); font-weight: 700;
-    border-bottom: 2px solid var(--pis-teal); padding-bottom: 4px;
-  }
-  .pis-navbar-right { display: flex; align-items: center; gap: 14px; }
-  .pis-nav-compare {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: rgba(255,255,255,0.45); text-decoration: none;
-  }
-  .pis-nav-compare:hover { color: var(--pis-teal); }
-  .pis-nav-select {
-    padding: 6px 28px 6px 12px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #f4f4f2;
-    border-radius: 6px;
-    font-family: inherit; font-size: 13px; cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23aaa' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat; background-position: right 10px center;
-    max-width: 360px;
-  }
-  .pis-nav-select:focus { outline: 1px solid var(--pis-teal); outline-offset: 1px; }
 
   .pis-root {
     font-family: 'DM Sans', -apple-system, sans-serif;
-    background: var(--pis-dark);
-    color: #f4f4f2;
+    background: var(--pis-bg);
+    color: var(--pis-ink);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Banner */
+  /* Thin preview banner (unobtrusive) */
   .pis-banner {
-    background: var(--pis-dark);
-    color: #f4f4f2;
-    padding: 10px 32px;
+    background: var(--pis-ink);
+    color: var(--pis-bg);
+    padding: 8px 32px;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     display: flex; justify-content: space-between; align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
   }
   .pis-banner strong { color: var(--pis-teal); margin-right: 10px; }
-  .pis-banner a { color: #f4f4f2; opacity: 0.85; text-decoration: underline; font-size: 11px; }
+  .pis-banner a { color: var(--pis-bg); opacity: 0.85; text-decoration: underline; font-size: 11px; }
 
-  /* Navbar */
-  .pis-navbar {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 32px;
-    background: var(--pis-dark);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
-  .pis-navbar-left { display: flex; align-items: center; gap: 40px; }
-  .pis-wordmark { display: flex; align-items: center; gap: 8px; font-family: 'Georgia', serif; font-size: 18px; color: #f4f4f2; }
-  .pis-wordmark .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--pis-teal); }
-  .pis-wordmark .abar { font-weight: 800; }
-  .pis-wordmark .va { color: var(--pis-teal); font-weight: 900; }
-  .pis-tenant-chip { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #f4f4f2; }
-  .pis-tenant-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--pis-teal); }
-  .pis-nav-links { display: flex; gap: 28px; margin-left: 10px; }
-  .pis-nav-links a { font-size: 14px; color: rgba(255,255,255,0.6); text-decoration: none; transition: color 0.15s; }
-  .pis-nav-links a:hover { color: #f4f4f2; }
-  .pis-nav-links a.active { color: var(--pis-teal); font-weight: 700; border-bottom: 2px solid var(--pis-teal); padding-bottom: 4px; }
-  .pis-navbar-right { display: flex; align-items: center; gap: 10px; }
-  .pis-user-card { text-align: right; }
-  .pis-user-name { font-size: 13px; font-weight: 600; color: #f4f4f2; }
-  .pis-user-role { font-size: 11px; color: var(--pis-teal); font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em; }
-  .pis-user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--pis-teal); color: var(--pis-dark); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-
-  /* Program picker · single row with dropdown */
-  .pis-program-picker {
-    background: var(--pis-dark);
-    padding: 10px 32px 12px;
-    display: flex; gap: 12px; align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  .pis-program-picker-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
-  .pis-program-select {
-    padding: 6px 28px 6px 12px;
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: #f4f4f2;
-    border-radius: 6px;
-    font-family: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23aaa' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-  }
-  .pis-program-select:focus { outline: 1px solid var(--pis-teal); outline-offset: 1px; }
-  .pis-program-sub { font-size: 12px; color: rgba(255,255,255,0.55); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em; }
-
-  /* ─── CHAT-CENTERED STAGE · 2-col with side rail ────────────── */
+  /* ─── CHAT STAGE · 2-col layout ──────────────────────────────── */
   .pis-chat-stage {
     max-width: 1320px;
     margin: 0 auto;
-    padding: 28px 32px 60px;
-    background: var(--pis-dark);
+    padding: 32px 32px 60px;
   }
 
+  /* Topline · program title + meta + dropdown */
   .pis-chat-topline {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--pis-line);
   }
+  .pis-topline-left { flex: 1; min-width: 0; }
   .pis-program-title {
     font-family: 'Georgia', serif;
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 600;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
     line-height: 1.1;
-    color: #f4f4f2;
-    margin: 0;
+    color: var(--pis-ink);
+    margin: 0 0 8px;
   }
+  .pis-program-meta {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px;
+    color: var(--pis-ink-muted);
+  }
+  .pis-program-meta-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--pis-teal);
+  }
+  .pis-program-select {
+    padding: 8px 32px 8px 14px;
+    background: var(--pis-surface);
+    border: 1px solid var(--pis-line);
+    color: var(--pis-ink);
+    border-radius: 8px;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%236d6258' d='M0 0h10L5 6z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+    max-width: 360px;
+  }
+  .pis-program-select:focus { outline: 2px solid rgba(14,159,140,0.35); outline-offset: 1px; }
 
-  /* Two-col layout · chat is LEFT (main), side rail is RIGHT */
+  /* Phase anchors · cream-palette pills */
+  .pis-phase-anchors {
+    display: flex; gap: 10px;
+    justify-content: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .pis-phase-anchor {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    background: var(--pis-surface);
+    border: 1px solid var(--pis-line);
+    color: var(--pis-ink-muted);
+    border-radius: 999px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .pis-phase-anchor:hover {
+    background: var(--pis-teal-soft);
+    border-color: rgba(14,159,140,0.3);
+    color: var(--pis-ink);
+    transform: translateY(-1px);
+  }
+  .pis-phase-anchor.visited:not(.active) {
+    background: rgba(14,159,140,0.05);
+    border-color: rgba(14,159,140,0.2);
+    color: var(--pis-teal-dark);
+  }
+  .pis-phase-anchor.active {
+    background: var(--pis-teal-soft);
+    border: 1.5px solid var(--pis-teal);
+    color: var(--pis-teal-dark);
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(14,159,140,0.15);
+  }
+  .pis-phase-anchor.live::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--pis-teal);
+    box-shadow: 0 0 0 2px rgba(14,159,140,0.25);
+    display: inline-block;
+  }
+  .pis-phase-anchor-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+    font-weight: 600;
+  }
+  .pis-phase-anchor.active .pis-phase-anchor-num { opacity: 1; }
+
+  /* Two-col layout */
   .pis-chat-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 320px;
@@ -455,54 +438,23 @@ const iridescentCss = `
     100% { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* The chat window · CENTER OF ATTENTION */
-  .pis-chat-window {
-    animation: pis-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  @keyframes pis-pop {
-    0%   { opacity: 0; transform: translateY(16px) scale(0.99); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .pis-chat-phase-banner {
-    padding: 16px 20px;
-    background:
-      radial-gradient(ellipse 400px 200px at 20% 0%, rgba(20,184,166,0.12), transparent 60%),
-      rgba(20,184,166,0.04);
-    border: 1px solid rgba(20,184,166,0.22);
-    border-radius: 14px;
-    margin-bottom: 16px;
-  }
-  .pis-chat-phase-label {
-    display: flex; align-items: center; gap: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--pis-teal);
-    font-weight: 700;
-    margin-bottom: 8px;
-  }
-  .pis-chat-phase-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--pis-teal);
-    box-shadow: 0 0 0 0 rgba(20,184,166,0.5);
-    animation: pis-halo 2s ease-out infinite;
-  }
-  @keyframes pis-halo {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(20,184,166,0.5); }
-    50%      { box-shadow: 0 0 0 8px rgba(20,184,166,0); }
-  }
-  .pis-chat-phase-summary { font-size: 14px; line-height: 1.55; color: rgba(255,255,255,0.82); }
+  .pis-chat-window { display: flex; flex-direction: column; gap: 12px; }
 
   /* Messages */
   .pis-chat-messages {
-    display: flex; flex-direction: column; gap: 18px;
-    margin-bottom: 20px;
+    display: flex; flex-direction: column; gap: 14px;
+    padding-bottom: 4px;
   }
   .pis-bubble {
     display: flex; gap: 14px;
-    padding: 4px 0;
+    padding: 16px 18px;
+    background: var(--pis-surface);
+    border: 1px solid var(--pis-line-soft);
+    border-radius: 12px;
+  }
+  .pis-bubble.nexus {
+    background: var(--pis-teal-soft);
+    border-color: rgba(14,159,140,0.22);
   }
   .pis-bubble-avatar {
     width: 32px; height: 32px; border-radius: 50%;
@@ -510,9 +462,9 @@ const iridescentCss = `
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700;
   }
-  .pis-bubble.you .pis-bubble-avatar { background: rgba(255,255,255,0.08); color: #f4f4f2; }
+  .pis-bubble.you .pis-bubble-avatar { background: rgba(26,22,18,0.08); color: var(--pis-ink); }
   .pis-bubble.nexus .pis-bubble-avatar {
-    background: var(--pis-teal); color: var(--pis-dark);
+    background: var(--pis-teal); color: white;
     font-family: 'Georgia', serif; font-size: 18px;
   }
   .pis-bubble-content { flex: 1; min-width: 0; }
@@ -521,99 +473,90 @@ const iridescentCss = `
     font-size: 10px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
+    color: var(--pis-ink-faint);
     margin-bottom: 6px;
   }
-  .pis-bubble.nexus .pis-bubble-speaker { color: var(--pis-teal); font-weight: 700; }
-  .pis-bubble-body { font-size: 15px; line-height: 1.65; color: rgba(255,255,255,0.92); }
+  .pis-bubble.nexus .pis-bubble-speaker { color: var(--pis-teal-dark); font-weight: 700; }
+  .pis-bubble-body { font-size: 15px; line-height: 1.65; color: var(--pis-ink); }
   .pis-bubble-body em { color: var(--pis-amber); font-style: normal; font-weight: 600; }
 
-  /* Composer · the central affordance */
+  /* Composer · cream palette */
   .pis-chat-composer {
-    background: var(--pis-dark-card);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 14px 18px;
-    margin-bottom: 22px;
-    box-shadow: 0 4px 28px rgba(0,0,0,0.35);
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    background: var(--pis-surface);
+    border: 1px solid var(--pis-line);
+    border-radius: 14px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    box-shadow: 0 2px 10px rgba(26,22,18,0.04);
+    transition: border-color 0.18s, box-shadow 0.18s;
   }
   .pis-chat-composer:focus-within {
-    border-color: rgba(20,184,166,0.45);
-    box-shadow: 0 4px 28px rgba(0,0,0,0.35), 0 0 0 3px rgba(20,184,166,0.1);
+    border-color: rgba(14,159,140,0.4);
+    box-shadow: 0 2px 10px rgba(26,22,18,0.06), 0 0 0 3px rgba(14,159,140,0.08);
   }
-  .pis-composer-hint {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    margin-bottom: 10px;
-  }
-  .pis-composer-row { display: flex; align-items: center; gap: 12px; }
+  .pis-composer-row { display: flex; align-items: center; gap: 10px; }
   .pis-composer-plus {
-    width: 32px; height: 32px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.6);
+    width: 30px; height: 30px;
+    background: var(--pis-bg);
+    border: 1px solid var(--pis-line);
+    color: var(--pis-ink-muted);
     border-radius: 999px;
-    cursor: pointer; font-size: 18px;
+    cursor: pointer; font-size: 16px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
   }
-  .pis-composer-plus:hover { background: rgba(255,255,255,0.1); color: #f4f4f2; }
+  .pis-composer-plus:hover { background: var(--pis-teal-soft); color: var(--pis-teal-dark); border-color: rgba(14,159,140,0.3); }
   .pis-composer-input {
     flex: 1;
     background: transparent;
     border: none;
-    color: #f4f4f2;
+    color: var(--pis-ink);
     font-family: inherit;
     font-size: 15px;
     outline: none;
   }
-  .pis-composer-input::placeholder { color: rgba(255,255,255,0.35); }
+  .pis-composer-input::placeholder { color: var(--pis-ink-faint); }
   .pis-composer-meta {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.4);
+    color: var(--pis-ink-faint);
   }
   .pis-composer-send {
-    width: 36px; height: 36px;
+    width: 32px; height: 32px;
     background: var(--pis-teal);
-    border: none; color: var(--pis-dark);
+    border: none; color: white;
     border-radius: 999px;
     cursor: pointer; font-size: 14px; font-weight: 700;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
     transition: all 0.15s;
   }
-  .pis-composer-send:hover { background: #0fa896; }
+  .pis-composer-send:hover { background: #0a5849; }
 
-  /* Inline signals · subtle link row after composer */
+  /* Inline signals · subtle link under composer */
   .pis-inline-signals {
-    display: flex;
-    justify-content: center;
-    margin-top: 14px;
+    display: flex; justify-content: center;
+    padding: 8px 0 0;
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    letter-spacing: 0.06em;
-    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.04em;
+    color: var(--pis-ink-faint);
   }
   .pis-inline-signal { display: inline-flex; align-items: center; gap: 8px; }
-  .pis-inline-signal a { color: var(--pis-teal); text-decoration: none; }
+  .pis-inline-signal a { color: var(--pis-teal-dark); text-decoration: none; font-weight: 600; }
   .pis-inline-signal a:hover { text-decoration: underline; }
   .pis-inline-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-  .pis-inline-dot.amber { background: var(--pis-amber); box-shadow: 0 0 0 2px rgba(245,158,11,0.18); }
+  .pis-inline-dot.amber { background: var(--pis-amber); box-shadow: 0 0 0 2px rgba(186,117,23,0.2); }
 
-  /* Side rail · deliverables only · minimal */
+  /* Side rail · deliverables only */
   .pis-side-rail {
     position: sticky;
     top: 24px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 12px;
+    background: var(--pis-surface);
+    border: 1px solid var(--pis-line);
+    border-radius: 14px;
     padding: 18px;
   }
   .pis-side-heading {
@@ -621,7 +564,7 @@ const iridescentCss = `
     font-size: 10px;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
+    color: var(--pis-ink-muted);
     margin-bottom: 12px;
     font-weight: 600;
   }
@@ -634,7 +577,7 @@ const iridescentCss = `
     padding: 10px 12px;
     background: transparent;
     border: 1px solid transparent;
-    color: rgba(255,255,255,0.85);
+    color: var(--pis-ink);
     border-radius: 8px;
     cursor: pointer;
     text-align: left;
@@ -643,194 +586,35 @@ const iridescentCss = `
     transition: all 0.15s;
   }
   .pis-side-deliverable:hover {
-    background: rgba(255,255,255,0.04);
-    border-color: rgba(255,255,255,0.08);
+    background: var(--pis-bg);
+    border-color: var(--pis-line);
   }
   .pis-side-deliverable-main { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
   .pis-side-deliverable-code {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     letter-spacing: 0.08em;
-    color: rgba(255,255,255,0.4);
+    color: var(--pis-ink-faint);
   }
-  .pis-side-deliverable.ready .pis-side-deliverable-code { color: var(--pis-teal); }
-  .pis-side-deliverable.pending .pis-side-deliverable-code { color: var(--pis-amber); }
+  .pis-side-deliverable.ready .pis-side-deliverable-code { color: var(--pis-teal); font-weight: 600; }
+  .pis-side-deliverable.pending .pis-side-deliverable-code { color: var(--pis-amber); font-weight: 600; }
   .pis-side-deliverable-name {
     font-size: 13px;
-    color: rgba(255,255,255,0.88);
+    color: var(--pis-ink);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .pis-side-deliverable-status { font-size: 11px; color: rgba(255,255,255,0.4); }
+  .pis-side-deliverable-status { font-size: 11px; color: var(--pis-ink-faint); }
   .pis-side-deliverable-status.ready { color: var(--pis-teal); }
-  .pis-side-deliverable-status.draft { color: rgba(255,255,255,0.55); }
+  .pis-side-deliverable-status.draft { color: var(--pis-ink-muted); }
   .pis-side-deliverable-status.pending { color: var(--pis-amber); }
 
-  /* Phase anchors · Claude.ai-style action pills under the chat */
-  .pis-phase-anchors {
-    display: flex; gap: 10px;
-    justify-content: center;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .pis-phase-anchor {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 18px;
-    background: var(--pis-dark-card);
-    border: 1px solid rgba(255,255,255,0.1);
-    color: rgba(255,255,255,0.75);
-    border-radius: 999px;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .pis-phase-anchor:hover {
-    background: rgba(20,184,166,0.08);
-    border-color: rgba(20,184,166,0.3);
-    color: #f4f4f2;
-    transform: translateY(-1px);
-  }
-  .pis-phase-anchor.visited:not(.active) {
-    background: rgba(20,184,166,0.06);
-    border-color: rgba(20,184,166,0.2);
-  }
-  .pis-phase-anchor.active {
-    background: rgba(20,184,166,0.18);
-    border: 1.5px solid var(--pis-teal);
-    color: var(--pis-teal);
-    font-weight: 700;
-    box-shadow: 0 4px 16px rgba(20,184,166,0.2);
-  }
-  .pis-phase-anchor.live::before {
-    content: '';
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--pis-teal);
-    box-shadow: 0 0 0 2px rgba(20,184,166,0.25);
-    display: inline-block;
-  }
-  .pis-phase-anchor-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    opacity: 0.75;
-    font-weight: 600;
-  }
-  .pis-phase-anchor.active .pis-phase-anchor-num { opacity: 1; }
-  .pis-phase-anchor-name { font-size: 13px; }
-
-  /* Deliverables chip row · compact */
-  .pis-chat-deliverables {
-    display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
-    padding: 12px 0 4px;
-  }
-  .pis-chat-deliverables-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-    align-self: center;
-    margin-right: 4px;
-  }
-  .pis-deliverable-chip {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 999px;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
-  .pis-deliverable-chip:hover { background: rgba(255,255,255,0.08); }
-  .pis-deliverable-chip.ready { background: rgba(20,184,166,0.08); border-color: rgba(20,184,166,0.3); }
-  .pis-deliverable-chip.pending { background: rgba(245,158,11,0.06); border-color: rgba(245,158,11,0.22); }
-  .pis-deliverable-code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.06em;
-    opacity: 0.65;
-  }
-  .pis-deliverable-chip.ready .pis-deliverable-code { color: var(--pis-teal); opacity: 1; }
-  .pis-deliverable-chip.pending .pis-deliverable-code { color: var(--pis-amber); opacity: 1; }
-  .pis-deliverable-name { color: rgba(255,255,255,0.82); }
-
-  /* Context drawer · peripheral, collapsed */
-  .pis-context-drawer {
-    margin-top: 32px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 20px;
-  }
-  .pis-context-summary {
-    display: flex; justify-content: space-between; align-items: center;
-    cursor: pointer;
-    padding: 10px 14px;
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 8px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.6);
-    list-style: none;
-    transition: all 0.15s;
-  }
-  .pis-context-summary::-webkit-details-marker { display: none; }
-  .pis-context-summary:hover { color: #f4f4f2; border-color: rgba(255,255,255,0.12); }
-  .pis-context-chevron { transition: transform 0.2s; }
-  .pis-context-drawer[open] .pis-context-chevron { transform: rotate(180deg); }
-  .pis-context-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    margin-top: 14px;
-  }
-  .pis-context-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 10px;
-    padding: 14px 16px;
-  }
-  .pis-context-card.amber { border-color: rgba(245,158,11,0.2); }
-  .pis-context-card.purple { border-color: rgba(167,139,250,0.2); }
-  .pis-context-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.45);
-    margin-bottom: 8px;
-  }
-  .pis-context-label.amber { color: var(--pis-amber); }
-  .pis-context-label.purple { color: var(--pis-purple); }
-  .pis-context-name { font-size: 14px; font-weight: 700; color: #f4f4f2; margin-bottom: 3px; }
-  .pis-context-sub { font-size: 12px; color: rgba(255,255,255,0.55); }
-  .pis-contradiction-mini {
-    padding: 6px 0;
-    border-top: 1px dashed rgba(255,255,255,0.08);
-    font-size: 12px;
-    line-height: 1.45;
-    color: rgba(255,255,255,0.78);
-  }
-  .pis-contradiction-mini:first-of-type { border-top: none; padding-top: 0; }
-
-  /* Footer */
-  .pis-footer {
-    padding: 18px 32px;
-    font-size: 11px;
-    color: rgba(255,255,255,0.45);
-    font-family: 'JetBrains Mono', monospace;
-    letter-spacing: 0.05em;
-    display: flex; justify-content: space-between;
-    background: var(--pis-dark);
-    border-top: 1px solid rgba(255,255,255,0.06);
-  }
-
   @media (max-width: 900px) {
-    .pis-context-grid { grid-template-columns: 1fr; }
-    .pis-chat-topline { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .pis-chat-layout { grid-template-columns: 1fr; }
+    .pis-side-rail { position: static; }
+    .pis-chat-topline { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .pis-phase-anchors { justify-content: flex-start; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pis-chat-window, .pis-phase-anchor, .pis-chat-phase-dot { animation: none !important; transition: none !important; }
+    .pis-chat-layout, .pis-phase-anchor { animation: none !important; transition: none !important; }
   }
 `;
