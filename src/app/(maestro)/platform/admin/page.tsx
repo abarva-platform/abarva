@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { StewardAdminRail } from '@/components/admin/StewardAdminRail'
 
 // ── Design tokens (spec-exact) ────────────────────────────────────────────
 const BG     = '#FAFAF9'
@@ -301,8 +302,23 @@ export default function AdminPortal() {
     }
   }
 
+  const firstInitial = (user.firstName ?? user.primaryEmailAddress?.emailAddress ?? 'AS').charAt(0).toUpperCase()
+  const lastInitial = (user.lastName ?? '').charAt(0).toUpperCase()
+  const userInitials = `${firstInitial}${lastInitial || 'D'}`
+  const clientNameMeta = (user.publicMetadata?.clientName as string | undefined) ?? 'AbarVa Ops'
+  // Seed Steward with roster count from the in-page MAESTROS table; the
+  // rail refetches live counts from /api/admin/steward-stats on mount.
+  const initialMaestros = MAESTROS.filter(m => m.status === 'Active').length
+  const initialPending = MAESTROS.filter(m => m.status === 'Pending').length
+
   return (
     <div style={{ background: BG, fontFamily: SANS }}>
+      <StewardAdminRail
+        initialMaestros={initialMaestros}
+        initialPendingInvitations={initialPending}
+        userInitials={userInitials}
+        clientName={clientNameMeta}
+      />
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 104px)' }}>
 
         {/* ── Sidebar ──────────────────────────────────────────────── */}
