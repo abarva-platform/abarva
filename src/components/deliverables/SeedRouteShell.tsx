@@ -266,6 +266,10 @@ function SeedPageFrame({ eyebrow, title, summary, children }: { eyebrow: string;
     <main className="del-page">
       <DeliverablePageStyles />
       <div className="del-shell">
+        <nav className="del-breadcrumbs" aria-label="Route breadcrumbs" style={{ marginBottom: 24 }}>
+          <Link href="/operations/portfolio">Portfolio</Link>
+          <span className="del-pill">Canonical route</span>
+        </nav>
         <header>
           <div className="del-topline">{eyebrow}</div>
           <h1 className="del-title">{title}</h1>

@@ -36,3 +36,6 @@ jobs:
 
       - name: Tower sub-surface stubs
         run: npm run integrity:tower-stubs
+
+      - name: Canonical route integrity
+        run: npm run integrity:canonical-routes
