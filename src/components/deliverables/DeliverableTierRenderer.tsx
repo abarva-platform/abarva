@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { deliverableToneColor, type DeliverableRenderModel, type DeliverableRouteLink } from '@/lib/deliverables/render-contract';
+import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
 
 export function DeliverableTierRenderer({ model }: { model: DeliverableRenderModel }) {
   return (
@@ -10,6 +11,7 @@ export function DeliverableTierRenderer({ model }: { model: DeliverableRenderMod
         {model.deliverable.tier === 'stub' ? <StubBody model={model} /> : model.deliverable.tier === 'outline' ? <OutlineBody model={model} /> : <RichBody model={model} />}
         <footer className="del-footer">
           {model.provenance.disclaimer} · Seed spec {model.provenance.seedSpecVersion} · {model.provenance.contentState.replace(/_/g, ' ')}.
+          {model.deliverable.tier === 'rich' ? ` ${RICH_DELIVERABLE_DEMO_DISCLAIMER}` : ''}
         </footer>
       </div>
     </main>

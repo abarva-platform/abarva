@@ -15,6 +15,13 @@ import {
   getPatternManifestEntry,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
+import {
+  TOWER_SUBSURFACE_DEFINITIONS,
+  tenantTowerPath,
+  tenantTowerSubsurfacePath,
+  type TowerSubsurfaceSlug,
+} from '@/lib/integrity/route-catalog';
+import { COMPOSITE_DISCLAIMER, PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type { DeliverableSeedPlan, ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
@@ -98,6 +105,12 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
           ['Freshness', pattern ? formatSeedFreshness(pattern.lastUpdatedAt) : 'unknown', 'from source file'],
         ]}
       />
+      <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
+        <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+        </p>
+      </div>
       {pattern ? (
         <CardGrid>
           <LinkCard href={patternRouteFor(pattern.slug)} label="Global pattern" title="Open full pattern page" description={`${pattern.sections.length} authored sections · ${pattern.diagnosticQuestions.length} diagnostic probes`} />
@@ -155,7 +168,7 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
       <div className="del-panel">
         <div className="del-eyebrow">Integrity disclaimer</div>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
-          Composite organization built from real-world data. Demo rendering: tenant-specific pattern state is generated from seeded program and deliverable links and must be sponsor-validated before production use.
+          {COMPOSITE_DISCLAIMER} Demo rendering: tenant-specific pattern state is generated from seeded program and deliverable links and must be sponsor-validated before production use.
         </p>
       </div>
     </SeedPageFrame>
@@ -177,6 +190,12 @@ export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
       ) : (
         <div className="del-panel"><div className="del-eyebrow">Pattern placeholder</div><p style={{ color: 'var(--del-muted)', lineHeight: 1.65 }}>This pattern route renders as a safe placeholder until detailed pattern content is authored.</p></div>
       )}
+      <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
+        <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+        </p>
+      </div>
     </SeedPageFrame>
   );
 }
@@ -186,6 +205,48 @@ export function SeedTenantTower({ tenant }: { tenant: TenantSeedPlan }) {
   return (
     <SeedPageFrame eyebrow={`${tenant.displayName} · control tower`} title="Tenant tower route" summary="Canonical tower URL is ready for tenant-scoped cockpit integration.">
       <MetricGrid metrics={[['Programs', tenant.programs.length.toString(), 'scoped'], ['Deliverables', counts.deliverables.toString(), 'route-covered'], ['Rich artifacts', counts.rich.toString(), 'demo-ready'], ['Scheduled', counts.stub.toString(), 'future-safe']]} />
+      <SectionTitle label="Scheduled Tower surfaces" />
+      <CardGrid>
+        {TOWER_SUBSURFACE_DEFINITIONS.map((surface) => (
+          <LinkCard
+            key={surface.slug}
+            href={tenantTowerSubsurfacePath(tenant, surface.slug)}
+            label="Scheduled"
+            title={surface.label}
+            description={surface.description}
+          />
+        ))}
+      </CardGrid>
+    </SeedPageFrame>
+  );
+}
+
+export function SeedTenantTowerSubsurface({ tenant, surface }: { tenant: TenantSeedPlan; surface: TowerSubsurfaceSlug }) {
+  const definition = TOWER_SUBSURFACE_DEFINITIONS.find((entry) => entry.slug === surface)!;
+
+  return (
+    <SeedPageFrame
+      eyebrow={`${tenant.displayName} · control tower · ${definition.label}`}
+      title={`${definition.label} surface`}
+      summary={definition.description}
+    >
+      <div className="del-panel" style={{ borderColor: 'rgba(245, 158, 11, 0.5)', background: 'rgba(245, 158, 11, 0.08)' }}>
+        <div className="del-eyebrow">Scheduled state</div>
+        <h2 style={{ margin: '10px 0 8px', fontFamily: 'Georgia, serif', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.02 }}>
+          This surface ships in the next build cycle
+        </h2>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: 0 }}>
+          The route intentionally renders a Stub-style scheduled state so demo navigation never dead-ends or invents unsupported Tower functionality.
+        </p>
+      </div>
+      <CardGrid>
+        <LinkCard
+          href={tenantTowerPath(tenant)}
+          label="Breadcrumb"
+          title="Back to Control Tower"
+          description="Return to the tenant-scoped Tower landing surface."
+        />
+      </CardGrid>
     </SeedPageFrame>
   );
 }
@@ -205,13 +266,17 @@ function SeedPageFrame({ eyebrow, title, summary, children }: { eyebrow: string;
     <main className="del-page">
       <DeliverablePageStyles />
       <div className="del-shell">
+        <nav className="del-breadcrumbs" aria-label="Route breadcrumbs" style={{ marginBottom: 24 }}>
+          <Link href="/operations/portfolio">Portfolio</Link>
+          <span className="del-pill">Canonical route</span>
+        </nav>
         <header>
           <div className="del-topline">{eyebrow}</div>
           <h1 className="del-title">{title}</h1>
           <p className="del-summary">{summary}</p>
         </header>
         <div style={{ marginTop: 34, display: 'grid', gap: 28 }}>{children}</div>
-        <footer className="del-footer">Composite organization built from real-world data. Canonical seed route scaffold for demo integrity.</footer>
+        <footer className="del-footer">{COMPOSITE_DISCLAIMER} Canonical seed route scaffold for demo integrity.</footer>
       </div>
     </main>
   );
