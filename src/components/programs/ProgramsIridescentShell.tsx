@@ -4,7 +4,7 @@
 // The (maestro) layout already renders AbarvaNav · this component does
 // NOT render its own navbar. Just the chat + phase journey + side rail.
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
 
@@ -114,9 +114,10 @@ function initialsOf(name: string): string {
 }
 
 export function ProgramsIridescentShell({ programs }: { programs: ProgramFullState[] }) {
+  const initialPhase = phaseKeyFor(programs[0] ?? null);
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id ?? null);
-  const [activePhase, setActivePhase] = useState<PhaseKey>('p0');
-  const [visitedPhases, setVisitedPhases] = useState<Set<number>>(new Set([0]));
+  const [activePhase, setActivePhase] = useState<PhaseKey>(initialPhase);
+  const [visitedPhases, setVisitedPhases] = useState<Set<number>>(new Set([PHASE_NAMES[initialPhase].num]));
   const [transitionKey, setTransitionKey] = useState(0);
   const [input, setInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -126,15 +127,20 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
     [selectedProgramId, programs],
   );
 
-  useEffect(() => {
+  function scrollChatEnd(): void {
+    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+  }
+
+  function activatePhase(nextPhase: PhaseKey): void {
+    setActivePhase(nextPhase);
     setVisitedPhases((prev) => {
       const next = new Set(prev);
-      next.add(PHASE_NAMES[activePhase].num);
+      next.add(PHASE_NAMES[nextPhase].num);
       return next;
     });
     setTransitionKey((k) => k + 1);
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
-  }, [activePhase]);
+    scrollChatEnd();
+  }
 
   const conversation = PHASE_CONVERSATIONS[activePhase];
   const phaseMeta = PHASE_NAMES[activePhase];
@@ -178,8 +184,11 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                 const id = e.target.value;
                 setSelectedProgramId(id);
                 const prog = programs.find((x) => x.id === id);
-                setActivePhase(phaseKeyFor(prog ?? null));
-                setVisitedPhases(new Set([Number(phaseKeyFor(prog ?? null).slice(1))]));
+                const nextPhase = phaseKeyFor(prog ?? null);
+                setActivePhase(nextPhase);
+                setVisitedPhases(new Set([PHASE_NAMES[nextPhase].num]));
+                setTransitionKey((k) => k + 1);
+                scrollChatEnd();
               }}
               aria-label="Switch program"
             >
@@ -203,7 +212,7 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => setActivePhase(pk)}
+                onClick={() => activatePhase(pk)}
                 className={`pis-phase-anchor ${active ? 'active' : ''} ${visited ? 'visited' : ''} ${live ? 'live' : ''}`}
               >
                 <span className="pis-phase-anchor-num">P{meta.num}</span>
