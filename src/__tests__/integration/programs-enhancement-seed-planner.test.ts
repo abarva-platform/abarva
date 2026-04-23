@@ -66,8 +66,8 @@ describe('Programs enhancement seed planner', () => {
     const richRoutes = morrison.deliverables
       .filter((deliverable) => deliverable.renderTier === 'rich')
       .map((deliverable) => deliverable.routePath);
-    expect(richRoutes).toContain('/tenant/apex-retail/programs/morrison-owned-brand-margin-recovery/deliverables/phase-3/d12-estimation-roadmap');
-    expect(richRoutes).toContain('/tenant/apex-retail/programs/morrison-owned-brand-margin-recovery/deliverables/phase-3/d17-decision-memo-for-cxo');
+    expect(richRoutes).toContain('/tenant/apex-retail/programs/morrison-owned-brand-margin-recovery/deliverables/d12-estimation-roadmap');
+    expect(richRoutes).toContain('/tenant/apex-retail/programs/morrison-owned-brand-margin-recovery/deliverables/d17-decision-memo-for-cxo');
 
     const scheduled = morrison.deliverables.filter((deliverable) => deliverable.lifecycleState === 'scheduled');
     expect(scheduled.map((deliverable) => deliverable.deliverableCode)).toEqual(['D24', 'D25', 'D26', 'D27', 'D28']);

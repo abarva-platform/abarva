@@ -35,6 +35,8 @@ import { PatternImpactViz } from '@/components/intelligence/PatternImpactViz';
 import { getPatternImpactData } from '@/lib/intelligence/pattern-impact-data';
 import { PatternClusterGraph, type ClusterPattern } from '@/components/intelligence/PatternClusterGraph';
 import { GenomeSuccessRateBars, type InterventionSuccessRate } from '@/components/intelligence/GenomeSuccessRateBars';
+import { SeedGlobalPattern } from '@/components/deliverables/SeedRouteShell';
+import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -161,7 +163,11 @@ export default async function PatternDetailPage({
 
   // If neither a DB row nor an augmentation exists, the route is genuinely
   // 404 · patterns without either have nothing to render.
-  if (!row && !augmentation) notFound();
+  if (!row && !augmentation) {
+    const seedHasPattern = getSeedPlan().programs.some((program) => program.patternSlug === patternKey);
+    if (seedHasPattern) return <SeedGlobalPattern patternSlug={patternKey} />;
+    notFound();
+  }
 
   const name = augmentation?.patternId === patternKey && !row ? patternKey : row?.name ?? patternKey;
   const shortDescription = augmentation?.oneSentenceProblem ?? row?.short_description ?? null;
