@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AbarVa Intelligence Page Wireframe</title>
+  <style>
+    :root {
+      --bg: #f7f1e8;
+      --bg-soft: #fbf7f1;
+      --ink: #191612;
+      --ink-soft: #4e4841;
+      --ink-muted: #746e66;
+      --line: rgba(25, 22, 18, 0.1);
+      --line-strong: rgba(25, 22, 18, 0.18);
+      --teal: #14b8a6;
+      --teal-deep: #0f766e;
+      --amber: #d97706;
+      --plum: #7c3aed;
+      --surface-dark: #0b0d11;
+      --surface-dark-2: #141820;
+      --surface-dark-3: #1a202b;
+      --text-dark-on-dark: rgba(246, 242, 234, 0.94);
+      --text-muted-on-dark: rgba(246, 242, 234, 0.62);
+      --shadow: 0 20px 60px rgba(19, 12, 6, 0.08);
+      --shadow-tight: 0 10px 30px rgba(19, 12, 6, 0.06);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --max: 1520px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(900px 480px at 0% 0%, rgba(20, 184, 166, 0.12), transparent 62%),
+        radial-gradient(820px 440px at 100% 0%, rgba(234, 88, 12, 0.08), transparent 64%),
+        radial-gradient(740px 420px at 100% 100%, rgba(124, 58, 237, 0.06), transparent 66%),
+        var(--bg);
+      color: var(--ink);
+      font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(calc(100vw - 48px), var(--max));
+      margin: 24px auto 80px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 22px;
+      background: rgba(251, 247, 241, 0.8);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 18px;
+      z-index: 20;
+      box-shadow: var(--shadow-tight);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background:
+        radial-gradient(circle at 30% 30%, #59d4c5 0 10%, transparent 11%),
+        radial-gradient(circle at 68% 28%, #5aa8ff 0 10%, transparent 11%),
+        radial-gradient(circle at 30% 68%, #8aa6ff 0 10%, transparent 11%),
+        radial-gradient(circle at 68% 68%, #14b8a6 0 10%, transparent 11%),
+        #0f1720;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .brand-wordmark {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 29px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .brand-wordmark span:last-child {
+      color: var(--teal);
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nav a {
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink-soft);
+      transition: background 160ms ease, color 160ms ease;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      background: rgba(20, 184, 166, 0.12);
+      color: var(--teal-deep);
+    }
+
+    .topbar-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      color: var(--ink-soft);
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--teal);
+      display: inline-block;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 286px minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 22px;
+      align-items: start;
+    }
+
+    .left-rail {
+      position: sticky;
+      top: 102px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-tight);
+      overflow: hidden;
+      backdrop-filter: blur(8px);
+    }
+
+    .rail-head {
+      padding: 18px 18px 14px;
+      border-bottom: 1px solid rgba(25, 22, 18, 0.06);
+      background:
+        linear-gradient(180deg, rgba(20, 184, 166, 0.08), transparent),
+        rgba(255, 255, 255, 0.28);
+    }
+
+    .eyebrow {
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--teal-deep);
+    }
+
+    .rail-title {
+      margin-top: 8px;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .rail-sub {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+    }
+
+    .rail-group {
+      padding: 14px 12px 12px;
+    }
+
+    .rail-group + .rail-group {
+      border-top: 1px solid rgba(25, 22, 18, 0.06);
+    }
+
+    .rail-label {
+      padding: 0 8px 8px;
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+    }
+
+    .rail-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      color: var(--ink-soft);
+      transition: background 160ms ease, transform 160ms ease, color 160ms ease;
+    }
+
+    .rail-link:hover {
+      background: rgba(20, 184, 166, 0.1);
+      color: var(--ink);
+      transform: translateX(2px);
+    }
+
+    .rail-link strong {
+      display: block;
+      font-size: 14px;
+      color: currentColor;
+    }
+
+    .rail-link span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      color: inherit;
+      opacity: 0.72;
+    }
+
+    .rail-pill {
+      min-width: 34px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(25, 22, 18, 0.06);
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 34px;
+      padding: 34px;
+      background:
+        radial-gradient(720px 380px at 0% 0%, rgba(20, 184, 166, 0.14), transparent 62%),
+        radial-gradient(680px 340px at 100% 0%, rgba(249, 115, 22, 0.08), transparent 60%),
+        radial-gradient(620px 340px at 100% 100%, rgba(124, 58, 237, 0.07), transparent 64%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.42));
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.5fr) minmax(320px, 0.9fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .hero h1 {
+      margin: 12px 0 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(46px, 6vw, 78px);
+      line-height: 0.98;
+      letter-spacing: -0.04em;
+      max-width: 11ch;
+    }
+
+    .hero p {
+      margin: 18px 0 0;
+      max-width: 760px;
+      font-size: 19px;
+      line-height: 1.58;
+      color: var(--ink-soft);
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .hero-actions a {
+      padding: 14px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .hero-actions a.primary {
+      background: var(--ink);
+      color: var(--bg-soft);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .hero-actions a.secondary {
+      background: rgba(255, 255, 255, 0.5);
+      border-color: rgba(25, 22, 18, 0.1);
+      color: var(--ink);
+    }
+
+    .hero-panel {
+      padding: 18px;
+      background: rgba(255, 255, 255, 0.54);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      border-radius: 24px;
+    }
+
+    .hero-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .mini-card {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+    }
+
+    .mini-card .value {
+      margin-top: 10px;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .mini-card .sub {
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--ink-muted);
+    }
+
+    .anchor-grid {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .anchor-card {
+      display: block;
+      min-height: 134px;
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.44);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      box-shadow: var(--shadow-tight);
+      transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+    }
+
+    .anchor-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 22px 40px rgba(22, 16, 11, 0.08);
+      border-color: rgba(20, 184, 166, 0.22);
+    }
+
+    .anchor-card .num {
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 13px;
+      color: var(--teal-deep);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .anchor-card h3 {
+      margin: 14px 0 0;
+      font-size: 22px;
+      line-height: 1.02;
+      letter-spacing: -0.03em;
+    }
+
+    .anchor-card p {
+      margin: 12px 0 0;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--ink-muted);
+    }
+
+    .section {
+      border-radius: 30px;
+      overflow: hidden;
+      box-shadow: var(--shadow-tight);
+      border: 1px solid rgba(25, 22, 18, 0.07);
+    }
+
+    .section.light {
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .section.dark {
+      background:
+        radial-gradient(800px 420px at 100% 0%, rgba(20, 184, 166, 0.08), transparent 58%),
+        radial-gradient(800px 460px at 0% 100%, rgba(124, 58, 237, 0.08), transparent 56%),
+        var(--surface-dark);
+      color: var(--text-dark-on-dark);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .section-inner {
+      padding: 28px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      margin: 10px 0 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(34px, 4vw, 52px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .section-head p {
+      max-width: 620px;
+      margin: 10px 0 0;
+      font-size: 16px;
+      line-height: 1.58;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.74fr);
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 20px;
+      border-radius: 22px;
+      border: 1px solid rgba(25, 22, 18, 0.08);
+      background: rgba(255, 255, 255, 0.66);
+    }
+
+    .section.dark .panel {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .panel h3 {
+      margin: 12px 0 0;
+      font-size: 28px;
+      line-height: 1.06;
+      letter-spacing: -0.03em;
+    }
+
+    .panel p {
+      margin: 12px 0 0;
+      font-size: 15px;
+      line-height: 1.65;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .kpi {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(25, 22, 18, 0.03);
+      border: 1px solid rgba(25, 22, 18, 0.06);
+    }
+
+    .section.dark .kpi {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .kpi strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 30px;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .kpi span {
+      display: block;
+      margin-top: 5px;
+      font-size: 12px;
+      opacity: 0.72;
+      line-height: 1.5;
+    }
+
+    .workbench {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .stack-nav {
+      padding: 12px;
+      border-radius: 22px;
+      background: rgba(25, 22, 18, 0.04);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+    }
+
+    .section.dark .stack-nav {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .stack-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      margin-bottom: 8px;
+      background: transparent;
+      transition: background 160ms ease;
+    }
+
+    .stack-item:hover {
+      background: rgba(20, 184, 166, 0.08);
+    }
+
+    .stack-index {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: rgba(20, 184, 166, 0.12);
+      color: var(--teal-deep);
+      font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .stack-item strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .stack-item span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      opacity: 0.72;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .result-card {
+      min-height: 210px;
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.54);
+      border: 1px solid rgba(25, 22, 18, 0.08);
+    }
+
+    .section.dark .result-card {
+      background: rgba(255, 255, 255, 0.04);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .result-card h4 {
+      margin: 12px 0 0;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .result-card ul {
+      margin: 14px 0 0;
+      padding-left: 18px;
+      font-size: 14px;
+      line-height: 1.7;
+      opacity: 0.84;
+    }
+
+    .contradictions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .contradiction {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .contradiction h4 {
+      margin: 14px 0 0;
+      font-size: 21px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .contradiction p {
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.65;
+      color: var(--text-muted-on-dark);
+    }
+
+    .chat-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) 330px;
+      gap: 16px;
+    }
+
+    .composer {
+      min-height: 172px;
+      border-radius: 24px;
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .composer .input {
+      min-height: 84px;
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--text-dark-on-dark);
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .composer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .token-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .token {
+      padding: 9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 12px;
+      color: var(--text-muted-on-dark);
+    }
+
+    .send {
+      padding: 12px 20px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #14b8a6, #0f766e);
+      color: white;
+      font-weight: 700;
+      font-size: 14px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    .phase-card {
+      padding: 20px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .phase-list {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .phase {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .phase.active {
+      border-color: rgba(20, 184, 166, 0.32);
+      background: rgba(20, 184, 166, 0.09);
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      padding: 18px 20px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.48);
+      border: 1px dashed rgba(25, 22, 18, 0.14);
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--ink-soft);
+    }
+
+    @media (max-width: 1320px) {
+      .anchor-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .hero-grid,
+      .split,
+      .chat-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 1080px) {
+      .shell,
+      .workbench {
+        grid-template-columns: 1fr;
+      }
+
+      .left-rail {
+        position: static;
+      }
+
+      .contradictions,
+      .kpi-row,
+      .result-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .page {
+        width: min(calc(100vw - 24px), var(--max));
+        margin-top: 12px;
+      }
+
+      .topbar {
+        position: static;
+        border-radius: 18px;
+      }
+
+      .anchor-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .hero,
+      .section-inner {
+        padding: 22px;
+      }
+
+      .hero h1 {
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-wordmark"><span>Abar</span><span>Va</span></div>
+      </div>
+      <nav class="nav">
+        <a href="#">Home</a>
+        <a href="#">Programs</a>
+        <a class="active" href="#">Intelligence</a>
+        <a href="#">Control Tower</a>
+        <a href="#">Platform</a>
+      </nav>
+      <div class="topbar-meta">
+        <span><i class="dot"></i>Meridian Health</span>
+        <span>Admin view</span>
+      </div>
+    </header>
+
+    <div class="shell">
+      <aside class="left-rail">
+        <div class="rail-head">
+          <div class="eyebrow">Windows-style left rail</div>
+          <div class="rail-title">Intelligence should work like an operating console.</div>
+          <div class="rail-sub">
+            One page, one persistent work surface, and every click reveals content in-place. No dead top boxes. No throwaway summary wall.
+          </div>
+        </div>
+
+        <div class="rail-group">
+          <div class="rail-label">Primary navigation</div>
+          <a class="rail-link" href="#overview">
+            <div>
+              <strong>Overview</strong>
+              <span>Ground the tenant, scope the page, show what is live</span>
+            </div>
+            <div class="rail-pill">01</div>
+          </a>
+          <a class="rail-link" href="#layers">
+            <div>
+              <strong>Layer navigator</strong>
+              <span>L1 public to L4 viewer, with working entry points</span>
+            </div>
+            <div class="rail-pill">02</div>
+          </a>
+          <a class="rail-link" href="#patterns">
+            <div>
+              <strong>Patterns & benchmarks</strong>
+              <span>What the platform knows, with evidence depth</span>
+            </div>
+            <div class="rail-pill">03</div>
+          </a>
+          <a class="rail-link" href="#vendors">
+            <div>
+              <strong>Vendor landscape</strong>
+              <span>Named players, overlaps, momentum, and spend</span>
+            </div>
+            <div class="rail-pill">04</div>
+          </a>
+          <a class="rail-link" href="#contradictions">
+            <div>
+              <strong>Contradictions</strong>
+              <span>What is breaking trust, speed, or value realization</span>
+            </div>
+            <div class="rail-pill">05</div>
+          </a>
+          <a class="rail-link" href="#ask">
+            <div>
+              <strong>Ask AbarVa</strong>
+              <span>Persistent composer with phase summary and next action</span>
+            </div>
+            <div class="rail-pill">06</div>
+          </a>
+        </div>
+
+        <div class="rail-group">
+          <div class="rail-label">Working filters</div>
+          <a class="rail-link" href="#patterns">
+            <div>
+              <strong>Pattern</strong>
+              <span>4 promoted, 3 candidate</span>
+            </div>
+            <div class="rail-pill">4</div>
+          </a>
+          <a class="rail-link" href="#patterns">
+            <div>
+              <strong>Benchmark</strong>
+              <span>18 market references</span>
+            </div>
+            <div class="rail-pill">18</div>
+          </a>
+          <a class="rail-link" href="#vendors">
+            <div>
+              <strong>Vendor</strong>
+              <span>16 mapped to Meridian</span>
+            </div>
+            <div class="rail-pill">16</div>
+          </a>
+          <a class="rail-link" href="#contradictions">
+            <div>
+              <strong>Contradiction</strong>
+              <span>25 client-level flags</span>
+            </div>
+            <div class="rail-pill">25</div>
+          </a>
+          <a class="rail-link" href="#ask">
+            <div>
+              <strong>Research</strong>
+              <span>98 cited artifacts</span>
+            </div>
+            <div class="rail-pill">98</div>
+          </a>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="hero" id="overview">
+          <div class="hero-grid">
+            <div>
+              <div class="eyebrow">Intelligence redesigned</div>
+              <h1>Meridian needs a workbench, not a dead library grid.</h1>
+              <p>
+                This direction turns Intelligence into a navigable operating surface: warm editorial entry at the top, left-rail control all the way down, and dark analytic sections only where the page needs focus and weight.
+              </p>
+              <div class="hero-actions">
+                <a class="primary" href="#layers">Open layer navigator</a>
+                <a class="secondary" href="#ask">Jump to Ask AbarVa</a>
+              </div>
+            </div>
+
+            <div class="hero-panel">
+              <div class="eyebrow">Client context</div>
+              <div class="rail-title" style="font-size: 32px;">Meridian Health</div>
+              <div class="rail-sub">
+                Healthcare IDN · viewer maestro · page should adapt by tenant, not leak another industry's cards into the first screen.
+              </div>
+              <div class="hero-panel-grid">
+                <div class="mini-card">
+                  <div class="eyebrow">Use cases</div>
+                  <div class="value">42</div>
+                  <div class="sub">Grounded enterprise context</div>
+                </div>
+                <div class="mini-card">
+                  <div class="eyebrow">Vendors</div>
+                  <div class="value">16</div>
+                  <div class="sub">Named and mapped to the tenant</div>
+                </div>
+                <div class="mini-card">
+                  <div class="eyebrow">Contradictions</div>
+                  <div class="value">25</div>
+                  <div class="sub">Needs an actual click path and detail view</div>
+                </div>
+                <div class="mini-card">
+                  <div class="eyebrow">Readiness</div>
+                  <div class="value">L2</div>
+                  <div class="sub">Enterprise-wide, but still evidence-constrained</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="anchor-grid">
+          <a class="anchor-card" href="#patterns">
+            <div class="num">01 · Pattern</div>
+            <h3>Pattern gallery</h3>
+            <p>Every top box must click somewhere real. This one opens pattern cards with evidence depth and promotion status.</p>
+          </a>
+          <a class="anchor-card" href="#patterns">
+            <div class="num">02 · Benchmark</div>
+            <h3>Benchmark bench</h3>
+            <p>Peer references, comparables, and assumptions with confidence and recency.</p>
+          </a>
+          <a class="anchor-card" href="#vendors">
+            <div class="num">03 · Vendor</div>
+            <h3>Vendor landscape</h3>
+            <p>Named vendors, overlaps, active deployments, and strategic implication.</p>
+          </a>
+          <a class="anchor-card" href="#contradictions">
+            <div class="num">04 · Contradiction</div>
+            <h3>Contradictions</h3>
+            <p>Open executive tensions, proof gaps, and operating contradictions in one scroll path.</p>
+          </a>
+          <a class="anchor-card" href="#layers">
+            <div class="num">05 · Layer</div>
+            <h3>Layer navigator</h3>
+            <p>L1 to L4 should feel like switching work modes, not changing apps.</p>
+          </a>
+          <a class="anchor-card" href="#ask">
+            <div class="num">06 · Ask</div>
+            <h3>Ask AbarVa</h3>
+            <p>The composer belongs on-page with wrapped text, a visible phase summary, and no backend trace leakage.</p>
+          </a>
+        </section>
+
+        <section class="section light" id="layers">
+          <div class="section-inner">
+            <div class="section-head">
+              <div>
+                <div class="eyebrow">Layer navigator</div>
+                <h2>One page, six sections, no dead-end clicks.</h2>
+                <p>
+                  The Intelligence page should not send users away every time they ask for detail. The left rail stays fixed; the center changes content. That is the main structural fix.
+                </p>
+              </div>
+            </div>
+
+            <div class="workbench">
+              <div class="stack-nav">
+                <div class="stack-item">
+                  <div class="stack-index">L4</div>
+                  <div>
+                    <strong>You</strong>
+                    <span>Current role, thread, recent asks</span>
+                  </div>
+                </div>
+                <div class="stack-item">
+                  <div class="stack-index">L3</div>
+                  <div>
+                    <strong>Programs</strong>
+                    <span>What Meridian is actually working</span>
+                  </div>
+                </div>
+                <div class="stack-item">
+                  <div class="stack-index">L2</div>
+                  <div>
+                    <strong>Enterprise</strong>
+                    <span>Client-wide use cases, facts, systems</span>
+                  </div>
+                </div>
+                <div class="stack-item">
+                  <div class="stack-index">L1</div>
+                  <div>
+                    <strong>Public</strong>
+                    <span>Patterns, benchmarks, vendor and research base</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="result-grid">
+                <div class="result-card">
+                  <div class="eyebrow">What the layer switch reveals</div>
+                  <h4>L4 should start with your real work, not with an abstract speech.</h4>
+                  <ul>
+                    <li>Current tenant and role</li>
+                    <li>Open thread or active ask</li>
+                    <li>Three recommended follow-ups</li>
+                    <li>Visible trust disclaimer if content is modeled</li>
+                  </ul>
+                </div>
+                <div class="result-card">
+                  <div class="eyebrow">What changes from today</div>
+                  <h4>Top metric cards become navigational controls, not dead counters.</h4>
+                  <ul>
+                    <li>Pattern goes to pattern cards</li>
+                    <li>Vendor goes to vendor map</li>
+                    <li>Benchmark goes to benchmark view</li>
+                    <li>Contradictions opens the contradiction ledger</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section dark" id="patterns">
+          <div class="section-inner">
+            <div class="section-head">
+              <div>
+                <div class="eyebrow">Patterns & benchmarks</div>
+                <h2>The middle of the page becomes the evidence engine.</h2>
+                <p>
+                  This is where the page earns trust: named pattern cards, why they matter, what evidence supports them, and what still needs to be generated if the corpus is thin.
+                </p>
+              </div>
+            </div>
+
+            <div class="split">
+              <div class="panel">
+                <div class="eyebrow">Pattern board</div>
+                <h3>Ambient documentation overlap without outcome ownership.</h3>
+                <p>
+                  Two vendors are active, adoption is rising, burnout is not improving, and there is no named outcome owner for the physician-experience metric.
+                </p>
+                <div class="kpi-row">
+                  <div class="kpi">
+                    <div class="eyebrow">Confidence</div>
+                    <strong>82%</strong>
+                    <span>Evidence from deployment logs, survey trend, and spend overlap</span>
+                  </div>
+                  <div class="kpi">
+                    <div class="eyebrow">Programs hit</div>
+                    <strong>3</strong>
+                    <span>Primary care, specialty, and CIO charter work</span>
+                  </div>
+                  <div class="kpi">
+                    <div class="eyebrow">Evidence refs</div>
+                    <strong>12</strong>
+                    <span>Every claim should have a click-through trail</span>
+                  </div>
+                  <div class="kpi">
+                    <div class="eyebrow">Action</div>
+                    <strong>Promote</strong>
+                    <span>Or hold if anonymization and intervention history are thin</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="panel">
+                <div class="eyebrow">Benchmark lane</div>
+                <h3>Peer comparison should read like an analyst note.</h3>
+                <p>
+                  Comparable health systems, current ambient vendor mix, adoption range, burnout correlation, and board narrative trend.
+                </p>
+                <p>
+                  If the content does not exist yet, the page should say so directly and offer a generated research package rather than pretending the section is populated.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section light" id="vendors">
+          <div class="section-inner">
+            <div class="section-head">
+              <div>
+                <div class="eyebrow">Vendor landscape</div>
+                <h2>Vendor should become a map, not a count.</h2>
+                <p>
+                  The current count box is not enough. This section should expose which vendors are active, overlapping, displacing one another, or drifting into shadow use.
+                </p>
+              </div>
+            </div>
+
+            <div class="result-grid">
+              <div class="result-card">
+                <div class="eyebrow">Primary vendor clusters</div>
+                <h4>Clinical documentation</h4>
+                <ul>
+                  <li>Abridge · East + Central</li>
+                  <li>Nuance DAX · West + specialty</li>
+                  <li>Nabla · candidate, not deployed</li>
+                  <li>Epic native options · strategic pressure</li>
+                </ul>
+              </div>
+              <div class="result-card">
+                <div class="eyebrow">Where this helps</div>
+                <h4>The page can answer “what is live, overlapping, or drifting?” in one glance.</h4>
+                <ul>
+                  <li>Overlap badge</li>
+                  <li>Spend badge</li>
+                  <li>Adoption badge</li>
+                  <li>Named contradiction if no owner is assigned</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section dark" id="contradictions">
+          <div class="section-inner">
+            <div class="section-head">
+              <div>
+                <div class="eyebrow">Contradictions ledger</div>
+                <h2>The most important section should feel like a control room.</h2>
+                <p>
+                  Contradictions are where the platform feels smartest. They deserve a dedicated section with real click depth, severity, ownerlessness, and visible next-step routing.
+                </p>
+              </div>
+            </div>
+
+            <div class="contradictions">
+              <div class="contradiction">
+                <div class="eyebrow" style="color: #f59e0b;">High · operating</div>
+                <h4>Burnout is worsening while adoption is rising.</h4>
+                <p>
+                  This is not a vendor selection question first. It is an outcome ownership question. The page should force that reframing visibly.
+                </p>
+              </div>
+              <div class="contradiction">
+                <div class="eyebrow" style="color: #f59e0b;">High · spend</div>
+                <h4>Two ambient tools, one business case, no named consolidator.</h4>
+                <p>
+                  A $478K per month overlap should not sit inside a dead card. It should open a path to related programs, vendors, and evidence.
+                </p>
+              </div>
+              <div class="contradiction">
+                <div class="eyebrow" style="color: #f59e0b;">Medium · trust</div>
+                <h4>The board story sounds mature; the measurement trail does not.</h4>
+                <p>
+                  Show the exact missing refs, the confidence drop, and the recommended cleanup actions side by side.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section dark" id="ask">
+          <div class="section-inner">
+            <div class="section-head">
+              <div>
+                <div class="eyebrow">Ask AbarVa</div>
+                <h2>The chat area needs to feel like a real tool, not a debug console.</h2>
+                <p>
+                  Text wraps naturally, there is no leaked trace or XML, and phase transitions should reset the conversation viewport while carrying a summary on the side.
+                </p>
+              </div>
+            </div>
+
+            <div class="chat-shell">
+              <div class="composer">
+                <div class="input">
+                  How many peer health systems kept both ambient vendors in place after running a physician-burnout review, and what ownership model separated the winners from the failures?
+                </div>
+                <div class="composer-toolbar">
+                  <div class="token-row">
+                    <div class="token">Tenant: Meridian</div>
+                    <div class="token">Mode: enterprise</div>
+                    <div class="token">Sources: citations on</div>
+                    <div class="token">Wrap text like Claude</div>
+                  </div>
+                  <a class="send" href="#overview">Send</a>
+                </div>
+              </div>
+
+              <div class="phase-card">
+                <div class="eyebrow">Phase summary rail</div>
+                <div class="rail-title" style="font-size: 28px; color: var(--text-dark-on-dark);">
+                  Show the current phase summary here after every gate.
+                </div>
+                <div class="phase-list">
+                  <div class="phase active">
+                    <div class="eyebrow">Phase 0 · approved</div>
+                    <strong>Charter locked</strong>
+                    <span>Why burnout is not moving, which ownership model wins, and whether consolidation is actually required.</span>
+                  </div>
+                  <div class="phase">
+                    <div class="eyebrow">Phase 1 · next</div>
+                    <strong>Diagnose</strong>
+                    <span>Measure adoption, survey lift, note quality, and contract timing.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          <strong>Recommendation:</strong> the Intelligence page should become a fixed-shell workbench with a persistent left rail, clickable top boxes, and internal section rendering only. If a section has thin content, show a generated “research package needed” state instead of a broken card or a dead route.
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const links = [...document.querySelectorAll('.rail-link')];
+    const sections = links
+      .map((link) => document.querySelector(link.getAttribute('href')))
+      .filter(Boolean);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const id = '#' + entry.target.id;
+          links.forEach((link) => {
+            const active = link.getAttribute('href') === id;
+            link.style.background = active ? 'rgba(20, 184, 166, 0.1)' : 'transparent';
+            link.style.color = active ? 'var(--ink)' : 'var(--ink-soft)';
+          });
+        });
+      },
+      { rootMargin: '-28% 0px -55% 0px', threshold: 0.1 }
+    );
+
+    sections.forEach((section) => observer.observe(section));
+  </script>
+</body>
+</html>
