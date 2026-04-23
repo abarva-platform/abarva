@@ -112,8 +112,12 @@ export function AttentionProvider({
   );
 
   useEffect(() => {
-    scheduleIdle();
+    // Defer initial idle scheduling past the render tick so setIdle
+    // doesn't fire synchronously inside the effect
+    // (react-hooks/set-state-in-effect).
+    const initial = window.setTimeout(scheduleIdle, 0);
     return () => {
+      window.clearTimeout(initial);
       if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     };
   }, [scheduleIdle]);
