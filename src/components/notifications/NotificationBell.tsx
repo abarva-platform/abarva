@@ -51,9 +51,12 @@ export function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    fetchItems();
+    // Defer the first fetch by a microtask so setState doesn't fire
+    // synchronously inside the effect (react-hooks/set-state-in-effect).
+    const initial = window.setTimeout(fetchItems, 0);
     pollRef.current = window.setInterval(fetchItems, 60_000);
     return () => {
+      window.clearTimeout(initial);
       if (pollRef.current !== null) window.clearInterval(pollRef.current);
     };
   }, [fetchItems]);
