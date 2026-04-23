@@ -1,0 +1,28 @@
+{
+  "generatedAt": "2026-04-23T17:10:41.067Z",
+  "summary": {
+    "evidenceBaseCount": 2,
+    "referenceCount": 99,
+    "renderModelReferenceCount": 99,
+    "authoredContentReferenceCount": 0,
+    "unresolvedCount": 0,
+    "resolutionRate": 1
+  },
+  "evidenceBases": [
+    {
+      "tenantSlug": "apex-retail",
+      "programCode": "APX-01",
+      "programSlug": "morrison-owned-brand-margin-recovery",
+      "path": "/Users/anand/Projects/nexus/src/content/deliverables/apex-retail/morrison/_evidence-base.json",
+      "entryCount": 65
+    },
+    {
+      "tenantSlug": "meridian-health",
+      "programCode": "MRD-01",
+      "programSlug": "ambient-clinical-value-chain-activation",
+      "path": "/Users/anand/Projects/nexus/src/content/deliverables/meridian/ambient-clinical-value-chain-activation/_evidence-base.json",
+      "entryCount": 32
+    }
+  ],
+  "unresolved": []
+}

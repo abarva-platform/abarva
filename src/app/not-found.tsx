@@ -1,6 +1,24 @@
 import Link from 'next/link'
+import { headers } from 'next/headers'
 
-export default function NotFound() {
+// Production 404 monitoring · §3.5 of page-agent-coherence-work-order.md.
+// Logs every 404 via console.error so Vercel runtime captures it.
+// Alert thresholds (>3 distinct 404s / 10 min) configured in Vercel's
+// observability UI, not here.
+
+export const dynamic = 'force-dynamic'
+
+export default async function NotFound() {
+  try {
+    const h = await headers()
+    const referrer = h.get('referer') ?? 'direct'
+    const ua = (h.get('user-agent') ?? 'unknown').slice(0, 80)
+    const path = h.get('x-nextjs-route') ?? h.get('x-matched-path') ?? 'unknown'
+    console.error(`[404] path=${path} referrer=${referrer} ua=${ua} ts=${new Date().toISOString()}`)
+  } catch {
+    // silent if headers() unavailable
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#0D1117', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "-apple-system, 'Helvetica Neue', Arial, sans-serif" }}>
       <div style={{ textAlign: 'center', maxWidth: '480px', padding: '40px' }}>
