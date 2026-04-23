@@ -10,6 +10,11 @@ import {
   tenantProgramPhasePath,
   tenantProgramsPath,
 } from '@/lib/deliverables/seed-route-resolver';
+import {
+  getPatternApplicableProgramsForTenant,
+  getPatternManifestEntry,
+  patternRouteFor,
+} from '@/lib/intelligence/pattern-manifest';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type { DeliverableSeedPlan, ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
@@ -68,13 +73,91 @@ export function SeedPhaseOverview({ tenant, program, phase }: { tenant: TenantSe
 
 export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedPlan; patternSlug: string }) {
   const matchingPrograms = tenant.programs.filter((program) => program.patternSlug === patternSlug);
+  const pattern = getPatternManifestEntry(patternSlug);
+  const applicablePrograms = getPatternApplicableProgramsForTenant(patternSlug, tenant.routeSlug);
+  const highestPhase = applicablePrograms.reduce((max, program) => Math.max(max, program.currentPhaseSpec), 0);
+  const overlayState = applicablePrograms.length === 0 ? 'Not started' : highestPhase >= 3 ? 'Active' : 'Partial';
+  const traceableDeliverables = applicablePrograms
+    .flatMap((program) => program.deliverables
+      .filter((deliverable) => deliverable.renderTier !== 'stub')
+      .map((deliverable) => ({ ...deliverable, program })))
+    .sort((a, b) => Number(b.renderTier === 'rich') - Number(a.renderTier === 'rich') || a.code.localeCompare(b.code))
+    .slice(0, 8);
+
   return (
-    <SeedPageFrame eyebrow={`${tenant.displayName} · source pattern`} title={patternSlug.replace(/-/g, ' ')} summary="Canonical tenant-scoped pattern route. It exists so source-pattern cross-links never leak to localhost or 404.">
-      {matchingPrograms.length > 0 ? (
+    <SeedPageFrame
+      eyebrow={`${tenant.displayName} · tenant-scoped source pattern`}
+      title={pattern?.name ?? patternSlug.replace(/-/g, ' ')}
+      summary={pattern?.shortDescription ?? 'Canonical tenant-scoped pattern route. It exists so source-pattern cross-links never leak to localhost or 404.'}
+    >
+      <MetricGrid
+        metrics={[
+          ['Tenant overlay', overlayState, highestPhase ? `highest phase P${highestPhase}` : 'no active program'],
+          ['Programs', applicablePrograms.length.toString(), 'tenant scoped'],
+          ['Evidence', String(pattern?.evidenceCount ?? 0), 'source-counted'],
+          ['Freshness', pattern ? formatSeedFreshness(pattern.lastUpdatedAt) : 'unknown', 'from source file'],
+        ]}
+      />
+      {pattern ? (
+        <CardGrid>
+          <LinkCard href={patternRouteFor(pattern.slug)} label="Global pattern" title="Open full pattern page" description={`${pattern.sections.length} authored sections · ${pattern.diagnosticQuestions.length} diagnostic probes`} />
+        </CardGrid>
+      ) : null}
+      {applicablePrograms.length > 0 ? (
+        <>
+          <SectionTitle label="Applicable programs in this tenant" />
+          <CardGrid>
+            {applicablePrograms.map((program) => (
+              <LinkCard
+                key={program.code}
+                href={program.routePath}
+                label={`${program.code} · phase ${program.currentPhaseSpec}`}
+                title={program.name}
+                description={`${program.deliverables.length} deliverables apply this pattern · ${program.roleInDemo}`}
+              />
+            ))}
+          </CardGrid>
+        </>
+      ) : matchingPrograms.length > 0 ? (
         <CardGrid>{matchingPrograms.map((program) => <LinkCard key={program.code} href={tenantProgramPath(tenant, program)} label={program.code} title={program.name} description={`${program.deliverables.length} deliverables apply this pattern.`} />)}</CardGrid>
       ) : (
         <div className="del-panel"><div className="del-eyebrow">Pattern placeholder</div><p style={{ color: 'var(--del-muted)', lineHeight: 1.65 }}>No seeded program currently applies this pattern for {tenant.displayName}. The route still renders to preserve link integrity.</p></div>
       )}
+      {traceableDeliverables.length > 0 ? (
+        <>
+          <SectionTitle label="Traceable deliverables" />
+          <CardGrid>
+            {traceableDeliverables.map((deliverable) => (
+              <LinkCard
+                key={`${deliverable.program.code}-${deliverable.code}`}
+                href={deliverable.routePath}
+                label={`${deliverable.program.code} · ${deliverable.code} · ${deliverable.renderTier}`}
+                title={deliverable.title}
+                description={`Phase ${deliverable.phaseSpec} · source-pattern backlink resolves here.`}
+              />
+            ))}
+          </CardGrid>
+        </>
+      ) : null}
+      {pattern?.observations.length ? (
+        <>
+          <SectionTitle label="Composite observations" />
+          <CardGrid>
+            {pattern.observations.slice(0, 4).map((observation, index) => (
+              <div key={`${observation}-${index}`} className="del-panel">
+                <div className="del-eyebrow">Obs {index + 1} · Composite</div>
+                <p style={{ color: 'var(--del-text)', lineHeight: 1.6, margin: '10px 0 0' }}>{observation}</p>
+              </div>
+            ))}
+          </CardGrid>
+        </>
+      ) : null}
+      <div className="del-panel">
+        <div className="del-eyebrow">Integrity disclaimer</div>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+          Composite organization built from real-world data. Demo rendering: tenant-specific pattern state is generated from seeded program and deliverable links and must be sponsor-validated before production use.
+        </p>
+      </div>
     </SeedPageFrame>
   );
 }
@@ -82,8 +165,13 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
 export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
   const plan = getSeedPlan();
   const matchingPrograms = plan.programs.filter((program) => program.patternSlug === patternSlug);
+  const pattern = getPatternManifestEntry(patternSlug);
   return (
-    <SeedPageFrame eyebrow="Global source pattern" title={patternSlug.replace(/-/g, ' ')} summary="Canonical global pattern route. Tenant-scoped variants are available for each applying program.">
+    <SeedPageFrame
+      eyebrow="Global source pattern"
+      title={pattern?.name ?? patternSlug.replace(/-/g, ' ')}
+      summary={pattern?.shortDescription ?? 'Canonical global pattern route. Tenant-scoped variants are available for each applying program.'}
+    >
       {matchingPrograms.length > 0 ? (
         <CardGrid>{matchingPrograms.map((program) => <LinkCard key={program.code} href={tenantProgramPath({ routeSlug: program.tenantRouteSlug }, program)} label={`${program.clientDisplayName} · ${program.code}`} title={program.name} description={`${program.deliverables.length} deliverables apply this pattern.`} />)}</CardGrid>
       ) : (
@@ -161,4 +249,14 @@ function summarizeTenant(tenant: TenantSeedPlan) {
 
 function countTier(program: ProgramSeedPlan, tier: DeliverableSeedPlan['renderTier']): number {
   return program.deliverables.filter((deliverable) => deliverable.renderTier === tier).length;
+}
+
+function formatSeedFreshness(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'unknown';
+  const deltaDays = Math.max(0, Math.round((Date.now() - date.getTime()) / 86_400_000));
+  if (deltaDays === 0) return 'today';
+  if (deltaDays === 1) return '1d ago';
+  if (deltaDays < 30) return `${deltaDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
