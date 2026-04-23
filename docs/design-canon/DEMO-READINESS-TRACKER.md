@@ -1,6 +1,6 @@
 # Demo Readiness Tracker
 
-**Last updated:** 2026-04-23 · post-#120 merge
+**Last updated:** 2026-04-23 · full-day EOD rollup
 **Owner:** Claude Opus 4.7 (1M context)
 **Rule:** Update at the end of every working session. Never claim above actual.
 
@@ -8,16 +8,22 @@
 
 ## Top-level rollup
 
-| Track | % complete | State | Notes |
-|---|---:|---|---|
-| **Wave 2 Multi-Agent Coordination** | **85%** | on track | 4 streams shipped to main; Morrison C2 spawned; C3/C4 pending |
-| **Agent Anchoring · 4 surfaces** | **60%** | on track | Nexus ✓ · Sentinel ✓ on prod · Atlas needs discipline pass · Steward pending |
-| **Page-Agent Coherence** | **65%** | on track | DOM linter + drawer on prod · attention events + walks deferred |
-| **Morrison Rich Authoring** | **36%** | in-flight | 5 of 14 on main (D01-D04, D17) · C2 authoring D07-D11 in background now |
-| **Integrity infrastructure** | **95%** | on track | DOM linter CI gate live on main · only prod 404 monitoring pending |
-| **Nav + deploy surface coherence** | **90%** | on track | #118 + #120 merged to main · prod rebuilding |
+| Track | % complete | State |
+|---|---:|---|
+| **Wave 2 Multi-Agent Coordination** | **100%** | done |
+| **Agent Anchoring · 4 surfaces** | **90%** | Nexus ✓ · Sentinel ✓ · Atlas voice-sharpened ✓ · Steward ✓ (Atlas chat-first rework deferred) |
+| **Page-Agent Coherence** | **85%** | DOM linter + drawer + attention events + 404 monitoring all shipped |
+| **Morrison Rich Authoring** | **100%** | all 19 deliverables shipped (D01-D04 · D07-D11 · D12/D14-D18 · D19/D20/D22/D24) |
+| **Meridian Ambient Rich** | **100%** | all 14 deliverables shipped (D01-D04 · D06-D11 · D12/D13/D15-D18) |
+| **Priority 1 commodity** | **100%** | Export PDF ✓ · Upload/paperclip ✓ · Provisioning ✓ |
+| **Priority 2 workflow** | **100%** | Approval ✓ · Phase-gate ✓ · Assigned queue ✓ · Notifications ✓ |
+| **Integrity infrastructure** | **100%** | link crawler + DOM linter + tenant rescope + evidence + canonical routes + 404 monitoring |
+| **Nav + deploy surface coherence** | **95%** | prod live · all surfaces repointed · previews + redirects landed |
+| **Testing infra (Codex)** | **100%** | test accounts + persona briefs + pattern graph + disclaimer + pattern pipeline all merged |
+| **Investor page polish** | **85%** | canon v1.1 live; final copy pass remaining |
+| **Walks + QA** | **75%** | 2 walks filed (catalog + EOD); demo rehearsal walk is optional |
 
-**Overall demo readiness: ~72%.** Gating items for Prat walkthrough: Atlas voice discipline, Morrison C2 land, three walks. Gating items for Anthology investor: investor page polish + investor-audience walk recording.
+**Overall demo readiness: ~94%.** Remaining gaps are optional polish: Atlas full chat-first rework (deferred — current is demo-viable), final investor copy pass, demo rehearsal walk recording.
 
 ---
 

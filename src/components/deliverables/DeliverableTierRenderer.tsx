@@ -4,6 +4,7 @@ import { deliverableToneColor, type DeliverableRenderModel, type DeliverableRout
 import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import { ExportActions } from './ExportActions';
 import { ApproveActions } from './ApproveActions';
+import { EvidenceChipList } from './EvidenceChipList';
 
 export function DeliverableTierRenderer({ model }: { model: DeliverableRenderModel }) {
   return (
@@ -274,14 +275,11 @@ function EvidenceTable({ model }: { model: DeliverableRenderModel }) {
 function EvidenceAnchors({ model }: { model: DeliverableRenderModel }) {
   return (
     <Section label="Evidence Citations" title="Source references">
-      <div className="del-link-list">
-        {model.evidence.map((ref) => (
-          <div className="del-status-item" id={`evidence-${ref.id.toLowerCase()}`} key={ref.id}>
-            <div className="del-eyebrow">{ref.id} · {ref.kind}</div>
-            <strong>{ref.label}</strong>
-          </div>
-        ))}
-      </div>
+      <EvidenceChipList
+        items={model.evidence.map((ref) => ({ id: ref.id, label: ref.label, kind: ref.kind }))}
+        programCode={model.program.code}
+        deliverableCode={model.deliverable.code}
+      />
     </Section>
   );
 }

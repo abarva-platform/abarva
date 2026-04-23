@@ -42,10 +42,20 @@ interface DrawerContextValue {
 
 const DrawerContext = createContext<DrawerContextValue | null>(null);
 
+// Null-safe hook · callers outside a DrawerProvider (SSR tests,
+// standalone previews) get a no-op that matches the contract. This keeps
+// consumers like EvidenceChipList from blowing up the integrity suite
+// when rendered without the (maestro) layout.
+const NOOP_DRAWER: DrawerContextValue = {
+  state: { open: false, content: null, sourceScrollY: 0 },
+  openDrawer: () => {},
+  closeDrawer: () => {},
+  promoteDrawerToNavigation: () => {},
+};
+
 export function useDrawer(): DrawerContextValue {
   const ctx = useContext(DrawerContext);
-  if (!ctx) throw new Error('useDrawer must be used inside DrawerProvider');
-  return ctx;
+  return ctx ?? NOOP_DRAWER;
 }
 
 export function DrawerProvider({ children }: { children: ReactNode }) {
