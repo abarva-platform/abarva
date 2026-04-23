@@ -39,3 +39,6 @@ jobs:
 
       - name: Canonical route integrity
         run: npm run integrity:canonical-routes
+
+      - name: Seed integrity report
+        run: npm run integrity:seed-report

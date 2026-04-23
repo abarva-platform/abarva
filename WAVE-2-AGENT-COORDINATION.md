@@ -96,9 +96,9 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 | 1.4 Tenant switcher re-scope validation | complete | Deterministic integration gate verifies Meridian → Apex re-scope across program list, pattern integration state, Tower data, and admin data signature with zero Meridian leakage. |
 | 1.5 Tower sub-surface stub routes | complete | All five Tower scheduled surfaces render for all four tenants (20 routes) with Stub-style scheduled banner, Control Tower backlink, and composite disclaimer. |
 | 1.6 Route-level integrity tests | complete | `src/__tests__/integration/canonical-routes.test.ts` renders every seed-spec canonical route, asserts 200-level route catalog coverage, shell structure, breadcrumbs, footer, and no unresolved `{{}}`, `undefined`, or `null` strings. |
-| 1.7 Seed integrity report generator | pending | Not started. |
+| 1.7 Seed integrity report generator | complete | Seed dry runs now emit `reports/seed-integrity-{timestamp}.md`; `npm run integrity:seed-report` passed and validates totals, tier counts, phase distribution, schema warnings, and committed report `reports/seed-integrity-2026-04-23T04-35-00-000Z.md`. |
 
-**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npm run integrity:evidence-citations` · `npm run integrity:tenant-rescope` · `npm run integrity:tower-stubs` · `npm run integrity:canonical-routes` · `npx tsc --noEmit --pretty false`
+**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npm run integrity:evidence-citations` · `npm run integrity:tenant-rescope` · `npm run integrity:tower-stubs` · `npm run integrity:canonical-routes` · `npm run integrity:seed-report` · `npx tsc --noEmit --pretty false`
 
 ---
 
