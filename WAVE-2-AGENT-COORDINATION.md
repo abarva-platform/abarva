@@ -85,7 +85,7 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 ## Codex Overnight Work Order · Tier 1
 
 **Owner branch:** `codex/overnight-tier1`
-**Status:** in progress
+**Status:** Tier 1 complete · PR pending
 **Rule:** one item per commit · Tier 1 PR only after 1.1-1.7 complete
 
 | Item | Status | Evidence |
