@@ -1,6 +1,6 @@
 # Demo Readiness Tracker
 
-**Last updated:** 2026-04-23 · end of session
+**Last updated:** 2026-04-23 · post-#120 merge
 **Owner:** Claude Opus 4.7 (1M context)
 **Rule:** Update at the end of every working session. Never claim above actual.
 
@@ -10,14 +10,14 @@
 
 | Track | % complete | State | Notes |
 |---|---:|---|---|
-| **Wave 2 Multi-Agent Coordination** | **80%** | on track | 4 streams shipped; only Morrison C2-C4 (13 deliverables) + nav repoint rebase remain |
-| **Agent Anchoring · 4 surfaces** | **55%** | on track | Nexus/Programs ✓ · Sentinel/Intelligence ✓ · Atlas/Tower partial · Steward/Admin pending |
-| **Page-Agent Coherence** | **60%** | on track | DOM linter + drawer shipped; attention events + walks deferred |
-| **Morrison Rich Authoring** | **36%** | slipping | 5 of 14 deliverables landed (D01-D04, D17); C2/C3/C4 not started |
-| **Integrity infrastructure** | **85%** | on track | link crawler + DOM linter + tenant rescope + evidence + canonical routes all live |
-| **Nav + deploy surface coherence** | **70%** | in flight | nav repoint + base-path redirects shipped on PR #118; not yet merged to main |
+| **Wave 2 Multi-Agent Coordination** | **85%** | on track | 4 streams shipped to main; Morrison C2 spawned; C3/C4 pending |
+| **Agent Anchoring · 4 surfaces** | **60%** | on track | Nexus ✓ · Sentinel ✓ on prod · Atlas needs discipline pass · Steward pending |
+| **Page-Agent Coherence** | **65%** | on track | DOM linter + drawer on prod · attention events + walks deferred |
+| **Morrison Rich Authoring** | **36%** | in-flight | 5 of 14 on main (D01-D04, D17) · C2 authoring D07-D11 in background now |
+| **Integrity infrastructure** | **95%** | on track | DOM linter CI gate live on main · only prod 404 monitoring pending |
+| **Nav + deploy surface coherence** | **90%** | on track | #118 + #120 merged to main · prod rebuilding |
 
-**Overall demo readiness: ~65%.** Gating items for Prat walkthrough: Atlas voice discipline, Morrison C2 Phase 2 content, three walks. Gating items for Anthology investor: investor page polish + investor-audience walk recording.
+**Overall demo readiness: ~72%.** Gating items for Prat walkthrough: Atlas voice discipline, Morrison C2 land, three walks. Gating items for Anthology investor: investor page polish + investor-audience walk recording.
 
 ---
 
@@ -32,8 +32,8 @@ Work order: `docs/design-canon/wave-2-multi-agent-coordination-work-order.md`
 | 3 · Morrison Rich | Agent C1-C4 | 14 deliverables + shared timeline + evidence base | 36% | #115 merged (C1) | see Track 4 |
 | 4 · Interaction exemplar | Agent D (me) | wireframe-agent-interaction-nexus.html | 100% | #116 merged | done |
 
-Canon import foundation (PR #112) · merged.
-**Wave 2 aggregate: 80% · three of four streams complete.**
+Canon import foundation (PR #112) · merged. Sentinel surface (PR #120) · merged.
+**Wave 2 aggregate: 85% · three streams complete, Morrison in flight.**
 
 ---
 
@@ -48,14 +48,14 @@ Guide: `docs/design-canon/agent-anchoring-implementation-guide.md` · design thi
 | Atlas ▲ | Control Tower | partial | needs discipline pass | ✓ | — | **55%** |
 | Steward ◆ | Admin | — | — | — | — | **0%** |
 
-**Anchoring aggregate: 55%.** Atlas rail exists on `/preview/tower` but uses the original right-docked pattern; needs reworking to match Sentinel's primary-anchor pattern with in-page content + confidence-qualified voice.
+**Anchoring aggregate: 60%.** Atlas rail exists on `/preview/tower` but uses the original right-docked pattern; needs reworking to match Sentinel's primary-anchor pattern with in-page content + confidence-qualified voice.
 
 Sub-items:
 - [x] AgentRail React primitive (PR #106)
 - [x] ConversationTurn / StreamingResponsePane / AgentStateIndicator (PR #114)
-- [x] Sentinel on Intelligence · chat-first with 5 views (PRs landed in #118 branch)
+- [x] Sentinel on Intelligence · chat-first with 5 views (PR #120 merged)
 - [x] Voice contracts per agent (PR #113)
-- [x] Cross-agent handoff chip pattern (Sentinel → Nexus shipped)
+- [x] Cross-agent handoff chip pattern (Sentinel → Nexus shipped in #120)
 - [ ] Atlas discipline pass · move from side rail to primary anchor
 - [ ] Steward on Admin · full implementation
 - [ ] Handoff chip · Nexus → Sentinel (for in-program pattern consult)
@@ -142,27 +142,25 @@ Shared primitives:
 
 ## What's in flight right now
 
-1. **PR #118** (`fix/repoint-nav-to-new-surfaces`) · stacked commits for nav repoint + redirects + tenant scoping + Sentinel shell + Sentinel iteration + DOM linter + drawer primitive. Awaiting user merge call.
-2. **PR #117** (`fix/programs-shell-post-merge`) · initialPhase + useEffect fix. Should merge before #118 rebase.
+1. **Agent C2** (Morrison Phase 2 · D07-D11) · Opus subagent running in background · branch `design/wave-2-agent-c2-morrison-p2`. Target: 4,800-6,100 words across 5 deliverables · E20-E39 evidence range.
+2. **Atlas discipline pass** · next in queue after C2 spawns.
 
 ## What's blocked
 
-- **Atlas discipline pass** on `/preview/tower` — blocked on design decision: move Atlas from right-rail to primary anchor like Sentinel, or keep the pressure-card-first layout and lean Atlas into a "supporting agent" role?
-- **Steward on Admin** — blocked on posture priority vs. demo criticality (likely post-demo)
+- **Steward on Admin** — post-demo priority unless explicitly pulled forward.
 
 ## What's next (recommended order)
 
-1. Merge PR #117 → rebase PR #118 → merge PR #118. (Unblocks the nav repoint on prod.)
-2. **Spawn Agent C2** (Morrison Phase 2 · D07-D11) · parallel to everything else; +5 deliverables lands ~40% of Morrison in one pass.
-3. **Atlas discipline pass** on `/preview/tower` · voice + handoff chips + drop confidence qualifiers.
-4. **Attention-event protocol** (§1 of coherence work order) · foundation for next-level rail prompting.
-5. **Drawer wiring expansion** · evidence citations as drawer (E1-E9 chips open the evidence detail inline, not a page nav).
-6. **Walk #1 recording** (Prat golden path) · T-7 before demo.
+1. **Atlas discipline pass** on `/preview/tower` · voice + handoff chips + drop from right-rail to primary anchor with in-page pressure-card content. Moves Anchoring from 60% → 80%.
+2. **Attention-event protocol** (§1 of coherence work order) · React context + emit hook + taxonomy. Foundation for silent state updates when user clicks a pressure card / KPI / row.
+3. **Drawer wiring expansion** · evidence citations (E1-E39+) as drawer from Morrison deliverables. Tower pressure "see related pattern" as drawer.
+4. **Walk #1 recording** (Prat golden path) · after Atlas + C2 land.
+5. **Agent C3** (Morrison Phase 3 · D12, D15, D16, D18) · 4 deliverables · moves Morrison 71% → 100% for Tier A+B spine.
 
 ## Metric math
 
-- **Aggregate readiness** is a weighted average: Wave 2 (25%) + Anchoring (20%) + Coherence (15%) + Morrison (20%) + Integrity (10%) + Deploy (10%) = 80×0.25 + 55×0.20 + 60×0.15 + 36×0.20 + 85×0.10 + 70×0.10 = **63.3%** → rounded to **~65%**.
-- Morrison is the drag. Moving Morrison from 36% → 70% alone would lift aggregate to ~72%.
+- **Aggregate readiness** is a weighted average: Wave 2 (25%) + Anchoring (20%) + Coherence (15%) + Morrison (20%) + Integrity (10%) + Deploy (10%) = 85×0.25 + 60×0.20 + 65×0.15 + 36×0.20 + 95×0.10 + 90×0.10 = **71.5%** → rounded to **~72%**.
+- Morrison still the drag. When C2 lands (5 deliverables, ~70% Morrison), aggregate → ~78%. When Atlas lands (80% anchoring), aggregate → ~80%.
 
 ---
 
