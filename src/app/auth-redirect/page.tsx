@@ -2,7 +2,7 @@
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { DEFAULT_CLIENT_KEY, isClientKey } from '@/lib/client-config'
+import { isExternalOnlyRole, resolvePostSignInPath, resolveSessionClientKey } from '@/lib/auth/access-routing'
 
 const BG = '#060A12'
 const TEAL = '#14B8A6'
@@ -28,29 +28,14 @@ export default function AuthRedirect() {
     const role              = user.publicMetadata?.role              as string | undefined
     const clientId          = user.publicMetadata?.clientId          as string | undefined
     const defaultClientId   = user.publicMetadata?.defaultClientId   as string | undefined
-    const resolvedClientId  = [clientId, defaultClientId, DEFAULT_CLIENT_KEY].find((candidate) => isClientKey(candidate)) ?? DEFAULT_CLIENT_KEY
+    const resolvedClientId  = resolveSessionClientKey({ clientId, defaultClientId })
+    const destination       = resolvePostSignInPath(role, { clientId, defaultClientId })
 
-    if (role === 'investor') {
+    if (!isExternalOnlyRole(role)) {
       persistClientContext(resolvedClientId)
-      router.replace(`/investor?client=${resolvedClientId}`)
-      return
     }
 
-    if (role === 'admin') {
-      persistClientContext(resolvedClientId)
-      router.replace(`/home?client=${resolvedClientId}`)
-      return
-    }
-
-    if ((role === 'client' || role === 'maestro') && isClientKey(clientId)) {
-      persistClientContext(clientId)
-      router.replace(`/home?client=${clientId}`)
-      return
-    }
-
-    // Default fallback
-    persistClientContext(resolvedClientId)
-    router.replace(`/home?client=${resolvedClientId}`)
+    router.replace(destination)
   }, [isLoaded, user, router])
 
   return (

@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isExternalOnlyRole } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 
@@ -52,6 +53,10 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Auth-required routes (any role)
   if (authRequiredRoutes(request) && !userId) {
     return NextResponse.redirect(new URL('/sign-in', request.url))
+  }
+
+  if (authRequiredRoutes(request) && isExternalOnlyRole(role)) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   if (!isPublicRoute(request)) {
