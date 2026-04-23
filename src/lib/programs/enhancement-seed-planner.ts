@@ -115,6 +115,10 @@ export function graphNodeIdForProgram(portfolio: Pick<TenantPortfolioSeed, 'tena
   return `eng_${portfolio.tenantKey}_${program.programSlug.replace(/-/g, '_')}`;
 }
 
+export function deliverableRouteSegmentFor(deliverable: Pick<DeliverableSeedPlan, 'deliverableCode' | 'deliverableSlug'>): string {
+  return `${deliverable.deliverableCode.toLowerCase()}-${deliverable.deliverableSlug.replace(/^d\d+-/, '')}`;
+}
+
 export function buildDeliverableTypeSeedSpecs(): DeliverableTypeSeedSpec[] {
   return PROGRAMS_ENHANCEMENT_MATRIX.deliverables.map((definition) => ({
     typeKey: deliverableTypeKeyFor(definition),
@@ -171,7 +175,10 @@ export function buildProgramSeedPlan(portfolio: TenantPortfolioSeed, program: Te
       deliverableCode: entry.code,
       deliverableSlug: definition.slug,
       title: definition.title,
-      routePath: `${routePath}/deliverables/phase-${entry.phase}/${definition.slug}`,
+      routePath: `${routePath}/deliverables/${deliverableRouteSegmentFor({
+        deliverableCode: entry.code,
+        deliverableSlug: definition.slug,
+      })}`,
       phaseSpec: entry.phase,
       phaseApp,
       requirement: entry.requirement,
