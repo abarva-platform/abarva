@@ -29,6 +29,8 @@
     "seed:enterprise": "npx tsx src/scripts/seed/run-enterprise-packj.ts",
     "seed:enterprise-depth": "npx tsx src/scripts/seed/run-enterprise-depth.ts",
     "seed:programs-demo": "npx tsx src/scripts/seed/programs-demo-apex.ts",
+    "seed:programs-enhancement:plan": "npx tsx src/scripts/seed/programs-enhancement-plan.ts",
+    "seed:programs-enhancement": "npx tsx src/scripts/seed/programs-enhancement-seed.ts",
     "db:migrate": "npx tsx src/scripts/run-migrations.ts",
     "db:migrate:dry": "npx tsx src/scripts/run-migrations.ts --dry",
     "db:migrate:mark-applied": "npx tsx src/scripts/run-migrations.ts --mark-all-applied",

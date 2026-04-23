@@ -1,0 +1,364 @@
+{
+  "version": "1.0",
+  "specDate": "2026-04-22",
+  "owner": "Anand Sundaram",
+  "status": "authoritative",
+  "phaseModel": {
+    "specPhases": [
+      {
+        "phase": 1,
+        "name": "Intake & Framing",
+        "gateCriterion": "Problem statement accepted; scope, sponsor, success metric agreed",
+        "primaryOutput": "Program charter",
+        "currentAppPhase": 0
+      },
+      {
+        "phase": 2,
+        "name": "Diagnosis & Analysis",
+        "gateCriterion": "Current state characterized; root causes validated; hypothesis ranked",
+        "primaryOutput": "Diagnosis report",
+        "currentAppPhase": 1
+      },
+      {
+        "phase": 3,
+        "name": "Design & Decision",
+        "gateCriterion": "Target state designed; intervention portfolio selected; CXO alignment",
+        "primaryOutput": "Decision memo",
+        "currentAppPhase": 2
+      },
+      {
+        "phase": 4,
+        "name": "Build & Deliver",
+        "gateCriterion": "Interventions executed; milestones tracked; risks managed",
+        "primaryOutput": "Delivery artifacts",
+        "currentAppPhase": 3
+      },
+      {
+        "phase": 5,
+        "name": "Outcome & Accountability",
+        "gateCriterion": "Outcomes measured; attribution validated; financial impact signed",
+        "primaryOutput": "Outcome attestation",
+        "currentAppPhase": 4
+      }
+    ]
+  },
+  "archetypes": [
+    {
+      "code": "ST",
+      "key": "strategic_transformation",
+      "name": "Strategic Transformation",
+      "description": "Enterprise-scale change program. Heavy on strategy artifacts, governance, multi-workstream orchestration.",
+      "typicalDurationMonths": {
+        "min": 12,
+        "max": 24
+      },
+      "typicalPrograms": [
+        "Enterprise AI strategy",
+        "Operating model overhaul",
+        "M&A integration"
+      ]
+    },
+    {
+      "code": "WA",
+      "key": "workflow_automation",
+      "name": "Workflow Automation",
+      "description": "Process-level automation with measurable throughput/cost outcome.",
+      "typicalDurationMonths": {
+        "min": 3,
+        "max": 9
+      },
+      "typicalPrograms": [
+        "Prior auth automation",
+        "Claims processing",
+        "Onboarding automation"
+      ]
+    },
+    {
+      "code": "PM",
+      "key": "platform_modernization",
+      "name": "Platform Modernization",
+      "description": "Technical stack or data platform modernization.",
+      "typicalDurationMonths": {
+        "min": 6,
+        "max": 18
+      },
+      "typicalPrograms": [
+        "Data platform modernization",
+        "Legacy system retirement",
+        "Cloud migration"
+      ]
+    },
+    {
+      "code": "AP",
+      "key": "ai_product_enablement",
+      "name": "AI Product / Copilot Enablement",
+      "description": "Building an AI product or copilot embedded in workflows.",
+      "typicalDurationMonths": {
+        "min": 4,
+        "max": 12
+      },
+      "typicalPrograms": [
+        "Sales copilot",
+        "Clinical copilot",
+        "Trader assistant"
+      ]
+    },
+    {
+      "code": "OO",
+      "key": "operational_optimization",
+      "name": "Operational Optimization",
+      "description": "Cost, margin, or efficiency optimization using AI intelligence.",
+      "typicalDurationMonths": {
+        "min": 3,
+        "max": 9
+      },
+      "typicalPrograms": [
+        "Owned brand margin recovery",
+        "Vendor sprawl rationalization",
+        "Demand forecasting"
+      ]
+    }
+  ],
+  "deliverables": [
+    {
+      "code": "D01",
+      "slug": "d01-program-charter",
+      "title": "Program Charter",
+      "typicalPhases": [1],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D02",
+      "slug": "d02-stakeholder-map",
+      "title": "Stakeholder Map",
+      "typicalPhases": [1],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D03",
+      "slug": "d03-success-metric-tree",
+      "title": "Success Metric Tree",
+      "typicalPhases": [1],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D04",
+      "slug": "d04-intake-interview-synthesis",
+      "title": "Intake Interview Synthesis",
+      "typicalPhases": [1, 2],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D05",
+      "slug": "d05-current-state-process-map",
+      "title": "Current State Process Map",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["WA", "OO", "AP"]
+    },
+    {
+      "code": "D06",
+      "slug": "d06-current-state-data-system-map",
+      "title": "Current State Data & System Map",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["PM", "AP", "WA"]
+    },
+    {
+      "code": "D07",
+      "slug": "d07-current-state-financial-baseline",
+      "title": "Current State Financial Baseline",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["OO", "WA", "ST"]
+    },
+    {
+      "code": "D08",
+      "slug": "d08-pain-point-register",
+      "title": "Pain Point Register",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["WA", "OO", "AP"]
+    },
+    {
+      "code": "D09",
+      "slug": "d09-root-cause-analysis",
+      "title": "Root Cause Analysis",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["ST", "WA", "OO"]
+    },
+    {
+      "code": "D10",
+      "slug": "d10-benchmark-comparison",
+      "title": "Benchmark Comparison",
+      "typicalPhases": [2],
+      "appliesToArchetypes": ["ST", "OO", "AP"]
+    },
+    {
+      "code": "D11",
+      "slug": "d11-hypothesis-backlog",
+      "title": "Hypothesis Backlog",
+      "typicalPhases": [2, 3],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D12",
+      "slug": "d12-estimation-roadmap",
+      "title": "Estimation & Execution Roadmap",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D13",
+      "slug": "d13-target-state-architecture",
+      "title": "Target State Architecture",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["PM", "AP"]
+    },
+    {
+      "code": "D14",
+      "slug": "d14-target-state-operating-model",
+      "title": "Target State Operating Model",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["ST", "OO"]
+    },
+    {
+      "code": "D15",
+      "slug": "d15-intervention-portfolio",
+      "title": "Intervention Portfolio",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D16",
+      "slug": "d16-business-case",
+      "title": "Business Case",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D17",
+      "slug": "d17-decision-memo-for-cxo",
+      "title": "Decision Memo for CXO",
+      "typicalPhases": [3],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D18",
+      "slug": "d18-risk-register",
+      "title": "Risk Register",
+      "typicalPhases": [3, 4],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D19",
+      "slug": "d19-delivery-plan-raci",
+      "title": "Delivery Plan & RACI",
+      "typicalPhases": [4],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D20",
+      "slug": "d20-sprint-milestone-artifacts",
+      "title": "Sprint / Milestone Artifacts",
+      "typicalPhases": [4],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D21",
+      "slug": "d21-model-system-build-specs",
+      "title": "Model / System Build Specs",
+      "typicalPhases": [4],
+      "appliesToArchetypes": ["PM", "AP"]
+    },
+    {
+      "code": "D22",
+      "slug": "d22-change-management-package",
+      "title": "Change Management Package",
+      "typicalPhases": [4],
+      "appliesToArchetypes": ["ST", "WA", "OO"]
+    },
+    {
+      "code": "D23",
+      "slug": "d23-go-live-readiness-assessment",
+      "title": "Go-Live Readiness Assessment",
+      "typicalPhases": [4],
+      "appliesToArchetypes": ["WA", "PM", "AP"]
+    },
+    {
+      "code": "D24",
+      "slug": "d24-outcome-measurement-plan",
+      "title": "Outcome Measurement Plan",
+      "typicalPhases": [4, 5],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D25",
+      "slug": "d25-outcome-attestation-report",
+      "title": "Outcome Attestation Report",
+      "typicalPhases": [5],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D26",
+      "slug": "d26-financial-impact-validation",
+      "title": "Financial Impact Validation",
+      "typicalPhases": [5],
+      "appliesToArchetypes": ["OO", "WA", "ST"]
+    },
+    {
+      "code": "D27",
+      "slug": "d27-dual-ledger-reconciliation",
+      "title": "Dual-Ledger Reconciliation",
+      "typicalPhases": [5],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    },
+    {
+      "code": "D28",
+      "slug": "d28-lessons-learned-pattern-contribution",
+      "title": "Lessons Learned & Pattern Contribution",
+      "typicalPhases": [5],
+      "appliesToArchetypes": ["ST", "WA", "PM", "AP", "OO"]
+    }
+  ],
+  "matrix": {
+    "ST": {
+      "1": { "required": ["D01", "D02", "D03", "D04"], "optional": [] },
+      "2": { "required": ["D07", "D08", "D09", "D10", "D11"], "optional": ["D04", "D05", "D06"] },
+      "3": { "required": ["D12", "D14", "D15", "D16", "D17", "D18"], "optional": ["D11", "D13"] },
+      "4": { "required": ["D19", "D20", "D22", "D24"], "optional": ["D18", "D21", "D23"] },
+      "5": { "required": ["D24", "D25", "D26", "D27", "D28"], "optional": [] }
+    },
+    "WA": {
+      "1": { "required": ["D01", "D02", "D03", "D04"], "optional": [] },
+      "2": { "required": ["D05", "D06", "D07", "D08", "D09", "D11"], "optional": ["D04", "D10"] },
+      "3": { "required": ["D12", "D15", "D16", "D17", "D18"], "optional": ["D11", "D13", "D14"] },
+      "4": { "required": ["D19", "D20", "D22", "D23", "D24"], "optional": ["D18", "D21"] },
+      "5": { "required": ["D24", "D25", "D26", "D27", "D28"], "optional": [] }
+    },
+    "PM": {
+      "1": { "required": ["D01", "D02", "D03", "D04"], "optional": [] },
+      "2": { "required": ["D06", "D11"], "optional": ["D04", "D07", "D08", "D09", "D10"] },
+      "3": { "required": ["D12", "D13", "D15", "D16", "D17", "D18"], "optional": ["D11", "D14"] },
+      "4": { "required": ["D19", "D20", "D21", "D23", "D24"], "optional": ["D18", "D22"] },
+      "5": { "required": ["D24", "D25", "D27", "D28"], "optional": ["D26"] }
+    },
+    "AP": {
+      "1": { "required": ["D01", "D02", "D03", "D04"], "optional": [] },
+      "2": { "required": ["D05", "D06", "D08", "D10", "D11"], "optional": ["D04", "D07", "D09"] },
+      "3": { "required": ["D12", "D13", "D15", "D16", "D17", "D18"], "optional": ["D11", "D14"] },
+      "4": { "required": ["D19", "D20", "D21", "D23", "D24"], "optional": ["D18", "D22"] },
+      "5": { "required": ["D24", "D25", "D27", "D28"], "optional": ["D26"] }
+    },
+    "OO": {
+      "1": { "required": ["D01", "D02", "D03", "D04"], "optional": [] },
+      "2": { "required": ["D05", "D07", "D08", "D09", "D10", "D11"], "optional": ["D04", "D06"] },
+      "3": { "required": ["D12", "D14", "D15", "D16", "D17", "D18"], "optional": ["D11"] },
+      "4": { "required": ["D19", "D20", "D22", "D24"], "optional": ["D18", "D23"] },
+      "5": { "required": ["D24", "D25", "D26", "D27", "D28"], "optional": [] }
+    }
+  },
+  "deliverableCountPerArchetype": {
+    "ST": { "min": 18, "max": 22 },
+    "WA": { "min": 17, "max": 20 },
+    "PM": { "min": 16, "max": 19 },
+    "AP": { "min": 18, "max": 21 },
+    "OO": { "min": 18, "max": 21 }
+  }
+}
