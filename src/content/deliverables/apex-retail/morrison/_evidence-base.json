@@ -2,7 +2,7 @@
   "program_code": "APX-01",
   "program_name": "Morrison Owned Brand Margin Recovery",
   "schema_version": "1.0",
-  "last_updated": "2026-04-23-c2",
+  "last_updated": "2026-04-23-c3",
   "append_only": true,
 
   "integrity_note": "Every inline citation chip (E1, E2, ...) in any Morrison deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. The integrity linter will flag any citation chip that does not resolve.",
@@ -207,6 +207,326 @@
       "reference": "Pattern-library portfolio-compounding estimate: parallel execution of supplier + assortment + promotional levers recovers margin +30-40% faster than sequential execution of the same levers. Mechanism: supplier leverage highest when volume commitments are being renegotiated alongside SKU consolidation. Morrison high-scenario ($22M/yr) models the compounding lift; low-scenario ($14M/yr) assumes additive-only.",
       "evidence_confidence": "medium",
       "first_cited_in": "D11"
+    },
+    "E40": {
+      "type": "decision_record",
+      "source": "D12 Roadmap · parallel-track sequencing ratification",
+      "deliverable_code": "D12",
+      "reference": "Marcus T. (CFO) ratified the three-workstream parallel track over sequential execution on 2026-03-18. Mechanism rationale: supplier volume leverage compounds with SKU rationalisation when executed concurrently; sequential loses compounding because supplier contracts would lock pricing at pre-rationalisation volume band. Operational-load mitigation: one dedicated category lead added.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D12"
+    },
+    "E41": {
+      "type": "model",
+      "source": "D12 Roadmap · gate calendar and capital phasing",
+      "deliverable_code": "D12",
+      "reference": "Six-gate calendar: G1 Phase 4 launch 2026-05-06, G2 90-day supplier first-close 2026-08-06, G3 assortment Wave 1 2026-09-30, G4 promo calendar live 2026-10-15, G5 Phase 4 exit 2027-01-31, G6 Phase 5 attestation 2027-Q1. Capital phasing 55/30/15 across H1/H2/H3-H4 of the $6.8M envelope. Each gate has CFO-level pass/no-pass criterion tied to bps recovery or leading indicators.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D12"
+    },
+    "E42": {
+      "type": "resource_plan",
+      "source": "D12 Roadmap · resourcing envelope",
+      "deliverable_code": "D12",
+      "reference": "Morrison resourcing envelope: 3 workstream leads (Diane R. sponsoring WS1, Reese A. sponsoring WS2, a pricing-analytics director sponsoring WS3), 1 program manager, 1 dedicated category lead added to absorb Q3 2026 parallel execution load, Maestro orchestration providing governance forum cadence and dual-ledger reconciliation.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D12"
+    },
+    "E43": {
+      "type": "operating_cadence",
+      "source": "D14 Kanban Board · cadence and escalation protocol",
+      "deliverable_code": "D14",
+      "reference": "Morrison operating cadence: daily 09:00 async workstream check-in; weekly Tuesday 30-min workstream lead sync; biweekly Thursday 60-min governance forum with Marcus T., Katherine P., Diane R.; monthly first-Friday 90-min retrospective. 5-day In-flight escalation SLA routes any stale card to Marcus T. with 48-hour turnaround. Board state at Phase 3 close: 11 cards loaded across three swim lanes plus governance lane.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D14"
+    },
+    "E44": {
+      "type": "performance_target",
+      "source": "D14 Kanban Board · cycle-time targets and definition of done",
+      "deliverable_code": "D14",
+      "reference": "Cycle-time targets: standard cards Ready → Done ≤ 21 days, contract/redraft cards ≤ 35 days, governance cards ≤ 14 days. Definition of done per column: Ready → In-flight requires named owner + gate-criterion link; In-flight → Review requires artifact + downstream walkthrough; Review → Done requires sponsor sign-off or explicit no-sign-off annotation. Pattern-library base rate: 68% of blockages resolve at workstream-lead level.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D14"
+    },
+    "E45": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · portfolio overview and allocation",
+      "deliverable_code": "D15",
+      "reference": "Morrison portfolio selects 3 of 8 pattern-catalog levers; expected recovery envelope 300-430 bps across low-base-high scenarios. Capital allocation $3.1M Lever 1 (46%), $1.9M Lever 2 (28%), $1.8M Lever 3 (26%) of $6.8M total. Portfolio closes 40-55% of gap-to-cohort-median. Two catalog levers deferred to Phase 5 (planogram H7, supplier cost master H13); three catalog levers rejected in Phase 2 (H15-H17).",
+      "evidence_confidence": "high",
+      "first_cited_in": "D15"
+    },
+    "E46": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · Lever 1 supplier renegotiation detail",
+      "deliverable_code": "D15",
+      "reference": "Lever 1 target 140-200 bps recovery. Four sub-workstreams: volume-tier contract restructure (400-600 bps unit-cost on consolidated volume, maps to H1), tier-2 supplier activation in 3 categories (maps to H2), dual-sourcing 4 critical SKUs (15-25% unit-cost reduction, maps to H3), supplier-led trade-fund discipline (30-50 bps depth-creep reduction, maps to H4). Leading indicator: G2 90-day first-close with ≥300 bps unit-cost on consolidated volume.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D15"
+    },
+    "E47": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · Lever 2 assortment rationalisation detail",
+      "deliverable_code": "D15",
+      "reference": "Lever 2 target 80-120 bps recovery, bounded by brand-equity fence (≤15% urban / ≤23% suburban per-category cut cap). Three sub-workstreams: long-tail rationalisation bottom-40% SKUs (14-19% margin-per-LF lift, H5), pack-size consolidation 12 SKUs (60-90 bps subset, H6), subcategory exit (30-50 bps mix recovery, H8). Fence ratified by Katherine P. 2026-03-12; 5-point stretch allowed in Wave 2 if brand-health signals permit.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D15"
+    },
+    "E48": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · Lever 3 promo discipline detail",
+      "deliverable_code": "D15",
+      "reference": "Lever 3 target 80-110 bps recovery. Three sub-workstreams: depth cap at -22% (60-85 bps, maps to H9), margin-gated promotional calendar (H10 mirrors cohort Practice 3), T+7 category margin reporting rebuild (H14 data-engineering dependency enabling H11). Leading indicator: G4 2026-10-15 calendar live with T+7 reporting online; first gated depth event at -22% cap with no manual override.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D15"
+    },
+    "E49": {
+      "type": "decision_framework",
+      "source": "D15 Intervention Portfolio · kill-switch criteria",
+      "deliverable_code": "D15",
+      "reference": "Per-lever kill-switch criteria. Lever 1: no Tier-1 contract signed by day 120, or signed but <250 bps unit-cost recovery · pause + replacement-path review. Lever 2: consumer-perception signal >1 std-dev below trend, or revenue risk >2.5% category-level · pause + cut-depth re-calibration. Lever 3: T+7 reporting slips past day 195, or >3 depth-cap override events in first 60 days · pause + replan. Kill-switches pause rather than cancel; governance forum ratifies resumption / re-scope / replacement. Pattern-library base rate: programs with named kill-switches recover 2.1x faster from lever underperformance.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D15"
+    },
+    "E50": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · confidence ladder and sequencing rationale",
+      "deliverable_code": "D15",
+      "reference": "Confidence ladder: Lever 1 high (three of four sub-WSs have direct cohort-practice evidence), Lever 2 high-bounded (brand-equity fence constrains upper bound but is not a confidence reduction), Lever 3 medium-high (depth-cap enforcement and T+7 reporting rebuild are historically friction points). Ladder calibrates D16 low/base/high scenarios and is ratified in D17 decision memo as sponsor-attested.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D15"
+    },
+    "E51": {
+      "type": "financial_model",
+      "source": "D16 Business Case · 36-month financial model",
+      "deliverable_code": "D16",
+      "reference": "36-month model structured in 4 segments. Build months 1-6 ($3.7M capital, minimal bps recovery, 10-20% of year-one run-rate). Early harvest months 7-12 ($2.0M capital, 50-65% of steady state by month 12). Steady state months 13-24 ($1.1M residual, full $14-22M/yr run-rate). Continuation months 25-36 (attestation year, Phase 5 capital separate). Recovery follows sigmoidal curve: month 6 ~15%, month 12 ~55-65%, month 18 ~95% of steady state. Base case $18M/yr, payback 11 months, 36-mo NPV $35M, IRR 122%.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D16"
+    },
+    "E52": {
+      "type": "model",
+      "source": "D16 Business Case · sensitivity analysis",
+      "deliverable_code": "D16",
+      "reference": "Five sensitivity drivers with NPV impact: Driver 1 supplier unit-cost +/-100 bps shifts ~$9M (largest). Driver 2 brand-equity drag: -$6M downside-only (brand-equity fence caps upside). Driver 3 promo depth-cap overrides >3/60d: -$4M. Driver 4 portfolio-compounding absent: -$7M relative to base. Driver 5 T+7 reporting slip 60-120d: -$3M. Floor case all-drivers-stressed: ~$9M/yr steady-state, 36-mo NPV ~$8M, payback 20-24 mo. Floor is kill-switch criterion at G5, not base scenario.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D16"
+    },
+    "E53": {
+      "type": "financial_model",
+      "source": "D16 Business Case · scenario framing (downside/base/upside)",
+      "deliverable_code": "D16",
+      "reference": "Three scenarios: Downside $14M/yr (300 bps total, additive-only recovery, payback 14 mo, NPV $24M, IRR 88%). Base $18M/yr (365 bps, +15% partial compounding, payback 11 mo, NPV $35M, IRR 122%). Upside $22M/yr (430 bps, full +30-40% compounding, payback 9 mo, NPV $47M, IRR 164%). Base is what Marcus T. is signing for on 2026-03-24; downside is kill-switch floor; upside is Phase 5 continuation hypothesis.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D16"
+    },
+    "E54": {
+      "type": "financial_plan",
+      "source": "D16 Business Case · capital deployment schedule",
+      "deliverable_code": "D16",
+      "reference": "Capital deployment against D12 gate calendar. Months 1-6 (H1, $3.7M, 55%): supplier legal $0.9M, tier-2 due diligence $0.5M, assortment analytics $0.6M, T+7 rebuild $0.8M, margin-gated calendar $0.4M, PMO+change $0.5M. Months 7-12 (H2, $2.0M, 30%): dual-sourcing $0.4M, Wave 2 rollout $0.5M, competitive price platform $0.3M, category lead add $0.3M, governance + dual-ledger $0.5M. Months 13-24 (H3, $0.8M). Months 25-36 (H4, $0.3M). No capital drawn after month 18 except attestation tooling.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D16"
+    },
+    "E55": {
+      "type": "financial_model",
+      "source": "D16 Business Case · payback, IRR, NPV, CFO sign-off readiness",
+      "deliverable_code": "D16",
+      "reference": "Financial metrics at Apex 8.5% cost of capital: payback 9-14 months from Phase 4 open; IRR 88-164%; 36-month NPV $24-47M. Base case NPV $35M is 41% of gap-to-median NPV ($85M), reconciling to 40-55% gap-closure framing. CFO sign-off readiness checklist (5 items, all satisfied): dual-ledger methodology locked (D24), kill-switches named (D15), Phase 5 attestation scheduled 2027-Q1, capital phasing aligned to D12 gates, scenarios calibrated to D10 cohort benchmark.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D16"
+    },
+    "E56": {
+      "type": "risk_register",
+      "source": "D18 Risk Register · 14 risks categorised",
+      "deliverable_code": "D18",
+      "reference": "14 risks across 3 categories: 6 operational, 4 market/consumer, 4 execution. Severity distribution: 2 critical (R1 supplier response <300 bps, R2 parallel-track load), 5 high (R3 brand-equity drag, R4 compounding absent, R5 T+7 slip, R6 category-leader pushback, R7 promo override threshold), 5 medium (R8-R12 including R9 legal cycle, R10 elasticity shift, R11 forum cadence, R12 dual-ledger drift), 2 low (R13 competitive assortment, R14 attestation methodology). Top 8 tracked biweekly; remaining 6 reviewed monthly.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D18"
+    },
+    "E57": {
+      "type": "mitigation_plan",
+      "source": "D18 Risk Register · mitigation roadmap phased against D12 gates",
+      "deliverable_code": "D18",
+      "reference": "Mitigation roadmap phased to gate calendar. Pre-G1: 2 mitigations triggered (supplier concentration via tier-2 activation, category-leader pushback via Reese/Diane air cover). G1-G2: R1/R2/R6 active. G2-G4: R5/R7 active. G4-G5: R3/R4 active. G5-G6: R12/R14 active. Pattern-library precedent: programs without quarterly mitigation re-test show 40% mitigation drift by month 9. Mitigation-health row added to monthly governance forum dashboard.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D18"
+    },
+    "E58": {
+      "type": "escalation_protocol",
+      "source": "D18 Risk Register · escalation triggers and routing",
+      "deliverable_code": "D18",
+      "reference": "Three-tier escalation. Workstream lead: leading-indicator breach surfaced in Tuesday sync. Governance forum: critical/high risks with leading-indicator breach promoted to biweekly Thursday forum. Marcus T.: risks crossing kill-switch threshold auto-escalate with 48-hour turnaround per D17. CMO-level: R3 brand-equity escalates to Katherine P., not Marcus. Below-fold risks auto-promote to biweekly if probability changes >1 tier.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D18"
+    },
+    "E59": {
+      "type": "risk_detail",
+      "source": "D18 Risk Register · operational, market, and execution sub-risks",
+      "deliverable_code": "D18",
+      "reference": "Sub-risks below top-8 cluster: Operational R9 (supplier legal redraft cycle), R12 (dual-ledger reconciliation drift). Market/consumer R10 (macro consumer-confidence elasticity shift), R13 (category-level competitive assortment). Execution R11 (governance forum cadence), R14 (Phase 5 attestation methodology). Each has named owner, leading indicator, mitigation path, and escalation trigger consistent with three-tier protocol.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D18"
+    },
+    "E60": {
+      "type": "workshop",
+      "source": "D19 Delivery Plan · RACI ratification workshop minutes",
+      "deliverable_code": "D19",
+      "reference": "2026-05-06 RACI ratification workshop · Marcus T., Katherine P., Diane R., Reese A., Lena G., Nexus Maestro. 3 workstreams confirmed with 2 named decision owners per stream. Governance forum cadence set (Tuesday 0900 weekly, chaired by Marcus T., Katherine P. joins every second week). Escalation protocol ratified: workstream blockers older than 5 business days escalate directly to Marcus T. Phase 4 window compressed from 45 to 30 days to prevent scope drift and align gate date with Apex May-end finance close.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D19"
+    },
+    "E61": {
+      "type": "model",
+      "source": "D19 Delivery Plan · critical path + sequencing model",
+      "deliverable_code": "D19",
+      "reference": "Critical-path model routes through Workstream 1 (Supplier Renegotiation): volume-commitment data is the upstream input to Workstream 2 (Assortment) cut sizing and Workstream 3 (Promotion) margin-gated depth caps. No credible alternative routing. Sprint 1 scope: WS1 contract template drafts for Supplier A + B; WS2 long-tail SKU freeze and cut-target modelling; WS3 T+14 → T+7 reporting pilot on packaged goods and household essentials. Sprint 2 scope: WS1 Supplier C contract template and dual-source activation for 4 critical SKUs; WS2 first-category execution in packaged goods; WS3 margin-gated calendar rollout with first live event capped at -22%.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D19"
+    },
+    "E62": {
+      "type": "model",
+      "source": "D19 Delivery Plan · resourcing + staffing matrix",
+      "deliverable_code": "D19",
+      "reference": "$1.1M of $6.8M capital envelope allocated to Phase 4 build-out: added category lead for Workstream 2 ($180K loaded, pro-rated), contractor reporting engineering for WS3 (~$240K), CMO-side training/communications vendor (~$120K), retained Apex team allocations (Diane R. 50%, Reese A. 70%, Pricing Director 60%, Lena G. 25%). Comparable-pattern data indicates Workstream 2 without the added category lead would close Sprint 1 at 60-65% target velocity; with the added lead, 70%+ is achievable. Nexus footprint sized for removability at Phase 5.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D19"
+    },
+    "E63": {
+      "type": "doc",
+      "source": "D19 Delivery Plan · contingency reserve specification",
+      "deliverable_code": "D19",
+      "reference": "12% contingency reserve ($816K of $6.8M envelope) ring-fenced against three named triggers: (1) Supplier C contract redraft slippage past 2026-05-22 — funds parallel tier-2 draft; (2) CMO-side brand-equity pushback forcing smaller first-category cut — funds additional brand research and second rehearsal cycle; (3) Workstream 3 reporting stand-up slipping past T+10 on first close — funds second contractor wave and bridge reporting layer. Reserve release requires Marcus T. authorisation with documented trigger match; scope expansion using reserve is prohibited.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D19"
+    },
+    "E64": {
+      "type": "doc",
+      "source": "D20 Sprint Artifacts · sprint cadence and team structure specification",
+      "deliverable_code": "D20",
+      "reference": "2-week sprint cadence, Sprint 1: 2026-04-30 → 2026-05-13; Sprint 2: 2026-05-14 → 2026-05-30. Workstream team sizes 5-7 people each: WS1 Diane R. + category-lead deputy + Nexus supplier analytics + 2 category buyers + legal BP; WS2 Reese A. + Lena G. + added category lead + 2 category managers + merchandising analyst + Nexus assortment specialist; WS3 Director of Pricing + Finance BP + 2 pricing analysts + Nexus data engineering + contractor reporting engineer. Cross-workstream Tuesday 0900 governance forum is the most consequential ceremony; intra-workstream Friday 1600 retros secondary.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D20"
+    },
+    "E65": {
+      "type": "model",
+      "source": "D20 Sprint Artifacts · velocity + burn-down telemetry model",
+      "deliverable_code": "D20",
+      "reference": "Velocity measured in workstream-story-points closed per sprint, calibrated against D12 Phase 3 planning estimates. Sprint 1 target 70% of comparable-pattern baseline (4 reference engagements in Owned Brand Margin Recovery pattern library); Sprint 2 target 100%. Sprint 1 discount reflects team formation, added category lead ramp, and reporting stand-up cold-start. Burn-down published Monday 0800 weekly in Nexus telemetry package.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D20"
+    },
+    "E66": {
+      "type": "workshop",
+      "source": "D20 Sprint Artifacts · Sprint 1 closeout minutes",
+      "deliverable_code": "D20",
+      "reference": "2026-05-13 Sprint 1 closeout · Diane R. chaired · 3 of 4 milestones on-track, 1 at-risk (Workstream 1 Supplier C contract redraft). Velocity 68% against 70% target. Mitigation (parallel tier-2 contract draft, contingency release) triggered during 2026-05-12 Tuesday governance forum before the 5-day escalation threshold. Sprint 1 shipped 14 artifacts total (WS1=5, WS2=4, WS3=5). Two 'resistance-shaped' entries on blocker register, both resolved inside Sprint 1 using pre-registered D22 mitigations.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D20"
+    },
+    "E67": {
+      "type": "doc",
+      "source": "D20 Sprint Artifacts · artifact catalog register",
+      "deliverable_code": "D20",
+      "reference": "Artifact catalog locked before Sprint 1 kickoff. Per-workstream per-sprint artifact categories: (a) 1-page workstream brief; (b) 2-4 execution artifacts specific to workstream; (c) risk register update; (d) decision log entry; (e) Sprint N+1 readiness document. Target 14-18 artifacts per sprint across 3 workstreams; 20+ artifacts treated as governance warning (ceremony over execution) rather than velocity achievement.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D20"
+    },
+    "E68": {
+      "type": "model",
+      "source": "D22 Change Management · stakeholder impact analysis",
+      "deliverable_code": "D22",
+      "reference": "4 role-impact tiers by degree of behavioural change required (not by seniority). Tier 1 corporate decision-makers (~8): sponsor pair + workstream co-owners + Finance leads. Tier 2 function leaders (~24): category leaders, pricing managers, merchandising managers, supply chain operations, brand directors, store operations VPs. Tier 3 category operators (~160): buyers, pricing analysts, supply chain planners, merchandising analysts, brand managers. Tier 4 store operators (~3,200 across 1,200 stores): store managers, assistant managers, department leads. Store-level communications cascade through existing Apex channels (district huddle, store-manager update) rather than Morrison-specific channel.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D22"
+    },
+    "E69": {
+      "type": "doc",
+      "source": "D22 Change Management · communication plan cascade schedule",
+      "deliverable_code": "D22",
+      "reference": "Tier 1: weekly 30-minute sponsor syncs + Monday 0800 Nexus telemetry package. Tier 2: biweekly 60-minute function-leader forum + condensed telemetry package. Tier 3: weekly Monday written update (3-4 paragraphs narrative voice, authored by Nexus content lead, reviewed by workstream co-owners) + biweekly 45-minute team briefings. Tier 4: existing Apex store comms channels (Monday district huddle, mid-week store-manager email), Morrison content served through existing Apex learning platform.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D22"
+    },
+    "E70": {
+      "type": "doc",
+      "source": "D22 Change Management · training + enablement design",
+      "deliverable_code": "D22",
+      "reference": "Three training tracks. Supplier Renegotiation (Tier 2-3): 4-hour volume-tier contracting workshop + 90-min dual-sourcing overview. Assortment Rationalisation (Tier 2-4): 3-hour cut-methodology + 15%-ceiling workshop + 45-min store-manager execution briefing. Promotional Depth Discipline (Tier 2-3): 2-hour margin-gated calendar workshop + 60-min T+7 dashboard session. Cascade completion by 2026-05-27, tracked via Apex learning platform, 80% completion threshold is Gate 4 criterion. 90% stretch target discussed and deliberately not enforced (quality over box-ticking). Post-Phase-4 support scoped for 60 days beyond 2026-05-30 gate.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D22"
+    },
+    "E71": {
+      "type": "model",
+      "source": "D22 Change Management · adoption metrics framework",
+      "deliverable_code": "D22",
+      "reference": "Adoption measured at three levels: training completion (throughput, 24-hour lag from Apex learning platform), behavioural signals (leading: resistance-shaped blocker entries, Tier 3 briefing attendance, Tier 2 decision throughput, 3-sentence qualitative sponsor-confidence read after every Tuesday forum), outcome signals (lagging, owned by D24 not D22). Explicit boundary: adoption metrics are inputs to outcome metrics, not substitutes; 95% training completion with zero margin recovery is either adoption or design failure and D22 does not discriminate.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D22"
+    },
+    "E72": {
+      "type": "doc",
+      "source": "D22 Change Management · pre-registered resistance patterns",
+      "deliverable_code": "D22",
+      "reference": "Five pre-registered resistance patterns drawn from Owned Brand Margin Recovery pattern library and validated against Morrison stakeholder map. (1) SKU-count-as-identity: category-buyer headcount coupled to SKU count; mitigation CFO-signed 12-month decoupling letter. (2) Brand-equity-as-veto: 15% ceiling as veto envelope, Katherine P. named approver above ceiling. (3) Supplier-relationship-as-asset: Diane R. personally owns Supplier A/B renegotiations. (4) Promotional-depth-as-share-defence: margin-gated calendar as decision framework rather than rule. (5) Reporting-lag-as-excuse: Workstream 3 collapses T+14 to T+7 by Sprint 2; communicated as operator benefit not governance imposition. Tracked in blocker register with 'resistance-shaped' tag.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D22"
+    },
+    "E73": {
+      "type": "decision",
+      "source": "D22 Change Management · package approval decision",
+      "deliverable_code": "D22",
+      "reference": "2026-05-20 · Katherine P. (CMO) approved change management package. Training cascades to store-level by Week 4 (2026-05-27) with >80% completion target. 15%-per-category SKU depth cut ceiling codified as the brand-equity fence (corroborated by Lena G. in D04 intake [E11]). CFO-signed SKU-count/headcount decoupling letter authorised by Marcus T. on the same date as Pattern 1 mitigation.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D22"
+    },
+    "E74": {
+      "type": "doc",
+      "source": "D24 Outcome Measurement Plan · measurement framework specification",
+      "deliverable_code": "D24",
+      "reference": "Framework anchored exclusively to D03 success metric tree — no parallel scoring, no metric construct introduced after D03 lock. Each metric in D03 tree gets a D24 computation specification (source ledger, SKU/category filter, time window, owner). Metric proliferation during execution is a known failure pattern; D03 anchor makes silent migration detectable. Computation specifications signed by Finance business-partner before attestation; mid-flight changes require ratified decision log entry.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
+    },
+    "E75": {
+      "type": "doc",
+      "source": "D24 Outcome Measurement Plan · primary metric attestation methodology",
+      "deliverable_code": "D24",
+      "reference": "Primary metric (owned-brand gross-margin recovery in bps vs. D07 baseline) attested monthly at T+7. Three-step process: (1) Nexus pulls telemetry at T+5; (2) Apex Finance closes category ledger at T+6 or T+7 per Workstream 3 reporting stand-up; (3) reconcile against 3 bp target band. Phase 4 explicitly not attested (build activity, not outcome); first primary-metric attestation is June 2026 close published mid-July 2026. Attestation in bps not dollars (dollars provided alongside for convenience).",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
+    },
+    "E76": {
+      "type": "doc",
+      "source": "D24 Outcome Measurement Plan · dual-ledger reconciliation protocol",
+      "deliverable_code": "D24",
+      "reference": "Dual-ledger: Apex Finance closing ledger + Nexus Morrison telemetry ledger. 3 bp target reconciliation band calibrated against D07 baseline reconciliation [E21]. Protocol when outside band: (1) identify bps gap by category (usually concentrated in 1-2 categories); (2) classify root cause (timing, classification, methodological); (3) remediate per classification; (4) re-reconcile; if still outside, defer one cycle with sponsor-pair note. Expected frequency 1-2 deferrals per 24-month program per pattern library. No external figure leaves program without dual-ledger pass or Marcus T. authorised exception.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
+    },
+    "E77": {
+      "type": "decision",
+      "source": "D24 Outcome Measurement Plan · plan lock decision",
+      "deliverable_code": "D24",
+      "reference": "2026-05-27 · Marcus T. (CFO) + Nexus Maestro locked outcome measurement plan. Dual-ledger reconciliation applies before every Phase 5 attestation. Sign-off protocol: CFO signature is the attestation (not rubber stamp); Finance business-partner is operational author; disagreement triggers deferred-attestation path rather than compelled signature. Delta report trigger thresholds ratified: one month below $14M floor = sponsor-pair conversation; two consecutive months = portfolio-level review (structured conversation, not automatic descoping).",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
+    },
+    "E78": {
+      "type": "doc",
+      "source": "D24 Outcome Measurement Plan · publishing cadence",
+      "deliverable_code": "D24",
+      "reference": "Three publication cadences. Monthly: sponsor pair + workstream co-owners + Apex Finance partners (internal, ~12 recipients). Quarterly: Apex exec team (internal, ~25 recipients, 30-minute exec session review). Annually: Apex board agenda item with Marcus T. presenting and Nexus Maestro in support. No attested number appears externally without CFO explicit sign-off on external use. Every monthly publication carries a delta report: attested metric for the month + cumulative attested vs. D16 business case projection, tracking the $14-22M/yr steady-state range.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
+    },
+    "E79": {
+      "type": "doc",
+      "source": "D24 Outcome Measurement Plan · supporting metric cadence",
+      "deliverable_code": "D24",
+      "reference": "Supporting metrics on monthly attestation cadence with exception: promotional depth attests weekly during first six months of Phase 5, then reverts to monthly. Weekly cadence enabled by Workstream 3 T+7 reporting stand-up, no additional data engineering required. Tiering: unit cost, promotional depth, SKU-per-LF are primary-supporting (dual-ledger); inventory turns is secondary-supporting (Apex Finance number alone, correlates rather than decomposes). Six-month revert point ratified 2026-05-27; extends if depth creep surfaces before trigger resolution.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D24"
     }
   }
 }
