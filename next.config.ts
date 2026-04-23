@@ -23,6 +23,15 @@ const nextConfig: NextConfig = {
       // Product-map spec: engagement console lives at /engagements/[id].
       // Keep the /engage/* path alive via 308 for bookmarks + prior links.
       { source: '/engage/:path*', destination: '/engagements/:path*', permanent: true },
+      // Wave-2 surface migration. The new Nexus chat-first Programs shell
+      // and the Atlas-rail Control Tower live under /preview/* until the
+      // canonical routes are fully migrated. Redirect the BASE paths only —
+      // sub-routes like /engagements/[id], /tower/projects, /programs/new
+      // are still live and handle their own content. Use 307 (not permanent)
+      // so we can flip back once the canonical routes are replaced wholesale.
+      { source: '/engagements', destination: '/preview/programs', permanent: false },
+      { source: '/programs', destination: '/preview/programs', permanent: false },
+      { source: '/tower', destination: '/preview/tower', permanent: false },
     ];
   },
 };

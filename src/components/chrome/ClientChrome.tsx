@@ -24,13 +24,13 @@ interface ClientInfo {
 // (admin surfaces). Observer gets the same, minus Engagements.
 const ITEMS_CLIENT_VIEWER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
-  { label: 'Programs', href: '/engagements', match: (p) => p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
-  { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
+  { label: 'Programs', href: '/preview/programs', match: (p) => p === '/preview/programs' || p.startsWith('/preview/programs/') || p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
+  { label: 'Control Tower', href: '/preview/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') },
 ];
 
 const ITEMS_OBSERVER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
-  { label: 'Control Tower', href: '/tower', match: (p) => p === '/tower' || p.startsWith('/tower/') },
+  { label: 'Control Tower', href: '/preview/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') },
 ];
 
 export function ClientChrome({
