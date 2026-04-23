@@ -1,0 +1,164 @@
+{
+  "program_code": "MRD-01",
+  "program_name": "Ambient Clinical Value Chain Activation",
+  "schema_version": "1.0",
+  "last_updated": "2026-04-23-c5",
+  "append_only": true,
+
+  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Meridian Ambient deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. Meridian Ambient owns the E1-E19 range; other programs use separate evidence bases. The integrity linter flags any citation chip that does not resolve.",
+
+  "entries": {
+    "E1": {
+      "type": "baseline",
+      "source": "D06 Documentation-Time Baseline · Epic Signal 18-month trace",
+      "deliverable_code": "D06",
+      "reference": "18 months of Epic Signal documentation-time data across Meridian's 14 hospitals and 220 ambulatory sites · median clinician logs 1 hr 48 min/day of after-hours Epic activity (pajama time) · 47% of Meridian physicians above specialty-benchmark median · primary-care and hospital-medicine cohorts most exposed.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E2": {
+      "type": "baseline",
+      "source": "D06 Documentation-Time Baseline · MBI-HSS burnout survey wave",
+      "deliverable_code": "D06",
+      "reference": "MBI-HSS burnout survey wave completed 2026-01-12 · n=1,240 attending physicians and APPs · emotional exhaustion subscale shows 54% of clinicians in the elevated band · correlation with documentation time r=0.41 (p<0.01) · Depersonalisation subscale 38% elevated.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E3": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Sarah Chen (CIO) transcript",
+      "deliverable_code": "D04",
+      "reference": "CIO framing: 'Abridge / DAX Copilot / Suki were deployed to solve three different clinician populations · what we don't have is a value chain · the question is not which vendor survives, it's how any of them connect to CDI, HCC capture, and quality measure capture.'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E4": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Dr. Larsson (CMO) transcript",
+      "deliverable_code": "D04",
+      "reference": "CMO framing: 'Our north-star is clinician cognitive load · if we only chase HCC capture uplift we are just moving documentation burden to a different accountant · pajama time is the number I can take to my medical staff and they believe it.'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E5": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Priya Raman (VP Revenue Cycle) transcript",
+      "deliverable_code": "D04",
+      "reference": "Revenue Cycle framing: on the MA book the HCC recapture gap is real and material · estimate $3.2-5.1M/yr of uncaptured risk-adjustment across the MA-heavy payer mix · DRG specificity on inpatient side shows similar downgrade pattern worth $1.8-2.6M/yr in CMI drift.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E6": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Dr. Morales (CMIO) transcript",
+      "deliverable_code": "D04",
+      "reference": "CMIO framing: three parallel ambient vendors is an unstable equilibrium · Abridge handles primary care well, DAX Copilot carries specialty workflows, Suki covers outpatient procedural · but governance is fragmented across three vendor councils and note-template drift is measurable · argued for earlier consolidation; deferred to Phase 3 decision memo.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E7": {
+      "type": "doc",
+      "source": "Ambient Clinical Value Chain pattern · pattern manifest record",
+      "deliverable_code": "pattern",
+      "reference": "AbarVa Transformation Genome pattern `ambient-clinical-value-chain` · frames ambient listening as the platform for a clinical value chain (documentation → CDI → HCC capture → quality measure capture → care-gap closure) rather than a scribe product · 10 triggering symptoms · 8 detection signals · recommended intervention set anchored on value-chain integration rather than vendor consolidation.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E8": {
+      "type": "baseline",
+      "source": "D03 Success Metric Tree · north-star metric framing",
+      "deliverable_code": "D03",
+      "reference": "Primary metric: clinician after-hours Epic time (pajama time) in minutes/clinician/day · supporting metrics: note turnaround time (sign-to-close), HCC capture rate on MA panel, CDI query resolution cycle time, quality-measure documentation capture rate · MBI-HSS burnout index held as quarterly trailing indicator.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D03"
+    },
+    "E9": {
+      "type": "model",
+      "source": "D16 Business Case · value-at-stake model · Phase 3 baseline lock",
+      "deliverable_code": "D16",
+      "reference": "Steady-state value-at-stake: $8-14M/yr · cognitive-load recovery component $3-5M/yr (retention and recruitment arbitrage, locum avoidance, visit-volume recovery) · documentation quality component $5-9M/yr (HCC recapture $3.2-5.1M/yr · DRG specificity $1.8-2.6M/yr · quality-measure performance $0.5-1.3M/yr) · capital envelope $4.2M · 12-18 month payback.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D01"
+    },
+    "E10": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · cohort analysis · ambient maturity",
+      "deliverable_code": "D10",
+      "reference": "6-IDN composite cohort · Meridian is the only cohort member operating three ambient vendors in parallel past 12 months · 4 of 6 peers consolidated to a single primary within 18 months of first deployment · 2 peers operate a primary + specialty pairing · cohort median HCC recapture lift post-ambient: 4-7 points on MA book when integrated to CDI; <1 point when not.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E11": {
+      "type": "model",
+      "source": "D08 Pain Point Register · documentation governance audit",
+      "deliverable_code": "D08",
+      "reference": "Note-template drift audit: sampled 2,400 ambient-generated notes across the three vendors over 90 days · 23% show specialty-inappropriate template selection · 11% show HCC-relevant language present in transcript but absent from final note · primary driver: no shared CDI feedback loop between vendors.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E12": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Abridge vendor council representative",
+      "deliverable_code": "D04",
+      "reference": "Abridge vendor council: 'We treat Meridian as a flagship primary-care ambient deployment · we have HCC-oriented code suggestion available but it has not been enabled at Meridian because integration to Epic HCC queue has not been commissioned on the Meridian side.'",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E13": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · DAX Copilot vendor council representative",
+      "deliverable_code": "D04",
+      "reference": "DAX Copilot (Microsoft) vendor council: 'Specialty deployments at Meridian cover cardiology, orthopedics, and GI · clinician adoption steady but DRG specificity feedback loop has not been opened · we have the capability but it requires CDI integration on Meridian's side.'",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E14": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Suki vendor council representative",
+      "deliverable_code": "D04",
+      "reference": "Suki vendor council: 'Outpatient procedural deployment · Meridian uses Suki primarily in urgent care and outpatient surgery · lighter integration footprint · no current HCC or DRG feedback loop commissioned.'",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    },
+    "E15": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · CDI director shadow",
+      "deliverable_code": "D04",
+      "reference": "CDI director framing: 'We run 42 CDI specialists across the system · since ambient deployed we have received almost no change in query volume routed from ambient notes · the ambient vendors are not routing documentation gaps to our queue · this is the biggest missed integration in the program.'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E16": {
+      "type": "workshop",
+      "source": "D01 Charter · sponsor working session · 2026-01-06",
+      "deliverable_code": "D01",
+      "reference": "Sponsor working session · Sarah Chen · Dr. Larsson · Priya Raman · Dr. Morales · agreed to charter the program around value-chain activation rather than vendor rationalization · agreed to preserve the three-vendor envelope through Phase 3 decision memo · agreed pajama time is the north-star metric.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E17": {
+      "type": "baseline",
+      "source": "D06 Documentation-Time Baseline · specialty decomposition",
+      "deliverable_code": "D06",
+      "reference": "Specialty decomposition of pajama time: primary care 2 hr 09 min/day median · hospital medicine 1 hr 54 min/day · cardiology 1 hr 32 min/day · orthopedics 1 hr 17 min/day · urgent care 48 min/day · ambulatory surgery 42 min/day · ambient vendor coverage unevenly distributed across these specialties.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D03"
+    },
+    "E18": {
+      "type": "doc",
+      "source": "D01 Charter · payer mix and risk contract exposure",
+      "deliverable_code": "D01",
+      "reference": "Meridian payer mix: Medicare Advantage + commercial risk-based 55% of revenue · traditional Medicare 22% · Medicaid 14% · commercial fee-for-service 9% · substantial ACO / MSSP exposure · HCC capture is a direct revenue mechanism on MA book, not an accounting artifact.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D01"
+    },
+    "E19": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · chief ambulatory officer field shadow",
+      "deliverable_code": "D04",
+      "reference": "Chief Ambulatory Officer framing: 'The 220 ambulatory sites are where the clinician burnout math actually lives · if we get ambient working in ambulatory primary care, we buy capacity worth 6-9 incremental visits per clinician per week · that is a real patient-access number.'",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D04"
+    }
+  }
+}

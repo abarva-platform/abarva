@@ -1,0 +1,58 @@
+{
+  "program_code": "MRD-01",
+  "program_name": "Ambient Clinical Value Chain Activation",
+  "tenant_code": "meridian",
+  "tenant_display": "Meridian Health System",
+  "program_start": "2026-01-07",
+  "phase_1_end": "2026-02-03",
+  "phase_2_end": "2026-03-10",
+  "phase_3_gate": "2026-04-21",
+  "phase_4_gate": "2026-05-26",
+  "phase_5_target": "2027-Q1",
+
+  "key_decisions": [
+    { "date": "2026-01-07", "phase": 1, "author": "Sarah Chen · CIO", "event": "Program charter approved · scope locked to value-chain activation (not scribe rationalization) · three-vendor operating envelope preserved through Phase 3", "deliverable": "D01", "relatedDeliverables": ["D03", "D04"] },
+    { "date": "2026-01-09", "phase": 1, "author": "Dr. Larsson · CMO", "event": "Co-sponsorship confirmed · clinician cognitive load named as the north-star frame · after-hours Epic time endorsed as primary leading metric", "deliverable": "D01", "relatedDeliverables": ["D03"] },
+    { "date": "2026-01-14", "phase": 1, "author": "Priya Raman · VP Revenue Cycle", "event": "Revenue cycle operational dependencies ratified · HCC capture and DRG specificity named as Phase 2-3 diagnostic threads", "deliverable": "D02" },
+    { "date": "2026-01-20", "phase": 1, "author": "Dr. Morales · CMIO", "event": "Success metric tree approved · clinician after-hours Epic time (pajama time) set as north-star · MBI-HSS burnout index retained as quarterly trailing indicator", "deliverable": "D03" },
+    { "date": "2026-01-28", "phase": 1, "author": "Nexus · Maestro", "event": "Intake synthesis complete · 14 interviews · 3-vendor governance gap confirmed · CMIO / vendor-rationalisation tension preserved as productive contradiction", "deliverable": "D04", "relatedDeliverables": ["D02", "D08"] },
+
+    { "date": "2026-02-11", "phase": 2, "author": "Dr. Morales · CMIO", "event": "Documentation-time baseline approved · 18 months of Epic Signal data normalized · 47% of Meridian physicians above specialty-median pajama time", "deliverable": "D06" },
+    { "date": "2026-02-24", "phase": 2, "author": "Priya Raman · VP Revenue Cycle", "event": "HCC and DRG specificity gap quantified · estimated $3.2-5.1M/yr uncaptured risk adjustment across MA book · routed to D08 pain-point register", "deliverable": "D08" },
+    { "date": "2026-03-03", "phase": 2, "author": "Nexus · Maestro", "event": "11 hypotheses resolved · 7 validated · 2 rejected · 2 deferred to Phase 5 · primary hypothesis: value-chain integration (not vendor consolidation) is the dominant lever", "deliverable": "D11" },
+
+    { "date": "2026-03-18", "phase": 3, "author": "Sarah Chen · CIO", "event": "Intervention portfolio drafted · 4-lever architecture · CDI integration · HCC capture feedback loop · quality measure capture · clinician cognitive-load protection", "deliverable": "D15", "relatedDeliverables": ["D16", "D17"] },
+    { "date": "2026-04-08", "phase": 3, "author": "Dr. Larsson · CMO + Sarah Chen · CIO", "event": "Business case baseline-locked · $4.2M capital envelope · $8-14M/yr steady-state value-at-stake · 12-18 month payback", "deliverable": "D16" },
+    { "date": "2026-04-14", "phase": 3, "author": "Sarah Chen · CIO + Dr. Larsson · CMO + Priya Raman · VP Revenue Cycle", "event": "Decision memo approved · D17 locked · CMIO dissent recorded on vendor-rationalisation timing (argued for earlier consolidation)", "deliverable": "D17", "relatedDeliverables": ["D15", "D16", "D18"] }
+  ],
+
+  "anchor_facts": {
+    "revenue_usd": 7800000000,
+    "hospital_count": 14,
+    "ambulatory_sites": 220,
+    "payer_mix_ma_commercial_pct": 55,
+    "capital_envelope_usd": 4200000,
+    "steady_state_value_low_usd": 8000000,
+    "steady_state_value_high_usd": 14000000,
+    "payback_months_low": 12,
+    "payback_months_high": 18,
+    "ambient_vendors_deployed": 3,
+    "epic_signal_months_of_data": 18,
+    "physicians_above_pajama_median_pct": 47,
+    "hcc_uncaptured_risk_usd_low": 3200000,
+    "hcc_uncaptured_risk_usd_high": 5100000,
+    "hypotheses_total": 11,
+    "hypotheses_validated": 7,
+    "hypotheses_rejected": 2,
+    "hypotheses_deferred": 2,
+    "sponsor_primary": "Sarah Chen · CIO",
+    "sponsor_co": "Dr. Larsson · CMO",
+    "revenue_cycle_lead": "Priya Raman · VP Revenue Cycle",
+    "cmio": "Dr. Morales · CMIO",
+    "orchestrator_agent": "Nexus"
+  },
+
+  "append_only": true,
+  "version": "1.0",
+  "last_updated": "2026-04-23"
+}
