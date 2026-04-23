@@ -1,14 +1,16 @@
 import { getAllPrograms } from '@/lib/programs/mock';
-import { ProgramsCanonShell } from '@/components/programs/ProgramsCanonShell';
+import { ProgramsIridescentShell } from '@/components/programs/ProgramsIridescentShell';
 
 export const dynamic = 'force-dynamic';
 
-// /preview/programs · canon rebuild · design package v1.1
-// Source: wireframe-programs-page.html exemplar + wireframes §3.2 + component library
-// Signature: animated 5-phase journey · dot halo · pop-in stage transitions
-// when navigating between phases. Old preview replaced.
+// /preview/programs · iridescent canon build · matches
+// abarva_program_page_in_new_aesthetic.html (Apr 23, 2026).
+// Two zones: iridescent cream hero (radial glow) + dark content
+// where the conversation is the primary left-column star.
+// Deliverables render as a compact chip row, not a column.
+// Phase-pop animation preserved across tab switches.
 
 export default function ProgramsPreviewPage() {
   const programs = getAllPrograms();
-  return <ProgramsCanonShell programs={programs} />;
+  return <ProgramsIridescentShell programs={programs} />;
 }

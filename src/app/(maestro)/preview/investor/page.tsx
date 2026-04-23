@@ -23,15 +23,7 @@ export default function InvestorPreviewPage() {
         <Link href="/investors">← Compare with current /investors</Link>
       </div>
 
-      {/* Minimal navbar — no Programs/Tower chrome */}
-      <div className="canon-minimal-navbar">
-        <div className="canon-wordmark">
-          <span className="abar">Abar</span><span className="va">Va</span>
-        </div>
-        <a href="mailto:anand@abarva.ai">Contact Anand →</a>
-      </div>
-
-      {/* ─── Hero (light) ──────────────────────────────────────────── */}
+      {/* ─── Hero (light) · layout already renders the AbarVa nav ─── */}
       <section className="canon-hero">
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div className="canon-hero-eyebrow">Investor · Seed round · $8M at $25M cap</div>
