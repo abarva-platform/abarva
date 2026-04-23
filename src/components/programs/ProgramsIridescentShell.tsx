@@ -423,8 +423,8 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                 step={INTAKE_OPTIONS[intakeStep]!}
                 onChoice={(id, label) => {
                   const you = { speaker: 'you' as const, text: label };
-                  let next: typeof intakeLog = [...intakeLog, you];
-                  let newIntake = { ...intake };
+                  const next: typeof intakeLog = [...intakeLog, you];
+                  const newIntake = { ...intake };
                   let nextStep: IntakeStep = intakeStep;
                   if (intakeStep === 'archetype') { newIntake.archetype = id; nextStep = 'sponsor'; }
                   else if (intakeStep === 'sponsor') { newIntake.sponsor = id; nextStep = 'value'; }
