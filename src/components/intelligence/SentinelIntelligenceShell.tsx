@@ -52,37 +52,55 @@ function patternsBySector(patterns: PatternManifestEntry[]): Record<string, Patt
   return bySector;
 }
 
+function confidenceBand(floor: number | null): 'high' | 'medium' | 'thin' {
+  if (floor === null) return 'medium';
+  if (floor >= 0.75) return 'high';
+  if (floor >= 0.5) return 'medium';
+  return 'thin';
+}
+
+// Sentinel opening turn · voice-authentic. Research-rigorous: establish
+// evidence, qualify confidence, name freshness. Short where the evidence
+// is thin; longer when we need to anchor a pattern the user is zooming
+// into. Every opener ends with a framed question — never open-ended.
 function sentinelOpener(view: View, selected: PatternManifestEntry | null, clientName: string | null): Turn {
-  const tenant = clientName ?? 'your workspace';
+  const tenant = clientName ?? 'this workspace';
   if (view === 'patterns' && selected) {
     const evidence = selected.evidenceCount;
     const obs = selected.observationCount || selected.observations.length;
+    const band = confidenceBand(selected.confidenceFloor);
+    const confidenceLine =
+      band === 'high'
+        ? `Confidence is high — ${obs} composite observations, ${evidence} evidence sources. I'd stand behind any of the detection signals here.`
+        : band === 'medium'
+        ? `Medium confidence — ${obs} observations, ${evidence} sources. Strong on the thesis, thinner on cross-sector transfer. I'd qualify claims beyond the primary sector.`
+        : `Evidence is thin — ${obs} observations, ${evidence} sources. Treat the thesis as a working hypothesis and ask me to flag which claims rest on a single source.`;
     return {
       speaker: 'sentinel',
-      text: `${selected.name} is one of our deeper patterns — ${obs} observations, ${evidence} evidence sources. I can walk the thesis, the detection signals, or the intervention menu. What serves you most?`,
+      text: `${selected.name}. ${confidenceLine} Where do you want to go in — the thesis, the detection signals, or the intervention menu?`,
     };
   }
   if (view === 'overview') {
     return {
       speaker: 'sentinel',
-      text: `Intelligence is structured as four layers: Patterns, Vendors, Contradictions, and Ask. Each layer reads from the authored knowledge base — no measured customer outcomes, only composite observations with evidence citations. I can orient you on ${tenant} specifically, or take a pattern from the top of the demo-critical list.`,
+      text: `${tenant} knowledge layer is live. Every observation is authored from industry research, not measured customer outcomes — I'll name the confidence band on anything I surface. Where should we start?`,
     };
   }
   if (view === 'vendors') {
     return {
       speaker: 'sentinel',
-      text: `Vendor index populates as Pack J + Pack K portfolios land. Until then, Patterns is the spine — each pattern's vendor landscape is where I reason about overlap and rationalisation for ${tenant}.`,
+      text: `Vendor graph is staging (Pack J + Pack K land it). Until then, each pattern carries its own vendor landscape — that's where I reason about overlap and rationalisation. Pivot to a pattern?`,
     };
   }
   if (view === 'contradictions') {
     return {
       speaker: 'sentinel',
-      text: `Contradictions are the tensions each pattern surfaces inside the enterprise — things like "governance slows AI ROI" or "cost compression pressures data quality." They anchor diagnostic conversations. I can surface them by pattern or by sector.`,
+      text: `Contradictions are where the pattern library earns its keep — governance vs velocity, cost compression vs data quality, platform modernisation vs business continuity. These anchor the diagnostic. Zoom on a pattern, or scan the list?`,
     };
   }
   return {
     speaker: 'sentinel',
-    text: `I am a stateless librarian for the pattern library. Ask me anything indexed across topics, vendors, patterns, regulations, frameworks, benchmarks, and research. Specific > general — I qualify confidence when the evidence is thin.`,
+    text: `Stateless librarian. I index topics, vendors, patterns, regulations, frameworks, benchmarks, and research. Specific questions beat general ones — and I'll say "evidence is thin" when that's honest.`,
   };
 }
 
@@ -103,13 +121,15 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
     [selectedSlug, patterns],
   );
 
-  const [log, setLog] = useState<Turn[]>([sentinelOpener(parseView(initialView), selected, activeClientName)]);
+  // Append-only log of user actions + Sentinel follow-ups. The contextual
+  // opener is derived separately and rendered above the log — never mixed
+  // in, so view/selection changes don't spam the chat with repeated intros.
+  const [log, setLog] = useState<Turn[]>([]);
 
-  // Re-seed opener when view or selection changes.
-  useEffect(() => {
-    setLog((prev) => [...prev, sentinelOpener(view, selected, activeClientName)]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, selectedSlug]);
+  const opener = useMemo(
+    () => sentinelOpener(view, selected, activeClientName),
+    [view, selected, activeClientName],
+  );
 
   useEffect(() => {
     const id = window.setTimeout(
@@ -117,16 +137,98 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
       80,
     );
     return () => window.clearTimeout(id);
-  }, [log.length]);
+  }, [log.length, view, selectedSlug]);
 
   const userInitials = initialsOf(activeClientName);
   const groups = useMemo(() => patternsBySector(patterns), [patterns]);
 
-  function pickChoice(label: string, next: { view?: View; slug?: string }) {
-    setLog((prev) => [
-      ...prev,
-      { speaker: 'you', text: label },
-    ]);
+  // Sentinel follow-up response after a user chip click. Voice-authentic
+  // and context-aware; does NOT just repeat the opener. Short default,
+  // longer only when the chip asks for walk-through content.
+  function sentinelFollowUp(
+    label: string,
+    choice: { view?: View; slug?: string; kind?: string },
+    nextSelected: PatternManifestEntry | null,
+  ): Turn {
+    if (choice.kind === 'thesis' && nextSelected) {
+      const band = confidenceBand(nextSelected.confidenceFloor);
+      const qualifier =
+        band === 'thin'
+          ? `One sentence up front: evidence for this pattern is thin — ${nextSelected.evidenceCount} sources, treat as working hypothesis. `
+          : band === 'medium'
+          ? `One qualifier: medium confidence on cross-sector transfer. `
+          : ``;
+      return { speaker: 'sentinel', text: `${qualifier}Thesis lives in the panel on the left — scroll to "Why this matters." Ask me to pressure-test any specific claim.` };
+    }
+    if (choice.kind === 'interventions' && nextSelected) {
+      return {
+        speaker: 'sentinel',
+        text: `${nextSelected.interventions.length} interventions authored. Each one has an effectiveness cue and a caveat. Want me to flag the ones with the strongest evidence, or the ones that apply best to ${activeClientName ?? 'this tenant'}?`,
+      };
+    }
+    if (choice.kind === 'signals' && nextSelected) {
+      return {
+        speaker: 'sentinel',
+        text: `Detection signals are in the panel. Name one signal you see in your telemetry and I'll tell you whether it's load-bearing for this pattern.`,
+      };
+    }
+    if (choice.kind === 'evidence' && nextSelected) {
+      const band = confidenceBand(nextSelected.confidenceFloor);
+      if (band === 'thin') {
+        return {
+          speaker: 'sentinel',
+          text: `Honest read: ${nextSelected.evidenceCount} sources backing this pattern. Two are composite, the rest are secondary. I would not lean on this pattern for a board decision today — I'd use it to frame a diagnostic.`,
+        };
+      }
+      return {
+        speaker: 'sentinel',
+        text: `${nextSelected.evidenceCount} evidence sources. Authored from research — not measured client outcomes. I can walk the two strongest citations if you want.`,
+      };
+    }
+    if (choice.kind === 'handoff-nexus' && nextSelected) {
+      return {
+        speaker: 'sentinel',
+        text: `Good move — Nexus owns program creation. I'll pass the context: ${nextSelected.name}, ${nextSelected.evidenceCount} sources, confidence ${confidenceBand(nextSelected.confidenceFloor)}. Click through to Programs and Nexus will open with a charter draft aligned to this pattern.`,
+      };
+    }
+    if (choice.kind === 'related' && nextSelected) {
+      return {
+        speaker: 'sentinel',
+        text: `Loaded. ${nextSelected.name} shares detection signals with the prior pattern — ask me where the two diverge if that matters for your diagnostic.`,
+      };
+    }
+    if (choice.kind === 'open-pattern' && nextSelected) {
+      // Reuse the opener logic as a follow-up when user picks a pattern
+      // directly from the list — gives them the confidence frame without
+      // stacking a separate "opener + follow-up" pair.
+      return sentinelOpener('patterns', nextSelected, activeClientName);
+    }
+    if (choice.view === 'vendors') {
+      return {
+        speaker: 'sentinel',
+        text: `Vendor graph is staging. Until it lands, pick a pattern — the vendor landscape is richest inside each pattern's card.`,
+      };
+    }
+    if (choice.view === 'contradictions') {
+      return {
+        speaker: 'sentinel',
+        text: `Surfaced. Each pattern's tensions are on the list. Pick one and I'll tell you whether the contradiction is load-bearing for ${activeClientName ?? 'your tenant'}.`,
+      };
+    }
+    if (choice.view === 'ask') {
+      return {
+        speaker: 'sentinel',
+        text: `Ask layer is the stateless librarian. Type what you need — I qualify confidence before answering.`,
+      };
+    }
+    return { speaker: 'sentinel', text: `Got it. ${label} — ready when you are.` };
+  }
+
+  function pickChoice(label: string, next: { view?: View; slug?: string; kind?: string }) {
+    setLog((prev) => [...prev, { speaker: 'you', text: label }]);
+    const nextSelected = next.slug ? patterns.find((p) => p.slug === next.slug) ?? selected : selected;
+    const response = sentinelFollowUp(label, next, nextSelected);
+    setLog((prev) => [...prev, response]);
     if (next.view) setView(next.view);
     if (next.slug) setSelectedSlug(next.slug);
   }
@@ -139,7 +241,7 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
       { speaker: 'you', text },
       {
         speaker: 'sentinel',
-        text: 'Logged. For free-text queries I route through the Ask layer — switch to Ask Sentinel for the full stateless librarian, or pick one of the guided prompts to stay in context.',
+        text: `Heard. Free-text queries route through the Ask layer — switch tabs to Ask Sentinel for the full librarian, or stick with guided choices to stay in context. I'll say "evidence is thin" if that's the honest answer.`,
       },
     ]);
     setEscapeText('');
@@ -207,11 +309,9 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                 groups={groups}
                 selected={selected}
                 onSelect={(slug) => {
-                  setSelectedSlug(slug);
-                  setLog((prev) => [
-                    ...prev,
-                    { speaker: 'you', text: `Open ${patterns.find((p) => p.slug === slug)?.name ?? slug}` },
-                  ]);
+                  const target = patterns.find((p) => p.slug === slug);
+                  if (!target) return;
+                  pickChoice(`Open ${target.name}`, { slug, kind: 'open-pattern' });
                 }}
               />
             ) : null}
@@ -237,6 +337,14 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                 Research-rigorous · reads telemetry aloud, names confidence and freshness
               </div>
               <div className="sis-rail-messages">
+                {/* Contextual opener · derived, never duplicated in log */}
+                <div className="sis-bubble sentinel opener">
+                  <div className="sis-bubble-avatar">◈</div>
+                  <div className="sis-bubble-content">
+                    <div className="sis-bubble-speaker">Sentinel</div>
+                    <div className="sis-bubble-body">{opener.text}</div>
+                  </div>
+                </div>
                 {log.map((turn, i) => (
                   <div key={i} className={`sis-bubble ${turn.speaker}`}>
                     <div className="sis-bubble-avatar">
@@ -259,11 +367,14 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                     <button
                       key={i}
                       type="button"
-                      className="sis-chip"
+                      className={`sis-chip ${opt.handoff ? `handoff-${opt.handoff}` : ''}`}
                       onClick={() => pickChoice(opt.label, opt.next)}
                     >
                       <span className="sis-chip-label">{opt.label}</span>
                       {opt.sub ? <span className="sis-chip-sub">{opt.sub}</span> : null}
+                      {opt.handoff === 'nexus' ? (
+                        <span className="sis-chip-handoff">→ Nexus ✱</span>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -300,28 +411,65 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
   );
 }
 
+type ChoiceNext = { view?: View; slug?: string; kind?: string };
+interface Choice {
+  label: string;
+  sub?: string;
+  next: ChoiceNext;
+  handoff?: 'nexus';
+}
+
 function buildGuidedChoices(
   view: View,
   selected: PatternManifestEntry | null,
   patterns: PatternManifestEntry[],
-): { prompt: string; options: Array<{ label: string; sub?: string; next: { view?: View; slug?: string } }> } {
+): { prompt: string; options: Choice[] } {
   if (view === 'patterns' && selected) {
-    const related = selected.relatedPatternIds.slice(0, 2);
-    const relatedOpts: Array<{ label: string; sub?: string; next: { view?: View; slug?: string } }> = [];
+    const evidence = selected.evidenceCount;
+    const band = confidenceBand(selected.confidenceFloor);
+    const related = selected.relatedPatternIds.slice(0, 1);
+    const relatedOpts: Choice[] = [];
     for (const id of related) {
       const target = patterns.find((p) => p.id === id);
       if (target) {
-        relatedOpts.push({ label: `Open ${target.name}`, sub: 'Related pattern', next: { view: 'patterns', slug: target.slug } });
+        relatedOpts.push({
+          label: `Cross-reference ${target.name}`,
+          sub: 'Shared detection signals · where the two diverge',
+          next: { view: 'patterns', slug: target.slug, kind: 'related' },
+        });
       }
     }
     return {
-      prompt: 'Pick the angle I should lead with.',
+      prompt: 'Where do you want to go in?',
       options: [
-        { label: 'Headline insight', sub: 'What the pattern claims in one paragraph', next: {} },
-        { label: 'Walk the interventions', sub: `${selected.interventions.length} options with effectiveness cues`, next: {} },
-        { label: 'Contradictions', sub: 'Tensions this pattern surfaces', next: { view: 'contradictions' } },
+        {
+          label: 'Pressure-test the thesis',
+          sub: band === 'thin' ? `Honest caveat first · ${evidence} sources` : band === 'high' ? `High confidence · walk the claim` : `Medium confidence · I\u2019ll qualify`,
+          next: { kind: 'thesis' },
+        },
+        {
+          label: 'Detection signals',
+          sub: `${selected.detectionSignals.length} signals · tell me one you see and I\u2019ll pressure-test`,
+          next: { kind: 'signals' },
+        },
+        {
+          label: 'Walk interventions',
+          sub: `${selected.interventions.length} options · effectiveness + caveats`,
+          next: { kind: 'interventions' },
+        },
+        {
+          label: 'How strong is the evidence?',
+          sub: `${evidence} sources · I\u2019ll name the two strongest`,
+          next: { kind: 'evidence' },
+        },
+        {
+          label: 'Apply this to a program',
+          sub: 'Hand to Nexus with this pattern as anchor',
+          next: { kind: 'handoff-nexus' },
+          handoff: 'nexus' as const,
+        },
         ...relatedOpts,
-      ],
+      ].slice(0, 5),
     };
   }
   if (view === 'overview') {
@@ -330,37 +478,51 @@ function buildGuidedChoices(
       prompt: 'Where should we start?',
       options: [
         demoFirst
-          ? { label: `Open ${demoFirst.name}`, sub: 'Demo-critical pattern · deepest authoring', next: { view: 'patterns' as const, slug: demoFirst.slug } }
-          : { label: 'Browse all patterns', sub: `${patterns.length} available`, next: { view: 'patterns' as const } },
-        { label: 'Vendor landscape', sub: 'Overlap + rationalisation posture', next: { view: 'vendors' as const } },
-        { label: 'Contradictions', sub: 'What is blocking value or trust', next: { view: 'contradictions' as const } },
-        { label: 'Ask Sentinel', sub: 'Free-text against the whole index', next: { view: 'ask' as const } },
+          ? {
+              label: `Open ${demoFirst.name}`,
+              sub: `Demo-critical · ${demoFirst.evidenceCount} sources · ${demoFirst.observationCount || demoFirst.observations.length} observations`,
+              next: { view: 'patterns', slug: demoFirst.slug, kind: 'open-pattern' },
+            }
+          : {
+              label: 'Browse patterns',
+              sub: `${patterns.length} available · I\u2019ll surface the demo-critical first`,
+              next: { view: 'patterns' },
+            },
+        { label: 'Vendor landscape', sub: 'Overlap + rationalisation · staging', next: { view: 'vendors' } },
+        { label: 'Contradictions', sub: 'What blocks value or trust', next: { view: 'contradictions' } },
+        { label: 'Ask anything', sub: 'Free-text against the index', next: { view: 'ask' } },
       ],
     };
   }
   if (view === 'vendors') {
+    const demoFirst = patterns.find((p) => p.demoCritical);
     return {
-      prompt: 'Until Pack J lands, pivot to a pattern — that is where I reason about vendors today.',
+      prompt: 'Until the vendor graph lands, the richer read is inside each pattern.',
       options: [
-        { label: 'Back to Patterns', next: { view: 'patterns' as const } },
-        { label: 'Overview', next: { view: 'overview' as const } },
+        demoFirst
+          ? { label: `Open ${demoFirst.name}`, sub: 'Pattern with vendor landscape baked in', next: { view: 'patterns', slug: demoFirst.slug, kind: 'open-pattern' } }
+          : { label: 'Browse patterns', next: { view: 'patterns' } },
+        { label: 'Back to Overview', next: { view: 'overview' } },
       ],
     };
   }
   if (view === 'contradictions') {
+    const demoFirst = patterns.find((p) => p.demoCritical);
     return {
-      prompt: 'Zoom in by pattern or stay at the contradictions list?',
+      prompt: 'Pick a pattern and I will tell you whether the contradiction is load-bearing.',
       options: [
-        { label: 'Pick a pattern to zoom', next: { view: 'patterns' as const } },
-        { label: 'Overview', next: { view: 'overview' as const } },
+        demoFirst
+          ? { label: `Zoom on ${demoFirst.name}`, sub: 'Demo-critical pattern', next: { view: 'patterns', slug: demoFirst.slug, kind: 'open-pattern' } }
+          : { label: 'Browse patterns', next: { view: 'patterns' } },
+        { label: 'Back to Overview', next: { view: 'overview' } },
       ],
     };
   }
   return {
-    prompt: 'Ask is best for lookups you cannot find with the guided choices.',
+    prompt: 'Ask is the escape hatch for lookups the guided choices miss.',
     options: [
-      { label: 'Back to Overview', next: { view: 'overview' as const } },
-      { label: 'Browse Patterns', next: { view: 'patterns' as const } },
+      { label: 'Browse patterns', sub: 'Anchor on something specific', next: { view: 'patterns' } },
+      { label: 'Overview', next: { view: 'overview' } },
     ],
   };
 }
@@ -872,10 +1034,26 @@ const sentinelCss = `
   background: #FFFFFF; border: 1px solid rgba(26,22,18,0.12); border-radius: 8px;
   cursor: pointer; font-family: 'DM Sans', sans-serif;
   transition: all 0.15s;
+  position: relative;
 }
 .sis-chip:hover { background: rgba(155,109,255,0.08); border-color: #9B6DFF; transform: translateX(-1px); }
-.sis-chip-label { display: block; font-size: 12.5px; font-weight: 500; color: #1a1612; }
-.sis-chip-sub { display: block; margin-top: 2px; font-size: 10.5px; color: #8a7e72; line-height: 1.4; }
+.sis-chip-label { display: block; font-size: 12.5px; font-weight: 500; color: #1a1612; padding-right: 60px; }
+.sis-chip-sub { display: block; margin-top: 2px; font-size: 10.5px; color: #8a7e72; line-height: 1.4; padding-right: 60px; }
+.sis-chip.handoff-nexus { border-color: rgba(14,159,140,0.4); background: rgba(14,159,140,0.06); }
+.sis-chip.handoff-nexus:hover { background: rgba(14,159,140,0.12); border-color: #0E9F8C; }
+.sis-chip.handoff-nexus .sis-chip-label { color: #0E9F8C; font-weight: 700; }
+.sis-chip-handoff {
+  position: absolute; top: 8px; right: 10px;
+  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  letter-spacing: 0.14em; font-weight: 700;
+  color: #0E9F8C;
+}
+
+.sis-bubble.opener .sis-bubble-body {
+  padding: 10px 12px; background: rgba(155,109,255,0.06);
+  border-left: 2px solid #9B6DFF; border-radius: 0 8px 8px 0;
+  margin-top: 2px;
+}
 
 .sis-rail-escape {
   display: flex; gap: 6px; padding: 6px;
