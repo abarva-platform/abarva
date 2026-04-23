@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { deliverableToneColor, type DeliverableRenderModel, type DeliverableRouteLink } from '@/lib/deliverables/render-contract';
 import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
+import { ExportActions } from './ExportActions';
 
 export function DeliverableTierRenderer({ model }: { model: DeliverableRenderModel }) {
   return (
@@ -205,6 +206,14 @@ function Header({ model, label }: { model: DeliverableRenderModel; label: string
           <span className="del-pill" data-tone={model.deliverable.tier === 'stub' ? 'amber' : 'teal'}>{model.deliverable.tier.toUpperCase()}</span>
           <span className="del-pill" data-tone="amber">Composite disclaimer active</span>
         </div>
+        {model.deliverable.tier !== 'stub' ? (
+          <div style={{ marginTop: 18 }}>
+            <ExportActions
+              deliverableCode={model.deliverable.code}
+              title={model.deliverable.title}
+            />
+          </div>
+        ) : null}
       </div>
       <aside className="del-panel">
         <div className="del-eyebrow">Render Contract</div>
