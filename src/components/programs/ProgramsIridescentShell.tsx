@@ -4,7 +4,7 @@
 // The (maestro) layout already renders AbarvaNav · this component does
 // NOT render its own navbar. Just the chat + phase journey + side rail.
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
 
@@ -254,6 +254,7 @@ const INTAKE_LABELS: Record<string, string> = {
 };
 
 export function ProgramsIridescentShell({ programs }: { programs: ProgramFullState[] }) {
+  const initialPhase = phaseKeyFor(programs[0] ?? null);
   const [mode, setMode] = useState<Mode>('phase');
   const [selectedProgramId, setSelectedProgramId] = useState<string | null>(programs[0]?.id ?? null);
   const [activePhase, setActivePhase] = useState<PhaseKey>(initialPhase);
