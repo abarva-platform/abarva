@@ -37,6 +37,12 @@ import { PatternClusterGraph, type ClusterPattern } from '@/components/intellige
 import { GenomeSuccessRateBars, type InterventionSuccessRate } from '@/components/intelligence/GenomeSuccessRateBars';
 import { SeedGlobalPattern } from '@/components/deliverables/SeedRouteShell';
 import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
+import {
+  getPatternApplicablePrograms,
+  getPatternManifestEntry,
+  patternRouteFor,
+  type PatternManifestEntry,
+} from '@/lib/intelligence/pattern-manifest';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,12 +164,16 @@ export default async function PatternDetailPage({
   const activeClient = await getActiveClientRow();
   const row = await loadPatternRow(patternKey, activeClient?.id ?? null);
   const augmentation = getPatternAugmentation(patternKey);
+  const manifest = getPatternManifestEntry(patternKey);
   const industryCompositions = getPatternIndustryCompositions(patternKey);
   const linkedKpis = await loadLinkedKpis(row?.linked_kpi_ids ?? null, activeClient?.id ?? null);
 
   // If neither a DB row nor an augmentation exists, the route is genuinely
-  // 404 · patterns without either have nothing to render.
+  // 404 · patterns without either have nothing to render. The authored
+  // manifest is the first fallback so new design-pack slugs never 404 while
+  // the DB/vector/graph ingestion catches up.
   if (!row && !augmentation) {
+    if (manifest) return <ManifestPatternDetail pattern={manifest} activeClientName={activeClient?.name ?? null} />;
     const seedHasPattern = getSeedPlan().programs.some((program) => program.patternSlug === patternKey);
     if (seedHasPattern) return <SeedGlobalPattern patternSlug={patternKey} />;
     notFound();
@@ -640,6 +650,270 @@ function RelatedGroup({ title, items }: { title: string; items: Array<{ label: s
   );
 }
 
+function ManifestPatternDetail({
+  pattern,
+  activeClientName,
+}: {
+  pattern: PatternManifestEntry;
+  activeClientName: string | null;
+}) {
+  const sectionPreview = pattern.sections.slice(0, 8);
+  const applicablePrograms = getPatternApplicablePrograms(pattern.slug);
+  const traceableDeliverables = applicablePrograms
+    .flatMap((program) => program.deliverables
+      .filter((deliverable) => deliverable.renderTier !== 'stub')
+      .map((deliverable) => ({ ...deliverable, program })))
+    .sort((a, b) => Number(b.renderTier === 'rich') - Number(a.renderTier === 'rich') || a.code.localeCompare(b.code))
+    .slice(0, 10);
+  const stats = [
+    ['Confidence floor', pattern.confidenceFloor === null ? 'TBD' : `${Math.round(pattern.confidenceFloor * 100)}%`],
+    ['Evidence sources', String(pattern.evidenceCount)],
+    ['Observations', String(pattern.observationCount || pattern.nObservationsFloor || pattern.observations.length)],
+    ['Last updated', formatFreshness(pattern.lastUpdatedAt)],
+  ];
+
+  return (
+    <PageShell width="standard" padding="comfortable">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
+        <header style={{ display: 'grid', gap: 22, gridTemplateColumns: 'minmax(0, 1.2fr) minmax(300px, 0.8fr)', alignItems: 'start' }}>
+          <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 14 }}>
+              <EyebrowLabel tone={pattern.demoCritical ? 'amber' : 'teal'} size="sm">
+                {pattern.demoCritical ? 'DEMO CRITICAL' : 'AUTHORING PACK'}
+              </EyebrowLabel>
+              {pattern.category ? <EyebrowLabel tone="muted" size="xs">{pattern.category}</EyebrowLabel> : null}
+            </div>
+            <PageTitle size="display">{pattern.name}</PageTitle>
+            {pattern.shortDescription ? (
+              <Body size="lg" tone="secondary" style={{ maxWidth: 860, marginTop: 12 }}>
+                {pattern.shortDescription}
+              </Body>
+            ) : null}
+            <div style={{ marginTop: 18, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+              <EntityLink href="/intelligence/library?category=pattern" variant="ghost">
+                ← Pattern library
+              </EntityLink>
+              <MetaLabel>
+                {activeClientName ? `${activeClientName} scoped · ` : ''}Composite pattern · {pattern.sourceFile}
+              </MetaLabel>
+            </div>
+          </div>
+          <aside style={{ padding: 18, borderRadius: 14, border: '0.5px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.03)' }}>
+            <EyebrowLabel tone="teal" size="sm">PATTERN READINESS</EyebrowLabel>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12, marginTop: 14 }}>
+              {stats.map(([label, value]) => (
+                <div key={label} style={{ padding: 12, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
+                  <MetaLabel>{label}</MetaLabel>
+                  <Body size="lg" weight={700} tone="primary" style={{ marginTop: 4 }}>{value}</Body>
+                </div>
+              ))}
+            </div>
+            <Body size="sm" tone="secondary" style={{ marginTop: 14 }}>
+              Manifest fallback is active with source freshness, evidence count, and program backlinks preserved for demo integrity.
+            </Body>
+          </aside>
+        </header>
+
+        {pattern.longDescription ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">PATTERN THESIS</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+              Why this matters
+            </SectionHeading>
+            <Body size="md" tone="primary" style={{ maxWidth: 980 }}>
+              {pattern.longDescription}
+            </Body>
+          </section>
+        ) : null}
+
+        <section>
+          <EyebrowLabel tone="teal" size="sm">APPLICABLE PROGRAMS</EyebrowLabel>
+          <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+            Programs currently applying this pattern
+          </SectionHeading>
+          {applicablePrograms.length > 0 ? (
+            <div style={{ display: 'grid', gap: 14, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+              {applicablePrograms.map((program) => (
+                <Link
+                  key={`${program.tenantKey}-${program.code}`}
+                  href={program.routePath}
+                  style={{
+                    display: 'block',
+                    padding: 16,
+                    borderRadius: 12,
+                    textDecoration: 'none',
+                    background: 'rgba(20,184,166,0.06)',
+                    border: '0.5px solid rgba(20,184,166,0.22)',
+                  }}
+                >
+                  <EyebrowLabel tone="teal" size="xs" style={{ marginBottom: 8 }}>
+                    {program.clientDisplayName.toUpperCase()} · PHASE {program.currentPhaseSpec} · {program.status.toUpperCase()}
+                  </EyebrowLabel>
+                  <Body size="md" weight={700} tone="primary" as="div">{program.name}</Body>
+                  <Body size="sm" tone="secondary" as="div" style={{ marginTop: 8 }}>
+                    {program.deliverables.length} deliverables · {program.roleInDemo}
+                  </Body>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <Body size="sm" tone="muted">No seeded program currently applies this pattern.</Body>
+          )}
+        </section>
+
+        {traceableDeliverables.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="amber" size="sm">TRACEABLE DELIVERABLES</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+              Source-pattern links that resolve back to this page
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 10 }}>
+              {traceableDeliverables.map((deliverable) => (
+                <Link
+                  key={`${deliverable.program.code}-${deliverable.code}`}
+                  href={deliverable.routePath}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '110px minmax(0, 1fr) 130px',
+                    gap: 12,
+                    alignItems: 'center',
+                    padding: '12px 14px',
+                    borderRadius: 10,
+                    textDecoration: 'none',
+                    background: 'rgba(255,255,255,0.025)',
+                    border: '0.5px solid rgba(255,255,255,0.09)',
+                  }}
+                >
+                  <MetaLabel>{deliverable.program.code} · {deliverable.code}</MetaLabel>
+                  <Body size="sm" weight={600} tone="primary" as="div">{deliverable.title}</Body>
+                  <MetaLabel>{deliverable.renderTier} · P{deliverable.phaseSpec}</MetaLabel>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {pattern.observations.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">COMPOSITE OBSERVATIONS</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+              Evidence-backed observations in the authored pattern pack
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+              {pattern.observations.slice(0, 6).map((observation, index) => (
+                <div key={`${observation}-${index}`} style={{ padding: 14, borderRadius: 12, background: 'rgba(255,255,255,0.025)', border: '0.5px solid rgba(255,255,255,0.10)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+                    <MetaLabel>Obs {index + 1}</MetaLabel>
+                    <span style={{ border: '0.5px solid rgba(20,184,166,0.35)', color: COLORS.teal, borderRadius: 999, padding: '3px 8px', fontSize: 10, fontFamily: 'JetBrains Mono, monospace', letterSpacing: '0.12em' }}>
+                      COMPOSITE
+                    </span>
+                  </div>
+                  <Body size="sm" tone="primary">{observation}</Body>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+          <ManifestList title="Trigger symptoms" tone="teal" items={pattern.triggerSymptoms} empty="Triggers are scheduled for enrichment." />
+          <ManifestList title="Detection signals" tone="teal" items={pattern.detectionSignals} empty="Signals are scheduled for enrichment." />
+          <ManifestList title="Diagnostic questions" tone="amber" items={pattern.diagnosticQuestions} empty="Diagnostics are scheduled for enrichment." />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: 16 }}>
+          <ManifestList title="Evidence requirements" tone="teal" items={pattern.evidenceRequirements} empty="Evidence requirements are scheduled for enrichment." />
+          <ManifestList title="Intervention menu" tone="amber" items={pattern.interventions} empty="Interventions are scheduled for enrichment." />
+        </div>
+
+        {pattern.relatedPatternIds.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">RELATED PATTERNS</EyebrowLabel>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
+              {pattern.relatedPatternIds.map((id) => (
+                <EntityLink key={id} href={patternRouteFor(id)} variant="ghost">
+                  {id.replace(/^pattern_/, '').replace(/_/g, ' ')}
+                </EntityLink>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {sectionPreview.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">AUTHORING DEPTH</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 16 }}>
+              Parsed sections from the design pack
+            </SectionHeading>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {sectionPreview.map((section) => (
+                <details key={section.id} style={{ border: '0.5px solid rgba(255,255,255,0.10)', borderRadius: 12, background: 'rgba(255,255,255,0.025)', overflow: 'hidden' }}>
+                  <summary style={{ cursor: 'pointer', padding: '14px 16px' }}>
+                    <Body size="md" weight={700} tone="primary" as="span">{section.title}</Body>
+                  </summary>
+                  <Body size="sm" tone="secondary" style={{ padding: '0 16px 16px', whiteSpace: 'pre-wrap', lineHeight: 1.65 }}>
+                    {section.body}
+                  </Body>
+                </details>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        <footer style={{ paddingTop: 8 }}>
+          <MetaLabel>
+            Composite organization built from real-world data. Demo rendering: pattern content is generated from authored design-pack source and must be sponsor-validated before production use. Pattern route rendered from content hash {pattern.contentHash}; no localhost links.
+          </MetaLabel>
+        </footer>
+      </div>
+    </PageShell>
+  );
+}
+
+function formatFreshness(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'unknown';
+  const now = Date.now();
+  const deltaDays = Math.max(0, Math.round((now - date.getTime()) / 86_400_000));
+  if (deltaDays === 0) return 'today';
+  if (deltaDays === 1) return '1d ago';
+  if (deltaDays < 30) return `${deltaDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function ManifestList({
+  title,
+  tone,
+  items,
+  empty,
+}: {
+  title: string;
+  tone: 'teal' | 'amber';
+  items: string[];
+  empty: string;
+}) {
+  const borderColor = tone === 'amber' ? COLORS.amber : COLORS.teal;
+  return (
+    <section style={{ padding: 16, borderRadius: 12, border: '0.5px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.025)', borderTop: `2px solid ${borderColor}` }}>
+      <EyebrowLabel tone={tone} size="sm">{title}</EyebrowLabel>
+      {items.length === 0 ? (
+        <Body size="sm" tone="muted" style={{ marginTop: 10 }}>{empty}</Body>
+      ) : (
+        <ul style={{ listStyle: 'none', margin: '12px 0 0', padding: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+          {items.slice(0, 8).map((item, index) => (
+            <li key={`${item}-${index}`} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <span style={{ color: borderColor, fontFamily: 'JetBrains Mono, monospace', fontSize: 10, marginTop: 5 }}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <Body size="sm" tone="primary">{item}</Body>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function RubricColumn({ title, items, tone }: { title: string; items: string[]; tone: 'teal' | 'amber' }) {
   const borderColor = tone === 'amber' ? COLORS.amber : COLORS.teal;
   return (
@@ -663,8 +937,9 @@ function RubricColumn({ title, items, tone }: { title: string; items: string[]; 
 export async function generateMetadata({ params }: { params: Promise<{ patternKey: string }> }) {
   const { patternKey } = await params;
   const augmentation = getPatternAugmentation(patternKey);
+  const manifest = getPatternManifestEntry(patternKey);
   return {
-    title: augmentation ? `${augmentation.ordinalRef} · Pattern` : 'Pattern',
-    description: augmentation?.oneSentenceProblem ?? undefined,
+    title: augmentation ? `${augmentation.ordinalRef} · Pattern` : manifest ? `${manifest.name} · Pattern` : 'Pattern',
+    description: augmentation?.oneSentenceProblem ?? manifest?.shortDescription ?? undefined,
   };
 }

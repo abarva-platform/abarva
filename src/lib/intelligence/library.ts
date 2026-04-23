@@ -1,6 +1,7 @@
 import { getServerSupabase } from '@/lib/supabase-server';
 import { getAllGenomePatterns } from '@/lib/graph/retrieval';
 import { VENDOR_CATALOG } from '@/lib/config/vendor-catalog';
+import { getPatternManifestEntries, patternMatchesIndustry } from '@/lib/intelligence/pattern-manifest';
 
 // Library catalog loader — classifies knowledge_sources + Genome patterns +
 // vendors into the buckets the Library page renders. Empty-safe — every
@@ -169,6 +170,7 @@ export async function loadLibraryCatalog(options: LibraryCatalogOptions = {}): P
   }
 
   // ── Genome patterns
+  const addedPatternIds = new Set<string>();
   try {
     const patterns = await getAllGenomePatterns();
     for (const p of patterns) {
@@ -186,10 +188,38 @@ export async function loadLibraryCatalog(options: LibraryCatalogOptions = {}): P
         href: `/intelligence/patterns?code=${encodeURIComponent(p.code)}`,
         sourceUrl: null,
       });
+      addedPatternIds.add(p.code.toLowerCase());
       counts.pattern += 1;
     }
   } catch (err) {
     console.warn('[library.patterns]', err);
+  }
+
+  // ── Authored pattern design pack fallback. These are file-authored
+  // patterns from the 2026 design pack, so the Library and detail routes
+  // remain useful even before Neo4j/Pinecone ingestion finishes.
+  for (const p of getPatternManifestEntries()) {
+    if (!patternMatchesIndustry(p, resolvedIndustry)) continue;
+    const key = p.slug.toLowerCase();
+    if (addedPatternIds.has(key) || addedPatternIds.has(p.id.toLowerCase())) continue;
+    entries.push({
+      id: `pattern-manifest:${p.slug}`,
+      category: 'pattern',
+      title: p.name,
+      subtitle: p.category,
+      detail: p.demoCritical
+        ? 'Demo-critical pattern · authored design pack'
+        : `${p.sections.length} authored sections · ${p.diagnosticQuestions.length} diagnostic probes`,
+      industryTags: p.sectorApplicability,
+      topicTags: p.category ? [p.category] : [],
+      publishedAt: null,
+      href: `/intelligence/patterns/${encodeURIComponent(p.slug)}`,
+      sourceUrl: null,
+    });
+    addedPatternIds.add(key);
+    counts.pattern += 1;
+    for (const i of p.sectorApplicability) industrySet.add(i);
+    if (p.category) topicSet.add(p.category);
   }
 
   // ── Topics · prefer real engagement_topics catalog; fall back to synthetic
