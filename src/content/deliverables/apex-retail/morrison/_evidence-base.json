@@ -1,0 +1,84 @@
+{
+  "program_code": "APX-01",
+  "program_name": "Morrison Owned Brand Margin Recovery",
+  "schema_version": "1.0",
+  "last_updated": "2026-04-23",
+  "append_only": true,
+
+  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Morrison deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. The integrity linter will flag any citation chip that does not resolve.",
+
+  "entries": {
+    "E1": {
+      "type": "financial_baseline",
+      "source": "D07 Financial Baseline · §2.1 category-level margin trace",
+      "deliverable_code": "D07",
+      "reference": "24-month gross margin trace, owned-brand category decomposition · shows -340 bps aggregate compression with concentration in packaged-goods and household essentials categories",
+      "evidence_confidence": "high",
+      "first_cited_in": "D07"
+    },
+    "E2": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · cohort analysis table",
+      "deliverable_code": "D10",
+      "reference": "6-retailer composite cohort · Apex at 3rd quartile on owned-brand gross margin · gap to median = 180 bps · gap to top quartile = 310 bps",
+      "evidence_confidence": "high",
+      "first_cited_in": "D10"
+    },
+    "E3": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Marcus T. (CFO) transcript",
+      "deliverable_code": "D04",
+      "reference": "CFO framing: 'margin compression is not pricing · our pricing discipline held · the compression is upstream in cost-to-serve and downstream in promo depth'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E4": {
+      "type": "interview",
+      "source": "D04 Intake Synthesis · Katherine P. (CMO) transcript",
+      "deliverable_code": "D04",
+      "reference": "CMO framing: 'owned-brand is a brand-equity asset, not a margin play · aggressive assortment cuts will signal retreat and affect house-brand perception'",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E5": {
+      "type": "model",
+      "source": "D09 RCA · supplier consolidation driver analysis",
+      "deliverable_code": "D09",
+      "reference": "Supplier concentration analysis · top 3 suppliers account for 62% of owned-brand COGS · unit-cost premium vs. a diversified supplier base is +6-9% across 5 categories",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D09"
+    },
+    "E6": {
+      "type": "model",
+      "source": "D09 RCA · assortment bloat driver analysis",
+      "deliverable_code": "D09",
+      "reference": "SKU-per-linear-foot analysis · owned-brand carries 1.8× the SKU density of top-decile peers · long-tail SKUs (bottom 40% of volume) contribute 12% of sales, 28% of markdown, and 38% of returns",
+      "evidence_confidence": "high",
+      "first_cited_in": "D09"
+    },
+    "E7": {
+      "type": "model",
+      "source": "D09 RCA · promotional depth driver analysis",
+      "deliverable_code": "D09",
+      "reference": "Promotional depth trend · owned-brand promo markdown depth deepened from -18% (2024) to -27% (2026) while national-brand stayed flat · price elasticity modeling suggests -22% is the point of diminishing returns",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D09"
+    },
+    "E8": {
+      "type": "baseline",
+      "source": "D03 Success Metric Tree · primary-metric baseline framing",
+      "deliverable_code": "D03",
+      "reference": "Primary metric: owned-brand gross-margin recovery measured in bps vs. FY24 baseline · supporting metrics: unit cost (bps), promotional depth (bps), SKU-per-LF (count), inventory turns (turns/yr)",
+      "evidence_confidence": "high",
+      "first_cited_in": "D03"
+    },
+    "E9": {
+      "type": "doc",
+      "source": "Owned Brand Margin Recovery pattern · intervention lever catalog",
+      "deliverable_code": "pattern",
+      "reference": "AbarVa Transformation Genome pattern · 8 canonical levers · 3 selected for Morrison (supplier renegotiation, assortment rationalization, promo discipline) · average steady-state impact per lever in pattern library: 60-120 bps",
+      "evidence_confidence": "high",
+      "first_cited_in": "D15"
+    }
+  }
+}
