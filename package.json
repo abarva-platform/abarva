@@ -65,7 +65,8 @@
     "db:seed:briefings": "npx tsx src/scripts/seed/seed-briefings.ts",
     "db:verify:briefings": "npx tsx src/scripts/seed/verify-briefings.ts",
     "intel:patterns:generate": "npx tsx src/scripts/intelligence/generate-pattern-manifest.ts",
-    "integrity:link-crawler": "npx tsx src/scripts/integrity/run-link-crawler.ts"
+    "integrity:link-crawler": "npx tsx src/scripts/integrity/run-link-crawler.ts",
+    "integrity:disclaimers": "jest src/__tests__/integration/composite-disclaimer-presence.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",

@@ -1,0 +1,29 @@
+name: Integrity
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  route-and-disclaimer-integrity:
+    name: Routes and disclaimers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Link crawler
+        run: npm run integrity:link-crawler
+
+      - name: Composite disclaimer audit
+        run: npm run integrity:disclaimers
