@@ -32,6 +32,7 @@ const nextConfig: NextConfig = {
       { source: '/engagements', destination: '/preview/programs', permanent: false },
       { source: '/programs', destination: '/preview/programs', permanent: false },
       { source: '/tower', destination: '/preview/tower', permanent: false },
+      { source: '/intelligence', destination: '/preview/intelligence', permanent: false },
     ];
   },
 };
