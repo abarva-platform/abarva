@@ -6,7 +6,7 @@
 - Application role: `client`
 - Organization: `Apex Retail Group`
 - Functional title: `CFO`
-- Provisioned account email: `marcus-apex-cfo-test@abarva.local.example.com`
+- Provisioned account email: `marcus-apex-cfo-test@abarva-test.example.com`
 
 ## Access model
 

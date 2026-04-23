@@ -6,7 +6,7 @@
 - Application role: `investor`
 - Organization: `Anthology`
 - Functional title: `Analyst`
-- Provisioned account email: `jake-anthology-analyst-test@abarva.local.example.com`
+- Provisioned account email: `jake-anthology-analyst-test@abarva-test.example.com`
 
 ## Access model
 

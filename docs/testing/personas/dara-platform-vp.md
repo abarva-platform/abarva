@@ -6,7 +6,7 @@
 - Application role: `external`
 - Organization: external evaluator
 - Functional title: `VP, Platform`
-- Provisioned account email: `dara-platform-vp-test@abarva.local.example.com`
+- Provisioned account email: `dara-platform-vp-test@abarva-test.example.com`
 
 ## Access model
 

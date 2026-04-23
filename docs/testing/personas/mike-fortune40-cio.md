@@ -6,7 +6,7 @@
 - Application role: `client`
 - Organization: Fortune-40 composite evaluator routed through Meridian fallback
 - Functional title: `CIO`
-- Provisioned account email: `mike-fortune40-cio-test@abarva.local.example.com`
+- Provisioned account email: `mike-fortune40-cio-test@abarva-test.example.com`
 
 ## Access model
 

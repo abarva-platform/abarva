@@ -6,7 +6,7 @@
 - Application role: `client`
 - Organization: `Meridian Health System`
 - Functional title: `CMIO`
-- Provisioned account email: `dr-l-meridian-cmio-test@abarva.local.example.com`
+- Provisioned account email: `dr-l-meridian-cmio-test@abarva-test.example.com`
 
 ## Access model
 
