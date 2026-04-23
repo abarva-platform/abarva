@@ -6,12 +6,22 @@
 
 ## Agent A · Stream 1 · Agent Posture Spec
 
-**Owner file:** `page-strategic-purpose-definition.md` (design package)
-**Status:** not started
-**Blocks:** Streams 2, 4
-**Completed:** —
-**Next:** Author agent posture sections for Programs (Nexus), Intelligence (Sentinel), Tower (Atlas), Admin (Steward). Each posture = agent name + domain, voice contract (one paragraph), guided-choice style, cross-agent handoff protocol, conversation state scope.
-**Blockers:** none · but depends on the design package md file being available at a writable path under the repo. Currently it lives in `/Users/anand/Library/Mobile Documents/...` which is outside the repo. Need to either (a) copy the package into the repo as a tracked asset, or (b) treat Agent A's output as a package PR back to the design package author.
+**Owner file:** `docs/design-canon/page-strategic-purpose-definition.md` (in-repo canon)
+**Status:** done (branch `design/wave-2-agent-a-posture`)
+**Blocks:** Streams 2 (voice polish), 4 (interaction exemplar) — now unblocked
+**Completed:**
+- "Agent postures" top-level section added to the strategic purpose doc, placed after the shared design principles / priority ranking and before the end marker. Additive-only; no existing sections rewritten.
+- Four authoritative agent subsections authored (Nexus ✱ / Sentinel ◈ / Atlas ▲ / Steward ◆), each covering: domain, voice contract (~100-130 words each, dialogue-grade), guided-choice style (closed vs generative options, escape-hatch behaviour), cross-agent handoff protocol (explicit triggers + chip phrasing), conversation state scope (per-surface / per-program / per-tenant / global + persistence rules).
+- Cross-agent orchestration notes appended (mutual exclusivity, handoff-as-chip semantics, Steward as audit floor, voice-blending prohibition).
+- Fixed agent ↔ surface ↔ glyph ↔ accent mapping reiterated at the top of the new section so the posture chapter is readable standalone.
+- Total new content: ~2,070 words.
+**Flag for Agent B:** The stub voice strings in `src/components/agent-rail/AgentRail.tsx` `AGENTS` const can now be replaced with canonical one-line descriptors drawn from the new posture sections. Suggested replacements (Agent B owns the final wording, but these fit the ~60-character rail tooltip budget and track the posture voice contracts):
+- `nexus.voice`: `"Maestro-collegial · sketches trade-offs, names the next decision"`
+- `sentinel.voice`: `"Forensic · reads telemetry aloud, names confidence and freshness"`
+- `atlas.voice`: `"Operational · leads with what's hot, cuts to the relevant surface"`
+- `steward.voice`: `"Utility-clerical · confirms what changed, by whom, when"`
+**Next:** none in Agent A's scope · posture spec is complete and authoritative.
+**Blockers:** none.
 
 ---
 
@@ -36,8 +46,8 @@
 
 ## Agent C · Stream 3 · Morrison Rich Authoring
 
-**Owner path:** `src/content/deliverables/apex-retail/morrison/` (to be created)
-**Status:** not started · unblocked
+**Owner path:** `src/content/deliverables/apex-retail/morrison/`
+**Status:** C1 in-flight (spawned 2026-04-23, branch `design/wave-2-agent-c1-morrison-p1`), C2-C4 pending
 **Shared references (read-only):** `wireframe-d17-morrison-decision-memo.html`, `morrison-rich-authoring-work-order.md`, `intelligence-layer-pattern-design-pack-FULL.md` (Owned Brand Margin Recovery pattern)
 **Shared JSON (Agent C owns, sub-agents append-only):**
 - `src/content/deliverables/apex-retail/morrison/_timeline.json` — canonical chronology
