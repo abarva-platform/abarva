@@ -33,3 +33,6 @@ jobs:
 
       - name: Tenant re-scope validation
         run: npm run integrity:tenant-rescope
+
+      - name: Tower sub-surface stubs
+        run: npm run integrity:tower-stubs
