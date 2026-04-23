@@ -1,0 +1,65 @@
+{
+  "program_code": "APX-01",
+  "program_name": "Morrison Owned Brand Margin Recovery",
+  "tenant_code": "apex-retail",
+  "tenant_display": "Apex Retail Group",
+  "program_start": "2026-01-14",
+  "phase_1_end": "2026-02-10",
+  "phase_2_end": "2026-03-15",
+  "phase_3_gate": "2026-04-30",
+  "phase_4_gate": "2026-05-30",
+  "phase_5_target": "2027-Q1",
+
+  "key_decisions": [
+    { "date": "2026-01-14", "phase": 1, "author": "Marcus T. · CFO", "event": "Program charter approved · scope locked to owned-brand only · national-brand margin deferred", "deliverable": "D01", "relatedDeliverables": ["D03", "D15"] },
+    { "date": "2026-01-16", "phase": 1, "author": "Katherine P. · CMO", "event": "Co-sponsor confirmation · owned-brand margin protection committed as Q1 priority", "deliverable": "D01" },
+    { "date": "2026-01-18", "phase": 1, "author": "Nexus · Maestro", "event": "Success metric framework approved · primary metric set to 340 bps margin recovery", "deliverable": "D03" },
+    { "date": "2026-01-22", "phase": 1, "author": "Diane R. · SVP Supply Chain", "event": "Stakeholder tiering methodology ratified · governance cadence set to biweekly", "deliverable": "D02" },
+    { "date": "2026-01-27", "phase": 1, "author": "Nexus · Maestro", "event": "Intake synthesis · 12 interviews completed · 4 tensions surfaced · primary contradiction: CFO wants cost-side, CMO wants brand-equity protection", "deliverable": "D04" },
+
+    { "date": "2026-02-04", "phase": 2, "author": "Nexus · Maestro", "event": "Baseline methodology approved · 24-month category-level margin trace · cost vs. pricing decomposition", "deliverable": "D07" },
+    { "date": "2026-02-11", "phase": 2, "author": "Marcus T. · CFO", "event": "Pain-point register prioritization · supplier concentration, assortment bloat, promo depth flagged as top 3", "deliverable": "D08" },
+    { "date": "2026-02-19", "phase": 2, "author": "Nexus · Maestro", "event": "RCA validation · 3 root causes confirmed with evidence: supplier consolidation gap, assortment bloat, promotional depth creep", "deliverable": "D09" },
+    { "date": "2026-02-26", "phase": 2, "author": "Diane R. · SVP Supply Chain", "event": "Benchmark cohort accepted · 6 composite peers · Apex at 3rd quartile on margin, 2nd on unit cost", "deliverable": "D10" },
+    { "date": "2026-03-05", "phase": 2, "author": "Nexus · Maestro", "event": "14 hypotheses resolved · 9 validated, 3 rejected, 2 deferred to Phase 5", "deliverable": "D11" },
+
+    { "date": "2026-03-18", "phase": 3, "author": "Marcus T. · CFO", "event": "Intervention portfolio selected · 3-lever parallel track · supplier renegotiation + assortment rationalization + promo discipline", "deliverable": "D15", "relatedDeliverables": ["D16", "D17"] },
+    { "date": "2026-03-24", "phase": 3, "author": "Nexus · Maestro", "event": "Business case baseline-locked · $6.8M capital ask · $14-22M/yr steady-state impact · 9-14 mo payback", "deliverable": "D16" },
+    { "date": "2026-04-02", "phase": 3, "author": "Nexus · Maestro", "event": "Execution roadmap sequenced · 14-month plan · parallel-track over sequential · 3 workstreams", "deliverable": "D12" },
+    { "date": "2026-04-15", "phase": 3, "author": "Marcus T. · CFO + Katherine P. · CMO", "event": "Decision memo approved · D17 locked · sponsor dissent captured (CMO concern: brand-equity fence around assortment cuts)", "deliverable": "D17", "relatedDeliverables": ["D15", "D16"] },
+    { "date": "2026-04-22", "phase": 3, "author": "Nexus · Maestro", "event": "Risk register finalized · 14 risks · 2 critical mitigations triggered (supplier concentration, category-leader pushback)", "deliverable": "D18" },
+
+    { "date": "2026-05-06", "phase": 4, "author": "Nexus · Maestro", "event": "RACI ratified · 3 workstreams · 2 decision owners named per stream · escalation path to Marcus for blockers > 5 days", "deliverable": "D19" },
+    { "date": "2026-05-13", "phase": 4, "author": "Diane R. · SVP Supply Chain", "event": "Sprint 1 closed · 3 milestones on track, 1 at risk (supplier contract redraft), mitigation: parallel draft with second-source supplier", "deliverable": "D20" },
+    { "date": "2026-05-20", "phase": 4, "author": "Katherine P. · CMO", "event": "Change management package approved · 4 role-impact tiers · training cascades to store-level by Week 4", "deliverable": "D22" },
+    { "date": "2026-05-27", "phase": 4, "author": "Marcus T. · CFO + Nexus · Maestro", "event": "Outcome measurement plan locked · dual-ledger methodology · AbarVa + Apex Finance reconciliation before every Phase 5 attestation", "deliverable": "D24" }
+  ],
+
+  "anchor_facts": {
+    "margin_compression_bps": 340,
+    "compression_window_months": 24,
+    "capital_ask_usd": 6800000,
+    "steady_state_impact_low_usd": 14000000,
+    "steady_state_impact_high_usd": 22000000,
+    "payback_months_low": 9,
+    "payback_months_high": 14,
+    "owned_brand_categories_affected": 8,
+    "hypotheses_total": 14,
+    "hypotheses_validated": 9,
+    "hypotheses_rejected": 3,
+    "hypotheses_deferred": 2,
+    "risks_total": 14,
+    "risks_critical": 2,
+    "risks_high": 5,
+    "benchmark_cohort_size": 6,
+    "apex_cohort_position": "3rd quartile · margin",
+    "sponsor_primary": "Marcus T. · CFO",
+    "sponsor_co": "Katherine P. · CMO",
+    "supply_chain_lead": "Diane R. · SVP Supply Chain",
+    "orchestrator_agent": "Nexus"
+  },
+
+  "append_only": true,
+  "version": "1.0",
+  "last_updated": "2026-04-23"
+}
