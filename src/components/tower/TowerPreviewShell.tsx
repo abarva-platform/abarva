@@ -516,11 +516,14 @@ function PressureRow({ item }: { item: PressureItem }) {
   return (
     <div
       style={{
+        // Fixed-width columns · severity 90px, $ 110px (right-aligned),
+        // headline flexes, unowned flag 110px, action 130px (fixed so
+        // "ASSIGN OWNER" pill and "OPEN →" right-edge both align).
         display: 'grid',
-        gridTemplateColumns: 'auto 110px 1fr auto auto',
-        gap: 16,
+        gridTemplateColumns: '90px 110px minmax(0, 1fr) 110px 130px',
+        gap: 18,
         alignItems: 'center',
-        padding: '12px 16px 12px 14px',
+        padding: '14px 18px',
         background: PANEL_BG,
         border: `1px solid ${LINE}`,
         borderLeft: `3px solid ${severityColor}`,
@@ -536,8 +539,10 @@ function PressureRow({ item }: { item: PressureItem }) {
           fontWeight: 700,
           color: severityColor,
           background: severityBg,
-          padding: '5px 10px',
+          padding: '5px 0',
           borderRadius: 6,
+          textAlign: 'center',
+          width: 90,
         }}
       >
         {item.severity}
@@ -549,6 +554,7 @@ function PressureRow({ item }: { item: PressureItem }) {
           fontWeight: 700,
           color: INK,
           textAlign: 'right',
+          fontVariantNumeric: 'tabular-nums',
         }}
       >
         {fmtUsd(item.monthlyUsd)}/mo
@@ -561,45 +567,51 @@ function PressureRow({ item }: { item: PressureItem }) {
           color: item.unowned ? CORAL : INK_MUTED,
           fontWeight: item.unowned ? 700 : 500,
           letterSpacing: '0.04em',
+          textAlign: 'right',
         }}
       >
         {item.unowned ? '— UNOWNED' : item.programName ?? '—'}
       </span>
-      {item.programHref ? (
-        <Link
-          href={item.programHref}
-          style={{
-            fontFamily: MONO,
-            fontSize: 12,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: TEAL,
-            textDecoration: 'none',
-            fontWeight: 700,
-          }}
-        >
-          Open →
-        </Link>
-      ) : (
-        <button
-          type="button"
-          style={{
-            fontFamily: MONO,
-            fontSize: 12,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: CORAL,
-            border: `1px solid ${CORAL_SOFT}`,
-            background: 'transparent',
-            borderRadius: 999,
-            padding: '6px 12px',
-            cursor: 'pointer',
-            fontWeight: 700,
-          }}
-        >
-          Assign owner
-        </button>
-      )}
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        {item.programHref ? (
+          <Link
+            href={item.programHref}
+            style={{
+              fontFamily: MONO,
+              fontSize: 12,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: TEAL,
+              textDecoration: 'none',
+              fontWeight: 700,
+              padding: '6px 14px',
+              border: `1px solid transparent`,
+            }}
+          >
+            Open →
+          </Link>
+        ) : (
+          <button
+            type="button"
+            style={{
+              fontFamily: MONO,
+              fontSize: 11,
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              color: CORAL,
+              border: `1px solid ${CORAL_SOFT}`,
+              background: 'transparent',
+              borderRadius: 999,
+              padding: '6px 14px',
+              cursor: 'pointer',
+              fontWeight: 700,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Assign owner
+          </button>
+        )}
+      </div>
     </div>
   );
 }
