@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · Programs · Apex Retail Group</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Georgia&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-dark: #0a0a0b; --bg-cream: #f5f1eb; --bg-surface: #ffffff;
+    --teal: #1d9e75; --teal-dark: #0f6e56; --teal-light: #e1f5ee;
+    --amber: #ba7517; --amber-light: #faeeda;
+    --red: #a32d2d; --red-light: #fceded;
+    --gray-900: #2c2c2a; --gray-700: #444441; --gray-500: #5f5e5a;
+    --gray-300: #b4b2a9; --gray-200: #d3d1c7; --gray-100: #f1efe8;
+    --border: rgba(10, 10, 11, 0.12); --border-strong: rgba(10, 10, 11, 0.24);
+  }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg-cream); color: var(--gray-900); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+
+  .navbar { background: var(--bg-dark); padding: 14px 32px; display: flex; align-items: center; gap: 32px; }
+  .wordmark { font-family: 'Georgia', serif; color: white; }
+  .wordmark .abar { font-weight: 800; font-size: 17px; }
+  .wordmark .va { font-weight: 900; font-size: 23px; color: var(--teal); }
+  .tenant-switcher { background: rgba(255, 255, 255, 0.05); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
+  .tenant-switcher::before { content: '●'; color: var(--teal); font-size: 10px; }
+  .tenant-switcher::after { content: '▾'; font-size: 10px; opacity: 0.6; }
+  .nav-links { display: flex; gap: 24px; margin-left: 16px; flex: 1; }
+  .nav-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.85; }
+  .nav-link.active { color: var(--teal); opacity: 1; }
+  .nav-right { color: white; font-size: 14px; font-weight: 600; opacity: 0.85; }
+
+  .container { max-width: 1280px; margin: 0 auto; padding: 32px; }
+
+  .breadcrumb { font-size: 12px; color: var(--gray-500); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 24px; }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.4; }
+  .breadcrumb .current { color: var(--gray-700); }
+
+  /* PAGE HEADER */
+  .page-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; flex-wrap: wrap; gap: 20px; }
+  .page-header-main h1 { font-family: 'Georgia', serif; font-size: 42px; font-weight: 400; line-height: 1.1; color: var(--gray-900); margin-bottom: 8px; }
+  .page-header-sub { color: var(--gray-500); font-size: 14px; }
+  .btn { padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border-strong); background: transparent; color: var(--gray-900); font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .btn:hover { background: rgba(0, 0, 0, 0.03); }
+  .btn.primary { background: var(--bg-dark); color: white; border-color: var(--bg-dark); }
+  .btn.primary::before { content: '+ '; }
+
+  /* PORTFOLIO STATS */
+  .portfolio-stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .stat-value { font-family: 'Georgia', serif; font-size: 22px; font-weight: 400; color: var(--gray-900); line-height: 1.1; }
+  .stat-detail { font-size: 11px; color: var(--gray-500); margin-top: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.05em; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-group { display: flex; align-items: center; gap: 6px; }
+  .filter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .filter-select {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--gray-900);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-select::after { content: ' ▾'; }
+  .filter-search {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--gray-900);
+    min-width: 180px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-search:focus { outline: none; border-color: var(--teal); }
+  .filter-sep { color: var(--gray-300); }
+
+  /* PROGRAM CARD */
+  .programs-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+  .program-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 20px;
+  }
+  .program-card:hover { border-color: var(--border-strong); background: rgba(0, 0, 0, 0.01); }
+  .program-card.hero { border-left: 3px solid var(--teal); }
+  .program-main { min-width: 0; }
+
+  .program-code-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .hero-tag {
+    background: var(--teal);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+  .program-title {
+    font-family: 'Georgia', serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--gray-900);
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+  .program-meta-row {
+    color: var(--gray-500);
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .program-meta-row .sep { opacity: 0.4; }
+  .program-meta-row strong { color: var(--gray-700); font-weight: 600; }
+
+  .program-outcome {
+    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: 10px;
+  }
+  .program-outcome strong { color: var(--teal-dark); font-weight: 600; }
+
+  .program-pressure {
+    font-size: 12px;
+    color: var(--gray-500);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+  .pressure-count { color: var(--amber); font-weight: 500; }
+  .pressure-count.clear { color: var(--teal); }
+  .pressure-count.risk { color: var(--red); }
+
+  /* RIGHT SIDE: phase badge + cta */
+  .program-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 14px;
+    justify-content: space-between;
+  }
+
+  .phase-badge {
+    background: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    text-align: right;
+    min-width: 160px;
+  }
+  .phase-badge.active { background: var(--teal-light); border-color: rgba(29, 158, 117, 0.25); }
+  .phase-badge.complete { background: var(--bg-cream); border-color: var(--border); }
+  .phase-badge-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .phase-badge.active .phase-badge-label { color: var(--teal-dark); }
+  .phase-badge-value {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+  .phase-badge.active .phase-badge-value { color: var(--teal-dark); }
+  .phase-badge-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .mini-timeline {
+    display: flex;
+    gap: 3px;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+  .mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--gray-200);
+  }
+  .mini-dot.done { background: var(--teal); }
+  .mini-dot.current { background: var(--teal); box-shadow: 0 0 0 2px white, 0 0 0 3px var(--teal); }
+
+  .program-cta {
+    font-size: 13px;
+    color: var(--teal-dark);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .program-cta::after { content: ' →'; }
+
+  /* PORTFOLIO HEALTH STRIP */
+  .portfolio-health {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .health-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .health-title { font-family: 'Georgia', serif; font-size: 18px; color: var(--gray-900); font-weight: 400; margin-bottom: 16px; }
+  .phase-distribution {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .phase-col {
+    background: var(--bg-cream);
+    border-radius: 4px;
+    padding: 10px 12px;
+    text-align: center;
+  }
+  .phase-col-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .phase-col-count {
+    font-family: 'Georgia', serif;
+    font-size: 24px;
+    color: var(--gray-900);
+  }
+  .phase-col.active { background: var(--teal-light); }
+  .phase-col.active .phase-col-label { color: var(--teal-dark); }
+  .phase-col.active .phase-col-count { color: var(--teal-dark); }
+
+  .footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  @media (max-width: 900px) {
+    .portfolio-stats { grid-template-columns: repeat(2, 1fr); }
+    .phase-distribution { grid-template-columns: repeat(5, 1fr); }
+    .program-card { grid-template-columns: 1fr; }
+    .program-right { align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+  <div class="tenant-switcher">Apex Retail Group</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link active" href="#">Programs</a>
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Control Tower</a>
+    <a class="nav-link" href="#">Platform</a>
+  </div>
+  <div class="nav-right">Investor →</div>
+</nav>
+
+<div class="container">
+
+  <div class="breadcrumb">
+    <a href="#">Apex Retail Group</a><span class="sep">›</span>
+    <span class="current">Programs</span>
+  </div>
+
+  <div class="page-header">
+    <div class="page-header-main">
+      <h1>Programs</h1>
+      <div class="page-header-sub">6 programs in flight across 4 archetypes · 24 deliverables in active review · 3 CXO interactions scheduled</div>
+    </div>
+    <button class="btn primary">Start new program</button>
+  </div>
+
+  <!-- PORTFOLIO HEALTH -->
+  <div class="portfolio-health">
+    <div class="health-label">Portfolio health · phase distribution</div>
+    <h2 class="health-title">Running work across every phase.</h2>
+    <div class="phase-distribution">
+      <div class="phase-col">
+        <div class="phase-col-label">P1 · Intake</div>
+        <div class="phase-col-count">1</div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">P2 · Diagnosis</div>
+        <div class="phase-col-count">1</div>
+      </div>
+      <div class="phase-col active">
+        <div class="phase-col-label">P3 · Design</div>
+        <div class="phase-col-count">1</div>
+      </div>
+      <div class="phase-col active">
+        <div class="phase-col-label">P4 · Build</div>
+        <div class="phase-col-count">2</div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-col-label">P5 · Outcome</div>
+        <div class="phase-col-count">1</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <span class="filter-label">Phase:</span>
+      <span class="filter-select">All</span>
+    </div>
+    <span class="filter-sep">·</span>
+    <div class="filter-group">
+      <span class="filter-label">Archetype:</span>
+      <span class="filter-select">All</span>
+    </div>
+    <span class="filter-sep">·</span>
+    <div class="filter-group">
+      <span class="filter-label">Sort:</span>
+      <span class="filter-select">Most active</span>
+    </div>
+    <span class="filter-sep">·</span>
+    <input class="filter-search" type="text" placeholder="Search programs..." />
+  </div>
+
+  <!-- PROGRAMS LIST -->
+  <div class="programs-list">
+
+    <!-- MORRISON - HERO PROGRAM -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card hero">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-01 · OO archetype</span>
+          <span class="hero-tag">HERO PROGRAM</span>
+        </div>
+        <div class="program-title">Morrison Owned Brand Margin Recovery</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Jan 14, 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Target close <strong>Mar 2027</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Marcus T. (CFO)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Maya</strong></span>
+        </div>
+        <div class="program-outcome">Projected outcome: <strong>$68-94M/yr margin recovery</strong> · three-lever program · break-even month 8</div>
+        <div class="program-pressure">
+          <span class="pressure-count">2 open decisions</span>
+          <span>·</span>
+          <span class="pressure-count risk">1 high risk</span>
+          <span>·</span>
+          <span>CFO interview Apr 24</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge active">
+          <div class="phase-badge-label">Current</div>
+          <div class="phase-badge-value">Phase 4 · Build</div>
+          <div class="phase-badge-detail">Gate approaching May 30</div>
+          <div class="mini-timeline">
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot current"></div>
+            <div class="mini-dot"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+    <!-- APX-02 DEMAND FORECASTING -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-02 · OO archetype</span>
+        </div>
+        <div class="program-title">Demand Forecasting Modernization</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Feb 22, 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Target close <strong>Q4 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Diane R. (SVP Supply Chain)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Alex</strong></span>
+        </div>
+        <div class="program-outcome">Projected outcome: <strong>8-12% inventory carrying cost reduction</strong> · forecast accuracy lift to 87%</div>
+        <div class="program-pressure">
+          <span class="pressure-count">3 decisions in design</span>
+          <span>·</span>
+          <span class="pressure-count clear">on track</span>
+          <span>·</span>
+          <span>CXO review May 2</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge active">
+          <div class="phase-badge-label">Current</div>
+          <div class="phase-badge-value">Phase 3 · Design</div>
+          <div class="phase-badge-detail">4 of 6 deliverables ready</div>
+          <div class="mini-timeline">
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot current"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+    <!-- APX-03 STORE LABOR -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-03 · OO archetype</span>
+        </div>
+        <div class="program-title">Store Labor Optimization</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Aug 2025</strong></span>
+          <span class="sep">·</span>
+          <span>Closed <strong>Mar 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Rachel K. (SVP Stores)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Jordan</strong></span>
+        </div>
+        <div class="program-outcome">Attested outcome: <strong>$22M/yr labor productivity gain</strong> · verified against Apex finance ledger</div>
+        <div class="program-pressure">
+          <span class="pressure-count clear">Attestation complete</span>
+          <span>·</span>
+          <span>Lessons contributed to pattern library</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge complete">
+          <div class="phase-badge-label">Closed</div>
+          <div class="phase-badge-value">Phase 5 complete</div>
+          <div class="phase-badge-detail">Attested Mar 18</div>
+          <div class="mini-timeline">
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+    <!-- APX-04 DIGITAL ASSORTMENT COPILOT -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-04 · AP archetype</span>
+        </div>
+        <div class="program-title">Digital Assortment Copilot</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Mar 11, 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Target close <strong>Q1 2027</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Katherine P. (CMO)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Sam</strong></span>
+        </div>
+        <div class="program-outcome">Projected outcome: <strong>Pending diagnosis</strong> · assortment decision cycle time target: 5x faster</div>
+        <div class="program-pressure">
+          <span class="pressure-count">7 hypotheses in backlog</span>
+          <span>·</span>
+          <span>benchmark cohort forming</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge active">
+          <div class="phase-badge-label">Current</div>
+          <div class="phase-badge-value">Phase 2 · Diagnosis</div>
+          <div class="phase-badge-detail">5 of 8 deliverables ready</div>
+          <div class="mini-timeline">
+            <div class="mini-dot done"></div>
+            <div class="mini-dot current"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+    <!-- APX-05 SUPPLY CHAIN CONTROL TOWER -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-05 · PM archetype</span>
+        </div>
+        <div class="program-title">Supply Chain Control Tower</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Apr 8, 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Target close <strong>Q3 2027</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Diane R. (SVP Supply Chain)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Priya</strong></span>
+        </div>
+        <div class="program-outcome">Projected outcome: <strong>Scoping in progress</strong> · OTB + logistics visibility integrated view target</div>
+        <div class="program-pressure">
+          <span class="pressure-count">Charter under review</span>
+          <span>·</span>
+          <span>stakeholder map in draft</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge active">
+          <div class="phase-badge-label">Current</div>
+          <div class="phase-badge-value">Phase 1 · Intake</div>
+          <div class="phase-badge-detail">2 of 4 deliverables ready</div>
+          <div class="mini-timeline">
+            <div class="mini-dot current"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+            <div class="mini-dot"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+    <!-- APX-06 RETURNS FRAUD -->
+    <a href="#" style="text-decoration: none; color: inherit;">
+    <div class="program-card">
+      <div class="program-main">
+        <div class="program-code-row">
+          <span>APX-06 · WA archetype</span>
+        </div>
+        <div class="program-title">Returns Fraud Detection</div>
+        <div class="program-meta-row">
+          <span>Started <strong>Nov 2025</strong></span>
+          <span class="sep">·</span>
+          <span>Target close <strong>Jul 2026</strong></span>
+          <span class="sep">·</span>
+          <span>Sponsor: <strong>Jason M. (VP LP)</strong></span>
+          <span class="sep">·</span>
+          <span>Maestro: <strong>Chris</strong></span>
+        </div>
+        <div class="program-outcome">Projected outcome: <strong>$8-11M/yr fraud recovery</strong> · false-positive rate target &lt;5%</div>
+        <div class="program-pressure">
+          <span class="pressure-count">1 high risk</span>
+          <span>·</span>
+          <span>go-live gate approaching May 22</span>
+          <span>·</span>
+          <span>cross-link: fraud pattern library</span>
+        </div>
+      </div>
+      <div class="program-right">
+        <div class="phase-badge active">
+          <div class="phase-badge-label">Current</div>
+          <div class="phase-badge-value">Phase 4 · Build</div>
+          <div class="phase-badge-detail">Go-live target May 22</div>
+          <div class="mini-timeline">
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot done"></div>
+            <div class="mini-dot current"></div>
+            <div class="mini-dot"></div>
+          </div>
+        </div>
+        <a href="#" class="program-cta">Open program</a>
+      </div>
+    </div>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    <div>Composite organization built from real-world data. Programs rendered here are demo scenarios, not real engagements.</div>
+    <div>6 programs seeded · portfolio last refreshed 2h ago</div>
+  </div>
+
+</div>
+
+</body>
+</html>

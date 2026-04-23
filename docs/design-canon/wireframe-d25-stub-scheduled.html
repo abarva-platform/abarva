@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · D25 Outcome Attestation · Scheduled · Morrison</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Georgia&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-dark: #0a0a0b; --bg-cream: #f5f1eb; --bg-surface: #ffffff;
+    --teal: #1d9e75; --teal-dark: #0f6e56; --teal-light: #e1f5ee;
+    --amber: #ba7517; --amber-light: #faeeda;
+    --gray-900: #2c2c2a; --gray-700: #444441; --gray-500: #5f5e5a;
+    --gray-300: #b4b2a9; --gray-200: #d3d1c7; --gray-100: #f1efe8;
+    --border: rgba(10, 10, 11, 0.12); --border-strong: rgba(10, 10, 11, 0.24);
+  }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg-cream); color: var(--gray-900); font-size: 14px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+
+  .navbar { background: var(--bg-dark); padding: 14px 32px; display: flex; align-items: center; gap: 32px; }
+  .wordmark { font-family: 'Georgia', serif; color: white; }
+  .wordmark .abar { font-weight: 800; font-size: 17px; }
+  .wordmark .va { font-weight: 900; font-size: 23px; color: var(--teal); }
+  .tenant-switcher { background: rgba(255, 255, 255, 0.05); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
+  .tenant-switcher::before { content: '●'; color: var(--teal); font-size: 10px; }
+  .tenant-switcher::after { content: '▾'; font-size: 10px; opacity: 0.6; }
+  .nav-links { display: flex; gap: 24px; margin-left: 16px; flex: 1; }
+  .nav-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.85; }
+  .nav-link.active { color: var(--teal); opacity: 1; }
+  .nav-right { color: white; font-size: 14px; font-weight: 600; opacity: 0.85; }
+
+  .container { max-width: 1000px; margin: 0 auto; padding: 32px; }
+
+  .breadcrumb { font-size: 12px; color: var(--gray-500); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 24px; }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.4; }
+  .breadcrumb .current { color: var(--gray-700); }
+
+  /* HEADER */
+  .del-header { margin-bottom: 28px; }
+  .del-code-row { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--teal); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 8px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .tier-badge { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+  .tier-badge.stub { background: var(--bg-surface); color: var(--gray-700); border: 1px solid var(--border-strong); }
+  .del-title { font-family: 'Georgia', serif; font-size: 38px; font-weight: 400; line-height: 1.1; color: var(--gray-900); margin-bottom: 12px; }
+  .del-meta { color: var(--gray-500); font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap; }
+  .del-meta .sep { opacity: 0.4; }
+
+  /* SCHEDULED BANNER */
+  .scheduled-banner {
+    background: var(--teal-light);
+    border: 1px solid rgba(29, 158, 117, 0.25);
+    border-radius: 10px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+  .scheduled-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .scheduled-content { flex: 1; }
+  .scheduled-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal-dark);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .scheduled-title { font-family: 'Georgia', serif; font-size: 22px; color: var(--teal-dark); font-weight: 400; margin-bottom: 10px; line-height: 1.3; }
+  .scheduled-body { color: var(--teal-dark); font-size: 14px; line-height: 1.6; opacity: 0.9; }
+  .scheduled-body strong { font-weight: 600; }
+
+  /* SECTIONS */
+  .section { background: var(--bg-surface); border: 1px solid var(--border); border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; }
+  .section-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 12px; font-weight: 500; }
+  .section-title { font-family: 'Georgia', serif; font-size: 22px; font-weight: 400; margin-bottom: 16px; color: var(--gray-900); line-height: 1.25; }
+
+  /* TRIGGER CONDITIONS */
+  .trigger-list { display: flex; flex-direction: column; gap: 12px; }
+  .trigger-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    background: var(--bg-cream);
+    border-radius: 6px;
+  }
+  .trigger-state {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .trigger-state.not-yet { background: var(--bg-surface); color: var(--gray-500); border: 1px solid var(--border); }
+  .trigger-state.in-progress { background: var(--amber-light); color: var(--amber); }
+  .trigger-state.complete { background: var(--teal-light); color: var(--teal-dark); }
+  .trigger-text { font-size: 13px; color: var(--gray-900); line-height: 1.5; flex: 1; }
+  .trigger-text strong { font-weight: 600; display: block; margin-bottom: 2px; }
+  .trigger-detail { color: var(--gray-500); font-size: 12px; margin-top: 4px; }
+
+  /* STRUCTURE PREVIEW */
+  .structure-list { list-style: none; padding: 0; }
+  .structure-item { padding: 14px 0; border-bottom: 1px solid var(--border); display: flex; gap: 14px; align-items: flex-start; }
+  .structure-item:last-child { border-bottom: none; }
+  .structure-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+    min-width: 28px;
+    padding-top: 2px;
+    font-weight: 500;
+  }
+  .structure-text { flex: 1; }
+  .structure-text strong { display: block; font-size: 14px; color: var(--gray-900); font-weight: 600; margin-bottom: 4px; }
+  .structure-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
+
+  /* PREREQUISITE LINKS */
+  .prereq-list { display: flex; flex-direction: column; gap: 8px; }
+  .prereq-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .prereq-item:hover { border-color: var(--border-strong); background: rgba(0, 0, 0, 0.01); }
+  .prereq-main { display: flex; align-items: center; gap: 12px; }
+  .prereq-code { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-500); letter-spacing: 0.08em; min-width: 40px; }
+  .prereq-name { font-weight: 500; color: var(--gray-900); font-size: 14px; }
+  .prereq-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; }
+  .prereq-status.ready { background: var(--teal-light); color: var(--teal-dark); }
+  .prereq-status.draft { background: var(--bg-cream); color: var(--gray-700); border: 1px solid var(--border); }
+  .prereq-status.not-started { background: var(--bg-surface); color: var(--gray-500); border: 1px solid var(--border); }
+
+  /* NAVIGATION PRESERVED */
+  .nav-preserved {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .nav-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .nav-pill {
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: var(--gray-700);
+    background: var(--bg-cream);
+    border: 1px solid var(--border);
+    text-decoration: none;
+    transition: all 0.15s;
+  }
+  .nav-pill:hover { color: var(--teal); border-color: var(--teal); }
+  .nav-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gray-500); letter-spacing: 0.08em; text-transform: uppercase; margin-right: 8px; }
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+  <div class="tenant-switcher">Apex Retail Group</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link active" href="#">Programs</a>
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Control Tower</a>
+    <a class="nav-link" href="#">Platform</a>
+  </div>
+  <div class="nav-right">Investor →</div>
+</nav>
+
+<div class="container">
+
+  <div class="breadcrumb">
+    <a href="#">Apex Retail Group</a><span class="sep">›</span>
+    <a href="#">Programs</a><span class="sep">›</span>
+    <a href="#">Morrison Owned Brand Margin Recovery</a><span class="sep">›</span>
+    <a href="#">Phase 5</a><span class="sep">›</span>
+    <span class="current">D25 Outcome Attestation</span>
+  </div>
+
+  <div class="del-header">
+    <div class="del-code-row">
+      <span>D25 · Outcome attestation report · Phase 5</span>
+      <span class="tier-badge stub">Stub · scheduled</span>
+    </div>
+    <h1 class="del-title">Outcome attestation report</h1>
+    <div class="del-meta">
+      <span>Morrison Owned Brand Margin Recovery</span>
+      <span class="sep">·</span>
+      <span>For attestation by: Marcus T. (CFO) · AbarVa outcome committee</span>
+    </div>
+  </div>
+
+  <!-- SCHEDULED BANNER -->
+  <div class="scheduled-banner">
+    <div class="scheduled-icon">▸</div>
+    <div class="scheduled-content">
+      <div class="scheduled-label">Scheduled · not yet active</div>
+      <h2 class="scheduled-title">This deliverable activates when Morrison reaches Phase 5.</h2>
+      <div class="scheduled-body">
+        Morrison is currently in <strong>Phase 4 · Build &amp; Deliver</strong>. Phase 5 begins after the Phase 4 gate passes and the outcome measurement window (90 days from first intervention go-live) completes. Earliest activation: <strong>targeted Q1 2027</strong>.
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIGGER CONDITIONS -->
+  <div class="section">
+    <div class="section-label">Trigger conditions</div>
+    <h2 class="section-title">What must be true before this deliverable generates.</h2>
+    <div class="trigger-list">
+
+      <div class="trigger-item">
+        <span class="trigger-state in-progress">In progress</span>
+        <div class="trigger-text">
+          <strong>Phase 4 gate passed.</strong>
+          All Phase 4 deliverables (D19 Delivery Plan, D20 Sprint Artifacts, D22 Change Management, D23 Go-Live Readiness, D24 Outcome Measurement Plan) signed off by sponsor Marcus T.
+          <div class="trigger-detail">Current status: 2 of 5 Phase 4 deliverables ready · 3 in progress.</div>
+        </div>
+      </div>
+
+      <div class="trigger-item">
+        <span class="trigger-state not-yet">Not yet</span>
+        <div class="trigger-text">
+          <strong>Outcome measurement window (90 days) complete.</strong>
+          First intervention go-live must occur, then a 90-day measurement window runs before attestation can begin.
+          <div class="trigger-detail">Target first go-live: supplier renegotiation wave 1, Jul 2026. Measurement window completes Oct 2026.</div>
+        </div>
+      </div>
+
+      <div class="trigger-item">
+        <span class="trigger-state not-yet">Not yet</span>
+        <div class="trigger-text">
+          <strong>D26 Financial Impact Validation in draft.</strong>
+          Financial impact validation from Apex finance team must exist in draft form before D25 can pull from it.
+        </div>
+      </div>
+
+      <div class="trigger-item">
+        <span class="trigger-state not-yet">Not yet</span>
+        <div class="trigger-text">
+          <strong>D27 Dual-Ledger Reconciliation initiated.</strong>
+          AbarVa ledger and Apex finance ledger reconciliation must be underway. D25 attestation references the reconciled ledger.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREREQUISITES -->
+  <div class="section">
+    <div class="section-label">Prerequisite deliverables</div>
+    <h2 class="section-title">Deliverables this one depends on.</h2>
+    <div class="prereq-list">
+
+      <div class="prereq-item">
+        <div class="prereq-main">
+          <span class="prereq-code">D24</span>
+          <span class="prereq-name">Outcome Measurement Plan · Phase 4</span>
+        </div>
+        <span class="prereq-status draft">Draft · open →</span>
+      </div>
+
+      <div class="prereq-item">
+        <div class="prereq-main">
+          <span class="prereq-code">D26</span>
+          <span class="prereq-name">Financial Impact Validation · Phase 5</span>
+        </div>
+        <span class="prereq-status not-started">Stub · scheduled</span>
+      </div>
+
+      <div class="prereq-item">
+        <div class="prereq-main">
+          <span class="prereq-code">D27</span>
+          <span class="prereq-name">Dual-Ledger Reconciliation · Phase 5</span>
+        </div>
+        <span class="prereq-status not-started">Stub · scheduled</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- STRUCTURE PREVIEW -->
+  <div class="section">
+    <div class="section-label">Structure preview · what this deliverable will contain</div>
+    <h2 class="section-title">Sections scheduled for generation.</h2>
+    <ul class="structure-list">
+
+      <li class="structure-item">
+        <div class="structure-num">1</div>
+        <div class="structure-text">
+          <strong>Outcome reconciliation</strong>
+          <div class="structure-desc">AbarVa ledger vs. Apex finance ledger line-by-line reconciliation. Variance analysis. Methodology notes.</div>
+        </div>
+      </li>
+
+      <li class="structure-item">
+        <div class="structure-num">2</div>
+        <div class="structure-text">
+          <strong>Baseline vs. measured values for each KPI</strong>
+          <div class="structure-desc">For every success metric declared in D03 (gross margin recovery, SKU-per-linear-foot, promotional depth average): baseline at program start, measured at 90-day window, variance.</div>
+        </div>
+      </li>
+
+      <li class="structure-item">
+        <div class="structure-num">3</div>
+        <div class="structure-text">
+          <strong>Attribution methodology</strong>
+          <div class="structure-desc">How program-attributed savings are isolated from market-driven, supplier-driven, and macro effects. Counterfactual construction. Confidence intervals.</div>
+        </div>
+      </li>
+
+      <li class="structure-item">
+        <div class="structure-num">4</div>
+        <div class="structure-text">
+          <strong>Intervention-level breakdown</strong>
+          <div class="structure-desc">Per-lever contribution: supplier renegotiation, assortment rationalization, promotional depth discipline. Sum reconciled to total.</div>
+        </div>
+      </li>
+
+      <li class="structure-item">
+        <div class="structure-num">5</div>
+        <div class="structure-text">
+          <strong>Attestation signatures</strong>
+          <div class="structure-desc">Marcus T. (CFO), Katherine P. (CMO), AbarVa outcome committee. Date and version signed.</div>
+        </div>
+      </li>
+
+      <li class="structure-item">
+        <div class="structure-num">6</div>
+        <div class="structure-text">
+          <strong>Pattern contribution</strong>
+          <div class="structure-desc">Observations contributed back to the Owned Brand Margin Recovery pattern in the Intelligence layer. Anonymization status. Composite tagging.</div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- NAVIGATION PRESERVED -->
+  <div class="nav-preserved">
+    <div class="nav-group">
+      <span class="nav-label">Navigate</span>
+      <a href="#" class="nav-pill">← Phase 5 overview</a>
+      <a href="#" class="nav-pill">Morrison program</a>
+      <a href="#" class="nav-pill">Phase 4 (current) →</a>
+    </div>
+    <div class="nav-group">
+      <a href="#" class="nav-pill" style="color: var(--teal); border-color: var(--teal);">View source pattern →</a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>Composite organization built from real-world data. This page is a scheduled-state render, not a generated deliverable.</div>
+    <div>Activation: Q1 2027 target · Morrison currently Phase 4 · Last check 2h ago</div>
+  </div>
+
+</div>
+
+</body>
+</html>
