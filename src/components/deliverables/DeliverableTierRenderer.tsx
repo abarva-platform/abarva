@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { deliverableToneColor, type DeliverableRenderModel, type DeliverableRouteLink } from '@/lib/deliverables/render-contract';
 import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import { ExportActions } from './ExportActions';
+import { ApproveActions } from './ApproveActions';
 
 export function DeliverableTierRenderer({ model }: { model: DeliverableRenderModel }) {
   return (
@@ -207,8 +208,16 @@ function Header({ model, label }: { model: DeliverableRenderModel; label: string
           <span className="del-pill" data-tone="amber">Composite disclaimer active</span>
         </div>
         {model.deliverable.tier !== 'stub' ? (
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <ExportActions deliverableCode={model.deliverable.code} title={model.deliverable.title} />
+            {model.deliverable.tier === 'rich' ? (
+              <ApproveActions
+                programCode={model.program.code}
+                deliverableCode={model.deliverable.code}
+                phase={model.phase.spec}
+                decision={model.deliverable.title}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
