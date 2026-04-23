@@ -15,6 +15,12 @@ import {
   getPatternManifestEntry,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
+import {
+  TOWER_SUBSURFACE_DEFINITIONS,
+  tenantTowerPath,
+  tenantTowerSubsurfacePath,
+  type TowerSubsurfaceSlug,
+} from '@/lib/integrity/route-catalog';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type { DeliverableSeedPlan, ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
@@ -186,6 +192,48 @@ export function SeedTenantTower({ tenant }: { tenant: TenantSeedPlan }) {
   return (
     <SeedPageFrame eyebrow={`${tenant.displayName} · control tower`} title="Tenant tower route" summary="Canonical tower URL is ready for tenant-scoped cockpit integration.">
       <MetricGrid metrics={[['Programs', tenant.programs.length.toString(), 'scoped'], ['Deliverables', counts.deliverables.toString(), 'route-covered'], ['Rich artifacts', counts.rich.toString(), 'demo-ready'], ['Scheduled', counts.stub.toString(), 'future-safe']]} />
+      <SectionTitle label="Scheduled Tower surfaces" />
+      <CardGrid>
+        {TOWER_SUBSURFACE_DEFINITIONS.map((surface) => (
+          <LinkCard
+            key={surface.slug}
+            href={tenantTowerSubsurfacePath(tenant, surface.slug)}
+            label="Scheduled"
+            title={surface.label}
+            description={surface.description}
+          />
+        ))}
+      </CardGrid>
+    </SeedPageFrame>
+  );
+}
+
+export function SeedTenantTowerSubsurface({ tenant, surface }: { tenant: TenantSeedPlan; surface: TowerSubsurfaceSlug }) {
+  const definition = TOWER_SUBSURFACE_DEFINITIONS.find((entry) => entry.slug === surface)!;
+
+  return (
+    <SeedPageFrame
+      eyebrow={`${tenant.displayName} · control tower · ${definition.label}`}
+      title={`${definition.label} surface`}
+      summary={definition.description}
+    >
+      <div className="del-panel" style={{ borderColor: 'rgba(245, 158, 11, 0.5)', background: 'rgba(245, 158, 11, 0.08)' }}>
+        <div className="del-eyebrow">Scheduled state</div>
+        <h2 style={{ margin: '10px 0 8px', fontFamily: 'Georgia, serif', fontSize: 'clamp(28px, 4vw, 44px)', lineHeight: 1.02 }}>
+          This surface ships in the next build cycle
+        </h2>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: 0 }}>
+          The route intentionally renders a Stub-style scheduled state so demo navigation never dead-ends or invents unsupported Tower functionality.
+        </p>
+      </div>
+      <CardGrid>
+        <LinkCard
+          href={tenantTowerPath(tenant)}
+          label="Breadcrumb"
+          title="Back to Control Tower"
+          description="Return to the tenant-scoped Tower landing surface."
+        />
+      </CardGrid>
     </SeedPageFrame>
   );
 }

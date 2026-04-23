@@ -82,6 +82,26 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 
 ---
 
+## Codex Overnight Work Order · Tier 1
+
+**Owner branch:** `codex/overnight-tier1`
+**Status:** in progress
+**Rule:** one item per commit · Tier 1 PR only after 1.1-1.7 complete
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| 1.1 Link crawler expansion | complete | `npm run integrity:link-crawler` passed with 696 routes, 8,492 internal links, 0 broken routes, 0 broken links, 0 redirect-chain violations. Report: `reports/link-crawler-2026-04-23T04-05-35-790Z.json`. |
+| 1.2 Composite disclaimer audit | pending | Next item. |
+| 1.3 Evidence citation resolution check | pending | Not started. |
+| 1.4 Tenant switcher re-scope validation | pending | Not started. |
+| 1.5 Tower sub-surface stub routes | pending | Minimal generic route added in 1.1 to let the crawler include Tower sub-surfaces without false 404s; 1.5 will harden explicit scheduled-state coverage. |
+| 1.6 Route-level integrity tests | pending | Not started. |
+| 1.7 Seed integrity report generator | pending | Not started. |
+
+**Validation:** `npm run integrity:link-crawler` · `npx tsc --noEmit --pretty false`
+
+---
+
 ## Integration checkpoint · wave 2 done when
 
 - [ ] Agent A · posture sections present for Programs/Intelligence/Tower/Admin
