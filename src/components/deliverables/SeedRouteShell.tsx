@@ -21,6 +21,7 @@ import {
   tenantTowerSubsurfacePath,
   type TowerSubsurfaceSlug,
 } from '@/lib/integrity/route-catalog';
+import { COMPOSITE_DISCLAIMER, PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type { DeliverableSeedPlan, ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
@@ -148,6 +149,12 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
       {pattern?.observations.length ? (
         <>
           <SectionTitle label="Composite observations" />
+          <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
+            <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
+            <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+              {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+            </p>
+          </div>
           <CardGrid>
             {pattern.observations.slice(0, 4).map((observation, index) => (
               <div key={`${observation}-${index}`} className="del-panel">
@@ -161,7 +168,7 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
       <div className="del-panel">
         <div className="del-eyebrow">Integrity disclaimer</div>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
-          Composite organization built from real-world data. Demo rendering: tenant-specific pattern state is generated from seeded program and deliverable links and must be sponsor-validated before production use.
+          {COMPOSITE_DISCLAIMER} Demo rendering: tenant-specific pattern state is generated from seeded program and deliverable links and must be sponsor-validated before production use.
         </p>
       </div>
     </SeedPageFrame>
@@ -183,6 +190,12 @@ export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
       ) : (
         <div className="del-panel"><div className="del-eyebrow">Pattern placeholder</div><p style={{ color: 'var(--del-muted)', lineHeight: 1.65 }}>This pattern route renders as a safe placeholder until detailed pattern content is authored.</p></div>
       )}
+      <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
+        <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
+        <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
+          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+        </p>
+      </div>
     </SeedPageFrame>
   );
 }
@@ -259,7 +272,7 @@ function SeedPageFrame({ eyebrow, title, summary, children }: { eyebrow: string;
           <p className="del-summary">{summary}</p>
         </header>
         <div style={{ marginTop: 34, display: 'grid', gap: 28 }}>{children}</div>
-        <footer className="del-footer">Composite organization built from real-world data. Canonical seed route scaffold for demo integrity.</footer>
+        <footer className="del-footer">{COMPOSITE_DISCLAIMER} Canonical seed route scaffold for demo integrity.</footer>
       </div>
     </main>
   );

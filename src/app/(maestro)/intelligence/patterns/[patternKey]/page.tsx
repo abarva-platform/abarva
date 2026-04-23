@@ -43,6 +43,7 @@ import {
   patternRouteFor,
   type PatternManifestEntry,
 } from '@/lib/intelligence/pattern-manifest';
+import { COMPOSITE_DISCLAIMER, PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER } from '@/lib/integrity/disclaimers';
 
 export const dynamic = 'force-dynamic';
 
@@ -225,6 +226,8 @@ export default async function PatternDetailPage({
             ) : null}
           </div>
         </header>
+
+        <PatternObservationDisclaimer />
 
         {industryCompositions.length > 0 ? (
           <section>
@@ -590,12 +593,29 @@ export default async function PatternDetailPage({
             </div>
           </section>
         ) : null}
+
+        <footer style={{ paddingTop: 8 }}>
+          <MetaLabel>
+            {COMPOSITE_DISCLAIMER} Demo rendering: pattern content is generated from authored design-pack source and must be sponsor-validated before production use.
+          </MetaLabel>
+        </footer>
       </div>
     </PageShell>
   );
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
+
+function PatternObservationDisclaimer() {
+  return (
+    <section style={{ padding: 16, borderRadius: 12, border: `0.5px solid ${COLORS.amber}`, background: 'rgba(245,158,11,0.08)' }}>
+      <EyebrowLabel tone="amber" size="xs">OBSERVATION AUTHORSHIP</EyebrowLabel>
+      <Body size="sm" tone="secondary" style={{ marginTop: 8 }}>
+        {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+      </Body>
+    </section>
+  );
+}
 
 function VendorLayerCard({ group }: { group: VendorGroup }) {
   return (

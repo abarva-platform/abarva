@@ -10,6 +10,7 @@ import {
   type TenantSeedPlan,
 } from '@/lib/programs/enhancement-seed-planner';
 import { buildDeliverableVersionPayload, titleForDeliverableInstance } from '@/lib/programs/enhancement-seed-writer';
+import { COMPOSITE_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import type {
   DeliverableDecision,
   DeliverableEvidenceRef,
@@ -155,7 +156,7 @@ export function buildSeedDeliverableRenderModel(context: Required<SeedRouteConte
           : deliverable.renderTier === 'outline'
             ? 'seeded_outline'
             : 'scheduled_stub',
-      disclaimer: 'Composite organization built from real-world data. Seeded render for demo validation; production use requires sponsor-approved evidence.',
+      disclaimer: `${COMPOSITE_DISCLAIMER} Seeded render for demo validation; production use requires sponsor-approved evidence.`,
     },
   };
 }
