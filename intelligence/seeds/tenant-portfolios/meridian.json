@@ -1,0 +1,68 @@
+{
+  "tenantKey": "meridian",
+  "routeSlug": "meridian-health",
+  "displayName": "Meridian Health System",
+  "displayAliases": ["Meridian Health System", "Meridian Health"],
+  "industryKey": "healthcare_idn",
+  "profile": "Composite integrated delivery network, 14 hospitals, 220 ambulatory sites, MA-heavy payer mix, $7.8B revenue.",
+  "demoRole": "Beachhead vertical — healthcare positioning anchor.",
+  "programs": [
+    {
+      "code": "MRD-01",
+      "programSlug": "ambient-clinical-value-chain-activation",
+      "name": "Ambient Clinical Value Chain Activation",
+      "archetypeCode": "AP",
+      "currentPhaseSpec": 3,
+      "portfolioFidelityTier": "rich",
+      "patternSlug": "ambient-clinical-value-chain",
+      "roleInDemo": "Hero program — healthcare anchor",
+      "richDeliverablesByPhase": {
+        "1": ["D01", "D02", "D03", "D04"],
+        "2": ["D06", "D08", "D10", "D11"],
+        "3": ["D12", "D13", "D15", "D16", "D17", "D18"]
+      }
+    },
+    {
+      "code": "MRD-02",
+      "programSlug": "prior-authorization-automation",
+      "name": "Prior Authorization Automation",
+      "archetypeCode": "WA",
+      "currentPhaseSpec": 4,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "prior-authorization-automation",
+      "roleInDemo": "Shows pattern in active build"
+    },
+    {
+      "code": "MRD-03",
+      "programSlug": "clinical-documentation-ai-governance",
+      "name": "Clinical Documentation AI Governance",
+      "archetypeCode": "ST",
+      "currentPhaseSpec": 1,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "ai-governance-operating-model",
+      "roleInDemo": "Shows freshly-initiated governance program"
+    },
+    {
+      "code": "MRD-04",
+      "programSlug": "revenue-cycle-ai-tool-rationalization",
+      "name": "Revenue Cycle AI Tool Rationalization",
+      "archetypeCode": "OO",
+      "currentPhaseSpec": 2,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "vendor-sprawl-ai-tool-rationalization",
+      "roleInDemo": "Shows cross-cutting pattern (vendor rationalization in healthcare RCM)"
+    },
+    {
+      "code": "MRD-05",
+      "programSlug": "readmission-risk-model-refresh",
+      "name": "Readmission Risk Model Refresh",
+      "archetypeCode": "OO",
+      "currentPhaseSpec": 5,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": null,
+      "roleInDemo": "Shows completed outcome state"
+    }
+  ],
+  "expectedPhaseDistribution": { "1": 1, "2": 1, "3": 1, "4": 1, "5": 1 },
+  "expectedArchetypeDistribution": { "AP": 1, "WA": 1, "ST": 1, "OO": 2 }
+}

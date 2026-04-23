@@ -1,0 +1,90 @@
+{
+  "tenantKey": "apexretail",
+  "routeSlug": "apex-retail",
+  "displayName": "Apex Retail Group",
+  "displayAliases": ["Apex Retail Group", "Apex Retail"],
+  "industryKey": "retail",
+  "profile": "Composite retail tenant, $18B revenue, 1,200 stores, private label strategy under margin pressure.",
+  "demoRole": "Primary demo surface. Prat's walkthrough runs here.",
+  "programs": [
+    {
+      "code": "APX-01",
+      "programSlug": "morrison-owned-brand-margin-recovery",
+      "name": "Morrison Owned Brand Margin Recovery",
+      "archetypeCode": "OO",
+      "currentPhaseSpec": 4,
+      "portfolioFidelityTier": "rich",
+      "patternSlug": "owned-brand-margin-recovery",
+      "roleInDemo": "Hero program — golden path",
+      "richDeliverablesByPhase": {
+        "1": ["D01", "D02", "D03", "D04"],
+        "2": ["D07", "D08", "D09", "D10", "D11"],
+        "3": ["D12", "D14", "D15", "D16", "D17", "D18"],
+        "4": ["D19", "D20", "D22", "D24"]
+      }
+    },
+    {
+      "code": "APX-02",
+      "programSlug": "demand-forecasting-modernization",
+      "name": "Demand Forecasting Modernization",
+      "archetypeCode": "OO",
+      "currentPhaseSpec": 3,
+      "portfolioFidelityTier": "rich",
+      "patternSlug": "demand-forecasting-inventory-ai",
+      "roleInDemo": "Secondary hero — exercises Phase 3 assets",
+      "additionalSeedDeliverablesByPhase": {
+        "3": ["D13"]
+      },
+      "richDeliverablesByPhase": {
+        "1": ["D01", "D02", "D03"],
+        "2": ["D07", "D08", "D11"],
+        "3": ["D12", "D13", "D15", "D16", "D17"]
+      }
+    },
+    {
+      "code": "APX-03",
+      "programSlug": "store-labor-optimization",
+      "name": "Store Labor Optimization",
+      "archetypeCode": "OO",
+      "currentPhaseSpec": 5,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": null,
+      "roleInDemo": "Shows completed program, outcome attestation tier"
+    },
+    {
+      "code": "APX-04",
+      "programSlug": "digital-assortment-copilot",
+      "name": "Digital Assortment Copilot",
+      "archetypeCode": "AP",
+      "currentPhaseSpec": 2,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": null,
+      "roleInDemo": "Shows mid-diagnosis state, Phase 2 deliverables"
+    },
+    {
+      "code": "APX-05",
+      "programSlug": "supply-chain-control-tower",
+      "name": "Supply Chain Control Tower",
+      "archetypeCode": "PM",
+      "currentPhaseSpec": 1,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "analytics-modernization",
+      "roleInDemo": "Shows freshly-initiated program"
+    },
+    {
+      "code": "APX-06",
+      "programSlug": "returns-fraud-detection",
+      "name": "Returns Fraud Detection",
+      "archetypeCode": "WA",
+      "currentPhaseSpec": 4,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "fraud-detection-modernization",
+      "roleInDemo": "Shows cross-vertical pattern reuse (fraud pattern in retail context)"
+    }
+  ],
+  "expectedPhaseDistribution": { "1": 1, "2": 1, "3": 1, "4": 2, "5": 1 },
+  "expectedArchetypeDistribution": { "OO": 3, "AP": 1, "PM": 1, "WA": 1 },
+  "narrativeClaims": {
+    "estimatedDeliverableInstancesRange": { "min": 75, "max": 85 }
+  }
+}
