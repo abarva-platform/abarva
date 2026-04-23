@@ -58,7 +58,7 @@ describe('composite disclaimer presence', () => {
     expect(patternRoutes.length).toBeGreaterThan(0);
 
     for (const route of patternRoutes) {
-      expect(renderRoute(route)).toContain(PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER);
+      expect(normalizeRenderedText(renderRoute(route))).toContain(PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER);
     }
   });
 });
@@ -116,4 +116,8 @@ function phaseFromRoute(route: CanonicalRouteRecord): SpecPhaseNumber {
   const match = route.path.match(/\/phase\/([1-5])$/);
   if (!match) throw new Error(`No phase segment found for ${route.path}`);
   return Number(match[1]) as SpecPhaseNumber;
+}
+
+function normalizeRenderedText(markup: string): string {
+  return markup.replaceAll('&#x27;', '\'');
 }

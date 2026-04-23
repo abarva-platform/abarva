@@ -609,10 +609,18 @@ export default async function PatternDetailPage({
 
 function PatternObservationDisclaimer() {
   return (
-    <section style={{ padding: 16, borderRadius: 12, border: `0.5px solid ${COLORS.amber}`, background: 'rgba(245,158,11,0.08)' }}>
+    <section
+      style={{
+        padding: 16,
+        borderRadius: 12,
+        border: '0.5px solid rgba(245, 199, 74, 0.48)',
+        background: 'linear-gradient(135deg, rgba(245, 199, 74, 0.12), rgba(245, 158, 11, 0.06))',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.03)',
+      }}
+    >
       <EyebrowLabel tone="amber" size="xs">OBSERVATION AUTHORSHIP</EyebrowLabel>
       <Body size="sm" tone="secondary" style={{ marginTop: 8 }}>
-        {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+        {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER}
       </Body>
     </section>
   );
