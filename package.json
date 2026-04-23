@@ -76,7 +76,8 @@
     "integrity:seed-report": "REPORT_TIMESTAMP=ci-seed-integrity npx tsx src/scripts/seed/programs-enhancement-seed.ts --json >/tmp/abarva-seed-integrity.json && jest src/__tests__/integration/seed-integrity-report.test.ts",
     "test:findings-harness": "jest src/__tests__/integration/findings-harness.test.ts",
     "testing:findings:samples": "npx tsx src/scripts/testing/generate-findings-samples.ts",
-    "testing:findings:compare": "npx tsx src/scripts/testing/compare-findings-cycles.ts"
+    "testing:findings:compare": "npx tsx src/scripts/testing/compare-findings-cycles.ts",
+    "testing:create-test-users": "npx tsx scripts/create-test-users.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.85.0",

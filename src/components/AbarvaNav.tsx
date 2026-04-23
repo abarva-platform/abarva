@@ -61,6 +61,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const isInvestor = metaRole === 'investor'
   const isMaestro  = metaRole === 'maestro'   // separate Maestro role (mh+clerk_test, af+clerk_test)
   const isClient   = metaRole === 'client'
+  const isExternal = metaRole === 'external'
   const isOperator = signedIn && (isAdmin || isInvestor || isMaestro) // all non-client signed-in
 
   // ── Paths ────────────────────────────────────────────────────────────────
@@ -281,7 +282,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
         {/* ══════════════════════════════════════════════════════════════════
             UNAUTHENTICATED — marketing surface only
         ══════════════════════════════════════════════════════════════════ */}
-        {!signedIn && (
+        {(!signedIn || isExternal) && (
           <>
             {navLink('Investor', '/investor', investorActive)}
             {demoNavItem()}
@@ -307,7 +308,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '12px', fontWeight: 500, color: NAV_TEXT, fontFamily: SANS }}>{firstName}</div>
                   <div style={{ fontSize: '9px', color: TEAL, fontFamily: MONO }}>
-                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
+                    {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
                   </div>
                 </div>
                 <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: 'rgba(20,184,166,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, color: TEAL, fontFamily: MONO, flexShrink: 0 }}>
@@ -320,7 +321,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                   <div style={{ padding: '8px 14px 10px', borderBottom: `1px solid ${DROP_BORD}`, marginBottom: '4px' }}>
                     <div style={{ fontFamily: SANS, fontSize: '13px', color: DROP_HEAD, fontWeight: 600 }}>{displayName}</div>
                     <div style={{ fontFamily: MONO, fontSize: '9px', color: '#6B7280', marginTop: '2px' }}>
-                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : ''}
+                      {isAdmin ? 'Admin' : isMaestro ? 'Maestro' : isInvestor ? 'Investor' : isClient ? 'Client' : isExternal ? 'External' : ''}
                     </div>
                   </div>
                   {(isAdmin || isMaestro) && (
