@@ -3,7 +3,7 @@ export type ProvisioningAppRole = 'client' | 'investor' | 'external';
 
 // Clerk rejects bare `.local` domains. We preserve the requested namespace
 // under a valid reserved suffix so the addresses remain clearly test-only.
-export const TEST_USER_EMAIL_SUFFIX = '@abarva.local.example.com';
+export const TEST_USER_EMAIL_SUFFIX = '@abarva-test.example.com';
 
 export interface TestUserSpec {
   key: string;

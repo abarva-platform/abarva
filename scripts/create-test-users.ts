@@ -262,8 +262,11 @@ function mergeMetadata(existing: JsonRecord | null | undefined, next: JsonRecord
 
 async function upsertClerkUser(spec: TestUserSpec, personId: string | null, investorAccessToken: string | null) {
   const clerk = getClerk();
-  const existingUsers = await clerk.users.getUserList({ emailAddress: [spec.email], limit: 1 });
-  const existing = existingUsers.data[0];
+  const [existingByEmail, existingByExternalId] = await Promise.all([
+    clerk.users.getUserList({ emailAddress: [spec.email], limit: 1 }),
+    clerk.users.getUserList({ externalId: [spec.key], limit: 1 }),
+  ]);
+  const existing = existingByEmail.data[0] ?? existingByExternalId.data[0];
 
   const publicMetadata = mergeMetadata(existing?.publicMetadata as JsonRecord | undefined, {
     ...spec.publicMetadata,
@@ -283,6 +286,26 @@ async function upsertClerkUser(spec: TestUserSpec, personId: string | null, inve
       signOutOfOtherSessions: true,
       externalId: spec.key,
     });
+
+    const matchingEmail = existing.emailAddresses.find((email) => email.emailAddress === spec.email);
+    if (matchingEmail) {
+      const isVerified = matchingEmail.verification?.status === 'verified';
+      const isPrimary = existing.primaryEmailAddressId === matchingEmail.id;
+      if (!isVerified || !isPrimary) {
+        await clerk.emailAddresses.updateEmailAddress(matchingEmail.id, {
+          verified: true,
+          primary: true,
+        });
+      }
+    } else {
+      await clerk.emailAddresses.createEmailAddress({
+        userId: existing.id,
+        emailAddress: spec.email,
+        verified: true,
+        primary: true,
+      });
+    }
+
     await clerk.users.updateUserMetadata(existing.id, { publicMetadata, privateMetadata });
     return existing.id;
   }
