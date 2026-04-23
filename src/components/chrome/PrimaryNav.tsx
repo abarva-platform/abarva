@@ -14,7 +14,7 @@ const FONT_BODY = 'DM Sans, -apple-system, sans-serif';
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/' || p.startsWith('/home/') || p === '/dashboard' || p.startsWith('/dashboard/') },
   { label: 'Programs', href: '/preview/programs', match: (p) => p === '/preview/programs' || p.startsWith('/preview/programs/') || p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
-  { label: 'Intelligence', href: '/intelligence', match: (p) => p === '/intelligence' || p.startsWith('/intelligence/') },
+  { label: 'Intelligence', href: '/preview/intelligence', match: (p) => p === '/preview/intelligence' || p.startsWith('/preview/intelligence/') || p === '/intelligence' || p.startsWith('/intelligence/') },
   { label: 'Control Tower', href: '/preview/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') },
   { label: 'Platform', href: '/platform', match: (p) => p === '/platform' || p.startsWith('/platform/') || p.startsWith('/admin') || p.startsWith('/data') || p.startsWith('/users') },
 ];
@@ -83,7 +83,24 @@ export function PrimaryNav() {
         );
       })}
       <div style={{ flex: 1 }} />
-      <div style={{ display: 'flex', alignItems: 'center', paddingRight: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, paddingRight: 4 }}>
+        <Link
+          href="/home/queue"
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            padding: '7px 11px',
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.14)',
+            color: 'rgba(255,255,255,0.85)',
+            textDecoration: 'none',
+          }}
+        >
+          Queue
+        </Link>
         <NotificationBell />
       </div>
     </nav>

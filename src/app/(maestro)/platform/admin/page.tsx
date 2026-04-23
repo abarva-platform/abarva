@@ -252,6 +252,43 @@ function QualityOpsJumpView() {
           Open Quality Ops →
         </a>
       </div>
+
+      {/* Crawler-friendly admin nav · plain-anchor links to every admin
+          sub-surface. Exposes the Steward rail's chip destinations as
+          <a> elements so browser-automation agents can discover them
+          without interacting with the guided-choice rail. */}
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '24px', marginTop: '16px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: MONO, marginBottom: '12px' }}>
+          Admin surfaces
+        </div>
+        <nav style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }} aria-label="Admin sub-surfaces">
+          {[
+            { href: '/platform/admin/users', label: 'Users · provisioning' },
+            { href: '/platform/admin/connectors', label: 'Connectors · health' },
+            { href: '/platform/admin/audit', label: 'Audit · cross-ledger' },
+            { href: '/platform/admin/quality', label: 'Quality · ops' },
+            { href: '/home/queue', label: 'Queue · your assignments' },
+          ].map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              style={{
+                display: 'inline-block',
+                background: BG,
+                color: DARK,
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '8px 14px',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                border: `1px solid ${BORDER}`,
+              }}
+            >
+              {link.label} →
+            </a>
+          ))}
+        </nav>
+      </div>
     </div>
   )
 }
