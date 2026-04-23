@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const INK = '#F5F5F0';
 const TEAL = '#14B8A6';
@@ -81,6 +82,10 @@ export function PrimaryNav() {
           </Link>
         );
       })}
+      <div style={{ flex: 1 }} />
+      <div style={{ display: 'flex', alignItems: 'center', paddingRight: 4 }}>
+        <NotificationBell />
+      </div>
     </nav>
   );
 }
