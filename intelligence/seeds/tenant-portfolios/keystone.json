@@ -1,0 +1,53 @@
+{
+  "tenantKey": "keystone",
+  "routeSlug": "keystone-energy",
+  "displayName": "Keystone Energy",
+  "displayAliases": ["Keystone Energy", "Keystone Energy Holdings", "Keystone Energy Holdings, Inc."],
+  "industryKey": "energy",
+  "profile": "Composite integrated energy company — upstream + midstream + trading, ~6,000 employees, NERC CIP scope.",
+  "demoRole": "Energy vertical demonstration.",
+  "programs": [
+    {
+      "code": "KST-01",
+      "programSlug": "commodity-trading-ai-modernization",
+      "name": "Commodity Trading AI Modernization",
+      "archetypeCode": "AP",
+      "currentPhaseSpec": 3,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "commodity-trading-ai",
+      "roleInDemo": "Primary energy pattern exemplar"
+    },
+    {
+      "code": "KST-02",
+      "programSlug": "predictive-maintenance-modernization",
+      "name": "Predictive Maintenance Modernization",
+      "archetypeCode": "AP",
+      "currentPhaseSpec": 4,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "predictive-maintenance-modernization",
+      "roleInDemo": "Phase 4 active build, high-visual content"
+    },
+    {
+      "code": "KST-03",
+      "programSlug": "ot-it-data-platform-convergence",
+      "name": "OT/IT Data Platform Convergence",
+      "archetypeCode": "PM",
+      "currentPhaseSpec": 2,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": "analytics-modernization",
+      "roleInDemo": "Shows Phase 2 deliverables for PM archetype"
+    },
+    {
+      "code": "KST-04",
+      "programSlug": "regulatory-reporting-ai",
+      "name": "Regulatory Reporting AI",
+      "archetypeCode": "WA",
+      "currentPhaseSpec": 5,
+      "portfolioFidelityTier": "outline",
+      "patternSlug": null,
+      "roleInDemo": "Shows Phase 5 outcome state"
+    }
+  ],
+  "expectedPhaseDistribution": { "1": 0, "2": 1, "3": 1, "4": 1, "5": 1 },
+  "expectedArchetypeDistribution": { "AP": 2, "PM": 1, "WA": 1 }
+}
