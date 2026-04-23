@@ -463,30 +463,44 @@ export function TowerPreviewShell({
         </div>
       </div>
 
-      {/* ─── Atlas agent rail · canonical primitive ──────────────────── */}
-      <AgentRail
-        agent={AGENTS.atlas}
-        contextBadge={`${clientName} · Monday check`}
-        userInitials="AS"
-        conversation={[
-          {
-            id: 'atlas-opener',
-            speaker: 'agent',
-            text: `${unownedCount} unowned contradictions are accumulating $${Math.round(pressure.reduce((s, p) => s + p.monthlyUsd, 0) / 1000)}K/mo. The Shadow AI one is the hottest — it has been known for 6 weeks and still has no named owner. I would escalate that first.`,
-          },
-        ]}
-        guidedChoice={{
-          prompt: 'What do you want to do in the next 5 minutes?',
-          options: [
-            { id: 'assign-shadow-ai', label: 'Assign owner for Shadow AI', sub: 'send to CIO staff meeting agenda' },
-            { id: 'vendor-overlap', label: 'Review vendor overlap matrix', sub: '7 tools doing similar work · rationalization queue' },
-            { id: 'pressure-export', label: 'Export pressure memo for the CEO', sub: 'one-pager of the 3 highest-dollar unowned items' },
-            { id: 'peer-position', label: 'Compare my estate to peers', sub: 'cohort benchmark · 6 anonymized Fortune 500s' },
-          ],
-        }}
-        onChoice={(id) => console.log('atlas choice', id)}
-        onEscape={(text) => console.log('atlas escape', text)}
-      />
+      {/* ─── Atlas agent rail · voice-disciplined per design thinking §3 ──
+          Atlas is executive-concise: headline + qualifier + decision chips.
+          Never more than 3 sentences. Decision verbs on chips. One handoff
+          to Nexus when a pressure needs a program. */}
+      {(() => {
+        const totalMoPressureK = Math.round(pressure.reduce((s, p) => s + p.monthlyUsd, 0) / 1000);
+        const hottest = pressure
+          .filter((p) => p.unowned)
+          .sort((a, b) => b.monthlyUsd - a.monthlyUsd)[0];
+        const hottestLabel = hottest?.title ?? 'top pressure';
+        const hottestK = hottest ? Math.round(hottest.monthlyUsd / 1000) : 0;
+        return (
+          <AgentRail
+            agent={AGENTS.atlas}
+            contextBadge={`${clientName} · Monday check`}
+            userInitials="AS"
+            conversation={[
+              {
+                id: 'atlas-opener',
+                speaker: 'agent',
+                text: `${unownedCount} unowned pressures. $${totalMoPressureK}K/mo. ${hottestLabel} leads at $${hottestK}K/mo. Pick one.`,
+              },
+            ]}
+            guidedChoice={{
+              prompt: 'Decide in the next 5 minutes.',
+              options: [
+                { id: 'assign-hottest', label: `Assign owner · ${hottestLabel}`, sub: 'queue for next CIO staff · I draft the ask' },
+                { id: 'defer-to-council', label: 'Defer to AI Council', sub: 'next meeting · I preload the pre-read' },
+                { id: 'create-program', label: 'Resolve via new program', sub: 'hand to Nexus · draft charter in Programs → Nexus ✱' },
+                { id: 'vendor-overlap', label: 'Vendor overlap matrix', sub: '7 tools · rationalisation queue' },
+                { id: 'pressure-export', label: 'Export CEO pressure memo', sub: 'one-pager · top-3 unowned' },
+              ],
+            }}
+            onChoice={(id) => console.log('atlas choice', id)}
+            onEscape={(text) => console.log('atlas escape', text)}
+          />
+        );
+      })()}
     </div>
   );
 }
