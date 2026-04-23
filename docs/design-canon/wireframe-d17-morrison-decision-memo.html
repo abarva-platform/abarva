@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · D17 Decision Memo · Morrison Owned Brand Margin Recovery</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Georgia&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-dark: #0a0a0b;
+    --bg-cream: #f5f1eb;
+    --bg-surface: #ffffff;
+    --teal: #1d9e75;
+    --teal-dark: #0f6e56;
+    --teal-light: #e1f5ee;
+    --amber: #ba7517;
+    --amber-light: #faeeda;
+    --red: #a32d2d;
+    --red-light: #fceded;
+    --gray-900: #2c2c2a;
+    --gray-700: #444441;
+    --gray-500: #5f5e5a;
+    --gray-300: #b4b2a9;
+    --gray-200: #d3d1c7;
+    --gray-100: #f1efe8;
+    --border: rgba(10, 10, 11, 0.12);
+    --border-strong: rgba(10, 10, 11, 0.24);
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg-cream);
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* NAVBAR */
+  .navbar {
+    background: var(--bg-dark);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+  }
+  .wordmark { font-family: 'Georgia', serif; color: white; }
+  .wordmark .abar { font-weight: 800; font-size: 17px; }
+  .wordmark .va { font-weight: 900; font-size: 23px; color: var(--teal); }
+  .tenant-switcher {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .tenant-switcher::before { content: '●'; color: var(--teal); font-size: 10px; }
+  .tenant-switcher::after { content: '▾'; font-size: 10px; opacity: 0.6; }
+  .nav-links { display: flex; gap: 24px; margin-left: 16px; flex: 1; }
+  .nav-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.85; }
+  .nav-link.active { color: var(--teal); opacity: 1; }
+  .nav-right { color: white; font-size: 14px; font-weight: 600; opacity: 0.85; }
+
+  /* LAYOUT */
+  .container { max-width: 1280px; margin: 0 auto; padding: 32px; }
+
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.4; }
+  .breadcrumb .current { color: var(--gray-700); }
+
+  /* DELIVERABLE HEADER */
+  .del-header { margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start; gap: 32px; }
+  .del-header-main { flex: 1; }
+  .del-code-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .del-title { font-family: 'Georgia', serif; font-size: 40px; font-weight: 400; line-height: 1.1; color: var(--gray-900); margin-bottom: 12px; }
+  .del-meta { color: var(--gray-500); font-size: 14px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .del-meta .status-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    background: var(--amber-light);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .del-meta .sep { opacity: 0.4; }
+
+  .del-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--gray-900);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: rgba(0, 0, 0, 0.03); }
+  .btn.primary { background: var(--bg-dark); color: white; border-color: var(--bg-dark); }
+  .btn.primary:hover { background: #1a1a1c; }
+  .btn.primary::after { content: ' →'; }
+
+  /* MAIN GRID */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  /* BODY (LEFT) */
+  .body { min-width: 0; }
+
+  .section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 40px;
+    margin-bottom: 24px;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .section-title { font-family: 'Georgia', serif; font-size: 26px; font-weight: 400; margin-bottom: 16px; color: var(--gray-900); line-height: 1.2; }
+  .section-body { color: var(--gray-900); font-size: 15px; line-height: 1.7; }
+  .section-body p { margin-bottom: 16px; }
+  .section-body strong { font-weight: 600; color: var(--gray-900); }
+
+  /* EXEC SUMMARY */
+  .exec-summary {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--teal);
+    border-radius: 8px;
+    padding: 28px 40px;
+    margin-bottom: 24px;
+  }
+  .exec-summary .section-label { color: var(--teal); margin-bottom: 12px; }
+  .exec-summary p { font-family: 'Georgia', serif; font-size: 19px; line-height: 1.5; color: var(--gray-900); font-weight: 400; }
+  .exec-summary p strong { font-weight: 700; }
+
+  /* KPI STRIP */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .kpi-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 22px;
+  }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .kpi-value { font-family: 'Georgia', serif; font-size: 30px; font-weight: 400; color: var(--gray-900); line-height: 1.1; }
+  .kpi-delta { font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--teal); margin-top: 6px; font-weight: 500; }
+  .kpi-delta.amber { color: var(--amber); }
+
+  /* DATA TABLE */
+  .data-table { width: 100%; border-collapse: collapse; margin: 16px 0 8px; font-size: 13px; }
+  .data-table th {
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--border-strong);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .data-table td {
+    padding: 14px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--gray-900);
+    vertical-align: top;
+  }
+  .data-table td.numeric { font-variant-numeric: tabular-nums; text-align: right; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover { background: rgba(29, 158, 117, 0.03); }
+  .data-table .preferred td { background: var(--teal-light); }
+  .data-table .preferred td:first-child::before { content: '● '; color: var(--teal); }
+
+  /* CHART */
+  .chart-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .chart-title { font-family: 'Georgia', serif; font-size: 18px; font-weight: 400; color: var(--gray-900); }
+  .chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--gray-500); }
+  .legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .chart-svg { width: 100%; height: 220px; }
+
+  /* DECISION LOG EXTRACT */
+  .decision-extract { margin-top: 16px; }
+  .decision-entry { padding: 12px 0; border-bottom: 1px solid var(--border); display: flex; gap: 16px; }
+  .decision-entry:last-child { border-bottom: none; }
+  .decision-date-col {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    min-width: 56px;
+  }
+  .decision-text-col { font-size: 13px; color: var(--gray-900); line-height: 1.5; flex: 1; }
+  .decision-text-col strong { font-weight: 600; }
+
+  /* RISK TABLE */
+  .risk-item { display: grid; grid-template-columns: 90px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .risk-item:last-child { border-bottom: none; }
+  .risk-tier {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    text-align: center;
+    height: fit-content;
+  }
+  .risk-tier.high { background: var(--amber-light); color: var(--amber); }
+  .risk-tier.med { background: var(--bg-cream); color: var(--gray-700); border: 1px solid var(--border); }
+  .risk-tier.critical { background: var(--red-light); color: var(--red); }
+  .risk-text { font-size: 13px; color: var(--gray-900); line-height: 1.5; }
+  .risk-text strong { font-weight: 600; display: block; margin-bottom: 4px; }
+  .risk-mitigation { color: var(--gray-500); font-size: 12px; margin-top: 4px; }
+
+  /* SIDEBAR (RIGHT) */
+  .sidebar { position: sticky; top: 24px; }
+  .sidebar-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+  }
+  .sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 500;
+  }
+  .nav-anchor-list { list-style: none; }
+  .nav-anchor-list li { margin-bottom: 10px; }
+  .nav-anchor-list a { color: var(--gray-700); text-decoration: none; font-size: 13px; display: block; padding: 4px 0; border-left: 2px solid transparent; padding-left: 10px; transition: all 0.15s; }
+  .nav-anchor-list a:hover { color: var(--teal); border-left-color: var(--teal); }
+  .nav-anchor-list a.active { color: var(--teal); border-left-color: var(--teal); font-weight: 600; }
+
+  .link-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .link-item:last-child { border-bottom: none; }
+  .link-item:hover .link-title { color: var(--teal); }
+  .link-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .link-title { font-size: 13px; font-weight: 500; color: var(--gray-900); transition: color 0.15s; }
+  .link-arrow { color: var(--gray-300); font-size: 14px; }
+  .link-item:hover .link-arrow { color: var(--teal); }
+
+  /* FOOTER ACTIONS */
+  .page-actions {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .page-actions-left { display: flex; gap: 8px; flex-wrap: wrap; }
+  .page-actions-right { font-size: 12px; color: var(--gray-500); }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* EVIDENCE CITATION */
+  .cite {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin-left: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    vertical-align: super;
+    line-height: 1;
+    font-weight: 500;
+    border: 1px solid rgba(29, 158, 117, 0.25);
+  }
+  .cite:hover { background: var(--teal); color: white; }
+
+  @media (max-width: 1000px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .del-title { font-size: 30px; }
+    .sidebar { position: static; }
+  }
+
+  /* PRINT */
+  @media print {
+    body { background: white; }
+    .navbar, .sidebar, .page-actions, .del-actions, .footer { display: none; }
+    .main-grid { grid-template-columns: 1fr; }
+    .section, .exec-summary, .kpi-card, .chart-container { border: 1px solid #ccc; box-shadow: none; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <div class="wordmark">
+    <span class="abar">Abar</span><span class="va">Va</span>
+  </div>
+  <div class="tenant-switcher">Apex Retail Group</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link active" href="#">Programs</a>
+    <a class="nav-link" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Control Tower</a>
+    <a class="nav-link" href="#">Platform</a>
+  </div>
+  <div class="nav-right">Investor →</div>
+</nav>
+
+<div class="container">
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb">
+    <a href="#">Apex Retail Group</a>
+    <span class="sep">›</span>
+    <a href="#">Programs</a>
+    <span class="sep">›</span>
+    <a href="#">Morrison Owned Brand Margin Recovery</a>
+    <span class="sep">›</span>
+    <a href="#">Phase 3</a>
+    <span class="sep">›</span>
+    <span class="current">D17 Decision Memo</span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="del-header">
+    <div class="del-header-main">
+      <div class="del-code-row">
+        <span>D17 · Decision memo for CXO · Phase 3</span>
+        <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; background: var(--teal); color: white;">Rich</span>
+      </div>
+      <h1 class="del-title">Morrison Owned Brand Margin Recovery</h1>
+      <div class="del-meta">
+        <span class="status-pill">Ready for CFO review</span>
+        <span class="sep">·</span>
+        <span>For: Marcus T. (CFO) · Katherine P. (Chief Merch. Officer)</span>
+        <span class="sep">·</span>
+        <span>Generated by Nexus · Apr 21, 2026</span>
+      </div>
+    </div>
+    <div class="del-actions">
+      <button class="btn">Print</button>
+      <button class="btn">Regenerate</button>
+      <button class="btn primary">Send for review</button>
+    </div>
+  </div>
+
+  <!-- EXEC SUMMARY -->
+  <div class="exec-summary">
+    <div class="section-label">Executive summary</div>
+    <p>Recommend activating a <strong>three-lever owned-brand margin recovery program</strong> — supplier renegotiation, assortment rationalization, and promotional depth discipline — across Apex's 1,200 stores. Capital commitment <strong>$4.2M</strong> over 14 months; projected net margin recovery <strong>$68M-$94M/yr</strong> at steady state. Break-even at month 8. Primary risk: supplier renegotiation timing against Q3 reset window — mitigated by parallel-track execution.</p>
+  </div>
+
+  <!-- KPI STRIP -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label">Capital commitment</div>
+      <div class="kpi-value">$4.2M</div>
+      <div class="kpi-delta">Over 14 months</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Net margin recovery</div>
+      <div class="kpi-value">$68-94M</div>
+      <div class="kpi-delta">Per year, steady state</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Payback</div>
+      <div class="kpi-value">8 mo</div>
+      <div class="kpi-delta">From program kickoff</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Risk tier</div>
+      <div class="kpi-value" style="color: var(--amber);">High</div>
+      <div class="kpi-delta amber">Q3 reset timing primary</div>
+    </div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <div class="body">
+
+      <!-- RECOMMENDATION -->
+      <div class="section" id="recommendation">
+        <div class="section-label">Recommendation</div>
+        <h2 class="section-title">Activate three margin recovery levers in parallel.</h2>
+        <div class="section-body">
+          <p>Apex's owned-brand margin has compressed <strong>340 basis points</strong> over the last 24 months<a href="#ev-1" class="cite">E1</a> against a category that expanded by 80 bps<a href="#ev-2" class="cite">E2</a>. The gap is not a pricing problem — our consumer price index is in line with the cohort<a href="#ev-3" class="cite">E3</a> — it is a <strong>cost-side erosion</strong> compounded by assortment bloat and promotional depth creep.</p>
+          <p>Three interventions are decision-ready. Each has independent payback. The portfolio effect compounds: executing all three in parallel recovers margin ~40% faster than sequential execution<a href="#ev-4" class="cite">E4</a>, because supplier leverage is highest when volume commitments are being renegotiated alongside SKU consolidation.</p>
+          <p><strong>Lever 1 — Supplier renegotiation:</strong> Top 40 owned-brand suppliers, anchored on Q3 2026 reset cycle. Volume consolidation across 180 SKUs unlocks Tier-1 cost brackets. Projected: $34M-$42M/yr<a href="#ev-5" class="cite">E5</a>.</p>
+          <p><strong>Lever 2 — Assortment rationalization:</strong> 23% SKU reduction on owned-brand tail. Store-level demand modeling shows &lt;2% revenue risk<a href="#ev-6" class="cite">E6</a>; margin-per-linear-foot lift of 14-19%. Projected: $22M-$31M/yr.</p>
+          <p><strong>Lever 3 — Promotional depth discipline:</strong> Cap depth at 22% off for owned-brand (vs. current average 28%<a href="#ev-7" class="cite">E7</a>), with surgical exceptions for competitive response. Projected: $12M-$21M/yr.</p>
+        </div>
+      </div>
+
+      <!-- VENDOR COMPARISON -->
+      <div class="section" id="supplier-path">
+        <div class="section-label">Supplier renegotiation path</div>
+        <h2 class="section-title">Top 40 suppliers, tiered by leverage.</h2>
+        <div class="section-body">
+          <p>The table below shows the top 6 suppliers by annual spend, the leverage we hold going into Q3 reset, and the expected savings at Tier-1 brackets. Composite data; supplier names anonymized.</p>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Category</th>
+              <th class="numeric">Annual spend</th>
+              <th>Leverage tier</th>
+              <th class="numeric">Projected savings</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="preferred">
+              <td>Supplier A</td>
+              <td>Dairy · ambient</td>
+              <td class="numeric">$84M</td>
+              <td>High · volume lead</td>
+              <td class="numeric">$8.4M-$10.2M</td>
+            </tr>
+            <tr class="preferred">
+              <td>Supplier B</td>
+              <td>Household paper</td>
+              <td class="numeric">$62M</td>
+              <td>High · dual-source ready</td>
+              <td class="numeric">$5.8M-$7.1M</td>
+            </tr>
+            <tr>
+              <td>Supplier C</td>
+              <td>Canned &amp; dry goods</td>
+              <td class="numeric">$48M</td>
+              <td>Medium · contract binding</td>
+              <td class="numeric">$3.1M-$4.4M</td>
+            </tr>
+            <tr class="preferred">
+              <td>Supplier D</td>
+              <td>Frozen prepared</td>
+              <td class="numeric">$41M</td>
+              <td>High · cohort aligned</td>
+              <td class="numeric">$4.2M-$5.6M</td>
+            </tr>
+            <tr>
+              <td>Supplier E</td>
+              <td>Cleaning &amp; hygiene</td>
+              <td class="numeric">$38M</td>
+              <td>Medium</td>
+              <td class="numeric">$2.4M-$3.1M</td>
+            </tr>
+            <tr>
+              <td>Supplier F</td>
+              <td>Personal care</td>
+              <td class="numeric">$34M</td>
+              <td>Low · single-source risk</td>
+              <td class="numeric">$1.2M-$1.9M</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- CHART -->
+      <div class="chart-container" id="outcome-chart">
+        <div class="chart-header">
+          <div class="chart-title">Projected cumulative margin recovery · 36 months</div>
+          <div class="chart-legend">
+            <span><span class="legend-dot" style="background: var(--teal);"></span>Low scenario ($68M/yr)</span>
+            <span><span class="legend-dot" style="background: var(--teal-dark);"></span>High scenario ($94M/yr)</span>
+          </div>
+        </div>
+        <svg class="chart-svg" viewBox="0 0 800 240" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+          <!-- grid -->
+          <line x1="60" y1="40" x2="60" y2="210" stroke="#d3d1c7" stroke-width="1"/>
+          <line x1="60" y1="210" x2="780" y2="210" stroke="#d3d1c7" stroke-width="1"/>
+          <!-- y axis labels -->
+          <text x="50" y="215" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a" text-anchor="end">$0</text>
+          <text x="50" y="165" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a" text-anchor="end">$50M</text>
+          <text x="50" y="115" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a" text-anchor="end">$150M</text>
+          <text x="50" y="65" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a" text-anchor="end">$250M</text>
+          <!-- x axis labels -->
+          <text x="60" y="228" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a">M0</text>
+          <text x="200" y="228" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a">M8 · breakeven</text>
+          <text x="420" y="228" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a">M18</text>
+          <text x="640" y="228" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a">M36</text>
+          <!-- breakeven marker -->
+          <line x1="230" y1="40" x2="230" y2="210" stroke="#ba7517" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="234" y="50" font-family="JetBrains Mono, monospace" font-size="9" fill="#ba7517">Breakeven</text>
+          <!-- investment negative area (M0-M8) -->
+          <path d="M 60 210 Q 120 215 180 220 Q 215 222 230 210 Z" fill="#faeeda" opacity="0.5"/>
+          <!-- high scenario area -->
+          <path d="M 60 210 Q 180 220 230 210 Q 320 180 420 130 Q 540 80 640 55 Q 720 40 780 35 L 780 210 L 60 210 Z" fill="rgba(15, 110, 86, 0.10)"/>
+          <!-- low scenario area -->
+          <path d="M 60 210 Q 180 220 230 210 Q 320 195 420 160 Q 540 120 640 95 Q 720 80 780 70 L 780 210 L 60 210 Z" fill="rgba(29, 158, 117, 0.15)"/>
+          <!-- low scenario line -->
+          <path d="M 60 210 Q 180 220 230 210 Q 320 195 420 160 Q 540 120 640 95 Q 720 80 780 70" stroke="#1d9e75" stroke-width="2" fill="none"/>
+          <!-- high scenario line -->
+          <path d="M 60 210 Q 180 220 230 210 Q 320 180 420 130 Q 540 80 640 55 Q 720 40 780 35" stroke="#0f6e56" stroke-width="2" fill="none"/>
+          <!-- breakeven dot -->
+          <circle cx="230" cy="210" r="4" fill="#ba7517"/>
+        </svg>
+      </div>
+
+      <!-- DECISION LOG EXTRACT -->
+      <div class="section" id="decision-log">
+        <div class="section-label">Decision log · leading to this memo</div>
+        <h2 class="section-title">How we got here.</h2>
+        <div class="decision-extract">
+          <div class="decision-entry">
+            <div class="decision-date-col">Apr 18</div>
+            <div class="decision-text-col"><strong>Parallel-track execution selected over sequential.</strong> Analysis showed 40% faster margin recovery with portfolio leverage. Trade-off: higher operational load in Q3 — mitigated by adding one owned-brand category lead.</div>
+          </div>
+          <div class="decision-entry">
+            <div class="decision-date-col">Apr 14</div>
+            <div class="decision-text-col"><strong>Promotional depth cap set at 22%.</strong> Alternatives considered: 20% (aggressive, competitive risk), 25% (conservative, lower recovery). 22% balances margin recovery with competitive response flexibility.</div>
+          </div>
+          <div class="decision-entry">
+            <div class="decision-date-col">Apr 9</div>
+            <div class="decision-text-col"><strong>SKU reduction target set at 23%.</strong> Store-level demand model validated &lt;2% revenue risk across 85% of stores. Higher-density urban stores carry 4-6% risk; mitigated by store-tier-specific assortment.</div>
+          </div>
+          <div class="decision-entry">
+            <div class="decision-date-col">Apr 2</div>
+            <div class="decision-text-col"><strong>Scope confirmed: owned-brand only.</strong> National-brand margin compression deferred to separate program — different lever structure, different stakeholder set.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RISKS -->
+      <div class="section" id="risks">
+        <div class="section-label">Risks and mitigations</div>
+        <h2 class="section-title">Three risks material to decision.</h2>
+        <div class="risk-item">
+          <div class="risk-tier high">High</div>
+          <div class="risk-text">
+            <strong>Q3 supplier reset timing.</strong>
+            Supplier renegotiation window closes end of Q3. If parallel-track execution slips, top-6 savings deferred 6 months.
+            <div class="risk-mitigation">Mitigation: dedicated category lead, weekly steering, escalation protocol for any supplier milestone slip &gt;10 days.</div>
+          </div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-tier med">Med</div>
+          <div class="risk-text">
+            <strong>SKU reduction backlash in urban stores.</strong>
+            Higher-density stores show 4-6% revenue risk at target reduction.
+            <div class="risk-mitigation">Mitigation: tier-specific assortment (urban stores keep 82% of current SKU count vs. 77% average).</div>
+          </div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-tier med">Med</div>
+          <div class="risk-text">
+            <strong>Competitive response to promotional depth cap.</strong>
+            If primary competitor deepens promotion during transition, owned-brand traffic could compress 2-4%.
+            <div class="risk-mitigation">Mitigation: surgical exception budget (1.5% of promotional spend), weekly competitive price monitoring.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <!-- Section nav -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">On this page</div>
+        <ul class="nav-anchor-list">
+          <li><a href="#recommendation" class="active">Recommendation</a></li>
+          <li><a href="#supplier-path">Supplier path</a></li>
+          <li><a href="#outcome-chart">Outcome projection</a></li>
+          <li><a href="#decision-log">Decision log</a></li>
+          <li><a href="#risks">Risks</a></li>
+        </ul>
+      </div>
+
+      <!-- Cross-links -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Cross-links</div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Source pattern</div>
+            <div class="link-title">Owned Brand Margin Recovery</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Prerequisite</div>
+            <div class="link-title">D16 Business Case</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Downstream</div>
+            <div class="link-title">D18 Risk Register</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Downstream</div>
+            <div class="link-title">D19 Delivery Plan</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+
+      <!-- Evidence -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Evidence base</div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Interviews</div>
+            <div class="link-title">8 stakeholder interviews</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Financial baseline</div>
+            <div class="link-title">D07 · 24-month margin trace</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Benchmark</div>
+            <div class="link-title">D10 · 6-company cohort</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Model output</div>
+            <div class="link-title">SKU demand simulation</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+
+      <!-- Analogous programs -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Analogous programs</div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Meridian Health</div>
+            <div class="link-title">Ambient Clinical Value Chain</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PAGE ACTIONS -->
+  <div class="page-actions">
+    <div class="page-actions-left">
+      <button class="btn">Print view</button>
+      <button class="btn">Request Nexus regeneration</button>
+      <button class="btn primary">Send to Marcus T. for review</button>
+    </div>
+    <div class="page-actions-right">Approve for Phase 3 gate when review complete</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>Composite organization built from real-world data. This document is a demo rendering, not a deliverable for a real engagement.</div>
+    <div>Generated by Nexus on Apr 21 · Grounded in 23 evidence sources · Last updated 2h ago</div>
+  </div>
+
+</div>
+
+</body>
+</html>

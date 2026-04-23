@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · Pattern · Ambient Clinical Value Chain Automation</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Georgia&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-dark: #0a0a0b; --bg-cream: #f5f1eb; --bg-surface: #ffffff;
+    --teal: #1d9e75; --teal-dark: #0f6e56; --teal-light: #e1f5ee;
+    --amber: #ba7517; --amber-light: #faeeda;
+    --red: #a32d2d; --red-light: #fceded;
+    --gray-900: #2c2c2a; --gray-700: #444441; --gray-500: #5f5e5a;
+    --gray-300: #b4b2a9; --gray-200: #d3d1c7; --gray-100: #f1efe8;
+    --border: rgba(10, 10, 11, 0.12); --border-strong: rgba(10, 10, 11, 0.24);
+  }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg-cream); color: var(--gray-900); font-size: 14px; line-height: 1.65; -webkit-font-smoothing: antialiased; }
+
+  .navbar { background: var(--bg-dark); padding: 14px 32px; display: flex; align-items: center; gap: 32px; }
+  .wordmark { font-family: 'Georgia', serif; color: white; }
+  .wordmark .abar { font-weight: 800; font-size: 17px; }
+  .wordmark .va { font-weight: 900; font-size: 23px; color: var(--teal); }
+  .tenant-switcher { background: rgba(255, 255, 255, 0.05); color: white; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.08); }
+  .tenant-switcher::before { content: '●'; color: var(--teal); font-size: 10px; }
+  .tenant-switcher::after { content: '▾'; font-size: 10px; opacity: 0.6; }
+  .nav-links { display: flex; gap: 24px; margin-left: 16px; flex: 1; }
+  .nav-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.85; }
+  .nav-link.active { color: var(--teal); opacity: 1; }
+  .nav-right { color: white; font-size: 14px; font-weight: 600; opacity: 0.85; }
+
+  .container { max-width: 1240px; margin: 0 auto; padding: 32px; }
+
+  .breadcrumb { font-size: 12px; color: var(--gray-500); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 24px; }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.4; }
+  .breadcrumb .current { color: var(--gray-700); }
+
+  /* HEADER */
+  .pattern-header { margin-bottom: 32px; }
+  .pattern-code-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .depth-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    background: var(--bg-dark);
+    color: white;
+  }
+  .pattern-title {
+    font-family: 'Georgia', serif;
+    font-size: 48px;
+    font-weight: 400;
+    line-height: 1.05;
+    color: var(--gray-900);
+    margin-bottom: 20px;
+    max-width: 800px;
+  }
+
+  .pattern-thesis {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--teal);
+    border-radius: 10px;
+    padding: 28px 36px;
+    margin-bottom: 24px;
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    line-height: 1.45;
+    color: var(--gray-900);
+    max-width: 880px;
+  }
+  .pattern-thesis::before { content: '"'; font-size: 56px; color: var(--teal); line-height: 0.5; vertical-align: sub; margin-right: 8px; }
+
+  /* META CHIPS */
+  .pattern-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .chip {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .chip-label { color: var(--gray-500); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .chip-value { font-weight: 600; color: var(--gray-900); }
+  .chip-value.teal { color: var(--teal-dark); }
+
+  /* LAYOUT */
+  .main-grid { display: grid; grid-template-columns: 1fr 260px; gap: 40px; align-items: flex-start; }
+  .body { min-width: 0; }
+
+  /* SECTIONS */
+  .section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px 40px;
+    margin-bottom: 20px;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .section-title { font-family: 'Georgia', serif; font-size: 28px; font-weight: 400; margin-bottom: 16px; color: var(--gray-900); line-height: 1.2; }
+  .section-body p { color: var(--gray-900); font-size: 15px; line-height: 1.7; margin-bottom: 16px; }
+  .section-body p:last-child { margin-bottom: 0; }
+  .section-body strong { font-weight: 600; }
+
+  /* VALUE CHAIN DIAGRAM */
+  .diagram-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 40px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+  .diagram-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .diagram-title {
+    font-family: 'Georgia', serif;
+    font-size: 22px;
+    color: var(--gray-900);
+    margin-bottom: 24px;
+  }
+  .diagram-svg { width: 100%; height: 460px; display: block; }
+
+  /* SIGNAL/QUESTION LIST */
+  .numbered-list { counter-reset: item; padding: 0; list-style: none; }
+  .numbered-item {
+    counter-increment: item;
+    padding: 16px 0 16px 48px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .numbered-item:last-child { border-bottom: none; }
+  .numbered-item::before {
+    content: counter(item, decimal-leading-zero);
+    position: absolute;
+    left: 0;
+    top: 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--teal);
+    font-weight: 500;
+  }
+  .numbered-item strong { display: block; font-size: 15px; margin-bottom: 4px; font-weight: 600; color: var(--gray-900); }
+  .numbered-item-detail { font-size: 13px; color: var(--gray-500); line-height: 1.6; }
+
+  /* OBSERVATION CARDS */
+  .obs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .obs-card {
+    background: var(--bg-cream);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 22px;
+  }
+  .obs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .obs-tenant {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal-dark);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .obs-composite-tag {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-surface);
+    color: var(--gray-500);
+    padding: 2px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+  }
+  .obs-text { font-size: 13px; color: var(--gray-900); line-height: 1.55; margin-bottom: 10px; }
+  .obs-outcome { font-size: 12px; color: var(--teal-dark); font-weight: 500; }
+
+  /* INTERVENTION CARDS */
+  .intervention { padding: 16px 20px; margin-bottom: 10px; background: var(--bg-cream); border-radius: 6px; border-left: 3px solid var(--teal); }
+  .intervention-name { font-size: 14px; font-weight: 600; color: var(--gray-900); margin-bottom: 4px; }
+  .intervention-detail { font-size: 12px; color: var(--gray-500); line-height: 1.55; }
+  .intervention-success {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--teal);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    margin-left: 8px;
+    text-transform: uppercase;
+  }
+
+  /* SIDEBAR */
+  .sidebar { position: sticky; top: 24px; }
+  .sidebar-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+  }
+  .sidebar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .nav-anchor-list { list-style: none; }
+  .nav-anchor-list li { margin-bottom: 2px; }
+  .nav-anchor-list a { color: var(--gray-700); text-decoration: none; font-size: 13px; display: block; padding: 5px 0 5px 10px; border-left: 2px solid transparent; transition: all 0.15s; }
+  .nav-anchor-list a:hover { color: var(--teal); border-left-color: var(--teal); }
+  .nav-anchor-list a.active { color: var(--teal); border-left-color: var(--teal); font-weight: 600; }
+
+  .link-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .link-item:last-child { border-bottom: none; }
+  .link-item:hover .link-title { color: var(--teal); }
+  .link-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--gray-500); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 3px; }
+  .link-title { font-size: 13px; font-weight: 500; color: var(--gray-900); transition: color 0.15s; }
+  .link-arrow { color: var(--gray-300); font-size: 14px; }
+
+  /* REGULATORY */
+  .reg-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .reg-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--amber-light);
+    color: var(--amber);
+    padding: 4px 8px;
+    border-radius: 3px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  @media (max-width: 1000px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .obs-grid { grid-template-columns: 1fr; }
+    .pattern-title { font-size: 32px; }
+    .sidebar { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="wordmark"><span class="abar">Abar</span><span class="va">Va</span></div>
+  <div class="tenant-switcher">Meridian Health</div>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Home</a>
+    <a class="nav-link" href="#">Programs</a>
+    <a class="nav-link active" href="#">Intelligence</a>
+    <a class="nav-link" href="#">Control Tower</a>
+    <a class="nav-link" href="#">Platform</a>
+  </div>
+  <div class="nav-right">Investor →</div>
+</nav>
+
+<div class="container">
+
+  <div class="breadcrumb">
+    <a href="#">Intelligence</a><span class="sep">›</span>
+    <a href="#">Patterns</a><span class="sep">›</span>
+    <a href="#">Healthcare</a><span class="sep">›</span>
+    <span class="current">Ambient Clinical Value Chain Automation</span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="pattern-header">
+    <div class="pattern-code-row">
+      <span>Pattern · healthcare · vertical</span>
+      <span class="depth-badge">Full depth · Parts A-R</span>
+    </div>
+    <h1 class="pattern-title">Ambient Clinical Value Chain Automation</h1>
+  </div>
+
+  <!-- THESIS -->
+  <div class="pattern-thesis">
+    Ambient listening is not a scribe vendor. It is the platform underneath the entire clinical value chain — documentation, HCC coding, quality measures, care gap closure, revenue integrity. Enterprises treating ambient as a scribe vendor miss 60-80% of attainable value.
+  </div>
+
+  <!-- META CHIPS -->
+  <div class="pattern-meta">
+    <div class="chip"><span class="chip-label">Observations</span><span class="chip-value">6</span></div>
+    <div class="chip"><span class="chip-label">Interventions</span><span class="chip-value">8</span></div>
+    <div class="chip"><span class="chip-label">Anti-patterns</span><span class="chip-value">8</span></div>
+    <div class="chip"><span class="chip-label">Applied in</span><span class="chip-value teal">1 active program</span></div>
+    <div class="chip"><span class="chip-label">Evidence sources</span><span class="chip-value">23</span></div>
+    <div class="chip"><span class="chip-label">Last updated</span><span class="chip-value">1d ago</span></div>
+  </div>
+
+  <!-- MAIN GRID -->
+  <div class="main-grid">
+    <div class="body">
+
+      <!-- VALUE CHAIN DIAGRAM (signature visual) -->
+      <div class="diagram-container" id="value-chain">
+        <div class="diagram-label">Value chain map</div>
+        <h2 class="diagram-title">Ambient platform + 6 downstream value streams.</h2>
+        <svg class="diagram-svg" viewBox="0 0 900 460" xmlns="http://www.w3.org/2000/svg">
+          <!-- Center node: Ambient Platform -->
+          <circle cx="450" cy="230" r="82" fill="#0f6e56" stroke="#1d9e75" stroke-width="2"/>
+          <circle cx="450" cy="230" r="76" fill="none" stroke="#fff" stroke-width="1" stroke-opacity="0.2"/>
+          <text x="450" y="222" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="white" font-weight="400">Ambient</text>
+          <text x="450" y="244" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="white" font-weight="400">Platform</text>
+          <text x="450" y="262" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#9fe1cb" letter-spacing="1">LISTENING + CAPTURE</text>
+
+          <!-- Connectors (6 streams) -->
+          <!-- NW: Documentation -->
+          <line x1="400" y1="175" x2="250" y2="90" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+          <!-- N: HCC Coding -->
+          <line x1="450" y1="148" x2="450" y2="60" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+          <!-- NE: Quality Measures -->
+          <line x1="500" y1="175" x2="650" y2="90" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+          <!-- SE: Care Gap Closure -->
+          <line x1="500" y1="285" x2="650" y2="370" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+          <!-- S: Revenue Integrity -->
+          <line x1="450" y1="312" x2="450" y2="400" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+          <!-- SW: SDOH/Equity -->
+          <line x1="400" y1="285" x2="250" y2="370" stroke="#d3d1c7" stroke-width="2" stroke-dasharray="4,4"/>
+
+          <!-- Stream nodes -->
+          <!-- NW: Documentation -->
+          <g>
+            <rect x="130" y="60" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="210" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">Documentation</text>
+            <text x="210" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">CDI · NOTE QUALITY</text>
+            <text x="210" y="114" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#1d9e75">● Active</text>
+          </g>
+
+          <!-- N: HCC Coding -->
+          <g>
+            <rect x="370" y="0" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="450" y="22" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">HCC Coding</text>
+            <text x="450" y="40" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">RISK ADJUSTMENT · MA</text>
+            <text x="450" y="54" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#ba7517">◐ Partial</text>
+          </g>
+
+          <!-- NE: Quality Measures -->
+          <g>
+            <rect x="610" y="60" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="690" y="82" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">Quality Measures</text>
+            <text x="690" y="100" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">HEDIS · STARS · MIPS</text>
+            <text x="690" y="114" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#b4b2a9">○ Not started</text>
+          </g>
+
+          <!-- SE: Care Gap Closure -->
+          <g>
+            <rect x="610" y="340" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="690" y="362" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">Care Gap Closure</text>
+            <text x="690" y="380" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">PROACTIVE OUTREACH</text>
+            <text x="690" y="394" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#b4b2a9">○ Not started</text>
+          </g>
+
+          <!-- S: Revenue Integrity -->
+          <g>
+            <rect x="370" y="400" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="450" y="422" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">Revenue Integrity</text>
+            <text x="450" y="440" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">DRG · DENIAL PREV</text>
+            <text x="450" y="454" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#ba7517">◐ Partial</text>
+          </g>
+
+          <!-- SW: SDOH / Equity -->
+          <g>
+            <rect x="130" y="340" width="160" height="60" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="1"/>
+            <text x="210" y="362" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="600" fill="#0f6e56">SDOH / Equity</text>
+            <text x="210" y="380" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#0f6e56" letter-spacing="1">HEALTH EQUITY · Z-CODES</text>
+            <text x="210" y="394" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="#b4b2a9">○ Not started</text>
+          </g>
+
+          <!-- Legend -->
+          <g transform="translate(40, 435)">
+            <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a" letter-spacing="1">MERIDIAN INTEGRATION STATE:</text>
+            <text x="200" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#1d9e75">●</text>
+            <text x="212" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a"> ACTIVE</text>
+            <text x="272" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#ba7517">◐</text>
+            <text x="284" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a"> PARTIAL</text>
+            <text x="346" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#b4b2a9">○</text>
+            <text x="358" y="0" font-family="JetBrains Mono, monospace" font-size="10" fill="#5f5e5a"> NOT STARTED</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- PART A IDENTITY -->
+      <div class="section" id="identity">
+        <div class="section-label">A · Identity</div>
+        <h2 class="section-title">The pattern at one glance.</h2>
+        <div class="section-body">
+          <p>Ambient clinical listening — the real-time capture of the physician-patient conversation and its conversion into structured clinical artifacts — has emerged as one of the highest-leverage points in modern healthcare AI. Most enterprises deploy it as a documentation-burden-reduction tool. That framing is <strong>narrow by an order of magnitude</strong>. The ambient capture layer, done well, becomes the shared substrate for HCC coding, quality measure capture, care gap closure, CDI, revenue integrity, and SDOH/health equity — six downstream value streams that would otherwise require separate, overlapping vendor stacks.</p>
+          <p>The pattern is: treat ambient as a <strong>platform capability</strong>, not a product purchase. Integrate it once; compound value across six streams.</p>
+        </div>
+      </div>
+
+      <!-- PART C DETECTION -->
+      <div class="section" id="detection">
+        <div class="section-label">C · Detection · 8 signals</div>
+        <h2 class="section-title">How you know an enterprise is leaving value on the table.</h2>
+        <ul class="numbered-list">
+          <li class="numbered-item"><strong>Ambient rollout without HCC integration</strong><span class="numbered-item-detail">Ambient tool deployed only for documentation burden reduction. No integration with HCC coding workflow despite MA payer mix &gt;25%.</span></li>
+          <li class="numbered-item"><strong>Separate quality measure capture workflow</strong><span class="numbered-item-detail">HEDIS, Stars, MIPS measures captured in parallel workflow to ambient. Duplicate clinician burden; missed opportunity.</span></li>
+          <li class="numbered-item"><strong>CDI team treats ambient as competitor, not input</strong><span class="numbered-item-detail">Clinical documentation improvement team stripped of queries it would otherwise send, because ambient "just generates the note." Undervalues CDI expertise; misses synergy.</span></li>
+          <li class="numbered-item"><strong>Three or more ambient vendors in pilot without consolidation plan</strong><span class="numbered-item-detail">Pilot sprawl indicates enterprise hasn't made the platform decision. Cost compounds; value thesis fragments.</span></li>
+          <li class="numbered-item"><strong>No care gap closure workflow tied to ambient events</strong><span class="numbered-item-detail">Ambient captures "patient overdue for colonoscopy" in dialogue but no downstream outreach is triggered. Capture without action.</span></li>
+          <li class="numbered-item"><strong>Denial rate unchanged after 12 months of ambient deployment</strong><span class="numbered-item-detail">If ambient is generating notes but documentation denial rate hasn't moved, revenue integrity hasn't been wired in.</span></li>
+          <li class="numbered-item"><strong>Z-code / SDOH capture rate &lt;5%</strong><span class="numbered-item-detail">Ambient hears social determinant signals constantly. Low Z-code capture means the stream isn't being mined.</span></li>
+          <li class="numbered-item"><strong>CFO reports "ambient ROI unclear"</strong><span class="numbered-item-detail">The tell. If the CFO can't trace value, ambient is a cost center instead of a platform.</span></li>
+        </ul>
+      </div>
+
+      <!-- PART E INTERVENTIONS -->
+      <div class="section" id="interventions">
+        <div class="section-label">E · Interventions · 8 levers</div>
+        <h2 class="section-title">The portfolio of moves.</h2>
+
+        <div class="intervention">
+          <div class="intervention-name">1 · Treat ambient as platform, not product<span class="intervention-success">78% success rate</span></div>
+          <div class="intervention-detail">Reframe procurement decision: ambient is a platform capability with six value streams. Scorecard vendors against downstream integration depth, not just documentation quality.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">2 · Wire HCC integration before Phase 1 go-live<span class="intervention-success">64% success rate</span></div>
+          <div class="intervention-detail">Highest-dollar value stream for MA-heavy populations. Sequence HCC integration into ambient rollout Phase 1, not Phase 3. Revenue accrues 9-12 months earlier.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">3 · Pair ambient with CDI, don't replace<span class="intervention-success">71% success rate</span></div>
+          <div class="intervention-detail">CDI team becomes the quality layer above ambient. Ambient drafts; CDI elevates. Both accountabilities compound.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">4 · Build care gap event pipeline<span class="intervention-success">52% success rate</span></div>
+          <div class="intervention-detail">Capture ambient-detected care gaps into a real-time event stream. Route to population health outreach teams within 24-72h.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">5 · Contractual integration requirements with vendor<span class="intervention-success">83% success rate</span></div>
+          <div class="intervention-detail">Vendor contract must commit to HCC, quality, denial prevention integration milestones — with exit rights if missed.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">6 · SDOH capture workflow with compliance guardrails<span class="intervention-success">47% success rate</span></div>
+          <div class="intervention-detail">Health equity Z-code capture pipeline. Requires patient consent framework; partner with compliance early.</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">7 · Dual-vendor strategy with primary + competitive<span class="intervention-success">59% success rate</span></div>
+          <div class="intervention-detail">Maintain dual-vendor posture to sustain negotiation leverage and risk diversification. Primary (70% volume) + competitive (30%).</div>
+        </div>
+
+        <div class="intervention">
+          <div class="intervention-name">8 · Quarterly value chain accounting<span class="intervention-success">68% success rate</span></div>
+          <div class="intervention-detail">CFO + CMIO review ambient value chain contributions by stream every 90 days. Prevents drift back to "documentation only" framing.</div>
+        </div>
+      </div>
+
+      <!-- PART I OBSERVATIONS -->
+      <div class="section" id="observations">
+        <div class="section-label">I · Observations · from composite programs</div>
+        <h2 class="section-title">Patterns seen, not cases sold.</h2>
+        <div class="section-body">
+          <p style="font-size: 13px; color: var(--gray-500); margin-bottom: 20px;">Every observation below is drawn from composite scenarios built from real-world data. AbarVa has no deployed customer engagements yet; these are pattern-level observations authored from industry knowledge, not measured outcomes from paying clients.</p>
+        </div>
+        <div class="obs-grid">
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite IDN · 14 hospitals · MA-heavy</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">Enterprise deployed ambient in Phase 1 for documentation only. HCC coding integration pushed to "Phase 3" — actually meant year 2. Net effect: risk adjustment revenue impact delayed 14 months.</div>
+            <div class="obs-outcome">Pattern insight: HCC-first sequencing is the default, not the variant.</div>
+          </div>
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite academic system · 6 hospitals</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">CDI team initially positioned ambient as a threat. After restructuring CDI role to "elevator of ambient drafts," query volume stayed flat but query depth and specificity improved measurably.</div>
+            <div class="obs-outcome">Pattern insight: CDI+ambient is additive, not substitutive.</div>
+          </div>
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite community network · 3 hospitals</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">Three ambient vendors in parallel pilot with no consolidation plan. Documented cost overrun of ~$1.4M/yr from vendor overlap before intervention forced rationalization.</div>
+            <div class="obs-outcome">Pattern insight: pilot sprawl is a governance failure, not a product choice.</div>
+          </div>
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite integrated delivery · 18 hospitals</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">SDOH capture remained at 2% after 18 months of ambient deployment. No patient consent framework. No workflow integration. Ambient was hearing Z-code signals continuously; none were mined.</div>
+            <div class="obs-outcome">Pattern insight: SDOH requires explicit pipeline, not passive capture.</div>
+          </div>
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite health system · national footprint</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">Documentation denial rate moved from 12% to 8% within 9 months of ambient + revenue integrity integration. Isolated attribution via counterfactual cohort.</div>
+            <div class="obs-outcome">Pattern insight: denial rate is the most measurable ambient ROI signal.</div>
+          </div>
+
+          <div class="obs-card">
+            <div class="obs-header">
+              <span class="obs-tenant">Composite safety-net system · 4 hospitals</span>
+              <span class="obs-composite-tag">Composite</span>
+            </div>
+            <div class="obs-text">Quarterly CFO+CMIO value chain review prevented two "defund ambient" decisions driven by ROI-unclear framing. Review itself became a stabilizing governance mechanism.</div>
+            <div class="obs-outcome">Pattern insight: governance cadence is a value preservation mechanism.</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Section nav -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">On this pattern</div>
+        <ul class="nav-anchor-list">
+          <li><a href="#value-chain" class="active">Value chain map</a></li>
+          <li><a href="#identity">A · Identity</a></li>
+          <li><a href="#detection">C · Detection (8)</a></li>
+          <li><a href="#interventions">E · Interventions (8)</a></li>
+          <li><a href="#observations">I · Observations (6)</a></li>
+          <li><a href="#">F · Anti-patterns</a></li>
+          <li><a href="#">G · Vendor landscape</a></li>
+          <li><a href="#">H · Regulatory</a></li>
+          <li><a href="#">J · Success measures</a></li>
+          <li><a href="#">N · Related patterns</a></li>
+        </ul>
+      </div>
+
+      <!-- Applicable tenants -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Applicable to</div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Composite tenant</div>
+            <div class="link-title">Meridian Health · MRD-01</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+
+      <!-- Regulatory -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Regulatory</div>
+        <div class="reg-row">
+          <span class="reg-chip">HIPAA</span>
+          <span class="reg-chip">PART 2</span>
+          <span class="reg-chip">RADV</span>
+          <span class="reg-chip">INFO BLOCKING</span>
+        </div>
+      </div>
+
+      <!-- Related patterns -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Related patterns</div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Healthcare</div>
+            <div class="link-title">Prior Authorization Automation</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Universal</div>
+            <div class="link-title">Vendor Sprawl & AI Tool Rationalization</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Universal</div>
+            <div class="link-title">AI Use Case Portfolio Management</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    <div>Composite organization built from real-world data. Pattern observations are authored from industry knowledge, not measured outcomes from deployed customers.</div>
+    <div>Pattern authored Apr 10 · Last updated 1d ago · Evidence base: 23 sources</div>
+  </div>
+
+</div>
+
+</body>
+</html>

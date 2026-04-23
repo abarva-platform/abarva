@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AbarVa · Component Library</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Georgia&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-dark: #0a0a0b;
+    --bg-cream: #f5f1eb;
+    --bg-surface: #ffffff;
+    --teal: #1d9e75;
+    --teal-dark: #0f6e56;
+    --teal-light: #e1f5ee;
+    --amber: #ba7517;
+    --amber-light: #faeeda;
+    --red: #a32d2d;
+    --red-light: #fceded;
+    --gray-900: #2c2c2a;
+    --gray-700: #444441;
+    --gray-500: #5f5e5a;
+    --gray-300: #b4b2a9;
+    --gray-200: #d3d1c7;
+    --gray-100: #f1efe8;
+    --border: rgba(10, 10, 11, 0.12);
+    --border-strong: rgba(10, 10, 11, 0.24);
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg-cream);
+    color: var(--gray-900);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px;
+  }
+
+  .doc { max-width: 1200px; margin: 0 auto; }
+  .doc-title { font-family: 'Georgia', serif; font-size: 36px; margin-bottom: 8px; }
+  .doc-subtitle { color: var(--gray-500); font-size: 14px; margin-bottom: 40px; }
+
+  .component-group { margin-bottom: 56px; }
+  .component-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--teal);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+  .component-title { font-family: 'Georgia', serif; font-size: 20px; margin-bottom: 6px; }
+  .component-desc { color: var(--gray-500); font-size: 13px; margin-bottom: 20px; }
+  .component-canvas {
+    background: var(--bg-cream);
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 16px;
+  }
+  .component-canvas.dark { background: var(--bg-dark); }
+  .usage-note {
+    background: #fff9e6;
+    border-left: 3px solid #d9a619;
+    padding: 12px 16px;
+    font-size: 12px;
+    color: #5f4a0e;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  /* ========== NAVBAR ========== */
+  .navbar {
+    background: var(--bg-dark);
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .wordmark { font-family: 'Georgia', serif; color: white; display: flex; align-items: center; }
+  .wordmark .abar { font-weight: 800; font-size: 17px; }
+  .wordmark .va { font-weight: 900; font-size: 23px; color: var(--teal); }
+
+  .tenant-switcher {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  .tenant-switcher::before { content: '●'; color: var(--teal); font-size: 10px; }
+  .tenant-switcher::after { content: '▾'; font-size: 10px; opacity: 0.6; }
+
+  .nav-links { display: flex; gap: 24px; margin-left: 16px; flex: 1; }
+  .nav-link { color: white; text-decoration: none; font-size: 14px; font-weight: 600; opacity: 0.85; transition: all 0.15s; }
+  .nav-link:hover { color: var(--teal); opacity: 1; }
+  .nav-link.active { color: var(--teal); opacity: 1; }
+
+  .nav-right { color: white; font-size: 14px; font-weight: 600; opacity: 0.85; cursor: pointer; }
+
+  /* ========== BREADCRUMB ========== */
+  .breadcrumb {
+    font-size: 12px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .breadcrumb a { color: var(--gray-500); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--teal); }
+  .breadcrumb .sep { margin: 0 8px; opacity: 0.4; }
+  .breadcrumb .current { color: var(--gray-700); }
+
+  /* ========== MONO LABEL ========== */
+  .mono-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .mono-label.teal { color: var(--teal); }
+  .mono-label.amber { color: var(--amber); }
+  .mono-label.gray { color: var(--gray-500); }
+
+  /* ========== CHIP ========== */
+  .chip {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+  }
+  .chip-label { color: var(--gray-500); font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .chip-value { font-weight: 600; color: var(--gray-900); }
+  .chip-value.amber { color: var(--amber); }
+  .chip-value.red { color: var(--red); }
+  .chip-value.teal { color: var(--teal); }
+
+  /* ========== BUTTON ========== */
+  .btn {
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: transparent;
+    color: var(--gray-900);
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+    display: inline-block;
+  }
+  .btn:hover { background: rgba(0, 0, 0, 0.03); }
+  .btn.primary { background: var(--bg-dark); color: white; border-color: var(--bg-dark); }
+  .btn.primary:hover { background: #1a1a1c; }
+  .btn.primary::after { content: ' →'; }
+  .btn.arrow::after { content: ' →'; }
+
+  /* ========== CALLOUT ========== */
+  .callout {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .callout.amber { color: var(--amber); }
+  .callout.teal { color: var(--teal); }
+  .callout.red { color: var(--red); }
+
+  /* ========== SECTION CARD ========== */
+  .section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+  }
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .section-title { font-family: 'Georgia', serif; font-size: 22px; font-weight: 400; margin-bottom: 8px; color: var(--gray-900); }
+  .section-subtitle { color: var(--gray-500); font-size: 14px; margin-bottom: 24px; }
+
+  /* ========== KPI CARD ========== */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .kpi-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .kpi-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .kpi-value { font-family: 'Georgia', serif; font-size: 32px; font-weight: 400; color: var(--gray-900); line-height: 1.1; }
+  .kpi-unit { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--gray-500); margin-top: 8px; font-weight: 400; }
+
+  /* ========== PRESSURE CARD ========== */
+  .pressure-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 6px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .pressure-card.critical { border-left-color: var(--red); }
+  .pressure-severity {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    background: var(--amber-light);
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .pressure-card.critical .pressure-severity {
+    color: var(--red);
+    background: var(--red-light);
+  }
+  .pressure-text { flex: 1; font-size: 13px; color: var(--gray-900); }
+
+  /* ========== PHASE TIMELINE ========== */
+  .timeline-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px 32px;
+  }
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .phase {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding: 0 12px;
+  }
+  .phase-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    border: 3px solid var(--bg-surface);
+    box-shadow: 0 0 0 1px var(--border-strong);
+    z-index: 2;
+    position: relative;
+  }
+  .phase.done .phase-dot { background: var(--teal); box-shadow: 0 0 0 1px var(--teal); }
+  .phase.current .phase-dot {
+    background: white;
+    border: 3px solid var(--bg-surface);
+    box-shadow: 0 0 0 2px var(--teal);
+    width: 18px;
+    height: 18px;
+  }
+  .phase.current .phase-dot::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    background: rgba(29, 158, 117, 0.15);
+    z-index: -1;
+  }
+
+  .phase-connector {
+    position: absolute;
+    top: 7px;
+    left: calc(50% + 12px);
+    right: calc(-50% + 12px);
+    height: 2px;
+    background: var(--gray-200);
+    z-index: 1;
+  }
+  .phase.done .phase-connector { background: var(--teal); }
+  .phase:last-child .phase-connector { display: none; }
+
+  .phase-label {
+    margin-top: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  .phase.current .phase-label { color: var(--teal); font-weight: 500; }
+  .phase-name { margin-top: 4px; font-size: 14px; font-weight: 600; text-align: center; color: var(--gray-900); }
+  .phase-date { margin-top: 2px; font-size: 11px; color: var(--gray-500); text-align: center; font-family: 'JetBrains Mono', monospace; }
+
+  /* ========== DELIVERABLE ROW ========== */
+  .deliverable {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .deliverable:hover { border-color: var(--border-strong); background: rgba(0, 0, 0, 0.01); }
+  .deliverable-main { display: flex; align-items: center; gap: 12px; flex: 1; }
+  .deliverable-code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--gray-500);
+    letter-spacing: 0.08em;
+    min-width: 40px;
+  }
+  .deliverable-name { font-weight: 500; color: var(--gray-900); font-size: 14px; }
+  .deliverable-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  .deliverable-status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .deliverable-status.ready { background: var(--teal-light); color: var(--teal-dark); }
+  .deliverable-status.draft { background: var(--bg-cream); color: var(--gray-700); border: 1px solid var(--border); }
+  .deliverable-status.pending { background: var(--amber-light); color: var(--amber); }
+
+  /* ========== GATE BANNER ========== */
+  .gate-banner {
+    display: flex;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--teal-light);
+    border-radius: 6px;
+    border-left: 3px solid var(--teal);
+  }
+  .gate-banner-icon { color: var(--teal-dark); font-size: 14px; font-weight: 600; }
+  .gate-banner-text { color: var(--teal-dark); font-size: 14px; }
+
+  /* ========== DECISION LOG ENTRY ========== */
+  .decision-entry { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .decision-entry:last-child { border-bottom: none; }
+  .decision-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .decision-text { font-size: 13px; color: var(--gray-900); line-height: 1.5; }
+
+  /* ========== CROSS-LINK ITEM ========== */
+  .link-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .link-item:last-child { border-bottom: none; }
+  .link-item:hover .link-title { color: var(--teal); }
+  .link-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--gray-500);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .link-title { font-size: 13px; font-weight: 500; color: var(--gray-900); transition: color 0.15s; }
+  .link-arrow { color: var(--gray-300); font-size: 14px; }
+  .link-item:hover .link-arrow { color: var(--teal); }
+
+  /* ========== COMPOSITE DISCLAIMER ========== */
+  .composite-footer {
+    padding: 16px 20px;
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.05em;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <h1 class="doc-title">AbarVa · Component Library</h1>
+  <p class="doc-subtitle">Reusable components extracted from the Programs wireframe. Every subsequent page composes from these primitives. Copy component markup from View Source → use directly.</p>
+
+  <div class="usage-note">
+    <strong>HOW TO USE</strong><br>
+    Right-click → View Source to copy any component's HTML and CSS. CSS variables (--teal, --bg-dark, etc.) are defined once at the top; every component uses them. To extend, add new variants (e.g., .btn.success) without touching the primitive.
+  </div>
+
+  <!-- NAVBAR -->
+  <div class="component-group">
+    <div class="component-label">01 · Global</div>
+    <h2 class="component-title">Navbar (authenticated)</h2>
+    <p class="component-desc">Top navigation across all authenticated surfaces. Tenant switcher on left, primary nav in middle, Investor link on right. Dark background (--bg-dark) with white text + teal accent on active/hover.</p>
+    <div class="component-canvas" style="padding: 0;">
+      <nav class="navbar">
+        <div class="wordmark">
+          <span class="abar">Abar</span><span class="va">Va</span>
+        </div>
+        <div class="tenant-switcher">Meridian Health</div>
+        <div class="nav-links">
+          <a class="nav-link" href="#">Home</a>
+          <a class="nav-link active" href="#">Programs</a>
+          <a class="nav-link" href="#">Intelligence</a>
+          <a class="nav-link" href="#">Control Tower</a>
+          <a class="nav-link" href="#">Platform</a>
+        </div>
+        <div class="nav-right">Investor →</div>
+      </nav>
+    </div>
+  </div>
+
+  <!-- BREADCRUMB -->
+  <div class="component-group">
+    <div class="component-label">02 · Global</div>
+    <h2 class="component-title">Breadcrumb</h2>
+    <p class="component-desc">Mono caps, clickable segments, trailing current in darker gray.</p>
+    <div class="component-canvas">
+      <div class="breadcrumb">
+        <a href="#">Meridian Health</a>
+        <span class="sep">›</span>
+        <a href="#">Programs</a>
+        <span class="sep">›</span>
+        <span class="current">Ambient Clinical Value Chain</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MONO LABEL -->
+  <div class="component-group">
+    <div class="component-label">03 · Typography</div>
+    <h2 class="component-title">Mono label (caps)</h2>
+    <p class="component-desc">JetBrains Mono, 11px, letter-spaced. Used for section labels, metadata rows, and editorial tags. Three color variants.</p>
+    <div class="component-canvas">
+      <div class="mono-label teal" style="margin-bottom: 12px;">MRD-01 · AP archetype · Phase 3 · On track</div>
+      <div class="mono-label amber" style="margin-bottom: 12px;">▸ Phase 3 · 4 of 6 deliverables ready · gate approaching Apr 30</div>
+      <div class="mono-label gray">Last updated 2h ago</div>
+    </div>
+  </div>
+
+  <!-- CHIP -->
+  <div class="component-group">
+    <div class="component-label">04 · Data</div>
+    <h2 class="component-title">Meta chip</h2>
+    <p class="component-desc">Label + value pair in a bordered container. Used in horizontal rows for program/tenant metadata. Value color variants for semantic meaning.</p>
+    <div class="component-canvas">
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <div class="chip"><span class="chip-label">Deliverables</span><span class="chip-value">24</span></div>
+        <div class="chip"><span class="chip-label">Open risks</span><span class="chip-value amber">3</span></div>
+        <div class="chip"><span class="chip-label">Projected outcome</span><span class="chip-value teal">$14-22M/yr</span></div>
+        <div class="chip"><span class="chip-label">Contradictions</span><span class="chip-value red">25</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTON -->
+  <div class="component-group">
+    <div class="component-label">05 · Action</div>
+    <h2 class="component-title">Button</h2>
+    <p class="component-desc">Two variants: outline (secondary actions) and primary (dominant action). Primary gets an auto-appended arrow.</p>
+    <div class="component-canvas">
+      <button class="btn" style="margin-right: 8px;">Ask Nexus</button>
+      <button class="btn primary">Request phase gate</button>
+    </div>
+  </div>
+
+  <!-- CALLOUT -->
+  <div class="component-group">
+    <div class="component-label">06 · Editorial</div>
+    <h2 class="component-title">Editorial callout</h2>
+    <p class="component-desc">Mono caps with color signaling. Used above headlines to set frame or urgency. The signature Tower pattern — carries the editorial voice ("PRESSURE TODAY · 3 UNOWNED · HIGHEST-DOLLAR").</p>
+    <div class="component-canvas">
+      <div class="callout amber" style="margin-bottom: 8px;">▸ PRESSURE TODAY · 3 UNOWNED · HIGHEST-DOLLAR</div>
+      <div class="callout teal" style="margin-bottom: 8px;">● PHASE 3 · DESIGN &amp; DECISION · ON TRACK</div>
+      <div class="callout red">⚠ CRITICAL · GATE BLOCKER · REQUIRES CXO</div>
+    </div>
+  </div>
+
+  <!-- SECTION CARD -->
+  <div class="component-group">
+    <div class="component-label">07 · Layout</div>
+    <h2 class="component-title">Section card</h2>
+    <p class="component-desc">The base container. White surface, subtle border, generous padding. Holds a section label (mono caps) + serif title + subtitle + body content.</p>
+    <div class="component-canvas">
+      <div class="section">
+        <div class="section-label">Phase 3 · Design &amp; decision</div>
+        <h2 class="section-title">Target state designed. Interventions selected. CXO aligned.</h2>
+        <div class="section-subtitle">Gate criterion: Target state designed · Intervention portfolio selected · CXO alignment achieved on Phase 4 capital commitment.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI CARD -->
+  <div class="component-group">
+    <div class="component-label">08 · Data</div>
+    <h2 class="component-title">KPI card grid</h2>
+    <p class="component-desc">Serif large number + mono caps label + small unit. Four-column grid collapses to 2 on mobile. The outcome/projection pattern.</p>
+    <div class="component-canvas">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label">Capital commitment</div>
+          <div class="kpi-value">$6.8M</div>
+          <div class="kpi-unit">over 18 months</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Net impact</div>
+          <div class="kpi-value">$14-22M</div>
+          <div class="kpi-unit">per year at steady state</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Payback</div>
+          <div class="kpi-value">9-14</div>
+          <div class="kpi-unit">months</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Risk tier</div>
+          <div class="kpi-value" style="color: var(--amber);">High</div>
+          <div class="kpi-unit">HCC coding primary</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESSURE CARD -->
+  <div class="component-group">
+    <div class="component-label">09 · Signal</div>
+    <h2 class="component-title">Pressure card</h2>
+    <p class="component-desc">The Tower pressure signal. Severity chip + editorial one-liner + action slot. Two variants: amber (HIGH) and red (CRITICAL). Left accent bar matches severity.</p>
+    <div class="component-canvas">
+      <div class="pressure-card" style="margin-bottom: 8px;">
+        <span class="pressure-severity">High</span>
+        <div class="pressure-text">AI cloud spend on pace to $2.4M/mo by Q3 without guardrails · 1.8x growth in 12 months · no consumption attribution.</div>
+      </div>
+      <div class="pressure-card critical">
+        <span class="pressure-severity">Critical</span>
+        <div class="pressure-text">AI spend is scaling like a production platform while governance still behaves like a pilot committee.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PHASE TIMELINE -->
+  <div class="component-group">
+    <div class="component-label">10 · Programs</div>
+    <h2 class="component-title">Phase timeline</h2>
+    <p class="component-desc">The signature program visual. 5 phases with done (teal fill) / current (teal ring + pulse) / future (gray) states. Connector lines fill with teal as phases complete.</p>
+    <div class="component-canvas">
+      <div class="timeline-card">
+        <div class="timeline">
+          <div class="phase done">
+            <div class="phase-dot"></div>
+            <div class="phase-connector"></div>
+            <div class="phase-label">Phase 1</div>
+            <div class="phase-name">Intake</div>
+            <div class="phase-date">Mar 3 ✓</div>
+          </div>
+          <div class="phase done">
+            <div class="phase-dot"></div>
+            <div class="phase-connector"></div>
+            <div class="phase-label">Phase 2</div>
+            <div class="phase-name">Diagnosis</div>
+            <div class="phase-date">Apr 1 ✓</div>
+          </div>
+          <div class="phase current">
+            <div class="phase-dot"></div>
+            <div class="phase-connector"></div>
+            <div class="phase-label">Phase 3</div>
+            <div class="phase-name">Design</div>
+            <div class="phase-date">▸ Apr 22</div>
+          </div>
+          <div class="phase">
+            <div class="phase-dot"></div>
+            <div class="phase-connector"></div>
+            <div class="phase-label">Phase 4</div>
+            <div class="phase-name">Build</div>
+            <div class="phase-date">May 30</div>
+          </div>
+          <div class="phase">
+            <div class="phase-dot"></div>
+            <div class="phase-label">Phase 5</div>
+            <div class="phase-name">Outcome</div>
+            <div class="phase-date">Aug 15</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELIVERABLE ROW -->
+  <div class="component-group">
+    <div class="component-label">11 · Programs</div>
+    <h2 class="component-title">Deliverable row</h2>
+    <p class="component-desc">Code + name + meta + status chip. Status has three states: ready (teal), draft (neutral), pending (amber). Clickable with hover.</p>
+    <div class="component-canvas">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div class="deliverable">
+          <div class="deliverable-main">
+            <span class="deliverable-code">D12</span>
+            <div>
+              <div class="deliverable-name">Estimation &amp; Execution Roadmap</div>
+              <div class="deliverable-meta">Rich · 72 pages · intervention sequencing</div>
+            </div>
+          </div>
+          <span class="deliverable-status ready">Ready for review</span>
+        </div>
+        <div class="deliverable">
+          <div class="deliverable-main">
+            <span class="deliverable-code">D13</span>
+            <div>
+              <div class="deliverable-name">Target State Architecture</div>
+              <div class="deliverable-meta">Rich · Ambient platform + 6 downstream value streams</div>
+            </div>
+          </div>
+          <span class="deliverable-status draft">Draft</span>
+        </div>
+        <div class="deliverable" style="border-color: var(--amber); background: #fffaf0;">
+          <div class="deliverable-main">
+            <span class="deliverable-code" style="color: var(--amber);">D17</span>
+            <div>
+              <div class="deliverable-name">Decision Memo for CXO</div>
+              <div class="deliverable-meta">Rich · Ready for Dr. L interview scheduled Apr 24</div>
+            </div>
+          </div>
+          <span class="deliverable-status pending">Pending CXO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GATE BANNER -->
+  <div class="component-group">
+    <div class="component-label">12 · Programs</div>
+    <h2 class="component-title">Gate readiness banner</h2>
+    <p class="component-desc">Teal-washed banner with left accent. States phase readiness in one glance.</p>
+    <div class="component-canvas">
+      <div class="gate-banner">
+        <div class="gate-banner-icon">▸</div>
+        <div class="gate-banner-text"><strong>Gate readiness:</strong> 4 of 6 deliverables ready · 1 pending Dr. L interview (D17) · 1 in draft</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DECISION LOG -->
+  <div class="component-group">
+    <div class="component-label">13 · Programs</div>
+    <h2 class="component-title">Decision log entry</h2>
+    <p class="component-desc">Teal mono date + body text. Stack in sidebars with 1px divider between entries.</p>
+    <div class="component-canvas" style="max-width: 400px;">
+      <div class="section">
+        <div class="decision-entry">
+          <div class="decision-date">Apr 18</div>
+          <div class="decision-text">Elevated ambient vendor DAX to preferred (from DAX/Abridge tie). Dual-vendor retained for risk mitigation.</div>
+        </div>
+        <div class="decision-entry">
+          <div class="decision-date">Apr 15</div>
+          <div class="decision-text">Scope narrowed to inpatient first. Outpatient deferred pending Dr. L input on sequencing.</div>
+        </div>
+        <div class="decision-entry">
+          <div class="decision-date">Apr 10</div>
+          <div class="decision-text">Risk tier raised to CRITICAL for HCC coding claim accuracy — RADV audit exposure.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CROSS-LINK ITEM -->
+  <div class="component-group">
+    <div class="component-label">14 · Navigation</div>
+    <h2 class="component-title">Cross-link item</h2>
+    <p class="component-desc">Mono label + title + arrow. Used in sidebars for related patterns, analogous programs, evidence base.</p>
+    <div class="component-canvas" style="max-width: 400px;">
+      <div class="section">
+        <div class="link-item">
+          <div>
+            <div class="link-label">Source pattern</div>
+            <div class="link-title">Ambient Clinical Value Chain Automation</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Analogous program</div>
+            <div class="link-title">Demand Forecasting · Apex Retail</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+        <div class="link-item">
+          <div>
+            <div class="link-label">Evidence base</div>
+            <div class="link-title">23 sources · 6 Meridian interviews</div>
+          </div>
+          <span class="link-arrow">→</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPOSITE FOOTER -->
+  <div class="component-group">
+    <div class="component-label">15 · Global</div>
+    <h2 class="component-title">Composite footer</h2>
+    <p class="component-desc">Mandatory on every page with tenant data. Left: composite disclaimer. Right: provenance line.</p>
+    <div class="component-canvas">
+      <div class="composite-footer">
+        <div>Composite organization built from real-world data.</div>
+        <div>Generated by Nexus · Grounded in 23 evidence sources · Last updated 2h ago</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
