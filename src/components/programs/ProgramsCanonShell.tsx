@@ -286,7 +286,7 @@ function PortfolioStage({
   return (
     <div className="pcs-container">
       <div className="pcs-breadcrumb">
-        <a href="#">Portfolio</a>
+        <Link href="/preview/programs">Portfolio</Link>
       </div>
       <div className="pcs-prog-header">
         <div>
@@ -353,9 +353,9 @@ function PhaseStage({
   return (
     <div className="pcs-container pcs-phase-stage">
       <div className="pcs-breadcrumb">
-        <a href="#">{program.clientName}</a>
+        <Link href="/home">{program.clientName}</Link>
         <span className="sep">›</span>
-        <a href="#">Programs</a>
+        <Link href="/preview/programs">Programs</Link>
         <span className="sep">›</span>
         <span className="current">{program.name}</span>
       </div>
