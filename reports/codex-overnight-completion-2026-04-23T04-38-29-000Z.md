@@ -4,7 +4,7 @@
 
 - Tier 1 complete: 7 / 7 items.
 - Branch: `codex/overnight-tier1`.
-- PR: pending push/open.
+- PR: https://github.com/anandsundaram-hash/abarva/pull/111.
 - Flags raised: 0.
 
 ## Shipped
