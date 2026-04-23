@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-23T03:15:52.632Z",
+  "generatedAt": "2026-04-23T16:43:24.802Z",
   "sourceDir": "Patterns",
   "patternCount": 17,
   "demoCriticalSlugs": [
@@ -30,10 +30,17 @@
       "confidenceFloor": 0.65,
       "nObservationsFloor": 8,
       "relatedPatternIds": [
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
-        "pattern_vendor_sprawl_ai_tool_rationalization",
-        "pattern_ai_led_pdlc"
+        "pattern_ai_led_pdlc",
+        "pattern_ambient_clinical_value_chain",
+        "pattern_analytics_modernization",
+        "pattern_commodity_trading_ai",
+        "pattern_customer_onboarding_kyc_ai",
+        "pattern_demand_forecasting_inventory_ai",
+        "pattern_fraud_detection_modernization",
+        "pattern_owned_brand_margin_recovery",
+        "pattern_prior_authorization_automation",
+        "pattern_vendor_sprawl_ai_tool_rationalization"
       ],
       "regulatoryFrameworkIds": [
         "framework_nist_ai_rmf",
@@ -188,10 +195,16 @@
       "confidenceFloor": 0.7,
       "nObservationsFloor": 8,
       "relatedPatternIds": [
+        "pattern_ai_governance_operating_model",
         "pattern_ai_use_case_portfolio",
-        "pattern_vendor_sprawl_ai_tool_rationalization",
         "pattern_ai_led_pdlc",
-        "pattern_ai_governance_operating_model"
+        "pattern_ambient_clinical_value_chain",
+        "pattern_commodity_trading_ai",
+        "pattern_customer_onboarding_kyc_ai",
+        "pattern_demand_forecasting_inventory_ai",
+        "pattern_fraud_detection_modernization",
+        "pattern_owned_brand_margin_recovery",
+        "pattern_vendor_sprawl_ai_tool_rationalization"
       ],
       "regulatoryFrameworkIds": [
         "framework_nist_ai_rmf",
@@ -339,9 +352,9 @@
       "confidenceFloor": 0.7,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_owned_brand_margin_recovery",
-        "pattern_analytics_modernization",
         "pattern_ai_use_case_portfolio",
+        "pattern_analytics_modernization",
+        "pattern_owned_brand_margin_recovery",
         "pattern_vendor_sprawl_ai_tool_rationalization"
       ],
       "regulatoryFrameworkIds": [
@@ -461,9 +474,9 @@
       "confidenceFloor": 0.7,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_demand_forecasting_inventory_ai",
         "pattern_ai_use_case_portfolio",
-        "pattern_analytics_modernization"
+        "pattern_analytics_modernization",
+        "pattern_demand_forecasting_inventory_ai"
       ],
       "regulatoryFrameworkIds": [
         "framework_ftc_made_in_usa",
@@ -624,9 +637,13 @@
       "relatedPatternIds": [
         "pattern_ai_use_case_portfolio",
         "pattern_ai_led_pdlc",
+        "pattern_ambient_clinical_value_chain",
         "pattern_analytics_modernization",
-        "pattern_vendor_sprawl_ai_tool_rationalization",
-        "pattern_shadow_ai_governance"
+        "pattern_commodity_trading_ai",
+        "pattern_customer_onboarding_kyc_ai",
+        "pattern_fraud_detection_modernization",
+        "pattern_prior_authorization_automation",
+        "pattern_vendor_sprawl_ai_tool_rationalization"
       ],
       "regulatoryFrameworkIds": [
         "framework_nist_ai_rmf",
@@ -786,14 +803,14 @@
       "confidenceFloor": 0.65,
       "nObservationsFloor": 10,
       "relatedPatternIds": [
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
-        "pattern_vendor_sprawl_ai_tool_rationalization",
         "pattern_ai_use_case_portfolio",
+        "pattern_analytics_modernization",
+        "pattern_context_as_code_underinvestment",
+        "pattern_senior_bench_decay",
         "pattern_specification_debt_multiplication",
         "pattern_velocity_without_validation",
-        "pattern_context_as_code_underinvestment",
-        "pattern_senior_bench_decay"
+        "pattern_vendor_sprawl_ai_tool_rationalization"
       ],
       "regulatoryFrameworkIds": [
         "framework_nist_ai_rmf",
@@ -947,10 +964,10 @@
       "confidenceFloor": 0.7,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
-        "pattern_prior_authorization_automation",
-        "pattern_ai_use_case_portfolio"
+        "pattern_ai_use_case_portfolio",
+        "pattern_analytics_modernization",
+        "pattern_prior_authorization_automation"
       ],
       "regulatoryFrameworkIds": [
         "framework_hipaa_security_rule",
@@ -1039,11 +1056,11 @@
       "confidenceFloor": 0.7,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_predictive_maintenance_modernization",
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
         "pattern_ai_use_case_portfolio",
-        "pattern_fraud_detection_modernization"
+        "pattern_analytics_modernization",
+        "pattern_fraud_detection_modernization",
+        "pattern_predictive_maintenance_modernization"
       ],
       "regulatoryFrameworkIds": [
         "framework_cftc_dodd_frank_title_vii",
@@ -1164,7 +1181,9 @@
       "longDescription": null,
       "confidenceFloor": 0.7,
       "nObservationsFloor": 8,
-      "relatedPatternIds": [],
+      "relatedPatternIds": [
+        "pattern_ai_led_pdlc"
+      ],
       "regulatoryFrameworkIds": [],
       "sourceFile": "02-ai-led-pdlc.md",
       "sourceSection": null,
@@ -1260,10 +1279,10 @@
       "confidenceFloor": 0.75,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_fraud_detection_modernization",
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
-        "pattern_ai_use_case_portfolio"
+        "pattern_ai_use_case_portfolio",
+        "pattern_analytics_modernization",
+        "pattern_fraud_detection_modernization"
       ],
       "regulatoryFrameworkIds": [
         "framework_bsa_cip",
@@ -1391,10 +1410,11 @@
       "confidenceFloor": 0.75,
       "nObservationsFloor": 6,
       "relatedPatternIds": [
-        "pattern_customer_onboarding_kyc_ai",
-        "pattern_analytics_modernization",
         "pattern_ai_governance_operating_model",
-        "pattern_ai_use_case_portfolio"
+        "pattern_ai_use_case_portfolio",
+        "pattern_analytics_modernization",
+        "pattern_commodity_trading_ai",
+        "pattern_customer_onboarding_kyc_ai"
       ],
       "regulatoryFrameworkIds": [
         "framework_bsa_aml",
@@ -1518,7 +1538,9 @@
       "longDescription": "Predictive maintenance has been a priority workload for utilities and energy companies for two decades. Early generation focused on vibration monitoring for rotating equipment; mid-generation added temperature, pressure, and oil analysis; current generation integrates continuous sensor streams with ML anomaly detection and generative AI for work-order narrative and field-technician assistance. Most incumbent energy companies carry multiple vendor solutions deployed on different asset classes — vibration on turbines, partial discharge on transformers, acoustic on pipelines, drone-based thermal on transmission towers — with disconnected alert streams, separate case management, and inconsistent integration to work order management. The pattern captures the integrated modernization required: unified asset health signal, prioritized alert management, work order integration, field-technician augmentation, and feedback-loop discipline connecting maintenance outcomes back to model refinement. NERC CIP compliance overlays add cyber-security constraints that shape architecture choices distinctively.",
       "confidenceFloor": null,
       "nObservationsFloor": null,
-      "relatedPatternIds": [],
+      "relatedPatternIds": [
+        "pattern_commodity_trading_ai"
+      ],
       "regulatoryFrameworkIds": [],
       "sourceFile": "12-predictive-maintenance-modernization.md",
       "sourceSection": null,
@@ -1640,9 +1662,9 @@
       "confidenceFloor": 0.65,
       "nObservationsFloor": 8,
       "relatedPatternIds": [
-        "pattern_ambient_clinical_value_chain",
+        "pattern_ai_governance_operating_model",
         "pattern_ai_use_case_portfolio",
-        "pattern_ai_governance_operating_model"
+        "pattern_ambient_clinical_value_chain"
       ],
       "regulatoryFrameworkIds": [
         "framework_hipaa_privacy_rule",
@@ -1797,7 +1819,9 @@
       "longDescription": null,
       "confidenceFloor": 0.6,
       "nObservationsFloor": 6,
-      "relatedPatternIds": [],
+      "relatedPatternIds": [
+        "pattern_ai_led_pdlc"
+      ],
       "regulatoryFrameworkIds": [],
       "sourceFile": "02-ai-led-pdlc.md",
       "sourceSection": null,
@@ -1888,7 +1912,9 @@
       "longDescription": null,
       "confidenceFloor": 0.7,
       "nObservationsFloor": 8,
-      "relatedPatternIds": [],
+      "relatedPatternIds": [
+        "pattern_ai_led_pdlc"
+      ],
       "regulatoryFrameworkIds": [],
       "sourceFile": "02-ai-led-pdlc.md",
       "sourceSection": null,
@@ -1978,7 +2004,9 @@
       "longDescription": null,
       "confidenceFloor": 0.7,
       "nObservationsFloor": 10,
-      "relatedPatternIds": [],
+      "relatedPatternIds": [
+        "pattern_ai_led_pdlc"
+      ],
       "regulatoryFrameworkIds": [],
       "sourceFile": "02-ai-led-pdlc.md",
       "sourceSection": null,
@@ -2077,8 +2105,9 @@
       "relatedPatternIds": [
         "pattern_ai_governance_operating_model",
         "pattern_ai_use_case_portfolio",
+        "pattern_ai_led_pdlc",
         "pattern_analytics_modernization",
-        "pattern_ai_led_pdlc"
+        "pattern_demand_forecasting_inventory_ai"
       ],
       "regulatoryFrameworkIds": [
         "framework_nist_ai_rmf",

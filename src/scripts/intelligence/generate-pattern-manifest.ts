@@ -80,7 +80,7 @@ function main() {
     patterns.push(...parsePatternDocument(markdown, file, null));
   }
 
-  const unique = Array.from(new Map(patterns.map((pattern) => [pattern.slug, pattern])).values())
+  const unique = normalizeRelatedPatternIds(Array.from(new Map(patterns.map((pattern) => [pattern.slug, pattern])).values()))
     .sort((a, b) => Number(b.demoCritical) - Number(a.demoCritical) || a.name.localeCompare(b.name));
 
   const payload = {
@@ -94,6 +94,47 @@ function main() {
   mkdirSync(dirname(OUTPUT_PATH), { recursive: true });
   writeFileSync(OUTPUT_PATH, `${JSON.stringify(payload, null, 2)}\n`);
   console.log(`Wrote ${unique.length} patterns to ${OUTPUT_PATH}`);
+}
+
+function normalizeRelatedPatternIds(patterns: ParsedPattern[]): ParsedPattern[] {
+  const knownIds = new Set(patterns.map((pattern) => pattern.id));
+  const normalized = patterns.map((pattern) => {
+    const uniqueIds = Array.from(new Set(pattern.relatedPatternIds));
+    const filteredIds = uniqueIds.filter((id) => {
+      const isKnown = knownIds.has(id);
+      if (!isKnown) {
+        console.warn(`[pattern-manifest] dropping unknown related pattern id "${id}" from ${pattern.id}`);
+      }
+      return isKnown;
+    });
+
+    return {
+      ...pattern,
+      relatedPatternIds: filteredIds,
+    };
+  });
+
+  const byId = new Map(normalized.map((pattern) => [pattern.id, pattern]));
+  for (const pattern of normalized) {
+    for (const targetId of pattern.relatedPatternIds) {
+      const target = byId.get(targetId);
+      if (!target) continue;
+      if (!target.relatedPatternIds.includes(pattern.id)) {
+        target.relatedPatternIds.push(pattern.id);
+      }
+    }
+  }
+
+  return normalized.map((pattern) => ({
+    ...pattern,
+    relatedPatternIds: pattern.relatedPatternIds
+      .slice()
+      .sort((left, right) => {
+        const leftName = byId.get(left)?.name ?? left;
+        const rightName = byId.get(right)?.name ?? right;
+        return leftName.localeCompare(rightName);
+      }),
+  }));
 }
 
 function parsePatternDocument(markdown: string, sourceFile: string, sourceSection: string | null): ParsedPattern[] {
