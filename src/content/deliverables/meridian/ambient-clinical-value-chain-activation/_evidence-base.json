@@ -2,10 +2,10 @@
   "program_code": "MRD-01",
   "program_name": "Ambient Clinical Value Chain Activation",
   "schema_version": "1.0",
-  "last_updated": "2026-04-23-c5",
+  "last_updated": "2026-04-23-c6",
   "append_only": true,
 
-  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Meridian Ambient deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. Meridian Ambient owns the E1-E19 range; other programs use separate evidence bases. The integrity linter flags any citation chip that does not resolve.",
+  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Meridian Ambient deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. Meridian Ambient owns the E1-E39 range (C5 E1-E19, C6 E20-E39); other programs use separate evidence bases. The integrity linter flags any citation chip that does not resolve.",
 
   "entries": {
     "E1": {
@@ -159,6 +159,110 @@
       "reference": "Chief Ambulatory Officer framing: 'The 220 ambulatory sites are where the clinician burnout math actually lives · if we get ambient working in ambulatory primary care, we buy capacity worth 6-9 incremental visits per clinician per week · that is a real patient-access number.'",
       "evidence_confidence": "medium",
       "first_cited_in": "D04"
+    },
+    "E20": {
+      "type": "workshop",
+      "source": "D06 Workstream Charters · Phase 2 steering ratification · 2026-02-03",
+      "deliverable_code": "D06",
+      "reference": "Phase 2 four-workstream charter approved by steering committee · WS1 documentation governance (Dr. Morales + Theo J.), WS2 clinician burnout measurement (Dr. Larsson + Kevin B.), WS3 vendor rationalisation candidates (Priya Raman + Dr. Morales), WS4 CMIO/CMO alignment cadence (Sarah Chen + Dr. Larsson) · workstream-level Tier-2 authority bounds and cross-workstream coordination via Nexus orchestrator surface.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D06"
+    },
+    "E21": {
+      "type": "interview",
+      "source": "D08 Pain Point Register · Phase 2 intake corpus",
+      "deliverable_code": "D08",
+      "reference": "Phase 2 pain-point intake corpus: 22 structured clinician conversations (12 primary care, 6 specialty, 4 outpatient procedural), 4 CDI-specialist shadows, 6 revenue-cycle workshops, 3 vendor-council joint reviews · conducted 2026-02-05 → 2026-02-24 · 28 distinct pain points logged.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D08"
+    },
+    "E22": {
+      "type": "model",
+      "source": "D08 Pain Point Register · three-axis severity scoring",
+      "deliverable_code": "D08",
+      "reference": "Three-axis scoring matrix: severity (clinician-impact + dollar-impact composite), feasibility (12-month recoverability inside $4.2M envelope), program-relevance (ambient-value-chain vs. adjacent-program) · 10 high-severity pains / 13 medium / 5 low · top 4 by weighted program-relevance: primary-care pajama time, note-template drift, CDI-queue starvation, reporting latency.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D08"
+    },
+    "E23": {
+      "type": "interview",
+      "source": "D08 Pain Point Register · clinician-voice triangulation",
+      "deliverable_code": "D08",
+      "reference": "22 clinician conversations decomposed by finding: pajama-time variance across 220 ambulatory sites ranges 1.42-2.38 hr/day median · in-basket and message volume consumes 38 min/day median in primary care · visit-volume compensation pressure surfaced in 14 of 22 conversations · 9 of 14 primary-care clinicians flagged post-visit care-gap documentation load as an ambient non-coverage pain.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D08"
+    },
+    "E24": {
+      "type": "doc",
+      "source": "D08 Pain Point Register · Epic template proliferation audit",
+      "deliverable_code": "D08",
+      "reference": "Epic template proliferation in primary care: 17 active templates across the 3 largest primary-care specialties · vendor-specific template governance cadences: Abridge weekly, DAX Copilot monthly, Suki quarterly · 40 clinicians across specialty and hospital medicine work in dual-ambient settings (two vendors active).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D08"
+    },
+    "E25": {
+      "type": "benchmark",
+      "source": "D08 / D10 · CDI-queue routing volume benchmark",
+      "deliverable_code": "D08",
+      "reference": "Pattern-evidence CDI-queue benchmark for Meridian's scale and MA-payer-mix: expected 180-220 HCC-relevant queries/week and 120-160 DRG-specificity queries/week · observed at Meridian: ~40 HCC queries/week, ~35 DRG queries/week · delta is the empirical measure of the ambient-to-CDI integration gap.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D08"
+    },
+    "E26": {
+      "type": "baseline",
+      "source": "D08 Pain Point Register · data/IT cluster reporting latency",
+      "deliverable_code": "D08",
+      "reference": "Reporting latency state: CDI-queue, HCC-capture, pajama-time dashboards close on T+21 cycle · vendor telemetry fragmented across three ambient vendors with no unified Meridian-side surface · Epic integration middleware runs three separate connectors commissioned by different project teams without automated integration-surface tests · patient-facing watchlist (consent fatigue, portal-summary accuracy concerns, ambient-active preference variance) routed to D22 change-management package.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D08"
+    },
+    "E27": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · 5-peer IDN cohort selection",
+      "deliverable_code": "D10",
+      "reference": "Cohort selection · four-filter methodology: revenue band $5.5B-$11B · hospital count 8-19 · ambulatory footprint 150-260 sites · payer mix ≥45% MA and commercial risk-based · auxiliary tests: ambient vendor live ≥18 months, CDI team 25-65 specialists · final cohort size 5 · no individual peer identifiable · ratified by Priya Raman 2026-02-18, re-validated by Dr. Morales 2026-02-26.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D10"
+    },
+    "E28": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · cohort scorecard · ambient value-chain integration maturity",
+      "deliverable_code": "D10",
+      "reference": "Meridian cohort position: 4th quartile on ambient-value-chain integration maturity · 3rd quartile on pajama time · 2nd quartile on ambient-vendor clinician adoption · HCC capture 58% (cohort median 62%, top-quartile 71%) · pajama-time primary care 2 hr 09 min/day vs. cohort median 1 hr 51 min · note sign-to-close 3.8 hr vs. cohort median 3.6 hr · four transferable practices: unified telemetry, HCC feedback loop, quality-measure capture, template governance.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E29": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · MBI-HSS 4-peer cohort",
+      "deliverable_code": "D10",
+      "reference": "MBI-HSS cohort comparison · 4 of 5 cohort peers publish/share anonymised MBI-HSS wave data (fifth runs a different instrument) · Meridian emotional-exhaustion 54% vs. 4-peer cohort median 48% (range 42-56%) · depersonalisation Meridian 38% vs. cohort median 35% · two peers reduced emotional-exhaustion 8-11 points after integrating ambient into CDI and HCC workflows.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E30": {
+      "type": "benchmark",
+      "source": "D10 Benchmark Comparison · Peer-3 deep dive · payer-provider hybrid",
+      "deliverable_code": "D10",
+      "reference": "Peer-3 deep dive: payer-provider hybrid IDN · ~60% MA exposure · ~$6.8B revenue · single ambient vendor consolidated 19 months post-deployment · pajama time 14% below cohort median · HCC capture 9 points above cohort median · CDI routing 2.4× cohort median · pattern-library decomposition: ~70% of Peer-3 lift integration-driven (portable), ~30% consolidation-driven + captive-MA-specific (partially non-portable to Meridian).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D10"
+    },
+    "E31": {
+      "type": "workshop",
+      "source": "D11 Hypothesis Backlog · hypothesis resolution workshop 2026-03-03",
+      "deliverable_code": "D11",
+      "reference": "Hypothesis resolution workshop · Sarah Chen, Dr. Larsson, Priya Raman, Dr. Morales · 12 hypotheses tested: 7 validated, 2 rejected, 2 deferred to Phase 5, 1 held open for D17 · four-cluster structure (consolidation, documentation redesign, clinician-facing workflow, governance) · parallel-track sequencing over sequential selected · H12 rationalisation hypothesis explicitly routed to D17 under charter commitment.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D11"
+    },
+    "E32": {
+      "type": "model",
+      "source": "Pattern library · lever-interaction compounding model",
+      "deliverable_code": "pattern",
+      "reference": "AbarVa pattern-library lever-interaction model for ambient-clinical-value-chain: parallel-track execution of CDI integration, HCC feedback loop, and template governance produces +25-35% faster outcome realisation vs. sequential execution · compounding mechanism: CDI-queue volume reinforces HCC feedback loop reinforces template governance on a positive cycle · additive-only low-scenario assumes zero compounding for conservative business-case framing.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D11"
     }
   }
 }
