@@ -6,12 +6,22 @@
 
 ## Agent A · Stream 1 · Agent Posture Spec
 
-**Owner file:** `page-strategic-purpose-definition.md` (design package)
-**Status:** not started
-**Blocks:** Streams 2, 4
-**Completed:** —
-**Next:** Author agent posture sections for Programs (Nexus), Intelligence (Sentinel), Tower (Atlas), Admin (Steward). Each posture = agent name + domain, voice contract (one paragraph), guided-choice style, cross-agent handoff protocol, conversation state scope.
-**Blockers:** none · but depends on the design package md file being available at a writable path under the repo. Currently it lives in `/Users/anand/Library/Mobile Documents/...` which is outside the repo. Need to either (a) copy the package into the repo as a tracked asset, or (b) treat Agent A's output as a package PR back to the design package author.
+**Owner file:** `docs/design-canon/page-strategic-purpose-definition.md` (in-repo canon)
+**Status:** done (branch `design/wave-2-agent-a-posture`)
+**Blocks:** Streams 2 (voice polish), 4 (interaction exemplar) — now unblocked
+**Completed:**
+- "Agent postures" top-level section added to the strategic purpose doc, placed after the shared design principles / priority ranking and before the end marker. Additive-only; no existing sections rewritten.
+- Four authoritative agent subsections authored (Nexus ✱ / Sentinel ◈ / Atlas ▲ / Steward ◆), each covering: domain, voice contract (~100-130 words each, dialogue-grade), guided-choice style (closed vs generative options, escape-hatch behaviour), cross-agent handoff protocol (explicit triggers + chip phrasing), conversation state scope (per-surface / per-program / per-tenant / global + persistence rules).
+- Cross-agent orchestration notes appended (mutual exclusivity, handoff-as-chip semantics, Steward as audit floor, voice-blending prohibition).
+- Fixed agent ↔ surface ↔ glyph ↔ accent mapping reiterated at the top of the new section so the posture chapter is readable standalone.
+- Total new content: ~2,070 words.
+**Flag for Agent B:** The stub voice strings in `src/components/agent-rail/AgentRail.tsx` `AGENTS` const can now be replaced with canonical one-line descriptors drawn from the new posture sections. Suggested replacements (Agent B owns the final wording, but these fit the ~60-character rail tooltip budget and track the posture voice contracts):
+- `nexus.voice`: `"Maestro-collegial · sketches trade-offs, names the next decision"`
+- `sentinel.voice`: `"Forensic · reads telemetry aloud, names confidence and freshness"`
+- `atlas.voice`: `"Operational · leads with what's hot, cuts to the relevant surface"`
+- `steward.voice`: `"Utility-clerical · confirms what changed, by whom, when"`
+**Next:** none in Agent A's scope · posture spec is complete and authoritative.
+**Blockers:** none.
 
 ---
 
@@ -92,6 +102,27 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 - **[Agent B, 2026-04-23 03:30 UTC]** `StreamingResponsePane` and `AgentStateIndicator` not yet shipped. Agent D is blocked on these for the interaction exemplar. Proposed build order: ship these next before moving to Sentinel/Steward wirings.
 - **[Agent C, 2026-04-23 03:30 UTC]** Shared Morrison directory `src/content/deliverables/apex-retail/morrison/` does not exist yet. This PR creates it with seeded `_timeline.json` + `_evidence-base.json`. First deliverable authoring PR will add the first deliverable file.
 - **[Design package location]** · The design package md files (wireframes, strategic purpose, work order) currently live outside the repo. Agent A writes need a repo-tracked copy OR a synced-back protocol. Flagging for Anand decision.
+
+---
+
+## Codex Overnight Work Order · Tier 1
+
+**Owner branch:** `codex/overnight-tier1`
+**Status:** Tier 1 complete · PR #111 open/green
+**PR:** https://github.com/anandsundaram-hash/abarva/pull/111
+**Rule:** one item per commit · Tier 1 PR only after 1.1-1.7 complete
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| 1.1 Link crawler expansion | complete | `npm run integrity:link-crawler` passed with 696 routes, 8,492 internal links, 0 broken routes, 0 broken links, 0 redirect-chain violations. Report: `reports/link-crawler-2026-04-23T04-05-35-790Z.json`. |
+| 1.2 Composite disclaimer audit | complete | Exact disclaimer constants centralized; rendered checks added in `src/__tests__/integration/composite-disclaimer-presence.test.ts`; CI workflow added in `.github/workflows/integrity.yml`. |
+| 1.3 Evidence citation resolution check | complete | `npm run integrity:evidence-citations` passed with 1 evidence base, 57 rendered refs, 0 unresolved, 100% resolution. Report: `reports/evidence-citations-2026-04-23T04-20-42-475Z.json`. |
+| 1.4 Tenant switcher re-scope validation | complete | Deterministic integration gate verifies Meridian → Apex re-scope across program list, pattern integration state, Tower data, and admin data signature with zero Meridian leakage. |
+| 1.5 Tower sub-surface stub routes | complete | All five Tower scheduled surfaces render for all four tenants (20 routes) with Stub-style scheduled banner, Control Tower backlink, and composite disclaimer. |
+| 1.6 Route-level integrity tests | complete | `src/__tests__/integration/canonical-routes.test.ts` renders every seed-spec canonical route, asserts 200-level route catalog coverage, shell structure, breadcrumbs, footer, and no unresolved `{{}}`, `undefined`, or `null` strings. |
+| 1.7 Seed integrity report generator | complete | Seed dry runs now emit `reports/seed-integrity-{timestamp}.md`; `npm run integrity:seed-report` passed and validates totals, tier counts, phase distribution, schema warnings, and committed report `reports/seed-integrity-2026-04-23T04-35-00-000Z.md`. |
+
+**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npm run integrity:evidence-citations` · `npm run integrity:tenant-rescope` · `npm run integrity:tower-stubs` · `npm run integrity:canonical-routes` · `npm run integrity:seed-report` · `npx tsc --noEmit --pretty false`
 
 ---
 
