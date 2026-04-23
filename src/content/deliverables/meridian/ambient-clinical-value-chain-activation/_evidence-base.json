@@ -2,10 +2,10 @@
   "program_code": "MRD-01",
   "program_name": "Ambient Clinical Value Chain Activation",
   "schema_version": "1.0",
-  "last_updated": "2026-04-23-c6",
+  "last_updated": "2026-04-23-c7",
   "append_only": true,
 
-  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Meridian Ambient deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. Meridian Ambient owns the E1-E39 range (C5 E1-E19, C6 E20-E39); other programs use separate evidence bases. The integrity linter flags any citation chip that does not resolve.",
+  "integrity_note": "Every inline citation chip (E1, E2, ...) in any Meridian Ambient deliverable must resolve to an entry in this file. Sub-agents author deliverables APPEND entries additively. Do not rewrite existing entries. Meridian Ambient owns the E1-E59 range (C5 E1-E19, C6 E20-E32, C7 E40-E59; E33-E39 unused gap). Other programs use separate evidence bases. The integrity linter flags any citation chip that does not resolve.",
 
   "entries": {
     "E1": {
@@ -263,6 +263,158 @@
       "reference": "AbarVa pattern-library lever-interaction model for ambient-clinical-value-chain: parallel-track execution of CDI integration, HCC feedback loop, and template governance produces +25-35% faster outcome realisation vs. sequential execution · compounding mechanism: CDI-queue volume reinforces HCC feedback loop reinforces template governance on a positive cycle · additive-only low-scenario assumes zero compounding for conservative business-case framing.",
       "evidence_confidence": "medium",
       "first_cited_in": "D11"
+    },
+    "E40": {
+      "type": "workshop",
+      "source": "D15 Intervention Portfolio · Phase 3 portfolio ratification workshop · 2026-03-18",
+      "deliverable_code": "D15",
+      "reference": "Phase 3 portfolio ratification workshop · Sarah Chen (CIO) + Dr. Larsson (CMO) with Priya Raman and Dr. Morales attending · three-lever parallel-track portfolio ratified with three-vendor operating envelope preserved through Phase 4 · parallel-execution selected over sequential to capture +25-35% compounding · kill-switch criteria named per lever · integration-engineering staffing committed with three dedicated engineers before G1.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D12"
+    },
+    "E41": {
+      "type": "model",
+      "source": "D16 Business Case · capital phasing model · $4.2M envelope",
+      "deliverable_code": "D16",
+      "reference": "Phase 4 capital phasing: 50% H1 (months 1-6, $2.1M) front-loads CDI-telemetry commissioning + HCC feedback loop specification · 28% H2 (months 7-12, $1.2M) covers Suki feedback loop + D13 pilot operational cost + shift-specific coaching · 14% H3 (months 13-24, $0.6M) covers Epic middleware stabilisation + D24 outcome pipeline refinement · 8% H4 (months 25-36, $0.3M) covers Phase 5 attestation + rationalisation tooling · no capital drawn against Phase 5 continuation window.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D12"
+    },
+    "E42": {
+      "type": "design",
+      "source": "D13 Pilot Plan · ambient consolidation pilot design",
+      "deliverable_code": "D13",
+      "reference": "D13 ambient consolidation pilot design: 18 of 220 ambulatory sites · ~120 primary-care clinicians · 4 medical groups (2 urban, 2 suburban) · Abridge as consolidated primary vendor inside pilot boundary · DAX Copilot + Suki suspended at pilot sites with ratified re-instatement pathway · 6-month instrumented window 2026-06-15 to 2026-12-15 · month-3 interim readout · month-6 go/scale/kill decision · pilot runs concurrently with Phase 4 intervention portfolio, not as replacement.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D13"
+    },
+    "E43": {
+      "type": "design",
+      "source": "D13 Pilot Plan · cohort selection criteria",
+      "deliverable_code": "D13",
+      "reference": "D13 pilot cohort selection · four constraints satisfied: footprint representativeness (urban/suburban spread across pajama-time distribution band covering 65% of primary-care population), ambient-maturity readiness (≥12 months pre-pilot vendor live at all 18 sites), MA-panel exposure (58-62% MA payer mix matching Meridian 55% system average), clinician-council readiness (three of four medical groups participated in Phase 2 D08 intake) · excludes urgent care, outpatient surgery, specialty outpatient by design · ratified by Dr. Larsson 2026-04-08.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D13"
+    },
+    "E44": {
+      "type": "design",
+      "source": "D13 Pilot Plan · measurement framework",
+      "deliverable_code": "D13",
+      "reference": "D13 measurement framework · 3 leading indicators: pajama time (minutes/clinician/day; target 4-min reduction month 1, 9-min month 3, 18-min month 6), CDI-queue routing (40/wk month 1, 110/wk month 3, 150-165/wk month 6), HCC capture on MA panel (1.5-point lift month 3, 3-point month 6) · 2 trailing indicators: MBI-HSS emotional-exhaustion subscale (month 3 + month 6 waves; target 4-7 point reduction) and note-template drift (monthly 200-note-per-vendor audit; target 9-12% error rate at pilot sites vs. 11-14% system-wide) · 14-day reporting cadence.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D13"
+    },
+    "E45": {
+      "type": "doc",
+      "source": "D15 Intervention Portfolio · kill-switch protocol · pattern-library precedent",
+      "deliverable_code": "D15",
+      "reference": "Kill-switch protocol per lever · Lever 1: CDI-queue <55/week at G2 OR 3 consecutive weeks of unresolved cross-vendor blockers · Lever 2: HCC capture <0.5-point lift at G3 OR feedback loop commissioning blocked on >1 vendor · Lever 3 (pilot): month-3 interim readout fails three-criterion gate · pause-not-cancel protocol with governance-forum review · pattern-library precedent: programs with named kill-switches recover 2.1× faster from lever underperformance than programs without · weekly governance-forum re-entry until decision owner ratifies resumption, re-scope, or replacement.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D15"
+    },
+    "E46": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · capital allocation model",
+      "deliverable_code": "D15",
+      "reference": "Capital allocation across three levers · Lever 1 (documentation governance + CDI integration): $1.8M covering unified ambient-to-CDI telemetry, Epic integration-engineering labor, specialty template governance tooling, unified vendor-council coordination platform · Lever 2 (clinician-facing workflow redesign): $1.4M covering HCC feedback-loop commissioning on Abridge + DAX Copilot, quality-measure documentation pipeline, shift-specific coaching, Epic middleware · Lever 3 (vendor rationalisation pilot-first): $1.0M including $0.6M D13 pilot operational cost + $0.4M Phase 5 transition planning reserve · $4.2M total.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D15"
+    },
+    "E47": {
+      "type": "model",
+      "source": "D15 Intervention Portfolio · lever outcome envelope model",
+      "deliverable_code": "D15",
+      "reference": "Lever outcome envelope model · Lever 1 target: 25-35 min/clinician/day pajama-time reduction in primary care · CDI-queue routing 140-180/week from ~40/week baseline · template-drift error 11-14% residual from 23% baseline · Lever 2 target: 3-5 point HCC capture lift on MA panel · 4-7 point MBI-HSS emotional-exhaustion reduction · HEDIS + Stars quality-measure capture 55-65% from 34% baseline · night-shift pajama time brought within 10 min of day-shift · Lever 3 target: zero Phase 4 outcome contribution by design · Phase 5 rationalisation ratification packet populated with Meridian-specific pilot evidence.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D15"
+    },
+    "E49": {
+      "type": "model",
+      "source": "D16 Business Case · low/base/high scenario framework",
+      "deliverable_code": "D16",
+      "reference": "Three scenarios structure the business case · Downside ($8M/yr steady-state): additive-only outcome realisation, CDI-queue ramp undershooting at ~100/week at G2, clinician-adoption at pattern-library lower bound, one vendor-council commissioning slip · Base ($11M/yr): partial portfolio-compounding ~+15%, CDI-queue at G2 target, clinician-adoption at pattern-library midpoint, all three vendors commissioning on G3 timeline · Upside ($14M/yr): full +25-35% portfolio-compounding, CDI-queue at or above cohort median by G5, MBI-HSS burnout conversion at upper-bound HR impact · floor case $5.5M/yr at all-five-drivers-downside sensitivity stack.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D16"
+    },
+    "E50": {
+      "type": "model",
+      "source": "D16 Business Case · 36-month financial model",
+      "deliverable_code": "D16",
+      "reference": "36-month financial model · spans 2026-06 to 2029-05 · four segments: Build (months 1-6, $2.1M capital-out, ~12% of year-one run-rate), Early harvest (months 7-12, $1.2M capital-out, 45-60% of steady state), Steady state (months 13-24, $0.6M capital-out, full $8-14M/yr run-rate), Continuation (months 25-36, $0.3M capital-out, attestation + Phase 5 rationalisation) · sigmoidal outcome-realisation curve: month 6 ~12% of year-one run-rate, month 12 ~50-60%, month 18 ~90% of steady state · monthly granularity months 1-18, quarterly thereafter · reconciliation to Meridian Finance monthly from month 4.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D16"
+    },
+    "E51": {
+      "type": "model",
+      "source": "D16 Business Case · sensitivity driver matrix",
+      "deliverable_code": "D16",
+      "reference": "Sensitivity driver matrix · 5 drivers: (1) CDI-queue ramp rate ±20% shifts 36-month NPV ~$4.5M, (2) clinician adoption at pilot sites shifts NPV ~-$3M if friction signal material, (3) vendor-council commissioning cadence shifts NPV ~-$2M per vendor-slip, (4) portfolio-compounding lift 0% shifts NPV ~-$4M vs. base, (5) MBI-HSS to retention+locum-avoidance conversion coefficient shifts NPV ~-$2.5M at undershoot · 36-month NPV range $14-32M at 7.5% cost of capital · IRR 72-148% · payback 12-18 months · floor case $5.5M/yr steady-state with cumulative sensitivity stack.",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D16"
+    },
+    "E52": {
+      "type": "analysis",
+      "source": "D17 Decision Memo · Option A analysis · Abridge primary-care consolidation",
+      "deliverable_code": "D17",
+      "reference": "Option A · Abridge primary-care consolidation · consolidate to Abridge as single ambient vendor for all primary care in Phase 4 (~1,400 primary-care clinicians) with DAX Copilot + Suki sunset at primary-care sites by month 9 · specialty outpatient continues on DAX Copilot · outpatient procedural separated to Phase 5 decision · expected outcome envelope: 30-40 min/day pajama-time reduction, 4-6 pt HCC capture lift, 6-10 pt MBI-HSS reduction · cost $4.2M envelope insufficient; requires additional $1.8-2.4M · 14-20 month clinician-transition exposure on ~2,400-provider footprint · preferred by Dr. Morales (CMIO).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D17"
+    },
+    "E53": {
+      "type": "analysis",
+      "source": "D17 Decision Memo · Option B analysis · DAX Copilot specialty consolidation",
+      "deliverable_code": "D17",
+      "reference": "Option B · DAX Copilot specialty consolidation · consolidate to DAX Copilot as single ambient vendor for specialty outpatient (~600 specialty clinicians) with Suki sunset at specialty sites by month 9 · primary care continues on Abridge + DAX Copilot split · expected outcome envelope: 15-22 min/day pajama-time reduction (specialty), 2-4 pt DRG specificity lift, limited MBI-HSS lift because specialty pajama time already closer to cohort parity · $4.2M envelope adequate but reallocates $1.1M from Lever 2 to consolidation execution, thinning HCC feedback-loop commissioning · not preferred by CMIO (lower-priority rationalisation target than primary care).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D17"
+    },
+    "E54": {
+      "type": "analysis",
+      "source": "D17 Decision Memo · Option C analysis · hybrid with redesign + pilot (recommended)",
+      "deliverable_code": "D17",
+      "reference": "Option C · hybrid · three-vendor operating envelope preserved through Phase 4 · execute D15 three-lever portfolio (documentation governance + CDI integration; clinician-workflow redesign; vendor-rationalisation pilot-first) · D13 18-site consolidation pilot runs as structured counterfactual · Phase 5 rationalisation ratification workshop 2027-Q3 reasons against pilot evidence + integration-driven outcome signal + CMIO dissent + primary-care service-line readout · expected outcome envelope: 25-35 min/day pajama-time reduction (primary care), 3-5 pt HCC capture lift, 4-7 pt MBI-HSS reduction · fits $4.2M envelope exactly · Phase 5 ratification has three pre-ratified paths: scale Option A, preserve Option C, extend pilot.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D17"
+    },
+    "E55": {
+      "type": "workshop",
+      "source": "D17 Decision Memo · dissent capture · CMIO + primary-care service-line",
+      "deliverable_code": "D17",
+      "reference": "CMIO dissent formally captured at D17 approval 2026-04-14 · Dr. Morales position: earlier consolidation to Abridge in primary care (Option A) captures ~30% consolidation-specific outcome component that Option C by design does not · three specific concerns: three-vendor governance fragmentation even with unified cadence, 23% template-drift residual is present clinician harm not future risk, rationalisation deferral risks losing sponsor-attention coherence · counterposition: sponsor group agrees substantively with Dr. Morales and disagrees only with timing · 2027-Q3 ratification workshop chaired by Dr. Morales to ensure CMIO position has structural authority at rationalisation decision point · primary-care service-line readout concern on clinician-transition fatigue under Option A also preserved in Phase 5 packet.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D17"
+    },
+    "E56": {
+      "type": "doc",
+      "source": "D17 Decision Memo · Board Clinical Quality and Technology Committee read-out · 2026-05-12",
+      "deliverable_code": "D17",
+      "reference": "Meridian Board Clinical Quality and Technology Committee read-out scheduled 2026-05-12 · Chair Dr. Evelyn Park MD, Vice-Chair John Mbeki, Technology liaison Sarah Chen · three objectives: affirmation of Phase 4 commitment, acknowledgment of Phase 5 return-path for rationalisation decision, affirmation of clinician cognitive-load primacy as program north-star · read-out packet includes D17 memo, D16 business case abstract, two-page clinical-outcome summary sourced from D03 + D06 · three pre-drafted responses ready: why rationalisation is deferred, how CMIO dissent is preserved, what Phase 4 exit looks like if pilot fails · pre-read-out briefing with Committee Chair 2026-05-01.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D17"
+    },
+    "E57": {
+      "type": "model",
+      "source": "D18 Risk Register · 16-risk catalogue · 4-category structure",
+      "deliverable_code": "D18",
+      "reference": "D18 risk register structure · 16 risks sorted into 4 categories: clinical quality (5), regulatory + compliance (4), execution (5), market/competitive (2) · severity distribution: 3 critical, 6 high, 5 medium, 2 low · top 8 by severity-adjusted exposure tracked at biweekly four-principal steering; remaining 8 reviewed monthly at governance triad · 3 mitigations triggered pre-launch 2026-04-21: integration-engineering staffing (R10), unified vendor-council cadence (R6), D13 pilot cohort engagement (R4) · pattern-library precedent: ambient programs without quarterly mitigation re-test show 35-45% mitigation drift by month 9.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D18"
+    },
+    "E58": {
+      "type": "doc",
+      "source": "D18 Risk Register · regulatory framework + escalation matrix",
+      "deliverable_code": "D18",
+      "reference": "Regulatory + compliance framework surfaces · HIPAA (vendor BAA re-audit at Phase 4 launch; Privacy Office attendee at unified vendor-council cadence; PHI-handling changes require Privacy Office pre-approval) · 42 CFR Part 2 (behavioral-health clinicians excluded from ambient coverage until vendor-council attests redaction capability; Part 2 consent pathway integrated into Epic ambient-active toggle before G1) · Info Blocking rule (21st Century Cures Act): 72-hour clinician review window structured as 'automatic release unless clinician actively flags inaccuracy' to preserve review authority without blanket delay; pre-cleared with Meridian Compliance Office 2026-04-10 · Escalation matrix: workstream lead → governance triad (H11 monthly) → four-principal steering (biweekly) → Sarah Chen (48-hr SLA) · clinical quality risks escalate to Dr. Larsson; regulatory risks route through Privacy + Compliance Office with 24-hr active-breach SLA before sponsor-level escalation.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D18"
+    },
+    "E59": {
+      "type": "doc",
+      "source": "D18 Risk Register · execution + market risk catalogue",
+      "deliverable_code": "D18",
+      "reference": "Execution risks catalogue · R10 CDI-queue ramp undershoot at G2 (mitigation: three dedicated integration engineers pre-G1, Epic middleware pre-production tested, governance triad H2-capital reallocation authority) · R11 HCC feedback-loop commissioning blocked by vendor-council non-readiness (mitigation: bilateral commitments ratified 2026-04-10, Abridge priority commissioning as flagship, DAX Copilot 30-day trailing, Suki Phase 5 timeline) · R12 dual-ledger reconciliation drift · R13 governance triad cadence misses parallel-track blockages · R14 D13 pilot cut-over latency at 18 sites · Market/competitive risks: R15 ambient vendor M&A shifts product roadmap (BAA assignment clauses pre-cleared), R16 clinician labor market tightening as upside risk (no mitigation; preserved in high-scenario NPV).",
+      "evidence_confidence": "medium",
+      "first_cited_in": "D18"
     }
   }
 }
