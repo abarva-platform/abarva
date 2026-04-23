@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { TowerViewModel, ContradictionRow } from '@/lib/tower/aggregate';
+import { AgentRail, AGENTS } from '@/components/agent-rail/AgentRail';
 
 // TowerPreviewShell · redesign sandbox per the audit feedback.
 // Keeps the 5-column "live system" cockpit (the audit called it "closest
@@ -462,8 +463,30 @@ export function TowerPreviewShell({
         </div>
       </div>
 
-      {/* ─── Atlas dock · right edge, summonable ──────────────────────── */}
-      <AtlasDock open={atlasOpen} onClose={() => setAtlasOpen(false)} onOpen={() => setAtlasOpen(true)} clientName={clientName} />
+      {/* ─── Atlas agent rail · canonical primitive ──────────────────── */}
+      <AgentRail
+        agent={AGENTS.atlas}
+        contextBadge={`${clientName} · Monday check`}
+        userInitials="AS"
+        conversation={[
+          {
+            id: 'atlas-opener',
+            speaker: 'agent',
+            text: `${unownedCount} unowned contradictions are accumulating $${Math.round(pressure.reduce((s, p) => s + p.monthlyUsd, 0) / 1000)}K/mo. The Shadow AI one is the hottest — it has been known for 6 weeks and still has no named owner. I would escalate that first.`,
+          },
+        ]}
+        guidedChoice={{
+          prompt: 'What do you want to do in the next 5 minutes?',
+          options: [
+            { id: 'assign-shadow-ai', label: 'Assign owner for Shadow AI', sub: 'send to CIO staff meeting agenda' },
+            { id: 'vendor-overlap', label: 'Review vendor overlap matrix', sub: '7 tools doing similar work · rationalization queue' },
+            { id: 'pressure-export', label: 'Export pressure memo for the CEO', sub: 'one-pager of the 3 highest-dollar unowned items' },
+            { id: 'peer-position', label: 'Compare my estate to peers', sub: 'cohort benchmark · 6 anonymized Fortune 500s' },
+          ],
+        }}
+        onChoice={(id) => console.log('atlas choice', id)}
+        onEscape={(text) => console.log('atlas escape', text)}
+      />
     </div>
   );
 }
