@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
+import { PhaseGateControl } from '@/components/programs/PhaseGateControl';
 
 type PhaseKey = 'p0' | 'p1' | 'p2' | 'p3' | 'p4';
 
@@ -408,6 +409,18 @@ export function ProgramsIridescentShell({ programs, activeClientName = null }: P
             );
           })}
         </div>
+
+        {/* Phase-gate control · advances live phase forward when user is on it */}
+        {selectedProgram && mode === 'phase' && activePhase === phaseKeyFor(selectedProgram) ? (
+          <div style={{ margin: '12px 0 0' }}>
+            <PhaseGateControl
+              programCode={selectedProgram.id}
+              currentPhase={PHASE_NAMES[activePhase].num}
+              maxPhase={4}
+              gateCriterion={`Advance ${selectedProgram.name} to Phase ${PHASE_NAMES[activePhase].num + 1}`}
+            />
+          </div>
+        ) : null}
 
         {/* 2-col · chat (main) + side rail (deliverables or intake progress) */}
         <div className="pis-chat-layout" key={transitionKey}>
