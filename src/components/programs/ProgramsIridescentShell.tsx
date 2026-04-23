@@ -113,7 +113,7 @@ function initialsOf(name: string): string {
   return name.split(' ').map((w) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase();
 }
 
-function nexusAck(step: IntakeStep, choiceId: string, intake: IntakeState, nextStep: IntakeStep): string {
+function nexusAck(step: IntakeStep, choiceId: string, _intake: IntakeState, _nextStep: IntakeStep): string {
   const choice = INTAKE_LABELS[choiceId] ?? choiceId;
   if (step === 'archetype') {
     return `"${choice}". Good — I will pre-load the pattern library scope for that archetype. Peer decisions from analogous programs will surface starting Phase 1. Who is the sponsor?`;
@@ -277,15 +277,23 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
     [selectedProgramId, programs],
   );
 
-  useEffect(() => {
+  const navigateToPhase = (pk: PhaseKey) => {
+    setActivePhase(pk);
     setVisitedPhases((prev) => {
       const next = new Set(prev);
-      next.add(PHASE_NAMES[activePhase].num);
+      next.add(PHASE_NAMES[pk].num);
       return next;
     });
     setTransitionKey((k) => k + 1);
-    setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
-  }, [activePhase]);
+  };
+
+  useEffect(() => {
+    const id = window.setTimeout(
+      () => chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }),
+      100,
+    );
+    return () => window.clearTimeout(id);
+  }, [activePhase, transitionKey]);
 
   const conversation = PHASE_CONVERSATIONS[activePhase];
   const phaseMeta = PHASE_NAMES[activePhase];
@@ -329,8 +337,10 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                 const id = e.target.value;
                 setSelectedProgramId(id);
                 const prog = programs.find((x) => x.id === id);
-                setActivePhase(phaseKeyFor(prog ?? null));
-                setVisitedPhases(new Set([Number(phaseKeyFor(prog ?? null).slice(1))]));
+                const phase = phaseKeyFor(prog ?? null);
+                setActivePhase(phase);
+                setVisitedPhases(new Set([PHASE_NAMES[phase].num]));
+                setTransitionKey((k) => k + 1);
               }}
               aria-label="Switch program"
             >
@@ -375,7 +385,7 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                 type="button"
                 role="tab"
                 aria-selected={active}
-                onClick={() => { setMode('phase'); setActivePhase(pk); }}
+                onClick={() => { setMode('phase'); navigateToPhase(pk); }}
                 className={`pis-phase-anchor ${active ? 'active' : ''} ${visited && mode === 'phase' ? 'visited' : ''} ${live ? 'live' : ''}`}
                 disabled={mode === 'intake'}
                 style={mode === 'intake' ? { opacity: 0.4 } : undefined}
@@ -453,9 +463,7 @@ export function ProgramsIridescentShell({ programs }: { programs: ProgramFullSta
                   <button type="button" className="pis-btn-secondary" onClick={() => { setIntakeStep('archetype'); setIntakeLog(intakeLog.slice(0, 1)); setIntake({ archetype: null, sponsor: null, valueAtStake: null, scope: null }); }}>Start over</button>
                   <button type="button" className="pis-btn-primary" onClick={() => {
                     setMode('phase');
-                    setActivePhase('p0');
-                    setVisitedPhases(new Set([0]));
-                    setTransitionKey((k) => k + 1);
+                    navigateToPhase('p0');
                   }}>Approve charter → enter Phase 0 →</button>
                 </div>
               </div>
