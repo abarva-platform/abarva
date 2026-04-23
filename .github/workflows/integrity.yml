@@ -1,0 +1,44 @@
+name: Integrity
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  route-and-disclaimer-integrity:
+    name: Routes and disclaimers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Link crawler
+        run: npm run integrity:link-crawler
+
+      - name: Composite disclaimer audit
+        run: npm run integrity:disclaimers
+
+      - name: Evidence citation resolution
+        run: npm run integrity:evidence-citations
+
+      - name: Tenant re-scope validation
+        run: npm run integrity:tenant-rescope
+
+      - name: Tower sub-surface stubs
+        run: npm run integrity:tower-stubs
+
+      - name: Canonical route integrity
+        run: npm run integrity:canonical-routes
+
+      - name: Seed integrity report
+        run: npm run integrity:seed-report

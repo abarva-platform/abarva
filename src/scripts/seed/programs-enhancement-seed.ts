@@ -15,6 +15,7 @@ import {
   type FilteredProgramsSeedPlan,
   type SeedWriteFilters,
 } from '@/lib/programs/enhancement-seed-writer';
+import { writeSeedIntegrityReport } from '@/lib/integrity/seed-integrity-report';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env.local') });
 loadEnv();
@@ -283,18 +284,25 @@ function printPlan(plan: FilteredProgramsSeedPlan): void {
 
 async function main(): Promise<void> {
   const validation = validateProgramsSeedEnhancementSpec();
+  const filters = parseFilters();
+  const plan = filterProgramsSeedPlan(buildAllProgramsSeedPlan(), filters);
+  const integrityReport = writeSeedIntegrityReport(plan, validation, {
+    mode: shouldWrite ? 'write' : 'dry-run',
+    filters,
+    timestamp: process.env.REPORT_TIMESTAMP,
+  });
+
   if (validation.errors.length) {
     throw new Error(`Spec validation failed:\n${validation.errors.map((entry) => `- ${entry}`).join('\n')}`);
   }
 
-  const plan = filterProgramsSeedPlan(buildAllProgramsSeedPlan(), parseFilters());
-
   if (shouldPrintJson && !shouldWrite) {
-    console.log(JSON.stringify({ mode: 'dry-run', plan, validation }, null, 2));
+    console.log(JSON.stringify({ mode: 'dry-run', plan, validation, integrityReportPath: integrityReport.path }, null, 2));
     return;
   }
 
   printPlan(plan);
+  console.log(`\nSeed integrity report: ${integrityReport.path}`);
 
   if (validation.warnings.length) {
     console.log('\nWarnings');
@@ -305,7 +313,7 @@ async function main(): Promise<void> {
 
   const counts = await writePlan(plan);
   if (shouldPrintJson) {
-    console.log(JSON.stringify({ mode: 'write', counts, validation }, null, 2));
+    console.log(JSON.stringify({ mode: 'write', counts, validation, integrityReportPath: integrityReport.path }, null, 2));
     return;
   }
 

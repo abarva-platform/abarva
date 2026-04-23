@@ -82,6 +82,27 @@ Initial content is in this PR at `src/content/deliverables/apex-retail/morrison/
 
 ---
 
+## Codex Overnight Work Order · Tier 1
+
+**Owner branch:** `codex/overnight-tier1`
+**Status:** Tier 1 complete · PR #111 open/green
+**PR:** https://github.com/anandsundaram-hash/abarva/pull/111
+**Rule:** one item per commit · Tier 1 PR only after 1.1-1.7 complete
+
+| Item | Status | Evidence |
+| --- | --- | --- |
+| 1.1 Link crawler expansion | complete | `npm run integrity:link-crawler` passed with 696 routes, 8,492 internal links, 0 broken routes, 0 broken links, 0 redirect-chain violations. Report: `reports/link-crawler-2026-04-23T04-05-35-790Z.json`. |
+| 1.2 Composite disclaimer audit | complete | Exact disclaimer constants centralized; rendered checks added in `src/__tests__/integration/composite-disclaimer-presence.test.ts`; CI workflow added in `.github/workflows/integrity.yml`. |
+| 1.3 Evidence citation resolution check | complete | `npm run integrity:evidence-citations` passed with 1 evidence base, 57 rendered refs, 0 unresolved, 100% resolution. Report: `reports/evidence-citations-2026-04-23T04-20-42-475Z.json`. |
+| 1.4 Tenant switcher re-scope validation | complete | Deterministic integration gate verifies Meridian → Apex re-scope across program list, pattern integration state, Tower data, and admin data signature with zero Meridian leakage. |
+| 1.5 Tower sub-surface stub routes | complete | All five Tower scheduled surfaces render for all four tenants (20 routes) with Stub-style scheduled banner, Control Tower backlink, and composite disclaimer. |
+| 1.6 Route-level integrity tests | complete | `src/__tests__/integration/canonical-routes.test.ts` renders every seed-spec canonical route, asserts 200-level route catalog coverage, shell structure, breadcrumbs, footer, and no unresolved `{{}}`, `undefined`, or `null` strings. |
+| 1.7 Seed integrity report generator | complete | Seed dry runs now emit `reports/seed-integrity-{timestamp}.md`; `npm run integrity:seed-report` passed and validates totals, tier counts, phase distribution, schema warnings, and committed report `reports/seed-integrity-2026-04-23T04-35-00-000Z.md`. |
+
+**Validation:** `npm run integrity:link-crawler` · `npm run integrity:disclaimers` · `npm run integrity:evidence-citations` · `npm run integrity:tenant-rescope` · `npm run integrity:tower-stubs` · `npm run integrity:canonical-routes` · `npm run integrity:seed-report` · `npx tsc --noEmit --pretty false`
+
+---
+
 ## Integration checkpoint · wave 2 done when
 
 - [ ] Agent A · posture sections present for Programs/Intelligence/Tower/Admin
