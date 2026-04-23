@@ -80,7 +80,7 @@ export default async function DimensionOnboardPage({ params }: { params: Promise
       {/* Templates + manual */}
       <section style={{ marginTop: 64 }}>
         <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', color: TEAL, textTransform: 'uppercase', marginBottom: 16 }}>
-          Don't have any of these?
+          Don&apos;t have any of these?
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <a

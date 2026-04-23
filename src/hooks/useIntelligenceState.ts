@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { NexusTurnData } from '@/lib/intelligence/types';
 
 export type IntelligenceUiState = 'A' | 'B' | 'C';
@@ -20,10 +20,10 @@ export function useIntelligenceState(
 ) {
   const [manualState, setManualState] = useState<IntelligenceUiState | null>(opts.forceState ?? null);
 
-  const state = useMemo(
-    () => deriveIntelligenceState(turns, { ...opts, forceState: manualState }),
-    [manualState, opts.forceState, opts.isStreaming, turns],
-  );
+  const state = deriveIntelligenceState(turns, {
+    forceState: manualState ?? opts.forceState ?? null,
+    isStreaming: opts.isStreaming,
+  });
 
   return {
     state,

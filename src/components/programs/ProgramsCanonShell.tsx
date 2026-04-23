@@ -5,7 +5,7 @@
 // Signature motion: animated phase journey with dot halo, connector fill, and
 // pop-in stage transitions when navigating between phases.
 
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
 
@@ -148,23 +148,21 @@ export function ProgramsCanonShell({ programs }: { programs: ProgramFullState[] 
     [selectedProgramId, programs],
   );
 
-  // When a new phase is selected, mark it visited and trigger pop animation.
-  useEffect(() => {
-    if (activeTab.startsWith('p')) {
-      const n = Number(activeTab.slice(1));
-      setVisitedPhases((prev) => {
-        const next = new Set(prev);
-        next.add(n);
-        return next;
-      });
-      setTransitionKey((k) => k + 1);
-    }
-  }, [activeTab]);
-
   function switchTab(tab: TabKey, programId?: string) {
     setActiveTab(tab);
     if (programId) {
       setSelectedProgramId(programId);
+    }
+
+    if (tab.startsWith('p')) {
+      const n = Number(tab.slice(1));
+      setVisitedPhases((prev) => {
+        const next = programId ? new Set<number>() : new Set(prev);
+        next.add(n);
+        return next;
+      });
+      setTransitionKey((k) => k + 1);
+    } else if (programId) {
       setVisitedPhases(new Set()); // reset visited trail for new program
     }
   }
