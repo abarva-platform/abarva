@@ -24,6 +24,13 @@ export interface AgentProfile {
   accentSoft: string;       // rgba soft tint
 }
 
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${(n / 1024 / 1024 / 1024).toFixed(1)} GB`;
+}
+
 export const AGENTS: Record<AgentKey, AgentProfile> = {
   nexus: {
     key: 'nexus', name: 'Nexus', domain: 'Programs',
@@ -60,6 +67,13 @@ export interface GuidedChoiceOption {
   sub?: string;                 // optional tiny description
 }
 
+export interface AgentAttachment {
+  id: string;
+  name: string;
+  sizeBytes: number;
+  mimeType: string;
+}
+
 export interface AgentRailProps {
   agent: AgentProfile;
   conversation: AgentTurn[];
@@ -80,6 +94,13 @@ export interface AgentRailProps {
   userInitials?: string;
   // Controlled open state (optional · defaults to internal state)
   defaultOpen?: boolean;
+  // Upload support (Priority 1). When onAttach is wired, the escape
+  // input shows a paperclip affordance. Actual ingestion into agent
+  // context is Category 3 (deferred pending crawler findings) — for
+  // now the file is surfaced as a visible chip so the user has proof
+  // the attachment exists and the simulation can drop artifacts.
+  onAttach?: (files: AgentAttachment[]) => void;
+  attachments?: AgentAttachment[];
 }
 
 export function AgentRail({
@@ -91,10 +112,13 @@ export function AgentRail({
   contextBadge,
   userInitials = 'YO',
   defaultOpen = false,
+  onAttach,
+  attachments = [],
 }: AgentRailProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [escapeText, setEscapeText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -186,6 +210,17 @@ export function AgentRail({
                   </button>
                 ))}
               </div>
+              {attachments.length > 0 ? (
+                <div className="ar-attachments" aria-label="Attached files">
+                  {attachments.map((a) => (
+                    <span key={a.id} className="ar-attachment-chip" title={`${a.mimeType} · ${formatBytes(a.sizeBytes)}`}>
+                      <span className="ar-attachment-icon" aria-hidden="true">📎</span>
+                      <span className="ar-attachment-name">{a.name}</span>
+                      <span className="ar-attachment-size">{formatBytes(a.sizeBytes)}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <form
                 className="ar-escape"
                 onSubmit={(e) => {
@@ -196,6 +231,37 @@ export function AgentRail({
                   }
                 }}
               >
+                {onAttach ? (
+                  <>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files ?? []);
+                        if (files.length === 0) return;
+                        const newAttachments: AgentAttachment[] = files.map((f, i) => ({
+                          id: `${Date.now()}-${i}-${f.name}`,
+                          name: f.name,
+                          sizeBytes: f.size,
+                          mimeType: f.type || 'application/octet-stream',
+                        }));
+                        onAttach(newAttachments);
+                        if (fileInputRef.current) fileInputRef.current.value = '';
+                      }}
+                    />
+                    <button
+                      type="button"
+                      className="ar-attach-btn"
+                      onClick={() => fileInputRef.current?.click()}
+                      aria-label="Attach file"
+                      title="Attach file"
+                    >
+                      📎
+                    </button>
+                  </>
+                ) : null}
                 <input
                   type="text"
                   value={escapeText}
@@ -475,6 +541,31 @@ function railCss(accent: string, accentSoft: string): string {
       display: flex; align-items: center; justify-content: center;
     }
     .ar-escape-send:hover { opacity: 0.9; }
+
+    .ar-attach-btn {
+      width: 28px; height: 28px; border-radius: 999px;
+      background: rgba(10,10,11,0.06); color: #1a1612;
+      border: 1px solid rgba(10,10,11,0.1); cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      margin-right: 2px;
+    }
+    .ar-attach-btn:hover { background: var(--ar-accent-soft); border-color: var(--ar-accent); }
+    .ar-attachments {
+      display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px;
+    }
+    .ar-attachment-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 8px; border-radius: 6px;
+      background: var(--ar-accent-soft); border: 1px solid var(--ar-accent-soft);
+      font-size: 11px; color: #1a1612;
+    }
+    .ar-attachment-icon { flex-shrink: 0; font-size: 12px; }
+    .ar-attachment-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+    .ar-attachment-size {
+      font-family: 'JetBrains Mono', monospace; font-size: 9px;
+      color: #6d625a; flex-shrink: 0;
+    }
 
     @media (max-width: 640px) {
       .ar-expanded { width: 100%; }
