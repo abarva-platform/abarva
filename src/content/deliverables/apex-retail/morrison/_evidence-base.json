@@ -80,6 +80,30 @@
       "evidence_confidence": "high",
       "first_cited_in": "D15"
     },
+    "E10": {
+      "type": "interview_transcript",
+      "source": "D04 Intake Synthesis · Marcus T. (CFO) sponsor interview 2026-01-15",
+      "deliverable_code": "D04",
+      "reference": "CFO framing · margin compression is upstream (cost-to-serve erosion + promotional depth creep), not a pricing failure. Apex CPI tracked peer medians through the compression window. Pricing action is explicitly off the table — not available without breaking banner value proposition. Capital envelope appetite: $6-8M at 14-month payback.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E11": {
+      "type": "interview_transcript",
+      "source": "D04 Intake Synthesis · Katherine P. (CMO) + Lena G. (Director Brand Strategy) co-sponsor interviews 2026-01-16, 2026-01-21",
+      "deliverable_code": "D04",
+      "reference": "CMO framing · owned-brand is a brand-equity asset, not a margin play. 15%-per-category SKU depth cut is the consumer tolerance threshold; beyond that, perception drag takes 2-3 quarters to recover. Brand Strategy director (Lena) corroborates the 15% threshold and serves as the interlocutor who checks Katherine's veto arithmetic.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
+    "E12": {
+      "type": "interview_transcript",
+      "source": "D04 Intake Synthesis · Reese A. (VP Merchandising, Owned Brand) interview 2026-01-17",
+      "deliverable_code": "D04",
+      "reference": "Merchandising framing · assortment cuts operationally feasible but politically difficult. Category leads protect SKU counts because headcount allocations tie to SKU complexity. Reese willing to sponsor rationalization at category level; needs Diane R. (Supply Chain) air cover for first two category rollouts. Long-tail assessment: 40% cut achievable on long-tail SKUs without consumer-visible signal.",
+      "evidence_confidence": "high",
+      "first_cited_in": "D04"
+    },
     "E20": {
       "type": "financial_baseline",
       "source": "D07 Financial Baseline · §2.2 category-level compression detail",
