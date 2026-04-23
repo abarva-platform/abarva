@@ -108,7 +108,7 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
       <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
         <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
-          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER}
         </p>
       </div>
       {pattern ? (
@@ -194,7 +194,7 @@ export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
       <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
         <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>
-          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER} Every observation card carries a Composite tag.
+          {PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER}
         </p>
       </div>
       <PatternObservationsPipelinePanel />
