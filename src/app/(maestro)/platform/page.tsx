@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
+import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,21 +49,22 @@ type ComparisonRow = {
   abarva: string;
 };
 
-const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
+function knowledgeLayers(patternCount: number): KnowledgeLayer[] {
+  return [
   {
     name: 'Out-of-box Genome',
     scope: 'Cross-tenant · anonymized · AbarVa-curated',
     counters: [
-      '47 promoted patterns',
+      `${patternCount} authored patterns`,
       '1,247 anonymized observations',
       'F018 most-cited · 31 program contributions',
       'Growth · ~3 patterns / quarter',
     ],
-    artifacts: ['Pattern library (F001-F047)', 'Intervention library (n=124 · success-rated)', 'Comparator class library · industry × function × scale'],
+    artifacts: ['Pattern library (authored corpus)', 'Intervention library (n=124 · success-rated)', 'Comparator class library · industry × function × scale'],
     whatThisIsNot:
       '"Best practices PDFs," "consulting playbooks," or "AI knowledge graph." This is observed-and-validated pattern capital with n-counts and intervention success rates.',
     flowNote: 'Receives only promoted patterns after threshold, evidence review, and legal anonymization sign-off.',
-    metric: '47 live patterns',
+    metric: `${patternCount} authored patterns`,
   },
   {
     name: 'Client-contributed',
@@ -92,7 +94,8 @@ const KNOWLEDGE_LAYERS: KnowledgeLayer[] = [
     flowNote: 'Promotes upward only when repeated observations clear threshold and the contribution package is audit-complete.',
     metric: '3 promotions this quarter',
   },
-];
+  ];
+}
 
 const PHASES: PhaseBlock[] = [
   {
@@ -204,10 +207,11 @@ const AGENTS: Agent[] = [
   },
 ];
 
-const COMPOUNDING: CompoundingAsset[] = [
+function compoundingAssets(patternCount: number): CompoundingAsset[] {
+  return [
   {
     name: 'Transformation Genome',
-    primary: '47 promoted patterns',
+    primary: `${patternCount} authored patterns`,
     secondary: ['1,247 anonymized observations', 'F018 most-cited (31 program contributions)', 'Growth rate ~3 patterns / quarter'],
     whyCompounds:
       'Every program adds to the corpus. Every pattern match strengthens or refines a Genome entry. Patterns at n ≥ 5 promote to recommend-intervention status. The library only gets sharper.',
@@ -249,7 +253,8 @@ const COMPOUNDING: CompoundingAsset[] = [
       'Research is written against live program observations, something consulting firms and tool vendors structurally cannot produce.',
     visual: 'publication',
   },
-];
+  ];
+}
 
 const PLATFORM_PROVIDES = [
   'Program Operating System · 28 deliverables generated dynamically across 5 phases, based on program context rather than static templates.',
@@ -356,6 +361,10 @@ const sectionBody: CSSProperties = {
 };
 
 export default function PlatformPage() {
+  const patternCount = getPatternManifestEntries().length;
+  const knowledgeLayerCards = knowledgeLayers(patternCount);
+  const compoundingAssetsList = compoundingAssets(patternCount);
+
   return (
     <div
       style={{
@@ -414,13 +423,13 @@ export default function PlatformPage() {
               <div className="hero-stat-strip">
                 <MetricChip label="Agents" value="4 named" />
                 <MetricChip label="Knowledge layers" value="3-tier" />
-                <MetricChip label="Pattern capital" value="47 live" />
+                <MetricChip label="Pattern capital" value={`${patternCount} authored`} />
                 <MetricChip label="Proof discipline" value="Audit-grade" />
               </div>
             </div>
 
             <div className="platform-hero-visual" aria-hidden="true">
-              <ArchitectureConstellation />
+              <ArchitectureConstellation patternCount={patternCount} />
             </div>
           </header>
 
@@ -439,7 +448,7 @@ export default function PlatformPage() {
                 <span />
                 <span />
               </div>
-              {KNOWLEDGE_LAYERS.map((layer, index) => (
+              {knowledgeLayerCards.map((layer, index) => (
                 <article key={layer.name} className="layer-band">
                   <div>
                     <div style={{ ...sectionEyebrow, fontSize: 10, color: 'rgba(247,242,234,0.55)' }}>{layer.scope}</div>
@@ -579,7 +588,7 @@ export default function PlatformPage() {
             </p>
 
             <div className="asset-grid">
-              {COMPOUNDING.map((asset) => (
+              {compoundingAssetsList.map((asset) => (
                 <article key={asset.name} className="asset-card">
                   <div className="asset-card-top">
                     <div>
@@ -719,7 +728,7 @@ export default function PlatformPage() {
   );
 }
 
-function ArchitectureConstellation() {
+function ArchitectureConstellation({ patternCount }: { patternCount: number }) {
   // Live operational schematic. Four zones wired to the same spine · agents
   // at the top tap into the phase pipeline; phase gates write into the
   // Evidence Ledger; the ledger feeds knowledge upward (Client → Emergent →
@@ -847,7 +856,7 @@ function ArchitectureConstellation() {
         <div className="schematic-knowledge-stack">
           <div className="schematic-knowledge-band schematic-knowledge-genome">
             <div className="schematic-knowledge-name">Genome</div>
-            <div className="schematic-knowledge-count">47 promoted patterns</div>
+            <div className="schematic-knowledge-count">{patternCount} authored patterns</div>
           </div>
           <div className="schematic-knowledge-arrow" aria-hidden="true" />
           <div className="schematic-knowledge-band schematic-knowledge-emergent">
