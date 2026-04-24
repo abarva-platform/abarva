@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { ProgramFullState } from '@/lib/programs/types.ui';
 import { PhaseGateControl } from '@/components/programs/PhaseGateControl';
+import { useDrawer } from '@/components/drawer/DrawerProvider';
 
 type PhaseKey = 'p0' | 'p1' | 'p2' | 'p3' | 'p4';
 
@@ -273,6 +274,7 @@ export function ProgramsIridescentShell({ programs, activeClientName = null }: P
   const [transitionKey, setTransitionKey] = useState(0);
   const [input, setInput] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const drawer = useDrawer();
 
   // Intake state
   const [intakeStep, setIntakeStep] = useState<IntakeStep>('archetype');
@@ -544,7 +546,62 @@ export function ProgramsIridescentShell({ programs, activeClientName = null }: P
                 <div className="pis-side-heading">Phase {phaseMeta.num} deliverables</div>
                 <div className="pis-side-deliverables">
                   {phaseMeta.deliverables.map((d) => (
-                    <button key={d.code} type="button" className={`pis-side-deliverable ${d.status}`}>
+                    <button
+                      key={d.code}
+                      type="button"
+                      className={`pis-side-deliverable ${d.status}`}
+                      onClick={() => {
+                        // Deliverable clicks open in-drawer rather than
+                        // navigating out of the Nexus chat-anchored shell.
+                        // Every click renders within the page per the
+                        // page-agent coherence work order §2.
+                        const tenantSlug = selectedProgram?.clientName?.toLowerCase().replace(/\s+/g, '-') ?? 'apex-retail';
+                        const programSlug = selectedProgram?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') ?? '';
+                        const deliverableHref = programSlug
+                          ? `/tenant/${tenantSlug}/programs/${programSlug}/deliverables/${d.code.toLowerCase()}-${d.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                          : null;
+                        drawer.openDrawer({
+                          kind: 'deliverable',
+                          id: d.code,
+                          href: deliverableHref ?? '#',
+                          title: `${d.code} · ${d.name}`,
+                          eyebrow: `Phase ${phaseMeta.num} · ${d.status}`,
+                          body: (
+                            <article style={{ fontFamily: 'DM Sans, sans-serif' }}>
+                              <header style={{ marginBottom: 20, paddingBottom: 14, borderBottom: '1px solid rgba(26,22,18,0.08)' }}>
+                                <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0e9f8c', fontWeight: 700, marginBottom: 6 }}>
+                                  {selectedProgram?.clientName ?? ''} · {selectedProgram?.name ?? ''} · Phase {phaseMeta.num}
+                                </div>
+                                <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 28, margin: 0, letterSpacing: '-0.02em', fontWeight: 700 }}>
+                                  {d.code} · {d.name}
+                                </h2>
+                                <div style={{ fontSize: 13, marginTop: 8, color: '#6d625a' }}>
+                                  Status: <strong style={{ color: '#1a1612' }}>{d.status}</strong>
+                                </div>
+                              </header>
+                              <section style={{ fontSize: 14, lineHeight: 1.65, color: '#3d342d' }}>
+                                <p>
+                                  This is a preview of the deliverable. The full rendered deliverable — with Rich-tier executive summary,
+                                  KPI strip, evidence table + chart, decision log, risks, and cross-links — lives at the canonical
+                                  tenant-scoped route.
+                                </p>
+                                <p style={{ marginTop: 12 }}>
+                                  Use <strong>Open full page →</strong> above to navigate out of the Nexus shell into the deliverable
+                                  detail. The agent rail stays with you; dismiss the drawer to return here.
+                                </p>
+                                <p style={{ marginTop: 12, padding: 12, borderRadius: 10, background: 'rgba(14,159,140,0.08)', fontSize: 13 }}>
+                                  <strong>Demo note:</strong> drawer body is placeholder for mock programs; real tenant-scoped
+                                  deliverables (Morrison D17, Meridian Ambient D17, etc.) load into /tenant/{'{'}slug{'}'}/... full pages.
+                                </p>
+                              </section>
+                              <footer style={{ marginTop: 24, paddingTop: 14, borderTop: '1px solid rgba(26,22,18,0.08)', fontSize: 12, color: '#8a7e72', lineHeight: 1.7 }}>
+                                Composite organization built from real-world data.
+                              </footer>
+                            </article>
+                          ),
+                        });
+                      }}
+                    >
                       <div className="pis-side-deliverable-main">
                         <span className="pis-side-deliverable-code">{d.code}</span>
                         <span className="pis-side-deliverable-name">{d.name}</span>
