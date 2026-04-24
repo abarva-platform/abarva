@@ -311,7 +311,7 @@
       "id": "S8",
       "name": "Programs page readiness contract",
       "category": "J",
-      "status": "ready",
+      "status": "code_complete",
       "risk": "medium",
       "ownerAgent": "Planner + Reviewer",
       "dependsOn": [
