@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import '@/styles/abarva-canon.css';
 import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
+import { tenantDashboardPath, tenantProgramPath } from '@/lib/deliverables/seed-route-resolver';
+import { getSeedTenantForClientKey } from '@/lib/deliverables/legacy-route-resolver';
 
 // /preview/investor · rebuilt per design canon v1.1
 // Source: page-wireframes-and-journey-maps.md §3.7 + Part 0.5 + Part 7
@@ -12,6 +14,13 @@ export const dynamic = 'force-dynamic';
 
 const LAST_UPDATED = 'Apr 22, 2026 · 10:15 PM';
 const patternCount = getPatternManifestEntries().length;
+const apexTenant = getSeedTenantForClientKey('apexretail');
+const meridianTenant = getSeedTenantForClientKey('meridian');
+const morrisonProgram = apexTenant?.programs.find((program) => program.programSlug === 'morrison-owned-brand-margin-recovery') ?? null;
+const ambientProgram = meridianTenant?.programs.find((program) => program.programSlug === 'ambient-clinical-value-chain-activation') ?? null;
+const ambientPatternHref = meridianTenant
+  ? `/tenant/${meridianTenant.routeSlug}/intelligence/patterns/ambient-clinical-value-chain`
+  : '/preview/intelligence?client=meridian&view=patterns&slug=ambient-clinical-value-chain';
 
 export default function InvestorPreviewPage() {
   return (
@@ -137,25 +146,25 @@ export default function InvestorPreviewPage() {
               tenant="Apex Retail"
               path="Morrison Owned Brand Margin Recovery · Phase 4"
               note="Rich fidelity · Anthology-critical walkthrough"
-              href="/preview/programs?client=apexretail"
+              href={apexTenant && morrisonProgram ? tenantProgramPath(apexTenant, morrisonProgram) : '/engagements?client=apexretail'}
             />
             <ProofLink
               tenant="Meridian Health"
               path="Ambient Clinical Value Chain · Phase 3"
               note="Healthcare pattern with vendor overlap resolution"
-              href="/preview/programs?client=meridian"
+              href={meridianTenant && ambientProgram ? tenantProgramPath(meridianTenant, ambientProgram) : '/engagements?client=meridian'}
             />
             <ProofLink
               tenant="Meridian Health"
               path="AI Control Tower · Monday-morning CIO surface"
               note="Prat-resonant · the single most commercially compelling page"
-              href="/preview/tower?client=meridian"
+              href={meridianTenant ? `${tenantDashboardPath(meridianTenant)}/tower` : '/tower?client=meridian'}
             />
             <ProofLink
               tenant="Intelligence"
               path="Ambient Clinical · canonical pattern detail"
               note="Spec-depth pattern · moat evidence"
-              href="/preview/intelligence?client=meridian&view=patterns&slug=ambient-clinical-value-chain"
+              href={ambientPatternHref}
             />
           </div>
         </div>

@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { getActiveClientKey } from '@/lib/active-client';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
 import { getServerSupabase } from '@/lib/supabase-server';
 
 export const dynamic = 'force-dynamic';
@@ -118,10 +120,18 @@ function qualityColor(score: number | undefined): string {
 
 export default async function DeliverablesPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ engagementId: string }>;
+  searchParams: Promise<{ client?: string }>;
 }) {
   const { engagementId: graphId } = await params;
+  const { client } = await searchParams;
+  const activeClientKey = await getActiveClientKey(client);
+  const canonicalProgramPath = resolveSeedProgramPath(graphId, activeClientKey);
+  if (canonicalProgramPath) {
+    redirect(canonicalProgramPath);
+  }
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
 

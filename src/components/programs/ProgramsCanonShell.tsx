@@ -180,7 +180,7 @@ export function ProgramsCanonShell({ programs }: { programs: ProgramFullState[] 
       {/* Preview banner */}
       <div className="pcs-banner">
         <span><strong>● PROGRAMS · CANON PREVIEW</strong> Design canon v1.1 · animated phase journey</span>
-        <Link href="/programs">← Compare with current /programs</Link>
+        <Link href="/engagements">← Compare with current /engagements</Link>
       </div>
 
       {/* Dark navbar */}
@@ -189,9 +189,9 @@ export function ProgramsCanonShell({ programs }: { programs: ProgramFullState[] 
         <div className="pcs-tenant-switcher">{selectedProgram?.clientName ?? 'Pick a tenant'}</div>
         <div className="pcs-nav-links">
           <Link href="/home">Home</Link>
-          <Link href="/preview/programs" className="active">Programs</Link>
+          <Link href="/engagements" className="active">Programs</Link>
           <Link href="/preview/intelligence">Intelligence</Link>
-          <Link href="/preview/tower">Control Tower</Link>
+          <Link href="/tower">Control Tower</Link>
           <Link href="/platform">Platform</Link>
         </div>
         <Link href="/preview/investor" className="pcs-nav-right">Investor →</Link>
@@ -286,7 +286,7 @@ function PortfolioStage({
   return (
     <div className="pcs-container">
       <div className="pcs-breadcrumb">
-        <Link href="/preview/programs">Portfolio</Link>
+        <Link href="/engagements">Portfolio</Link>
       </div>
       <div className="pcs-prog-header">
         <div>
@@ -355,7 +355,7 @@ function PhaseStage({
       <div className="pcs-breadcrumb">
         <Link href="/home">{program.clientName}</Link>
         <span className="sep">›</span>
-        <Link href="/preview/programs">Programs</Link>
+        <Link href="/engagements">Programs</Link>
         <span className="sep">›</span>
         <span className="current">{program.name}</span>
       </div>

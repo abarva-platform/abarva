@@ -23,29 +23,18 @@ const nextConfig: NextConfig = {
       // Product-map spec: engagement console lives at /engagements/[id].
       // Keep the /engage/* path alive via 308 for bookmarks + prior links.
       { source: '/engage/:path*', destination: '/engagements/:path*', permanent: true },
-      // Wave-2 surface migration. The new Nexus chat-first Programs shell
-      // and the Atlas-rail Control Tower live under /preview/* until the
-      // canonical routes are fully migrated. Redirect the BASE paths only —
-      // sub-routes like /engagements/[id], /tower/projects, /programs/new
-      // are still live and handle their own content. Use 307 (not permanent)
-      // so we can flip back once the canonical routes are replaced wholesale.
-      { source: '/engagements', destination: '/preview/programs', permanent: false },
-      { source: '/programs', destination: '/preview/programs', permanent: false },
-      { source: '/tower', destination: '/preview/tower', permanent: false },
+      // Intelligence preview remains the primary shell while the canonical
+      // pattern pages keep filling out. Programs and Tower now resolve
+      // through their own route handlers so legacy URLs can redirect into
+      // tenant-scoped seeded surfaces without looping through /preview/*.
       { source: '/intelligence', destination: '/preview/intelligence', permanent: false },
-      // Legacy-route sweep · every deep path under the old surfaces now
-      // redirects to the canonical preview surface. The "engagement"
-      // concept is retired wholesale; users never see an engagement URL.
-      // Tenant-scoped paths (/tenant/{slug}/...) are untouched — those
-      // are the canonical product routes.
-      { source: '/engagements/:path*', destination: '/preview/programs', permanent: false },
-      { source: '/programs/:path*', destination: '/preview/programs', permanent: false },
-      { source: '/sponsor/:path*', destination: '/preview/programs', permanent: false },
+      // Legacy sponsor URLs now land on the person profile route instead of
+      // dumping users into the programs preview shell.
+      { source: '/sponsor/:path*', destination: '/persons/:path*', permanent: false },
       { source: '/intelligence/thread/:path*', destination: '/preview/intelligence', permanent: false },
       // NOTE · /tower/projects, /tower/staff-aug, /tower/tech-stack,
       // /tower/volumetrics, /tower/preview, /tower/onboard/* are legitimate
-      // Tower sub-surfaces with their own content. Only the exact /tower
-      // root redirects (above); sub-paths stay live.
+      // Tower sub-surfaces with their own content and stay live.
     ];
   },
 };

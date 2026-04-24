@@ -14,6 +14,14 @@ const SERIF = 'Georgia, serif';
 const BODY = 'DM Sans, -apple-system, sans-serif';
 const MONO = 'JetBrains Mono, monospace';
 
+function isTenantProgramsPath(pathname: string): boolean {
+  return pathname.startsWith('/tenant/') && pathname.includes('/programs');
+}
+
+function isTenantTowerPath(pathname: string): boolean {
+  return pathname.startsWith('/tenant/') && pathname.includes('/tower');
+}
+
 interface ClientInfo {
   clientId: string;
   name: string;
@@ -24,13 +32,13 @@ interface ClientInfo {
 // (admin surfaces). Observer gets the same, minus Engagements.
 const ITEMS_CLIENT_VIEWER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
-  { label: 'Programs', href: '/preview/programs', match: (p) => p === '/preview/programs' || p.startsWith('/preview/programs/') || p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') },
-  { label: 'Control Tower', href: '/preview/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') },
+  { label: 'Programs', href: '/engagements', match: (p) => p === '/preview/programs' || p.startsWith('/preview/programs/') || p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') || isTenantProgramsPath(p) },
+  { label: 'Control Tower', href: '/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') || isTenantTowerPath(p) },
 ];
 
 const ITEMS_OBSERVER: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/dashboard' || p === '/' },
-  { label: 'Control Tower', href: '/preview/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') },
+  { label: 'Control Tower', href: '/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') || isTenantTowerPath(p) },
 ];
 
 export function ClientChrome({

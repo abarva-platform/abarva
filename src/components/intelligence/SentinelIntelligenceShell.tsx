@@ -60,6 +60,34 @@ function confidenceBand(floor: number | null): 'high' | 'medium' | 'thin' {
   return 'thin';
 }
 
+function sentinelFreeTextReply(
+  text: string,
+  selected: PatternManifestEntry | null,
+  activeClientName: string | null,
+): string {
+  if (!selected) {
+    return `I need a pattern anchored first. Pick one from the library and I will stay honest about what is research-authored versus what is measured for ${activeClientName ?? 'your tenant'}.`;
+  }
+
+  const normalized = text.toLowerCase();
+  const strongestSignal = selected.detectionSignals[0] ?? selected.triggerSymptoms[0] ?? 'the pattern thesis itself';
+  const firstQuestion = selected.diagnosticQuestions[0] ?? 'the first unresolved diagnostic question';
+
+  if (normalized.includes('evidence') || normalized.includes('citation') || normalized.includes('source')) {
+    return `${selected.evidenceCount} evidence sources support ${selected.name}. Honest caveat: these are authored from research and composite observations, not measured customer outcomes. The two places I would start are the first evidence citation and the leading diagnostic question: "${firstQuestion}".`;
+  }
+
+  if (normalized.includes('risk') || normalized.includes('biggest') || normalized.includes('why')) {
+    return `The load-bearing risk in ${selected.name} is usually ${strongestSignal.toLowerCase()}. For ${activeClientName ?? 'this tenant'}, I would treat that as a diagnostic hypothesis until a program deliverable proves otherwise.`;
+  }
+
+  if (normalized.includes('apply') || normalized.includes('relevant') || normalized.includes('tenant') || normalized.includes('meridian') || normalized.includes('apex')) {
+    return `${selected.name} applies when the tenant is showing the same operating symptoms captured in the detection signals. The first one I would test for ${activeClientName ?? 'this tenant'} is ${strongestSignal.toLowerCase()}.`;
+  }
+
+  return `I can answer at the pattern level for ${selected.name}, but I will not fabricate measured outcomes. My best next step is to anchor on the strongest signal I see — ${strongestSignal.toLowerCase()} — and then test it with "${firstQuestion}".`;
+}
+
 // Sentinel opening turn · voice-authentic. Research-rigorous: establish
 // evidence, qualify confidence, name freshness. Short where the evidence
 // is thin; longer when we need to anchor a pattern the user is zooming
@@ -268,7 +296,7 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
       { speaker: 'you', text },
       {
         speaker: 'sentinel',
-        text: `Heard. Free-text queries route through the Ask layer — switch tabs to Ask Sentinel for the full librarian, or stick with guided choices to stay in context. I'll say "evidence is thin" if that's the honest answer.`,
+        text: sentinelFreeTextReply(text, selected, activeClientName),
       },
     ]);
     setEscapeText('');

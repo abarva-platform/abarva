@@ -5,6 +5,7 @@ import { ProgramCard } from '@/components/shared/entities/ProgramCard';
 
 export interface PortfolioProgram {
   id: string;
+  href?: string;
   // Identifier used in the nav target URL. Demo/composite rows pass the
   // program's mock id so the link resolves to /programs/[id] (C17). Real
   // engagement rows pass the graph_node_id and use the engagement console
@@ -68,6 +69,7 @@ export function PortfolioGlance({ programs, totalCount }: Props) {
         {top.map((p) => {
           const root = p.routePrefix ?? '/programs';
           const slug = root === '/programs' ? p.id : p.graphNodeId;
+          const href = p.href ?? `${root}/${encodeURIComponent(slug)}`;
           return (
             <ProgramCard
               key={p.id}
@@ -78,7 +80,7 @@ export function PortfolioGlance({ programs, totalCount }: Props) {
               objective={p.objective}
               outcomeFeeUsd={p.outcomeFeeUsd}
               healthSignal={p.healthSignal}
-              href={`${root}/${encodeURIComponent(slug)}`}
+              href={href}
               size="compact"
             />
           );

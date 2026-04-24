@@ -88,7 +88,7 @@ export function ProgramShell({
         <div className="programs-header-bar">
           <div className="programs-stack" style={{ gap: 12 }}>
             <div className="programs-row" style={{ gap: 8, flexWrap: 'wrap' }}>
-              <Link href="/programs" className="programs-tab is-active">Programs</Link>
+              <Link href="/engagements" className="programs-tab is-active">Programs</Link>
               <span className="programs-chip">{program.clientName}</span>
               <span className="programs-chip teal">{program.patternName ?? 'Custom shape'}</span>
               <span className="programs-chip">{program.shape}</span>

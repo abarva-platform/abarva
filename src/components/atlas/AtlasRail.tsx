@@ -354,7 +354,7 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
                   Shadow AI {dollars(payload.portfolio.shadowAiSpendUsd)} · realized value {dollars(payload.portfolio.realizedValueUsd)} · trustworthiness {payload.portfolio.averageTrustworthinessScore ?? 'n/a'}
                 </div>
                 <Link
-                  href="/programs"
+                  href="/engagements"
                   style={{
                     justifySelf: 'start',
                     fontSize: 12,
