@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import '@/styles/abarva-canon.css';
+import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 
 // /preview/investor · rebuilt per design canon v1.1
 // Source: page-wireframes-and-journey-maps.md §3.7 + Part 0.5 + Part 7
@@ -10,6 +11,7 @@ import '@/styles/abarva-canon.css';
 export const dynamic = 'force-dynamic';
 
 const LAST_UPDATED = 'Apr 22, 2026 · 10:15 PM';
+const patternCount = getPatternManifestEntries().length;
 
 export default function InvestorPreviewPage() {
   return (
