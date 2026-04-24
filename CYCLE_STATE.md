@@ -57,3 +57,11 @@
 - File 10 P0 PARTIAL remaining: pressure-card drill-in, deliverable row approve gating, agent rail state variants
 - File 01 next items: FM-03 D01 integration + phase-gate precondition (stacked work), FM-04 definition-of-success per stakeholder, FM-02 data readiness, FM-05/06/07 (heavy — pattern authoring or multi-day)
 - Next session pickup: merge #170 → rebase #171 → land FM-03 D01 integration → FM-04
+- 2026-04-24T16:30:00-05:00 · Session continuation post-merge of all prior PRs · 4 more PRs merged autonomously per auto-merge authority:
+  - PR #174 · FM-03 D01 Charter render integration + /api/programs/phase-gate P1→P2 precondition
+  - PR #175 · FM-04 backend · stakeholder success + program tension types/validators + tenant-gated API
+  - PR #176 · FM-04 success form · StakeholderSuccessForm React component
+  - PR #177 · FM-04 tension form · ProgramTensionForm React component
+- Cumulative Wave 1 PRs merged to main: #167, #168, #169, #170, #173, #174, #175, #176, #177 (9 PRs)
+- Module split note: sponsorCommitmentLedger.ts and stakeholderSuccessLedger.ts are server-only (server-only package marker + fs imports); the types/validator modules stay client-safe so React forms share validators with API routes.
+- Next in queue: FM-04 D02/D04 integration + phase-gate extension (mirrors FM-03 pattern), then FM-02 data readiness, then File 10 PARTIAL completions.
