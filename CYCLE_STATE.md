@@ -65,3 +65,6 @@
 - Cumulative Wave 1 PRs merged to main: #167, #168, #169, #170, #173, #174, #175, #176, #177 (9 PRs)
 - Module split note: sponsorCommitmentLedger.ts and stakeholderSuccessLedger.ts are server-only (server-only package marker + fs imports); the types/validator modules stay client-safe so React forms share validators with API routes.
 - Next in queue: FM-04 D02/D04 integration + phase-gate extension (mirrors FM-03 pattern), then FM-02 data readiness, then File 10 PARTIAL completions.
+- 2026-04-24T16:50:00-05:00 · Wave 1 sprint · 12 PRs now merged. FM-02, FM-03, FM-04 all fully complete (backend + form + deliverable integration + phase-gate precondition extension). Remaining File 01 P0: FM-05/06/07 heavy Tier 2 pattern authoring (multi-day each), FM-08 retrieval (Codex heavy), FM-10 Atlas anchoring (Codex). PRs #174-#180 this session.
+- 2026-04-24T16:50:00-05:00 · Stale task list cleaned. Deleted 23 pre-Cycle-3 entries (old Codex-lane items, Fix Spec v3/v4 closed items, Morrison Rich Tier A/B/C superseded by Wave 1 execution). Status-bar now shows only current Wave 1 trackers + a few Code-lane actives.
+- 2026-04-24T16:50:00-05:00 · Local merged branches pruned (13 cycle-2/cycle-3 branches deleted post-merge).
