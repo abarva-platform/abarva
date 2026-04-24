@@ -18,14 +18,12 @@ const INK_SOFT = '#3A312A';
 const INK_MUTED = '#5B4D43';
 const INK_FAINT = '#8A7D70';
 const LINE = 'rgba(23,20,17,0.12)';
-const LINE_SOFT = 'rgba(23,20,17,0.06)';
 const TEAL = '#0E9F8C';
 const TEAL_SOFT = 'rgba(14,159,140,0.1)';
 const AMBER = '#C08643';
 const AMBER_SOFT = 'rgba(192,134,67,0.12)';
 const CORAL = '#CE5A3B';
 const CORAL_SOFT = 'rgba(206,90,59,0.1)';
-const GREEN = '#3FB27F';
 const SERIF = '"Fraunces", Georgia, serif';
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
 const SANS = '"DM Sans", -apple-system, sans-serif';
@@ -131,7 +129,6 @@ export function TowerPreviewShell({
   currentPath: string;
 }) {
   const [expandedPillar, setExpandedPillar] = useState<PillarKey | null>(null);
-  const [atlasOpen, setAtlasOpen] = useState(false);
 
   const pressure: PressureItem[] = vm?.contradictions?.length
     ? (() => {
@@ -253,9 +250,8 @@ export function TowerPreviewShell({
         </div>
 
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-          <button
-            type="button"
-            onClick={() => setAtlasOpen(true)}
+          <Link
+            href="/preview/intelligence"
             style={{
               padding: '10px 18px',
               background: 'transparent',
@@ -268,10 +264,11 @@ export function TowerPreviewShell({
               color: INK_SOFT,
               cursor: 'pointer',
               fontWeight: 600,
+              textDecoration: 'none',
             }}
           >
-            Ask Atlas
-          </button>
+            Open intelligence
+          </Link>
           <Link
             href="/programs"
             style={{
@@ -324,7 +321,6 @@ export function TowerPreviewShell({
           }}
         >
           <PillarCard
-            pillar="inventory"
             label="Inventory"
             subtitle="What exists"
             value={String(inventoryTotal)}
@@ -338,7 +334,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'inventory' ? null : 'inventory')}
           />
           <PillarCard
-            pillar="adoption"
             label="Adoption"
             subtitle="Who uses it"
             value={`${adoptionPct}%`}
@@ -352,7 +347,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'adoption' ? null : 'adoption')}
           />
           <PillarCard
-            pillar="value"
             label="Value"
             subtitle="Is it working"
             value={fmtUsd(valueVerified)}
@@ -366,7 +360,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'value' ? null : 'value')}
           />
           <PillarCard
-            pillar="risk"
             label="Risk"
             subtitle="Is it safe"
             value={`${riskApproved}/${riskTotal}`}
@@ -380,7 +373,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'risk' ? null : 'risk')}
           />
           <PillarCard
-            pillar="cost"
             label="Cost"
             subtitle="Is it worth it"
             value={`${fmtUsd(monthlySpend)}`}
@@ -654,7 +646,6 @@ function PressureRow({ item }: { item: PressureItem }) {
 }
 
 function PillarCard({
-  pillar,
   label,
   subtitle,
   value,
@@ -663,7 +654,6 @@ function PillarCard({
   expanded,
   onClick,
 }: {
-  pillar: PillarKey;
   label: string;
   subtitle: string;
   value: string;
@@ -806,160 +796,5 @@ function DrillDown({ pillar, onClose }: { pillar: PillarKey; onClose: () => void
         In the real implementation this pulls the filtered dataset for {pillar} and lands on the same row pattern as the Home command center.
       </div>
     </section>
-  );
-}
-
-function AtlasDock({
-  open,
-  onClose,
-  onOpen,
-  clientName,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onOpen: () => void;
-  clientName: string;
-}) {
-  return (
-    <>
-      {/* Collapsed tab on right edge */}
-      {!open ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label="Open Atlas"
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: '40%',
-            padding: '16px 10px',
-            background: INK,
-            color: PAGE_BG,
-            border: 'none',
-            borderRadius: '10px 0 0 10px',
-            cursor: 'pointer',
-            writingMode: 'vertical-rl',
-            fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            boxShadow: '-4px 4px 14px rgba(23,20,17,0.15)',
-            zIndex: 20,
-          }}
-        >
-          Atlas ⟨
-        </button>
-      ) : null}
-
-      {/* Expanded panel */}
-      {open ? (
-        <aside
-          role="dialog"
-          aria-label="Atlas assistant"
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 380,
-            background: INK,
-            color: PAGE_BG,
-            zIndex: 21,
-            padding: '20px 22px',
-            boxShadow: '-12px 0 40px rgba(23,20,17,0.28)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            overflow: 'auto',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: AMBER,
-                  fontWeight: 700,
-                }}
-              >
-                Atlas · Tower
-              </div>
-              <div style={{ fontFamily: SERIF, fontSize: 20, marginTop: 4 }}>{clientName}</div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close Atlas"
-              style={{
-                border: '1px solid rgba(248,247,244,0.22)',
-                background: 'transparent',
-                color: PAGE_BG,
-                padding: '6px 10px',
-                borderRadius: 999,
-                cursor: 'pointer',
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: '0.12em',
-              }}
-            >
-              Close ⟩
-            </button>
-          </div>
-          <div
-            style={{
-              padding: 16,
-              background: 'rgba(245,158,11,0.1)',
-              border: '1px solid rgba(245,158,11,0.26)',
-              borderRadius: 14,
-              fontSize: 14,
-              lineHeight: 1.55,
-            }}
-          >
-            2 programs active. 3 unowned contradictions burning $88K/month. Shadow AI is the hottest of the three · no named
-            owner, PHI risk.
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['Who owns Shadow AI?', 'Peer position on VBC capability', 'Last gate decision summary'].map((q) => (
-              <button
-                key={q}
-                type="button"
-                style={{
-                  textAlign: 'left',
-                  padding: '10px 14px',
-                  background: 'rgba(248,247,244,0.04)',
-                  border: '1px solid rgba(248,247,244,0.1)',
-                  borderRadius: 10,
-                  color: PAGE_BG,
-                  fontFamily: SANS,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-          <div style={{ flex: 1 }} />
-          <input
-            type="text"
-            placeholder="Ask Atlas about portfolio state…"
-            style={{
-              padding: '12px 14px',
-              background: 'rgba(248,247,244,0.06)',
-              border: '1px solid rgba(248,247,244,0.18)',
-              borderRadius: 12,
-              color: PAGE_BG,
-              fontFamily: SANS,
-              fontSize: 13,
-              outline: 'none',
-            }}
-          />
-        </aside>
-      ) : null}
-    </>
   );
 }

@@ -137,25 +137,25 @@ export default function InvestorPreviewPage() {
               tenant="Apex Retail"
               path="Morrison Owned Brand Margin Recovery · Phase 4"
               note="Rich fidelity · Anthology-critical walkthrough"
-              href="/programs"
+              href="/preview/programs?client=apexretail"
             />
             <ProofLink
               tenant="Meridian Health"
               path="Ambient Clinical Value Chain · Phase 3"
               note="Healthcare pattern with vendor overlap resolution"
-              href="/preview/programs"
+              href="/preview/programs?client=meridian"
             />
             <ProofLink
               tenant="Meridian Health"
               path="AI Control Tower · Monday-morning CIO surface"
               note="Prat-resonant · the single most commercially compelling page"
-              href="/preview/tower"
+              href="/preview/tower?client=meridian"
             />
             <ProofLink
               tenant="Intelligence"
               path="Ambient Clinical · canonical pattern detail"
               note="Spec-depth pattern · moat evidence"
-              href="/preview/intelligence"
+              href="/preview/intelligence?client=meridian&view=patterns&slug=ambient-clinical-value-chain"
             />
           </div>
         </div>

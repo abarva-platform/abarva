@@ -16,7 +16,8 @@
 
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getAllActiveEngagements } from '@/lib/db/engagement';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { CLIENT_KEY_TO_DB_NAME, getClientOption } from '@/lib/client-config';
 import { getAllPersons } from '@/lib/db/person';
 import { getAllPrograms } from '@/lib/programs/mock';
 import { BriefingSurface, type BriefingSummary } from '@/components/home/composite/BriefingSurface';
@@ -36,7 +37,6 @@ const INK_SOFT = '#40342D';
 const INK_MUTED = '#6B5B52';
 const LINE = 'rgba(23,20,17,0.12)';
 const TEAL = '#14B8A6';
-const SKY = '#7FB8FF';
 const DARK = '#101418';
 const DARK_PANEL = '#171C21';
 const DARK_LINE = 'rgba(255,255,255,0.08)';
@@ -67,14 +67,22 @@ function healthFromPhase(phase: number): 'healthy' | 'watch' | 'attention' {
   return 'attention';
 }
 
-export default async function HomePage() {
-  const [maestro, activeClient, allPersons] = await Promise.all([
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const params = await searchParams;
+  const [maestro, activeClientKey, activeClient, allPersons] = await Promise.all([
     getCurrentPerson(),
-    getActiveClientRow(),
+    getActiveClientKey(params.client),
+    getActiveClientRow(params.client),
     getAllPersons(),
   ]);
 
-  const activeClientId = activeClient?.id ?? null;
+  const activeClientId = activeClient?.id || null;
+  const currentClientOption = getClientOption(activeClientKey);
+  const activeClientName = activeClient?.name ?? currentClientOption.name;
 
   const engagements = await getAllActiveEngagements(
     maestro?.id,
@@ -89,13 +97,24 @@ export default async function HomePage() {
   //    which is the older EngagementConsole. Used for clients that
   //    don't yet have composite mock data.
   const allMockPrograms = getAllPrograms();
-  const activeClientName = activeClient?.name ?? null;
-  const matchesMockTenant = (tenant: string) => {
-    if (!activeClientName) return false;
-    const keyword = activeClientName.split(/\s+/)[0]?.toLowerCase() ?? '';
-    return keyword.length > 0 && tenant.toLowerCase().includes(keyword);
-  };
+  const clientNameCandidates = CLIENT_KEY_TO_DB_NAME[activeClientKey].map((name) => name.toLowerCase());
+  const matchesMockTenant = (tenant: string) => clientNameCandidates.includes(tenant.toLowerCase());
   const mockForActive = allMockPrograms.filter((p) => matchesMockTenant(p.clientName));
+
+  const engagementPortfolio: PortfolioProgram[] = activeClientId
+    ? engagements.map((e) => ({
+        id: e.id,
+        graphNodeId: e.graph_node_id,
+        routePrefix: '/engagements' as const,
+        name: e.name,
+        currentPhase: e.current_phase ?? 0,
+        sponsorName: e.sponsor_name,
+        sponsorTitle: e.sponsor_role,
+        objective: null,
+        outcomeFeeUsd: null,
+        healthSignal: healthFromPhase(e.current_phase ?? 0),
+      }))
+    : [];
 
   const portfolio: PortfolioProgram[] = mockForActive.length > 0
     ? mockForActive.map((p) => ({
@@ -112,20 +131,9 @@ export default async function HomePage() {
           : p.gateStatus === 'cleared' ? 'healthy' as const
           : 'watch' as const,
       }))
-    : engagements.map((e) => ({
-        id: e.id,
-        graphNodeId: e.graph_node_id,
-        routePrefix: '/engagements' as const,
-        name: e.name,
-        currentPhase: e.current_phase ?? 0,
-        sponsorName: e.sponsor_name,
-        sponsorTitle: e.sponsor_role,
-        objective: null,
-        outcomeFeeUsd: null,
-        healthSignal: healthFromPhase(e.current_phase ?? 0),
-      }));
+    : engagementPortfolio;
 
-  const scopedPersons = scopePersonsToOrg(allPersons, activeClient?.name ?? null);
+  const scopedPersons = scopePersonsToOrg(allPersons, activeClientName);
 
   // Rank: sponsors of active programs first, then other scoped org members.
   const sponsorIds = new Set(engagements.map((e) => e.sponsor_name).filter(Boolean) as string[]);
@@ -176,10 +184,9 @@ export default async function HomePage() {
   // wiring lands, replace the fallbacks with live counts.
   const programCount = portfolio.length;
   const stakeholderTotal = scopedPersons.length;
-  const tenantName = activeClient?.name ?? null;
-  const isApex = tenantName?.toLowerCase().includes('apex') ?? false;
-  const isMeridian = tenantName?.toLowerCase().includes('meridian') ?? false;
-  const isFirstCapital = tenantName?.toLowerCase().includes('first') ?? tenantName?.toLowerCase().includes('arcturus') ?? false;
+  const isApex = activeClientKey === 'apexretail';
+  const isMeridian = activeClientKey === 'meridian';
+  const isFirstCapital = activeClientKey === 'arcturus';
 
   const breadthChips: BreadthChip[] = [
     {

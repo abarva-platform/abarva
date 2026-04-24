@@ -1,5 +1,6 @@
 import { getAllPrograms } from '@/lib/programs/mock';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { CLIENT_KEY_TO_DB_NAME, getClientOption } from '@/lib/client-config';
 import { ProgramsIridescentShell } from '@/components/programs/ProgramsIridescentShell';
 
 export const dynamic = 'force-dynamic';
@@ -10,12 +11,18 @@ export const dynamic = 'force-dynamic';
 // tenant has no programs yet (new Keystone/Meridian seats, etc.); the
 // "+ New Program" pill inside the shell is the primary call to action.
 
-export default async function ProgramsPreviewPage() {
-  const activeClient = await getActiveClientRow();
+export default async function ProgramsPreviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const params = await searchParams;
+  const activeClientKey = await getActiveClientKey(params.client);
+  const activeClient = await getActiveClientRow(params.client);
+  const clientOption = getClientOption(activeClientKey);
   const all = getAllPrograms();
-  const programs = activeClient
-    ? all.filter((p) => p.clientName === activeClient.name)
-    : all;
-  const activeClientName = activeClient?.name ?? null;
+  const candidates = CLIENT_KEY_TO_DB_NAME[activeClientKey].map((name) => name.toLowerCase());
+  const programs = all.filter((p) => candidates.includes(p.clientName.toLowerCase()));
+  const activeClientName = activeClient?.name ?? clientOption.name;
   return <ProgramsIridescentShell programs={programs} activeClientName={activeClientName} />;
 }
