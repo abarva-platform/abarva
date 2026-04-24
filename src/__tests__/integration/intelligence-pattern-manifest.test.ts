@@ -4,6 +4,7 @@ import {
   getPatternApplicableProgramsForTenant,
   getPatternManifestEntries,
   getPatternManifestEntry,
+  patternMatchesIndustry,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
 
@@ -66,5 +67,12 @@ describe('intelligence pattern manifest', () => {
 
     const apexPrograms = getPatternApplicableProgramsForTenant('owned-brand-margin-recovery', 'apex-retail');
     expect(apexPrograms.map((program) => program.programSlug)).toContain('morrison-owned-brand-margin-recovery');
+  });
+
+  it('maps tenant industry aliases onto manifest sectors', () => {
+    const priorAuth = getPatternManifestEntry('prior-authorization-automation');
+    expect(priorAuth).toBeTruthy();
+    expect(patternMatchesIndustry(priorAuth!, 'HEALTHCARE_IDN')).toBe(true);
+    expect(patternMatchesIndustry(priorAuth!, 'healthcare')).toBe(true);
   });
 });

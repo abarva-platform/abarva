@@ -1,9 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { isExternalOnlyRole, resolveSessionRole } from '@/lib/auth/access-routing'
+import { isExternalOnlyRole, resolveSessionClientKey, resolveSessionRole, shouldStripUnauthorizedClientParam } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
 
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
@@ -38,9 +39,32 @@ const authRequiredRoutes = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
-  const metadataRole = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
+  const metadata = (sessionClaims?.publicMetadata as { role?: string; clientId?: string; defaultClientId?: string } | undefined) ?? {}
+  const metadataRole = metadata.role ?? null
   const email = (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ?? null
   const role = resolveSessionRole(metadataRole, email)
+  const requestedClientId = request.nextUrl.searchParams.get('client')
+
+  if (
+    authRequiredRoutes(request)
+    && shouldStripUnauthorizedClientParam(
+      role,
+      {
+        clientId: metadata.clientId,
+        defaultClientId: metadata.defaultClientId,
+        email,
+      },
+      requestedClientId,
+    )
+  ) {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.searchParams.delete('client')
+    return NextResponse.redirect(redirectUrl)
+  }
+
+  if (userId && (request.nextUrl.pathname === '/' || request.nextUrl.pathname.startsWith('/sign-in'))) {
+    return NextResponse.redirect(new URL('/auth-redirect', request.url))
+  }
 
   // Maestro routes — require authenticated Maestro/Admin/Investor
   if (maestroRoutes(request)) {
@@ -65,13 +89,36 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
     await auth.protect()
   }
 
+  let response: NextResponse | null = null
+  function getResponse() {
+    if (!response) response = NextResponse.next()
+    return response
+  }
+
+  if (isPublicRoute(request) && !userId) {
+    getResponse().cookies.delete(ACTIVE_CLIENT_COOKIE)
+  }
+
+  if (isPublicRoute(request) && userId && !isExternalOnlyRole(role)) {
+    const pinnedClient = resolveSessionClientKey({
+      clientId: metadata.clientId,
+      defaultClientId: metadata.defaultClientId,
+      email,
+    })
+    getResponse().cookies.set(ACTIVE_CLIENT_COOKIE, pinnedClient, {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 365,
+      sameSite: 'lax',
+    })
+  }
+
   // Tag mobile UA requests — consumed by server components via x-is-mobile header
   const ua = request.headers.get('user-agent') ?? ''
   if (MOBILE_UA.test(ua)) {
-    const response = NextResponse.next()
-    response.headers.set('x-is-mobile', '1')
-    return response
+    getResponse().headers.set('x-is-mobile', '1')
   }
+
+  if (response) return response
 })
 
 export const config = {

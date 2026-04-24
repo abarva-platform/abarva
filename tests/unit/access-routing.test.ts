@@ -1,10 +1,12 @@
 import {
   inferSessionRoleFromEmail,
+  isLockedTenantRole,
   isExternalOnlyRole,
   isNewClientSetupEmail,
   resolvePostSignInPath,
   resolveSessionClientKey,
   resolveSessionRole,
+  shouldStripUnauthorizedClientParam,
 } from '@/lib/auth/access-routing';
 
 describe('access-routing', () => {
@@ -49,6 +51,36 @@ describe('access-routing', () => {
   test('routes locked client users to their pinned client', () => {
     expect(resolvePostSignInPath('client', { clientId: 'meridian', defaultClientId: 'apexretail' })).toBe('/home?client=meridian');
     expect(resolvePostSignInPath(undefined, { email: 'demo-apexretail+clerk_test@abarva.com' })).toBe('/home?client=apexretail');
+  });
+
+  test('recognizes locked tenant roles from role or email alias', () => {
+    expect(isLockedTenantRole('client', null)).toBe(true);
+    expect(isLockedTenantRole(undefined, 'demo-keystone+clerk_test@abarva.com')).toBe(true);
+    expect(isLockedTenantRole('admin', 'anand+clerk_test@abarva.com')).toBe(false);
+  });
+
+  test('strips unauthorized client params for locked sessions', () => {
+    expect(
+      shouldStripUnauthorizedClientParam(
+        undefined,
+        { email: 'demo-apexretail+clerk_test@abarva.com' },
+        'meridian',
+      ),
+    ).toBe(true);
+    expect(
+      shouldStripUnauthorizedClientParam(
+        undefined,
+        { email: 'demo-apexretail+clerk_test@abarva.com' },
+        'apexretail',
+      ),
+    ).toBe(false);
+    expect(
+      shouldStripUnauthorizedClientParam(
+        'admin',
+        { email: 'anand+clerk_test@abarva.com', defaultClientId: 'meridian' },
+        'apexretail',
+      ),
+    ).toBe(false);
   });
 
   test('routes external users to the public surface', () => {

@@ -56,11 +56,26 @@ export function resolveSessionRole(role: AppSessionRole, email: string | null | 
   return role ?? inferSessionRoleFromEmail(email);
 }
 
+export function isLockedTenantRole(role: AppSessionRole, email: string | null | undefined): boolean {
+  const resolvedRole = resolveSessionRole(role, email);
+  return resolvedRole === 'client' || resolvedRole === 'maestro';
+}
+
 export function resolveSessionClientKey(input: ResolveClientInput): ClientKey {
   const resolved = [input.clientId, input.defaultClientId, inferClientKeyFromEmail(input.email), DEFAULT_CLIENT_KEY].find((candidate) =>
     isClientKey(candidate),
   );
   return resolved ?? DEFAULT_CLIENT_KEY;
+}
+
+export function shouldStripUnauthorizedClientParam(
+  role: AppSessionRole,
+  input: ResolveClientInput,
+  requestedClientId: string | null | undefined,
+): boolean {
+  if (!requestedClientId) return false;
+  if (!isLockedTenantRole(role, input.email)) return false;
+  return requestedClientId !== resolveSessionClientKey(input);
 }
 
 export function isExternalOnlyRole(role: AppSessionRole): role is 'external' {
