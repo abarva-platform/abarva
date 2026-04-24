@@ -15,7 +15,7 @@ export default async function SignInPage({
   ])
 
   if (user) {
-    redirect('/auth-redirect')
+    redirect(params.redirect || '/auth-redirect')
   }
 
   return <SignInShell redirectUrl={params.redirect || '/auth-redirect'} />

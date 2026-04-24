@@ -11,7 +11,7 @@
 ## Committed queue (ordered — do not reorder without updating this file)
 
 1. C2-1-tenant-isolation — Enforce backend membership checks on every `/tenant/{slug}/*` route, including programs, deliverables, patterns, tower, and evidence. Non-admin cross-tenant reads return 403, not content. `LOCAL COMPLETE · validated`
-2. C2-2-clerk-rebinding — Fix demo-account re-auth so `demo-apexretail+clerk_test` and `demo-meridian+clerk_test` do not rebound to the wrong tenant or lose valid `?client=` state because of stale/incomplete claims.
+2. C2-2-clerk-rebinding — Fix demo-account re-auth so `demo-apexretail+clerk_test` and `demo-meridian+clerk_test` do not rebound to the wrong tenant or lose valid `?client=` state because of stale/incomplete claims. `LOCAL COMPLETE · validated`
 3. C2-3-tower-open-routing — Resolve or remove the broken Tower pressure-card `OPEN → /engagements/892a57af-*` path.
 4. C2-4-atlas-free-text-runtime — Replace Atlas echo/redirect behavior with a real Stage 1-6 backed free-text path, same honesty contract as Sentinel.
 5. C2-5-nexus-discoverability — Make Nexus/Programs chat discoverable from program detail pages.
@@ -27,9 +27,9 @@
 
 ## Current position
 
-- Current item: C2-2-clerk-rebinding
-- Current step within item: C2-1 implemented + focused validation green locally; starting demo-account role/pin correction and `?client=` strip hardening
-- Started item at: 2026-04-24T09:14:00-05:00
+- Current item: C2-3-tower-open-routing
+- Current step within item: C2-2 implemented + focused validation green locally; routing trace on broken Tower `OPEN → /engagements/892a57af-*` starting next
+- Started item at: 2026-04-24T09:34:00-05:00
 - Expected next action ETA: same session
 
 ## Complete this cycle
@@ -51,7 +51,8 @@
 - 2026-04-24T08:09:00-05:00: For Cycle 2 item 1, safest membership model is “admin may roam; all other roles are pinned.” This matches the user instruction that all users should be locked to one account except admin.
 - 2026-04-24T09:13:00-05:00: C2-1 local validation passed: `jest tests/unit/tenant-access.test.ts tests/unit/access-routing.test.ts`, `tsc --noEmit`, and focused `eslint` on auth/test files.
 - 2026-04-24T09:15:00-05:00: Sidecar route sweep found additional tenant-shaped APIs to audit after the core `/tenant/*` leak path: `/api/engage/[engagementId]/turn`, `/api/engagements/create/turn`, `/api/data/upload`, `/api/data/turn`, `/api/tower/upload`, `/api/tower/seed-demo`, and `/api/v1/sentinel/query`.
+- 2026-04-24T09:33:00-05:00: C2-2 local validation passed: `jest tests/unit/access-routing.test.ts tests/unit/tenant-access.test.ts`, `tsc --noEmit`, and focused `eslint` on access-routing, active-client, sign-in, AppChrome, and auth test helpers.
 
 ## Last status emission
 
-- 2026-04-24T09:16:00-05:00 · C2-1 local validation green · item 2 in progress
+- 2026-04-24T09:34:00-05:00 · C2-2 local validation green · item 3 in progress
