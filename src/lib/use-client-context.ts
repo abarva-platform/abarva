@@ -13,7 +13,7 @@
 import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, isClientKey, type ClientOption } from '@/lib/client-config'
+import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey } from '@/lib/client-config'
 
 export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
 
@@ -47,6 +47,14 @@ export function useClientContext() {
 
   const role        = user?.publicMetadata?.role        as string | undefined
   const metaClient  = user?.publicMetadata?.clientId    as string | undefined
+  const defaultClient = user?.publicMetadata?.defaultClientId as string | undefined
+  const email = user?.primaryEmailAddress?.emailAddress
+    ?? user?.emailAddresses?.[0]?.emailAddress
+    ?? undefined
+  const inferredClient = inferClientKeyFromEmail(email)
+  const pinnedClientId = [metaClient, defaultClient, inferredClient, DEFAULT_CLIENT_KEY].find((candidate) =>
+    isClientKey(candidate),
+  ) ?? DEFAULT_CLIENT_KEY
 
   // Admin and investor can access all accounts
   const isElevated = !isLoaded || !user || role === 'admin' || role === 'investor'
@@ -54,17 +62,17 @@ export function useClientContext() {
   // Account-level users are locked to their single account
   const allowedClients = isElevated
     ? ALL_CLIENTS
-    : ALL_CLIENTS.filter(c => c.id === metaClient)
+    : ALL_CLIENTS.filter(c => c.id === pinnedClientId)
 
   // Resolve active client: URL param → localStorage → user metadata → default to first allowed
   const urlClient = searchParams.get('client')
   const lsClient = readLocalStorage()
-  const requestedClientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
+  const requestedClientId = urlClient || lsClient || pinnedClientId || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
   let clientId = requestedClientId
 
   // Enforce isolation: if the resolved client is one the user can't see, override
-  if (!isElevated && metaClient && clientId !== metaClient) {
-    clientId = metaClient
+  if (!isElevated && clientId !== pinnedClientId) {
+    clientId = pinnedClientId
   }
 
   if (!isClientKey(clientId) || !allowedClients.find((c) => c.id === clientId)) {

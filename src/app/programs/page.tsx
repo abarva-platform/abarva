@@ -1,22 +1,16 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getActiveClientKey } from '@/lib/active-client';
+import { isClientKey } from '@/lib/client-config';
 
-import { Suspense } from 'react';
-import { getAllPrograms } from '@/lib/programs/mock';
-import { ProgramsShell } from '@/components/programs/ProgramsShell';
+export const dynamic = 'force-dynamic';
 
-// Single persistent Programs shell · sub-menu tabs (Portfolio · + New Program ·
-// P0-P4), metadata strip on program-mode, and a phase workspace that swaps in
-// place without route changes. Light editorial palette matching Home + Platform.
-
-function ProgramsPageContent() {
-  const programs = getAllPrograms();
-  return <ProgramsShell programs={programs} />;
-}
-
-export default function ProgramsPage() {
-  return (
-    <Suspense fallback={<div style={{ padding: 28, fontFamily: 'DM Sans, sans-serif', color: '#5B4D43' }}>Loading programs…</div>}>
-      <ProgramsPageContent />
-    </Suspense>
-  );
+export default async function ProgramsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const params = await searchParams;
+  const requestedClient = isClientKey(params.client) ? params.client : null;
+  const clientKey = await getActiveClientKey(requestedClient);
+  redirect(`/preview/programs?client=${clientKey}`);
 }

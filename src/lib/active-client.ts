@@ -3,6 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import {
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
+  inferClientKeyFromEmail,
   isClientKey,
   type ClientKey,
 } from '@/lib/client-config';
@@ -18,21 +19,48 @@ import {
 
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 
-export async function getActiveClientKey(): Promise<ClientKey> {
-  let role: string | undefined;
-  let meta: string | undefined;
+type SessionClientContext = {
+  role?: string;
+  clientId?: string;
+  defaultClientId?: string;
+  email?: string;
+};
+
+async function getSessionClientContext(): Promise<SessionClientContext> {
   try {
     const user = await currentUser();
-    role = user?.publicMetadata?.role as string | undefined;
-    meta = user?.publicMetadata?.clientId as string | undefined;
+    return {
+      role: user?.publicMetadata?.role as string | undefined,
+      clientId: user?.publicMetadata?.clientId as string | undefined,
+      defaultClientId: user?.publicMetadata?.defaultClientId as string | undefined,
+      email: user?.primaryEmailAddress?.emailAddress
+        ?? user?.emailAddresses?.[0]?.emailAddress
+        ?? undefined,
+    };
   } catch {
-    // currentUser() fails outside Clerk context — fall through to cookie/default
+    return {};
   }
+}
 
-  // Locked accounts are pinned to Clerk metadata regardless of any stale
-  // client cookie so the server and nav cannot drift across tenants.
+function resolvePinnedClientKey(session: SessionClientContext): ClientKey {
+  const resolved = [
+    session.clientId,
+    session.defaultClientId,
+    inferClientKeyFromEmail(session.email),
+    DEFAULT_CLIENT_KEY,
+  ].find((candidate) => isClientKey(candidate));
+  return resolved ?? DEFAULT_CLIENT_KEY;
+}
+
+export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
+  const session = await getSessionClientContext();
+  const role = session.role;
+  const pinnedClientKey = resolvePinnedClientKey(session);
+
   const isLockedRole = role === 'client' || role === 'maestro';
-  if (isLockedRole && isClientKey(meta)) return meta;
+  if (isLockedRole) return pinnedClientKey;
+
+  if (isClientKey(requestedClientId)) return requestedClientId;
 
   // 1 · cookie
   try {
@@ -43,8 +71,11 @@ export async function getActiveClientKey(): Promise<ClientKey> {
     // cookies() fails outside request scope — fall through to metadata/default
   }
 
-  // 2 · Clerk metadata
-  if (isClientKey(meta)) return meta;
+  // 2 · Clerk metadata / fallback alias
+  if (isClientKey(session.clientId)) return session.clientId;
+  if (isClientKey(session.defaultClientId)) return session.defaultClientId;
+  const inferred = inferClientKeyFromEmail(session.email);
+  if (inferred) return inferred;
 
   // 3 · fallback
   return DEFAULT_CLIENT_KEY;
@@ -56,8 +87,8 @@ export async function getActiveClientKey(): Promise<ClientKey> {
  * Callers should treat null as "no active client" and render an empty-state
  * rather than silently showing cross-client data.
  */
-export async function getActiveClientRow(): Promise<{ id: string; name: string; industry_code: string | null; key: ClientKey } | null> {
-  const key = await getActiveClientKey();
+export async function getActiveClientRow(requestedClientId?: string | null): Promise<{ id: string; name: string; industry_code: string | null; key: ClientKey } | null> {
+  const key = await getActiveClientKey(requestedClientId);
   const { getServerSupabase } = await import('@/lib/supabase-server');
   const sb = getServerSupabase();
   const candidates = CLIENT_KEY_TO_DB_NAME[key];

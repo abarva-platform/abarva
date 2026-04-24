@@ -1,4 +1,5 @@
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { getClientOption } from '@/lib/client-config';
 import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 import { SentinelIntelligenceShell } from '@/components/intelligence/SentinelIntelligenceShell';
 
@@ -11,10 +12,12 @@ export const dynamic = 'force-dynamic';
 export default async function IntelligencePreviewPage({
   searchParams,
 }: {
-  searchParams: Promise<{ slug?: string; view?: string }>;
+  searchParams: Promise<{ slug?: string; view?: string; client?: string }>;
 }) {
   const params = await searchParams;
-  const activeClient = await getActiveClientRow();
+  const activeClientKey = await getActiveClientKey(params.client);
+  const activeClient = await getActiveClientRow(params.client);
+  const clientOption = getClientOption(activeClientKey);
   const patterns = getPatternManifestEntries();
   const initialSlug = params.slug ?? patterns.find((p) => p.demoCritical)?.slug ?? patterns[0]?.slug ?? null;
   const initialView = params.view ?? 'patterns';
@@ -23,7 +26,7 @@ export default async function IntelligencePreviewPage({
       patterns={patterns}
       initialSlug={initialSlug}
       initialView={initialView}
-      activeClientName={activeClient?.name ?? null}
+      activeClientName={activeClient?.name ?? clientOption.name}
     />
   );
 }

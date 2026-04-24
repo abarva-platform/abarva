@@ -1,5 +1,6 @@
 import { buildTowerViewModel } from '@/lib/tower/aggregate';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { getClientOption } from '@/lib/client-config';
 import { TowerPreviewShell } from '@/components/tower/TowerPreviewShell';
 
 export const dynamic = 'force-dynamic';
@@ -12,14 +13,21 @@ export const dynamic = 'force-dynamic';
 // column is now clickable to drill down; Atlas is demoted from a
 // permanent right column to a summonable right-edge dock.
 
-export default async function TowerPreviewPage() {
-  const activeClient = await getActiveClientRow();
-  const vm = activeClient ? await buildTowerViewModel(activeClient.id) : null;
+export default async function TowerPreviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const params = await searchParams;
+  const activeClientKey = await getActiveClientKey(params.client);
+  const activeClient = await getActiveClientRow(params.client);
+  const vm = activeClient?.id ? await buildTowerViewModel(activeClient.id) : null;
+  const clientOption = getClientOption(activeClientKey);
 
   return (
     <TowerPreviewShell
       vm={vm}
-      clientName={activeClient?.name ?? 'Meridian Health'}
+      clientName={activeClient?.name ?? clientOption.name}
       currentPath="/tower"
     />
   );
