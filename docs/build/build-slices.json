@@ -345,7 +345,7 @@
       "id": "S9",
       "name": "Programs canonical index/detail proof",
       "category": "C",
-      "status": "blocked",
+      "status": "code_complete",
       "risk": "high",
       "ownerAgent": "Builder + Reviewer + Test Runner",
       "dependsOn": [
