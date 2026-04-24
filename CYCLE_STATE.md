@@ -108,3 +108,11 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 
 ## Last status emission
 - 2026-04-24T18:15 · Solo re-anchor · beginning Cycle 2 code-level verification matrix
+
+## AbarVa Source Sidecar State
+
+- Current item: deterministic Source context builder stub.
+- Completed: Source context/chat/attachment/quality/validation type contracts were restored on `codex/source-foundation`; `src/lib/source/context-builder.ts` now assembles deterministic `SourceAgentContextBundle` objects from seed data only.
+- Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
+- Blockers/do-not-build: no Source UI, chat UI, API routes, model calls, upload/parsing, event canvas extension, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs`, `/preview`, `/demo`, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Next recommended item: Source context builder review packet.
