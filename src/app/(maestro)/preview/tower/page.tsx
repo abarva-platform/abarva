@@ -1,5 +1,6 @@
 import { buildTowerViewModel } from '@/lib/tower/aggregate';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { CLIENT_KEY_TO_ROUTE_SLUG, getClientOption } from '@/lib/client-config';
 import { TowerPreviewShell } from '@/components/tower/TowerPreviewShell';
 
 export const dynamic = 'force-dynamic';
@@ -13,14 +14,19 @@ export const dynamic = 'force-dynamic';
 // permanent right column to a summonable right-edge dock.
 
 export default async function TowerPreviewPage() {
-  const activeClient = await getActiveClientRow();
+  const [activeClientKey, activeClient] = await Promise.all([
+    getActiveClientKey(),
+    getActiveClientRow(),
+  ]);
+  const currentClient = getClientOption(activeClientKey);
   const vm = activeClient ? await buildTowerViewModel(activeClient.id) : null;
+  const programsHref = `/tenant/${CLIENT_KEY_TO_ROUTE_SLUG[activeClientKey]}/programs`;
 
   return (
     <TowerPreviewShell
       vm={vm}
-      clientName={activeClient?.name ?? 'Meridian Health'}
-      currentPath="/tower"
+      clientName={activeClient?.name ?? currentClient?.shortName ?? 'Client workspace'}
+      programsHref={programsHref}
     />
   );
 }

@@ -1,21 +1,15 @@
-import { getAllPrograms } from '@/lib/programs/mock';
-import { getActiveClientRow } from '@/lib/active-client';
-import { ProgramsIridescentShell } from '@/components/programs/ProgramsIridescentShell';
+import { redirect } from 'next/navigation';
+import { getActiveClientKey } from '@/lib/active-client';
+import { CLIENT_KEY_TO_ROUTE_SLUG } from '@/lib/client-config';
 
 export const dynamic = 'force-dynamic';
 
-// /preview/programs · iridescent canon build · Nexus chat-first.
-// Scoped to the signed-in user's active tenant — programs from other
-// tenants never leak in here. Empty state renders when the active
-// tenant has no programs yet (new Keystone/Meridian seats, etc.); the
-// "+ New Program" pill inside the shell is the primary call to action.
+// /preview/programs is a stable entrypoint in the nav and investor preview,
+// but the canonical tenant-scoped seeded routes now carry the complete
+// program inventory and Morrison/Ambient walkthroughs. Redirect here so
+// users never fall back to the stale Apex-only mock shell.
 
 export default async function ProgramsPreviewPage() {
-  const activeClient = await getActiveClientRow();
-  const all = getAllPrograms();
-  const programs = activeClient
-    ? all.filter((p) => p.clientName === activeClient.name)
-    : all;
-  const activeClientName = activeClient?.name ?? null;
-  return <ProgramsIridescentShell programs={programs} activeClientName={activeClientName} />;
+  const clientKey = await getActiveClientKey();
+  redirect(`/tenant/${CLIENT_KEY_TO_ROUTE_SLUG[clientKey]}/programs`);
 }

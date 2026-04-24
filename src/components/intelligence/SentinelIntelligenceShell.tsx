@@ -70,6 +70,8 @@ function sentinelOpener(view: View, selected: PatternManifestEntry | null, clien
     const evidence = selected.evidenceCount;
     const obs = selected.observationCount || selected.observations.length;
     const band = confidenceBand(selected.confidenceFloor);
+    const firstSignal = selected.detectionSignals[0] ?? selected.triggerSymptoms[0] ?? null;
+    const firstIntervention = selected.interventions[0] ?? null;
     const confidenceLine =
       band === 'high'
         ? `Confidence is high — ${obs} composite observations, ${evidence} evidence sources. I'd stand behind any of the detection signals here.`
@@ -78,7 +80,7 @@ function sentinelOpener(view: View, selected: PatternManifestEntry | null, clien
         : `Evidence is thin — ${obs} observations, ${evidence} sources. Treat the thesis as a working hypothesis and ask me to flag which claims rest on a single source.`;
     return {
       speaker: 'sentinel',
-      text: `${selected.name}. ${confidenceLine} Where do you want to go in — the thesis, the detection signals, or the intervention menu?`,
+      text: `${selected.name}. ${confidenceLine}${firstSignal ? ` The first signal I'd check in ${tenant} is "${firstSignal}."` : ''}${firstIntervention ? ` The intervention I would pressure-test first is "${firstIntervention}."` : ''} Where do you want to go in — the thesis, the detection signals, or the intervention menu?`,
     };
   }
   if (view === 'overview') {

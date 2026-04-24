@@ -3,6 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import {
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
+  inferClientKeyFromEmail,
   isClientKey,
   type ClientKey,
 } from '@/lib/client-config';
@@ -13,26 +14,31 @@ import {
 //
 // Precedence: cookie → Clerk metadata.clientId → first allowed fallback.
 //
-// Isolation: locked account users are pinned to their clientId regardless
-// of cookie. Admin + investor can switch via the top-nav dropdown.
+// Isolation: client roles are pinned to a single tenant regardless of
+// cookie or URL params. Admin and investor remain cross-tenant.
 
 export const ACTIVE_CLIENT_COOKIE = 'abarva_active_client';
 
 export async function getActiveClientKey(): Promise<ClientKey> {
   let role: string | undefined;
   let meta: string | undefined;
+  let defaultMeta: string | undefined;
+  let email: string | undefined;
   try {
     const user = await currentUser();
     role = user?.publicMetadata?.role as string | undefined;
     meta = user?.publicMetadata?.clientId as string | undefined;
+    defaultMeta = user?.publicMetadata?.defaultClientId as string | undefined;
+    email = user?.primaryEmailAddress?.emailAddress;
   } catch {
     // currentUser() fails outside Clerk context — fall through to cookie/default
   }
 
-  // Locked accounts are pinned to Clerk metadata regardless of any stale
-  // client cookie so the server and nav cannot drift across tenants.
-  const isLockedRole = role === 'client' || role === 'maestro';
-  if (isLockedRole && isClientKey(meta)) return meta;
+  const pinned = [meta, defaultMeta, inferClientKeyFromEmail(email)].find(isClientKey);
+
+  // Client roles are pinned to a single tenant regardless of any stale
+  // client cookie or URL parameter. Admin and investor remain cross-tenant.
+  if (role && role !== 'admin' && role !== 'investor' && pinned) return pinned;
 
   // 1 · cookie
   try {
@@ -44,7 +50,7 @@ export async function getActiveClientKey(): Promise<ClientKey> {
   }
 
   // 2 · Clerk metadata
-  if (isClientKey(meta)) return meta;
+  if (pinned) return pinned;
 
   // 3 · fallback
   return DEFAULT_CLIENT_KEY;

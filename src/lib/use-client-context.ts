@@ -3,8 +3,8 @@
  * useClientContext
  *
  * Single source of truth for the active client selection across all module pages.
- * Enforces account isolation: role='client' users are locked to their assigned account.
- * Admin and investor users can toggle freely between the canonical 4 accounts.
+ * Enforces account isolation: client roles are pinned to a single assigned
+ * account; admin and investor stay cross-tenant.
  *
  * Persistence order: URL param → localStorage → user metadata → first allowed client
  * Switching via the nav dropdown writes to localStorage so selection survives page navigation.
@@ -13,7 +13,12 @@
 import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, isClientKey, type ClientOption } from '@/lib/client-config'
+import {
+  ALL_CLIENTS,
+  DEFAULT_CLIENT_KEY,
+  inferClientKeyFromEmail,
+  isClientKey,
+} from '@/lib/client-config'
 
 export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
 
@@ -47,24 +52,29 @@ export function useClientContext() {
 
   const role        = user?.publicMetadata?.role        as string | undefined
   const metaClient  = user?.publicMetadata?.clientId    as string | undefined
+  const defaultMetaClient = user?.publicMetadata?.defaultClientId as string | undefined
+  const inferredClient = inferClientKeyFromEmail(user?.primaryEmailAddress?.emailAddress)
 
-  // Admin and investor can access all accounts
-  const isElevated = !isLoaded || !user || role === 'admin' || role === 'investor'
+  // Single-tenant lock for client roles only. Admin and investor keep
+  // cross-tenant access for oversight and demo review flows.
+  const isCrossTenantRole = isLoaded && !!user && (role === 'admin' || role === 'investor')
+  const isUnlocked = !isLoaded || !user || isCrossTenantRole
 
-  // Account-level users are locked to their single account
-  const allowedClients = isElevated
+  const pinnedClientId = [metaClient, defaultMetaClient, inferredClient].find(isClientKey) ?? DEFAULT_CLIENT_KEY
+
+  const allowedClients = isUnlocked
     ? ALL_CLIENTS
-    : ALL_CLIENTS.filter(c => c.id === metaClient)
+    : ALL_CLIENTS.filter(c => c.id === pinnedClientId)
 
   // Resolve active client: URL param → localStorage → user metadata → default to first allowed
   const urlClient = searchParams.get('client')
   const lsClient = readLocalStorage()
-  const requestedClientId = urlClient || lsClient || metaClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
+  const requestedClientId = urlClient || lsClient || metaClient || defaultMetaClient || inferredClient || allowedClients[0]?.id || DEFAULT_CLIENT_KEY
   let clientId = requestedClientId
 
   // Enforce isolation: if the resolved client is one the user can't see, override
-  if (!isElevated && metaClient && clientId !== metaClient) {
-    clientId = metaClient
+  if (!isUnlocked && clientId !== pinnedClientId) {
+    clientId = pinnedClientId
   }
 
   if (!isClientKey(clientId) || !allowedClients.find((c) => c.id === clientId)) {
@@ -101,18 +111,16 @@ export function useClientContext() {
     router.refresh()
   }
 
-  const isAdmin = isLoaded && !!user && role === 'admin'
-
   return {
     clientId,
     currentClient,
     allowedClients,
-    canSwitch: isElevated && ALL_CLIENTS.length > 1,
-    canSwitchInline: isAdmin,
+    canSwitch: isCrossTenantRole && ALL_CLIENTS.length > 1,
+    canSwitchInline: isCrossTenantRole,
     switchClient,
     isLoaded,
     role,
-    isElevated,
-    isAdmin,
+    isElevated: isUnlocked,
+    isAdmin: isLoaded && !!user && role === 'admin',
   }
 }

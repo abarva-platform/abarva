@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import '@/styles/abarva-canon.css';
+import { CLIENT_KEY_TO_ROUTE_SLUG } from '@/lib/client-config';
+import { getPatternManifestEntries } from '@/lib/intelligence/pattern-manifest';
 
 // /preview/investor · rebuilt per design canon v1.1
 // Source: page-wireframes-and-journey-maps.md §3.7 + Part 0.5 + Part 7
@@ -12,6 +14,11 @@ export const dynamic = 'force-dynamic';
 const LAST_UPDATED = 'Apr 22, 2026 · 10:15 PM';
 
 export default function InvestorPreviewPage() {
+  const patternCount = getPatternManifestEntries().length;
+  const morrisonPath = `/tenant/${CLIENT_KEY_TO_ROUTE_SLUG.apexretail}/programs/morrison-owned-brand-margin-recovery`;
+  const ambientPath = `/tenant/${CLIENT_KEY_TO_ROUTE_SLUG.meridian}/programs/ambient-clinical-value-chain-activation`;
+  const ambientPatternPath = `/tenant/${CLIENT_KEY_TO_ROUTE_SLUG.meridian}/intelligence/patterns/ambient-clinical-value-chain`;
+
   return (
     <div className="canon-root cream">
       {/* Preview banner */}
@@ -65,7 +72,7 @@ export default function InvestorPreviewPage() {
             <ThesisPanel
               label="02 · The intelligence moat"
               title="Patterns that compound across engagements."
-              body="The Transformation Genome — 13 patterns authored to spec depth, designed to accumulate. Every program enriches the library; every new program starts from the enriched library."
+              body={`The Transformation Genome — ${patternCount} patterns authored to spec depth, designed to accumulate. Every program enriches the library; every new program starts from the enriched library.`}
             />
             <ThesisPanel
               label="03 · Outcome accountability"
@@ -88,7 +95,7 @@ export default function InvestorPreviewPage() {
             <MoatRow
               num="01"
               name="Transformation Genome"
-              state="13 patterns authored · target 50 by Series A"
+              state={`${patternCount} patterns authored · target 50 by Series A`}
               evidence="Spec-depth content · 5 universal + 8 vertical · authored, not stubbed"
               link={{ href: '/preview/intelligence', label: 'Browse patterns' }}
             />
@@ -135,13 +142,13 @@ export default function InvestorPreviewPage() {
               tenant="Apex Retail"
               path="Morrison Owned Brand Margin Recovery · Phase 4"
               note="Rich fidelity · Anthology-critical walkthrough"
-              href="/programs"
+              href={morrisonPath}
             />
             <ProofLink
               tenant="Meridian Health"
               path="Ambient Clinical Value Chain · Phase 3"
               note="Healthcare pattern with vendor overlap resolution"
-              href="/preview/programs"
+              href={ambientPath}
             />
             <ProofLink
               tenant="Meridian Health"
@@ -153,7 +160,7 @@ export default function InvestorPreviewPage() {
               tenant="Intelligence"
               path="Ambient Clinical · canonical pattern detail"
               note="Spec-depth pattern · moat evidence"
-              href="/preview/intelligence"
+              href={ambientPatternPath}
             />
           </div>
         </div>
@@ -173,11 +180,11 @@ export default function InvestorPreviewPage() {
               <HonestyItem label="Product" lines={[
                 'Live at app.abarva.ai',
                 'Four composite reference tenants in the build',
-                'Morrison program being built to Rich fidelity',
+                'Morrison walkthrough live on the tenant-scoped seeded route',
                 'Control Tower with editorial POV live in preview',
               ]} />
               <HonestyItem label="Intelligence" lines={[
-                '13 pattern packs authored · 5 universal + 8 vertical',
+                `${patternCount} pattern packs authored and linked into the live library`,
                 'Spec depth matching research-institute standard',
                 'Pattern library navigable today',
               ]} />
@@ -351,7 +358,7 @@ export default function InvestorPreviewPage() {
             />
             <FaqRow
               q="What is real today vs. aspirational?"
-              a="Product is live. 13 patterns are authored. Four composite reference tenants exist. Shail is committed. The Fortune 40 CIPO conversation is in advancing stage. Zero customers, zero revenue, zero deployed outcomes. The honest column above says so explicitly."
+              a={`Product is live. ${patternCount} patterns are authored. Four composite reference tenants exist. Shail is committed. The Fortune 40 CIPO conversation is in advancing stage. Zero customers, zero revenue, zero deployed outcomes. The honest column above says so explicitly.`}
             />
             <FaqRow
               q="What changes between my first visit and my second?"

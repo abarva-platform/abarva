@@ -18,14 +18,12 @@ const INK_SOFT = '#3A312A';
 const INK_MUTED = '#5B4D43';
 const INK_FAINT = '#8A7D70';
 const LINE = 'rgba(23,20,17,0.12)';
-const LINE_SOFT = 'rgba(23,20,17,0.06)';
 const TEAL = '#0E9F8C';
 const TEAL_SOFT = 'rgba(14,159,140,0.1)';
 const AMBER = '#C08643';
 const AMBER_SOFT = 'rgba(192,134,67,0.12)';
 const CORAL = '#CE5A3B';
 const CORAL_SOFT = 'rgba(206,90,59,0.1)';
-const GREEN = '#3FB27F';
 const SERIF = '"Fraunces", Georgia, serif';
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
 const SANS = '"DM Sans", -apple-system, sans-serif';
@@ -66,7 +64,7 @@ function fmtRelTime(d: Date | null | undefined): string {
   return `${days}d ago`;
 }
 
-function derivePressure(contradictions: ContradictionRow[]): PressureItem[] {
+function derivePressure(contradictions: ContradictionRow[], programsHref: string): PressureItem[] {
   // Top 3 by monthly $ · prefer unowned · prefer high severity
   const scored = contradictions.map((c) => {
     const impact = (c.evidence && typeof c.evidence === 'object' ? c.evidence : {}) as { impact?: ContradictionImpact };
@@ -78,7 +76,7 @@ function derivePressure(contradictions: ContradictionRow[]): PressureItem[] {
       monthlyUsd: monthly,
       title: oneLiner,
       programName: c.triggered_engagement_id ? null : null,
-      programHref: c.triggered_engagement_id ? `/engagements/${encodeURIComponent(c.triggered_engagement_id)}` : null,
+      programHref: programsHref,
       severity: (c.severity === 'low' ? 'medium' : c.severity === 'medium' ? 'high' : 'critical') as PressureItem['severity'],
       unowned,
       rawSeverity: c.severity,
@@ -97,8 +95,8 @@ const FALLBACK_PRESSURE: PressureItem[] = [
     id: 'f-1',
     monthlyUsd: 42_000,
     title: 'VBC commitment vs. capability gap — 3 contracts at risk',
-    programName: 'Meridian AI Readiness',
-    programHref: '/engagements',
+    programName: null,
+    programHref: null,
     severity: 'critical',
     unowned: true,
   },
@@ -115,8 +113,8 @@ const FALLBACK_PRESSURE: PressureItem[] = [
     id: 'f-3',
     monthlyUsd: 18_000,
     title: '3 ambient documentation tools running · no owner',
-    programName: 'Ambient Documentation Vendor Strategy',
-    programHref: '/engagements',
+    programName: null,
+    programHref: null,
     severity: 'high',
     unowned: true,
   },
@@ -125,20 +123,21 @@ const FALLBACK_PRESSURE: PressureItem[] = [
 export function TowerPreviewShell({
   vm,
   clientName,
+  programsHref,
 }: {
   vm: TowerViewModel | null;
   clientName: string;
-  currentPath: string;
+  programsHref: string;
 }) {
   const [expandedPillar, setExpandedPillar] = useState<PillarKey | null>(null);
-  const [atlasOpen, setAtlasOpen] = useState(false);
+  const [, setAtlasOpen] = useState(false);
 
   const pressure: PressureItem[] = vm?.contradictions?.length
     ? (() => {
-        const derived = derivePressure(vm.contradictions);
+        const derived = derivePressure(vm.contradictions, programsHref);
         return derived.length > 0 ? derived : FALLBACK_PRESSURE;
       })()
-    : FALLBACK_PRESSURE;
+    : FALLBACK_PRESSURE.map((item) => ({ ...item, programHref: item.programHref ?? programsHref }));
 
   const inventoryTotal = vm?.inventory.total ?? 42;
   const adoptionPct = Math.round(vm?.adoption.avgPenetrationPct ?? 62);
@@ -273,7 +272,7 @@ export function TowerPreviewShell({
             Ask Atlas
           </button>
           <Link
-            href="/programs"
+            href={programsHref}
             style={{
               padding: '10px 18px',
               background: INK,
@@ -324,7 +323,6 @@ export function TowerPreviewShell({
           }}
         >
           <PillarCard
-            pillar="inventory"
             label="Inventory"
             subtitle="What exists"
             value={String(inventoryTotal)}
@@ -338,7 +336,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'inventory' ? null : 'inventory')}
           />
           <PillarCard
-            pillar="adoption"
             label="Adoption"
             subtitle="Who uses it"
             value={`${adoptionPct}%`}
@@ -352,7 +349,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'adoption' ? null : 'adoption')}
           />
           <PillarCard
-            pillar="value"
             label="Value"
             subtitle="Is it working"
             value={fmtUsd(valueVerified)}
@@ -366,7 +362,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'value' ? null : 'value')}
           />
           <PillarCard
-            pillar="risk"
             label="Risk"
             subtitle="Is it safe"
             value={`${riskApproved}/${riskTotal}`}
@@ -380,7 +375,6 @@ export function TowerPreviewShell({
             onClick={() => setExpandedPillar(expandedPillar === 'risk' ? null : 'risk')}
           />
           <PillarCard
-            pillar="cost"
             label="Cost"
             subtitle="Is it worth it"
             value={`${fmtUsd(monthlySpend)}`}
@@ -430,24 +424,17 @@ export function TowerPreviewShell({
                 Active programs
               </div>
               <div style={{ fontSize: 14, color: INK, marginTop: 4 }}>
-                <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
-                  Meridian AI Readiness
+                <Link href={programsHref} style={{ color: INK, textDecoration: 'underline' }}>
+                  Open the seeded program portfolio
                 </Link>
                 <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
-                  · Phase 1 · Diagnose
-                </span>
-                {' · '}
-                <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
-                  Ambient Documentation Vendor Strategy
-                </Link>
-                <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
-                  · Phase 0 · Start
+                  · tenant-scoped routes · current phase state
                 </span>
               </div>
             </div>
           </div>
           <Link
-            href="/programs"
+            href={programsHref}
             style={{
               fontFamily: MONO,
               fontSize: 12,
@@ -654,7 +641,6 @@ function PressureRow({ item }: { item: PressureItem }) {
 }
 
 function PillarCard({
-  pillar,
   label,
   subtitle,
   value,
@@ -663,7 +649,6 @@ function PillarCard({
   expanded,
   onClick,
 }: {
-  pillar: PillarKey;
   label: string;
   subtitle: string;
   value: string;
@@ -806,160 +791,5 @@ function DrillDown({ pillar, onClose }: { pillar: PillarKey; onClose: () => void
         In the real implementation this pulls the filtered dataset for {pillar} and lands on the same row pattern as the Home command center.
       </div>
     </section>
-  );
-}
-
-function AtlasDock({
-  open,
-  onClose,
-  onOpen,
-  clientName,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onOpen: () => void;
-  clientName: string;
-}) {
-  return (
-    <>
-      {/* Collapsed tab on right edge */}
-      {!open ? (
-        <button
-          type="button"
-          onClick={onOpen}
-          aria-label="Open Atlas"
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: '40%',
-            padding: '16px 10px',
-            background: INK,
-            color: PAGE_BG,
-            border: 'none',
-            borderRadius: '10px 0 0 10px',
-            cursor: 'pointer',
-            writingMode: 'vertical-rl',
-            fontFamily: MONO,
-            fontSize: 10,
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            boxShadow: '-4px 4px 14px rgba(23,20,17,0.15)',
-            zIndex: 20,
-          }}
-        >
-          Atlas ⟨
-        </button>
-      ) : null}
-
-      {/* Expanded panel */}
-      {open ? (
-        <aside
-          role="dialog"
-          aria-label="Atlas assistant"
-          style={{
-            position: 'fixed',
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: 380,
-            background: INK,
-            color: PAGE_BG,
-            zIndex: 21,
-            padding: '20px 22px',
-            boxShadow: '-12px 0 40px rgba(23,20,17,0.28)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-            overflow: 'auto',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: AMBER,
-                  fontWeight: 700,
-                }}
-              >
-                Atlas · Tower
-              </div>
-              <div style={{ fontFamily: SERIF, fontSize: 20, marginTop: 4 }}>{clientName}</div>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close Atlas"
-              style={{
-                border: '1px solid rgba(248,247,244,0.22)',
-                background: 'transparent',
-                color: PAGE_BG,
-                padding: '6px 10px',
-                borderRadius: 999,
-                cursor: 'pointer',
-                fontFamily: MONO,
-                fontSize: 10,
-                letterSpacing: '0.12em',
-              }}
-            >
-              Close ⟩
-            </button>
-          </div>
-          <div
-            style={{
-              padding: 16,
-              background: 'rgba(245,158,11,0.1)',
-              border: '1px solid rgba(245,158,11,0.26)',
-              borderRadius: 14,
-              fontSize: 14,
-              lineHeight: 1.55,
-            }}
-          >
-            2 programs active. 3 unowned contradictions burning $88K/month. Shadow AI is the hottest of the three · no named
-            owner, PHI risk.
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {['Who owns Shadow AI?', 'Peer position on VBC capability', 'Last gate decision summary'].map((q) => (
-              <button
-                key={q}
-                type="button"
-                style={{
-                  textAlign: 'left',
-                  padding: '10px 14px',
-                  background: 'rgba(248,247,244,0.04)',
-                  border: '1px solid rgba(248,247,244,0.1)',
-                  borderRadius: 10,
-                  color: PAGE_BG,
-                  fontFamily: SANS,
-                  fontSize: 13,
-                  cursor: 'pointer',
-                }}
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-          <div style={{ flex: 1 }} />
-          <input
-            type="text"
-            placeholder="Ask Atlas about portfolio state…"
-            style={{
-              padding: '12px 14px',
-              background: 'rgba(248,247,244,0.06)',
-              border: '1px solid rgba(248,247,244,0.18)',
-              borderRadius: 12,
-              color: PAGE_BG,
-              fontFamily: SANS,
-              fontSize: 13,
-              outline: 'none',
-            }}
-          />
-        </aside>
-      ) : null}
-    </>
   );
 }
