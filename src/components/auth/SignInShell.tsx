@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { SignIn } from '@clerk/nextjs'
 import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
+import { DemoCodeSignIn } from '@/components/auth/DemoCodeSignIn'
 
 interface Props {
   redirectUrl: string
@@ -21,9 +22,20 @@ export function SignInShell({ redirectUrl }: Props) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        padding: '32px 20px',
       }}
     >
-      <SignIn key={redirectUrl} forceRedirectUrl={redirectUrl} />
+      <div
+        style={{
+          width: '100%',
+          display: 'grid',
+          justifyItems: 'center',
+          gap: '20px',
+        }}
+      >
+        <DemoCodeSignIn redirectUrl={redirectUrl} />
+        <SignIn key={redirectUrl} forceRedirectUrl={redirectUrl} />
+      </div>
     </div>
   )
 }
