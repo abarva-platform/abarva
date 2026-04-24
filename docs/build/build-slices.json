@@ -275,7 +275,7 @@
       "id": "S7",
       "name": "Tenant isolation probe tests",
       "category": "A",
-      "status": "ready",
+      "status": "code_complete",
       "risk": "critical",
       "ownerAgent": "Test Runner + Reviewer",
       "dependsOn": [
