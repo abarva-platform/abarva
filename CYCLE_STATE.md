@@ -27,7 +27,7 @@
 
 ### Codex lane
 - Current item: queue merged · Codex Cycle 1 P0 lane
-- Current step within item: post-merge verification in progress · production deploy green · follow-up fix for legacy deliverable code-alias links queued for PR/merge
+- Current step within item: post-merge verification in progress · production deploy green · final legacy deliverable code-alias follow-up in flight; close only after deploy + live walkthrough pass
 - Started item at: 2026-04-24T03:34:00Z
 - Expected next action ETA: same session
 
