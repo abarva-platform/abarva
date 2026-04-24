@@ -49,15 +49,18 @@ export function findDeliverableByRoute(tenantSlug: string, programSlug: string, 
   const context = findProgramByRoute(tenantSlug, programSlug);
   if (!context) return null;
   const normalizedSegment = normalizeDeliverableSegment(deliverableSegment);
+  const prefixCode = normalizedSegment.match(/^(d\d{2})(?:-|$)/)?.[1] ?? null;
   const deliverable = context.program.deliverables.find((entry) => {
     const canonical = deliverableRouteSegmentFor(entry);
+    const code = entry.deliverableCode.toLowerCase();
     return (
       canonical === deliverableSegment ||
       canonical === normalizedSegment ||
       entry.deliverableSlug === deliverableSegment ||
       entry.deliverableSlug === normalizedSegment ||
-      entry.deliverableCode.toLowerCase() === deliverableSegment ||
-      entry.deliverableCode.toLowerCase() === normalizedSegment
+      code === deliverableSegment ||
+      code === normalizedSegment ||
+      (prefixCode !== null && prefixCode === code)
     );
   });
   return deliverable ? { ...context, deliverable } : null;

@@ -61,14 +61,23 @@ describe('Deliverable render contract', () => {
   });
 
   it('resolves legacy duplicate-code deliverable segments used in older authored links', () => {
-    const context = findDeliverableByRoute(
+    const d01 = findDeliverableByRoute(
       'apex-retail',
       'morrison-owned-brand-margin-recovery',
       'd01-d01-program-charter',
     );
 
-    expect(context?.deliverable?.deliverableCode).toBe('D01');
-    expect(context?.deliverable?.deliverableSlug).toBe('d01-program-charter');
+    expect(d01?.deliverable?.deliverableCode).toBe('D01');
+    expect(d01?.deliverable?.deliverableSlug).toBe('d01-program-charter');
+
+    const d17 = findDeliverableByRoute(
+      'apex-retail',
+      'morrison-owned-brand-margin-recovery',
+      'd17-d17-decision-memo',
+    );
+
+    expect(d17?.deliverable?.deliverableCode).toBe('D17');
+    expect(d17?.deliverable?.deliverableSlug).toBe('d17-decision-memo-for-cxo');
   });
 
   it('keeps every generated cross-link inside a route class we can audit', () => {

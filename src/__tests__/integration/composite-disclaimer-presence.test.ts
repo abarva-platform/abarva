@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import EvidenceDetailPage from '@/app/tenant/[tenantSlug]/programs/[programSlug]/evidence/[evidenceId]/page';
 import {
   buildSeedDeliverableRenderModel,
   findDeliverableByRoute,
@@ -31,16 +32,16 @@ import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 describe('composite disclaimer presence', () => {
   const routes = buildCanonicalRouteRecords();
 
-  it('keeps the composite disclaimer on every tenant-scoped route', () => {
+  it('keeps the composite disclaimer on every tenant-scoped route', async () => {
     const tenantScopedRoutes = routes.filter((route) => route.tenantSlug);
     expect(tenantScopedRoutes.length).toBeGreaterThan(0);
 
     for (const route of tenantScopedRoutes) {
-      expect(renderRoute(route)).toContain(COMPOSITE_DISCLAIMER);
+      await expect(renderRoute(route)).resolves.toContain(COMPOSITE_DISCLAIMER);
     }
   });
 
-  it('keeps the demo-rendering disclaimer on every Rich deliverable route', () => {
+  it('keeps the demo-rendering disclaimer on every Rich deliverable route', async () => {
     const richDeliverableRoutes = routes.filter((route) => {
       if (route.surface !== 'tenant_deliverable') return false;
       const context = deliverableContextForRoute(route);
@@ -49,21 +50,21 @@ describe('composite disclaimer presence', () => {
 
     expect(richDeliverableRoutes.length).toBeGreaterThan(0);
     for (const route of richDeliverableRoutes) {
-      expect(renderRoute(route)).toContain(RICH_DELIVERABLE_DEMO_DISCLAIMER);
+      await expect(renderRoute(route)).resolves.toContain(RICH_DELIVERABLE_DEMO_DISCLAIMER);
     }
   });
 
-  it('keeps the observation-authorship disclaimer on every pattern page', () => {
+  it('keeps the observation-authorship disclaimer on every pattern page', async () => {
     const patternRoutes = routes.filter((route) => route.surface === 'global_pattern' || route.surface === 'tenant_pattern');
     expect(patternRoutes.length).toBeGreaterThan(0);
 
     for (const route of patternRoutes) {
-      expect(normalizeRenderedText(renderRoute(route))).toContain(PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER);
+      await expect(renderRoute(route).then(normalizeRenderedText)).resolves.toContain(PATTERN_OBSERVATION_AUTHORSHIP_DISCLAIMER);
     }
   });
 });
 
-function renderRoute(route: CanonicalRouteRecord): string {
+async function renderRoute(route: CanonicalRouteRecord): Promise<string> {
   const plan = getSeedPlan();
   const tenant = route.tenantSlug ? plan.tenants.find((entry) => entry.routeSlug === route.tenantSlug) : null;
 
@@ -99,6 +100,18 @@ function renderRoute(route: CanonicalRouteRecord): string {
       return renderToStaticMarkup(createElement(SeedTenantTowerSubsurface, { tenant: tenant!, surface: route.towerSurface! }));
     case 'tenant_pattern':
       return renderToStaticMarkup(createElement(SeedTenantPattern, { tenant: tenant!, patternSlug: route.patternSlug! }));
+    case 'tenant_evidence': {
+      const match = route.path.match(/^\/tenant\/([^/]+)\/programs\/([^/]+)\/evidence\/([^/]+)$/);
+      if (!match) return '';
+      const page = await EvidenceDetailPage({
+        params: Promise.resolve({
+          tenantSlug: match[1],
+          programSlug: match[2],
+          evidenceId: match[3],
+        }),
+      });
+      return renderToStaticMarkup(page);
+    }
     case 'global_pattern':
       return renderToStaticMarkup(createElement(SeedGlobalPattern, { patternSlug: route.patternSlug! }));
     default:
