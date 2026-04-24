@@ -65,7 +65,7 @@ export default function InvestorPreviewPage() {
             <ThesisPanel
               label="02 · The intelligence moat"
               title="Patterns that compound across engagements."
-              body="The Transformation Genome — 13 patterns authored to spec depth, designed to accumulate. Every program enriches the library; every new program starts from the enriched library."
+              body={`The Transformation Genome — ${patternCount} patterns authored to spec depth, designed to accumulate. Every program enriches the library; every new program starts from the enriched library.`}
             />
             <ThesisPanel
               label="03 · Outcome accountability"
@@ -88,7 +88,7 @@ export default function InvestorPreviewPage() {
             <MoatRow
               num="01"
               name="Transformation Genome"
-              state="13 patterns authored · target 50 by Series A"
+              state={`${patternCount} patterns authored · target 50 by Series A`}
               evidence="Spec-depth content · 5 universal + 8 vertical · authored, not stubbed"
               link={{ href: '/preview/intelligence', label: 'Browse patterns' }}
             />
@@ -351,7 +351,7 @@ export default function InvestorPreviewPage() {
             />
             <FaqRow
               q="What is real today vs. aspirational?"
-              a="Product is live. 13 patterns are authored. Four composite reference tenants exist. Shail is committed. The Fortune 40 CIPO conversation is in advancing stage. Zero customers, zero revenue, zero deployed outcomes. The honest column above says so explicitly."
+              a={`Product is live. ${patternCount} patterns are authored. Four composite reference tenants exist. Shail is committed. The Fortune 40 CIPO conversation is in advancing stage. Zero customers, zero revenue, zero deployed outcomes. The honest column above says so explicitly.`}
             />
             <FaqRow
               q="What changes between my first visit and my second?"

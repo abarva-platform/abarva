@@ -33,6 +33,19 @@ const nextConfig: NextConfig = {
       { source: '/programs', destination: '/preview/programs', permanent: false },
       { source: '/tower', destination: '/preview/tower', permanent: false },
       { source: '/intelligence', destination: '/preview/intelligence', permanent: false },
+      // Legacy-route sweep · every deep path under the old surfaces now
+      // redirects to the canonical preview surface. The "engagement"
+      // concept is retired wholesale; users never see an engagement URL.
+      // Tenant-scoped paths (/tenant/{slug}/...) are untouched — those
+      // are the canonical product routes.
+      { source: '/engagements/:path*', destination: '/preview/programs', permanent: false },
+      { source: '/programs/:path*', destination: '/preview/programs', permanent: false },
+      { source: '/sponsor/:path*', destination: '/preview/programs', permanent: false },
+      { source: '/intelligence/thread/:path*', destination: '/preview/intelligence', permanent: false },
+      // NOTE · /tower/projects, /tower/staff-aug, /tower/tech-stack,
+      // /tower/volumetrics, /tower/preview, /tower/onboard/* are legitimate
+      // Tower sub-surfaces with their own content. Only the exact /tower
+      // root redirects (above); sub-paths stay live.
     ];
   },
 };
