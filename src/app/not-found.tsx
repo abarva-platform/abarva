@@ -59,13 +59,22 @@ export default async function NotFound() {
           The intelligence you are looking for may have moved.
         </div>
 
-        {/* Buttons */}
+        {/* Buttons · P0-2 · Investor CTA removed · inappropriate for an
+            operating-system product surfaced to customers. Keep the single
+            Go Home path and offer the other canonical authenticated
+            surfaces. */}
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#2DD4C8', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+          <Link href="/home" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#2DD4C8', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
             ← Go Home
           </Link>
-          <Link href="/investor" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid #2DD4C8', color: '#0D1117', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: '#2DD4C8' }}>
-            Open Investor View →
+          <Link href="/preview/programs" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+            Programs
+          </Link>
+          <Link href="/preview/intelligence" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+            Intelligence
+          </Link>
+          <Link href="/preview/tower" style={{ padding: '12px 24px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.16)', color: '#E6EDF3', fontSize: '14px', fontWeight: 600, textDecoration: 'none', background: 'transparent' }}>
+            Control Tower
           </Link>
         </div>
       </div>

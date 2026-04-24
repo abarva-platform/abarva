@@ -32,6 +32,11 @@ const PEOPLE: Record<string, PersonRef> = {
   arjun: { id: 'person-arjun-patel', name: 'Arjun Patel', title: 'Chief Information Officer', initials: 'AP', avatarColor: '#1d4ed8', clientName: 'Apex Retail Group' },
   elena: { id: 'person-elena-cruz', name: 'Elena Cruz', title: 'Chief Marketing Officer', initials: 'EC', avatarColor: '#9333ea', clientName: 'Apex Retail Group' },
   marcus: { id: 'person-marcus-hale', name: 'Marcus Hale', title: 'Head of Digital', initials: 'MH', avatarColor: '#ea580c', clientName: 'Apex Retail Group' },
+  // P0-3 · Morrison sponsor of record · CFO persona aligned with the
+  // investor page commitment. The Anthology walkthrough follows this
+  // program end-to-end, so sponsor identity must survive click-through.
+  marcusT: { id: 'person-marcus-t', name: 'Marcus T.', title: 'Chief Financial Officer', initials: 'MT', avatarColor: '#6d28d9', clientName: 'Apex Retail Group' },
+  katherineP: { id: 'person-katherine-p', name: 'Katherine P.', title: 'Chief Marketing Officer', initials: 'KP', avatarColor: '#be185d', clientName: 'Apex Retail Group' },
   alex: { id: 'person-alex-kim', name: 'Alex Kim', title: 'Program Lead', initials: 'AK', avatarColor: '#0ea5e9', clientName: 'Apex Retail Group' },
   tori: { id: 'person-tori-nguyen', name: 'Tori Nguyen', title: 'VP Merchandising Analytics', initials: 'TN', avatarColor: '#16a34a', clientName: 'Apex Retail Group' },
   sofia: { id: 'person-sofia-ramirez', name: 'Sofia Ramirez', title: 'Data Platform Director', initials: 'SR', avatarColor: '#b45309', clientName: 'Apex Retail Group' },
@@ -564,9 +569,14 @@ const executeData: ProgramFullState['executeData'] = {
 };
 
 const programs: ProgramFullState[] = [
+  // P0-3 · Apex Retail hero program · name + sponsor aligned with investor
+  // page commitment ("Morrison Owned Brand Margin Recovery · Phase 4 · CFO
+  // Marcus T"). The underlying workflow/module content still uses the
+  // CCAI operating narrative; content depth refresh to owned-brand margin
+  // theming is a P1/P2 follow-up.
   {
-    id: 'contact-center-ai-transformation',
-    name: 'Contact Center AI Transformation',
+    id: 'morrison-owned-brand-margin-recovery',
+    name: 'Morrison Owned Brand Margin Recovery',
     clientName: 'Apex Retail Group',
     archetype: 'operational_optimization',
     currentPhase: 5,
@@ -608,7 +618,7 @@ const programs: ProgramFullState[] = [
       { id: 'act-cc2', type: 'milestone', title: 'Integration wave at 64%', detail: 'Salesforce Commerce and service integration are tracking with one blocker.', at: hoursAgo(11), actor: PEOPLE.sofia },
       { id: 'act-cc3', type: 'deliverable', title: 'Weekly report drafted', detail: 'Nexus drafted the Sunday sponsor report for Alex to edit.', at: hoursAgo(20), actor: PEOPLE.alex },
     ],
-    sponsorPerson: PEOPLE.dana,
+    sponsorPerson: PEOPLE.marcusT,
     leadPerson: PEOPLE.alex,
     phaseStatus: 'blocked',
     gateSummary: 'Execute remains active, but the tuning-sprint blocker must clear before Wave 2 agent rollout starts.',
