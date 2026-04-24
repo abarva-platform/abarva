@@ -6,13 +6,18 @@ import { isExternalOnlyRole, resolveSessionClientKey, resolveSessionRole, should
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 const ACTIVE_CLIENT_COOKIE = 'abarva_active_client'
 
-const isPublicRoute = createRouteMatcher([
+export const PUBLIC_ROUTE_PATTERNS = [
   '/sign-in(.*)',
   '/auth-redirect(.*)',
   '/',
   '/demo(.*)',
   '/investor(.*)',
-])
+  // Demo code sign-in starts unauthenticated from /sign-in, so the ticket
+  // handoff route must stay publicly reachable and perform its own checks.
+  '/api/auth/demo-code-sign-in(.*)',
+] as const
+
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS])
 
 // Maestro workspace — requires any authenticated Maestro/Admin/Investor session
 const maestroRoutes = createRouteMatcher([
