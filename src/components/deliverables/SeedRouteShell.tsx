@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { DeliverablePageStyles } from './DeliverableTierRenderer';
 import { NexusProgramRail } from './NexusProgramRail';
+import { SentinelPatternRail } from '@/components/intelligence/SentinelPatternRail';
 import {
   getSeedPlan,
   phaseMeta,
@@ -179,6 +180,15 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
         </>
       ) : null}
       <PatternObservationsPipelinePanel />
+      {/* F04 Z4-A · Sentinel anchored on every tenant pattern page · rail
+          opens guided-choice prompts bound to this pattern + tenant. */}
+      <SentinelPatternRail
+        tenant={tenant}
+        patternSlug={patternSlug}
+        patternName={pattern?.name ?? patternSlug.replace(/-/g, ' ')}
+        evidenceCount={pattern?.evidenceCount ?? 0}
+        applicableProgramCount={applicablePrograms.length}
+      />
       {pattern?.observations.length ? (
         <>
           <SectionTitle label="Composite observations" />
