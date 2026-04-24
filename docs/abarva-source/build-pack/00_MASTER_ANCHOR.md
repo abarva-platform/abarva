@@ -2,7 +2,7 @@
 
 This Build Pack is the source of truth for **AbarVa Source**.
 
-Codex must read this file first before reading any other file in [docs/abarva-source/build-pack](/Users/anand/Projects/nexus/docs/abarva-source/build-pack).
+Codex must read [CYCLE_STATE.md](/Users/anand/Projects/nexus/CYCLE_STATE.md) first for live operating state, then this file before reading any other file in [docs/abarva-source/build-pack](/Users/anand/Projects/nexus/docs/abarva-source/build-pack).
 
 ## What AbarVa Source Is
 
@@ -16,6 +16,8 @@ AbarVa Source is an AI-led sourcing and vendor-selection workflow product inside
 - Steward supports gate enforcement, readiness, auditability, and operational integrity.
 
 AbarVa Source is not a demo route, CRUD dashboard, procurement portal clone, generic AI chatbot, or static template library.
+
+Agent context awareness is a load-bearing product capability. No Nexus, Sentinel, Atlas, or Steward UI should be considered complete until the response is grounded in the current Source context and passes the context validation harness.
 
 ## Platform Fit
 
@@ -41,8 +43,9 @@ Source uses platform foundations rather than inventing an isolated product stack
 
 ## Read Order
 
-Codex should read the Build Pack in this order:
+Codex should read operating state first, then the Build Pack in this order:
 
+0. [CYCLE_STATE.md](/Users/anand/Projects/nexus/CYCLE_STATE.md)
 1. [00_MASTER_ANCHOR.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/00_MASTER_ANCHOR.md)
 2. [01_PRODUCT_VISION_AND_POSITIONING.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/01_PRODUCT_VISION_AND_POSITIONING.md)
 3. [02_USER_PERSONAS_AND_JOURNEYS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/02_USER_PERSONAS_AND_JOURNEYS.md)
@@ -59,8 +62,17 @@ Codex should read the Build Pack in this order:
 14. [13_EVENT_LIFECYCLE_AND_ALERTS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/13_EVENT_LIFECYCLE_AND_ALERTS.md)
 15. [14_IMPLEMENTATION_SEQUENCE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/14_IMPLEMENTATION_SEQUENCE.md)
 16. [15_ACCEPTANCE_CRITERIA.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/15_ACCEPTANCE_CRITERIA.md)
-17. relevant `wireframes/*.md`
-18. relevant `components/*.md`
+17. [16_AGENT_PER_TURN_CONTRACT.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/16_AGENT_PER_TURN_CONTRACT.md)
+18. [17_CRAWLER_PERSONA_VERIFICATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/17_CRAWLER_PERSONA_VERIFICATION.md)
+19. [18_FAILURE_MODE_CATALOG.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/18_FAILURE_MODE_CATALOG.md)
+20. [19_CROSS_PRODUCT_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/19_CROSS_PRODUCT_ARCHITECTURE.md)
+21. [20_COMMERCIAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/20_COMMERCIAL_MODEL.md)
+22. [21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md)
+23. [22_AGENT_CONTEXT_AWARENESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/22_AGENT_CONTEXT_AWARENESS.md)
+24. [23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md)
+25. [24_CONTEXT_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/24_CONTEXT_VALIDATION_HARNESS.md)
+26. relevant `wireframes/*.md`
+27. relevant `components/*.md`
 
 ## Source Of Truth Map
 
@@ -72,12 +84,21 @@ Codex should read the Build Pack in this order:
 - Data model and architecture: [06_DATA_MODEL_AND_ERD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/06_DATA_MODEL_AND_ERD.md)
 - Workflow and lifecycle: [07_WORKFLOW_AND_STATE_MACHINE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/07_WORKFLOW_AND_STATE_MACHINE.md) and [13_EVENT_LIFECYCLE_AND_ALERTS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/13_EVENT_LIFECYCLE_AND_ALERTS.md)
 - Agent model: [08_AGENT_DESIGN_AND_HANDOFFS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/08_AGENT_DESIGN_AND_HANDOFFS.md)
-- Pattern packs: [09_PATTERN_PACK_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/09_PATTERN_PACK_ARCHITECTURE.md)
+- Agent per-turn contract: [16_AGENT_PER_TURN_CONTRACT.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/16_AGENT_PER_TURN_CONTRACT.md)
+- Agent context awareness: [22_AGENT_CONTEXT_AWARENESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/22_AGENT_CONTEXT_AWARENESS.md)
+- Chat/input model: [23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md)
+- Context validation harness: [24_CONTEXT_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/24_CONTEXT_VALIDATION_HARNESS.md)
+- Pattern packs: [09_PATTERN_PACK_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/09_PATTERN_PACK_ARCHITECTURE.md) and [21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md)
 - Artifacts and RFP generation: [10_ARTIFACT_AND_RFP_GENERATION_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/10_ARTIFACT_AND_RFP_GENERATION_MODEL.md)
 - Scorecard governance: [11_SCORECARD_GOVERNANCE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/11_SCORECARD_GOVERNANCE.md)
 - Value ledger: [12_VALUE_LEDGER_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/12_VALUE_LEDGER_MODEL.md)
+- Persona crawler verification: [17_CRAWLER_PERSONA_VERIFICATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/17_CRAWLER_PERSONA_VERIFICATION.md)
+- Sourcing failure modes: [18_FAILURE_MODE_CATALOG.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/18_FAILURE_MODE_CATALOG.md)
+- Cross-product architecture: [19_CROSS_PRODUCT_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/19_CROSS_PRODUCT_ARCHITECTURE.md)
+- Commercial model: [20_COMMERCIAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/20_COMMERCIAL_MODEL.md)
 - Implementation sequence: [14_IMPLEMENTATION_SEQUENCE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/14_IMPLEMENTATION_SEQUENCE.md)
 - Acceptance criteria: [15_ACCEPTANCE_CRITERIA.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/15_ACCEPTANCE_CRITERIA.md)
+- Operating state: [CYCLE_STATE.md](/Users/anand/Projects/nexus/CYCLE_STATE.md)
 
 ## Build Discipline
 
@@ -102,8 +123,17 @@ Codex should not implement any component unless all of the following are true:
 4. the visual behavior is defined
 5. the acceptance criteria are listed
 6. the implementation slice has been explicitly approved
+7. any agent/chat behavior has an approved Context Bundle contract and validation harness criteria
 
 The current dashboard implementation is **prototype v0 only**. It is not final design authority and must not be extended until the dashboard spec and wireframe are reviewed.
+
+No agent UI is complete until:
+
+- it assembles responses from a Source Agent Context Bundle
+- it exposes context used and confidence
+- it offers contextual suggested actions where appropriate
+- it passes vanilla-response detection
+- it avoids model-generated claims that bypass event state, gates, evidence, or citations
 
 ## Prohibited Until Reviewed
 
