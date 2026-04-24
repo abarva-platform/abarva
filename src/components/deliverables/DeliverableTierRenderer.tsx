@@ -10,6 +10,8 @@ import type { SponsorCommitmentRecord } from '@/lib/workflow/sponsorCommitment';
 import { D02StakeholderSuccessSection } from './D02StakeholderSuccessSection';
 import { D04TensionSection } from './D04TensionSection';
 import type { ProgramTensionRecord, StakeholderSuccessRecord } from '@/lib/workflow/stakeholderSuccess';
+import { DataReadinessForm } from '@/components/workflow/DataReadinessForm';
+import type { DataReadinessRecord } from '@/lib/workflow/dataReadiness';
 
 interface DeliverableTierRendererProps {
   model: DeliverableRenderModel;
@@ -25,6 +27,10 @@ interface DeliverableTierRendererProps {
    * FM-04 · D04 Intake Synthesis · existing tension records for the program.
    */
   programTensionRecords?: ProgramTensionRecord[];
+  /**
+   * FM-02 · D03 Success Metric Tree · existing data readiness record.
+   */
+  dataReadiness?: DataReadinessRecord | null;
 }
 
 export function DeliverableTierRenderer({
@@ -32,9 +38,11 @@ export function DeliverableTierRenderer({
   sponsorCommitment,
   stakeholderSuccessRecords,
   programTensionRecords,
+  dataReadiness,
 }: DeliverableTierRendererProps) {
   const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
   const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
+  const isSuccessMetricTree = model.deliverable.code === 'D03' || model.deliverable.typeKey === 'success_metric_tree';
   const isIntakeSynthesis = model.deliverable.code === 'D04' || model.deliverable.typeKey === 'intake_synthesis';
   return (
     <main className="del-page">
@@ -59,6 +67,19 @@ export function DeliverableTierRenderer({
         ) : null}
         {isIntakeSynthesis ? (
           <D04TensionSection programCode={model.program.code} existing={programTensionRecords ?? []} />
+        ) : null}
+        {isSuccessMetricTree ? (
+          <section style={{ marginTop: 32 }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
+                Phase 1 → 2 gate requirement · FM-02
+              </div>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
+                Data readiness
+              </h2>
+            </div>
+            <DataReadinessForm programCode={model.program.code} existing={dataReadiness ?? null} />
+          </section>
         ) : null}
         <footer className="del-footer">
           {model.provenance.disclaimer} · Seed spec {model.provenance.seedSpecVersion} · {model.provenance.contentState.replace(/_/g, ' ')}.

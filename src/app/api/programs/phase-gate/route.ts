@@ -5,6 +5,7 @@ import { join } from 'path';
 import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
+import { dataReadinessGateMet } from '@/lib/workflow/dataReadinessLedger';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -124,6 +125,25 @@ export async function POST(request: NextRequest) {
           error: 'precondition_failed',
           precondition: 'program_tension',
           message: 'Phase 1 → Phase 2 requires at least one program tension with named owner. Capture on D04 Intake Synthesis first.',
+        },
+        { status: 412 },
+      );
+    }
+    // FM-02 · require a data-readiness record with no blocked dimensions.
+    // Gaps are allowed (the tenant has acknowledged them); blocks are hard
+    // stops until resolved.
+    const readinessGate = dataReadinessGateMet(programCode);
+    if (!readinessGate.met) {
+      return NextResponse.json(
+        {
+          error: 'precondition_failed',
+          precondition: 'data_readiness',
+          reason: readinessGate.reason,
+          blockedDimensions: readinessGate.blockedDimensions,
+          message:
+            readinessGate.reason === 'no_record'
+              ? 'Phase 1 → Phase 2 requires a data-readiness assessment. Submit the five-dimension form on D03 Success Metric Tree first.'
+              : `Phase 1 → Phase 2 is blocked by ${readinessGate.blockedDimensions.length} data dimension${readinessGate.blockedDimensions.length === 1 ? '' : 's'} (${readinessGate.blockedDimensions.join(', ')}). Resolve or reclassify before advancing.`,
         },
         { status: 412 },
       );

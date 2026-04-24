@@ -4,6 +4,7 @@ import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/d
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
+import { getLatestDataReadiness } from '@/lib/workflow/dataReadinessLedger';
 
 export default async function TenantDeliverableSeedPage({
   params,
@@ -22,6 +23,7 @@ export default async function TenantDeliverableSeedPage({
   // the empty state or the audit-trail view without a client round-trip.
   const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
   const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
+  const isSuccessMetricTree = model.deliverable.code === 'D03' || model.deliverable.typeKey === 'success_metric_tree';
   const isIntakeSynthesis = model.deliverable.code === 'D04' || model.deliverable.typeKey === 'intake_synthesis';
 
   const existingCommitment = isCharter
@@ -33,6 +35,9 @@ export default async function TenantDeliverableSeedPage({
   const programTensionRecords = isIntakeSynthesis
     ? getProgramTensionRecords(model.program.code)
     : undefined;
+  const dataReadiness = isSuccessMetricTree
+    ? getLatestDataReadiness(model.program.code)
+    : null;
 
   return (
     <DeliverableTierRenderer
@@ -40,6 +45,7 @@ export default async function TenantDeliverableSeedPage({
       sponsorCommitment={existingCommitment ?? undefined}
       stakeholderSuccessRecords={stakeholderSuccessRecords}
       programTensionRecords={programTensionRecords}
+      dataReadiness={dataReadiness}
     />
   );
 }
