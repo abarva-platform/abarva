@@ -162,7 +162,7 @@
       "id": "S4",
       "name": "Nexus context adapter",
       "category": "B",
-      "status": "blocked",
+      "status": "code_complete",
       "risk": "high",
       "ownerAgent": "Builder + Reviewer",
       "dependsOn": [
