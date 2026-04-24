@@ -26,16 +26,16 @@
 ## Current position
 
 ### Codex lane
-- Current item: queue complete · Codex Cycle 1 P0 lane
-- Current step within item: 5 of 5 (validation complete; preparing staging/PR)
+- Current item: queue merged · Codex Cycle 1 P0 lane
+- Current step within item: post-merge verification (awaiting production deploy + live walkthrough)
 - Started item at: 2026-04-24T03:34:00Z
-- Expected PR ETA: same session
+- Expected next action ETA: same session
 
 ### Code lane
-- Current item: F08-S9-citation (F08-S4.6-seam landed in-session)
-- Current step within item: 1 of 3 (build primitive)
+- Current item: Cycle 1 Code queue closed · all six items landed in working tree · typecheck + build clean
+- Current step within item: PR open · awaiting review/merge and post-merge crawler persona verification
 - Started item at: 2026-04-22T00:00:00Z (resumed 2026-04-24 after Codex reclaimed state file)
-- Expected PR ETA: same session
+- Expected PR ETA: open as PR `#157`
 
 ## Complete this cycle
 - F08-S19-state-file (Codex): authoritative repo-root cycle file created and adopted on `codex/cycle1-codex-execution`
@@ -44,6 +44,12 @@
 - P0-3-pattern-deliverable-graph (Codex): bidirectional pattern↔deliverable query layer and API routes landed with ambiguity handling and fallback from graph edges to seed/manifest-backed relationships
 - P0-4-freshness-evidence (Codex): authored evidence registry loader, canonical tenant/program evidence routes, real pattern evidence/freshness metrics, and registry-backed deliverable evidence chips landed with canonical route coverage
 - F08-S4.6-seam (Code): src/lib/agent/renderedResponse.ts committed (no PR yet — bundled with Code lane items for a single Cycle 1 Code PR)
+- F08-S9-citation (Code): src/components/agent/AgentCitation.tsx · six citation types × three confidence tiers + broken-target class, compact superscript mode for observations/evidence_source, drawer integration for evidence and observation citations
+- F08-S10-vocab (Code): src/lib/agent/honestDisclosure.ts · §10.1-10.6 vocabulary arrays + opener/provenance helpers; src/components/agent/SparsitySignal.tsx · italic librarian-honest treatment (§4.7, §10.4)
+- F08-S7-render (Code): src/components/agent/AgentResponse.tsx · sparsity-first render, placeholder-to-citation resolver, follow-up chips, handoff affordance slot
+- F08-S5-voices (Code): src/lib/agent/voiceContracts.ts · per-agent opener/body/closer rules, word-count targets, citation cadence, forbidden-phrase lint helpers
+- F08-S12-handoff (Code): src/components/agent/HandoffAffordance.tsx · explicit button with session-storage handoff carry (§12.3), one-shot read via consumeHandoffContext
+- AgentRail wired (Code): AgentRail consumes RenderedResponse via the new AgentTurn.rendered field · agent bubbles use AgentResponse when rendered is present, fall back to plain text otherwise
 
 ## Blocked or escalated
 - (none yet)
@@ -63,7 +69,10 @@
 - 2026-04-24T04:13:00Z: Auth smoke rerun passed cleanly after replacing `waitForLoadState('networkidle')` in the Playwright helper with a deterministic document-ready check. Client shell expectation was also updated to match the intentional signed-in nav (no `Platform` link).
 - 2026-04-24T04:24:00Z: P0-4 implementation landed: authored evidence registries now back pattern evidence counts/freshness, seed deliverable evidence chips resolve to canonical tenant/program evidence routes, and pattern detail/preview surfaces show browsable evidence linked to those counts.
 - 2026-04-24T04:29:00Z: Full Codex-lane validation is green — focused Jest suites (16 tests), canonical-routes, tenant-rescope, TypeScript, focused eslint, `next build --webpack`, and Playwright auth smoke all passed after the P0-4 route renderer was added to the canonical-route harness.
+- 2026-04-24T11:11:42Z: PR `#156` (`feat: complete cycle 1 codex p0 queue`) merged to `main` at commit `8eceb3a54cfa2fc01c6d826a17875f3a904c611c`. Remaining Codex-lane work is deployment completion plus live walkthrough on Apex/Morrison, Meridian deliverables, and in-app free-text agent behavior.
+- 2026-04-24: Code lane Cycle 1 queue closed in working tree. Six items merged into a single bundle so the rendered_response contract (seam) and its consumers (citation, vocabulary, renderer, voice contracts, handoff) land together — easier to review than drip PRs, and avoids a half-wired contract.
+- 2026-04-24T11:37:14Z: PR `#157` (`feat: cycle 1 code lane · agent render contract`) opened from `code/cycle1-render-contract`. Remaining Code-lane work is PR review/merge plus crawler persona verification once the `rendered_response` seam is exercised end-to-end.
 
 ## Last status emission
 - 2026-04-24T04:26:00Z (Codex)
-- 2026-04-24 (Code · in-session continuation after state-file merge)
+- 2026-04-24 · Code · Cycle 1 queue closed in working tree; typecheck + Next build clean; PR #157 open
