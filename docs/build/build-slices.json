@@ -240,7 +240,7 @@
       "id": "S6",
       "name": "Agent UI score wiring",
       "category": "B",
-      "status": "blocked",
+      "status": "code_complete",
       "risk": "medium",
       "ownerAgent": "Builder + Reviewer",
       "dependsOn": [
