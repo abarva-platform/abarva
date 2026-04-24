@@ -26,6 +26,7 @@ function isTenantTowerPath(pathname: string): boolean {
 const ITEMS: Array<{ label: string; href: string; match: (p: string) => boolean }> = [
   { label: 'Home', href: '/home', match: (p) => p === '/home' || p === '/' || p.startsWith('/home/') || p === '/dashboard' || p.startsWith('/dashboard/') },
   { label: 'Programs', href: '/engagements', match: (p) => p === '/preview/programs' || p.startsWith('/preview/programs/') || p === '/engagements' || p.startsWith('/engagements/') || p.startsWith('/engage/') || p === '/programs' || p.startsWith('/programs/') || isTenantProgramsPath(p) },
+  { label: 'Source', href: '/source', match: (p) => p === '/source' || p.startsWith('/source/') },
   { label: 'Intelligence', href: '/preview/intelligence', match: (p) => p === '/preview/intelligence' || p.startsWith('/preview/intelligence/') || p === '/intelligence' || p.startsWith('/intelligence/') || isTenantIntelligencePath(p) },
   { label: 'Control Tower', href: '/tower', match: (p) => p === '/preview/tower' || p.startsWith('/preview/tower/') || p === '/tower' || p.startsWith('/tower/') || isTenantTowerPath(p) },
   { label: 'Platform', href: '/platform', match: (p) => p === '/platform' || p.startsWith('/platform/') || p.startsWith('/admin') || p.startsWith('/data') || p.startsWith('/users') },
