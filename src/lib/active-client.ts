@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { currentUser } from '@clerk/nextjs/server';
-import { resolveSessionRole } from '@/lib/auth/access-routing';
+import { resolvePinnedSessionClientKey, resolveSessionRole } from '@/lib/auth/access-routing';
 import {
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
@@ -43,14 +43,12 @@ async function getSessionClientContext(): Promise<SessionClientContext> {
   }
 }
 
-function resolvePinnedClientKey(session: SessionClientContext): ClientKey {
-  const resolved = [
-    session.clientId,
-    session.defaultClientId,
-    inferClientKeyFromEmail(session.email),
-    DEFAULT_CLIENT_KEY,
-  ].find((candidate) => isClientKey(candidate));
-  return resolved ?? DEFAULT_CLIENT_KEY;
+function resolvePinnedClientKey(session: SessionClientContext): ClientKey | null {
+  return resolvePinnedSessionClientKey({
+    clientId: session.clientId,
+    defaultClientId: session.defaultClientId,
+    email: session.email,
+  });
 }
 
 export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
@@ -59,7 +57,20 @@ export async function getActiveClientKey(requestedClientId?: string | null): Pro
   const pinnedClientKey = resolvePinnedClientKey(session);
 
   const isLockedRole = role === 'client' || role === 'maestro';
-  if (isLockedRole) return pinnedClientKey;
+  if (isLockedRole && pinnedClientKey) return pinnedClientKey;
+
+  if (isLockedRole && isClientKey(requestedClientId)) return requestedClientId;
+
+  if (isLockedRole) {
+    try {
+      const store = await cookies();
+      const fromCookie = store.get(ACTIVE_CLIENT_COOKIE)?.value ?? null;
+      if (isClientKey(fromCookie)) return fromCookie;
+    } catch {
+      // cookies() fails outside request scope — fall through to the
+      // remaining metadata / alias / default resolution.
+    }
+  }
 
   if (isClientKey(requestedClientId)) return requestedClientId;
 

@@ -6,12 +6,12 @@ export const DEMO_ROLE_ACCOUNTS = {
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform', 'Investor', 'Admin'],
     hiddenNav: [],
   },
-  maestro: {
+  clientArcturus: {
     email: 'demo-arcturus+clerk_test@abarva.com',
     expectedPath: /\/home\?client=arcturus$/,
-    pageMarker: { kind: 'text', label: 'Maestro' },
-    visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
-    hiddenNav: ['Investor', 'Admin'],
+    pageMarker: { kind: 'text', label: 'Arcturus Financial' },
+    visibleNav: ['Home', 'Programs', 'Control Tower'],
+    hiddenNav: ['Intelligence', 'Platform', 'Investor', 'Admin'],
   },
   investor: {
     email: 'investor+clerk_test@abarva.com',
