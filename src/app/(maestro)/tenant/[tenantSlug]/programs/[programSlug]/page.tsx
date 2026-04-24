@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation';
-import { SeedProgramOverview } from '@/components/deliverables/SeedRouteShell';
+import { ProgramCanonicalDetail } from '@/components/programs/ProgramCanonicalDetail';
 import { findProgramByRoute } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
 
-export default async function TenantProgramSeedPage({
+export default async function TenantProgramCanonicalPage({
   params,
 }: {
   params: Promise<{ tenantSlug: string; programSlug: string }>;
@@ -13,5 +13,5 @@ export default async function TenantProgramSeedPage({
   const context = findProgramByRoute(tenantSlug, programSlug);
   if (!context) notFound();
 
-  return <SeedProgramOverview tenant={context.tenant} program={context.program} />;
+  return <ProgramCanonicalDetail tenant={context.tenant} program={context.program} />;
 }
