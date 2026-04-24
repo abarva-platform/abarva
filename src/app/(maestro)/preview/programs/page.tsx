@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getAllPrograms } from '@/lib/programs/mock';
 import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
 import { CLIENT_KEY_TO_DB_NAME, getClientOption } from '@/lib/client-config';
@@ -24,5 +25,10 @@ export default async function ProgramsPreviewPage({
   const candidates = CLIENT_KEY_TO_DB_NAME[activeClientKey].map((name) => name.toLowerCase());
   const programs = all.filter((p) => candidates.includes(p.clientName.toLowerCase()));
   const activeClientName = activeClient?.name ?? clientOption.name;
+
+  if (programs.length === 0 && activeClient?.id) {
+    redirect(`/engagements?client=${activeClientKey}`);
+  }
+
   return <ProgramsIridescentShell programs={programs} activeClientName={activeClientName} />;
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getAllActiveEngagements, type EngagementListItem } from '@/lib/db/engagement';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { getClientOption } from '@/lib/client-config';
 import { loadEngagementSummaries, type EngagementSummaryExtras } from '@/lib/engagements/list-summary';
 
 export const dynamic = 'force-dynamic';
@@ -17,8 +18,6 @@ const TEAL_DEEP = '#0A5849';
 const PLUM = '#8B5CF6';
 const AMBER = '#D97706';
 const GREEN = '#2F855A';
-const CORAL = '#D9485F';
-const CREAM = '#FBF7F1';
 const SERIF = '"Fraunces", Georgia, serif';
 const MONO = '"JetBrains Mono", "Fira Code", monospace';
 const SANS = '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -311,12 +310,20 @@ function EngagementCard({ e, x }: { e: EngagementListItem; x: EngagementSummaryE
   );
 }
 
-export default async function EngagementsListPage() {
-  const activeClient = await getActiveClientRow();
-  const rows = await getAllActiveEngagements(undefined, activeClient?.id ?? null);
+export default async function EngagementsListPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ client?: string }>;
+}) {
+  const params = await searchParams;
+  const activeClientKey = await getActiveClientKey(params.client);
+  const activeClient = await getActiveClientRow(params.client);
+  const clientOption = getClientOption(activeClientKey);
+  const rows = activeClient?.id ? await getAllActiveEngagements(undefined, activeClient.id) : [];
   const extras = await loadEngagementSummaries(rows.map((r) => r.id));
-  const newProgramHref = activeClient?.key
-    ? `/programs/new?client=${encodeURIComponent(activeClient.key)}`
+  const activeClientName = activeClient?.name ?? clientOption.name;
+  const newProgramHref = activeClientKey
+    ? `/programs/new?client=${encodeURIComponent(activeClientKey)}`
     : '/programs/new';
 
   const latestTurn = rows
@@ -381,7 +388,7 @@ export default async function EngagementsListPage() {
                   maxWidth: 900,
                 }}
               >
-                Programs for {activeClient?.name ?? 'the current tenant'}.
+                Programs for {activeClientName}.
               </h1>
               <p
                 style={{
@@ -524,7 +531,7 @@ export default async function EngagementsListPage() {
                   lineHeight: 1.6,
                 }}
               >
-                No active programs yet{activeClient ? ` for ${activeClient.name}` : ''}. Start a new program to seed
+                No active programs yet for {activeClientName}. Start a new program to seed
                 the portfolio with live scope, sponsors, contradictions, and deliverables.
               </div>
             ) : (
