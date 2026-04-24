@@ -33,9 +33,19 @@ export interface DeliverableSection {
   bullets?: string[];
 }
 
+export interface DeliverableTableCell {
+  text: string;
+  /** When set, the cell renders as a Next.js Link pointing here. */
+  href?: string;
+}
+
 export interface DeliverableTable {
   columns: string[];
-  rows: string[][];
+  /**
+   * Cells accept plain strings (legacy) or `{text, href}` objects. The
+   * renderer handles both so migration is incremental.
+   */
+  rows: (string | DeliverableTableCell)[][];
   highlightedRows?: number[];
 }
 

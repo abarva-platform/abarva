@@ -12,7 +12,7 @@
 
 1. C2-1-tenant-isolation — Enforce backend membership checks on every `/tenant/{slug}/*` route, including programs, deliverables, patterns, tower, and evidence. Non-admin cross-tenant reads return 403, not content. `LOCAL COMPLETE · validated`
 2. C2-2-clerk-rebinding — Fix demo-account re-auth so `demo-apexretail+clerk_test` and `demo-meridian+clerk_test` do not rebound to the wrong tenant or lose valid `?client=` state because of stale/incomplete claims. `LOCAL COMPLETE · validated`
-3. C2-3-tower-open-routing — Resolve or remove the broken Tower pressure-card `OPEN → /engagements/892a57af-*` path.
+3. C2-3-tower-open-routing — Resolve or remove the broken Tower pressure-card `OPEN → /engagements/892a57af-*` path. `LOCAL COMPLETE · validated`
 4. C2-4-atlas-free-text-runtime — Replace Atlas echo/redirect behavior with a real Stage 1-6 backed free-text path, same honesty contract as Sentinel.
 5. C2-5-nexus-discoverability — Make Nexus/Programs chat discoverable from program detail pages.
 6. C2-6-phase-source-of-truth — Align Morrison phase state across home, program detail, and any other surfaced cards.
@@ -27,9 +27,9 @@
 
 ## Current position
 
-- Current item: C2-3-tower-open-routing
-- Current step within item: C2-2 implemented + focused validation green locally; routing trace on broken Tower `OPEN → /engagements/892a57af-*` starting next
-- Started item at: 2026-04-24T09:34:00-05:00
+- Current item: C2-4-atlas-free-text-runtime
+- Current step within item: C2-3 validated via UUID/graph-id fallback regression test; Atlas Stage 1-6 bridge is next
+- Started item at: 2026-04-24T09:49:00-05:00
 - Expected next action ETA: same session
 
 ## Complete this cycle
@@ -52,7 +52,21 @@
 - 2026-04-24T09:13:00-05:00: C2-1 local validation passed: `jest tests/unit/tenant-access.test.ts tests/unit/access-routing.test.ts`, `tsc --noEmit`, and focused `eslint` on auth/test files.
 - 2026-04-24T09:15:00-05:00: Sidecar route sweep found additional tenant-shaped APIs to audit after the core `/tenant/*` leak path: `/api/engage/[engagementId]/turn`, `/api/engagements/create/turn`, `/api/data/upload`, `/api/data/turn`, `/api/tower/upload`, `/api/tower/seed-demo`, and `/api/v1/sentinel/query`.
 - 2026-04-24T09:33:00-05:00: C2-2 local validation passed: `jest tests/unit/access-routing.test.ts tests/unit/tenant-access.test.ts`, `tsc --noEmit`, and focused `eslint` on access-routing, active-client, sign-in, AppChrome, and auth test helpers.
+- 2026-04-24T09:48:00-05:00: C2-3 local validation passed: `jest tests/unit/engagement-db.test.ts`, `tsc --noEmit`, and focused `eslint` on engagement route + test files. UUID-backed Tower pressure-card paths now resolve through `/engagements/[engagementId]`.
+
+- 2026-04-24T13:55:00-05:00 · Code lane follow-up: items C2-5, C2-6, C2-9, C2-10, C2-12, C2-13, C2-14 all landed on PR #162 (stacked on PR #161). Type + build clean.
+  - C2-5 · NexusProgramRail mounted on SeedProgramOverview
+  - C2-6 · ProgramsGrid phase labels aligned to spec-phase (P1-P5) matching detail page
+  - C2-9 · Internal "Design note" stripped from /home
+  - C2-10 · Queue page uses persons.name via getCurrentUser, Clerk fallback preserved
+  - C2-12 · PatternProse linkifies in-prose pattern_* tokens; reads manifest JSON directly to avoid pulling fs-dependent evidence-registry into client bundle
+  - C2-13 · SeedProgramOverview renders all deliverables, not `.slice(0, 12)`
+  - C2-14 · DeliverableTable cell type widened to support `{text, href}`; Pattern + Program cells now clickable
+- 2026-04-24T13:55:00-05:00 · ESCALATIONS (§19.5):
+  - C2-4 Atlas free-text runtime → Codex lane (Stage 5 Claude invocation is Codex-owned; Code will wire `rendered_response` consumer once Codex ships /api/v1/programs/.../atlas/ask)
+  - C2-8 Vercel toolbar → Vercel dashboard config (no toolbar package in repo; injected by platform; requires project setting toggle)
+  - C2-11 D16 E51-E55 stub citations → content authoring (labels need real payloads; Morrison Tier C task #123 owns this)
 
 ## Last status emission
 
-- 2026-04-24T09:34:00-05:00 · C2-2 local validation green · item 3 in progress
+- 2026-04-24T13:55:00-05:00 · Code lane 11 of 14 items merged-or-staged on PRs #160/#161/#162 · 3 items escalated

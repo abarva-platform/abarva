@@ -521,39 +521,9 @@ export default async function HomePage({
                 Intelligence should feel composed before it feels dense.
               </h2>
             </div>
-            <div
-              style={{
-                padding: '20px 22px',
-                borderRadius: 22,
-                border: `1px solid ${LINE}`,
-                background: 'rgba(255,253,249,0.88)',
-                boxShadow: '0 14px 40px rgba(23,20,17,0.06)',
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: MONO,
-                  fontSize: 10,
-                  fontWeight: 600,
-                  letterSpacing: '0.14em',
-                  textTransform: 'uppercase',
-                  color: INK_MUTED,
-                }}
-              >
-                Design note
-              </div>
-              <p
-                style={{
-                  margin: '10px 0 0',
-                  fontSize: 16,
-                  lineHeight: 1.62,
-                  color: INK_SOFT,
-                }}
-              >
-                The hero and transition panels stay warm and open. The dense grids remain darker on purpose so
-                the scan-heavy product surfaces still read crisply on smaller laptops.
-              </p>
-            </div>
+            {/* C2-09 · internal "Design note" block removed. This was
+                product-design self-commentary shipped to customers; not
+                customer-facing content. */}
           </section>
 
           <section
