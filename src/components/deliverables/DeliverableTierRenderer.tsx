@@ -5,13 +5,40 @@ import { RICH_DELIVERABLE_DEMO_DISCLAIMER } from '@/lib/integrity/disclaimers';
 import { ExportActions } from './ExportActions';
 import { ApproveActions } from './ApproveActions';
 import { EvidenceChipList } from './EvidenceChipList';
+import { SponsorCommitmentForm } from '@/components/workflow/SponsorCommitmentForm';
+import type { SponsorCommitmentRecord } from '@/lib/workflow/sponsorCommitment';
 
-export function DeliverableTierRenderer({ model }: { model: DeliverableRenderModel }) {
+interface DeliverableTierRendererProps {
+  model: DeliverableRenderModel;
+  /**
+   * FM-03 · when rendering D01 Program Charter, the caller passes the
+   * latest sponsor commitment record (or undefined if none). The tier
+   * renderer appends a SponsorCommitmentForm section below the body so
+   * the sponsor can submit before the Phase 1→2 gate.
+   */
+  sponsorCommitment?: SponsorCommitmentRecord | null;
+}
+
+export function DeliverableTierRenderer({ model, sponsorCommitment }: DeliverableTierRendererProps) {
+  const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
   return (
     <main className="del-page">
       <DeliverablePageStyles />
       <div className="del-shell">
         {model.deliverable.tier === 'stub' ? <StubBody model={model} /> : model.deliverable.tier === 'outline' ? <OutlineBody model={model} /> : <RichBody model={model} />}
+        {isCharter ? (
+          <section style={{ marginTop: 32 }}>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#0E9F8C', fontWeight: 700 }}>
+                Phase 1 → 2 gate requirement · FM-03
+              </div>
+              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: 24, letterSpacing: '-0.015em', margin: '8px 0 0', color: '#1a1612' }}>
+                Sponsor commitment
+              </h2>
+            </div>
+            <SponsorCommitmentForm programCode={model.program.code} existing={sponsorCommitment ?? null} />
+          </section>
+        ) : null}
         <footer className="del-footer">
           {model.provenance.disclaimer} · Seed spec {model.provenance.seedSpecVersion} · {model.provenance.contentState.replace(/_/g, ' ')}.
           {model.deliverable.tier === 'rich' ? ` ${RICH_DELIVERABLE_DEMO_DISCLAIMER}` : ''}

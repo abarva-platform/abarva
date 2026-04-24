@@ -3,6 +3,7 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
+import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -83,6 +84,24 @@ export async function POST(request: NextRequest) {
   if (!access.ok) {
     const status = access.reason === 'unauthenticated' ? 401 : 403;
     return NextResponse.json({ error: access.reason }, { status });
+  }
+
+  // FM-03 · Phase 1 → 2 gate requires a sponsor commitment record. Other
+  // phase transitions have their own preconditions (Phase 2→3 needs the
+  // tension-capture fields per FM-04, etc.) — those land in follow-up
+  // items. For now, enforce only the FM-03 precondition.
+  if (fromPhase === 1 && toPhase === 2) {
+    const commitment = getLatestSponsorCommitment(programCode);
+    if (!commitment) {
+      return NextResponse.json(
+        {
+          error: 'precondition_failed',
+          precondition: 'sponsor_commitment',
+          message: 'Phase 1 → Phase 2 requires a sponsor commitment record. Submit the commitment form on D01 Charter first.',
+        },
+        { status: 412 },
+      );
+    }
   }
 
   const clerk = await clerkClient();

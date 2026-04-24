@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTierRenderer';
 import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
+import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 
 export default async function TenantDeliverableSeedPage({
   params,
@@ -15,5 +16,13 @@ export default async function TenantDeliverableSeedPage({
 
   const model = buildSeedDeliverableRenderModel({ tenant: context.tenant, program: context.program, deliverable: context.deliverable });
 
-  return <DeliverableTierRenderer model={model} />;
+  // FM-03 · D01 Program Charter carries the sponsor commitment form. Fetch
+  // the latest committed record server-side so the form can render either
+  // the empty state or the audit-trail view without a client round-trip.
+  const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
+  const existingCommitment = isCharter
+    ? getLatestSponsorCommitment(model.program.code)
+    : null;
+
+  return <DeliverableTierRenderer model={model} sponsorCommitment={existingCommitment ?? undefined} />;
 }
