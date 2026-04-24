@@ -33,9 +33,9 @@
 
 ### Code lane
 - Current item: Cycle 1 Code queue closed · all six items landed in working tree · typecheck + build clean
-- Current step within item: post-implementation validation complete; next concrete step is commit + PR
+- Current step within item: PR open · awaiting review/merge and post-merge crawler persona verification
 - Started item at: 2026-04-22T00:00:00Z (resumed 2026-04-24 after Codex reclaimed state file)
-- Expected PR ETA: same session
+- Expected PR ETA: open as PR `#157`
 
 ## Complete this cycle
 - F08-S19-state-file (Codex): authoritative repo-root cycle file created and adopted on `codex/cycle1-codex-execution`
@@ -70,8 +70,9 @@
 - 2026-04-24T04:24:00Z: P0-4 implementation landed: authored evidence registries now back pattern evidence counts/freshness, seed deliverable evidence chips resolve to canonical tenant/program evidence routes, and pattern detail/preview surfaces show browsable evidence linked to those counts.
 - 2026-04-24T04:29:00Z: Full Codex-lane validation is green — focused Jest suites (16 tests), canonical-routes, tenant-rescope, TypeScript, focused eslint, `next build --webpack`, and Playwright auth smoke all passed after the P0-4 route renderer was added to the canonical-route harness.
 - 2026-04-24T11:11:42Z: PR `#156` (`feat: complete cycle 1 codex p0 queue`) merged to `main` at commit `8eceb3a54cfa2fc01c6d826a17875f3a904c611c`. Remaining Codex-lane work is deployment completion plus live walkthrough on Apex/Morrison, Meridian deliverables, and in-app free-text agent behavior.
-- 2026-04-24: Code lane Cycle 1 queue closed in working tree. Six items merged into a single bundle so the rendered_response contract (seam) and its consumers (citation, vocabulary, renderer, voice contracts, handoff) land together — easier to review than drip PRs, and avoids a half-wired contract. Next action: commit + PR.
+- 2026-04-24: Code lane Cycle 1 queue closed in working tree. Six items merged into a single bundle so the rendered_response contract (seam) and its consumers (citation, vocabulary, renderer, voice contracts, handoff) land together — easier to review than drip PRs, and avoids a half-wired contract.
+- 2026-04-24T11:37:14Z: PR `#157` (`feat: cycle 1 code lane · agent render contract`) opened from `code/cycle1-render-contract`. Remaining Code-lane work is PR review/merge plus crawler persona verification once the `rendered_response` seam is exercised end-to-end.
 
 ## Last status emission
 - 2026-04-24T04:26:00Z (Codex)
-- 2026-04-24 · Code · Cycle 1 queue closed in working tree; typecheck + Next build clean; ready for PR
+- 2026-04-24 · Code · Cycle 1 queue closed in working tree; typecheck + Next build clean; PR #157 open
