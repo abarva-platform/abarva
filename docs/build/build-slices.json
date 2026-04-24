@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "lastUpdated": "2026-04-24",
+  "lifecycle": [
+    "ready",
+    "in_progress",
+    "code_complete",
+    "verified",
+    "merged"
+  ],
+  "slices": [
+    {
+      "id": "S0",
+      "name": "Repo guardrails and PR packet",
+      "category": "J",
+      "status": "in_progress",
+      "risk": "medium",
+      "ownerAgent": "Planner + Progress Scribe",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/BUILD_OPERATING_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/slices/README.md",
+        ".github/pull_request_template.md"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "acceptanceCriteria": [
+        "Build operating model documents one-man-army execution discipline.",
+        "Slice manifest defines S0-S9 with allowed files, forbidden files, acceptance criteria, and validation commands.",
+        "PR template includes the 10-field review packet.",
+        "Only allowed documentation/config files are staged and committed."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build",
+        "git diff --cached --name-only"
+      ],
+      "notes": "This slice creates the control system for all later slices. It must not modify product UI, runtime code, auth, migrations, or Source implementation."
+    },
+    {
+      "id": "S1",
+      "name": "Context Bundle contracts",
+      "category": "A",
+      "status": "ready",
+      "risk": "high",
+      "ownerAgent": "Planner + Builder",
+      "dependsOn": [
+        "S0"
+      ],
+      "allowedFiles": [
+        "src/lib/agent/**",
+        "src/lib/source/agent-context.ts",
+        "src/lib/source/context-quality.ts",
+        "docs/build/build-slices.json",
+        "docs/build/slices/S1_CONTEXT_BUNDLE_CONTRACTS.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/components/programs/ProgramSurface.tsx",
+        "src/lib/programs/mock.ts",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Typed Context Bundle contract covers tenant, work object, evidence, workflow, patterns, files, conversation, and quality state.",
+        "Contract can represent portfolio, program, Source event, stage, artifact, scorecard, and low-context states.",
+        "No model calls are introduced.",
+        "No UI expansion is introduced."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Use existing Source context contracts as a reference, but avoid overfitting the global runtime to Source only."
+    },
+    {
+      "id": "S2",
+      "name": "Context scoring/classifier",
+      "category": "A",
+      "status": "blocked",
+      "risk": "high",
+      "ownerAgent": "Builder + Test Runner",
+      "dependsOn": [
+        "S1"
+      ],
+      "allowedFiles": [
+        "src/lib/agent/**",
+        "src/lib/source/context-quality.ts",
+        "src/__tests__/**",
+        "tests/**",
+        "docs/build/slices/S2_CONTEXT_SCORING_CLASSIFIER.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "5-state bundle classifier is deterministic.",
+        "6-dimension quality scoring is computed before composition.",
+        "Vanilla-response risk can block or downgrade composition.",
+        "Tests use fixtures and do not call external models."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run test:integration:nexus",
+        "npm run build"
+      ],
+      "notes": "This slice should turn context quality into a runtime gate, not just a display score."
+    },
+    {
+      "id": "S3",
+      "name": "Source context validation fixtures",
+      "category": "I",
+      "status": "ready",
+      "risk": "low",
+      "ownerAgent": "Builder + Test Runner",
+      "dependsOn": [
+        "S0"
+      ],
+      "allowedFiles": [
+        "src/lib/source/**",
+        "src/__tests__/source/**",
+        "tests/**",
+        "docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_VALIDATION_FIXTURES.md",
+        "docs/build/slices/S3_SOURCE_CONTEXT_VALIDATION_FIXTURES.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Fixtures cover Source portfolio context, event context, Scope stage context, missing event, and low-context states.",
+        "Assertions verify lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality scores.",
+        "No Source UI files are modified.",
+        "No model calls are made."
+      ],
+      "validationCommands": [
+        "npx eslint src/lib/source",
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "This is the safest next Source-sidecar slice because it validates runtime context without expanding UI."
+    },
+    {
+      "id": "S4",
+      "name": "Nexus context adapter",
+      "category": "B",
+      "status": "blocked",
+      "risk": "high",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S1",
+        "S2"
+      ],
+      "allowedFiles": [
+        "src/lib/nexus/orchestrator.ts",
+        "src/lib/nexus/assembler.ts",
+        "src/lib/nexus/composer.ts",
+        "src/lib/agent/**",
+        "src/__tests__/integration/nexus/**",
+        "docs/build/slices/S4_NEXUS_CONTEXT_ADAPTER.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "src/components/programs/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Nexus receives a scored Context Bundle before Claude invocation.",
+        "Retrieve and assemble phases preserve existing six-phase runPipeline semantics.",
+        "Composition can see bundle state and quality scores.",
+        "Existing Nexus tests pass or are updated with deterministic fixtures."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run test:integration:nexus",
+        "npm run build"
+      ],
+      "notes": "Do not rewrite prompts broadly in this slice. This is an adapter/wiring slice."
+    },
+    {
+      "id": "S5",
+      "name": "Honest disclosure response contract",
+      "category": "A",
+      "status": "blocked",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S2"
+      ],
+      "allowedFiles": [
+        "src/lib/agent/honestDisclosure.ts",
+        "src/lib/agent/renderedResponse.ts",
+        "src/components/agent/AgentResponse.tsx",
+        "src/components/agent/HonestDisclosureBanner.tsx",
+        "src/components/agent/ConfidenceQualifier.tsx",
+        "src/components/agent/SparsitySignal.tsx",
+        "src/__tests__/**",
+        "docs/build/slices/S5_HONEST_DISCLOSURE_RESPONSE_CONTRACT.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Disclosure language is derived from bundle state and context quality scores.",
+        "Confidence qualifiers are HIGH/MEDIUM/LOW based on measured quality, not static props.",
+        "Context-used indicators can list sources, files, or explicit absence of evidence.",
+        "Thin context produces honest non-fabrication behavior."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run test:integration:nexus",
+        "npm run build"
+      ],
+      "notes": "This slice makes the existing response primitives operational rather than decorative."
+    },
+    {
+      "id": "S6",
+      "name": "Agent UI score wiring",
+      "category": "B",
+      "status": "blocked",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S5"
+      ],
+      "allowedFiles": [
+        "src/components/agent/**",
+        "src/components/deliverables/NexusProgramRail.tsx",
+        "src/components/intelligence/**",
+        "src/components/atlas/**",
+        "docs/build/slices/S6_AGENT_UI_SCORE_WIRING.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/(maestro)/source/**",
+        "src/components/source/**",
+        "src/app/programs/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Agent UI consistently shows confidence, context-used, sparse-context, and handoff state.",
+        "Score rendering does not make unsupported confidence claims.",
+        "No generic chatbot-only experience is introduced.",
+        "No Source UI expansion occurs."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Only wire surfaces already using agent response primitives. Do not invent new product flows here."
+    },
+    {
+      "id": "S7",
+      "name": "Tenant isolation probe tests",
+      "category": "A",
+      "status": "ready",
+      "risk": "critical",
+      "ownerAgent": "Test Runner + Reviewer",
+      "dependsOn": [
+        "S0"
+      ],
+      "allowedFiles": [
+        "src/__tests__/**",
+        "tests/**",
+        "scripts/**",
+        "src/lib/integrity/**",
+        "docs/build/slices/S7_TENANT_ISOLATION_PROBE_TESTS.md"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/app/(maestro)/tenant/**",
+        "src/app/api/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Marcus T and Dr. L cross-tenant read/write probes are encoded as regression tests or deterministic scripts.",
+        "Tests assert forbidden tenant/program/deliverable/API access returns 403 or blocked JSON, never content.",
+        "No auth code is changed in this test-only slice unless founder explicitly approves a fix slice.",
+        "Probe results are documented in the final report."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run integrity:tenant-rescope",
+        "npm run build"
+      ],
+      "notes": "This slice should prove the existing Cycle 2 tenant hardening, not rewrite auth."
+    },
+    {
+      "id": "S8",
+      "name": "Programs page readiness contract",
+      "category": "J",
+      "status": "ready",
+      "risk": "medium",
+      "ownerAgent": "Planner + Reviewer",
+      "dependsOn": [
+        "S0"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/S8_PROGRAMS_PAGE_READINESS_CONTRACT.md",
+        "docs/design-canon/**",
+        "docs/specs/**"
+      ],
+      "forbiddenFiles": [
+        "src/app/programs/**",
+        "src/app/(maestro)/tenant/**",
+        "src/components/programs/**",
+        "src/lib/programs/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Programs index/detail readiness contract defines purpose, data dependencies, agent behavior, states, acceptance, and validation.",
+        "Contract explicitly forbids legacy/mock-heavy dependencies unless approved.",
+        "Contract separates code complete from verified.",
+        "No product code is modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "This is a documentation-only gate before Programs canonical implementation."
+    },
+    {
+      "id": "S9",
+      "name": "Programs canonical index/detail proof",
+      "category": "C",
+      "status": "blocked",
+      "risk": "high",
+      "ownerAgent": "Builder + Reviewer + Test Runner",
+      "dependsOn": [
+        "S8",
+        "S4"
+      ],
+      "allowedFiles": [
+        "src/app/(maestro)/tenant/[tenantSlug]/programs/**",
+        "src/components/programs/**",
+        "src/lib/programs/queries.ts",
+        "src/lib/programs/types.ui.ts",
+        "src/__tests__/**",
+        "docs/build/slices/S9_PROGRAMS_CANONICAL_INDEX_DETAIL_PROOF.md"
+      ],
+      "forbiddenFiles": [
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "Founder can open canonical Programs index/detail and answer status, value, risk, gate, and next action within 3 seconds.",
+        "Nexus recommendation is grounded in available context and does not fabricate missing deliverable content.",
+        "Tenant guard remains enforced.",
+        "Legacy /programs and preview/demo routes are not extended."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run test:e2e:phase-0",
+        "npm run build"
+      ],
+      "notes": "This slice remains blocked until the Programs readiness contract and Nexus context adapter are approved."
+    }
+  ]
+}
