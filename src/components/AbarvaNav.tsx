@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
+import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
@@ -49,7 +50,10 @@ function NavInner({ activePage, compact = false }: NavProps) {
   const startClose = () => { closeTimer.current = setTimeout(() => setOpen(null), 180) }
   const cancelClose = () => clearTimeout(closeTimer.current)
 
-  const metaRole = user?.publicMetadata?.role as string | undefined
+  const email = user?.primaryEmailAddress?.emailAddress
+    ?? user?.emailAddresses?.[0]?.emailAddress
+    ?? undefined
+  const metaRole = resolveSessionRole(user?.publicMetadata?.role as string | undefined, email)
 
   const signedIn    = isLoaded && !!user
   const displayName = user?.fullName || user?.emailAddresses?.[0]?.emailAddress?.split('@')?.[0] || 'User'

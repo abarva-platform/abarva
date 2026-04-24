@@ -2,7 +2,13 @@
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { isExternalOnlyRole, resolvePostSignInPath, resolveSessionClientKey } from '@/lib/auth/access-routing'
+import {
+  isExternalOnlyRole,
+  isNewClientSetupEmail,
+  resolvePostSignInPath,
+  resolveSessionClientKey,
+  resolveSessionRole,
+} from '@/lib/auth/access-routing'
 
 const BG = '#060A12'
 const TEAL = '#14B8A6'
@@ -25,13 +31,17 @@ export default function AuthRedirect() {
     if (!isLoaded) return
     if (!user) { router.push('/sign-in'); return }
 
-    const role              = user.publicMetadata?.role              as string | undefined
-    const clientId          = user.publicMetadata?.clientId          as string | undefined
-    const defaultClientId   = user.publicMetadata?.defaultClientId   as string | undefined
-    const resolvedClientId  = resolveSessionClientKey({ clientId, defaultClientId })
-    const destination       = resolvePostSignInPath(role, { clientId, defaultClientId })
+    const role = user.publicMetadata?.role as string | undefined
+    const clientId = user.publicMetadata?.clientId as string | undefined
+    const defaultClientId = user.publicMetadata?.defaultClientId as string | undefined
+    const email = user.primaryEmailAddress?.emailAddress
+      ?? user.emailAddresses?.[0]?.emailAddress
+      ?? undefined
+    const resolvedRole = resolveSessionRole(role, email)
+    const resolvedClientId = resolveSessionClientKey({ clientId, defaultClientId, email })
+    const destination = resolvePostSignInPath(resolvedRole, { clientId, defaultClientId, email })
 
-    if (!isExternalOnlyRole(role)) {
+    if (!isExternalOnlyRole(resolvedRole) && !isNewClientSetupEmail(email)) {
       persistClientContext(resolvedClientId)
     }
 

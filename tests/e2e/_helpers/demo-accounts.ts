@@ -7,7 +7,7 @@ export const DEMO_ROLE_ACCOUNTS = {
     hiddenNav: [],
   },
   maestro: {
-    email: 'af+clerk_test@abarva.com',
+    email: 'demo-arcturus+clerk_test@abarva.com',
     expectedPath: /\/home\?client=arcturus$/,
     pageMarker: { kind: 'text', label: 'Maestro' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
@@ -21,7 +21,7 @@ export const DEMO_ROLE_ACCOUNTS = {
     hiddenNav: ['Admin'],
   },
   client: {
-    email: 'mh+clerk_test@abarva.com',
+    email: 'demo-meridian+clerk_test@abarva.com',
     expectedPath: /\/home\?client=meridian$/,
     pageMarker: { kind: 'text', label: 'Meridian Health' },
     visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
