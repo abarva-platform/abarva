@@ -276,7 +276,15 @@ function EvidenceAnchors({ model }: { model: DeliverableRenderModel }) {
   return (
     <Section label="Evidence Citations" title="Source references">
       <EvidenceChipList
-        items={model.evidence.map((ref) => ({ id: ref.id, label: ref.label, kind: ref.kind }))}
+        items={model.evidence.map((ref) => ({
+          id: ref.id,
+          label: ref.label,
+          kind: ref.kind,
+          href: ref.href,
+          source: ref.source,
+          reference: ref.reference,
+          confidence: ref.confidence,
+        }))}
         programCode={model.program.code}
         deliverableCode={model.deliverable.code}
       />

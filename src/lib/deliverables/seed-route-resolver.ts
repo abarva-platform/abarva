@@ -2,6 +2,7 @@ import {
   PROGRAMS_ENHANCEMENT_MATRIX,
   type SpecPhaseNumber,
 } from '@/lib/programs/enhancement-spec';
+import { getEvidenceEntriesForDeliverable } from '@/lib/deliverables/evidence-registry';
 import {
   buildAllProgramsSeedPlan,
   deliverableRouteSegmentFor,
@@ -217,13 +218,33 @@ function sectionsFromMarkdown(content: string, program: ProgramSeedPlan, deliver
 }
 
 function buildEvidenceRefs(program: ProgramSeedPlan, deliverable: DeliverableSeedPlan): DeliverableEvidenceRef[] {
-  const refs = [
+  const registryRefs = getEvidenceEntriesForDeliverable(
+    program.tenantRouteSlug,
+    program.programSlug,
+    deliverable.deliverableCode,
+  );
+
+  if (registryRefs.length > 0) {
+    return registryRefs.slice(0, 12).map((ref) => ({
+      id: ref.id,
+      label: ref.label,
+      href: ref.href,
+      kind: ref.kind,
+      source: ref.source,
+      reference: ref.reference,
+      confidence: ref.confidence,
+      deliverableCode: ref.deliverableCode,
+      firstCitedIn: ref.firstCitedIn,
+    }));
+  }
+
+  const fallbackRefs = [
     { id: 'E1', label: `${program.code} program charter`, kind: 'Program record' },
     { id: 'E2', label: `Phase ${deliverable.phaseSpec} gate criterion`, kind: 'Phase gate' },
     { id: 'E3', label: program.patternSlug ? `${program.patternSlug} pattern` : `${program.archetypeCode} archetype benchmark`, kind: 'Pattern evidence' },
   ];
 
-  return refs.map((ref) => ({
+  return fallbackRefs.map((ref) => ({
     ...ref,
     href: `#evidence-${ref.id.toLowerCase()}`,
   }));

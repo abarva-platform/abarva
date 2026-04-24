@@ -56,6 +56,11 @@ export interface DeliverableEvidenceRef {
   label: string;
   href: string;
   kind: string;
+  source?: string;
+  reference?: string;
+  confidence?: string | null;
+  deliverableCode?: string | null;
+  firstCitedIn?: string | null;
 }
 
 export interface StubTriggerCondition {

@@ -11,8 +11,9 @@ import {
   tenantProgramsPath,
 } from '@/lib/deliverables/seed-route-resolver';
 import {
+  getPatternBrowsableEvidence,
   getPatternApplicableProgramsForTenant,
-  getPatternManifestEntry,
+  getPatternManifestEntryWithMetrics,
   patternRouteFor,
 } from '@/lib/intelligence/pattern-manifest';
 import {
@@ -80,7 +81,8 @@ export function SeedPhaseOverview({ tenant, program, phase }: { tenant: TenantSe
 
 export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedPlan; patternSlug: string }) {
   const matchingPrograms = tenant.programs.filter((program) => program.patternSlug === patternSlug);
-  const pattern = getPatternManifestEntry(patternSlug);
+  const pattern = getPatternManifestEntryWithMetrics(patternSlug, tenant.routeSlug);
+  const evidenceSources = getPatternBrowsableEvidence(patternSlug, tenant.routeSlug).slice(0, 6);
   const applicablePrograms = getPatternApplicableProgramsForTenant(patternSlug, tenant.routeSlug);
   const highestPhase = applicablePrograms.reduce((max, program) => Math.max(max, program.currentPhaseSpec), 0);
   const overlayState = applicablePrograms.length === 0 ? 'Not started' : highestPhase >= 3 ? 'Active' : 'Partial';
@@ -152,6 +154,22 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
           </CardGrid>
         </>
       ) : null}
+      {evidenceSources.length > 0 ? (
+        <>
+          <SectionTitle label="Browsable evidence" />
+          <CardGrid>
+            {evidenceSources.map((source) => (
+              <LinkCard
+                key={source.href}
+                href={source.href}
+                label={`${source.programCode} · ${source.id}`}
+                title={source.label}
+                description={source.reference}
+              />
+            ))}
+          </CardGrid>
+        </>
+      ) : null}
       <PatternObservationsPipelinePanel />
       {pattern?.observations.length ? (
         <>
@@ -179,7 +197,8 @@ export function SeedTenantPattern({ tenant, patternSlug }: { tenant: TenantSeedP
 export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
   const plan = getSeedPlan();
   const matchingPrograms = plan.programs.filter((program) => program.patternSlug === patternSlug);
-  const pattern = getPatternManifestEntry(patternSlug);
+  const pattern = getPatternManifestEntryWithMetrics(patternSlug);
+  const evidenceSources = getPatternBrowsableEvidence(patternSlug).slice(0, 6);
   return (
     <SeedPageFrame
       eyebrow="Global source pattern"
@@ -191,6 +210,22 @@ export function SeedGlobalPattern({ patternSlug }: { patternSlug: string }) {
       ) : (
         <div className="del-panel"><div className="del-eyebrow">Pattern placeholder</div><p style={{ color: 'var(--del-muted)', lineHeight: 1.65 }}>This pattern route renders as a safe placeholder until detailed pattern content is authored.</p></div>
       )}
+      {evidenceSources.length > 0 ? (
+        <>
+          <SectionTitle label="Browsable evidence" />
+          <CardGrid>
+            {evidenceSources.map((source) => (
+              <LinkCard
+                key={source.href}
+                href={source.href}
+                label={`${source.programCode} · ${source.id}`}
+                title={source.label}
+                description={source.reference}
+              />
+            ))}
+          </CardGrid>
+        </>
+      ) : null}
       <div className="del-panel" style={{ borderColor: 'rgba(169, 111, 0, 0.35)', background: 'rgba(169, 111, 0, 0.08)' }}>
         <div className="del-eyebrow" style={{ color: 'var(--del-amber)' }}>Observation authorship</div>
         <p style={{ color: 'var(--del-muted)', lineHeight: 1.65, margin: '10px 0 0' }}>

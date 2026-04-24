@@ -4,6 +4,7 @@ import { useState, useRef, Suspense } from 'react'
 import { useUser, useClerk } from '@clerk/nextjs'
 import { useRouter, usePathname } from 'next/navigation'
 import { resolveSessionRole } from '@/lib/auth/access-routing'
+import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 import { useClientContext, ALL_CLIENTS } from '@/lib/use-client-context'
 import AbarvaMark from './AbarvaMark'
 
@@ -342,7 +343,11 @@ function NavInner({ activePage, compact = false }: NavProps) {
                     </Link>
                   )}
                   <button
-                    onClick={() => { setUserMenuOpen(false); signOut(() => router.push('/')) }}
+                    onClick={() => {
+                      setUserMenuOpen(false)
+                      clearActiveClientContext()
+                      signOut(() => router.push('/'))
+                    }}
                     className="abarva-menu-item"
                     style={{ width: '100%', textAlign: 'left', padding: '9px 14px', fontSize: '13px', color: DROP_HEAD, background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: SANS, borderRadius: '8px', margin: '0 4px' }}
                   >

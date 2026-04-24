@@ -9,19 +9,11 @@ import {
   resolveSessionClientKey,
   resolveSessionRole,
 } from '@/lib/auth/access-routing'
+import { clearActiveClientContext, persistActiveClientContext } from '@/lib/auth/client-context-storage'
 
 const BG = '#060A12'
 const TEAL = '#14B8A6'
 const MONO = 'JetBrains Mono, monospace'
-
-function persistClientContext(clientId: string) {
-  try {
-    localStorage.setItem('abarva_selected_client', clientId)
-  } catch {}
-  try {
-    document.cookie = `abarva_active_client=${encodeURIComponent(clientId)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
-  } catch {}
-}
 
 export default function AuthRedirect() {
   const { user, isLoaded } = useUser()
@@ -29,7 +21,11 @@ export default function AuthRedirect() {
 
   useEffect(() => {
     if (!isLoaded) return
-    if (!user) { router.push('/sign-in'); return }
+    if (!user) {
+      clearActiveClientContext()
+      router.replace('/sign-in')
+      return
+    }
 
     const role = user.publicMetadata?.role as string | undefined
     const clientId = user.publicMetadata?.clientId as string | undefined
@@ -42,7 +38,9 @@ export default function AuthRedirect() {
     const destination = resolvePostSignInPath(resolvedRole, { clientId, defaultClientId, email })
 
     if (!isExternalOnlyRole(resolvedRole) && !isNewClientSetupEmail(email)) {
-      persistClientContext(resolvedClientId)
+      persistActiveClientContext(resolvedClientId)
+    } else {
+      clearActiveClientContext()
     }
 
     router.replace(destination)

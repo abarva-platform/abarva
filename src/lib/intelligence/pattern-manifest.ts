@@ -1,6 +1,10 @@
 import manifestJson from './generated/pattern-manifest.json';
 import { buildAllProgramsSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 import type { DeliverableSeedPlan, ProgramSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import {
+  getPatternEvidenceMetrics,
+  type EvidenceRegistryEntry,
+} from '@/lib/deliverables/evidence-registry';
 
 export interface PatternManifestSection {
   id: string;
@@ -81,6 +85,12 @@ export function getPatternManifestEntries(): PatternManifestEntry[] {
   return manifest.patterns;
 }
 
+export function getPatternManifestEntriesWithMetrics(
+  tenantScope?: string | null,
+): PatternManifestEntry[] {
+  return manifest.patterns.map((pattern) => withBrowsablePatternMetrics(pattern, tenantScope));
+}
+
 export function getPatternManifestEntry(key: string): PatternManifestEntry | null {
   const normalized = normalizePatternKey(key);
   return (
@@ -90,6 +100,23 @@ export function getPatternManifestEntry(key: string): PatternManifestEntry | nul
         || normalizePatternKey(patternIdToSlug(pattern.id)) === normalized;
     }) ?? null
   );
+}
+
+export function getPatternManifestEntryWithMetrics(
+  key: string,
+  tenantScope?: string | null,
+): PatternManifestEntry | null {
+  const pattern = getPatternManifestEntry(key);
+  return pattern ? withBrowsablePatternMetrics(pattern, tenantScope) : null;
+}
+
+export function getPatternBrowsableEvidence(
+  key: string,
+  tenantScope?: string | null,
+): EvidenceRegistryEntry[] {
+  const pattern = getPatternManifestEntry(key);
+  if (!pattern) return [];
+  return getPatternEvidenceMetrics(pattern.slug, tenantScope).entries;
 }
 
 export function patternIdToSlug(patternId: string): string {
@@ -115,7 +142,10 @@ export function getPatternApplicableProgramsForTenant(
 ): PatternApplicableProgram[] {
   const normalizedTenant = normalizePatternKey(tenantRouteSlug);
   return getPatternApplicablePrograms(patternKey)
-    .filter((program) => normalizePatternKey(program.tenantRouteSlug) === normalizedTenant);
+    .filter((program) => {
+      return normalizePatternKey(program.tenantRouteSlug) === normalizedTenant
+        || normalizePatternKey(program.tenantKey) === normalizedTenant;
+    });
 }
 
 export function patternMatchesIndustry(pattern: PatternManifestEntry, industryCode: string | null | undefined): boolean {
@@ -136,6 +166,18 @@ function normalizeIndustry(value: string): string {
 
 function normalizePatternKey(value: string): string {
   return value.trim().toLowerCase().replace(/^pattern[-_]/, '').replace(/_/g, '-');
+}
+
+function withBrowsablePatternMetrics(
+  pattern: PatternManifestEntry,
+  tenantScope?: string | null,
+): PatternManifestEntry {
+  const metrics = getPatternEvidenceMetrics(pattern.slug, tenantScope);
+  return {
+    ...pattern,
+    evidenceCount: metrics.evidenceCount,
+    lastUpdatedAt: metrics.lastUpdatedAt ?? pattern.lastUpdatedAt,
+  };
 }
 
 function mapApplicableProgram(program: ProgramSeedPlan): PatternApplicableProgram {

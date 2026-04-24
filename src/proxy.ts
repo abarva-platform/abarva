@@ -37,6 +37,15 @@ const authRequiredRoutes = createRouteMatcher([
   '/intelligence(.*)',
 ])
 
+function createSignInRedirect(request: NextRequest) {
+  const url = new URL('/sign-in', request.url)
+  const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`
+  if (requestedPath && requestedPath !== '/' && !request.nextUrl.pathname.startsWith('/sign-in')) {
+    url.searchParams.set('redirect', requestedPath)
+  }
+  return NextResponse.redirect(url)
+}
+
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
   const metadata = (sessionClaims?.publicMetadata as { role?: string; clientId?: string; defaultClientId?: string } | undefined) ?? {}
@@ -69,7 +78,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Maestro routes — require authenticated Maestro/Admin/Investor
   if (maestroRoutes(request)) {
     if (!userId) {
-      return NextResponse.redirect(new URL('/sign-in', request.url))
+      return createSignInRedirect(request)
     }
     if (role === 'client') {
       return NextResponse.redirect(new URL('/home', request.url))
@@ -78,7 +87,7 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
 
   // Auth-required routes (any role)
   if (authRequiredRoutes(request) && !userId) {
-    return NextResponse.redirect(new URL('/sign-in', request.url))
+    return createSignInRedirect(request)
   }
 
   if (authRequiredRoutes(request) && isExternalOnlyRole(role)) {

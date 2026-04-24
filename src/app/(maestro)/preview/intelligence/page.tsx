@@ -1,6 +1,10 @@
 import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
 import { getClientOption } from '@/lib/client-config';
-import { getPatternApplicableProgramsForTenant, getPatternManifestEntries, patternMatchesIndustry } from '@/lib/intelligence/pattern-manifest';
+import {
+  getPatternApplicableProgramsForTenant,
+  getPatternManifestEntriesWithMetrics,
+  patternMatchesIndustry,
+} from '@/lib/intelligence/pattern-manifest';
 import { SentinelIntelligenceShell } from '@/components/intelligence/SentinelIntelligenceShell';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +23,8 @@ export default async function IntelligencePreviewPage({
   const activeClient = await getActiveClientRow(params.client);
   const clientOption = getClientOption(activeClientKey);
   const industryCode = activeClient?.industry_code ?? null;
-  const patterns = getPatternManifestEntries().filter((pattern) => patternMatchesIndustry(pattern, industryCode));
+  const patterns = getPatternManifestEntriesWithMetrics(activeClientKey)
+    .filter((pattern) => patternMatchesIndustry(pattern, industryCode));
   const applicableProgramsByPattern = Object.fromEntries(
     patterns.map((pattern) => [pattern.slug, getPatternApplicableProgramsForTenant(pattern.slug, activeClientKey)]),
   );

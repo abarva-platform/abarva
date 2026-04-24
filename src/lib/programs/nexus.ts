@@ -159,7 +159,7 @@ export async function assembleContext(ctx: TenancyCtx, programId: string): Promi
   if (patternKey) {
     const { data: topic } = await sb
       .from('engagement_topics')
-      .select('canonical_shape_json, phase_playbook, diagnostic_questions, success_signals, failure_modes')
+      .select('topic_key, title, canonical_shape_json, phase_playbook, diagnostic_questions, success_signals, failure_modes')
       .eq('topic_key', patternKey)
       .maybeSingle();
     patternPreload = topic as Record<string, unknown> | null;

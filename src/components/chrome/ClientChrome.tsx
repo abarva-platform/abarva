@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { clearActiveClientContext } from '@/lib/auth/client-context-storage';
 
 const BG = '#0A0A0A';
 const INK = '#F5F5F0';
@@ -142,6 +143,7 @@ export function ClientChrome({
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
+                  clearActiveClientContext();
                   signOut(() => router.push('/'));
                 }}
                 style={{
