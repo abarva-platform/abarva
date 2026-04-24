@@ -67,6 +67,7 @@
   - C2-8 Vercel toolbar → Vercel dashboard config (no toolbar package in repo; injected by platform; requires project setting toggle)
   - C2-11 D16 E51-E55 stub citations → content authoring (labels need real payloads; Morrison Tier C task #123 owns this)
 - 2026-04-24T15:07:00-05:00: C2-4 local validation passed: `jest src/__tests__/integration/atlas-ask-route.test.ts tests/unit/engagement-db.test.ts tests/unit/access-routing.test.ts tests/unit/tenant-access.test.ts`, `tsc --noEmit`, and focused `eslint` on the Atlas ask route, rendered-response assembler, preview tower shell, and route test files. `/preview/tower` now routes free-text and guided choices through `/api/v1/atlas/ask` with rendered responses, honest sparse-evidence framing, and explicit Nexus/Sentinel handoffs instead of canned echo text.
+- 2026-04-24T15:18:00-05:00: PR #163 CI failure reproduced locally: `integrity:disclaimers` was pulling Clerk auth into the static disclaimer audit via tenant evidence routes after the tenant-isolation hardening. Scoped fix: mock `assertTenantAccess` inside `src/__tests__/integration/composite-disclaimer-presence.test.ts` so the audit remains focused on disclaimer presence. Re-ran `npm run integrity:disclaimers`, the Atlas regression suite, `tsc --noEmit`, and focused `eslint` — all green.
 
 ## Last status emission
 

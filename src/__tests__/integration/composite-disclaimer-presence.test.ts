@@ -29,6 +29,10 @@ import {
 } from '@/lib/integrity/disclaimers';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 
+jest.mock('@/lib/auth/tenant-access', () => ({
+  assertTenantAccess: jest.fn(async () => undefined),
+}));
+
 describe('composite disclaimer presence', () => {
   const routes = buildCanonicalRouteRecords();
 
