@@ -3,6 +3,7 @@ import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTi
 import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
+import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 
 export default async function TenantDeliverableSeedPage({
   params,
@@ -20,9 +21,25 @@ export default async function TenantDeliverableSeedPage({
   // the latest committed record server-side so the form can render either
   // the empty state or the audit-trail view without a client round-trip.
   const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
+  const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
+  const isIntakeSynthesis = model.deliverable.code === 'D04' || model.deliverable.typeKey === 'intake_synthesis';
+
   const existingCommitment = isCharter
     ? getLatestSponsorCommitment(model.program.code)
     : null;
+  const stakeholderSuccessRecords = isStakeholderMap
+    ? getStakeholderSuccessRecords(model.program.code)
+    : undefined;
+  const programTensionRecords = isIntakeSynthesis
+    ? getProgramTensionRecords(model.program.code)
+    : undefined;
 
-  return <DeliverableTierRenderer model={model} sponsorCommitment={existingCommitment ?? undefined} />;
+  return (
+    <DeliverableTierRenderer
+      model={model}
+      sponsorCommitment={existingCommitment ?? undefined}
+      stakeholderSuccessRecords={stakeholderSuccessRecords}
+      programTensionRecords={programTensionRecords}
+    />
+  );
 }

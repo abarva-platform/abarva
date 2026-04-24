@@ -7,20 +7,35 @@ import { ApproveActions } from './ApproveActions';
 import { EvidenceChipList } from './EvidenceChipList';
 import { SponsorCommitmentForm } from '@/components/workflow/SponsorCommitmentForm';
 import type { SponsorCommitmentRecord } from '@/lib/workflow/sponsorCommitment';
+import { D02StakeholderSuccessSection } from './D02StakeholderSuccessSection';
+import { D04TensionSection } from './D04TensionSection';
+import type { ProgramTensionRecord, StakeholderSuccessRecord } from '@/lib/workflow/stakeholderSuccess';
 
 interface DeliverableTierRendererProps {
   model: DeliverableRenderModel;
   /**
-   * FM-03 · when rendering D01 Program Charter, the caller passes the
-   * latest sponsor commitment record (or undefined if none). The tier
-   * renderer appends a SponsorCommitmentForm section below the body so
-   * the sponsor can submit before the Phase 1→2 gate.
+   * FM-03 · D01 Program Charter · existing sponsor commitment record.
    */
   sponsorCommitment?: SponsorCommitmentRecord | null;
+  /**
+   * FM-04 · D02 Stakeholder Map · existing success records for the program.
+   */
+  stakeholderSuccessRecords?: StakeholderSuccessRecord[];
+  /**
+   * FM-04 · D04 Intake Synthesis · existing tension records for the program.
+   */
+  programTensionRecords?: ProgramTensionRecord[];
 }
 
-export function DeliverableTierRenderer({ model, sponsorCommitment }: DeliverableTierRendererProps) {
+export function DeliverableTierRenderer({
+  model,
+  sponsorCommitment,
+  stakeholderSuccessRecords,
+  programTensionRecords,
+}: DeliverableTierRendererProps) {
   const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
+  const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
+  const isIntakeSynthesis = model.deliverable.code === 'D04' || model.deliverable.typeKey === 'intake_synthesis';
   return (
     <main className="del-page">
       <DeliverablePageStyles />
@@ -38,6 +53,12 @@ export function DeliverableTierRenderer({ model, sponsorCommitment }: Deliverabl
             </div>
             <SponsorCommitmentForm programCode={model.program.code} existing={sponsorCommitment ?? null} />
           </section>
+        ) : null}
+        {isStakeholderMap ? (
+          <D02StakeholderSuccessSection programCode={model.program.code} existing={stakeholderSuccessRecords ?? []} />
+        ) : null}
+        {isIntakeSynthesis ? (
+          <D04TensionSection programCode={model.program.code} existing={programTensionRecords ?? []} />
         ) : null}
         <footer className="del-footer">
           {model.provenance.disclaimer} · Seed spec {model.provenance.seedSpecVersion} · {model.provenance.contentState.replace(/_/g, ' ')}.

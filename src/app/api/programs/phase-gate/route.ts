@@ -4,6 +4,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
+import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -98,6 +99,31 @@ export async function POST(request: NextRequest) {
           error: 'precondition_failed',
           precondition: 'sponsor_commitment',
           message: 'Phase 1 → Phase 2 requires a sponsor commitment record. Submit the commitment form on D01 Charter first.',
+        },
+        { status: 412 },
+      );
+    }
+    // FM-04 · require at least one success record (D02) and one tension
+    // record (D04). Full per-stakeholder enforcement needs Codex's
+    // stakeholder resolver; this floor catches "empty D02/D04" gates.
+    const successRecords = getStakeholderSuccessRecords(programCode);
+    if (successRecords.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'precondition_failed',
+          precondition: 'stakeholder_success',
+          message: 'Phase 1 → Phase 2 requires at least one stakeholder success definition. Capture on D02 Stakeholder Map first.',
+        },
+        { status: 412 },
+      );
+    }
+    const tensionRecords = getProgramTensionRecords(programCode);
+    if (tensionRecords.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'precondition_failed',
+          precondition: 'program_tension',
+          message: 'Phase 1 → Phase 2 requires at least one program tension with named owner. Capture on D04 Intake Synthesis first.',
         },
         { status: 412 },
       );
