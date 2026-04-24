@@ -367,7 +367,7 @@ export function TowerPreviewShell({
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {pressure.map((p) => (
-            <PressureRow key={p.id} item={p} />
+            <PressureRow key={p.id} item={p} onAskAtlas={(prompt) => void sendAtlasTurn(prompt)} />
           ))}
         </div>
       </div>
@@ -599,10 +599,18 @@ function HeaderPill({
   );
 }
 
-function PressureRow({ item }: { item: PressureItem }) {
+function PressureRow({ item, onAskAtlas }: { item: PressureItem; onAskAtlas?: (prompt: string) => void }) {
   const severityColor = item.severity === 'critical' ? CORAL : AMBER;
   const severityBg = item.severity === 'critical' ? CORAL_SOFT : AMBER_SOFT;
   const drawer = useDrawer();
+
+  function askAtlas() {
+    if (!onAskAtlas) return;
+    const monthlyK = Math.round(item.monthlyUsd / 1000);
+    const prompt = `Walk me through the ${fmtUsd(item.monthlyUsd)}/mo pressure on "${item.title}". What's the derivation, who should own it, and what's the next decision I should force? ${item.unowned ? 'This one is unowned — name a candidate.' : ''}`.trim();
+    onAskAtlas(prompt);
+    void monthlyK;
+  }
 
   function openDerivation() {
     drawer.openDrawer({
@@ -709,6 +717,28 @@ function PressureRow({ item }: { item: PressureItem }) {
         >
           Why?
         </button>
+        {onAskAtlas ? (
+          <button
+            type="button"
+            onClick={askAtlas}
+            title="Ask Atlas to walk this pressure"
+            style={{
+              fontFamily: MONO,
+              fontSize: 10,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              color: AMBER,
+              background: AMBER_SOFT,
+              border: `1px solid ${AMBER}55`,
+              borderRadius: 999,
+              padding: '4px 10px',
+              cursor: 'pointer',
+              fontWeight: 700,
+            }}
+          >
+            ▲ Ask Atlas
+          </button>
+        ) : null}
         {item.programHref ? (
           <Link
             href={item.programHref}
