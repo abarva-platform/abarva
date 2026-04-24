@@ -1,4 +1,15 @@
-import type { SourcePersona } from './agent-context';
+import type {
+  SourceAgentContextScope,
+  SourceContextAssemblyInput,
+  SourceContextUsed,
+  SourcePersona,
+  SourceSurface,
+  SourceUserRole,
+} from './agent-context';
+import type {
+  SourceLifecycleStatus,
+  SourceStageKey,
+} from './types';
 
 export type SourceAgentValidationScore = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -87,3 +98,69 @@ export const SOURCE_DEFAULT_VALIDATION_PASS_CRITERIA: SourceValidationPassCriter
   requiresNextAction: true,
   requiresSuggestedActionsWhenAppropriate: true,
 };
+
+export type SourceAgentValidationFixtureCategory =
+  | 'portfolioAttention'
+  | 'portfolioRisk'
+  | 'stageGate'
+  | 'missingInputs'
+  | 'scorecardGovernance'
+  | 'artifactReadiness'
+  | 'attachmentGrounding'
+  | 'patternGrounding'
+  | 'valueLedgerGrounding'
+  | 'waitStateGrounding';
+
+export type SourceAgentValidationFixtureVerdict = 'pass' | 'defer' | 'fail';
+
+export type SourceAgentValidationFixtureInput = SourceContextAssemblyInput & {
+  userRole?: SourceUserRole;
+  persona?: SourcePersona;
+};
+
+export interface SourceAgentValidationFixtureExpectedContext {
+  contextScope: SourceAgentContextScope;
+  expectedEventId?: string;
+  expectedEventName?: string;
+  expectedStageKey?: SourceStageKey;
+  expectedLifecycleStatus?: SourceLifecycleStatus;
+  requiresEvent: boolean;
+  requiresStage: boolean;
+  requiresLifecycleStatus: boolean;
+  requiresMissingInputs: boolean;
+  requiresOwner: boolean;
+  requiresDueDateWhenAvailable: boolean;
+  requiresAging: boolean;
+  requiresPattern: boolean;
+  requiresPatternSections: boolean;
+  requiresScorecard: boolean;
+  requiresScorecardDefaultsOrOverrides: boolean;
+  requiresValueLedger: boolean;
+  requiresAttachmentSummary: boolean;
+  requiresArtifactReadiness: boolean;
+  requiresGateCheck: boolean;
+  requiredAllowedActionIds: string[];
+}
+
+export interface SourceAgentValidationFixture extends SourceGoldenPromptFixture {
+  category: SourceAgentValidationFixtureCategory;
+  surface: SourceSurface;
+  scenario: string;
+  contextInput: SourceAgentValidationFixtureInput;
+  expectedContext: SourceAgentValidationFixtureExpectedContext;
+  expectedVerdict: SourceAgentValidationFixtureVerdict;
+  genericResponseFailureFlags: SourceVanillaResponseFlag[];
+}
+
+export interface SourceAgentValidationFixtureResult {
+  fixtureId: string;
+  prompt: string;
+  expectedVerdict: SourceAgentValidationFixtureVerdict;
+  actualVerdict: SourceAgentValidationFixtureVerdict;
+  passesExpectation: boolean;
+  validationResult: SourceAgentValidationResult;
+  contextUsed: SourceContextUsed[];
+  missingContextReasons: string[];
+  genericResponseWouldFail: boolean;
+  genericResponseFailureFlags: SourceVanillaResponseFlag[];
+}

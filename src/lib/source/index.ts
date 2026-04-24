@@ -1,4 +1,5 @@
 export * from './agent-validation';
+export * from './agent-validation-fixtures';
 export * from './attachments';
 export * from './chat-types';
 export * from './constants';
