@@ -379,6 +379,56 @@
         "npm run build"
       ],
       "notes": "This slice remains blocked until the Programs readiness contract and Nexus context adapter are approved."
+    },
+    {
+      "id": "S9b",
+      "name": "Programs Nexus rail metadata binding",
+      "category": "B",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S5",
+        "S6"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/programs-nexus-rail-view.ts",
+        "src/components/deliverables/NexusProgramRail.tsx",
+        "src/__tests__/integration/programs/programs-nexus-rail-metadata.test.ts",
+        "docs/build/slices/S9B_PROGRAMS_NEXUS_RAIL_METADATA_BINDING.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/context-bundle.ts",
+        "src/lib/agent/context-bundle-scoring.ts",
+        "src/lib/agent/renderedResponse.ts",
+        "src/lib/agent/honestDisclosure.ts",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Programs Nexus rail produces RenderedResponse objects with honest_disclosure metadata for every turn.",
+        "Confidence, context-used, and missing-input affordances render via S6 wiring without changes to AgentResponse.",
+        "No model or API call is invoked; prose is composed deterministically.",
+        "Honest fallbacks surface where Business Context and Evidence are unseeded; no fabricated data.",
+        "Existing rail public props and visual geometry are preserved."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-nexus-rail-metadata.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Programs consumer of S5/S6 honest-disclosure metadata. Defers gate state machine to S9c, evidence and value seeding to S9d, Tower signal emission to S9e, and live agent binding to a separate slice family."
     }
   ]
 }
