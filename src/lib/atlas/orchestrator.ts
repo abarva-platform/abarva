@@ -8,7 +8,7 @@ import {
   touchAtlasThread,
 } from '@/lib/atlas/repository';
 import { makeScriptedChatResponse, runScriptedAtlasIntent } from '@/lib/atlas/scripted-engine';
-import type { AtlasChatResponse, AtlasObservation, AtlasTenancyCtx } from '@/lib/atlas/types';
+import type { AtlasChatResponse, AtlasObservation, AtlasTenancyCtx, AtlasToolResultMap, AtlasTurnResult } from '@/lib/atlas/types';
 
 function guessObservationKind(intent: AtlasChatResponse['intent']): AtlasObservation['observationKind'] {
   if (intent === 'morning_summary' || intent === 'portfolio_status') return 'summary';
@@ -31,6 +31,25 @@ export async function runAtlasTurn(input: {
   threadId?: string | null;
   signalId?: string | null;
 }): Promise<AtlasChatResponse> {
+  const detailed = await runAtlasTurnDetailed(input);
+  return {
+    threadId: detailed.threadId,
+    routeType: detailed.routeType,
+    intent: detailed.intent,
+    response: detailed.response,
+    suggestions: detailed.suggestions,
+    signalId: detailed.signalId ?? null,
+    observationId: detailed.observationId ?? null,
+    toolsUsed: detailed.toolsUsed,
+  };
+}
+
+export async function runAtlasTurnDetailed(input: {
+  ctx: AtlasTenancyCtx;
+  message: string;
+  threadId?: string | null;
+  signalId?: string | null;
+}): Promise<AtlasTurnResult> {
   const startedAt = Date.now();
   const classification = classifyAtlasIntent(input.message);
   const thread = await getOrCreateAtlasThread(input.ctx, {
@@ -48,10 +67,12 @@ export async function runAtlasTurn(input: {
   });
 
   let response: AtlasChatResponse;
+  let toolResults: AtlasToolResultMap = {};
   let modelName: string | null = null;
 
   if (classification.routeType === 'scripted' || classification.routeType === 'hybrid') {
     const scripted = await runScriptedAtlasIntent(input.ctx, classification.intent, input.message);
+    toolResults = scripted.toolResults;
     response = makeScriptedChatResponse(
       {
         threadId: thread.id,
@@ -63,6 +84,7 @@ export async function runAtlasTurn(input: {
   } else {
     const llm = await runAtlasLlm(input.ctx, input.message);
     modelName = llm.modelName;
+    toolResults = llm.toolResults;
     response = {
       threadId: thread.id,
       routeType: 'llm',
@@ -111,5 +133,8 @@ export async function runAtlasTurn(input: {
   return {
     ...response,
     observationId,
+    toolResults,
+    modelName,
+    promptVersion: ATLAS_PROMPT_VERSION,
   };
 }

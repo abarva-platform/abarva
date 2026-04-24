@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { TowerViewModel, ContradictionRow } from '@/lib/tower/aggregate';
 import { AgentRail, AGENTS, type AgentTurn } from '@/components/agent-rail/AgentRail';
+import type { RenderedResponse } from '@/lib/agent/renderedResponse';
 
 // TowerPreviewShell · redesign sandbox per the audit feedback.
 // Keeps the 5-column "live system" cockpit (the audit called it "closest
@@ -89,38 +90,6 @@ function derivePressure(contradictions: ContradictionRow[]): PressureItem[] {
   return ranked.slice(0, 3);
 }
 
-function atlasReplyForChoice(
-  choiceId: string,
-  hottestPressure: PressureItem | undefined,
-  totalMoPressureK: number,
-): string {
-  const target = hottestPressure?.title ?? 'the highest-pressure contradiction';
-  if (choiceId === 'assign-hottest') {
-    return `Assigned in principle. ${target} is carrying enough exposure that I would name an executive owner before the next staff meeting.`;
-  }
-  if (choiceId === 'defer-to-council') {
-    return `I can defer it, but that is a delay decision. The board-safe framing is that ${target} still sits inside a $${totalMoPressureK}K/mo pressure stack until someone owns it.`;
-  }
-  if (choiceId === 'create-program') {
-    return `This is charter-shaped. Resolve it through Programs so Nexus can open a scoped workstream and attach deliverables instead of leaving it as a Tower pressure card.`;
-  }
-  if (choiceId === 'vendor-overlap') {
-    return `The right move is to quantify duplicate spend, name the regional decision owner, and force a keep / consolidate / pilot-third decision in one memo.`;
-  }
-  if (choiceId === 'pressure-export') {
-    return `CEO memo shape: top 3 unowned pressures, monthly exposure, named decision, and the next 30-day consequence of doing nothing.`;
-  }
-  return `Atlas logged the choice. The next honest step is to turn ${target} into a named decision, owner, and time-bound follow-up.`;
-}
-
-function atlasReplyForEscape(text: string, hottestPressure: PressureItem | undefined): string {
-  const target = hottestPressure?.title ?? 'the top pressure on the stack';
-  if (/derive|assumption|confidence|counterfactual|board/i.test(text)) {
-    return `Short answer: this preview does not expose the derivation workbook yet. The honest board-safe answer is to treat ${target} as directional until the linked program memo and evidence chain are open.`;
-  }
-  return `I heard "${text}". Atlas can summarize pressure here, but the defensible next step is still to open the linked program and inspect the deliverable chain behind ${target}.`;
-}
-
 // ─── Fallback data · used when the tenant has no aggregate rows yet ─────
 const FALLBACK_PRESSURE: PressureItem[] = [
   {
@@ -154,9 +123,11 @@ const FALLBACK_PRESSURE: PressureItem[] = [
 
 export function TowerPreviewShell({
   vm,
+  clientId,
   clientName,
 }: {
   vm: TowerViewModel | null;
+  clientId: string;
   clientName: string;
   currentPath: string;
 }) {
@@ -174,6 +145,8 @@ export function TowerPreviewShell({
     .filter((item) => item.unowned)
     .sort((a, b) => b.monthlyUsd - a.monthlyUsd)[0] ?? pressure[0];
   const hottestLabel = hottestUnownedPressure?.title ?? 'top pressure';
+  const [atlasThreadId, setAtlasThreadId] = useState<string | null>(null);
+  const [atlasPending, setAtlasPending] = useState(false);
   const [atlasConversation, setAtlasConversation] = useState<AgentTurn[]>(() => {
     const hottestK = hottestUnownedPressure ? Math.round(hottestUnownedPressure.monthlyUsd / 1000) : 0;
     return [
@@ -184,6 +157,70 @@ export function TowerPreviewShell({
       },
     ];
   });
+
+  async function sendAtlasTurn(text: string) {
+    const prompt = text.trim();
+    if (!prompt || atlasPending) return;
+
+    const userTurnId = `atlas-you-${Date.now()}`;
+    const pendingTurnId = `atlas-agent-pending-${Date.now()}`;
+    setAtlasPending(true);
+    setAtlasConversation((prev) => [
+      ...prev,
+      { id: userTurnId, speaker: 'you', text: prompt },
+      { id: pendingTurnId, speaker: 'agent', text: 'Atlas is reading the live Tower state…' },
+    ]);
+
+    try {
+      const res = await fetch('/api/v1/atlas/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: prompt,
+          threadId: atlasThreadId,
+          clientId,
+        }),
+      });
+
+      const json = (await res.json().catch(() => ({}))) as {
+        threadId?: string;
+        renderedResponse?: RenderedResponse;
+      };
+
+      if (!res.ok || !json.renderedResponse) {
+        throw new Error('Atlas ask route did not return a rendered response');
+      }
+
+      const renderedResponse = json.renderedResponse;
+
+      if (json.threadId) {
+        setAtlasThreadId(json.threadId);
+      }
+
+      setAtlasConversation((prev) => prev.map((turn) => (
+        turn.id === pendingTurnId
+          ? {
+              id: `atlas-agent-${Date.now()}`,
+              speaker: 'agent',
+              text: renderedResponse.response_text,
+              rendered: renderedResponse,
+            }
+          : turn
+      )));
+    } catch {
+      setAtlasConversation((prev) => prev.map((turn) => (
+        turn.id === pendingTurnId
+          ? {
+              id: `atlas-agent-${Date.now()}`,
+              speaker: 'agent',
+              text: 'Atlas could not answer from the live Tower path just now. Honest next step: retry, or open Programs / Intelligence rather than treating the pressure card as analysis.',
+            }
+          : turn
+      )));
+    } finally {
+      setAtlasPending(false);
+    }
+  }
 
   const inventoryTotal = vm?.inventory.total ?? 42;
   const adoptionPct = Math.round(vm?.adoption.avgPenetrationPct ?? 62);
@@ -499,33 +536,17 @@ export function TowerPreviewShell({
               ],
             }}
             onChoice={(id) => {
-              const label = ({
-                'assign-hottest': `Assign owner · ${hottestLabel}`,
-                'defer-to-council': 'Defer to AI Council',
-                'create-program': 'Resolve via new program',
-                'vendor-overlap': 'Vendor overlap matrix',
-                'pressure-export': 'Export CEO pressure memo',
+              const prompt = ({
+                'assign-hottest': `Assign an owner for "${hottestLabel}". What is the cleanest ask, and what happens in the next 30 days if nobody owns it?`,
+                'defer-to-council': `If we defer "${hottestLabel}" to AI Council, what risk stays unowned in the meantime?`,
+                'create-program': `This looks charter-shaped. What program should exist to resolve "${hottestLabel}", and what should the first memo carry?`,
+                'vendor-overlap': `Build the decision frame for "${hottestLabel}". What should a vendor overlap matrix force us to decide?`,
+                'pressure-export': `Draft the CEO pressure memo shape for "${hottestLabel}". Keep it concise and board-safe.`,
               } as Record<string, string>)[id] ?? id;
-              setAtlasConversation((prev) => [
-                ...prev,
-                { id: `atlas-you-${prev.length}`, speaker: 'you', text: label },
-                {
-                  id: `atlas-agent-${prev.length}`,
-                  speaker: 'agent',
-                  text: atlasReplyForChoice(id, hottestUnownedPressure, totalMoPressureK),
-                },
-              ]);
+              void sendAtlasTurn(prompt);
             }}
             onEscape={(text) => {
-              setAtlasConversation((prev) => [
-                ...prev,
-                { id: `atlas-you-${prev.length}`, speaker: 'you', text },
-                {
-                  id: `atlas-agent-${prev.length}`,
-                  speaker: 'agent',
-                  text: atlasReplyForEscape(text, hottestUnownedPressure),
-                },
-              ]);
+              void sendAtlasTurn(text);
             }}
           />
         );

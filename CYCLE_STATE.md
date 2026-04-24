@@ -13,7 +13,7 @@
 1. C2-1-tenant-isolation — Enforce backend membership checks on every `/tenant/{slug}/*` route, including programs, deliverables, patterns, tower, and evidence. Non-admin cross-tenant reads return 403, not content. `LOCAL COMPLETE · validated`
 2. C2-2-clerk-rebinding — Fix demo-account re-auth so `demo-apexretail+clerk_test` and `demo-meridian+clerk_test` do not rebound to the wrong tenant or lose valid `?client=` state because of stale/incomplete claims. `LOCAL COMPLETE · validated`
 3. C2-3-tower-open-routing — Resolve or remove the broken Tower pressure-card `OPEN → /engagements/892a57af-*` path. `LOCAL COMPLETE · validated`
-4. C2-4-atlas-free-text-runtime — Replace Atlas echo/redirect behavior with a real Stage 1-6 backed free-text path, same honesty contract as Sentinel.
+4. C2-4-atlas-free-text-runtime — Replace Atlas echo/redirect behavior with a real Stage 1-6 backed free-text path, same honesty contract as Sentinel. `LOCAL COMPLETE · validated`
 5. C2-5-nexus-discoverability — Make Nexus/Programs chat discoverable from program detail pages.
 6. C2-6-phase-source-of-truth — Align Morrison phase state across home, program detail, and any other surfaced cards.
 7. C2-7-approve-tenant-gate — Ensure `APPROVE DECISION` and related write paths are tenant-gated and cannot mutate cross-tenant state.
@@ -27,9 +27,9 @@
 
 ## Current position
 
-- Current item: C2-4-atlas-free-text-runtime
-- Current step within item: C2-3 validated via UUID/graph-id fallback regression test; Atlas Stage 1-6 bridge is next
-- Started item at: 2026-04-24T09:49:00-05:00
+- Current item: Cycle 2 queue closed in repo code; remaining items are external escalations
+- Current step within item: Await merge path for C2-1..C2-4 and separately track Vercel-toolbar + D16 citation payload follow-ups outside the repo lane
+- Started item at: 2026-04-24T07:55:00-05:00
 - Expected next action ETA: same session
 
 ## Complete this cycle
@@ -40,7 +40,8 @@
 
 ## Blocked or escalated
 
-- (none yet)
+- C2-8 Vercel toolbar → Vercel dashboard config (no toolbar package in repo; injected by platform; requires project setting toggle)
+- C2-11 D16 E51-E55 stub citations → content authoring (labels need real payloads; Morrison Tier C task #123 owns this)
 
 ## Notes and discoveries
 
@@ -63,10 +64,10 @@
   - C2-13 · SeedProgramOverview renders all deliverables, not `.slice(0, 12)`
   - C2-14 · DeliverableTable cell type widened to support `{text, href}`; Pattern + Program cells now clickable
 - 2026-04-24T13:55:00-05:00 · ESCALATIONS (§19.5):
-  - C2-4 Atlas free-text runtime → Codex lane (Stage 5 Claude invocation is Codex-owned; Code will wire `rendered_response` consumer once Codex ships /api/v1/programs/.../atlas/ask)
   - C2-8 Vercel toolbar → Vercel dashboard config (no toolbar package in repo; injected by platform; requires project setting toggle)
   - C2-11 D16 E51-E55 stub citations → content authoring (labels need real payloads; Morrison Tier C task #123 owns this)
+- 2026-04-24T15:07:00-05:00: C2-4 local validation passed: `jest src/__tests__/integration/atlas-ask-route.test.ts tests/unit/engagement-db.test.ts tests/unit/access-routing.test.ts tests/unit/tenant-access.test.ts`, `tsc --noEmit`, and focused `eslint` on the Atlas ask route, rendered-response assembler, preview tower shell, and route test files. `/preview/tower` now routes free-text and guided choices through `/api/v1/atlas/ask` with rendered responses, honest sparse-evidence framing, and explicit Nexus/Sentinel handoffs instead of canned echo text.
 
 ## Last status emission
 
-- 2026-04-24T13:55:00-05:00 · Code lane 11 of 14 items merged-or-staged on PRs #160/#161/#162 · 3 items escalated
+- 2026-04-24T15:07:00-05:00 · C2-4 closed locally and validated; Cycle 2 repo-code queue now complete, with only C2-8 and C2-11 remaining as external escalations

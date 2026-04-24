@@ -27,6 +27,7 @@ export default async function TowerPreviewPage({
   return (
     <TowerPreviewShell
       vm={vm}
+      clientId={activeClient?.id ?? clientOption.id}
       clientName={activeClient?.name ?? clientOption.name}
       currentPath="/tower"
     />
