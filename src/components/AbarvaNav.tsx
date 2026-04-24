@@ -82,6 +82,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
                               || pathname === '/' || activePage === 'home'
   const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
                               || pathname.startsWith('/engage/') || tenantProgramsActive || activePage === 'engagements'
+  const sourceActive       = pathname === '/source' || pathname.startsWith('/source/') || activePage === 'source'
   const intelligenceActive = pathname === '/intelligence' || pathname.startsWith('/intelligence/')
                               || tenantIntelligenceActive || activePage === 'intelligence'
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
@@ -266,6 +267,7 @@ function NavInner({ activePage, compact = false }: NavProps) {
             {(isAdmin || isInvestor) ? clientDropdown() : staticClientLabel()}
             {!compact && navLink('Home', '/home', homeActive)}
             {!compact && navLink('Programs', '/engagements', engagementsActive)}
+            {!compact && navLink('Source', '/source', sourceActive)}
             {!compact && navLink('Intelligence', intelligencePath, intelligenceActive)}
             {!compact && navLink('Control Tower', '/tower', towerActive)}
             {!compact && navLink('Platform', '/platform', platformActive)}
