@@ -261,11 +261,32 @@ function EvidenceTable({ model }: { model: DeliverableRenderModel }) {
       <table className="del-table">
         <thead><tr>{model.table.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead>
         <tbody>
-          {model.table.rows.map((row, rowIndex) => (
-            <tr key={`${row[0]}-${rowIndex}`} data-highlight={model.table.highlightedRows?.includes(rowIndex) ? 'true' : 'false'}>
-              {row.map((cell, cellIndex) => <td key={`${row[0]}-${cellIndex}`}>{cell}</td>)}
-            </tr>
-          ))}
+          {model.table.rows.map((row, rowIndex) => {
+            const rowKey = typeof row[0] === 'string' ? row[0] : row[0]?.text ?? '';
+            return (
+              <tr key={`${rowKey}-${rowIndex}`} data-highlight={model.table.highlightedRows?.includes(rowIndex) ? 'true' : 'false'}>
+                {row.map((cell, cellIndex) => {
+                  // C2-14 · cells can be plain strings (legacy) or `{text, href}`
+                  // objects for linked values. Pattern + Program cells now render
+                  // as clickable links from the deliverable back to their canonical
+                  // surfaces.
+                  if (typeof cell === 'string') {
+                    return <td key={`${rowKey}-${cellIndex}`}>{cell}</td>;
+                  }
+                  if (cell.href) {
+                    return (
+                      <td key={`${rowKey}-${cellIndex}`}>
+                        <Link href={cell.href} style={{ color: 'var(--del-teal)', textDecoration: 'underline' }}>
+                          {cell.text}
+                        </Link>
+                      </td>
+                    );
+                  }
+                  return <td key={`${rowKey}-${cellIndex}`}>{cell.text}</td>;
+                })}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </Section>

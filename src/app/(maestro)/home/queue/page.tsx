@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { QueueActions } from './QueueActions';
+import { getCurrentUser } from '@/lib/auth/current-user';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +59,15 @@ export default async function QueuePage() {
   const clerk = await clerkClient();
   const user = await clerk.users.getUser(session.userId);
   const myEmail = user.emailAddresses[0]?.emailAddress ?? '';
-  const myName = [user.firstName, user.lastName].filter(Boolean).join(' ') || myEmail;
+
+  // C2-10 · Prefer the stakeholder identity (persons.name · e.g. "Dr. L.
+  // Morales, CMIO") over the Clerk account display name ("Meridian Demo").
+  // Crawler flagged the mismatch: sponsors saw themselves addressed by the
+  // account label, not by their modeled role. getCurrentUser resolves the
+  // linked persons row when one exists, falls back to Clerk metadata.
+  const currentUser = await getCurrentUser();
+  const clerkDisplay = [user.firstName, user.lastName].filter(Boolean).join(' ');
+  const myName = currentUser?.name ?? clerkDisplay ?? myEmail;
 
   const tasksLedger = readJson<{ entries: TaskEntry[] }>(join(process.cwd(), '.approvals/tasks.json'));
   const approvalsLedger = readJson<{ entries: ApprovalEntry[] }>(join(process.cwd(), '.approvals/ledger.json'));

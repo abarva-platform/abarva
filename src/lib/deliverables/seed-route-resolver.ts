@@ -269,13 +269,24 @@ function buildEvidenceRefs(program: ProgramSeedPlan, deliverable: DeliverableSee
 }
 
 function buildEvidenceTable(tenant: TenantSeedPlan, program: ProgramSeedPlan, deliverable: DeliverableSeedPlan): DeliverableTable {
+  // C2-14 · make the Pattern cell a clickable link when a pattern exists.
+  // Dr. L flagged this row as "Linked" plain-text — no click-through from
+  // the deliverable back to the pattern page.
+  const patternCell = program.patternSlug
+    ? { text: program.patternSlug, href: tenantPatternPath(tenant, program.patternSlug) }
+    : 'No named pattern yet';
+  const programCell = {
+    text: program.name,
+    href: tenantProgramPath(tenant, program),
+  };
+
   return {
     columns: ['Signal', 'Seeded value', 'Status'],
     rows: [
       ['Tenant', tenant.displayName, 'Scoped'],
-      ['Program', program.name, program.roleInDemo],
+      ['Program', programCell, program.roleInDemo],
       ['Phase', `Phase ${deliverable.phaseSpec}`, deliverable.lifecycleState === 'scheduled' ? 'Scheduled' : 'Active'],
-      ['Pattern', program.patternSlug ?? 'No named pattern yet', program.patternSlug ? 'Linked' : 'Unlinked'],
+      ['Pattern', patternCell, program.patternSlug ? 'Linked' : 'Unlinked'],
     ],
     highlightedRows: deliverable.renderTier === 'rich' ? [1, 2] : [],
   };
