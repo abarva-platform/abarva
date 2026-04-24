@@ -13,6 +13,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import type { RenderedResponse } from '@/lib/agent/renderedResponse';
 import { AgentResponse } from '@/components/agent/AgentResponse';
+import { SkeletonCard } from '@/components/system/SkeletonScreen';
+import { ErrorStateCard } from '@/components/system/ErrorStateCard';
 
 export type AgentKey = 'nexus' | 'sentinel' | 'atlas' | 'steward';
 
@@ -110,6 +112,18 @@ export interface AgentRailProps {
   // the attachment exists and the simulation can drop artifacts.
   onAttach?: (files: AgentAttachment[]) => void;
   attachments?: AgentAttachment[];
+  // File 10 §6.7 · container state variants. `idle` is the default and
+  // renders the conversation. `loading` shows skeleton bubbles while the
+  // agent's Stage 1-5 pipeline runs. `error` surfaces an ErrorStateCard
+  // in the message area with an optional retry. `notification` marks the
+  // collapsed rail with a pulsing chip (unread signal from the agent).
+  railState?: 'idle' | 'loading' | 'error' | 'notification';
+  // Message to display when `railState === 'error'`.
+  errorMessage?: string;
+  // Retry handler for the error state card.
+  onErrorRetry?: () => void;
+  // Count shown on the collapsed rail notification badge.
+  notificationCount?: number;
 }
 
 export function AgentRail({
@@ -123,6 +137,10 @@ export function AgentRail({
   defaultOpen = false,
   onAttach,
   attachments = [],
+  railState = 'idle',
+  errorMessage,
+  onErrorRetry,
+  notificationCount,
 }: AgentRailProps) {
   const [open, setOpen] = useState(defaultOpen);
   const [escapeText, setEscapeText] = useState('');
@@ -145,14 +163,22 @@ export function AgentRail({
       {!open ? (
         <button
           type="button"
-          className="ar-collapsed"
+          className={`ar-collapsed ar-state-${railState}`}
           onClick={() => setOpen(true)}
-          aria-label={`Open ${agent.name} · ${agent.domain}`}
+          aria-label={`Open ${agent.name} · ${agent.domain}${railState === 'notification' ? ` · ${notificationCount ?? ''} new`.trimEnd() : ''}`}
           title={`${agent.name} · ${agent.voice}`}
         >
           <span className="ar-collapsed-avatar">{agent.glyph}</span>
           <span className="ar-collapsed-name">{agent.name}</span>
           <span className="ar-collapsed-status" aria-hidden="true" />
+          {railState === 'notification' && (notificationCount ?? 0) > 0 ? (
+            <span className="ar-collapsed-notif" aria-hidden="true">
+              {notificationCount! > 9 ? '9+' : notificationCount}
+            </span>
+          ) : null}
+          {railState === 'error' ? (
+            <span className="ar-collapsed-error" aria-hidden="true" title="Agent rail error">!</span>
+          ) : null}
         </button>
       ) : null}
 
@@ -186,7 +212,21 @@ export function AgentRail({
           <div className="ar-voice">{agent.voice}</div>
 
           <div className="ar-messages">
-            {conversation.map((turn) => (
+            {railState === 'loading' ? (
+              <>
+                <SkeletonCard lines={2} />
+                <SkeletonCard lines={3} />
+              </>
+            ) : null}
+            {railState === 'error' ? (
+              <ErrorStateCard
+                title={errorMessage ?? 'Agent pipeline error'}
+                body="The response couldn't be generated. The question is logged and we'll follow up."
+                severity="warning"
+                primaryAction={onErrorRetry ? { label: 'Retry', onClick: onErrorRetry } : undefined}
+              />
+            ) : null}
+            {railState !== 'loading' && railState !== 'error' ? conversation.map((turn) => (
               <div key={turn.id} className={`ar-bubble ${turn.speaker}`}>
                 <div className="ar-bubble-avatar">
                   {turn.speaker === 'you' ? userInitials : agent.glyph}
@@ -204,7 +244,7 @@ export function AgentRail({
                   </div>
                 </div>
               </div>
-            ))}
+            )) : null}
             <div ref={chatEndRef} />
           </div>
 
@@ -347,6 +387,22 @@ function railCss(accent: string, accentSoft: string): string {
       background: var(--ar-accent);
       box-shadow: 0 0 0 2px var(--ar-accent-soft);
       animation: ar-halo 2.4s ease-in-out infinite;
+    }
+    .ar-collapsed.ar-state-notification { box-shadow: -4px 8px 24px rgba(14,159,140,0.18); }
+    .ar-collapsed-notif {
+      position: absolute; top: 8px; right: 8px;
+      min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px;
+      background: #E04444; color: #FFFFFF;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+    }
+    .ar-collapsed.ar-state-error { border-color: rgba(224,68,68,0.6); box-shadow: -4px 8px 24px rgba(224,68,68,0.2); }
+    .ar-collapsed-error {
+      position: absolute; top: 8px; right: 8px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #E04444; color: #FFFFFF;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Georgia', serif; font-size: 11px; font-weight: 700;
     }
     @keyframes ar-halo {
       0%, 100% { box-shadow: 0 0 0 2px var(--ar-accent-soft); opacity: 1; }
