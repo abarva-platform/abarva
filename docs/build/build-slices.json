@@ -124,7 +124,7 @@
       "id": "S3",
       "name": "Source context validation fixtures",
       "category": "I",
-      "status": "ready",
+      "status": "code_complete",
       "risk": "low",
       "ownerAgent": "Builder + Test Runner",
       "dependsOn": [
