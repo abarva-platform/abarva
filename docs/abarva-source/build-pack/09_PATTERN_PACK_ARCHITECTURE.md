@@ -6,6 +6,8 @@ Pattern packs are configurable sourcing archetype logic.
 
 They are authored AbarVa IP, not hard-coded UI.
 
+Pattern packs must meet the content depth standard in [21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/21_PATTERN_PACK_CONTENT_DEPTH_STANDARD.md). A pack that only names stages, artifacts, and scorecard defaults is not implementation-ready.
+
 Pattern packs provide:
 
 - stages
@@ -15,6 +17,12 @@ Pattern packs provide:
 - gate templates
 - common risks
 - Nexus guidance
+- detection signals
+- diagnostic questions
+- failure-mode mapping
+- evidence requirements
+- intervention levers
+- learning loop observations
 
 ## Type Shape
 
@@ -24,13 +32,21 @@ type SourcePatternPack = {
   name: string;
   archetype: SourcingArchetype;
   defaultRigor: RigorLevel;
+  applicableDealTypes: string[];
+  antiPatterns: string[];
+  detectionSignals: PatternDetectionSignal[];
+  diagnosticQuestions: PatternDiagnosticQuestion[];
   stages: WorkflowStageTemplate[];
   requiredInputs: RequiredInputTemplate[];
   artifactTemplates: ArtifactTemplate[];
   scorecardDefaults: EvaluationCriteria[];
   gateTemplates: StageGateTemplate[];
   commonRisks: RiskTemplate[];
+  failureModeIds: string[];
+  interventionLevers: SourcingInterventionLever[];
+  evidenceRequirements: PatternEvidenceRequirement[];
   nexusGuidance: Record<string, string>;
+  learningLoop: PatternLearningLoopRule[];
 };
 ```
 
@@ -108,6 +124,29 @@ Later implementation should add:
 - `src/lib/source/pattern-packs.ts`
 
 This should store authored pack configuration or load it from a future persistence layer.
+
+## Implementation Readiness Standard
+
+A pattern pack is implementation-ready only when it includes:
+
+- identity and anti-patterns
+- detection signals with confidence tiers
+- diagnostic questions with missing-data behavior
+- required inputs with owners and source systems
+- stage gates with evidence and approval rules
+- artifact templates with generated vs human-authored sections
+- scorecard defaults with rationale and override guidance
+- failure-mode mapping
+- sourcing levers and interventions
+- evidence base and confidence levels
+- Nexus guidance by stage and wait state
+- observation and learning loop rules
+
+The first three packs that must meet this standard are:
+
+- Data & AI Modernization Sourcing
+- AMS / Managed Services Sourcing
+- Digital Product Build Vendor Selection
 
 ## Anti-Patterns
 
