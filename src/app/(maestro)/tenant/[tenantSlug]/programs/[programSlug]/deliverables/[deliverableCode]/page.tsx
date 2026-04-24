@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTierRenderer';
 import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/deliverables/seed-route-resolver';
+import { assertTenantAccess } from '@/lib/auth/tenant-access';
 
 export default async function TenantDeliverableSeedPage({
   params,
@@ -8,6 +9,7 @@ export default async function TenantDeliverableSeedPage({
   params: Promise<{ tenantSlug: string; programSlug: string; deliverableCode: string }>;
 }) {
   const { tenantSlug, programSlug, deliverableCode } = await params;
+  await assertTenantAccess(tenantSlug);
   const context = findDeliverableByRoute(tenantSlug, programSlug, deliverableCode);
   if (!context?.deliverable) notFound();
 

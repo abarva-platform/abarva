@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
 
 // Priority 2 item 1 · approval flow that advances state.
 //
@@ -70,6 +71,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'programCode, deliverableCode, phase, decision all required' }, { status: 400 });
   }
 
+  // Tenant gate · resolve which tenant owns this programCode and refuse
+  // the write when the authenticated user has no membership. Closes the
+  // cross-tenant approval path Marcus T and Dr. L confirmed on 2026-04-24.
+  const ownerKey = tenantKeyForProgramCode(programCode);
+  if (!ownerKey) {
+    return NextResponse.json({ error: 'unknown programCode' }, { status: 404 });
+  }
+  const access = await checkTenantAccessByKey(ownerKey);
+  if (!access.ok) {
+    const status = access.reason === 'unauthenticated' ? 401 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
+  }
+
   const clerk = await clerkClient();
   const user = await clerk.users.getUser(session.userId);
   const role = (user.publicMetadata?.role as string | undefined) ?? null;
@@ -105,6 +119,24 @@ export async function GET(request: NextRequest) {
   }
   const programCode = request.nextUrl.searchParams.get('programCode');
   const deliverableCode = request.nextUrl.searchParams.get('deliverableCode');
+
+  // Tenant gate on reads: when a specific programCode is requested, verify
+  // membership first. Absent programCode we return an empty ledger — the
+  // caller must name the program to read its approvals.
+  if (programCode) {
+    const ownerKey = tenantKeyForProgramCode(programCode);
+    if (!ownerKey) {
+      return NextResponse.json({ ok: true, entries: [] });
+    }
+    const access = await checkTenantAccessByKey(ownerKey);
+    if (!access.ok) {
+      const status = access.reason === 'unauthenticated' ? 401 : 403;
+      return NextResponse.json({ error: access.reason }, { status });
+    }
+  } else {
+    return NextResponse.json({ ok: true, entries: [] });
+  }
+
   const ledger = readLedger();
   const filtered = ledger.entries
     .filter((e) => (programCode ? e.programCode === programCode : true))

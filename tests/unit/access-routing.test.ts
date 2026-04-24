@@ -3,6 +3,7 @@ import {
   isLockedTenantRole,
   isExternalOnlyRole,
   isNewClientSetupEmail,
+  resolvePinnedSessionClientKey,
   resolvePostSignInPath,
   resolveSessionClientKey,
   resolveSessionRole,
@@ -26,6 +27,11 @@ describe('access-routing', () => {
 
   test('falls back to global default for invalid values', () => {
     expect(resolveSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBe('meridian');
+  });
+
+  test('strict pinned client resolver never falls back to the global default', () => {
+    expect(resolvePinnedSessionClientKey({ clientId: 'unknown', defaultClientId: 'nope' })).toBeNull();
+    expect(resolvePinnedSessionClientKey({ email: 'demo-apexretail+clerk_test@abarva.com' })).toBe('apexretail');
   });
 
   test('infers roles for legacy demo logins', () => {

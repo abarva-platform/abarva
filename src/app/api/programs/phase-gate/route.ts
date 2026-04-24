@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { checkTenantAccessByKey, tenantKeyForProgramCode } from '@/lib/auth/tenant-access';
 
 // Priority 2 item 2 · phase-gate advancement that moves a program forward.
 //
@@ -71,6 +72,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'toPhase must be fromPhase + 1' }, { status: 400 });
   }
 
+  // Tenant gate · same shape as /api/programs/approve. A phase-gate
+  // advance is a stateful write on a tenant-owned program; cross-tenant
+  // requests must fail here too.
+  const ownerKey = tenantKeyForProgramCode(programCode);
+  if (!ownerKey) {
+    return NextResponse.json({ error: 'unknown programCode' }, { status: 404 });
+  }
+  const access = await checkTenantAccessByKey(ownerKey);
+  if (!access.ok) {
+    const status = access.reason === 'unauthenticated' ? 401 : 403;
+    return NextResponse.json({ error: access.reason }, { status });
+  }
+
   const clerk = await clerkClient();
   const user = await clerk.users.getUser(session.userId);
   const role = (user.publicMetadata?.role as string | undefined) ?? null;
@@ -103,6 +117,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const programCode = request.nextUrl.searchParams.get('programCode');
+
+  if (programCode) {
+    const ownerKey = tenantKeyForProgramCode(programCode);
+    if (!ownerKey) {
+      return NextResponse.json({ ok: true, entries: [] });
+    }
+    const access = await checkTenantAccessByKey(ownerKey);
+    if (!access.ok) {
+      const status = access.reason === 'unauthenticated' ? 401 : 403;
+      return NextResponse.json({ error: access.reason }, { status });
+    }
+  } else {
+    return NextResponse.json({ ok: true, entries: [] });
+  }
+
   const ledger = readLedger();
   const filtered = ledger.entries
     .filter((e) => (programCode ? e.programCode === programCode : true))

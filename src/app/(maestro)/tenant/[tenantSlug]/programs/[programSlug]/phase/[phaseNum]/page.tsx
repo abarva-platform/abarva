@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { SeedPhaseOverview } from '@/components/deliverables/SeedRouteShell';
 import { findProgramByRoute } from '@/lib/deliverables/seed-route-resolver';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
+import { assertTenantAccess } from '@/lib/auth/tenant-access';
 
 export default async function TenantProgramPhaseSeedPage({
   params,
@@ -12,6 +13,7 @@ export default async function TenantProgramPhaseSeedPage({
   const phase = Number(phaseNum);
   if (!isSpecPhase(phase)) notFound();
 
+  await assertTenantAccess(tenantSlug);
   const context = findProgramByRoute(tenantSlug, programSlug);
   if (!context) notFound();
 

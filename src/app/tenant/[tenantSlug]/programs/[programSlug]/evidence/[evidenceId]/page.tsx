@@ -6,6 +6,7 @@ import {
 } from '@/lib/deliverables/evidence-registry';
 import { tenantProgramPath } from '@/lib/deliverables/seed-route-resolver';
 import { COMPOSITE_DISCLAIMER } from '@/lib/integrity/disclaimers';
+import { assertTenantAccess } from '@/lib/auth/tenant-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,6 +16,7 @@ export default async function EvidenceDetailPage({
   params: Promise<{ tenantSlug: string; programSlug: string; evidenceId: string }>;
 }) {
   const { tenantSlug, programSlug, evidenceId } = await params;
+  await assertTenantAccess(tenantSlug);
   const entry = getEvidenceDetail(tenantSlug, programSlug, evidenceId);
   const registry = getProgramEvidenceRegistry(tenantSlug, programSlug);
 
