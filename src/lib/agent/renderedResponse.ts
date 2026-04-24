@@ -138,6 +138,82 @@ export interface RenderedResponse {
   handoff_affordance: HandoffAffordance | null;
   /** Observability tags; never rendered to the user. */
   quality_issues?: QualityIssue[];
+  /**
+   * S5 · Honest-disclosure metadata derived from the platform Context
+   * Bundle (S1) and its scoring/classification (S2). Optional; older
+   * rendered responses without a Context Bundle leave this undefined and
+   * existing renderers continue to work unchanged.
+   */
+  honest_disclosure?: HonestDisclosureMetadata;
+}
+
+/**
+ * Recommended response mode per the response gate. Mirrors the gate
+ * `reason` codes from S2's createResponseGate so renderers and composers
+ * can branch on a single enum.
+ */
+export type RecommendedResponseMode =
+  | 'proceed'
+  | 'proceed_with_disclosure'
+  | 'ask_for_missing_context'
+  | 'refuse_or_defer';
+
+/**
+ * S5 · Per-turn honest-disclosure metadata. All fields are optional so
+ * legacy turns without a scored Context Bundle can omit the entire
+ * metadata block (or include only what is known) without breaking
+ * renderers.
+ *
+ * The renderer uses this to choose a banner kind, populate confidence
+ * chips, list "context used" categories, and surface missing-input
+ * call-outs. None of these fields imply a specific UI layout — they are
+ * the data contract; visual treatment lives in the components.
+ */
+export interface HonestDisclosureMetadata {
+  /** 5-state classification from S2. */
+  contextBundleState?:
+    | 'complete'
+    | 'usable_with_gaps'
+    | 'pattern_only'
+    | 'insufficient'
+    | 'blocked';
+  /**
+   * Compact summary of which Context Bundle categories were populated
+   * for this turn. Strings are intentionally human-friendly; the renderer
+   * may pass them through verbatim into a chip group.
+   */
+  contextBundleSummary?: string[];
+  /**
+   * Bucketed confidence tier for the response as a whole. Derived from
+   * the bundle state and quality scores per
+   * deriveConfidenceLevelFromContextScore.
+   */
+  confidenceLevel?: ConfidenceTier;
+  /**
+   * Short rationale explaining why the confidence tier was assigned.
+   * Renders next to the confidence chip when expanded.
+   */
+  confidenceReason?: string;
+  /**
+   * Canonical category labels the agent used (e.g. "Workflow state",
+   * "Pattern library"). Drives the "Context used" chip group.
+   */
+  contextCategoriesUsed?: string[];
+  /** Inputs the bundle declared missing, in priority order. */
+  missingInputs?: string[];
+  /** S2 vanilla_response_risk score (0-100, higher = worse). */
+  vanillaResponseRisk?: number;
+  /**
+   * Single short prose line the renderer can show above the response
+   * body. Composed deterministically from state plus risk.
+   */
+  disclosureMessage?: string;
+  /** S2 response gate `reason` code. */
+  responseGate?: RecommendedResponseMode;
+  /** Whether the gate permits a substantive response at all. */
+  permitsResponse?: boolean;
+  /** Same value as responseGate, named for renderers reading mode hints. */
+  recommendedResponseMode?: RecommendedResponseMode;
 }
 
 /**

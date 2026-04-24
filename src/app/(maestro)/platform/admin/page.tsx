@@ -26,7 +26,7 @@ type Section =
   | 'maestros' | 'roles' | 'security'
   | 'clients'  | 'contracts'
   | 'sensitive-data' | 'quality' | 'access-logs' | 'pending-requests'
-  | 'audit-log' | 'api-keys' | 'compliance'
+  | 'audit-log' | 'api-keys' | 'compliance' | 'build-progress'
 
 // ── Sidebar config ────────────────────────────────────────────────────────
 const SIDEBAR_GROUPS: Array<{
@@ -60,6 +60,7 @@ const SIDEBAR_GROUPS: Array<{
   {
     label: 'Platform',
     items: [
+      { key: 'build-progress', icon: '▣', label: 'Build Progress' },
       { key: 'audit-log',  icon: '📜', label: 'Audit Log' },
       { key: 'api-keys',   icon: '🔑', label: 'API Keys' },
       { key: 'compliance', icon: '✅', label: 'Compliance' },
@@ -267,6 +268,7 @@ function QualityOpsJumpView() {
             { href: '/platform/admin/connectors', label: 'Connectors · health' },
             { href: '/platform/admin/audit', label: 'Audit · cross-ledger' },
             { href: '/platform/admin/quality', label: 'Quality · ops' },
+            { href: '/platform/admin/build-progress', label: 'Build Progress · backlog' },
             { href: '/home/queue', label: 'Queue · your assignments' },
           ].map((link) => (
             <a
@@ -288,6 +290,32 @@ function QualityOpsJumpView() {
             </a>
           ))}
         </nav>
+      </div>
+    </div>
+  )
+}
+
+function BuildProgressJumpView() {
+  return (
+    <div>
+      <div style={{ paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Build Progress</div>
+        <div style={{ fontSize: '13px', color: MUTED }}>Track execution slices, critical path, validation status, blockers, and production readiness.</div>
+      </div>
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '28px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: MONO, marginBottom: '10px' }}>
+          Founder control surface
+        </div>
+        <div style={{ fontSize: '18px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Open the Build Progress dashboard</div>
+        <div style={{ fontSize: '14px', color: MUTED, lineHeight: 1.7, marginBottom: '16px', maxWidth: '720px' }}>
+          The page is an internal mission-control view for the AbarVa backlog. It reads static TypeScript roadmap data today and is admin-only.
+        </div>
+        <a
+          href="/platform/admin/build-progress"
+          style={{ display: 'inline-block', background: DARK, color: BG, fontSize: '13px', fontWeight: 600, padding: '10px 16px', borderRadius: '6px', textDecoration: 'none' }}
+        >
+          Open Build Progress →
+        </a>
       </div>
     </div>
   )
@@ -332,6 +360,7 @@ export default function AdminPortal() {
       case 'quality':          return <QualityOpsJumpView />
       case 'access-logs':      return <PlaceholderView title="Access Logs"               sub="Data access audit trail by user and dataset." />
       case 'pending-requests': return <PlaceholderView title="Pending Requests"          sub="Maestro requests for elevated data access." />
+      case 'build-progress':   return <BuildProgressJumpView />
       case 'audit-log':        return <PlaceholderView title="Audit Log"                 sub="Complete platform activity log." />
       case 'api-keys':         return <PlaceholderView title="API Keys"                  sub="Platform API keys and integrations." />
       case 'compliance':       return <PlaceholderView title="Compliance"                sub="SOC2 compliance status and reporting." />

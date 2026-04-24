@@ -16,6 +16,14 @@ import { runDecision } from './specialists/decision';
 import { assemble, type CompositionBundle } from './assembler';
 import { compose } from './composer';
 import { loadSessionContext, renderSessionContextBlock, type SessionContext } from './sessionContext';
+import { adaptToContextBundle } from './context-adapter';
+import type {
+  ContextBundle,
+  ContextBundleQualityScore,
+  ContextBundleResponseGate,
+  ContextBundleState,
+  ContextBundleSummary,
+} from '@/lib/agent/context-bundle';
 import type {
   NexusFormat,
   NexusMode,
@@ -79,6 +87,52 @@ export interface OrchestratorOutput {
   clarifying?: ReturnType<typeof shouldClarify>;
   session?: SessionContext;
   gateSignals: GateSignal[];
+
+  // S4 · Context Bundle adapter metadata. Optional and additive: these
+  // fields surface the platform Context Bundle / scoring / response gate
+  // for observability but do not change prompt content, payload, or
+  // visible UI. Absence is normal when the adapter could not run.
+  contextBundle?: ContextBundle;
+  contextBundleSummary?: ContextBundleSummary;
+  contextBundleGate?: ContextBundleResponseGate;
+  contextBundleScore?: ContextBundleQualityScore;
+  contextBundleState?: ContextBundleState;
+}
+
+// S4 · Run the Context Bundle adapter without letting any failure surface
+// to the pipeline. The adapter is a pure function but we still defend
+// against future extensions throwing.
+function runContextAdapterSafely(args: {
+  pipelineInput: OrchestratorInput;
+  compositionBundle?: CompositionBundle | null;
+  session?: SessionContext | null;
+  isClarifying?: boolean;
+}):
+  | {
+      contextBundle: ContextBundle;
+      contextBundleSummary: ContextBundleSummary;
+      contextBundleGate: ContextBundleResponseGate;
+      contextBundleScore: ContextBundleQualityScore;
+      contextBundleState: ContextBundleState;
+    }
+  | undefined {
+  try {
+    const result = adaptToContextBundle({
+      pipelineInput: args.pipelineInput,
+      compositionBundle: args.compositionBundle ?? null,
+      session: args.session ?? null,
+      isClarifying: args.isClarifying ?? false,
+    });
+    return {
+      contextBundle: result.bundle,
+      contextBundleSummary: result.summary,
+      contextBundleGate: result.responseGate,
+      contextBundleScore: result.qualityScore,
+      contextBundleState: result.state,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 const HARD_CAP_MS = 15_000;
@@ -143,6 +197,24 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
   // Fast-path · if clarifying fires, skip retrieval and return the question directly
   if (clarifying.fires) {
     progress({ phase: 'parse', status: 'clarifying' });
+    const clarifyingShellBundle: CompositionBundle = {
+      mode: modeResult.mode,
+      query: input.query,
+      entities: [],
+      evidence: [],
+      valueSignals: [],
+      valueHeadline: null,
+      contradictions: [],
+      contradictionSelfCheck: null,
+      decision: { crux: null, branches: [], tiebreaker: null },
+      sources: [],
+      contextTokenEstimate: 0,
+    };
+    const clarifyingAdapter = runContextAdapterSafely({
+      pipelineInput: input,
+      compositionBundle: clarifyingShellBundle,
+      isClarifying: true,
+    });
     return {
       mode: modeResult.mode,
       format: 'clarification',
@@ -151,23 +223,12 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
         question: clarifying.question,
         options: clarifying.options,
       },
-      bundle: {
-        mode: modeResult.mode,
-        query: input.query,
-        entities: [],
-        evidence: [],
-        valueSignals: [],
-        valueHeadline: null,
-        contradictions: [],
-        contradictionSelfCheck: null,
-        decision: { crux: null, branches: [], tiebreaker: null },
-        sources: [],
-        contextTokenEstimate: 0,
-      },
+      bundle: clarifyingShellBundle,
       latencyMs: { parse: parseMs, plan: 0, retrieve: 0, assemble: 0, compose: 0, total: Date.now() - started },
       strippedCount: 0,
       clarifying,
       gateSignals: [],
+      ...clarifyingAdapter,
     };
   }
 
@@ -217,6 +278,10 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
   // Hard cap · if we've already burned 10s+ before composition, surface an idk
   const elapsed = Date.now() - started;
   if (elapsed > HARD_CAP_MS - 3000) {
+    const idkAdapter = runContextAdapterSafely({
+      pipelineInput: input,
+      compositionBundle: bundle,
+    });
     return {
       mode: modeResult.mode,
       format: 'idk',
@@ -229,6 +294,7 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
       latencyMs: { parse: parseMs, plan: planMs, retrieve: retrieveMs, assemble: assembleMs, compose: 0, total: elapsed },
       strippedCount: 0,
       gateSignals: [],
+      ...idkAdapter,
     };
   }
 
@@ -257,6 +323,12 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
   // ── Phase 6 · render (payload is ready) ─────────────────────────────
   progress({ phase: 'render', status: 'complete' });
 
+  const finalAdapter = runContextAdapterSafely({
+    pipelineInput: input,
+    compositionBundle: bundle,
+    session,
+  });
+
   return {
     mode: modeResult.mode,
     format,
@@ -273,5 +345,6 @@ export async function runPipeline(input: OrchestratorInput): Promise<Orchestrato
     strippedCount: composed.strippedCount,
     session,
     gateSignals,
+    ...finalAdapter,
   };
 }

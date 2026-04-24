@@ -15,7 +15,22 @@
 // not body prose. The agent's composed response provides the substantive
 // claim; the vocabulary frames what level of certainty the claim carries.
 
-import type { ConfidenceSignal, Provenance } from './renderedResponse';
+import type {
+  ConfidenceSignal,
+  ConfidenceTier,
+  HonestDisclosureMetadata,
+  Provenance,
+  RecommendedResponseMode,
+} from './renderedResponse';
+import {
+  CONTEXT_BUNDLE_CATEGORY_KEYS,
+  type ContextBundle,
+  type ContextBundleCategoryKey,
+  type ContextBundleQualityScore,
+  type ContextBundleResponseGate,
+  type ContextBundleState,
+  type ContextBundleSummary,
+} from './context-bundle';
 
 /**
  * §10.1 · High confidence openers.
@@ -122,4 +137,220 @@ export function sparsityOpener(index = 0): string {
 export function withProvenance(label: string, provenance?: Provenance): string {
   if (!provenance) return label;
   return `${PROVENANCE_PREFIXES[provenance]} ${label}`;
+}
+
+// =====================================================================
+// S5 · Honest-disclosure metadata derived from S1 ContextBundle + S2
+// scoring. Pure, deterministic, no model calls. Each helper accepts the
+// minimal information it needs so callers can mix-and-match (e.g. a
+// renderer that has the bundle vs. an API consumer that only has the
+// summary).
+// =====================================================================
+
+/**
+ * Vanilla-response-risk threshold above which we suppress a HIGH
+ * confidence verdict even if completeness is otherwise high.
+ */
+const HIGH_VANILLA_RISK_THRESHOLD = 50;
+
+/** Human-friendly labels for the eight canonical Context Bundle categories. */
+export const CONTEXT_CATEGORY_LABELS: Record<ContextBundleCategoryKey, string> = {
+  identity: 'Identity',
+  workObject: 'Work object',
+  workflowState: 'Workflow state',
+  businessContext: 'Business context',
+  artifacts: 'Artifacts',
+  patterns: 'Pattern library',
+  evidence: 'Evidence',
+  conversation: 'Conversation',
+};
+
+/**
+ * Disclosure prose per state. Kept short, polished, surface-agnostic.
+ * Renderers can append a more specific addendum (named missing input,
+ * named vendor, etc.) but the stock copy is the canonical baseline.
+ */
+const DISCLOSURE_MESSAGES: Record<ContextBundleState, string> = {
+  complete:
+    'I have enough client, workflow, evidence, and pattern context to provide a grounded recommendation.',
+  usable_with_gaps:
+    'I can provide a directional recommendation, but a few inputs are missing.',
+  pattern_only:
+    'This is pattern-informed guidance; client-specific evidence is limited.',
+  insufficient:
+    'I do not have enough context to give a reliable answer yet.',
+  blocked:
+    'I cannot responsibly answer this until the blocking context is resolved.',
+};
+
+/**
+ * Map a Context Bundle state plus its score into a display confidence
+ * tier. High vanilla-response risk suppresses HIGH even if completeness
+ * is otherwise sufficient.
+ */
+export function deriveConfidenceLevelFromContextScore(
+  score: Pick<ContextBundleQualityScore, 'vanilla_response_risk' | 'overallConfidence'>
+    | null
+    | undefined,
+  state?: ContextBundleState | null,
+): ConfidenceTier {
+  // No score at all → defer to the state.
+  if (!score) {
+    if (state === 'complete') return 'HIGH';
+    if (state === 'usable_with_gaps' || state === 'pattern_only') return 'MEDIUM';
+    return 'LOW';
+  }
+
+  const tier = score.overallConfidence;
+  // HIGH suppression: even if the bundle scores high overall, an
+  // elevated vanilla-response risk means we cannot claim HIGH.
+  if (tier === 'HIGH'
+    && score.vanilla_response_risk > HIGH_VANILLA_RISK_THRESHOLD) {
+    return 'MEDIUM';
+  }
+  return tier;
+}
+
+/**
+ * Build the disclosure prose line for a bundle state. Returns null for
+ * states the renderer should not announce (no state available yet).
+ */
+export function deriveDisclosureMessage(input: {
+  state?: ContextBundleState | null;
+  vanillaResponseRisk?: number | null;
+  missingInputs?: string[];
+}): string | null {
+  if (!input.state) return null;
+  const base = DISCLOSURE_MESSAGES[input.state];
+  // Append a short addendum naming missing inputs when applicable.
+  if (
+    (input.state === 'usable_with_gaps' || input.state === 'pattern_only')
+    && input.missingInputs
+    && input.missingInputs.length > 0
+  ) {
+    const named = input.missingInputs.slice(0, 2).join(', ');
+    const more = input.missingInputs.length > 2
+      ? ` plus ${input.missingInputs.length - 2} more`
+      : '';
+    return `${base} Missing: ${named}${more}.`;
+  }
+  // For complete bundles, surface elevated vanilla-risk inline rather
+  // than promising more than we know.
+  if (
+    input.state === 'complete'
+    && typeof input.vanillaResponseRisk === 'number'
+    && input.vanillaResponseRisk > HIGH_VANILLA_RISK_THRESHOLD
+  ) {
+    return 'I have grounded context, but the response could read as generic — please verify against your specifics.';
+  }
+  return base;
+}
+
+/**
+ * Derive human-friendly "context used" labels from either a bundle or
+ * its summary. Consumers without the full bundle can pass the summary
+ * shape returned by summarizeContextBundle.
+ */
+export function deriveContextUsedLabels(
+  bundleOrSummary: ContextBundle | ContextBundleSummary | null | undefined,
+): string[] {
+  if (!bundleOrSummary) return [];
+  // Summary shape exposes presentCategoryKeys directly.
+  if ('presentCategoryKeys' in bundleOrSummary) {
+    return bundleOrSummary.presentCategoryKeys.map((k) => CONTEXT_CATEGORY_LABELS[k]);
+  }
+  const labels: string[] = [];
+  for (const key of CONTEXT_BUNDLE_CATEGORY_KEYS) {
+    if (bundleOrSummary.categories[key]?.present) {
+      labels.push(CONTEXT_CATEGORY_LABELS[key]);
+    }
+  }
+  return labels;
+}
+
+/**
+ * Map a S2 response gate `reason` to the renderer-facing
+ * RecommendedResponseMode. Falls back to `proceed_with_disclosure` for
+ * gates that include extra metadata (e.g. blocking input ids) so
+ * downstream code can branch consistently.
+ */
+function normalizeGateReason(gate: ContextBundleResponseGate | null | undefined):
+  | RecommendedResponseMode
+  | undefined {
+  if (!gate) return undefined;
+  const reason = gate.reason;
+  if (reason === 'proceed') return 'proceed';
+  if (reason === 'proceed_with_disclosure') return 'proceed_with_disclosure';
+  if (reason === 'ask_for_missing_context') return 'ask_for_missing_context';
+  if (reason.startsWith('refuse_or_defer')) return 'refuse_or_defer';
+  return undefined;
+}
+
+/**
+ * Compose a complete HonestDisclosureMetadata block from a Context
+ * Bundle. Pure: no I/O, no time reads. Pass either the full bundle plus
+ * its scored fields, or pass them piecewise.
+ */
+export function deriveHonestDisclosureMetadata(input: {
+  bundle?: ContextBundle | null;
+  summary?: ContextBundleSummary | null;
+  state?: ContextBundleState | null;
+  qualityScore?: ContextBundleQualityScore | null;
+  responseGate?: ContextBundleResponseGate | null;
+}): HonestDisclosureMetadata {
+  const state = input.state
+    ?? input.bundle?.state
+    ?? input.summary?.state
+    ?? undefined;
+  const qualityScore = input.qualityScore ?? input.bundle?.qualityScore ?? null;
+  const responseGate = input.responseGate ?? input.bundle?.responseGate ?? null;
+
+  const missingInputs = (input.bundle?.missingInputs ?? []).map((m) => m.label);
+  const contextCategoriesUsed = deriveContextUsedLabels(
+    input.bundle ?? input.summary ?? null,
+  );
+
+  const confidenceLevel = deriveConfidenceLevelFromContextScore(
+    qualityScore ?? undefined,
+    state ?? undefined,
+  );
+
+  const confidenceReason = qualityScore
+    ? buildConfidenceReason(qualityScore, state ?? undefined)
+    : undefined;
+
+  const disclosureMessage = deriveDisclosureMessage({
+    state,
+    vanillaResponseRisk: qualityScore?.vanilla_response_risk,
+    missingInputs,
+  }) ?? undefined;
+
+  const recommendedResponseMode = normalizeGateReason(responseGate);
+
+  return {
+    contextBundleState: state ?? undefined,
+    contextBundleSummary: contextCategoriesUsed,
+    confidenceLevel,
+    confidenceReason,
+    contextCategoriesUsed,
+    missingInputs,
+    vanillaResponseRisk: qualityScore?.vanilla_response_risk,
+    disclosureMessage,
+    responseGate: recommendedResponseMode,
+    permitsResponse: responseGate?.permitsResponse,
+    recommendedResponseMode,
+  };
+}
+
+function buildConfidenceReason(
+  score: ContextBundleQualityScore,
+  state?: ContextBundleState,
+): string {
+  const parts: string[] = [];
+  parts.push(`Completeness ${score.context_completeness}`);
+  parts.push(`Evidence ${score.evidence_coverage}`);
+  parts.push(`Workflow ${score.workflow_awareness}`);
+  parts.push(`Risk ${score.vanilla_response_risk}`);
+  const head = state ? `${state} bundle` : 'Scored bundle';
+  return `${head} · ${parts.join(', ')}.`;
 }
