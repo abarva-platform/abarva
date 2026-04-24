@@ -10,7 +10,7 @@
 
 ## Committed queue (ordered — do not reorder without updating this file)
 
-1. C2-1-tenant-isolation — Enforce backend membership checks on every `/tenant/{slug}/*` route, including programs, deliverables, patterns, tower, and evidence. Non-admin cross-tenant reads return 403, not content.
+1. C2-1-tenant-isolation — Enforce backend membership checks on every `/tenant/{slug}/*` route, including programs, deliverables, patterns, tower, and evidence. Non-admin cross-tenant reads return 403, not content. `LOCAL COMPLETE · validated`
 2. C2-2-clerk-rebinding — Fix demo-account re-auth so `demo-apexretail+clerk_test` and `demo-meridian+clerk_test` do not rebound to the wrong tenant or lose valid `?client=` state because of stale/incomplete claims.
 3. C2-3-tower-open-routing — Resolve or remove the broken Tower pressure-card `OPEN → /engagements/892a57af-*` path.
 4. C2-4-atlas-free-text-runtime — Replace Atlas echo/redirect behavior with a real Stage 1-6 backed free-text path, same honesty contract as Sentinel.
@@ -27,9 +27,9 @@
 
 ## Current position
 
-- Current item: C2-1-tenant-isolation
-- Current step within item: branch cut · Cycle 2 queue committed in state file · auth surface mapped across `/tenant/*`, proxy, and seeded approval APIs · implementation in progress
-- Started item at: 2026-04-24T07:56:00-05:00
+- Current item: C2-2-clerk-rebinding
+- Current step within item: C2-1 implemented + focused validation green locally; starting demo-account role/pin correction and `?client=` strip hardening
+- Started item at: 2026-04-24T09:14:00-05:00
 - Expected next action ETA: same session
 
 ## Complete this cycle
@@ -49,7 +49,9 @@
 - 2026-04-24T08:05:00-05:00: Explorer findings for C2-2 show demo-account fallback auth still classifies `demo-meridian` and `demo-apexretail` as `maestro` in fallback paths, which likely contributes to wrong-tenant rebind and premature `?client=` stripping.
 - 2026-04-24T08:07:00-05:00: Explorer findings for C2-4 show Atlas free-text still runs through `src/app/api/v1/atlas/chat/route.ts` + `src/lib/atlas/orchestrator.ts` one-shot response plumbing rather than the Stage 1-6 SSE contract used by Nexus/Sentinel.
 - 2026-04-24T08:09:00-05:00: For Cycle 2 item 1, safest membership model is “admin may roam; all other roles are pinned.” This matches the user instruction that all users should be locked to one account except admin.
+- 2026-04-24T09:13:00-05:00: C2-1 local validation passed: `jest tests/unit/tenant-access.test.ts tests/unit/access-routing.test.ts`, `tsc --noEmit`, and focused `eslint` on auth/test files.
+- 2026-04-24T09:15:00-05:00: Sidecar route sweep found additional tenant-shaped APIs to audit after the core `/tenant/*` leak path: `/api/engage/[engagementId]/turn`, `/api/engagements/create/turn`, `/api/data/upload`, `/api/data/turn`, `/api/tower/upload`, `/api/tower/seed-demo`, and `/api/v1/sentinel/query`.
 
 ## Last status emission
 
-- 2026-04-24T08:10:00-05:00 · Cycle 2 kickoff · queue committed · item 1 in progress
+- 2026-04-24T09:16:00-05:00 · C2-1 local validation green · item 2 in progress
