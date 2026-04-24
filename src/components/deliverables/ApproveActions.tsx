@@ -13,6 +13,21 @@ interface ApproveActionsProps {
   deliverableCode: string;
   phase: number;
   decision: string;
+  /**
+   * File 10 §4.11 permission gating. When false, the component renders
+   * a muted read-only state instead of the active button. Consumers
+   * compute this server-side from the viewer's role + tenant membership
+   * and pass it down. Defaults to true for backwards compatibility —
+   * the server `/api/programs/approve` route still enforces tenant
+   * access (C2-07), so the gate is defense-in-depth at the UI layer.
+   */
+  canApprove?: boolean;
+  /**
+   * Optional reason surfaced in the muted state when `canApprove` is
+   * false. Example: "Cross-tenant view — approval belongs to Apex Retail
+   * sponsors." Keep to one sentence.
+   */
+  gateReason?: string;
 }
 
 type Status =
@@ -21,8 +36,73 @@ type Status =
   | { kind: 'approved'; approverName: string | null; timestamp: string }
   | { kind: 'error'; message: string };
 
-export function ApproveActions({ programCode, deliverableCode, phase, decision }: ApproveActionsProps) {
+export function ApproveActions({ programCode, deliverableCode, phase, decision, canApprove = true, gateReason }: ApproveActionsProps) {
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
+
+  // §4.11 · render a muted read-only state when the viewer can't approve.
+  // Server still enforces tenant access on POST (C2-07); this is the UI
+  // affordance layer — explicit, not hidden.
+  if (!canApprove) {
+    return (
+      <div
+        className="apv-actions apv-gated"
+        role="group"
+        aria-label="Approval not available to this viewer"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '12px 16px',
+          borderRadius: 14,
+          background: 'rgba(138,126,114,0.08)',
+          border: '1px dashed rgba(138,126,114,0.35)',
+          fontFamily: 'DM Sans, -apple-system, sans-serif',
+          flexWrap: 'wrap',
+        }}
+      >
+        <span
+          aria-hidden="true"
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: '50%',
+            background: 'rgba(138,126,114,0.18)',
+            color: '#8a7e72',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: 'Georgia, serif',
+          }}
+        >
+          \u2014
+        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+          <strong style={{ fontSize: 13, color: '#1a1612' }}>Approval not available to this viewer</strong>
+          <span style={{ fontSize: 11, color: '#6d625a' }}>
+            {gateReason ?? 'Your role does not hold approval authority on this deliverable.'}
+          </span>
+        </div>
+        <span
+          style={{
+            display: 'inline-block',
+            padding: '4px 10px',
+            borderRadius: 999,
+            background: 'rgba(138,126,114,0.14)',
+            color: '#8a7e72',
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+          }}
+        >
+          Read-only
+        </span>
+      </div>
+    );
+  }
 
   async function handleApprove() {
     if (status.kind === 'submitting' || status.kind === 'approved') return;
