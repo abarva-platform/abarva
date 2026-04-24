@@ -11,6 +11,8 @@
 // domain-specific, but the rail geometry is identical.
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import type { RenderedResponse } from '@/lib/agent/renderedResponse';
+import { AgentResponse } from '@/components/agent/AgentResponse';
 
 export type AgentKey = 'nexus' | 'sentinel' | 'atlas' | 'steward';
 
@@ -59,6 +61,13 @@ export interface AgentTurn {
   speaker: 'you' | 'agent';
   text: string;
   timestamp?: string;
+  /**
+   * When present and speaker is 'agent', the renderer uses the File 08
+   * Section 4.6 rendered_response shape instead of plain text. `text` is
+   * still kept as a fallback and as the source feeding the feedback
+   * store.
+   */
+  rendered?: RenderedResponse;
 }
 
 export interface GuidedChoiceOption {
@@ -186,7 +195,13 @@ export function AgentRail({
                   <div className="ar-bubble-speaker">
                     {turn.speaker === 'you' ? 'You' : agent.name}
                   </div>
-                  <div className="ar-bubble-body">{turn.text}</div>
+                  <div className="ar-bubble-body">
+                    {turn.speaker === 'agent' && turn.rendered ? (
+                      <AgentResponse response={turn.rendered} accent={agent.accent} />
+                    ) : (
+                      turn.text
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
