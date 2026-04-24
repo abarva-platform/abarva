@@ -27,7 +27,7 @@
 
 ### Codex lane
 - Current item: queue merged · Codex Cycle 1 P0 lane
-- Current step within item: post-merge verification in progress · production deploy green · follow-up fix for legacy deliverable links in flight
+- Current step within item: post-merge verification in progress · production deploy green · follow-up fix for legacy deliverable code-alias links queued for PR/merge
 - Started item at: 2026-04-24T03:34:00Z
 - Expected next action ETA: same session
 
@@ -74,6 +74,7 @@
 - 2026-04-24T11:37:14Z: PR `#157` (`feat: cycle 1 code lane · agent render contract`) opened from `code/cycle1-render-contract`. Remaining Code-lane work is PR review/merge plus crawler persona verification once the `rendered_response` seam is exercised end-to-end.
 - 2026-04-24T11:59:13Z: PR `#157` merged to `main` at commit `e91f003517f7585706583607814966e3454577a0`; both production deploys went green. Remaining Code-lane work is crawler persona verification on differentiated cited responses.
 - 2026-04-24T12:05:00Z: Live walkthrough against production found a real regression: authored legacy deliverable links like `d01-d01-program-charter` 404 even though the canonical route is `d01-program-charter`. Follow-up fix is to normalize duplicate-code legacy segments in `findDeliverableByRoute` so old authored links resolve.
+- 2026-04-24T12:24:00Z: First legacy-route fix merged as PR `#158`, but live verification still found `d17-d17-decision-memo` failing because the canonical seeded slug is `d17-decision-memo-for-cxo`. Follow-up fix broadens the resolver so legacy `code-*` segments resolve when a program contains exactly one deliverable for that code.
 
 ## Last status emission
 - 2026-04-24T04:26:00Z (Codex)
