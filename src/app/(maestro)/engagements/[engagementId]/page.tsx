@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
-import { getEngagementByGraphId } from '@/lib/db/engagement';
+import { getEngagementByAnyId } from '@/lib/db/engagement';
 import { getPersonById } from '@/lib/db/person';
 import { getRecentTurns } from '@/lib/db/turn';
 import {
@@ -114,8 +114,18 @@ export default async function EngagePage({
     redirect(canonicalProgramPath);
   }
 
-  const engagement = await getEngagementByGraphId(engagementId);
+  const engagement = await getEngagementByAnyId(engagementId);
   if (!engagement) notFound();
+
+  // C2-03 · if the engagement resolves to a seeded canonical program path,
+  // redirect there instead of rendering the legacy console. Covers Tower
+  // pressure-card UUIDs that used to 404.
+  const canonicalByGraphId = engagement.graph_node_id
+    ? resolveSeedProgramPath(engagement.graph_node_id, activeClientKey)
+    : null;
+  if (canonicalByGraphId) {
+    redirect(canonicalByGraphId);
+  }
 
   // Defensive fetches · graph-backed helpers talk to Neo4j/AGE which may be
   // unreachable or the engagement may lack a graph node yet for freshly-
