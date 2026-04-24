@@ -208,33 +208,8 @@ export function TowerPreviewShell({
         paddingBottom: 60,
       }}
     >
-      {/* Preview banner · flags this as a sandbox */}
-      <div
-        style={{
-          background: INK,
-          color: PAGE_BG,
-          padding: '10px 24px',
-          fontFamily: MONO,
-          fontSize: 11,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 16,
-        }}
-      >
-        <span>
-          <strong style={{ color: TEAL, marginRight: 10 }}>● TOWER · REDESIGN PREVIEW</strong>
-          <span style={{ opacity: 0.7 }}>Sandbox route · live data · no user impact</span>
-        </span>
-        <Link
-          href="/tower"
-          style={{ color: PAGE_BG, opacity: 0.85, textDecoration: 'underline', fontSize: 11 }}
-        >
-          ← Compare with current /tower
-        </Link>
-      </div>
+      {/* P0-2 · sandbox banner removed · /preview/tower is the canonical
+          authenticated Tower surface; it is not a sandbox to customers. */}
 
       {/* ─── Operating header · one line ─────────────────────────────── */}
       <div
