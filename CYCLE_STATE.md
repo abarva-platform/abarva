@@ -54,6 +54,19 @@
 - 2026-04-24T09:33:00-05:00: C2-2 local validation passed: `jest tests/unit/access-routing.test.ts tests/unit/tenant-access.test.ts`, `tsc --noEmit`, and focused `eslint` on access-routing, active-client, sign-in, AppChrome, and auth test helpers.
 - 2026-04-24T09:48:00-05:00: C2-3 local validation passed: `jest tests/unit/engagement-db.test.ts`, `tsc --noEmit`, and focused `eslint` on engagement route + test files. UUID-backed Tower pressure-card paths now resolve through `/engagements/[engagementId]`.
 
+- 2026-04-24T13:55:00-05:00 · Code lane follow-up: items C2-5, C2-6, C2-9, C2-10, C2-12, C2-13, C2-14 all landed on PR #162 (stacked on PR #161). Type + build clean.
+  - C2-5 · NexusProgramRail mounted on SeedProgramOverview
+  - C2-6 · ProgramsGrid phase labels aligned to spec-phase (P1-P5) matching detail page
+  - C2-9 · Internal "Design note" stripped from /home
+  - C2-10 · Queue page uses persons.name via getCurrentUser, Clerk fallback preserved
+  - C2-12 · PatternProse linkifies in-prose pattern_* tokens; reads manifest JSON directly to avoid pulling fs-dependent evidence-registry into client bundle
+  - C2-13 · SeedProgramOverview renders all deliverables, not `.slice(0, 12)`
+  - C2-14 · DeliverableTable cell type widened to support `{text, href}`; Pattern + Program cells now clickable
+- 2026-04-24T13:55:00-05:00 · ESCALATIONS (§19.5):
+  - C2-4 Atlas free-text runtime → Codex lane (Stage 5 Claude invocation is Codex-owned; Code will wire `rendered_response` consumer once Codex ships /api/v1/programs/.../atlas/ask)
+  - C2-8 Vercel toolbar → Vercel dashboard config (no toolbar package in repo; injected by platform; requires project setting toggle)
+  - C2-11 D16 E51-E55 stub citations → content authoring (labels need real payloads; Morrison Tier C task #123 owns this)
+
 ## Last status emission
 
-- 2026-04-24T09:49:00-05:00 · C2-3 local validation green · item 4 in progress
+- 2026-04-24T13:55:00-05:00 · Code lane 11 of 14 items merged-or-staged on PRs #160/#161/#162 · 3 items escalated
