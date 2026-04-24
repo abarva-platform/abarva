@@ -14,30 +14,17 @@ import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { isLockedTenantRole, resolveSessionRole } from '@/lib/auth/access-routing'
+import {
+  ACTIVE_CLIENT_LOCAL_STORAGE_KEY,
+  persistActiveClientContext,
+} from '@/lib/auth/client-context-storage'
 import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey } from '@/lib/client-config'
 
 export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
 
-const LS_KEY = 'abarva_selected_client'
-
 function readLocalStorage(): string | null {
   if (typeof window === 'undefined') return null
-  try { return localStorage.getItem(LS_KEY) } catch { return null }
-}
-
-function writeLocalStorage(id: string) {
-  if (typeof window === 'undefined') return
-  try { localStorage.setItem(LS_KEY, id) } catch { /* ignore */ }
-}
-
-// Mirror active client in a cookie so server components can filter data
-// without a client-round-trip. 1-year max-age; path-scoped to root so
-// every page sees it.
-function writeCookie(id: string) {
-  if (typeof document === 'undefined') return
-  try {
-    document.cookie = `abarva_active_client=${encodeURIComponent(id)}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`
-  } catch { /* ignore */ }
+  try { return localStorage.getItem(ACTIVE_CLIENT_LOCAL_STORAGE_KEY) } catch { return null }
 }
 
 export function useClientContext() {
@@ -85,8 +72,7 @@ export function useClientContext() {
   // This prevents a stale or unauthorized ?client= value from poisoning the
   // cookie the server reads for locked tenant users.
   useEffect(() => {
-    writeLocalStorage(clientId)
-    writeCookie(clientId)
+    persistActiveClientContext(clientId)
   }, [clientId])
 
   useEffect(() => {
@@ -108,8 +94,7 @@ export function useClientContext() {
 
   function switchClient(newId: string) {
     if (!allowedClients.find(c => c.id === newId)) return // silently ignore unauthorized switch
-    writeLocalStorage(newId)
-    writeCookie(newId)
+    persistActiveClientContext(newId)
     const params = new URLSearchParams(searchParams.toString())
     params.set('client', newId)
     const targetPath = pathname || '/home'

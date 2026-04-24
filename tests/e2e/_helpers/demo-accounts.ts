@@ -24,7 +24,7 @@ export const DEMO_ROLE_ACCOUNTS = {
     email: 'demo-meridian+clerk_test@abarva.com',
     expectedPath: /\/home\?client=meridian$/,
     pageMarker: { kind: 'text', label: 'Meridian Health' },
-    visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower', 'Platform'],
+    visibleNav: ['Home', 'Programs', 'Intelligence', 'Control Tower'],
     hiddenNav: ['Investor', 'Admin'],
   },
 } as const;

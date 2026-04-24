@@ -1,19 +1,16 @@
-// POST /api/v1/programs/:programId/nexus/ask · Mode A side-panel Q&A
+// POST /api/v1/programs/:programId/nexus/ask · Programs free-text ask
 //
-// SSE stream. Mode A is read-only — no program-state writes. Assembles
-// context via assembleContext() then streams Claude Opus 4.7 response
-// via the shared streamAgentTurn infra.
-//
-// Events:
-//   context_ready  — context bundle summary
-//   delta          — { text } text deltas from Claude
-//   sources        — { sources } provenance pills (future)
-//   complete       — { latency_ms, token_estimate }
-//   error          — { message }
+// Free-text turns are program-scoped. Each turn:
+//   1. Resolves tenancy + active client
+//   2. Creates or validates a side-panel thread
+//   3. Assembles program context
+//   4. Runs retrieval-backed Nexus synthesis
+//   5. Streams citations, text deltas, and an explicit completion payload
 
 import { NextRequest } from 'next/server';
-import { streamAgentTurn } from '@/lib/agent/stream';
-import { assembleContext, describePendingComposerCall, touchThread } from '@/lib/programs/nexus';
+import { getActiveClientRow } from '@/lib/active-client';
+import { runProgramsNexusTurn } from '@/lib/programs/nexus-free-text';
+import { assembleContext, createThread, touchThread } from '@/lib/programs/nexus';
 import { getServerSupabase } from '@/lib/supabase-server';
 import { requireTenancy, TenancyError } from '../../../_auth';
 
@@ -25,30 +22,96 @@ function sseMessage(event: string, data: Record<string, unknown>): string {
   return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ programId: string }> }) {
+function summarizeThreadTitle(query: string): string {
+  const compact = query.replace(/\s+/g, ' ').trim();
+  return compact.length <= 96 ? compact : `${compact.slice(0, 93)}...`;
+}
+
+function splitForStream(text: string): string[] {
+  const sentences = text
+    .split(/\n\n+/)
+    .flatMap((paragraph) => paragraph.match(/[^.!?]+[.!?]?/g) ?? [paragraph])
+    .map((chunk) => chunk.trim())
+    .filter(Boolean);
+
+  return sentences.length > 0 ? sentences : [text.trim()];
+}
+
+async function validateThreadOwnership(args: {
+  threadId: string;
+  programId: string;
+  userId: string;
+}): Promise<boolean> {
+  const sb = getServerSupabase();
+  const { data, error } = await sb
+    .from('program_threads')
+    .select('id, engagement_id, user_id')
+    .eq('id', args.threadId)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return false;
+
+  const thread = data as { engagement_id: string; user_id: string };
+  return thread.user_id === args.userId && thread.engagement_id === args.programId;
+}
+
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ programId: string }> },
+) {
   let ctx;
   try {
     ctx = await requireTenancy();
   } catch (err) {
     if (err instanceof TenancyError) {
-      return Response.json({ error: err.code }, { status: err.code === 'unauthenticated' ? 401 : 403 });
+      return Response.json(
+        { error: err.code },
+        { status: err.code === 'unauthenticated' ? 401 : 403 },
+      );
     }
     throw err;
   }
 
   const { programId } = await params;
+
   let body: { query?: string; threadId?: string };
   try {
     body = (await req.json()) as typeof body;
   } catch {
     return Response.json({ error: 'bad_request', detail: 'malformed JSON' }, { status: 400 });
   }
-  if (!body?.query) {
+
+  const userQuery = body.query?.trim();
+  if (!userQuery) {
     return Response.json({ error: 'bad_request', detail: 'query required' }, { status: 400 });
   }
 
-  const userQuery = body.query;
-  const threadId = body.threadId;
+  const activeClient = await getActiveClientRow();
+  if (!activeClient) {
+    return Response.json({ error: 'no_client' }, { status: 403 });
+  }
+
+  let threadId = body.threadId?.trim() || null;
+  if (threadId) {
+    const isOwnedThread = await validateThreadOwnership({
+      threadId,
+      programId,
+      userId: ctx.userId,
+    });
+    if (!isOwnedThread) {
+      return Response.json({ error: 'thread_not_found' }, { status: 404 });
+    }
+  } else {
+    const thread = await createThread(ctx, {
+      programId,
+      mode: 'side_panel',
+      title: summarizeThreadTitle(userQuery),
+    });
+    threadId = thread.id;
+  }
+
+  const context = await assembleContext(ctx, programId);
 
   const stream = new ReadableStream({
     async start(controller) {
@@ -58,43 +121,55 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       const started = Date.now();
 
       try {
-        const context = await assembleContext(ctx, programId);
-        const composerPlan = describePendingComposerCall({
-          mode: 'side_panel',
-          context,
-          prompt: userQuery,
-        });
-
         send('context_ready', {
+          threadId,
           programName: context.program.name,
           currentPhase: context.program.currentPhase,
           moduleCount: context.modules.length,
           deliverableCount: context.deliverables.length,
           flagCount: context.flags.length,
-          hasPattern: !!context.patternPreload,
-          tokenEstimate: composerPlan.contextTokenEstimate,
+          hasPatternAnchor: Boolean(context.patternPreload?.topic_key),
         });
 
-        const systemPrompt = buildSystemPrompt(composerPlan.systemPromptHint, context);
-        const gen = streamAgentTurn({
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userQuery }],
-          model: composerPlan.model,
-          maxTokens: 1024,
+        const result = await runProgramsNexusTurn({
+          ctx: {
+            clientKey: activeClient.key,
+            clientName: activeClient.name,
+            industryCode: activeClient.industry_code,
+            userId: ctx.userId,
+          },
+          message: userQuery,
+          context,
         });
 
-        for await (const chunk of gen) {
-          send('delta', { text: chunk });
+        for (const source of result.sources) {
+          send('source_attached', { source });
         }
 
-        if (threadId) {
-          await touchThread(threadId).catch(() => void 0);
+        for (const citation of result.citations) {
+          send('citation_attached', { citation });
         }
 
-        send('complete', { latencyMs: Date.now() - started });
-        controller.close();
+        for (const chunk of splitForStream(result.response)) {
+          send('delta', { text: `${chunk}${chunk.endsWith('\n') ? '' : ' '}` });
+        }
+
+        await touchThread(threadId).catch(() => void 0);
+
+        send('complete', {
+          threadId,
+          routeType: result.routeType,
+          confidence: result.confidence,
+          sparseEvidence: result.sparseEvidence,
+          activePatternSlug: result.activePatternSlug,
+          citationCount: result.citations.length,
+          citations: result.citations,
+          suggestions: result.suggestions,
+          latencyMs: Date.now() - started,
+        });
       } catch (err) {
         send('error', { message: (err as Error).message });
+      } finally {
         controller.close();
       }
     },
@@ -108,19 +183,4 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pro
       'X-Accel-Buffering': 'no',
     },
   });
-}
-
-function buildSystemPrompt(modeHint: string, context: Awaited<ReturnType<typeof assembleContext>>): string {
-  const sections = [
-    'You are Nexus, the embedded delivery agent for AbarVa Programs. Voice: commit to claims, never hedge, always cite provenance when possible. Follow the 8 response formats when appropriate (ONE-SENTENCE · MATRIX · CRUX · RANKED LIST · ARTIFACT · CLARIFICATION · COUNTER-PAIR · "I DON\'T KNOW"). Forbidden phrases: "As an AI language model", "Great question", "Let me know if you need anything else", apologies for not knowing.',
-    `Mode: ${modeHint}`,
-    `Program: ${context.program.name}`,
-    `Current phase: ${context.program.currentPhase ?? 'not yet on a phase'}`,
-    `Archetype: ${context.program.archetype ?? 'unknown'}`,
-    context.modules.length > 0 ? `Modules: ${context.modules.map((m) => `${m.moduleKey}(${m.status})`).join(', ')}` : '',
-    context.deliverables.length > 0 ? `Deliverables: ${context.deliverables.map((d) => `${d.typeKey}(${d.status})`).join(', ')}` : '',
-    context.flags.length > 0 ? `Open flags: ${context.flags.map((f) => f.headline).join(' · ')}` : '',
-    context.patternPreload ? 'A pattern pre-load is attached; lean on it when relevant.' : 'No pattern attached.',
-  ];
-  return sections.filter(Boolean).join('\n\n');
 }

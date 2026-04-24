@@ -1,12 +1,18 @@
 'use client'
 
+import { useEffect } from 'react'
 import { SignIn } from '@clerk/nextjs'
+import { clearActiveClientContext } from '@/lib/auth/client-context-storage'
 
 interface Props {
   redirectUrl: string
 }
 
 export function SignInShell({ redirectUrl }: Props) {
+  useEffect(() => {
+    clearActiveClientContext()
+  }, [])
+
   return (
     <div
       style={{
@@ -17,7 +23,7 @@ export function SignInShell({ redirectUrl }: Props) {
         justifyContent: 'center',
       }}
     >
-      <SignIn forceRedirectUrl={redirectUrl} />
+      <SignIn key={redirectUrl} forceRedirectUrl={redirectUrl} />
     </div>
   )
 }

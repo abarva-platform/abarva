@@ -99,7 +99,7 @@ async function signInWithServerTicket(page: Page, email: string): Promise<void> 
     return Boolean(win.Clerk?.user);
   });
   await page.waitForFunction(() => document.cookie.includes('__session='));
-  await page.waitForLoadState('networkidle');
+  await page.waitForFunction(() => document.readyState === 'complete');
 }
 
 export async function addClerkSessionCookie(page: Page, sessionToken = AUTH_TOKEN): Promise<void> {

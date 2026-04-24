@@ -11,6 +11,10 @@ interface EvidenceItem {
   id: string;
   label: string;
   kind: string;
+  href?: string;
+  source?: string;
+  reference?: string;
+  confidence?: string | null;
 }
 
 export function EvidenceChipList({
@@ -25,10 +29,11 @@ export function EvidenceChipList({
   const drawer = useDrawer();
 
   function openEvidence(ref: EvidenceItem) {
+    const href = ref.href ?? `/evidence/${encodeURIComponent(ref.id)}?program=${encodeURIComponent(programCode)}&deliverable=${encodeURIComponent(deliverableCode)}`;
     drawer.openDrawer({
       kind: 'evidence',
       id: ref.id,
-      href: `/evidence/${encodeURIComponent(ref.id)}?program=${encodeURIComponent(programCode)}&deliverable=${encodeURIComponent(deliverableCode)}`,
+      href,
       title: `${ref.id} · ${ref.kind}`,
       eyebrow: 'Evidence detail',
       body: (
@@ -47,15 +52,24 @@ export function EvidenceChipList({
           </header>
           <section style={{ fontSize: 14, lineHeight: 1.65, color: '#3d342d' }}>
             <p>
-              Source: <strong>{ref.label}</strong>
+              Source: <strong>{ref.source ?? ref.label}</strong>
             </p>
+            {ref.reference ? (
+              <p style={{ marginTop: 12 }}>
+                Reference: {ref.reference}
+              </p>
+            ) : null}
             <p style={{ marginTop: 12 }}>
               Cited in <strong>{deliverableCode}</strong> · program <strong>{programCode}</strong>.
             </p>
+            {ref.confidence ? (
+              <p style={{ marginTop: 12 }}>
+                Confidence: <strong>{ref.confidence}</strong>
+              </p>
+            ) : null}
             <p style={{ marginTop: 12, fontSize: 12, color: '#6d625a', fontStyle: 'italic' }}>
-              Evidence details resolve against the program&rsquo;s <code>_evidence-base.json</code>.
-              This drawer is the entry point; the authored evidence registry carries the full
-              detail including source, reference, and confidence level.
+              Evidence details resolve against the program&rsquo;s authored <code>_evidence-base.json</code>.
+              Use the canonical route if you want a durable deep link.
             </p>
           </section>
           <footer style={{ marginTop: 24, paddingTop: 14, borderTop: '1px solid rgba(26,22,18,0.08)', fontSize: 12, color: '#8a7e72', lineHeight: 1.7 }}>
@@ -95,7 +109,7 @@ export function EvidenceChipList({
             fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
             letterSpacing: '0.12em', color: '#9B6DFF', fontWeight: 700,
           }}>
-            Open in drawer →
+            Open evidence →
           </span>
         </button>
       ))}

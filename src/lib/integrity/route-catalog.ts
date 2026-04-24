@@ -8,9 +8,10 @@ import {
   tenantProgramPhasePath,
   tenantProgramsPath,
 } from '@/lib/deliverables/seed-route-resolver';
+import { getAllProgramEvidenceRegistries } from '@/lib/deliverables/evidence-registry';
 import { getPatternManifestEntries, patternRouteFor } from '@/lib/intelligence/pattern-manifest';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
-import type { DeliverableSeedPlan, ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import type { ProgramSeedPlan, TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 
 export const TOWER_SUBSURFACE_DEFINITIONS = [
   {
@@ -49,6 +50,7 @@ export type CanonicalRouteSurface =
   | 'tenant_program'
   | 'tenant_program_phase'
   | 'tenant_deliverable'
+  | 'tenant_evidence'
   | 'tenant_tower'
   | 'tenant_tower_subsurface'
   | 'global_pattern'
@@ -166,6 +168,18 @@ export function buildCanonicalRouteRecords(): CanonicalRouteRecord[] {
 
     for (const program of tenant.programs) {
       addProgramRecords(records, tenant, program);
+    }
+  }
+
+  for (const registry of getAllProgramEvidenceRegistries()) {
+    for (const entry of registry.entries) {
+      records.push({
+        path: entry.href,
+        label: `${registry.programName} · ${entry.id}`,
+        surface: 'tenant_evidence',
+        tenantSlug: registry.tenantSlug,
+        programSlug: registry.programSlug,
+      });
     }
   }
 

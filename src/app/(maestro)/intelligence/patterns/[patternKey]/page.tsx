@@ -39,7 +39,9 @@ import { SeedGlobalPattern } from '@/components/deliverables/SeedRouteShell';
 import { getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import {
   getPatternApplicablePrograms,
+  getPatternBrowsableEvidence,
   getPatternManifestEntry,
+  getPatternManifestEntryWithMetrics,
   patternRouteFor,
   type PatternManifestEntry,
 } from '@/lib/intelligence/pattern-manifest';
@@ -165,7 +167,7 @@ export default async function PatternDetailPage({
   const activeClient = await getActiveClientRow();
   const row = await loadPatternRow(patternKey, activeClient?.id ?? null);
   const augmentation = getPatternAugmentation(patternKey);
-  const manifest = getPatternManifestEntry(patternKey);
+  const manifest = getPatternManifestEntryWithMetrics(patternKey, activeClient?.key ?? null);
   const industryCompositions = getPatternIndustryCompositions(patternKey);
   const linkedKpis = await loadLinkedKpis(row?.linked_kpi_ids ?? null, activeClient?.id ?? null);
 
@@ -174,7 +176,15 @@ export default async function PatternDetailPage({
   // manifest is the first fallback so new design-pack slugs never 404 while
   // the DB/vector/graph ingestion catches up.
   if (!row && !augmentation) {
-    if (manifest) return <ManifestPatternDetail pattern={manifest} activeClientName={activeClient?.name ?? null} />;
+    if (manifest) {
+      return (
+        <ManifestPatternDetail
+          pattern={manifest}
+          activeClientName={activeClient?.name ?? null}
+          activeClientKey={activeClient?.key ?? null}
+        />
+      );
+    }
     const seedHasPattern = getSeedPlan().programs.some((program) => program.patternSlug === patternKey);
     if (seedHasPattern) return <SeedGlobalPattern patternSlug={patternKey} />;
     notFound();
@@ -718,12 +728,15 @@ function RelatedGroup({ title, items }: { title: string; items: Array<{ label: s
 function ManifestPatternDetail({
   pattern,
   activeClientName,
+  activeClientKey,
 }: {
   pattern: PatternManifestEntry;
   activeClientName: string | null;
+  activeClientKey: string | null;
 }) {
   const sectionPreview = pattern.sections.slice(0, 8);
   const applicablePrograms = getPatternApplicablePrograms(pattern.slug);
+  const evidenceSources = getPatternBrowsableEvidence(pattern.slug, activeClientKey).slice(0, 8);
   const traceableDeliverables = applicablePrograms
     .flatMap((program) => program.deliverables
       .filter((deliverable) => deliverable.renderTier !== 'stub')
@@ -828,6 +841,39 @@ function ManifestPatternDetail({
             <Body size="sm" tone="muted">No seeded program currently applies this pattern.</Body>
           )}
         </section>
+
+        {evidenceSources.length > 0 ? (
+          <section>
+            <EyebrowLabel tone="teal" size="sm">BROWSABLE EVIDENCE</EyebrowLabel>
+            <SectionHeading size="md" style={{ marginTop: 10, marginBottom: 14 }}>
+              Observable sources behind the evidence count
+            </SectionHeading>
+            <div style={{ display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
+              {evidenceSources.map((source) => (
+                <Link
+                  key={source.href}
+                  href={source.href}
+                  style={{
+                    display: 'block',
+                    padding: 16,
+                    borderRadius: 12,
+                    textDecoration: 'none',
+                    background: 'rgba(20,184,166,0.04)',
+                    border: '0.5px solid rgba(20,184,166,0.18)',
+                  }}
+                >
+                  <EyebrowLabel tone="teal" size="xs" style={{ marginBottom: 8 }}>
+                    {source.programCode} · {source.id} · {(source.confidence ?? 'unlabeled').toUpperCase()}
+                  </EyebrowLabel>
+                  <Body size="md" weight={700} tone="primary" as="div">{source.label}</Body>
+                  <Body size="sm" tone="secondary" style={{ marginTop: 8 }}>
+                    {source.reference}
+                  </Body>
+                </Link>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {traceableDeliverables.length > 0 ? (
           <section>

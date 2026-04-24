@@ -5,7 +5,7 @@ import type {
 } from '@/lib/intelligence/pattern-manifest';
 import {
   getPatternApplicableProgramsForTenant,
-  getPatternManifestEntries,
+  getPatternManifestEntriesWithMetrics,
   patternMatchesIndustry,
 } from '@/lib/intelligence/pattern-manifest';
 import type {
@@ -275,7 +275,7 @@ export async function runSentinelTurn(args: {
   message: string;
   activePatternSlug?: string | null;
 }): Promise<SentinelQueryResponse> {
-  const patterns = getPatternManifestEntries()
+  const patterns = getPatternManifestEntriesWithMetrics(args.ctx.clientKey)
     .filter((pattern) => patternMatchesIndustry(pattern, args.ctx.industryCode));
   const anchorSlug = args.activePatternSlug ?? null;
 

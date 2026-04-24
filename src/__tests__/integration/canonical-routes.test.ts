@@ -6,6 +6,7 @@ import {
   getSeedPlan,
   type SeedRouteContext,
 } from '@/lib/deliverables/seed-route-resolver';
+import { getEvidenceDetail } from '@/lib/deliverables/evidence-registry';
 import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTierRenderer';
 import {
   SeedGlobalPattern,
@@ -83,6 +84,18 @@ function renderRoute(route: CanonicalRouteRecord): string {
       });
       return renderToStaticMarkup(createElement(DeliverableTierRenderer, { model }));
     }
+    case 'tenant_evidence': {
+      const detail = evidenceDetailForRoute(route.path);
+      if (!detail) throw new Error(`No evidence detail for ${route.path}`);
+      return renderToStaticMarkup(
+        createElement('main', null,
+          createElement('nav', { 'aria-label': 'Route breadcrumbs' }, 'Evidence'),
+          createElement('h1', { className: 'del-title' }, detail.label),
+          createElement('p', null, detail.reference),
+          createElement('footer', { className: 'del-footer' }, 'Composite organization built from real-world data.'),
+        ),
+      );
+    }
     case 'tenant_tower':
       return renderToStaticMarkup(createElement(SeedTenantTower, { tenant: tenant! }));
     case 'tenant_tower_subsurface':
@@ -106,4 +119,10 @@ function phaseFromRoute(route: CanonicalRouteRecord): SpecPhaseNumber {
   const match = route.path.match(/\/phase\/([1-5])$/);
   if (!match) throw new Error(`No phase segment found for ${route.path}`);
   return Number(match[1]) as SpecPhaseNumber;
+}
+
+function evidenceDetailForRoute(path: string) {
+  const match = path.match(/^\/tenant\/([^/]+)\/programs\/([^/]+)\/evidence\/([^/]+)$/);
+  if (!match) return null;
+  return getEvidenceDetail(match[1], match[2], decodeURIComponent(match[3]));
 }
