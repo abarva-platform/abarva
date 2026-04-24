@@ -1,22 +1,13 @@
-'use client';
+import { redirect } from 'next/navigation';
+import { getActiveClientKey } from '@/lib/active-client';
+import { CLIENT_KEY_TO_ROUTE_SLUG } from '@/lib/client-config';
 
-import { Suspense } from 'react';
-import { getAllPrograms } from '@/lib/programs/mock';
-import { ProgramsShell } from '@/components/programs/ProgramsShell';
+export const dynamic = 'force-dynamic';
 
-// Single persistent Programs shell · sub-menu tabs (Portfolio · + New Program ·
-// P0-P4), metadata strip on program-mode, and a phase workspace that swaps in
-// place without route changes. Light editorial palette matching Home + Platform.
-
-function ProgramsPageContent() {
-  const programs = getAllPrograms();
-  return <ProgramsShell programs={programs} />;
-}
-
-export default function ProgramsPage() {
-  return (
-    <Suspense fallback={<div style={{ padding: 28, fontFamily: 'DM Sans, sans-serif', color: '#5B4D43' }}>Loading programs…</div>}>
-      <ProgramsPageContent />
-    </Suspense>
-  );
+// Retire the stale mock-only /programs shell. Canonical program access now
+// lives on the tenant-scoped seeded routes, so every legacy /programs link
+// resolves into the same source of truth as preview + investor flows.
+export default async function ProgramsRedirectPage() {
+  const clientKey = await getActiveClientKey();
+  redirect(`/tenant/${CLIENT_KEY_TO_ROUTE_SLUG[clientKey]}/programs`);
 }

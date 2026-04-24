@@ -21,6 +21,7 @@ export interface PortfolioProgram {
   objective: string | null;
   outcomeFeeUsd: number | null;
   healthSignal: 'healthy' | 'watch' | 'attention' | null;
+  href?: string;
 }
 
 interface Props {
@@ -68,6 +69,7 @@ export function PortfolioGlance({ programs, totalCount }: Props) {
         {top.map((p) => {
           const root = p.routePrefix ?? '/programs';
           const slug = root === '/programs' ? p.id : p.graphNodeId;
+          const href = p.href ?? `${root}/${encodeURIComponent(slug)}`;
           return (
             <ProgramCard
               key={p.id}
@@ -78,7 +80,7 @@ export function PortfolioGlance({ programs, totalCount }: Props) {
               objective={p.objective}
               outcomeFeeUsd={p.outcomeFeeUsd}
               healthSignal={p.healthSignal}
-              href={`${root}/${encodeURIComponent(slug)}`}
+              href={href}
               size="compact"
             />
           );

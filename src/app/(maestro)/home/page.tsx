@@ -16,7 +16,8 @@
 
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getAllActiveEngagements } from '@/lib/db/engagement';
-import { getActiveClientRow } from '@/lib/active-client';
+import { getActiveClientKey, getActiveClientRow } from '@/lib/active-client';
+import { CLIENT_KEY_TO_ROUTE_SLUG } from '@/lib/client-config';
 import { getAllPersons } from '@/lib/db/person';
 import { getAllPrograms } from '@/lib/programs/mock';
 import { BriefingSurface, type BriefingSummary } from '@/components/home/composite/BriefingSurface';
@@ -25,6 +26,7 @@ import { StakeholderLens, type StakeholderSummary } from '@/components/home/comp
 import { ContextFooter } from '@/components/home/composite/ContextFooter';
 import { TenantBreadthRow, type BreadthChip } from '@/components/home/composite/TenantBreadthRow';
 import { CommandCenter } from '@/components/home/command-center/CommandCenter';
+import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +38,6 @@ const INK_SOFT = '#40342D';
 const INK_MUTED = '#6B5B52';
 const LINE = 'rgba(23,20,17,0.12)';
 const TEAL = '#14B8A6';
-const SKY = '#7FB8FF';
 const DARK = '#101418';
 const DARK_PANEL = '#171C21';
 const DARK_LINE = 'rgba(255,255,255,0.08)';
@@ -68,10 +69,11 @@ function healthFromPhase(phase: number): 'healthy' | 'watch' | 'attention' {
 }
 
 export default async function HomePage() {
-  const [maestro, activeClient, allPersons] = await Promise.all([
+  const [maestro, activeClient, allPersons, activeClientKey] = await Promise.all([
     getCurrentPerson(),
     getActiveClientRow(),
     getAllPersons(),
+    getActiveClientKey(),
   ]);
 
   const activeClientId = activeClient?.id ?? null;
@@ -90,6 +92,7 @@ export default async function HomePage() {
   //    don't yet have composite mock data.
   const allMockPrograms = getAllPrograms();
   const activeClientName = activeClient?.name ?? null;
+  const seededTenant = findTenantByRouteSlug(CLIENT_KEY_TO_ROUTE_SLUG[activeClientKey]);
   const matchesMockTenant = (tenant: string) => {
     if (!activeClientName) return false;
     const keyword = activeClientName.split(/\s+/)[0]?.toLowerCase() ?? '';
@@ -97,7 +100,21 @@ export default async function HomePage() {
   };
   const mockForActive = allMockPrograms.filter((p) => matchesMockTenant(p.clientName));
 
-  const portfolio: PortfolioProgram[] = mockForActive.length > 0
+  const portfolio: PortfolioProgram[] = seededTenant?.programs?.length
+    ? seededTenant.programs.map((program) => ({
+        id: program.programSlug,
+        graphNodeId: program.programSlug,
+        routePrefix: '/programs' as const,
+        href: program.routePath,
+        name: program.name,
+        currentPhase: program.currentAppPhase,
+        sponsorName: null,
+        sponsorTitle: null,
+        objective: program.roleInDemo,
+        outcomeFeeUsd: null,
+        healthSignal: healthFromPhase(program.currentAppPhase),
+      }))
+    : mockForActive.length > 0
     ? mockForActive.map((p) => ({
         id: p.id,
         graphNodeId: p.id, // programs/[id] route uses the same id
@@ -174,7 +191,7 @@ export default async function HomePage() {
   // approximations per spec §7 demo note so the row never reads as empty
   // for a demo-ready tenant. When the Tenant Intelligence Command Center
   // wiring lands, replace the fallbacks with live counts.
-  const programCount = portfolio.length;
+  const programCount = seededTenant?.programs.length ?? portfolio.length;
   const stakeholderTotal = scopedPersons.length;
   const tenantName = activeClient?.name ?? null;
   const isApex = tenantName?.toLowerCase().includes('apex') ?? false;
