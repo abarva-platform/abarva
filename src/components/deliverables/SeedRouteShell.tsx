@@ -63,7 +63,10 @@ export function SeedProgramOverview({ tenant, program }: { tenant: TenantSeedPla
         ))}
       </CardGrid>
       <SectionTitle label="Deliverables" />
-      <DeliverableList tenant={tenant} program={program} deliverables={program.deliverables.slice(0, 12)} />
+      {/* C2-13 · surface all deliverables, not a silently-truncated 12. The
+          metrics row above advertises the full count; the card grid must
+          match or the counter reads as dishonest. */}
+      <DeliverableList tenant={tenant} program={program} deliverables={program.deliverables} />
     </SeedPageFrame>
   );
 }

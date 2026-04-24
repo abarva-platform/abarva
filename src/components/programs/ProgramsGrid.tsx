@@ -12,12 +12,19 @@ import { COLORS } from '@/lib/design-system';
 // use case (tenant manager asks "show me everything"). Preserves the
 // PortfolioIndex per-segment inbox layout · this grid is additive.
 
+// Phase labels match the canonical spec-phase vocabulary used by every
+// program detail page — so the home card and detail page agree (C2-06).
+// The input `currentPhase` is app-phase (0-4) per SPEC_PHASE_TO_APP_PHASE;
+// we map to spec-phase (1-5) for display. Labels mirror the seed plan's
+// phase names (Intake / Diagnosis / Design & Decision / Build & Deliver /
+// Outcome) rather than the legacy Start/Diagnose/Design/Execute/Verify set
+// that only existed on this one surface.
 const PHASE_LABELS: Record<number, string> = {
-  0: 'Phase 0 · Start',
-  1: 'Phase 1 · Diagnose',
-  2: 'Phase 2 · Design',
-  3: 'Phase 3 · Execute',
-  4: 'Phase 4 · Verify',
+  0: 'P1 · Intake',
+  1: 'P2 · Diagnosis',
+  2: 'P3 · Design & Decision',
+  3: 'P4 · Build & Deliver',
+  4: 'P5 · Outcome',
 };
 
 const STATUS_TO_LABEL: Record<string, string> = {
@@ -349,11 +356,11 @@ export function ProgramsGrid() {
       label: 'Phase',
       type: 'multiselect',
       options: [
-        { value: '0', label: 'Phase 0 · Start' },
-        { value: '1', label: 'Phase 1 · Diagnose' },
-        { value: '2', label: 'Phase 2 · Design' },
-        { value: '3', label: 'Phase 3 · Execute' },
-        { value: '4', label: 'Phase 4 · Verify' },
+        { value: '0', label: 'P1 · Intake' },
+        { value: '1', label: 'P2 · Diagnosis' },
+        { value: '2', label: 'P3 · Design & Decision' },
+        { value: '3', label: 'P4 · Build & Deliver' },
+        { value: '4', label: 'P5 · Outcome' },
       ],
     },
     {
