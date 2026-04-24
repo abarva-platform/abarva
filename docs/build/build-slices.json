@@ -49,7 +49,7 @@
       "id": "S1",
       "name": "Context Bundle contracts",
       "category": "A",
-      "status": "ready",
+      "status": "code_complete",
       "risk": "high",
       "ownerAgent": "Planner + Builder",
       "dependsOn": [
