@@ -61,11 +61,15 @@ export function isLockedTenantRole(role: AppSessionRole, email: string | null | 
   return resolvedRole === 'client' || resolvedRole === 'maestro';
 }
 
-export function resolveSessionClientKey(input: ResolveClientInput): ClientKey {
-  const resolved = [input.clientId, input.defaultClientId, inferClientKeyFromEmail(input.email), DEFAULT_CLIENT_KEY].find((candidate) =>
+export function resolvePinnedSessionClientKey(input: ResolveClientInput): ClientKey | null {
+  const resolved = [input.clientId, input.defaultClientId, inferClientKeyFromEmail(input.email)].find((candidate) =>
     isClientKey(candidate),
   );
-  return resolved ?? DEFAULT_CLIENT_KEY;
+  return resolved ?? null;
+}
+
+export function resolveSessionClientKey(input: ResolveClientInput): ClientKey {
+  return resolvePinnedSessionClientKey(input) ?? DEFAULT_CLIENT_KEY;
 }
 
 export function shouldStripUnauthorizedClientParam(

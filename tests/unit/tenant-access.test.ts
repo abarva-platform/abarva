@@ -4,7 +4,7 @@
 // right verdict across the crawler-confirmed scenarios:
 // - Meridian user on Apex URL → forbidden
 // - Apex user on Apex URL → ok
-// - Maestro on any URL → ok
+// - Only admin may roam across tenants
 // - Unknown programCode → 404-equivalent
 // - programCode→tenantKey resolution for every seeded program
 
@@ -18,7 +18,12 @@ jest.mock('@/lib/auth/current-user', () => {
   };
 });
 
+jest.mock('@clerk/nextjs/server', () => ({
+  auth: jest.fn(async () => ({ sessionClaims: null })),
+}));
+
 import { getCurrentUser } from '@/lib/auth/current-user';
+import { auth } from '@clerk/nextjs/server';
 import {
   checkTenantAccess,
   checkTenantAccessByKey,
@@ -26,6 +31,19 @@ import {
 } from '@/lib/auth/tenant-access';
 
 const mockedGetCurrentUser = getCurrentUser as jest.MockedFunction<typeof getCurrentUser>;
+const mockedAuth = auth as unknown as jest.MockedFunction<() => Promise<{ sessionClaims: unknown }>>;
+
+function claimsFor(overrides: { role?: string; clientId?: string; email?: string } = {}) {
+  return {
+    sessionClaims: {
+      publicMetadata: {
+        role: overrides.role ?? 'client',
+        clientId: overrides.clientId ?? null,
+      },
+      emailAddress: overrides.email ?? null,
+    },
+  };
+}
 
 function userFixture(overrides: Partial<CurrentUser> = {}): CurrentUser {
   return {
@@ -44,6 +62,8 @@ function userFixture(overrides: Partial<CurrentUser> = {}): CurrentUser {
 describe('tenant-access guard', () => {
   afterEach(() => {
     mockedGetCurrentUser.mockReset();
+    mockedAuth.mockReset();
+    mockedAuth.mockResolvedValue({ sessionClaims: null });
   });
 
   describe('checkTenantAccess', () => {
@@ -54,6 +74,7 @@ describe('tenant-access guard', () => {
           accessibleClients: [{ clientId: 'meridian', name: 'Meridian Health', role: 'client_viewer' }],
         }),
       );
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'client', clientId: 'meridian' }));
       const verdict = await checkTenantAccess('apex-retail');
       expect(verdict.ok).toBe(false);
       if (!verdict.ok) expect(verdict.reason).toBe('forbidden');
@@ -66,16 +87,32 @@ describe('tenant-access guard', () => {
           accessibleClients: [{ clientId: 'apexretail', name: 'Apex Retail', role: 'client_viewer' }],
         }),
       );
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'client', clientId: 'apexretail' }));
       const verdict = await checkTenantAccess('apex-retail');
       expect(verdict.ok).toBe(true);
     });
 
-    test('maestro bypasses tenant scoping and reads any tenant', async () => {
+    test('admin bypasses tenant scoping and reads any tenant', async () => {
       mockedGetCurrentUser.mockResolvedValue(userFixture({ primaryRole: 'maestro' }));
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'admin' }));
       const apex = await checkTenantAccess('apex-retail');
       const meridian = await checkTenantAccess('meridian-health');
       expect(apex.ok).toBe(true);
       expect(meridian.ok).toBe(true);
+    });
+
+    test('maestro fallback stays pinned when it is not an admin session', async () => {
+      mockedGetCurrentUser.mockResolvedValue(userFixture({ primaryRole: 'maestro' }));
+      mockedAuth.mockResolvedValue(
+        claimsFor({
+          role: 'maestro',
+          clientId: 'apexretail',
+          email: 'demo-apexretail+clerk_test@abarva.com',
+        }),
+      );
+      const verdict = await checkTenantAccess('meridian-health');
+      expect(verdict.ok).toBe(false);
+      if (!verdict.ok) expect(verdict.reason).toBe('forbidden');
     });
 
     test('unauthenticated caller returns unauthenticated reason', async () => {
@@ -87,6 +124,7 @@ describe('tenant-access guard', () => {
 
     test('nonexistent tenant slug returns tenant_not_found', async () => {
       mockedGetCurrentUser.mockResolvedValue(userFixture());
+      mockedAuth.mockResolvedValue(claimsFor());
       const verdict = await checkTenantAccess('nonexistent-tenant');
       expect(verdict.ok).toBe(false);
       if (!verdict.ok) expect(verdict.reason).toBe('tenant_not_found');
@@ -99,6 +137,7 @@ describe('tenant-access guard', () => {
           accessibleClients: [],
         }),
       );
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'client', clientId: 'apexretail' }));
       const verdict = await checkTenantAccess('apex-retail');
       expect(verdict.ok).toBe(true);
     });
@@ -112,6 +151,7 @@ describe('tenant-access guard', () => {
           accessibleClients: [{ clientId: 'apexretail', name: 'Apex Retail', role: 'client_viewer' }],
         }),
       );
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'client', clientId: 'apexretail' }));
       const verdict = await checkTenantAccessByKey('apexretail');
       expect(verdict.ok).toBe(true);
     });
@@ -123,6 +163,7 @@ describe('tenant-access guard', () => {
           accessibleClients: [{ clientId: 'apexretail', name: 'Apex Retail', role: 'client_viewer' }],
         }),
       );
+      mockedAuth.mockResolvedValue(claimsFor({ role: 'client', clientId: 'apexretail' }));
       const verdict = await checkTenantAccessByKey('meridian');
       expect(verdict.ok).toBe(false);
       if (!verdict.ok) expect(verdict.reason).toBe('forbidden');
@@ -141,6 +182,10 @@ describe('tenant-access guard', () => {
     test('returns null for unknown program codes', () => {
       expect(tenantKeyForProgramCode('NOPE-999')).toBeNull();
       expect(tenantKeyForProgramCode('')).toBeNull();
+    });
+
+    test('normalizes whitespace and casing before lookup', () => {
+      expect(tenantKeyForProgramCode('  apx-01  ')).toBe('apexretail');
     });
   });
 });

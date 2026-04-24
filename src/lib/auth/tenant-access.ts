@@ -21,9 +21,11 @@
 // honestly: "this tenant exists; you just don't have access." More
 // defensible from a product integrity standpoint.
 
+import { auth } from '@clerk/nextjs/server';
 import { forbidden, notFound, redirect } from 'next/navigation';
-import { getCurrentUser, userCanAccessClient } from './current-user';
+import { getCurrentUser } from './current-user';
 import type { CurrentUser } from './current-user';
+import { resolvePinnedSessionClientKey, resolveSessionRole, type AppSessionRole } from './access-routing';
 import { findTenantByRouteSlug, getSeedPlan } from '@/lib/deliverables/seed-route-resolver';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
 import { isClientKey, type ClientKey } from '@/lib/client-config';
@@ -32,6 +34,57 @@ export interface TenantAccessContext {
   user: CurrentUser;
   tenant: TenantSeedPlan;
   clientKey: ClientKey;
+}
+
+interface TenantAccessSnapshot {
+  sessionRole: AppSessionRole;
+  pinnedClientKey: ClientKey | null;
+  membershipClientKeys: ClientKey[];
+}
+
+type AuthSessionClaims = {
+  publicMetadata?: {
+    role?: string;
+    clientId?: string;
+  };
+  emailAddress?: string;
+} | null;
+
+function getMembershipClientKeys(user: CurrentUser): ClientKey[] {
+  if (user.primaryRole === 'maestro') {
+    return [];
+  }
+
+  return user.accessibleClients
+    .map((client) => (isClientKey(client.clientId) ? client.clientId : null))
+    .filter((clientId): clientId is ClientKey => clientId !== null);
+}
+
+function buildTenantAccessSnapshot(user: CurrentUser, claims: AuthSessionClaims): TenantAccessSnapshot {
+  const email = claims?.emailAddress ?? user.email;
+  const sessionRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, email);
+  const pinnedClientKey = resolvePinnedSessionClientKey({
+    clientId: claims?.publicMetadata?.clientId ?? null,
+    email,
+  });
+
+  return {
+    sessionRole,
+    pinnedClientKey,
+    membershipClientKeys: getMembershipClientKeys(user),
+  };
+}
+
+export function canAccessTenantClient(snapshot: TenantAccessSnapshot, clientKey: ClientKey): boolean {
+  if (snapshot.sessionRole === 'admin') {
+    return true;
+  }
+
+  if (snapshot.membershipClientKeys.includes(clientKey)) {
+    return true;
+  }
+
+  return snapshot.pinnedClientKey === clientKey;
 }
 
 /**
@@ -65,22 +118,9 @@ export async function assertTenantAccess(tenantSlug: string): Promise<TenantAcce
     notFound();
   }
 
-  // Maestros (admins with cross-tenant role) bypass — they're allowed
-  // to see every tenant. Everyone else needs an explicit membership or
-  // a matching Clerk publicMetadata.clientId.
-  if (user.primaryRole === 'maestro') {
-    return { user, tenant, clientKey };
-  }
-
-  if (userCanAccessClient(user, clientKey)) {
-    return { user, tenant, clientKey };
-  }
-
-  // Fallback: Clerk publicMetadata.clientId can pin a client even when
-  // the person_client_memberships row hasn't been seeded yet (common
-  // for demo accounts). If metadata matches, we allow — this preserves
-  // the existing auth contract for fresh Clerk accounts.
-  if (user.metadataClientKey && user.metadataClientKey === clientKey) {
+  const { sessionClaims } = await auth();
+  const snapshot = buildTenantAccessSnapshot(user, sessionClaims as AuthSessionClaims);
+  if (canAccessTenantClient(snapshot, clientKey)) {
     return { user, tenant, clientKey };
   }
 
@@ -107,15 +147,9 @@ export async function checkTenantAccess(
   const clientKey = tenant.tenantKey;
   if (!isClientKey(clientKey)) return { ok: false, reason: 'tenant_not_found' };
 
-  if (user.primaryRole === 'maestro') {
-    return { ok: true, user, tenant, clientKey };
-  }
-
-  if (userCanAccessClient(user, clientKey)) {
-    return { ok: true, user, tenant, clientKey };
-  }
-
-  if (user.metadataClientKey && user.metadataClientKey === clientKey) {
+  const { sessionClaims } = await auth();
+  const snapshot = buildTenantAccessSnapshot(user, sessionClaims as AuthSessionClaims);
+  if (canAccessTenantClient(snapshot, clientKey)) {
     return { ok: true, user, tenant, clientKey };
   }
 
@@ -129,7 +163,8 @@ export async function checkTenantAccess(
  */
 export function tenantKeyForProgramCode(programCode: string): ClientKey | null {
   const plan = getSeedPlan();
-  const program = plan.programs.find((p) => p.code === programCode);
+  const normalizedCode = programCode.trim().toLowerCase();
+  const program = plan.programs.find((p) => p.code.trim().toLowerCase() === normalizedCode);
   if (!program) return null;
   return isClientKey(program.tenantKey) ? program.tenantKey : null;
 }
@@ -150,9 +185,9 @@ export async function checkTenantAccessByKey(
 
   if (!isClientKey(clientKey)) return { ok: false, reason: 'tenant_not_found' };
 
-  if (user.primaryRole === 'maestro') return { ok: true, user };
-  if (userCanAccessClient(user, clientKey)) return { ok: true, user };
-  if (user.metadataClientKey && user.metadataClientKey === clientKey) return { ok: true, user };
+  const { sessionClaims } = await auth();
+  const snapshot = buildTenantAccessSnapshot(user, sessionClaims as AuthSessionClaims);
+  if (canAccessTenantClient(snapshot, clientKey)) return { ok: true, user };
 
   return { ok: false, reason: 'forbidden' };
 }
