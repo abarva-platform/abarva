@@ -38,6 +38,30 @@ export async function getEngagementByGraphId(graphNodeId: string): Promise<Engag
   return data as EngagementRow | null;
 }
 
+// Widened lookup · some pressure cards (Tower contradictions) reference an
+// engagement by its primary-key UUID rather than graph_node_id. Try both so
+// the /engagements/{id}/ route resolves for either shape. Fixes the 404 Dr. L
+// and Marcus T hit on /engagements/892a57af-... (C2-03).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function getEngagementByAnyId(idOrGraphId: string): Promise<EngagementRow | null> {
+  const byGraph = await getEngagementByGraphId(idOrGraphId);
+  if (byGraph) return byGraph;
+
+  // Only attempt primary-key lookup when the input has UUID shape — saves
+  // an extra query for the common graph_node_id miss and avoids a Postgres
+  // UUID cast error on non-UUID inputs.
+  if (!UUID_RE.test(idOrGraphId)) return null;
+
+  const { data, error } = await getServerSupabase()
+    .from('engagements')
+    .select('*')
+    .eq('id', idOrGraphId)
+    .maybeSingle();
+  if (error) throw error;
+  return data as EngagementRow | null;
+}
+
 export interface DecisionEntry {
   summary: string;
   rationale: string;

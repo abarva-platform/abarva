@@ -37,8 +37,8 @@ describe('access-routing', () => {
   test('infers roles for legacy demo logins', () => {
     expect(inferSessionRoleFromEmail('anand+clerk_test@abarva.com')).toBe('admin');
     expect(inferSessionRoleFromEmail('investor+clerk_test@abarva.com')).toBe('investor');
-    expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBe('maestro');
-    expect(resolveSessionRole(undefined, 'demo-apexretail+clerk_test@abarva.com')).toBe('maestro');
+    expect(inferSessionRoleFromEmail('demo-meridian+clerk_test@abarva.com')).toBe('client');
+    expect(resolveSessionRole(undefined, 'demo-apexretail+clerk_test@abarva.com')).toBe('client');
   });
 
   test('recognizes the new client setup alias', () => {
@@ -77,6 +77,13 @@ describe('access-routing', () => {
       shouldStripUnauthorizedClientParam(
         undefined,
         { email: 'demo-apexretail+clerk_test@abarva.com' },
+        'apexretail',
+      ),
+    ).toBe(false);
+    expect(
+      shouldStripUnauthorizedClientParam(
+        'client',
+        { email: null, clientId: null, defaultClientId: null },
         'apexretail',
       ),
     ).toBe(false);

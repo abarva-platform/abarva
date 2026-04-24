@@ -138,6 +138,12 @@ export interface AtlasToolResultMap {
   }>;
 }
 
+export interface AtlasTurnResult extends AtlasChatResponse {
+  toolResults: AtlasToolResultMap;
+  modelName: string | null;
+  promptVersion: string;
+}
+
 export interface AtlasChatResponse {
   threadId: string;
   routeType: AtlasRouteType;

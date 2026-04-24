@@ -46,7 +46,7 @@ export function inferSessionRoleFromEmail(email: string | null | undefined): App
     normalized.includes('keystone+clerk_test') ||
     normalized.includes('ke+clerk_test')
   ) {
-    return 'maestro';
+    return 'client';
   }
 
   return null;
@@ -79,7 +79,9 @@ export function shouldStripUnauthorizedClientParam(
 ): boolean {
   if (!requestedClientId) return false;
   if (!isLockedTenantRole(role, input.email)) return false;
-  return requestedClientId !== resolveSessionClientKey(input);
+  const pinnedClientId = resolvePinnedSessionClientKey(input);
+  if (!pinnedClientId) return false;
+  return requestedClientId !== pinnedClientId;
 }
 
 export function isExternalOnlyRole(role: AppSessionRole): role is 'external' {
@@ -91,6 +93,7 @@ export function resolvePostSignInPath(
   input: ResolveClientInput = {},
 ): string {
   const resolvedRole = resolveSessionRole(role, input.email);
+  const pinnedClientId = resolvePinnedSessionClientKey(input);
   const resolvedClientId = resolveSessionClientKey(input);
 
   if (isNewClientSetupEmail(input.email)) {
@@ -109,8 +112,11 @@ export function resolvePostSignInPath(
     return `/home?client=${resolvedClientId}`;
   }
 
-  if ((resolvedRole === 'client' || resolvedRole === 'maestro') && isClientKey(input.clientId)) {
-    return `/home?client=${input.clientId}`;
+  if (resolvedRole === 'client' || resolvedRole === 'maestro') {
+    if (pinnedClientId) {
+      return `/home?client=${pinnedClientId}`;
+    }
+    return '/home';
   }
 
   return `/home?client=${resolvedClientId}`;
