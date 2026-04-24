@@ -127,7 +127,11 @@ export function patternMatchesIndustry(pattern: PatternManifestEntry, industryCo
 }
 
 function normalizeIndustry(value: string): string {
-  return value.trim().toLowerCase().replace(/-/g, '_');
+  const normalized = value.trim().toLowerCase().replace(/-/g, '_');
+  if (normalized === 'healthcare_idn' || normalized === 'health') return 'healthcare';
+  if (normalized === 'finserv' || normalized === 'finance' || normalized === 'financial_services') return 'financial_services';
+  if (normalized === 'retail_omni') return 'retail';
+  return normalized;
 }
 
 function normalizePatternKey(value: string): string {

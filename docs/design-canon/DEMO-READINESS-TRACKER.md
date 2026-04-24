@@ -1,5 +1,7 @@
 # Demo Readiness Tracker
 
+> **Status note · 2026-04-23:** this tracker predates the remediation handoff in `/Users/anand/Downloads/abarva-remediation-handoff-2026-04-24.md` and still contains historical percentage rollups. For the current P0 remediation state, use `/Users/anand/Projects/nexus-codex-p0-remediation/reports/codex-completion-report-2026-04-23-p0-remediation-pass-1.md` as the authoritative cycle report.
+
 **Last updated:** 2026-04-23 · full-day EOD rollup
 **Owner:** Claude Opus 4.7 (1M context)
 **Rule:** Update at the end of every working session. Never claim above actual.

@@ -13,7 +13,7 @@
 import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
-import { resolveSessionRole } from '@/lib/auth/access-routing'
+import { isLockedTenantRole, resolveSessionRole } from '@/lib/auth/access-routing'
 import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey } from '@/lib/client-config'
 
 export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
@@ -90,12 +90,19 @@ export function useClientContext() {
   }, [clientId])
 
   useEffect(() => {
-    if (!urlClient || urlClient === clientId) return
+    if (!urlClient) return
     const params = new URLSearchParams(searchParams.toString())
-    params.set('client', clientId)
+    if (isLockedTenantRole(role, email) && urlClient !== pinnedClientId) {
+      params.delete('client')
+    } else if (urlClient !== clientId) {
+      params.set('client', clientId)
+    } else {
+      return
+    }
     const targetPath = pathname || '/home'
-    router.replace(`${targetPath}?${params.toString()}`)
-  }, [clientId, pathname, router, searchParams, urlClient])
+    const nextQuery = params.toString()
+    router.replace(nextQuery ? `${targetPath}?${nextQuery}` : targetPath)
+  }, [clientId, email, pathname, pinnedClientId, role, router, searchParams, urlClient])
 
   const currentClient = ALL_CLIENTS.find(c => c.id === clientId) ?? ALL_CLIENTS[0]
 

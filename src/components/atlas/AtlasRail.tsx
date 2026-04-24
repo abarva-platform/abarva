@@ -120,44 +120,62 @@ export function AtlasRail({ clientId, clientName }: { clientId: string; clientNa
 
   async function sendMessage(message: string, signalId?: string | null) {
     const trimmed = message.trim();
-    if (!trimmed) return;
+    if (!trimmed || pending) return;
 
     setPending(true);
     setMessages((current) => [...current, { id: `user-${Date.now()}`, role: 'user', content: trimmed }]);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 18_000);
 
-    const res = await fetch('/api/v1/atlas/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: trimmed, threadId, signalId, clientId }),
-    });
-    const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
+    try {
+      const res = await fetch('/api/v1/atlas/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: trimmed, threadId, signalId, clientId }),
+        signal: controller.signal,
+      });
+      const json = (await res.json().catch(() => ({}))) as Partial<AtlasChatResponse>;
 
-    setPending(false);
-    if (!res.ok || !json.response || !json.threadId) {
+      if (!res.ok || !json.response || !json.threadId) {
+        setMessages((current) => [
+          ...current,
+          {
+            id: `atlas-error-${Date.now()}`,
+            role: 'atlas',
+            content: 'Atlas could not answer that right now. Honest read: the Tower summary is still valid, but the live response path needs a retry.',
+          },
+        ]);
+        return;
+      }
+
+      const responseText = json.response;
+      setThreadId(json.threadId);
+      setMessages((current) => [
+        ...current,
+        {
+          id: `atlas-${Date.now()}`,
+          role: 'atlas',
+          content: responseText,
+        },
+      ]);
+      setSuggestions(json.suggestions ?? []);
+      if (json.signalId) {
+        setActiveSignalId(json.signalId);
+      }
+    } catch (err) {
       setMessages((current) => [
         ...current,
         {
           id: `atlas-error-${Date.now()}`,
           role: 'atlas',
-          content: 'Atlas could not answer that right now. Try the hero signal or peer-position prompts again.',
+          content: err instanceof DOMException && err.name === 'AbortError'
+            ? 'Atlas timed out before the portfolio response came back. Honest answer: retry the prompt or open the linked signal while I keep the Tower summary anchored.'
+            : 'Atlas could not reach the live response path just now. The pressure cards are still server-rendered, but this reply is unavailable until the next retry.',
         },
       ]);
-      return;
-    }
-
-    const responseText = json.response;
-    setThreadId(json.threadId);
-    setMessages((current) => [
-      ...current,
-      {
-        id: `atlas-${Date.now()}`,
-        role: 'atlas',
-        content: responseText,
-      },
-    ]);
-    setSuggestions(json.suggestions ?? []);
-    if (json.signalId) {
-      setActiveSignalId(json.signalId);
+    } finally {
+      window.clearTimeout(timeout);
+      setPending(false);
     }
   }
 

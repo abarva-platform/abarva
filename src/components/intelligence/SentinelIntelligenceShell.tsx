@@ -8,8 +8,10 @@
 // contract from agent-anchoring-implementation-guide.md §2.2.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { PatternManifestEntry } from '@/lib/intelligence/pattern-manifest';
+import type { PatternApplicableProgram, PatternManifestEntry } from '@/lib/intelligence/pattern-manifest';
+import type { ClientKey } from '@/lib/client-config';
 import { useDrawer } from '@/components/drawer/DrawerProvider';
+import type { SentinelCitation, SentinelConfidenceBand, SentinelQueryResponse } from '@/lib/sentinel/types';
 
 type View = 'overview' | 'patterns' | 'vendors' | 'contradictions' | 'ask';
 
@@ -17,12 +19,16 @@ interface Props {
   patterns: PatternManifestEntry[];
   initialSlug: string | null;
   initialView: string;
+  activeClientKey: ClientKey;
   activeClientName: string | null;
+  applicableProgramsByPattern: Record<string, PatternApplicableProgram[]>;
 }
 
 interface Turn {
   speaker: 'you' | 'sentinel';
   text: string;
+  citations?: SentinelCitation[];
+  confidence?: SentinelConfidenceBand;
 }
 
 const VIEWS: Array<{ key: View; label: string; blurb: string }> = [
@@ -138,11 +144,19 @@ function sectionTextFrom(entry: PatternManifestEntry, title: RegExp): string | n
   return match?.body?.trim() ?? null;
 }
 
-export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, activeClientName }: Props) {
+export function SentinelIntelligenceShell({
+  patterns,
+  initialSlug,
+  initialView,
+  activeClientKey,
+  activeClientName,
+  applicableProgramsByPattern,
+}: Props) {
   const [view, setView] = useState<View>(parseView(initialView));
   const [selectedSlug, setSelectedSlug] = useState<string | null>(initialSlug);
   const [railOpen, setRailOpen] = useState(true);
   const [escapeText, setEscapeText] = useState('');
+  const [pending, setPending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const drawer = useDrawer();
 
@@ -288,18 +302,64 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
     if (next.slug) setSelectedSlug(next.slug);
   }
 
-  function submitFreeText() {
+  async function submitFreeText() {
     const text = escapeText.trim();
     if (!text) return;
-    setLog((prev) => [
-      ...prev,
-      { speaker: 'you', text },
-      {
-        speaker: 'sentinel',
-        text: sentinelFreeTextReply(text, selected, activeClientName),
-      },
-    ]);
+    setLog((prev) => [...prev, { speaker: 'you', text }]);
     setEscapeText('');
+    setPending(true);
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 18_000);
+
+    try {
+      const res = await fetch('/api/v1/sentinel/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          activePatternSlug: selected?.slug ?? null,
+          clientKey: activeClientKey,
+        }),
+        signal: controller.signal,
+      });
+
+      const json = (await res.json().catch(() => ({}))) as Partial<SentinelQueryResponse> & { error?: string; detail?: string };
+      if (!res.ok || !json.response) {
+        throw new Error(json.detail || json.error || `Sentinel returned ${res.status}`);
+      }
+      const responseText = json.response;
+
+      setLog((prev) => [
+        ...prev,
+        {
+          speaker: 'sentinel',
+          text: responseText,
+          citations: json.citations,
+          confidence: json.confidence,
+        },
+      ]);
+      if (json.activePatternSlug) {
+        setSelectedSlug(json.activePatternSlug);
+        setView('patterns');
+      }
+    } catch (err) {
+      const fallback = sentinelFreeTextReply(text, selected, activeClientName);
+      const message = err instanceof DOMException && err.name === 'AbortError'
+        ? `${fallback} Honest note: the live retrieval call timed out, so I'm falling back to the authored pattern context already on this page.`
+        : `${fallback} Honest note: the live retrieval call failed just now, so this answer is coming from the authored pattern context already loaded in the page.`;
+      setLog((prev) => [
+        ...prev,
+        {
+          speaker: 'sentinel',
+          text: message,
+          confidence: selected ? confidenceBand(selected.confidenceFloor) : 'thin',
+        },
+      ]);
+    } finally {
+      window.clearTimeout(timeout);
+      setPending(false);
+    }
   }
 
   const guided = buildGuidedChoices(view, selected, patterns);
@@ -363,6 +423,7 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                 patterns={patterns}
                 groups={groups}
                 selected={selected}
+                applicableProgramsByPattern={applicableProgramsByPattern}
                 onSelect={(slug) => {
                   const target = patterns.find((p) => p.slug === slug);
                   if (!target) return;
@@ -410,9 +471,35 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                         {turn.speaker === 'you' ? 'You' : 'Sentinel'}
                       </div>
                       <div className="sis-bubble-body">{turn.text}</div>
+                      {turn.confidence ? (
+                        <div className="sis-turn-note">
+                          Confidence · {turn.confidence}
+                        </div>
+                      ) : null}
+                      {turn.citations?.length ? (
+                        <div className="sis-turn-citations">
+                          {turn.citations.map((citation) => (
+                            <a key={citation.slug} href={citation.href} className="sis-turn-citation">
+                              <span>{citation.label}</span>
+                              <small>
+                                {citation.evidenceCount} sources · {citation.deliverableCount} deliverables · {citation.freshnessLabel}
+                              </small>
+                            </a>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                 ))}
+                {pending ? (
+                  <div className="sis-bubble sentinel pending">
+                    <div className="sis-bubble-avatar">◈</div>
+                    <div className="sis-bubble-content">
+                      <div className="sis-bubble-speaker">Sentinel</div>
+                      <div className="sis-bubble-body">Composing against the tenant-scoped pattern index…</div>
+                    </div>
+                  </div>
+                ) : null}
                 <div ref={chatEndRef} />
               </div>
               <div className="sis-rail-guided">
@@ -437,18 +524,19 @@ export function SentinelIntelligenceShell({ patterns, initialSlug, initialView, 
                   className="sis-rail-escape"
                   onSubmit={(e) => {
                     e.preventDefault();
-                    submitFreeText();
+                    void submitFreeText();
                   }}
                 >
                   <input
                     type="text"
                     placeholder="Something else…"
                     value={escapeText}
-                    onChange={(e) => setEscapeText(e.target.value)}
-                    className="sis-rail-escape-input"
-                    aria-label="Ask Sentinel"
-                  />
-                  <button type="submit" className="sis-rail-escape-send" aria-label="Send">
+                  onChange={(e) => setEscapeText(e.target.value)}
+                  className="sis-rail-escape-input"
+                  aria-label="Ask Sentinel"
+                  disabled={pending}
+                />
+                  <button type="submit" className="sis-rail-escape-send" aria-label="Send" disabled={pending}>
                     ↵
                   </button>
                 </form>
@@ -633,11 +721,13 @@ function PatternsPanel({
   patterns,
   groups,
   selected,
+  applicableProgramsByPattern,
   onSelect,
 }: {
   patterns: PatternManifestEntry[];
   groups: Record<string, PatternManifestEntry[]>;
   selected: PatternManifestEntry | null;
+  applicableProgramsByPattern: Record<string, PatternApplicableProgram[]>;
   onSelect: (slug: string) => void;
 }) {
   return (
@@ -667,7 +757,7 @@ function PatternsPanel({
       </aside>
       <article className="sis-panel">
         {selected ? (
-          <PatternDetail entry={selected} />
+          <PatternDetail entry={selected} applicablePrograms={applicableProgramsByPattern[selected.slug] ?? []} />
         ) : (
           <div>
             <div className="sis-eyebrow">Pattern detail</div>
@@ -683,12 +773,21 @@ function PatternsPanel({
   );
 }
 
-function PatternDetail({ entry }: { entry: PatternManifestEntry }) {
+function PatternDetail({
+  entry,
+  applicablePrograms,
+}: {
+  entry: PatternManifestEntry;
+  applicablePrograms: PatternApplicableProgram[];
+}) {
   const thesis = sectionTextFrom(entry, /why this matters|pattern thesis/i) ?? entry.longDescription;
   const triggerSymptoms = entry.triggerSymptoms;
   const detectionSignals = entry.detectionSignals;
   const diagnosticQuestions = entry.diagnosticQuestions;
   const interventions = entry.interventions;
+  const traceableDeliverables = applicablePrograms
+    .flatMap((program) => program.deliverables.map((deliverable) => ({ ...deliverable, program })))
+    .slice(0, 8);
 
   return (
     <div>
@@ -769,6 +868,40 @@ function PatternDetail({ entry }: { entry: PatternManifestEntry }) {
           </ul>
         </section>
       ) : null}
+
+      {applicablePrograms.length > 0 ? (
+        <section className="sis-section">
+          <div className="sis-eyebrow">Applicable programs in this tenant</div>
+          <div className="sis-link-grid">
+            {applicablePrograms.map((program) => (
+              <a key={program.code} href={program.routePath} className="sis-link-card">
+                <span>{program.code} · Phase {program.currentPhaseSpec}</span>
+                {program.name}
+                <small>{program.deliverables.length} deliverables currently trace this pattern</small>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {traceableDeliverables.length > 0 ? (
+        <section className="sis-section">
+          <div className="sis-eyebrow">Traceable deliverables</div>
+          <div className="sis-link-grid">
+            {traceableDeliverables.map((deliverable) => (
+              <a
+                key={`${deliverable.program.code}-${deliverable.code}`}
+                href={deliverable.routePath}
+                className="sis-link-card"
+              >
+                <span>{deliverable.program.code} · {deliverable.code} · {deliverable.renderTier}</span>
+                {deliverable.title}
+                <small>{deliverable.program.name}</small>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }
@@ -778,7 +911,7 @@ function PatternDetail({ entry }: { entry: PatternManifestEntry }) {
 function DrawerPatternView({ entry }: { entry: PatternManifestEntry }) {
   return (
     <div className="sis-panel">
-      <PatternDetail entry={entry} />
+      <PatternDetail entry={entry} applicablePrograms={[]} />
     </div>
   );
 }
@@ -991,6 +1124,44 @@ const sentinelCss = `
   margin: 4px 0 10px; font-weight: 700;
 }
 .sis-section p { font-size: 14px; line-height: 1.65; color: #3d342d; margin: 0 0 10px; }
+.sis-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+.sis-link-card {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(26,22,18,0.10);
+  background: rgba(26,22,18,0.02);
+  color: #1a1612;
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sis-link-card:hover {
+  border-color: rgba(155,109,255,0.45);
+  background: rgba(155,109,255,0.06);
+}
+.sis-link-card span,
+.sis-turn-citation span {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9B6DFF;
+  margin-bottom: 4px;
+}
+.sis-link-card small,
+.sis-turn-citation small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: #8a7e72;
+}
 .sis-bullets { list-style: none; padding: 0; margin: 4px 0; }
 .sis-bullets li {
   font-size: 14px; line-height: 1.6; color: #3d342d;
@@ -1087,6 +1258,33 @@ const sentinelCss = `
 }
 .sis-bubble.sentinel .sis-bubble-speaker { color: #9B6DFF; font-weight: 700; }
 .sis-bubble-body { font-size: 13px; line-height: 1.55; color: #1a1612; }
+.sis-turn-note {
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a7e72;
+}
+.sis-turn-citations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.sis-turn-citation {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(26,22,18,0.10);
+  background: rgba(26,22,18,0.02);
+  color: #1a1612;
+  text-decoration: none;
+}
+.sis-turn-citation:hover {
+  border-color: rgba(155,109,255,0.45);
+  background: rgba(155,109,255,0.06);
+}
 
 .sis-rail-guided {
   padding: 12px 16px 14px;
@@ -1135,6 +1333,11 @@ const sentinelCss = `
   background: #9B6DFF; color: #FFFFFF; border: none; cursor: pointer;
   font-size: 12px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
+}
+.sis-rail-escape-input:disabled,
+.sis-rail-escape-send:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .sis-footer {
