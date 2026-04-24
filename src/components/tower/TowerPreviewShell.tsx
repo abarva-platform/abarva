@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { TowerViewModel, ContradictionRow } from '@/lib/tower/aggregate';
-import { AgentRail, AGENTS } from '@/components/agent-rail/AgentRail';
+import { AgentRail, AGENTS, type AgentTurn } from '@/components/agent-rail/AgentRail';
 
 // TowerPreviewShell · redesign sandbox per the audit feedback.
 // Keeps the 5-column "live system" cockpit (the audit called it "closest
@@ -89,14 +89,46 @@ function derivePressure(contradictions: ContradictionRow[]): PressureItem[] {
   return ranked.slice(0, 3);
 }
 
+function atlasReplyForChoice(
+  choiceId: string,
+  hottestPressure: PressureItem | undefined,
+  totalMoPressureK: number,
+): string {
+  const target = hottestPressure?.title ?? 'the highest-pressure contradiction';
+  if (choiceId === 'assign-hottest') {
+    return `Assigned in principle. ${target} is carrying enough exposure that I would name an executive owner before the next staff meeting.`;
+  }
+  if (choiceId === 'defer-to-council') {
+    return `I can defer it, but that is a delay decision. The board-safe framing is that ${target} still sits inside a $${totalMoPressureK}K/mo pressure stack until someone owns it.`;
+  }
+  if (choiceId === 'create-program') {
+    return `This is charter-shaped. Resolve it through Programs so Nexus can open a scoped workstream and attach deliverables instead of leaving it as a Tower pressure card.`;
+  }
+  if (choiceId === 'vendor-overlap') {
+    return `The right move is to quantify duplicate spend, name the regional decision owner, and force a keep / consolidate / pilot-third decision in one memo.`;
+  }
+  if (choiceId === 'pressure-export') {
+    return `CEO memo shape: top 3 unowned pressures, monthly exposure, named decision, and the next 30-day consequence of doing nothing.`;
+  }
+  return `Atlas logged the choice. The next honest step is to turn ${target} into a named decision, owner, and time-bound follow-up.`;
+}
+
+function atlasReplyForEscape(text: string, hottestPressure: PressureItem | undefined): string {
+  const target = hottestPressure?.title ?? 'the top pressure on the stack';
+  if (/derive|assumption|confidence|counterfactual|board/i.test(text)) {
+    return `Short answer: this preview does not expose the derivation workbook yet. The honest board-safe answer is to treat ${target} as directional until the linked program memo and evidence chain are open.`;
+  }
+  return `I heard "${text}". Atlas can summarize pressure here, but the defensible next step is still to open the linked program and inspect the deliverable chain behind ${target}.`;
+}
+
 // ─── Fallback data · used when the tenant has no aggregate rows yet ─────
 const FALLBACK_PRESSURE: PressureItem[] = [
   {
     id: 'f-1',
     monthlyUsd: 42_000,
     title: 'VBC commitment vs. capability gap — 3 contracts at risk',
-    programName: 'Meridian AI Readiness',
-    programHref: '/engagements',
+    programName: 'Clinical Documentation AI Governance',
+    programHref: '/engagements/meridian-ai-readiness',
     severity: 'critical',
     unowned: true,
   },
@@ -114,7 +146,7 @@ const FALLBACK_PRESSURE: PressureItem[] = [
     monthlyUsd: 18_000,
     title: '3 ambient documentation tools running · no owner',
     programName: 'Ambient Documentation Vendor Strategy',
-    programHref: '/engagements',
+    programHref: '/engagements/ambient-documentation-vendor-strategy',
     severity: 'high',
     unowned: true,
   },
@@ -136,6 +168,22 @@ export function TowerPreviewShell({
         return derived.length > 0 ? derived : FALLBACK_PRESSURE;
       })()
     : FALLBACK_PRESSURE;
+  const totalMoPressureK = Math.round(pressure.reduce((sum, item) => sum + item.monthlyUsd, 0) / 1000);
+  const unownedCount = pressure.filter((p) => p.unowned).length;
+  const hottestUnownedPressure = pressure
+    .filter((item) => item.unowned)
+    .sort((a, b) => b.monthlyUsd - a.monthlyUsd)[0] ?? pressure[0];
+  const hottestLabel = hottestUnownedPressure?.title ?? 'top pressure';
+  const [atlasConversation, setAtlasConversation] = useState<AgentTurn[]>(() => {
+    const hottestK = hottestUnownedPressure ? Math.round(hottestUnownedPressure.monthlyUsd / 1000) : 0;
+    return [
+      {
+        id: 'atlas-opener',
+        speaker: 'agent',
+        text: `${unownedCount} unowned pressures. $${totalMoPressureK}K/mo. ${hottestLabel} leads at $${hottestK}K/mo. Pick one.`,
+      },
+    ];
+  });
 
   const inventoryTotal = vm?.inventory.total ?? 42;
   const adoptionPct = Math.round(vm?.adoption.avgPenetrationPct ?? 62);
@@ -144,7 +192,6 @@ export function TowerPreviewShell({
   const riskTotal = vm?.risk.totalAssessed ?? 25;
   const monthlySpend = vm?.cost.monthlySpendUsd ?? 1_400_000;
   const contradictionCount = vm?.contradictions?.length ?? 25;
-  const unownedCount = pressure.filter((p) => p.unowned).length;
   const lastTurn = fmtRelTime(vm?.inventory.freshness ?? null);
 
   const now = new Date();
@@ -270,7 +317,7 @@ export function TowerPreviewShell({
             Open intelligence
           </Link>
           <Link
-            href="/programs"
+            href="/engagements"
             style={{
               padding: '10px 18px',
               background: INK,
@@ -422,24 +469,24 @@ export function TowerPreviewShell({
                 Active programs
               </div>
               <div style={{ fontSize: 14, color: INK, marginTop: 4 }}>
-                <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
-                  Meridian AI Readiness
+                <Link href="/engagements/meridian-ai-readiness" style={{ color: INK, textDecoration: 'underline' }}>
+                  Clinical Documentation AI Governance
                 </Link>
                 <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
                   · Phase 1 · Diagnose
                 </span>
                 {' · '}
-                <Link href="/programs" style={{ color: INK, textDecoration: 'underline' }}>
-                  Ambient Documentation Vendor Strategy
+                <Link href="/engagements/ambient-documentation-vendor-strategy" style={{ color: INK, textDecoration: 'underline' }}>
+                  Ambient Clinical Value Chain Activation
                 </Link>
                 <span style={{ color: INK_FAINT, fontFamily: MONO, fontSize: 11, marginLeft: 6 }}>
-                  · Phase 0 · Start
+                  · Phase 3 · Design
                 </span>
               </div>
             </div>
           </div>
           <Link
-            href="/programs"
+            href="/engagements"
             style={{
               fontFamily: MONO,
               fontSize: 12,
@@ -460,24 +507,12 @@ export function TowerPreviewShell({
           Never more than 3 sentences. Decision verbs on chips. One handoff
           to Nexus when a pressure needs a program. */}
       {(() => {
-        const totalMoPressureK = Math.round(pressure.reduce((s, p) => s + p.monthlyUsd, 0) / 1000);
-        const hottest = pressure
-          .filter((p) => p.unowned)
-          .sort((a, b) => b.monthlyUsd - a.monthlyUsd)[0];
-        const hottestLabel = hottest?.title ?? 'top pressure';
-        const hottestK = hottest ? Math.round(hottest.monthlyUsd / 1000) : 0;
         return (
           <AgentRail
             agent={AGENTS.atlas}
             contextBadge={`${clientName} · Monday check`}
             userInitials="AS"
-            conversation={[
-              {
-                id: 'atlas-opener',
-                speaker: 'agent',
-                text: `${unownedCount} unowned pressures. $${totalMoPressureK}K/mo. ${hottestLabel} leads at $${hottestK}K/mo. Pick one.`,
-              },
-            ]}
+            conversation={atlasConversation}
             guidedChoice={{
               prompt: 'Decide in the next 5 minutes.',
               options: [
@@ -488,8 +523,35 @@ export function TowerPreviewShell({
                 { id: 'pressure-export', label: 'Export CEO pressure memo', sub: 'one-pager · top-3 unowned' },
               ],
             }}
-            onChoice={(id) => console.log('atlas choice', id)}
-            onEscape={(text) => console.log('atlas escape', text)}
+            onChoice={(id) => {
+              const label = ({
+                'assign-hottest': `Assign owner · ${hottestLabel}`,
+                'defer-to-council': 'Defer to AI Council',
+                'create-program': 'Resolve via new program',
+                'vendor-overlap': 'Vendor overlap matrix',
+                'pressure-export': 'Export CEO pressure memo',
+              } as Record<string, string>)[id] ?? id;
+              setAtlasConversation((prev) => [
+                ...prev,
+                { id: `atlas-you-${prev.length}`, speaker: 'you', text: label },
+                {
+                  id: `atlas-agent-${prev.length}`,
+                  speaker: 'agent',
+                  text: atlasReplyForChoice(id, hottestUnownedPressure, totalMoPressureK),
+                },
+              ]);
+            }}
+            onEscape={(text) => {
+              setAtlasConversation((prev) => [
+                ...prev,
+                { id: `atlas-you-${prev.length}`, speaker: 'you', text },
+                {
+                  id: `atlas-agent-${prev.length}`,
+                  speaker: 'agent',
+                  text: atlasReplyForEscape(text, hottestUnownedPressure),
+                },
+              ]);
+            }}
           />
         );
       })()}

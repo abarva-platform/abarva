@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { StructuredArtifactView } from '@/components/engagement/StructuredArtifactView';
+import { getActiveClientKey } from '@/lib/active-client';
+import { resolveSeedDeliverablePath } from '@/lib/deliverables/legacy-route-resolver';
 import { getEngagementByGraphId } from '@/lib/db/engagement';
 import {
   getMissingRequiredSections,
@@ -79,10 +81,18 @@ function statusLabel(s: string): string {
 
 export default async function DeliverableDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ engagementId: string; deliverableId: string }>;
+  searchParams: Promise<{ client?: string }>;
 }) {
   const { engagementId: graphId, deliverableId } = await params;
+  const { client } = await searchParams;
+  const activeClientKey = await getActiveClientKey(client);
+  const canonicalDeliverablePath = resolveSeedDeliverablePath(deliverableId, activeClientKey, graphId);
+  if (canonicalDeliverablePath) {
+    redirect(canonicalDeliverablePath);
+  }
   const engagement = await getEngagementByGraphId(graphId);
   if (!engagement) notFound();
 

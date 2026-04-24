@@ -8,7 +8,7 @@ import { SectionHeading } from '@/components/shared/typography/SectionHeading';
 import { EntityLink } from '@/components/shared/entities/EntityLink';
 import { ExecutiveCard } from '@/components/shared/entities/ExecutiveCard';
 import { getActiveClientRow } from '@/lib/active-client';
-import { getPersonById } from '@/lib/db/person';
+import { getPersonByIdentifier } from '@/lib/db/person';
 import {
   loadExecutiveProfileDetail,
   type ExecutiveCareerEntry,
@@ -38,7 +38,7 @@ export default async function PersonProfilePage({
   const [activeClient, profile, person] = await Promise.all([
     getActiveClientRow(),
     loadExecutiveProfileDetail({ personId }),
-    getPersonById(personId).catch(() => null),
+    getPersonByIdentifier(personId).catch(() => null),
   ]);
 
   const pendingRealWorld = getPendingRealWorldExecutiveProfile(personId);

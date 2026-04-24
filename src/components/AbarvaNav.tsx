@@ -73,15 +73,18 @@ function NavInner({ activePage, compact = false }: NavProps) {
 
   // ── Active states · pathname first (truth), activePage prop fallback
   // for legacy callers.
+  const tenantProgramsActive = pathname.startsWith('/tenant/') && pathname.includes('/programs')
+  const tenantIntelligenceActive = pathname.startsWith('/tenant/') && pathname.includes('/intelligence')
+  const tenantTowerActive = pathname.startsWith('/tenant/') && pathname.includes('/tower')
   const homeActive         = pathname === '/home' || pathname.startsWith('/home/')
                               || pathname === '/dashboard' || pathname.startsWith('/dashboard/')
                               || pathname === '/' || activePage === 'home'
   const engagementsActive  = pathname === '/engagements' || pathname.startsWith('/engagements/')
-                              || pathname.startsWith('/engage/') || activePage === 'engagements'
+                              || pathname.startsWith('/engage/') || tenantProgramsActive || activePage === 'engagements'
   const intelligenceActive = pathname === '/intelligence' || pathname.startsWith('/intelligence/')
-                              || activePage === 'intelligence'
+                              || tenantIntelligenceActive || activePage === 'intelligence'
   const towerActive        = pathname === '/tower' || pathname.startsWith('/tower/')
-                              || activePage === 'tower'
+                              || tenantTowerActive || activePage === 'tower'
   // Admin takes precedence · when the pathname is under /platform/admin,
   // only the Admin pill should light up, not both Platform and Admin.
   const adminActive        = pathname.startsWith('/admin') || pathname.startsWith('/platform/admin')

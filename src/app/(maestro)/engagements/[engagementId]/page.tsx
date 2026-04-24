@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +16,8 @@ import { getCurrentPerson } from '@/lib/auth/maestro';
 import { loadVipGreetingData } from '@/lib/agent/prompts/_shared/user-context';
 import { listAllTopics, listEngagementTopics } from '@/lib/topics/db';
 import { getServerSupabase } from '@/lib/supabase-server';
+import { getActiveClientKey } from '@/lib/active-client';
+import { resolveSeedProgramPath } from '@/lib/deliverables/legacy-route-resolver';
 
 type NormalizedDeliverable = {
   type: string;
@@ -99,10 +101,18 @@ function dedupeTopContradictions<T extends { description: string; one_liner: str
 
 export default async function EngagePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ engagementId: string }>;
+  searchParams: Promise<{ client?: string }>;
 }) {
   const { engagementId } = await params;
+  const { client } = await searchParams;
+  const activeClientKey = await getActiveClientKey(client);
+  const canonicalProgramPath = resolveSeedProgramPath(engagementId, activeClientKey);
+  if (canonicalProgramPath) {
+    redirect(canonicalProgramPath);
+  }
 
   const engagement = await getEngagementByGraphId(engagementId);
   if (!engagement) notFound();

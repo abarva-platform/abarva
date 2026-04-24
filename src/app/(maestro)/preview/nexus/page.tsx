@@ -1,17 +1,15 @@
 import { redirect } from 'next/navigation';
 import { getActiveClientKey } from '@/lib/active-client';
-import { isClientKey } from '@/lib/client-config';
 import { getSeedProgramsIndexPath } from '@/lib/deliverables/legacy-route-resolver';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ProgramsPage({
+export default async function PreviewNexusPage({
   searchParams,
 }: {
   searchParams: Promise<{ client?: string }>;
 }) {
   const params = await searchParams;
-  const requestedClient = isClientKey(params.client) ? params.client : null;
-  const clientKey = await getActiveClientKey(requestedClient);
-  redirect(getSeedProgramsIndexPath(clientKey));
+  const activeClientKey = await getActiveClientKey(params.client);
+  redirect(getSeedProgramsIndexPath(activeClientKey));
 }

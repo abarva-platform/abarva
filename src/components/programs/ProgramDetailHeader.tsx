@@ -37,7 +37,7 @@ export function ProgramDetailHeader({ program, currentView, onViewChange }: Prop
     <header style={{ display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <EntityLink href="/programs" variant="ghost">Portfolio</EntityLink>
+          <EntityLink href="/engagements" variant="ghost">Portfolio</EntityLink>
           <span style={{ color: 'rgba(245,245,240,0.3)' }}>/</span>
           <Body size="sm" tone="secondary">{program.name}</Body>
         </div>

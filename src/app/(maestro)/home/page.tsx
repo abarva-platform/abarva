@@ -26,6 +26,7 @@ import { StakeholderLens, type StakeholderSummary } from '@/components/home/comp
 import { ContextFooter } from '@/components/home/composite/ContextFooter';
 import { TenantBreadthRow, type BreadthChip } from '@/components/home/composite/TenantBreadthRow';
 import { CommandCenter } from '@/components/home/command-center/CommandCenter';
+import { getSeedTenantForClientKey } from '@/lib/deliverables/legacy-route-resolver';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,16 +91,30 @@ export default async function HomePage({
   );
 
   // Portfolio source precedence for demo flow:
-  // 1. Mock programs scoped to the active client · route cleanly to C17
-  //    at /programs/[mockId] with deep data (phases, deliverables,
-  //    activity, stakeholders). Preferred when any match.
-  // 2. Real engagements table fallback · route to /engagements/[graphId]
-  //    which is the older EngagementConsole. Used for clients that
-  //    don't yet have composite mock data.
+  // 1. Seeded tenant programs · canonical tenant-scoped routes with the
+  //    full deliverable chain behind them. Preferred when present because
+  //    they are the product's demo-critical source of truth.
+  // 2. Mock programs scoped to the active client · legacy Wave 3 surface.
+  // 3. Real engagements table fallback · older EngagementConsole.
+  const seededTenant = getSeedTenantForClientKey(activeClientKey);
   const allMockPrograms = getAllPrograms();
   const clientNameCandidates = CLIENT_KEY_TO_DB_NAME[activeClientKey].map((name) => name.toLowerCase());
   const matchesMockTenant = (tenant: string) => clientNameCandidates.includes(tenant.toLowerCase());
   const mockForActive = allMockPrograms.filter((p) => matchesMockTenant(p.clientName));
+
+  const seededPortfolio: PortfolioProgram[] = (seededTenant?.programs ?? []).map((program) => ({
+    id: program.programSlug,
+    href: program.routePath,
+    graphNodeId: program.graphNodeId,
+    routePrefix: '/engagements' as const,
+    name: program.name,
+    currentPhase: program.currentAppPhase,
+    sponsorName: null,
+    sponsorTitle: null,
+    objective: program.roleInDemo,
+    outcomeFeeUsd: null,
+    healthSignal: healthFromPhase(program.currentAppPhase),
+  }));
 
   const engagementPortfolio: PortfolioProgram[] = activeClientId
     ? engagements.map((e) => ({
@@ -116,8 +131,7 @@ export default async function HomePage({
       }))
     : [];
 
-  const portfolio: PortfolioProgram[] = mockForActive.length > 0
-    ? mockForActive.map((p) => ({
+  const mockPortfolio: PortfolioProgram[] = mockForActive.map((p) => ({
         id: p.id,
         graphNodeId: p.id, // programs/[id] route uses the same id
         routePrefix: '/programs' as const,
@@ -130,8 +144,13 @@ export default async function HomePage({
         healthSignal: p.gateStatus === 'blocked' ? 'attention' as const
           : p.gateStatus === 'cleared' ? 'healthy' as const
           : 'watch' as const,
-      }))
-    : engagementPortfolio;
+      }));
+
+  const portfolio: PortfolioProgram[] = seededPortfolio.length > 0
+    ? seededPortfolio
+    : mockPortfolio.length > 0
+      ? mockPortfolio
+      : engagementPortfolio;
 
   const scopedPersons = scopePersonsToOrg(allPersons, activeClientName);
 

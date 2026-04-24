@@ -22,6 +22,18 @@ export async function getPersonById(id: string): Promise<PersonRow | null> {
   return data as PersonRow | null;
 }
 
+export async function getPersonByGraphNodeId(graphNodeId: string): Promise<PersonRow | null> {
+  const { data, error } = await getServerSupabase().from('persons').select('*').eq('graph_node_id', graphNodeId).maybeSingle();
+  if (error) throw error;
+  return data as PersonRow | null;
+}
+
+export async function getPersonByIdentifier(identifier: string): Promise<PersonRow | null> {
+  const byId = await getPersonById(identifier);
+  if (byId) return byId;
+  return getPersonByGraphNodeId(identifier);
+}
+
 export interface CreatePersonArgs {
   name: string;
   email?: string | null;
