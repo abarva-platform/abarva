@@ -60,6 +60,17 @@ describe('Deliverable render contract', () => {
     expect(model.summary).toContain('will not state conclusions');
   });
 
+  it('resolves legacy duplicate-code deliverable segments used in older authored links', () => {
+    const context = findDeliverableByRoute(
+      'apex-retail',
+      'morrison-owned-brand-margin-recovery',
+      'd01-d01-program-charter',
+    );
+
+    expect(context?.deliverable?.deliverableCode).toBe('D01');
+    expect(context?.deliverable?.deliverableSlug).toBe('d01-program-charter');
+  });
+
   it('keeps every generated cross-link inside a route class we can audit', () => {
     const plan = getSeedPlan();
     const sample = plan.deliverables.filter((deliverable) => deliverable.programCode === 'APX-01').slice(0, 8);

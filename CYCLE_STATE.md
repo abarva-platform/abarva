@@ -27,15 +27,15 @@
 
 ### Codex lane
 - Current item: queue merged · Codex Cycle 1 P0 lane
-- Current step within item: post-merge verification (awaiting production deploy + live walkthrough)
+- Current step within item: post-merge verification in progress · production deploy green · follow-up fix for legacy deliverable links in flight
 - Started item at: 2026-04-24T03:34:00Z
 - Expected next action ETA: same session
 
 ### Code lane
 - Current item: Cycle 1 Code queue closed · all six items landed in working tree · typecheck + build clean
-- Current step within item: PR open · awaiting review/merge and post-merge crawler persona verification
+- Current step within item: queue merged · awaiting crawler persona verification
 - Started item at: 2026-04-22T00:00:00Z (resumed 2026-04-24 after Codex reclaimed state file)
-- Expected PR ETA: open as PR `#157`
+- Expected PR ETA: merged as PR `#157`
 
 ## Complete this cycle
 - F08-S19-state-file (Codex): authoritative repo-root cycle file created and adopted on `codex/cycle1-codex-execution`
@@ -72,7 +72,9 @@
 - 2026-04-24T11:11:42Z: PR `#156` (`feat: complete cycle 1 codex p0 queue`) merged to `main` at commit `8eceb3a54cfa2fc01c6d826a17875f3a904c611c`. Remaining Codex-lane work is deployment completion plus live walkthrough on Apex/Morrison, Meridian deliverables, and in-app free-text agent behavior.
 - 2026-04-24: Code lane Cycle 1 queue closed in working tree. Six items merged into a single bundle so the rendered_response contract (seam) and its consumers (citation, vocabulary, renderer, voice contracts, handoff) land together — easier to review than drip PRs, and avoids a half-wired contract.
 - 2026-04-24T11:37:14Z: PR `#157` (`feat: cycle 1 code lane · agent render contract`) opened from `code/cycle1-render-contract`. Remaining Code-lane work is PR review/merge plus crawler persona verification once the `rendered_response` seam is exercised end-to-end.
+- 2026-04-24T11:59:13Z: PR `#157` merged to `main` at commit `e91f003517f7585706583607814966e3454577a0`; both production deploys went green. Remaining Code-lane work is crawler persona verification on differentiated cited responses.
+- 2026-04-24T12:05:00Z: Live walkthrough against production found a real regression: authored legacy deliverable links like `d01-d01-program-charter` 404 even though the canonical route is `d01-program-charter`. Follow-up fix is to normalize duplicate-code legacy segments in `findDeliverableByRoute` so old authored links resolve.
 
 ## Last status emission
 - 2026-04-24T04:26:00Z (Codex)
-- 2026-04-24 · Code · Cycle 1 queue closed in working tree; typecheck + Next build clean; PR #157 open
+- 2026-04-24 · Code · Cycle 1 queue merged to main; crawler verification pending

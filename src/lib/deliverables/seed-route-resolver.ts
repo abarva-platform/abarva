@@ -48,9 +48,17 @@ export function findProgramByRoute(tenantSlug: string, programSlug: string): See
 export function findDeliverableByRoute(tenantSlug: string, programSlug: string, deliverableSegment: string): SeedRouteContext | null {
   const context = findProgramByRoute(tenantSlug, programSlug);
   if (!context) return null;
+  const normalizedSegment = normalizeDeliverableSegment(deliverableSegment);
   const deliverable = context.program.deliverables.find((entry) => {
     const canonical = deliverableRouteSegmentFor(entry);
-    return canonical === deliverableSegment || entry.deliverableSlug === deliverableSegment || entry.deliverableCode.toLowerCase() === deliverableSegment;
+    return (
+      canonical === deliverableSegment ||
+      canonical === normalizedSegment ||
+      entry.deliverableSlug === deliverableSegment ||
+      entry.deliverableSlug === normalizedSegment ||
+      entry.deliverableCode.toLowerCase() === deliverableSegment ||
+      entry.deliverableCode.toLowerCase() === normalizedSegment
+    );
   });
   return deliverable ? { ...context, deliverable } : null;
 }
@@ -171,6 +179,13 @@ export function allSeedDeliverablePaths(): string[] {
   return plan.tenants.flatMap((tenant) =>
     tenant.programs.flatMap((program) => program.deliverables.map((deliverable) => tenantDeliverablePath(tenant, program, deliverable))),
   );
+}
+
+function normalizeDeliverableSegment(segment: string): string {
+  const normalized = segment.trim().toLowerCase();
+  const match = normalized.match(/^(d\d{2})-\1-(.+)$/);
+  if (!match) return normalized;
+  return `${match[1]}-${match[2]}`;
 }
 
 function sectionsFromMarkdown(content: string, program: ProgramSeedPlan, deliverable: DeliverableSeedPlan): DeliverableSection[] {
