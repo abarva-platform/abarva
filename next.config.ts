@@ -3,6 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ['@anthropic-ai/sdk'],
 
+  // Enables `forbidden()` and `unauthorized()` from `next/navigation`.
+  // Used by `src/lib/auth/tenant-access.ts` to render the /forbidden.tsx
+  // page with a 403 status when a user hits a tenant they don't belong
+  // to (crawler C2-01 fix).
+  experimental: {
+    authInterrupts: true,
+  },
+
   // Product-map · legacy paths redirect to their new homes under the
   // five-item nav. Admin sub-pages (/admin/brief, /admin/outcomes, etc.)
   // still resolve where they are — the consolidation of those sub-pages
