@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { DeliverableTierRenderer } from '@/components/deliverables/DeliverableTierRenderer';
 import { buildSeedDeliverableRenderModel, findDeliverableByRoute } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
+import { getCurrentUser } from '@/lib/auth/current-user';
 import { getLatestSponsorCommitment } from '@/lib/workflow/sponsorCommitmentLedger';
 import { getProgramTensionRecords, getStakeholderSuccessRecords } from '@/lib/workflow/stakeholderSuccessLedger';
 import { getLatestDataReadiness } from '@/lib/workflow/dataReadinessLedger';
@@ -39,6 +40,19 @@ export default async function TenantDeliverableSeedPage({
     ? getLatestDataReadiness(model.program.code)
     : null;
 
+  // §4.11 permission gating · maestros approve anywhere; tenant-scoped
+  // viewers approve their own tenant's deliverables; anyone else sees
+  // the read-only view. Server-side POST still enforces tenant access
+  // (C2-07) — UI gate is defense-in-depth + honest affordance.
+  const viewer = await getCurrentUser();
+  const canApprove =
+    viewer?.primaryRole === 'maestro' ||
+    viewer?.accessibleClients.some((c) => c.clientId === context.tenant.tenantKey) ||
+    viewer?.metadataClientKey === context.tenant.tenantKey;
+  const approveGateReason = !canApprove
+    ? `Approval authority on ${context.tenant.displayName} deliverables belongs to members of that tenant.`
+    : undefined;
+
   return (
     <DeliverableTierRenderer
       model={model}
@@ -46,6 +60,8 @@ export default async function TenantDeliverableSeedPage({
       stakeholderSuccessRecords={stakeholderSuccessRecords}
       programTensionRecords={programTensionRecords}
       dataReadiness={dataReadiness}
+      canApprove={canApprove}
+      approveGateReason={approveGateReason}
     />
   );
 }

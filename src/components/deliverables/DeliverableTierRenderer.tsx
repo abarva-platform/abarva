@@ -31,6 +31,17 @@ interface DeliverableTierRendererProps {
    * FM-02 · D03 Success Metric Tree · existing data readiness record.
    */
   dataReadiness?: DataReadinessRecord | null;
+  /**
+   * F10 §4.11 · whether the current viewer can approve this deliverable.
+   * Default true (backwards compatible); callers compute server-side from
+   * viewer role + tenant membership. Server `/api/programs/approve` still
+   * enforces tenant access (C2-07) — this is UI-layer gating.
+   */
+  canApprove?: boolean;
+  /**
+   * Optional reason surfaced in the muted state when canApprove is false.
+   */
+  approveGateReason?: string;
 }
 
 export function DeliverableTierRenderer({
@@ -39,6 +50,8 @@ export function DeliverableTierRenderer({
   stakeholderSuccessRecords,
   programTensionRecords,
   dataReadiness,
+  canApprove = true,
+  approveGateReason,
 }: DeliverableTierRendererProps) {
   const isCharter = model.deliverable.code === 'D01' || model.deliverable.typeKey === 'program_charter';
   const isStakeholderMap = model.deliverable.code === 'D02' || model.deliverable.typeKey === 'stakeholder_map';
@@ -48,7 +61,7 @@ export function DeliverableTierRenderer({
     <main className="del-page">
       <DeliverablePageStyles />
       <div className="del-shell">
-        {model.deliverable.tier === 'stub' ? <StubBody model={model} /> : model.deliverable.tier === 'outline' ? <OutlineBody model={model} /> : <RichBody model={model} />}
+        {model.deliverable.tier === 'stub' ? <StubBody model={model} /> : model.deliverable.tier === 'outline' ? <OutlineBody model={model} /> : <RichBody model={model} canApprove={canApprove} approveGateReason={approveGateReason} />}
         {isCharter ? (
           <section style={{ marginTop: 32 }}>
             <div style={{ marginBottom: 12 }}>
@@ -148,10 +161,10 @@ export function DeliverablePageStyles() {
   );
 }
 
-function RichBody({ model }: { model: DeliverableRenderModel }) {
+function RichBody({ model, canApprove = true, approveGateReason }: { model: DeliverableRenderModel; canApprove?: boolean; approveGateReason?: string }) {
   return (
     <>
-      <Header model={model} label="Rich deliverable" />
+      <Header model={model} label="Rich deliverable" canApprove={canApprove} approveGateReason={approveGateReason} />
       <KpiGrid model={model} />
       <div className="del-main-grid">
         <article className="del-panel">
@@ -261,7 +274,7 @@ function StubBody({ model }: { model: DeliverableRenderModel }) {
   );
 }
 
-function Header({ model, label }: { model: DeliverableRenderModel; label: string }) {
+function Header({ model, label, canApprove = true, approveGateReason }: { model: DeliverableRenderModel; label: string; canApprove?: boolean; approveGateReason?: string }) {
   const breadcrumbs = model.crossLinks.filter((link) => link.className === 'breadcrumb');
   return (
     <header className="del-header-grid">
@@ -286,6 +299,8 @@ function Header({ model, label }: { model: DeliverableRenderModel; label: string
                 deliverableCode={model.deliverable.code}
                 phase={model.phase.spec}
                 decision={model.deliverable.title}
+                canApprove={canApprove}
+                gateReason={approveGateReason}
               />
             ) : null}
           </div>
