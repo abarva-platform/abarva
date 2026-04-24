@@ -11,6 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PatternApplicableProgram, PatternManifestEntry } from '@/lib/intelligence/pattern-manifest';
 import type { ClientKey } from '@/lib/client-config';
 import { useDrawer } from '@/components/drawer/DrawerProvider';
+import { PatternProse } from '@/components/intelligence/PatternProse';
 import type { SentinelCitation, SentinelConfidenceBand, SentinelQueryResponse } from '@/lib/sentinel/types';
 
 type View = 'overview' | 'patterns' | 'vendors' | 'contradictions' | 'ask';
@@ -810,7 +811,8 @@ function PatternDetail({
         <section className="sis-section">
           <div className="sis-eyebrow">Pattern thesis</div>
           <h3>Why this matters</h3>
-          <p>{thesis}</p>
+          {/* C2-12 · linkify pattern_xxx references in thesis prose. */}
+          <PatternProse as="p">{thesis}</PatternProse>
         </section>
       ) : null}
 

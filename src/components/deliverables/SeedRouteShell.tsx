@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { DeliverablePageStyles } from './DeliverableTierRenderer';
+import { NexusProgramRail } from './NexusProgramRail';
 import {
   getSeedPlan,
   phaseMeta,
@@ -67,6 +68,10 @@ export function SeedProgramOverview({ tenant, program }: { tenant: TenantSeedPla
           metrics row above advertises the full count; the card grid must
           match or the counter reads as dishonest. */}
       <DeliverableList tenant={tenant} program={program} deliverables={program.deliverables} />
+      {/* C2-05 · Nexus chat rail discoverable from every tenant program
+          detail surface. The rail is collapsed by default; opens to a
+          guided-choice conversation anchored to this program\u2019s phase. */}
+      <NexusProgramRail tenant={tenant} program={program} />
     </SeedPageFrame>
   );
 }
