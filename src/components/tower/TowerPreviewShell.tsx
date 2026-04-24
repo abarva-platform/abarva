@@ -5,6 +5,8 @@ import Link from 'next/link';
 import type { TowerViewModel, ContradictionRow } from '@/lib/tower/aggregate';
 import { AgentRail, AGENTS, type AgentTurn } from '@/components/agent-rail/AgentRail';
 import type { RenderedResponse } from '@/lib/agent/renderedResponse';
+import { useDrawer } from '@/components/drawer/DrawerProvider';
+import { PressureCardDerivation } from '@/components/tower/PressureCardDerivation';
 
 // TowerPreviewShell · redesign sandbox per the audit feedback.
 // Keeps the 5-column "live system" cockpit (the audit called it "closest
@@ -600,6 +602,33 @@ function HeaderPill({
 function PressureRow({ item }: { item: PressureItem }) {
   const severityColor = item.severity === 'critical' ? CORAL : AMBER;
   const severityBg = item.severity === 'critical' ? CORAL_SOFT : AMBER_SOFT;
+  const drawer = useDrawer();
+
+  function openDerivation() {
+    drawer.openDrawer({
+      kind: 'pattern',
+      id: item.id,
+      href: item.programHref ?? '#',
+      title: item.title,
+      eyebrow: `Pressure card · ${item.severity.toUpperCase()}`,
+      body: (
+        <PressureCardDerivation
+          title={item.title}
+          headline={`${fmtUsd(item.monthlyUsd)} / month`}
+          severity={item.severity}
+          owner={item.unowned ? 'unowned' : item.programName ?? 'Program owner'}
+          method="The headline is the contradiction's monthly dollar impact per Tower's cost aggregate. Breakdown below ties each component back to its source contradiction or use case."
+          inputs={[
+            { label: 'Monthly cost impact', value: `${fmtUsd(item.monthlyUsd)}/mo`, qualifier: 'From contradiction evidence.impact.monthly_total_usd' },
+            { label: 'Severity', value: item.severity.toUpperCase(), qualifier: 'Normalised from contradiction row severity' },
+            { label: 'Owner status', value: item.unowned ? 'Unowned' : 'Owned', qualifier: item.unowned ? 'No accountable owner on record' : item.programName ?? 'Owner named on program' },
+          ]}
+          relatedLinks={item.programHref ? [{ label: `Open program · ${item.programName ?? 'linked program'}`, href: item.programHref }] : []}
+        />
+      ),
+    });
+  }
+
   return (
     <div
       style={{
