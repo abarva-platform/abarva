@@ -193,40 +193,42 @@ F10.4 and F10.6 are net-new in my canon. F10.1, F10.2, F10.3, F10.5 overlap part
 
 **Heavy?** No. This is process/discipline, not implementation.
 
-## Items to promote to CYCLE_STATE.md for Cycle 3
+## Items to promote to CYCLE_STATE.md for Cycle 4
 
-These refinements should become explicit Cycle 3 scope items:
+**Naming note (Cycle 4 revision):** Items originally labeled C3-D01 through C3-D07 have been renamed to C4-D01 through C4-D07 to match CYCLE_STATE.md, which uses C4-Dxx to avoid collision with the active Cycle 3 Wave 1 P0 sweep. The scope content is unchanged.
 
-**C3-D01 · Context Bundle 5-state runtime implementation**
+These refinements should become explicit Cycle 4 scope items:
+
+**C4-D01 · Context Bundle 5-state runtime implementation**
 - Implement state classifier at per-turn contract (per doc 02 addendum)
 - Responses gated against state: `complete` responds freely; `usable_with_gaps` requires caveat disclosure; `pattern_only` requires pattern-level labeling; `insufficient` triggers guided choices; `blocked` triggers refusal with explanation
 - Accept when all five states produce correct agent behavior across Nexus/Sentinel/Atlas/Steward
 
-**C3-D02 · Page readiness contract authored per surface**
+**C4-D02 · Page readiness contract authored per surface**
 - Author 13-field contract for Programs, Source, Intelligence, Tower, Admin
 - Five deliverables in `docs/platform-design/page-contracts/`
 - Accept when each contract is reviewed by founder and marked AUTHORED-LOCKED
 
-**C3-D03 · Persona crawler verdict format adoption**
+**C4-D03 · Persona crawler verdict format adoption**
 - Update crawler script output to include ACCEPT/DEFER/REJECT verdict with scores
 - Update Marcus T, Dr. L, Jake, Priya, Sarah, Amy persona profiles with verdict format
 - Accept when next crawler walk produces verdict in standard format
 
-**C3-D04 · Implementation review packet as PR template**
+**C4-D04 · Implementation review packet as PR template**
 - Create `.github/pull_request_template.md` with 10-field implementation review packet
 - Update CONTRIBUTING.md referencing the template
-- Accept when next Cycle 3 PR uses the template
+- Accept when next Cycle 4 PR uses the template
 
-**C3-D05 · Suggested action quality linter**
+**C4-D05 · Suggested action quality linter**
 - Build runtime check that rejects suggested actions that appear unchanged across unrelated contexts
 - Integrate into response composition layer
 - Accept when crawler test confirms suggested actions are context-specific
 
-**C3-D06 · Named component specs (pre-implementation)**
+**C4-D06 · Named component specs (pre-implementation)**
 - Spec Readiness Meter, Gate State Badge, Action Bar (the 3 net-new components from doc 04 addendum)
 - Accept when each spec passes design review against doc 04 compositional test
 
-**C3-D07 · Attachment-to-evidence outcome enforcement**
+**C4-D07 · Attachment-to-evidence outcome enforcement**
 - Update file upload UI: files that cannot become context summary / extracted field / citation source / artifact input are clearly marked "stored but not yet usable as evidence"
 - Accept when uploaded files with unknown/unusable status surface correctly
 
@@ -237,7 +239,7 @@ These refinements should become explicit Cycle 3 scope items:
 - Backfilling all existing failure modes with 12-field schema (doc 07 addendum)
 - Full multi-product context fragmentation mitigation (F10.6, doc 07 addendum)
 
-These are valuable but not blocking. They're refinement work on a working foundation; Cycle 3 builds the foundation first.
+These are valuable but not blocking. They're refinement work on a working foundation; Cycle 4 builds the foundation first.
 
 ## Items to clarify with founder before next cycle
 
@@ -245,7 +247,7 @@ Three questions where GPT's addendum prompts a product direction decision:
 
 **Q1 — Product-specific Build Packs.** GPT formalizes the distinction: platform canon = shared rules, Build Pack = surface-specific. Does AbarVa Source get a formal Build Pack document? The GPT-5.5 16-file Build Pack we reviewed earlier fits this model. Other surfaces (Programs, Intelligence, Tower, Admin) — should they each get analogous Build Packs, or is that premature?
 
-**Q2 — Practical product priorities ordering (doc 01 addendum).** GPT ordered: context → decision clarity → workflow → evidence → suggestions → artifacts → polish. This implies Cycle 3 should not be visual-polish work. Confirm this ordering for Cycle 3 scoping.
+**Q2 — Practical product priorities ordering (doc 01 addendum).** GPT ordered: context → decision clarity → workflow → evidence → suggestions → artifacts → polish. This implies Cycle 4 should not be visual-polish work. Confirm this ordering for Cycle 4 scoping.
 
 **Q3 — Minimum crawler set per shipping page (doc 06 addendum).** Three personas per ship decision. We currently run Marcus T and Dr. L primarily. Do we add a third persona (per GPT's recommendation for CIO + operational owner + skeptical reviewer) to every cycle verification? This is cost but increases confidence.
 

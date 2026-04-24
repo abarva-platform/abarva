@@ -109,6 +109,7 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 ## Cycle 4 — Canon Integration and Implementation Gates
 
 Status: SCOPE-PROPOSED · AWAITING-FOUNDER-DECISIONS · NOT-ACTIVE
+Last revised: 2026-04-24 (revision session · canon reconciliation)
 
 Net-new scope class: platform-design canon integration. Cycle 4 is distinct from active Cycle 3 Wave 1 P0 sweep (which continues unchanged against existing design-canon files). Cycle 4 cannot begin execution until the prerequisites below are satisfied.
 
@@ -173,6 +174,64 @@ New platform-design canon vs. existing design-canon / runtime-contracts. None re
 - C9 · `docs/pattern-library/` directory referenced by doc 00:62–63, 79 does not exist — covered by Known-issue-1 class; founder decides whether to create or rewrite references
 - C10 · Agent autonomy tension: new canon 10-item approval boundary (doc 00:132–145) vs existing 4-tier decision authority (`agent-autonomy-decision-charter.md`) — requires founder decision on scope separation or deprecation; also interacts with `memory/feedback_auto_merge_authority.md`
 
+### Cycle 4 revision session · Canon-vs-existing conflict resolutions (2026-04-24)
+
+Ten conflicts documented in commit 1653852 Step 4 cross-check.
+Resolutions applied in this revision session (commit builds on 1653852):
+
+**Resolved new-canon-wins (3 conflicts):**
+- **C1** (3 vs 3-5 chips): New canon "maximum three" rule stands.
+  docs/design-canon/agent-interaction-design-thinking.md needs revision
+  or retirement of its 3-5 chip section in Cycle 5+.
+- **C2** (Steward voice "Utility-clerical" vs "Operationally-terse"):
+  New canon "Operationally-terse" stands. agent-interaction-design-
+  thinking.md needs update in Cycle 5+.
+- **C5** (Atlas 3-sentence vs 150-word cap): New canon 150-word cap
+  stands. agent-interaction-design-thinking.md needs update in Cycle 5+.
+
+**Resolved via file placement (2 conflicts):**
+- **C3** (broken path refs): Resolved by placing files 08, 09, 10 into
+  docs/design-canon/ in this revision session.
+- **C9** (nonexistent docs/pattern-library/): Resolved by creating
+  docs/pattern-library/ and placing 2 pattern files in this revision
+  session.
+
+**Resolved via reconciliation appends (3 conflicts):**
+- **C4** (response modes vs UX modalities): Both taxonomies preserved.
+  Orthogonal axes reconciliation appended to 03_PAGE_LEVEL_AGENT_
+  CONTRACTS.md.
+- **C8** (12-step bundle vs 6-phase pipeline): Bundle lifecycle wraps
+  runPipeline() rather than replacing it. Runtime integration note
+  appended to 02_CONTEXT_BUNDLE_STANDARD.md. C4-D01 scope unchanged;
+  implementation adds bundle assembly inside existing retrieve +
+  assemble phases.
+- **C10** (approval boundary vs autonomy charter): Scope-separated.
+  Canon approval boundary governs slice initiation; autonomy charter
+  governs micro-decisions inside approved slices. Reconciliation
+  appended to 08_BUILD_GOVERNANCE.md. Auto-merge authority from
+  memory/feedback_auto_merge_authority.md retires at Cycle 4+.
+  Founder action required before Cycle 4 scope lock: formally retire
+  the auto-merge memory or approve retirement implicitly by locking
+  Cycle 4 scope.
+
+**Deferred terminology cleanup (1 conflict):**
+- **C6** (drawer pattern scope): Complementary, no contradiction. New
+  canon's Zone E architecture and existing page-agent-coherence-work-
+  order.md's implementation detail coexist. Work-order needs Zone E
+  terminology update in Cycle 5+.
+
+**No action required (1 conflict):**
+- **C7** (prohibited-files list): Already aligned between new canon
+  doc 00 and existing CYCLE_STATE.md Source Sidecar.
+
+### Cycle 4 scope refinement
+
+Cycle 4 scope items remain C4-D01 through C4-D07 as documented in prior
+session. No scope changes in this revision session. Scope still
+AWAITING-FOUNDER-DECISIONS on Q1/Q2/Q3, plus auto-merge authority
+retirement per C10.
+
 ## Last status emission
 - 2026-04-24T18:15 · Solo re-anchor · beginning Cycle 2 code-level verification matrix
 - 2026-04-24T15:28 · Canon-integration session · 11 platform-design files placed byte-identically in `docs/platform-design/`; Cycle 4 scope candidates proposed AWAITING-FOUNDER-DECISIONS; Cycle 5+ deferred items captured; two known issues flagged for follow-up revision session; no implementation initiated
+- 2026-04-24T15:50 · Canon-revision session · 5 previously-authored files placed in `docs/pattern-library/` (00/01) and `docs/design-canon/` (08/09/10); 3 reconciliation appends to platform-design 02/03/08 covering conflicts C4/C8/C10; C3-Dxx renamed to C4-Dxx in review doc (Known-issue-2); conflict resolution summary appended to CYCLE_STATE; Cycle 4 remains SCOPE-PROPOSED pending Q1/Q2/Q3 plus auto-merge retirement decision per C10
