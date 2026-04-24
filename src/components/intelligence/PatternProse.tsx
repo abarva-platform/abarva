@@ -36,10 +36,6 @@ function snakeToSlug(token: string): string {
   return token.replace(/^pattern_/, '').replace(/_/g, '-');
 }
 
-// Matches pattern_<snake_case_words>. Requires at least one underscore
-// after the "pattern_" prefix to avoid matching "pattern" on its own.
-const TOKEN_RE = /\bpattern_[a-z][a-z0-9_]*\b/g;
-
 interface PatternProseProps {
   children: string;
   /**
@@ -56,10 +52,12 @@ export function PatternProse({ children, as = 'span', style, className }: Patter
   const parts: ReactNode[] = [];
   let lastIndex = 0;
   let key = 0;
-  TOKEN_RE.lastIndex = 0;
+  // Keep the global regex local to the render so React immutability lint
+  // never sees shared module state being mutated via `lastIndex`.
+  const tokenRe = /\bpattern_[a-z][a-z0-9_]*\b/g;
   let match: RegExpExecArray | null;
 
-  while ((match = TOKEN_RE.exec(children)) !== null) {
+  while ((match = tokenRe.exec(children)) !== null) {
     const before = children.slice(lastIndex, match.index);
     if (before) parts.push(before);
 
