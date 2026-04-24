@@ -88,7 +88,7 @@
       "id": "S2",
       "name": "Context scoring/classifier",
       "category": "A",
-      "status": "blocked",
+      "status": "code_complete",
       "risk": "high",
       "ownerAgent": "Builder + Test Runner",
       "dependsOn": [
