@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AbarVaLogoExploration } from '@/components/marketing/AbarVaLogoExploration';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,6 +81,8 @@ export default function PlatformStylePreviewPage() {
       }}
     >
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '28px 28px 96px' }}>
+        <AbarVaLogoExploration />
+
         <section
           style={{
             position: 'relative',
