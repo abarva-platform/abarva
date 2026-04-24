@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { currentUser } from '@clerk/nextjs/server';
+import { resolveSessionRole } from '@/lib/auth/access-routing';
 import {
   CLIENT_KEY_TO_DB_NAME,
   DEFAULT_CLIENT_KEY,
@@ -54,7 +55,7 @@ function resolvePinnedClientKey(session: SessionClientContext): ClientKey {
 
 export async function getActiveClientKey(requestedClientId?: string | null): Promise<ClientKey> {
   const session = await getSessionClientContext();
-  const role = session.role;
+  const role = resolveSessionRole(session.role, session.email);
   const pinnedClientKey = resolvePinnedClientKey(session);
 
   const isLockedRole = role === 'client' || role === 'maestro';

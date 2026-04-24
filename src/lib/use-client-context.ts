@@ -13,6 +13,7 @@
 import { useEffect } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { resolveSessionRole } from '@/lib/auth/access-routing'
 import { ALL_CLIENTS, DEFAULT_CLIENT_KEY, inferClientKeyFromEmail, isClientKey } from '@/lib/client-config'
 
 export { ALL_CLIENTS, type ClientOption } from '@/lib/client-config'
@@ -45,12 +46,13 @@ export function useClientContext() {
   const router = useRouter()
   const pathname = usePathname()
 
-  const role        = user?.publicMetadata?.role        as string | undefined
+  const metadataRole = user?.publicMetadata?.role as string | undefined
   const metaClient  = user?.publicMetadata?.clientId    as string | undefined
   const defaultClient = user?.publicMetadata?.defaultClientId as string | undefined
   const email = user?.primaryEmailAddress?.emailAddress
     ?? user?.emailAddresses?.[0]?.emailAddress
     ?? undefined
+  const role = resolveSessionRole(metadataRole, email)
   const inferredClient = inferClientKeyFromEmail(email)
   const pinnedClientId = [metaClient, defaultClient, inferredClient, DEFAULT_CLIENT_KEY].find((candidate) =>
     isClientKey(candidate),

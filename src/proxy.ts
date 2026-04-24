@@ -1,7 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { isExternalOnlyRole } from '@/lib/auth/access-routing'
+import { isExternalOnlyRole, resolveSessionRole } from '@/lib/auth/access-routing'
 
 const MOBILE_UA = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
 
@@ -38,7 +38,9 @@ const authRequiredRoutes = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   const { userId, sessionClaims } = await auth()
-  const role = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
+  const metadataRole = (sessionClaims?.publicMetadata as { role?: string } | undefined)?.role ?? null
+  const email = (sessionClaims as { emailAddress?: string } | undefined)?.emailAddress ?? null
+  const role = resolveSessionRole(metadataRole, email)
 
   // Maestro routes — require authenticated Maestro/Admin/Investor
   if (maestroRoutes(request)) {

@@ -17,12 +17,12 @@ export {
 } from './env';
 
 export const DEMO_ACCOUNTS = {
-  meridian: { email: 'mh+clerk_test@abarva.com', password: 'Demo2026!' },
-  arcturus: { email: 'af+clerk_test@abarva.com', password: 'Demo2026!' },
-  apexretail: { email: 'apex+clerk_test@abarva.com', password: 'Demo2026!' },
-  keystone: { email: 'keystone+clerk_test@abarva.com', password: 'Demo2026!' },
+  meridian: { email: 'demo-meridian+clerk_test@abarva.com', password: 'Demo2026!' },
+  arcturus: { email: 'demo-arcturus+clerk_test@abarva.com', password: 'Demo2026!' },
+  apexretail: { email: 'demo-apexretail+clerk_test@abarva.com', password: 'Demo2026!' },
+  keystone: { email: 'demo-keystone+clerk_test@abarva.com', password: 'Demo2026!' },
   admin: { email: 'anand+clerk_test@abarva.com', password: 'Archer2026!' },
-  investor: { email: 'investor+clerk_test@abarva.com', password: 'Demo2026!' },
+  investor: { email: 'investor+clerk_test@abarva.com', password: 'Investor2026!' },
 } as const;
 
 export function missingClerkPrereqs(): string[] {

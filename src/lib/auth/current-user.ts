@@ -1,4 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
+import { resolveSessionRole } from '@/lib/auth/access-routing';
 import { getCurrentPerson } from '@/lib/auth/maestro';
 import { getServerSupabase } from '@/lib/supabase-server';
 
@@ -40,13 +41,13 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       }
     | undefined;
   const personIdFromClaims = claims?.publicMetadata?.person_id ?? null;
-  const legacyRole = claims?.publicMetadata?.role ?? null;
+  const fallbackEmail = claims?.emailAddress ?? null;
+  const legacyRole = resolveSessionRole(claims?.publicMetadata?.role ?? null, fallbackEmail);
   const metadataClientKey = claims?.publicMetadata?.clientId ?? null;
   const fallbackName =
     [claims?.firstName, claims?.lastName].filter(Boolean).join(' ') ||
     claims?.emailAddress ||
     'User';
-  const fallbackEmail = claims?.emailAddress ?? null;
   const resolvedPerson = personIdFromClaims ? null : await getCurrentPerson();
   const personId = personIdFromClaims ?? resolvedPerson?.id ?? null;
 

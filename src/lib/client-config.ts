@@ -69,6 +69,7 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
+    normalized.includes('demo-meridian') ||
     normalized.includes('mh+clerk_test') ||
     normalized.includes('meridian')
   ) {
@@ -76,6 +77,8 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
+    normalized.includes('demo-arcturus') ||
+    normalized.includes('demo-firstcapital') ||
     normalized.includes('af+clerk_test') ||
     normalized.includes('arcturus') ||
     normalized.includes('firstcapital') ||
@@ -85,7 +88,11 @@ export function inferClientKeyFromEmail(email: string | null | undefined): Clien
   }
 
   if (
+    normalized.includes('demo-keystone') ||
+    normalized.includes('demo-nexora') ||
+    normalized.includes('keystone+clerk_test') ||
     normalized.includes('ke+clerk_test') ||
+    normalized.includes('nexora') ||
     normalized.includes('keystone')
   ) {
     return 'keystone';
