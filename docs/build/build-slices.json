@@ -1666,6 +1666,44 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "PDEL4",
+      "name": "HTML Deliverable Canvas Contract",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": ["PDEL", "PDEL3", "PF2", "DES1"],
+      "allowedFiles": [
+        "docs/build/slices/PDEL4_HTML_DELIVERABLE_CANVAS_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract names exactly five render modes (html, markdown, pdf_export_later, docx_export_later, ppt_export_later) and identifies html as the implemented mode.",
+        "Contract defines canvas renderer surface contract: header, body, right rail (evidence/missing-input panel), footer (action bar).",
+        "Contract specifies an evidence/missing-input right-rail panel with honest empty states and no fabricated E-### citations.",
+        "Contract names approve/regenerate/download actions with regenerate as a disabled affordance (deferred · live nexus runtime) and download disabled for PDF/DOCX/PPT in this slice.",
+        "Contract binds versioning to the Stub → Outline → Rich promotion ladder per MW1 §J and treats version history as read-only in this slice.",
+        "Contract documents Nexus generation behavior with explicit refusal on missing evidence.",
+        "Contract documents the Steward approval / gate readiness touchpoint without changing gate readiness logic.",
+        "Contract enumerates no-fabrication rules: no fake dollar amounts, no fake E-### citations, no live-runtime claims, no fake meeting notes, disabled affordance sub-label, honest empty states.",
+        "Contract names future slices PDEL5 (export actions), PDEL6 (meeting notes view), PDEL7 (Nexus generation runtime), PDEL8 (versioning + evidence trace).",
+        "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification / contract document only. Anchors the central deliverable canvas: render modes, evidence panel, versioning, approve/regenerate/download actions, file-type chips, Nexus generation behavior, Steward gate touchpoint, no-fabrication rules. PDEL5–PDEL8 implement the deferred surfaces."
     }
   ]
 }
