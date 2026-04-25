@@ -153,7 +153,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       requiredEvidenceLevel: 3,
       suggestedActionsExpected: true,
     },
-    expectedVerdict: 'defer',
+    expectedVerdict: 'pass',
     genericResponseFailureFlags: [
       'missingEventContext',
       'missingNextAction',
@@ -203,7 +203,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       requiredEvidenceLevel: 3,
       suggestedActionsExpected: true,
     },
-    expectedVerdict: 'defer',
+    expectedVerdict: 'pass',
     genericResponseFailureFlags: [
       'missingEventContext',
       'genericSourcingAdvice',
@@ -333,7 +333,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
     prompt: 'Can I change commercial weight to 25%?',
     eventId: DATA_AI_EVENT_ID,
     stageKey: 'scope',
-    scenario: 'Procurement asks for a scorecard weight change before defaults and overrides are available.',
+    scenario: 'Procurement asks for a scorecard weight change after deterministic pattern defaults are available.',
     contextInput: sourceFixtureInput('Can I change commercial weight to 25%?', {
       eventId: DATA_AI_EVENT_ID,
       stageKey: 'scope',
@@ -372,7 +372,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       requiredEvidenceLevel: 3,
       suggestedActionsExpected: true,
     },
-    expectedVerdict: 'defer',
+    expectedVerdict: 'pass',
     genericResponseFailureFlags: [
       'scorecardWithoutDefaultsOrOverrides',
       'genericConsultantVoice',
@@ -442,12 +442,12 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
     prompt: 'Summarize this vendor response.',
     eventId: DIGITAL_EVENT_ID,
     stageKey: 'vendor_responses',
-    scenario: 'Sourcing lead asks for a file-specific summary without parsed attachment context.',
+    scenario: 'Sourcing lead asks for a file-specific summary with only a seeded placeholder attachment, not client evidence.',
     contextInput: sourceFixtureInput('Summarize this vendor response.', {
       eventId: DIGITAL_EVENT_ID,
       stageKey: 'vendor_responses',
       surface: 'vendorResponses',
-      selectedAttachmentIds: ['attachment-vendor-response-missing-summary'],
+      selectedAttachmentIds: ['attachment-source-003-vendor-response-placeholder'],
     }),
     expectedContext: expectedContext({
       contextScope: 'stage',
@@ -535,7 +535,7 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       requiredEvidenceLevel: 3,
       suggestedActionsExpected: true,
     },
-    expectedVerdict: 'defer',
+    expectedVerdict: 'pass',
     genericResponseFailureFlags: [
       'genericSourcingAdvice',
       'genericConsultantVoice',
@@ -851,11 +851,20 @@ function collectFixtureFindings(
 
   addFindingIf(
     findings,
-    expected.requiresAttachmentSummary && bundle.evidenceCitations.length === 0,
+    expected.requiresAttachmentSummary && !hasAttachmentCitations(bundle),
     'missing-attachment-citation',
     'warning',
     'evidence',
     'Attachment-specific prompt requires file evidence or citation references.',
+  );
+
+  addFindingIf(
+    findings,
+    expected.requiresAttachmentSummary && hasPlaceholderAttachmentSummary(bundle),
+    'attachment-summary-placeholder-only',
+    'warning',
+    'evidence',
+    'Attachment summary is a deterministic seed placeholder, not parsed client evidence.',
   );
 
   addFindingIf(
@@ -1109,6 +1118,18 @@ function hasValueLedgerContext(bundle: SourceAgentContextBundle): boolean {
 function hasValueLedgerEvidence(bundle: SourceAgentContextBundle): boolean {
   return bundle.projectedValueLedger.some((line) => line.evidenceCount > 0)
     || Boolean(bundle.realizedValueLedger?.some((line) => line.evidenceCount > 0));
+}
+
+function hasAttachmentCitations(bundle: SourceAgentContextBundle): boolean {
+  return bundle.parsedFileSummaries.some((summary) => summary.citations.length > 0)
+    || bundle.uploadedFiles.some((file) => file.evidenceReferences.length > 0);
+}
+
+function hasPlaceholderAttachmentSummary(bundle: SourceAgentContextBundle): boolean {
+  return bundle.parsedFileSummaries.some((summary) => (
+    summary.keyFields.placeholder === true
+    || summary.summary.toLowerCase().includes('placeholder')
+  ));
 }
 
 function toValidationVerdict(verdict: SourceAgentValidationFixtureVerdict): SourceAgentValidationResult['verdict'] {

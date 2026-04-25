@@ -1,4 +1,13 @@
 import type {
+  SourceEvidenceContext,
+  SourcePatternSectionContext,
+  SourceScorecardSnapshot,
+} from './agent-context';
+import type {
+  SourceAttachment,
+  SourceAttachmentSummary,
+} from './attachments';
+import type {
   AbarvaSourceDashboardData,
   SourceArtifactDetail,
   SourceValueLedgerSnapshot,
@@ -6,6 +15,7 @@ import type {
   SourcingEventSummary,
 } from './types';
 import {
+  SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS,
   SOURCE_GOLDEN_EVENT_IDS,
   SOURCE_GOLDEN_EVENT_VALUES_USD,
   SOURCE_LIFECYCLE_STATUS_LABELS,
@@ -695,6 +705,241 @@ const artifactDetails: SourceArtifactDetail[] = [
   },
 ];
 
+const dataAiPatternSections: SourcePatternSectionContext[] = [
+  {
+    id: 'pattern-data-ai-applicability',
+    title: 'Applicability',
+    kind: 'stageGuidance',
+    summary:
+      'Use the Data & AI Modernization pattern when the sourcing event is selecting an SI partner for data platform modernization, analytics workload migration, AI enablement, and operating-model transition.',
+    confidence: 'medium',
+  },
+  {
+    id: 'pattern-data-ai-detection-signals',
+    title: 'Detection signals',
+    kind: 'evidence',
+    summary:
+      'Strong signals include legacy data platform migration, analytics workload baseline needs, data governance uplift, cloud data platform expertise, and AI/GenAI roadmap enablement.',
+    confidence: 'medium',
+  },
+  {
+    id: 'pattern-data-ai-required-inputs',
+    title: 'Required inputs',
+    kind: 'requiredInputs',
+    summary:
+      'Minimum deterministic inputs are application inventory, analytics workload baseline, data platform inventory, current vendor/contract inventory, migration constraints, governance/security requirements, and operating-model ownership.',
+    confidence: 'high',
+  },
+  {
+    id: 'pattern-data-ai-scorecard-rationale',
+    title: 'Scorecard rationale',
+    kind: 'scorecardDefaults',
+    summary:
+      'Default scorecard weights emphasize modernization capability, migration delivery method, data/domain expertise, cloud platform expertise, governance quality, commercial model, AI enablement, and change/adoption readiness.',
+    confidence: 'medium',
+  },
+  {
+    id: 'pattern-data-ai-common-risks',
+    title: 'Common risks',
+    kind: 'risks',
+    summary:
+      'Common risks are incomplete workload baseline, unclear retained responsibilities, underestimated migration complexity, weak data governance, non-comparable commercial assumptions, and AI roadmap claims without operating proof.',
+    confidence: 'medium',
+  },
+  {
+    id: 'pattern-data-ai-stage-gate-guidance',
+    title: 'Stage gate guidance',
+    kind: 'stageGuidance',
+    summary:
+      'The Scope gate should remain blocked until application inventory and analytics workload baseline are present enough to support sourcing strategy, vendor requirements, and value assumptions.',
+    confidence: 'high',
+  },
+  {
+    id: 'pattern-data-ai-value-levers',
+    title: 'Value levers',
+    kind: 'interventions',
+    summary:
+      'Typical value levers include platform consolidation, report rationalization, vendor consolidation, migration factory productivity, operating-model simplification, and AI-enabled delivery acceleration.',
+    confidence: 'medium',
+  },
+  {
+    id: 'pattern-data-ai-evidence-requirements',
+    title: 'Evidence requirements',
+    kind: 'evidence',
+    summary:
+      'Evidence should distinguish seed/pattern guidance from client evidence, and client-specific claims require uploaded inventory, baseline extracts, contract data, artifact references, or cited decision records.',
+    confidence: 'high',
+  },
+];
+
+const dataAiScorecardDefaultWeights: SourceScorecardSnapshot['defaultWeights'] = [
+  {
+    criterionId: 'scorecard-data-ai-platform-modernization-capability',
+    label: 'Data platform modernization capability',
+    weight: 20,
+    rationale:
+      'This is the primary capability axis because the event is selecting a partner to modernize the core data platform, not merely staff a delivery team.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-migration-factory-delivery-approach',
+    label: 'Migration factory / delivery approach',
+    weight: 15,
+    rationale:
+      'Migration method and repeatability matter because timeline, risk, and value realization depend on how workloads are sequenced and industrialized.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-domain-data-model-expertise',
+    label: 'Domain/data model expertise',
+    weight: 15,
+    rationale:
+      'Domain and data-model fluency reduce translation risk between business meaning, source systems, data products, and reporting outcomes.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-cloud-platform-expertise',
+    label: 'Cloud platform expertise',
+    weight: 15,
+    rationale:
+      'Cloud platform expertise is material because architecture, migration tooling, security posture, and operating model differ significantly by platform.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-governance-security-quality',
+    label: 'Governance/security/quality',
+    weight: 10,
+    rationale:
+      'Governance, security, and quality are mandatory controls, but the default keeps them balanced against delivery and platform modernization capability.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-commercial-model',
+    label: 'Commercial model',
+    weight: 10,
+    rationale:
+      'Commercials matter, but the default avoids allowing price to overpower delivery risk before scope and assumptions are comparable.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-genai-roadmap',
+    label: 'AI/GenAI enablement roadmap',
+    weight: 10,
+    rationale:
+      'AI enablement is important when it is tied to modernization outcomes, reusable assets, and operating adoption rather than generic innovation claims.',
+  },
+  {
+    criterionId: 'scorecard-data-ai-change-adoption-operating-model',
+    label: 'Change/adoption and operating model',
+    weight: 5,
+    rationale:
+      'The default weight is lower because the sourcing event is capability-led, but it must increase if adoption risk or retained organization change becomes a primary blocker.',
+  },
+];
+
+const dataAiPatternEvidence: SourceEvidenceContext[] = [
+  {
+    id: 'seed-evidence-data-ai-scorecard-rationale',
+    label: 'Seed pattern evidence: Data & AI scorecard rationale',
+    sourceType: 'patternPack',
+    sourceId: SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS.dataAiModernization,
+    confidence: 'medium',
+    excerpt:
+      'Pattern-level seed guidance: default weights emphasize modernization capability, migration approach, data/domain expertise, platform expertise, governance, commercial model, AI enablement, and adoption.',
+  },
+  {
+    id: 'seed-evidence-data-ai-required-inputs',
+    label: 'Seed pattern evidence: Data & AI required inputs',
+    sourceType: 'patternPack',
+    sourceId: SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS.dataAiModernization,
+    confidence: 'high',
+    excerpt:
+      'Pattern-level seed guidance: application inventory and analytics workload baseline are minimum required inputs before strategy and RFP readiness can be trusted.',
+  },
+  {
+    id: 'seed-evidence-data-ai-risks',
+    label: 'Seed pattern evidence: Data & AI sourcing risks',
+    sourceType: 'patternPack',
+    sourceId: SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS.dataAiModernization,
+    confidence: 'medium',
+    excerpt:
+      'Pattern-level seed guidance: incomplete baselines, retained responsibility gaps, weak governance, and non-comparable assumptions are common sourcing failure modes.',
+  },
+  {
+    id: 'seed-evidence-data-ai-value-levers',
+    label: 'Seed pattern evidence: Data & AI value levers',
+    sourceType: 'patternPack',
+    sourceId: SOURCE_DEFAULT_SCORECARD_ARCHETYPE_IDS.dataAiModernization,
+    confidence: 'medium',
+    excerpt:
+      'Pattern-level seed guidance: common value levers include platform consolidation, report rationalization, vendor consolidation, migration factory productivity, and AI-enabled delivery acceleration.',
+  },
+];
+
+const sourcePortfolioEvidence: SourceEvidenceContext[] = [
+  {
+    id: 'seed-evidence-source-portfolio-value',
+    label: 'Seed event-state evidence: Source portfolio value at stake',
+    sourceType: 'eventState',
+    sourceId: 'source-dashboard-seed',
+    confidence: 'medium',
+    excerpt:
+      'Seed dashboard context includes three sourcing events with deterministic value-at-stake fields. This is seed context only, not client evidence.',
+  },
+  {
+    id: 'seed-evidence-source-portfolio-attention',
+    label: 'Seed event-state evidence: Source portfolio attention items',
+    sourceType: 'eventState',
+    sourceId: 'source-dashboard-seed',
+    confidence: 'medium',
+    excerpt:
+      'Seed dashboard context includes attention items for blocked scope, AMS sourcing model decision, and vendor response normalization.',
+  },
+];
+
+const digitalVendorResponsePlaceholderSummary: SourceAttachmentSummary = {
+  attachmentId: 'attachment-source-003-vendor-response-placeholder',
+  purpose: 'vendorResponse',
+  summary:
+    'Seed placeholder only: no actual uploaded vendor response exists. Nexus may acknowledge that a vendor-response summary was requested, but must not summarize vendor facts until a real parsed file is available.',
+  keyFields: {
+    placeholder: true,
+    clientEvidence: false,
+    usableForVendorComparison: false,
+  },
+  missingSections: [
+    'Actual vendor response file',
+    'Parsed scope response',
+    'Parsed commercial response',
+    'Attachment citations',
+  ],
+  extractionConfidence: 'low',
+  citations: [],
+};
+
+const digitalVendorResponsePlaceholderAttachment: SourceAttachment = {
+  id: digitalVendorResponsePlaceholderSummary.attachmentId,
+  fileName: 'vendor-response-placeholder-no-client-file.txt',
+  fileType: 'txt',
+  purpose: 'vendorResponse',
+  uploadedBy: 'source-seed',
+  uploadTime: '2026-04-24T00:00:00.000Z',
+  association: {
+    eventId: SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild,
+    stageKey: 'vendor_responses',
+    artifactId: 'artifact-source-003-rfp',
+    artifactKind: 'artifact_packet',
+  },
+  parsedStatus: 'lowConfidence',
+  summary: digitalVendorResponsePlaceholderSummary,
+  extractedEntities: [],
+  relatedArtifacts: ['artifact-source-003-rfp'],
+  evidenceReferences: [],
+  confidence: 'low',
+  parsingErrors: [
+    {
+      code: 'lowConfidence',
+      message: 'Seed placeholder only; no real vendor response has been uploaded or parsed.',
+      recoverable: true,
+    },
+  ],
+  securityStatus: 'needsReview',
+};
+
 export function listSourceEventSeed(): SourcingEventSummary[] {
   return events.map((event) => ({
     id: event.id,
@@ -736,6 +981,52 @@ export function getSourceValueSeed(): SourceValueLedgerSnapshot {
     projected: events.flatMap((event) => event.valueLedger.projected),
     realized: events.flatMap((event) => event.valueLedger.realized),
   };
+}
+
+export function getSourcePatternSectionsSeed(event: SourcingEventDetail): SourcePatternSectionContext[] {
+  if (event.id === SOURCE_GOLDEN_EVENT_IDS.dataAiModernization) {
+    return dataAiPatternSections;
+  }
+  return [];
+}
+
+export function getSourceScorecardDefaultWeightsSeed(
+  event: SourcingEventDetail,
+): SourceScorecardSnapshot['defaultWeights'] {
+  if (event.id === SOURCE_GOLDEN_EVENT_IDS.dataAiModernization) {
+    return dataAiScorecardDefaultWeights;
+  }
+  return [];
+}
+
+export function getSourceEvidenceSeed(event: SourcingEventDetail): SourceEvidenceContext[] {
+  if (event.id === SOURCE_GOLDEN_EVENT_IDS.dataAiModernization) {
+    return dataAiPatternEvidence;
+  }
+  return [];
+}
+
+export function getSourcePortfolioEvidenceSeed(): SourceEvidenceContext[] {
+  return sourcePortfolioEvidence;
+}
+
+export function getSourceAttachmentSeed(
+  event: SourcingEventDetail,
+  selectedAttachmentIds: string[],
+): SourceAttachment[] {
+  if (
+    event.id === SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild
+    && selectedAttachmentIds.includes(digitalVendorResponsePlaceholderAttachment.id)
+  ) {
+    return [digitalVendorResponsePlaceholderAttachment];
+  }
+  return [];
+}
+
+export function getSourceAttachmentSummarySeed(
+  attachments: SourceAttachment[],
+): SourceAttachmentSummary[] {
+  return attachments.flatMap((attachment) => (attachment.summary ? [attachment.summary] : []));
 }
 
 export function getSourceDashboardSeed(): AbarvaSourceDashboardData {

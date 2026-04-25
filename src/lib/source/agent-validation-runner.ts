@@ -226,8 +226,14 @@ function getRecommendedNextRemediation(
   if (findingIds.has('missing-scorecard-defaults-overrides')) {
     recommendations.push('Add scorecard default weights, rationale, and override history before scorecard chat guidance.');
   }
-  if (findingIds.has('missing-attachment-summary') || findingIds.has('missing-attachment-citation')) {
+  if (findingIds.has('missing-attachment-summary')) {
     recommendations.push('Add deterministic attachment summary and citation placeholders before vendor-response prompts.');
+  }
+  if (findingIds.has('missing-attachment-citation') && !findingIds.has('attachment-summary-placeholder-only')) {
+    recommendations.push('Add attachment citation placeholders before vendor-response prompts.');
+  }
+  if (findingIds.has('attachment-summary-placeholder-only')) {
+    recommendations.push('Keep vendor-response summary deferred until a real uploaded response is parsed and cited.');
   }
   if (findingIds.has('artifact-generation-deferred-missing-inputs')) {
     recommendations.push('Keep artifact generation blocked until Scope missing inputs and gate checks are satisfied.');
