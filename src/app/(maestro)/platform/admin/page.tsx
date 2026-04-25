@@ -28,7 +28,7 @@ type Section =
   | 'maestros' | 'roles' | 'security'
   | 'clients'  | 'contracts'
   | 'sensitive-data' | 'quality' | 'access-logs' | 'pending-requests'
-  | 'audit-log' | 'api-keys' | 'compliance' | 'build-progress'
+  | 'audit-log' | 'api-keys' | 'compliance' | 'build-progress' | 'production-readiness'
 
 // ── Sidebar config ────────────────────────────────────────────────────────
 const SIDEBAR_GROUPS: Array<{
@@ -69,6 +69,7 @@ const SIDEBAR_GROUPS: Array<{
     label: 'Platform',
     items: [
       { key: 'build-progress', icon: '▣', label: 'Build Progress' },
+      { key: 'production-readiness', icon: '□', label: 'Production Readiness' },
       { key: 'audit-log',  icon: '📜', label: 'Audit Log' },
       { key: 'api-keys',   icon: '🔑', label: 'API Keys' },
       { key: 'compliance', icon: '✅', label: 'Compliance' },
@@ -277,6 +278,7 @@ function QualityOpsJumpView() {
             { href: '/platform/admin/audit', label: 'Audit · cross-ledger' },
             { href: '/platform/admin/quality', label: 'Quality · ops' },
             { href: '/platform/admin/build-progress', label: 'Build Progress · backlog' },
+            { href: '/platform/admin/production-readiness', label: 'Production Readiness · tracker' },
             { href: '/home/queue', label: 'Queue · your assignments' },
           ].map((link) => (
             <a
@@ -329,6 +331,32 @@ function BuildProgressJumpView() {
   )
 }
 
+function ProductionReadinessJumpView() {
+  return (
+    <div>
+      <div style={{ paddingBottom: '20px', borderBottom: `1px solid ${BORDER}`, marginBottom: '24px' }}>
+        <div style={{ fontSize: '22px', fontWeight: 600, color: DARK, marginBottom: '4px' }}>Production Readiness</div>
+        <div style={{ fontSize: '13px', color: MUTED }}>Review full-flow, pilot, and production readiness blockers from the deterministic PROD1 manifest.</div>
+      </div>
+      <div style={{ background: '#fff', border: `1px solid ${BORDER}`, borderRadius: '7px', padding: '28px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: MONO, marginBottom: '10px' }}>
+          Steward tracker
+        </div>
+        <div style={{ fontSize: '18px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Open the Production Readiness tracker</div>
+        <div style={{ fontSize: '14px', color: MUTED, lineHeight: 1.7, marginBottom: '16px', maxWidth: '720px' }}>
+          The tracker reads docs/build/production-readiness.json and does not claim live monitoring or production polling.
+        </div>
+        <a
+          href="/platform/admin/production-readiness"
+          style={{ display: 'inline-block', background: DARK, color: BG, fontSize: '13px', fontWeight: 600, padding: '10px 16px', borderRadius: '6px', textDecoration: 'none' }}
+        >
+          Open Production Readiness →
+        </a>
+      </div>
+    </div>
+  )
+}
+
 // ── Admin Portal — standalone, no maestro imports ─────────────────────────
 export default function AdminPortal() {
   const { isLoaded, user } = useUser()
@@ -370,6 +398,7 @@ export default function AdminPortal() {
       case 'access-logs':      return <PlaceholderView title="Access Logs"               sub="Data access audit trail by user and dataset." />
       case 'pending-requests': return <PlaceholderView title="Pending Requests"          sub="Maestro requests for elevated data access." />
       case 'build-progress':   return <BuildProgressJumpView />
+      case 'production-readiness': return <ProductionReadinessJumpView />
       case 'audit-log':        return <PlaceholderView title="Audit Log"                 sub="Complete platform activity log." />
       case 'api-keys':         return <PlaceholderView title="API Keys"                  sub="Platform API keys and integrations." />
       case 'compliance':       return <PlaceholderView title="Compliance"                sub="SOC2 compliance status and reporting." />
