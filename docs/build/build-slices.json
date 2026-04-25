@@ -678,6 +678,65 @@
         "npm run build"
       ],
       "notes": "Deterministic, seed-only Atlas brief. No model calls, no streaming compose, no Atlas turn persistence. Live Atlas subscriber, follow-up wiring, and confidence promotion to high are deferred to follow-on slices."
+    },
+    {
+      "id": "I1",
+      "name": "Sentinel Pattern Detection Read Model",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e",
+        "S9f",
+        "S9g"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-detections.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detections.test.ts",
+        "docs/build/slices/I1_SENTINEL_PATTERN_DETECTION_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/components/intelligence/**",
+        "src/app/(maestro)/intelligence/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Every canonical demo tenant produces a deterministic Sentinel pattern detection list.",
+        "value_ledger_incompleteness triggers from value_not_ready signals only.",
+        "evidence_chain_gap triggers from evidence_not_ready signals only.",
+        "gate_governance_gap triggers from gate_missing_inputs or executive_decision_needed signals.",
+        "program_context_sparsity triggers from context_insufficient or deliverable_coverage_gap signals.",
+        "ai_governance_operating_model_gap is suppressed unless at least two distinct programs share governance/gate/evidence/value gaps.",
+        "Detection IDs follow the canonical sentinel:<tenantKey>:<patternKey> form and are unique within a tenant.",
+        "Summary counts reconcile to the detection list across pattern, confidence, and severity dimensions.",
+        "Each affected program's routeHref resolves to the canonical /tenant/<routeSlug>/programs/<programSlug> detail.",
+        "No detection invents a dollar amount in any string field.",
+        "No detection emits a timestamp, ISO date, or epoch ms; cross-call JSON output is byte-equal.",
+        "No Intelligence UI, Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-detections.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read model only. No Intelligence UI build (deferred to I2), no live Sentinel runtime, no Atlas editorial handoff, no persistence. Confidence cap at medium for single-program detections is enforced because the seed cannot defend a higher claim alone."
     }
   ]
 }
