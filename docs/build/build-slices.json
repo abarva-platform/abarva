@@ -429,6 +429,53 @@
         "npm run build"
       ],
       "notes": "First Programs consumer of S5/S6 honest-disclosure metadata. Defers gate state machine to S9c, evidence and value seeding to S9d, Tower signal emission to S9e, and live agent binding to a separate slice family."
+    },
+    {
+      "id": "S9c",
+      "name": "Program phase + hard-gate status rendering",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/programs-canonical-view.ts",
+        "src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
+        "docs/build/slices/S9C_PROGRAM_PHASE_GATE_STATUS_RENDERING.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Six canonical phases render in order with explicit 6-state status enum (not_started/current/complete/informational/blocked/not_seeded).",
+        "Origination always renders honestly as informational/pre-seed.",
+        "Four hard gates render in order with explicit 5-state enum (informational/ready/missing_inputs/blocked/not_wired).",
+        "Gate strip never claims true approval state from the seed alone; ready is not emitted while production state machine is deferred.",
+        "Steward readiness note composes deterministically from seed (no model call), with ready / missing / blocking / deferred buckets.",
+        "Existing Programs detail public props and visual geometry are preserved."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
+        "npm run build"
+      ],
+      "notes": "Seed-only. No production state machine, no audit log writes, no model calls. Defers true gate approval to a later state-machine slice and gate-readiness signal upgrade to S9d once value and evidence are seeded."
     }
   ]
 }

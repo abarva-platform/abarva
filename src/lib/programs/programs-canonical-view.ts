@@ -365,4 +365,306 @@ export const HONEST_FALLBACK_LABELS = {
   riskRegister: 'Risk register not yet captured in seed.',
   decisionsPending: 'Decisions registry not yet captured in seed.',
   origination: 'Origination phase predates the seed; treated as pre-Charter.',
+  productionStateMachineDeferred:
+    'Seed-informed gate readiness; production state machine deferred.',
 } as const;
+
+// =====================================================================
+// S9c · Phase + hard-gate status rendering view model
+// =====================================================================
+//
+// The functions below consume only seed data. They do NOT implement a
+// production state machine. They produce deterministic status enums
+// the canonical detail component can render without fabricating
+// approval state.
+
+/**
+ * The richer 6-state phase status enum the canonical detail surface
+ * renders against. Mirrors the S8 readiness contract §H.
+ */
+export type CanonicalPhaseRenderStatus =
+  | 'not_started'
+  | 'current'
+  | 'complete'
+  | 'informational'
+  | 'blocked'
+  | 'not_seeded';
+
+/**
+ * Map the existing 4-state classification (statusForCanonicalPhase) to
+ * the 6-state enum the renderer wants. Behavior is deterministic and
+ * pure: no model calls, no time reads.
+ */
+export function statusToCanonicalPhaseRenderStatus(
+  status: CanonicalPhaseStatus,
+): CanonicalPhaseRenderStatus {
+  switch (status) {
+    case 'complete':
+      return 'complete';
+    case 'active':
+      return 'current';
+    case 'pending':
+      return 'not_started';
+    case 'origination_pre_seed':
+      return 'informational';
+  }
+}
+
+export interface CanonicalPhaseTimelineEntry {
+  phase: CanonicalPhase;
+  status: CanonicalPhaseRenderStatus;
+  /** True for the phase the program is currently sitting at. */
+  isCurrent: boolean;
+  /**
+   * Spec phase the timeline entry can link to (1..5). Origination has
+   * no spec phase mapping today; null for that entry.
+   */
+  specPhase: SpecPhaseNumber | null;
+  /** Short single-line reason the renderer can show next to the tile. */
+  reason: string;
+}
+
+/**
+ * Returns the canonical phase the program is currently sitting at.
+ * Pure; null only if the program has an out-of-range spec phase.
+ */
+export function getCurrentCanonicalPhase(
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec'>,
+): CanonicalPhase | null {
+  const idx = mapSpecPhaseToCanonicalIndex(program.currentPhaseSpec);
+  return CANONICAL_SIX_PHASES.find((p) => p.index === idx) ?? null;
+}
+
+/**
+ * Build the deterministic six-phase timeline view-model. The renderer
+ * iterates this array — no per-tile decisions in JSX. Each entry
+ * carries its own status and reason so the component stays thin.
+ */
+export function buildCanonicalPhaseTimeline(
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec'>,
+): ReadonlyArray<CanonicalPhaseTimelineEntry> {
+  return CANONICAL_SIX_PHASES.map((phase) => {
+    const baseStatus = statusForCanonicalPhase(program, phase.index);
+    const status = statusToCanonicalPhaseRenderStatus(baseStatus);
+    const specPhase = phase.index === 1
+      ? null
+      : ((phase.index - 1) as SpecPhaseNumber);
+    return {
+      phase,
+      status,
+      isCurrent: status === 'current',
+      specPhase,
+      reason: phaseReasonFor(phase, status),
+    } satisfies CanonicalPhaseTimelineEntry;
+  });
+}
+
+function phaseReasonFor(
+  phase: CanonicalPhase,
+  status: CanonicalPhaseRenderStatus,
+): string {
+  switch (status) {
+    case 'informational':
+      return phase.key === 'origination'
+        ? HONEST_FALLBACK_LABELS.origination
+        : 'Informational placeholder.';
+    case 'current':
+      return `Program is in ${phase.label} (P${phase.index}).`;
+    case 'complete':
+      return `${phase.label} (P${phase.index}) is behind the program; treated as complete.`;
+    case 'not_started':
+      return `${phase.label} (P${phase.index}) has not been reached yet.`;
+    case 'blocked':
+      return `${phase.label} (P${phase.index}) is blocked.`;
+    case 'not_seeded':
+      return `${phase.label} (P${phase.index}) is not represented in the seed.`;
+  }
+}
+
+// --- Hard-gate readiness ----------------------------------------------
+
+/**
+ * 5-state hard-gate render status. Honest defaults while the production
+ * gate state machine is deferred to a later slice.
+ */
+export type CanonicalHardGateRenderStatus =
+  | 'informational'
+  | 'ready'
+  | 'missing_inputs'
+  | 'blocked'
+  | 'not_wired';
+
+export interface CanonicalHardGateEntry {
+  gate: CanonicalGate;
+  status: CanonicalHardGateRenderStatus;
+  /** Short single-line label the renderer can show next to the row. */
+  label: string;
+  /**
+   * When status is `missing_inputs` or `blocked`, names the seed-known
+   * reason transition is not safe today. Null otherwise.
+   */
+  blockedTransitionReason: string | null;
+  /** True iff the program's current canonical phase exits this gate. */
+  isCurrentGate: boolean;
+  /** True iff the program has passed this gate's exit phase. */
+  isPassed: boolean;
+}
+
+/**
+ * Convert a render-status enum to a short uppercase label suitable for
+ * the badge column in the gate strip.
+ */
+export function getGateReadinessLabel(
+  status: CanonicalHardGateRenderStatus,
+): string {
+  switch (status) {
+    case 'informational':
+      return 'INFORMATIONAL';
+    case 'ready':
+      return 'READY';
+    case 'missing_inputs':
+      return 'MISSING INPUTS';
+    case 'blocked':
+      return 'BLOCKED';
+    case 'not_wired':
+      return 'NOT WIRED';
+  }
+}
+
+/**
+ * Per-gate seed-known reason a transition is not safe today. Returns a
+ * single-sentence prose string when the gate is `missing_inputs` (or
+ * one day `blocked`). Returns null when the gate is `informational`,
+ * `ready`, or `not_wired`.
+ */
+export function getBlockedTransitionReason(
+  gate: CanonicalGate,
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec' | 'status'>,
+): string | null {
+  const status = classifyGateStatus(gate, program);
+  if (status !== 'missing_inputs' && status !== 'blocked') return null;
+  return describeGateMissingInputs(gate);
+}
+
+function describeGateMissingInputs(gate: CanonicalGate): string {
+  switch (gate.index) {
+    case 1:
+      return 'Charter signature is not captured in the seed; G1 readiness deferred to the production state machine.';
+    case 2:
+      return 'CXO interview capture is not captured in the seed; G2 readiness deferred to the production state machine.';
+    case 3:
+      return 'Projected value documentation is not captured in the seed; G3 readiness deferred until evidence and value seed land.';
+    case 4:
+      return 'Realized outcomes verification is not captured in the seed; G4 readiness deferred until measurement seed lands.';
+  }
+}
+
+function classifyGateStatus(
+  gate: CanonicalGate,
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec' | 'status'>,
+): CanonicalHardGateRenderStatus {
+  const programIndex = mapSpecPhaseToCanonicalIndex(program.currentPhaseSpec);
+  const gatePhaseIndex = CANONICAL_SIX_PHASES.find(
+    (p) => p.key === gate.exitsPhase,
+  )!.index;
+
+  // Gate is still ahead of the program's current canonical phase: the
+  // production state machine would govern it later. Today we mark it
+  // as not_wired because we have no machine.
+  if (programIndex < gatePhaseIndex) return 'not_wired';
+
+  // Gate's exit phase IS the program's current phase: known to require
+  // inputs the seed does not capture today. Honest label is
+  // missing_inputs with a per-gate reason.
+  if (programIndex === gatePhaseIndex) return 'missing_inputs';
+
+  // Gate's exit phase is behind the program. Without a state machine,
+  // we cannot claim it as approved/cleared. Honest label is
+  // informational with the "passed" reason in the entry.
+  return 'informational';
+}
+
+/**
+ * Build the deterministic four-hard-gate strip view-model. The
+ * renderer iterates this array. No per-row decisions in JSX.
+ */
+export function buildCanonicalHardGateStrip(
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec' | 'status'>,
+): ReadonlyArray<CanonicalHardGateEntry> {
+  const programIndex = mapSpecPhaseToCanonicalIndex(program.currentPhaseSpec);
+  return CANONICAL_FOUR_GATES.map((gate) => {
+    const gatePhaseIndex = CANONICAL_SIX_PHASES.find(
+      (p) => p.key === gate.exitsPhase,
+    )!.index;
+    const status = classifyGateStatus(gate, program);
+    const isCurrentGate = programIndex === gatePhaseIndex;
+    const isPassed = programIndex > gatePhaseIndex;
+    return {
+      gate,
+      status,
+      label: getGateReadinessLabel(status),
+      blockedTransitionReason: getBlockedTransitionReason(gate, program),
+      isCurrentGate,
+      isPassed,
+    } satisfies CanonicalHardGateEntry;
+  });
+}
+
+// --- Steward readiness note ------------------------------------------
+
+export interface StewardReadinessNote {
+  ready: string[];
+  missing: string[];
+  blocking: string[];
+  deferred: string[];
+  /** Single-line summary the renderer can show as an eyebrow. */
+  summary: string;
+}
+
+/**
+ * Build a deterministic Steward readiness note from seed alone. No
+ * model call. The note lists what is ready, what is missing, what
+ * blocks advancement today, and what is deferred to the production
+ * state machine.
+ */
+export function buildStewardReadinessNote(
+  program: Pick<ProgramSeedPlan, 'currentPhaseSpec' | 'status'>,
+): StewardReadinessNote {
+  const phases = buildCanonicalPhaseTimeline(program);
+  const gates = buildCanonicalHardGateStrip(program);
+  const current = phases.find((p) => p.isCurrent);
+
+  const ready: string[] = [];
+  const missing: string[] = [];
+  const blocking: string[] = [];
+  const deferred: string[] = [];
+
+  if (current) {
+    ready.push(`Program is in canonical ${current.phase.label} (P${current.phase.index}).`);
+  }
+  for (const phase of phases) {
+    if (phase.status === 'complete') {
+      ready.push(`${phase.phase.label} treated as complete based on canonical position.`);
+    }
+  }
+
+  for (const entry of gates) {
+    if (entry.status === 'missing_inputs') {
+      missing.push(`G${entry.gate.index}: ${entry.gate.label} → ${entry.blockedTransitionReason ?? 'inputs missing'}`);
+      blocking.push(`G${entry.gate.index} cannot be cleared from seed alone.`);
+    } else if (entry.status === 'not_wired') {
+      deferred.push(`G${entry.gate.index} (${entry.gate.label}) — not wired yet.`);
+    } else if (entry.status === 'informational' && entry.isPassed) {
+      ready.push(`G${entry.gate.index} sits behind the program's current phase; treated informationally.`);
+    }
+  }
+
+  deferred.push('Production gate state machine implementation (Steward-owned writer + audit log).');
+
+  const summary = [
+    HONEST_FALLBACK_LABELS.productionStateMachineDeferred,
+    `${ready.length} ready signal(s), ${missing.length} missing input(s), ${blocking.length} blocking item(s).`,
+  ].join(' ');
+
+  return { ready, missing, blocking, deferred, summary };
+}

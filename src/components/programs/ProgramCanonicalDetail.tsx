@@ -32,12 +32,14 @@ import {
   tenantDeliverablePath,
 } from '@/lib/deliverables/seed-route-resolver';
 import {
-  CANONICAL_FOUR_GATES,
-  CANONICAL_SIX_PHASES,
   HONEST_FALLBACK_LABELS,
+  buildCanonicalHardGateStrip,
+  buildCanonicalPhaseTimeline,
   buildProgramEditorial,
-  statusForCanonicalPhase,
+  buildStewardReadinessNote,
   summarizeProgram,
+  type CanonicalHardGateRenderStatus,
+  type CanonicalPhaseRenderStatus,
 } from '@/lib/programs/programs-canonical-view';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type {
@@ -206,6 +208,9 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
             {/* Four hard-gate strip */}
             <HardGateStrip program={program} />
 
+            {/* Steward readiness note */}
+            <StewardReadinessPanel program={program} />
+
             {/* Honest fallbacks: data not yet captured */}
             <DataPlaceholders />
 
@@ -241,6 +246,7 @@ function PhaseTimeline({
   tenant: TenantSeedPlan;
   program: ProgramSeedPlan;
 }) {
+  const entries = buildCanonicalPhaseTimeline(program);
   return (
     <section
       aria-label="Canonical six-phase timeline"
@@ -271,12 +277,8 @@ function PhaseTimeline({
           gap: 6,
         }}
       >
-        {CANONICAL_SIX_PHASES.map((phase) => {
-          const status = statusForCanonicalPhase(program, phase.index);
-          const tile = phaseTileColors(status);
-          // Origination has no spec phase; other canonical phases map
-          // to a spec phase the deliverable seed knows about.
-          const specPhaseForLink = canonicalToSpecPhase(phase.index);
+        {entries.map((entry) => {
+          const tile = phaseTileColors(entry.status);
           const tileBody = (
             <div
               style={{
@@ -287,9 +289,11 @@ function PhaseTimeline({
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 4,
-                minHeight: 96,
+                minHeight: 104,
               }}
-              title={phase.summary}
+              title={entry.reason}
+              data-canonical-phase={entry.phase.key}
+              data-status={entry.status}
             >
               <span
                 style={{
@@ -301,26 +305,26 @@ function PhaseTimeline({
                   fontWeight: 700,
                 }}
               >
-                P{phase.index} · {statusLabel(status)}
+                P{entry.phase.index} · {phaseRenderStatusLabel(entry.status)}
               </span>
               <span style={{ fontSize: 14, fontWeight: 600, color: COLORS.ink }}>
-                {phase.label}
+                {entry.phase.label}
               </span>
               <span style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.4 }}>
-                {phase.summary}
+                {entry.phase.summary}
               </span>
             </div>
           );
-          return specPhaseForLink ? (
+          return entry.specPhase !== null ? (
             <Link
-              key={phase.key}
-              href={tenantProgramPhasePath(tenant, program, specPhaseForLink)}
+              key={entry.phase.key}
+              href={tenantProgramPhasePath(tenant, program, entry.specPhase)}
               style={{ textDecoration: 'none' }}
             >
               {tileBody}
             </Link>
           ) : (
-            <div key={phase.key}>{tileBody}</div>
+            <div key={entry.phase.key}>{tileBody}</div>
           );
         })}
       </div>
@@ -338,42 +342,44 @@ function PhaseTimeline({
   );
 }
 
-function canonicalToSpecPhase(index: 1 | 2 | 3 | 4 | 5 | 6): SpecPhaseNumber | null {
-  // Inverse of mapSpecPhaseToCanonicalIndex. Origination (canonical 1)
-  // has no spec-phase route today.
-  if (index === 1) return null;
-  return (index - 1) as SpecPhaseNumber;
-}
-
-function phaseTileColors(status: ReturnType<typeof statusForCanonicalPhase>) {
+function phaseTileColors(status: CanonicalPhaseRenderStatus) {
   switch (status) {
-    case 'active':
+    case 'current':
       return { bg: COLORS.accentSoft, border: 'rgba(14,159,140,0.3)', accent: COLORS.accent };
     case 'complete':
       return { bg: 'rgba(26,22,18,0.04)', border: COLORS.border, accent: COLORS.muted };
-    case 'pending':
+    case 'not_started':
       return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
-    case 'origination_pre_seed':
+    case 'informational':
+      return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
+    case 'blocked':
+      return { bg: COLORS.amberSoft, border: 'rgba(217,119,6,0.3)', accent: COLORS.amber };
+    case 'not_seeded':
       return { bg: 'rgba(26,22,18,0.02)', border: COLORS.borderSoft, accent: COLORS.mutedSoft };
   }
 }
 
-function statusLabel(status: ReturnType<typeof statusForCanonicalPhase>): string {
+function phaseRenderStatusLabel(status: CanonicalPhaseRenderStatus): string {
   switch (status) {
-    case 'active':
-      return 'Active';
+    case 'current':
+      return 'Current';
     case 'complete':
       return 'Complete';
-    case 'pending':
-      return 'Pending';
-    case 'origination_pre_seed':
-      return 'Pre-seed';
+    case 'not_started':
+      return 'Not started';
+    case 'informational':
+      return 'Informational';
+    case 'blocked':
+      return 'Blocked';
+    case 'not_seeded':
+      return 'Not seeded';
   }
 }
 
 // --- Hard-gate strip --------------------------------------------------
 
 function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
+  const entries = buildCanonicalHardGateStrip(program);
   return (
     <section
       aria-label="Canonical four hard gates"
@@ -398,12 +404,11 @@ function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
         Canonical four hard gates
       </div>
       <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {CANONICAL_FOUR_GATES.map((gate) => {
-          const status = inferInformationalGateStatus(program, gate.exitsPhase);
-          const tone = gateTone(status);
+        {entries.map((entry) => {
+          const tone = gateTone(entry.status);
           return (
             <li
-              key={gate.index}
+              key={entry.gate.index}
               style={{
                 display: 'grid',
                 gridTemplateColumns: '36px 1fr auto',
@@ -414,6 +419,9 @@ function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
                 border: `1px solid ${tone.border}`,
                 borderRadius: 8,
               }}
+              data-canonical-gate={entry.gate.index}
+              data-status={entry.status}
+              title={entry.blockedTransitionReason ?? undefined}
             >
               <span
                 style={{
@@ -424,11 +432,18 @@ function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
                   letterSpacing: '0.1em',
                 }}
               >
-                G{gate.index}
+                G{entry.gate.index}
               </span>
-              <span style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.5 }}>
-                {gate.label}
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.5 }}>
+                  {entry.gate.label}
+                </span>
+                {entry.blockedTransitionReason ? (
+                  <span style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.45 }}>
+                    {entry.blockedTransitionReason}
+                  </span>
+                ) : null}
+              </div>
               <span
                 style={{
                   fontFamily: 'JetBrains Mono, monospace',
@@ -439,7 +454,7 @@ function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
                   fontWeight: 700,
                 }}
               >
-                {status}
+                {entry.label}
               </span>
             </li>
           );
@@ -453,41 +468,130 @@ function HardGateStrip({ program }: { program: ProgramSeedPlan }) {
           fontStyle: 'italic',
         }}
       >
-        {HONEST_FALLBACK_LABELS.gateState}
+        {HONEST_FALLBACK_LABELS.productionStateMachineDeferred}
       </div>
     </section>
   );
 }
 
-type GateStatusLabel = 'cleared' | 'in flight' | 'pending';
-
-function inferInformationalGateStatus(
-  program: ProgramSeedPlan,
-  exitsPhase: (typeof CANONICAL_FOUR_GATES)[number]['exitsPhase'],
-): GateStatusLabel {
-  // Informational only — derived from canonical phase index. The real
-  // gate state machine lands in S9c.
-  const programIndex = canonicalIndexForProgram(program);
-  const gatePhaseIndex = CANONICAL_SIX_PHASES.find((p) => p.key === exitsPhase)!.index;
-  if (programIndex > gatePhaseIndex) return 'cleared';
-  if (programIndex === gatePhaseIndex) return 'in flight';
-  return 'pending';
-}
-
-function canonicalIndexForProgram(program: ProgramSeedPlan): number {
-  const view = summarizeProgram(program);
-  return view.currentCanonicalPhase.index;
-}
-
-function gateTone(status: GateStatusLabel) {
+function gateTone(status: CanonicalHardGateRenderStatus) {
   switch (status) {
-    case 'cleared':
+    case 'informational':
       return { bg: COLORS.accentSoft, border: 'rgba(14,159,140,0.2)', accent: COLORS.accent };
-    case 'in flight':
-      return { bg: COLORS.amberSoft, border: 'rgba(217,119,6,0.2)', accent: COLORS.amber };
-    case 'pending':
+    case 'ready':
+      return { bg: COLORS.accentSoft, border: 'rgba(14,159,140,0.3)', accent: COLORS.accent };
+    case 'missing_inputs':
+      return { bg: COLORS.amberSoft, border: 'rgba(217,119,6,0.3)', accent: COLORS.amber };
+    case 'blocked':
+      return { bg: 'rgba(224,68,68,0.08)', border: 'rgba(224,68,68,0.3)', accent: '#E04444' };
+    case 'not_wired':
       return { bg: 'rgba(26,22,18,0.03)', border: COLORS.border, accent: COLORS.mutedSoft };
   }
+}
+
+// --- Steward readiness note ------------------------------------------
+
+function StewardReadinessPanel({ program }: { program: ProgramSeedPlan }) {
+  const note = buildStewardReadinessNote(program);
+  return (
+    <section
+      aria-label="Steward readiness note"
+      style={{
+        padding: '16px 18px',
+        background: COLORS.card,
+        border: `1px solid ${COLORS.border}`,
+        borderLeft: `3px solid ${COLORS.amber}`,
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: COLORS.amber,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        Steward · readiness · deterministic
+      </div>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 13,
+          lineHeight: 1.6,
+          color: COLORS.ink,
+        }}
+      >
+        {note.summary}
+      </p>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 10,
+          marginTop: 12,
+        }}
+      >
+        <StewardColumn label="Ready" tone={COLORS.accent} items={note.ready} />
+        <StewardColumn label="Missing inputs" tone={COLORS.amber} items={note.missing} />
+        <StewardColumn label="Blocking" tone="#E04444" items={note.blocking} />
+        <StewardColumn label="Deferred" tone={COLORS.mutedSoft} items={note.deferred} />
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontSize: 11,
+          color: COLORS.mutedSoft,
+          fontStyle: 'italic',
+        }}
+      >
+        Composed deterministically from seed state. No live agent or model call.
+      </div>
+    </section>
+  );
+}
+
+function StewardColumn({
+  label,
+  tone,
+  items,
+}: {
+  label: string;
+  tone: string;
+  items: string[];
+}) {
+  return (
+    <div>
+      <div
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: tone,
+          fontWeight: 700,
+          marginBottom: 4,
+        }}
+      >
+        {label}
+        <span style={{ marginLeft: 6, opacity: 0.65 }}>· {items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <div style={{ fontSize: 12, color: COLORS.mutedSoft, fontStyle: 'italic' }}>None.</div>
+      ) : (
+        <ul style={{ listStyle: 'disc', paddingLeft: 16, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {items.map((item, i) => (
+            <li key={`${label}-${i}`} style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5 }}>
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 // --- Honest data placeholders ----------------------------------------
