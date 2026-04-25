@@ -575,6 +575,56 @@
         "npm run build"
       ],
       "notes": "Read model only. No Tower UI build, no Atlas runtime subscription, no persistence. Programs in canonical Execute phase honestly emit zero gate_missing_inputs signals because no canonical hard gate exits Execute."
+    },
+    {
+      "id": "S9f",
+      "name": "Tower Programs pressure cards",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e"
+      ],
+      "allowedFiles": [
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/lib/tower/program-pressure-view.ts",
+        "src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx",
+        "src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "docs/build/slices/S9F_TOWER_PROGRAM_PRESSURE_CARDS.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Tower landing renders the new Programs pressure section above the existing tower content.",
+        "Tower view helper imports only the S9e read model and never re-derives signals from canonical view modules.",
+        "Every card routeHref resolves to the canonical tenant program detail route.",
+        "No card claims evidence or value as ready while seed lacks them.",
+        "No card emits a dollar amount in any string field.",
+        "Existing assertTenantAccess and notFound behavior is preserved.",
+        "No Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Tower UI consumer of the S9e read model. Atlas signal subscriber, persistence, aging, and notification delivery are deferred to follow-on slices."
     }
   ]
 }
