@@ -1861,6 +1861,62 @@
         "npm run build"
       ],
       "notes": "Mounts a deterministic, server-rendered Workshop Mode shell inside the canonical Programs Detail surface following the PF2 layout (left journey rail / center Nexus canvas / right context panel). No live workshop ingestion, no deliverable refinement loop, no live Steward verdict, no client interactivity. PW2+ wires Maestro capture, deliverable refinement, and detail drawer overlay."
+    },
+    {
+      "id": "PDEL5",
+      "name": "Deliverable / Artifact Canvas Renderer",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramArtifactCanvas.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/program-artifact-canvas-view.ts",
+        "src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "docs/build/slices/PDEL5_DELIVERABLE_ARTIFACT_CANVAS_RENDERER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildProgramArtifactCanvasView is byte-equal across repeated calls per program for every canonical demo program.",
+        "Every canonical demo program produces a non-zero artifact count; renderableCount is always less than or equal to artifactCount.",
+        "When an artifact is selected, all four canvas actions (edit, regenerate, download, approve) are returned as enabled=false with non-empty deferred reasons.",
+        "Preview mode is `placeholder` for every non-html and non-markdown render mode, with the canonical placeholder body.",
+        "No `https://` and no `E-###` citation tokens appear in the serialized canvas view.",
+        "Placeholder preview body never claims a real download path (no `https://`, no `blob:`, no `download?`, no `.pdf` suffix, no `/files/`).",
+        "ProgramArtifactCanvas root carries data-program-artifact-canvas=\"pdel5\"; Edit / Regenerate / Download / Approve buttons render with disabled, aria-disabled=\"true\", and a sub-label naming the deferred reason.",
+        "ProgramCanonicalDetail mounts ProgramArtifactCanvas using buildProgramArtifactCanvasView(program.programSlug).",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "npx jest src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic two-region canvas (left list + right preview) projected from the PDEL artifact inventory. No upload, no parse, no export, no model calls, no live download. PDEL5b/PDEL6 wire export and route-level selection state; PDEL7 wires edit / regenerate."
     }
   ]
 }

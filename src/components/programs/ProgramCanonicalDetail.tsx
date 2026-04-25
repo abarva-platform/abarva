@@ -23,6 +23,8 @@
 
 import Link from 'next/link';
 import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
+import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
+import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
 import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
 import {
   phaseMeta,
@@ -226,6 +228,11 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Deliverable summary */}
             <DeliverableList tenant={tenant} program={program} />
+
+            {/* PDEL5 · Deliverable / artifact canvas */}
+            <ProgramArtifactCanvas
+              view={buildProgramArtifactCanvasView(program.programSlug)}
+            />
           </section>
 
           {/* Zone D · Nexus rail (existing component, do not rewrite — S9b owns it) */}
