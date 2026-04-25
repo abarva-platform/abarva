@@ -117,16 +117,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #201 merged: Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs.
 - 2026-04-25 · Workflow richness and document collaboration hardening started on reconciled Build Pack baseline. Build Pack now needs explicit artifact versioning, external edit/re-upload, approval routing, and workflow validation specs before workflow UI expands.
 - 2026-04-25 · PR #202 merged: workflow richness and document collaboration model.
+- 2026-04-25 · Workflow validation fixtures implementation completed locally: 12 deterministic fixtures, 11 BLOCK / 1 DEFER / 0 mismatches.
 
 ## Last status emission
-- 2026-04-25 · Source workflow validation fixtures planning · PR #202 merged · current item is planning only · no workflow fixtures/engine/UI/API/model/export/import implementation.
+- 2026-04-25 · Source workflow validation fixtures implementation · deterministic fixtures only · no workflow engine/UI/API/model/export/import implementation.
 
 ## AbarVa Source Sidecar State
 
 - Current completed milestone: PR #202 merged · workflow richness and document collaboration model.
 - Dashboard decision: approve with small refinements.
-- Current objective: prepare the next controlled slice: deterministic workflow validation fixtures plan.
-- Current item: workflow validation fixtures planning.
+- Current objective: implement deterministic workflow validation fixtures without workflow runtime expansion.
+- Current item: workflow validation fixtures implementation.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -163,9 +164,12 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Artifact/RFP generation model updates.
   - Lifecycle/alerts updates.
   - Production readiness tracker updates.
+  - Deterministic workflow validation fixture contract.
+  - Twelve workflow validation fixtures covering stage gates, artifact lifecycle, document review, approvals, versioning, waiver behavior, uploaded document citation readiness, vendor response completeness, and value realization.
+  - Local deterministic fixture smoke result: 12 total, 11 BLOCK, 1 DEFER, all expectations matched.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
-- Blockers/do-not-build: no workflow validation fixtures yet, workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Workflow validation fixtures should test stage gates, artifact lifecycle, document review, approval routing, versioning, waiver behavior, and offline edit/re-upload rules before workflow UI or runtime implementation. This should remain deterministic and seeded.
-- Next recommended item: create deterministic workflow validation fixtures using seeded Source workflow state, then review outcomes before any workflow UI/engine work.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_WORKFLOW_VALIDATION_FIXTURES.md`.
+- Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until a separate runner/report slice is reviewed. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented.
+- Next recommended item: review and merge workflow validation fixtures PR, then plan deterministic workflow validation runner in a separate docs-only slice.
+- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_WORKFLOW_VALIDATION_RUNNER.md` after fixture PR is accepted.
