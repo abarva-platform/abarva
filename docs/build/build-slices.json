@@ -896,6 +896,63 @@
         "npm run build"
       ],
       "notes": "Specification / contract document only. Establishes the canonical Setup/Admin control plane shape. ADM2-ADM10 implement the surface; this slice does not modify application code. No runtime, no migrations, no model calls."
+    },
+    {
+      "id": "ADM2",
+      "name": "Steward Setup Home / Control Center",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM1"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/steward-setup-readiness.ts",
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/app/(maestro)/platform/admin/page.tsx",
+        "src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "docs/build/slices/ADM2_STEWARD_SETUP_HOME_CONTROL_CENTER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Read model exposes the 12 canonical Enterprise Dataset Domains from ADM1 in canonical ordinal order with status, counts, example datasets, missing inputs, agents, surfaces, Steward guidance per row.",
+        "Evidence aggregate exposes byState entries for all 9 canonical evidence states with monotonic non-increasing counts across the progression.",
+        "totalLoaded / totalAvailable / totalUsable reconcile to byState.loaded / byState.indexed / byState.usable_as_evidence.",
+        "Agent Readiness Matrix has all four canonical agents (Nexus, Sentinel, Atlas, Steward) with status, canUse, missingContext, safeToAnswer, mustDefer, nextAdminAction per row.",
+        "Steward Brief carries title, tenantSetupHealth (label + rationale), topAdminGaps, dataEvidenceReadiness, userSecurityRisk, connectorRisk, agentReadiness sentences, recommendedNextAction, three deterministic disabled suggestedFollowUps, sourceLabel, interpretationBasis.",
+        "Steward Brief recommendedNextAction equals recommendedActions[0].",
+        "Admin modules include all ten canonical ADM1 modules including Build Progress / Founder Control Tower; every module has a routeHref starting with /.",
+        "Brief never invents a dollar amount in any string field.",
+        "Brief never claims a live runtime; connector posture honestly reads not_started or 0 of 0.",
+        "Component imports only next/link and the ADM2 read model; no imports from Source UI, Nexus / Sentinel / Atlas / Agent runtime, legacy /programs, mock.ts, or auth.",
+        "Existing /platform/admin guard, sidebar items, and Build Progress route are preserved unchanged.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
     }
   ]
 }
