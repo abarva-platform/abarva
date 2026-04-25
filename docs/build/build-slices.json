@@ -740,7 +740,7 @@
     },
     {
       "id": "I2",
-      "name": "Intelligence · Sentinel Brief + Active Patterns",
+      "name": "Intelligence \u00b7 Sentinel Brief + Active Patterns",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -797,7 +797,7 @@
     },
     {
       "id": "I3",
-      "name": "Intelligence · Pattern Detail / Evidence Trail",
+      "name": "Intelligence \u00b7 Pattern Detail / Evidence Trail",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -855,7 +855,7 @@
     },
     {
       "id": "ADM1",
-      "name": "Steward Setup/Admin · Apple-like Control Plane Contract",
+      "name": "Steward Setup/Admin \u00b7 Apple-like Control Plane Contract",
       "category": "ADM",
       "status": "code_complete",
       "risk": "low",
@@ -883,7 +883,7 @@
         "Contract defines the ten canonical Admin modules.",
         "Contract defines twelve canonical Enterprise Dataset Domains, each with example datasets, why-it-matters, agents, surfaces, readiness criteria, common missing inputs, and Steward guidance.",
         "Contract defines the Data Explorer field set and drawer behavior.",
-        "Contract defines the nine canonical evidence states (loaded → usable_as_evidence + blocked) and per-agent effect.",
+        "Contract defines the nine canonical evidence states (loaded \u2192 usable_as_evidence + blocked) and per-agent effect.",
         "Contract defines the Users & Access, Security & Governance, and Connector contracts.",
         "Contract defines the seven AI Control Tower dimensions and per-dimension agent role.",
         "Contract defines the Agent Readiness Matrix shape for Nexus, Sentinel, Atlas, Steward.",
@@ -952,7 +952,7 @@
         "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
         "npm run build"
       ],
-      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 \u00a7F (zones), \u00a7G (modules), \u00a7H (12 dataset domains), \u00a7J (evidence states), \u00a7O (agent readiness), \u00a7P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
     },
     {
       "id": "ADM3",
@@ -992,7 +992,7 @@
       "acceptanceCriteria": [
         "summary.byDomain covers all 12 canonical Enterprise Dataset Domains.",
         "buildDatasetDomainInventoryForDomain returns non-empty items for active domains and empty list for not_started domains and unknown keys.",
-        "Every item carries the full ADM1 §I field set with deterministic seed-only data.",
+        "Every item carries the full ADM1 \u00a7I field set with deterministic seed-only data.",
         "Item ids are unique; every id matches the ds:<domainKey>:<slug> pattern.",
         "summary.loadedTotal / availableTotal / usableTotal reconcile to the canonical evidence progression (loaded >= available >= usable).",
         "byUsability covers all 9 canonical evidence states; byParseStatus covers all 4 parse states.",
@@ -1011,7 +1011,7 @@
     },
     {
       "id": "I4",
-      "name": "Intelligence · Pattern Content Renderer / Detail Enrichment",
+      "name": "Intelligence \u00b7 Pattern Content Renderer / Detail Enrichment",
       "category": "I",
       "status": "code_complete",
       "risk": "low",
@@ -1055,7 +1055,7 @@
         "relatedPatterns reference only canonical I1 pattern keys with no self-reference.",
         "Content does not invent a dollar amount in any string field.",
         "Content does not claim live retrieval / live model invocation.",
-        "SentinelPatternContentPanel renders source · deterministic seed chip and disclaims live retrieval in footer.",
+        "SentinelPatternContentPanel renders source \u00b7 deterministic seed chip and disclaims live retrieval in footer.",
         "SentinelPatternDetail integrates SentinelPatternContentPanel via PatternAuthoredContentSection.",
         "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
       ],
@@ -1100,7 +1100,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "ACT1",
@@ -1235,6 +1235,63 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection of (tenant, program) seed into per-workshop readiness records. Operationalizes the MW1 contract. No meeting notes ingestion, no live LLM-driven brief composition, no calendar/booking integration. Future MW3 Maestro Brief UI renders these records; MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
+    },
+    {
+      "id": "MW3",
+      "name": "Nexus Maestro Brief UI",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "MW2",
+        "DES2"
+      ],
+      "allowedFiles": [
+        "src/components/programs/NexusMaestroBriefPanel.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/__tests__/integration/programs/nexus-maestro-brief-panel.test.ts",
+        "docs/build/slices/MW3_NEXUS_MAESTRO_BRIEF_UI.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "New server component NexusMaestroBriefPanel renders the MW2 WorkshopReadiness record as the Client Maestro pre-workshop brief surface.",
+        "Component carries data-mw3=\"nexus-maestro-brief\" on its root for testability and exposes both a named and a default export.",
+        "Panel surfaces labeled sections for: Next workshop (title, type, phase, why-now), Objective, Required attendees, Optional SMEs, Pre-read, Questions to ask, Likely tensions, Decisions needed, Evidence to capture, Expected outputs, Nexus preparation brief, and Steward gate implication.",
+        "Honest disclaimer rendered at the bottom: live workshop ingestion is not wired; the brief is rendered from the deterministic workshop readiness read model.",
+        "Honest fallback labels surface for any field not yet wired in MW2 \u2014 no fabricated meeting notes, decisions, or evidence.",
+        "ProgramCanonicalDetail.tsx adds a single import and a single conditional mount adjacent to the existing readiness surface; no other behavior changed.",
+        "Mount renders nothing when buildNextRecommendedWorkshop returns null; no stub readiness invented.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; uses no 'use client', useState, useEffect, fetch, Date.now, Math.random, or new Date.",
+        "Render pass produces deterministic HTML across repeated calls and renders without throwing for every (tenant, program, workshop) record across the canonical demo plan."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/nexus-maestro-brief-panel.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npx jest src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Server-component panel that renders the MW2 deterministic workshop readiness record as a Client Maestro / Nexus pre-workshop brief. Pure presentation: no client interactivity, no model calls, no live workshop ingestion. Mounts into ProgramCanonicalDetail adjacent to the existing readiness surface. Future MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
     },
     {
       "id": "PF1",
@@ -1461,9 +1518,9 @@
         "Contract defines a center-canvas, Nexus-led phase workspace with left journey rail (<=220px), center canvas (~70%), and right compact context panel (<=320px); not a left-rail nav and not a split-view dashboard.",
         "Contract enumerates exactly six mutually exclusive phase modes: phase overview, workshop preparation, live session support, notes synthesis, deliverable refinement, gate readiness.",
         "Contract names the Client Maestro as the only role that advances the phase and Nexus as the program mastermind; Atlas only speaks about the workshop, never in it.",
-        "Contract specifies Save / Stop / Resume affordances per MW1 §G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
+        "Contract specifies Save / Stop / Resume affordances per MW1 \u00a7G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
         "Contract specifies typed / pasted / uploaded ingestion only with deterministic extractors, raw-text persistence, Maestro confirmation, and source / createdFrom tagging; audio and meeting-bot ingestion are deferred.",
-        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub → Outline → Rich promotion ladder per MW1 §J.",
+        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub \u2192 Outline \u2192 Rich promotion ladder per MW1 \u00a7J.",
         "Contract requires evidence chip (NAVY / AMBER / RED / MUTED), value ledger reference, canonical gate caps in the journey rail, Steward gate readiness verdict in the right rail, and refusal of phase advancement when hard-gate inputs are missing.",
         "Contract specifies click-to-explore interaction, single-instance drawer overlay, 120ms fade-only animation, and a workshop notes pane that defaults open on the active phase.",
         "Contract forbids fabricated dollar amounts, fake E-### citations, and live-runtime claims; tags Maestro-captured records with source: 'maestro_capture' and createdFrom: 'deterministic_seed'.",
@@ -1510,7 +1567,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "DES1",

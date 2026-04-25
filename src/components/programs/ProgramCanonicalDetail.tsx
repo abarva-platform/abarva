@@ -23,6 +23,8 @@
 
 import Link from 'next/link';
 import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
+import { NexusMaestroBriefPanel } from '@/components/programs/NexusMaestroBriefPanel';
+import { buildNextRecommendedWorkshop } from '@/lib/programs/workshop-readiness';
 import {
   phaseMeta,
   tenantProgramPath,
@@ -212,6 +214,9 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Steward readiness note */}
             <StewardReadinessPanel program={program} />
+
+            {/* MW3 · Nexus Maestro Brief (deterministic readiness projection) */}
+            <NexusMaestroBriefMount tenant={tenant} program={program} />
 
             {/* Evidence + value readiness summary (S9d) */}
             <EvidenceValueReadinessSummary tenant={tenant} program={program} />
@@ -597,6 +602,20 @@ function StewardColumn({
       )}
     </div>
   );
+}
+
+// --- MW3 · Nexus Maestro Brief mount ---------------------------------
+
+function NexusMaestroBriefMount({
+  tenant,
+  program,
+}: {
+  tenant: TenantSeedPlan;
+  program: ProgramSeedPlan;
+}) {
+  const readiness = buildNextRecommendedWorkshop(tenant, program);
+  if (!readiness) return null;
+  return <NexusMaestroBriefPanel readiness={readiness} />;
 }
 
 // --- S9d · Evidence + Value readiness summary -----------------------
