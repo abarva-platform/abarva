@@ -128,18 +128,26 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #213 merged: authenticated dashboard visual review packet; authenticated dashboard access remained blocked by Clerk redirect.
 - 2026-04-25 · PR #215 merged: Source auth redirect diagnostic. Root cause: `/source` was not in the app-owned auth-required route matcher.
 - 2026-04-25 · PR #216 merged: base hygiene repair removed Steward setup conflict markers and restored TypeScript validation.
-- 2026-04-25 · PR #218 merged: Source auth redirect fix routed `/source` through the app-owned sign-in redirect flow.
-- 2026-04-25 · Authenticated `/source` screenshot review completed by user. Decision: approve with targeted visual refinement; shift dashboard from dark command center toward off-white premium sourcing workbench.
+- 2026-04-25 · PR #218 merged: Source auth redirect fix routes `/source` through the app-owned sign-in redirect flow.
+- 2026-04-25 · PR #223 merged: AMS Managed Services Sourcing pattern pack. First full authored Source pattern pack preserved as docs-only sourcing IP.
+- 2026-04-25 · PR #224 merged: AMS pattern sectioning plan.
+- 2026-04-25 · PR #225 merged: AMS pattern sections. Authored AMS pattern now has 28 stable `source.ams.v1.*` section ids in a docs-only companion.
+- 2026-04-25 · PR #227 merged: deterministic Source multi-agent briefing layer. Nexus, Sentinel, Atlas, and Steward now produce distinct non-LLM briefings from Source context plus context/workflow validation reports.
+- 2026-04-25 · Source layered progress tracker started as a docs-only operating-state slice to separate MVP and production readiness by layer.
+- 2026-04-25 · PR #228 merged: Source layered progress tracker.
+- 2026-04-25 · Source-specific Nexus API stub plan started as a docs-only planning slice; no route implementation, UI, model calls, upload/parsing, or workflow runtime scope.
+- 2026-04-25 · PR #229 merged: Source-specific Nexus API stub plan.
+- 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
-- 2026-04-25 · Source dashboard light visual refinement implemented locally · warmer off-white dashboard canvas, compact pressure signals, earlier event table, and one retained dark command-read panel · no event canvas/chat/API/model/upload/workflow engine scope.
+- 2026-04-25 · Source-specific Nexus API route stub implemented locally after PR #229 merge · deterministic API stub only · no model, chat UI, upload, persistence, workflow engine, or approval engine scope.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #218 merged · Source auth redirect fix enabled authenticated `/source` access for visual review.
-- Dashboard decision: approve with targeted visual refinement after authenticated screenshot review.
-- Current objective: align `/source` dashboard visual language with off-white, premium, data-forward AbarVa direction.
-- Current item: Source dashboard light visual refinement.
+- Current completed milestone: PR #229 merged · Source Nexus API stub plan.
+- Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
+- Current objective: implement the Source-specific Nexus API route stub with deterministic no-model behavior.
+- Current item: Source Nexus API route stub.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -199,10 +207,18 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Source auth redirect diagnostic merged via PR #215.
   - Base TypeScript hygiene repaired via PR #216.
   - Source auth redirect fix merged via PR #218.
-  - Authenticated screenshot review completed by user; content strategy strong, visual tone too dark/heavy.
+  - AMS Managed Services Sourcing pattern pack merged via PR #223.
+  - AMS pattern sectioning plan merged via PR #224.
+  - AMS pattern sections merged via PR #225.
+  - Deterministic Source multi-agent briefing layer merged via PR #227: Nexus, Sentinel, Atlas, and Steward produce distinct non-LLM briefings from SourceAgentContextBundle plus context/workflow validation reports.
+  - Source layered progress tracker merged via PR #228 to show Source progress across platform design system, product foundation, pattern/workflow IP, validation harnesses, multi-agent intelligence, API/runtime, UI, evidence pipeline, and production readiness.
+  - Source Nexus API stub plan drafted for `POST /api/v1/source/[eventId]/nexus/ask`, no-model first behavior, SourceAgentContextBundle usage, deterministic multi-agent briefing integration, context/workflow validation integration, request/response shape, failure states, and auth/tenant considerations.
+  - Source Nexus API route stub implemented locally for `POST /api/v1/source/[eventId]/nexus/ask`.
+  - Source Nexus API deterministic helper added to build no-model responses from seeded Source context, context validation report, workflow validation report, and multi-agent briefing.
+  - Source Nexus API smoke check passed for `evt-source-data-ai-si-selection`: noModel true, briefing present, answerStatus blocked, context verdict defer, workflow verdict defer.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue was narrow and fixed by PR #218. Authenticated review confirmed the dashboard content is strong but the visual tone should be lighter, more off-white, and more table-forward.
-- Next recommended item: review the light visual refinement PR, then capture authenticated `/source` screenshot after merge. Keep event canvas/chat/API/model/upload/workflow engine work blocked until explicitly approved.
-- Next planning artifact: authenticated Source dashboard screen review after light visual refinement.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
+- Next recommended item: review and merge the Source Nexus API route stub, then consider route-level integration tests or a small authenticated API smoke review before UI binding. Keep chat UI, model calls, upload/parsing, event canvas, workflow engine, approval engine, artifact versioning, and document export/import blocked until explicitly approved.
+- Next planning artifact: Source Nexus API route smoke/integration test plan, no UI or model calls.
