@@ -122,16 +122,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #206 merged: workflow validation runner plan.
 - 2026-04-25 · PR #207 merged: deterministic Source workflow validation runner.
 - 2026-04-25 · PR #209 merged: workflow validation report hardening plan.
+- 2026-04-25 · PR #210 merged: deterministic Source workflow validation report formatter. Workflow validation foundation is complete at the deterministic fixture/runner/report layer.
 
 ## Last status emission
-- 2026-04-25 · Source workflow validation report hardening implemented locally · deterministic report/readable formatter only · 12 total / 11 BLOCK / 1 DEFER / 0 mismatches · no workflow engine/UI/API/model/export/import implementation.
+- 2026-04-25 · Source operating state/readiness tracker housekeeping after PR #210 · documentation/state only · deterministic workflow validation milestone complete · no product implementation.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #209 merged · workflow validation report hardening plan.
+- Current completed milestone: PR #210 merged · deterministic Source workflow validation report formatter.
 - Dashboard decision: approve with small refinements.
-- Current objective: complete deterministic workflow validation report hardening.
-- Current item: workflow validation report hardening implementation.
+- Current objective: update Source operating state and production readiness tracker after workflow validation milestone.
+- Current item: production readiness tracker housekeeping.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -181,9 +182,13 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Deterministic readable workflow validation report hardening.
   - Workflow validation BLOCK/defer/remediation display helpers.
   - Workflow validation report comparison to context validation report.
+  - Workflow validation fixtures merged via PR #204.
+  - Workflow validation runner merged via PR #207.
+  - Workflow validation readable report formatter merged via PR #210.
+  - Current workflow validation outcome: 12 total, 11 BLOCK, 1 DEFER, 0 mismatches.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Fixtures should stay as deterministic guardrails until a separate runner/report slice is reviewed. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker so Source planning can resume. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER.
-- Next recommended item: review and merge workflow validation report hardening PR, then update the Source production readiness tracker for workflow validation status.
-- Next planning artifact: production readiness tracker update after report hardening outcome is known.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER.
+- Next recommended item: review this production readiness tracker update, then decide the next approved Source slice. Keep UI/API/model/upload/workflow engine work blocked until explicitly approved.
+- Next planning artifact: TBD after readiness tracker update is reviewed.
