@@ -1612,6 +1612,60 @@
         "npm run build"
       ],
       "notes": "Eleven calm, deterministic React primitives plus a single shared theme module that encodes the DES1 canon. No client interactivity, no model calls. DES3+ page refresh slices migrate Programs / Intelligence / AI Control Tower / Admin Setup onto these primitives."
+    },
+    {
+      "id": "SOL2",
+      "name": "AI-led PDLC Solution Component Pack",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PF1",
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/ai-led-pdlc-components.ts",
+        "src/__tests__/integration/solutions/ai-led-pdlc-components.test.ts",
+        "docs/build/slices/SOL2_AI_LED_PDLC_SOLUTION_COMPONENT_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 14 canonical AI-led PDLC solution components in canonical order.",
+        "Each component carries key, name, definition, problemSolved, requiredCurrentStateInputs (>=3), requiredMetrics (>=2), targetCapabilities (>=2), enablingTools (>=2), governanceRequirements (>=2), implementationSteps (>=3), expectedOutcomes (>=2), risks (>=1), relatedFailureModes (>=1), relatedPatterns (>=1), requiredWorkshops (>=1), deliverablesProduced (>=1), createdFrom.",
+        "Every relatedFailureModes entry is a canonical PF1 AiProgramFailureKey.",
+        "Every relatedPatterns entry is a canonical I1 SentinelPatternKey.",
+        "DORA telemetry component names all four canonical DORA metrics; at least eight components reference at least one DORA metric.",
+        "getAiLedPdlcSolutionComponent returns null for unknown keys including PF1 / I1 keys.",
+        "recommendPdlcComponentsFromInputs is union-semantics on failureModes OR patternKeys, returns canonical-order results, and ignores unknown keys without throwing.",
+        "summarizePdlcSolutionComponentPack reconciles totalCount to the canonical pack size and exposes uniqueRelatedFailureModes / uniqueRelatedPatterns sorted with canonical-key membership.",
+        "No component invents a dollar amount in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/ai-led-pdlc-components.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
     }
   ]
 }
