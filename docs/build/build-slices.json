@@ -953,6 +953,63 @@
         "npm run build"
       ],
       "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+    },
+    {
+      "id": "I4",
+      "name": "Intelligence · Pattern Content Renderer / Detail Enrichment",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1",
+        "I2",
+        "I3"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-content.ts",
+        "src/components/intelligence/SentinelPatternContentPanel.tsx",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "docs/build/slices/I4_INTELLIGENCE_PATTERN_CONTENT_RENDERER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildSentinelPatternAuthoredContent returns deterministic content for each of the 5 canonical I1 pattern keys.",
+        "buildSentinelPatternAuthoredContent returns null for unknown keys.",
+        "Each canonical pattern carries definition, howSentinelDetected, whyItMatters, failureModes (>=1), interventions (>=1), requiredEvidence (>=1), handoffGuidance (>=1), contentCompleteness, authoredAt.",
+        "howSentinelDetected only references the canonical S9e signal types.",
+        "relatedPatterns reference only canonical I1 pattern keys with no self-reference.",
+        "Content does not invent a dollar amount in any string field.",
+        "Content does not claim live retrieval / live model invocation.",
+        "SentinelPatternContentPanel renders source · deterministic seed chip and disclaims live retrieval in footer.",
+        "SentinelPatternDetail integrates SentinelPatternContentPanel via PatternAuthoredContentSection.",
+        "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "npm run build"
+      ],
+      "notes": "Authored deterministic content for each of the 5 canonical I1 pattern keys. No live Sentinel runtime, no graph traversal, no Claude / OpenAI / Pinecone invocation. Future content management, graph traversal, and registry-bound evidence can swap content entries without contract changes."
     }
   ]
 }

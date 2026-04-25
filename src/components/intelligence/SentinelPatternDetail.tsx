@@ -12,6 +12,8 @@ import type {
   SentinelPatternDetailView,
   SentinelPatternEvidenceTrailRow,
 } from '@/lib/intelligence/sentinel-pattern-view';
+import { buildSentinelPatternAuthoredContent } from '@/lib/intelligence/sentinel-pattern-content';
+import { SentinelPatternContentPanel } from '@/components/intelligence/SentinelPatternContentPanel';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
@@ -276,6 +278,8 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
         )}
       </Block>
 
+      <PatternAuthoredContentSection view={view} />
+
       <footer
         style={{
           fontSize: 11,
@@ -294,6 +298,21 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
 }
 
 // --- Sub-components ---------------------------------------------------
+
+function PatternAuthoredContentSection({ view }: { view: SentinelPatternDetailView }) {
+  const content = buildSentinelPatternAuthoredContent(view.patternKey);
+  if (!content) return null;
+  const tenantSlug = view.tenant.routeSlug;
+  return (
+    <SentinelPatternContentPanel
+      content={content}
+      intelligenceLandingHref={view.intelligenceLandingHref}
+      buildRelatedPatternHref={(patternKey) =>
+        `/tenant/${tenantSlug}/intelligence/patterns/${patternKey}`
+      }
+    />
+  );
+}
 
 function Block({
   heading,
