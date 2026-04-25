@@ -113,16 +113,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-24 · PR #195 merged: seeded context depth for validation fixtures. Runner improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
 - 2026-04-24 · PR #197 merged: deterministic Source context validation report formatter.
 - 2026-04-25 · PR #199 merged: `/source` dashboard visual review. Dashboard decision: approve with small refinements.
+- 2026-04-25 · Build Pack inventory reconciliation started after workflow hardening review found anchor-referenced files missing from `origin/main`.
 
 ## Last status emission
-- 2026-04-25 · Post-merge Source state update · PR #199 merged · next recommended slice is dashboard front-door refinement planning.
+- 2026-04-25 · Build Pack inventory reconciliation · restoring missing anchor-referenced docs from `codex/source-foundation` before workflow/document collaboration hardening proceeds.
 
 ## AbarVa Source Sidecar State
 
 - Current completed milestone: PR #199 merged · `/source` dashboard visual review.
 - Dashboard decision: approve with small refinements.
-- Current objective: prepare the next controlled slice: Source dashboard front-door refinement only.
-- Current item: post-merge state update and dashboard refinement planning.
+- Current objective: restore missing Build Pack inventory referenced by `00_MASTER_ANCHOR.md` before workflow/document collaboration hardening proceeds.
+- Current item: Build Pack inventory reconciliation.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -150,9 +151,10 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Current validation outcome: 10 fixtures, 8 pass, 2 defer, 0 reject.
   - `/source` dashboard visual review packet.
   - Dashboard review decision: approve with small refinements.
+  - Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs from `codex/source-foundation`.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
-- Blockers/do-not-build: no event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`. Dashboard implementation remains paused until the refinement slice is explicitly approved.
-- Notes and discoveries: Dashboard visual review approved the Source front-door direction with small refinements. The next implementation slice should stay limited to first viewport hierarchy, KPI/copy clarity, event-table salience, value-at-risk emphasis, alert pressure signals, and responsive fit.
-- Next recommended item: refine `/source` dashboard first viewport, hierarchy, KPI/copy clarity, event-table salience, value-at-risk emphasis, alert pressure signals, and responsive fit.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_REFINEMENT.md`.
+- Blockers/do-not-build: no product code, UI, event canvas, chat UI, model calls, API routes, upload/parsing, file export/import, approvals, artifact versioning, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: `00_MASTER_ANCHOR.md` on `origin/main` referenced Build Pack files that were absent from `origin/main` but present on older local Source branch `codex/source-foundation`. Reconciliation should land before the held workflow/document collaboration hardening branch is rebased or recreated.
+- Next recommended item: merge Build Pack inventory reconciliation, then rebase/recreate workflow/document collaboration hardening on updated main and rerun inventory check.
+- Next planning artifact: `docs/abarva-source/build-pack/implementation-reviews/11_BUILD_PACK_INVENTORY_RECONCILIATION.md`.
