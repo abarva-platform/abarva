@@ -1966,41 +1966,296 @@
       "notes": "Calm executive entry surface that augments the existing composite home above the legacy hero. Numbers are deterministic seeds; live binding is deferred to a later slice that wires the attention strip to real tenant state."
     },
     {
-      "id": "PROD1",
-      "name": "Production Readiness Tracker",
-      "category": "PROD",
+      "id": "SOL3",
+      "name": "Solution Archetype Registry",
+      "category": "SOL",
       "status": "code_complete",
-      "risk": "medium",
-      "ownerAgent": "Steward",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
       "dependsOn": [
-        "ADM2",
-        "QA1",
-        "DES2",
-        "ARCH1",
-        "ARCH2"
+        "SOL2"
       ],
       "allowedFiles": [
-        "docs/build/production-readiness.json",
-        "docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md",
-        "src/lib/admin/production-readiness.ts",
-        "src/components/admin/ProductionReadinessTracker.tsx",
-        "src/app/(maestro)/platform/admin/production-readiness/page.tsx",
-        "src/app/(maestro)/platform/admin/page.tsx",
-        "src/__tests__/integration/admin/production-readiness-tracker.test.ts",
-        "docs/build/slices/PROD1_PRODUCTION_READINESS_TRACKER.md",
+        "src/lib/solutions/solution-archetype-registry.ts",
+        "src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "docs/build/slices/SOL3_SOLUTION_ARCHETYPE_REGISTRY.md",
         "docs/build/build-slices.json"
       ],
       "forbiddenFiles": [
         "src/lib/source/**",
         "src/app/(maestro)/source/**",
-        "src/lib/nexus/**",
         "src/lib/sentinel/**",
         "src/lib/atlas/**",
+        "src/lib/nexus/**",
         "src/lib/agent/**",
-        "src/lib/auth/**",
+        "src/components/agent/**",
         "src/app/programs/**",
         "src/app/(maestro)/preview/**",
         "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Registry contains exactly the 12 canonical solution archetypes in canonical order: ai_led_pdlc_transformation, analytics_modernization, healthcare_ambient_clinical_value_chain, hcc_risk_adjustment_coding_accuracy, prior_authorization_utilization_management, kyc_customer_onboarding_ai, predictive_maintenance_modernization, build_buy_partner_evaluation, service_operations_agentic_automation, ai_governance_operating_model, contact_center_ai_transformation, finance_fpna_ai_automation.",
+        "Each archetype carries key, name, sector, capabilityFamily, problemStatement, businessOutcomes (>=3), currentStateInputsRequired (>=3), patternsUsed (>=1), failureModesAddressed (>=1), solutionComponents (>=2), architectureBuildingBlocks (>=3), workshopsRequired (>=2), smesRequired (>=2), buildBuyPartnerConsiderations (>=2), governanceRiskConsiderations (>=2), deliverablesGenerated (>=2), valueMetrics (>=2), agentRoles {nexus, sentinel, atlas, steward} all named, recommendedFirstWorkshop, createdFrom.",
+        "ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey.",
+        "analytics_modernization fields mention data foundation, governance, and semantic layer concepts.",
+        "Healthcare archetypes (3-5) reference clinical workflow + governance language.",
+        "build_buy_partner_evaluation references vendor / startup assessment language.",
+        "SOLUTION_ARCHETYPE_KEYS is a frozen tuple in canonical order; SOLUTION_ARCHETYPES record is keyed by every canonical key.",
+        "listSolutionArchetypes returns canonical order and is byte-equal across calls.",
+        "getSolutionArchetype returns null for unknown keys including SOL2 / PF1 / I1 keys.",
+        "recommendSolutionArchetypes is union-semantics on sectors OR capabilityKeywords, returns canonical-order results, and ignores unknown / empty tokens without throwing.",
+        "summarizeSolutionArchetypes default param iterates the full canonical list with totalCount === 12; sectors / uniqueWorkshops / uniqueArchitectureBlocks are sorted ascending.",
+        "No archetype invents a dollar amount in any string field.",
+        "No archetype contains banned placeholder phrases (Coming soon, TBD, Lorem ipsum) in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic registry only. Does not compose live per-tenant architectures, invoke models, or read tenant state. UI binding is deferred to SOL7 (archetype detail view) and SOL8 (archetype canvas)."
+    },
+    {
+      "id": "SOL4",
+      "name": "Analytics Modernization Component Pack",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/analytics-modernization-components.ts",
+        "src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "docs/build/slices/SOL4_ANALYTICS_MODERNIZATION_COMPONENT_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 15 canonical analytics-modernization solution components in canonical order (data_platform_assessment, cloud_lakehouse_foundation, semantic_layer_design, master_data_management, data_quality_observability, reporting_rationalization, ai_ready_feature_store, data_governance_operating_model, metadata_catalog_lineage, self_service_analytics_enablement, legacy_platform_decommission, value_case_and_migration_roadmap, data_product_operating_model, real_time_integration_layer, analytics_cost_optimization).",
+        "Each component carries key, name, definition, problemSolved, requiredCurrentStateInputs (>=3), targetCapabilities (>=2), architectureBuildingBlocks (>=2), governanceRequirements (>=2), implementationSteps (>=3), expectedOutcomes (>=2), risks (>=1), requiredWorkshops (>=1), deliverablesProduced (>=1), relatedArchetypes (>=1), createdFrom.",
+        "Registry coverage: semantic-layer, data-quality, governance, AI, and feature-store concepts are represented across components (substring sweep).",
+        "ai_ready_feature_store explicitly references AI readiness and feature-store concepts.",
+        "getAnalyticsModernizationComponent returns null for unknown keys.",
+        "recommendAnalyticsModernizationComponents is union-semantics on capabilityKeywords OR currentStateGaps, returns canonical-order results, ignores unknown keys without throwing, and is case-insensitive.",
+        "summarizeAnalyticsModernizationComponentPack().totalCount === 15; uniqueArchitectureBlocks / uniqueWorkshops / uniqueDeliverables are sorted ascending and reconcile exactly to the observed sets.",
+        "ANALYTICS_MODERNIZATION_COMPONENT_KEYS is a frozen tuple in canonical order; ANALYTICS_MODERNIZATION_COMPONENTS is a record keyed in canonical order.",
+        "No component invents a dollar amount in any string field; no banned placeholder phrases (Coming soon, TBD, Lorem ipsum).",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) \u2014 components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
+    },
+    {
+      "id": "SOL5",
+      "name": "Healthcare AI Archetypes",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/healthcare-ai-archetypes.ts",
+        "src/__tests__/integration/solutions/healthcare-ai-archetypes.test.ts",
+        "docs/build/slices/SOL5_HEALTHCARE_AI_ARCHETYPES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 12 canonical healthcare AI archetypes in canonical order: ambient_clinical_value_chain, hcc_risk_adjustment_coding_accuracy, prior_authorization_automation, clinical_documentation_improvement, care_management_next_best_action, patient_access_scheduling_optimization, revenue_integrity_ai, population_health_analytics, clinical_contact_center_ai, provider_network_intelligence, denial_prevention_ai, patient_experience_personalization.",
+        "Each archetype carries key, name, clinicalBusinessProblem, workflowImpacted (>=2), currentStateInputsRequired (>=3), dataSourcesRequired (>=3), architectureBuildingBlocks (>=3), vendorStartupConsiderations (>=2), buildBuyPartnerConsiderations (>=2), governanceRiskConsiderations (>=2), valueMetrics (>=2), requiredWorkshops (>=2), smesRequired (>=2), deliverablesGenerated (>=2), patternsUsed (>=1), failureModesAddressed (>=1), likelySystemsImpacted (>=2), createdFrom='deterministic_healthcare_archetype_pack'.",
+        "ambient_clinical_value_chain.workflowImpacted names downstream coding, billing, and quality entries.",
+        "hcc_risk_adjustment_coding_accuracy.workflowImpacted names RAF, submission, and audit entries.",
+        "prior_authorization_automation contains evidence packet, clinical policy, and payer workflow across its joined string fields.",
+        "revenue_integrity_ai and denial_prevention_ai carry distinct clinicalBusinessProblem statements and distinct value metric sets.",
+        "vendorStartupConsiderations entries describe categories not branded vendors; the deny-list ['Suki','Nuance DAX','Abridge','Epic-specific endorsement'] never appears as a substring anywhere in the pack.",
+        "getHealthcareAiArchetype returns null for unknown keys including PF1 / I1 keys.",
+        "recommendHealthcareAiArchetypes is union-semantics on workflowKeywords OR valueDriverKeywords, returns canonical-order results, and ignores unknown / empty keywords without throwing.",
+        "summarizeHealthcareAiArchetypes returns totalCount=12 and uniqueWorkflows / uniqueArchitectureBlocks / uniqueWorkshops / uniqueDataSources sorted ascending and de-duplicated.",
+        "No archetype invents a dollar amount in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect; no 'Coming soon' / 'TBD' / 'Lorem ipsum'."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/healthcare-ai-archetypes.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic healthcare-vertical archetype library. Peer to SOL2 (AI-led PDLC) and consumed downstream by SOL3 / SOL4 / SOL6. Does not generate live architectures, invoke models, or read tenant state. Vendor startup considerations are kept at the category level (e.g. 'ambient documentation specialists') so the pack stays defensible across tenants whose vendor short-list differs."
+    },
+    {
+      "id": "SOL6",
+      "name": "Build / Buy / Partner Decision Framework",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/build-buy-partner-framework.ts",
+        "src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "docs/build/slices/SOL6_BUILD_BUY_PARTNER_DECISION_FRAMEWORK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Framework contains exactly the 14 canonical build / buy / partner decision criteria in canonical order.",
+        "Each criterion carries key, name, description, buildSignal, buySignal, partnerSignal, and weight.",
+        "Vendor / startup assessment factor pack publishes at least eight factors covering all five categories (capability, commercial, governance, integration, enterprise_readiness) with non-empty red-flag and green-flag signals.",
+        "Enterprise readiness risk pack publishes at least five risks with non-empty mitigations and a severity of low / medium / high.",
+        "evaluateBuildBuyPartnerScenario is deterministic and byte-equal across repeated calls for the same input.",
+        "Build is recommended when differentiation is high and internal capability is present.",
+        "Buy is recommended when time-to-value pressure is high and market capability maturity is mature and differentiation is not high.",
+        "Partner is recommended when market capability maturity is fragmented and differentiation is not low.",
+        "Governance warnings populate when regulated context is true or high-risk tags are non-empty.",
+        "Vendor / startup checks populate when the recommended option is not build.",
+        "Confidence is one of low / medium / high; option is one of build / buy / partner.",
+        "No string field invents a dollar amount.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no useState / useEffect; no banned AI vendor names appear in source."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices will compose this framework with PF1 failure-mode signals, I1 pattern signals, and SOL2 component recommendations to produce a single defensible build / buy / partner brief per capability request."
+    },
+    {
+      "id": "SOL7",
+      "name": "Solution Archetype Detail Read Model",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/solution-archetype-detail-view.ts",
+        "src/__tests__/integration/solutions/solution-archetype-detail-view.test.ts",
+        "docs/build/slices/SOL7_SOLUTION_ARCHETYPE_DETAIL_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports SolutionArchetypeLike, SolutionArchetypeDetailView, SolutionArchetypeCanvasSection, and SolutionArchetypeReadinessSummary as the canonical read-model contract.",
+        "buildSolutionArchetypeDetailView projects every canonical archetype field into the view and is byte-equal across repeated calls for both the fully-populated and partial fixtures.",
+        "missingInputPrompts is empty for a fully-specified archetype and non-empty when any of currentStateInputsRequired, businessOutcomes, smesRequired, workshopsRequired, or valueMetrics is empty.",
+        "recommendedNextAction proposes proceeding to architecture composition when no inputs are missing and proposes scheduling the recommendedFirstWorkshop when inputs are missing.",
+        "buildSolutionArchetypeCanvasSections returns exactly 12 sections in the canonical order brief / business outcomes / current-state inputs / patterns and failure modes / solution components / architecture / workshops / SMEs / build-buy-partner / governance and risk / deliverables / value metrics.",
+        "Every canvas section carries a layoutHint drawn from the closed vocabulary list | paragraph | two_column | metric_strip | agent_partition.",
+        "The five canonical evidence-anchored sections (business outcomes, current-state inputs, patterns and failure modes, governance and risk, value metrics) carry evidenceLinkRequired: true.",
+        "summarizeSolutionArchetypeReadiness returns readinessLevel: usable for a fully-populated archetype and weak or partial for the partial fixture, with totalSections always 12.",
+        "basis.source equals deterministic_solution_archetype_registry, basis.viewBuilderVersion equals sol7.v1, and createdFrom equals deterministic_seed.",
+        "Serialised view contains no invented dollar amounts.",
+        "Module does not import the SOL3 registry (deferred follow-up); it relies on the local SolutionArchetypeLike structural type.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai; no Coming soon / TBD / Lorem ipsum placeholders."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-detail-view.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of a canonical solution archetype into a canvas-ready detail view. SOL3's solution-archetype-registry is not yet present in this worktree, so SOL7 declares a local SolutionArchetypeLike structural type and a follow-up slice will wire the registry through to this read model. SOL7 is library-only \u2014 no UI renderer, no live retrieval, no model calls."
+    },
+    {
+      "id": "SOL8",
+      "name": "Solution Intelligence Canvas Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3",
+        "SOL7"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/SOL8_SOLUTION_INTELLIGENCE_CANVAS_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
         "supabase/**",
         "CYCLE_STATE.md",
         "docs/abarva-source/**",
@@ -2008,28 +2263,72 @@
         "docs/CORE_APP_CONTEXT_PACK.md"
       ],
       "acceptanceCriteria": [
-        "production-readiness.json defines schemaVersion, lastUpdated, updatedBy, source, overallStatus, overallReadinessPercent, stewardBrief, and components.",
-        "The manifest tracks all 15 required product/platform components with ownerAgent, status, maturity, lastVerifiedCommit, dimensions, testingGates, blockers, nextAction, and notes.",
-        "Every component includes all nine readiness dimensions and all eight testing gates.",
-        "Read model imports the manifest and exposes buildProductionReadinessView, loadProductionReadinessManifest, summarizeProductionReadiness, getProductionReadinessNextActions, computeOverallReadinessPercent, and getLowestReadinessComponents.",
-        "Tracker page renders the Steward brief, overall score, full-flow/pilot/production readiness, top blockers, next actions, component grid, dimensions, gates, blocked/deferred items, and a Build Progress link.",
-        "Route follows the existing admin-only guard pattern and does not rewrite auth.",
-        "Admin portal receives only a minimal discoverability link to the Production Readiness tracker.",
-        "Source / Outsourcing is tracked as a first-class component with scaffolded foundation_validation maturity, medium_high production risk, and explicit notes covering dashboard, event journey, AMS pattern intelligence, Nexus foundation, validation, pricing/negotiation intelligence, Admin data readiness, and deferred Source runtime/upload/workflow surfaces.",
-        "Update protocol requires every future Codex/Claude slice to report whether production-readiness.json changed, which component changed, prior/new status, gates affected, blockers added/removed, and next readiness action or why no tracker update was needed.",
-        "Tests prove the manifest parses, is deterministic, contains all components/dimensions/gates, uses valid statuses, reconciles summary to components, and prevents false production_ready claims.",
-        "Tests assert no live monitoring claim, no Vercel polling claim, no model/API calls, no forbidden runtime imports, no auth rewrite, and no migrations.",
-        "No Source UI, Nexus, Sentinel, Atlas, Agent runtime, auth implementation, legacy /programs, preview/demo routes, migrations, or founder/canon docs are modified."
+        "Section A names purpose: the Solution Intelligence Canvas is where Client Maestro / AbarVa Maestro / Solution Architect compose a tenant-specific solution architecture from a SOL3 archetype plus SOL2 / SOL4 / SOL5 component packs, and defines the canvas shape so v1 implementation has a single source of truth.",
+        "Section B names four canvas route candidates as proposed (not yet implemented): /tenant/[tenantSlug]/solutions, /tenant/[tenantSlug]/solutions/[solutionKey], /tenant/[tenantSlug]/solutions/[solutionKey]/architecture, /tenant/[tenantSlug]/solutions/[solutionKey]/build-buy-partner.",
+        "Section C names the primary user as Client Maestro / AbarVa Maestro / Solution Architect.",
+        "Section D names the four agent roles on the canvas with explicit responsibilities: Nexus as deterministic composition lead, Sentinel as PF1 / I1 validation, Steward as readiness enforcement with explicit refusal language, Atlas as executive implication on the AI Control Tower.",
+        "Section E enumerates the ten canvas sections in canonical order: solution brief, current-state inputs, patterns used, archetype selected, architecture components, workshops required, build/buy/partner decision, risks/governance, deliverables, missing inputs.",
+        "Section F defines the same-canvas interaction model: section click opens a side drawer with state preserved, single drawer at a time, 120ms fade transition, no full-page navigation, drawers compose from canonical contracts (SOL3 detail per SOL7, SOL2/4/5 component metadata, SOL6 evaluator).",
+        "Section G defines versioning: each canvas has a version field and a versions history; archetype / component / build-buy-partner changes create a new version per OUT1; approval / lock state is auditable per AUD1; immutable once approved with new edits creating a new version.",
+        "Section H defines handoff to deliverable renderer: Nexus produces an OUT1 html-mode deliverable when canvas reaches usable readiness AND a Steward approval lands; markdown / pdf / docx / ppt render modes are deferred per OUT1.",
+        "Section I states no-live-model v1 rules: composition is deterministic from SOL3 / SOL2 / SOL4 / SOL5 / SOL6 / MW2 / PDEL; LLM enrichment per MG1 is deferred to v2 inside Nexus runtime; any 'Composed by Nexus' label clarifies 'deterministic seed' until model gateway is wired.",
+        "Section J names future slices: SOL9 Solution Canvas UI on DES2 primitives, SOL10 Architecture Draft Read Model, SOL11 Workshop-to-Architecture Refinement (deterministic merge first, LLM-assisted later), SOL12 Architecture Deliverable Renderer.",
+        "Section K states no-fabrication rules: no fabricated dollar amounts, no fabricated E-### evidence citations outside EVID1 usable_as_evidence, no fabricated vendor endorsements, missing inputs surfaced explicitly, honest refusal language ('Steward refuses approval \u2014 N hard inputs missing').",
+        "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
       ],
       "validationCommands": [
         "npx tsc --noEmit --pretty false",
-        "npx jest src/__tests__/integration/admin/production-readiness-tracker.test.ts",
-        "npm run build",
-        "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
-        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
-        "git diff --cached --name-only"
+        "npm run build"
       ],
-      "notes": "Read-model backed internal admin tracker only. No live production monitoring, no Vercel polling, no deployments, no database migrations, no model/API calls. Production-ready remains blocked until full-flow testing, pilot gates, Model Gateway, Evidence Ledger, ingestion/parsing, governance, and deployment verification have evidence."
+      "notes": "Contract document only. Defines the Solution Intelligence Canvas shape so the v1 implementation has a single source of truth across the Builder + Reviewer agent partition, the canonical contracts the canvas consumes (SOL3 archetype, SOL2 / SOL4 / SOL5 component packs, SOL6 evaluator, MW2 readiness, PDEL inventory, EVID1 evidence, PF1 failure modes, I1 patterns), and the OUT1 deliverable handoff. Future slices SOL9 (Solution Canvas UI), SOL10 (Architecture Draft Read Model), SOL11 (Workshop-to-Architecture Refinement), and SOL12 (Architecture Deliverable Renderer) implement the canvas, the read model, the workshop refinement loop, and the deliverable renderer respectively."
+    },
+    {
+      "id": "QA3",
+      "name": "Solution Intelligence Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [
+        "SOL3",
+        "SOL4",
+        "SOL5",
+        "SOL6",
+        "SOL7",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "docs/build/SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook \u00a7A documents purpose and scope as the founder-facing checklist for SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs, named as the third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks.",
+        "Runbook \u00a7B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only) and pass criteria.",
+        "Runbook \u00a7C lists required validation commands (tsc, build, integrity:dom, the per-slice jest suites for SOL3-SOL7, and the docs-only file check for SOL8) with pass criteria.",
+        "Runbook \u00a7D defines per-slice verification checklists for SOL3 (12 archetypes in canonical order, 21 required fields, AI-led PDLC linkage, analytics modernization concepts, healthcare archetypes 3-5, build-buy-partner archetype, no invented dollars, module hygiene), SOL4 (15 components in canonical order, 13 required fields, four-pillar coverage, relatedArchetypes cross-reference), SOL5 (12 healthcare archetypes, ambient / HCC / prior auth / revenue integrity / denial prevention specifics, vendor deny-list), SOL6 (14 criteria, vendor / startup factors, enterprise readiness risks, deterministic build / buy / partner rules, governance warnings), SOL7 (byte-equal detail view, 12 canvas sections, readiness summary, missing-input prompts), and SOL8 (sections A through K, route candidates, agent roles, interaction model, versioning, handoff to deliverable renderer, no-live-model rules, future slices, no-fabrication rules).",
+        "Runbook \u00a7E captures the deferred route / canvas verification checklist for SOL9-SOL12 (solutions index, per-archetype canvas, click-to-open drawer with 120ms fade, versioning visible, Steward refusal language, deliverable handoff, build / buy / partner sub-canvas, honest empty states, disabled affordances).",
+        "Runbook \u00a7F defines no-fabrication checks (no fake dollars regex, no E-### citations, no branded vendor endorsements, no Coming soon / TBD / Lorem ipsum, honest fallbacks, deterministic-source captions).",
+        "Runbook \u00a7G defines build / buy / partner checks for the deterministic rule fixtures: high-differentiation + internal capability -> build, high time-to-value + mature market + non-high diff -> buy, fragmented market + non-low diff -> partner; confidence levels valid; vendor / startup checks populated when option != build; governance warnings populated when regulated OR high-risk-tagged.",
+        "Runbook \u00a7H defines healthcare archetype checks: >=3 data sources, >=2 SMEs, >=2 governance considerations per archetype; specific content checks for ambient, HCC, prior auth, revenue integrity, denial prevention; no branded vendor endorsements.",
+        "Runbook \u00a7I defines analytics modernization checks: all 15 components address AI readiness somewhere across their fields; semantic layer / data quality / governance / metadata catalog all represented.",
+        "Runbook \u00a7J defines AI-led PDLC component linkage: ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey; SOL4 components have relatedArchetypes referencing canonical SOL3 archetype keys.",
+        "Runbook \u00a7K defines workshop and deliverable linkage: every archetype names >=2 workshopsRequired and a recommendedFirstWorkshop; every archetype names >=2 deliverablesGenerated; cross-references resolve to canonical MW1 / MW2 and PDEL keys.",
+        "Runbook \u00a7L defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait, push only with explicit founder go-ahead, and the canonical cherry-pick path off main with build-slices.json conflict resolution.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs land honestly before push or PR. Third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     }
   ]
 }
