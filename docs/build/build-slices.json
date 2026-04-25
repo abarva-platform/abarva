@@ -2324,10 +2324,10 @@
       "acceptanceCriteria": [
         "Module exports SolutionRecommendationInput, SolutionRecommendationScore, SolutionRecommendationReason, SolutionRecommendationMissingInput, SolutionRecommendationNextAction, SolutionRecommendation, SolutionRecommendationSummary, recommendSolutionArchetypesForContext, summarizeSolutionRecommendations, and getTopSolutionRecommendation as the canonical contract.",
         "recommendSolutionArchetypesForContext is byte-equal across repeated calls for the same input and is capped at five recommendations.",
-        "Scoring weights are industry_match 4, failure_mode_match 3 per match, pattern_match 3 per match, capability_match 2 per match, dataset_match 2 per match, preference_match 1; raw is normalized as min(1, raw / 24) with bands low (< 0.34), medium (< 0.67), high (≥ 0.67); confidence is high if normalized ≥ 0.67 and missing-input count ≤ 1, medium if normalized ≥ 0.34, else low.",
+        "Scoring weights are industry_match 4, failure_mode_match 3 per match, pattern_match 3 per match, capability_match 2 per match, dataset_match 2 per match, preference_match 1; raw is normalized as min(1, raw / 24) with bands low (< 0.34), medium (< 0.67), high (\u2265 0.67); confidence is high if normalized \u2265 0.67 and missing-input count \u2264 1, medium if normalized \u2265 0.34, else low.",
         "Special-case keyword priors bias healthcare archetypes (clinical / ambient / HCC / prior auth / payer / EHR), analytics_modernization (data / lakehouse / semantic / BI / warehouse / feature store), ai_led_pdlc_transformation (PDLC / DORA / code review / developer productivity / engineering or the ai_governance_operating_model_gap failure-mode marker), and kyc_customer_onboarding_ai (KYC / onboarding / customer due diligence / AML).",
         "Sparse input (no industry, no desiredOutcomes, no currentStateSignals, no detectedFailureModes, no detectedPatterns) returns one placeholder recommendation with missingInputs.length > 0 AND nextAction.kind === 'capture_inputs'.",
-        "Every recommendation carries buildBuyPartnerGuidance with recommendedOption ∈ {build, buy, partner}, derived deterministically from SOL6's evaluateBuildBuyPartnerScenario.",
+        "Every recommendation carries buildBuyPartnerGuidance with recommendedOption \u2208 {build, buy, partner}, derived deterministically from SOL6's evaluateBuildBuyPartnerScenario.",
         "summarizeSolutionRecommendations reconciles totalRecommendations, topArchetypeKey, highConfidenceCount, and totalMissingInputs against the recommendation list.",
         "Serialized recommendation list contains no fabricated dollar amounts.",
         "Module imports SOL3 (solution-archetype-registry) and SOL6 (build-buy-partner-framework); module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; contains no Math.random / clock reads / fetch / anthropic / openai / useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders."
@@ -2339,7 +2339,7 @@
         "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
         "npm run build"
       ],
-      "notes": "Pure deterministic recommendation engine that unifies SOL3 archetypes, SOL4 / SOL5 component packs, the SOL6 build/buy/partner evaluator, and the SOL7 detail read model into a single Nexus-facing recommendation layer. Library only — no UI renderer, no live retrieval, no model calls, no tenant runtime state. Live Nexus integration is deferred to SOL10+."
+      "notes": "Pure deterministic recommendation engine that unifies SOL3 archetypes, SOL4 / SOL5 component packs, the SOL6 build/buy/partner evaluator, and the SOL7 detail read model into a single Nexus-facing recommendation layer. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state. Live Nexus integration is deferred to SOL10+."
     },
     {
       "id": "QA3",
@@ -2442,6 +2442,52 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection layer that assembles a single Unified Context Pack for any agent turn against one of three canonical work-object kinds (program, intelligence_pattern, solution_archetype). Reads only from S9 (programs-canonical-view), I1 (sentinel-pattern-detections), SOL3 (solution-archetype-registry), and the deterministic seed. Always emits twelve canonical sections; honestly empty for evidence (EVID2 not wired), conversation (no memory wired), and datasets (ADM3 deferred in v1). Sets up CTX3 live retrieval integration without changing the pack shape."
+    },
+    {
+      "id": "EVID2",
+      "name": "Evidence Ledger MVP",
+      "category": "EVID",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "EVID1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/evidence-ledger-mvp.ts",
+        "src/__tests__/integration/architecture/evidence-ledger-mvp.test.ts",
+        "docs/build/slices/EVID2_EVIDENCE_LEDGER_MVP.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/evidence-ledger-mvp.ts exports the canonical EVIDENCE_LEDGER_USABILITY_STATES tuple in canonical order ('loaded', 'parsed', 'indexed', 'classified', 'scoped', 'cited', 'quality_checked', 'usable_as_evidence', 'blocked').",
+        "Module exports EvidenceLedgerCitation, EvidenceLedgerClaim, EvidenceLedgerEntry, EvidenceLedgerValidationResult, and EvidenceLedgerSummary types with the contract-required fields, and helpers buildEvidenceLedgerMvp, validateEvidenceLedgerEntry, summarizeEvidenceLedger, getUsableEvidence, getBlockedEvidence, and explainEvidenceUsability.",
+        "buildEvidenceLedgerMvp() returns at least 12 deterministic seed entries spanning all 9 canonical states, with at least 3 program-linked entries (mix of states from loaded to usable_as_evidence), at least 3 pattern-linked entries, at least 3 dataset-domain-linked entries, at least 3 solution-archetype-linked entries, at least 4 entries in usable_as_evidence with full validation pass, and at least 2 entries in blocked with explicit blockReason.",
+        "Every entry id starts with 'evid-seed-' and uses lowercase / digits / hyphens only; serialized ledger contains no production-shaped /E-\\d{2,}/ citations and no real https:// or http:// URLs in citation locators.",
+        "validateEvidenceLedgerEntry enforces non-empty tenantKey, non-empty citation.locator, canonical citation.kind, qualityNotes containing 'quality' for usable_as_evidence, and non-empty blockReason for blocked.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Test suite at src/__tests__/integration/architecture/evidence-ledger-mvp.test.ts is fully green and enforces determinism, state coverage, linkage coverage, validation rules, id and citation shape, summary reconciliation, partition correctness, explanation strings, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the EVID2 seed-only ledger under data_evidence_knowledge_fabric and audit_governance with a deferred-pipeline next action; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/evidence-ledger-mvp.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that demonstrates the canonical Evidence Ledger usability lifecycle. Companion to EVID1 contract. No model calls, no migrations, no persistence, no live citation resolution. Lane D output of the parallel build pack."
     }
   ]
 }

@@ -902,9 +902,10 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review.",
+      "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review. Live evidence pipeline and persistence remain deferred (EVID2 is seed-only).",
       "notes": [
-        "Demo-grade ledgers are not production audit readiness."
+        "Demo-grade ledgers are not production audit readiness.",
+        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger)."
       ]
     },
     {
