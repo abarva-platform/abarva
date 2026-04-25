@@ -10,7 +10,8 @@
 //   E · Detail placeholder / object inspector slot
 //
 // No live Steward runtime, no model call, no Date.now(). Component
-// imports are restricted to next/link and the ADM2 read-model module.
+// imports are restricted to next/link, deterministic admin panels, and
+// the ADM2 read-model module.
 
 import Link from 'next/link';
 import { DatasetExplorerPanel } from '@/components/admin/DatasetExplorerPanel';
@@ -150,7 +151,6 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
 
       {/* Zone D · Dataset Explorer (ADM4) + recommended actions / explorer rail */}
       <DatasetExplorerPanel />
-
       <RecommendedActionsBlock actions={recommendedActions} modules={modules} />
 
       {/* Zone E · Detail placeholder / object inspector slot */}
