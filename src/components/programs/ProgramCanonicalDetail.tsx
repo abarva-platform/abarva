@@ -23,6 +23,9 @@
 
 import Link from 'next/link';
 import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
+import { ProgramArtifactCanvas } from '@/components/programs/ProgramArtifactCanvas';
+import { buildProgramArtifactCanvasView } from '@/lib/programs/program-artifact-canvas-view';
+import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
 import {
   phaseMeta,
   tenantProgramPath,
@@ -43,6 +46,7 @@ import {
   type CanonicalPhaseRenderStatus,
   type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
+import { buildProgramWorkshopModeView } from '@/lib/programs/program-workshop-mode-view';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type {
   DeliverableSeedPlan,
@@ -216,11 +220,19 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
             {/* Evidence + value readiness summary (S9d) */}
             <EvidenceValueReadinessSummary tenant={tenant} program={program} />
 
+            {/* PW1 · Program Workshop Mode shell */}
+            <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />
+
             {/* Honest fallbacks: data not yet captured */}
             <DataPlaceholders />
 
             {/* Deliverable summary */}
             <DeliverableList tenant={tenant} program={program} />
+
+            {/* PDEL5 · Deliverable / artifact canvas */}
+            <ProgramArtifactCanvas
+              view={buildProgramArtifactCanvasView(program.programSlug)}
+            />
           </section>
 
           {/* Zone D · Nexus rail (existing component, do not rewrite — S9b owns it) */}

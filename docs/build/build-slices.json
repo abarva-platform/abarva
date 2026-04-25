@@ -740,7 +740,7 @@
     },
     {
       "id": "I2",
-      "name": "Intelligence · Sentinel Brief + Active Patterns",
+      "name": "Intelligence \u00b7 Sentinel Brief + Active Patterns",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -797,7 +797,7 @@
     },
     {
       "id": "I3",
-      "name": "Intelligence · Pattern Detail / Evidence Trail",
+      "name": "Intelligence \u00b7 Pattern Detail / Evidence Trail",
       "category": "I",
       "status": "code_complete",
       "risk": "medium",
@@ -855,7 +855,7 @@
     },
     {
       "id": "ADM1",
-      "name": "Steward Setup/Admin · Apple-like Control Plane Contract",
+      "name": "Steward Setup/Admin \u00b7 Apple-like Control Plane Contract",
       "category": "ADM",
       "status": "code_complete",
       "risk": "low",
@@ -883,7 +883,7 @@
         "Contract defines the ten canonical Admin modules.",
         "Contract defines twelve canonical Enterprise Dataset Domains, each with example datasets, why-it-matters, agents, surfaces, readiness criteria, common missing inputs, and Steward guidance.",
         "Contract defines the Data Explorer field set and drawer behavior.",
-        "Contract defines the nine canonical evidence states (loaded → usable_as_evidence + blocked) and per-agent effect.",
+        "Contract defines the nine canonical evidence states (loaded \u2192 usable_as_evidence + blocked) and per-agent effect.",
         "Contract defines the Users & Access, Security & Governance, and Connector contracts.",
         "Contract defines the seven AI Control Tower dimensions and per-dimension agent role.",
         "Contract defines the Agent Readiness Matrix shape for Nexus, Sentinel, Atlas, Steward.",
@@ -952,7 +952,7 @@
         "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
         "npm run build"
       ],
-      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 \u00a7F (zones), \u00a7G (modules), \u00a7H (12 dataset domains), \u00a7J (evidence states), \u00a7O (agent readiness), \u00a7P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
     },
     {
       "id": "ADM3",
@@ -992,7 +992,7 @@
       "acceptanceCriteria": [
         "summary.byDomain covers all 12 canonical Enterprise Dataset Domains.",
         "buildDatasetDomainInventoryForDomain returns non-empty items for active domains and empty list for not_started domains and unknown keys.",
-        "Every item carries the full ADM1 §I field set with deterministic seed-only data.",
+        "Every item carries the full ADM1 \u00a7I field set with deterministic seed-only data.",
         "Item ids are unique; every id matches the ds:<domainKey>:<slug> pattern.",
         "summary.loadedTotal / availableTotal / usableTotal reconcile to the canonical evidence progression (loaded >= available >= usable).",
         "byUsability covers all 9 canonical evidence states; byParseStatus covers all 4 parse states.",
@@ -1011,7 +1011,7 @@
     },
     {
       "id": "I4",
-      "name": "Intelligence · Pattern Content Renderer / Detail Enrichment",
+      "name": "Intelligence \u00b7 Pattern Content Renderer / Detail Enrichment",
       "category": "I",
       "status": "code_complete",
       "risk": "low",
@@ -1055,7 +1055,7 @@
         "relatedPatterns reference only canonical I1 pattern keys with no self-reference.",
         "Content does not invent a dollar amount in any string field.",
         "Content does not claim live retrieval / live model invocation.",
-        "SentinelPatternContentPanel renders source · deterministic seed chip and disclaims live retrieval in footer.",
+        "SentinelPatternContentPanel renders source \u00b7 deterministic seed chip and disclaims live retrieval in footer.",
         "SentinelPatternDetail integrates SentinelPatternContentPanel via PatternAuthoredContentSection.",
         "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
       ],
@@ -1100,7 +1100,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "ACT1",
@@ -1461,9 +1461,9 @@
         "Contract defines a center-canvas, Nexus-led phase workspace with left journey rail (<=220px), center canvas (~70%), and right compact context panel (<=320px); not a left-rail nav and not a split-view dashboard.",
         "Contract enumerates exactly six mutually exclusive phase modes: phase overview, workshop preparation, live session support, notes synthesis, deliverable refinement, gate readiness.",
         "Contract names the Client Maestro as the only role that advances the phase and Nexus as the program mastermind; Atlas only speaks about the workshop, never in it.",
-        "Contract specifies Save / Stop / Resume affordances per MW1 §G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
+        "Contract specifies Save / Stop / Resume affordances per MW1 \u00a7G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
         "Contract specifies typed / pasted / uploaded ingestion only with deterministic extractors, raw-text persistence, Maestro confirmation, and source / createdFrom tagging; audio and meeting-bot ingestion are deferred.",
-        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub → Outline → Rich promotion ladder per MW1 §J.",
+        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub \u2192 Outline \u2192 Rich promotion ladder per MW1 \u00a7J.",
         "Contract requires evidence chip (NAVY / AMBER / RED / MUTED), value ledger reference, canonical gate caps in the journey rail, Steward gate readiness verdict in the right rail, and refusal of phase advancement when hard-gate inputs are missing.",
         "Contract specifies click-to-explore interaction, single-instance drawer overlay, 120ms fade-only animation, and a workshop notes pane that defaults open on the active phase.",
         "Contract forbids fabricated dollar amounts, fake E-### citations, and live-runtime claims; tags Maestro-captured records with source: 'maestro_capture' and createdFrom: 'deterministic_seed'.",
@@ -1510,7 +1510,7 @@
         "npx tsc --noEmit --pretty false",
         "npm run build"
       ],
-      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     },
     {
       "id": "DES1",
@@ -1666,6 +1666,304 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "CAT1",
+      "name": "Page & Workflow Catalog Integration",
+      "category": "CAT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/product/page-workflow-catalog/**",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/product/page-workflow-catalog/ contains exactly 14 markdown files: 00 master + 10 per-page files (01..10) + 3 cross-page files (11 page data contract standard, 12 wireframe requirements by page, 13 MVP/V1/V2 roadmap).",
+        "00_PAGE_WORKFLOW_CATALOG_MASTER.md states the five product rules explicitly: every page answers a clear user question; every page is backed by a data/read-model contract; every page exposes what the agent knows, what is missing, and what action is next; details are hidden by default and revealed via click/drill-down/drawer/same-canvas; agents are anchors not clutter.",
+        "00 master file enumerates the canonical agent partition (Nexus / Sentinel / Atlas / Steward), the six canonical phases (Origination -> Plan -> Build -> Pilot -> Execute -> Verify), the four hard gates G1..G4, and the canonical evidence lifecycle.",
+        "Each per-page file (01..10) includes the required sections: page purpose, primary user question, primary agent, route(s), required data contract / read model, what the page knows, what the page is missing, key user actions, agent actions, empty / degraded states, navigation / drill-down behavior, MVP / V1 / V2 scope, visual blueprint reference.",
+        "11_PAGE_DATA_CONTRACT_STANDARD.md defines the six required fields every page-level read model must satisfy and the forbidden field set.",
+        "12_WIREFRAME_REQUIREMENTS_BY_PAGE.md enumerates the minimum render contract per page and the universal wireframe rules.",
+        "13_MVP_V1_V2_PAGE_ROADMAP.md sequences pages into MVP / V1 / V2 waves with cross-cutting commitments and a slice trace.",
+        "Manifest entry updates lastUpdated to today's ISO date (2026-04-25) and appends CAT1 at the end of the slices array."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Documentation only, no app code. Integrates the platform-design page & workflow catalog source into the canonical product catalog under docs/product/page-workflow-catalog/. Where the platform-design source was unavailable in this worktree, the catalog composes from the build-slice contracts (S8 / S9 series / PDEL / I1..I4 / ACT1 / ADM1..ADM4 / MW1 / MW2 / PF2 / SOL1 / SOL2) and the visual blueprints under docs/design/pages/."
+    },
+    {
+      "id": "ARCH1",
+      "name": "Agentic Platform Architecture Contract",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/architecture/ARCH1_AGENTIC_PLATFORM_ARCHITECTURE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Doc declares each of the 12 numbered sections (platform purpose; non-negotiable technical principles; ingestion and parsing pipeline; Knowledge Fabric; Context Builder; Model Gateway; Agent Runtime; Tool Layer; Evidence / Audit / Governance layer; Deliverable / output layer; what is enforced today vs future work; anti-patterns) in canonical order.",
+        "Doc explicitly names anti-patterns including raw vector search without evidence binding, Claude / OpenAI as parser, direct provider import outside the gateway, artifacts without provenance, recommendations without missing-input disclosure, fabricated dollar amounts, and fake E-### citations.",
+        "Doc explicitly forbids `import OpenAI` / `import Anthropic` (or any provider SDK import) anywhere outside the Model Gateway module.",
+        "Doc states that Claude / OpenAI is NOT used as a parser; deterministic extractors only.",
+        "Doc names existing slices (S1, S2, S7, S9 / S9b\u2013g, I1, PF1, SOL1 / SOL2, PDEL, MW1 / MW2, ACT1, ADM3, DES1 / DES2) as the source-of-truth contracts for each layer."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Architecture contract document only. Names what is enforced today (S7 tenant isolation, ADM3 dataset inventory, SOL2 PDLC pack, S9 / S9b\u2013g spine, I1 / I2 / I3 / I4 intelligence, PF1 failure modes, PDEL deliverables, MW1 / MW2 workshops, ACT1 Tower contract, S1 / S2 context bundle, DES1 / DES2 design canon) vs aspirational (live Sentinel runtime, live evidence ledger ingest, live Model Gateway, live audit ledger, live Steward G1-G4 evaluator, export pipeline, SOL3 per-tenant solution draft, PF4 per-tenant failure-mode persistence)."
+    },
+    {
+      "id": "ARCH2",
+      "name": "Nexus End-to-End Execution Flow",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/architecture/ARCH2_NEXUS_END_TO_END_EXECUTION_FLOW.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Doc declares each of the 16 numbered steps (user / Client Maestro input; identify work object; assemble context bundle; retrieve evidence; retrieve patterns; evaluate failure modes; evaluate solution archetypes; check governance / gates; assemble prompt via model gateway; call model THROUGH GATEWAY ONLY; render response; attach evidence + missing-input chips; create actions / artifacts; update program / workshop / deliverable state; emit Tower / Intelligence signals; audit / trace everything) in canonical order.",
+        "Each step names inputs, outputs, owner contract / read model, and refusal conditions as required.",
+        "Doc explicitly forbids direct provider imports (`import OpenAI` / `import Anthropic`) outside the Model Gateway module.",
+        "Doc names the canonical source-of-truth contract or read model for every step (S1, S2, S7, S9 / S9b\u2013g, I1, PF1, SOL1 / SOL2 / SOL3, PDEL, MW1 / MW2, ACT1, ADM3 / ADM4, DES1 / DES2, evidence ledger, audit ledger, Model Gateway).",
+        "Doc names anti-patterns including raw vector hits surfaced as evidence, model-as-parser, direct provider call from a page component, and side effects outside the tool layer."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Execution-flow contract document only. Sixteen-step runbook every later slice authors against. References ARCH1 for architectural principles."
+    },
+    {
+      "id": "CAT2",
+      "name": "Route Implementation Checklist + Next 20 Slices",
+      "category": "CAT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "CAT1"
+      ],
+      "allowedFiles": [
+        "docs/product/page-workflow-catalog/14_ROUTE_IMPLEMENTATION_CHECKLIST.md",
+        "docs/product/page-workflow-catalog/15_NEXT_20_IMPLEMENTATION_SLICES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "16 canonical routes covered in 14_ROUTE_IMPLEMENTATION_CHECKLIST.md with consistent sections (Status, Primary agent, Primary question answered, Data contract required, Read model required, Components required, Actions required, Validation tests required, Visual blueprint reference, MVP/V1/V2 priority, Known gaps, Next implementation slice).",
+        "Route status accurately reflects HEAD 861d765 of pack/cat2-route-implementation-checklist (15 routes exist, 1 proposed/missing).",
+        "20 implementation slices proposed in 15_NEXT_20_IMPLEMENTATION_SLICES.md in priority order, grouped 5/3/3/3/3/3 across Programs / Intelligence / Tower / Admin-Source / Solution Intelligence / Architecture-Platform.",
+        "All proposed slice IDs (PW2, PW3, PW4, PW5, PDEL6, INTEL3, INTEL4, INTEL5, TWR3, TWR4, TWR5, ADM6, ADM7, SRC4, SOL3, SOL4, SOL5, PF3, PF4, ARCH1) do not collide with the existing 36 slice IDs in build-slices.json.",
+        "Each slice entry includes Why now, Depends on, Allowed files signature, Acceptance criteria summary, Estimated effort, and Risk.",
+        "No app code is touched; this is documentation only."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Documentation-only follow-up to CAT1. Records the actual app-router state for the 16 canonical routes and proposes the next 20 implementation slices that close the recorded gaps. Consumed by Steward on /platform/admin/build-progress and by pack lanes when picking the next slice off the queue."
+    },
+    {
+      "id": "PW1",
+      "name": "Program Workshop Mode Shell",
+      "category": "PW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW2",
+        "PF2"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramWorkshopMode.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/program-workshop-mode-view.ts",
+        "src/__tests__/integration/programs/program-workshop-mode.test.ts",
+        "docs/build/slices/PW1_PROGRAM_WORKSHOP_MODE_SHELL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildProgramWorkshopModeView(programId) is pure: JSON byte-equal across calls for every canonical demo program.",
+        "Every canonical demo program returns a view with non-null nextWorkshop, an agenda of >=1 lines, >=1 required attendee, >=1 evidence-to-capture entry, and >=1 expected output (inherited from MW2).",
+        "View carries a six-element leftRail.phases array with statuses drawn from {completed, current, pending}; active programs surface exactly one 'current' phase.",
+        "View carries rightContext with gatekeeperAgent: 'steward', non-empty gateImplication, and a non-negative integer evidenceUsable.",
+        "honestDisclaimer mentions 'not wired' or 'deterministic'; createdFrom === 'deterministic_seed'.",
+        "Unknown programId returns a defensive shell with null nextWorkshop, empty agenda, six pending phases, and createdFrom: 'deterministic_seed'.",
+        "ProgramWorkshopMode.tsx is a server component (no 'use client', no useState, no useEffect) and renders data-program-workshop-mode=\"pw1\" on its root.",
+        "ProgramCanonicalDetail.tsx imports ProgramWorkshopMode and buildProgramWorkshopModeView and mounts <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />.",
+        "Both new modules import nothing from src/lib/nexus/**, src/lib/agent/**, src/lib/source/**, src/lib/auth/**, supabase, or src/lib/programs/mock.ts; do not call Date.now / Math.random / new Date / fetch; do not invoke Anthropic / OpenAI runtime."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-workshop-mode.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npx jest src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Mounts a deterministic, server-rendered Workshop Mode shell inside the canonical Programs Detail surface following the PF2 layout (left journey rail / center Nexus canvas / right context panel). No live workshop ingestion, no deliverable refinement loop, no live Steward verdict, no client interactivity. PW2+ wires Maestro capture, deliverable refinement, and detail drawer overlay."
+    },
+    {
+      "id": "PDEL5",
+      "name": "Deliverable / Artifact Canvas Renderer",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramArtifactCanvas.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/program-artifact-canvas-view.ts",
+        "src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "docs/build/slices/PDEL5_DELIVERABLE_ARTIFACT_CANVAS_RENDERER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildProgramArtifactCanvasView is byte-equal across repeated calls per program for every canonical demo program.",
+        "Every canonical demo program produces a non-zero artifact count; renderableCount is always less than or equal to artifactCount.",
+        "When an artifact is selected, all four canvas actions (edit, regenerate, download, approve) are returned as enabled=false with non-empty deferred reasons.",
+        "Preview mode is `placeholder` for every non-html and non-markdown render mode, with the canonical placeholder body.",
+        "No `https://` and no `E-###` citation tokens appear in the serialized canvas view.",
+        "Placeholder preview body never claims a real download path (no `https://`, no `blob:`, no `download?`, no `.pdf` suffix, no `/files/`).",
+        "ProgramArtifactCanvas root carries data-program-artifact-canvas=\"pdel5\"; Edit / Regenerate / Download / Approve buttons render with disabled, aria-disabled=\"true\", and a sub-label naming the deferred reason.",
+        "ProgramCanonicalDetail mounts ProgramArtifactCanvas using buildProgramArtifactCanvasView(program.programSlug).",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "npx jest src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic two-region canvas (left list + right preview) projected from the PDEL artifact inventory. No upload, no parse, no export, no model calls, no live download. PDEL5b/PDEL6 wire export and route-level selection state; PDEL7 wires edit / regenerate."
+    },
+    {
+      "id": "HOME1",
+      "name": "Agentic Executive Home / Entry Surface",
+      "category": "HOME",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/components/home/AgenticHomeEntry.tsx",
+        "src/app/(maestro)/home/page.tsx",
+        "src/__tests__/integration/home/agentic-home-entry.test.ts",
+        "docs/build/slices/HOME1_AGENTIC_EXECUTIVE_ENTRY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "AgenticHomeEntry renders the AbarVa wordmark plus a one-line orientation tagline within a single page-fold of content.",
+        "Surface exposes all four canonical agent surface cards: Programs/Nexus, Control Tower/Atlas, Intelligence/Sentinel, Admin Setup/Steward.",
+        "Each agent card hrefs to its canonical route: /tenant/[tenantSlug]/programs, /tenant/[tenantSlug]/tower, /tenant/[tenantSlug]/intelligence, /platform/admin.",
+        "Component accepts an optional tenantSlug prop and defaults to the canonical placeholder 'acme' when omitted.",
+        "What-needs-attention strip renders no more than 3 cards, each carrying data-deterministic=\"true\" and data-source=\"deterministic_seed\".",
+        "Attention numbers are produced by a pure deterministic helper, not by any live read or model call.",
+        "Surface carries a root data-agentic-home-entry=\"home1\" marker and a data-honest-disclaimer=\"home1\" footer naming the seed-only contract.",
+        "Home route mounts <AgenticHomeEntry /> from the canonical module path.",
+        "Component imports nothing from lib/nexus, lib/agent, lib/source, lib/auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/home/agentic-home-entry.test.ts",
+        "npm run build"
+      ],
+      "notes": "Calm executive entry surface that augments the existing composite home above the legacy hero. Numbers are deterministic seeds; live binding is deferred to a later slice that wires the attention strip to real tenant state."
     }
   ]
 }

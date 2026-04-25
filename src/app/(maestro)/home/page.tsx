@@ -27,6 +27,7 @@ import { ContextFooter } from '@/components/home/composite/ContextFooter';
 import { TenantBreadthRow, type BreadthChip } from '@/components/home/composite/TenantBreadthRow';
 import { CommandCenter } from '@/components/home/command-center/CommandCenter';
 import { getSeedTenantForClientKey } from '@/lib/deliverables/legacy-route-resolver';
+import { AgenticHomeEntry } from '@/components/home/AgenticHomeEntry';
 
 export const dynamic = 'force-dynamic';
 
@@ -300,6 +301,14 @@ export default async function HomePage({
     >
       <div style={{ maxWidth: 1380, margin: '0 auto', padding: '28px 24px 96px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          {/* HOME1 · Agentic executive entry surface · single-fold
+              orientation panel with the four canonical agent surfaces
+              (Nexus / Atlas / Sentinel / Steward) and a deterministic
+              "what needs attention" strip. Lives above the legacy
+              composite home so arriving executives see the calm,
+              honest entry first; existing density preserved below. */}
+          <AgenticHomeEntry tenantSlug={seededTenant?.routeSlug ?? 'acme'} />
+
           <header
             style={{
               position: 'relative',
