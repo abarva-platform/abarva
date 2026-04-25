@@ -112,15 +112,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-24 · PR #194 merged: Source production readiness tracker.
 - 2026-04-24 · PR #195 merged: seeded context depth for validation fixtures. Runner improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
 - 2026-04-24 · PR #197 merged: deterministic Source context validation report formatter.
+- 2026-04-25 · PR #199 merged: `/source` dashboard visual review. Dashboard decision: approve with small refinements.
 
 ## Last status emission
-- 2026-04-24 · Post-merge Source state update · PR #197 merged · next recommended slice is dashboard visual review planning.
+- 2026-04-25 · Post-merge Source state update · PR #199 merged · next recommended slice is dashboard front-door refinement planning.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #197 merged · deterministic Source context validation report formatter.
-- Current objective: prepare the next controlled slice: visual review and refinement plan for `/source` dashboard.
-- Current item: post-merge state update and dashboard visual review planning.
+- Current completed milestone: PR #199 merged · `/source` dashboard visual review.
+- Dashboard decision: approve with small refinements.
+- Current objective: prepare the next controlled slice: Source dashboard front-door refinement only.
+- Current item: post-merge state update and dashboard refinement planning.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -146,9 +148,11 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Deterministic readable Source context validation report shape.
   - Deterministic Source context validation markdown formatter.
   - Current validation outcome: 10 fixtures, 8 pass, 2 defer, 0 reject.
+  - `/source` dashboard visual review packet.
+  - Dashboard review decision: approve with small refinements.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
-- Blockers/do-not-build: no dashboard UI changes yet, chat UI, model calls, API routes, upload/parsing, event canvas expansion, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Source validation is stronger and now reviewable, so the next safe move is visual review of `/source` before changing dashboard UI. Dashboard refinement should be driven by screenshot/manual review criteria, not instinctive polish or broad UI expansion.
-- Next recommended item: create a dashboard visual review plan and review checklist before changing UI.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_VISUAL_REVIEW.md`.
+- Blockers/do-not-build: no event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`. Dashboard implementation remains paused until the refinement slice is explicitly approved.
+- Notes and discoveries: Dashboard visual review approved the Source front-door direction with small refinements. The next implementation slice should stay limited to first viewport hierarchy, KPI/copy clarity, event-table salience, value-at-risk emphasis, alert pressure signals, and responsive fit.
+- Next recommended item: refine `/source` dashboard first viewport, hierarchy, KPI/copy clarity, event-table salience, value-at-risk emphasis, alert pressure signals, and responsive fit.
+- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_REFINEMENT.md`.
