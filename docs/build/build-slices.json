@@ -1286,6 +1286,62 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection of (tenant, program) seed into a per-program artifact inventory. No upload, no parse, no export, no canvas rendering. Future deliverable canvas / upload pipeline / export slices flip per-artifact state without contract changes."
+    },
+    {
+      "id": "ADM4",
+      "name": "Dataset Explorer UI",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM2",
+        "ADM3"
+      ],
+      "allowedFiles": [
+        "src/components/admin/DatasetExplorerPanel.tsx",
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/lib/admin/dataset-explorer-view.ts",
+        "src/__tests__/integration/admin/dataset-explorer-panel.test.ts",
+        "docs/build/slices/ADM4_DATASET_EXPLORER_UI.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Dataset explorer view exposes all 12 canonical dataset domains in canonical ordinal order.",
+        "View totalLoadedAcrossDomains / totalUsableAcrossDomains reconcile to summary loadedTotal / usableTotal.",
+        "Per-domain rollup respects loadedCount >= availableCount >= usableCount.",
+        "Domains with zero loaded items report status not_started.",
+        "Panel imports only next/link, the ADM4 view helper, and ADM3 inventory types.",
+        "No item claims a live connector sync; no item references a production URL; no item asserts a real E-### citation.",
+        "interpretationBasis explicitly names the deterministic source-of-truth limit.",
+        "StewardSetupControlCenter imports and mounts the DatasetExplorerPanel.",
+        "Object inspector slot renders an honest empty placeholder.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-explorer-panel.test.ts",
+        "npm run build"
+      ],
+      "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
     }
   ]
 }
