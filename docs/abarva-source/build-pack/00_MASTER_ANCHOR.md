@@ -19,6 +19,8 @@ AbarVa Source is not a demo route, CRUD dashboard, procurement portal clone, gen
 
 Agent context awareness is a load-bearing product capability. No Nexus, Sentinel, Atlas, or Steward UI should be considered complete until the response is grounded in the current Source context and passes the context validation harness.
 
+Workflow richness and document collaboration are production-readiness requirements. Source must support artifact lifecycles, document export/edit/re-upload, version history, review cycles, approval routing, wait states, rework loops, and workflow validation before it can be considered enterprise-ready.
+
 ## Platform Fit
 
 Source uses platform foundations rather than inventing an isolated product stack:
@@ -71,8 +73,11 @@ Codex should read operating state first, then the Build Pack in this order:
 23. [22_AGENT_CONTEXT_AWARENESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/22_AGENT_CONTEXT_AWARENESS.md)
 24. [23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/23_CHAT_EXPERIENCE_AND_INPUT_MODEL.md)
 25. [24_CONTEXT_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/24_CONTEXT_VALIDATION_HARNESS.md)
-26. relevant `wireframes/*.md`
-27. relevant `components/*.md`
+26. [25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md)
+27. [26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md)
+28. [27_WORKFLOW_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/27_WORKFLOW_VALIDATION_HARNESS.md)
+29. relevant `wireframes/*.md`
+30. relevant `components/*.md`
 
 ## Source Of Truth Map
 
@@ -92,6 +97,9 @@ Codex should read operating state first, then the Build Pack in this order:
 - Artifacts and RFP generation: [10_ARTIFACT_AND_RFP_GENERATION_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/10_ARTIFACT_AND_RFP_GENERATION_MODEL.md)
 - Scorecard governance: [11_SCORECARD_GOVERNANCE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/11_SCORECARD_GOVERNANCE.md)
 - Value ledger: [12_VALUE_LEDGER_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/12_VALUE_LEDGER_MODEL.md)
+- Workflow richness and document collaboration: [25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md)
+- Artifact review and approval model: [26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md)
+- Workflow validation harness: [27_WORKFLOW_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/27_WORKFLOW_VALIDATION_HARNESS.md)
 - Persona crawler verification: [17_CRAWLER_PERSONA_VERIFICATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/17_CRAWLER_PERSONA_VERIFICATION.md)
 - Sourcing failure modes: [18_FAILURE_MODE_CATALOG.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/18_FAILURE_MODE_CATALOG.md)
 - Cross-product architecture: [19_CROSS_PRODUCT_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/19_CROSS_PRODUCT_ARCHITECTURE.md)
@@ -124,6 +132,7 @@ Codex should not implement any component unless all of the following are true:
 5. the acceptance criteria are listed
 6. the implementation slice has been explicitly approved
 7. any agent/chat behavior has an approved Context Bundle contract and validation harness criteria
+8. any artifact/review/approval behavior has an approved workflow validation scenario and gate behavior
 
 The current dashboard implementation is **prototype v0 only**. It is not final design authority and must not be extended until the dashboard spec and wireframe are reviewed.
 
@@ -135,6 +144,16 @@ No agent UI is complete until:
 - it passes vanilla-response detection
 - it avoids model-generated claims that bypass event state, gates, evidence, or citations
 
+No workflow or artifact collaboration UI is complete until:
+
+- artifact lifecycle states are explicit
+- export/edit/re-upload behavior is defined
+- artifact versions are preserved
+- review and approval routes are auditable
+- locked/reopened behavior is enforced
+- stage gates use artifact, review, approval, and waiver state
+- workflow validation scenarios pass for unsafe stage movement and document actions
+
 ## Prohibited Until Reviewed
 
 Do not build:
@@ -145,6 +164,9 @@ Do not build:
 - value ledger
 - vendor response flow
 - AI generation
+- document export/import
+- approval routing UI
+- artifact versioning UI
 
 Do not touch:
 
