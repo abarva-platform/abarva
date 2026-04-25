@@ -175,9 +175,9 @@ export const SOURCE_AGENT_VALIDATION_FIXTURES: SourceAgentValidationFixture[] = 
       contextScope: 'portfolio',
       requiresEvent: false,
       requiresStage: false,
-      requiresLifecycleStatus: true,
+      requiresLifecycleStatus: false,
       requiresOwner: true,
-      requiresAging: true,
+      requiresAging: false,
       requiresPattern: false,
       requiresValueLedger: true,
       requiredAllowedActionIds: ['source-action-review-portfolio'],
@@ -886,6 +886,17 @@ function collectFixtureFindings(
       `Expected allowed action ${actionId} is missing.`,
     );
   }
+
+  addFindingIf(
+    findings,
+    fixtureItem.category === 'artifactReadiness'
+      && fixtureItem.expectedVerdict === 'defer'
+      && bundle.missingInputs.length > 0,
+    'artifact-generation-deferred-missing-inputs',
+    'warning',
+    'missingContext',
+    'Artifact generation must defer while required Source inputs remain missing.',
+  );
 
   return findings;
 }
