@@ -1180,6 +1180,58 @@
         "npm run build"
       ],
       "notes": "Specification only. Establishes the canonical Maestro Workshop Intelligence shape: Maestro / Nexus / SME role partition, before/during/after capture, save/stop/start lifecycle, deterministic synthesis, SME recommendation, deliverable refinement loop. MW2-MW7 implement the surface."
+    },
+    {
+      "id": "PF1",
+      "name": "AI Program Failure Modes Pattern Pack",
+      "category": "PF",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e",
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/ai-program-failure-modes.ts",
+        "src/__tests__/integration/intelligence/ai-program-failure-modes.test.ts",
+        "docs/build/slices/PF1_AI_PROGRAM_FAILURE_MODES_PATTERN_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 12 canonical AI program failure modes in canonical order.",
+        "Each mode carries key, name, definition, whyItMatters, commonSignals, requiredEvidence, phaseWhereDetected, recommendedIntervention, gateImplication, deliverableImplication, primaryAgent, handoffAgents, createdFrom.",
+        "Every mode names a primary agent from {nexus, sentinel, atlas, steward} and at least one handoff agent.",
+        "getAiProgramFailureMode returns null for unknown keys.",
+        "mapSignalsToFailureModes filters non-canonical signal types and returns canonical-order results regardless of input order.",
+        "summarizeFailureModes reconciles byPrimaryAgent to totalCount and exposes byGate / byPhase covering canonical enums.",
+        "No mode invents a dollar amount in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/ai-program-failure-modes.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic pattern pack of AI program failure modes. No live runtime, no model calls. Future slices PF2 / PF3 / PF4 wire the pack into Sentinel detections, Programs / Atlas surfacing, and per-tenant persistence."
     }
   ]
 }
