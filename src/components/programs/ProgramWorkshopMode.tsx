@@ -837,7 +837,7 @@ function RightContextPanel({
           Live workshop notes
         </span>
         <span style={{ fontSize: 11, color: COLORS.mutedSoft, fontStyle: 'italic' }}>
-          Coming soon · PW2 wires Maestro-typed capture.
+          Not yet wired · PW2 will land Maestro-typed capture.
         </span>
       </div>
 
@@ -865,7 +865,7 @@ function RightContextPanel({
           Deliverable refinement
         </span>
         <span style={{ fontSize: 11, color: COLORS.mutedSoft, fontStyle: 'italic' }}>
-          Coming soon · PW3 wires Stub → Outline → Rich promotion.
+          Not yet wired · PW3 will land Stub → Outline → Rich promotion.
         </span>
       </div>
     </aside>
