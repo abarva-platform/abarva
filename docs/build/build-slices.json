@@ -2183,6 +2183,61 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices will compose this framework with PF1 failure-mode signals, I1 pattern signals, and SOL2 component recommendations to produce a single defensible build / buy / partner brief per capability request."
+    },
+    {
+      "id": "SOL7",
+      "name": "Solution Archetype Detail Read Model",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/solution-archetype-detail-view.ts",
+        "src/__tests__/integration/solutions/solution-archetype-detail-view.test.ts",
+        "docs/build/slices/SOL7_SOLUTION_ARCHETYPE_DETAIL_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports SolutionArchetypeLike, SolutionArchetypeDetailView, SolutionArchetypeCanvasSection, and SolutionArchetypeReadinessSummary as the canonical read-model contract.",
+        "buildSolutionArchetypeDetailView projects every canonical archetype field into the view and is byte-equal across repeated calls for both the fully-populated and partial fixtures.",
+        "missingInputPrompts is empty for a fully-specified archetype and non-empty when any of currentStateInputsRequired, businessOutcomes, smesRequired, workshopsRequired, or valueMetrics is empty.",
+        "recommendedNextAction proposes proceeding to architecture composition when no inputs are missing and proposes scheduling the recommendedFirstWorkshop when inputs are missing.",
+        "buildSolutionArchetypeCanvasSections returns exactly 12 sections in the canonical order brief / business outcomes / current-state inputs / patterns and failure modes / solution components / architecture / workshops / SMEs / build-buy-partner / governance and risk / deliverables / value metrics.",
+        "Every canvas section carries a layoutHint drawn from the closed vocabulary list | paragraph | two_column | metric_strip | agent_partition.",
+        "The five canonical evidence-anchored sections (business outcomes, current-state inputs, patterns and failure modes, governance and risk, value metrics) carry evidenceLinkRequired: true.",
+        "summarizeSolutionArchetypeReadiness returns readinessLevel: usable for a fully-populated archetype and weak or partial for the partial fixture, with totalSections always 12.",
+        "basis.source equals deterministic_solution_archetype_registry, basis.viewBuilderVersion equals sol7.v1, and createdFrom equals deterministic_seed.",
+        "Serialised view contains no invented dollar amounts.",
+        "Module does not import the SOL3 registry (deferred follow-up); it relies on the local SolutionArchetypeLike structural type.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai; no Coming soon / TBD / Lorem ipsum placeholders."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-detail-view.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of a canonical solution archetype into a canvas-ready detail view. SOL3's solution-archetype-registry is not yet present in this worktree, so SOL7 declares a local SolutionArchetypeLike structural type and a follow-up slice will wire the registry through to this read model. SOL7 is library-only \u2014 no UI renderer, no live retrieval, no model calls."
     }
   ]
 }
