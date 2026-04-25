@@ -1768,6 +1768,42 @@
         "npm run build"
       ],
       "notes": "Execution-flow contract document only. Sixteen-step runbook every later slice authors against. References ARCH1 for architectural principles."
+    },
+    {
+      "id": "CAT2",
+      "name": "Route Implementation Checklist + Next 20 Slices",
+      "category": "CAT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "CAT1"
+      ],
+      "allowedFiles": [
+        "docs/product/page-workflow-catalog/14_ROUTE_IMPLEMENTATION_CHECKLIST.md",
+        "docs/product/page-workflow-catalog/15_NEXT_20_IMPLEMENTATION_SLICES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "16 canonical routes covered in 14_ROUTE_IMPLEMENTATION_CHECKLIST.md with consistent sections (Status, Primary agent, Primary question answered, Data contract required, Read model required, Components required, Actions required, Validation tests required, Visual blueprint reference, MVP/V1/V2 priority, Known gaps, Next implementation slice).",
+        "Route status accurately reflects HEAD 861d765 of pack/cat2-route-implementation-checklist (15 routes exist, 1 proposed/missing).",
+        "20 implementation slices proposed in 15_NEXT_20_IMPLEMENTATION_SLICES.md in priority order, grouped 5/3/3/3/3/3 across Programs / Intelligence / Tower / Admin-Source / Solution Intelligence / Architecture-Platform.",
+        "All proposed slice IDs (PW2, PW3, PW4, PW5, PDEL6, INTEL3, INTEL4, INTEL5, TWR3, TWR4, TWR5, ADM6, ADM7, SRC4, SOL3, SOL4, SOL5, PF3, PF4, ARCH1) do not collide with the existing 36 slice IDs in build-slices.json.",
+        "Each slice entry includes Why now, Depends on, Allowed files signature, Acceptance criteria summary, Estimated effort, and Risk.",
+        "No app code is touched; this is documentation only."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Documentation-only follow-up to CAT1. Records the actual app-router state for the 16 canonical routes and proposes the next 20 implementation slices that close the recorded gaps. Consumed by Steward on /platform/admin/build-progress and by pack lanes when picking the next slice off the queue."
     }
   ]
 }
