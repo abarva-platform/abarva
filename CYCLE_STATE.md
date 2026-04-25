@@ -134,16 +134,18 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #225 merged: AMS pattern sections. Authored AMS pattern now has 28 stable `source.ams.v1.*` section ids in a docs-only companion.
 - 2026-04-25 · PR #227 merged: deterministic Source multi-agent briefing layer. Nexus, Sentinel, Atlas, and Steward now produce distinct non-LLM briefings from Source context plus context/workflow validation reports.
 - 2026-04-25 · Source layered progress tracker started as a docs-only operating-state slice to separate MVP and production readiness by layer.
+- 2026-04-25 · PR #228 merged: Source layered progress tracker.
+- 2026-04-25 · Source-specific Nexus API stub plan started as a docs-only planning slice; no route implementation, UI, model calls, upload/parsing, or workflow runtime scope.
 
 ## Last status emission
-- 2026-04-25 · Source layered progress tracker started after PR #227 merge · docs/state only · no UI, API, model, upload, runtime, workflow engine, or approval engine scope.
+- 2026-04-25 · Source-specific Nexus API stub plan started after PR #228 merge · docs only · no API implementation, UI, model, upload, workflow engine, or approval engine scope.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #227 merged · deterministic Source multi-agent briefing layer.
+- Current completed milestone: PR #228 merged · Source layered progress tracker.
 - Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: preserve a layer-by-layer Source progress tracker for MVP and production readiness.
-- Current item: Source layered progress tracker.
+- Current objective: plan a Source-specific Nexus API route stub with no model calls.
+- Current item: Source Nexus API stub plan.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -207,10 +209,11 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - AMS pattern sectioning plan merged via PR #224.
   - AMS pattern sections merged via PR #225.
   - Deterministic Source multi-agent briefing layer merged via PR #227: Nexus, Sentinel, Atlas, and Steward produce distinct non-LLM briefings from SourceAgentContextBundle plus context/workflow validation reports.
-  - Source layered progress tracker drafted to show Source progress across platform design system, product foundation, pattern/workflow IP, validation harnesses, multi-agent intelligence, API/runtime, UI, evidence pipeline, and production readiness.
+  - Source layered progress tracker merged via PR #228 to show Source progress across platform design system, product foundation, pattern/workflow IP, validation harnesses, multi-agent intelligence, API/runtime, UI, evidence pipeline, and production readiness.
+  - Source Nexus API stub plan drafted for `POST /api/v1/source/[eventId]/nexus/ask`, no-model first behavior, SourceAgentContextBundle usage, deterministic multi-agent briefing integration, context/workflow validation integration, request/response shape, failure states, and auth/tenant considerations.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
 - Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
-- Next recommended item: review and merge the Source layered progress tracker, then plan a Source-specific Nexus API route stub with no model calls. Keep chat UI, model calls, upload/parsing, event canvas, workflow engine, approval engine, artifact versioning, and document export/import blocked until explicitly approved.
-- Next planning artifact: Source-specific Nexus API route stub plan, no model calls.
+- Next recommended item: review and merge the Source Nexus API stub plan, then consider implementing the no-model Source Nexus API stub only if explicitly approved. Keep chat UI, model calls, upload/parsing, event canvas, workflow engine, approval engine, artifact versioning, and document export/import blocked until explicitly approved.
+- Next planning artifact: no-model Source Nexus API stub implementation plan/PR, only after this plan is reviewed.
