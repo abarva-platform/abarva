@@ -852,6 +852,50 @@
         "npm run build"
       ],
       "notes": "Pattern detail surface for Sentinel keys; legacy [patternSlug] route was deleted to resolve a Next.js dynamic-segment-name collision and the new [patternKey] route falls back to SeedTenantPattern for any non-Sentinel slug. Evidence registry citation, graph traversal, authored pattern renderer, and live Sentinel validation are deferred to I4+."
+    },
+    {
+      "id": "ADM1",
+      "name": "Steward Setup/Admin · Apple-like Control Plane Contract",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/ADM1_STEWARD_SETUP_ADMIN_CONTROL_PLANE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract names Setup/Admin as the Steward-led control plane, not a settings page.",
+        "Contract enumerates the seven primary users.",
+        "Contract enumerates the nine admin questions the surface must answer.",
+        "Contract defines the seven Steward responsibilities in Admin.",
+        "Contract states the Apple-like experience principles.",
+        "Contract defines the five canonical Admin zones (header, brief, cards, explorer, drawer).",
+        "Contract defines the ten canonical Admin modules.",
+        "Contract defines twelve canonical Enterprise Dataset Domains, each with example datasets, why-it-matters, agents, surfaces, readiness criteria, common missing inputs, and Steward guidance.",
+        "Contract defines the Data Explorer field set and drawer behavior.",
+        "Contract defines the nine canonical evidence states (loaded → usable_as_evidence + blocked) and per-agent effect.",
+        "Contract defines the Users & Access, Security & Governance, and Connector contracts.",
+        "Contract defines the seven AI Control Tower dimensions and per-dimension agent role.",
+        "Contract defines the Agent Readiness Matrix shape for Nexus, Sentinel, Atlas, Steward.",
+        "Contract defines the deterministic Steward Brief field set and example.",
+        "Contract enumerates UI states, actions, acceptance criteria, future implementation slices (ADM2-ADM10), and explicit defer list.",
+        "No application code, Source files, Admin UI, runtime, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification / contract document only. Establishes the canonical Setup/Admin control plane shape. ADM2-ADM10 implement the surface; this slice does not modify application code. No runtime, no migrations, no model calls."
     }
   ]
 }
