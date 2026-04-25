@@ -1182,6 +1182,61 @@
       "notes": "Specification only. Establishes the canonical Maestro Workshop Intelligence shape: Maestro / Nexus / SME role partition, before/during/after capture, save/stop/start lifecycle, deterministic synthesis, SME recommendation, deliverable refinement loop. MW2-MW7 implement the surface."
     },
     {
+      "id": "MW2",
+      "name": "Workshop Readiness Read Model",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "S9",
+        "S9d"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/workshop-readiness.ts",
+        "src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "docs/build/slices/MW2_WORKSHOP_READINESS_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Read model builds deterministically for every (tenant, program) pair across all four canonical demo tenants.",
+        "Every active program emits at least one workshop readiness record with type drawn from the canonical nine workshop types.",
+        "Every record carries id (ws:<tenantKey>:<programSlug>:<type>), title, objective, requiredAttendees, optionalSmes, preReadList, agenda, questionsToAsk, likelyTensions, decisionsNeeded, evidenceToCapture, expectedOutputs, nexusPreparationBrief, stewardGateImplication, risks, createdFrom.",
+        "requiredAttendees always contains client_maestro and at least three roles per workshop.",
+        "evidenceToCapture carries at least two entries per workshop, with at least one required: true and one required: false.",
+        "stewardGateImplication names the canonical hard gate (G1..G4) the workshop helps unblock, or honestly states no canonical hard gate is at risk for phase 4.",
+        "buildNextRecommendedWorkshop returns non-null for every active program and is deterministic across repeated calls.",
+        "summarizeWorkshopReadiness reconciles byType and perTenant counts to totalCount.",
+        "Every record carries createdFrom: 'deterministic_program_seed'; no record invents a dollar amount or claims a real E-### citation.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program) seed into per-workshop readiness records. Operationalizes the MW1 contract. No meeting notes ingestion, no live LLM-driven brief composition, no calendar/booking integration. Future MW3 Maestro Brief UI renders these records; MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
+    },
+    {
       "id": "PF1",
       "name": "AI Program Failure Modes Pattern Pack",
       "category": "PF",
