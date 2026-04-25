@@ -4,7 +4,273 @@
   "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
-  "overallReadinessPercent": 34,
+  "overallReadinessPercent": 24,
+  "maturitySnapshot": {
+    "source": "Founder-provided maturity assessment recorded on 2026-04-25. This is a deterministic planning snapshot, not live production monitoring.",
+    "indicators": [
+      {
+        "id": "overall_product_maturity",
+        "label": "Overall product maturity",
+        "percentLow": 35,
+        "percentHigh": 40,
+        "interpretation": "Product vision, architecture, and deterministic surfaces are substantial, while persistence, full workflows, and runtime loops remain pending."
+      },
+      {
+        "id": "demo_proof_of_concept_maturity",
+        "label": "Demo / proof-of-concept maturity",
+        "percentLow": 65,
+        "percentHigh": 70,
+        "interpretation": "The system can demonstrate many core concepts through seeded read models and internal surfaces, but not a full production workflow."
+      },
+      {
+        "id": "production_readiness",
+        "label": "Production readiness",
+        "percentLow": 20,
+        "percentHigh": 25,
+        "interpretation": "Production readiness is blocked by live workflow, evidence, gateway, tenant/security, CI, observability, and deploy verification gaps."
+      }
+    ],
+    "areas": [
+      {
+        "id": "product_vision_architecture",
+        "area": "Product vision / architecture",
+        "completed": "Agent model, Programs/Tower/Intelligence/Admin spine, page/workflow catalog, visual canon, and solution architecture contracts.",
+        "pending": "Final reconciliation into one master architecture index.",
+        "percentLow": 75,
+        "percentHigh": 75,
+        "relatedComponentIds": [
+          "programs",
+          "ai_control_tower",
+          "intelligence",
+          "admin_setup",
+          "solution_intelligence"
+        ]
+      },
+      {
+        "id": "programs",
+        "area": "Programs",
+        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, and artifact canvas shell.",
+        "pending": "Full save/resume state, live meeting notes ingestion, real deliverable generation, and gate transition workflows.",
+        "percentLow": 55,
+        "percentHigh": 55,
+        "relatedComponentIds": [
+          "programs",
+          "program_workshop_mode",
+          "deliverables_artifacts"
+        ]
+      },
+      {
+        "id": "program_deliverables_artifacts",
+        "area": "Program deliverables / artifacts",
+        "completed": "Artifact inventory read model, canvas renderer shell, file-type concepts, and deliverables-by-phase logic started.",
+        "pending": "Real generated deliverables, production HTML/Markdown renderer, versioning, approval, export, and download.",
+        "percentLow": 35,
+        "percentHigh": 35,
+        "relatedComponentIds": [
+          "deliverables_artifacts"
+        ]
+      },
+      {
+        "id": "nexus_client_maestro_workflow",
+        "area": "Nexus / Client Maestro workflow",
+        "completed": "Nexus role defined, workshop readiness read model, Maestro brief concepts, and workshop mode shell.",
+        "pending": "Live Nexus mastermind loop, notes-to-state updates, SME recommendation UI, and dynamic refinement loop.",
+        "percentLow": 35,
+        "percentHigh": 35,
+        "relatedComponentIds": [
+          "programs",
+          "program_workshop_mode",
+          "agent_runtime"
+        ]
+      },
+      {
+        "id": "intelligence_sentinel",
+        "area": "Intelligence / Sentinel",
+        "completed": "Sentinel pattern detections, Intelligence landing, active patterns, pattern detail, evidence trail, pattern content renderer, and failure modes.",
+        "pending": "Pattern registry lifecycle, pattern graph, real evidence drawer, internal/external source basis, and live Sentinel validation.",
+        "percentLow": 45,
+        "percentHigh": 45,
+        "relatedComponentIds": [
+          "intelligence"
+        ]
+      },
+      {
+        "id": "ai_control_tower_atlas",
+        "area": "AI Control Tower / Atlas",
+        "completed": "Program pressure cards, Atlas Executive Brief, and AI Control Tower contract.",
+        "pending": "AI portfolio inventory, adoption/usage, cost, risk, DORA/productivity, and technology/data readiness read models and UI.",
+        "percentLow": 30,
+        "percentHigh": 30,
+        "relatedComponentIds": [
+          "ai_control_tower"
+        ]
+      },
+      {
+        "id": "admin_setup_steward",
+        "area": "Admin / Setup / Steward",
+        "completed": "Steward setup control center, dataset domain inventory, dataset explorer UI, and Admin contract.",
+        "pending": "Users/access UI, governance posture, connector health, agent readiness deep drilldown, and live data readiness from real sources.",
+        "percentLow": 40,
+        "percentHigh": 40,
+        "relatedComponentIds": [
+          "admin_setup"
+        ]
+      },
+      {
+        "id": "source_sourcing_product",
+        "area": "Source / sourcing product",
+        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started.",
+        "pending": "Event detail canvas, vendor responses, scorecards, RFP artifacts, Source value ledger, and Source to Tower/Intelligence signals.",
+        "percentLow": 25,
+        "percentHigh": 25,
+        "relatedComponentIds": [
+          "source"
+        ]
+      },
+      {
+        "id": "solution_intelligence_fabric",
+        "area": "Solution Intelligence Fabric",
+        "completed": "Solution archetype registry, analytics modernization pack, healthcare archetypes, build/buy/partner framework, detail read model, and canvas contract.",
+        "pending": "SOL9 recommendation engine, solution canvas UI, architecture draft generation, and workshop-to-architecture refinement.",
+        "percentLow": 45,
+        "percentHigh": 45,
+        "relatedComponentIds": [
+          "solution_intelligence"
+        ]
+      },
+      {
+        "id": "patterns_pattern_library",
+        "area": "Patterns / pattern library",
+        "completed": "Pattern tiering concept, failure modes pack, pattern detections, and content renderer.",
+        "pending": "Governed pattern registry, linter, promotion workflow, graph, and usage/outcome feedback loop.",
+        "percentLow": 35,
+        "percentHigh": 35,
+        "relatedComponentIds": [
+          "intelligence",
+          "audit_governance"
+        ]
+      },
+      {
+        "id": "data_knowledge_fabric",
+        "area": "Data / Knowledge Fabric",
+        "completed": "Dataset domains, architecture contracts, context bundle foundations, and deterministic read models.",
+        "pending": "Real ingestion/parsing, vector/graph integration, object store, evidence ledger backend, and data lineage.",
+        "percentLow": 20,
+        "percentHigh": 20,
+        "relatedComponentIds": [
+          "data_evidence_knowledge_fabric",
+          "ingestion_parsing"
+        ]
+      },
+      {
+        "id": "evidence_ledger",
+        "area": "Evidence Ledger",
+        "completed": "Evidence readiness concepts, artifact/evidence state contracts, and no-fabrication tests.",
+        "pending": "Real evidence IDs, citations, provenance, freshness, confidence, backend persistence, and claim support.",
+        "percentLow": 15,
+        "percentHigh": 15,
+        "relatedComponentIds": [
+          "data_evidence_knowledge_fabric",
+          "audit_governance"
+        ]
+      },
+      {
+        "id": "model_gateway",
+        "area": "Model Gateway",
+        "completed": "Contract defined and acknowledged as non-negotiable.",
+        "pending": "Actual gateway implementation, model routing, cost tracking, prompt assembly, audit, and fallback.",
+        "percentLow": 5,
+        "percentHigh": 10,
+        "relatedComponentIds": [
+          "model_gateway"
+        ]
+      },
+      {
+        "id": "agent_runtime",
+        "area": "Agent Runtime",
+        "completed": "Existing Nexus/Sentinel/Atlas scaffolds, context bundle, disclosure metadata, and UI wiring.",
+        "pending": "Unified model gateway usage, tool registry integration, cross-agent handoffs, and live memory/state update.",
+        "percentLow": 25,
+        "percentHigh": 25,
+        "relatedComponentIds": [
+          "agent_runtime",
+          "model_gateway"
+        ]
+      },
+      {
+        "id": "tool_layer",
+        "area": "Tool Layer",
+        "completed": "Contracts planned and partially documented.",
+        "pending": "Real tool registry, guarded tool calls, graph/vector/file/workflow/export tools.",
+        "percentLow": 10,
+        "percentHigh": 15,
+        "relatedComponentIds": [
+          "agent_runtime",
+          "model_gateway",
+          "ingestion_parsing"
+        ]
+      },
+      {
+        "id": "workflow_program_state",
+        "area": "Workflow / program state",
+        "completed": "Seed-backed phases/gates/workshop state and deterministic read models.",
+        "pending": "Production state machines, write paths, audit events, approvals, pause, and resume.",
+        "percentLow": 25,
+        "percentHigh": 25,
+        "relatedComponentIds": [
+          "programs",
+          "program_workshop_mode",
+          "audit_governance"
+        ]
+      },
+      {
+        "id": "audit_governance",
+        "area": "Audit / governance",
+        "completed": "Tenant isolation tests, governance concepts, and audit contracts.",
+        "pending": "Cross-agent audit trail, gate audit, evidence audit, and exportable audit logs.",
+        "percentLow": 20,
+        "percentHigh": 20,
+        "relatedComponentIds": [
+          "audit_governance"
+        ]
+      },
+      {
+        "id": "visual_design_system",
+        "area": "Visual design system",
+        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked.",
+        "pending": "Apply consistently across all pages and finalize logo asset/SVG system.",
+        "percentLow": 50,
+        "percentHigh": 50,
+        "relatedComponentIds": [
+          "admin_setup",
+          "validation_qa"
+        ]
+      },
+      {
+        "id": "validation_qa",
+        "area": "Validation / QA",
+        "completed": "Many targeted Jest suites, build checks, runbooks, and no-fabrication checks.",
+        "pending": "Golden prompt harness, route smoke automation, persona crawler, visual regression, and production monitoring.",
+        "percentLow": 35,
+        "percentHigh": 35,
+        "relatedComponentIds": [
+          "validation_qa"
+        ]
+      },
+      {
+        "id": "production_deployment_readiness",
+        "area": "Production deployment readiness",
+        "completed": "Vercel build works, multiple PRs merged, hotfixes handled, and a deterministic Production Readiness Tracker exists.",
+        "pending": "Live monitoring, CI integration, security review, rate limits, env/secrets hardening, and post-deploy route verification.",
+        "percentLow": 20,
+        "percentHigh": 25,
+        "relatedComponentIds": [
+          "production_deployment",
+          "validation_qa"
+        ]
+      }
+    ]
+  },
   "stewardBrief": {
     "title": "Steward Production Readiness Brief",
     "summary": "AbarVa has meaningful deterministic surfaces and read models, but full-system testing, live persona walks, Model Gateway wiring, evidence ledger productionization, ingestion/parsing, Vercel deployment verification, and production observability are still blockers.",
