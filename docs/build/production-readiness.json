@@ -40,14 +40,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Deterministic helpers are covered through focused integration tests rather than a complete unit suite." },
-        "integration_tests": { "status": "passing", "evidence": "Programs canonical surface, metadata, phase-gate, evidence/value, and Tower signal tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Playwright specs exist, but PROD1 does not certify a complete automated route-smoke gate." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "Founder/persona walk remains a manual verification requirement." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Seed-only no-dollar/no-fake-citation tests exist on several read models; full-flow coverage is incomplete." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation probes exist and are treated as a required production gate." },
-        "vercel_build": { "status": "not_run", "evidence": "This manifest does not poll or certify Vercel deploy health." },
-        "security_governance_review": { "status": "partial", "evidence": "Governance checks exist as contracts/probes; final review is incomplete." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Deterministic helpers are covered through focused integration tests rather than a complete unit suite."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Programs canonical surface, metadata, phase-gate, evidence/value, and Tower signal tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Playwright specs exist, but PROD1 does not certify a complete automated route-smoke gate."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "Founder/persona walk remains a manual verification requirement."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Seed-only no-dollar/no-fake-citation tests exist on several read models; full-flow coverage is incomplete."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation probes exist and are treated as a required production gate."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "This manifest does not poll or certify Vercel deploy health."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Governance checks exist as contracts/probes; final review is incomplete."
+        }
       },
       "blockers": [
         {
@@ -88,14 +112,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Workshop readiness helpers are exercised through deterministic integration tests." },
-        "integration_tests": { "status": "passing", "evidence": "Workshop readiness and Program Workshop Mode tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Route renders through Programs detail; full automated journey smoke is not certified." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No recorded live workshop-mode founder walk is encoded here." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Deterministic seed source and no fake notes/citations are enforced in tests." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Inherited through canonical Programs routes, not workshop-specific live testing." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel build health is not polled by PROD1." },
-        "security_governance_review": { "status": "partial", "evidence": "Save/stop/resume audit behavior is contract-defined; production governance is deferred." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Workshop readiness helpers are exercised through deterministic integration tests."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Workshop readiness and Program Workshop Mode tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Route renders through Programs detail; full automated journey smoke is not certified."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No recorded live workshop-mode founder walk is encoded here."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Deterministic seed source and no fake notes/citations are enforced in tests."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Inherited through canonical Programs routes, not workshop-specific live testing."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel build health is not polled by PROD1."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Save/stop/resume audit behavior is contract-defined; production governance is deferred."
+        }
       },
       "blockers": [
         {
@@ -129,14 +177,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Artifact helper behavior is covered primarily by integration tests." },
-        "integration_tests": { "status": "passing", "evidence": "Program artifact inventory and canvas tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Mounted inside Programs detail; full artifact route smoke is incomplete." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No founder/persona artifact-canvas walk is recorded by this tracker." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Tests guard against fake dollars, fake E-### citations, fake downloads, and fake export paths." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Inherited through canonical Programs route access." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel build health must be verified outside this manifest." },
-        "security_governance_review": { "status": "partial", "evidence": "Approval/export governance remains deferred." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Artifact helper behavior is covered primarily by integration tests."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Program artifact inventory and canvas tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Mounted inside Programs detail; full artifact route smoke is incomplete."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No founder/persona artifact-canvas walk is recorded by this tracker."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Tests guard against fake dollars, fake E-### citations, fake downloads, and fake export paths."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Inherited through canonical Programs route access."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel build health must be verified outside this manifest."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Approval/export governance remains deferred."
+        }
       },
       "blockers": [
         {
@@ -170,14 +242,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Deterministic detection/content helpers are covered through integration suites." },
-        "integration_tests": { "status": "passing", "evidence": "Sentinel pattern detection, active patterns, detail, and content tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Some Playwright intelligence specs exist; PROD1 does not certify complete route smoke." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No named live Intelligence persona walk is recorded here." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Tests enforce deterministic source labels and no fake dollars/citations." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Route guard behavior is inherited from tenant routes and needs live walk confirmation." },
-        "vercel_build": { "status": "not_run", "evidence": "This tracker does not query Vercel." },
-        "security_governance_review": { "status": "partial", "evidence": "Live Sentinel validation and governance handoff are deferred." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Deterministic detection/content helpers are covered through integration suites."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Sentinel pattern detection, active patterns, detail, and content tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Some Playwright intelligence specs exist; PROD1 does not certify complete route smoke."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No named live Intelligence persona walk is recorded here."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Tests enforce deterministic source labels and no fake dollars/citations."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Route guard behavior is inherited from tenant routes and needs live walk confirmation."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "This tracker does not query Vercel."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Live Sentinel validation and governance handoff are deferred."
+        }
       },
       "blockers": [
         {
@@ -211,14 +307,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Tower view behavior is checked through integration tests." },
-        "integration_tests": { "status": "passing", "evidence": "Program pressure cards and Atlas executive brief tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Tower e2e specs exist, but full production route smoke is not certified." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "Founder/executive Tower walk remains manual." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Tests cap confidence and block fake dollar claims." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Tenant route guard needs live confirmation for production readiness." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel polling is implemented." },
-        "security_governance_review": { "status": "partial", "evidence": "Production governance signals are not persisted or aged." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Tower view behavior is checked through integration tests."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Program pressure cards and Atlas executive brief tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Tower e2e specs exist, but full production route smoke is not certified."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "Founder/executive Tower walk remains manual."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Tests cap confidence and block fake dollar claims."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Tenant route guard needs live confirmation for production readiness."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel polling is implemented."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Production governance signals are not persisted or aged."
+        }
       },
       "blockers": [
         {
@@ -252,14 +372,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Admin read models are covered through deterministic integration tests." },
-        "integration_tests": { "status": "passing", "evidence": "Steward control center, dataset domain, explorer, and PROD1 tests cover admin read models." },
-        "route_smoke": { "status": "partial", "evidence": "Build Progress route exists and admin portal links exist; full route smoke remains required." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "Founder/operator admin walk remains manual." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Admin tests enforce deterministic source and no live-runtime claims." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Admin allowlist/role guard is reused; no auth rewrite occurs in PROD1." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel deploy health is external to this tracker." },
-        "security_governance_review": { "status": "partial", "evidence": "Admin security/governance review is incomplete." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Admin read models are covered through deterministic integration tests."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Steward control center, dataset domain, explorer, and PROD1 tests cover admin read models."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Build Progress route exists and admin portal links exist; full route smoke remains required."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "Founder/operator admin walk remains manual."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Admin tests enforce deterministic source and no live-runtime claims."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Admin allowlist/role guard is reused; no auth rewrite occurs in PROD1."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel deploy health is external to this tracker."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Admin security/governance review is incomplete."
+        }
       },
       "blockers": [
         {
@@ -294,14 +438,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Source has strong docs, patterns, deterministic context validation, and deterministic workflow validation, but not a complete production unit gate." },
-        "integration_tests": { "status": "partial", "evidence": "Source/dashboard foundation exists; Source-specific full-system workflow and persistence validation are not certified." },
-        "route_smoke": { "status": "not_automated", "evidence": "The /source route family exists, but authenticated visual QA and full route smoke are not complete." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No current recorded Source / Outsourcing persona walk is in this tracker." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Context-aware Nexus foundation and deterministic validation help, but no model-assisted Source Nexus route is production certified." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation probes remain a required shared gate." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel polling is implemented." },
-        "security_governance_review": { "status": "partial", "evidence": "Production-grade tenant/security validation, upload policy, and evidence governance review remain incomplete." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Source has strong docs, patterns, deterministic context validation, and deterministic workflow validation, but not a complete production unit gate."
+        },
+        "integration_tests": {
+          "status": "partial",
+          "evidence": "Source/dashboard foundation exists; Source-specific full-system workflow and persistence validation are not certified."
+        },
+        "route_smoke": {
+          "status": "not_automated",
+          "evidence": "The /source route family exists, but authenticated visual QA and full route smoke are not complete."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No current recorded Source / Outsourcing persona walk is in this tracker."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Context-aware Nexus foundation and deterministic validation help, but no model-assisted Source Nexus route is production certified."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation probes remain a required shared gate."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel polling is implemented."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Production-grade tenant/security validation, upload policy, and evidence governance review remain incomplete."
+        }
       },
       "blockers": [
         {
@@ -365,14 +533,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Dataset/evidence helpers are tested through integration suites." },
-        "integration_tests": { "status": "passing", "evidence": "Dataset domain inventory and explorer tests exist." },
-        "route_smoke": { "status": "partial", "evidence": "Admin explorer exists; end-to-end evidence journey is not smoked." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No live data/evidence operator walk is recorded here." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Read models avoid fake connector, fake citation, and fake evidence claims." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation remains a shared gate." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel is not polled by this tracker." },
-        "security_governance_review": { "status": "blocked", "evidence": "Evidence ledger governance is not production implemented." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Dataset/evidence helpers are tested through integration suites."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Dataset domain inventory and explorer tests exist."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Admin explorer exists; end-to-end evidence journey is not smoked."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No live data/evidence operator walk is recorded here."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Read models avoid fake connector, fake citation, and fake evidence claims."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation remains a shared gate."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel is not polled by this tracker."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Evidence ledger governance is not production implemented."
+        }
       },
       "blockers": [
         {
@@ -382,9 +574,10 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Implement and verify tenant-bound evidence ledger ingest before any production-ready claim.",
+      "nextAction": "Implement and verify tenant-bound evidence ledger ingest before any production-ready claim. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
       "notes": [
-        "No fake Evidence Ledger status is emitted."
+        "No fake Evidence Ledger status is emitted.",
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
       ]
     },
     {
@@ -406,14 +599,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Solution pack logic is covered through integration tests." },
-        "integration_tests": { "status": "passing", "evidence": "AI-led PDLC solution component, analytics modernization, healthcare AI archetypes, build/buy/partner framework, archetype detail read model, and SOL9 recommendation engine integration tests exist." },
-        "route_smoke": { "status": "not_automated", "evidence": "No production route for solution draft flow is certified." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No solution-intelligence persona walk is recorded." },
-        "no_fabrication_check": { "status": "passing", "evidence": "Tests block fake dollars and non-canonical relations in the component pack and recommendation engine." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Future per-tenant solution state must prove isolation." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel polling is implemented." },
-        "security_governance_review": { "status": "partial", "evidence": "Solution approval/governance flow is not production wired." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Solution pack logic is covered through integration tests."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "AI-led PDLC solution component, analytics modernization, healthcare AI archetypes, build/buy/partner framework, archetype detail read model, and SOL9 recommendation engine integration tests exist."
+        },
+        "route_smoke": {
+          "status": "not_automated",
+          "evidence": "No production route for solution draft flow is certified."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No solution-intelligence persona walk is recorded."
+        },
+        "no_fabrication_check": {
+          "status": "passing",
+          "evidence": "Tests block fake dollars and non-canonical relations in the component pack and recommendation engine."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Future per-tenant solution state must prove isolation."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel polling is implemented."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Solution approval/governance flow is not production wired."
+        }
       },
       "blockers": [
         {
@@ -448,14 +665,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Runtime helpers have focused tests but not complete production runtime coverage." },
-        "integration_tests": { "status": "partial", "evidence": "Agent-adjacent read models are tested; live cross-agent runtime is not certified." },
-        "route_smoke": { "status": "partial", "evidence": "Agent surfaces render, but no complete route-smoke gate covers runtime handoffs." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No full multi-agent live walk is recorded." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Honest disclosure primitives exist; full runtime no-fabrication coverage is incomplete." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation probes exist as shared gate." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel polling is implemented." },
-        "security_governance_review": { "status": "blocked", "evidence": "Gateway/audit/governance path is not production wired." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Runtime helpers have focused tests but not complete production runtime coverage."
+        },
+        "integration_tests": {
+          "status": "partial",
+          "evidence": "Agent-adjacent read models are tested; live cross-agent runtime is not certified."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Agent surfaces render, but no complete route-smoke gate covers runtime handoffs."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No full multi-agent live walk is recorded."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Honest disclosure primitives exist; full runtime no-fabrication coverage is incomplete."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation probes exist as shared gate."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel polling is implemented."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Gateway/audit/governance path is not production wired."
+        }
       },
       "blockers": [
         {
@@ -465,9 +706,10 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion.",
+      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
       "notes": [
-        "PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files."
+        "PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files.",
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
       ]
     },
     {
@@ -489,14 +731,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "not_started", "evidence": "No production Model Gateway module test exists." },
-        "integration_tests": { "status": "not_started", "evidence": "Gateway routing is contract-defined only." },
-        "route_smoke": { "status": "not_started", "evidence": "No route depends on a production gateway in this slice." },
-        "live_persona_walk": { "status": "not_started", "evidence": "No live gateway walk exists." },
-        "no_fabrication_check": { "status": "blocked", "evidence": "Gateway-level refusal and audit checks cannot pass until gateway exists." },
-        "tenant_isolation_check": { "status": "blocked", "evidence": "Gateway tenant binding must be implemented before readiness." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel gateway deployment is checked." },
-        "security_governance_review": { "status": "blocked", "evidence": "Provider boundary and audit controls are not implemented." }
+        "unit_tests": {
+          "status": "not_started",
+          "evidence": "No production Model Gateway module test exists."
+        },
+        "integration_tests": {
+          "status": "not_started",
+          "evidence": "Gateway routing is contract-defined only."
+        },
+        "route_smoke": {
+          "status": "not_started",
+          "evidence": "No route depends on a production gateway in this slice."
+        },
+        "live_persona_walk": {
+          "status": "not_started",
+          "evidence": "No live gateway walk exists."
+        },
+        "no_fabrication_check": {
+          "status": "blocked",
+          "evidence": "Gateway-level refusal and audit checks cannot pass until gateway exists."
+        },
+        "tenant_isolation_check": {
+          "status": "blocked",
+          "evidence": "Gateway tenant binding must be implemented before readiness."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel gateway deployment is checked."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Provider boundary and audit controls are not implemented."
+        }
       },
       "blockers": [
         {
@@ -530,14 +796,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Some parser-adjacent code exists, but production ingestion tests are incomplete." },
-        "integration_tests": { "status": "partial", "evidence": "No end-to-end upload->parse->evidence certification exists in PROD1." },
-        "route_smoke": { "status": "not_automated", "evidence": "Upload/parse route smoke is not certified." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No live ingestion operator walk is recorded." },
-        "no_fabrication_check": { "status": "partial", "evidence": "No fake citation checks exist on downstream read models; ingestion path itself is not complete." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "File-level tenant isolation needs production validation." },
-        "vercel_build": { "status": "not_run", "evidence": "No Vercel polling is implemented." },
-        "security_governance_review": { "status": "blocked", "evidence": "Upload policy, malware/content handling, and data-retention review are incomplete." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Some parser-adjacent code exists, but production ingestion tests are incomplete."
+        },
+        "integration_tests": {
+          "status": "partial",
+          "evidence": "No end-to-end upload->parse->evidence certification exists in PROD1."
+        },
+        "route_smoke": {
+          "status": "not_automated",
+          "evidence": "Upload/parse route smoke is not certified."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No live ingestion operator walk is recorded."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "No fake citation checks exist on downstream read models; ingestion path itself is not complete."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "File-level tenant isolation needs production validation."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "No Vercel polling is implemented."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Upload policy, malware/content handling, and data-retention review are incomplete."
+        }
       },
       "blockers": [
         {
@@ -571,14 +861,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Tenant and governance helper tests exist in parts of the app." },
-        "integration_tests": { "status": "partial", "evidence": "No full audit-ledger replay/integrity suite exists." },
-        "route_smoke": { "status": "partial", "evidence": "Admin audit surfaces exist in scaffolded form; production route smoke is incomplete." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No security/governance reviewer live walk is recorded." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Read-model no-fabrication checks exist; audit trail enforcement is not productionized." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation probes are a known shared gate." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel health is not polled." },
-        "security_governance_review": { "status": "blocked", "evidence": "Final production security/governance review has not passed." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Tenant and governance helper tests exist in parts of the app."
+        },
+        "integration_tests": {
+          "status": "partial",
+          "evidence": "No full audit-ledger replay/integrity suite exists."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Admin audit surfaces exist in scaffolded form; production route smoke is incomplete."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No security/governance reviewer live walk is recorded."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Read-model no-fabrication checks exist; audit trail enforcement is not productionized."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation probes are a known shared gate."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel health is not polled."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Final production security/governance review has not passed."
+        }
       },
       "blockers": [
         {
@@ -612,14 +926,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "partial", "evidence": "Many focused tests exist; not all production gates are unit-covered." },
-        "integration_tests": { "status": "passing", "evidence": "Broad deterministic integration coverage exists across Programs, Admin, Intelligence, Tower, and solution packs." },
-        "route_smoke": { "status": "partial", "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "Manual live walk remains required for verified status." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Many no-fake checks exist; full-system no-fabrication certification is incomplete." },
-        "tenant_isolation_check": { "status": "passing", "evidence": "Tenant isolation probes and runbooks exist." },
-        "vercel_build": { "status": "not_run", "evidence": "Vercel deployment validation is not connected to this tracker." },
-        "security_governance_review": { "status": "partial", "evidence": "Security scan and governance review automation are deferred." }
+        "unit_tests": {
+          "status": "partial",
+          "evidence": "Many focused tests exist; not all production gates are unit-covered."
+        },
+        "integration_tests": {
+          "status": "passing",
+          "evidence": "Broad deterministic integration coverage exists across Programs, Admin, Intelligence, Tower, and solution packs."
+        },
+        "route_smoke": {
+          "status": "partial",
+          "evidence": "Playwright specs and canonical route crawler exist, but no single required CI gate is certified."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "Manual live walk remains required for verified status."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Many no-fake checks exist; full-system no-fabrication certification is incomplete."
+        },
+        "tenant_isolation_check": {
+          "status": "passing",
+          "evidence": "Tenant isolation probes and runbooks exist."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "Vercel deployment validation is not connected to this tracker."
+        },
+        "security_governance_review": {
+          "status": "partial",
+          "evidence": "Security scan and governance review automation are deferred."
+        }
       },
       "blockers": [
         {
@@ -653,14 +991,38 @@
         "production_risk": "blocked"
       },
       "testingGates": {
-        "unit_tests": { "status": "not_started", "evidence": "Deployment readiness is not unit-testable in this slice." },
-        "integration_tests": { "status": "partial", "evidence": "Build/test commands validate code, not deployed production behavior." },
-        "route_smoke": { "status": "not_automated", "evidence": "No production route-smoke gate is wired." },
-        "live_persona_walk": { "status": "not_automated", "evidence": "No post-deploy persona walk is recorded." },
-        "no_fabrication_check": { "status": "partial", "evidence": "Local deterministic tests exist; production output is not walked." },
-        "tenant_isolation_check": { "status": "partial", "evidence": "Production tenant isolation must be checked after deploy." },
-        "vercel_build": { "status": "not_run", "evidence": "PROD1 does not deploy and does not poll Vercel build state." },
-        "security_governance_review": { "status": "blocked", "evidence": "Production observability, security scan, and deployment review are deferred." }
+        "unit_tests": {
+          "status": "not_started",
+          "evidence": "Deployment readiness is not unit-testable in this slice."
+        },
+        "integration_tests": {
+          "status": "partial",
+          "evidence": "Build/test commands validate code, not deployed production behavior."
+        },
+        "route_smoke": {
+          "status": "not_automated",
+          "evidence": "No production route-smoke gate is wired."
+        },
+        "live_persona_walk": {
+          "status": "not_automated",
+          "evidence": "No post-deploy persona walk is recorded."
+        },
+        "no_fabrication_check": {
+          "status": "partial",
+          "evidence": "Local deterministic tests exist; production output is not walked."
+        },
+        "tenant_isolation_check": {
+          "status": "partial",
+          "evidence": "Production tenant isolation must be checked after deploy."
+        },
+        "vercel_build": {
+          "status": "not_run",
+          "evidence": "PROD1 does not deploy and does not poll Vercel build state."
+        },
+        "security_governance_review": {
+          "status": "blocked",
+          "evidence": "Production observability, security scan, and deployment review are deferred."
+        }
       },
       "blockers": [
         {

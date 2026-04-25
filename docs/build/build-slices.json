@@ -2388,6 +2388,60 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs land honestly before push or PR. Third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+    },
+    {
+      "id": "CTX2",
+      "name": "Unified Context Builder MVP",
+      "category": "CTX",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "CTX1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/unified-context-builder.ts",
+        "src/__tests__/integration/architecture/unified-context-builder.test.ts",
+        "docs/build/slices/CTX2_UNIFIED_CONTEXT_BUILDER_MVP.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/lib/programs/mock.ts",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/unified-context-builder.ts exposes UnifiedContextBuildRequest, UnifiedContextPack, UnifiedContextBuildResult, UnifiedContextSection, UnifiedContextSectionKey, WorkObjectType, UnifiedContextQuality, UnifiedContextMissingInput, UnifiedContextGovernanceConstraint, UnifiedContextSourceBasis types and the UNIFIED_CONTEXT_PACK_SECTIONS twelve-key constant.",
+        "buildUnifiedContextPack(request) is pure and deterministic: same request input produces byte-equal output across calls.",
+        "The returned pack always carries all twelve canonical sections in canonical order (identity, work_object, workflow_state, business_context, artifacts, patterns, evidence, conversation, datasets, solution_archetypes, governance_constraints, audit_basis), each with hasContent: boolean and a sourceLabel string.",
+        "Program work objects resolved from programs-canonical-view populate workflow_state, business_context, and artifacts sections; unknown program ids return resolved: false with a resolutionNote and a blocks_response missing input.",
+        "Intelligence pattern work objects resolved against the canonical Sentinel pattern key list populate the patterns section; unknown keys return resolved: false with blocks_response.",
+        "Solution archetype work objects resolved via SOL3 getSolutionArchetype populate the solution_archetypes section; unknown keys return resolved: false with blocks_response.",
+        "Evidence section is always present with body { items: [] } and notes \"EVID2 ledger not yet wired\"; conversation section is always present with body { messages: [] }; datasets section is always present with body { summaries: [] }.",
+        "Governance constraints section merges three CTX2 default policies (no_fabricated_evidence_citations, no_fabricated_dollar_value, honest_missing_input_disclosure) with caller-supplied constraints, deduped by policy and stably sorted.",
+        "Audit basis section reports retrievalSources (sorted, deduplicated), generatedAt: \"deterministic_seed\", and contextBuilderVersion: \"ctx2.v1\"; pack.createdFrom is \"deterministic_seed\".",
+        "Quality classifier returns refused on unresolved work object plus high-stakes intent containing approve/execute/deliver, weak with fewer than 3 sections of content, partial with 3-5 sections of content or any blocks_response missing input, and usable with 6+ sections of content and zero blocks_response inputs.",
+        "No fabricated E-### evidence citations leak into any pack body (no E-\\d+ patterns serialized).",
+        "Module hygiene: no Date.now, no Math.random, no new Date(, no fetch(, no Anthropic / OpenAI SDK imports, no useState / useEffect, no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/auth, supabase, or src/lib/programs/mock; read-only import from src/lib/agent/context-bundle is allowed (CTX1 type alignment).",
+        "New integration test file src/__tests__/integration/architecture/unified-context-builder.test.ts asserts determinism, twelve-section invariant, work-object resolution per kind, sparse / refused verdicts, evidence emptiness, audit basis presence, governance merging, and module hygiene.",
+        "docs/build/slices/CTX2_UNIFIED_CONTEXT_BUILDER_MVP.md documents the slice (what changed, twelve-section table, resolution rules, quality classifier, missing-input bookkeeping, governance defaults, audit basis, what is intentionally not in v1, hygiene invariants, validation commands, future slices).",
+        "docs/build/build-slices.json appends the CTX2 entry with category CTX, dependsOn [CTX1], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json updates the data_evidence_knowledge_fabric and agent_runtime components with notes naming the CTX2 unified context builder MVP and a nextAction mentioning live retrieval integration; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/unified-context-builder.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection layer that assembles a single Unified Context Pack for any agent turn against one of three canonical work-object kinds (program, intelligence_pattern, solution_archetype). Reads only from S9 (programs-canonical-view), I1 (sentinel-pattern-detections), SOL3 (solution-archetype-registry), and the deterministic seed. Always emits twelve canonical sections; honestly empty for evidence (EVID2 not wired), conversation (no memory wired), and datasets (ADM3 deferred in v1). Sets up CTX3 live retrieval integration without changing the pack shape."
     }
   ]
 }
