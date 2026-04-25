@@ -1666,6 +1666,42 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "CAT1",
+      "name": "Page & Workflow Catalog Integration",
+      "category": "CAT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/product/page-workflow-catalog/**",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/product/page-workflow-catalog/ contains exactly 14 markdown files: 00 master + 10 per-page files (01..10) + 3 cross-page files (11 page data contract standard, 12 wireframe requirements by page, 13 MVP/V1/V2 roadmap).",
+        "00_PAGE_WORKFLOW_CATALOG_MASTER.md states the five product rules explicitly: every page answers a clear user question; every page is backed by a data/read-model contract; every page exposes what the agent knows, what is missing, and what action is next; details are hidden by default and revealed via click/drill-down/drawer/same-canvas; agents are anchors not clutter.",
+        "00 master file enumerates the canonical agent partition (Nexus / Sentinel / Atlas / Steward), the six canonical phases (Origination -> Plan -> Build -> Pilot -> Execute -> Verify), the four hard gates G1..G4, and the canonical evidence lifecycle.",
+        "Each per-page file (01..10) includes the required sections: page purpose, primary user question, primary agent, route(s), required data contract / read model, what the page knows, what the page is missing, key user actions, agent actions, empty / degraded states, navigation / drill-down behavior, MVP / V1 / V2 scope, visual blueprint reference.",
+        "11_PAGE_DATA_CONTRACT_STANDARD.md defines the six required fields every page-level read model must satisfy and the forbidden field set.",
+        "12_WIREFRAME_REQUIREMENTS_BY_PAGE.md enumerates the minimum render contract per page and the universal wireframe rules.",
+        "13_MVP_V1_V2_PAGE_ROADMAP.md sequences pages into MVP / V1 / V2 waves with cross-cutting commitments and a slice trace.",
+        "Manifest entry updates lastUpdated to today's ISO date (2026-04-25) and appends CAT1 at the end of the slices array."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Documentation only, no app code. Integrates the platform-design page & workflow catalog source into the canonical product catalog under docs/product/page-workflow-catalog/. Where the platform-design source was unavailable in this worktree, the catalog composes from the build-slice contracts (S8 / S9 series / PDEL / I1..I4 / ACT1 / ADM1..ADM4 / MW1 / MW2 / PF2 / SOL1 / SOL2) and the visual blueprints under docs/design/pages/."
     }
   ]
 }
