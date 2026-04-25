@@ -23,6 +23,7 @@
 
 import Link from 'next/link';
 import { NexusProgramRail } from '@/components/deliverables/NexusProgramRail';
+import { ProgramWorkshopMode } from '@/components/programs/ProgramWorkshopMode';
 import {
   phaseMeta,
   tenantProgramPath,
@@ -43,6 +44,7 @@ import {
   type CanonicalPhaseRenderStatus,
   type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
+import { buildProgramWorkshopModeView } from '@/lib/programs/program-workshop-mode-view';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type {
   DeliverableSeedPlan,
@@ -215,6 +217,9 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Evidence + value readiness summary (S9d) */}
             <EvidenceValueReadinessSummary tenant={tenant} program={program} />
+
+            {/* PW1 · Program Workshop Mode shell */}
+            <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />
 
             {/* Honest fallbacks: data not yet captured */}
             <DataPlaceholders />

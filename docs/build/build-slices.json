@@ -1804,6 +1804,63 @@
         "npm run build"
       ],
       "notes": "Documentation-only follow-up to CAT1. Records the actual app-router state for the 16 canonical routes and proposes the next 20 implementation slices that close the recorded gaps. Consumed by Steward on /platform/admin/build-progress and by pack lanes when picking the next slice off the queue."
+    },
+    {
+      "id": "PW1",
+      "name": "Program Workshop Mode Shell",
+      "category": "PW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW2",
+        "PF2"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramWorkshopMode.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/program-workshop-mode-view.ts",
+        "src/__tests__/integration/programs/program-workshop-mode.test.ts",
+        "docs/build/slices/PW1_PROGRAM_WORKSHOP_MODE_SHELL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildProgramWorkshopModeView(programId) is pure: JSON byte-equal across calls for every canonical demo program.",
+        "Every canonical demo program returns a view with non-null nextWorkshop, an agenda of >=1 lines, >=1 required attendee, >=1 evidence-to-capture entry, and >=1 expected output (inherited from MW2).",
+        "View carries a six-element leftRail.phases array with statuses drawn from {completed, current, pending}; active programs surface exactly one 'current' phase.",
+        "View carries rightContext with gatekeeperAgent: 'steward', non-empty gateImplication, and a non-negative integer evidenceUsable.",
+        "honestDisclaimer mentions 'not wired' or 'deterministic'; createdFrom === 'deterministic_seed'.",
+        "Unknown programId returns a defensive shell with null nextWorkshop, empty agenda, six pending phases, and createdFrom: 'deterministic_seed'.",
+        "ProgramWorkshopMode.tsx is a server component (no 'use client', no useState, no useEffect) and renders data-program-workshop-mode=\"pw1\" on its root.",
+        "ProgramCanonicalDetail.tsx imports ProgramWorkshopMode and buildProgramWorkshopModeView and mounts <ProgramWorkshopMode view={buildProgramWorkshopModeView(program.programSlug)} />.",
+        "Both new modules import nothing from src/lib/nexus/**, src/lib/agent/**, src/lib/source/**, src/lib/auth/**, supabase, or src/lib/programs/mock.ts; do not call Date.now / Math.random / new Date / fetch; do not invoke Anthropic / OpenAI runtime."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-workshop-mode.test.ts",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npx jest src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "npm run build"
+      ],
+      "notes": "Mounts a deterministic, server-rendered Workshop Mode shell inside the canonical Programs Detail surface following the PF2 layout (left journey rail / center Nexus canvas / right context panel). No live workshop ingestion, no deliverable refinement loop, no live Steward verdict, no client interactivity. PW2+ wires Maestro capture, deliverable refinement, and detail drawer overlay."
     }
   ]
 }
