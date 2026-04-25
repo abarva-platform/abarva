@@ -211,87 +211,10 @@ export function getSourceWorkflowValidationReport(
         actualOutcome: row.actualOutcome,
         remediation: row.requiredRemediation,
       })),
-    requiredRemediations: getSourceWorkflowValidationRemediations(rows),
+    requiredRemediations: collectSourceWorkflowValidationRemediations(rows),
     remainingWorkflowGaps: getRemainingWorkflowValidationGaps(rows),
     nextRecommendedSlice: 'Harden the readable workflow validation report before workflow engine, UI, API, approval, versioning, or export/import implementation.',
   };
-}
-
-export function formatSourceWorkflowValidationReportAsMarkdown(
-  report: SourceWorkflowValidationRunnerReport = getSourceWorkflowValidationReport(),
-): string {
-  const lines = [
-    '# Source Workflow Validation Report',
-    '',
-    `Report version: ${report.reportVersion}`,
-    `Generated at: ${report.generatedAt}`,
-    '',
-    '## Suite Summary',
-    '',
-    `Source workflow validation: ${report.totalFixtures} fixtures`,
-    `PASS: ${report.passCount}`,
-    `BLOCK: ${report.blockCount}`,
-    `DEFER: ${report.deferCount}`,
-    `WAIVER_REQUIRED: ${report.waiverRequiredCount}`,
-    `FAIL: ${report.failCount}`,
-    `Mismatches: ${report.mismatchCount}`,
-    `Suite verdict: ${report.suiteVerdict.toUpperCase()}`,
-    `Expected current outcome: ${report.expectedSummary}`,
-    '',
-    '## Fixture Outcomes',
-    '',
-    '| Fixture | Rule | Action | Expected | Actual | Status | Remediation |',
-    '|---|---|---|---:|---:|---|---|',
-    ...report.resultsByFixture.map((row) => (
-      `| ${row.fixtureId} | ${row.ruleId} | ${escapeTableCell(row.attemptedAction)} | ${row.expectedOutcome} | ${row.actualOutcome} | ${row.status} | ${escapeTableCell(row.requiredRemediation)} |`
-    )),
-    '',
-    '## Blocker Explanations',
-    '',
-    ...formatWorkflowExplanations(report.blockerExplanations),
-    '',
-    '## Intentional Defers',
-    '',
-    ...formatWorkflowExplanations(report.deferExplanations),
-    '',
-    '## Waiver Required',
-    '',
-    ...formatWorkflowExplanations(report.waiverRequiredExplanations),
-    '',
-    '## Failed Expectations',
-    '',
-    ...formatFailedExpectations(report.failedExpectations),
-    '',
-    '## Remaining Workflow Gaps',
-    '',
-    ...report.remainingWorkflowGaps.map((gap) => `- ${gap}`),
-    '',
-    '## Required Remediations',
-    '',
-    ...report.requiredRemediations.map((remediation) => `- ${remediation}`),
-    '',
-    '## Explicitly Out Of Scope',
-    '',
-    ...report.explicitOutOfScope.map((item) => `- ${item}`),
-    '',
-    '## Next Recommended Slice',
-    '',
-    report.nextRecommendedSlice,
-  ];
-
-  return `${lines.join('\n')}\n`;
-}
-
-export function getIntentionalSourceWorkflowValidationDefers(
-  report: SourceWorkflowValidationRunnerReport = getSourceWorkflowValidationReport(),
-): SourceWorkflowValidationExplanation[] {
-  return report.deferExplanations;
-}
-
-export function getSourceWorkflowValidationRemediations(
-  rows: SourceWorkflowValidationFixtureReportRow[] = getSourceWorkflowValidationReport().resultsByFixture,
-): string[] {
-  return unique(rows.map((row) => `${row.fixtureId}: ${row.requiredRemediation}`));
 }
 
 function toWorkflowValidationFixtureRow(
@@ -355,28 +278,10 @@ function getRemainingWorkflowValidationGaps(
     : ['No remaining workflow validation gaps are visible in the deterministic fixture report.'];
 }
 
-function formatWorkflowExplanations(
-  explanations: SourceWorkflowValidationExplanation[],
+function collectSourceWorkflowValidationRemediations(
+  rows: SourceWorkflowValidationFixtureReportRow[],
 ): string[] {
-  if (explanations.length === 0) return ['- None'];
-
-  return explanations.map((item) => (
-    `- ${item.fixtureId} (${item.outcome}): ${item.explanation} Remediation: ${item.remediation}`
-  ));
-}
-
-function formatFailedExpectations(
-  failedExpectations: SourceWorkflowValidationFailedExpectation[],
-): string[] {
-  if (failedExpectations.length === 0) return ['- None'];
-
-  return failedExpectations.map((item) => (
-    `- ${item.fixtureId}: expected ${item.expectedOutcome}, got ${item.actualOutcome}. Remediation: ${item.remediation}`
-  ));
-}
-
-function escapeTableCell(value: string): string {
-  return value.replace(/\|/g, '\\|').replace(/\n/g, '<br />');
+  return unique(rows.map((row) => `${row.fixtureId}: ${row.requiredRemediation}`));
 }
 
 function unique(values: string[]): string[] {
