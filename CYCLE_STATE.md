@@ -114,16 +114,18 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-24 · PR #197 merged: deterministic Source context validation report formatter.
 - 2026-04-25 · PR #199 merged: `/source` dashboard visual review. Dashboard decision: approve with small refinements.
 - 2026-04-25 · Build Pack inventory reconciliation started after workflow hardening review found anchor-referenced files missing from `origin/main`.
+- 2026-04-25 · PR #201 merged: Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs.
+- 2026-04-25 · Workflow richness and document collaboration hardening started on reconciled Build Pack baseline. Build Pack now needs explicit artifact versioning, external edit/re-upload, approval routing, and workflow validation specs before workflow UI expands.
 
 ## Last status emission
-- 2026-04-25 · Build Pack inventory reconciliation · restoring missing anchor-referenced docs from `codex/source-foundation` before workflow/document collaboration hardening proceeds.
+- 2026-04-25 · Source workflow richness hardening · PR #201 baseline is merged · current item is documentation/spec only · no UI/API/model/export/approval implementation.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #199 merged · `/source` dashboard visual review.
+- Current completed milestone: PR #201 merged · Build Pack inventory reconciliation.
 - Dashboard decision: approve with small refinements.
-- Current objective: restore missing Build Pack inventory referenced by `00_MASTER_ANCHOR.md` before workflow/document collaboration hardening proceeds.
-- Current item: Build Pack inventory reconciliation.
+- Current objective: harden Source workflow/document collaboration requirements before richer workflow UI or artifact generation.
+- Current item: workflow richness and document collaboration hardening.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -152,9 +154,12 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - `/source` dashboard visual review packet.
   - Dashboard review decision: approve with small refinements.
   - Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs from `codex/source-foundation`.
+  - Workflow richness and document collaboration spec layer.
+  - Artifact review and approval model.
+  - Workflow validation harness specification.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
-- Blockers/do-not-build: no product code, UI, event canvas, chat UI, model calls, API routes, upload/parsing, file export/import, approvals, artifact versioning, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: `00_MASTER_ANCHOR.md` on `origin/main` referenced Build Pack files that were absent from `origin/main` but present on older local Source branch `codex/source-foundation`. Reconciliation should land before the held workflow/document collaboration hardening branch is rebased or recreated.
-- Next recommended item: merge Build Pack inventory reconciliation, then rebase/recreate workflow/document collaboration hardening on updated main and rerun inventory check.
-- Next planning artifact: `docs/abarva-source/build-pack/implementation-reviews/11_BUILD_PACK_INVENTORY_RECONCILIATION.md`.
+- Blockers/do-not-build: no event canvas, chat UI, model calls, API routes, upload/parsing, file export/import, approval routing implementation, artifact versioning implementation, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: Source workflow cannot be production-serious as a linear tracker. It needs artifact lifecycle, review/approval routes, offline edit/re-upload, version history, audit trail, wait states, rework loops, and deterministic workflow validation. PR #201 resolved the missing anchor-referenced Build Pack inventory before this hardening branch was recreated.
+- Next recommended item: review workflow richness hardening docs, then create deterministic workflow validation fixture/type contracts before any document collaboration UI.
+- Next planning artifact: none until workflow hardening review is accepted.

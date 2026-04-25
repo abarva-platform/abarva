@@ -1,6 +1,6 @@
 # AbarVa Source Production Readiness Tracker
 
-Date: 2026-04-24
+Date: 2026-04-25
 
 Purpose: answer "Where are we in relation to getting AbarVa Source to production?"
 
@@ -10,7 +10,7 @@ AbarVa Source is not production-ready yet.
 
 Foundation and agent-context architecture are progressing well. The Source Build Pack, route family, domain scaffolding, context-awareness documentation, type contracts, deterministic context builder, validation fixtures, and validation runner now create a serious foundation for a context-aware enterprise sourcing workbench.
 
-The current work is still in the foundation and validation phase. Source should not move into chat UI, model calls, file upload, RFP generation, vendor workflow, or broader workflow expansion until deterministic context grounding is stronger.
+The current work is still in the foundation and validation phase. Source should not move into chat UI, model calls, file upload, RFP generation, vendor workflow, or broader workflow expansion until deterministic context grounding and deterministic workflow validation are stronger.
 
 The next major product milestone is a validated context-aware Nexus foundation before chat, model, and UI expansion. In practice, this means enriching deterministic seeded context, proving fixture behavior through the validation runner, and only then exposing Nexus interactions in product surfaces.
 
@@ -29,7 +29,8 @@ The next major product milestone is a validated context-aware Nexus foundation b
 | Deterministic context builder | Merged | PR #188, `src/lib/source/context-builder.ts` | Builds seeded portfolio, event, stage, and failure contexts. | Enrich deterministic context depth. |
 | Context validation fixtures | Merged | PR #190, `src/lib/source/agent-validation-fixtures.ts` | Golden prompts validate anti-vanilla behavior without LLMs. | Improve seeded context for current defers. |
 | Context validation runner | Merged | PR #192, `src/lib/source/agent-validation-runner.ts` | Produces structured pass/defer/reject report. | Harden report after context depth improves. |
-| Context depth for fixture defers | Planned | PR #193, `docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_DEPTH_FOR_DEFERS.md` | Planned slice for pattern sections, scorecard defaults, citation scaffolding, attachment placeholders. Planning is complete; implementation has not started. | Implement as the next controlled slice only after approval. |
+| Context depth for fixture defers | Merged | PR #195, `docs/abarva-source/build-pack/implementation-reviews/07_CONTEXT_DEPTH_FOR_DEFERS_REVIEW.md` | Fixture outcomes improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject. | Preserve intentional defers until real attachment/client evidence exists. |
+| Runner report hardening | Merged | PR #197, `src/lib/source/agent-validation-report.ts` | Readable report formatter exists for 10 fixtures, 8 pass, 2 defer, 0 reject. | Use report before chat/model work. |
 | Nexus Engagement Canvas | Designed | Build Pack wireframes and component specs | Not implemented beyond allowed foundation. | Review spec before any build. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
 | Persistent Nexus Panel | Designed | Build Pack docs, context-awareness docs | Chat/panel behavior is specified, not implemented. | Wait for stronger context validation. |
@@ -39,6 +40,13 @@ The next major product milestone is a validated context-aware Nexus foundation b
 | Model-assisted Nexus response | Not Started | `16_AGENT_PER_TURN_CONTRACT.md`, `22_AGENT_CONTEXT_AWARENESS.md` | Model behavior is designed, not wired. | Do not start until SourceAgentContextBundle is enforced. |
 | Scorecard governance UI | Not Started / Deferred | Build Pack scorecard docs | Scorecard governance is specified, UI not expanded. | Seed defaults first, then review UI scope. |
 | Artifact drawer | Not Started / Deferred | Build Pack artifact docs | Artifact structure exists in plan, not production-ready. | Stabilize artifact model before generation. |
+| Artifact versioning | Designed | `docs/abarva-source/build-pack/25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md`, `docs/abarva-source/build-pack/10_ARTIFACT_AND_RFP_GENERATION_MODEL.md` | Versioning is now a product requirement; no implementation exists. | Create type contract before UI/export work. |
+| External document editing | Designed | `docs/abarva-source/build-pack/25_WORKFLOW_RICHNESS_AND_DOCUMENT_COLLABORATION.md`, `docs/abarva-source/build-pack/10_ARTIFACT_AND_RFP_GENERATION_MODEL.md` | Export/edit/re-upload is required; Office/Google Docs may remain editing surfaces. | Do not implement until artifact version model is reviewed. |
+| Approval routing | Designed | `docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md` | Sequential/parallel, waiver, escalation, and role-based approval model is specified. | Create deterministic approval route types before UI. |
+| Workflow validation harness | Designed | `docs/abarva-source/build-pack/27_WORKFLOW_VALIDATION_HARNESS.md` | Harness scenarios define allow/block/defer/waiver behavior. | Implement deterministic fixtures before workflow UI. |
+| Document review wait states | Designed | `docs/abarva-source/build-pack/13_EVENT_LIFECYCLE_AND_ALERTS.md` | Document review wait states are specified; not implemented. | Model wait states before artifact workflow UI. |
+| Approval wait states | Designed | `docs/abarva-source/build-pack/13_EVENT_LIFECYCLE_AND_ALERTS.md`, `docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md` | Approval wait, escalation, waiver, and expiry states are specified. | Model deterministic approval state before UI. |
+| Artifact evidence/citation requirements | Designed | `docs/abarva-source/build-pack/10_ARTIFACT_AND_RFP_GENERATION_MODEL.md`, `27_WORKFLOW_VALIDATION_HARNESS.md` | Artifact trust requires Sentinel/evidence/citation validation; no runtime exists. | Create artifact evidence contract before generation. |
 | RFP/RFI artifact generation | Not Started / Deferred | Build Pack artifact generation model | Explicitly blocked until artifact structure, gates, and evidence are stable. | Keep blocked. |
 | Value ledger UI | Not Started / Deferred | Build Pack value ledger docs, source value types | Value concepts exist, production UI not built. | Add deterministic value context first. |
 | Vendor response workflow | Not Started / Deferred | Build Pack workflow docs | No vendor response flow should be built before scorecard and attachment foundations. | Keep blocked. |
@@ -96,6 +104,8 @@ Required:
 
 Current assessment: not satisfied. Dashboard exists, but UX completeness is early and review is pending.
 
+Workflow/document collaboration note: UX is not ready until artifact lifecycle, version history, review queues, approval state, and gate-blocking behavior have approved designs. Do not build document collaboration UI before the workflow validation harness exists.
+
 ### Gate 4: Agent Ready
 
 Required:
@@ -115,6 +125,9 @@ Required:
 - Seeded data replaced with real data where needed.
 - Attachments stored and parsed.
 - Citations/evidence connected.
+- Artifact versions persisted.
+- Export/upload records persisted.
+- Review comments and approvals persisted.
 
 Current assessment: not satisfied. Current Source context is seeded and deterministic only.
 
@@ -129,6 +142,9 @@ Required:
 - Logging.
 - Validation.
 - Crawler persona checks.
+- Workflow validation harness.
+- Approval audit trail.
+- Waiver audit trail.
 
 Current assessment: not satisfied for Source production. Shared app capabilities may exist, but Source-specific enterprise readiness is not validated.
 
@@ -160,8 +176,8 @@ Current assessment: not started for Source.
 1. Context depth improvements for fixture defers.
 2. Context validation runner report hardening.
 3. Visual review/refine Source dashboard.
-4. Nexus Engagement Canvas shell design/build.
-5. Source-specific Nexus API route stub, no model call.
+4. Workflow richness and document collaboration review.
+5. Deterministic workflow validation harness fixtures.
 
 ## 7. Explicit Do-Not-Build List
 
@@ -170,6 +186,8 @@ Keep active:
 - No chat UI until context validation is stronger.
 - No model calls until SourceAgentContextBundle is enforced.
 - No file upload until attachment model is reviewed.
+- No document export/import until artifact versioning and review model are reviewed.
+- No approval routing UI until approval model and workflow validation fixtures exist.
 - No RFP generation until artifact structure is stable.
 - No vendor workflow until scorecard governance is stable.
 - No `/programs` coupling.
@@ -182,12 +200,23 @@ Keep active:
 - PR #191: Context validation runner plan.
 - PR #192: Deterministic context validation runner.
 - PR #193: Context depth improvements plan.
+- PR #194: Source production readiness tracker.
+- PR #195: Seeded context depth for validation fixtures.
+- PR #196: Runner report hardening plan.
+- PR #197: Context validation report formatter.
+- PR #198: Dashboard visual review plan.
+- PR #199: Source dashboard visual review.
+- PR #200: Dashboard front-door refinement plan.
+- PR #201: Build Pack inventory reconciliation.
 
 Post-merge planning notes:
 
 - `docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_VALIDATION_FIXTURES.md` planned fixture work after PR #188.
 - `docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_VALIDATION_RUNNER.md` planned runner work after PR #190.
 - `docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_DEPTH_FOR_DEFERS.md` plans deterministic context depth improvements after PR #192.
+- `docs/abarva-source/NEXT_SLICE_PLAN_RUNNER_REPORT_HARDENING.md` planned readable report output.
+- `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_VISUAL_REVIEW.md` planned visual dashboard review.
+- `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_REFINEMENT.md` planned the dashboard front-door refinement.
 
 ## 9. Open Risks
 
@@ -197,6 +226,9 @@ Post-merge planning notes:
 - File upload/evidence pipeline is not built.
 - No Source-specific Nexus API route exists yet.
 - No model validation exists yet.
+- Workflow richness is designed but not implemented.
+- Artifact versioning, export/re-upload, review comments, approvals, and waivers are not implemented.
+- Workflow validation harness is specified but not executable.
 - Persona crawler validation is designed but not executable.
 - Auth, permission, and tenant-boundary behavior is not Source-production validated.
 - Unrelated workspace files must not leak into Source commits.
