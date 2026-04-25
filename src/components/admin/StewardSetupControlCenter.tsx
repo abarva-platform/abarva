@@ -10,13 +10,11 @@
 //   E · Detail placeholder / object inspector slot
 //
 // No live Steward runtime, no model call, no Date.now(). Component
-// imports are restricted to next/link and the ADM2 read-model module.
+// imports are restricted to next/link, deterministic admin panels, and
+// the ADM2 read-model module.
 
 import Link from 'next/link';
-<<<<<<< codex/source-context-validation-fixtures
 import { DatasetExplorerPanel } from '@/components/admin/DatasetExplorerPanel';
-=======
->>>>>>> main
 import {
   buildStewardSetupReadinessView,
   type AdminModuleReadiness,
@@ -151,13 +149,8 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
         <AgentReadinessCard agents={agents} />
       </div>
 
-<<<<<<< codex/source-context-validation-fixtures
       {/* Zone D · Dataset Explorer (ADM4) + recommended actions / explorer rail */}
       <DatasetExplorerPanel />
-
-=======
-      {/* Zone D · Recommended actions / explorer rail */}
->>>>>>> main
       <RecommendedActionsBlock actions={recommendedActions} modules={modules} />
 
       {/* Zone E · Detail placeholder / object inspector slot */}
