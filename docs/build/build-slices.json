@@ -345,7 +345,7 @@
       "id": "S9",
       "name": "Programs canonical index/detail proof",
       "category": "C",
-      "status": "blocked",
+      "status": "code_complete",
       "risk": "high",
       "ownerAgent": "Builder + Reviewer + Test Runner",
       "dependsOn": [
@@ -379,6 +379,728 @@
         "npm run build"
       ],
       "notes": "This slice remains blocked until the Programs readiness contract and Nexus context adapter are approved."
+    },
+    {
+      "id": "S9b",
+      "name": "Programs Nexus rail metadata binding",
+      "category": "B",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S5",
+        "S6"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/programs-nexus-rail-view.ts",
+        "src/components/deliverables/NexusProgramRail.tsx",
+        "src/__tests__/integration/programs/programs-nexus-rail-metadata.test.ts",
+        "docs/build/slices/S9B_PROGRAMS_NEXUS_RAIL_METADATA_BINDING.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/context-bundle.ts",
+        "src/lib/agent/context-bundle-scoring.ts",
+        "src/lib/agent/renderedResponse.ts",
+        "src/lib/agent/honestDisclosure.ts",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Programs Nexus rail produces RenderedResponse objects with honest_disclosure metadata for every turn.",
+        "Confidence, context-used, and missing-input affordances render via S6 wiring without changes to AgentResponse.",
+        "No model or API call is invoked; prose is composed deterministically.",
+        "Honest fallbacks surface where Business Context and Evidence are unseeded; no fabricated data.",
+        "Existing rail public props and visual geometry are preserved."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-nexus-rail-metadata.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Programs consumer of S5/S6 honest-disclosure metadata. Defers gate state machine to S9c, evidence and value seeding to S9d, Tower signal emission to S9e, and live agent binding to a separate slice family."
+    },
+    {
+      "id": "S9c",
+      "name": "Program phase + hard-gate status rendering",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/programs-canonical-view.ts",
+        "src/__tests__/integration/programs/programs-canonical-surface.test.ts",
+        "src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
+        "docs/build/slices/S9C_PROGRAM_PHASE_GATE_STATUS_RENDERING.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Six canonical phases render in order with explicit 6-state status enum (not_started/current/complete/informational/blocked/not_seeded).",
+        "Origination always renders honestly as informational/pre-seed.",
+        "Four hard gates render in order with explicit 5-state enum (informational/ready/missing_inputs/blocked/not_wired).",
+        "Gate strip never claims true approval state from the seed alone; ready is not emitted while production state machine is deferred.",
+        "Steward readiness note composes deterministically from seed (no model call), with ready / missing / blocking / deferred buckets.",
+        "Existing Programs detail public props and visual geometry are preserved."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-phase-gate-status.test.ts",
+        "npm run build"
+      ],
+      "notes": "Seed-only. No production state machine, no audit log writes, no model calls. Defers true gate approval to a later state-machine slice and gate-readiness signal upgrade to S9d once value and evidence are seeded."
+    },
+    {
+      "id": "S9d",
+      "name": "Program deliverables, evidence + value readiness summary",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S9c"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/programs-canonical-view.ts",
+        "src/__tests__/integration/programs/programs-deliverables-evidence-value.test.ts",
+        "docs/build/slices/S9D_PROGRAM_DELIVERABLES_EVIDENCE_VALUE_SUMMARY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Deliverable tier and per-requirement counts reconcile to the seed.",
+        "Required-but-stub gaps render deterministically with resolvable route paths.",
+        "Evidence and value signals are honestly labeled not_seeded with named expected signals.",
+        "Value readiness names canonical G3 and G4 hard gates verbatim.",
+        "No ready signal is emitted while seed lacks evidence or value capture.",
+        "No live agent or model call. Detail component public props unchanged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-deliverables-evidence-value.test.ts",
+        "npm run build"
+      ],
+      "notes": "Seed-only. Evidence and value readiness exposed as explicit not_seeded signals. Promotion to ready/partial requires a future seed-population slice to populate evidence references and value ledger entries."
+    },
+    {
+      "id": "S9e",
+      "name": "Programs Control Tower signal read model",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S9b",
+        "S9c",
+        "S9d"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/programs-control-tower-signals.ts",
+        "src/__tests__/integration/programs/programs-control-tower-signals.test.ts",
+        "docs/build/slices/S9E_PROGRAMS_CONTROL_TOWER_SIGNAL_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/components/tower/**",
+        "src/lib/tower/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Every canonical demo tenant produces a deterministic signal list.",
+        "Signals are sorted by severity desc, then by canonical type rank, then by id.",
+        "High/critical signals are emitted when gate, evidence, or value readiness is missing.",
+        "routeHref always points back to the canonical tenant program route.",
+        "No signal claims evidence/value readiness while seed lacks them.",
+        "No signal invents a dollar amount.",
+        "Per-tenant aggregate equals concatenation of per-program signals (sorted)."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-control-tower-signals.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read model only. No Tower UI build, no Atlas runtime subscription, no persistence. Programs in canonical Execute phase honestly emit zero gate_missing_inputs signals because no canonical hard gate exits Execute."
+    },
+    {
+      "id": "S9f",
+      "name": "Tower Programs pressure cards",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e"
+      ],
+      "allowedFiles": [
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/lib/tower/program-pressure-view.ts",
+        "src/app/(maestro)/tenant/[tenantSlug]/tower/page.tsx",
+        "src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "docs/build/slices/S9F_TOWER_PROGRAM_PRESSURE_CARDS.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Tower landing renders the new Programs pressure section above the existing tower content.",
+        "Tower view helper imports only the S9e read model and never re-derives signals from canonical view modules.",
+        "Every card routeHref resolves to the canonical tenant program detail route.",
+        "No card claims evidence or value as ready while seed lacks them.",
+        "No card emits a dollar amount in any string field.",
+        "Existing assertTenantAccess and notFound behavior is preserved.",
+        "No Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Tower UI consumer of the S9e read model. Atlas signal subscriber, persistence, aging, and notification delivery are deferred to follow-on slices."
+    },
+    {
+      "id": "S9g",
+      "name": "Tower Atlas Executive Brief for Program Pressure",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e",
+        "S9f"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/program-pressure-view.ts",
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "docs/build/slices/S9G_TOWER_ATLAS_EXECUTIVE_BRIEF.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Atlas Executive Brief panel renders above the existing program pressure cards on the canonical tenant Tower landing.",
+        "Brief is composed only from the S9e signal list and S9f Tower view; no live Atlas / Nexus / agent runtime is invoked.",
+        "Brief is byte-equal across repeated calls for the same tenant and signal list.",
+        "Confidence label is capped at medium for any seed-only signal mix; no brief claims high confidence.",
+        "No brief invents a dollar amount in any string field.",
+        "evidenceValueWarning is empty when no evidence_not_ready / value_not_ready signals exist; non-empty otherwise.",
+        "Suggested follow-ups are exactly three deterministic items, all rendered as disabled affordances; live Ask-Atlas runtime is deferred.",
+        "Empty-tenant brief returns confidenceLabel no_signals and sourceLabel deterministic_seed without fabricating an executive headline.",
+        "No Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic, seed-only Atlas brief. No model calls, no streaming compose, no Atlas turn persistence. Live Atlas subscriber, follow-up wiring, and confidence promotion to high are deferred to follow-on slices."
+    },
+    {
+      "id": "I1",
+      "name": "Sentinel Pattern Detection Read Model",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e",
+        "S9f",
+        "S9g"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-detections.ts",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detections.test.ts",
+        "docs/build/slices/I1_SENTINEL_PATTERN_DETECTION_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/components/intelligence/**",
+        "src/app/(maestro)/intelligence/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Every canonical demo tenant produces a deterministic Sentinel pattern detection list.",
+        "value_ledger_incompleteness triggers from value_not_ready signals only.",
+        "evidence_chain_gap triggers from evidence_not_ready signals only.",
+        "gate_governance_gap triggers from gate_missing_inputs or executive_decision_needed signals.",
+        "program_context_sparsity triggers from context_insufficient or deliverable_coverage_gap signals.",
+        "ai_governance_operating_model_gap is suppressed unless at least two distinct programs share governance/gate/evidence/value gaps.",
+        "Detection IDs follow the canonical sentinel:<tenantKey>:<patternKey> form and are unique within a tenant.",
+        "Summary counts reconcile to the detection list across pattern, confidence, and severity dimensions.",
+        "Each affected program's routeHref resolves to the canonical /tenant/<routeSlug>/programs/<programSlug> detail.",
+        "No detection invents a dollar amount in any string field.",
+        "No detection emits a timestamp, ISO date, or epoch ms; cross-call JSON output is byte-equal.",
+        "No Intelligence UI, Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-detections.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read model only. No Intelligence UI build (deferred to I2), no live Sentinel runtime, no Atlas editorial handoff, no persistence. Confidence cap at medium for single-program detections is enforced because the seed cannot defend a higher claim alone."
+    },
+    {
+      "id": "I2",
+      "name": "Intelligence · Sentinel Brief + Active Patterns",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-view.ts",
+        "src/components/intelligence/SentinelActivePatterns.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx",
+        "src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "docs/build/slices/I2_INTELLIGENCE_SENTINEL_BRIEF_ACTIVE_PATTERNS.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Intelligence landing route renders the Sentinel brief + active patterns section using the I1 read model.",
+        "View helper imports only the I1 detection module and the seed planner; never re-derives detections.",
+        "Sentinel brief includes title, topPattern, topSeverity, topConfidence, whatSentinelSees, whyItMatters, affectedPrograms, recommendedAction, suggestedHandoffs, suggestedFollowUps, sourceLabel, interpretationBasis.",
+        "suggestedFollowUps has exactly three deterministic items in canonical order, all enabled: false.",
+        "Pattern cards correspond 1:1 to I1 detections in the same sort order.",
+        "Affected program routeHref resolves to the canonical /tenant/<routeSlug>/programs/<programSlug> detail.",
+        "Detection routeHref points to the future /tenant/<routeSlug>/intelligence/patterns/<patternKey> route.",
+        "No brief or card invents a dollar amount in any string field.",
+        "No claim of live Sentinel runtime today; chips are visible-but-disabled.",
+        "Empty-tenant view returns sourceLabel deterministic_seed and topSeverity / topConfidence NONE without fabricating a headline.",
+        "Existing assertTenantAccess and notFound behavior is preserved on the route.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Intelligence-page consumer of the I1 read model. Pattern detail drawer, evidence trail, graph traversal, live Sentinel validation, and Atlas editorial handoff are deferred to I3 and beyond."
+    },
+    {
+      "id": "I3",
+      "name": "Intelligence · Pattern Detail / Evidence Trail",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1",
+        "I2"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-view.ts",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts",
+        "docs/build/slices/I3_INTELLIGENCE_PATTERN_DETAIL_EVIDENCE_TRAIL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Sentinel pattern detail route renders via /tenant/<routeSlug>/intelligence/patterns/<patternKey> for canonical I1 pattern keys.",
+        "buildSentinelPatternDetailView returns null when the pattern key is unknown or when the tenant has no detection for that key.",
+        "isSentinelPatternKey type guard accepts only the 5 canonical SentinelPatternKey values.",
+        "Pattern detail view exposes patternKey, patternName, confidence, severity, title, summary, whyItMatters, affected programs, source signal IDs, evidence trail rows, missing inputs, recommended action, handoff rows, intelligenceLandingHref, sourceLabel, interpretationBasis.",
+        "Affected program rows route back to the canonical /tenant/<routeSlug>/programs/<programSlug>.",
+        "Evidence trail rows trace back 1:1 to detection.sourceSignalIds and detection.evidenceSignals from I1.",
+        "Citation readiness reports not_yet_wired today; no row claims a real citation.",
+        "No invented dollar amount in any string field on the detail view.",
+        "No claim of live Sentinel runtime; sourceLabel is deterministic_seed or pattern_detection_read_model.",
+        "Route preserves legacy /tenant/<routeSlug>/intelligence/patterns/<seed-slug> behavior by falling back to <SeedTenantPattern> when the slug is not a canonical Sentinel pattern key.",
+        "Existing assertTenantAccess and notFound behavior is preserved on the route.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pattern detail surface for Sentinel keys; legacy [patternSlug] route was deleted to resolve a Next.js dynamic-segment-name collision and the new [patternKey] route falls back to SeedTenantPattern for any non-Sentinel slug. Evidence registry citation, graph traversal, authored pattern renderer, and live Sentinel validation are deferred to I4+."
+    },
+    {
+      "id": "ADM1",
+      "name": "Steward Setup/Admin · Apple-like Control Plane Contract",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/ADM1_STEWARD_SETUP_ADMIN_CONTROL_PLANE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract names Setup/Admin as the Steward-led control plane, not a settings page.",
+        "Contract enumerates the seven primary users.",
+        "Contract enumerates the nine admin questions the surface must answer.",
+        "Contract defines the seven Steward responsibilities in Admin.",
+        "Contract states the Apple-like experience principles.",
+        "Contract defines the five canonical Admin zones (header, brief, cards, explorer, drawer).",
+        "Contract defines the ten canonical Admin modules.",
+        "Contract defines twelve canonical Enterprise Dataset Domains, each with example datasets, why-it-matters, agents, surfaces, readiness criteria, common missing inputs, and Steward guidance.",
+        "Contract defines the Data Explorer field set and drawer behavior.",
+        "Contract defines the nine canonical evidence states (loaded → usable_as_evidence + blocked) and per-agent effect.",
+        "Contract defines the Users & Access, Security & Governance, and Connector contracts.",
+        "Contract defines the seven AI Control Tower dimensions and per-dimension agent role.",
+        "Contract defines the Agent Readiness Matrix shape for Nexus, Sentinel, Atlas, Steward.",
+        "Contract defines the deterministic Steward Brief field set and example.",
+        "Contract enumerates UI states, actions, acceptance criteria, future implementation slices (ADM2-ADM10), and explicit defer list.",
+        "No application code, Source files, Admin UI, runtime, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification / contract document only. Establishes the canonical Setup/Admin control plane shape. ADM2-ADM10 implement the surface; this slice does not modify application code. No runtime, no migrations, no model calls."
+    },
+    {
+      "id": "ADM2",
+      "name": "Steward Setup Home / Control Center",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM1"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/steward-setup-readiness.ts",
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/app/(maestro)/platform/admin/page.tsx",
+        "src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "docs/build/slices/ADM2_STEWARD_SETUP_HOME_CONTROL_CENTER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Read model exposes the 12 canonical Enterprise Dataset Domains from ADM1 in canonical ordinal order with status, counts, example datasets, missing inputs, agents, surfaces, Steward guidance per row.",
+        "Evidence aggregate exposes byState entries for all 9 canonical evidence states with monotonic non-increasing counts across the progression.",
+        "totalLoaded / totalAvailable / totalUsable reconcile to byState.loaded / byState.indexed / byState.usable_as_evidence.",
+        "Agent Readiness Matrix has all four canonical agents (Nexus, Sentinel, Atlas, Steward) with status, canUse, missingContext, safeToAnswer, mustDefer, nextAdminAction per row.",
+        "Steward Brief carries title, tenantSetupHealth (label + rationale), topAdminGaps, dataEvidenceReadiness, userSecurityRisk, connectorRisk, agentReadiness sentences, recommendedNextAction, three deterministic disabled suggestedFollowUps, sourceLabel, interpretationBasis.",
+        "Steward Brief recommendedNextAction equals recommendedActions[0].",
+        "Admin modules include all ten canonical ADM1 modules including Build Progress / Founder Control Tower; every module has a routeHref starting with /.",
+        "Brief never invents a dollar amount in any string field.",
+        "Brief never claims a live runtime; connector posture honestly reads not_started or 0 of 0.",
+        "Component imports only next/link and the ADM2 read model; no imports from Source UI, Nexus / Sentinel / Atlas / Agent runtime, legacy /programs, mock.ts, or auth.",
+        "Existing /platform/admin guard, sidebar items, and Build Progress route are preserved unchanged.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+    },
+    {
+      "id": "ADM3",
+      "name": "Dataset Domain Inventory Read Model",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM1",
+        "ADM2"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/dataset-domain-inventory.ts",
+        "src/__tests__/integration/admin/dataset-domain-inventory.test.ts",
+        "docs/build/slices/ADM3_DATASET_DOMAIN_INVENTORY_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "summary.byDomain covers all 12 canonical Enterprise Dataset Domains.",
+        "buildDatasetDomainInventoryForDomain returns non-empty items for active domains and empty list for not_started domains and unknown keys.",
+        "Every item carries the full ADM1 §I field set with deterministic seed-only data.",
+        "Item ids are unique; every id matches the ds:<domainKey>:<slug> pattern.",
+        "summary.loadedTotal / availableTotal / usableTotal reconcile to the canonical evidence progression (loaded >= available >= usable).",
+        "byUsability covers all 9 canonical evidence states; byParseStatus covers all 4 parse states.",
+        "No item claims sourceType connector or non-null connector today; no item asserts a real E-### citation.",
+        "agentsAllowedToUse contains only Nexus / Sentinel / Atlas / Steward.",
+        "Blocked items only allow Steward in agentsAllowedToUse.",
+        "No invented dollar amount in any string field.",
+        "Module imports nothing from Source UI, Nexus / Sentinel / Atlas / Agent runtime, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-domain-inventory.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic dataset inventory consumed by ADM4 (Dataset Explorer UI) and downstream ADM5 / 7 / 9 surfaces. No live connector sync, no upload pipeline, no production evidence registry, no DB persistence. Future connector / upload / registry slices flip per-item state without contract changes."
+    },
+    {
+      "id": "I4",
+      "name": "Intelligence · Pattern Content Renderer / Detail Enrichment",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1",
+        "I2",
+        "I3"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-content.ts",
+        "src/components/intelligence/SentinelPatternContentPanel.tsx",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "docs/build/slices/I4_INTELLIGENCE_PATTERN_CONTENT_RENDERER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildSentinelPatternAuthoredContent returns deterministic content for each of the 5 canonical I1 pattern keys.",
+        "buildSentinelPatternAuthoredContent returns null for unknown keys.",
+        "Each canonical pattern carries definition, howSentinelDetected, whyItMatters, failureModes (>=1), interventions (>=1), requiredEvidence (>=1), handoffGuidance (>=1), contentCompleteness, authoredAt.",
+        "howSentinelDetected only references the canonical S9e signal types.",
+        "relatedPatterns reference only canonical I1 pattern keys with no self-reference.",
+        "Content does not invent a dollar amount in any string field.",
+        "Content does not claim live retrieval / live model invocation.",
+        "SentinelPatternContentPanel renders source · deterministic seed chip and disclaims live retrieval in footer.",
+        "SentinelPatternDetail integrates SentinelPatternContentPanel via PatternAuthoredContentSection.",
+        "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-content.test.ts",
+        "npm run build"
+      ],
+      "notes": "Authored deterministic content for each of the 5 canonical I1 pattern keys. No live Sentinel runtime, no graph traversal, no Claude / OpenAI / Pinecone invocation. Future content management, graph traversal, and registry-bound evidence can swap content entries without contract changes."
+    },
+    {
+      "id": "QA1",
+      "name": "Agentic Spine Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/AGENTIC_SPINE_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook documents branch hygiene checklist with exact git commands and pass criteria.",
+        "Runbook lists required validation commands (tsc, jest suites, build) with pass criteria.",
+        "Runbook enumerates the seven canonical routes to live-walk: Programs index, Programs detail, Tower, Intelligence, Pattern detail, Admin, Build Progress.",
+        "Runbook defines per-route checklists for Programs (Nexus rail, six phases, four gates), Tower (pressure cards, Atlas Executive Brief), Intelligence (Sentinel Brief, Active Patterns, evidence trail, disabled chips), and Admin (Build Progress, Setup / Steward Control Center, data + agent readiness).",
+        "Runbook defines tenant isolation checks including the S7 probe and cross-tenant URL / API probes.",
+        "Runbook defines no-fabrication checks: no fake dollars, no fake citations, no live model claim, deterministic-source captions visible.",
+        "Runbook defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with a default to not-push for unsupervised batches.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     }
   ]
 }

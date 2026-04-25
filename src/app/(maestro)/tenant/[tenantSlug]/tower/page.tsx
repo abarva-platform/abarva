@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { SeedTenantTower } from '@/components/deliverables/SeedRouteShell';
+import { ProgramPressureCards } from '@/components/tower/ProgramPressureCards';
 import { findTenantByRouteSlug } from '@/lib/deliverables/seed-route-resolver';
 import { assertTenantAccess } from '@/lib/auth/tenant-access';
 
@@ -13,5 +14,10 @@ export default async function TenantTowerSeedPage({
   const tenant = findTenantByRouteSlug(tenantSlug);
   if (!tenant) notFound();
 
-  return <SeedTenantTower tenant={tenant} />;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <ProgramPressureCards tenant={tenant} />
+      <SeedTenantTower tenant={tenant} />
+    </div>
+  );
 }

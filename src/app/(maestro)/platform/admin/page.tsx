@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { StewardAdminRail } from '@/components/admin/StewardAdminRail'
+import { StewardSetupControlCenter } from '@/components/admin/StewardSetupControlCenter'
 
 // ── Design tokens (spec-exact) ────────────────────────────────────────────
 const BG     = '#FAFAF9'
@@ -23,6 +24,7 @@ const ADMIN_EMAIL_ALLOWLIST = new Set([
 
 // ── Types ─────────────────────────────────────────────────────────────────
 type Section =
+  | 'control-center'
   | 'maestros' | 'roles' | 'security'
   | 'clients'  | 'contracts'
   | 'sensitive-data' | 'quality' | 'access-logs' | 'pending-requests'
@@ -33,6 +35,12 @@ const SIDEBAR_GROUPS: Array<{
   label: string
   items: Array<{ key: Section; icon: string; label: string; badge?: number; badgeAmber?: boolean }>
 }> = [
+  {
+    label: 'Setup',
+    items: [
+      { key: 'control-center', icon: '◎', label: 'Setup · Control Center' },
+    ],
+  },
   {
     label: 'Users & Access',
     items: [
@@ -324,7 +332,7 @@ function BuildProgressJumpView() {
 // ── Admin Portal — standalone, no maestro imports ─────────────────────────
 export default function AdminPortal() {
   const { isLoaded, user } = useUser()
-  const [active, setActive] = useState<Section>('maestros')
+  const [active, setActive] = useState<Section>('control-center')
 
   const role = user?.publicMetadata?.role as string | undefined
   const fallbackRole =
@@ -351,6 +359,7 @@ export default function AdminPortal() {
 
   function renderContent() {
     switch (active) {
+      case 'control-center':   return <StewardSetupControlCenter />
       case 'maestros':         return <MaestrosView />
       case 'roles':            return <PlaceholderView title="Roles & Permissions"       sub="Manage user roles and access control." />
       case 'security':         return <PlaceholderView title="Security"                  sub="Security settings and authentication." />
