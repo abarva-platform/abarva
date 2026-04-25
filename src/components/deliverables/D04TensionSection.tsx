@@ -51,7 +51,7 @@ export function D04TensionSection({ programCode, existing }: D04SectionProps) {
           Tension capture
         </h2>
         <p style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.55, color: '#544b42' }}>
-          Each Tier 1 stakeholder's top tension is captured with category, named owner, and explicit resolution path. Unowned tensions block the phase gate.
+          Each Tier 1 stakeholder&apos;s top tension is captured with category, named owner, and explicit resolution path. Unowned tensions block the phase gate.
         </p>
       </header>
 
