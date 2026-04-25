@@ -27,6 +27,10 @@ Governance covers permissions, audit trails, approval state, data retention, sou
 
 Agents should cite available evidence, disclose missing evidence, and avoid unsupported certainty. If confidence is low, stale, restricted, or waived, the response must label that state.
 
+For Source specifically, agents can cite only data marked as Usable Evidence. Loaded data, available data, uploaded files, connected systems, or parsed-but-unvalidated records are not enough for citation.
+
+Low-confidence, stale, restricted, waived, or uncited evidence must be surfaced to Nexus, Sentinel, Atlas, and Steward. Nexus should adjust the artifact tier and next action. Sentinel should flag evidence risk. Atlas should summarize executive impact. Steward should route the Admin/Setup action.
+
 ## Product Impact
 
 Programs, Source, Intelligence, Control Tower, and Admin/Setup all consume evidence state. Evidence readiness should affect what pages show, what actions are available, and what agents are allowed to say.

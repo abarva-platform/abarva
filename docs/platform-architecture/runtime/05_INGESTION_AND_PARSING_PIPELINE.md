@@ -36,6 +36,14 @@ Models may assist extraction or summarization only after source material is pars
 
 Ingestion should expose missing, requested, uploaded, connected, loaded, parsed, available, usable evidence, low confidence, stale, access restricted, not applicable, and waived states.
 
+## Admin/Setup And Source Boundary
+
+The parsing pipeline feeds Admin/Setup readiness and the Evidence Ledger. Admin/Setup owns the readiness state that tells the platform whether a dataset, file, connector, or parsed source can be treated as usable evidence.
+
+Source does not run its own parsing pipeline. Source consumes readiness and evidence state from the platform pipeline, then translates that state into sourcing workflow impact, such as RFP tier, scorecard confidence, vendor evaluation readiness, pricing normalization readiness, and value ledger confidence.
+
+If a Source attachment or vendor contract is uploaded but not parsed, Source must show that it cannot cite the file yet. If data is loaded but not validated as usable evidence, Source must not use it for artifacts, scorecards, pricing normalization, or value claims.
+
 ## MVP / V1 / V2
 
 MVP: file inventory and manual readiness. V1: deterministic parsing, normalization, and evidence ledger. V2: automated enrichment, exception handling, and continuous freshness monitoring.
