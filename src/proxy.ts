@@ -40,6 +40,7 @@ const authRequiredRoutes = createRouteMatcher([
   '/sponsor(.*)',
   '/platform(.*)',
   '/intelligence(.*)',
+  '/source(.*)',
 ])
 
 function createSignInRedirect(request: NextRequest) {
