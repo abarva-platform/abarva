@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-24",
+  "lastUpdated": "2026-04-25",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -1182,6 +1182,61 @@
       "notes": "Specification only. Establishes the canonical Maestro Workshop Intelligence shape: Maestro / Nexus / SME role partition, before/during/after capture, save/stop/start lifecycle, deterministic synthesis, SME recommendation, deliverable refinement loop. MW2-MW7 implement the surface."
     },
     {
+      "id": "MW2",
+      "name": "Workshop Readiness Read Model",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MW1",
+        "S9",
+        "S9d"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/workshop-readiness.ts",
+        "src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "docs/build/slices/MW2_WORKSHOP_READINESS_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Read model builds deterministically for every (tenant, program) pair across all four canonical demo tenants.",
+        "Every active program emits at least one workshop readiness record with type drawn from the canonical nine workshop types.",
+        "Every record carries id (ws:<tenantKey>:<programSlug>:<type>), title, objective, requiredAttendees, optionalSmes, preReadList, agenda, questionsToAsk, likelyTensions, decisionsNeeded, evidenceToCapture, expectedOutputs, nexusPreparationBrief, stewardGateImplication, risks, createdFrom.",
+        "requiredAttendees always contains client_maestro and at least three roles per workshop.",
+        "evidenceToCapture carries at least two entries per workshop, with at least one required: true and one required: false.",
+        "stewardGateImplication names the canonical hard gate (G1..G4) the workshop helps unblock, or honestly states no canonical hard gate is at risk for phase 4.",
+        "buildNextRecommendedWorkshop returns non-null for every active program and is deterministic across repeated calls.",
+        "summarizeWorkshopReadiness reconciles byType and perTenant counts to totalCount.",
+        "Every record carries createdFrom: 'deterministic_program_seed'; no record invents a dollar amount or claims a real E-### citation.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; does not call Date.now / Math.random / new Date."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/workshop-readiness.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program) seed into per-workshop readiness records. Operationalizes the MW1 contract. No meeting notes ingestion, no live LLM-driven brief composition, no calendar/booking integration. Future MW3 Maestro Brief UI renders these records; MW4 captures notes; MW5 generates agenda templates; MW6 surfaces SME recommendations; MW7 wires the deliverable refinement loop."
+    },
+    {
       "id": "PF1",
       "name": "AI Program Failure Modes Pattern Pack",
       "category": "PF",
@@ -1342,6 +1397,275 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
+    },
+    {
+      "id": "SOL1",
+      "name": "Solution Architecture Composition Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/SOL1_SOLUTION_ARCHITECTURE_COMPOSITION_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract defines purpose, scope, and the documentation-only constraint.",
+        "Contract states the principle Pattern not equal Solution Architecture and distinguishes pattern, solution component, architecture, and deliverable.",
+        "Contract enumerates the twelve canonical Solution Context Bundle categories: client context, current-state ways of working, tech stack, DORA metrics, engineering persona, AI adoption, security and compliance, target outcomes, applicable patterns, workshop findings, existing deliverables, and missing inputs.",
+        "Contract walks the canonical AI-led PDLC worked example covering current ways of working, DORA baseline, toolchain, AI tool adoption, testing and release and security process, and target operating model with the canonical solution component set.",
+        "Contract defines the deterministic seven-step composition flow from context assembly to decision-grade deliverable.",
+        "Contract defines the three composition styles pattern-driven, LLM-composed, and SME-validated with anchoring rule and confidence caps.",
+        "Contract defines per-agent roles for Nexus, Sentinel, Steward, and Atlas with explicit refusal behavior.",
+        "Contract defines missing-input behavior including honest fallbacks per ADM1 and phase-advancement refusal by Steward.",
+        "Contract defines architecture versioning, refinement rules, provenance, and the PDEL anchor.",
+        "Contract enumerates the canonical deliverable outputs and proposes future slices SOL2 through SOL6.",
+        "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification only. Establishes how AbarVa composes client-specific solution architectures from current-state context, patterns, solution components, workshop findings, evidence, constraints, SME and client alignment, and LLM-assisted synthesis. Future slices SOL2 through SOL6 implement the component pack, draft read model, canvas UI, refinement loop, and deliverable renderer."
+    },
+    {
+      "id": "PF2",
+      "name": "Program Phase Workspace Contract",
+      "category": "PF",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/PF2_PROGRAM_PHASE_WORKSPACE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract defines a center-canvas, Nexus-led phase workspace with left journey rail (<=220px), center canvas (~70%), and right compact context panel (<=320px); not a left-rail nav and not a split-view dashboard.",
+        "Contract enumerates exactly six mutually exclusive phase modes: phase overview, workshop preparation, live session support, notes synthesis, deliverable refinement, gate readiness.",
+        "Contract names the Client Maestro as the only role that advances the phase and Nexus as the program mastermind; Atlas only speaks about the workshop, never in it.",
+        "Contract specifies Save / Stop / Resume affordances per MW1 §G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
+        "Contract specifies typed / pasted / uploaded ingestion only with deterministic extractors, raw-text persistence, Maestro confirmation, and source / createdFrom tagging; audio and meeting-bot ingestion are deferred.",
+        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub → Outline → Rich promotion ladder per MW1 §J.",
+        "Contract requires evidence chip (NAVY / AMBER / RED / MUTED), value ledger reference, canonical gate caps in the journey rail, Steward gate readiness verdict in the right rail, and refusal of phase advancement when hard-gate inputs are missing.",
+        "Contract specifies click-to-explore interaction, single-instance drawer overlay, 120ms fade-only animation, and a workshop notes pane that defaults open on the active phase.",
+        "Contract forbids fabricated dollar amounts, fake E-### citations, and live-runtime claims; tags Maestro-captured records with source: 'maestro_capture' and createdFrom: 'deterministic_seed'.",
+        "Contract introduces no Sentinel / Atlas / Nexus / Agent runtime modifications and stages only docs/build/slices/PF2_PROGRAM_PHASE_WORKSPACE_CONTRACT.md and docs/build/build-slices.json."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification / contract document only. Defines the program phase workspace shape that consumes MW1 (Maestro Workshop Intelligence) and PDEL (Program Deliverables / Artifacts Read Model). Future slices PF3 / PF4 / PF5 / PF6 / PF7 wire workshop templates, ingestion, deliverable generation, resume continuity, and Nexus rail v2."
+    },
+    {
+      "id": "QA2",
+      "name": "Solution Workshop Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook documents purpose and scope as the founder-facing checklist for SOL1, SOL2, MW2, and PF2 outputs, named as the companion to the QA1 Agentic Spine Verification Runbook.",
+        "Runbook documents branch hygiene checklist with exact git commands and pass criteria.",
+        "Runbook lists required validation commands (tsc, build, PF1/SOL2/MW2/PDEL/ADM2/ADM3/ADM4 jest suites, S7 tenant isolation probe) with pass criteria.",
+        "Runbook defines per-artifact verification checklists for SOL1 (12-category bundle, 7-step composition, 3 styles, 4 agent roles, missing-input behavior, 6 deliverables, future SOL2-SOL6 list), SOL2 (14 components in canonical order with all required fields, deterministic recommender, module hygiene), MW2 (every active program has >=1 record, client_maestro required, deterministic seed source, no fake notes, summary reconciliation), and PF2 (center-canvas layout, six phase modes, save/stop/resume lifecycle, meeting notes ingestion sans audio, dynamic deliverables via PDEL, evidence/value/gate integration, interaction model with 120ms fade only).",
+        "Runbook walks the AI-led PDLC scenario from Programs index to Apex Retail program detail through phase canvas, MW2 brief, Steward gate readiness, I1 pattern detail, and Atlas Tower brief.",
+        "Runbook lists six canonical questions to ask Nexus / Client Maestro during the walk and where the honest answer lives today.",
+        "Runbook defines no-fabrication checks (no dollar amounts, no real E-### citations, no live runtime claims, disabled Ask-agent chips, honest empty states), solution context bundle checks, workshop readiness checks, and deliverable / artifact checks.",
+        "Runbook defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait and push only with explicit founder go-ahead.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+    },
+    {
+      "id": "DES1",
+      "name": "AbarVa Visual Canon",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/design/ABARVA_VISUAL_CANON.md",
+        "docs/design/components/ABARVA_COMPONENT_RECIPES.md",
+        "docs/design/pages/PROGRAMS_PAGE_BLUEPRINT.md",
+        "docs/design/pages/INTELLIGENCE_PAGE_BLUEPRINT.md",
+        "docs/design/pages/AI_CONTROL_TOWER_PAGE_BLUEPRINT.md",
+        "docs/design/pages/ADMIN_SETUP_PAGE_BLUEPRINT.md",
+        "docs/build/slices/DES1_ABARVA_VISUAL_CANON.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Canon document declares brand direction, wordmark rule, symbol rule, color palette, typography, light/dark surface usage, top-nav contract, agent visual treatment, icon restraint, card/table/drawer style, progressive-disclosure rules, and no-clutter rules.",
+        "Color palette names NAVY (#1B2B5C) as the single brand accent and reserves dark surfaces for high-impact briefs only.",
+        "Typography direction is DM Sans body + JetBrains Mono mono; serif body is explicitly retired from v2.",
+        "Wordmark rule is typographic (no SVG) with the Abar/Va split, NAVY Va half 1.05-1.10x larger than Abar half.",
+        "Agent visual treatment maps Nexus / Sentinel / Atlas / Steward to canonical accents.",
+        "Component recipes describe surface and props for the eleven canonical primitives implemented by DES2.",
+        "Each page blueprint (Programs / Intelligence / AI Control Tower / Admin Setup) lists hide/show rules and acceptance criteria.",
+        "No app code is touched; this is documentation only."
+      ],
+      "validationCommands": [
+        "git diff --cached --name-only"
+      ],
+      "notes": "Documentation-only foundation slice. Captures the AbarVa visual direction so DES2 primitives and DES3+ page refresh slices have a single source of truth. No runtime, no model calls, no migrations."
+    },
+    {
+      "id": "DES2",
+      "name": "Core UI Primitives",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1"
+      ],
+      "allowedFiles": [
+        "src/lib/design/abarva-theme.ts",
+        "src/components/abarva/AbarVaTopNav.tsx",
+        "src/components/abarva/AgentBadge.tsx",
+        "src/components/abarva/AgentBriefPanel.tsx",
+        "src/components/abarva/DetailDrawerShell.tsx",
+        "src/components/abarva/EmptyInspector.tsx",
+        "src/components/abarva/EvidenceChip.tsx",
+        "src/components/abarva/FileTypeChip.tsx",
+        "src/components/abarva/JourneyRail.tsx",
+        "src/components/abarva/MetricStrip.tsx",
+        "src/components/abarva/PatternCard.tsx",
+        "src/components/abarva/PressureCard.tsx",
+        "src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "docs/build/slices/DES2_CORE_UI_PRIMITIVES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "abarva-theme.ts exports COLORS, FONT, TYPE, SPACING, RADIUS, BORDER, AGENT_ACCENT, ABARVA_AGENT_NAMES (4), ABARVA_STATUS_KEYS (7), ABARVA_FILE_CHIPS (7), ABARVA_EVIDENCE_STATES (6), and a total statusAccent() helper.",
+        "COLORS.navy is exactly #1B2B5C and FONT.body is DM Sans (no Georgia, no Times).",
+        "All eleven primitives live under src/components/abarva/ and are server components (no useState, no useEffect, no fetch).",
+        "Top nav exposes the canonical surface tuple ABARVA_TOP_NAV_SURFACES in canonical order.",
+        "Agent partition maps the four canonical agents (Nexus / Sentinel / Atlas / Steward) to the canon accents.",
+        "Status partition maps the seven canonical status keys (ready / low / medium / partial / high / blocked / critical) to NAVY / AMBER / RED accent tiers.",
+        "Module hygiene tests block accidental imports from Sentinel / Atlas / Nexus / Agent runtime, Source UI, mock.ts, auth, or supabase, and ban Date.now / Math.random / anthropic / openai usage."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "npm run build"
+      ],
+      "notes": "Eleven calm, deterministic React primitives plus a single shared theme module that encodes the DES1 canon. No client interactivity, no model calls. DES3+ page refresh slices migrate Programs / Intelligence / AI Control Tower / Admin Setup onto these primitives."
+    },
+    {
+      "id": "SOL2",
+      "name": "AI-led PDLC Solution Component Pack",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PF1",
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/ai-led-pdlc-components.ts",
+        "src/__tests__/integration/solutions/ai-led-pdlc-components.test.ts",
+        "docs/build/slices/SOL2_AI_LED_PDLC_SOLUTION_COMPONENT_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 14 canonical AI-led PDLC solution components in canonical order.",
+        "Each component carries key, name, definition, problemSolved, requiredCurrentStateInputs (>=3), requiredMetrics (>=2), targetCapabilities (>=2), enablingTools (>=2), governanceRequirements (>=2), implementationSteps (>=3), expectedOutcomes (>=2), risks (>=1), relatedFailureModes (>=1), relatedPatterns (>=1), requiredWorkshops (>=1), deliverablesProduced (>=1), createdFrom.",
+        "Every relatedFailureModes entry is a canonical PF1 AiProgramFailureKey.",
+        "Every relatedPatterns entry is a canonical I1 SentinelPatternKey.",
+        "DORA telemetry component names all four canonical DORA metrics; at least eight components reference at least one DORA metric.",
+        "getAiLedPdlcSolutionComponent returns null for unknown keys including PF1 / I1 keys.",
+        "recommendPdlcComponentsFromInputs is union-semantics on failureModes OR patternKeys, returns canonical-order results, and ignores unknown keys without throwing.",
+        "summarizePdlcSolutionComponentPack reconciles totalCount to the canonical pack size and exposes uniqueRelatedFailureModes / uniqueRelatedPatterns sorted with canonical-key membership.",
+        "No component invents a dollar amount in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/ai-led-pdlc-components.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
     }
   ]
 }
