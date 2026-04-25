@@ -116,16 +116,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Build Pack inventory reconciliation started after workflow hardening review found anchor-referenced files missing from `origin/main`.
 - 2026-04-25 · PR #201 merged: Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs.
 - 2026-04-25 · Workflow richness and document collaboration hardening started on reconciled Build Pack baseline. Build Pack now needs explicit artifact versioning, external edit/re-upload, approval routing, and workflow validation specs before workflow UI expands.
+- 2026-04-25 · PR #202 merged: workflow richness and document collaboration model.
 
 ## Last status emission
-- 2026-04-25 · Source workflow richness hardening · PR #201 baseline is merged · current item is documentation/spec only · no UI/API/model/export/approval implementation.
+- 2026-04-25 · Source workflow validation fixtures planning · PR #202 merged · current item is planning only · no workflow fixtures/engine/UI/API/model/export/import implementation.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #201 merged · Build Pack inventory reconciliation.
+- Current completed milestone: PR #202 merged · workflow richness and document collaboration model.
 - Dashboard decision: approve with small refinements.
-- Current objective: harden Source workflow/document collaboration requirements before richer workflow UI or artifact generation.
-- Current item: workflow richness and document collaboration hardening.
+- Current objective: prepare the next controlled slice: deterministic workflow validation fixtures plan.
+- Current item: workflow validation fixtures planning.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -157,9 +158,14 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Workflow richness and document collaboration spec layer.
   - Artifact review and approval model.
   - Workflow validation harness specification.
+  - Workflow richness model.
+  - Document collaboration model.
+  - Artifact/RFP generation model updates.
+  - Lifecycle/alerts updates.
+  - Production readiness tracker updates.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
-- Blockers/do-not-build: no event canvas, chat UI, model calls, API routes, upload/parsing, file export/import, approval routing implementation, artifact versioning implementation, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Source workflow cannot be production-serious as a linear tracker. It needs artifact lifecycle, review/approval routes, offline edit/re-upload, version history, audit trail, wait states, rework loops, and deterministic workflow validation. PR #201 resolved the missing anchor-referenced Build Pack inventory before this hardening branch was recreated.
-- Next recommended item: review workflow richness hardening docs, then create deterministic workflow validation fixture/type contracts before any document collaboration UI.
-- Next planning artifact: none until workflow hardening review is accepted.
+- Blockers/do-not-build: no workflow validation fixtures yet, workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: Workflow validation fixtures should test stage gates, artifact lifecycle, document review, approval routing, versioning, waiver behavior, and offline edit/re-upload rules before workflow UI or runtime implementation. This should remain deterministic and seeded.
+- Next recommended item: create deterministic workflow validation fixtures using seeded Source workflow state, then review outcomes before any workflow UI/engine work.
+- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_WORKFLOW_VALIDATION_FIXTURES.md`.
