@@ -14,6 +14,7 @@ export * from './types';
 export * from './value-ledger';
 export * from './workflow-validation';
 export * from './workflow-validation-fixtures';
+export * from './workflow-validation-report';
 export * from './workflow-validation-runner';
 
 export type {
