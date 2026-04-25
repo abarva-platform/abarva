@@ -1458,6 +1458,50 @@
         "npm run build"
       ],
       "notes": "11 AbarVa primitives plus theme tokens. Pure data props; consumers wire interactivity. Forms the visual foundation for DES3 / DES4 / DES5 / ADM5 UX refreshes."
+    },
+    {
+      "id": "ADM5",
+      "name": "Admin Dataset Explorer Polish",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1",
+        "DES2",
+        "ADM2",
+        "ADM4"
+      ],
+      "allowedFiles": [
+        "src/components/admin/StewardSetupControlCenter.tsx",
+        "src/components/admin/DatasetExplorerPanel.tsx",
+        "src/__tests__/integration/admin/admin-ux-refresh.test.ts",
+        "docs/build/slices/ADM5_ADMIN_DATASET_EXPLORER_POLISH.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "StewardSetupControlCenter and DatasetExplorerPanel import from @/lib/design/abarva-theme.",
+        "Brand accent shifted from teal #0E9F8C to NAVY #1B2B5C across both components.",
+        "Each component carries data-abarva-refreshed='adm5' marker on root.",
+        "Build Progress route preserved via the data-driven modules block.",
+        "No structural changes; existing copy, behavior, source captions, disabled chips preserved.",
+        "Regression suites pass: steward-setup-control-center, dataset-domain-inventory, dataset-explorer-panel."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/admin-ux-refresh.test.ts",
+        "npm run build"
+      ],
+      "notes": "Visual refresh only. Functionality unchanged. Brand accent and surface palette aligned with AbarVa visual canon."
     }
   ]
 }

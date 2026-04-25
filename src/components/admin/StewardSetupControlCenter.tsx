@@ -24,29 +24,34 @@ import {
   type StewardBrief,
   type StewardSetupReadinessView,
 } from '@/lib/admin/steward-setup-readiness';
+import { COLORS as ABARVA_COLORS } from '@/lib/design/abarva-theme';
 
 interface StewardSetupControlCenterProps {
   view?: StewardSetupReadinessView;
 }
 
+// ADM5 · refreshed against AbarVa visual canon. Brand accent shifts
+// from teal to NAVY; surface tones already align with the canonical
+// off-white palette. Steward stays light-card (utility-clerical
+// voice — never dark).
 const COLORS = {
-  ink: '#0F0E0D',
-  body: '#3D3B38',
-  muted: '#706D66',
-  mutedSoft: '#9A958E',
-  border: '#E8E6E3',
-  borderSoft: '#F2F1F0',
-  surface: '#FAFAF9',
-  card: '#FFFFFF',
-  surface2: '#F7F6F3',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.10)',
-  amber: '#B45309',
-  amberSoft: 'rgba(180,83,9,0.10)',
-  red: '#C53030',
-  redSoft: 'rgba(197,48,48,0.10)',
-  teal: '#1f7a8c',
-  tealSoft: 'rgba(31,122,140,0.10)',
+  ink: ABARVA_COLORS.ink,
+  body: ABARVA_COLORS.body,
+  muted: ABARVA_COLORS.muted,
+  mutedSoft: ABARVA_COLORS.mutedSoft,
+  border: ABARVA_COLORS.border,
+  borderSoft: ABARVA_COLORS.borderSoft,
+  surface: ABARVA_COLORS.surface,
+  card: ABARVA_COLORS.card,
+  surface2: ABARVA_COLORS.surface2,
+  accent: ABARVA_COLORS.navy,
+  accentSoft: ABARVA_COLORS.navySoft,
+  amber: ABARVA_COLORS.amber,
+  amberSoft: ABARVA_COLORS.amberSoft,
+  red: ABARVA_COLORS.red,
+  redSoft: ABARVA_COLORS.redSoft,
+  teal: ABARVA_COLORS.navy,
+  tealSoft: ABARVA_COLORS.navySoft,
 } as const;
 
 const MONO = "'JetBrains Mono', 'Courier New', monospace";
@@ -60,6 +65,7 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
 
   return (
     <section
+      data-abarva-refreshed="adm5"
       aria-label="Steward setup control center"
       style={{
         display: 'flex',
