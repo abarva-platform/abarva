@@ -1666,6 +1666,55 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "SOL4",
+      "name": "Analytics Modernization Component Pack",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/analytics-modernization-components.ts",
+        "src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "docs/build/slices/SOL4_ANALYTICS_MODERNIZATION_COMPONENT_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 12 canonical analytics modernization components in canonical order.",
+        "Each component carries key, name, definition, problemSolved, requiredCurrentStateInputs (>=3), targetCapabilities (>=2), architectureBuildingBlocks (>=2), governanceRequirements (>=2), implementationSteps (>=3), expectedOutcomes (>=2), risks (>=1), requiredWorkshops (>=1), deliverablesProduced (>=1), createdFrom.",
+        "listAnalyticsModernizationComponents is byte-equal across repeated calls and order is canonical.",
+        "getAnalyticsModernizationComponent returns null for unknown keys including SOL2-shaped keys.",
+        "recommendAnalyticsModernizationComponents is union-semantics on capabilityKeywords OR currentStateGaps substring overlap, returns canonical-order results, and ignores unknown / non-matching inputs without throwing.",
+        "summarizeAnalyticsModernizationComponentPack reports totalCount = 12 and exposes uniqueArchitectureBlocks / uniqueWorkshops / uniqueDeliverables sorted ascending.",
+        "JSON.stringify of ANALYTICS_MODERNIZATION_COMPONENTS does not match a dollar-amount pattern.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch( / anthropic / openai / supabase / next/* / React reference."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Analogous to SOL2 (AI-led PDLC) but for analytics modernization. SOL3 binding deferred. Future slices SOL5 / SOL6 / SOL7 wire the pack into per-tenant adoption tracking, workshop scheduling, and cross-pack portfolio rationalization."
     }
   ]
 }
