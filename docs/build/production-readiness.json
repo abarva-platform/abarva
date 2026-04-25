@@ -1,218 +1,10 @@
 {
   "schemaVersion": 1,
   "lastUpdated": "2026-04-25",
-  "updatedBy": "Codex",
+  "updatedBy": "Code",
   "source": "Deterministic build/readiness manifest maintained in docs/build. No live monitoring, no Vercel polling, and no model/API calls are implemented by this tracker.",
   "overallStatus": "blocked",
-  "overallReadinessPercent": 24,
-  "maturitySnapshot": {
-    "source": "Founder-provided maturity assessment recorded on 2026-04-25. This is a deterministic planning snapshot, not live production monitoring.",
-    "indicators": [
-      {
-        "id": "overall_product_maturity",
-        "label": "Overall product maturity",
-        "percentLow": 35,
-        "percentHigh": 40,
-        "interpretation": "Product vision, architecture, and deterministic surfaces are substantial, while persistence, full workflows, and runtime loops remain pending."
-      },
-      {
-        "id": "demo_proof_of_concept_maturity",
-        "label": "Demo / proof-of-concept maturity",
-        "percentLow": 65,
-        "percentHigh": 70,
-        "interpretation": "The system can demonstrate many core concepts through seeded read models and internal surfaces, but not a full production workflow."
-      },
-      {
-        "id": "production_readiness",
-        "label": "Production readiness",
-        "percentLow": 20,
-        "percentHigh": 25,
-        "interpretation": "Production readiness is blocked by live workflow, evidence, gateway, tenant/security, CI, observability, and deploy verification gaps."
-      }
-    ],
-    "areas": [
-      {
-        "id": "product_vision_architecture",
-        "area": "Product vision / architecture",
-        "completed": "Agent model, Programs/Tower/Intelligence/Admin spine, page/workflow catalog, visual canon, and solution architecture contracts.",
-        "pending": "Final reconciliation into one master architecture index.",
-        "percentLow": 75,
-        "percentHigh": 75,
-        "relatedComponentIds": ["programs", "ai_control_tower", "intelligence", "admin_setup", "solution_intelligence"]
-      },
-      {
-        "id": "programs",
-        "area": "Programs",
-        "completed": "Canonical programs index/detail, phase/gate rendering, Nexus rail, evidence/value readiness, workshop readiness, workshop mode shell, and artifact canvas shell.",
-        "pending": "Full save/resume state, live meeting notes ingestion, real deliverable generation, and gate transition workflows.",
-        "percentLow": 55,
-        "percentHigh": 55,
-        "relatedComponentIds": ["programs", "program_workshop_mode", "deliverables_artifacts"]
-      },
-      {
-        "id": "program_deliverables_artifacts",
-        "area": "Program deliverables / artifacts",
-        "completed": "Artifact inventory read model, canvas renderer shell, file-type concepts, and deliverables-by-phase logic started.",
-        "pending": "Real generated deliverables, production HTML/Markdown renderer, versioning, approval, export, and download.",
-        "percentLow": 35,
-        "percentHigh": 35,
-        "relatedComponentIds": ["deliverables_artifacts"]
-      },
-      {
-        "id": "nexus_client_maestro_workflow",
-        "area": "Nexus / Client Maestro workflow",
-        "completed": "Nexus role defined, workshop readiness read model, Maestro brief concepts, and workshop mode shell.",
-        "pending": "Live Nexus mastermind loop, notes-to-state updates, SME recommendation UI, and dynamic refinement loop.",
-        "percentLow": 35,
-        "percentHigh": 35,
-        "relatedComponentIds": ["programs", "program_workshop_mode", "agent_runtime"]
-      },
-      {
-        "id": "intelligence_sentinel",
-        "area": "Intelligence / Sentinel",
-        "completed": "Sentinel pattern detections, Intelligence landing, active patterns, pattern detail, evidence trail, pattern content renderer, and failure modes.",
-        "pending": "Pattern registry lifecycle, pattern graph, real evidence drawer, internal/external source basis, and live Sentinel validation.",
-        "percentLow": 45,
-        "percentHigh": 45,
-        "relatedComponentIds": ["intelligence"]
-      },
-      {
-        "id": "ai_control_tower_atlas",
-        "area": "AI Control Tower / Atlas",
-        "completed": "Program pressure cards, Atlas Executive Brief, and AI Control Tower contract.",
-        "pending": "AI portfolio inventory, adoption/usage, cost, risk, DORA/productivity, and technology/data readiness read models and UI.",
-        "percentLow": 30,
-        "percentHigh": 30,
-        "relatedComponentIds": ["ai_control_tower"]
-      },
-      {
-        "id": "admin_setup_steward",
-        "area": "Admin / Setup / Steward",
-        "completed": "Steward setup control center, dataset domain inventory, dataset explorer UI, and Admin contract.",
-        "pending": "Users/access UI, governance posture, connector health, agent readiness deep drilldown, and live data readiness from real sources.",
-        "percentLow": 40,
-        "percentHigh": 40,
-        "relatedComponentIds": ["admin_setup"]
-      },
-      {
-        "id": "source_sourcing_product",
-        "area": "Source / sourcing product",
-        "completed": "Source foundation, validation fixtures/runner/report concepts, and Source dashboard started.",
-        "pending": "Event detail canvas, vendor responses, scorecards, RFP artifacts, Source value ledger, and Source to Tower/Intelligence signals.",
-        "percentLow": 25,
-        "percentHigh": 25,
-        "relatedComponentIds": ["source"]
-      },
-      {
-        "id": "solution_intelligence_fabric",
-        "area": "Solution Intelligence Fabric",
-        "completed": "Solution archetype registry, analytics modernization pack, healthcare archetypes, build/buy/partner framework, detail read model, and canvas contract.",
-        "pending": "SOL9 recommendation engine, solution canvas UI, architecture draft generation, and workshop-to-architecture refinement.",
-        "percentLow": 45,
-        "percentHigh": 45,
-        "relatedComponentIds": ["solution_intelligence"]
-      },
-      {
-        "id": "patterns_pattern_library",
-        "area": "Patterns / pattern library",
-        "completed": "Pattern tiering concept, failure modes pack, pattern detections, and content renderer.",
-        "pending": "Governed pattern registry, linter, promotion workflow, graph, and usage/outcome feedback loop.",
-        "percentLow": 35,
-        "percentHigh": 35,
-        "relatedComponentIds": ["intelligence", "audit_governance"]
-      },
-      {
-        "id": "data_knowledge_fabric",
-        "area": "Data / Knowledge Fabric",
-        "completed": "Dataset domains, architecture contracts, context bundle foundations, and deterministic read models.",
-        "pending": "Real ingestion/parsing, vector/graph integration, object store, evidence ledger backend, and data lineage.",
-        "percentLow": 20,
-        "percentHigh": 20,
-        "relatedComponentIds": ["data_evidence_knowledge_fabric", "ingestion_parsing"]
-      },
-      {
-        "id": "evidence_ledger",
-        "area": "Evidence Ledger",
-        "completed": "Evidence readiness concepts, artifact/evidence state contracts, and no-fabrication tests.",
-        "pending": "Real evidence IDs, citations, provenance, freshness, confidence, backend persistence, and claim support.",
-        "percentLow": 15,
-        "percentHigh": 15,
-        "relatedComponentIds": ["data_evidence_knowledge_fabric", "audit_governance"]
-      },
-      {
-        "id": "model_gateway",
-        "area": "Model Gateway",
-        "completed": "Contract defined and acknowledged as non-negotiable.",
-        "pending": "Actual gateway implementation, model routing, cost tracking, prompt assembly, audit, and fallback.",
-        "percentLow": 5,
-        "percentHigh": 10,
-        "relatedComponentIds": ["model_gateway"]
-      },
-      {
-        "id": "agent_runtime",
-        "area": "Agent Runtime",
-        "completed": "Existing Nexus/Sentinel/Atlas scaffolds, context bundle, disclosure metadata, and UI wiring.",
-        "pending": "Unified model gateway usage, tool registry integration, cross-agent handoffs, and live memory/state update.",
-        "percentLow": 25,
-        "percentHigh": 25,
-        "relatedComponentIds": ["agent_runtime", "model_gateway"]
-      },
-      {
-        "id": "tool_layer",
-        "area": "Tool Layer",
-        "completed": "Contracts planned and partially documented.",
-        "pending": "Real tool registry, guarded tool calls, graph/vector/file/workflow/export tools.",
-        "percentLow": 10,
-        "percentHigh": 15,
-        "relatedComponentIds": ["agent_runtime", "model_gateway", "ingestion_parsing"]
-      },
-      {
-        "id": "workflow_program_state",
-        "area": "Workflow / program state",
-        "completed": "Seed-backed phases/gates/workshop state and deterministic read models.",
-        "pending": "Production state machines, write paths, audit events, approvals, pause, and resume.",
-        "percentLow": 25,
-        "percentHigh": 25,
-        "relatedComponentIds": ["programs", "program_workshop_mode", "audit_governance"]
-      },
-      {
-        "id": "audit_governance",
-        "area": "Audit / governance",
-        "completed": "Tenant isolation tests, governance concepts, and audit contracts.",
-        "pending": "Cross-agent audit trail, gate audit, evidence audit, and exportable audit logs.",
-        "percentLow": 20,
-        "percentHigh": 20,
-        "relatedComponentIds": ["audit_governance"]
-      },
-      {
-        "id": "visual_design_system",
-        "area": "Visual design system",
-        "completed": "Visual canon, UI primitives, and logo/color direction mostly locked.",
-        "pending": "Apply consistently across all pages and finalize logo asset/SVG system.",
-        "percentLow": 50,
-        "percentHigh": 50,
-        "relatedComponentIds": ["admin_setup", "validation_qa"]
-      },
-      {
-        "id": "validation_qa",
-        "area": "Validation / QA",
-        "completed": "Many targeted Jest suites, build checks, runbooks, and no-fabrication checks.",
-        "pending": "Golden prompt harness, route smoke automation, persona crawler, visual regression, and production monitoring.",
-        "percentLow": 35,
-        "percentHigh": 35,
-        "relatedComponentIds": ["validation_qa"]
-      },
-      {
-        "id": "production_deployment_readiness",
-        "area": "Production deployment readiness",
-        "completed": "Vercel build works, multiple PRs merged, hotfixes handled, and a deterministic Production Readiness Tracker exists.",
-        "pending": "Live monitoring, CI integration, security review, rate limits, env/secrets hardening, and post-deploy route verification.",
-        "percentLow": 20,
-        "percentHigh": 25,
-        "relatedComponentIds": ["production_deployment", "validation_qa"]
-      }
-    ]
-  },
+  "overallReadinessPercent": 34,
   "stewardBrief": {
     "title": "Steward Production Readiness Brief",
     "summary": "AbarVa has meaningful deterministic surfaces and read models, but full-system testing, live persona walks, Model Gateway wiring, evidence ledger productionization, ingestion/parsing, Vercel deployment verification, and production observability are still blockers.",
@@ -296,7 +88,10 @@
         }
       ],
       "nextAction": "Run and record the canonical Programs persona walk, then close the evidence/value seed gaps that block gate promotion.",
-      "notes": ["Code complete is not production ready.", "No legacy /programs route is extended by PROD1."]
+      "notes": [
+        "Code complete is not production ready.",
+        "No legacy /programs route is extended by PROD1."
+      ]
     },
     {
       "id": "program_workshop_mode",
@@ -359,7 +154,9 @@
         }
       ],
       "nextAction": "Add a verified manual walk for workshop preparation and document the deferred live capture path before pilot consideration.",
-      "notes": ["No meeting bot, audio transcription, or live model synthesis is implemented."]
+      "notes": [
+        "No meeting bot, audio transcription, or live model synthesis is implemented."
+      ]
     },
     {
       "id": "deliverables_artifacts",
@@ -422,7 +219,9 @@
         }
       ],
       "nextAction": "Choose the first production artifact workflow to promote from disabled seed state to audited runtime behavior.",
-      "notes": ["Readable canvas is present; production artifact operations are not."]
+      "notes": [
+        "Readable canvas is present; production artifact operations are not."
+      ]
     },
     {
       "id": "intelligence",
@@ -485,7 +284,9 @@
         }
       ],
       "nextAction": "Verify the deterministic Intelligence journey in browser, then define the evidence-registry binding required for pilot readiness.",
-      "notes": ["Active patterns are read-model backed, not live monitoring."]
+      "notes": [
+        "Active patterns are read-model backed, not live monitoring."
+      ]
     },
     {
       "id": "ai_control_tower",
@@ -548,7 +349,9 @@
         }
       ],
       "nextAction": "Complete a manual Tower walk and decide which production signal source should become the first persisted feed.",
-      "notes": ["The Tower surface is deterministic today."]
+      "notes": [
+        "The Tower surface is deterministic today."
+      ]
     },
     {
       "id": "admin_setup",
@@ -611,7 +414,9 @@
         }
       ],
       "nextAction": "Use the production-readiness tracker in morning review and update the manifest after each validation event.",
-      "notes": ["PROD1 adds a read-only admin page and manifest only."]
+      "notes": [
+        "PROD1 adds a read-only admin page and manifest only."
+      ]
     },
     {
       "id": "source",
@@ -769,15 +574,18 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Implement and verify tenant-bound evidence ledger ingest before any production-ready claim.",
-      "notes": ["No fake Evidence Ledger status is emitted."]
+      "nextAction": "Implement and verify tenant-bound evidence ledger ingest before any production-ready claim. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
+      "notes": [
+        "No fake Evidence Ledger status is emitted.",
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
+      ]
     },
     {
       "id": "solution_intelligence",
       "name": "Solution Intelligence",
       "ownerAgent": "Atlas",
       "status": "code_complete",
-      "maturity": "Solution architecture contract and AI-led PDLC component pack exist; per-tenant solution draft/runtime generation is deferred.",
+      "maturity": "Solution architecture contract, AI-led PDLC / analytics / healthcare component packs, build-buy-partner evaluator, archetype detail read model, and SOL9 deterministic recommendation engine exist; per-tenant solution draft/runtime generation and live Nexus integration are deferred.",
       "lastVerifiedCommit": null,
       "dimensions": {
         "functionality": "code_complete",
@@ -797,7 +605,7 @@
         },
         "integration_tests": {
           "status": "passing",
-          "evidence": "AI-led PDLC solution component tests exist."
+          "evidence": "AI-led PDLC solution component, analytics modernization, healthcare AI archetypes, build/buy/partner framework, archetype detail read model, and SOL9 recommendation engine integration tests exist."
         },
         "route_smoke": {
           "status": "not_automated",
@@ -809,7 +617,7 @@
         },
         "no_fabrication_check": {
           "status": "passing",
-          "evidence": "Tests block fake dollars and non-canonical relations in the component pack."
+          "evidence": "Tests block fake dollars and non-canonical relations in the component pack and recommendation engine."
         },
         "tenant_isolation_check": {
           "status": "partial",
@@ -832,8 +640,11 @@
           "unblocks": "pilot_ready"
         }
       ],
-      "nextAction": "Build the first per-tenant solution draft read model and verify it against SOL1/SOL2 contracts.",
-      "notes": ["No model-generated solution architecture is invoked by PROD1."]
+      "nextAction": "Wire SOL9 deterministic recommendation engine into live Nexus per-tenant solution drafts (SOL10+) and verify against SOL1 / SOL2 / SOL3 contracts.",
+      "notes": [
+        "No model-generated solution architecture is invoked by PROD1.",
+        "SOL9 deterministic recommendation engine is added as a pure library that unifies SOL3 archetypes, SOL4 / SOL5 component packs, and the SOL6 build/buy/partner evaluator into a Nexus-facing recommendation layer."
+      ]
     },
     {
       "id": "agent_runtime",
@@ -895,8 +706,11 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion.",
-      "notes": ["PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files."]
+      "nextAction": "Route any future live agent composition through the Model Gateway contract and audit ledger before production promotion. Wire CTX3 live retrieval integration: replace CTX2 honest-empty evidence, conversation, and datasets sections with live EVID2 ledger ingest, conversation memory, and ADM3 dataset inventory bindings without changing the twelve-section pack shape.",
+      "notes": [
+        "PROD1 does not modify Nexus, Sentinel, Atlas, or Agent runtime files.",
+        "CTX2 unified context builder MVP added (src/lib/architecture/unified-context-builder.ts) \u2014 deterministic projection of programs/canonical-view, sentinel-pattern-detections, and solution-archetype-registry into a twelve-section Unified Context Pack; evidence/conversation/datasets sections honestly empty pending live wiring."
+      ]
     },
     {
       "id": "model_gateway",
@@ -959,7 +773,9 @@
         }
       ],
       "nextAction": "Implement a typed Model Gateway slice before any live model/runtime production-readiness claim.",
-      "notes": ["PROD1 does not call Claude, OpenAI, or any model provider."]
+      "notes": [
+        "PROD1 does not call Claude, OpenAI, or any model provider."
+      ]
     },
     {
       "id": "ingestion_parsing",
@@ -1022,7 +838,9 @@
         }
       ],
       "nextAction": "Define an ingestion/parsing slice with deterministic parser tests and tenant isolation checks.",
-      "notes": ["No model-as-parser behavior is introduced."]
+      "notes": [
+        "No model-as-parser behavior is introduced."
+      ]
     },
     {
       "id": "audit_governance",
@@ -1084,8 +902,11 @@
           "unblocks": "production_ready"
         }
       ],
-      "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review.",
-      "notes": ["Demo-grade ledgers are not production audit readiness."]
+      "nextAction": "Promote audit ledger from contract/demo state to tenant-bound production persistence and review. Live evidence pipeline and persistence remain deferred (EVID2 is seed-only).",
+      "notes": [
+        "Demo-grade ledgers are not production audit readiness.",
+        "EVID2 Evidence Ledger MVP read model is now wired alongside the audit/governance contract surface (deterministic seed entries; no production audit ledger)."
+      ]
     },
     {
       "id": "validation_qa",
@@ -1148,7 +969,9 @@
         }
       ],
       "nextAction": "Turn the runbooks into CI-backed route smoke, persona crawler, and security governance checks.",
-      "notes": ["This component is tested, not full-flow ready."]
+      "notes": [
+        "This component is tested, not full-flow ready."
+      ]
     },
     {
       "id": "production_deployment",
@@ -1211,7 +1034,10 @@
         }
       ],
       "nextAction": "After explicit founder approval to deploy, verify Vercel build, production routes, auth redirects, DNS, tenant isolation, and observability manually or through CI.",
-      "notes": ["PROD1 does not deploy.", "No live monitoring claim is made."]
+      "notes": [
+        "PROD1 does not deploy.",
+        "No live monitoring claim is made."
+      ]
     }
   ]
 }
