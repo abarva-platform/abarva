@@ -737,6 +737,63 @@
         "npm run build"
       ],
       "notes": "Read model only. No Intelligence UI build (deferred to I2), no live Sentinel runtime, no Atlas editorial handoff, no persistence. Confidence cap at medium for single-program detections is enforced because the seed cannot defend a higher claim alone."
+    },
+    {
+      "id": "I2",
+      "name": "Intelligence · Sentinel Brief + Active Patterns",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-view.ts",
+        "src/components/intelligence/SentinelActivePatterns.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/page.tsx",
+        "src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "docs/build/slices/I2_INTELLIGENCE_SENTINEL_BRIEF_ACTIVE_PATTERNS.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Intelligence landing route renders the Sentinel brief + active patterns section using the I1 read model.",
+        "View helper imports only the I1 detection module and the seed planner; never re-derives detections.",
+        "Sentinel brief includes title, topPattern, topSeverity, topConfidence, whatSentinelSees, whyItMatters, affectedPrograms, recommendedAction, suggestedHandoffs, suggestedFollowUps, sourceLabel, interpretationBasis.",
+        "suggestedFollowUps has exactly three deterministic items in canonical order, all enabled: false.",
+        "Pattern cards correspond 1:1 to I1 detections in the same sort order.",
+        "Affected program routeHref resolves to the canonical /tenant/<routeSlug>/programs/<programSlug> detail.",
+        "Detection routeHref points to the future /tenant/<routeSlug>/intelligence/patterns/<patternKey> route.",
+        "No brief or card invents a dollar amount in any string field.",
+        "No claim of live Sentinel runtime today; chips are visible-but-disabled.",
+        "Empty-tenant view returns sourceLabel deterministic_seed and topSeverity / topConfidence NONE without fabricating a headline.",
+        "Existing assertTenantAccess and notFound behavior is preserved on the route.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-active-patterns-page.test.ts",
+        "npm run build"
+      ],
+      "notes": "First Intelligence-page consumer of the I1 read model. Pattern detail drawer, evidence trail, graph traversal, live Sentinel validation, and Atlas editorial handoff are deferred to I3 and beyond."
     }
   ]
 }
