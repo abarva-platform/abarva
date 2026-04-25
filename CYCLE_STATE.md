@@ -128,16 +128,18 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #213 merged: authenticated dashboard visual review packet; authenticated dashboard access remained blocked by Clerk redirect.
 - 2026-04-25 · PR #215 merged: Source auth redirect diagnostic. Root cause: `/source` was not in the app-owned auth-required route matcher.
 - 2026-04-25 · PR #216 merged: base hygiene repair removed Steward setup conflict markers and restored TypeScript validation.
+- 2026-04-25 · PR #218 merged: Source auth redirect fix routed `/source` through the app-owned sign-in redirect flow.
+- 2026-04-25 · Authenticated `/source` screenshot review completed by user. Decision: approve with targeted visual refinement; shift dashboard from dark command center toward off-white premium sourcing workbench.
 
 ## Last status emission
-- 2026-04-25 · Source auth redirect fix implemented locally · `/source` added to app-owned auth-required route matcher · no Source UI/API/model/upload/workflow engine scope.
+- 2026-04-25 · Source dashboard light visual refinement implemented locally · warmer off-white dashboard canvas, compact pressure signals, earlier event table, and one retained dark command-read panel · no event canvas/chat/API/model/upload/workflow engine scope.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #216 merged · base TypeScript hygiene blocker cleared.
-- Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: enable authenticated `/source` access through the app-owned sign-in redirect flow.
-- Current item: Source auth redirect fix.
+- Current completed milestone: PR #218 merged · Source auth redirect fix enabled authenticated `/source` access for visual review.
+- Dashboard decision: approve with targeted visual refinement after authenticated screenshot review.
+- Current objective: align `/source` dashboard visual language with off-white, premium, data-forward AbarVa direction.
+- Current item: Source dashboard light visual refinement.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -196,9 +198,11 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Authenticated Source dashboard visual review packet merged via PR #213; review remained blocked by Clerk redirect.
   - Source auth redirect diagnostic merged via PR #215.
   - Base TypeScript hygiene repaired via PR #216.
+  - Source auth redirect fix merged via PR #218.
+  - Authenticated screenshot review completed by user; content strategy strong, visual tone too dark/heavy.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
-- Next recommended item: merge the Source auth redirect fix, then perform authenticated `/source` screenshot/review. Keep event canvas/chat/API/model/upload/workflow engine work blocked until explicitly approved.
-- Next planning artifact: authenticated Source dashboard screen review after auth fix.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue was narrow and fixed by PR #218. Authenticated review confirmed the dashboard content is strong but the visual tone should be lighter, more off-white, and more table-forward.
+- Next recommended item: review the light visual refinement PR, then capture authenticated `/source` screenshot after merge. Keep event canvas/chat/API/model/upload/workflow engine work blocked until explicitly approved.
+- Next planning artifact: authenticated Source dashboard screen review after light visual refinement.
