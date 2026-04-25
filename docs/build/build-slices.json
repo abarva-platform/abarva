@@ -794,6 +794,64 @@
         "npm run build"
       ],
       "notes": "First Intelligence-page consumer of the I1 read model. Pattern detail drawer, evidence trail, graph traversal, live Sentinel validation, and Atlas editorial handoff are deferred to I3 and beyond."
+    },
+    {
+      "id": "I3",
+      "name": "Intelligence · Pattern Detail / Evidence Trail",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1",
+        "I2"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/sentinel-pattern-view.ts",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
+        "src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts",
+        "docs/build/slices/I3_INTELLIGENCE_PATTERN_DETAIL_EVIDENCE_TRAIL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Tenant Sentinel pattern detail route renders via /tenant/<routeSlug>/intelligence/patterns/<patternKey> for canonical I1 pattern keys.",
+        "buildSentinelPatternDetailView returns null when the pattern key is unknown or when the tenant has no detection for that key.",
+        "isSentinelPatternKey type guard accepts only the 5 canonical SentinelPatternKey values.",
+        "Pattern detail view exposes patternKey, patternName, confidence, severity, title, summary, whyItMatters, affected programs, source signal IDs, evidence trail rows, missing inputs, recommended action, handoff rows, intelligenceLandingHref, sourceLabel, interpretationBasis.",
+        "Affected program rows route back to the canonical /tenant/<routeSlug>/programs/<programSlug>.",
+        "Evidence trail rows trace back 1:1 to detection.sourceSignalIds and detection.evidenceSignals from I1.",
+        "Citation readiness reports not_yet_wired today; no row claims a real citation.",
+        "No invented dollar amount in any string field on the detail view.",
+        "No claim of live Sentinel runtime; sourceLabel is deterministic_seed or pattern_detection_read_model.",
+        "Route preserves legacy /tenant/<routeSlug>/intelligence/patterns/<seed-slug> behavior by falling back to <SeedTenantPattern> when the slug is not a canonical Sentinel pattern key.",
+        "Existing assertTenantAccess and notFound behavior is preserved on the route.",
+        "No Sentinel runtime, Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth implementation, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/sentinel-pattern-detail.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pattern detail surface for Sentinel keys; legacy [patternSlug] route was deleted to resolve a Next.js dynamic-segment-name collision and the new [patternKey] route falls back to SeedTenantPattern for any non-Sentinel slug. Evidence registry citation, graph traversal, authored pattern renderer, and live Sentinel validation are deferred to I4+."
     }
   ]
 }

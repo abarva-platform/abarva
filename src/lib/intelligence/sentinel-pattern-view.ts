@@ -27,11 +27,15 @@
 
 import {
   buildSentinelPatternDetectionsForTenant,
+  SENTINEL_PATTERN_KEYS_IN_RANK_ORDER,
   summarizeSentinelPatternDetections,
+  type SentinelAffectedProgram,
   type SentinelDetectionConfidence,
   type SentinelPatternDetection,
   type SentinelPatternDetectionSummary,
+  type SentinelPatternEvidenceSignal,
   type SentinelPatternHandoffTarget,
+  type SentinelPatternKey,
   type SentinelPatternSeverity,
 } from '@/lib/intelligence/sentinel-pattern-detections';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
@@ -336,5 +340,245 @@ function humanizeConfidence(confidence: SentinelDetectionConfidence): string {
       return 'MEDIUM';
     case 'low':
       return 'LOW';
+  }
+}
+
+// =====================================================================
+// I3 · Pattern Detail / Evidence Trail
+// =====================================================================
+//
+// Pure deterministic helpers that take an I1 SentinelPatternDetection
+// and return display rows for the tenant pattern detail page.
+// No model calls, no Date.now() reads, no random IDs.
+
+export type SentinelPatternEvidenceCitationStatus =
+  | 'not_yet_wired'
+  | 'wired';
+
+export interface SentinelPatternEvidenceTrailRow {
+  signalId: string;
+  signalType: SentinelPatternEvidenceSignal['signalType'];
+  signalSeverity: SentinelPatternEvidenceSignal['signalSeverity'];
+  programCode: string;
+  programName: string;
+  source: SentinelPatternEvidenceSignal['source'];
+  routeHref: string;
+  /** Honest evidence-citation readiness for this row. */
+  citationStatus: SentinelPatternEvidenceCitationStatus;
+  /** Single-line caption naming why citations are or are not present. */
+  citationCaption: string;
+}
+
+export interface SentinelPatternHandoffRow {
+  target: SentinelPatternHandoffTarget;
+  reason: string;
+}
+
+export interface SentinelPatternDetailView {
+  tenant: TenantSeedPlan;
+  detection: SentinelPatternDetection;
+  patternKey: SentinelPatternKey;
+  patternName: string;
+  confidence: SentinelDetectionConfidence;
+  confidenceLabel: string;
+  severity: SentinelPatternSeverity;
+  severityLabel: string;
+  title: string;
+  summary: string;
+  whyItMatters: string;
+  affectedPrograms: ReadonlyArray<SentinelAffectedProgram>;
+  affectedProgramRows: ReadonlyArray<SentinelAffectedProgram>;
+  sourceSignalIds: ReadonlyArray<string>;
+  evidenceTrail: ReadonlyArray<SentinelPatternEvidenceTrailRow>;
+  missingInputs: ReadonlyArray<string>;
+  recommendedAction: string;
+  handoffTargets: ReadonlyArray<SentinelPatternHandoffTarget>;
+  handoffRows: ReadonlyArray<SentinelPatternHandoffRow>;
+  /** Honest summary of citation readiness across the evidence trail. */
+  citationReadinessLabel: SentinelPatternEvidenceCitationStatus;
+  /** Sentence calling out that citations are not yet wired today. */
+  citationReadinessCaption: string;
+  /** Route the page can use to send the user back to Intelligence. */
+  intelligenceLandingHref: string;
+  /** Marker so consumers know this is not a live-model output. */
+  sourceLabel: SentinelBriefSourceLabel;
+  /** Single-line basis for the page's confidence/severity claim. */
+  interpretationBasis: string;
+}
+
+/**
+ * Type guard: is this string a known canonical Sentinel pattern key?
+ */
+export function isSentinelPatternKey(value: string): value is SentinelPatternKey {
+  return (SENTINEL_PATTERN_KEYS_IN_RANK_ORDER as ReadonlyArray<string>).includes(
+    value,
+  );
+}
+
+/**
+ * Build the deterministic Pattern Detail view for a tenant + pattern
+ * key. Returns null when the tenant has no detection for that key
+ * (the route should `notFound()` in that case). Pure: same inputs →
+ * identical view.
+ */
+export function buildSentinelPatternDetailView(
+  tenant: TenantSeedPlan,
+  patternKey: string,
+): SentinelPatternDetailView | null {
+  if (!isSentinelPatternKey(patternKey)) return null;
+
+  const detections = buildSentinelPatternDetectionsForTenant(tenant);
+  const detection = detections.find((d) => d.patternKey === patternKey);
+  if (!detection) return null;
+
+  const evidenceTrail = buildPatternEvidenceTrail(detection);
+  const affectedProgramRows = buildPatternAffectedProgramRows(detection);
+  const handoffRows = buildPatternHandoffRows(detection);
+
+  const citationReadinessLabel: SentinelPatternEvidenceCitationStatus =
+    'not_yet_wired';
+  const citationReadinessCaption =
+    'Evidence citations are not yet wired for this deterministic pattern view.';
+
+  const interpretationBasis = composeDetailInterpretationBasis(
+    detection,
+    affectedProgramRows.length,
+  );
+
+  return {
+    tenant,
+    detection,
+    patternKey: detection.patternKey,
+    patternName: detection.patternName,
+    confidence: detection.confidence,
+    confidenceLabel: humanizeConfidence(detection.confidence),
+    severity: detection.severity,
+    severityLabel: humanizeSeverity(detection.severity),
+    title: detection.title,
+    summary: detection.summary,
+    whyItMatters: detection.whyItMatters,
+    affectedPrograms: detection.affectedPrograms,
+    affectedProgramRows,
+    sourceSignalIds: detection.sourceSignalIds,
+    evidenceTrail,
+    missingInputs: detection.missingInputs,
+    recommendedAction: detection.recommendedAction,
+    handoffTargets: detection.handoffTargets,
+    handoffRows,
+    citationReadinessLabel,
+    citationReadinessCaption,
+    intelligenceLandingHref: `/tenant/${tenant.routeSlug}/intelligence`,
+    sourceLabel: 'pattern_detection_read_model',
+    interpretationBasis,
+  };
+}
+
+/**
+ * Project the I1 evidenceSignals onto traceable rows for rendering.
+ * Pure.
+ */
+export function buildPatternEvidenceTrail(
+  detection: SentinelPatternDetection,
+): ReadonlyArray<SentinelPatternEvidenceTrailRow> {
+  return detection.evidenceSignals.map<SentinelPatternEvidenceTrailRow>((sig) => {
+    const matching = detection.affectedPrograms.find(
+      (ap) => ap.programCode === sig.programCode,
+    );
+    const summary = composeEvidenceTrailSummary(sig, matching);
+    return {
+      signalId: sig.signalId,
+      signalType: sig.signalType,
+      signalSeverity: sig.signalSeverity,
+      programCode: sig.programCode,
+      programName: sig.programName,
+      source: sig.source,
+      routeHref: sig.routeHref,
+      citationStatus: 'not_yet_wired',
+      citationCaption: summary,
+    };
+  });
+}
+
+/**
+ * Affected programs as renderable rows. Today this is just the I1
+ * shape, but the helper exists so future enrichment (phase, gate,
+ * value status) lands in one place. Pure.
+ */
+export function buildPatternAffectedProgramRows(
+  detection: SentinelPatternDetection,
+): ReadonlyArray<SentinelAffectedProgram> {
+  return detection.affectedPrograms;
+}
+
+/**
+ * Handoff targets enriched with a per-target reason caption. Pure.
+ */
+export function buildPatternHandoffRows(
+  detection: SentinelPatternDetection,
+): ReadonlyArray<SentinelPatternHandoffRow> {
+  return detection.handoffTargets.map<SentinelPatternHandoffRow>((target) => ({
+    target,
+    reason: composeHandoffReason(target, detection),
+  }));
+}
+
+// --- Internal composition helpers ------------------------------------
+
+function composeDetailInterpretationBasis(
+  detection: SentinelPatternDetection,
+  programCount: number,
+): string {
+  if (detection.confidence === 'high' && programCount >= 3) {
+    return `Cross-program scope (${programCount} programs) lifted confidence to high; live Sentinel persistence would refine this with recurrence history.`;
+  }
+  if (detection.confidence === 'medium') {
+    return `${programCount} program(s) involved; live Sentinel runtime would refine this with retrieval-backed evidence.`;
+  }
+  return 'Single-program detection from seed-only readiness; live Sentinel runtime would refine this with retrieval and recurrence.';
+}
+
+function composeEvidenceTrailSummary(
+  sig: SentinelPatternEvidenceSignal,
+  matching: SentinelAffectedProgram | undefined,
+): string {
+  const programLabel = matching
+    ? `${matching.programCode} · ${matching.programName}`
+    : `${sig.programCode} · ${sig.programName}`;
+  const typeLabel = humanizeSignalType(sig.signalType);
+  return `Evidence citations not yet wired · ${programLabel} · ${typeLabel}.`;
+}
+
+function composeHandoffReason(
+  target: SentinelPatternHandoffTarget,
+  detection: SentinelPatternDetection,
+): string {
+  switch (target) {
+    case 'atlas':
+      return `Atlas can compose executive editorial naming the ${detection.patternName.toLowerCase()} pattern with confidence ${detection.confidence}.`;
+    case 'steward':
+      return 'Steward can clear blocking items program by program and capture structured decisions.';
+    case 'nexus':
+      return 'Nexus can orchestrate retrieval to lift the Context Bundle out of insufficient/pattern-only state.';
+    case 'sentinel':
+      return 'Sentinel will track recurrence across steering touchpoints once persistence lands.';
+  }
+}
+
+function humanizeSignalType(
+  type: SentinelPatternEvidenceSignal['signalType'],
+): string {
+  switch (type) {
+    case 'gate_missing_inputs':
+      return 'gate inputs';
+    case 'evidence_not_ready':
+      return 'evidence readiness';
+    case 'value_not_ready':
+      return 'value readiness';
+    case 'deliverable_coverage_gap':
+      return 'deliverable coverage';
+    case 'context_insufficient':
+      return 'context bundle';
+    case 'executive_decision_needed':
+      return 'executive decision';
   }
 }
