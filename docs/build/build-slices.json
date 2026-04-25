@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-04-24",
+  "lastUpdated": "2026-04-25",
   "lifecycle": [
     "ready",
     "in_progress",
@@ -1342,6 +1342,107 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
+    },
+    {
+      "id": "DES1",
+      "name": "AbarVa Visual Canon",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/design/ABARVA_VISUAL_CANON.md",
+        "docs/design/components/ABARVA_COMPONENT_RECIPES.md",
+        "docs/design/pages/PROGRAMS_PAGE_BLUEPRINT.md",
+        "docs/design/pages/INTELLIGENCE_PAGE_BLUEPRINT.md",
+        "docs/design/pages/AI_CONTROL_TOWER_PAGE_BLUEPRINT.md",
+        "docs/design/pages/ADMIN_SETUP_PAGE_BLUEPRINT.md",
+        "docs/build/slices/DES1_ABARVA_VISUAL_CANON.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Canon document declares brand direction, wordmark rule, symbol rule, color palette, typography, light/dark surface usage, top-nav contract, agent visual treatment, icon restraint, card/table/drawer style, progressive-disclosure rules, and no-clutter rules.",
+        "Color palette names NAVY (#1B2B5C) as the single brand accent and reserves dark surfaces for high-impact briefs only.",
+        "Typography direction is DM Sans body + JetBrains Mono mono; serif body is explicitly retired from v2.",
+        "Wordmark rule is typographic (no SVG) with the Abar/Va split, NAVY Va half 1.05-1.10x larger than Abar half.",
+        "Agent visual treatment maps Nexus / Sentinel / Atlas / Steward to canonical accents.",
+        "Component recipes describe surface and props for the eleven canonical primitives implemented by DES2.",
+        "Each page blueprint (Programs / Intelligence / AI Control Tower / Admin Setup) lists hide/show rules and acceptance criteria.",
+        "No app code is touched; this is documentation only."
+      ],
+      "validationCommands": [
+        "git diff --cached --name-only"
+      ],
+      "notes": "Documentation-only foundation slice. Captures the AbarVa visual direction so DES2 primitives and DES3+ page refresh slices have a single source of truth. No runtime, no model calls, no migrations."
+    },
+    {
+      "id": "DES2",
+      "name": "Core UI Primitives",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1"
+      ],
+      "allowedFiles": [
+        "src/lib/design/abarva-theme.ts",
+        "src/components/abarva/AbarVaTopNav.tsx",
+        "src/components/abarva/AgentBadge.tsx",
+        "src/components/abarva/AgentBriefPanel.tsx",
+        "src/components/abarva/DetailDrawerShell.tsx",
+        "src/components/abarva/EmptyInspector.tsx",
+        "src/components/abarva/EvidenceChip.tsx",
+        "src/components/abarva/FileTypeChip.tsx",
+        "src/components/abarva/JourneyRail.tsx",
+        "src/components/abarva/MetricStrip.tsx",
+        "src/components/abarva/PatternCard.tsx",
+        "src/components/abarva/PressureCard.tsx",
+        "src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "docs/build/slices/DES2_CORE_UI_PRIMITIVES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "abarva-theme.ts exports COLORS, FONT, TYPE, SPACING, RADIUS, BORDER, AGENT_ACCENT, ABARVA_AGENT_NAMES (4), ABARVA_STATUS_KEYS (7), ABARVA_FILE_CHIPS (7), ABARVA_EVIDENCE_STATES (6), and a total statusAccent() helper.",
+        "COLORS.navy is exactly #1B2B5C and FONT.body is DM Sans (no Georgia, no Times).",
+        "All eleven primitives live under src/components/abarva/ and are server components (no useState, no useEffect, no fetch).",
+        "Top nav exposes the canonical surface tuple ABARVA_TOP_NAV_SURFACES in canonical order.",
+        "Agent partition maps the four canonical agents (Nexus / Sentinel / Atlas / Steward) to the canon accents.",
+        "Status partition maps the seven canonical status keys (ready / low / medium / partial / high / blocked / critical) to NAVY / AMBER / RED accent tiers.",
+        "Module hygiene tests block accidental imports from Sentinel / Atlas / Nexus / Agent runtime, Source UI, mock.ts, auth, or supabase, and ban Date.now / Math.random / anthropic / openai usage."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "npm run build"
+      ],
+      "notes": "Eleven calm, deterministic React primitives plus a single shared theme module that encodes the DES1 canon. No client interactivity, no model calls. DES3+ page refresh slices migrate Programs / Intelligence / AI Control Tower / Admin Setup onto these primitives."
     }
   ]
 }
