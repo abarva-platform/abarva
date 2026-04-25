@@ -9,9 +9,12 @@ Before a UI PR is approved, the review must confirm:
 - Value, risk, status, and owner are visible.
 - Journey stage is visible wherever workflow matters.
 - Agent guidance is contextual, not generic.
+- Agent activity shows concrete mission work when proactive guidance is present.
 - Agent response shape matches the user situation.
 - Three choices plus custom appears only when it helps the user move forward.
 - Context used, missing context, and confidence are visible when relevant.
+- Mission counts, blockers, defers, owners, and due dates are visible only when they add decision value.
+- Agent activity does not become a noisy feed or avatar-led chatbot surface.
 - Tables are readable and scannable.
 - Icons and symbols are restrained.
 - Badges do not overwhelm the page.
