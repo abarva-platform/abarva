@@ -12,6 +12,8 @@ export * from './queries';
 export * from './scorecard';
 export * from './types';
 export * from './value-ledger';
+export * from './workflow-validation';
+export * from './workflow-validation-fixtures';
 
 export type {
   SourceAgentContextBundle,
