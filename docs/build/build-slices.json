@@ -1342,6 +1342,46 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
+    },
+    {
+      "id": "DES1",
+      "name": "AbarVa Visual Canon and Page Blueprints",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/design/ABARVA_VISUAL_CANON.md",
+        "docs/design/pages/PROGRAMS_PAGE_BLUEPRINT.md",
+        "docs/design/pages/INTELLIGENCE_PAGE_BLUEPRINT.md",
+        "docs/design/pages/AI_CONTROL_TOWER_PAGE_BLUEPRINT.md",
+        "docs/design/pages/ADMIN_SETUP_PAGE_BLUEPRINT.md",
+        "docs/design/components/ABARVA_COMPONENT_RECIPES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Visual canon defines brand direction, AbarVa wordmark rules, no-symbol logo rules, palette, typography, light vs dark usage, top nav direction, agent visual treatment, icon restraint, card / table / drawer style, progressive disclosure rules, and no-clutter rules.",
+        "Programs page blueprint defines portfolio table, six-phase journey rail, gate caps, phase canvas, Nexus mastermind role, Steward gate role, deliverables / artifacts by phase via PDEL, hide-show rules, and acceptance criteria.",
+        "Intelligence page blueprint defines Sentinel Brief, Active Patterns strip, four-mode Dynamic Insight Canvas (Summary / Evidence / Programs / Actions), Sentinel interaction rail (drawer not chat), internal vs external dataset basis, same-canvas interaction model, and acceptance criteria.",
+        "AI Control Tower page blueprint defines Atlas Brief hero, five-scorecard limit, three-pressure-card limit, one-active-lens rule, Ask Atlas drawer (not chat), seven canonical dimensions, no-dashboard-clutter rules, and acceptance criteria.",
+        "Admin / Setup page blueprint defines Steward Brief, Apple-like five-zone control plane, dataset domain readiness, loaded / available / usable evidence model, users / access / governance / connectors portals, Agent Readiness Matrix, dataset explorer (ADM4), and acceptance criteria.",
+        "Component recipes define AbarVaTopNav, AgentBriefPanel, AgentBadge, JourneyRail, PhaseCanvas, EvidenceChip, FileTypeChip, PressureCard, PatternCard, DatasetCard, DetailDrawer, EmptyInspector with purpose, props, visual treatment, behavior, and constraints per recipe.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "AbarVa visual canon plus 4 page blueprints plus 12 component recipes. Establishes the design contract every future implementation slice (Programs / Tower / Intelligence / Admin) must conform to. Specification only."
     }
   ]
 }
