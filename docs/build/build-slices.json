@@ -1917,6 +1917,53 @@
         "npm run build"
       ],
       "notes": "Pure deterministic two-region canvas (left list + right preview) projected from the PDEL artifact inventory. No upload, no parse, no export, no model calls, no live download. PDEL5b/PDEL6 wire export and route-level selection state; PDEL7 wires edit / regenerate."
+    },
+    {
+      "id": "HOME1",
+      "name": "Agentic Executive Home / Entry Surface",
+      "category": "HOME",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/components/home/AgenticHomeEntry.tsx",
+        "src/app/(maestro)/home/page.tsx",
+        "src/__tests__/integration/home/agentic-home-entry.test.ts",
+        "docs/build/slices/HOME1_AGENTIC_EXECUTIVE_ENTRY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "AgenticHomeEntry renders the AbarVa wordmark plus a one-line orientation tagline within a single page-fold of content.",
+        "Surface exposes all four canonical agent surface cards: Programs/Nexus, Control Tower/Atlas, Intelligence/Sentinel, Admin Setup/Steward.",
+        "Each agent card hrefs to its canonical route: /tenant/[tenantSlug]/programs, /tenant/[tenantSlug]/tower, /tenant/[tenantSlug]/intelligence, /platform/admin.",
+        "Component accepts an optional tenantSlug prop and defaults to the canonical placeholder 'acme' when omitted.",
+        "What-needs-attention strip renders no more than 3 cards, each carrying data-deterministic=\"true\" and data-source=\"deterministic_seed\".",
+        "Attention numbers are produced by a pure deterministic helper, not by any live read or model call.",
+        "Surface carries a root data-agentic-home-entry=\"home1\" marker and a data-honest-disclaimer=\"home1\" footer naming the seed-only contract.",
+        "Home route mounts <AgenticHomeEntry /> from the canonical module path.",
+        "Component imports nothing from lib/nexus, lib/agent, lib/source, lib/auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/home/agentic-home-entry.test.ts",
+        "npm run build"
+      ],
+      "notes": "Calm executive entry surface that augments the existing composite home above the legacy hero. Numbers are deterministic seeds; live binding is deferred to a later slice that wires the attention strip to real tenant state."
     }
   ]
 }
