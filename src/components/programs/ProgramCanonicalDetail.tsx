@@ -49,24 +49,28 @@ import type {
   ProgramSeedPlan,
   TenantSeedPlan,
 } from '@/lib/programs/enhancement-seed-planner';
+import { COLORS as ABARVA_COLORS } from '@/lib/design/abarva-theme';
 
 interface ProgramCanonicalDetailProps {
   tenant: TenantSeedPlan;
   program: ProgramSeedPlan;
 }
 
+// DES3 · refreshed against AbarVa visual canon. Brand accent shifts
+// from teal to NAVY; surface tones lift onto the canonical
+// off-white palette.
 const COLORS = {
-  ink: '#1a1612',
-  muted: '#5a5148',
-  mutedSoft: '#8a7e72',
-  border: 'rgba(26,22,18,0.08)',
-  borderSoft: 'rgba(26,22,18,0.04)',
-  card: '#FFFFFF',
-  surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
-  amber: '#D97706',
-  amberSoft: 'rgba(217,119,6,0.08)',
+  ink: ABARVA_COLORS.ink,
+  muted: ABARVA_COLORS.muted,
+  mutedSoft: ABARVA_COLORS.mutedSoft,
+  border: ABARVA_COLORS.border,
+  borderSoft: ABARVA_COLORS.borderSoft,
+  card: ABARVA_COLORS.card,
+  surface: ABARVA_COLORS.surface,
+  accent: ABARVA_COLORS.navy,
+  accentSoft: ABARVA_COLORS.navySoft,
+  amber: ABARVA_COLORS.amber,
+  amberSoft: ABARVA_COLORS.amberSoft,
 } as const;
 
 export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDetailProps) {
@@ -75,6 +79,7 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
   return (
     <main
+      data-abarva-refreshed="des3"
       style={{
         background: COLORS.surface,
         color: COLORS.ink,

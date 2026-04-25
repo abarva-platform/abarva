@@ -1458,6 +1458,47 @@
         "npm run build"
       ],
       "notes": "11 AbarVa primitives plus theme tokens. Pure data props; consumers wire interactivity. Forms the visual foundation for DES3 / DES4 / DES5 / ADM5 UX refreshes."
+    },
+    {
+      "id": "DES3",
+      "name": "Programs UX Refresh",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1",
+        "DES2"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramsCanonicalIndex.tsx",
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/__tests__/integration/programs/programs-ux-refresh.test.ts",
+        "docs/build/slices/DES3_PROGRAMS_UX_REFRESH.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "ProgramsCanonicalIndex and ProgramCanonicalDetail import from @/lib/design/abarva-theme.",
+        "Brand accent shifted from teal #0E9F8C to NAVY #1B2B5C across both components.",
+        "Both components carry data-abarva-refreshed='des3' marker on root.",
+        "No structural changes; existing zones, copy, behavior, routes preserved.",
+        "Regression suites pass: programs-canonical-surface, programs-nexus-rail-metadata, program-artifact-inventory."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-ux-refresh.test.ts",
+        "npm run build"
+      ],
+      "notes": "Visual refresh only. Functionality unchanged. Brand accent and surface palette aligned with AbarVa visual canon."
     }
   ]
 }
