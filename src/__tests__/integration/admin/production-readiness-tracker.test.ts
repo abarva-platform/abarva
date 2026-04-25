@@ -3,11 +3,14 @@ import { resolve } from 'path';
 import {
   buildProductionReadinessView,
   computeOverallReadinessPercent,
+  getProductionReadinessComponentProgress,
+  getProductionReadinessSegments,
   loadProductionReadinessManifest,
   PRODUCTION_READINESS_COMPONENT_IDS,
   PRODUCTION_READINESS_DIMENSIONS,
   PRODUCTION_READINESS_GATES,
   PRODUCTION_READINESS_GATE_STATUSES,
+  PRODUCTION_READINESS_SEGMENTS,
   PRODUCTION_READINESS_STATUSES,
   summarizeProductionReadiness,
   type ProductionReadinessManifest,
@@ -25,26 +28,20 @@ describe('production-readiness.json manifest', () => {
 
   it('matches the expected product component IDs in canonical order', () => {
     const manifest = loadProductionReadinessManifest();
-    expect(manifest.components.map((component) => component.id)).toEqual([
-      ...PRODUCTION_READINESS_COMPONENT_IDS,
-    ]);
+    expect(manifest.components.map((component) => component.id)).toEqual([...PRODUCTION_READINESS_COMPONENT_IDS]);
   });
 
   it('includes all readiness dimensions for every component', () => {
     const manifest = loadProductionReadinessManifest();
     for (const component of manifest.components) {
-      expect(Object.keys(component.dimensions).sort()).toEqual(
-        [...PRODUCTION_READINESS_DIMENSIONS].sort(),
-      );
+      expect(Object.keys(component.dimensions).sort()).toEqual([...PRODUCTION_READINESS_DIMENSIONS].sort());
     }
   });
 
   it('includes all testing gates for every component', () => {
     const manifest = loadProductionReadinessManifest();
     for (const component of manifest.components) {
-      expect(Object.keys(component.testingGates).sort()).toEqual(
-        [...PRODUCTION_READINESS_GATES].sort(),
-      );
+      expect(Object.keys(component.testingGates).sort()).toEqual([...PRODUCTION_READINESS_GATES].sort());
     }
   });
 
@@ -65,6 +62,65 @@ describe('production-readiness.json manifest', () => {
       }
     }
   });
+
+  it('records the founder maturity snapshot as deterministic ranges', () => {
+    const manifest = loadProductionReadinessManifest();
+
+    expect(manifest.maturitySnapshot.source.toLowerCase()).toContain('deterministic planning snapshot');
+    expect(manifest.maturitySnapshot.indicators).toEqual([
+      expect.objectContaining({
+        id: 'overall_product_maturity',
+        percentLow: 35,
+        percentHigh: 40,
+      }),
+      expect.objectContaining({
+        id: 'demo_proof_of_concept_maturity',
+        percentLow: 65,
+        percentHigh: 70,
+      }),
+      expect.objectContaining({
+        id: 'production_readiness',
+        percentLow: 20,
+        percentHigh: 25,
+      }),
+    ]);
+    expect(manifest.overallReadinessPercent).toBeGreaterThanOrEqual(20);
+    expect(manifest.overallReadinessPercent).toBeLessThanOrEqual(25);
+    expect(manifest.maturitySnapshot.areas.map((area) => area.area)).toEqual([
+      'Product vision / architecture',
+      'Programs',
+      'Program deliverables / artifacts',
+      'Nexus / Client Maestro workflow',
+      'Intelligence / Sentinel',
+      'AI Control Tower / Atlas',
+      'Admin / Setup / Steward',
+      'Source / sourcing product',
+      'Solution Intelligence Fabric',
+      'Patterns / pattern library',
+      'Data / Knowledge Fabric',
+      'Evidence Ledger',
+      'Model Gateway',
+      'Agent Runtime',
+      'Tool Layer',
+      'Workflow / program state',
+      'Audit / governance',
+      'Visual design system',
+      'Validation / QA',
+      'Production deployment readiness',
+    ]);
+
+    for (const area of manifest.maturitySnapshot.areas) {
+      expect(area.completed.length).toBeGreaterThan(0);
+      expect(area.pending.length).toBeGreaterThan(0);
+      expect(area.percentLow).toBeGreaterThanOrEqual(0);
+      expect(area.percentHigh).toBeLessThanOrEqual(100);
+      expect(area.percentHigh).toBeGreaterThanOrEqual(area.percentLow);
+      expect(area.relatedComponentIds.length).toBeGreaterThan(0);
+      for (const componentId of area.relatedComponentIds) {
+        expect(PRODUCTION_READINESS_COMPONENT_IDS).toContain(componentId);
+      }
+    }
+  });
 });
 
 describe('production readiness read model', () => {
@@ -82,10 +138,45 @@ describe('production readiness read model', () => {
         manifest.components.filter((component) => component.status === status).length,
       );
     }
-    expect(summary.overallReadinessPercent).toBe(
-      computeOverallReadinessPercent(manifest.components),
-    );
+    expect(summary.overallReadinessPercent).toBe(computeOverallReadinessPercent(manifest.components));
     expect(summary.overallReadinessPercent).toBe(manifest.overallReadinessPercent);
+  });
+
+  it('exposes component progress with started and percent pending math', () => {
+    const manifest = loadProductionReadinessManifest();
+    const progress = getProductionReadinessComponentProgress(manifest.components);
+
+    expect(progress).toHaveLength(manifest.components.length);
+    expect(progress.map((component) => component.componentId)).toEqual([...PRODUCTION_READINESS_COMPONENT_IDS]);
+
+    for (const component of progress) {
+      expect(component.percentComplete + component.percentPending).toBe(100);
+      expect(component.percentComplete).toBeGreaterThanOrEqual(0);
+      expect(component.percentComplete).toBeLessThanOrEqual(100);
+      expect(component.started).toBe(component.status !== 'not_started');
+      expect(component.segmentName.length).toBeGreaterThan(0);
+      expect(component.nextAction.length).toBeGreaterThan(0);
+    }
+
+    expect(progress.find((component) => component.componentId === 'model_gateway')?.started).toBe(false);
+    expect(progress.find((component) => component.componentId === 'source')?.percentComplete).toBeGreaterThan(0);
+  });
+
+  it('groups readiness by operator-friendly segments', () => {
+    const manifest = loadProductionReadinessManifest();
+    const segments = getProductionReadinessSegments(manifest.components);
+
+    expect(segments.map((segment) => segment.id)).toEqual(PRODUCTION_READINESS_SEGMENTS.map((segment) => segment.id));
+    expect(segments.reduce((sum, segment) => sum + segment.totalComponents, 0)).toBe(manifest.components.length);
+    expect(segments.flatMap((segment) => segment.components.map((component) => component.componentId)).sort()).toEqual(
+      [...PRODUCTION_READINESS_COMPONENT_IDS].sort(),
+    );
+
+    for (const segment of segments) {
+      expect(segment.percentComplete + segment.percentPending).toBe(100);
+      expect(segment.startedCount + segment.notStartedCount).toBe(segment.totalComponents);
+      expect(segment.nextAction.length).toBeGreaterThan(0);
+    }
   });
 
   it('exposes top blockers and next recommended actions', () => {
@@ -101,9 +192,7 @@ describe('production readiness read model', () => {
   });
 
   it('tracks Source / Outsourcing as a first-class honest component', () => {
-    const source = loadProductionReadinessManifest().components.find(
-      (component) => component.id === 'source',
-    );
+    const source = loadProductionReadinessManifest().components.find((component) => component.id === 'source');
     expect(source).toBeDefined();
     expect(source!.name).toBe('Source / Outsourcing');
     expect(source!.status).toBe('scaffolded');
@@ -186,9 +275,7 @@ describe('module hygiene', () => {
   const routeSource = readCode('../../../app/(maestro)/platform/admin/production-readiness/page.tsx');
   const adminPageSource = readCode('../../../app/(maestro)/platform/admin/page.tsx');
   const newSources = [readModelSource, componentSource, routeSource].map(stripComments).join('\n');
-  const adminSources = [readModelSource, componentSource, routeSource, adminPageSource]
-    .map(stripComments)
-    .join('\n');
+  const adminSources = [readModelSource, componentSource, routeSource, adminPageSource].map(stripComments).join('\n');
 
   it('does not import forbidden product/runtime modules', () => {
     expect(newSources).not.toMatch(/from '@\/lib\/source\//);
@@ -220,6 +307,12 @@ describe('module hygiene', () => {
   it('component and route wire the deterministic read model', () => {
     expect(componentSource).toMatch(/buildProductionReadinessView/);
     expect(componentSource).toMatch(/from '@\/lib\/admin\/production-readiness'/);
+    expect(componentSource).toMatch(/Product maturity by area/);
+    expect(componentSource).toMatch(/Readiness by segment/);
+    expect(componentSource).toMatch(/Component progress table/);
+    expect(componentSource).toMatch(/% done/);
+    expect(componentSource).toMatch(/% pending/);
+    expect(componentSource).toMatch(/Started/);
     expect(routeSource).toMatch(/ProductionReadinessTracker/);
     expect(routeSource).toMatch(/buildProductionReadinessView/);
     expect(adminPageSource).toMatch(/\/platform\/admin\/production-readiness/);
