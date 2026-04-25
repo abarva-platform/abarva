@@ -71,6 +71,48 @@ export const PRODUCTION_READINESS_COMPONENT_IDS = [
 
 export type ProductionReadinessComponentId = (typeof PRODUCTION_READINESS_COMPONENT_IDS)[number];
 
+export const PRODUCTION_READINESS_SEGMENTS = [
+  {
+    id: 'product_experience',
+    name: 'Product Experience',
+    description: 'User-facing and operator-facing product surfaces.',
+    componentIds: [
+      'programs',
+      'program_workshop_mode',
+      'deliverables_artifacts',
+      'intelligence',
+      'ai_control_tower',
+      'admin_setup',
+      'source',
+    ],
+  },
+  {
+    id: 'data_and_evidence',
+    name: 'Data and Evidence',
+    description: 'Evidence fabric, ingestion, and governance foundations.',
+    componentIds: ['data_evidence_knowledge_fabric', 'ingestion_parsing', 'audit_governance'],
+  },
+  {
+    id: 'runtime_and_intelligence',
+    name: 'Runtime and Intelligence',
+    description: 'Runtime, gateway, and solution intelligence capabilities.',
+    componentIds: ['solution_intelligence', 'agent_runtime', 'model_gateway'],
+  },
+  {
+    id: 'validation_and_deployment',
+    name: 'Validation and Deployment',
+    description: 'QA gates, release health, and production deployment readiness.',
+    componentIds: ['validation_qa', 'production_deployment'],
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  name: string;
+  description: string;
+  componentIds: ReadonlyArray<ProductionReadinessComponentId>;
+}>;
+
+export type ProductionReadinessSegmentId = (typeof PRODUCTION_READINESS_SEGMENTS)[number]['id'];
+
 export type ProductionReadinessBlockerSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type ProductionReadinessRiskLevel = 'low' | 'medium' | 'medium_high' | 'high' | 'critical';
 
@@ -111,6 +153,30 @@ export interface ProductionReadinessStewardBrief {
   topBlockers: ReadonlyArray<string>;
 }
 
+export interface ProductMaturityIndicator {
+  id: string;
+  label: string;
+  percentLow: number;
+  percentHigh: number;
+  interpretation: string;
+}
+
+export interface ProductMaturityArea {
+  id: string;
+  area: string;
+  completed: string;
+  pending: string;
+  percentLow: number;
+  percentHigh: number;
+  relatedComponentIds: ReadonlyArray<ProductionReadinessComponentId>;
+}
+
+export interface ProductMaturitySnapshot {
+  source: string;
+  indicators: ReadonlyArray<ProductMaturityIndicator>;
+  areas: ReadonlyArray<ProductMaturityArea>;
+}
+
 export interface ProductionReadinessManifest {
   schemaVersion: number;
   lastUpdated: string;
@@ -118,6 +184,7 @@ export interface ProductionReadinessManifest {
   source: string;
   overallStatus: ProductionReadinessStatus;
   overallReadinessPercent: number;
+  maturitySnapshot: ProductMaturitySnapshot;
   stewardBrief: ProductionReadinessStewardBrief;
   components: ReadonlyArray<ProductionReadinessComponent>;
 }
@@ -153,6 +220,44 @@ export interface ProductionReadinessRecommendedAction {
   unblocks: ProductionReadinessStatus;
 }
 
+export interface ProductionReadinessComponentProgress {
+  componentId: ProductionReadinessComponentId;
+  componentName: string;
+  ownerAgent: string;
+  segmentId: ProductionReadinessSegmentId;
+  segmentName: string;
+  status: ProductionReadinessStatus;
+  started: boolean;
+  percentComplete: number;
+  percentPending: number;
+  blockerCount: number;
+  criticalBlockerCount: number;
+  highestBlockerSeverity: ProductionReadinessBlockerSeverity | null;
+  productionRiskLevel: ProductionReadinessRiskLevel | ProductionReadinessStatus;
+  nextAction: string;
+}
+
+export interface ProductionReadinessSegmentSummary {
+  id: ProductionReadinessSegmentId;
+  name: string;
+  description: string;
+  totalComponents: number;
+  startedCount: number;
+  notStartedCount: number;
+  percentComplete: number;
+  percentPending: number;
+  scaffoldedOrBetterCount: number;
+  codeCompleteOrBetterCount: number;
+  testReadyCount: number;
+  fullFlowReadyCount: number;
+  pilotReadyCount: number;
+  productionReadyCount: number;
+  blockerCount: number;
+  criticalBlockerCount: number;
+  nextAction: string;
+  components: ReadonlyArray<ProductionReadinessComponentProgress>;
+}
+
 export interface ProductionReadinessView {
   schemaVersion: number;
   lastUpdated: string;
@@ -161,19 +266,22 @@ export interface ProductionReadinessView {
   overallStatus: ProductionReadinessStatus;
   stewardBrief: ProductionReadinessStewardBrief;
   overallReadinessPercent: number;
+  maturitySnapshot: ProductMaturitySnapshot;
   summary: ProductionReadinessSummary;
   components: ReadonlyArray<ProductionReadinessComponent>;
+  componentProgress: ReadonlyArray<ProductionReadinessComponentProgress>;
+  segments: ReadonlyArray<ProductionReadinessSegmentSummary>;
   recommendedActions: ReadonlyArray<ProductionReadinessRecommendedAction>;
   lowestReadinessComponents: ReadonlyArray<ProductionReadinessComponent>;
 }
 
 const STATUS_SCORE: Record<ProductionReadinessStatus, number> = {
-  not_started: 0,
-  scaffolded: 20,
-  code_complete: 45,
-  tested: 60,
-  full_flow_ready: 75,
-  pilot_ready: 88,
+  not_started: 5,
+  scaffolded: 15,
+  code_complete: 30,
+  tested: 40,
+  full_flow_ready: 60,
+  pilot_ready: 80,
   production_ready: 100,
   blocked: 10,
 };
@@ -206,6 +314,8 @@ export function buildProductionReadinessView(): ProductionReadinessView {
   const loadedManifest = loadProductionReadinessManifest();
   const components = loadedManifest.components;
   const summary = summarizeProductionReadiness(components);
+  const componentProgress = getProductionReadinessComponentProgress(components);
+  const segments = getProductionReadinessSegments(components);
 
   return {
     schemaVersion: loadedManifest.schemaVersion,
@@ -215,8 +325,11 @@ export function buildProductionReadinessView(): ProductionReadinessView {
     overallStatus: loadedManifest.overallStatus,
     stewardBrief: loadedManifest.stewardBrief,
     overallReadinessPercent: computeOverallReadinessPercent(components),
+    maturitySnapshot: loadedManifest.maturitySnapshot,
     summary,
     components,
+    componentProgress,
+    segments,
     recommendedActions: getProductionReadinessNextActions(components),
     lowestReadinessComponents: getLowestReadinessComponents(components),
   };
@@ -253,6 +366,65 @@ export function summarizeProductionReadiness(
   };
 }
 
+export function getProductionReadinessComponentProgress(
+  components: ReadonlyArray<ProductionReadinessComponent>,
+): ReadonlyArray<ProductionReadinessComponentProgress> {
+  return components.map((component) => {
+    const segment = getSegmentDefinitionForComponent(component.id);
+    const percentComplete = STATUS_SCORE[component.status];
+    const highestBlockerSeverity = getHighestBlockerSeverity(component.blockers);
+
+    return {
+      componentId: component.id,
+      componentName: component.name,
+      ownerAgent: component.ownerAgent,
+      segmentId: segment.id,
+      segmentName: segment.name,
+      status: component.status,
+      started: component.status !== 'not_started',
+      percentComplete,
+      percentPending: 100 - percentComplete,
+      blockerCount: component.blockers.length,
+      criticalBlockerCount: component.blockers.filter((blocker) => blocker.severity === 'critical').length,
+      highestBlockerSeverity,
+      productionRiskLevel: component.productionRiskLevel ?? component.dimensions.production_risk,
+      nextAction: component.nextAction,
+    };
+  });
+}
+
+export function getProductionReadinessSegments(
+  components: ReadonlyArray<ProductionReadinessComponent>,
+): ReadonlyArray<ProductionReadinessSegmentSummary> {
+  const componentProgress = getProductionReadinessComponentProgress(components);
+
+  return PRODUCTION_READINESS_SEGMENTS.map((segment) => {
+    const segmentComponents = componentProgress.filter((component) => component.segmentId === segment.id);
+    const percentComplete = computeProgressAverage(segmentComponents);
+
+    return {
+      id: segment.id,
+      name: segment.name,
+      description: segment.description,
+      totalComponents: segmentComponents.length,
+      startedCount: segmentComponents.filter((component) => component.started).length,
+      notStartedCount: segmentComponents.filter((component) => !component.started).length,
+      percentComplete,
+      percentPending: 100 - percentComplete,
+      scaffoldedOrBetterCount: countProgressAtLeast(segmentComponents, 'scaffolded'),
+      codeCompleteOrBetterCount: countProgressAtLeast(segmentComponents, 'code_complete'),
+      testReadyCount: countProgressAtLeast(segmentComponents, 'tested'),
+      fullFlowReadyCount: countProgressAtLeast(segmentComponents, 'full_flow_ready'),
+      pilotReadyCount: countProgressAtLeast(segmentComponents, 'pilot_ready'),
+      productionReadyCount: segmentComponents.filter((component) => component.status === 'production_ready').length,
+      blockerCount: segmentComponents.reduce((sum, component) => sum + component.blockerCount, 0),
+      criticalBlockerCount: segmentComponents.reduce((sum, component) => sum + component.criticalBlockerCount, 0),
+      nextAction: getSegmentNextAction(segmentComponents),
+      components: segmentComponents,
+    };
+  });
+}
+
 export function getProductionReadinessNextActions(
   components: ReadonlyArray<ProductionReadinessComponent>,
 ): ReadonlyArray<ProductionReadinessRecommendedAction> {
@@ -272,9 +444,7 @@ export function getProductionReadinessNextActions(
     .slice(0, 8);
 }
 
-export function computeOverallReadinessPercent(
-  components: ReadonlyArray<ProductionReadinessComponent>,
-): number {
+export function computeOverallReadinessPercent(components: ReadonlyArray<ProductionReadinessComponent>): number {
   if (components.length === 0) return 0;
   const totalScore = components.reduce((sum, component) => sum + STATUS_SCORE[component.status], 0);
   return Math.round(totalScore / components.length);
@@ -319,6 +489,56 @@ function countAtLeast(
   status: ProductionReadinessStatus,
 ): number {
   return components.filter((component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status]).length;
+}
+
+function countProgressAtLeast(
+  components: ReadonlyArray<ProductionReadinessComponentProgress>,
+  status: ProductionReadinessStatus,
+): number {
+  return components.filter((component) => STATUS_ORDER[component.status] >= STATUS_ORDER[status]).length;
+}
+
+function computeProgressAverage(components: ReadonlyArray<ProductionReadinessComponentProgress>): number {
+  if (components.length === 0) return 0;
+  const totalScore = components.reduce((sum, component) => sum + component.percentComplete, 0);
+  return Math.round(totalScore / components.length);
+}
+
+function getSegmentDefinitionForComponent(componentId: ProductionReadinessComponentId) {
+  const segment = PRODUCTION_READINESS_SEGMENTS.find((item) =>
+    (item.componentIds as ReadonlyArray<ProductionReadinessComponentId>).includes(componentId),
+  );
+  if (!segment) {
+    throw new Error(`Production readiness component is not assigned to a segment: ${componentId}`);
+  }
+  return segment;
+}
+
+function getSegmentNextAction(components: ReadonlyArray<ProductionReadinessComponentProgress>): string {
+  const sorted = [...components].sort((a, b) => {
+    const severityDelta = severityRank(a.highestBlockerSeverity) - severityRank(b.highestBlockerSeverity);
+    if (severityDelta !== 0) return severityDelta;
+
+    const scoreDelta = a.percentComplete - b.percentComplete;
+    if (scoreDelta !== 0) return scoreDelta;
+
+    return a.componentName.localeCompare(b.componentName);
+  });
+
+  return sorted[0]?.nextAction ?? 'No readiness action recorded.';
+}
+
+function getHighestBlockerSeverity(
+  blockers: ReadonlyArray<ProductionReadinessBlocker>,
+): ProductionReadinessBlockerSeverity | null {
+  return (
+    [...blockers].sort((a, b) => BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity])[0]
+      ?.severity ?? null
+  );
+}
+
+function severityRank(severity: ProductionReadinessBlockerSeverity | null): number {
+  return severity === null ? 99 : BLOCKER_SEVERITY_ORDER[severity];
 }
 
 function createStatusCounts(): Record<ProductionReadinessStatus, number> {
