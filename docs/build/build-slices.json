@@ -1964,6 +1964,72 @@
         "npm run build"
       ],
       "notes": "Calm executive entry surface that augments the existing composite home above the legacy hero. Numbers are deterministic seeds; live binding is deferred to a later slice that wires the attention strip to real tenant state."
+    },
+    {
+      "id": "PROD1",
+      "name": "Production Readiness Tracker",
+      "category": "PROD",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "ADM2",
+        "QA1",
+        "DES2",
+        "ARCH1",
+        "ARCH2"
+      ],
+      "allowedFiles": [
+        "docs/build/production-readiness.json",
+        "docs/build/PRODUCTION_READINESS_UPDATE_PROTOCOL.md",
+        "src/lib/admin/production-readiness.ts",
+        "src/components/admin/ProductionReadinessTracker.tsx",
+        "src/app/(maestro)/platform/admin/production-readiness/page.tsx",
+        "src/app/(maestro)/platform/admin/page.tsx",
+        "src/__tests__/integration/admin/production-readiness-tracker.test.ts",
+        "docs/build/slices/PROD1_PRODUCTION_READINESS_TRACKER.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "production-readiness.json defines schemaVersion, lastUpdated, updatedBy, source, overallStatus, overallReadinessPercent, stewardBrief, and components.",
+        "The manifest tracks all 15 required product/platform components with ownerAgent, status, maturity, lastVerifiedCommit, dimensions, testingGates, blockers, nextAction, and notes.",
+        "Every component includes all nine readiness dimensions and all eight testing gates.",
+        "Read model imports the manifest and exposes buildProductionReadinessView, loadProductionReadinessManifest, summarizeProductionReadiness, getProductionReadinessNextActions, computeOverallReadinessPercent, and getLowestReadinessComponents.",
+        "Tracker page renders the Steward brief, overall score, full-flow/pilot/production readiness, top blockers, next actions, component grid, dimensions, gates, blocked/deferred items, and a Build Progress link.",
+        "Route follows the existing admin-only guard pattern and does not rewrite auth.",
+        "Admin portal receives only a minimal discoverability link to the Production Readiness tracker.",
+        "Source / Outsourcing is tracked as a first-class component with scaffolded foundation_validation maturity, medium_high production risk, and explicit notes covering dashboard, event journey, AMS pattern intelligence, Nexus foundation, validation, pricing/negotiation intelligence, Admin data readiness, and deferred Source runtime/upload/workflow surfaces.",
+        "Update protocol requires every future Codex/Claude slice to report whether production-readiness.json changed, which component changed, prior/new status, gates affected, blockers added/removed, and next readiness action or why no tracker update was needed.",
+        "Tests prove the manifest parses, is deterministic, contains all components/dimensions/gates, uses valid statuses, reconciles summary to components, and prevents false production_ready claims.",
+        "Tests assert no live monitoring claim, no Vercel polling claim, no model/API calls, no forbidden runtime imports, no auth rewrite, and no migrations.",
+        "No Source UI, Nexus, Sentinel, Atlas, Agent runtime, auth implementation, legacy /programs, preview/demo routes, migrations, or founder/canon docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/production-readiness-tracker.test.ts",
+        "npm run build",
+        "npx jest src/__tests__/integration/admin/steward-setup-control-center.test.ts",
+        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "git diff --cached --name-only"
+      ],
+      "notes": "Read-model backed internal admin tracker only. No live production monitoring, no Vercel polling, no deployments, no database migrations, no model/API calls. Production-ready remains blocked until full-flow testing, pilot gates, Model Gateway, Evidence Ledger, ingestion/parsing, governance, and deployment verification have evidence."
     }
   ]
 }
