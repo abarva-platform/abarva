@@ -476,6 +476,53 @@
         "npm run build"
       ],
       "notes": "Seed-only. No production state machine, no audit log writes, no model calls. Defers true gate approval to a later state-machine slice and gate-readiness signal upgrade to S9d once value and evidence are seeded."
+    },
+    {
+      "id": "S9d",
+      "name": "Program deliverables, evidence + value readiness summary",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S9c"
+      ],
+      "allowedFiles": [
+        "src/components/programs/ProgramCanonicalDetail.tsx",
+        "src/lib/programs/programs-canonical-view.ts",
+        "src/__tests__/integration/programs/programs-deliverables-evidence-value.test.ts",
+        "docs/build/slices/S9D_PROGRAM_DELIVERABLES_EVIDENCE_VALUE_SUMMARY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Deliverable tier and per-requirement counts reconcile to the seed.",
+        "Required-but-stub gaps render deterministically with resolvable route paths.",
+        "Evidence and value signals are honestly labeled not_seeded with named expected signals.",
+        "Value readiness names canonical G3 and G4 hard gates verbatim.",
+        "No ready signal is emitted while seed lacks evidence or value capture.",
+        "No live agent or model call. Detail component public props unchanged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-deliverables-evidence-value.test.ts",
+        "npm run build"
+      ],
+      "notes": "Seed-only. Evidence and value readiness exposed as explicit not_seeded signals. Promotion to ready/partial requires a future seed-population slice to populate evidence references and value ledger entries."
     }
   ]
 }

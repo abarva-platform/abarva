@@ -36,10 +36,12 @@ import {
   buildCanonicalHardGateStrip,
   buildCanonicalPhaseTimeline,
   buildProgramEditorial,
+  buildProgramReadinessSummary,
   buildStewardReadinessNote,
   summarizeProgram,
   type CanonicalHardGateRenderStatus,
   type CanonicalPhaseRenderStatus,
+  type ReadinessSignal,
 } from '@/lib/programs/programs-canonical-view';
 import type { SpecPhaseNumber } from '@/lib/programs/enhancement-spec';
 import type {
@@ -210,6 +212,9 @@ export function ProgramCanonicalDetail({ tenant, program }: ProgramCanonicalDeta
 
             {/* Steward readiness note */}
             <StewardReadinessPanel program={program} />
+
+            {/* Evidence + value readiness summary (S9d) */}
+            <EvidenceValueReadinessSummary tenant={tenant} program={program} />
 
             {/* Honest fallbacks: data not yet captured */}
             <DataPlaceholders />
@@ -592,6 +597,354 @@ function StewardColumn({
       )}
     </div>
   );
+}
+
+// --- S9d · Evidence + Value readiness summary -----------------------
+
+function EvidenceValueReadinessSummary({
+  tenant,
+  program,
+}: {
+  tenant: TenantSeedPlan;
+  program: ProgramSeedPlan;
+}) {
+  const summary = buildProgramReadinessSummary(program);
+  return (
+    <section
+      aria-label="Evidence and value readiness summary"
+      style={{
+        padding: '16px 18px',
+        background: COLORS.card,
+        border: `1px solid ${COLORS.border}`,
+        borderLeft: `3px solid ${COLORS.accent}`,
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: COLORS.accent,
+          fontWeight: 700,
+          marginBottom: 8,
+        }}
+      >
+        Evidence + value readiness · seed-only
+      </div>
+      <p
+        style={{
+          margin: 0,
+          fontSize: 13,
+          lineHeight: 1.6,
+          color: COLORS.ink,
+        }}
+      >
+        {summary.summary}
+      </p>
+
+      {/* Deliverable readiness by requirement */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 10,
+          marginTop: 14,
+        }}
+      >
+        <RequirementCard
+          label="Required"
+          tone={COLORS.accent}
+          bucket={summary.byRequirement.required}
+        />
+        <RequirementCard
+          label="Optional"
+          tone={COLORS.muted}
+          bucket={summary.byRequirement.optional}
+        />
+        <RequirementCard
+          label="Additional"
+          tone={COLORS.mutedSoft}
+          bucket={summary.byRequirement.additional}
+        />
+      </div>
+
+      {/* Required-but-stub gaps */}
+      {summary.requiredStubGaps.length > 0 ? (
+        <div
+          style={{
+            marginTop: 14,
+            padding: '12px 14px',
+            background: COLORS.amberSoft,
+            border: '1px dashed rgba(217,119,6,0.3)',
+            borderRadius: 8,
+          }}
+        >
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: COLORS.amber,
+              fontWeight: 700,
+              marginBottom: 6,
+            }}
+          >
+            Required-but-stub gaps · {summary.requiredStubGaps.length}
+          </div>
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {summary.requiredStubGaps.map((gap) => (
+              <li key={gap.deliverableCode}>
+                <Link
+                  href={tenantDeliverablePath(tenant, program, {
+                    deliverableCode: gap.deliverableCode,
+                    deliverableSlug: gap.deliverableSlug,
+                  })}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'baseline',
+                    gap: 8,
+                    fontSize: 12,
+                    color: COLORS.ink,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: COLORS.amber,
+                      letterSpacing: '0.08em',
+                    }}
+                  >
+                    {gap.deliverableCode} · P{gap.phaseSpec}
+                  </span>
+                  <span style={{ color: COLORS.ink }}>{gap.title}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {/* Evidence + value readiness signals */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: 10,
+          marginTop: 14,
+        }}
+      >
+        <ReadinessCard
+          label="Evidence registry"
+          signal={summary.evidence.signal}
+          reason={summary.evidence.reason}
+          expected={summary.evidence.expectedSignals}
+        />
+        <ReadinessCard
+          label="Value ledger"
+          signal={summary.value.signal}
+          reason={summary.value.reason}
+          expected={summary.value.expectedSignals}
+          governingGates={summary.value.governingGates.map(
+            (g) => `G${g.gateIndex} · ${g.label}`,
+          )}
+        />
+      </div>
+
+      <div
+        style={{
+          marginTop: 12,
+          fontSize: 11,
+          color: COLORS.mutedSoft,
+          fontStyle: 'italic',
+        }}
+      >
+        Composed deterministically from seed state. No live agent or model call. Evidence and value seeding are deferred to a future seed-population slice.
+      </div>
+    </section>
+  );
+}
+
+function RequirementCard({
+  label,
+  tone,
+  bucket,
+}: {
+  label: string;
+  tone: string;
+  bucket: { rich: number; outline: number; stub: number; total: number };
+}) {
+  return (
+    <div
+      style={{
+        padding: '12px 14px',
+        background: 'rgba(26,22,18,0.02)',
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 8,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: tone,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+        <span style={{ marginLeft: 6, opacity: 0.65 }}>· {bucket.total}</span>
+      </div>
+      <div style={{ fontSize: 12, color: COLORS.muted }}>
+        {bucket.rich} Rich · {bucket.outline} Outline · {bucket.stub} Stub
+      </div>
+    </div>
+  );
+}
+
+function ReadinessCard({
+  label,
+  signal,
+  reason,
+  expected,
+  governingGates,
+}: {
+  label: string;
+  signal: ReadinessSignal;
+  reason: string;
+  expected: string[];
+  governingGates?: string[];
+}) {
+  const tone = readinessTone(signal);
+  return (
+    <div
+      style={{
+        padding: '12px 14px',
+        background: tone.bg,
+        border: `1px solid ${tone.border}`,
+        borderRadius: 8,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 8,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: tone.accent,
+            fontWeight: 700,
+          }}
+        >
+          {label}
+        </span>
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: tone.accent,
+            fontWeight: 700,
+          }}
+        >
+          {readinessSignalLabel(signal)}
+        </span>
+      </div>
+      <p style={{ margin: 0, fontSize: 12, color: COLORS.ink, lineHeight: 1.5 }}>
+        {reason}
+      </p>
+      {governingGates && governingGates.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: COLORS.mutedSoft,
+              fontWeight: 700,
+            }}
+          >
+            Governing gates
+          </span>
+          {governingGates.map((g) => (
+            <span key={g} style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.5 }}>
+              {g}
+            </span>
+          ))}
+        </div>
+      ) : null}
+      {expected.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              color: COLORS.mutedSoft,
+              fontWeight: 700,
+            }}
+          >
+            Expected signals
+          </span>
+          <ul style={{ listStyle: 'disc', paddingLeft: 16, margin: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {expected.map((sig) => (
+              <li key={sig} style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.5 }}>
+                {sig}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function readinessTone(signal: ReadinessSignal) {
+  switch (signal) {
+    case 'ready':
+      return { bg: COLORS.accentSoft, border: 'rgba(14,159,140,0.3)', accent: COLORS.accent };
+    case 'partial':
+      return { bg: COLORS.amberSoft, border: 'rgba(217,119,6,0.3)', accent: COLORS.amber };
+    case 'not_started':
+      return { bg: 'rgba(26,22,18,0.03)', border: COLORS.border, accent: COLORS.mutedSoft };
+    case 'not_seeded':
+      return { bg: 'rgba(26,22,18,0.03)', border: COLORS.border, accent: COLORS.mutedSoft };
+  }
+}
+
+function readinessSignalLabel(signal: ReadinessSignal): string {
+  switch (signal) {
+    case 'ready':
+      return 'READY';
+    case 'partial':
+      return 'PARTIAL';
+    case 'not_started':
+      return 'NOT STARTED';
+    case 'not_seeded':
+      return 'NOT SEEDED';
+  }
 }
 
 // --- Honest data placeholders ----------------------------------------

@@ -668,3 +668,186 @@ export function buildStewardReadinessNote(
 
   return { ready, missing, blocking, deferred, summary };
 }
+
+// =====================================================================
+// S9d · Deliverable + evidence + value readiness summary
+// =====================================================================
+//
+// Pure deterministic helpers that derive a seed-only readiness picture
+// for the canonical Program detail surface. No model calls, no
+// Date.now() reads, no fabrication. Evidence and value categories are
+// honestly absent from the seed today; the helpers expose that as
+// explicit "not_seeded" signals rather than empty fields.
+
+export type ReadinessSignal = 'ready' | 'partial' | 'not_started' | 'not_seeded';
+
+export interface DeliverableTierBucket {
+  rich: number;
+  outline: number;
+  stub: number;
+  total: number;
+}
+
+export interface DeliverableReadinessByRequirement {
+  required: DeliverableTierBucket;
+  optional: DeliverableTierBucket;
+  additional: DeliverableTierBucket;
+}
+
+export interface RequiredStubGap {
+  deliverableCode: string;
+  deliverableSlug: string;
+  title: string;
+  phaseSpec: SpecPhaseNumber;
+  routePath: string;
+}
+
+export interface EvidenceReadiness {
+  signal: ReadinessSignal;
+  reason: string;
+  /**
+   * The kinds of signals the seed would need to capture before the
+   * gate classifier can promote evidence-dependent gates from
+   * `missing_inputs` to `ready`.
+   */
+  expectedSignals: string[];
+}
+
+export interface ValueReadiness {
+  signal: ReadinessSignal;
+  reason: string;
+  /** The canonical hard gates that govern value readiness (G3, G4). */
+  governingGates: ReadonlyArray<{ gateIndex: 3 | 4; label: string }>;
+  expectedSignals: string[];
+}
+
+export interface ProgramReadinessSummary {
+  deliverableTiers: DeliverableTierCounts;
+  byRequirement: DeliverableReadinessByRequirement;
+  requiredStubGaps: ReadonlyArray<RequiredStubGap>;
+  evidence: EvidenceReadiness;
+  value: ValueReadiness;
+  /** Single-line summary the renderer can show as eyebrow. */
+  summary: string;
+}
+
+const EMPTY_BUCKET: DeliverableTierBucket = { rich: 0, outline: 0, stub: 0, total: 0 };
+
+function bucketAdd(
+  bucket: DeliverableTierBucket,
+  tier: DeliverableSeedPlan['renderTier'],
+): DeliverableTierBucket {
+  const next = { ...bucket };
+  next.total += 1;
+  if (tier === 'rich') next.rich += 1;
+  else if (tier === 'outline') next.outline += 1;
+  else next.stub += 1;
+  return next;
+}
+
+function countByRequirement(
+  deliverables: ReadonlyArray<DeliverableSeedPlan>,
+): DeliverableReadinessByRequirement {
+  let required = EMPTY_BUCKET;
+  let optional = EMPTY_BUCKET;
+  let additional = EMPTY_BUCKET;
+  for (const d of deliverables) {
+    if (d.requirement === 'required') required = bucketAdd(required, d.renderTier);
+    else if (d.requirement === 'optional') optional = bucketAdd(optional, d.renderTier);
+    else additional = bucketAdd(additional, d.renderTier);
+  }
+  return { required, optional, additional };
+}
+
+function collectRequiredStubGaps(
+  deliverables: ReadonlyArray<DeliverableSeedPlan>,
+): ReadonlyArray<RequiredStubGap> {
+  return deliverables
+    .filter((d) => d.requirement === 'required' && d.renderTier === 'stub')
+    .map<RequiredStubGap>((d) => ({
+      deliverableCode: d.deliverableCode,
+      deliverableSlug: d.deliverableSlug,
+      title: d.title,
+      phaseSpec: d.phaseSpec,
+      routePath: d.routePath,
+    }))
+    // Stable order: by phase, then by code.
+    .sort((a, b) => {
+      if (a.phaseSpec !== b.phaseSpec) return a.phaseSpec - b.phaseSpec;
+      return a.deliverableCode.localeCompare(b.deliverableCode);
+    });
+}
+
+function composeReadinessSummary(
+  tiers: DeliverableTierCounts,
+  requiredStubGaps: ReadonlyArray<RequiredStubGap>,
+): string {
+  if (tiers.total === 0) {
+    return 'No deliverables seeded yet. Evidence and value categories are not captured in the seed.';
+  }
+  const stubLine = requiredStubGaps.length === 0
+    ? 'No required-but-stub deliverable gaps in the current seed.'
+    : `${requiredStubGaps.length} required deliverable(s) at Stub tier — required-but-stub gap.`;
+  return [
+    `${tiers.total} deliverables: ${tiers.rich} Rich · ${tiers.outline} Outline · ${tiers.stub} Stub.`,
+    stubLine,
+    'Evidence and value categories are not yet captured in the seed; readiness is informational.',
+  ].join(' ');
+}
+
+/**
+ * Build a deterministic Evidence + Value readiness summary for a
+ * program, derived from seed data only. No model call. No fabrication.
+ */
+export function buildProgramReadinessSummary(
+  program: Pick<
+    ProgramSeedPlan,
+    'currentPhaseSpec' | 'status' | 'deliverables'
+  >,
+): ProgramReadinessSummary {
+  const deliverableTiers = countDeliverableTiers(program.deliverables);
+  const byRequirement = countByRequirement(program.deliverables);
+  const requiredStubGaps = collectRequiredStubGaps(program.deliverables);
+
+  const evidence: EvidenceReadiness = {
+    signal: 'not_seeded',
+    reason: 'Evidence registry is not captured in the seed.',
+    expectedSignals: [
+      'Per-deliverable evidence references (E-id citations).',
+      'CXO interview capture for Diagnose phase findings.',
+      'Baseline measurements for Verify phase outcome attestation.',
+    ],
+  };
+
+  const value: ValueReadiness = {
+    signal: 'not_seeded',
+    reason: 'Projected and realized value are not captured in the seed.',
+    governingGates: [
+      {
+        gateIndex: 3,
+        label: 'Design approved with projected value documented',
+      },
+      {
+        gateIndex: 4,
+        label: 'CXO verification of realized outcomes before outcome-fee claim',
+      },
+    ],
+    expectedSignals: [
+      'Projected value with confidence band per workstream.',
+      'Realized value measurement after Verify phase.',
+      'Variance attribution between projected and realized.',
+      'Dual-ledger entries with citations.',
+    ],
+  };
+
+  const summary = composeReadinessSummary(deliverableTiers, requiredStubGaps);
+
+  return {
+    deliverableTiers,
+    byRequirement,
+    requiredStubGaps,
+    evidence,
+    value,
+    summary,
+  };
+}
