@@ -43,6 +43,63 @@ export const COLORS = {
   LIGHT_bg:   '#F8FAFC',  // ← WRONG for product pages
   LIGHT_card: '#FFFFFF',  // ← WRONG for product pages
   LIGHT_text: '#0F172A',  // ← WRONG for product pages
+
+  // Experience System aliases - additive only. These let future slices adopt
+  // the warm AbarVa surface language without refactoring current dark pages.
+  warmBackground: '#F7F2EA',
+  ivory: '#F7F2EA',
+  surface: '#FFFFFF',
+  surfaceWarm: '#FBF7F0',
+  nearBlack: '#171412',
+  charcoal: '#4B463F',
+  ink: '#171412',
+  body: '#4B463F',
+  navy: '#13233A',
+  navySoft: '#E6EEF7',
+  accentBlue: '#2E6FD8',
+  accent: '#2E6FD8',
+  accentTeal: '#0E9F8C',
+  mutedBrown: '#8A7565',
+  muted: '#6D625A',
+  mutedSoft: '#8A7E72',
+  borderSoft: '#E5DCD2',
+  riskAmber: '#B86B12',
+  riskRed: '#B5452F',
+  successGreen: '#2F8A5E',
+  darkPanel: '#101722',
+  journeyActive: '#2E6FD8',
+  journeyComplete: '#2F8A5E',
+  journeyBlocked: '#B5452F',
+  journeyWaiting: '#B86B12',
+  evidenceUsable: '#2F8A5E',
+  evidenceLowConfidence: '#B86B12',
+  evidenceMissing: '#B5452F',
+} as const
+
+export const EXPERIENCE_COLORS = {
+  warmBackground: COLORS.warmBackground,
+  ivory: COLORS.ivory,
+  surface: COLORS.surface,
+  surfaceWarm: COLORS.surfaceWarm,
+  textPrimary: COLORS.nearBlack,
+  textSecondary: COLORS.charcoal,
+  navy: COLORS.navy,
+  navySoft: COLORS.navySoft,
+  accentBlue: COLORS.accentBlue,
+  accentTeal: COLORS.accentTeal,
+  mutedBrown: COLORS.mutedBrown,
+  borderSoft: COLORS.borderSoft,
+  riskAmber: COLORS.riskAmber,
+  riskRed: COLORS.riskRed,
+  successGreen: COLORS.successGreen,
+  darkPanel: COLORS.darkPanel,
+  journeyActive: COLORS.journeyActive,
+  journeyComplete: COLORS.journeyComplete,
+  journeyBlocked: COLORS.journeyBlocked,
+  journeyWaiting: COLORS.journeyWaiting,
+  evidenceUsable: COLORS.evidenceUsable,
+  evidenceLowConfidence: COLORS.evidenceLowConfidence,
+  evidenceMissing: COLORS.evidenceMissing,
 } as const
 
 // ─── TYPOGRAPHY ────────────────────────────────────────────────────────────
