@@ -8,6 +8,8 @@ export * from './constants';
 export * from './context-builder';
 export * from './context-quality';
 export * from './lifecycle';
+export * from './multi-agent-briefing';
+export * from './multi-agent-types';
 export * from './queries';
 export * from './scorecard';
 export * from './types';

@@ -129,16 +129,18 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #215 merged: Source auth redirect diagnostic. Root cause: `/source` was not in the app-owned auth-required route matcher.
 - 2026-04-25 · PR #216 merged: base hygiene repair removed Steward setup conflict markers and restored TypeScript validation.
 - 2026-04-25 · PR #223 merged: AMS Managed Services Sourcing pattern pack. First full authored Source pattern pack preserved as docs-only sourcing IP.
+- 2026-04-25 · PR #224 merged: AMS pattern sectioning plan.
+- 2026-04-25 · PR #225 merged: AMS pattern sections. Authored AMS pattern now has 28 stable `source.ams.v1.*` section ids in a docs-only companion.
 
 ## Last status emission
-- 2026-04-25 · AMS pattern sectioning plan started after PR #223 merge · docs-only · no runtime pattern ingestion, generated JSON, Source code, UI, API, model, upload, or workflow engine scope.
+- 2026-04-25 · Source multi-agent briefing layer started after AMS pattern sectioning merge · deterministic library/reporting only · no chat UI, API, model, upload, event canvas, workflow engine, or approval engine scope.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #223 merged · AMS Managed Services Sourcing pattern pack.
+- Current completed milestone: PR #225 merged · AMS pattern sections.
 - Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: prepare the next controlled Source slice · AMS pattern runtime sectioning plan.
-- Current item: AMS pattern sectioning plan.
+- Current objective: create deterministic Source multi-agent briefing layer from Source context and validation reports.
+- Current item: Source multi-agent briefing layer.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -198,9 +200,12 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Source auth redirect diagnostic merged via PR #215.
   - Base TypeScript hygiene repaired via PR #216.
   - AMS Managed Services Sourcing pattern pack merged via PR #223.
+  - AMS pattern sectioning plan merged via PR #224.
+  - AMS pattern sections merged via PR #225.
+  - Deterministic Source multi-agent briefing layer implemented locally: Nexus, Sentinel, Atlas, and Steward produce distinct non-LLM briefings from SourceAgentContextBundle plus context/workflow validation reports.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
 - Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER. The `/source` auth redirect issue is narrow: Source was missing from `authRequiredRoutes`, causing signed-out `/source` to fall through to Clerk generic `auth.protect()` instead of app-owned `/sign-in?redirect=/source`.
-- Next recommended item: review and merge the AMS pattern sectioning plan, then create docs-only structured AMS section files. Keep runtime pattern ingestion, generated JSON, Source code, UI, API, model, upload/parsing, workflow engine, approval engine, artifact versioning, and document export/import blocked until explicitly approved.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_AMS_PATTERN_SECTIONING.md`.
+- Next recommended item: review the deterministic multi-agent briefing layer; then consider a Source-specific Nexus API route stub plan with no model calls, or a multi-agent briefing review/demo packet. Keep chat UI, model calls, upload/parsing, event canvas, workflow engine, approval engine, artifact versioning, and document export/import blocked until explicitly approved.
+- Next planning artifact: Source-specific Nexus API route stub plan, no model calls.
