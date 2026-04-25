@@ -44,7 +44,13 @@ Product-specific APIs can shape work for each surface, but shared services own c
 11. `10_MVP_V1_V2_ROADMAP.md`
 12. `11_NEXUS_END_TO_END_EXECUTION_FLOW.md`
 13. `12_RUNTIME_ACCEPTANCE_CRITERIA.md`
-14. `RUNTIME_ARCHITECTURE_REVIEW_PACKET.md`
+14. `13_AGENT_MISSION_MODEL.md`
+15. `14_AGENT_WORK_QUEUE_AND_TRIGGERS.md`
+16. `RUNTIME_ARCHITECTURE_REVIEW_PACKET.md`
+
+## Agent Mission Canon
+
+`13_AGENT_MISSION_MODEL.md` and `14_AGENT_WORK_QUEUE_AND_TRIGGERS.md` define how Nexus, Sentinel, Atlas, and Steward become active product roles instead of passive chatbots. Runtime implementation must preserve mission types, mission states, priority rules, handoff rules, trigger inputs, visibility rules, audit needs, and stop conditions before adding schedulers, background jobs, model calls, or broad UI.
 
 ## Build Gate
 

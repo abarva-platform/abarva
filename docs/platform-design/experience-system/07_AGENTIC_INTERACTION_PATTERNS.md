@@ -52,3 +52,22 @@ When agent output relies on evidence, the page should show:
 - Evidence/citations.
 - Pattern vs client-specific distinction.
 - Missing context.
+
+## Mission-Driven Agent Activity
+
+Agents should have visible work, not just responses. Agent activity should be tied to context, workflow state, evidence, patterns, validation results, and user intent.
+
+Mission-driven activity can include:
+
+- Nexus next actions.
+- Sentinel evidence gaps.
+- Atlas executive briefs.
+- Steward blocked gates.
+- Data readiness follow-ups.
+- Workflow validation defers.
+- Approval follow-ups.
+- Vendor response gaps.
+
+The UI should show agent activity only when it adds decision value. Use mission counts, next action, context used, owner, due date, confidence, and blocker/defer reasons instead of noisy feeds.
+
+Read `16_AGENT_ACTIVITY_UI_PATTERN.md` before designing agent activity strips, mission panels, inline recommendations, executive briefs, or background mission drawers.
