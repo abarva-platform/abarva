@@ -953,6 +953,61 @@
         "npm run build"
       ],
       "notes": "First Apple-like Admin / Setup landing surface implementing ADM1 §F (zones), §G (modules), §H (12 dataset domains), §J (evidence states), §O (agent readiness), §P (Steward Brief). No live Steward runtime, no upload pipeline, no connector sync, no permission editor, no migrations. ADM3+ slices drill into the per-object detail."
+    },
+    {
+      "id": "ADM3",
+      "name": "Dataset Domain Inventory Read Model",
+      "category": "ADM",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ADM1",
+        "ADM2"
+      ],
+      "allowedFiles": [
+        "src/lib/admin/dataset-domain-inventory.ts",
+        "src/__tests__/integration/admin/dataset-domain-inventory.test.ts",
+        "docs/build/slices/ADM3_DATASET_DOMAIN_INVENTORY_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "summary.byDomain covers all 12 canonical Enterprise Dataset Domains.",
+        "buildDatasetDomainInventoryForDomain returns non-empty items for active domains and empty list for not_started domains and unknown keys.",
+        "Every item carries the full ADM1 §I field set with deterministic seed-only data.",
+        "Item ids are unique; every id matches the ds:<domainKey>:<slug> pattern.",
+        "summary.loadedTotal / availableTotal / usableTotal reconcile to the canonical evidence progression (loaded >= available >= usable).",
+        "byUsability covers all 9 canonical evidence states; byParseStatus covers all 4 parse states.",
+        "No item claims sourceType connector or non-null connector today; no item asserts a real E-### citation.",
+        "agentsAllowedToUse contains only Nexus / Sentinel / Atlas / Steward.",
+        "Blocked items only allow Steward in agentsAllowedToUse.",
+        "No invented dollar amount in any string field.",
+        "Module imports nothing from Source UI, Nexus / Sentinel / Atlas / Agent runtime, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/dataset-domain-inventory.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic dataset inventory consumed by ADM4 (Dataset Explorer UI) and downstream ADM5 / 7 / 9 surfaces. No live connector sync, no upload pipeline, no production evidence registry, no DB persistence. Future connector / upload / registry slices flip per-item state without contract changes."
     }
   ]
 }
