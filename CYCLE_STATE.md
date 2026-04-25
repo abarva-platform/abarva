@@ -111,15 +111,16 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-24 · PR #193 merged: context depth improvement plan.
 - 2026-04-24 · PR #194 merged: Source production readiness tracker.
 - 2026-04-24 · PR #195 merged: seeded context depth for validation fixtures. Runner improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
+- 2026-04-24 · PR #197 merged: deterministic Source context validation report formatter.
 
 ## Last status emission
-- 2026-04-24 · Runner report hardening implemented · deterministic readable report shape and markdown formatter added.
+- 2026-04-24 · Post-merge Source state update · PR #197 merged · next recommended slice is dashboard visual review planning.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #195 merged · seeded context depth for validation fixtures.
-- Current objective: harden deterministic Source validation reporting before chat/model/UI work.
-- Current item: runner report hardening implemented; pending review and commit.
+- Current completed milestone: PR #197 merged · deterministic Source context validation report formatter.
+- Current objective: prepare the next controlled slice: visual review and refinement plan for `/source` dashboard.
+- Current item: post-merge state update and dashboard visual review planning.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -144,8 +145,10 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Fixture outcomes improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
   - Deterministic readable Source context validation report shape.
   - Deterministic Source context validation markdown formatter.
+  - Current validation outcome: 10 fixtures, 8 pass, 2 defer, 0 reject.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
-- Blockers/do-not-build: no chat UI, model calls, API routes, upload/parsing, event canvas expansion, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: context depth improvements moved dashboard, scorecard, and pattern grounding fixtures toward pass while preserving intentional defer for RFP generation and vendor response summary. Runner result is now 10 fixtures total, 8 pass, 2 defer, 0 reject; suite verdict remains `defer` by design until real client inputs and parsed vendor response evidence exist.
-- Next recommended item: review `08_RUNNER_REPORT_HARDENING_REVIEW.md`, then commit the runner report hardening slice if approved.
-- Next planning artifact: `docs/abarva-source/build-pack/implementation-reviews/08_RUNNER_REPORT_HARDENING_REVIEW.md`.
+- Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
+- Blockers/do-not-build: no dashboard UI changes yet, chat UI, model calls, API routes, upload/parsing, event canvas expansion, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: Source validation is stronger and now reviewable, so the next safe move is visual review of `/source` before changing dashboard UI. Dashboard refinement should be driven by screenshot/manual review criteria, not instinctive polish or broad UI expansion.
+- Next recommended item: create a dashboard visual review plan and review checklist before changing UI.
+- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_SOURCE_DASHBOARD_VISUAL_REVIEW.md`.
