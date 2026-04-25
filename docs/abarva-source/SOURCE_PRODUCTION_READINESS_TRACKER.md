@@ -38,6 +38,7 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Workflow validation report formatter | Merged / Complete | PR #210, `src/lib/source/workflow-validation-report.ts` | Current outcome: 12 total, 11 BLOCK, 1 DEFER, 0 mismatches; suite verdict: defer. | Preserve remaining intentional defer until upload parsing/evidence exists. |
 | Workflow validation foundation | Complete | PR #204, PR #207, PR #210 | Deterministic fixtures, runner, and readable report exist. | Do not build workflow engine until these semantics are reviewed. |
 | Remaining workflow defer | Intentional | `source-workflow-uploaded-document-parse-before-citation` | Uploaded documents cannot be cited before parsing/validation. | Build upload/evidence pipeline later, not in current slice. |
+| Source/Admin data readiness integration | Designed / Spec Only | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, runtime architecture docs | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes readiness state. | Runtime consumption, Source UI panel, Admin/Setup UI, upload/parsing, and evidence ledger implementation are not started. |
 | Nexus Engagement Canvas | Designed | Build Pack wireframes and component specs | Not implemented beyond allowed foundation. | Review spec before any build. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
 | Persistent Nexus Panel | Designed | Build Pack docs, context-awareness docs | Chat/panel behavior is specified, not implemented. | Wait for SourceAgentContextBundle enforcement. |
@@ -142,6 +143,8 @@ Current assessment: not satisfied. The architecture is strong, but no Source-spe
 
 Required:
 
+- Admin/Setup data readiness model exists.
+- Source can consume readiness state.
 - Supabase persistence exists.
 - Seeded data replaced with real data where needed.
 - Attachments stored and parsed.
@@ -150,7 +153,7 @@ Required:
 - Export/upload records persisted.
 - Review comments and approvals persisted.
 
-Current assessment: not satisfied. Current Source context and validation behavior are deterministic and seeded only.
+Current assessment: not satisfied. The Source/Admin readiness responsibility split is designed/spec only. Runtime consumption, upload/parsing, evidence ledger integration, tenant permissions, and Source UI readiness display are not implemented.
 
 ### Gate 7: Enterprise Ready
 
@@ -191,6 +194,7 @@ Current assessment: not started for Source.
 - UI completeness: early / not production-ready. Dashboard exists, but broader Source UX is incomplete.
 - Data persistence: not production-ready. Current behavior is seeded and deterministic.
 - Upload/evidence pipeline: not started. The remaining workflow defer correctly blocks uploaded document citation before parsing/validation.
+- Source/Admin data readiness integration: designed/spec only. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
 - Agent/model integration: not started. This is intentional and remains blocked.
 - Production readiness: not started. Source has not passed enterprise, deployment, security, persistence, runtime, or live persona validation gates.
 
@@ -201,6 +205,7 @@ Current assessment: not started for Source.
 3. If continuing validation depth, plan upload/evidence pipeline contracts before implementing upload/parsing.
 4. If returning to UX, run only bounded dashboard/front-door refinement, not event canvas expansion.
 5. If preparing runtime work, plan a Source-specific Nexus API route stub with no model call.
+6. If preparing data readiness work, implement the platform Admin/Setup readiness model before any Source readiness panel.
 
 ## 7. Explicit Do-Not-Build List
 
@@ -210,6 +215,7 @@ Keep active:
 - No model calls until SourceAgentContextBundle is enforced.
 - No API routes until the route stub is explicitly approved.
 - No file upload/parsing until attachment and evidence pipeline contracts are reviewed.
+- No Source-specific setup workflow that duplicates Admin/Setup readiness.
 - No workflow engine until workflow validation semantics are reviewed.
 - No approval engine until approval route/state contracts are reviewed.
 - No artifact versioning implementation until the data model is reviewed.

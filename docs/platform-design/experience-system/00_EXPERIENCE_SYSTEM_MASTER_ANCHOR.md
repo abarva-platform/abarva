@@ -18,21 +18,22 @@ If a page or component lacks a spec or wireframe, the next step is to author the
 ## Read Order
 
 1. `00_EXPERIENCE_SYSTEM_MASTER_ANCHOR.md`
-2. `01_BRAND_AND_VISUAL_LANGUAGE.md`
-3. `02_AGENT_IDENTITY_SYSTEM.md`
-4. `03_DESIGN_TOKENS_AND_USAGE.md`
-5. `04_JOURNEY_PROGRESS_SYSTEM.md`
-6. `05_PAGE_ARCHETYPES.md`
-7. `06_PAGE_STATE_MATRIX.md`
-8. `07_AGENTIC_INTERACTION_PATTERNS.md`
-9. `08_DATA_TABLE_AND_PORTFOLIO_PATTERNS.md`
-10. `09_ARTIFACT_REVIEW_AND_DELIVERABLE_PATTERNS.md`
-11. `10_RESPONSIVE_AND_ACCESSIBILITY_RULES.md`
-12. `11_VISUAL_ACCEPTANCE_CRITERIA.md`
-13. `12_IMPLEMENTATION_GOVERNANCE.md`
-14. `13_AGENT_RESPONSE_DESIGN_SYSTEM.md`
-15. `14_THREE_CHOICES_PLUS_CUSTOM_PATTERN.md`
-16. `15_CONTEXT_AWARENESS_UI_RULES.md`
+2. `DESIGN_DECISIONS_LOCK.md`
+3. `01_BRAND_AND_VISUAL_LANGUAGE.md`
+4. `02_AGENT_IDENTITY_SYSTEM.md`
+5. `03_DESIGN_TOKENS_AND_USAGE.md`
+6. `04_JOURNEY_PROGRESS_SYSTEM.md`
+7. `05_PAGE_ARCHETYPES.md`
+8. `06_PAGE_STATE_MATRIX.md`
+9. `07_AGENTIC_INTERACTION_PATTERNS.md`
+10. `08_DATA_TABLE_AND_PORTFOLIO_PATTERNS.md`
+11. `09_ARTIFACT_REVIEW_AND_DELIVERABLE_PATTERNS.md`
+12. `10_RESPONSIVE_AND_ACCESSIBILITY_RULES.md`
+13. `11_VISUAL_ACCEPTANCE_CRITERIA.md`
+14. `12_IMPLEMENTATION_GOVERNANCE.md`
+15. `13_AGENT_RESPONSE_DESIGN_SYSTEM.md`
+16. `14_THREE_CHOICES_PLUS_CUSTOM_PATTERN.md`
+17. `15_CONTEXT_AWARENESS_UI_RULES.md`
 
 Then read the relevant files in `wireframes/` and `components/` for the target surface.
 
@@ -65,6 +66,7 @@ Then read the relevant files in `wireframes/` and `components/` for the target s
 Before implementing UI, cite the design files followed. At minimum:
 
 - This anchor
+- The design decisions lock
 - The relevant brand/tokens/journey/data/agent pattern files
 - The relevant agent response, three-choices, and context-awareness UI files
 - The relevant page wireframe
