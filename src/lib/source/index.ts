@@ -1,5 +1,6 @@
 export * from './agent-validation';
 export * from './agent-validation-fixtures';
+export * from './agent-validation-report';
 export * from './agent-validation-runner';
 export * from './attachments';
 export * from './chat-types';
