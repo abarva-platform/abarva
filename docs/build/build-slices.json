@@ -2021,6 +2021,59 @@
         "npm run build"
       ],
       "notes": "Deterministic registry only. Does not compose live per-tenant architectures, invoke models, or read tenant state. UI binding is deferred to SOL7 (archetype detail view) and SOL8 (archetype canvas)."
+    },
+    {
+      "id": "SOL4",
+      "name": "Analytics Modernization Component Pack",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/analytics-modernization-components.ts",
+        "src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "docs/build/slices/SOL4_ANALYTICS_MODERNIZATION_COMPONENT_PACK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly the 15 canonical analytics-modernization solution components in canonical order (data_platform_assessment, cloud_lakehouse_foundation, semantic_layer_design, master_data_management, data_quality_observability, reporting_rationalization, ai_ready_feature_store, data_governance_operating_model, metadata_catalog_lineage, self_service_analytics_enablement, legacy_platform_decommission, value_case_and_migration_roadmap, data_product_operating_model, real_time_integration_layer, analytics_cost_optimization).",
+        "Each component carries key, name, definition, problemSolved, requiredCurrentStateInputs (>=3), targetCapabilities (>=2), architectureBuildingBlocks (>=2), governanceRequirements (>=2), implementationSteps (>=3), expectedOutcomes (>=2), risks (>=1), requiredWorkshops (>=1), deliverablesProduced (>=1), relatedArchetypes (>=1), createdFrom.",
+        "Registry coverage: semantic-layer, data-quality, governance, AI, and feature-store concepts are represented across components (substring sweep).",
+        "ai_ready_feature_store explicitly references AI readiness and feature-store concepts.",
+        "getAnalyticsModernizationComponent returns null for unknown keys.",
+        "recommendAnalyticsModernizationComponents is union-semantics on capabilityKeywords OR currentStateGaps, returns canonical-order results, ignores unknown keys without throwing, and is case-insensitive.",
+        "summarizeAnalyticsModernizationComponentPack().totalCount === 15; uniqueArchitectureBlocks / uniqueWorkshops / uniqueDeliverables are sorted ascending and reconcile exactly to the observed sets.",
+        "ANALYTICS_MODERNIZATION_COMPONENT_KEYS is a frozen tuple in canonical order; ANALYTICS_MODERNIZATION_COMPONENTS is a record keyed in canonical order.",
+        "No component invents a dollar amount in any string field; no banned placeholder phrases (Coming soon, TBD, Lorem ipsum).",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) — components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
     }
   ]
 }
