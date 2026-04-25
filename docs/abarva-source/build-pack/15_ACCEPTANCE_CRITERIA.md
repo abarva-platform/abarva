@@ -15,6 +15,9 @@
 - agent context-awareness contract is explicit
 - chat experience and input model are explicit
 - context validation harness is explicit
+- workflow richness and document collaboration model is explicit
+- artifact review and approval model is explicit
+- workflow validation harness is explicit
 - pattern-pack architecture is explicit
 - pattern-pack content depth standard is explicit
 - artifact and RFP generation model is explicit
@@ -28,6 +31,32 @@
 - commercial model is explicit
 - implementation sequence is explicit
 - component specs and wireframes exist
+
+## Workflow Richness And Document Collaboration
+
+- Source defines three workflow layers: sourcing event workflow, artifact lifecycle workflow, and review/approval workflow
+- sourcing event workflow supports Intake, Scope, Sourcing Strategy, RFP/RFI Package, Vendor Responses, Evaluation, Orals/BAFO, Selection, Contract/Mobilization, and Value Realization
+- artifact lifecycle supports Not Started, Draft, Needs Inputs, In Review, Changes Requested, Approved, Locked, Issued/Published, Superseded, and Archived
+- document collaboration supports export to DOCX, XLSX, and later PPTX/PDF where appropriate
+- externally edited documents can be re-uploaded and classified against expected artifacts
+- re-uploaded external edits create a new artifact version, not an in-place overwrite
+- artifact versions track owner, creator, modifier, uploader, format, generated/uploaded origin, source inputs, citations, change summary, review state, approval state, lock state, and timestamps
+- Source remains the system of record for workflow state even when Office or Google Docs is used as the editing surface
+- audit trail records artifact generation, export, upload, version creation, review, approval, waiver, lock, issue/publish, reopen, and stage movement
+
+## Artifact Review And Approval
+
+- approval routing is configurable by rigor level, event value, artifact type, risk level, data sensitivity, security/compliance requirements, and stage
+- approval types include informational review, required approval, legal, security, finance, executive, procurement, business sponsor, data governance, and architecture approval
+- routing modes include sequential, parallel, all approvers required, any approver required, fallback approver, escalation approver, and conditional approver
+- approval statuses include Not Required, Not Started, Pending, Approved, Rejected, Changes Requested, Escalated, Waived, and Expired
+- approvals have owner, due date, routing mode, blocking flag, reminder cadence, escalation behavior, and decision timestamp
+- waivers require authorized owner and rationale
+- locked artifacts cannot be edited in place
+- reopening a locked artifact creates a new version
+- unresolved required comments block artifact lock
+- Steward enforces approval gates
+- Nexus explains approval blockers in event-specific language
 
 ## Agent Per-Turn Contract
 
@@ -109,6 +138,24 @@
 - product capabilities map back to failure modes
 - failure modes are visible in Nexus guidance, gates, alerts, artifacts, scorecards, or value tracking
 
+## Workflow Validation Harness
+
+- workflow validation scenarios define fixture state, attempted action, expected result, Nexus explanation, Steward enforcement, evidence needed, and acceptance criteria
+- workflow validation outcomes include PASS, BLOCK, DEFER, WAIVER_REQUIRED, and FAIL
+- harness blocks moving to Vendor Responses when RFP package is not approved/locked
+- harness blocks beginning Evaluation when scorecard is not locked
+- harness blocks Rich-tier RFP generation when required inputs are missing
+- harness blocks strategic sourcing readiness without legal/procurement review path
+- harness blocks artifact lock when required reviewer comments are unresolved
+- harness blocks approval without assigned approval owner
+- harness blocks stage advancement when required artifact is Needs Inputs unless waiver is explicitly allowed
+- harness requires re-uploaded offline edits to create a new version
+- harness prevents citing uploaded documents before parsing/validation
+- harness prevents vendor response completion when pricing template is missing unless exception is approved
+- harness prevents realized value claims without measurement owner and evidence
+- harness prevents approval skips without waiver rationale
+- workflow validation is distinct from context validation: context validation checks grounded response quality, while workflow validation checks whether Source permits or blocks workflow actions correctly
+
 ## Pattern-Pack Content Depth
 
 - pattern packs include identity, detection signals, diagnostic questions, required inputs, stage gates, artifact templates, scorecard defaults, risks, interventions, evidence base, Nexus guidance, and learning loop
@@ -174,6 +221,7 @@
 - supports status, tier, confidence, owner, inputs, and citation placeholders
 - uses dignified stubs
 - no fake content
+- supports future version history, external upload status, review state, approval state, and lock state before production use
 
 ## Value Ledger
 
