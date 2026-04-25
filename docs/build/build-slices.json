@@ -1666,6 +1666,60 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "SOL5",
+      "name": "Healthcare AI Solution Archetypes",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL2"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/healthcare-ai-archetypes.ts",
+        "src/__tests__/integration/solutions/healthcare-ai-archetypes.test.ts",
+        "docs/build/slices/SOL5_HEALTHCARE_AI_ARCHETYPES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Pack contains exactly 8 canonical healthcare AI archetypes in canonical order: ambient_clinical_value_chain, hcc_risk_adjustment_coding_accuracy, prior_authorization_automation, clinical_documentation_improvement, care_management_next_best_action, patient_access_scheduling_optimization, revenue_integrity_ai, population_health_analytics.",
+        "Each archetype carries key, name, clinicalBusinessProblem, workflowImpacted (>=2), currentStateInputsRequired (>=3), dataSourcesRequired (>=3), architectureBuildingBlocks (>=3), vendorStartupConsiderations (>=2), buildBuyPartnerConsiderations (>=2), governanceRiskConsiderations (>=2), valueMetrics (>=2), requiredWorkshops (>=2), smesRequired (>=2), deliverablesGenerated (>=2), patternsUsed (>=1), createdFrom.",
+        "ambient_clinical_value_chain workflowImpacted contains at least two entries hitting coding / billing / quality.",
+        "hcc_risk_adjustment_coding_accuracy workflowImpacted contains entries naming RAF, submission, or audit.",
+        "prior_authorization_automation contains the literal substrings 'evidence packet', 'clinical policy', and 'payer workflow' across its fields.",
+        "vendorStartupConsiderations is phrased as vendor categories, not branded endorsements (deny-list test enforced).",
+        "getHealthcareAiArchetype returns null for unknown keys.",
+        "recommendHealthcareAiArchetypes is union-semantics on workflowKeywords OR valueDriverKeywords, returns canonical-order results, and ignores unknown keywords without throwing.",
+        "summarizeHealthcareAiArchetypes returns totalCount === 8 and sorted-ascending unique sets.",
+        "No archetype invents a dollar amount in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, next/*, or React; no Date.now / Math.random / new Date / fetch / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/healthcare-ai-archetypes.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic registry only. Does not generate live architectures, invoke models, or read tenant state. Vendor / startup considerations are vendor categories, not branded endorsements; SOL6 will introduce the rigorous build / buy / partner framework that integrates vendor evaluation against tenant context."
     }
   ]
 }
