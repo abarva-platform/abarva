@@ -2238,6 +2238,49 @@
         "npm run build"
       ],
       "notes": "Pure deterministic projection of a canonical solution archetype into a canvas-ready detail view. SOL3's solution-archetype-registry is not yet present in this worktree, so SOL7 declares a local SolutionArchetypeLike structural type and a follow-up slice will wire the registry through to this read model. SOL7 is library-only \u2014 no UI renderer, no live retrieval, no model calls."
+    },
+    {
+      "id": "SOL8",
+      "name": "Solution Intelligence Canvas Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3",
+        "SOL7"
+      ],
+      "allowedFiles": [
+        "docs/build/slices/SOL8_SOLUTION_INTELLIGENCE_CANVAS_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Section A names purpose: the Solution Intelligence Canvas is where Client Maestro / AbarVa Maestro / Solution Architect compose a tenant-specific solution architecture from a SOL3 archetype plus SOL2 / SOL4 / SOL5 component packs, and defines the canvas shape so v1 implementation has a single source of truth.",
+        "Section B names four canvas route candidates as proposed (not yet implemented): /tenant/[tenantSlug]/solutions, /tenant/[tenantSlug]/solutions/[solutionKey], /tenant/[tenantSlug]/solutions/[solutionKey]/architecture, /tenant/[tenantSlug]/solutions/[solutionKey]/build-buy-partner.",
+        "Section C names the primary user as Client Maestro / AbarVa Maestro / Solution Architect.",
+        "Section D names the four agent roles on the canvas with explicit responsibilities: Nexus as deterministic composition lead, Sentinel as PF1 / I1 validation, Steward as readiness enforcement with explicit refusal language, Atlas as executive implication on the AI Control Tower.",
+        "Section E enumerates the ten canvas sections in canonical order: solution brief, current-state inputs, patterns used, archetype selected, architecture components, workshops required, build/buy/partner decision, risks/governance, deliverables, missing inputs.",
+        "Section F defines the same-canvas interaction model: section click opens a side drawer with state preserved, single drawer at a time, 120ms fade transition, no full-page navigation, drawers compose from canonical contracts (SOL3 detail per SOL7, SOL2/4/5 component metadata, SOL6 evaluator).",
+        "Section G defines versioning: each canvas has a version field and a versions history; archetype / component / build-buy-partner changes create a new version per OUT1; approval / lock state is auditable per AUD1; immutable once approved with new edits creating a new version.",
+        "Section H defines handoff to deliverable renderer: Nexus produces an OUT1 html-mode deliverable when canvas reaches usable readiness AND a Steward approval lands; markdown / pdf / docx / ppt render modes are deferred per OUT1.",
+        "Section I states no-live-model v1 rules: composition is deterministic from SOL3 / SOL2 / SOL4 / SOL5 / SOL6 / MW2 / PDEL; LLM enrichment per MG1 is deferred to v2 inside Nexus runtime; any 'Composed by Nexus' label clarifies 'deterministic seed' until model gateway is wired.",
+        "Section J names future slices: SOL9 Solution Canvas UI on DES2 primitives, SOL10 Architecture Draft Read Model, SOL11 Workshop-to-Architecture Refinement (deterministic merge first, LLM-assisted later), SOL12 Architecture Deliverable Renderer.",
+        "Section K states no-fabrication rules: no fabricated dollar amounts, no fabricated E-### evidence citations outside EVID1 usable_as_evidence, no fabricated vendor endorsements, missing inputs surfaced explicitly, honest refusal language ('Steward refuses approval \u2014 N hard inputs missing').",
+        "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Contract document only. Defines the Solution Intelligence Canvas shape so the v1 implementation has a single source of truth across the Builder + Reviewer agent partition, the canonical contracts the canvas consumes (SOL3 archetype, SOL2 / SOL4 / SOL5 component packs, SOL6 evaluator, MW2 readiness, PDEL inventory, EVID1 evidence, PF1 failure modes, I1 patterns), and the OUT1 deliverable handoff. Future slices SOL9 (Solution Canvas UI), SOL10 (Architecture Draft Read Model), SOL11 (Workshop-to-Architecture Refinement), and SOL12 (Architecture Deliverable Renderer) implement the canvas, the read model, the workshop refinement loop, and the deliverable renderer respectively."
     }
   ]
 }
