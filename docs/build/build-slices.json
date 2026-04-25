@@ -1666,6 +1666,63 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "SOL6",
+      "name": "Build / Buy / Partner Decision Framework",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL1"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/build-buy-partner-framework.ts",
+        "src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "docs/build/slices/SOL6_BUILD_BUY_PARTNER_DECISION_FRAMEWORK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "BUILD_BUY_PARTNER_CRITERIA contains exactly the 12 canonical decision criteria in canonical order.",
+        "Every criterion descriptor exposes non-empty name, description, buildSignal, buySignal, and partnerSignal.",
+        "evaluateBuildBuyPartnerScenario is deterministic: same input yields deeply equal output across repeated calls.",
+        "Build rule fires when differentiationLevel is high and internalCapabilityMaturity is not absent, returning recommendedOption build with high or medium confidence.",
+        "Buy rule fires when timeToValueUrgency is high and marketCapabilityMaturity is mature and differentiation is low or medium, returning recommendedOption buy.",
+        "Partner rule fires when timeToValueUrgency is high and marketCapabilityMaturity is fragmented and differentiation is medium or high, returning recommendedOption partner.",
+        "Fallback recommendation is partner with low confidence when no rule fires.",
+        "governanceWarnings is non-empty when regulatedContext is true or criticalRiskTags is non-empty; both produce distinct warnings when both apply.",
+        "vendorStartupAssessmentFactors is empty for build recommendations and non-empty (>=6 factors) for buy or partner recommendations.",
+        "enterpriseReadinessRisks is non-empty (>=4 risks) for every recommendation regardless of option.",
+        "rationale and tradeoffs each carry at least two entries on every recommendation.",
+        "No recommendation invents a dollar amount in any string field.",
+        "Source contains no branded vendor names presented as endorsements (Snowflake, Databricks, Epic, Microsoft Azure all absent).",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / next / React."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic rule-based library only. Does not generate live decisions, invoke models, fetch vendor catalogs, or read tenant state. Future slices wire the framework into Programs detail (per-capability scenario grading), Atlas portfolio rationalization, and a vendor diligence runbook."
     }
   ]
 }
