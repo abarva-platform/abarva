@@ -1140,6 +1140,46 @@
         "npm run build"
       ],
       "notes": "Specification only. Establishes the canonical AI Control Tower product shape: 7 dimensions, 5 scorecards, 3 pressure cards, 1 active lens, Atlas brief, drawer-not-chat, internal-vs-external basis, no-fabrication rules. ACT2-ACT10 implement the surface."
+    },
+    {
+      "id": "MW1",
+      "name": "Maestro Workshop Intelligence Contract",
+      "category": "MW",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/MW1_MAESTRO_WORKSHOP_INTELLIGENCE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract names the Client Maestro as the human leading the engagement; the platform never replaces the Maestro.",
+        "Contract names Nexus as program mastermind and AbarVa SMEs as recommendations not auto-assignments.",
+        "Contract defines the before-workshop brief field set: objective, requiredAttendees, preReadList, agenda, questionsToAsk, likelyTensions, decisionPoints, evidenceChecklist.",
+        "Contract defines the during/after capture types: notes, decisions, risks, objections, missingInputs, stakeholderAlignment, followUpActions.",
+        "Contract defines the after-workshop synthesis: program state update, deliverable revision, gate readiness update, next session recommendation, executive summary.",
+        "Contract defines save / stop / start program state lifecycle with audit-row emission.",
+        "Contract defines meeting notes ingestion excluding audio + real-time transcription in v1.",
+        "Contract defines SME recommendation logic surfacing top three with the Maestro deciding.",
+        "Contract defines deterministic deliverable refinement loop (Stub -> Outline -> Rich) without live model invocation in v1.",
+        "Contract defines per-agent roles: Nexus, Sentinel, Steward, Atlas; Atlas never speaks during the workshop itself.",
+        "Contract proposes future slices MW2 through MW7.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification only. Establishes the canonical Maestro Workshop Intelligence shape: Maestro / Nexus / SME role partition, before/during/after capture, save/stop/start lifecycle, deterministic synthesis, SME recommendation, deliverable refinement loop. MW2-MW7 implement the surface."
     }
   ]
 }
