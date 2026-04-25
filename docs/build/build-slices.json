@@ -1342,6 +1342,44 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
+    },
+    {
+      "id": "PF2",
+      "name": "Program Phase Workspace Contract",
+      "category": "PF",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/PF2_PROGRAM_PHASE_WORKSPACE_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract defines a center-canvas, Nexus-led phase workspace with left journey rail (<=220px), center canvas (~70%), and right compact context panel (<=320px); not a left-rail nav and not a split-view dashboard.",
+        "Contract enumerates exactly six mutually exclusive phase modes: phase overview, workshop preparation, live session support, notes synthesis, deliverable refinement, gate readiness.",
+        "Contract names the Client Maestro as the only role that advances the phase and Nexus as the program mastermind; Atlas only speaks about the workshop, never in it.",
+        "Contract specifies Save / Stop / Resume affordances per MW1 §G with audit-row Save, paused-program Stop, and Context Bundle Resume.",
+        "Contract specifies typed / pasted / uploaded ingestion only with deterministic extractors, raw-text persistence, Maestro confirmation, and source / createdFrom tagging; audio and meeting-bot ingestion are deferred.",
+        "Contract binds the workspace to PDEL render modes (html_render, markdown_render, note_list, pdf_preview) and the Stub → Outline → Rich promotion ladder per MW1 §J.",
+        "Contract requires evidence chip (NAVY / AMBER / RED / MUTED), value ledger reference, canonical gate caps in the journey rail, Steward gate readiness verdict in the right rail, and refusal of phase advancement when hard-gate inputs are missing.",
+        "Contract specifies click-to-explore interaction, single-instance drawer overlay, 120ms fade-only animation, and a workshop notes pane that defaults open on the active phase.",
+        "Contract forbids fabricated dollar amounts, fake E-### citations, and live-runtime claims; tags Maestro-captured records with source: 'maestro_capture' and createdFrom: 'deterministic_seed'.",
+        "Contract introduces no Sentinel / Atlas / Nexus / Agent runtime modifications and stages only docs/build/slices/PF2_PROGRAM_PHASE_WORKSPACE_CONTRACT.md and docs/build/build-slices.json."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification / contract document only. Defines the program phase workspace shape that consumes MW1 (Maestro Workshop Intelligence) and PDEL (Program Deliverables / Artifacts Read Model). Future slices PF3 / PF4 / PF5 / PF6 / PF7 wire workshop templates, ingestion, deliverable generation, resume continuity, and Nexus rail v2."
     }
   ]
 }
