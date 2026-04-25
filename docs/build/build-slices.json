@@ -1101,6 +1101,60 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
+    },
+    {
+      "id": "PDEL",
+      "name": "Program Deliverables / Artifacts Read Model",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S9d"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/program-artifact-inventory.ts",
+        "src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "docs/build/slices/PDEL_PROGRAM_DELIVERABLES_ARTIFACTS_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Inventory builds deterministically for every (tenant, program) pair across all four canonical demo tenants.",
+        "Every artifact carries id, programCode, programSlug, tenantKey, tenantRouteSlug, routeHref, type, fileChip, title, description, phaseBucket, phaseSpec, status, renderMode, renderableInCanvas, downloadable, evidenceUsability, honestFallback, createdFrom.",
+        "Artifact ids are unique within a single inventory.",
+        "Artifacts are sorted by phase bucket then type then id.",
+        "groupArtifactsByPhase / summarizeProgramArtifacts / getRenderableDeliverables compose pure from the artifact list.",
+        "byType, byPhase, byStatus counts reconcile to the artifact list.",
+        "downloadable is always false today; download / export pipeline is deferred.",
+        "No artifact invents a dollar amount or claims a real E-### citation.",
+        "Every artifact carries a non-empty honestFallback caption.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/program-artifact-inventory.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of (tenant, program) seed into a per-program artifact inventory. No upload, no parse, no export, no canvas rendering. Future deliverable canvas / upload pipeline / export slices flip per-artifact state without contract changes."
     }
   ]
 }
