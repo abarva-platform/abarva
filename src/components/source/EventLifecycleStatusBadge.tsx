@@ -5,11 +5,14 @@ import { COMPONENTS, COLORS, FONTS } from '@/lib/design-system';
 export function EventLifecycleStatusBadge({
   status,
   label,
+  variant = 'dark',
 }: {
   status: SourceLifecycleStatus;
   label?: string;
+  variant?: 'dark' | 'light';
 }) {
   const tone = getLifecycleTone(status);
+  const isLight = variant === 'light';
   const styles =
     tone === 'critical'
       ? COMPONENTS.riskPill('high')
@@ -28,8 +31,10 @@ export function EventLifecycleStatusBadge({
               textTransform: 'uppercase' as const,
               letterSpacing: '0.06em',
               fontWeight: 600,
-              background: tone === 'info' ? COLORS.tealDim : 'rgba(255,255,255,0.04)',
-              color: COLORS.textPrimary,
+              background: tone === 'info'
+                ? (isLight ? 'rgba(15,118,110,0.10)' : COLORS.tealDim)
+                : (isLight ? 'rgba(17,24,39,0.04)' : 'rgba(255,255,255,0.04)'),
+              color: tone === 'info' && isLight ? '#0F766E' : (isLight ? '#101827' : COLORS.textPrimary),
               border: `1px solid ${tone === 'info' ? COLORS.tealBorder : COLORS.border}`,
             };
 
