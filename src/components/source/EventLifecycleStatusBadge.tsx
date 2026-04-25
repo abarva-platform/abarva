@@ -18,12 +18,16 @@ export function EventLifecycleStatusBadge({
         : tone === 'success'
           ? COMPONENTS.riskPill('low')
           : {
+              display: 'inline-flex',
+              alignItems: 'center',
+              width: 'fit-content',
               fontFamily: FONTS.mono,
               fontSize: '9px',
               padding: '3px 8px',
               borderRadius: 20,
               textTransform: 'uppercase' as const,
               letterSpacing: '0.06em',
+              fontWeight: 600,
               background: tone === 'info' ? COLORS.tealDim : 'rgba(255,255,255,0.04)',
               color: COLORS.textPrimary,
               border: `1px solid ${tone === 'info' ? COLORS.tealBorder : COLORS.border}`,
