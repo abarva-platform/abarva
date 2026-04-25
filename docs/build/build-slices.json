@@ -2073,7 +2073,7 @@
         "npx jest src/__tests__/integration/solutions/analytics-modernization-components.test.ts",
         "npm run build"
       ],
-      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) — components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. relatedArchetypes references canonical SOL3 archetype keys (analytics_modernization, ai_led_pdlc_transformation) as documentation strings; this worktree does not import SOL3 and runtime cross-validation lands when SOL3 ships in the registry. Companion to SOL2 (AI-led PDLC) \u2014 components like ai_ready_feature_store and data_governance_operating_model cross-link both archetypes."
     },
     {
       "id": "SOL5",
@@ -2129,6 +2129,60 @@
         "npm run build"
       ],
       "notes": "Deterministic healthcare-vertical archetype library. Peer to SOL2 (AI-led PDLC) and consumed downstream by SOL3 / SOL4 / SOL6. Does not generate live architectures, invoke models, or read tenant state. Vendor startup considerations are kept at the category level (e.g. 'ambient documentation specialists') so the pack stays defensible across tenants whose vendor short-list differs."
+    },
+    {
+      "id": "SOL6",
+      "name": "Build / Buy / Partner Decision Framework",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/build-buy-partner-framework.ts",
+        "src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "docs/build/slices/SOL6_BUILD_BUY_PARTNER_DECISION_FRAMEWORK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Framework contains exactly the 14 canonical build / buy / partner decision criteria in canonical order.",
+        "Each criterion carries key, name, description, buildSignal, buySignal, partnerSignal, and weight.",
+        "Vendor / startup assessment factor pack publishes at least eight factors covering all five categories (capability, commercial, governance, integration, enterprise_readiness) with non-empty red-flag and green-flag signals.",
+        "Enterprise readiness risk pack publishes at least five risks with non-empty mitigations and a severity of low / medium / high.",
+        "evaluateBuildBuyPartnerScenario is deterministic and byte-equal across repeated calls for the same input.",
+        "Build is recommended when differentiation is high and internal capability is present.",
+        "Buy is recommended when time-to-value pressure is high and market capability maturity is mature and differentiation is not high.",
+        "Partner is recommended when market capability maturity is fragmented and differentiation is not low.",
+        "Governance warnings populate when regulated context is true or high-risk tags are non-empty.",
+        "Vendor / startup checks populate when the recommended option is not build.",
+        "Confidence is one of low / medium / high; option is one of build / buy / partner.",
+        "No string field invents a dollar amount.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no useState / useEffect; no banned AI vendor names appear in source."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices will compose this framework with PF1 failure-mode signals, I1 pattern signals, and SOL2 component recommendations to produce a single defensible build / buy / partner brief per capability request."
     }
   ]
 }
