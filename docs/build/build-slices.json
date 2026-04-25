@@ -523,6 +523,58 @@
         "npm run build"
       ],
       "notes": "Seed-only. Evidence and value readiness exposed as explicit not_seeded signals. Promotion to ready/partial requires a future seed-population slice to populate evidence references and value ledger entries."
+    },
+    {
+      "id": "S9e",
+      "name": "Programs Control Tower signal read model",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9",
+        "S9b",
+        "S9c",
+        "S9d"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/programs-control-tower-signals.ts",
+        "src/__tests__/integration/programs/programs-control-tower-signals.test.ts",
+        "docs/build/slices/S9E_PROGRAMS_CONTROL_TOWER_SIGNAL_READ_MODEL.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/components/tower/**",
+        "src/lib/tower/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "supabase/**",
+        "CYCLE_STATE.md"
+      ],
+      "acceptanceCriteria": [
+        "Every canonical demo tenant produces a deterministic signal list.",
+        "Signals are sorted by severity desc, then by canonical type rank, then by id.",
+        "High/critical signals are emitted when gate, evidence, or value readiness is missing.",
+        "routeHref always points back to the canonical tenant program route.",
+        "No signal claims evidence/value readiness while seed lacks them.",
+        "No signal invents a dollar amount.",
+        "Per-tenant aggregate equals concatenation of per-program signals (sorted)."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/programs-control-tower-signals.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read model only. No Tower UI build, no Atlas runtime subscription, no persistence. Programs in canonical Execute phase honestly emit zero gate_missing_inputs signals because no canonical hard gate exits Execute."
     }
   ]
 }
