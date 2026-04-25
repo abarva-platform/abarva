@@ -4,8 +4,15 @@ import {
 } from './constants';
 import { getActiveStage } from './lifecycle';
 import {
+  getSourceAttachmentSeed,
+  getSourceAttachmentSummarySeed,
   getSourceDashboardSeed,
+  getSourceEvidenceSeed,
   getSourceEventSeed,
+  getSourcePatternSectionsSeed,
+  getSourcePortfolioEvidenceSeed,
+  getSourceScorecardDefaultWeightsSeed,
+  getSourceValueSeed,
 } from './mock-seed';
 import type {
   SourceAgentContextBundle,
@@ -91,6 +98,12 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
   const requiredInputs = getRequiredInputs(event, activeStage);
   const missingInputs = getMissingInputs(event, activeStage);
   const blockers = uniqueStrings([event.blocker, activeStage.gate.blocker].filter(Boolean) as string[]);
+  const selectedAttachmentIds = input.selectedAttachmentIds ?? [];
+  const uploadedFiles = getSourceAttachmentSeed(event, selectedAttachmentIds);
+  const parsedFileSummaries = getSourceAttachmentSummarySeed(uploadedFiles);
+  const relevantPatternSections = getSourcePatternSectionsSeed(event);
+  const evidenceCitations = getSourceEvidenceSeed(event);
+  const scorecardDefaultWeights = getSourceScorecardDefaultWeightsSeed(event);
 
   const bundle: SourceAgentContextBundle = {
     ...createEmptySourceContextBundle(input),
@@ -113,16 +126,31 @@ export function buildSourceContextFromSeed(input: SourceContextBuilderInput): So
     missingInputs,
     stageGates: event.stages.map(toGateSnapshot),
     artifacts: event.artifacts.map(toArtifactSnapshot),
-    scorecard: toScorecardSnapshot(event),
-    projectedValueLedger: event.valueLedger.projected.map(toValueLedgerLineSnapshot),
-    realizedValueLedger: event.valueLedger.realized.map(toValueLedgerLineSnapshot),
+    scorecard: toScorecardSnapshot(event, scorecardDefaultWeights),
+    projectedValueLedger: event.valueLedger.projected.map((line) => toValueLedgerLineSnapshot(line, evidenceCitations)),
+    realizedValueLedger: event.valueLedger.realized.map((line) => toValueLedgerLineSnapshot(line, evidenceCitations)),
     risks: event.alerts.map((alert) => toRiskSnapshot(event, activeStage.key, alert)),
     decisions: event.nextDecision ? [toDecisionSnapshot(event)] : [],
-    selectedPatternPack: toPatternContext(event),
-    citationCoverage: toCitationCoverage(event),
+    uploadedFiles,
+    parsedFileSummaries,
+    selectedPatternPack: toPatternContext(event, relevantPatternSections),
+    relevantPatternSections,
+    evidenceCitations,
+    citationCoverage: toCitationCoverage(event, evidenceCitations),
     sourceOfTruthTimestamps: [
       { source: 'source-seed-event', updatedAt: SEED_UPDATED_AT, stale: false },
       { source: 'source-seed-value-ledger', updatedAt: event.valueLedger.updatedAt, stale: false },
+      ...(relevantPatternSections.length
+        ? [{ source: 'source-seed-pattern-sections', updatedAt: SEED_UPDATED_AT, stale: false }]
+        : []),
+      ...(evidenceCitations.length
+        ? [{ source: 'source-seed-evidence', updatedAt: SEED_UPDATED_AT, stale: false }]
+        : []),
+      ...uploadedFiles.map((attachment) => ({
+        source: `source-seed-attachment:${attachment.id}`,
+        updatedAt: attachment.uploadTime,
+        stale: false,
+      })),
       ...event.artifacts.map((artifact) => ({
         source: `source-seed-artifact:${artifact.id}`,
         updatedAt: artifact.updatedAt,
@@ -343,6 +371,12 @@ export function getMissingContextReasons(bundle: SourceAgentContextBundle): stri
   if (bundle.sourcingEvent && bundle.evidenceCitations.length === 0) {
     reasons.push('No evidence citations are available in the current seed context.');
   }
+  if (bundle.citationCoverage?.missingCitationClaims.length) {
+    reasons.push(`Client-specific citation coverage is still incomplete for: ${bundle.citationCoverage.missingCitationClaims.join('; ')}.`);
+  }
+  if (bundle.parsedFileSummaries.some((summary) => isPlaceholderAttachmentSummary(summary))) {
+    reasons.push('Selected attachment summary is a seed placeholder, not parsed client evidence.');
+  }
   if (bundle.missingInputs.length > 0) {
     reasons.push(`Missing inputs remain: ${bundle.missingInputs.join('; ')}.`);
   }
@@ -351,6 +385,10 @@ export function getMissingContextReasons(bundle: SourceAgentContextBundle): stri
   }
 
   return uniqueStrings(reasons);
+}
+
+function isPlaceholderAttachmentSummary(summary: SourceAgentContextBundle['parsedFileSummaries'][number]): boolean {
+  return summary.keyFields.placeholder === true || summary.summary.toLowerCase().includes('placeholder');
 }
 
 export function createSourceContextAssemblyFailure(
@@ -372,6 +410,8 @@ function createPortfolioContextBundle(input: SourceContextBuilderInput): SourceA
   const dashboard = getSourceDashboardSeed();
   const events = dashboard.events;
   const waitingOrBlocked = events.filter((event) => event.blocker || event.status.startsWith('waiting_on'));
+  const valueLedger = getSourceValueSeed();
+  const evidenceCitations = getSourcePortfolioEvidenceSeed();
 
   return {
     ...createEmptySourceContextBundle(input),
@@ -395,9 +435,19 @@ function createPortfolioContextBundle(input: SourceContextBuilderInput): SourceA
       options: [],
       evidenceIds: [],
     })),
-    projectedValueLedger: [],
+    projectedValueLedger: valueLedger.projected.map((line) => toValueLedgerLineSnapshot(line, evidenceCitations)),
+    realizedValueLedger: valueLedger.realized.map((line) => toValueLedgerLineSnapshot(line, evidenceCitations)),
+    evidenceCitations,
+    citationCoverage: {
+      requiredClaims: ['portfolioValueAtStake', 'portfolioAttentionItems'],
+      citedClaims: ['portfolioValueAtStake', 'portfolioAttentionItems'],
+      missingCitationClaims: [],
+      confidence: 'medium',
+    },
     sourceOfTruthTimestamps: [
       { source: 'source-seed-dashboard', updatedAt: SEED_UPDATED_AT, stale: false },
+      { source: 'source-seed-value-ledger', updatedAt: valueLedger.updatedAt, stale: false },
+      { source: 'source-seed-portfolio-evidence', updatedAt: SEED_UPDATED_AT, stale: false },
     ],
   };
 }
@@ -497,11 +547,14 @@ function toArtifactSnapshot(artifact: SourcingEventDetail['artifacts'][number]):
   };
 }
 
-function toScorecardSnapshot(event: SourcingEventDetail): SourceScorecardSnapshot {
+function toScorecardSnapshot(
+  event: SourcingEventDetail,
+  defaultWeights: SourceScorecardSnapshot['defaultWeights'],
+): SourceScorecardSnapshot {
   return {
     approvalState: event.scorecard.approvalState,
     criteria: event.scorecard.criteria,
-    defaultWeights: [],
+    defaultWeights,
     overrides: [],
     lockStatus: 'unlocked',
   };
@@ -509,37 +562,45 @@ function toScorecardSnapshot(event: SourcingEventDetail): SourceScorecardSnapsho
 
 function toValueLedgerLineSnapshot(
   line: SourcingEventDetail['valueLedger']['projected'][number],
+  evidenceCitations: SourceAgentContextBundle['evidenceCitations'] = [],
 ): SourceValueLedgerLineSnapshot {
   return {
     ...line,
     assumption: line.note,
-    citationIds: [],
+    citationIds: line.evidenceCount > 0 ? evidenceCitations.map((citation) => citation.id) : [],
   };
 }
 
-function toPatternContext(event: SourcingEventDetail): SourcePatternContext {
+function toPatternContext(
+  event: SourcingEventDetail,
+  relevantSections: SourcePatternContext['relevantSections'],
+): SourcePatternContext {
   return {
     id: getPatternId(event),
     name: `${event.archetype} Sourcing`,
     version: 'seed',
     archetype: event.archetype,
     rigorLevel: event.rigor,
-    relevantSections: [],
+    relevantSections,
   };
 }
 
-function toCitationCoverage(event: SourcingEventDetail): SourceCitationCoverage {
+function toCitationCoverage(
+  event: SourcingEventDetail,
+  evidenceCitations: SourceAgentContextBundle['evidenceCitations'],
+): SourceCitationCoverage {
   const requiredClaims = [
     event.valueAtStakeUsd > 0 ? 'valueAtStakeUsd' : null,
     event.projectedValueUsd > 0 ? 'projectedValueUsd' : null,
     event.isAtRisk ? 'riskStatus' : null,
   ].filter(Boolean) as string[];
+  const citedClaims = evidenceCitations.map((citation) => citation.id);
 
   return {
     requiredClaims,
-    citedClaims: [],
+    citedClaims,
     missingCitationClaims: requiredClaims,
-    confidence: requiredClaims.length > 0 ? 'low' : 'medium',
+    confidence: evidenceCitations.length > 0 ? 'medium' : requiredClaims.length > 0 ? 'low' : 'medium',
   };
 }
 
