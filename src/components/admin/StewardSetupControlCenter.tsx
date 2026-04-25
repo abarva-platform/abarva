@@ -13,6 +13,7 @@
 // imports are restricted to next/link and the ADM2 read-model module.
 
 import Link from 'next/link';
+import { DatasetExplorerPanel } from '@/components/admin/DatasetExplorerPanel';
 import {
   buildStewardSetupReadinessView,
   type AdminModuleReadiness,
@@ -147,7 +148,9 @@ export function StewardSetupControlCenter({ view }: StewardSetupControlCenterPro
         <AgentReadinessCard agents={agents} />
       </div>
 
-      {/* Zone D · Recommended actions / explorer rail */}
+      {/* Zone D · Dataset Explorer (ADM4) + recommended actions / explorer rail */}
+      <DatasetExplorerPanel />
+
       <RecommendedActionsBlock actions={recommendedActions} modules={modules} />
 
       {/* Zone E · Detail placeholder / object inspector slot */}
