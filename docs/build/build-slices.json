@@ -1964,6 +1964,63 @@
         "npm run build"
       ],
       "notes": "Calm executive entry surface that augments the existing composite home above the legacy hero. Numbers are deterministic seeds; live binding is deferred to a later slice that wires the attention strip to real tenant state."
+    },
+    {
+      "id": "SOL3",
+      "name": "Solution Archetype Registry",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL2"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/solution-archetype-registry.ts",
+        "src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "docs/build/slices/SOL3_SOLUTION_ARCHETYPE_REGISTRY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Registry contains exactly the 12 canonical solution archetypes in canonical order: ai_led_pdlc_transformation, analytics_modernization, healthcare_ambient_clinical_value_chain, hcc_risk_adjustment_coding_accuracy, prior_authorization_utilization_management, kyc_customer_onboarding_ai, predictive_maintenance_modernization, build_buy_partner_evaluation, service_operations_agentic_automation, ai_governance_operating_model, contact_center_ai_transformation, finance_fpna_ai_automation.",
+        "Each archetype carries key, name, sector, capabilityFamily, problemStatement, businessOutcomes (>=3), currentStateInputsRequired (>=3), patternsUsed (>=1), failureModesAddressed (>=1), solutionComponents (>=2), architectureBuildingBlocks (>=3), workshopsRequired (>=2), smesRequired (>=2), buildBuyPartnerConsiderations (>=2), governanceRiskConsiderations (>=2), deliverablesGenerated (>=2), valueMetrics (>=2), agentRoles {nexus, sentinel, atlas, steward} all named, recommendedFirstWorkshop, createdFrom.",
+        "ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey.",
+        "analytics_modernization fields mention data foundation, governance, and semantic layer concepts.",
+        "Healthcare archetypes (3-5) reference clinical workflow + governance language.",
+        "build_buy_partner_evaluation references vendor / startup assessment language.",
+        "SOLUTION_ARCHETYPE_KEYS is a frozen tuple in canonical order; SOLUTION_ARCHETYPES record is keyed by every canonical key.",
+        "listSolutionArchetypes returns canonical order and is byte-equal across calls.",
+        "getSolutionArchetype returns null for unknown keys including SOL2 / PF1 / I1 keys.",
+        "recommendSolutionArchetypes is union-semantics on sectors OR capabilityKeywords, returns canonical-order results, and ignores unknown / empty tokens without throwing.",
+        "summarizeSolutionArchetypes default param iterates the full canonical list with totalCount === 12; sectors / uniqueWorkshops / uniqueArchitectureBlocks are sorted ascending.",
+        "No archetype invents a dollar amount in any string field.",
+        "No archetype contains banned placeholder phrases (Coming soon, TBD, Lorem ipsum) in any string field.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / useState / useEffect / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic registry only. Does not compose live per-tenant architectures, invoke models, or read tenant state. UI binding is deferred to SOL7 (archetype detail view) and SOL8 (archetype canvas)."
     }
   ]
 }
