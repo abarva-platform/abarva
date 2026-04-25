@@ -24,6 +24,7 @@ import type {
   ProgramPressureSeverity,
 } from '@/lib/programs/programs-control-tower-signals';
 import type { TenantSeedPlan } from '@/lib/programs/enhancement-seed-planner';
+import { COLORS as ABARVA_COLORS } from '@/lib/design/abarva-theme';
 
 interface ProgramPressureCardsProps {
   /** Tenant seed plan. Component derives signals via the S9e read model. */
@@ -38,20 +39,24 @@ interface ProgramPressureCardsProps {
   topN?: number;
 }
 
+// DES5 · refreshed against AbarVa visual canon. Brand accent shifts
+// from teal to NAVY; surface tones lift onto the canonical
+// off-white palette. Atlas keeps the dark-hero option for the
+// future ACT10 redesign — for now this surface stays light-card.
 const COLORS = {
-  ink: '#1a1612',
-  muted: '#5a5148',
-  mutedSoft: '#8a7e72',
-  border: 'rgba(26,22,18,0.08)',
-  borderSoft: 'rgba(26,22,18,0.04)',
-  card: '#FFFFFF',
-  surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
-  amber: '#D97706',
-  amberSoft: 'rgba(217,119,6,0.08)',
-  red: '#E04444',
-  redSoft: 'rgba(224,68,68,0.1)',
+  ink: ABARVA_COLORS.ink,
+  muted: ABARVA_COLORS.muted,
+  mutedSoft: ABARVA_COLORS.mutedSoft,
+  border: ABARVA_COLORS.border,
+  borderSoft: ABARVA_COLORS.borderSoft,
+  card: ABARVA_COLORS.card,
+  surface: ABARVA_COLORS.surface,
+  accent: ABARVA_COLORS.navy,
+  accentSoft: ABARVA_COLORS.navySoft,
+  amber: ABARVA_COLORS.amber,
+  amberSoft: ABARVA_COLORS.amberSoft,
+  red: ABARVA_COLORS.red,
+  redSoft: ABARVA_COLORS.redSoft,
 } as const;
 
 export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCardsProps) {
@@ -61,6 +66,7 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
 
   return (
     <section
+      data-abarva-refreshed="des5"
       aria-label="Programs pressure cards"
       style={{
         padding: '20px 22px',

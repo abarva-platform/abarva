@@ -1458,6 +1458,45 @@
         "npm run build"
       ],
       "notes": "11 AbarVa primitives plus theme tokens. Pure data props; consumers wire interactivity. Forms the visual foundation for DES3 / DES4 / DES5 / ADM5 UX refreshes."
+    },
+    {
+      "id": "DES5",
+      "name": "AI Control Tower UX Refresh",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1",
+        "DES2"
+      ],
+      "allowedFiles": [
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/__tests__/integration/tower/tower-ux-refresh.test.ts",
+        "docs/build/slices/DES5_AI_CONTROL_TOWER_UX_REFRESH.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "ProgramPressureCards imports from @/lib/design/abarva-theme.",
+        "Brand accent shifted from teal #0E9F8C to NAVY #1B2B5C.",
+        "Component carries data-abarva-refreshed='des5' marker on root.",
+        "No structural changes; existing copy, behavior, source captions, 'Open program →' routes preserved.",
+        "Regression suites pass: program-pressure-cards, programs-control-tower-signals."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/tower-ux-refresh.test.ts",
+        "npm run build"
+      ],
+      "notes": "Visual refresh only. Functionality unchanged. Brand accent and surface palette aligned with AbarVa visual canon. Full ACT10 structural lift (5 scorecards, 3 pressure cards, Atlas dark hero, Ask Atlas drawer) is deferred."
     }
   ]
 }
