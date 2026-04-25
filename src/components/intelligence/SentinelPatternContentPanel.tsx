@@ -10,6 +10,7 @@
 
 import Link from 'next/link';
 import type { SentinelPatternAuthoredContent } from '@/lib/intelligence/sentinel-pattern-content';
+import { COLORS as ABARVA_COLORS } from '@/lib/design/abarva-theme';
 
 interface SentinelPatternContentPanelProps {
   content: SentinelPatternAuthoredContent;
@@ -19,18 +20,21 @@ interface SentinelPatternContentPanelProps {
   buildRelatedPatternHref?: (patternKey: string) => string;
 }
 
+// DES4 · refreshed against AbarVa visual canon. Brand accent shifts
+// from teal to NAVY; surface tones lift onto the canonical off-white
+// palette.
 const COLORS = {
-  ink: '#1a1612',
-  body: '#3D3B38',
-  muted: '#5a5148',
-  mutedSoft: '#8a7e72',
-  border: 'rgba(26,22,18,0.08)',
-  card: '#FFFFFF',
-  surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
-  amber: '#D97706',
-  amberSoft: 'rgba(217,119,6,0.08)',
+  ink: ABARVA_COLORS.ink,
+  body: ABARVA_COLORS.body,
+  muted: ABARVA_COLORS.muted,
+  mutedSoft: ABARVA_COLORS.mutedSoft,
+  border: ABARVA_COLORS.border,
+  card: ABARVA_COLORS.card,
+  surface: ABARVA_COLORS.surface,
+  accent: ABARVA_COLORS.navy,
+  accentSoft: ABARVA_COLORS.navySoft,
+  amber: ABARVA_COLORS.amber,
+  amberSoft: ABARVA_COLORS.amberSoft,
 } as const;
 
 const MONO = "'JetBrains Mono', 'Courier New', monospace";
@@ -41,6 +45,7 @@ export function SentinelPatternContentPanel({
 }: SentinelPatternContentPanelProps) {
   return (
     <section
+      data-abarva-refreshed="des4"
       aria-label={`Authored pattern content · ${content.patternName}`}
       style={{
         background: COLORS.card,

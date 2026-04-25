@@ -1458,6 +1458,49 @@
         "npm run build"
       ],
       "notes": "11 AbarVa primitives plus theme tokens. Pure data props; consumers wire interactivity. Forms the visual foundation for DES3 / DES4 / DES5 / ADM5 UX refreshes."
+    },
+    {
+      "id": "DES4",
+      "name": "Intelligence UX Refresh",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1",
+        "DES2"
+      ],
+      "allowedFiles": [
+        "src/components/intelligence/SentinelActivePatterns.tsx",
+        "src/components/intelligence/SentinelPatternDetail.tsx",
+        "src/components/intelligence/SentinelPatternContentPanel.tsx",
+        "src/__tests__/integration/intelligence/intelligence-ux-refresh.test.ts",
+        "docs/build/slices/DES4_INTELLIGENCE_UX_REFRESH.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**"
+      ],
+      "acceptanceCriteria": [
+        "SentinelActivePatterns / SentinelPatternDetail / SentinelPatternContentPanel import from @/lib/design/abarva-theme.",
+        "Brand accent shifted from teal #0E9F8C to NAVY #1B2B5C across all three components.",
+        "Each component carries data-abarva-refreshed='des4' marker on its root element.",
+        "Sentinel keeps its AMBER agent accent for severity / pattern chip framing per canon §H.",
+        "No structural changes; existing copy, behavior, source captions, disabled chips preserved.",
+        "Regression suites pass: sentinel-active-patterns-page, sentinel-pattern-detail, sentinel-pattern-content."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/intelligence-ux-refresh.test.ts",
+        "npm run build"
+      ],
+      "notes": "Visual refresh only. Functionality unchanged. Brand accent and surface palette aligned with AbarVa visual canon."
     }
   ]
 }

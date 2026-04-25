@@ -14,26 +14,30 @@ import type {
 } from '@/lib/intelligence/sentinel-pattern-view';
 import { buildSentinelPatternAuthoredContent } from '@/lib/intelligence/sentinel-pattern-content';
 import { SentinelPatternContentPanel } from '@/components/intelligence/SentinelPatternContentPanel';
+import { COLORS as ABARVA_COLORS } from '@/lib/design/abarva-theme';
 
 interface SentinelPatternDetailProps {
   view: SentinelPatternDetailView;
 }
 
+// DES4 · refreshed against AbarVa visual canon. Brand accent shifts
+// from teal to NAVY; surface tones lift onto the canonical off-white
+// palette.
 const COLORS = {
-  ink: '#1a1612',
-  muted: '#5a5148',
-  mutedSoft: '#8a7e72',
-  border: 'rgba(26,22,18,0.08)',
-  card: '#FFFFFF',
-  surface: '#F8F7F4',
-  accent: '#0E9F8C',
-  accentSoft: 'rgba(14,159,140,0.08)',
-  amber: '#D97706',
-  amberSoft: 'rgba(217,119,6,0.08)',
-  red: '#E04444',
-  redSoft: 'rgba(224,68,68,0.1)',
-  teal: '#1f7a8c',
-  tealSoft: 'rgba(31,122,140,0.08)',
+  ink: ABARVA_COLORS.ink,
+  muted: ABARVA_COLORS.muted,
+  mutedSoft: ABARVA_COLORS.mutedSoft,
+  border: ABARVA_COLORS.border,
+  card: ABARVA_COLORS.card,
+  surface: ABARVA_COLORS.surface,
+  accent: ABARVA_COLORS.navy,
+  accentSoft: ABARVA_COLORS.navySoft,
+  amber: ABARVA_COLORS.amber,
+  amberSoft: ABARVA_COLORS.amberSoft,
+  red: ABARVA_COLORS.red,
+  redSoft: ABARVA_COLORS.redSoft,
+  teal: ABARVA_COLORS.navy,
+  tealSoft: ABARVA_COLORS.navySoft,
 } as const;
 
 export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
@@ -42,6 +46,7 @@ export function SentinelPatternDetail({ view }: SentinelPatternDetailProps) {
 
   return (
     <article
+      data-abarva-refreshed="des4"
       aria-label={`Sentinel pattern · ${view.patternName}`}
       style={{
         padding: '24px clamp(16px, 4vw, 32px)',
