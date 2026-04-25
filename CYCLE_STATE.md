@@ -136,13 +136,15 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Source layered progress tracker started as a docs-only operating-state slice to separate MVP and production readiness by layer.
 - 2026-04-25 · PR #228 merged: Source layered progress tracker.
 - 2026-04-25 · Source-specific Nexus API stub plan started as a docs-only planning slice; no route implementation, UI, model calls, upload/parsing, or workflow runtime scope.
+- 2026-04-25 · PR #229 merged: Source-specific Nexus API stub plan.
+- 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
 - 2026-04-25 - Larger gated Source batch status update - Slice 1 pricing PR updated to remove per-slice CYCLE_STATE changes, Slice 5 data readiness panel plan opened, Slice 2 and Slice 4 already had open equivalent PRs, Slice 3 blocked by open PR #221 - no runtime/model/upload/parsing work in this state slice.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #228 merged · Source layered progress tracker.
+- Current completed milestone: PR #229 merged · Source Nexus API stub plan.
 - Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
 - Current objective: complete larger gated Source batch bookkeeping without per-slice CYCLE_STATE churn.
 - Current item: Batch State Update.

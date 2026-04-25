@@ -255,6 +255,8 @@ Material override rule: increasing Commercial competitiveness above 25% or reduc
 | Hybrid | Mixed stable/variable scope. | Balances predictability and flexibility. | Complexity. | Baselines by scope segment. | Clear triggers and reconciliation. |
 | Outcome/gainshare | Client can measure outcomes. | Aligns incentives. | Measurement disputes. | Baseline and measurement method. | Cap/floor, audit, owner. |
 
+Cross-reference: use `docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md` as the broader Source standard for pricing normalization, commercial trap detection, BAFO packs, benchmark policy, and negotiation intelligence.
+
 ## 14. Pricing Normalization Rules
 
 Normalize proposals across:

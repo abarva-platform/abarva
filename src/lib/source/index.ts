@@ -10,6 +10,7 @@ export * from './context-quality';
 export * from './lifecycle';
 export * from './multi-agent-briefing';
 export * from './multi-agent-types';
+export * from './nexus-api';
 export * from './queries';
 export * from './scorecard';
 export * from './types';

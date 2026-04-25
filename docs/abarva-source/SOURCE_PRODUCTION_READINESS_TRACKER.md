@@ -10,7 +10,7 @@ AbarVa Source is not production-ready yet.
 
 The foundation and agent-context architecture are strong. The Source Build Pack, route family, domain scaffold, context-aware agent contracts, deterministic context builder, context validation foundation, and workflow validation foundation are now in place.
 
-The current work is still in the foundation and validation phase. Source now has deterministic guardrails for both agent context grounding and workflow integrity, but it does not yet have production UI completeness, persistence, upload/evidence processing, Source-specific agent routes, model-assisted responses, workflow engine enforcement, approval engine behavior, artifact versioning, or document export/import.
+The current work is still in the foundation and validation phase. Source now has deterministic guardrails for both agent context grounding and workflow integrity, plus designed/spec-only standards for Admin/Setup data readiness consumption and pricing/negotiation intelligence. It does not yet have production UI completeness, persistence, upload/evidence processing, Source-specific agent routes, model-assisted responses, workflow engine enforcement, pricing engine implementation, approval engine behavior, artifact versioning, or document export/import.
 
 The next major product milestone remains a validated context-aware Nexus foundation before chat/model/UI expansion. The workflow validation foundation now adds a second guardrail: Source should not permit unsafe sourcing workflow moves once workflow behavior is implemented.
 
@@ -39,6 +39,7 @@ The next major product milestone remains a validated context-aware Nexus foundat
 | Workflow validation foundation | Complete | PR #204, PR #207, PR #210 | Deterministic fixtures, runner, and readable report exist. | Do not build workflow engine until these semantics are reviewed. |
 | Remaining workflow defer | Intentional | `source-workflow-uploaded-document-parse-before-citation` | Uploaded documents cannot be cited before parsing/validation. | Build upload/evidence pipeline later, not in current slice. |
 | Source/Admin data readiness integration | Designed / Spec Only | `docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md`, runtime architecture docs | Clarifies Admin/Setup owns setup, data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes readiness state. | Runtime consumption, Source UI panel, Admin/Setup UI, upload/parsing, and evidence ledger implementation are not started. |
+| Pricing and Negotiation Intelligence | Designed / Spec Only | `docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md`, `docs/abarva-source/pattern-packs/AMS_MANAGED_SERVICES_SOURCING_PATTERN.md` | Defines how Source can normalize vendor pricing, identify commercial traps, recommend negotiation levers, prepare BAFO packs, connect scorecards, and update value confidence without requiring paid third-party benchmarks for MVP. | Runtime pricing engine, pricing database, benchmark database, UI, model-assisted analysis, and RFP generation implementation are not started. |
 | Nexus Engagement Canvas | Designed | Build Pack wireframes and component specs | Not implemented beyond allowed foundation. | Review spec before any build. |
 | Source Journey Tracker final behavior | Partial | `src/components/source/SourceJourneyTracker.tsx`, Build Pack docs | Component exists, final behavior not production validated. | Review lifecycle/state expectations. |
 | Persistent Nexus Panel | Designed | Build Pack docs, context-awareness docs | Chat/panel behavior is specified, not implemented. | Wait for SourceAgentContextBundle enforcement. |
@@ -195,6 +196,7 @@ Current assessment: not started for Source.
 - Data persistence: not production-ready. Current behavior is seeded and deterministic.
 - Upload/evidence pipeline: not started. The remaining workflow defer correctly blocks uploaded document citation before parsing/validation.
 - Source/Admin data readiness integration: designed/spec only. Source should consume Admin/Setup readiness and must not duplicate connector setup, dataset inventory, parsing, file management, access control, or evidence storage.
+- Pricing and negotiation intelligence: designed/spec only. Source can use client baseline data, AbarVa pattern intelligence, vendor proposals, normalization logic, trap detection, negotiation strategy, scorecard linkage, and value ledger linkage without requiring paid third-party benchmark subscriptions.
 - Agent/model integration: not started. This is intentional and remains blocked.
 - Production readiness: not started. Source has not passed enterprise, deployment, security, persistence, runtime, or live persona validation gates.
 
