@@ -108,15 +108,27 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-24 · PR #188 merged: AbarVa Source foundation docs and context contracts. Source is paused for product review and next-slice planning only.
 - 2026-04-24 · PR #190 merged: deterministic Source context validation fixtures. Fixture layer now exposes pass/defer/fail readiness before chat/model work.
 - 2026-04-24 · PR #192 merged: deterministic Source context validation runner. Runner produces structured pass/defer/reject reporting for seeded Source context fixtures.
+- 2026-04-24 · PR #193 merged: context depth improvement plan.
+- 2026-04-24 · PR #194 merged: Source production readiness tracker.
+- 2026-04-24 · PR #195 merged: seeded context depth for validation fixtures. Runner improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
+- 2026-04-24 · PR #197 merged: deterministic Source context validation report formatter.
+- 2026-04-25 · PR #199 merged: `/source` dashboard visual review. Dashboard decision: approve with small refinements.
+- 2026-04-25 · Build Pack inventory reconciliation started after workflow hardening review found anchor-referenced files missing from `origin/main`.
+- 2026-04-25 · PR #201 merged: Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs.
+- 2026-04-25 · Workflow richness and document collaboration hardening started on reconciled Build Pack baseline. Build Pack now needs explicit artifact versioning, external edit/re-upload, approval routing, and workflow validation specs before workflow UI expands.
+- 2026-04-25 · PR #202 merged: workflow richness and document collaboration model.
+- 2026-04-25 · Workflow validation fixtures implementation completed locally: 12 deterministic fixtures, 11 BLOCK / 1 DEFER / 0 mismatches.
+- 2026-04-25 · PR #205 merged: CI lint issue resolved by escaping the unescaped apostrophe in `D04TensionSection`.
 
 ## Last status emission
-- 2026-04-24 · Post-merge Source state update · PR #192 merged · next recommended slice is deterministic Source context depth for current fixture defers.
+- 2026-04-25 · Source workflow validation runner plan drafted after PR #205 CI fix merge · docs-only · no workflow runner/UI/API/model/export/import implementation.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #192 merged · deterministic Source context validation runner.
-- Current objective: prepare the next controlled slice: improve Source context depth for fixture defers.
-- Current item: post-merge state update and context-depth planning.
+- Current completed milestone: PR #205 merged · CI lint issue resolved after PR #204.
+- Dashboard decision: approve with small refinements.
+- Current objective: prepare the next controlled Source slice · workflow validation runner plan.
+- Current item: workflow validation runner plan.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -133,8 +145,34 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Deterministic context validation runner.
   - Structured pass/defer/reject report.
   - Runner review packet.
+  - Source production readiness tracker.
+  - Seeded Data & AI Modernization pattern sections.
+  - Seeded Data & AI Modernization scorecard defaults.
+  - Seeded pattern/portfolio evidence placeholder scaffolding.
+  - Seeded vendor response attachment placeholder behavior.
+  - Fixture outcomes improved from 4 pass / 6 defer / 0 reject to 8 pass / 2 defer / 0 reject.
+  - Deterministic readable Source context validation report shape.
+  - Deterministic Source context validation markdown formatter.
+  - Current validation outcome: 10 fixtures, 8 pass, 2 defer, 0 reject.
+  - `/source` dashboard visual review packet.
+  - Dashboard review decision: approve with small refinements.
+  - Build Pack inventory reconciliation restored missing anchor-referenced docs, wireframes, and component specs from `codex/source-foundation`.
+  - Workflow richness and document collaboration spec layer.
+  - Artifact review and approval model.
+  - Workflow validation harness specification.
+  - Workflow richness model.
+  - Document collaboration model.
+  - Artifact/RFP generation model updates.
+  - Lifecycle/alerts updates.
+  - Production readiness tracker updates.
+  - Deterministic workflow validation fixture contract.
+  - Twelve workflow validation fixtures covering stage gates, artifact lifecycle, document review, approvals, versioning, waiver behavior, uploaded document citation readiness, vendor response completeness, and value realization.
+  - Local deterministic fixture smoke result: 12 total, 11 BLOCK, 1 DEFER, all expectations matched.
+  - CI lint issue resolved via PR #205: escaped unescaped apostrophe in `D04TensionSection`.
+  - Workflow validation runner plan drafted.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
-- Blockers/do-not-build: no chat UI, model calls, API routes, upload/parsing, event canvas expansion, scorecard UI, artifact drawer, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: the runner confirms current fixture defers are useful product signals, not failures to hide. The next depth slice should add seeded Data & AI Modernization pattern sections, scorecard default context, evidence/citation placeholder scaffolding, and deterministic attachment summary placeholder behavior while keeping chat/model/UI paused.
-- Next recommended item: add deterministic seeded context depth so the validation runner has richer grounding before any chat UI or model wiring.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_CONTEXT_DEPTH_FOR_DEFERS.md`.
+- Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
+- Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until a separate runner/report slice is reviewed. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker so Source planning can resume.
+- Next recommended item: commit and PR the workflow validation runner plan, then implement the deterministic runner only after the plan is reviewed and merged.
+- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_WORKFLOW_VALIDATION_RUNNER.md` drafted.
