@@ -1101,7 +1101,6 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
-<<<<<<< codex/source-context-validation-fixtures
     },
     {
       "id": "ACT1",
@@ -1343,8 +1342,6 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
-=======
->>>>>>> main
     }
   ]
 }
