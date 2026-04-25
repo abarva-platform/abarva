@@ -1101,7 +1101,6 @@
         "npm run build"
       ],
       "notes": "Founder-facing checklist for verifying the agentic spine before push, PR, or demo. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
-<<<<<<< codex/source-context-validation-fixtures
     },
     {
       "id": "ACT1",
@@ -1343,8 +1342,46 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
-=======
->>>>>>> main
+    },
+    {
+      "id": "SOL1",
+      "name": "Solution Architecture Composition Contract",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/slices/SOL1_SOLUTION_ARCHITECTURE_COMPOSITION_CONTRACT.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Contract defines purpose, scope, and the documentation-only constraint.",
+        "Contract states the principle Pattern not equal Solution Architecture and distinguishes pattern, solution component, architecture, and deliverable.",
+        "Contract enumerates the twelve canonical Solution Context Bundle categories: client context, current-state ways of working, tech stack, DORA metrics, engineering persona, AI adoption, security and compliance, target outcomes, applicable patterns, workshop findings, existing deliverables, and missing inputs.",
+        "Contract walks the canonical AI-led PDLC worked example covering current ways of working, DORA baseline, toolchain, AI tool adoption, testing and release and security process, and target operating model with the canonical solution component set.",
+        "Contract defines the deterministic seven-step composition flow from context assembly to decision-grade deliverable.",
+        "Contract defines the three composition styles pattern-driven, LLM-composed, and SME-validated with anchoring rule and confidence caps.",
+        "Contract defines per-agent roles for Nexus, Sentinel, Steward, and Atlas with explicit refusal behavior.",
+        "Contract defines missing-input behavior including honest fallbacks per ADM1 and phase-advancement refusal by Steward.",
+        "Contract defines architecture versioning, refinement rules, provenance, and the PDEL anchor.",
+        "Contract enumerates the canonical deliverable outputs and proposes future slices SOL2 through SOL6.",
+        "Documentation only; no application code, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Specification only. Establishes how AbarVa composes client-specific solution architectures from current-state context, patterns, solution components, workshop findings, evidence, constraints, SME and client alignment, and LLM-assisted synthesis. Future slices SOL2 through SOL6 implement the component pack, draft read model, canvas UI, refinement loop, and deliverable renderer."
+
     }
   ]
 }
