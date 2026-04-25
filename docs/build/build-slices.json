@@ -1666,6 +1666,58 @@
         "npm run build"
       ],
       "notes": "Deterministic library only. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL3 / SOL4 / SOL5 / SOL6 wire the pack into Programs / Atlas / per-tenant adoption / workshop scheduling surfaces."
+    },
+    {
+      "id": "SOL3",
+      "name": "Solution Archetype Registry",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL2"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/solution-archetype-registry.ts",
+        "src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "docs/build/slices/SOL3_SOLUTION_ARCHETYPE_REGISTRY.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Registry contains exactly the eight canonical solution archetypes in canonical order: ai_led_pdlc_transformation, analytics_modernization, healthcare_ambient_clinical_value_chain, hcc_risk_adjustment_coding_accuracy, prior_authorization_utilization_management, kyc_customer_onboarding_ai, predictive_maintenance_modernization, build_buy_partner_evaluation.",
+        "Each archetype carries key, name, sector, problemStatement, businessOutcomes (>=3), currentStateInputsRequired (>=3), patternsUsed (>=1), solutionComponents (>=2), architectureBuildingBlocks (>=3), workshopsRequired (>=2), smesRequired (>=2), buildBuyPartnerConsiderations (>=2), governanceRiskConsiderations (>=2), deliverablesGenerated (>=2), valueMetrics (>=2), agentRoles (nexus / sentinel / atlas / steward), and createdFrom: deterministic_solution_archetype_registry.",
+        "ai_led_pdlc_transformation references at least one canonical SOL2 AiLedPdlcComponentKey in its solutionComponents list.",
+        "listSolutionArchetypes is byte-equal across two calls (JSON.stringify equality).",
+        "getSolutionArchetype returns null for unknown keys including SOL2 component keys; returns the canonical record for every valid key.",
+        "recommendSolutionArchetypes is union-semantics on sectors OR capabilityKeywords; returns canonical-order results regardless of input order; ignores unknown tokens without throwing; deterministic across calls.",
+        "summarizeSolutionArchetypes totalCount equals 8; sectors / uniqueWorkshops / uniqueArchitectureBlocks are sorted ascending.",
+        "JSON.stringify(SOLUTION_ARCHETYPES) does not match a dollar-amount pattern (no invented dollar figures).",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, next/*, or react; no Date.now / Math.random / new Date / fetch / anthropic / openai / supabase identifier."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic registry only. Sits above SOL2 component packs. Does not generate live architectures, invoke models, or read tenant state. Future slices SOL4+ expand component packs for the remaining archetypes, wire the registry into Programs / Atlas / per-tenant adoption surfaces, and bind archetypes to ADM3 dataset / domain inventory."
     }
   ]
 }
