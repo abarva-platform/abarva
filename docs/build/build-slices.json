@@ -625,6 +625,59 @@
         "npm run build"
       ],
       "notes": "First Tower UI consumer of the S9e read model. Atlas signal subscriber, persistence, aging, and notification delivery are deferred to follow-on slices."
+    },
+    {
+      "id": "S9g",
+      "name": "Tower Atlas Executive Brief for Program Pressure",
+      "category": "C",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "S9e",
+        "S9f"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/program-pressure-view.ts",
+        "src/components/tower/ProgramPressureCards.tsx",
+        "src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "docs/build/slices/S9G_TOWER_ATLAS_EXECUTIVE_BRIEF.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Atlas Executive Brief panel renders above the existing program pressure cards on the canonical tenant Tower landing.",
+        "Brief is composed only from the S9e signal list and S9f Tower view; no live Atlas / Nexus / agent runtime is invoked.",
+        "Brief is byte-equal across repeated calls for the same tenant and signal list.",
+        "Confidence label is capped at medium for any seed-only signal mix; no brief claims high confidence.",
+        "No brief invents a dollar amount in any string field.",
+        "evidenceValueWarning is empty when no evidence_not_ready / value_not_ready signals exist; non-empty otherwise.",
+        "Suggested follow-ups are exactly three deterministic items, all rendered as disabled affordances; live Ask-Atlas runtime is deferred.",
+        "Empty-tenant brief returns confidenceLabel no_signals and sourceLabel deterministic_seed without fabricating an executive headline.",
+        "No Atlas runtime, Nexus runtime, agent runtime, Source UI, mock.ts, auth, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/program-pressure-cards.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic, seed-only Atlas brief. No model calls, no streaming compose, no Atlas turn persistence. Live Atlas subscriber, follow-up wiring, and confidence promotion to high are deferred to follow-on slices."
     }
   ]
 }

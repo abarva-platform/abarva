@@ -14,7 +14,9 @@
 
 import Link from 'next/link';
 import {
+  buildAtlasProgramPressureBrief,
   buildTowerProgramPressureView,
+  type AtlasProgramPressureBrief,
   type TowerProgramPressureView,
 } from '@/lib/tower/program-pressure-view';
 import type {
@@ -55,6 +57,7 @@ const COLORS = {
 export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCardsProps) {
   const resolvedView = view ?? buildTowerProgramPressureView(tenant, topN);
   const { signals, summary, topCards, strip } = resolvedView;
+  const brief = buildAtlasProgramPressureBrief(tenant, signals, summary);
 
   return (
     <section
@@ -98,6 +101,8 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
         </h2>
       </header>
 
+      <AtlasExecutiveBriefPanel brief={brief} />
+
       <ExecutiveStrip strip={strip} signalsCount={signals.length} />
 
       <SignalCounts summary={summary} />
@@ -134,6 +139,237 @@ export function ProgramPressureCards({ tenant, view, topN }: ProgramPressureCard
 }
 
 // --- Sub-components ---------------------------------------------------
+
+function AtlasExecutiveBriefPanel({ brief }: { brief: AtlasProgramPressureBrief }) {
+  const accent = atlasBriefAccent(brief.confidenceLabel);
+  const accentBg = atlasBriefAccentBg(brief.confidenceLabel);
+  return (
+    <article
+      aria-label="Atlas executive brief"
+      style={{
+        padding: '18px 22px',
+        background: COLORS.card,
+        border: `1px solid ${COLORS.border}`,
+        borderLeft: `3px solid ${accent}`,
+        borderRadius: 12,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+      }}
+    >
+      <header
+        style={{
+          display: 'flex',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              color: accent,
+              fontWeight: 700,
+              marginBottom: 4,
+            }}
+          >
+            Atlas executive brief · {brief.sourceLabel.replace(/_/g, ' ')}
+          </div>
+          <h3
+            style={{
+              margin: 0,
+              fontFamily: 'Georgia, "Times New Roman", serif',
+              fontSize: 18,
+              fontWeight: 600,
+              lineHeight: 1.3,
+              color: COLORS.ink,
+            }}
+          >
+            {brief.title}
+          </h3>
+        </div>
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            padding: '2px 8px',
+            borderRadius: 999,
+            background: accentBg,
+            color: accent,
+          }}
+          title={brief.interpretationBasis}
+        >
+          confidence · {brief.confidenceLabel.replace(/_/g, ' ')}
+        </span>
+      </header>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <BriefLine label="Top pressure" value={brief.topPressure} />
+        <BriefLine label="Why it matters" value={brief.whyItMatters} />
+        <BriefLine label="Programs affected" value={brief.programsAffected} />
+        {brief.evidenceValueWarning ? (
+          <BriefLine
+            label="Evidence + value"
+            value={brief.evidenceValueWarning}
+            tone={COLORS.amber}
+          />
+        ) : null}
+        <BriefLine
+          label="Recommended action"
+          value={brief.recommendedExecutiveAction}
+          tone={accent}
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          paddingTop: 8,
+          borderTop: `1px dashed ${COLORS.border}`,
+        }}
+      >
+        <span
+          style={{
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 10,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            fontWeight: 700,
+            color: COLORS.mutedSoft,
+          }}
+        >
+          Ask Atlas · suggested follow-ups · {brief.suggestedFollowUps.length}
+        </span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {brief.suggestedFollowUps.map((followUp) => (
+            <button
+              key={followUp.id}
+              type="button"
+              disabled
+              aria-disabled="true"
+              data-atlas-followup-id={followUp.id}
+              title={`${followUp.reason} · live Atlas runtime is deferred`}
+              style={{
+                padding: '8px 12px',
+                background: COLORS.surface,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 8,
+                color: COLORS.muted,
+                fontSize: 12,
+                fontWeight: 500,
+                cursor: 'not-allowed',
+                opacity: 0.85,
+                fontFamily: 'inherit',
+                textAlign: 'left',
+                display: 'inline-flex',
+                flexDirection: 'column',
+                gap: 2,
+                maxWidth: 320,
+              }}
+            >
+              <span style={{ color: COLORS.ink }}>{followUp.label}</span>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 10,
+                  letterSpacing: '0.12em',
+                  textTransform: 'uppercase',
+                  color: COLORS.mutedSoft,
+                  fontWeight: 700,
+                }}
+              >
+                deferred · live atlas runtime
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div
+        style={{
+          fontSize: 11,
+          color: COLORS.mutedSoft,
+          fontStyle: 'italic',
+        }}
+      >
+        {brief.interpretationBasis}
+      </div>
+    </article>
+  );
+}
+
+function BriefLine({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(140px, 180px) 1fr',
+        gap: 12,
+        alignItems: 'baseline',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'JetBrains Mono, monospace',
+          fontSize: 10,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: COLORS.mutedSoft,
+          fontWeight: 700,
+        }}
+      >
+        {label}
+      </span>
+      <span style={{ fontSize: 13, color: tone ?? COLORS.ink, lineHeight: 1.55 }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function atlasBriefAccent(label: AtlasProgramPressureBrief['confidenceLabel']): string {
+  switch (label) {
+    case 'high':
+      return COLORS.accent;
+    case 'medium':
+      return COLORS.amber;
+    case 'low':
+      return COLORS.mutedSoft;
+    case 'no_signals':
+      return COLORS.mutedSoft;
+  }
+}
+
+function atlasBriefAccentBg(label: AtlasProgramPressureBrief['confidenceLabel']): string {
+  switch (label) {
+    case 'high':
+      return COLORS.accentSoft;
+    case 'medium':
+      return COLORS.amberSoft;
+    case 'low':
+      return 'rgba(26,22,18,0.06)';
+    case 'no_signals':
+      return 'rgba(26,22,18,0.06)';
+  }
+}
 
 function ExecutiveStrip({
   strip,

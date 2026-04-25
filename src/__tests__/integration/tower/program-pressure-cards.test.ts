@@ -19,8 +19,14 @@
 //   migrations.
 
 import {
+  buildAtlasExecutiveAction,
+  buildAtlasPressureNarrative,
+  buildAtlasProgramPressureBrief,
   buildTowerProgramPressureView,
   TOWER_PROGRAM_PRESSURE_DEFAULT_TOP_N,
+  type AtlasBriefConfidenceLabel,
+  type AtlasBriefSourceLabel,
+  type AtlasProgramPressureBrief,
   type TowerProgramPressureView,
 } from '@/lib/tower/program-pressure-view';
 import {
@@ -274,5 +280,229 @@ describe('TowerProgramPressureView shape', () => {
     expect(typeof view.evidenceValueGapCount).toBe('number');
     expect(view.summary).toBeDefined();
     expect(view.strip).toBeDefined();
+  });
+});
+
+// =====================================================================
+// S9g · Atlas Executive Brief
+// =====================================================================
+
+const ALL_BRIEF_CONFIDENCES: AtlasBriefConfidenceLabel[] = [
+  'high',
+  'medium',
+  'low',
+  'no_signals',
+];
+
+const ALL_BRIEF_SOURCES: AtlasBriefSourceLabel[] = [
+  'deterministic_seed',
+  'program_pressure_signals',
+];
+
+describe('buildAtlasProgramPressureBrief · canonical demo tenants', () => {
+  it.each(plan.tenants.map((t) => [t.tenantKey, t]))(
+    'produces a deterministic Atlas brief for %s',
+    (_key, tenantParam) => {
+      const tenant = tenantParam as TenantSeedPlan;
+      if (tenant.programs.length === 0) return;
+      const view = buildTowerProgramPressureView(tenant);
+      const a = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      const b = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(a).toEqual(b);
+      expect(a.title).toContain(tenant.displayName);
+      expect(a.title).toMatch(/Atlas executive brief/i);
+    },
+  );
+
+  it('every brief has topPressure, whyItMatters, recommendedExecutiveAction', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(typeof brief.topPressure).toBe('string');
+      expect(brief.topPressure.length).toBeGreaterThan(10);
+      expect(typeof brief.whyItMatters).toBe('string');
+      expect(brief.whyItMatters.length).toBeGreaterThan(10);
+      expect(typeof brief.recommendedExecutiveAction).toBe('string');
+      expect(brief.recommendedExecutiveAction.length).toBeGreaterThan(10);
+    }
+  });
+
+  it('suggestedFollowUps has exactly three items, all disabled', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(brief.suggestedFollowUps).toHaveLength(3);
+      for (const followUp of brief.suggestedFollowUps) {
+        expect(followUp.enabled).toBe(false);
+        expect(typeof followUp.id).toBe('string');
+        expect(typeof followUp.label).toBe('string');
+        expect(typeof followUp.reason).toBe('string');
+      }
+      // Stable ids in canonical order.
+      expect(brief.suggestedFollowUps.map((f) => f.id)).toEqual([
+        'atlas-followup-walk-top-pressure',
+        'atlas-followup-evidence-value-gaps',
+        'atlas-followup-portfolio-summary',
+      ]);
+    }
+  });
+
+  it('confidenceLabel is from the canonical four enum values', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(ALL_BRIEF_CONFIDENCES).toContain(brief.confidenceLabel);
+    }
+  });
+
+  it('sourceLabel is one of the canonical two enum values', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(ALL_BRIEF_SOURCES).toContain(brief.sourceLabel);
+    }
+  });
+
+  it('does not invent a dollar amount in any string field', () => {
+    const dollarPattern = /\$\s?\d[\d,]*(\.\d+)?/;
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      const fields = [
+        brief.title,
+        brief.topPressure,
+        brief.whyItMatters,
+        brief.programsAffected,
+        brief.evidenceValueWarning,
+        brief.recommendedExecutiveAction,
+        brief.interpretationBasis,
+        ...brief.suggestedFollowUps.map((f) => f.label),
+        ...brief.suggestedFollowUps.map((f) => f.reason),
+      ];
+      for (const field of fields) {
+        expect(field).not.toMatch(dollarPattern);
+      }
+    }
+  });
+
+  it('mentions evidence/value readiness when signals indicate gaps', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      if (view.evidenceValueGapCount > 0) {
+        expect(brief.evidenceValueWarning.toLowerCase()).toContain('evidence');
+        expect(brief.evidenceValueWarning.toLowerCase()).toContain('value');
+      } else {
+        expect(brief.evidenceValueWarning).toBe('');
+      }
+    }
+  });
+
+  it('confidenceLabel is at most medium today (no live runtime can claim high)', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      expect(brief.confidenceLabel).not.toBe('high');
+    }
+  });
+
+  it('sourceLabel is program_pressure_signals when signals exist', () => {
+    for (const tenant of plan.tenants) {
+      const view = buildTowerProgramPressureView(tenant);
+      const brief = buildAtlasProgramPressureBrief(tenant, view.signals, view.summary);
+      if (view.signals.length > 0) {
+        expect(brief.sourceLabel).toBe('program_pressure_signals');
+      } else {
+        expect(brief.sourceLabel).toBe('deterministic_seed');
+      }
+    }
+  });
+});
+
+describe('buildAtlasPressureNarrative + buildAtlasExecutiveAction', () => {
+  const tenant = plan.tenants.find((t) => t.tenantKey === 'apexretail')!;
+
+  it('narrative names the top severity (uppercase) and program code', () => {
+    const view = buildTowerProgramPressureView(tenant);
+    const narrative = buildAtlasPressureNarrative(view.signals, view.summary);
+    if (view.signals.length > 0) {
+      const top = view.signals[0];
+      expect(narrative).toContain(top.programCode);
+      expect(narrative).toMatch(/(CRITICAL|HIGH|MEDIUM|LOW)/);
+    }
+  });
+
+  it('action mentions the top program code when signals exist', () => {
+    const view = buildTowerProgramPressureView(tenant);
+    const action = buildAtlasExecutiveAction(view.signals, view.summary);
+    if (view.signals.length > 0) {
+      expect(action).toContain(view.signals[0].programCode);
+    }
+  });
+
+  it('returns a no-action sentence for an empty signal list', () => {
+    const action = buildAtlasExecutiveAction(
+      [],
+      summarizeProgramControlTowerSignals([]),
+    );
+    expect(action.toLowerCase()).toContain('no portfolio action required');
+  });
+
+  it('narrative and action are deterministic across repeated calls', () => {
+    const view = buildTowerProgramPressureView(tenant);
+    const narrativeA = buildAtlasPressureNarrative(view.signals, view.summary);
+    const narrativeB = buildAtlasPressureNarrative(view.signals, view.summary);
+    expect(narrativeA).toBe(narrativeB);
+    const actionA = buildAtlasExecutiveAction(view.signals, view.summary);
+    const actionB = buildAtlasExecutiveAction(view.signals, view.summary);
+    expect(actionA).toBe(actionB);
+  });
+});
+
+describe('Atlas brief · empty-tenant edge', () => {
+  it('returns a no_signals brief for an empty portfolio', () => {
+    const empty: TenantSeedPlan = {
+      tenantKey: 'apexretail',
+      routeSlug: 'apex-retail',
+      displayName: 'Apex Retail',
+      programs: [],
+    };
+    const view = buildTowerProgramPressureView(empty);
+    const brief = buildAtlasProgramPressureBrief(empty, view.signals, view.summary);
+    expect(brief.confidenceLabel).toBe('no_signals');
+    expect(brief.sourceLabel).toBe('deterministic_seed');
+    expect(brief.evidenceValueWarning).toBe('');
+    expect(brief.suggestedFollowUps).toHaveLength(3);
+    expect(brief.recommendedExecutiveAction.toLowerCase()).toContain('no portfolio action required');
+  });
+});
+
+describe('Atlas brief · component embedding', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const fs = require('fs') as typeof import('fs');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const path = require('path') as typeof import('path');
+
+  it('the Tower component imports buildAtlasProgramPressureBrief from the helper', () => {
+    const src = path.resolve(
+      __dirname,
+      '../../../components/tower/ProgramPressureCards.tsx',
+    );
+    const content = fs.readFileSync(src, 'utf8');
+    expect(content).toMatch(/buildAtlasProgramPressureBrief/);
+    expect(content).toMatch(/from '@\/lib\/tower\/program-pressure-view'/);
+  });
+
+  it('the Tower component still does not import Atlas runtime', () => {
+    const src = path.resolve(
+      __dirname,
+      '../../../components/tower/ProgramPressureCards.tsx',
+    );
+    const content = fs.readFileSync(src, 'utf8');
+    expect(content).not.toMatch(/from '@\/lib\/atlas\//);
+    expect(content).not.toMatch(/from '@\/lib\/nexus\//);
+    expect(content).not.toMatch(/from '@\/lib\/agent\//);
+    expect(content).not.toMatch(/from '@\/components\/agent\//);
+    expect(content).not.toMatch(/from '@\/lib\/source\//);
   });
 });
