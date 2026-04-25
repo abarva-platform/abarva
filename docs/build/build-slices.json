@@ -1419,6 +1419,43 @@
         "npm run build"
       ],
       "notes": "Specification / contract document only. Defines the program phase workspace shape that consumes MW1 (Maestro Workshop Intelligence) and PDEL (Program Deliverables / Artifacts Read Model). Future slices PF3 / PF4 / PF5 / PF6 / PF7 wire workshop templates, ingestion, deliverable generation, resume continuity, and Nexus rail v2."
+    },
+    {
+      "id": "QA2",
+      "name": "Solution Workshop Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook documents purpose and scope as the founder-facing checklist for SOL1, SOL2, MW2, and PF2 outputs, named as the companion to the QA1 Agentic Spine Verification Runbook.",
+        "Runbook documents branch hygiene checklist with exact git commands and pass criteria.",
+        "Runbook lists required validation commands (tsc, build, PF1/SOL2/MW2/PDEL/ADM2/ADM3/ADM4 jest suites, S7 tenant isolation probe) with pass criteria.",
+        "Runbook defines per-artifact verification checklists for SOL1 (12-category bundle, 7-step composition, 3 styles, 4 agent roles, missing-input behavior, 6 deliverables, future SOL2-SOL6 list), SOL2 (14 components in canonical order with all required fields, deterministic recommender, module hygiene), MW2 (every active program has >=1 record, client_maestro required, deterministic seed source, no fake notes, summary reconciliation), and PF2 (center-canvas layout, six phase modes, save/stop/resume lifecycle, meeting notes ingestion sans audio, dynamic deliverables via PDEL, evidence/value/gate integration, interaction model with 120ms fade only).",
+        "Runbook walks the AI-led PDLC scenario from Programs index to Apex Retail program detail through phase canvas, MW2 brief, Steward gate readiness, I1 pattern detail, and Atlas Tower brief.",
+        "Runbook lists six canonical questions to ask Nexus / Client Maestro during the walk and where the honest answer lives today.",
+        "Runbook defines no-fabrication checks (no dollar amounts, no real E-### citations, no live runtime claims, disabled Ask-agent chips, honest empty states), solution context bundle checks, workshop readiness checks, and deliverable / artifact checks.",
+        "Runbook defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait and push only with explicit founder go-ahead.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying SOL1, SOL2, MW2, and PF2 outputs land honestly before push or PR. Companion to QA1 Agentic Spine Verification Runbook. Deterministic — does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     }
   ]
 }
