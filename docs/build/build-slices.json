@@ -2281,6 +2281,54 @@
         "npm run build"
       ],
       "notes": "Contract document only. Defines the Solution Intelligence Canvas shape so the v1 implementation has a single source of truth across the Builder + Reviewer agent partition, the canonical contracts the canvas consumes (SOL3 archetype, SOL2 / SOL4 / SOL5 component packs, SOL6 evaluator, MW2 readiness, PDEL inventory, EVID1 evidence, PF1 failure modes, I1 patterns), and the OUT1 deliverable handoff. Future slices SOL9 (Solution Canvas UI), SOL10 (Architecture Draft Read Model), SOL11 (Workshop-to-Architecture Refinement), and SOL12 (Architecture Deliverable Renderer) implement the canvas, the read model, the workshop refinement loop, and the deliverable renderer respectively."
+    },
+    {
+      "id": "QA3",
+      "name": "Solution Intelligence Verification Runbook",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Reviewer",
+      "dependsOn": [
+        "SOL3",
+        "SOL4",
+        "SOL5",
+        "SOL6",
+        "SOL7",
+        "SOL8"
+      ],
+      "allowedFiles": [
+        "docs/build/SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Runbook \u00a7A documents purpose and scope as the founder-facing checklist for SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs, named as the third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks.",
+        "Runbook \u00a7B documents the branch hygiene checklist with exact git commands (git branch --show-current, git status --short, git log --oneline -3, git show --stat HEAD, git diff --cached --name-only) and pass criteria.",
+        "Runbook \u00a7C lists required validation commands (tsc, build, integrity:dom, the per-slice jest suites for SOL3-SOL7, and the docs-only file check for SOL8) with pass criteria.",
+        "Runbook \u00a7D defines per-slice verification checklists for SOL3 (12 archetypes in canonical order, 21 required fields, AI-led PDLC linkage, analytics modernization concepts, healthcare archetypes 3-5, build-buy-partner archetype, no invented dollars, module hygiene), SOL4 (15 components in canonical order, 13 required fields, four-pillar coverage, relatedArchetypes cross-reference), SOL5 (12 healthcare archetypes, ambient / HCC / prior auth / revenue integrity / denial prevention specifics, vendor deny-list), SOL6 (14 criteria, vendor / startup factors, enterprise readiness risks, deterministic build / buy / partner rules, governance warnings), SOL7 (byte-equal detail view, 12 canvas sections, readiness summary, missing-input prompts), and SOL8 (sections A through K, route candidates, agent roles, interaction model, versioning, handoff to deliverable renderer, no-live-model rules, future slices, no-fabrication rules).",
+        "Runbook \u00a7E captures the deferred route / canvas verification checklist for SOL9-SOL12 (solutions index, per-archetype canvas, click-to-open drawer with 120ms fade, versioning visible, Steward refusal language, deliverable handoff, build / buy / partner sub-canvas, honest empty states, disabled affordances).",
+        "Runbook \u00a7F defines no-fabrication checks (no fake dollars regex, no E-### citations, no branded vendor endorsements, no Coming soon / TBD / Lorem ipsum, honest fallbacks, deterministic-source captions).",
+        "Runbook \u00a7G defines build / buy / partner checks for the deterministic rule fixtures: high-differentiation + internal capability -> build, high time-to-value + mature market + non-high diff -> buy, fragmented market + non-low diff -> partner; confidence levels valid; vendor / startup checks populated when option != build; governance warnings populated when regulated OR high-risk-tagged.",
+        "Runbook \u00a7H defines healthcare archetype checks: >=3 data sources, >=2 SMEs, >=2 governance considerations per archetype; specific content checks for ambient, HCC, prior auth, revenue integrity, denial prevention; no branded vendor endorsements.",
+        "Runbook \u00a7I defines analytics modernization checks: all 15 components address AI readiness somewhere across their fields; semantic layer / data quality / governance / metadata catalog all represented.",
+        "Runbook \u00a7J defines AI-led PDLC component linkage: ai_led_pdlc_transformation.solutionComponents references at least one canonical SOL2 AiLedPdlcComponentKey; SOL4 components have relatedArchetypes referencing canonical SOL3 archetype keys.",
+        "Runbook \u00a7K defines workshop and deliverable linkage: every archetype names >=2 workshopsRequired and a recommendedFirstWorkshop; every archetype names >=2 deliverablesGenerated; cross-references resolve to canonical MW1 / MW2 and PDEL keys.",
+        "Runbook \u00a7L defines the morning review decision matrix (keep / amend / discard / cherry-pick / push / PR) with default = wait, push only with explicit founder go-ahead, and the canonical cherry-pick path off main with build-slices.json conflict resolution.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Founder-facing checklist for verifying SOL3, SOL4, SOL5, SOL6, SOL7, and SOL8 outputs land honestly before push or PR. Third companion to QA1 (Agentic Spine) and QA2 (Solution / Workshop) verification runbooks. Deterministic \u2014 does not exercise live retrieval or model calls. Default policy for unsupervised batch runs: local commits only; morning review owns push / PR decisions."
     }
   ]
 }
