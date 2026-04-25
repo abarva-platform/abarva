@@ -77,8 +77,9 @@ Codex should read operating state first, then the Build Pack in this order:
 27. [26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md)
 28. [27_WORKFLOW_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/27_WORKFLOW_VALIDATION_HARNESS.md)
 29. [32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md)
-30. relevant `wireframes/*.md`
-31. relevant `components/*.md`
+30. [33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md)
+31. relevant `wireframes/*.md`
+32. relevant `components/*.md`
 
 ## Source Of Truth Map
 
@@ -102,6 +103,7 @@ Codex should read operating state first, then the Build Pack in this order:
 - Artifact review and approval model: [26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/26_ARTIFACT_REVIEW_AND_APPROVAL_MODEL.md)
 - Workflow validation harness: [27_WORKFLOW_VALIDATION_HARNESS.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/27_WORKFLOW_VALIDATION_HARNESS.md)
 - Source data readiness and Admin/Setup integration: [32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/32_SOURCE_DATA_READINESS_AND_ADMIN_SETUP_INTEGRATION.md)
+- Pricing and negotiation intelligence: [33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/33_PRICING_AND_NEGOTIATION_INTELLIGENCE_STANDARD.md)
 - Persona crawler verification: [17_CRAWLER_PERSONA_VERIFICATION.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/17_CRAWLER_PERSONA_VERIFICATION.md)
 - Sourcing failure modes: [18_FAILURE_MODE_CATALOG.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/18_FAILURE_MODE_CATALOG.md)
 - Cross-product architecture: [19_CROSS_PRODUCT_ARCHITECTURE.md](/Users/anand/Projects/nexus/docs/abarva-source/build-pack/19_CROSS_PRODUCT_ARCHITECTURE.md)
