@@ -1342,6 +1342,122 @@
         "npm run build"
       ],
       "notes": "Apple-like dataset explorer that consumes the ADM3 inventory deterministically. Read-only. Connector sync, upload pipeline, evidence registry, and object inspector drawer are deferred."
+    },
+    {
+      "id": "DES1",
+      "name": "AbarVa Visual Canon and Page Blueprints",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/design/ABARVA_VISUAL_CANON.md",
+        "docs/design/pages/PROGRAMS_PAGE_BLUEPRINT.md",
+        "docs/design/pages/INTELLIGENCE_PAGE_BLUEPRINT.md",
+        "docs/design/pages/AI_CONTROL_TOWER_PAGE_BLUEPRINT.md",
+        "docs/design/pages/ADMIN_SETUP_PAGE_BLUEPRINT.md",
+        "docs/design/components/ABARVA_COMPONENT_RECIPES.md",
+        "docs/build/slices/DES1_ABARVA_VISUAL_CANON_PAGE_BLUEPRINTS.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Visual canon defines wordmark rules ('Abar' near-black bold + 'Va' navy slightly larger, no gap), small secondary symbol motif, off-white surface palette with NAVY primary accent (no green-heavy, no purple-heavy), DM Sans + JetBrains Mono typography, light vs dark usage, thin top nav, agent visual treatment, no-clutter rules, card / table / drawer style, progressive disclosure.",
+        "Programs page blueprint defines portfolio table-card hybrid, six-phase journey rail with G1-G4 gate caps, phase / workshop center canvas, Nexus mastermind rail, Steward gate role, deliverables / artifacts by phase via PDEL, hide-show rules, and acceptance criteria.",
+        "Intelligence page blueprint defines Sentinel Brief hero, Active Patterns strip, four-mode Dynamic Insight Canvas, Sentinel interaction rail (drawer not chat), internal vs external dataset basis, same-canvas interaction model, and acceptance criteria.",
+        "AI Control Tower page blueprint defines Atlas Brief hero on dark surface, five-scorecard limit, three-pressure-card limit, one-active-lens rule, Ask Atlas drawer (not chat), seven canonical dimensions, no-dashboard-clutter rules, and acceptance criteria.",
+        "Admin / Setup page blueprint defines Steward Brief, Apple-like five-zone control plane, dataset domain readiness, loaded / available / usable evidence model, users / access / governance / connectors portals, Agent Readiness Matrix, dataset explorer (ADM4), and acceptance criteria.",
+        "Component recipes define AbarVaWordmark, AbarVaTopNav, AgentBadge, AgentBriefPanel, MetricStrip, PressureCard, PatternCard, JourneyRail, FileTypeChip, EvidenceChip, DetailDrawerShell, EmptyInspector with purpose, props, visual treatment, behavior, and constraints per recipe.",
+        "Documentation only; no application code, runtime, auth, supabase, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npm run build"
+      ],
+      "notes": "Visual canon plus 4 page blueprints plus 12 component recipes. Establishes the design contract every future implementation slice must conform to. Specification only."
+    },
+    {
+      "id": "DES2",
+      "name": "AbarVa Core UI Primitives",
+      "category": "DES",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "DES1"
+      ],
+      "allowedFiles": [
+        "src/lib/design/abarva-theme.ts",
+        "src/components/abarva/AbarVaTopNav.tsx",
+        "src/components/abarva/AgentBadge.tsx",
+        "src/components/abarva/AgentBriefPanel.tsx",
+        "src/components/abarva/MetricStrip.tsx",
+        "src/components/abarva/PressureCard.tsx",
+        "src/components/abarva/PatternCard.tsx",
+        "src/components/abarva/JourneyRail.tsx",
+        "src/components/abarva/FileTypeChip.tsx",
+        "src/components/abarva/EvidenceChip.tsx",
+        "src/components/abarva/DetailDrawerShell.tsx",
+        "src/components/abarva/EmptyInspector.tsx",
+        "src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "docs/build/slices/DES2_ABARVA_CORE_UI_PRIMITIVES.md",
+        "docs/build/build-slices.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Theme module exposes COLORS, FONT, TYPE, SPACING, RADIUS, BORDER, AGENT_ACCENT, statusAccent helper, and re-export constants.",
+        "Palette uses NAVY (#1B2B5C) as primary brand accent; AMBER, RED for status; off-white surface; INK_DARK / NAVY_DARK reserved for high-impact dark briefs.",
+        "Components import only next/link, the AbarVa theme module, and sibling AbarVa primitives.",
+        "AbarvaWordmark renders 'Abar' near-black bold + 'Va' navy slightly larger inline, no SVG.",
+        "AbarvaTopNav exposes the canonical 5 surfaces (Programs, Tower, Intelligence, Source, Admin) in canonical order.",
+        "AgentBadge supports nexus / sentinel / atlas / steward.",
+        "FileTypeChip supports DOC / PDF / XLS / PPT / NOTE / HTML / DATA.",
+        "EvidenceChip supports the canonical 6 evidence states.",
+        "AgentBriefPanel supports light / dark variants; three disabled 'Ask <agent>' follow-up chips with sub-label deferred · live <agent> runtime.",
+        "PressureCard / PatternCard / JourneyRail / MetricStrip / DetailDrawerShell / EmptyInspector follow the recipe contracts in DES1.",
+        "Module hygiene tests assert no imports from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/design/abarva-ui-primitives.test.ts",
+        "npm run build"
+      ],
+      "notes": "11 AbarVa primitives plus theme tokens. Pure data props; consumers wire interactivity. Forms the visual foundation for DES3 / DES4 / DES5 / ADM5 UX refreshes."
     }
   ]
 }
