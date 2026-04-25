@@ -2283,6 +2283,65 @@
       "notes": "Contract document only. Defines the Solution Intelligence Canvas shape so the v1 implementation has a single source of truth across the Builder + Reviewer agent partition, the canonical contracts the canvas consumes (SOL3 archetype, SOL2 / SOL4 / SOL5 component packs, SOL6 evaluator, MW2 readiness, PDEL inventory, EVID1 evidence, PF1 failure modes, I1 patterns), and the OUT1 deliverable handoff. Future slices SOL9 (Solution Canvas UI), SOL10 (Architecture Draft Read Model), SOL11 (Workshop-to-Architecture Refinement), and SOL12 (Architecture Deliverable Renderer) implement the canvas, the read model, the workshop refinement loop, and the deliverable renderer respectively."
     },
     {
+      "id": "SOL9",
+      "name": "Solution Recommendation Engine",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "SOL3",
+        "SOL4",
+        "SOL5",
+        "SOL6",
+        "SOL7"
+      ],
+      "allowedFiles": [
+        "src/lib/solutions/solution-recommendation-engine.ts",
+        "src/__tests__/integration/solutions/solution-recommendation-engine.test.ts",
+        "docs/build/slices/SOL9_SOLUTION_RECOMMENDATION_ENGINE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports SolutionRecommendationInput, SolutionRecommendationScore, SolutionRecommendationReason, SolutionRecommendationMissingInput, SolutionRecommendationNextAction, SolutionRecommendation, SolutionRecommendationSummary, recommendSolutionArchetypesForContext, summarizeSolutionRecommendations, and getTopSolutionRecommendation as the canonical contract.",
+        "recommendSolutionArchetypesForContext is byte-equal across repeated calls for the same input and is capped at five recommendations.",
+        "Scoring weights are industry_match 4, failure_mode_match 3 per match, pattern_match 3 per match, capability_match 2 per match, dataset_match 2 per match, preference_match 1; raw is normalized as min(1, raw / 24) with bands low (< 0.34), medium (< 0.67), high (≥ 0.67); confidence is high if normalized ≥ 0.67 and missing-input count ≤ 1, medium if normalized ≥ 0.34, else low.",
+        "Special-case keyword priors bias healthcare archetypes (clinical / ambient / HCC / prior auth / payer / EHR), analytics_modernization (data / lakehouse / semantic / BI / warehouse / feature store), ai_led_pdlc_transformation (PDLC / DORA / code review / developer productivity / engineering or the ai_governance_operating_model_gap failure-mode marker), and kyc_customer_onboarding_ai (KYC / onboarding / customer due diligence / AML).",
+        "Sparse input (no industry, no desiredOutcomes, no currentStateSignals, no detectedFailureModes, no detectedPatterns) returns one placeholder recommendation with missingInputs.length > 0 AND nextAction.kind === 'capture_inputs'.",
+        "Every recommendation carries buildBuyPartnerGuidance with recommendedOption ∈ {build, buy, partner}, derived deterministically from SOL6's evaluateBuildBuyPartnerScenario.",
+        "summarizeSolutionRecommendations reconciles totalRecommendations, topArchetypeKey, highConfidenceCount, and totalMissingInputs against the recommendation list.",
+        "Serialized recommendation list contains no fabricated dollar amounts.",
+        "Module imports SOL3 (solution-archetype-registry) and SOL6 (build-buy-partner-framework); module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; contains no Math.random / clock reads / fetch / anthropic / openai / useState / useEffect; no Coming soon / TBD / Lorem ipsum placeholders."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/solution-recommendation-engine.test.ts",
+        "npx jest src/__tests__/integration/solutions/solution-archetype-registry.test.ts",
+        "npx jest src/__tests__/integration/solutions/build-buy-partner-framework.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic recommendation engine that unifies SOL3 archetypes, SOL4 / SOL5 component packs, the SOL6 build/buy/partner evaluator, and the SOL7 detail read model into a single Nexus-facing recommendation layer. Library only — no UI renderer, no live retrieval, no model calls, no tenant runtime state. Live Nexus integration is deferred to SOL10+."
+    },
+    {
       "id": "QA3",
       "name": "Solution Intelligence Verification Runbook",
       "category": "QA",
