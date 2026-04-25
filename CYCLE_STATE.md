@@ -119,16 +119,21 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · PR #202 merged: workflow richness and document collaboration model.
 - 2026-04-25 · Workflow validation fixtures implementation completed locally: 12 deterministic fixtures, 11 BLOCK / 1 DEFER / 0 mismatches.
 - 2026-04-25 · PR #205 merged: CI lint issue resolved by escaping the unescaped apostrophe in `D04TensionSection`.
+- 2026-04-25 · PR #206 merged: workflow validation runner plan.
+- 2026-04-25 · PR #207 merged: deterministic Source workflow validation runner.
+- 2026-04-25 · PR #209 merged: workflow validation report hardening plan.
+- 2026-04-25 · PR #210 merged: deterministic Source workflow validation report formatter. Workflow validation foundation is complete at the deterministic fixture/runner/report layer.
+- 2026-04-25 · PR #211 merged: Source production readiness tracker updated after deterministic workflow validation milestone.
 
 ## Last status emission
-- 2026-04-25 · Source workflow validation runner plan drafted after PR #205 CI fix merge · docs-only · no workflow runner/UI/API/model/export/import implementation.
+- 2026-04-25 · Source dashboard front-door refinement implemented locally · first-viewport hierarchy, KPI clarity, pressure signals, and event table salience improved · no event canvas/chat/API/model/upload/workflow engine scope.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #205 merged · CI lint issue resolved after PR #204.
+- Current completed milestone: PR #211 merged · production readiness tracker updated after workflow validation milestone.
 - Dashboard decision: approve with small refinements.
-- Current objective: prepare the next controlled Source slice · workflow validation runner plan.
-- Current item: workflow validation runner plan.
+- Current objective: implement Source dashboard front-door refinement.
+- Current item: dashboard front-door refinement implementation.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -170,9 +175,23 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Local deterministic fixture smoke result: 12 total, 11 BLOCK, 1 DEFER, all expectations matched.
   - CI lint issue resolved via PR #205: escaped unescaped apostrophe in `D04TensionSection`.
   - Workflow validation runner plan drafted.
+  - Deterministic Source workflow validation runner.
+  - Structured Source workflow validation report object.
+  - Source workflow validation markdown formatter.
+  - Current workflow validation outcome: 12 fixtures, 11 BLOCK, 1 DEFER, 0 mismatches.
+  - Workflow validation report hardening plan drafted.
+  - Deterministic readable workflow validation report hardening.
+  - Workflow validation BLOCK/defer/remediation display helpers.
+  - Workflow validation report comparison to context validation report.
+  - Workflow validation fixtures merged via PR #204.
+  - Workflow validation runner merged via PR #207.
+  - Workflow validation readable report formatter merged via PR #210.
+  - Current workflow validation outcome: 12 total, 11 BLOCK, 1 DEFER, 0 mismatches.
+  - Production readiness tracker updated after workflow validation milestone via PR #211.
+  - Source dashboard front-door refinement implemented locally: command read, KPI clarity, executive pressure signals, event table salience, and responsive fit.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, and quality assessment.
 - Supported Source contexts: portfolio/dashboard context when no event id is supplied; event context for seeded sourcing events; stage context for the Scope stage on Data & AI Modernization SI Selection; deterministic lifecycle, owner, aging, next action, missing inputs, scorecard/artifact/value placeholders, pattern identity, quality assessment, validation runner output, and readable validation report output.
 - Blockers/do-not-build: no workflow engine code, approval engine, artifact versioning implementation, document export/import, event canvas, chat UI, model calls, API routes, upload/parsing, scorecard UI, artifact drawer UI, value ledger UI, vendor flow, AI/RFP generation, `/programs` integration, `/preview` or `/demo` surfaces, `ProgramSurface`, or `src/lib/programs/mock.ts`.
-- Notes and discoveries: Fixtures should stay as deterministic guardrails until a separate runner/report slice is reviewed. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker so Source planning can resume.
-- Next recommended item: commit and PR the workflow validation runner plan, then implement the deterministic runner only after the plan is reviewed and merged.
-- Next planning artifact: `docs/abarva-source/NEXT_SLICE_PLAN_WORKFLOW_VALIDATION_RUNNER.md` drafted.
+- Notes and discoveries: Fixtures should stay as deterministic guardrails until workflow runtime work is explicitly approved. The uploaded-document citation scenario correctly DEFERs because parsing/validation is not implemented. PR #205 cleared the unrelated full-lint blocker. The workflow validation runner preserves healthy BLOCK outcomes instead of treating them as failures. The hardened report makes BLOCK outcomes readable as expected enforcement and preserves the intentional DEFER.
+- Next recommended item: review and PR the Source dashboard front-door refinement slice. Keep event canvas/chat/API/model/upload/workflow engine work blocked until explicitly approved.
+- Next planning artifact: dashboard refinement review packet.
