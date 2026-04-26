@@ -547,7 +547,7 @@
       "name": "Product Polish + Azure Private Data Plane Prep",
       "goal": "Extend build tooling, add deliverable flows, phase gate, workshop templates, and Azure private data plane lab foundations.",
       "status": "in_progress",
-      "percentComplete": 33,
+      "percentComplete": 44,
       "plannedSlices": [
         "OPS11",
         "OPS12",
@@ -562,7 +562,8 @@
       "completedSlices": [
         "OPS11",
         "OPS12",
-        "PDEL9"
+        "PDEL9",
+        "PDEL10"
       ],
       "skippedSlices": [
         "PROG8",
@@ -574,7 +575,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration.",
+      "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration. Lane D complete. Awaiting OPS11, OPS12, PDEL9, AZLAB1-5 integration.",
       "lastUpdated": "2026-04-26"
     }
   ]

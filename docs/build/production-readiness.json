@@ -511,7 +511,8 @@
         "PDEL6 lastUpdated 2026-04-26.",
         "PDEL7 deliverable canvas viewer added (2026-04-26): pure deterministic single-deliverable viewer with three render modes (html, markdown, rich_text_placeholder); all four future actions (edit, regenerate, download, approve) rendered disabled with deferred 'future / not yet available' labels; server component only; never uses dangerouslySetInnerHTML; deliverable-versioning binding remains deferred (versionLabel is null today).",
         "PDEL8 deliverable evidence trace panel added (src/lib/programs/deliverable-evidence-trace.ts + src/components/programs/DeliverableEvidenceTracePanel.tsx) \u2014 pure deterministic, file-pure projection of a (program-deliverable artifact, EVID2 ledger) pair into six canonical statuses (supported / partially_supported / unsupported / missing / stale / blocked) with supported, partially-supported, unsupported, stale, blocked claim buckets, source-artifact rollup, and an advisory-only approval implication. No DB writes, no live retrieval, no model invocation, no fabricated citations. Read-only over EVID2 \u2014 every supported claim resolves to an `evid-seed-` prefixed id from the seeded ledger.",
-        "PDEL9: Deliverable export contract created; PDF/DOCX/PPT deferred, html_static only; no live export enabled."
+        "PDEL9: Deliverable export contract created; PDF/DOCX/PPT deferred, html_static only; no live export enabled.",
+        "PDEL10: Deliverable approval/lock/supersede flow created; all transitions proposed-only, no DB writes, decision-grade deliverables require evidence trace."
       ]
     },
     {

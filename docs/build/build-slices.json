@@ -6883,6 +6883,21 @@
       ],
       "sliceDoc": "docs/build/slices/PDEL9_DOWNLOAD_EXPORT_CONTRACT.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PDEL10",
+      "name": "Deliverable Approval / Lock / Supersede Flow",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/deliverable-approval-flow.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/deliverable-approval-flow.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PDEL10_DELIVERABLE_APPROVAL_LOCK_SUPERSEDE_FLOW.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
