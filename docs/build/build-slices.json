@@ -7184,6 +7184,19 @@
         "src/__tests__/integration/source/control-tower-signals.test.ts"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC17",
+      "wave": "wave-14",
+      "title": "Source Intelligence Patterns",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Deterministic intelligence pattern detection with 10 pattern categories, strength/source types, and detectIntelligencePatterns() builder.",
+      "files": [
+        "src/lib/source/intelligence-patterns.ts",
+        "src/__tests__/integration/source/intelligence-patterns.test.ts"
+      ],
+      "completedAt": "2026-04-26"
     }
   ]
 }

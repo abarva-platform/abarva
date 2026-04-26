@@ -859,7 +859,8 @@
         "2026-04-26 SRC11: Deterministic BAFO negotiation model added with 12 lever types, BafoNegotiationOpportunity, BafoNegotiationLever, BafoNegotiationRisk, BafoNegotiationScenario, BafoRecommendation, and BafoSummary. No model calls, no network calls. Does not replace existing bafo-negotiation.ts.",
         "2026-04-26 SRC13: Deterministic commercial risk exception detection added with 8 risk categories (pricing_anomaly, scope_ambiguity, governance_gap, evidence_deficit, contract_trap, transition_risk, liability_exposure, timeline_compression), severity/status types, pattern library, and detectCommercialRisks() builder. No model calls, no network calls.",
         "2026-04-26 SRC15: Presentational VendorPricingComparison React component added with tower breakdown table, delta from lowest, rank indicator, and normalization confidence. No API calls, no model calls.",
-        "2026-04-26 SRC14: Presentational SourceCommercialSummaryPanel React component added with vendor table, risk badge, exception counter, and top opportunity display. No API calls, no model calls, no data fetching. Display-only."
+        "2026-04-26 SRC14: Presentational SourceCommercialSummaryPanel React component added with vendor table, risk badge, exception counter, and top opportunity display. No API calls, no model calls, no data fetching. Display-only.",
+        "2026-04-26 SRC17: Deterministic Source intelligence pattern detection added with 10 pattern categories (pricing_compression, scope_anchor, evidence_leverage, timeline_pressure, bundling_trap, governance_avoidance, champion_dependency, reference_manipulation, pricing_opacity, scope_creep_setup). No model calls, no network calls."
       ]
     },
     {
