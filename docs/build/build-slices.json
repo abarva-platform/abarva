@@ -1977,6 +1977,64 @@
       "notes": "Pure deterministic two-region canvas (left list + right preview) projected from the PDEL artifact inventory. No upload, no parse, no export, no model calls, no live download. PDEL5b/PDEL6 wire export and route-level selection state; PDEL7 wires edit / regenerate."
     },
     {
+      "id": "PDEL7",
+      "name": "HTML / Markdown Deliverable Viewer",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PDEL",
+        "PDEL5"
+      ],
+      "allowedFiles": [
+        "src/components/programs/DeliverableCanvasViewer.tsx",
+        "src/lib/programs/deliverable-canvas-view.ts",
+        "src/__tests__/integration/programs/deliverable-canvas-viewer.test.ts",
+        "docs/build/slices/PDEL7_DELIVERABLE_CANVAS_VIEWER.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableCanvasView(programId, artifactId) is pure: JSON byte-equal across repeated calls for every (program, artifact) pair in the canonical demo seed.",
+        "Helper returns null when either programId or artifactId is unknown; never throws.",
+        "View carries title, phase, artifactType, renderMode in {html, markdown, rich_text_placeholder}, status, versionLabel (null today), evidenceStatus, missingInputs, generationLabel in {generated, uploaded}, previewBody (deterministic seed), disabledActions of length 4, honestDisclaimer, and createdFrom === 'deterministic_deliverable_view_seed'.",
+        "All three render modes (html, markdown, rich_text_placeholder) are observable across the canonical demo seed; no artifact resolves to a render mode outside this set.",
+        "All four canvas actions (edit, regenerate, download, approve) are returned with enabled === false, futureLabel === 'future', and a non-empty reason that includes 'not yet available' or 'deferred'.",
+        "Artifacts whose evidenceUsability !== 'usable' surface a missing-input entry naming evidence; every missing-input entry is a non-empty string.",
+        "Serialized view never contains http(s)://, blob:, data:application/, download?, /files/, .pdf path tokens, or E-### citation tokens.",
+        "DeliverableCanvasViewer.tsx is a server component (no 'use client', no useState, no useEffect, no useRef) and never uses dangerouslySetInnerHTML; root carries data-deliverable-canvas-viewer=\"pdel7\".",
+        "Action buttons render with disabled, aria-disabled=\"true\", and a sub-label naming the deferred destination.",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-canvas-viewer.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Deterministic single-deliverable viewer projected from the PDEL artifact inventory. Server component only; never injects raw HTML. No live edit, no live regenerate, no live download, no live approval \u2014 every future action is rendered disabled with a deferred reason. Companion to PDEL5 (two-region canvas) within the program canvas; future export / edit / regenerate / approval slices flip individual action enablement without contract changes. Versioning binding is deferred until deliverable-versioning lands on this branch."
+    },
+    {
       "id": "HOME1",
       "name": "Agentic Executive Home / Entry Surface",
       "category": "HOME",
