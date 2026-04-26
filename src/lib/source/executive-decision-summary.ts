@@ -16,7 +16,7 @@ const DEFAULT_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
 const SOURCE_MODULES_USED = [
   'commercial-signals',
-  'unified-agent-missions',
+  'commercial-mission-adapter',
 ] as const;
 
 function normalizeText(value: string): string {
@@ -75,14 +75,34 @@ function resolveTransitionRisk(blockers: string[]): SourceExecutiveRiskLevel {
   return 'medium';
 }
 
+function missionKey(mission: SourceAgentMission): string {
+  return [
+    mission.agentName,
+    mission.missionType,
+    mission.stageId ?? 'none',
+    normalizeText(mission.title),
+  ].join('::');
+}
+
+function mergeMissions(
+  provided: SourceAgentMission[],
+  adapted: SourceAgentMission[],
+): SourceAgentMission[] {
+  const seen = new Set<string>(provided.map(missionKey));
+  const merged = [...provided];
+  for (const mission of adapted) {
+    const key = missionKey(mission);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(mission);
+  }
+  return merged;
+}
+
 function buildUnifiedMissions(
   input: SourceExecutiveDecisionInput,
   signals: SourceCommercialSignals,
 ): SourceAgentMission[] {
-  if (input.unifiedMissions && input.unifiedMissions.length > 0) {
-    return input.unifiedMissions;
-  }
-
   const adapted = buildSourceCommercialAgentMissions({
     queueInput: {
       eventId: input.event.id,
@@ -99,6 +119,10 @@ function buildUnifiedMissions(
     },
     generatedAt: input.generatedAt,
   });
+
+  if (input.unifiedMissions && input.unifiedMissions.length > 0) {
+    return mergeMissions(input.unifiedMissions, adapted.adaptedMissions);
+  }
 
   return adapted.adaptedMissions;
 }
