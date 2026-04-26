@@ -127,7 +127,6 @@ describe('CLOUD3 · Docker runtime packaging artifacts', () => {
     it('is marked executable', () => {
       const mode = statSync(scriptPath).mode
       // POSIX: any execute bit set on owner / group / world.
-      // eslint-disable-next-line no-bitwise
       const executable = (mode & 0o111) !== 0
       expect(executable).toBe(true)
     })

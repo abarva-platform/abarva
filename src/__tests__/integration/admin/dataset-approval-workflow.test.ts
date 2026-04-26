@@ -11,7 +11,6 @@ import {
   evaluateDatasetApprovalRequest,
   summarizeDatasetApprovals,
   getRevokedOrExpiredDatasets,
-  type DatasetApprovalDecision,
   type DatasetApprovalRequest,
   type DatasetApprovalState,
 } from '@/lib/admin/dataset-approval-workflow';
