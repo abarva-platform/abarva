@@ -668,7 +668,7 @@
       "name": "Source Commercial UI + Architecture Page",
       "goal": "Surface Wave-14 commercial intelligence inside the Source app and add the Admin Architecture Overview page.",
       "status": "in_progress",
-      "percentComplete": 50,
+      "percentComplete": 60,
       "plannedSlices": [
         "SRC19",
         "SRC20",
@@ -686,7 +686,8 @@
         "SRC20",
         "SRC21",
         "SRC22",
-        "SRC23"
+        "SRC23",
+        "SRC24"
       ],
       "skippedSlices": [],
       "blockedSlices": [],

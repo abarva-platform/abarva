@@ -7300,6 +7300,15 @@
       "status": "complete",
       "branch": "wave15/src23-commercial-readiness",
       "description": "Readiness checklist with 6 checks across pricing, risk, negotiation, evidence, and decision dimensions. AbarVa design canon."
+    },
+    {
+      "id": "SRC24",
+      "wave": "wave-15",
+      "name": "Source Commercial Missions Panel",
+      "type": "source-ui",
+      "status": "complete",
+      "branch": "wave15/src24-commercial-missions-panel",
+      "description": "Mission queue panel showing up to 5 commercial intelligence missions grouped by agent owner. Show-more toggle. AbarVa design."
     }
   ]
 }
