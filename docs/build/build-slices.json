@@ -7543,6 +7543,15 @@
       "status": "code_complete",
       "branch": "wave17a/desroute2-legacy-shell-nav-audit",
       "description": "Deterministic audit of legacy shell/nav/toolbar ownership, banned visual patterns, and safe replacement guidance. Audit-only; no route rewiring or deletions."
+    },
+    {
+      "id": "DESROUTE3",
+      "wave": "wave-17a",
+      "name": "Admin Shell Enforcement",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17a/desroute3-admin-shell-enforcement",
+      "description": "Enforce canonical Admin route shell/chrome for active admin routes while preserving auth guards and existing route content."
     }
   ]
 }

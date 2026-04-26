@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { StewardAdminRail } from '@/components/admin/StewardAdminRail'
+import { AdminCanonShell } from '@/components/admin/AdminCanonShell'
 import { StewardSetupControlCenter } from '@/components/admin/StewardSetupControlCenter'
 
 // ── Design tokens (spec-exact) ────────────────────────────────────────────
@@ -12,6 +12,7 @@ const MUTED  = '#706D66'
 const BORDER = '#E8E6E3'
 const BG2    = '#F2F1F0'
 const TEAL   = '#14B8A6'
+const NAVY   = '#1B2B5C'
 const RED    = '#C53030'
 const AMBER  = '#B45309'
 const GREEN  = '#166534'
@@ -376,12 +377,24 @@ export default function AdminPortal() {
 
   if (!user || !isAdmin) {
     return (
-      <div style={{ background: BG, fontFamily: SANS, minHeight: 'calc(100vh - 104px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin Portal</div>
+      <AdminCanonShell
+        eyebrow="Platform · Admin"
+        title="Admin Portal"
+        description="Platform operator workspace for setup, governance, and readiness."
+        workflow={{
+          primaryAgent: 'steward',
+          pageQuestion: 'What must be true for this tenant to run AbarVa safely and reliably?',
+          whatIsKnown: 'Admin surfaces are deterministic and route-backed.',
+          whatIsMissing: 'Live governance and readiness signals still require verification.',
+          recommendedNextAction: 'Review setup, then inspect build and production readiness.',
+          caveat: 'Deterministic internal surface; no live readiness polling in this page.',
+        }}
+      >
+        <div style={{ textAlign: 'center', padding: '56px 0' }}>
+          <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '8px' }}>Admin access only</div>
           <div style={{ fontSize: '13px', color: MUTED }}>This area is restricted to platform administrators.</div>
         </div>
-      </div>
+      </AdminCanonShell>
     )
   }
 
@@ -406,35 +419,32 @@ export default function AdminPortal() {
     }
   }
 
-  const firstInitial = (user.firstName ?? user.primaryEmailAddress?.emailAddress ?? 'AS').charAt(0).toUpperCase()
-  const lastInitial = (user.lastName ?? '').charAt(0).toUpperCase()
-  const userInitials = `${firstInitial}${lastInitial || 'D'}`
-  const clientNameMeta = (user.publicMetadata?.clientName as string | undefined) ?? 'AbarVa Ops'
-  // Seed Steward with roster count from the in-page MAESTROS table; the
-  // rail refetches live counts from /api/admin/steward-stats on mount.
-  const initialMaestros = MAESTROS.filter(m => m.status === 'Active').length
-  const initialPending = MAESTROS.filter(m => m.status === 'Pending').length
-
   return (
-    <div style={{ background: BG, fontFamily: SANS }}>
-      <StewardAdminRail
-        initialMaestros={initialMaestros}
-        initialPendingInvitations={initialPending}
-        userInitials={userInitials}
-        clientName={clientNameMeta}
-      />
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 104px)' }}>
+    <AdminCanonShell
+      eyebrow="Platform · Admin"
+      title="Admin Portal"
+      description="Steward workspace for setup, governance, and route-level readiness across AbarVa."
+      workflow={{
+        primaryAgent: 'steward',
+        pageQuestion: 'What is known, what is missing, and what must happen next to operate safely?',
+        whatIsKnown: 'Setup controls, quality jump, build progress, and production readiness routes are available.',
+        whatIsMissing: 'Full live governance and production telemetry are still blocked.',
+        recommendedNextAction: 'Use the platform section to validate readiness blockers before pilot decisions.',
+        caveat: 'Deterministic operator shell. No fake live readiness claims.',
+      }}
+    >
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 270px)', border: `1px solid ${BORDER}`, borderRadius: '12px', overflow: 'hidden', background: '#fff' }}>
 
         {/* ── Sidebar ──────────────────────────────────────────────── */}
-        <div style={{ width: '240px', minWidth: '240px', background: '#020408', display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ width: '264px', minWidth: '264px', background: '#FCFCFB', display: 'flex', flexDirection: 'column', paddingBottom: '20px', borderRight: `1px solid ${BORDER}` }}>
 
           {/* Portal header */}
-          <div style={{ padding: '20px 18px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '4px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: MONO, marginBottom: '4px' }}>
+          <div style={{ padding: '20px 18px 16px', borderBottom: `1px solid ${BORDER}`, marginBottom: '4px' }}>
+            <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', fontFamily: MONO, marginBottom: '4px' }}>
               Portal
             </div>
-            <div style={{ fontSize: '15px', fontWeight: 600, color: '#FAFAF9', marginBottom: '2px' }}>Admin Portal</div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600, color: DARK, marginBottom: '2px' }}>Admin Portal</div>
+            <div style={{ fontSize: '11px', color: MUTED, fontFamily: MONO, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Platform governance
             </div>
           </div>
@@ -442,7 +452,7 @@ export default function AdminPortal() {
           {/* Nav groups */}
           {SIDEBAR_GROUPS.map(group => (
             <div key={group.label} style={{ padding: '14px 18px 4px' }}>
-              <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: MONO }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px', fontFamily: MONO }}>
                 {group.label}
               </div>
               {group.items.map(item => {
@@ -451,14 +461,14 @@ export default function AdminPortal() {
                   <div
                     key={item.key}
                     onClick={() => setActive(item.key)}
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(20,184,166,0.1)' : 'transparent', transition: 'background 0.15s' }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: '5px', cursor: 'pointer', marginBottom: '1px', background: isActive ? 'rgba(27,43,92,0.08)' : 'transparent', transition: 'background 0.15s' }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = BG2 }}
                     onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
-                    <span style={{ fontSize: '14px', color: isActive ? TEAL : 'rgba(255,255,255,0.45)', width: '16px', textAlign: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: '14px', color: isActive ? NAVY : MUTED, width: '16px', textAlign: 'center', flexShrink: 0 }}>
                       {item.icon}
                     </span>
-                    <span style={{ fontSize: '14px', fontWeight: isActive ? 600 : 400, color: isActive ? '#ffffff' : 'rgba(255,255,255,0.85)' }}>
+                    <span style={{ fontSize: '14px', fontWeight: isActive ? 600 : 400, color: isActive ? DARK : TEXT }}>
                       {item.label}
                     </span>
                     {item.badge ? (
@@ -479,6 +489,6 @@ export default function AdminPortal() {
         </div>
 
       </div>
-    </div>
+    </AdminCanonShell>
   )
 }
