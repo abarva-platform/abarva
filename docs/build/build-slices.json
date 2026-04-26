@@ -3749,6 +3749,60 @@
       "notes": "Deterministic Evidence Dataset Drawer view + server component mounted on the canonical Sentinel pattern detail. Seed entries cover internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources across 4 canonical I1 pattern keys. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the view contract."
     },
     {
+      "id": "I7",
+      "name": "Intelligence · Internal / External Source Basis",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/source-basis.ts",
+        "src/__tests__/integration/intelligence/source-basis.test.ts",
+        "docs/build/slices/I7_INTERNAL_EXTERNAL_SOURCE_BASIS.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildIntelligenceSourceBasisSeed returns deterministic, byte-equal arrays across repeated calls.",
+        "Across the seed set, all 6 source basis kinds (internal_program_evidence, internal_workshop_notes, internal_evidence_ledger, external_pattern_library, external_industry_benchmark, external_vendor_intelligence) appear at least once.",
+        "Across the seed set, all 3 confidence labels (low, medium, high) appear at least once.",
+        "Every seeded pattern key carries at least 1 internal and 1 external basis.",
+        "Every basis carries the deterministic intel-source-basis-seed-N id and createdFrom: 'deterministic_intelligence_source_basis_seed'.",
+        "summarizeIntelligenceSourceBasis returns totals, internal/external partition, confidence breakdown, kind breakdown, and a stable honest disclaimer; the breakdowns sum to totalBases; empty-input returns zero counts and the stable disclaimer.",
+        "getInternalOnlyBases and getExternalOnlyBases partition the seed disjointly so internal + external counts equal the seed length.",
+        "No https:// or http:// URL appears in any serialized basis; no literal E-### citation tokens appear; no fabricated dollar amounts.",
+        "Module imports nothing from Sentinel runtime, Atlas / Nexus / agent runtime, Source UI, legacy /programs, mock.ts, auth, supabase, or model SDKs; no Date.now, Math.random, new Date(, or fetch( in the source.",
+        "honestDisclaimer mentions deterministic seed and disclaims live external retrieval."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/source-basis.test.ts",
+        "npx eslint --max-warnings=0 src/lib/intelligence/source-basis.ts src/__tests__/integration/intelligence/source-basis.test.ts"
+      ],
+      "notes": "Deterministic Internal / External Source Basis read model. Distinguishes intelligence grounded in internal evidence (program evidence, workshop notes, evidence ledger) from intelligence grounded in the external pattern library (industry benchmarks, vendor intelligence, public pattern pack), with explicit per-basis confidence label (low / medium / high). Seed covers all 5 canonical I1 pattern keys, all 6 source basis kinds, and all 3 confidence labels. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Surface integration is deferred to a future slice; this slice ships the read model only."
+    },
+    {
       "id": "MG3",
       "name": "Model Gateway Safe Integration Contract",
       "category": "MG",
