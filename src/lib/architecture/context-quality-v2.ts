@@ -99,9 +99,8 @@ export interface ContextQualityV2Score {
   createdFrom: 'deterministic_seed';
 }
 
-const SCORER_VERSION: 'ctx4.v1' = 'ctx4.v1';
-const SCORER_SOURCE: 'deterministic_context_quality_scoring' =
-  'deterministic_context_quality_scoring';
+const SCORER_VERSION = 'ctx4.v1' as const;
+const SCORER_SOURCE = 'deterministic_context_quality_scoring' as const;
 
 const TOTAL_SECTIONS = 12;
 
