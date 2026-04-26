@@ -1,393 +1,363 @@
-import { buildSourceBafoNegotiationPlan } from './bafo-negotiation';
-import { getSourceVendorResponseSeed } from './mock-seed';
-import { buildSourcePricingNormalization } from './pricing-normalization';
-import { buildSourceVendorResponseCompleteness } from './vendor-response-completeness';
+import type { SourceAgentMission } from './agent-mission-types';
+import { buildSourceCommercialAgentMissions } from './commercial-mission-adapter';
+import { buildSourceCommercialSignals } from './commercial-signals';
+import type { SourceCommercialSignals, SourceCommercialVendorTradeoff } from './commercial-signal-types';
 import type {
   SourceExecutiveDecisionInput,
   SourceExecutiveDecisionPosture,
   SourceExecutiveDecisionSummary,
+  SourceExecutiveDecisionVendorTradeoffInput,
   SourceExecutiveEvidenceConfidence,
   SourceExecutiveRiskLevel,
   SourceExecutiveVendorTradeoff,
-  SourceExecutiveVendorViability,
 } from './executive-decision-types';
 
 const DEFAULT_GENERATED_AT = '2026-04-26T00:00:00.000Z';
 
-function toRiskLevel(score: number): SourceExecutiveRiskLevel {
-  if (score >= 8) return 'high';
-  if (score >= 4) return 'medium';
+const SOURCE_MODULES_USED = [
+  'commercial-signals',
+  'unified-agent-missions',
+] as const;
+
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function toRiskLevel(level: SourceCommercialVendorTradeoff['riskLevel']): SourceExecutiveRiskLevel {
+  if (level === 'critical' || level === 'high') return 'high';
+  if (level === 'medium') return 'medium';
   return 'low';
 }
 
-function toEvidenceConfidence(score: number): SourceExecutiveEvidenceConfidence {
-  if (score >= 6) return 'low';
-  if (score >= 3) return 'medium';
+function scoreForRisk(level: SourceExecutiveRiskLevel): number {
+  if (level === 'high') return 3;
+  if (level === 'medium') return 2;
+  return 1;
+}
+
+function toEvidenceConfidence(tradeoff: SourceCommercialVendorTradeoff): SourceExecutiveEvidenceConfidence {
+  const lowEvidenceBlocker = tradeoff.blockers.some((blocker) => (
+    normalizeText(blocker).includes('evidence')
+    || normalizeText(blocker).includes('proof')
+    || normalizeText(blocker).includes('citation')
+  ));
+  if (lowEvidenceBlocker) return 'low';
+  if (tradeoff.riskLevel === 'critical' || tradeoff.riskLevel === 'high') return 'medium';
   return 'high';
 }
 
-function toViability(input: {
-  hasPricingBlocker: boolean;
-  hasHighTransitionRisk: boolean;
-  evidenceConfidence: SourceExecutiveEvidenceConfidence;
-}): SourceExecutiveVendorViability {
-  if (input.hasPricingBlocker) {
+function collectUnresolvedAssumptions(tradeoff: SourceCommercialVendorTradeoff): string[] {
+  return tradeoff.blockers.filter((blocker) => {
+    const text = normalizeText(blocker);
+    return text.includes('assumption') || text.includes('exclusion') || text.includes('transition');
+  });
+}
+
+function toVendorViability(
+  tradeoff: SourceCommercialVendorTradeoff,
+  evidenceConfidence: SourceExecutiveEvidenceConfidence,
+): SourceExecutiveVendorTradeoff['viability'] {
+  if (tradeoff.pricingStatus === 'not_comparable') {
     return 'not_viable';
   }
-  if (input.evidenceConfidence === 'low' || input.hasHighTransitionRisk) {
+  if (evidenceConfidence === 'low') {
+    return 'conditional';
+  }
+  if (tradeoff.riskLevel === 'critical' || tradeoff.riskLevel === 'high') {
     return 'conditional';
   }
   return 'viable';
 }
 
-export function buildSourceExecutiveVendorTradeoffs(
+function resolveTransitionRisk(blockers: string[]): SourceExecutiveRiskLevel {
+  const hasTransitionBlocker = blockers.some((blocker) => normalizeText(blocker).includes('transition'));
+  if (hasTransitionBlocker) return 'high';
+  return 'medium';
+}
+
+function buildUnifiedMissions(
   input: SourceExecutiveDecisionInput,
-): SourceExecutiveVendorTradeoff[] {
-  const completeness = buildSourceVendorResponseCompleteness({ event: input.event, generatedAt: input.generatedAt });
-  const pricing = buildSourcePricingNormalization({ event: input.event, generatedAt: input.generatedAt });
-  const bafo = buildSourceBafoNegotiationPlan({
-    event: {
-      ...input.event,
-      currentStageKey: 'orals_bafo',
+  signals: SourceCommercialSignals,
+): SourceAgentMission[] {
+  if (input.unifiedMissions && input.unifiedMissions.length > 0) {
+    return input.unifiedMissions;
+  }
+
+  const adapted = buildSourceCommercialAgentMissions({
+    queueInput: {
+      eventId: input.event.id,
+      eventName: input.event.name,
+      stage: input.event.currentStageKey,
+      vendorIds: signals.vendorTradeoffs.map((vendor) => vendor.vendorId),
+      needsPriceBenchmark: signals.pricingSignals.status !== 'comparable',
+      needsScopeClarification: signals.vendorTradeoffs.some((vendor) => (
+        vendor.blockers.some((blocker) => normalizeText(blocker).includes('scope'))
+      )),
+      needsEvidenceCollection: signals.executiveImplications.sentinelEvidenceNotes.length > 0,
+      needsGovernanceReview: signals.executiveImplications.stewardGateNotes.length > 0,
+      isBafoPhase: signals.bafoSignals.overallReadiness !== 'ready',
     },
     generatedAt: input.generatedAt,
   });
 
-  const pricingByVendor = new Map(pricing.snapshots.map((snapshot) => [snapshot.vendorId, snapshot]));
-  const bafoByVendor = new Map(bafo.vendorNegotiationPlans.map((vendor) => [vendor.vendorId, vendor]));
-  const vendorSeeds = input.event.vendorResponses ?? getSourceVendorResponseSeed(input.event.id).responses;
-  const vendorSeedByVendor = new Map(vendorSeeds.map((seed) => [seed.vendorId, seed]));
+  return adapted.adaptedMissions;
+}
 
-  return completeness.records.map((record) => {
-    const pricingSnapshot = pricingByVendor.get(record.vendorId);
-    const bafoVendor = bafoByVendor.get(record.vendorId);
-    const vendorSeed = vendorSeedByVendor.get(record.vendorId);
+function buildMissionSummary(missions: SourceAgentMission[]): SourceExecutiveDecisionSummary['missionSummary'] {
+  const byPriority: SourceExecutiveDecisionSummary['missionSummary']['byPriority'] = {
+    critical: 0,
+    high: 0,
+    medium: 0,
+    low: 0,
+  };
+  let blocked = 0;
+  for (const mission of missions) {
+    byPriority[mission.priority] += 1;
+    if (mission.state === 'blocked') blocked += 1;
+  }
+  return {
+    total: missions.length,
+    critical: byPriority.critical,
+    high: byPriority.high,
+    blocked,
+    byPriority,
+  };
+}
 
-    let commercialRiskScore = 0;
-    let transitionRiskScore = 0;
-    let evidenceRiskScore = 0;
-
-    if (record.pricingTemplateStatus !== 'complete') {
-      commercialRiskScore += 5;
-    }
-    if (pricingSnapshot?.commercialTraps.some((trap) => trap.severity === 'high')) {
-      commercialRiskScore += 4;
-    }
-    if (record.responseStatus === 'blocked') {
-      commercialRiskScore += 3;
-    }
-    if (record.transitionPlanStatus !== 'complete') {
-      transitionRiskScore += 5;
-    }
-    if (vendorSeed?.responseRiskLevel === 'high') {
-      transitionRiskScore += 3;
-    }
-    if (vendorSeed?.evidenceUsability === 'low_confidence' || vendorSeed?.evidenceUsability === 'restricted') {
-      evidenceRiskScore += 6;
-    }
-    if (record.evidenceStatus === 'Low Confidence') {
-      evidenceRiskScore += 3;
-    }
-
-    const commercialRisk = toRiskLevel(commercialRiskScore);
-    const transitionRisk = toRiskLevel(transitionRiskScore);
-    const evidenceConfidence = toEvidenceConfidence(evidenceRiskScore);
-
-    const hasPricingBlocker = record.blockers.some((blocker) => blocker.toLowerCase().includes('pricing template'));
-    const viability = toViability({
-      hasPricingBlocker,
-      hasHighTransitionRisk: transitionRisk === 'high',
-      evidenceConfidence,
-    });
-
-    const keyStrengths: string[] = [];
-    if (record.automationRoadmapStatus === 'complete') {
-      keyStrengths.push('Automation and productivity scope is documented.');
-    }
-    if (record.securityResponseStatus === 'complete') {
-      keyStrengths.push('Security and compliance response is complete.');
-    }
-    if (record.pricingTemplateStatus === 'complete') {
-      keyStrengths.push('Pricing template is available for normalized comparison.');
-    }
-
-    const keyConcerns: string[] = [];
-    if (record.pricingTemplateStatus !== 'complete') {
-      keyConcerns.push('Pricing template is missing or incomplete.');
-    }
-    if (record.transitionPlanStatus !== 'complete') {
-      keyConcerns.push('Transition plan detail remains incomplete.');
-    }
-    if (vendorSeed?.evidenceUsability === 'low_confidence' || vendorSeed?.evidenceUsability === 'restricted') {
-      keyConcerns.push('Evidence quality is too weak for selection lock.');
-    }
-    if (record.exclusions.length > 0) {
-      keyConcerns.push('Exclusions require commercial clarification before recommendation lock.');
-    }
-
-    const requiredResolutions = Array.from(new Set([
-      ...record.blockers,
-      ...(bafoVendor?.requiredClarifications ?? []),
-    ])).slice(0, 8);
-
-    const costPosition = pricingSnapshot
-      ? `Year 1 ${pricingSnapshot.costByYear.year1.toLocaleString('en-US')} USD, readiness ${pricingSnapshot.readinessStatus}.`
-      : 'Pricing normalization snapshot unavailable.';
-
-    const valuePotential = bafoVendor?.expectedValueImpact
-      ?? 'Value potential is not yet stable due to unresolved commercial inputs.';
-
+export function buildSourceExecutiveVendorTradeoffs(
+  input: SourceExecutiveDecisionVendorTradeoffInput,
+): SourceExecutiveVendorTradeoff[] {
+  return input.commercialSignals.vendorTradeoffs.map((tradeoff) => {
+    const evidenceConfidence = toEvidenceConfidence(tradeoff);
+    const unresolvedAssumptions = collectUnresolvedAssumptions(tradeoff);
     return {
-      vendorId: record.vendorId,
-      vendorName: record.vendorName,
-      viability,
-      valuePotential,
-      costPosition,
-      commercialRisk,
-      transitionRisk,
+      vendorId: tradeoff.vendorId,
+      vendorName: tradeoff.vendorName,
+      viability: toVendorViability(tradeoff, evidenceConfidence),
+      valuePotential: tradeoff.bafoReadiness === 'ready'
+        ? 'Vendor signals BAFO-ready value delivery posture.'
+        : 'Value delivery remains conditional on BAFO clarifications.',
+      costPosition: tradeoff.pricingRank
+        ? `Pricing rank ${tradeoff.pricingRank}; status ${tradeoff.pricingStatus}.`
+        : `Pricing status ${tradeoff.pricingStatus}; rank unavailable.`,
+      pricingRank: tradeoff.pricingRank,
+      pricingStatus: tradeoff.pricingStatus,
+      bafoReadiness: tradeoff.bafoReadiness,
+      commercialRisk: toRiskLevel(tradeoff.riskLevel),
+      transitionRisk: resolveTransitionRisk(tradeoff.blockers),
       evidenceConfidence,
-      evidenceUsability: vendorSeed?.evidenceUsability ?? 'not_available',
-      keyStrengths,
-      keyConcerns,
-      blockers: record.blockers,
-      requiredResolutions,
+      blockers: tradeoff.blockers,
+      unresolvedAssumptions,
     };
   });
 }
 
-function resolveDecisionPosture(summary: {
-  tradeoffs: SourceExecutiveVendorTradeoff[];
-  blockers: string[];
-  evidenceConfidence: SourceExecutiveEvidenceConfidence;
-}): SourceExecutiveDecisionPosture {
-  const viableCount = summary.tradeoffs.filter((tradeoff) => tradeoff.viability !== 'not_viable').length;
-  const hasPricingBlocker = summary.blockers.some((blocker) => blocker.toLowerCase().includes('pricing template'));
-  const hasEvidenceBlocker = summary.tradeoffs.some((tradeoff) => (
-    tradeoff.evidenceConfidence === 'low' && tradeoff.viability !== 'not_viable'
-  ));
-
-  if (viableCount === 0 && hasPricingBlocker) {
-    return 'blocked_missing_pricing';
-  }
-  if (viableCount === 0 && hasEvidenceBlocker) {
-    return 'blocked_low_evidence';
-  }
-  if (summary.blockers.length === 0 && summary.evidenceConfidence === 'high') {
-    return 'ready_for_selection_review';
-  }
-  if (hasPricingBlocker || hasEvidenceBlocker) {
-    return 'defer_pending_clarifications';
-  }
-  return 'proceed_to_bafo';
+function deriveEvidenceConfidence(
+  vendorTradeoffs: SourceExecutiveVendorTradeoff[],
+  signals: SourceCommercialSignals,
+): SourceExecutiveEvidenceConfidence {
+  if (vendorTradeoffs.some((vendor) => vendor.evidenceConfidence === 'low')) return 'low';
+  if (signals.executiveImplications.sentinelEvidenceNotes.length > 0) return 'medium';
+  return 'high';
 }
 
-function resolveDecisionOptions(posture: SourceExecutiveDecisionPosture): string[] {
-  const optionsByPosture: Record<SourceExecutiveDecisionPosture, string[]> = {
+function deriveDecisionPosture(
+  blockers: string[],
+  evidenceConfidence: SourceExecutiveEvidenceConfidence,
+  missionSummary: SourceExecutiveDecisionSummary['missionSummary'],
+  signals: SourceCommercialSignals,
+): SourceExecutiveDecisionPosture {
+  const hasPricingBlocker = blockers.some((blocker) => {
+    const text = normalizeText(blocker);
+    return text.includes('pricing') || text.includes('template') || text.includes('comparable');
+  });
+  if (hasPricingBlocker) return 'blocked_missing_pricing';
+
+  if (evidenceConfidence === 'low') return 'blocked_low_evidence';
+
+  const hasWaiver = blockers.some((blocker) => normalizeText(blocker).includes('waiver'))
+    || signals.executiveImplications.stewardGateNotes.some((note) => normalizeText(note).includes('waiver'));
+  if (hasWaiver) return 'waiver_required';
+
+  if (missionSummary.blocked > 0 || signals.commercialReadiness === 'blocked') {
+    return 'defer_pending_clarifications';
+  }
+
+  if (signals.bafoSignals.overallReadiness !== 'ready') {
+    return 'proceed_to_bafo';
+  }
+
+  return 'ready_for_selection_review';
+}
+
+function deriveDecisionOptions(posture: SourceExecutiveDecisionPosture): string[] {
+  const options: Record<SourceExecutiveDecisionPosture, string[]> = {
     ready_for_selection_review: [
-      'Move to steering committee selection review with a clear recommendation.',
-      'Proceed with conditional approval notes and explicit assumption lock list.',
-      'Request one final commercial sanity pass before decision lock.',
+      'Move to selection review because blocking pricing and evidence issues are closed.',
+      'Move with explicit caveats and named owners for residual risks.',
+      'Run one final cross-functional sanity pass before recommendation lock.',
     ],
     proceed_to_bafo: [
-      'Proceed to BAFO with a focused clarification list by vendor.',
-      'Run one short negotiation loop on exclusions, transition, and risk terms.',
-      'Return to review after BAFO deltas are captured.',
+      'Proceed to BAFO with a targeted clarification list by vendor.',
+      'Issue one deterministic clarification pack for scope, pricing, and evidence asks.',
+      'Return to executive review after BAFO deltas are captured.',
     ],
     defer_pending_clarifications: [
-      'Defer selection review until pricing and transition clarifications are submitted.',
-      'Issue a deterministic clarification pack to all vendors with due dates.',
-      'Re-evaluate posture after clarifications are verified.',
+      'Defer selection review until current blockers are resolved.',
+      'Close mission and commercial blockers before advancing posture.',
+      'Rebuild executive summary after clarification evidence is validated.',
     ],
     blocked_missing_pricing: [
       'Block selection review until required pricing templates are complete.',
-      'Request complete pricing package and transition line-items from blocked vendors.',
-      'Escalate to procurement sponsor if templates remain missing.',
+      'Request full pricing templates and comparable line-item breakdowns.',
+      'Escalate unresolved pricing completeness gaps to procurement lead.',
     ],
     blocked_low_evidence: [
-      'Block selection review until evidence quality is improved.',
-      'Require contractable evidence for automation and value claims.',
-      'Re-score evidence confidence before reopening decision review.',
+      'Block selection review until evidence confidence improves.',
+      'Run an evidence recovery sprint for unsupported vendor claims.',
+      'Recompute posture after Sentinel cautions are closed.',
     ],
     waiver_required: [
-      'Document explicit waiver scope and residual risk ownership.',
-      'Require executive waiver approval before recommendation lock.',
-      'Track waived assumptions and exclusions in decision record.',
+      'Document waiver scope and residual commercial risk ownership.',
+      'Seek formal waiver approval before posture advances.',
+      'Track waived assumptions and exclusions as explicit decision caveats.',
     ],
   };
-  return optionsByPosture[posture];
+  return options[posture];
 }
 
-export function getSourceExecutiveDecisionOptions(summary: SourceExecutiveDecisionSummary): string[] {
-  return summary.decisionOptions;
+function deriveCommercialRisk(vendorTradeoffs: SourceExecutiveVendorTradeoff[]): SourceExecutiveRiskLevel {
+  if (vendorTradeoffs.length === 0) return 'medium';
+  const score = vendorTradeoffs.reduce((total, tradeoff) => total + scoreForRisk(tradeoff.commercialRisk), 0);
+  const average = score / vendorTradeoffs.length;
+  if (average >= 2.5) return 'high';
+  if (average >= 1.8) return 'medium';
+  return 'low';
+}
+
+function deriveTransitionRisk(vendorTradeoffs: SourceExecutiveVendorTradeoff[]): SourceExecutiveRiskLevel {
+  if (vendorTradeoffs.length === 0) return 'medium';
+  const score = vendorTradeoffs.reduce((total, tradeoff) => total + scoreForRisk(tradeoff.transitionRisk), 0);
+  const average = score / vendorTradeoffs.length;
+  if (average >= 2.5) return 'high';
+  if (average >= 1.8) return 'medium';
+  return 'low';
 }
 
 export function getSourceExecutiveDecisionBlockers(summary: SourceExecutiveDecisionSummary): string[] {
   return summary.blockers;
 }
 
+export function getSourceExecutiveDecisionOptions(summary: SourceExecutiveDecisionSummary): string[] {
+  return summary.decisionOptions;
+}
+
 export function buildSourceExecutiveDecisionSummary(
   input: SourceExecutiveDecisionInput,
 ): SourceExecutiveDecisionSummary {
   const generatedAt = input.generatedAt ?? DEFAULT_GENERATED_AT;
-  const tradeoffs = buildSourceExecutiveVendorTradeoffs(input);
-  const completeness = buildSourceVendorResponseCompleteness({ event: input.event, generatedAt });
-  const pricing = buildSourcePricingNormalization({ event: input.event, generatedAt });
-  const bafo = buildSourceBafoNegotiationPlan({
+  const signals = input.commercialSignals ?? buildSourceCommercialSignals({
     event: {
-      ...input.event,
-      currentStageKey: 'orals_bafo',
+      id: input.event.id,
+      name: input.event.name,
+      currentStageKey: input.event.currentStageKey,
     },
     generatedAt,
   });
-
-  const blockers = Array.from(new Set([
-    ...completeness.blockers,
-    ...pricing.missingInputs,
-    ...bafo.blockers,
-  ])).slice(0, 12);
-
-  const evidenceConfidenceScore = tradeoffs.reduce((score, tradeoff) => {
-    if (tradeoff.evidenceConfidence === 'low') return score + 3;
-    if (tradeoff.evidenceConfidence === 'medium') return score + 1;
-    return score;
-  }, 0);
-  const evidenceConfidence = toEvidenceConfidence(evidenceConfidenceScore);
-
-  const commercialRiskScore = tradeoffs.reduce((score, tradeoff) => (
-    score + (tradeoff.commercialRisk === 'high' ? 3 : tradeoff.commercialRisk === 'medium' ? 1 : 0)
-  ), 0);
-  const transitionRiskScore = tradeoffs.reduce((score, tradeoff) => (
-    score + (tradeoff.transitionRisk === 'high' ? 3 : tradeoff.transitionRisk === 'medium' ? 1 : 0)
-  ), 0);
-
-  const commercialRisk = toRiskLevel(commercialRiskScore);
-  const transitionRisk = toRiskLevel(transitionRiskScore);
-
-  const posture = resolveDecisionPosture({
-    tradeoffs,
-    blockers,
-    evidenceConfidence,
+  const unifiedMissions = buildUnifiedMissions(input, signals);
+  const missionSummary = buildMissionSummary(unifiedMissions);
+  const vendorTradeoffs = buildSourceExecutiveVendorTradeoffs({
+    commercialSignals: signals,
+    unifiedMissions,
   });
-
-  const unresolvedAssumptions = Array.from(new Set([
-    ...tradeoffs.flatMap((tradeoff) => tradeoff.requiredResolutions.filter((item) => (
-      item.toLowerCase().includes('assumption') || item.toLowerCase().includes('exclusion')
-    ))),
-    ...pricing.snapshots.flatMap((snapshot) => [
-      `${snapshot.vendorName}: assumptions use ${snapshot.assumptions.applicationCount} apps and ${snapshot.assumptions.ticketVolumePerMonth} tickets/month.`,
-      `${snapshot.vendorName}: rate escalation ${snapshot.costInputs.rateEscalationPercent}% with support hours ${snapshot.assumptions.supportHoursPerWeek}/week.`,
-    ]),
-  ])).slice(0, 10);
-
-  const viableVendors = tradeoffs
-    .filter((tradeoff) => tradeoff.viability !== 'not_viable')
-    .map((tradeoff) => tradeoff.vendorName);
-
-  const sentinelCautions = Array.from(new Set([
-    ...tradeoffs
-      .filter((tradeoff) => tradeoff.evidenceConfidence === 'low')
-      .map((tradeoff) => `${tradeoff.vendorName}: evidence confidence is low for selection-level commitment.`),
-    ...bafo.sentinelEvidenceNotes,
-  ])).slice(0, 6);
-
-  const stewardGateNotes = Array.from(new Set([
-    ...bafo.stewardGateNotes,
-    ...(blockers.length > 0
-      ? ['Selection gate should stay closed until pricing, transition, and evidence blockers are resolved.']
-      : ['Selection gate can open for executive review with no hard blockers.']),
-  ]));
-
-  const decisionOptions = resolveDecisionOptions(posture);
-  const recommendedNextAction = decisionOptions[0];
-
-  const valueAtStakeAmount = input.event.valueAtStakeUsd ?? 0;
-
-  const nexusRecommendation = posture === 'ready_for_selection_review'
-    ? 'Proceed to selection review with a documented assumption and exclusion register.'
-    : 'Hold final selection and run the next deterministic clarification cycle before executive lock.';
+  const blockers = Array.from(new Set([
+    ...signals.blockers,
+    ...vendorTradeoffs.flatMap((vendor) => vendor.blockers),
+    ...unifiedMissions
+      .filter((mission) => mission.state === 'blocked')
+      .map((mission) => mission.blockerReason)
+      .filter((reason): reason is string => Boolean(reason)),
+  ])).slice(0, 15);
+  const unresolvedAssumptions = Array.from(new Set(vendorTradeoffs.flatMap((vendor) => vendor.unresolvedAssumptions))).slice(0, 12);
+  const evidenceConfidence = deriveEvidenceConfidence(vendorTradeoffs, signals);
+  const decisionPosture = deriveDecisionPosture(blockers, evidenceConfidence, missionSummary, signals);
+  const decisionOptions = deriveDecisionOptions(decisionPosture);
+  const viableVendors = vendorTradeoffs
+    .filter((vendor) => vendor.viability !== 'not_viable')
+    .map((vendor) => vendor.vendorName);
+  const recommendedNextAction = decisionOptions[0] ?? signals.recommendedNextAction;
 
   const atlasExecutiveBrief = [
-    `Decision posture: ${posture}.`,
-    `Viable vendors: ${viableVendors.length > 0 ? viableVendors.join(', ') : 'none yet'}.`,
-    `Commercial risk: ${commercialRisk}; transition risk: ${transitionRisk}; evidence confidence: ${evidenceConfidence}.`,
-    `Top blocker: ${blockers[0] ?? 'No blocker currently flagged.'}`,
+    `Decision posture: ${decisionPosture}.`,
+    `Viable vendors: ${viableVendors.length > 0 ? viableVendors.join(', ') : 'none'}.`,
+    `Commercial readiness: ${signals.commercialReadiness}.`,
+    `Top blocker: ${blockers[0] ?? 'none'}.`,
   ].join(' ');
 
   return {
     eventId: input.event.id,
     generatedAt,
-    decisionNeeded: 'Determine whether the event can move to selection review or should remain in BAFO clarifications.',
-    recommendedDecisionPosture: posture,
+    decisionNeeded: 'Confirm whether this sourcing event can advance to executive selection review.',
+    decisionPosture,
+    recommendedDecisionPosture: decisionPosture,
     viableVendors,
-    vendorTradeoffs: tradeoffs,
+    vendorTradeoffs,
     valueAtStake: {
-      amountUsd: valueAtStakeAmount,
-      note: valueAtStakeAmount > 0
-        ? 'Value at stake is sourced from seeded Source event value fields.'
-        : 'Value at stake is not available in current seeded input.',
+      amountUsd: input.event.valueAtStakeUsd ?? 0,
+      note: input.event.valueAtStakeUsd
+        ? 'Value at stake provided from event context.'
+        : 'Value at stake was not provided in event context.',
     },
-    commercialRisk,
-    transitionRisk,
+    commercialRisk: deriveCommercialRisk(vendorTradeoffs),
+    transitionRisk: deriveTransitionRisk(vendorTradeoffs),
     evidenceConfidence,
     unresolvedAssumptions,
     blockers,
     decisionOptions,
     recommendedNextAction,
-    nexusRecommendation,
-    sentinelCautions,
-    stewardGateNotes,
+    nexusRecommendation: signals.executiveImplications.nexusGuidance,
+    sentinelCautions: signals.executiveImplications.sentinelEvidenceNotes,
+    stewardGateNotes: signals.executiveImplications.stewardGateNotes,
     atlasExecutiveBrief,
+    sourceModulesUsed: [...SOURCE_MODULES_USED],
+    missionSummary,
   };
 }
 
 export function summarizeSourceExecutiveDecision(summary: SourceExecutiveDecisionSummary): string {
-  return `Executive decision posture ${summary.recommendedDecisionPosture};`
-    + ` viable vendors ${summary.viableVendors.length};`
-    + ` blockers ${summary.blockers.length};`
-    + ` next action "${summary.recommendedNextAction}".`;
+  return `Executive decision (${summary.eventId}): posture=${summary.decisionPosture};`
+    + ` vendors=${summary.viableVendors.length}; blockers=${summary.blockers.length};`
+    + ` evidence=${summary.evidenceConfidence}.`;
 }
 
-export function formatSourceExecutiveDecisionSummaryAsMarkdown(
-  summary: SourceExecutiveDecisionSummary,
-): string {
+export function formatSourceExecutiveDecisionSummaryAsMarkdown(summary: SourceExecutiveDecisionSummary): string {
   const lines = [
     '# Source Executive Decision Summary',
     '',
     `Event: ${summary.eventId}`,
     `Generated: ${summary.generatedAt}`,
+    `Decision posture: ${summary.decisionPosture}`,
     `Decision needed: ${summary.decisionNeeded}`,
-    `Decision posture: ${summary.recommendedDecisionPosture}`,
-    `Value at stake: ${summary.valueAtStake.amountUsd.toLocaleString('en-US')} USD`,
-    `Commercial risk: ${summary.commercialRisk}`,
-    `Transition risk: ${summary.transitionRisk}`,
-    `Evidence confidence: ${summary.evidenceConfidence}`,
     '',
-    '## Viable vendors',
-    ...(summary.viableVendors.length > 0 ? summary.viableVendors.map((vendor) => `- ${vendor}`) : ['- none']),
+    '## Vendor tradeoffs',
+    ...(summary.vendorTradeoffs.length > 0
+      ? summary.vendorTradeoffs.map((vendor) => (
+        `- ${vendor.vendorName}: viability=${vendor.viability}, pricing=${vendor.pricingStatus},`
+        + ` commercialRisk=${vendor.commercialRisk}, evidence=${vendor.evidenceConfidence}`
+      ))
+      : ['- none']),
+    '',
+    '## Blockers',
+    ...(summary.blockers.length > 0 ? summary.blockers.map((blocker) => `- ${blocker}`) : ['- none']),
     '',
     '## Decision options',
     ...summary.decisionOptions.map((option) => `- ${option}`),
     '',
-    '## Top blockers',
-    ...summary.blockers.map((blocker) => `- ${blocker}`),
+    `Recommended next action: ${summary.recommendedNextAction}`,
     '',
-    '## Vendor tradeoffs',
+    `Atlas brief: ${summary.atlasExecutiveBrief}`,
+    '',
+    `Source modules used: ${summary.sourceModulesUsed.join(', ')}`,
   ];
-
-  for (const tradeoff of summary.vendorTradeoffs) {
-    lines.push(
-      `- ${tradeoff.vendorName}: ${tradeoff.viability};`
-      + ` cost=${tradeoff.costPosition};`
-      + ` value=${tradeoff.valuePotential};`
-      + ` commercialRisk=${tradeoff.commercialRisk};`
-      + ` transitionRisk=${tradeoff.transitionRisk};`
-      + ` evidence=${tradeoff.evidenceConfidence}.`,
-    );
-  }
-
-  lines.push('');
-  lines.push('## Atlas executive brief');
-  lines.push(summary.atlasExecutiveBrief);
-
   return lines.join('\n');
 }

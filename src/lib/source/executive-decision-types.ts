@@ -1,6 +1,6 @@
-import type { SourceEvidenceUsability, SourcingEventDetail } from './types';
-import type { SourcePricingVendorInput, SourcePricingVendorSnapshot } from './pricing-normalization-types';
-import type { SourceVendorResponseSeedInput } from './vendor-response-types';
+import type { SourceAgentMission, SourceAgentMissionPriority } from './agent-mission-types';
+import type { SourceUserRole } from './agent-context';
+import type { SourceCommercialSignals, SourceCommercialVendorTradeoff } from './commercial-signal-types';
 
 export type SourceExecutiveDecisionPosture =
   | 'ready_for_selection_review'
@@ -10,39 +10,48 @@ export type SourceExecutiveDecisionPosture =
   | 'blocked_low_evidence'
   | 'waiver_required';
 
-export type SourceExecutiveVendorViability = 'viable' | 'conditional' | 'not_viable';
-
 export type SourceExecutiveRiskLevel = 'low' | 'medium' | 'high';
 
 export type SourceExecutiveEvidenceConfidence = 'high' | 'medium' | 'low';
 
 export interface SourceExecutiveVendorTradeoff {
-  vendorId: string;
-  vendorName: string;
-  viability: SourceExecutiveVendorViability;
+  vendorId: SourceCommercialVendorTradeoff['vendorId'];
+  vendorName: SourceCommercialVendorTradeoff['vendorName'];
+  viability: 'viable' | 'conditional' | 'not_viable';
   valuePotential: string;
   costPosition: string;
+  pricingRank: number | null;
+  pricingStatus: SourceCommercialVendorTradeoff['pricingStatus'];
+  bafoReadiness: SourceCommercialVendorTradeoff['bafoReadiness'];
   commercialRisk: SourceExecutiveRiskLevel;
   transitionRisk: SourceExecutiveRiskLevel;
   evidenceConfidence: SourceExecutiveEvidenceConfidence;
-  evidenceUsability: SourceEvidenceUsability;
-  keyStrengths: string[];
-  keyConcerns: string[];
   blockers: string[];
-  requiredResolutions: string[];
+  unresolvedAssumptions: string[];
+}
+
+export interface SourceExecutiveDecisionValueAtStake {
+  amountUsd: number;
+  note: string;
+}
+
+export interface SourceExecutiveMissionSummary {
+  total: number;
+  critical: number;
+  high: number;
+  blocked: number;
+  byPriority: Record<SourceAgentMissionPriority, number>;
 }
 
 export interface SourceExecutiveDecisionSummary {
   eventId: string;
   generatedAt: string;
   decisionNeeded: string;
+  decisionPosture: SourceExecutiveDecisionPosture;
   recommendedDecisionPosture: SourceExecutiveDecisionPosture;
   viableVendors: string[];
   vendorTradeoffs: SourceExecutiveVendorTradeoff[];
-  valueAtStake: {
-    amountUsd: number;
-    note: string;
-  };
+  valueAtStake: SourceExecutiveDecisionValueAtStake;
   commercialRisk: SourceExecutiveRiskLevel;
   transitionRisk: SourceExecutiveRiskLevel;
   evidenceConfidence: SourceExecutiveEvidenceConfidence;
@@ -54,14 +63,24 @@ export interface SourceExecutiveDecisionSummary {
   sentinelCautions: string[];
   stewardGateNotes: string[];
   atlasExecutiveBrief: string;
+  sourceModulesUsed: string[];
+  missionSummary: SourceExecutiveMissionSummary;
 }
 
 export interface SourceExecutiveDecisionInput {
-  event: Pick<SourcingEventDetail, 'id' | 'name' | 'currentStageKey' | 'valueAtStakeUsd'> & {
-    vendorResponses?: SourceVendorResponseSeedInput[];
-    dataReadiness?: SourcingEventDetail['dataReadiness'];
-    pricingInputs?: SourcePricingVendorInput[];
-    pricingNormalizationSnapshots?: SourcePricingVendorSnapshot[];
+  event: {
+    id: string;
+    name: string;
+    currentStageKey: string;
+    valueAtStakeUsd?: number;
   };
+  commercialSignals?: SourceCommercialSignals;
+  unifiedMissions?: SourceAgentMission[];
+  userRole?: SourceUserRole;
   generatedAt?: string;
+}
+
+export interface SourceExecutiveDecisionVendorTradeoffInput {
+  commercialSignals: SourceCommercialSignals;
+  unifiedMissions: SourceAgentMission[];
 }
