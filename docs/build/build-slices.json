@@ -2741,6 +2741,57 @@
       "notes": "Mounts the AG11 Agent Mission Panel into the four canonical surfaces (Programs, AI Control Tower, Intelligence, Admin Setup) and projects the AG10 deterministic mission queue into each mount. Cap of 3 missions per surface keeps the panel from flooding already-dense surfaces and follows experience-system File 16 calm/data-forward density guidance. Server-component-only; no model calls, no live runtime, no persistence, no auth changes. Lane B follow-up to the AG10 / AG11 parallel build pack."
     },
     {
+      "id": "AG13",
+      "name": "Cross-Agent Handoff Read Model",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "AG10"
+      ],
+      "allowedFiles": [
+        "src/lib/agents/cross-agent-handoff.ts",
+        "src/__tests__/integration/agents/cross-agent-handoff.test.ts",
+        "docs/build/slices/AG13_CROSS_AGENT_HANDOFF_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/agents/cross-agent-handoff.ts exports the canonical CROSS_AGENT_HANDOFF_AGENTS, CROSS_AGENT_HANDOFF_STATES, and CROSS_AGENT_HANDOFF_REASONS tuples in canonical order, plus the CrossAgentHandoffAgent, CrossAgentHandoffState, CrossAgentHandoffReason, CrossAgentHandoffWorkObject, CrossAgentHandoffAuditBasis, CrossAgentHandoff, and CrossAgentHandoffSummary public types.",
+        "Module exports helpers buildCrossAgentHandoffSeed, summarizeCrossAgentHandoffs, getHandoffsForAgent, getOpenHandoffs, and validateCrossAgentHandoff.",
+        "buildCrossAgentHandoffSeed() returns at least 20 deterministic handoffs covering all four source agents, all four target agents, all seven states, and all nine reasons.",
+        "Every seed handoff has sourceAgent !== targetAgent, a non-empty audit.rationale, and a non-empty audit.expectedResolution.",
+        "Declined handoffs carry a non-empty declinedReason; blocked handoffs carry a non-empty blockedReason; deferred handoffs carry a non-empty deferredReason; escalated handoffs carry a valid escalatedTo target ('platform_admin' | 'founder' | 'value_office' | 'governance_committee').",
+        "At least one seed handoff references an AG10 mission via audit.triggeringMissionId; the AG13 module does not import from @/lib/agents/agent-mission-queue.",
+        "Every seed handoff id matches /^handoff-seed-\\d+$/ and every entry carries createdFrom 'deterministic_cross_agent_handoff_seed'.",
+        "validateCrossAgentHandoff returns invalid for sourceAgent === targetAgent, empty audit rationale, empty workObject id, empty workObject label, declined without declinedReason, blocked without blockedReason, and deferred without deferredReason.",
+        "summarizeCrossAgentHandoffs reconciles totalHandoffs with byState, bySourceAgent, byTargetAgent, and byReason sums; openCount equals proposed + accepted + deferred; blockedCount equals the count of blocked handoffs; uniqueWorkObjects is between 1 and totalHandoffs.",
+        "getOpenHandoffs returns only proposed | accepted | deferred handoffs and matches summarizeCrossAgentHandoffs.openCount.",
+        "Serialized seed contains no https:// or http:// URLs and no production-shaped /E-\\d+/ citation ids.",
+        "Module has no imports from @/lib/source|nexus|sentinel|atlas|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Test suite at src/__tests__/integration/agents/cross-agent-handoff.test.ts is fully green and enforces determinism, agent / state / reason coverage, sourceAgent !== targetAgent invariant, validation rules, summary reconciliation, serialized hygiene, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge AG13 under agent_runtime with a deferred-runtime / deferred-UI next action; component status is preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/cross-agent-handoff.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that gives the platform a typed surface for cross-agent handoffs across Nexus, Sentinel, Atlas, and Steward. Companion to AG10 (mission queue); AG13 references AG10 mission ids via audit.triggeringMissionId metadata only and does not import the AG10 module. No model calls, no migrations, no persistence, no live triggers, no UI mounting. Runtime trigger wiring and any handoff UI surface remain deferred behind the Model Gateway and audit ledger. Lane C output of the AG13 build pack."
+    },
+    {
       "id": "PROD2",
       "name": "Production Readiness Tracker Update Rules and Validator",
       "category": "PROD",
