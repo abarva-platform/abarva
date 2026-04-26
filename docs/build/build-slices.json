@@ -7417,6 +7417,15 @@
       "status": "code_complete",
       "branch": "wave17/des8-admin-shell-workflow-canon",
       "description": "AdminCanonShell primitive with workflow metadata strip (anchor agent, primary question, next action, caveat). Off-white surface, navy accent. 13 tests."
+    },
+    {
+      "id": "ARCH5",
+      "wave": "wave-17",
+      "name": "Architecture Canvas Visual + Workflow Refresh",
+      "type": "admin-ui",
+      "status": "code_complete",
+      "branch": "wave17/arch5-architecture-canvas-refresh",
+      "description": "ArchitectureCanvas component + view-model. 10 workflow sections: brief, 9 planes, request flow, data flow, control plane model, Azure ref, gateway/registry, mission runtime, built/deferred, next actions. Selective dark hero panel only."
     }
   ]
 }
