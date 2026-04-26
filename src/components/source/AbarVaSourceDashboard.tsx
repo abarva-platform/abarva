@@ -1,6 +1,15 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 import { COMPONENTS, FONTS } from '@/lib/design-system';
+import {
+  buildSourceAgentContextBundle,
+  buildSourceMultiAgentBriefing,
+  createSourceAgentMissionReport,
+  getSourceContextValidationReadableReport,
+  getSourceWorkflowValidationReadableReport,
+  type SourceAgentMission,
+  type SourceAgentMissionReport,
+} from '@/lib/source';
 import type { AbarvaSourceDashboardData } from '@/lib/source/types';
 import { formatUsd } from '@/lib/source/value-ledger';
 import {
@@ -51,6 +60,8 @@ const LIGHT_ACTION_LINK: CSSProperties = {
   border: '1px solid rgba(15,118,110,0.24)',
 };
 
+const DASHBOARD_MISSION_GENERATED_AT = '2026-04-26T00:00:00.000Z';
+
 export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardData }) {
   const waitingOrBlockedEvents = data.events.filter(
     (event) => event.blocker || event.status.startsWith('waiting_on'),
@@ -61,6 +72,8 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
   );
   const mostExposedEvent =
     data.events.find((event) => event.isAtRisk) ?? waitingOrBlockedEvents[0] ?? data.events[0];
+  const missionReport = mostExposedEvent ? buildDashboardMissionReport(mostExposedEvent) : null;
+  const missionPreviewMissions = missionReport ? getDashboardMissionPreviewMissions(missionReport) : [];
   const eventContextById = data.events.reduce<Record<string, SourceAlertEventContext>>((context, event) => {
     context[event.id] = {
       name: event.name,
@@ -164,6 +177,52 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
               <div style={{ ...sourceMuted, margin: 0, color: 'rgba(248,250,252,0.76)' }}>
                 Next action: {mostExposedEvent.nextAction}
               </div>
+              {missionPreviewMissions.length > 0 && missionReport ? (
+                <div
+                  style={{
+                    borderTop: '1px solid rgba(255,255,255,0.12)',
+                    paddingTop: 10,
+                    display: 'grid',
+                    gap: 8,
+                  }}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' }}>
+                    <span style={{ ...sourceSectionLabel, color: '#5EEAD4' }}>Agent missions</span>
+                    <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.66)' }}>
+                      {missionReport.countByPriority.critical} critical / {missionReport.countByPriority.high} high
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gap: 7 }}>
+                    {missionPreviewMissions.map((mission) => (
+                      <div
+                        key={mission.missionId}
+                        style={{
+                          display: 'grid',
+                          gap: 5,
+                          border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: 10,
+                          background: 'rgba(255,255,255,0.055)',
+                          padding: '9px 10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                          <span style={{ ...sourceMetricLabel, color: '#5EEAD4' }}>{agentLabel(mission.agentName)}</span>
+                          <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.70)', fontWeight: 800 }}>
+                            {mission.priority} / {mission.state}
+                          </span>
+                          <span style={{ ...sourceMetricDetail, color: 'rgba(248,250,252,0.58)' }}>
+                            evidence: {mission.evidenceStatus}
+                          </span>
+                        </div>
+                        <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '13px' }}>{mission.title}</div>
+                        <div style={{ ...sourceMuted, margin: 0, color: 'rgba(248,250,252,0.72)', fontSize: '12px' }}>
+                          {mission.recommendedAction}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -242,4 +301,78 @@ export function AbarVaSourceDashboard({ data }: { data: AbarvaSourceDashboardDat
       </section>
     </div>
   );
+}
+
+type SourceDashboardEvent = AbarvaSourceDashboardData['events'][number];
+
+function buildDashboardMissionReport(event: SourceDashboardEvent): SourceAgentMissionReport {
+  const contextBundle = buildSourceAgentContextBundle({
+    tenant: {
+      tenantId: 'source-dashboard-preview',
+      tenantName: 'Source Dashboard Preview',
+    },
+    user: {
+      id: 'source-dashboard-preview',
+    },
+    userRole: 'sourcingLead',
+    persona: 'sourcingLead',
+    route: '/source',
+    surface: 'dashboard',
+    userPrompt: 'Show deterministic Source dashboard missions.',
+    eventId: event.id,
+    stageKey: event.currentStageKey,
+  });
+  const contextValidationReport = getSourceContextValidationReadableReport({
+    generatedAt: DASHBOARD_MISSION_GENERATED_AT,
+  });
+  const workflowValidationReport = getSourceWorkflowValidationReadableReport({
+    generatedAt: DASHBOARD_MISSION_GENERATED_AT,
+  });
+  const multiAgentBriefing = buildSourceMultiAgentBriefing({
+    contextBundle,
+    contextValidationReport,
+    workflowValidationReport,
+    userRole: 'sourcingLead',
+    mode: 'dashboard',
+    generatedAt: DASHBOARD_MISSION_GENERATED_AT,
+  });
+
+  return createSourceAgentMissionReport({
+    contextBundle,
+    contextValidationReport,
+    workflowValidationReport,
+    multiAgentBriefing,
+    userRole: 'sourcingLead',
+    mode: 'dashboard',
+    generatedAt: DASHBOARD_MISSION_GENERATED_AT,
+  });
+}
+
+function getDashboardMissionPreviewMissions(report: SourceAgentMissionReport): SourceAgentMission[] {
+  const selected: SourceAgentMission[] = [];
+  const seenAgents = new Set<string>();
+
+  for (const mission of report.topMissions) {
+    if (!seenAgents.has(mission.agentName)) {
+      selected.push(mission);
+      seenAgents.add(mission.agentName);
+    }
+    if (selected.length === 3) return selected;
+  }
+
+  for (const mission of report.topMissions) {
+    if (!selected.some((selectedMission) => selectedMission.missionId === mission.missionId)) {
+      selected.push(mission);
+    }
+    if (selected.length === 3) return selected;
+  }
+
+  return selected;
+}
+
+function agentLabel(agentName: SourceAgentMission['agentName']): string {
+  if (agentName === 'nexus') return 'Nexus';
+  if (agentName === 'sentinel') return 'Sentinel';
+  if (agentName === 'atlas') return 'Atlas';
+  return 'Steward';
 }
