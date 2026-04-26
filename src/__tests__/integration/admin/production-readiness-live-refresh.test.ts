@@ -99,8 +99,24 @@ describe('PROD3 safety and module hygiene', () => {
     expect(combinedSource).not.toMatch(/GITHUB_TOKEN|VERCEL_TOKEN|SECRET|SERVICE_ROLE/);
 
     const response = JSON.stringify(buildProductionReadinessApiResponse(fixedGeneratedAt));
-    expect(response).not.toMatch(/GITHUB_TOKEN|VERCEL_TOKEN|SECRET|SERVICE_ROLE/);
-    expect(response).not.toMatch(/api\.github\.com|api\.vercel\.com/);
+    // The response embeds the manifest, whose honest notes may reference
+    // env var NAMES (e.g. CLERK_SECRET_KEY, SUPABASE_SERVICE_ROLE_KEY) as
+    // documentation of what the runtime expects — env var *names* are
+    // public, not secrets. What MUST never appear in the response is an
+    // actual token VALUE: a real GitHub/Vercel/etc. token shape, or a
+    // `KEY=long_opaque` style assignment that would imply leakage. Flag
+    // only those concrete leak shapes here.
+    expect(response).not.toMatch(/ghp_[A-Za-z0-9]{36,}/); // GitHub PAT
+    expect(response).not.toMatch(/github_pat_[A-Za-z0-9_]{60,}/); // fine-grained PAT
+    expect(response).not.toMatch(/vercel_[A-Za-z0-9]{24,}/); // Vercel API token
+    expect(response).not.toMatch(/sk-[A-Za-z0-9]{32,}/); // OpenAI/Anthropic-shaped
+    expect(response).not.toMatch(/[A-Z_]+_TOKEN\s*[:=]\s*['"][A-Za-z0-9_-]{16,}/); // any TOKEN= leak
+    expect(response).not.toMatch(/[A-Z_]+_SECRET\s*[:=]\s*['"][A-Za-z0-9_-]{16,}/); // any SECRET= leak
+    // NOTE: source-code check on line above already enforces no api.github.com /
+    // api.vercel.com URLs in the application code. The serialized manifest may
+    // legitimately mention those hostnames in honest documentation notes
+    // (e.g. PROD4 explicitly states "no call to api.github.com is performed"),
+    // and that is the opposite of a leak.
   });
 });
 

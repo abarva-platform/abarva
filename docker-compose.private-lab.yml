@@ -1,0 +1,159 @@
+# =====================================================================
+# CLOUD4 - Local Private Deployment Lab (docker-compose)
+# =====================================================================
+# LAB ONLY - NOT FOR PRODUCTION.
+#
+# This compose file simulates the *dependency surface* of an AbarVa
+# private-deployment target on a developer laptop. It does NOT deploy
+# to any cloud, does NOT run real model providers, and does NOT carry
+# real customer data, real secrets, or real provider keys.
+#
+# What it provides:
+#   - app                  placeholder build for the AbarVa shell.
+#                          Image is documented as `abarva:local`; the
+#                          real image is produced by the CLOUD3
+#                          Dockerfile slice. Until that image exists,
+#                          use `docker build -t abarva:local .` from
+#                          the repo root or comment the build out.
+#   - postgres             postgres:16-alpine - data plane stand-in
+#                          for Azure Postgres Flexible / Cloud SQL.
+#   - minio                minio/minio:latest - S3-compatible object
+#                          store stand-in for Azure Blob / GCS.
+#   - model-gateway-stub   busybox stub - NO real model calls. Stands
+#                          in for the CLOUD1 model gateway tier.
+#
+# All services live on a single private bridge network
+# (`abarva-private-lab`) to mirror the no-public-egress posture of
+# the CLOUD2 (Azure VNet) and future CLOUD5 (Azure IaC starter)
+# blueprints.
+#
+# Boot:
+#   cp .env.private-lab.example .env.private-lab
+#   docker compose -f docker-compose.private-lab.yml up -d
+#
+# Tear down:
+#   docker compose -f docker-compose.private-lab.yml down -v
+#
+# See docs/deployment/LOCAL_PRIVATE_DEPLOYMENT_LAB.md for full notes.
+# =====================================================================
+
+services:
+  # -------------------------------------------------------------------
+  # app - LAB ONLY placeholder for the AbarVa shell.
+  # -------------------------------------------------------------------
+  # The real Dockerfile is owned by the CLOUD3 slice. Until that lands,
+  # this service references the documented placeholder image
+  # `abarva:local`. If you do not have the image locally, the lab will
+  # still boot postgres / minio / model-gateway-stub for verification.
+  app:
+    image: abarva:local
+    container_name: abarva-private-lab-app
+    restart: unless-stopped
+    env_file:
+      - .env.private-lab
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      model-gateway-stub:
+        condition: service_started
+    networks:
+      - abarva-private-lab
+    healthcheck:
+      # LAB ONLY: hits the local app health endpoint. The shell's real
+      # endpoint is owned by the runtime; placeholder until CLOUD3.
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # -------------------------------------------------------------------
+  # postgres - LAB ONLY data plane stand-in (no real customer data).
+  # -------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: abarva-private-lab-postgres
+    restart: unless-stopped
+    env_file:
+      - .env.private-lab
+    # LAB ONLY: NEVER bind to a public IP for production.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - abarva-private-lab-postgres-data:/var/lib/postgresql/data
+    networks:
+      - abarva-private-lab
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # -------------------------------------------------------------------
+  # minio - LAB ONLY object-storage stand-in (no real customer data).
+  # -------------------------------------------------------------------
+  # MinIO speaks the S3 wire protocol so the AbarVa shell can target a
+  # local endpoint instead of Azure Blob / GCS during lab validation.
+  minio:
+    image: minio/minio:latest
+    container_name: abarva-private-lab-minio
+    restart: unless-stopped
+    env_file:
+      - .env.private-lab
+    command: server /data --console-address ":9001"
+    ports:
+      # API port (S3 protocol)
+      - "127.0.0.1:9000:9000"
+      # Console port (browser UI)
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - abarva-private-lab-minio-data:/data
+    networks:
+      - abarva-private-lab
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # -------------------------------------------------------------------
+  # model-gateway-stub - LAB ONLY. NO real model calls.
+  # -------------------------------------------------------------------
+  # Stands in for the CLOUD1 model gateway tier. Holds the network
+  # name `model-gateway-stub` so other services can target a stable
+  # hostname. Does NOT route to OpenAI, Anthropic, Azure OpenAI,
+  # Vertex AI, or any other provider. Provider keys MUST NOT be set.
+  model-gateway-stub:
+    image: busybox:latest
+    container_name: abarva-private-lab-model-gateway-stub
+    restart: unless-stopped
+    # stub, no real model calls
+    command: ["sh", "-c", "echo 'CLOUD4 model-gateway-stub: lab only - no real model calls'; sleep infinity"]
+    networks:
+      - abarva-private-lab
+
+# ---------------------------------------------------------------------
+# Volumes - LAB ONLY. Wiped by `docker compose down -v`.
+# ---------------------------------------------------------------------
+volumes:
+  abarva-private-lab-postgres-data:
+    name: abarva-private-lab-postgres-data
+  abarva-private-lab-minio-data:
+    name: abarva-private-lab-minio-data
+
+# ---------------------------------------------------------------------
+# Network - private bridge. LAB ONLY.
+# ---------------------------------------------------------------------
+networks:
+  abarva-private-lab:
+    name: abarva-private-lab
+    driver: bridge
