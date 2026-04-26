@@ -3,6 +3,8 @@ export * from './agent-validation-fixtures';
 export * from './agent-validation-report';
 export * from './rfp-readiness';
 export * from './rfp-readiness-types';
+export * from './pricing-normalization';
+export * from './pricing-normalization-types';
 export * from './admin-setup-readiness-contract';
 export * from './agent-validation-runner';
 export * from './agent-mission-report';
