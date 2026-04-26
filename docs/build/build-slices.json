@@ -3735,6 +3735,58 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes the read-side of the AUD1 unified audit event contract. Deterministic seed-only read model: 30 events across all 15 event types, all 3 actor kinds, all 4 agents, three tenants, eleven traces. No persistence, no signing/chaining, no live capture, no audit UI, no per-tenant binding, no model invocation. AUD3 (Steward audit log surface), AUD4 (replay/integrity test), AUD5 (bridge to EVID2 ledger), and AUD6 (persisted ledger) remain deferred. Conservative manifest update: audit_governance and validation_qa components are not promoted."
+    },
+    {
+      "id": "CTX4",
+      "name": "Context Pack Quality Scoring v2",
+      "category": "CTX",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "dependsOn": [
+        "CTX2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/context-quality-v2.ts",
+        "src/__tests__/integration/architecture/context-quality-v2.test.ts",
+        "docs/build/slices/CTX4_CONTEXT_QUALITY_SCORING_V2.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/lib/programs/mock.ts",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/context-quality-v2.ts exports CONTEXT_QUALITY_DIMENSIONS, ContextQualityDimension, ContextQualityBand, ContextQualityDimensionScore, ContextQualityRisk, ContextQualityRecommendation, and ContextQualityV2Score types plus helpers scoreContextQualityV2, classifyContextQualityV2, summarizeContextQualityV2, and getContextQualityRecommendations.",
+        "scoreContextQualityV2(pack) is pure and deterministic: same input pack produces byte-equal output across calls; basis.scorerVersion is 'ctx4.v1', basis.source is 'deterministic_context_quality_scoring', and createdFrom is 'deterministic_seed' on every result.",
+        "CONTEXT_QUALITY_DIMENSIONS exposes the canonical ten dimensions in order (completeness, evidence_strength, pattern_grounding, solution_grounding, workflow_state, data_readiness, governance_safety, missing_input_severity, sparsity_risk, actionability); dimensionScores emits exactly one score per dimension in that order.",
+        "Each dimension score is in [0,1] with band derived as usable >= 0.7, partial >= 0.4, weak >= 0.15, refused < 0.15, and a non-empty rationale string.",
+        "Overall band is the lowest of the ten dimension bands unless a refusal signal fires; refused: true is set when tenantKey is empty, work object is unresolved, or overall score is below the 0.15 floor; refusalReason names the cause.",
+        "Risks and recommendations are generated deterministically from dimension scores; tenant_scope_unclear / work_object_unresolved / missing_evidence / missing_governance / sparse_inputs / low_actionability risks each map to a corresponding recommendation kind, deduplicated by kind.",
+        "summarizeContextQualityV2 returns totalDimensions === 10, usableDimensions and weakDimensions counts, and topRisks / topRecommendations capped at 3 entries each.",
+        "Serialized score contains no /E-\\d+/ citation patterns; module imports only from @/lib/architecture/unified-context-builder.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|source|auth or supabase, no @/lib/programs/mock, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai SDK imports, no useState / useEffect.",
+        "Test suite at src/__tests__/integration/architecture/context-quality-v2.test.ts is fully green and enforces determinism, the ten-dimension constant, sparse / refused behavior, complete-pack scoring, evidence and governance variation, empty-tenant refusal, summary reconciliation, basis invariants, and module hygiene.",
+        "docs/build/slices/CTX4_CONTEXT_QUALITY_SCORING_V2.md documents the slice, the ten dimensions table, band thresholds, refusal signals, risk and recommendation mapping, audit basis, hygiene invariants, validation commands, and future slices.",
+        "docs/build/build-slices.json appends the CTX4 entry with category CTX, dependsOn [CTX2], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json appends notes to data_evidence_knowledge_fabric and agent_runtime acknowledging the CTX4 context quality scoring v2 module; status is not promoted; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, migrations, or persistence are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/context-quality-v2.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure deterministic scorer that grades a CTX2 Unified Context Pack across ten canonical dimensions and emits an overall band, risks, and recommendations. Reads only from @/lib/architecture/unified-context-builder; does not invoke any CTX2 runtime helper. No model calls, no migrations, no persistence, no live retrieval. Lane E output of the parallel build pack."
     }
   ]
 }
