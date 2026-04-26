@@ -50,6 +50,8 @@ describe('Source executive decision summary panel', () => {
     expect(html).toContain('Vendor tradeoffs');
     expect(html).toContain('Blockers');
     expect(html).toContain('Atlas executive brief');
+    expect(html).toContain('Nexus recommended next action');
+    expect(html).toContain('Source modules used');
     expect(html).toContain('Vertex CloudOps');
     expect(html).toContain('Nova Partner Group');
     expect(html).toContain('Aegis Digital');
@@ -64,6 +66,7 @@ describe('Source executive decision summary panel', () => {
     expect(html).toContain('Selection-readiness decision brief');
     expect(html).toContain('Decision options');
     expect(html).toContain('Atlas executive brief');
+    expect(html).toContain('Nexus recommended next action');
   });
 
   it('renders deterministic non-final decision posture with visible blockers for seeded data', async () => {
@@ -75,6 +78,7 @@ describe('Source executive decision summary panel', () => {
     expect(summary.blockers.length).toBeGreaterThan(0);
     expect(html).toContain(summary.recommendedDecisionPosture);
     expect(html).toContain('Blockers');
+    expect(html).not.toContain('Finalize vendor selection');
   });
 
   it('keeps executive decision panel files free of model/upload/workflow imports', () => {
