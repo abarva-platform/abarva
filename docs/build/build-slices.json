@@ -6836,6 +6836,135 @@
       ],
       "sliceDoc": "docs/build/slices/ADM8_AGENT_READINESS_DEEP_DRILL.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS11",
+      "name": "Build Waves Merge Support",
+      "category": "ops",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "scripts/integration/cherry_resolve.py",
+        "src/lib/ops/waves-merge-utils.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/cherry-resolve-build-waves.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/OPS11_BUILD_WAVES_MERGE_SUPPORT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "OPS12",
+      "name": "Integration Stash Safety Check",
+      "category": "ops",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "scripts/integration/stash_safety_check.py",
+        "src/lib/ops/stash-safety-check.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/ops/stash-safety-check.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/OPS12_INTEGRATION_STASH_SAFETY_CHECK.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PDEL9",
+      "name": "Download / Export Contract",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/deliverable-export-contract.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/deliverable-export-contract.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PDEL9_DOWNLOAD_EXPORT_CONTRACT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "PDEL10",
+      "name": "Deliverable Approval / Lock / Supersede Flow",
+      "category": "programs",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/programs/deliverable-approval-flow.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/programs/deliverable-approval-flow.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/PDEL10_DELIVERABLE_APPROVAL_LOCK_SUPERSEDE_FLOW.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB1",
+      "name": "SaaS Control Plane + Private Data Plane Lab Blueprint",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB1_SAAS_PRIVATE_DATA_PLANE_BLUEPRINT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB2",
+      "name": "Control Plane / Data Plane Boundary Contract",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/architecture/control-data-plane-boundary.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/architecture/control-data-plane-boundary.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/AZLAB2_CONTROL_DATA_PLANE_BOUNDARY_CONTRACT.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB3",
+      "name": "Private Data Plane Connector Stub",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/architecture/private-data-plane-connector-stub.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/architecture/private-data-plane-connector-stub.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/AZLAB3_PRIVATE_DATA_PLANE_CONNECTOR_STUB.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB4",
+      "name": "Private Evidence Manifest Demo",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/architecture/private-evidence-manifest-demo.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/architecture/private-evidence-manifest-demo.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/AZLAB4_PRIVATE_EVIDENCE_MANIFEST_DEMO.md",
+      "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB5",
+      "name": "Azure Lab Deployment Runbook",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB5_AZURE_LAB_DEPLOYMENT_RUNBOOK.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }

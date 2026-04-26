@@ -64,6 +64,7 @@ const EXPECTED_WAVE_IDS = [
   'wave-9',
   'wave-10',
   'wave-11',
+  'wave-12',
 ] as const;
 
 // ---------------------------------------------------------------------
@@ -165,7 +166,7 @@ describe('build-waves.json - top-level shape', () => {
 // ---------------------------------------------------------------------
 
 describe('build-waves.json - canonical wave coverage', () => {
-  it('includes all 12 canonical waves (Wave 0 through Wave 11)', () => {
+  it('includes all 13 canonical waves (Wave 0 through Wave 12)', () => {
     const m = loadWaves();
     expect(m.waves.length).toBe(EXPECTED_WAVE_IDS.length);
     const ids = m.waves.map((w) => w.waveId);
@@ -415,6 +416,70 @@ describe('build-waves.json - wave-8 build operations anchor', () => {
     expect(wave8).toBeDefined();
     if (!wave8) return;
     expect(wave8.status).toBe('merged');
+  });
+});
+
+// ---------------------------------------------------------------------
+// Wave 12 (this wave) anchor
+// ---------------------------------------------------------------------
+
+describe('build-waves.json - wave-12 product polish azure lab anchor', () => {
+  it('wave-12 lists all 9 planned slices', () => {
+    const m = loadWaves();
+    const wave12 = m.waves.find((w) => w.waveId === 'wave-12');
+    expect(wave12).toBeDefined();
+    if (!wave12) return;
+    const expected = [
+      'OPS11',
+      'OPS12',
+      'PDEL9',
+      'PDEL10',
+      'AZLAB1',
+      'AZLAB2',
+      'AZLAB3',
+      'AZLAB4',
+      'AZLAB5',
+    ];
+    for (const id of expected) {
+      expect(wave12.plannedSlices).toContain(id);
+    }
+  });
+
+  it('wave-12 lists all 9 slices as completed', () => {
+    const m = loadWaves();
+    const wave12 = m.waves.find((w) => w.waveId === 'wave-12');
+    expect(wave12).toBeDefined();
+    if (!wave12) return;
+    const expected = [
+      'OPS11',
+      'OPS12',
+      'PDEL9',
+      'PDEL10',
+      'AZLAB1',
+      'AZLAB2',
+      'AZLAB3',
+      'AZLAB4',
+      'AZLAB5',
+    ];
+    for (const id of expected) {
+      expect(wave12.completedSlices).toContain(id);
+    }
+  });
+
+  it('wave-12 percentComplete is 100', () => {
+    const m = loadWaves();
+    const wave12 = m.waves.find((w) => w.waveId === 'wave-12');
+    expect(wave12).toBeDefined();
+    if (!wave12) return;
+    expect(wave12.percentComplete).toBe(100);
+  });
+
+  it('wave-12 productionReadinessUpdated is true', () => {
+    const m = loadWaves();
+    const wave12 = m.waves.find((w) => w.waveId === 'wave-12');
+    expect(wave12).toBeDefined();
+    if (!wave12) return;
+    expect(wave12.productionReadinessUpdated).toBe(true);
   });
 });
 

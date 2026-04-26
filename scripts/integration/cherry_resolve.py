@@ -385,20 +385,100 @@ def merge_production_readiness(
 # ---------------------------------------------------------------------------
 
 
+WAVE_VALIDATION_RANK = [
+    "not_run",
+    "tsc_clean",
+    "tests_green",
+    "build_green",
+    "ci_green",
+    "partial",
+    "full_pass",
+]
+
+WAVE_STATUS_RANK = [
+    "planned",
+    "in_progress",
+    "blocked",
+    "deferred",
+    "merged",
+]
+
+
+def _wave_validation_rank(status: str) -> int:
+    """Return rank for wave validationStatus.  "failing" is a sentinel -> -1."""
+    if status in WAVE_VALIDATION_RANK:
+        return WAVE_VALIDATION_RANK.index(status)
+    return -1  # includes "failing"
+
+
+def _conservative_wave_validation(head_vs: str, src_vs: str) -> str:
+    """Conservative validationStatus merge: never upgrade HEAD with a higher-rank src.
+
+    "Conservative" means pessimistic: HEAD is demoted if src has a lower rank
+    (we trust the worse result), but HEAD is never upgraded to a higher rank
+    from src (we don't claim better validation from a cherry branch).
+
+    "failing" is a special sentinel:
+      - if HEAD is "failing", preserve it
+      - if src is "failing", preserve HEAD's status unchanged
+    """
+    if head_vs == src_vs:
+        return head_vs
+    if head_vs == "failing":
+        return head_vs
+    if src_vs == "failing":
+        return head_vs
+    h_rank = _wave_validation_rank(head_vs)
+    s_rank = _wave_validation_rank(src_vs)
+    # Never upgrade HEAD: if src is higher rank, keep HEAD
+    if s_rank > h_rank:
+        return head_vs
+    # src is lower rank -> demote HEAD (conservative = trust the worse result)
+    return src_vs
+
+
+def _conservative_wave_status(head_status: str, src_status: str) -> str:
+    """Never downgrade HEAD's status.
+
+    Rank order (ascending): planned < in_progress < blocked < deferred < merged
+    """
+    if head_status == src_status:
+        return head_status
+    h_rank = WAVE_STATUS_RANK.index(head_status) if head_status in WAVE_STATUS_RANK else -1
+    s_rank = WAVE_STATUS_RANK.index(src_status) if src_status in WAVE_STATUS_RANK else -1
+    # Keep HEAD if it is already at a higher rank
+    if h_rank >= s_rank:
+        return head_status
+    return src_status
+
+
+def _wave_next_action(head_na: str, src_na: str) -> str:
+    """Append src's nextAction to HEAD's if it is non-empty, different, and not
+    already a substring of HEAD's nextAction (space-joined, deduped)."""
+    if not src_na or src_na == head_na:
+        return head_na
+    if src_na in head_na:
+        return head_na
+    return (head_na.rstrip() + " " + src_na.lstrip()).strip()
+
+
 def merge_build_waves(head: dict, src: dict, today: str) -> tuple[dict, dict]:
     summary = {"merged_waves": [], "lastUpdated": today}
-    head_waves = {w.get("id"): w for w in head.get("waves", []) if "id" in w}
-    src_waves = {w.get("id"): w for w in src.get("waves", []) if "id" in w}
+    # Bug fix: wave objects use "waveId" not "id"
+    head_waves = {w.get("waveId"): w for w in head.get("waves", []) if "waveId" in w}
+    src_waves = {w.get("waveId"): w for w in src.get("waves", []) if "waveId" in w}
 
     for wid, swave in src_waves.items():
         if wid not in head_waves:
             head.setdefault("waves", []).append(swave)
             head_waves[wid] = swave
-            summary["merged_waves"].append({"id": wid, "added": True})
+            summary["merged_waves"].append({"waveId": wid, "added": True})
             continue
         hwave = head_waves[wid]
         merged = dict(hwave)
         changed = False
+
+        # Union slice arrays (dedup)
         for arr_field in ("completedSlices", "skippedSlices", "blockedSlices"):
             h_arr = list(hwave.get(arr_field, []))
             s_arr = list(swave.get(arr_field, []))
@@ -410,6 +490,45 @@ def merge_build_waves(head: dict, src: dict, today: str) -> tuple[dict, dict]:
             if h_arr != list(hwave.get(arr_field, [])):
                 merged[arr_field] = h_arr
                 changed = True
+
+        # mergedPrs: union of integer arrays (deduplicate)
+        h_prs = list(hwave.get("mergedPrs", []))
+        s_prs = list(swave.get("mergedPrs", []))
+        seen_prs: set[int] = set(h_prs)
+        for pr in s_prs:
+            if pr not in seen_prs:
+                seen_prs.add(pr)
+                h_prs.append(pr)
+        if h_prs != list(hwave.get("mergedPrs", [])):
+            merged["mergedPrs"] = h_prs
+            changed = True
+
+        # validationStatus: conservative (never upgrade HEAD with lower-rank src)
+        new_vs = _conservative_wave_validation(
+            hwave.get("validationStatus", "not_run"),
+            swave.get("validationStatus", "not_run"),
+        )
+        if new_vs != hwave.get("validationStatus", "not_run"):
+            merged["validationStatus"] = new_vs
+            changed = True
+
+        # status: never downgrade HEAD
+        new_status = _conservative_wave_status(
+            hwave.get("status", "planned"),
+            swave.get("status", "planned"),
+        )
+        if new_status != hwave.get("status", "planned"):
+            merged["status"] = new_status
+            changed = True
+
+        # nextAction: append src if non-empty and different/not substring
+        new_na = _wave_next_action(
+            hwave.get("nextAction", ""),
+            swave.get("nextAction", ""),
+        )
+        if new_na != hwave.get("nextAction", ""):
+            merged["nextAction"] = new_na
+            changed = True
 
         # Always recompute percentComplete deterministically
         planned = list(merged.get("plannedSlices", hwave.get("plannedSlices", [])))
@@ -423,12 +542,13 @@ def merge_build_waves(head: dict, src: dict, today: str) -> tuple[dict, dict]:
             changed = True
 
         if changed:
+            # Bug fix: look up by "waveId" not "id"
             for i, w in enumerate(head["waves"]):
-                if w.get("id") == wid:
+                if w.get("waveId") == wid:
                     head["waves"][i] = merged
                     break
             summary["merged_waves"].append(
-                {"id": wid, "added": False, "percentComplete": pct}
+                {"waveId": wid, "added": False, "percentComplete": pct}
             )
 
     head["lastUpdated"] = today
@@ -684,7 +804,7 @@ def main(argv: list[str] | None = None) -> int:
             wv = overall_summary["build_waves"]
             print(
                 f"{prefix}build-waves: merged="
-                f"{[w['id'] for w in wv.get('merged_waves', [])]}"
+                f"{[w.get('waveId', w.get('id')) for w in wv.get('merged_waves', [])]}"
             )
         print(f"{prefix}lastUpdated: {today}")
 
