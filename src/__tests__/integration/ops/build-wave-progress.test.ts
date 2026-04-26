@@ -665,7 +665,8 @@ describe('Wave-18 anchor', () => {
     });
   });
   it('wave-18 percentComplete is 100', () => expect(w18?.percentComplete).toBe(100));
-  it('wave-18 status is in_progress', () => expect(w18?.status).toBe('in_progress'));
+  it('wave-18 status is merged', () => expect(w18?.status).toBe('merged'));
+  it('wave-18 mergedPrs contains 366', () => expect(w18?.mergedPrs).toContain(366));
 });
 
 // ---------------------------------------------------------------------
