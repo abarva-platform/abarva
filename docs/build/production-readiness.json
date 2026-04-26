@@ -284,7 +284,8 @@
       "Evidence ledger, ingestion/parsing, and production audit/governance persistence are not production-ready.",
       "Vercel production deploy health is not polled by this tracker and must be verified manually after deploy.",
       "Security/governance review is partial and must be completed before pilot or production readiness.",
-      "Active route ownership and shell enforcement for admin/source/program routes is not fully canonical yet."
+      "Legacy route shell/nav bindings remain active on key operator surfaces and must be canon-enforced."
+      ,"Active route ownership and shell enforcement for admin/source/program routes is not fully canonical yet."
     ]
   },
   "components": [

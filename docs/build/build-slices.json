@@ -7534,6 +7534,15 @@
       "status": "code_complete",
       "branch": "wave17a/desroute1-active-route-ownership-map",
       "description": "Deterministic map of active route files/components/shell ownership and remediation for admin, source, and tenant program routes."
+    },
+    {
+      "id": "DESROUTE2",
+      "wave": "wave-17a",
+      "name": "Legacy Shell / Nav Audit",
+      "type": "qa",
+      "status": "code_complete",
+      "branch": "wave17a/desroute2-legacy-shell-nav-audit",
+      "description": "Deterministic audit of legacy shell/nav/toolbar ownership, banned visual patterns, and safe replacement guidance. Audit-only; no route rewiring or deletions."
     }
   ]
 }
