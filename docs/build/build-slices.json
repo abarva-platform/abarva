@@ -6166,6 +6166,61 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Provider-agnostic vector / search contract. Pure type-only / data-only module: zero runtime, no provider SDK, no fetch / http / axios, no Date / random / live retrieval, no UI, no migrations, no auth / source / sentinel / atlas / nexus / agent / supabase imports. Names the providers (pgvector, Azure AI Search, AlloyDB / Cloud SQL vector, generic Pinecone-like), capabilities, tenant-isolation models, audit hooks, and env vars the live retrieval runtime must enforce regardless of which provider is wired up. data_evidence_knowledge_fabric status is preserved (still scaffolded); future live adapter binding is deferred to a follow-up slice."
+    },
+    {
+      "id": "GRAPH1",
+      "name": "Graph Provider Contract + Relationship Fallback",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (Wave3 parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TEN2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/graph-provider-contract.ts",
+        "src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "docs/build/slices/GRAPH1_GRAPH_PROVIDER_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/graph-provider-contract.ts exports GraphProviderKind, GraphQueryCapability, GraphProviderRuntimeStatus, GraphProviderProfile, GraphFallbackColumn, GraphFallbackColumnTypeFamily, GraphRelationshipFallbackTable, GraphRelationshipFallbackSchema, GraphProviderSummary, GRAPH_PROVIDER_KINDS, GRAPH_QUERY_CAPABILITIES, listGraphProviders, buildGraphProviderRegistry, summarizeGraphProviders, buildRelationshipFallbackSchema.",
+        "GraphProviderKind covers exactly 'neo4j', 'cosmos_db_gremlin', 'neptune', and 'postgres_relationship_fallback'; every value appears exactly once in the seed registry.",
+        "GraphQueryCapability covers exactly 'shortest_path', 'multi_hop_traversal', 'subgraph_extract', 'relationship_count', 'pattern_match', and 'tenant_scoped_query'; every value appears at least once across the seed.",
+        "Exactly one provider records isFallback: true and it is the postgres_relationship_fallback kind; non-fallback providers all record runtimeStatus 'contract_only'.",
+        "Every provider records non-empty risk, mitigation, auditRequirement, label, family, and tenantKeyProperty; every provider supports tenant_scoped_query and records requiresTenantKeyOnTraversal: true.",
+        "Every provider and every fallback table is tagged createdFrom 'deterministic_graph_provider_contract_seed'.",
+        "buildRelationshipFallbackSchema returns a deterministic SQL-like schema description (NOT executable SQL) declaring graph_fallback_nodes, graph_fallback_edges, and graph_fallback_edge_versions; every table carries a non-null tenant_key column and at least one index that includes tenant_key.",
+        "src/__tests__/integration/architecture/graph-provider-contract.test.ts proves byte-equal determinism for both buildGraphProviderRegistry and buildRelationshipFallbackSchema, all 4 provider kinds, all 6 capabilities, the documented fallback option, summarizeGraphProviders reconciliation, and module hygiene (no prisma., no supabase., no await db, no Date.now, no Math.random, no new Date(, no fetch(, no React hooks, no placeholder copy, no executable SQL DDL).",
+        "docs/build/slices/GRAPH1_GRAPH_PROVIDER_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, validation commands, and acceptance criteria.",
+        "docs/build/build-slices.json appends a GRAPH1 entry with allowedFiles, forbiddenFiles, validationCommands, dependsOn TEN2, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json data_evidence_knowledge_fabric notes / nextAction are UNION-updated conservatively without overwriting prior wording; data_evidence_knowledge_fabric status is preserved (still scaffolded, not promoted).",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/graph-provider-contract.ts src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that names the canonical graph provider kinds (Neo4j, Cosmos DB Gremlin, Neptune, Postgres relationship-table fallback), the six query capabilities each provider must advertise, and the typed shape of the Postgres relationship-table fallback (graph_fallback_nodes, graph_fallback_edges, graph_fallback_edge_versions). Read-only complement to TEN2 graph boundary kind. Documents shape only; does not connect to any graph database, does not run any traversal, does not generate or execute SQL, does not migrate, does not promote data_evidence_knowledge_fabric. The fallback schema is a typed description, not a CREATE TABLE statement; the migration slice is a separate follow-up. Lane E commits locally only; the integration agent owns the cherry-pick and merge."
     }
   ]
 }
