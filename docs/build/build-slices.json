@@ -3261,6 +3261,58 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes dimension #2 (AI Adoption & Usage) of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant adoption telemetry binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT3.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "ACT4",
+      "name": "AI Value / Outcome Ledger Read Model",
+      "category": "ACT",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "ACT2"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/ai-value-outcome-ledger.ts",
+        "src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts",
+        "docs/build/slices/ACT4_VALUE_OUTCOME_LEDGER_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/tower/ai-value-outcome-ledger.ts exports the canonical VALUE_LEDGER_CATEGORIES tuple ('cost_avoidance', 'productivity', 'revenue_lift', 'risk_reduction', 'customer_experience', 'employee_experience', 'compliance') plus the ValueLedgerCategory / ValueMeasurementUnit / ValueReadinessState / ValueCounterfactualConfidence / ValueGovernanceReviewStatus enum types, ValueLedgerEntry, ValueOutcomeLedgerSummary, and the helpers buildAiValueOutcomeLedger, summarizeAiValueOutcomeLedger, getMeasuredEntries, getProjectedOnlyEntries, getEntriesByCategory, computeVariance.",
+        "buildAiValueOutcomeLedger returns at least 16 deterministic seed entries with at least one entry per canonical category and at least one entry per canonical readiness state.",
+        "At least 4 entries carry realizedValue !== null with non-null computed varianceAbs and variancePercent; at least 2 entries carry governanceReviewStatus 'flagged'; at least 2 entries link a canonical programKey from mock.ts (contact-center-ai / unified-customer-data-platform / store-associate-productivity / demand-forecasting-ai); at least 2 entries link a canonical aiUseCaseKey of the form 'ai-use-case-seed-{n}'.",
+        "Every entry carries seed_value: true and createdFrom 'deterministic_value_outcome_ledger_seed'; every id matches the 'value-seed-{n}' shape and ids are unique; every dollar-denominated entry uses the 'usd_seed' measurement unit; linked claim ids use the canonical 'claim-seed-' prefix.",
+        "summarizeAiValueOutcomeLedger reconciles totals (byCategory, byReadiness, and byMeasurementUnit sum to totalEntries), exposes every canonical category / readiness / measurement-unit key (zero allowed), reports measuredCount as the sum of measured_in_pilot and measured_in_production rows, projectedOnlyCount equal to byReadiness.projected_only, flaggedGovernanceCount that agrees with the defining filter, and uniqueInitiatives sorted ascending and de-duplicated.",
+        "computeVariance returns null fields when realizedValue is null; returns realized - projected for varianceAbs and ((realized - projected) / projected) * 100 for variancePercent; returns null variancePercent when projectedValue is 0 and realizedValue is non-zero; returns 0 when both are 0; matches the precomputed seed varianceAbs / variancePercent fields field-by-field.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor endorsements (deny-list OpenAI / Anthropic / Cohere / Mistral / Databricks / Snowflake / Microsoft Copilot / GitHub Copilot), and no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts is green and enforces shape, determinism, category and readiness coverage, per-row invariants, distribution constraints, computeVariance math, summary reconciliation, helper behaviors, no-fabrication invariants, and module hygiene.",
+        "Production readiness manifest is updated with notes acknowledging the ACT4 value / outcome ledger dimension under ai_control_tower and under audit_governance (since value claims need an audit trail); ai_control_tower and audit_governance statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/tower/ai-value-outcome-ledger.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the value-and-outcome dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model that builds on the ACT2 AI portfolio inventory by attaching value claims keyed by programKey and aiUseCaseKey. No live integrations, no per-tenant ledger binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT4.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower and audit_governance components are not promoted."
     }
   ]
 }
