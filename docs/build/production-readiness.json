@@ -381,7 +381,8 @@
         "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests.",
         "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests.",
         "PROG16 (wave-19): SourceEventChip \u2014 compact chip on ProgramFlagshipPage surfacing linked Source AMS event for APX-CDP-2026. Shows commercial readiness state, top blocker, route hint. Deterministic seed. Wired additively in ProgramFlagshipPage Section 2b. 9 tests.",
-        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created. /tenant/apex-retail/programs and CDP Activation programme flagship are the primary programme surfaces in the DEMO7 storyline."
+        "DEMO7 (wave-19): Apex Retail 30-minute demo guide created. /tenant/apex-retail/programs and CDP Activation programme flagship are the primary programme surfaces in the DEMO7 storyline.",
+        "DEMO8 (wave-20): Founder Live Route Review Checklist created at docs/demo/FOUNDER_LIVE_ROUTE_REVIEW_CHECKLIST.md. Covers 7 routes (programs portfolio, programme detail, source commercial event, admin architecture, admin production readiness, intelligence, tower) with pass/fail/deferred capture, expected headings, data levels, shell/nav checks, what-not-to-claim guardrails, and pilot ask cues. Docs only; no code change, no production_ready promotion."
       ]
     },
     {
