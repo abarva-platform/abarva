@@ -7470,7 +7470,16 @@
       "type": "program-ui",
       "status": "code_complete",
       "branch": "wave18/prog10-program-flagship-shell",
-      "description": "ProgramFlagshipPage shell + view-model with executive brief panel, workflow orientation strip, knows/missing two-column, slot props for PROG11–14. Deterministic seed-backed."
+      "description": "ProgramFlagshipPage shell + view-model with executive brief panel, workflow orientation strip, knows/missing two-column, slot props for PROG11\u201314. Deterministic seed-backed."
+    },
+    {
+      "id": "PROG11",
+      "wave": "wave-18",
+      "name": "Phase Journey + Approval Gate Canvas",
+      "type": "program-ui",
+      "status": "code_complete",
+      "branch": "wave18/prog11-phase-gate-canvas",
+      "description": "PhaseGateCanvas \u2014 6-phase journey rail + current gate card with requirements, missing inputs, Steward implication, approval caveat. Read-only deterministic; no transitions."
     }
   ]
 }
