@@ -7327,6 +7327,15 @@
       "status": "complete",
       "branch": "wave15/src26-commercial-hub",
       "description": "Top-level 7-tab hub container for commercial intelligence panels. Prop-slot composition pattern. AbarVa design."
+    },
+    {
+      "id": "ARCH4",
+      "wave": "wave-15",
+      "name": "Admin Architecture Overview Page",
+      "type": "admin-page",
+      "status": "complete",
+      "branch": "wave15/arch4-admin-architecture-page",
+      "description": "Architecture overview page at /platform/admin/architecture. Shows 6 system layers, wave history, build stats. AbarVa design."
     }
   ]
 }
