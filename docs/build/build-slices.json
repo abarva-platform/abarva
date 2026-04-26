@@ -4298,6 +4298,56 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Architecture contract that names the four canonical AbarVa tenancy tiers (Pilot, Enterprise / Dedicated, Private Data Plane, Self-Managed), the four canonical runtime planes (control, tenant runtime, data evidence, model gateway), the three canonical isolation modes (shared, dedicated, private), the tenant registry, the tenant data namespace, the per-tier SSO / RBAC / audit / gateway expectations, the capability \u00d7 tier feasibility matrix, the MVP / V1 / V2 progression, the risks and non-goals, and the cross-references to TEN2 (isolation enforcement), CLOUD1 (deployment topology), and TRUST1 (data trust posture). Documentation only. No application code, no runtime, no migrations, no provisioning automation, no model calls, no browser automation. Tier 2 / Tier 3 / Tier 4 provisionability is explicitly deferred behind a production-grade data evidence plane and the matching isolation enforcement (TEN2), deployment topology (CLOUD1), and data trust posture (TRUST1) slices."
+    },
+    {
+      "id": "TEN2",
+      "name": "Tenant Isolation Data Boundary Model",
+      "category": "TEN",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B (parallel build pack)",
+      "dependsOn": [
+        "S7"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tenant-isolation-boundary.ts",
+        "src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts",
+        "docs/build/slices/TEN2_TENANT_ISOLATION_DATA_BOUNDARY_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/tenant-isolation-boundary.ts exports TenantIsolationLevel, TenantDataBoundary, TenantStorageBoundary, TenantVectorBoundary, TenantGraphBoundary, TenantModelGatewayBoundary, TenantAuditBoundary, TenantIsolationFinding, listTenantIsolationLevels, buildTenantDataBoundaryModel, validateTenantBoundary, summarizeTenantIsolationBoundaries.",
+        "TenantIsolationLevel covers exactly 'logical_row_level', 'schema_isolated', 'database_isolated', 'environment_isolated', and 'customer_private_data_plane', and every value appears at least once in the seed.",
+        "Every seed boundary defines non-empty risk, mitigation, and auditRequirement, and every boundary is tagged createdFrom 'deterministic_tenant_isolation_seed'.",
+        "src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts proves determinism (byte-equal output across calls), all 5 isolation levels present, every boundary has risk/mitigation/auditRequirement, validateTenantBoundary rejects missing fields, summarizeTenantIsolationBoundaries reconciles to totalBoundaries, and module hygiene regex blocks Date.now / Math.random / new Date( / fetch( / anthropic / openai and forbids imports from auth/source/sentinel/atlas/nexus/agent/supabase.",
+        "docs/build/slices/TEN2_TENANT_ISOLATION_DATA_BOUNDARY_MODEL.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact.",
+        "docs/build/build-slices.json appends a TEN2 entry with allowedFiles, forbiddenFiles, validationCommands, dependsOn S7, status code_complete, risk low, ownerAgent Lane B; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json updates production_deployment, admin_setup, and data_evidence_knowledge_fabric notes/nextAction (UNION; conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tenant-isolation-boundary.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that documents the canonical tenant isolation boundary stack across persistence (Postgres row + schema), vector indexes, graph stores, the Model Gateway, and unified audit events. Read-only complement to S7 (tenant isolation decision probes) and AUD2 / EVID2 / ADM3 read models. Documents shape only; does not authenticate, run RLS, migrate, or rewrite any guard helper. No promotion of production_deployment or data_evidence_knowledge_fabric to production_ready."
     }
   ]
 }
