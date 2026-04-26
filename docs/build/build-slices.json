@@ -4139,6 +4139,67 @@
         "npm run build"
       ],
       "notes": "Pure deterministic deliverable version read-model: types + helpers (buildDeliverableVersionHistory, summarizeDeliverableVersions, getCurrentDeliverableVersion, validateDeliverableVersionTransition, createDeterministicVersionSeed). Read-model only \u2014 does not generate deliverables, export files, or write to any database. Steward verdict (`approved`), edit/regenerate flow, persistence, and canvas timeline UI are deferred to PDEL7+ and to the production write-path slices."
+    },
+    {
+      "id": "PDEL8",
+      "name": "Deliverable Evidence Trace Panel",
+      "category": "PDEL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "PDEL",
+        "EVID2",
+        "EVID3"
+      ],
+      "allowedFiles": [
+        "src/lib/programs/deliverable-evidence-trace.ts",
+        "src/components/programs/DeliverableEvidenceTracePanel.tsx",
+        "src/__tests__/integration/programs/deliverable-evidence-trace.test.ts",
+        "docs/build/slices/PDEL8_DELIVERABLE_EVIDENCE_TRACE_PANEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "buildDeliverableEvidenceTrace returns byte-equal output across repeated calls for any (artifact, ledger) pair.",
+        "Canonical trace status tuple is ['supported', 'partially_supported', 'unsupported', 'missing', 'stale', 'blocked'] in this order.",
+        "createdFrom is the canonical literal 'deterministic_evidence_trace_seed'.",
+        "Every supported claim resolves to an `evid-seed-` prefixed id from EVID2 whose state is usable_as_evidence (no fabricated citations).",
+        "Every blocked claim emits a non-empty blockReason carried verbatim from EVID2.",
+        "Stale-flagged matching entries downgrade the trace status; status is `stale` when only stale entries match and `partially_supported` when stale entries co-exist with usable entries.",
+        "Approval implication is advisory only (advisoryOnly === true) and never flips an artifact approval status.",
+        "Summary counts reconcile to the per-bucket claim arrays.",
+        "Server Component DeliverableEvidenceTracePanel renders supported / partial / unsupported / stale / blocked claim groups, source artifacts list, approval implication block, and a deterministic-source footer caption.",
+        "Component root carries data-deliverable-evidence-trace-panel=\"pdel8\" and data-trace-status={trace.status}.",
+        "View + component modules import nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch / anthropic / openai / useState / useEffect.",
+        "Serialized traces contain no `https://` URLs and no production-shaped `E-\\d{2,}` citation tokens."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/programs/deliverable-evidence-trace.test.ts",
+        "npx jest src/__tests__/integration/architecture/evidence-claim-support.test.ts",
+        "npx jest src/__tests__/integration/programs/program-artifact-canvas.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic projection of a (program-deliverable artifact, EVID2 ledger) pair into a six-status trace with supported / partial / unsupported / stale / blocked claim groups, source artifact rollup, and an advisory approval implication. No DB writes, no live retrieval, no model invocation. Approval state machine and live evidence registry binding remain deferred to PDEL9 / PDEL10."
     }
   ]
 }
