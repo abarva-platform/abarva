@@ -2,6 +2,7 @@ import { SOURCE_ARTIFACT_STATUS_LABELS } from '@/lib/source/constants';
 import { getActiveStage, getStageStateLabel } from '@/lib/source/lifecycle';
 import {
   buildSourceDataReadinessProjectionFromAdminSetup,
+  buildSourceVendorResponseCompleteness,
   type SourceAgentMission,
   type SourceAgentMissionReport,
 } from '@/lib/source';
@@ -11,6 +12,7 @@ import { EXPERIENCE_COLORS, FONTS, TEXT } from '@/lib/design-system';
 import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles';
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
+import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
 
 export function SourceActiveStageWorkspace({
   event,
@@ -32,6 +34,7 @@ export function SourceActiveStageWorkspace({
   const dataReadinessSummary = dataReadinessProjection.items.length > 0
     ? dataReadinessProjection.summary
     : undefined;
+  const vendorResponseReadiness = buildSourceVendorResponseCompleteness({ event });
 
   if (activeStage.key === 'scope') {
     return (
@@ -40,6 +43,26 @@ export function SourceActiveStageWorkspace({
         missionReport={missionReport}
         missionPreviewMissions={missionPreviewMissions}
       />
+    );
+  }
+
+  if (activeStage.key === 'vendor_responses') {
+    return (
+      <section style={{ ...sourceCard, background: EXPERIENCE_COLORS.surface, border: `1px solid ${EXPERIENCE_COLORS.borderSoft}` }}>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>
+            {event.currentStageLabel}
+          </h4>
+          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+            {activeStage.summary}
+          </div>
+          <div style={{ ...TEXT.small, marginTop: 6, color: EXPERIENCE_COLORS.riskAmber }}>
+            Gate status: {getStageStateLabel(activeStage.status)}
+          </div>
+        </div>
+        <SourceVendorResponseCompletenessPanel readiness={vendorResponseReadiness} />
+      </section>
     );
   }
 
