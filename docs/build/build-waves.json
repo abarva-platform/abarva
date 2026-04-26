@@ -197,7 +197,9 @@
         "ACT11",
         "ACT12",
         "I7",
-        "I8"
+        "I8",
+        "SOL15",
+        "SOL16"
       ],
       "completedSlices": [
         "ACT2",
@@ -216,7 +218,9 @@
         "ACT11",
         "ACT12",
         "I7",
-        "I8"
+        "I8",
+        "SOL15",
+        "SOL16"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
@@ -441,6 +445,68 @@
       "productionReadinessUpdated": true,
       "currentBlockers": [],
       "nextAction": "Build operations hardening fully merged via PR #291. Cherry-resolve helper, duplicate-preflight, lane-report validator, worktree-cleanup assistant, secret-hygiene pattern, deployment-status surface, and wave-progress tracker all landed. Next wave: Pattern Library + Quality Governance.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-9",
+      "name": "Pattern Library + Quality Governance",
+      "goal": "Add solution pattern playbook, pattern coverage scoring, program health scorecard, integration test coverage audit, and workshop outcome synthesis.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "SOL15",
+        "SOL16",
+        "PROG9",
+        "QA15",
+        "MW8"
+      ],
+      "completedSlices": [
+        "SOL15",
+        "SOL16",
+        "PROG9",
+        "QA15",
+        "MW8"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        308
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "Pattern library and quality governance fully merged. Live coverage scoring, real workshop capture ingestion, and live program state ingestion remain deferred.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-10",
+      "name": "Final Hardening",
+      "goal": "Add production readiness promotion gate, cross-surface consistency validator, live CI status stub, admin surface completeness inventory, and build run retrospective.",
+      "status": "merged",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "QA16",
+        "QA17",
+        "PROD6",
+        "ADM7",
+        "OPS9"
+      ],
+      "completedSlices": [
+        "QA16",
+        "QA17",
+        "PROD6",
+        "ADM7",
+        "OPS9"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [
+        309
+      ],
+      "validationStatus": "tests_green",
+      "productionReadinessUpdated": true,
+      "currentBlockers": [],
+      "nextAction": "All 6 session waves complete. Real GitHub/Vercel polling, live surface scanning, and manifest promotion deferred to next run.",
       "lastUpdated": "2026-04-26"
     }
   ]
