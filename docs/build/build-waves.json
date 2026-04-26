@@ -708,7 +708,7 @@
       "waveId": "wave-16",
       "name": "Source Commercial Route Mount + Demo Scenario",
       "goal": "Mount the Source commercial hub inside the Source event experience, add a deterministic AMS outsourcing demo scenario seed, deliver the commercial executive brief and action queue UI components, verify the route via smoke test, and ship the demo script.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
         "SRC27",
@@ -728,8 +728,10 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "not_run",
+      "mergedPrs": [
+        355
+      ],
+      "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
       "nextAction": "Integration branch ready. Run validation, push, and merge via PR.",
