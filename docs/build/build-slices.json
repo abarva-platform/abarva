@@ -2741,6 +2741,57 @@
       "notes": "Mounts the AG11 Agent Mission Panel into the four canonical surfaces (Programs, AI Control Tower, Intelligence, Admin Setup) and projects the AG10 deterministic mission queue into each mount. Cap of 3 missions per surface keeps the panel from flooding already-dense surfaces and follows experience-system File 16 calm/data-forward density guidance. Server-component-only; no model calls, no live runtime, no persistence, no auth changes. Lane B follow-up to the AG10 / AG11 parallel build pack."
     },
     {
+      "id": "AG13",
+      "name": "Cross-Agent Handoff Read Model",
+      "category": "AG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "AG10"
+      ],
+      "allowedFiles": [
+        "src/lib/agents/cross-agent-handoff.ts",
+        "src/__tests__/integration/agents/cross-agent-handoff.test.ts",
+        "docs/build/slices/AG13_CROSS_AGENT_HANDOFF_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/agents/cross-agent-handoff.ts exports the canonical CROSS_AGENT_HANDOFF_AGENTS, CROSS_AGENT_HANDOFF_STATES, and CROSS_AGENT_HANDOFF_REASONS tuples in canonical order, plus the CrossAgentHandoffAgent, CrossAgentHandoffState, CrossAgentHandoffReason, CrossAgentHandoffWorkObject, CrossAgentHandoffAuditBasis, CrossAgentHandoff, and CrossAgentHandoffSummary public types.",
+        "Module exports helpers buildCrossAgentHandoffSeed, summarizeCrossAgentHandoffs, getHandoffsForAgent, getOpenHandoffs, and validateCrossAgentHandoff.",
+        "buildCrossAgentHandoffSeed() returns at least 20 deterministic handoffs covering all four source agents, all four target agents, all seven states, and all nine reasons.",
+        "Every seed handoff has sourceAgent !== targetAgent, a non-empty audit.rationale, and a non-empty audit.expectedResolution.",
+        "Declined handoffs carry a non-empty declinedReason; blocked handoffs carry a non-empty blockedReason; deferred handoffs carry a non-empty deferredReason; escalated handoffs carry a valid escalatedTo target ('platform_admin' | 'founder' | 'value_office' | 'governance_committee').",
+        "At least one seed handoff references an AG10 mission via audit.triggeringMissionId; the AG13 module does not import from @/lib/agents/agent-mission-queue.",
+        "Every seed handoff id matches /^handoff-seed-\\d+$/ and every entry carries createdFrom 'deterministic_cross_agent_handoff_seed'.",
+        "validateCrossAgentHandoff returns invalid for sourceAgent === targetAgent, empty audit rationale, empty workObject id, empty workObject label, declined without declinedReason, blocked without blockedReason, and deferred without deferredReason.",
+        "summarizeCrossAgentHandoffs reconciles totalHandoffs with byState, bySourceAgent, byTargetAgent, and byReason sums; openCount equals proposed + accepted + deferred; blockedCount equals the count of blocked handoffs; uniqueWorkObjects is between 1 and totalHandoffs.",
+        "getOpenHandoffs returns only proposed | accepted | deferred handoffs and matches summarizeCrossAgentHandoffs.openCount.",
+        "Serialized seed contains no https:// or http:// URLs and no production-shaped /E-\\d+/ citation ids.",
+        "Module has no imports from @/lib/source|nexus|sentinel|atlas|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, and no Coming soon / TBD / Lorem ipsum placeholder language.",
+        "Test suite at src/__tests__/integration/agents/cross-agent-handoff.test.ts is fully green and enforces determinism, agent / state / reason coverage, sourceAgent !== targetAgent invariant, validation rules, summary reconciliation, serialized hygiene, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge AG13 under agent_runtime with a deferred-runtime / deferred-UI next action; component status is preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/agents/cross-agent-handoff.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that gives the platform a typed surface for cross-agent handoffs across Nexus, Sentinel, Atlas, and Steward. Companion to AG10 (mission queue); AG13 references AG10 mission ids via audit.triggeringMissionId metadata only and does not import the AG10 module. No model calls, no migrations, no persistence, no live triggers, no UI mounting. Runtime trigger wiring and any handoff UI surface remain deferred behind the Model Gateway and audit ledger. Lane C output of the AG13 build pack."
+    },
+    {
       "id": "PROD2",
       "name": "Production Readiness Tracker Update Rules and Validator",
       "category": "PROD",
@@ -3530,6 +3581,265 @@
         "npm run build"
       ],
       "notes": "Deterministic Evidence Dataset Drawer view + server component mounted on the canonical Sentinel pattern detail. Seed entries cover internal (tenant artifact, program evidence, dataset domain) and external (public pattern pack, industry benchmark) sources across 4 canonical I1 pattern keys. No live retrieval, no Claude / OpenAI invocation, no EVID2 / EVID3 live projection. Future slice can swap the seed for a live EVID2/EVID3 projection without changing the view contract."
+    },
+    {
+      "id": "MG3",
+      "name": "Model Gateway Safe Integration Contract",
+      "category": "MG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "MG1",
+        "MG2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/model-gateway-integration-contract.ts",
+        "src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts",
+        "docs/build/slices/MG3_MODEL_GATEWAY_SAFE_INTEGRATION_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/model-gateway-integration-contract.ts exposes GatewayCaller, GatewayRequestClassification, GatewayModelTier, GatewayRoutingDecision, GatewaySafetyDecision, GatewayForbiddenPattern type unions and the GatewayCostPolicy, GatewayAuditRequirement, GatewayFallbackPolicy, GatewayIntegrationPolicy, GatewayRequestClassificationMetadata, GatewayCallerMetadata interfaces.",
+        "Module exports GATEWAY_CALLER_KINDS (all 6 callers: nexus, sentinel, atlas, steward, system, admin), GATEWAY_REQUEST_CLASSIFICATIONS (all 7: recommendation, synthesis, classification, extraction, evidence_check, audit, evaluation), GATEWAY_MODEL_TIERS (all 4: tier_a_premium, tier_b_balanced, tier_c_economy, tier_d_local_only), GATEWAY_FORBIDDEN_PATTERNS (8 canonical anti-pattern strings), GATEWAY_REQUEST_CLASSIFICATION_METADATA, GATEWAY_CALLER_METADATA, and GATEWAY_INTEGRATION_POLICY readonly constants.",
+        "GATEWAY_INTEGRATION_POLICY.liveExecution is the literal false; modelTiersAllowed includes all 4 tiers with tier_d_local_only reserved for redaction-required cases; callersAllowed names the 6 canonical callers; callersForbidden names integration shapes that bypass the gateway (page_component, agent_direct_provider_call, browser_runtime_with_secret, cross_tenant_caller, unaudited_caller, sdk_import_outside_gateway); redactionPoliciesRequired covers redact_pii, redact_secrets, redact_evidence_metadata, redact_tenant_isolation.",
+        "Cost policy provides perRequestBudgetCentsCap (50), perTenantDailyBudgetCentsCap (5000), and perAgentBudgetCentsCap (1500) hardcoded conservative defaults plus costEstimateRequired and costAuditRequired set true.",
+        "Audit requirements include at least 5 entries covering: every_request_audited (all classifications, blocking), evidence_check_requires_evidence_basis (evidence_check, blocking), recommendation_requires_rationale (recommendation, blocking), write_classifications_require_approval (recommendation + synthesis, blocking), model_selection_traced (all classifications, blocking).",
+        "Fallback policy enables fallback through the standard tier_a_premium -> tier_b_balanced -> tier_c_economy -> tier_d_local_only chain and lists blocked reasons that should downgrade rather than refuse.",
+        "GATEWAY_FORBIDDEN_PATTERNS contains exactly: agent_direct_provider_call, page_direct_provider_call, unaudited_model_call, sdk_import_outside_gateway, fetch_to_provider_endpoint, env_secret_exposed_to_browser, unredacted_pii_to_provider, cross_tenant_request.",
+        "GatewayRoutingDecision union covers allow / block / defer / route_to_fallback / dry_run states; GatewaySafetyDecision union covers safe / block_pii / block_secrets / block_evidence_leak / redact_required / tenant_violation states.",
+        "Pure accessors getGatewayCallerMetadata(caller) and getGatewayClassificationMetadata(kind) return the metadata record for known input and null for unknown / empty input; summarizeGatewayIntegrationPolicy() reconciles totalCallers, totalClassifications, totalTiers, auditRequirementsCount, and forbiddenPatternsCount with the canonical lists.",
+        "Module hygiene: no import of any provider SDK (no 'openai', no 'anthropic', no '@anthropic-ai/sdk', no '@openai/sdk'); no Date.now, no Math.random, no new Date(, no fetch(, no useState / useEffect, no 'Coming soon' / 'TBD' / 'Lorem ipsum'; no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/agent, src/lib/auth, or supabase. The hygiene scanner strips comments and string literals before regex so the GATEWAY_FORBIDDEN_PATTERNS string-array literal does not produce false positives.",
+        "New integration test file src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts asserts caller / classification / tier / audit / cost / fallback / forbidden-pattern coverage, the GatewayRoutingDecision union (regex on source), the pure accessors, the policy summary, and the no-provider-SDK-imports module-hygiene assertion.",
+        "docs/build/slices/MG3_MODEL_GATEWAY_SAFE_INTEGRATION_CONTRACT.md documents the slice (relationship to MG1 / MG2, what changed, caller surface, classification table, tier table, redaction policies, audit requirements, cost policy, fallback policy, forbidden patterns, routing / safety decision unions, what is intentionally not in v1, hygiene invariants, validation commands, future slices, acceptance criteria mapping). Cites MG1 and MG2 explicitly.",
+        "docs/build/build-slices.json appends the MG3 entry with category MG, dependsOn [MG1, MG2], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json updates the model_gateway component notes to record that MG3 contract is added, extends nextAction to mention live MG runtime is still deferred, keeps status not_started (no promotion), and reflects the no-live-model-invocation blocker; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/model-gateway-integration-contract.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure type-only contract module describing the safety boundary for the eventual live Model Gateway runtime. MG3 names the callers (6), request classifications (7), model tiers (4), redaction policies (4), audit requirements (>= 5 blocking), cost caps (per-request / per-tenant-daily / per-agent), fallback chain (tier_a -> tier_b -> tier_c -> tier_d), and forbidden integration patterns (8) the live gateway must enforce. liveExecution is the literal false. MG2 (the deterministic stub) remains the runtime placeholder until the live gateway slice ships; MG3 specifies WHAT the live runtime must enforce when it eventually replaces the stub. No SDK import. No network. No Date.now. No randomness. No agent / source / sentinel / atlas / auth imports. No UI."
+    },
+    {
+      "id": "TOOL3",
+      "name": "Tool Invocation Audit Read Model",
+      "category": "TOOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "dependsOn": [
+        "TOOL2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tool-invocation-audit.ts",
+        "src/__tests__/integration/architecture/tool-invocation-audit.test.ts",
+        "docs/build/slices/TOOL3_TOOL_INVOCATION_AUDIT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/tool-invocation-audit.ts exports the canonical TOOL_INVOCATION_DECISIONS tuple ('proposed', 'allowed', 'blocked', 'deferred', 'completed', 'failed', 'dismissed') and TOOL_INVOCATION_ACTORS tuple ('nexus', 'sentinel', 'atlas', 'steward', 'system', 'admin') in canonical order.",
+        "Module exports ToolInvocationDecision, ToolInvocationActor, ToolInvocationScope, ToolInvocationRisk, ToolInvocationEvidenceBasis, ToolInvocationAuditRecord, and ToolInvocationAuditSummary types with the contract-required fields, and helpers buildToolInvocationAuditSeed, validateToolInvocationAudit, summarizeToolInvocationAudits, getBlockedToolInvocations, getToolInvocationsByAgent.",
+        "buildToolInvocationAuditSeed returns at least 24 deterministic seed records, each tagged createdFrom 'deterministic_tool_invocation_audit_seed' and id matching 'tool-audit-seed-{n}'.",
+        "Seed covers all 7 decisions with at least 2 records each, all 6 actors at least once, all 16 canonical TOOL2 tool ids at least once, all 3 scopes (platform / tenant / workspace), and all 4 risk levels with at least 4 records at high or critical risk.",
+        "Every blocked record carries a non-empty blockedReason; every deferred record carries a non-empty deferredReason; every failed record carries a non-empty failureReason; every write-shaped tool invocation (TOOL2 readWriteMode === 'write' | 'export') carries a non-null evidenceBasis with non-empty evidenceIds, rationale, and policyReferenceKey.",
+        "validateToolInvocationAudit rejects empty tenantKey, missing blocked/deferred/failed reasons, write-shaped tools with null or empty evidenceBasis, malformed id or toolId shapes, unknown actors or decisions, empty auditEventId or policyMatched, and wrong createdFrom sentinel; passes every seed record.",
+        "summarizeToolInvocationAudits reconciles totals (byDecision, byActor, byRisk all sum to totalRecords); blockedCount equals byDecision.blocked; failedCount equals byDecision.failed; uniqueTools is sorted ascending and contains at least 16 entries; uniqueTenants is sorted and de-duplicated; empty input returns a zero-counted summary.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no await / shell exec / fs writes.",
+        "Test suite at src/__tests__/integration/architecture/tool-invocation-audit.test.ts is fully green and enforces determinism, decision / actor / tool / scope / risk coverage, per-record invariants, validator behavior, summary reconciliation, helper behavior, and module hygiene.",
+        "Production readiness manifest is updated to acknowledge the TOOL3 audit-shape read model under agent_runtime and model_gateway with runtime tool-dispatcher and audit-ledger integration deferred; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tool-invocation-audit.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure read model that names the audit shape every future tool dispatcher must produce. Companion to TOOL2 (Tool Registry MVP, #253). Seed contains 26 records covering all 16 canonical tool ids, all 7 decisions (>= 2 each), all 6 actors, all 3 scopes, and all 4 risk levels. No tool dispatch, no model calls, no audit-ledger persistence, no migrations."
+    },
+    {
+      "id": "AUD2",
+      "name": "Unified Audit Event Read Model",
+      "category": "AUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "AUD1"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/unified-audit-events.ts",
+        "src/__tests__/integration/architecture/unified-audit-events.test.ts",
+        "docs/build/slices/AUD2_UNIFIED_AUDIT_EVENT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "src/app/demo/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module src/lib/architecture/unified-audit-events.ts exports the canonical UNIFIED_AUDIT_EVENT_TYPES tuple of 15 event types in canonical order, the UNIFIED_AUDIT_AGENTS and UNIFIED_AUDIT_ACTOR_KINDS tuples, the EVIDENCE_USING_EVENT_TYPES / DECISION_BEARING_EVENT_TYPES / STATE_CHANGE_EVENT_TYPES subtype groupings, the public types (UnifiedAuditActor, UnifiedAuditAgent, UnifiedAuditEventWorkObject, UnifiedAuditEventEvidenceBasis, UnifiedAuditEventBeforeAfter, UnifiedAuditEvent, UnifiedAuditSummary), and the helpers buildUnifiedAuditEventSeed, summarizeUnifiedAuditEvents, getAuditEventsByWorkObject, getAuditEventsByType, getAuditEventsByTrace, validateAuditEvent.",
+        "buildUnifiedAuditEventSeed returns at least 30 deterministic events; all 15 event types are covered with at least one event each; all 3 actor kinds (user/agent/system) are present; all 4 agents (nexus/sentinel/atlas/steward) are present in events that carry an agent; every event id is unique and prefixed audit-seed-; every traceId is prefixed trace-seed-; every event carries immutable: true and createdFrom 'deterministic_unified_audit_seed'.",
+        "Every event has non-empty traceId, tenantKey, workObject.id, and workObject.label; every event has an allowed timestampSource (monotonic_clock or persisted_event_time); evidence-using event types (agent_recommendation, evidence_used, evidence_blocked, deliverable_generated, gate_check, governance_decision) have non-null evidenceBasis with non-empty rationale; decision-bearing event types (agent_recommendation, agent_handoff, gate_check, gate_transition, governance_decision, model_gateway_decision) have non-null and non-empty decisionRationale; state-change event types (gate_transition, deliverable_approved, deliverable_superseded, readiness_update, user_action) have non-null beforeAfter with fieldsChanged.length > 0.",
+        "validateAuditEvent rejects events missing tenantKey, missing traceId, evidence-using event types without evidenceBasis, decision-bearing event types without decisionRationale, and state-change event types without beforeAfter or with empty fieldsChanged; every seed event passes validation.",
+        "summarizeUnifiedAuditEvents reconciles totalEvents (byEventType and byActorKind sum to totalEvents; byAgent counts only events with an agent and never exceeds totalEvents); exposes every canonical event type, actor kind, and agent key; reports uniqueTenants and uniqueTraceIds sorted ascending and deduplicated; reports eventsWithEvidenceBasis and eventsWithBeforeAfter equal to the count of non-null occurrences in the input; defaults to summarizing the canonical seed when called with no arguments.",
+        "Helpers (getAuditEventsByType, getAuditEventsByWorkObject, getAuditEventsByTrace) partition the input by the requested key and default to the canonical seed when called with no events argument.",
+        "Seed contains no invented dollar amounts (regex \\$\\s*\\d on JSON.stringify), no branded vendor references (deny-list OpenAI / Anthropic / Cohere / Databricks), no banned placeholder language (Coming soon / TBD / Lorem ipsum); module source has no imports from src/lib/source / sentinel / atlas / nexus / agent / auth or supabase, and no Date.now / Math.random / new Date( / fetch( / anthropic / openai / useState / useEffect.",
+        "Test suite at src/__tests__/integration/architecture/unified-audit-events.test.ts is green and enforces shape, determinism, event-type coverage, actor and agent coverage, per-event invariants (including immutable: true on every event), validation behavior, summary reconciliation, helper partitioning, and module hygiene.",
+        "Production readiness manifest is updated with notes acknowledging the AUD2 unified audit event read model under audit_governance and validation_qa; both component statuses are preserved (no promotion); manifest top-level lastUpdated reflects this change."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/unified-audit-events.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Operationalizes the read-side of the AUD1 unified audit event contract. Deterministic seed-only read model: 30 events across all 15 event types, all 3 actor kinds, all 4 agents, three tenants, eleven traces. No persistence, no signing/chaining, no live capture, no audit UI, no per-tenant binding, no model invocation. AUD3 (Steward audit log surface), AUD4 (replay/integrity test), AUD5 (bridge to EVID2 ledger), and AUD6 (persisted ledger) remain deferred. Conservative manifest update: audit_governance and validation_qa components are not promoted."
+    },
+    {
+      "id": "CTX4",
+      "name": "Context Pack Quality Scoring v2",
+      "category": "CTX",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "dependsOn": [
+        "CTX2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/context-quality-v2.ts",
+        "src/__tests__/integration/architecture/context-quality-v2.test.ts",
+        "docs/build/slices/CTX4_CONTEXT_QUALITY_SCORING_V2.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/lib/programs/mock.ts",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/context-quality-v2.ts exports CONTEXT_QUALITY_DIMENSIONS, ContextQualityDimension, ContextQualityBand, ContextQualityDimensionScore, ContextQualityRisk, ContextQualityRecommendation, and ContextQualityV2Score types plus helpers scoreContextQualityV2, classifyContextQualityV2, summarizeContextQualityV2, and getContextQualityRecommendations.",
+        "scoreContextQualityV2(pack) is pure and deterministic: same input pack produces byte-equal output across calls; basis.scorerVersion is 'ctx4.v1', basis.source is 'deterministic_context_quality_scoring', and createdFrom is 'deterministic_seed' on every result.",
+        "CONTEXT_QUALITY_DIMENSIONS exposes the canonical ten dimensions in order (completeness, evidence_strength, pattern_grounding, solution_grounding, workflow_state, data_readiness, governance_safety, missing_input_severity, sparsity_risk, actionability); dimensionScores emits exactly one score per dimension in that order.",
+        "Each dimension score is in [0,1] with band derived as usable >= 0.7, partial >= 0.4, weak >= 0.15, refused < 0.15, and a non-empty rationale string.",
+        "Overall band is the lowest of the ten dimension bands unless a refusal signal fires; refused: true is set when tenantKey is empty, work object is unresolved, or overall score is below the 0.15 floor; refusalReason names the cause.",
+        "Risks and recommendations are generated deterministically from dimension scores; tenant_scope_unclear / work_object_unresolved / missing_evidence / missing_governance / sparse_inputs / low_actionability risks each map to a corresponding recommendation kind, deduplicated by kind.",
+        "summarizeContextQualityV2 returns totalDimensions === 10, usableDimensions and weakDimensions counts, and topRisks / topRecommendations capped at 3 entries each.",
+        "Serialized score contains no /E-\\d+/ citation patterns; module imports only from @/lib/architecture/unified-context-builder.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|source|auth or supabase, no @/lib/programs/mock, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai SDK imports, no useState / useEffect.",
+        "Test suite at src/__tests__/integration/architecture/context-quality-v2.test.ts is fully green and enforces determinism, the ten-dimension constant, sparse / refused behavior, complete-pack scoring, evidence and governance variation, empty-tenant refusal, summary reconciliation, basis invariants, and module hygiene.",
+        "docs/build/slices/CTX4_CONTEXT_QUALITY_SCORING_V2.md documents the slice, the ten dimensions table, band thresholds, refusal signals, risk and recommendation mapping, audit basis, hygiene invariants, validation commands, and future slices.",
+        "docs/build/build-slices.json appends the CTX4 entry with category CTX, dependsOn [CTX2], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated bumped.",
+        "docs/build/production-readiness.json appends notes to data_evidence_knowledge_fabric and agent_runtime acknowledging the CTX4 context quality scoring v2 module; status is not promoted; manifest lastUpdated bumped.",
+        "No application UI, runtime, auth, supabase, agent runtime, migrations, or persistence are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/context-quality-v2.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Pure deterministic scorer that grades a CTX2 Unified Context Pack across ten canonical dimensions and emits an overall band, risks, and recommendations. Reads only from @/lib/architecture/unified-context-builder; does not invoke any CTX2 runtime helper. No model calls, no migrations, no persistence, no live retrieval. Lane E output of the parallel build pack."
+    },
+    {
+      "id": "QA6",
+      "name": "Golden Prompt Harness Contract + Seed Library",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane F (parallel build pack)",
+      "dependsOn": [],
+      "allowedFiles": [
+        "docs/build/GOLDEN_PROMPT_HARNESS_CONTRACT.md",
+        "docs/build/golden-prompts.seed.json",
+        "docs/build/slices/QA6_GOLDEN_PROMPT_HARNESS.md",
+        "src/__tests__/integration/qa/golden-prompts-seed.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/GOLDEN_PROMPT_HARNESS_CONTRACT.md documents sections A through P including purpose, prompt structure (12 required fields), pass/fail structure (7 result fields), no-fabrication checks (10 assertion classes), expected citation/evidence behavior, missing-input behavior, production-readiness wiring with golden_prompt_pass_rate metric and below-threshold blocker append, four validation modes (static_match, structured_match, behavior_assertion, manual_persona_review), deferred run cadence, run isolation, future automation composition with QA4/QA5/EVID2/AG10/PROD2, seed library shape with coverage requirements, explicit out-of-scope, why-it-is-safe, how-to-re-run, and readiness impact.",
+        "docs/build/golden-prompts.seed.json validates with top-level shape { schemaVersion: 1, lastUpdated, prompts } and contains at least 40 prompts spread across all 10 surfaces (programs >=5, program_workshop >=4, deliverables >=4, intelligence >=4, tower >=4, admin >=3, source >=3, solution_intelligence >=4, evidence >=4, agent_missions >=5).",
+        "Seed prompts cover all 4 expected agents (nexus, sentinel, atlas, steward) with at least 5 prompts each, all 4 validation modes appear at least once, and at least 6 prompts probe sparse-context handling (prompt or expectedBehavior matches /\\b(sparse|missing|without)\\b/i).",
+        "Every prompt has every required field with non-empty value (id, surface, persona, prompt, expectedBehavior, forbiddenBehavior, requiredContext, expectedAgent, validationMode, noFabricationChecks, readinessComponent, priority); every id matches /^gp-[a-z][a-z_-]*-\\d{3}$/ and is unique.",
+        "No string field of any prompt matches the fabricated-dollar regex /\\$[0-9]/ or the fake-citation regex /\\bE-\\d+\\b/; no banned placeholder phrase ('Coming soon' / 'TBD' / 'Lorem ipsum') appears anywhere in the JSON file.",
+        "src/__tests__/integration/qa/golden-prompts-seed.test.ts loads the seed via fs.readFileSync, parses as JSON, and asserts >=40 prompts, all 10 surfaces represented with minimums, all 4 expected agents with >=5 prompts each, all 4 validation modes, every required field non-empty, >=6 sparse-context probes, no fabricated dollar amounts, no fake E-### tokens, no banned phrases, every id unique and pattern-canonical, every prompt has >=1 noFabricationChecks entry, and forbiddenBehavior contains a negation verb with >=20 chars; the test does not invoke any agent runtime, does not import any model provider, and does not boot any server.",
+        "docs/build/slices/QA6_GOLDEN_PROMPT_HARNESS.md documents the slice purpose, what changed, coverage reconciliation table, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, and deferred future work.",
+        "docs/build/production-readiness.json appends a note to validation_qa.notes acknowledging the QA6 contract and seed landing, with execution still deferred; the validation_qa component status is preserved (still tested, not promoted); no component is promoted; lastUpdated is bumped to today's ISO date.",
+        "Documentation + JSON + lightweight integration test only; no application code, runtime, auth, supabase, or migrations are modified; no model provider import (anthropic, openai); no browser-automation import (playwright, puppeteer, cypress); no banned phrase ('Coming soon' / 'TBD' / 'Lorem ipsum') in any new file."
+      ],
+      "validationCommands": [
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/golden-prompts.seed.json','utf8')); console.log('golden prompts json ok')\"",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/golden-prompts-seed.test.ts",
+        "npm run build",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Founder-facing golden prompt harness contract + 43-prompt deterministic seed library covering all 10 product surfaces, all 4 agents (nexus / sentinel / atlas / steward) plus the system bucket, all 4 validation modes, with 15 sparse-context probes. Lane F output of the parallel build pack. No model calls, no live prompt execution, no server boot, no browser, no network. Companion to QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), and QA5 (Route Smoke Inventory). Execution wiring (CI gate, persona crawler integration, route-smoke composition, evidence-ledger probe, mission-queue probe, production-readiness validator integration) remains deferred."
     }
   ]
 }
