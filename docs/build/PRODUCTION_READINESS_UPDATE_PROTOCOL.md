@@ -335,3 +335,43 @@ Usage rules:
   `PRODUCTION_READINESS_VALIDATION_RULES` in the order they were added,
   with at least one negative test case in the validator integration
   test, and named in this section.
+
+## §K · Freshness metadata
+
+The Production Readiness tracker must distinguish manifest freshness from
+true live monitoring.
+
+Freshness metadata may be computed from the repository-backed manifest
+and the current request/view timestamp. It must not imply that GitHub,
+Vercel, route smoke, persona crawler, database-backed readiness, or
+observability signals are being polled unless those integrations exist
+and are backed by safe server-side configuration.
+
+Canonical freshness fields:
+
+- `lastUpdated`
+- `dataSource`
+- `updateMode`
+- `freshnessStatus`
+- `staleReason`
+- `nextRefreshRecommendation`
+
+Canonical freshness statuses:
+
+- `fresh`
+- `aging`
+- `stale`
+- `unknown`
+
+Canonical update modes:
+
+- `static_manifest`
+- `repository_snapshot`
+- `github_checks`
+- `vercel_deploy`
+- `mixed`
+
+When `updateMode` is `static_manifest` or `repository_snapshot`, the UI
+must state that the tracker is not live monitoring. GitHub/Vercel/check
+wording must remain a future/deferred statement unless live ingestion is
+implemented in a later approved slice.

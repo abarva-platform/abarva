@@ -264,6 +264,7 @@ export interface ProductionReadinessView {
   lastUpdated: string;
   updatedBy: string;
   source: string;
+  freshness: ProductionReadinessFreshnessMetadata;
   overallStatus: ProductionReadinessStatus;
   stewardBrief: ProductionReadinessStewardBrief;
   overallReadinessPercent: number;
@@ -278,6 +279,22 @@ export interface ProductionReadinessView {
 
 export type ProductionReadinessRefreshMode = 'api_polling';
 export type ProductionReadinessLiveCiStatus = 'unavailable' | 'configured' | 'error';
+export type ProductionReadinessFreshnessStatus = 'fresh' | 'aging' | 'stale' | 'unknown';
+export type ProductionReadinessUpdateMode =
+  | 'static_manifest'
+  | 'repository_snapshot'
+  | 'github_checks'
+  | 'vercel_deploy'
+  | 'mixed';
+
+export interface ProductionReadinessFreshnessMetadata {
+  lastUpdated: string;
+  dataSource: string;
+  updateMode: ProductionReadinessUpdateMode;
+  freshnessStatus: ProductionReadinessFreshnessStatus;
+  staleReason: string;
+  nextRefreshRecommendation: string;
+}
 
 export interface ProductionReadinessRefreshMetadata {
   generatedAt: string;
@@ -288,6 +305,12 @@ export interface ProductionReadinessRefreshMetadata {
 }
 
 export interface ProductionReadinessApiResponse extends ProductionReadinessRefreshMetadata {
+  lastUpdated: string;
+  dataSource: string;
+  updateMode: ProductionReadinessUpdateMode;
+  freshnessStatus: ProductionReadinessFreshnessStatus;
+  staleReason: string;
+  nextRefreshRecommendation: string;
   manifest: ProductionReadinessManifest;
   view: ProductionReadinessView;
 }
@@ -329,18 +352,21 @@ export function loadProductionReadinessManifest(): ProductionReadinessManifest {
 
 export function buildProductionReadinessView(
   manifestInput: ProductionReadinessManifest = loadProductionReadinessManifest(),
+  generatedAt: string = manifestInput.lastUpdated,
 ): ProductionReadinessView {
   const loadedManifest = manifestInput;
   const components = loadedManifest.components;
   const summary = summarizeProductionReadiness(components);
   const componentProgress = getProductionReadinessComponentProgress(components);
   const segments = getProductionReadinessSegments(components);
+  const freshness = getProductionReadinessFreshnessMetadata(loadedManifest, generatedAt);
 
   return {
     schemaVersion: loadedManifest.schemaVersion,
     lastUpdated: loadedManifest.lastUpdated,
     updatedBy: loadedManifest.updatedBy,
     source: loadedManifest.source,
+    freshness,
     overallStatus: loadedManifest.overallStatus,
     stewardBrief: loadedManifest.stewardBrief,
     overallReadinessPercent: computeOverallReadinessPercent(components),
@@ -369,10 +395,27 @@ export function getProductionReadinessRefreshMetadata(
 
 export function buildProductionReadinessApiResponse(generatedAt: string): ProductionReadinessApiResponse {
   const manifest = loadProductionReadinessManifest();
+  const view = buildProductionReadinessView(manifest, generatedAt);
   return {
     ...getProductionReadinessRefreshMetadata(generatedAt),
+    ...view.freshness,
     manifest,
-    view: buildProductionReadinessView(manifest),
+    view,
+  };
+}
+
+export function getProductionReadinessFreshnessMetadata(
+  manifest: ProductionReadinessManifest,
+  generatedAt: string,
+): ProductionReadinessFreshnessMetadata {
+  const freshnessStatus = getManifestFreshnessStatus(manifest.lastUpdated, generatedAt);
+  return {
+    lastUpdated: manifest.lastUpdated,
+    dataSource: 'docs/build/production-readiness.json',
+    updateMode: 'repository_snapshot',
+    freshnessStatus,
+    staleReason: getManifestStaleReason(freshnessStatus),
+    nextRefreshRecommendation: getManifestNextRefreshRecommendation(freshnessStatus),
   };
 }
 
@@ -576,6 +619,46 @@ function getHighestBlockerSeverity(
     [...blockers].sort((a, b) => BLOCKER_SEVERITY_ORDER[a.severity] - BLOCKER_SEVERITY_ORDER[b.severity])[0]
       ?.severity ?? null
   );
+}
+
+function getManifestFreshnessStatus(
+  lastUpdated: string,
+  generatedAt: string,
+): ProductionReadinessFreshnessStatus {
+  const lastUpdatedMs = Date.parse(lastUpdated);
+  const generatedAtMs = Date.parse(generatedAt);
+  if (Number.isNaN(lastUpdatedMs) || Number.isNaN(generatedAtMs)) return 'unknown';
+
+  const ageDays = Math.max(0, Math.floor((generatedAtMs - lastUpdatedMs) / 86_400_000));
+  if (ageDays <= 1) return 'fresh';
+  if (ageDays <= 7) return 'aging';
+  return 'stale';
+}
+
+function getManifestStaleReason(status: ProductionReadinessFreshnessStatus): string {
+  if (status === 'fresh') {
+    return 'Manifest was updated within one day of the current view timestamp.';
+  }
+  if (status === 'aging') {
+    return 'Manifest is more than one day old. It may be accurate, but should be checked after active build work.';
+  }
+  if (status === 'stale') {
+    return 'Manifest is more than seven days old. Refresh it from validated PR, CI, and deployment evidence before relying on it.';
+  }
+  return 'Freshness cannot be determined because the manifest or view timestamp is missing or invalid.';
+}
+
+function getManifestNextRefreshRecommendation(status: ProductionReadinessFreshnessStatus): string {
+  if (status === 'fresh') {
+    return 'Keep updating docs/build/production-readiness.json after each validated slice that changes readiness.';
+  }
+  if (status === 'aging') {
+    return 'Review recently merged PRs and update the manifest if readiness evidence changed.';
+  }
+  if (status === 'stale') {
+    return 'Run a readiness reconciliation slice before using the tracker for release or pilot decisions.';
+  }
+  return 'Repair the manifest lastUpdated value and rerun the production readiness tracker tests.';
 }
 
 function severityRank(severity: ProductionReadinessBlockerSeverity | null): number {

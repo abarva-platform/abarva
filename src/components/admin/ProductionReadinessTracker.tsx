@@ -6,6 +6,7 @@ import {
   type ProductionReadinessComponent,
   type ProductionReadinessComponentProgress,
   type ProductionReadinessDimension,
+  type ProductionReadinessFreshnessStatus,
   type ProductionReadinessGate,
   type ProductionReadinessGateStatus,
   type ProductionReadinessSegmentSummary,
@@ -64,6 +65,14 @@ const sectionHeaderStyle: CSSProperties = {
   justifyContent: 'space-between',
   alignItems: 'end',
   gap: SPACING.lg,
+};
+
+const freshnessPanelStyle: CSSProperties = {
+  ...cardStyle,
+  display: 'grid',
+  gap: SPACING.xs,
+  padding: SPACING.md,
+  background: COLORS.surface2,
 };
 
 const tableWrapStyle: CSSProperties = {
@@ -160,6 +169,7 @@ export function ProductionReadinessTracker({
               <span style={{ ...TYPE.caption, color: COLORS.muted }}>
                 Updated {view.lastUpdated} by {view.updatedBy}
               </span>
+              <FreshnessPill status={view.freshness.freshnessStatus} />
               <Link
                 href="/platform/admin/build-progress"
                 style={{
@@ -172,6 +182,27 @@ export function ProductionReadinessTracker({
               >
                 Build Progress
               </Link>
+            </div>
+            <div style={freshnessPanelStyle}>
+              <div style={{ display: 'grid', gap: 4 }}>
+                <span style={{ ...TYPE.eyebrow, color: COLORS.navy }}>Tracker freshness</span>
+                <span style={{ ...TYPE.caption, color: COLORS.body }}>
+                  {formatFreshnessStatus(view.freshness.freshnessStatus)} · {formatUpdateMode(view.freshness.updateMode)}
+                </span>
+              </div>
+              <div style={{ ...TYPE.caption, color: COLORS.muted }}>
+                Source: {view.freshness.dataSource}. {view.freshness.staleReason}
+              </div>
+              <div style={{ ...TYPE.caption, color: COLORS.muted }}>
+                {view.freshness.nextRefreshRecommendation}
+              </div>
+              {view.freshness.updateMode === 'static_manifest'
+                || view.freshness.updateMode === 'repository_snapshot' ? (
+                  <div style={{ ...TYPE.caption, color: COLORS.amber, fontWeight: 700 }}>
+                    This is not live monitoring; GitHub, Vercel, route smoke, persona crawler, and observability
+                    ingestion remain deferred.
+                  </div>
+                ) : null}
             </div>
           </div>
 
@@ -892,6 +923,31 @@ function StatusPill({ status }: { status: ProductionReadinessStatus }) {
   );
 }
 
+function FreshnessPill({ status }: { status: ProductionReadinessFreshnessStatus }) {
+  const tone = freshnessTone(status);
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        width: 'fit-content',
+        borderRadius: RADIUS.pill,
+        padding: '4px 9px',
+        fontFamily: FONT.mono,
+        fontSize: 10,
+        fontWeight: 600,
+        textTransform: 'uppercase',
+        color: tone.fg,
+        background: tone.bg,
+        border: `1px solid ${tone.ring}`,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      Freshness: {status}
+    </span>
+  );
+}
+
 function CompactStatusPill({ status }: { status: ProductionReadinessStatus }) {
   const tone = readinessTone(status);
   return (
@@ -1010,8 +1066,32 @@ function gateTone(status: ProductionReadinessGateStatus) {
   return { fg: COLORS.amber, bg: COLORS.amberSoft, ring: COLORS.amber };
 }
 
+function freshnessTone(status: ProductionReadinessFreshnessStatus) {
+  if (status === 'fresh') return { fg: COLORS.navy, bg: COLORS.navySoft, ring: COLORS.navy };
+  if (status === 'stale') return { fg: COLORS.red, bg: COLORS.redSoft, ring: COLORS.red };
+  if (status === 'unknown') {
+    return {
+      fg: COLORS.muted,
+      bg: 'rgba(82, 88, 102, 0.10)',
+      ring: COLORS.mutedSoft,
+    };
+  }
+  return { fg: COLORS.amber, bg: COLORS.amberSoft, ring: COLORS.amber };
+}
+
 function formatStatus(status: string): string {
   return status.replace(/_/g, ' ');
+}
+
+function formatFreshnessStatus(status: ProductionReadinessFreshnessStatus): string {
+  if (status === 'fresh') return 'Fresh manifest';
+  if (status === 'aging') return 'Aging manifest';
+  if (status === 'stale') return 'Stale manifest';
+  return 'Unknown freshness';
+}
+
+function formatUpdateMode(updateMode: string): string {
+  return updateMode.replace(/_/g, ' ');
 }
 
 function formatPercentRange(low: number, high: number): string {

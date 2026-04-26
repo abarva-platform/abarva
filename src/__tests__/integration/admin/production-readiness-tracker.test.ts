@@ -2,7 +2,9 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import {
   buildProductionReadinessView,
+  buildProductionReadinessApiResponse,
   computeOverallReadinessPercent,
+  getProductionReadinessFreshnessMetadata,
   getProductionReadinessComponentProgress,
   getProductionReadinessSegments,
   loadProductionReadinessManifest,
@@ -126,6 +128,62 @@ describe('production-readiness.json manifest', () => {
 describe('production readiness read model', () => {
   it('is deterministic across repeated calls', () => {
     expect(buildProductionReadinessView()).toEqual(buildProductionReadinessView());
+  });
+
+  it('exposes freshness metadata without changing deterministic scoring', () => {
+    const manifest = loadProductionReadinessManifest();
+    const view = buildProductionReadinessView(manifest, '2026-04-26T12:00:00.000Z');
+    const apiResponse = buildProductionReadinessApiResponse('2026-04-26T12:00:00.000Z');
+
+    expect(view.freshness).toEqual(
+      expect.objectContaining({
+        lastUpdated: manifest.lastUpdated,
+        dataSource: 'docs/build/production-readiness.json',
+        updateMode: 'repository_snapshot',
+        freshnessStatus: 'fresh',
+      }),
+    );
+    expect(apiResponse.refreshMode).toBe('api_polling');
+    expect(apiResponse.liveCiStatus).toBe('unavailable');
+    expect(apiResponse.updateMode).toBe('repository_snapshot');
+    expect(apiResponse.freshnessStatus).toBe('fresh');
+    expect(apiResponse.view.overallReadinessPercent).toBe(view.overallReadinessPercent);
+  });
+
+  it('classifies fresh, aging, stale, and unknown manifests deterministically', () => {
+    const manifest = loadProductionReadinessManifest();
+    const withLastUpdated = (lastUpdated: string): ProductionReadinessManifest => ({
+      ...manifest,
+      lastUpdated,
+    });
+
+    expect(
+      getProductionReadinessFreshnessMetadata(withLastUpdated('2026-04-26'), '2026-04-26T12:00:00.000Z')
+        .freshnessStatus,
+    ).toBe('fresh');
+    expect(
+      getProductionReadinessFreshnessMetadata(withLastUpdated('2026-04-23'), '2026-04-26T12:00:00.000Z')
+        .freshnessStatus,
+    ).toBe('aging');
+    expect(
+      getProductionReadinessFreshnessMetadata(withLastUpdated('2026-04-01'), '2026-04-26T12:00:00.000Z')
+        .freshnessStatus,
+    ).toBe('stale');
+    expect(
+      getProductionReadinessFreshnessMetadata(withLastUpdated('not-a-date'), '2026-04-26T12:00:00.000Z')
+        .freshnessStatus,
+    ).toBe('unknown');
+  });
+
+  it('does not claim true live monitoring when the tracker is repository-backed', () => {
+    const apiResponse = buildProductionReadinessApiResponse('2026-04-26T12:00:00.000Z');
+
+    expect(apiResponse.source).toBe('production_readiness_manifest');
+    expect(apiResponse.dataSource).toBe('docs/build/production-readiness.json');
+    expect(apiResponse.updateMode).toBe('repository_snapshot');
+    expect(apiResponse.liveCiStatus).toBe('unavailable');
+    expect(apiResponse.note.toLowerCase()).toContain('not configured yet');
+    expect(apiResponse.note.toLowerCase()).not.toMatch(/github.*enabled|vercel.*enabled|live monitoring enabled/);
   });
 
   it('overall summary reconciles to components', () => {
@@ -323,12 +381,15 @@ describe('module hygiene', () => {
   it('component and route wire the deterministic read model', () => {
     expect(componentSource).toMatch(/Product maturity by area/);
     expect(componentSource).toMatch(/Readiness by segment/);
+    expect(componentSource).toMatch(/Tracker freshness/);
+    expect(componentSource).toMatch(/This is not live monitoring/);
     expect(componentSource).toMatch(/Component progress table/);
     expect(componentSource).toMatch(/% done/);
     expect(componentSource).toMatch(/% pending/);
     expect(componentSource).toMatch(/Started/);
     expect(livePanelSource).toMatch(/ProductionReadinessTracker/);
     expect(livePanelSource).toMatch(/\/api\/admin\/production-readiness/);
+    expect(livePanelSource).toMatch(/freshnessStatus/);
     expect(routeSource).toMatch(/ProductionReadinessLivePanel/);
     expect(routeSource).toMatch(/buildProductionReadinessApiResponse/);
     expect(adminPageSource).toMatch(/\/platform\/admin\/production-readiness/);
