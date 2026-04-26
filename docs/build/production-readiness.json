@@ -556,7 +556,8 @@
       "nextAction": "Verify the deterministic Intelligence journey in browser, then define the evidence-registry binding required for pilot readiness.",
       "notes": [
         "Active patterns are read-model backed, not live monitoring.",
-        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call."
+        "AG12 mounts the AG11 Agent Mission Panel on SentinelActivePatterns with variant 'inline_recommendation' and the {sentinel, nexus} surface filter, capped at 3 deterministic missions; no live Sentinel runtime, no live retrieval, no model call.",
+        "I5 mounts a deterministic four-mode canvas tab strip (summary, evidence, programs, actions) on the tenant Sentinel pattern detail surface. Mode switching is pure URL state via ?canvas=<mode>; no client interactivity, no live runtime, no model invocation."
       ]
     },
     {

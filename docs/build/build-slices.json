@@ -3415,6 +3415,64 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "Operationalizes the Productivity & DORA dimension of the ACT1 AI Control Tower contract. Deterministic seed-only read model. No live integrations, no per-tenant binding, no Atlas brief composition, no Tower UI \u2014 those land in ACT7.x, ACT9, and ACT10. Conservative manifest update: ai_control_tower component is not promoted."
+    },
+    {
+      "id": "I5",
+      "name": "Intelligence \u00b7 Canvas Mode Switching",
+      "category": "I",
+      "status": "code_complete",
+      "risk": "medium",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [
+        "I1"
+      ],
+      "allowedFiles": [
+        "src/lib/intelligence/intelligence-canvas-modes.ts",
+        "src/components/intelligence/IntelligenceCanvasModeTabs.tsx",
+        "src/app/(maestro)/tenant/[tenantSlug]/intelligence/patterns/[patternKey]/page.tsx",
+        "src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "docs/build/slices/I5_INTELLIGENCE_CANVAS_MODES.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Canvas mode helper exposes the four canonical modes (summary, evidence, programs, actions) in canonical order.",
+        "buildIntelligenceCanvasView is pure: same inputs produce byte-equal JSON across calls.",
+        "parseCanvasModeFromSearchParam defaults to 'summary' for undefined, null, array, empty string, and any unknown value.",
+        "Each canvas mode tab href contains the pattern key and the ?canvas=<mode> query parameter.",
+        "Active tab is determined deterministically from the current mode; isActive is true on exactly one tab.",
+        "Body discriminated union matches mode (body.kind === mode) and each body content list is capped at 5 items.",
+        "IntelligenceCanvasModeTabs is a server component (no 'use client', no useState, no useEffect).",
+        "Tenant pattern detail page mounts IntelligenceCanvasModeTabs above SentinelPatternDetail for canonical Sentinel pattern keys.",
+        "Existing assertTenantAccess and notFound behavior on the route is preserved.",
+        "Helper module imports nothing from React, Next, UI components, Sentinel/Atlas/Nexus/agent runtime, or any model SDK.",
+        "No detection or rendering invents a dollar amount, citation, or live runtime claim.",
+        "No Date.now, Math.random, new Date(, fetch(, anthropic, openai, or placeholder copy is introduced."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/intelligence/intelligence-canvas-modes.test.ts",
+        "npm run build"
+      ],
+      "notes": "Canvas mode switching is pure URL state via ?canvas=<mode>. No client interactivity, no live Sentinel runtime, no Atlas / Nexus / Claude / OpenAI invocation. Live evidence rows, program enumeration in the canvas body, and persisted user preference are intentionally deferred."
     }
   ]
 }
