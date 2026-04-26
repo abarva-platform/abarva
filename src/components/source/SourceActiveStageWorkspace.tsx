@@ -3,6 +3,7 @@ import { getActiveStage, getStageStateLabel } from '@/lib/source/lifecycle';
 import {
   buildSourceDataReadinessProjectionFromAdminSetup,
   buildSourceBafoNegotiationPlan,
+  buildSourceExecutiveDecisionSummary,
   buildSourceVendorResponseCompleteness,
   type SourceAgentMission,
   type SourceAgentMissionReport,
@@ -14,6 +15,7 @@ import { sourceCard, sourceMuted, sourceSectionLabel } from './foundationStyles'
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 import { SourceScopeStageWorkspace } from './SourceScopeStageWorkspace';
 import { SourceBafoNegotiationPanel } from './SourceBafoNegotiationPanel';
+import { SourceExecutiveDecisionSummaryPanel } from './SourceExecutiveDecisionSummaryPanel';
 import { SourceVendorResponseCompletenessPanel } from './SourceVendorResponseCompletenessPanel';
 
 export function SourceActiveStageWorkspace({
@@ -89,6 +91,31 @@ export function SourceActiveStageWorkspace({
           </div>
         </div>
         <SourceBafoNegotiationPanel plan={bafoPlan} />
+      </section>
+    );
+  }
+
+  if (activeStage.key === 'selection') {
+    const executiveSummary = buildSourceExecutiveDecisionSummary({
+      event: {
+        ...event,
+        currentStageKey: 'selection',
+      },
+    });
+
+    return (
+      <section style={{ ...sourceCard, background: EXPERIENCE_COLORS.surface, border: `1px solid ${EXPERIENCE_COLORS.borderSoft}` }}>
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ ...sourceSectionLabel, color: EXPERIENCE_COLORS.accentTeal }}>Current-stage workspace</div>
+          <h4 style={{ margin: '4px 0 0', color: EXPERIENCE_COLORS.textPrimary }}>{event.currentStageLabel}</h4>
+          <div style={{ ...sourceMuted, color: EXPERIENCE_COLORS.textSecondary }}>
+            {activeStage.summary}
+          </div>
+          <div style={{ ...TEXT.small, marginTop: 6, color: EXPERIENCE_COLORS.riskAmber }}>
+            Gate status: {getStageStateLabel(activeStage.status)}
+          </div>
+        </div>
+        <SourceExecutiveDecisionSummaryPanel summary={executiveSummary} />
       </section>
     );
   }
