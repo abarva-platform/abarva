@@ -2,9 +2,10 @@ import type { CSSProperties, ReactNode } from 'react';
 import { EXPERIENCE_COLORS, TEXT } from '@/lib/design-system';
 import { sourceInsetCard, sourceMuted, sourceSectionLabel } from '@/components/source/foundationStyles';
 import type { SourcingEventDetail } from '@/lib/source/types';
-import { buildSourceDataReadinessProjectionFromAdminSetup } from '@/lib/source';
+import { buildSourceDataReadinessProjectionFromAdminSetup, buildSourceRfpReadiness } from '@/lib/source';
 import { SourceDataReadinessPanel } from './SourceDataReadinessPanel';
 import type { SourceAgentMission, SourceAgentMissionReport } from '@/lib/source';
+import { SourceRfpReadinessPanel } from './SourceRfpReadinessPanel';
 
 type ScopeWorkspaceProps = {
   event: SourcingEventDetail;
@@ -32,6 +33,7 @@ export function SourceScopeStageWorkspace({
 }: ScopeWorkspaceProps) {
   const readyStatus = buildScopeReadiness(event);
   const artifactStatuses = buildScopeArtifacts(event);
+  const rfpReadiness = buildSourceRfpReadiness({ event: buildRfpReadinessInputEvent(event) });
   const dataReadinessProjection = buildSourceDataReadinessProjectionFromAdminSetup({ eventId: event.id });
   const dataReadinessItems = dataReadinessProjection.items.length > 0
     ? dataReadinessProjection.items
@@ -130,6 +132,7 @@ export function SourceScopeStageWorkspace({
             Custom action: add evidence owner + date + impact for any waived baseline category.
           </div>
         </WorkspaceCard>
+        <SourceRfpReadinessPanel readiness={rfpReadiness} />
       </div>
     </section>
   );
@@ -251,6 +254,17 @@ function MissionSummaryCard({ missionPreview }: { missionPreview: SourceAgentMis
 function getScopeStageSummary(event: SourcingEventDetail): string {
   const scopedStageSummary = event.stages?.find((stage) => stage.key === 'scope')?.summary;
   return scopedStageSummary ?? event.nextDecision;
+}
+
+function buildRfpReadinessInputEvent(event: SourcingEventDetail): Parameters<typeof buildSourceRfpReadiness>[0]['event'] {
+  return {
+    id: event.id,
+    name: event.name,
+    currentStageKey: event.currentStageKey,
+    stages: event.stages,
+    artifacts: event.artifacts,
+    dataReadiness: event.dataReadiness,
+  };
 }
 
 function ThreeChoiceStrip() {

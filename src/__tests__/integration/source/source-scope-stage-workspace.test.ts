@@ -152,6 +152,10 @@ describe('Source scope stage workspace', () => {
     expect(html).toContain('Nexus guidance');
     expect(html).toContain('Request missing workload baseline');
     expect(html).toContain('Confirm scope split with PMO');
+    expect(html).toContain('Event RFP readiness snapshot');
+    expect(html).toContain('Overall tier');
+    expect(html).toContain('RFP section readiness');
+    expect(html).toContain('Required artifacts');
   });
 
   it('keeps scope workspace inside deterministic Source boundaries', () => {
