@@ -7235,6 +7235,16 @@
         "docs/build/HYGIENE_GATE_CI_CONTRACT.md"
       ],
       "completedAt": "2026-04-26"
+    },
+    {
+      "id": "SRC19",
+      "wave": "wave-15",
+      "title": "Source Commercial Summary Surface Mount",
+      "status": "code_complete",
+      "owner": "Codex",
+      "description": "Surface wrapper for SourceCommercialSummaryPanel with AbarVa design canon, status strip, and caveat footer.",
+      "files": ["src/lib/source/source-commercial-summary.ts", "src/components/source/SourceCommercialSummarySurface.tsx", "src/__tests__/integration/source/source-commercial-summary-surface.test.ts"],
+      "completedAt": "2026-04-26"
     }
   ]
 }
