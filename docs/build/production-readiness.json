@@ -365,7 +365,12 @@
         "PROG8 phase gate advancement flow contract added (src/lib/programs/phase-gate-advancement-flow.ts). Pure deterministic *proposed* advancement projection per (tenant, program, canonical phase): every proposal carries proposed: true, deterministic stewardReadiness, missingInputs[] (id/label/reason/blocking), evidenceRequirements[] (each with evidenceRegistryWired: false), auditRequirement (signoffRole: 'steward', auditLogWired: false), advancementStatus across all 5 canonical labels (ready / partially_ready / blocked / requires_waiver / requires_review), waiverPathReason for requires_waiver proposals, and recommendedNextAction. No DB writes, no migrations, no model calls, no phase advance, no gate signoff, no waiver issuance \u2014 live phase gate state machine + audit log + Steward signoff persistence remain deferred to the auth + audit + persistence slices.",
         "MW7 Workshop Template Library added (src/lib/programs/workshop-template-library.ts + src/components/programs/WorkshopTemplateLibrary.tsx). Pure deterministic catalog of seven canonical workshop templates spanning discovery, framing, value, governance, architecture, adoption, and executive review. Each template names purpose, prerequisite inputs, deterministic agenda with per-step durations summing to the template duration, decision-to-land, and outputs. Server Component, calm UI, future-only Open-template action rendered disabled. No live agenda generation, no booking, no model calls.",
         "PROG9 program health scorecard added (src/lib/programs/program-health-scorecard.ts); 5-dimension scoring (phase gate, workshop coverage, evidence quality, deliverable completion, risk posture); letter grades A\u2013F; honestDisclaimer on every output; no model calls, no DB writes.",
-        "MW8 workshop outcome synthesis added (src/lib/programs/workshop-outcome-synthesis.ts); classifies captures into decisions/actions/questions/evidence-gaps/risks; synthesisQuality scoring; proposed:true always; honestDisclaimer on every output; no model calls, no DB writes."
+        "MW8 workshop outcome synthesis added (src/lib/programs/workshop-outcome-synthesis.ts); classifies captures into decisions/actions/questions/evidence-gaps/risks; synthesisQuality scoring; proposed:true always; honestDisclaimer on every output; no model calls, no DB writes.",
+        "PROG10 (wave-18): ProgramFlagshipPage shell + view-model. Executive brief, workflow orientation, knows/missing, slot props for phase gate, workshop canvas, deliverables evidence, action mission strip. 15 tests.",
+        "PROG11 (wave-18): PhaseGateCanvas + view-model. 6-phase rail (discovery\u2192operate), current gate card with requirements/missing inputs/Steward implication. No transitions performed. 14 tests.",
+        "PROG12 (wave-18): NexusWorkshopCanvas \u2014 5-item agenda, 5-attendee roster, tensions, decisions needed, evidence to capture, expected outputs. No live notes. 15 tests.",
+        "PROG13 (wave-18): ProgramDeliverablesEvidencePanel \u2014 14 deliverables across 6 phases, evidence coverage % bar, current deliverable highlight. No fake downloads/approvals. 16 tests.",
+        "PROG14 (wave-18): ProgramActionMissionStrip \u2014 resume action, top 3 next actions, 4 agent missions, blocked items. No live execution. 15 tests."
       ]
     },
     {
@@ -1448,7 +1453,8 @@
         "QA22 (wave-15): source-commercial-ui-verification.ts manifest (8 components) + integration verification test. Always-passing design: 10 static tests + 16 graceful integration-phase file checks.",
         "QA23 (wave-16): source-commercial-route-smoke.ts manifest + smoke test. 10 static + graceful integration-phase file checks. Wave-15 file existence always verified.",
         "DEMO4 (wave-16): SOURCE_COMMERCIAL_INTELLIGENCE_DEMO_SCRIPT.md \u2014 10/20/45-minute demo scripts with talk tracks, pilot ask, what-not-to-claim guidance.",
-        "QA24 (wave-17): design-workflow-canon-regression manifest (10 banned tokens, 4 required canon rules, 10 workflow contracts, 4 target pages). Static + graceful integration scan."
+        "QA24 (wave-17): design-workflow-canon-regression manifest (10 banned tokens, 4 required canon rules, 10 workflow contracts, 4 target pages). Static + graceful integration scan.",
+        "QA25 (wave-18): program-flagship-verification manifest (5 components, 9 workflow sections, 3 canon rules). Static + graceful banned-token + workflow-keyword scans. Route existence asserted."
       ],
       "lastUpdated": "2026-04-26"
     },
@@ -1547,7 +1553,8 @@
         "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions.",
         "LIVE3: Production readiness page verification completed. Admin page and API routes checked. Static manifest caveat documented.",
         "LIVE4: Azure private data plane lab storyboard created (8 slides, two-plane architecture, May 4 lab plan documented).",
-        "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion."
+        "DEMO5 (wave-17): ABARVA_VISUAL_WORKFLOW_WALKTHROUGH_CHECKLIST.md \u2014 10-route founder review checklist with pass/fail/deferred capture per route. Docs-only; no code change, no production_ready promotion.",
+        "DEMO6 (wave-18): PROGRAM_FLAGSHIP_DEMO_SCRIPT.md \u2014 10/20/45-minute scripts with talk tracks, story arc, and three pilot-ask versions."
       ]
     }
   ]

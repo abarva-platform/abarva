@@ -766,10 +766,43 @@
       "mergedPrs": [
         362
       ],
-      "validationStatus": "tests_green",
+      "validationStatus": "not_run",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Status post-merge update.",
+      "nextAction": "Status post-merge update. Watch CI and merge when green.",
+      "lastUpdated": "2026-04-26"
+    },
+    {
+      "waveId": "wave-18",
+      "name": "Program Flagship Experience",
+      "goal": "Make the Program detail page the flagship AbarVa experience: phase journey, workflow, approval gates, deliverables, evidence, actions, agent-driven.",
+      "status": "in_progress",
+      "percentComplete": 100,
+      "plannedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
+      ],
+      "completedSlices": [
+        "PROG10",
+        "PROG11",
+        "PROG12",
+        "PROG13",
+        "PROG14",
+        "QA25",
+        "DEMO6"
+      ],
+      "skippedSlices": [],
+      "blockedSlices": [],
+      "mergedPrs": [],
+      "validationStatus": "not_run",
+      "productionReadinessUpdated": false,
+      "currentBlockers": [],
+      "nextAction": "Watch CI and merge when green.",
       "lastUpdated": "2026-04-26"
     }
   ]
