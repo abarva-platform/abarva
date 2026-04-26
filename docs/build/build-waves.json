@@ -626,7 +626,7 @@
       "waveId": "wave-14",
       "name": "Source Commercial Intelligence + Pricing Hardening",
       "goal": "Deliver comprehensive commercial intelligence models, pricing normalization, risk detection, vendor comparison, control tower signals, and mission queue for the Source module.",
-      "status": "in_progress",
+      "status": "merged",
       "percentComplete": 100,
       "plannedSlices": [
         "SRC11",
@@ -641,11 +641,11 @@
         "OPS14"
       ],
       "completedSlices": [
-        "SRC12",
         "SRC11",
+        "SRC12",
         "SRC13",
-        "SRC15",
         "SRC14",
+        "SRC15",
         "SRC16",
         "SRC17",
         "SRC18",
@@ -654,11 +654,13 @@
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "not_run",
+      "mergedPrs": [
+        340
+      ],
+      "validationStatus": "tests_green",
       "productionReadinessUpdated": false,
       "currentBlockers": [],
-      "nextAction": "Complete remaining 9 slices and merge via PR. Complete remaining 9 slices (SRC12\u2013SRC18, QA21, OPS14) and merge via PR. Complete remaining slices and merge via PR.",
+      "nextAction": "Wave-14 merged via PR #340. 161 tests green, hygiene gate 11/11 PASS. Next: Source module production readiness deepening and live workflow wiring.",
       "lastUpdated": "2026-04-26"
     }
   ]
