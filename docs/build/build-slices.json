@@ -6482,6 +6482,29 @@
       "notes": [
         "Deterministic tech & data readiness signals."
       ]
+    },
+    {
+      "id": "ACT11",
+      "name": "Adoption \u00d7 Cost \u00d7 Productivity Correlation",
+      "status": "code_complete",
+      "risk": "low",
+      "lastUpdated": "2026-04-26",
+      "ownerAgent": "Wave4 Lane E",
+      "dependsOn": [
+        "ACT3",
+        "ACT6",
+        "ACT7"
+      ],
+      "allowedFiles": [
+        "src/lib/tower/adoption-cost-productivity-correlation.ts",
+        "src/__tests__/integration/tower/adoption-cost-productivity-correlation.test.ts",
+        "docs/build/slices/ACT11_ADOPTION_COST_PRODUCTIVITY_CORRELATION.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "notes": [
+        "Deterministic correlation pairings \u2014 no statistics."
+      ]
     }
   ]
 }
