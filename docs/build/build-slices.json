@@ -5171,6 +5171,63 @@
         "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
       ],
       "notes": "OPS5 productizes the v2 cherry-resolve logic that has been used manually across multiple integration packs into a repo-supported, tested, dry-run-capable Python script. Encodes the OPS1 conflict policies (sections G and H) deterministically: build-slices.json append-only with no duplicate ids, production-readiness.json conservative status / notes UNION / blockers UNION / nextAction append-distinct, and optional build-waves.json UNION + deterministic percentComplete recalculation. Hidden fixture flags allow the Jest suite to run the real script against synthetic JSON without a real git repo, so the contract under test is exactly what integrators execute. No CI hookup, no agent runtime, no model providers."
+    },
+    {
+      "id": "OPS6",
+      "name": "Duplicate Slice Preflight Script",
+      "category": "OPS",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane B (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "OPS1",
+        "OPS2"
+      ],
+      "allowedFiles": [
+        "scripts/integration/check_duplicate_slices.py",
+        "docs/build/slices/OPS6_DUPLICATE_SLICE_PREFLIGHT_SCRIPT.md",
+        "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/auth/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/lib/agents/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "scripts/integration/check_duplicate_slices.py is executable, starts with the shebang #!/usr/bin/env python3, and exposes the CLI 'check_duplicate_slices.py [--json] [--manifest=PATH] [--allow-blocked] <SLICE_ID> [<SLICE_ID> ...]' with --help / -h support.",
+        "The script reads docs/build/build-slices.json by default (relative to Path.cwd()) and supports --manifest=PATH to redirect to a fixture manifest; it never modifies the manifest or any other file.",
+        "Text-mode output prints readyToRun, duplicates, missing (alias of readyToRun), blocked, and a single-line recommendedAction; --json mode emits a JSON object with the same keys plus manifest, recommendedAction, and exitCode.",
+        "Statuses code_complete and verified are classified as duplicates (BLOCKING, exit 2); statuses blocked and in_progress are classified as blocked (exit 4 unless --allow-blocked is set); slice ids absent from the manifest are classified as readyToRun and treated as exit 0.",
+        "Exit codes are: 0 when all targets are ready (or blocked-but-allowed) and no duplicates exist; 2 when one or more targets are duplicates; 3 when the manifest is missing, unreadable, or malformed JSON; 4 when one or more targets are blocked / in_progress and --allow-blocked was not supplied.",
+        "Module imports are restricted to Python's standard library (argparse, json, sys, pathlib, typing, __future__); the script makes no network calls and does not invoke subprocess, os.system, shutil, urllib, requests, http.client, or socket; the script never opens a file in write mode.",
+        "src/__tests__/integration/ops/duplicate-slice-preflight.test.ts drives the script via child_process.spawnSync against fixture build-slices.json files written to os.tmpdir(); the suite covers --help (exit 0), code_complete duplicate detection (exit 2), verified duplicate detection (exit 2), blocked detection without --allow-blocked (exit 4), --allow-blocked override (exit 0), --json shape and keys (manifest / readyToRun / duplicates / missing / blocked / recommendedAction / exitCode), malformed manifest (exit 3), missing manifest path (exit 3), and a non-mutating sha256 round-trip on the fixture manifest.",
+        "docs/build/slices/OPS6_DUPLICATE_SLICE_PREFLIGHT_SCRIPT.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and production readiness impact.",
+        "docs/build/build-slices.json appends an OPS6 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane B, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa notes are UNIONed with an entry acknowledging that OPS6 lands the deterministic duplicate-slice preflight script and an integration suite covering duplicate detection, blocked-state handling, --json shape, malformed-manifest exit code, and a non-mutating sha256 round-trip; status is preserved (no promotion); nextAction is conservatively appended without overwriting prior QA1\u2013QA8 / OPS1 / OPS2 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation, scripts, and tests only; no application code, no runtime, no auth, no supabase, no migrations, no package manifests, no infrastructure-as-code, and no platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "python3 scripts/integration/check_duplicate_slices.py --help",
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/ops/duplicate-slice-preflight.test.ts",
+        "npm run build"
+      ],
+      "notes": "Read-only Python 3 preflight script that classifies one or more candidate slice ids against docs/build/build-slices.json and bails out with a non-zero exit code when a target is already code_complete / verified (BLOCKING) or in a blocked / in_progress state (caution unless --allow-blocked). Imports only stdlib (argparse, json, sys, pathlib, typing, __future__); no subprocess, no shell, no network, no file mutation. The companion Jest suite drives the script through child_process.spawnSync against fixture manifests in os.tmpdir() and asserts the script does not modify the manifest via a sha256 round-trip. No package.json change; the script is invoked directly via python3 and is not registered as an npm run target in this slice."
     }
   ]
 }
