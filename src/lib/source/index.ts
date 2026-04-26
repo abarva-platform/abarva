@@ -39,6 +39,8 @@ export * from './intelligence-patterns';
 export * from './commercial-mission-queue';
 export * from './commercial-signal-types';
 export * from './commercial-signals';
+export * from './commercial-mission-adapter-types';
+export * from './commercial-mission-adapter';
 
 export type {
   SourceAgentContextBundle,
