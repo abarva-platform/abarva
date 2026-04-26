@@ -5056,6 +5056,63 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Founder-facing checklist for verifying enterprise deployment (TEN1 SaaS tenancy architecture, TEN2 tenant isolation data boundary, TEN3 dedicated tenant blueprint conditional, CLOUD1 four-tier deployment strategy, CLOUD2 Azure VNet reference lab, CLOUD3 Docker packaging conditional, CLOUD4 local lab conditional, CLOUD5 Bicep starter conditional) and client data trust (TRUST1 dataset trust model with five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 decision_grade, TRUST2 agent data access policy matrix, TRUST3 Steward setup TRUST surface wiring conditional) plus production readiness tracker (PROD3 live refresh, PROD4 CI / Vercel ingestion conditional) and users / access (ADM6 conditional) before push or PR. Eighth founder-facing runbook after QA1 (Agentic Spine), QA2 (Solution Workshop), QA3 (Solution Intelligence), QA4 (Agent Mission Persona), QA5 (Route Smoke Inventory), QA6 (Golden Prompt Harness Contract + Seed), and QA7 (Program Continuity + Deliverable Verification). Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review. Default policy for unsupervised batch runs: lane agents commit only; integration agent owns cherry-picks and merges; founder owns the push and merge decisions. Canonical cherry-pick path: TEN1 \u2192 TEN2 \u2192 TEN3 \u2192 TRUST1 \u2192 TRUST2 \u2192 TRUST3 \u2192 CLOUD1 \u2192 CLOUD2 \u2192 CLOUD3 \u2192 CLOUD4 \u2192 CLOUD5 \u2192 PROD4 \u2192 ADM6 \u2192 QA8."
+    },
+    {
+      "id": "QA13",
+      "name": "Secret Hygiene Test Pattern Update",
+      "category": "QA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "PROD3",
+        "PROD4"
+      ],
+      "allowedFiles": [
+        "src/lib/qa/secret-hygiene-patterns.ts",
+        "src/__tests__/integration/qa/secret-hygiene-patterns.test.ts",
+        "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "docs/build/slices/QA13_SECRET_HYGIENE_TEST_PATTERN_UPDATE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/lib/supabase/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/qa/secret-hygiene-patterns.ts exports LIKELY_SECRET_VALUE_PATTERNS as a ReadonlyArray of { name, pattern, description } covering github_pat_classic (ghp_), github_pat_fine_grained (github_pat_), github_app_token (ghs_), vercel_api_token (vercel_), openai_or_anthropic_key (sk- / sk-ant-), slack_bot_token (xoxb-), slack_user_token (xoxp-), aws_access_key_id (AKIA), jwt (three eyJ-prefixed base64url segments), and env_var_assignment_with_long_opaque (KEY|TOKEN|SECRET|PASSWORD = \"long_opaque\"). The module exports CREATED_FROM_DETERMINISTIC_SECRET_HYGIENE_SEED = 'deterministic_secret_hygiene_seed' for provenance. containsLikelySecretValue(text) returns true iff any pattern matches. listLikelySecretFindings(text) returns { patternName, match, index }[] with match truncated to 8 chars + ellipsis so a leaked secret is never persisted. assertNoLikelySecretValues(text) throws an Error with a structured patternName@index=truncated_match summary. The module imports nothing from anthropic / openai / agent / source / nexus / sentinel / atlas / auth / supabase, never uses Date.now, Math.random, new Date(...), or fetch(...).",
+        "src/__tests__/integration/qa/secret-hygiene-patterns.test.ts asserts: (a) the public surface (every documented pattern name is exposed; every entry carries non-empty name + description and a RegExp; CREATED_FROM_DETERMINISTIC_SECRET_HYGIENE_SEED equals 'deterministic_secret_hygiene_seed'); (b) positive cases must flag canonical real-shape tokens (ghp_ classic PAT, sk-ant-api03 Anthropic, sk- OpenAI, xoxb- Slack bot, JWT three-segment, KEY=\"ghp_...\" assignment, AKIA AWS access key); (c) negative cases must NOT flag honest documentation (bare SUPABASE_SERVICE_ROLE_KEY, api.github.com URL substring, GITHUB_STATUS_TOKEN env var name string, liveStatus configuration note, <replace-me>, lab_only_change_me, sk-not-a-real-key); (d) listLikelySecretFindings truncates the match field and records the match index; (e) assertNoLikelySecretValues throws with patternName included and never echoes the full untruncated secret; (f) module hygiene (no live runtime / model / auth / source / supabase imports; no Date.now / Math.random / new Date(...) / fetch(...) call sites).",
+        "src/__tests__/integration/admin/production-readiness-live-refresh.test.ts adopts assertNoLikelySecretValues(JSON.stringify(buildProductionReadinessApiResponse(...))) for the response-side hygiene check, replacing the inline per-pattern not-toMatch list. The source-code substring guard against GITHUB_TOKEN|VERCEL_TOKEN|SECRET|SERVICE_ROLE on combinedSource is preserved verbatim because it guards application code from literal env-var-name usage, not honest documentation in serialized manifests.",
+        "docs/build/slices/QA13_SECRET_HYGIENE_TEST_PATTERN_UPDATE.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact, and references the helper, the test suites, and the production-readiness manifest by relative path.",
+        "docs/build/build-slices.json appends a QA13 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json validation_qa component appends a notes row acknowledging that the QA13 deterministic secret hygiene helper is added and adopted by the PROD3 live-refresh test; status is preserved (no promotion); validation_qa.nextAction is UNIONed conservatively without overwriting prior QA1\u2013QA8 / PROD3 / PROD4 wording; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Helper module + test pattern only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, platform-design docs, model providers, browser automation, or live network calls are introduced or modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/qa/secret-hygiene-patterns.test.ts",
+        "npx jest src/__tests__/integration/admin/production-readiness-live-refresh.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure secret VALUE hygiene helper consumed by integration tests. Catches real GitHub PAT (ghp_), GitHub fine-grained PAT (github_pat_), GitHub App (ghs_), Vercel (vercel_), OpenAI / Anthropic (sk- / sk-ant-), Slack (xoxb-, xoxp-), AWS (AKIA), JWT (eyJ.eyJ.X), and KEY=long_opaque env-var assignments. Honest documentation (bare env var names, api.github.com URL substrings, <replace-me> / lab placeholders, short non-real shapes like sk-not-a-real-key) is explicitly NOT flagged. listLikelySecretFindings truncates every match to 8 chars + ellipsis so a leaked secret is never persisted to test logs or CI output. The PROD3 production-readiness live-refresh test adopts the helper for its response-side check; the source-code-side substring guard is preserved verbatim. Documentation only at the manifest level. validation_qa stays tested (not promoted) because the helper is read-only and CI integration of route smoke / persona crawlers / security scan remains deferred."
     }
   ]
 }
