@@ -6939,6 +6939,21 @@
       ],
       "sliceDoc": "docs/build/slices/AZLAB3_PRIVATE_DATA_PLANE_CONNECTOR_STUB.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB4",
+      "name": "Private Evidence Manifest Demo",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [
+        "src/lib/architecture/private-evidence-manifest-demo.ts"
+      ],
+      "testFiles": [
+        "src/__tests__/integration/architecture/private-evidence-manifest-demo.test.ts"
+      ],
+      "sliceDoc": "docs/build/slices/AZLAB4_PRIVATE_EVIDENCE_MANIFEST_DEMO.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
