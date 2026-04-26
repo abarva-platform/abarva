@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus2"
+    },
+    "environmentName": {
+      "value": "<replace-me>"
+    },
+    "vnetCidr": {
+      "value": "<replace-me>"
+    },
+    "appSubnetCidr": {
+      "value": "<replace-me>"
+    },
+    "peSubnetCidr": {
+      "value": "<replace-me>"
+    },
+    "containerAppName": {
+      "value": "<replace-me>"
+    },
+    "postgresAdminLogin": {
+      "value": "<replace-me>"
+    },
+    "postgresAdminPasswordSecretName": {
+      "value": "<replace-me>"
+    },
+    "keyVaultName": {
+      "value": "<replace-me>"
+    }
+  }
+}

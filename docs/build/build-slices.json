@@ -4837,6 +4837,63 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "Local-only docker-compose lab simulating private-deployment dependencies on a developer laptop. Boots postgres:16-alpine (data plane stand-in), minio/minio:latest (object-storage stand-in for Azure Blob / GCS), and a busybox model-gateway-stub (no real model calls) on the abarva-private-lab private bridge network, plus a documented placeholder app service referencing the future CLOUD3 Dockerfile image (abarva:local). Uses .env.private-lab.example as a placeholder template - operators copy to .env.private-lab and replace all values before any non-lab use. Provides scripts/verify-private-lab-config.sh and src/__tests__/integration/deployment/private-lab-config.test.ts to assert the lab config shape. Does NOT deploy to any cloud, does NOT call any real model provider, does NOT run migrations, does NOT carry real customer data, does NOT promote production_deployment status. CLOUD2 (Azure VNet blueprint) is the documentation-only Azure-side counterpart; CLOUD5 (Azure IaC starter) is the deferred Terraform / Bicep / azd implementation."
+    },
+    {
+      "id": "CLOUD5",
+      "name": "Azure Container Apps / VNet IaC Starter",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (parallel build pack)",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2"
+      ],
+      "allowedFiles": [
+        "infra/azure/container-apps-vnet/README.md",
+        "infra/azure/container-apps-vnet/main.bicep",
+        "infra/azure/container-apps-vnet/parameters.example.json",
+        "docs/build/slices/CLOUD5_AZURE_CONTAINER_APPS_VNET_IAC_STARTER.md",
+        "src/__tests__/integration/deployment/azure-vnet-iac.test.ts",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        ".github/workflows/**",
+        "azure.yaml",
+        "terraform/**"
+      ],
+      "acceptanceCriteria": [
+        "infra/azure/container-apps-vnet/main.bicep exists and is marked STARTER / LAB ONLY in the file header.",
+        "main.bicep declares parameters location, environmentName, vnetCidr, appSubnetCidr, peSubnetCidr, containerAppName, postgresAdminLogin, postgresAdminPasswordSecretName, and keyVaultName, each annotated with @description(...).",
+        "main.bicep declares resources of type Microsoft.Network/virtualNetworks, Microsoft.App/managedEnvironments, Microsoft.App/containerApps, Microsoft.DBforPostgreSQL/flexibleServers, Microsoft.Storage/storageAccounts, Microsoft.KeyVault/vaults, Microsoft.OperationalInsights/workspaces, plus three Microsoft.Network/privateDnsZones for postgres / blob / vault privatelink hostnames.",
+        "main.bicep uses the placeholder image mcr.microsoft.com/azuredocs/containerapps-helloworld:latest, omits administratorLoginPassword, and contains no sk- keys, no GUID-shaped subscription or tenant IDs, no literal password assignments outside parameter declarations, and no PEM private-key blocks.",
+        "infra/azure/container-apps-vnet/parameters.example.json parses as JSON, uses the ARM deploymentParameters $schema, declares all 9 required parameter keys, and uses placeholder values (<replace-me> for every key except location which is allowed to be eastus2).",
+        "infra/azure/container-apps-vnet/README.md contains the words STARTER, LAB, and not production; documents az bicep build and az deployment group what-if as the only validation commands; marks any az deployment group create reference as forward-only and NOT to be executed; and cross-references CLOUD2, CLOUD1, and CLOUD4.",
+        "src/__tests__/integration/deployment/azure-vnet-iac.test.ts asserts existence of main.bicep, presence of every required resource type by string match, presence of every required parameter declaration with @description, absence of hardcoded secrets (sk- keys, GUID subscription IDs, GUID tenant IDs, literal passwords, PEM blocks), parameters.example.json parses + uses placeholders, and README content contains STARTER / LAB / not production / validation commands / cross-references.",
+        "docs/build/slices/CLOUD5_AZURE_CONTAINER_APPS_VNET_IAC_STARTER.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact.",
+        "docs/build/build-slices.json appends a CLOUD5 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2), status code_complete, risk low, ownerAgent Lane D, and lastUpdated 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD5 Azure Container Apps + VNet IaC starter is added; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 / OPS1 / TEN1 / TEN2 / CLOUD1 / CLOUD2 / OPS2 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Starter only; no application code, no runtime, no Azure ARM call, no deploy, no auth, no supabase, no migrations, no package manifest, no platform-design doc is modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/deployment/azure-vnet-iac.test.ts",
+        "npm run build",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Reference Bicep IaC starter for a private-VNet Azure Container Apps lab. Provides main.bicep (VNet + two subnets, Container Apps Environment + Container App with placeholder hello-world image, Postgres Flexible Server, Storage Account, Key Vault, Log Analytics workspace, three privatelink DNS zones; @description on every parameter; no embedded secrets, no subscription IDs, no tenant ID literals, no administratorLoginPassword; Postgres password sourced from Key Vault at deploy time), parameters.example.json (ARM deploymentParameters $schema; <replace-me> placeholders for all values except location which is the representative example eastus2), README.md (STARTER / LAB ONLY; documents az bicep build and az deployment group what-if as the only validation commands; az deployment group create is forward-only and marked NOT to be executed; cross-references CLOUD2 / CLOUD1 / CLOUD4), and a deterministic file-pure jest suite that asserts shape and absence of hardcoded secrets. No deploy is performed, no Azure credentials are required, no real subscription is touched. production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; the deploy itself is deferred to a later slice."
     }
   ]
 }
