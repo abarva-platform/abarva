@@ -8,6 +8,7 @@ import {
   SOURCE_GOLDEN_EVENT_IDS,
   getSourcingEvent,
   buildSourceRfpReadiness,
+  buildSourceExecutiveDecisionSummary,
   SOURCE_STAGE_LABELS,
 } from '@/lib/source';
 import type { SourceStageStatus, StageGateStatus, WorkflowStage } from '@/lib/source/types';
@@ -35,6 +36,30 @@ function buildOralsBafoEvent(event: SourcingEvent) {
     stages: [...event.stages.map((stage) => ({ ...stage, status: 'complete' as SourceStageStatus })), oralsBafoStage],
     currentStageKey: 'orals_bafo' as const,
     currentStageLabel: SOURCE_STAGE_LABELS.orals_bafo,
+  };
+}
+
+function buildSelectionEvent(event: SourcingEvent) {
+  const selectionStage: WorkflowStage = {
+    key: 'selection',
+    label: SOURCE_STAGE_LABELS.selection,
+    status: 'active',
+    summary: 'Steering committee is reviewing tradeoffs before final selection recommendation.',
+    gate: {
+      id: 'gate-source-selection-review',
+      label: 'Selection review package complete',
+      status: 'in_review' as StageGateStatus,
+      ownerRole: 'Steering Committee',
+      requiredArtifacts: ['Executive decision brief', 'Commercial risk log'],
+      blocker: null,
+    },
+  };
+
+  return {
+    ...event,
+    stages: [...event.stages.map((stage) => ({ ...stage, status: 'complete' as SourceStageStatus })), selectionStage],
+    currentStageKey: 'selection' as const,
+    currentStageLabel: SOURCE_STAGE_LABELS.selection,
   };
 }
 
@@ -104,6 +129,20 @@ describe('Source event canvas shell', () => {
     expect(html).toContain('Top BAFO priorities');
     expect(html).toContain('Vendor BAFO questions');
     expect(html).toContain('Vertex CloudOps');
+  });
+
+  it('surfaces executive decision summary signals while keeping final selection posture gated', async () => {
+    const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
+    const event = buildSelectionEvent(sourceEvent!);
+    const summary = buildSourceExecutiveDecisionSummary({ event });
+    const html = renderToStaticMarkup(createElement(NexusEngagementCanvas, { event }));
+
+    expect(html).toContain('Executive decision summary');
+    expect(html).toContain('Selection-readiness decision brief');
+    expect(html).toContain('Decision posture');
+    expect(html).toContain('Decision options');
+    expect(summary.recommendedDecisionPosture).not.toBe('ready_for_selection_review');
+    expect(summary.blockers.length).toBeGreaterThan(0);
   });
 
   it('includes the deterministic data readiness panel with missing and usable evidence states', async () => {

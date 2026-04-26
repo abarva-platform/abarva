@@ -66,6 +66,17 @@ describe('Source executive decision summary panel', () => {
     expect(html).toContain('Atlas executive brief');
   });
 
+  it('renders deterministic non-final decision posture with visible blockers for seeded data', async () => {
+    const sourceEvent = await getSourcingEvent(SOURCE_GOLDEN_EVENT_IDS.digitalAppBuild);
+    const summary = buildSourceExecutiveDecisionSummary({ event: sourceEvent! });
+    const html = renderToStaticMarkup(createElement(SourceExecutiveDecisionSummaryPanel, { summary }));
+
+    expect(summary.recommendedDecisionPosture).not.toBe('ready_for_selection_review');
+    expect(summary.blockers.length).toBeGreaterThan(0);
+    expect(html).toContain(summary.recommendedDecisionPosture);
+    expect(html).toContain('Blockers');
+  });
+
   it('keeps executive decision panel files free of model/upload/workflow imports', () => {
     const sources = [
       'src/components/source/SourceExecutiveDecisionSummaryPanel.tsx',
@@ -80,4 +91,3 @@ describe('Source executive decision summary panel', () => {
     expect(sources).not.toMatch(/\bfetch\(/i);
   });
 });
-
