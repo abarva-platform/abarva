@@ -177,3 +177,58 @@ test('no vendor has deterministicSeed === false', () => {
     expect(vendor.deterministicSeed).not.toBe(false);
   }
 });
+
+// ---------------------------------------------------------------------------
+// 18. Stage gates include deterministic transitions and valid states
+// ---------------------------------------------------------------------------
+
+test('stage gates include deterministic transitions with valid gate states', () => {
+  expect(scenario.stageGates.length).toBeGreaterThanOrEqual(5);
+  const validGateStates = ['ready', 'blocked', 'waiting', 'needs_approval', 'waiver_required', 'deferred'];
+  for (const gate of scenario.stageGates) {
+    expect(gate.transition).toContain('->');
+    expect(validGateStates).toContain(gate.state);
+    expect(gate.requiredArtifacts.length).toBeGreaterThan(0);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// 19. Artifact metadata covers the expected deterministic workflow set
+// ---------------------------------------------------------------------------
+
+test('artifact metadata includes the complete deterministic source artifact strip set', () => {
+  expect(scenario.artifactMetadata.map((item) => item.artifactName)).toEqual([
+    'Sourcing Strategy Memo',
+    'Minimum Data Request',
+    'Scope Document',
+    'RFP Package',
+    'Pricing Template',
+    'Vendor Response Checklist',
+    'BAFO Question Pack',
+    'Executive Decision Brief',
+    'Transition Readiness Checklist',
+    'Value Ledger Assumptions',
+  ]);
+});
+
+// ---------------------------------------------------------------------------
+// 20. Review/approval, pricing assumptions, BAFO asks and decision posture exist
+// ---------------------------------------------------------------------------
+
+test('enrichment includes review, pricing, BAFO, and executive decision posture seed sections', () => {
+  expect(scenario.reviewApprovalStates.length).toBeGreaterThanOrEqual(3);
+  expect(scenario.vendorResponseStates.length).toBe(4);
+  expect(scenario.pricingAssumptions.length).toBeGreaterThanOrEqual(3);
+  expect(scenario.bafoAsks.length).toBeGreaterThanOrEqual(4);
+  expect(scenario.executiveDecisionPosture.posture).toBe('proceed_to_bafo');
+});
+
+// ---------------------------------------------------------------------------
+// 21. Transition/value realization placeholders stay deterministic and non-production
+// ---------------------------------------------------------------------------
+
+test('transition and value realization placeholders remain deterministic and non-production', () => {
+  expect(scenario.transitionReadinessPlaceholders.length).toBeGreaterThanOrEqual(3);
+  expect(scenario.valueRealizationPlaceholders.length).toBeGreaterThanOrEqual(3);
+  expect(scenario.caveats.join(' ')).toContain('deterministic seed data');
+});
