@@ -2,54 +2,58 @@
 
 ## Purpose
 
-Show what context and evidence informed an agent response or artifact.
+Show what context and evidence informed an agent response, artifact, or decision surface.
 
-## When to Use
+## Required Use
 
-Use under agent briefs, generated artifacts, evidence-backed insights, and validation reports.
+Use for:
 
-## When Not to Use
+- agent responses with stage guidance,
+- artifact recommendations,
+- decision or gate surfaces,
+- evidence-sensitive workflow messages.
 
-Do not show when no agent or evidence-backed claim is present.
+## Mandatory Elements
 
-## Visual Rules
+- Event or artifact identity.
+- Stage context.
+- Evidence and sources used.
+- Pattern basis vs client-specific basis.
+- Missing context.
+- Confidence/quality state.
 
-- Compact.
-- Distinguish pattern evidence from client evidence.
-- Show missing context plainly.
-- Avoid citation clutter.
+## Layout Rules
 
-## Conceptual Props
+- Compact footprint.
+- Distinguish pattern signal from real client context.
+- No hidden footnotes or unreadable source chips.
+- No fabricated citations.
+- Missing context is shown as a concrete blocker state.
+
+## Conceptual Data
 
 - `sources`
 - `evidenceType`
 - `citations`
 - `missingContext`
 - `confidence`
+- `scopeType`
 
-## Interaction Behavior
+## Interaction
 
-Click source opens evidence drawer or citation detail.
+- Source detail may open evidence modal or citation detail.
+- Keep this non-blocking and secondary to primary guidance.
 
 ## States
 
-Complete, partial, pattern-only, client-evidence, missing, blocked.
-
-## Accessibility
-
-Source names and confidence must be readable text.
-
-## Examples
-
-- Source event and Scope stage.
-- Pattern pack plus scorecard defaults.
-- Uploaded file pending validation.
-- Value ledger context.
-
-## Anti-patterns
-
-Fake citations, hidden missing context, decorative source chips.
+- Complete
+- Partial
+- Pattern-only
+- Client-evidence
+- Missing
+- Blocked
 
 ## Acceptance Criteria
 
-User can understand what the agent relied on.
+- Users understand why a response was made.
+- Weak context cannot hide behind generic confidence labels.

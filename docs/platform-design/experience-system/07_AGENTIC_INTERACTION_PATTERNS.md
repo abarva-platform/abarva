@@ -4,70 +4,107 @@
 
 AbarVa agents are context-first, not prompt-first. The surface should give useful guidance before the user types.
 
-## Agent Panel Requirements
+## Enforcement Standard
 
-Agent panels must show:
+For every workflow-stage agent interaction, the panel must follow this minimum contract:
+
+- The current object is explicit (event, program, artifact, or gate).
+- The current stage is explicit.
+- The context used is explicit.
+- Missing context is explicit when input is partial.
+- The panel indicates one clear next action.
+- 3 choices plus custom appears only when multiple meaningful paths exist.
+- The response is tied to the specific user context and does not read like generic assistant output.
+
+This is mandatory across Source, program surfaces, steward/admin surfaces, and executive summaries.
+
+### Mandatory Agent Responsibilities
+
+- Nexus: orchestration lead. It should surface current workflow state, next steps, blockers, and what is safe to do now.
+- Sentinel: evidence steward. It should surface confidence, citations, unsupported claims, and evidence gaps.
+- Atlas: commercial and strategic context. It should surface value/risk tradeoffs and implications for decision quality.
+- Steward: gate keeper. It should surface gate state, approvals, and readiness blockers.
+
+## Core Panel Requirements
+
+Every panel should show:
 
 - What matters now.
 - What context was used.
 - What is missing.
-- Confidence or readiness when relevant.
-- Three suggested actions plus custom input.
-- The current work object and stage.
+- Confidence/readiness state when relevant.
+- Recommended next action.
+- Current work object and stage.
+- A compact action path (not a chatbot prompt sequence).
 
-## Response Principles
+No panel is valid if the same copy could be posted unchanged for another client or event.
 
-- Agents are concise but useful.
-- Agents should know when to say "I cannot answer this yet because context is missing."
-- Agents should distinguish event-specific guidance from pattern-level guidance.
-- Agents should not bury the recommendation in a long paragraph.
-- Agents should guide the next best action instead of only answering the last question.
+## Response Patterns
 
-## Interaction Rules
+### Direct Answer
+Use for simple status questions. Still include stage context and confidence state where relevant.
 
-- Agent guidance is tied to event, program, artifact, stage, or tenant readiness.
-- Suggested actions are generated from current context, not static filler.
-- Agents should ask for missing inputs before generating decision-grade artifacts.
-- Chat/input accelerates workflow; it is not the whole product.
-- No blank prompt should be the primary experience.
-- No generic chatbot behavior.
-- Three choices plus custom should appear where it helps the user move forward, not mechanically after every message.
+### Guidance
+Use for workflow movement questions. Include blockers and the recommended action needed before progression.
+
+### Decision
+Use for gate/approval/selection and vendor decisions. Include risks, tradeoffs, evidence state, and options.
+
+### Low Context
+Use when context is incomplete. Never hide low confidence; explicitly say what is missing and what is safe to decide now.
+
+### Evidence
+Use when context is challenged. Show evidence basis, confidence, and limits.
 
 ## Three Choices Plus Custom
 
-Many substantive agent responses should offer:
+Use only when it clearly helps users move forward.
 
-1. The safest next action.
-2. A deeper inspection action.
-3. A document/artifact/workflow action when appropriate.
-4. Custom input.
-
-Do not show the pattern when the answer is purely informational, only one action is valid, or options would add clutter.
+- Three recommended actions.
+- One custom option.
+- No mechanical always-on appearance.
+- Hide actions that do not materially change the workflow path.
 
 ## Context Used Strip
 
-When agent output relies on evidence, the page should show:
+When output is evidence-backed, include a compact context strip that includes:
 
-- Context sources.
-- Evidence/citations.
-- Pattern vs client-specific distinction.
-- Missing context.
+- Evidence/state sources used.
+- Pattern-level vs client-specific basis.
+- Missing or deferred context.
+- Confidence state.
 
-## Mission-Driven Agent Activity
+## Source Stage Enforcement Mapping
 
-Agents should have visible work, not just responses. Agent activity should be tied to context, workflow state, evidence, patterns, validation results, and user intent.
+Each Source stage panel must include:
 
-Mission-driven activity can include:
+- Stage goal and current readiness.
+- Event/program identity and owner.
+- Context used and confidence.
+- Blocker and gating reason.
+- One recommended next action.
+- 3 choices + custom if at least two valid alternatives exist.
 
-- Nexus next actions.
-- Sentinel evidence gaps.
-- Atlas executive briefs.
-- Steward blocked gates.
-- Data readiness follow-ups.
-- Workflow validation defers.
-- Approval follow-ups.
-- Vendor response gaps.
+Mandatory example checks:
 
-The UI should show agent activity only when it adds decision value. Use mission counts, next action, context used, owner, due date, confidence, and blocker/defer reasons instead of noisy feeds.
+- Can we release the RFP?
+- Can we cite this vendor response?
+- Can we move to Evaluation?
+- What should the steering committee know?
 
-Read `16_AGENT_ACTIVITY_UI_PATTERN.md` before designing agent activity strips, mission panels, inline recommendations, executive briefs, or background mission drawers.
+## Mission-Driven Activity
+
+Agent surfaces should expose mission value and not become passive chat transcripts.
+
+Allowed mission signals:
+
+- Next action with owner.
+- Evidence blocker notes.
+- Gate readiness and dependency notes.
+- Risk or defer notices.
+
+No noisy feeds, no avatar-led chatbot patterns, and no uncited or contextless claims.
+
+## Source References
+
+Read `16_AGENT_ACTIVITY_UI_PATTERN.md` before changing agent strips, mission panels, executive briefs, or background mission surfaces.

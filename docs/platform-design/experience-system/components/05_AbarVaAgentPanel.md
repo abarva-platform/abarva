@@ -2,22 +2,35 @@
 
 ## Purpose
 
-Render contextual agent guidance without turning the page into generic chat.
+Render contextual agent guidance without creating a generic chatbot surface.
 
 ## When to Use
 
-Use on workbenches, admin readiness, artifact review, and analysis surfaces.
+Use on workbenches, admin readiness, artifact review, and analysis surfaces where workflow state exists.
+
+## Mandatory Content
+
+Each implementation should include:
+
+- Work object (event/program/artifact).
+- Stage and context.
+- Current guidance objective.
+- Context used source summary.
+- Confidence or readiness state.
+- Missing context and blockers.
+- Recommended next action.
+- Relevant role label: Nexus / Sentinel / Atlas / Steward.
 
 ## When Not to Use
 
-Do not use when no context exists or when the agent would only repeat static instructions.
+Do not use when no context exists or when the panel would only restate static instructions.
 
 ## Visual Rules
 
-- Agent identity visible but small.
-- Guidance leads with what matters now.
-- Context used is visible.
-- Suggested actions are clear.
+- Small agent identity, not chatbot chrome.
+- Guidance leads with "what matters now".
+- Compact context-used area.
+- Suggested actions are action-oriented and stage-relevant.
 
 ## Conceptual Props
 
@@ -26,31 +39,28 @@ Do not use when no context exists or when the agent would only repeat static ins
 - `stage`
 - `brief`
 - `contextUsed`
+- `confidence`
+- `missingContext`
 - `suggestedActions`
 - `customInput`
 
 ## Interaction Behavior
 
-Offer three choices plus custom input. Support handoff to other agents.
+- Offer three choices plus custom only when there are multiple meaningful workflows.
+- Support handoff to other agents only when workflow requires it.
+- If context is weak, panel should present low-context state and next input requirements.
 
 ## States
 
-Ready, partial context, blocked, low evidence, loading, error.
-
-## Accessibility
-
-Actions are keyboard reachable. Agent name and confidence/readiness are readable text.
-
-## Examples
-
-- Nexus panel on Source event.
-- Steward brief on Admin/Setup.
-- Atlas panel in Control Tower.
-
-## Anti-patterns
-
-Blank chat prompt as primary UI, generic chatbot rail, uncited claims.
+- Ready
+- Partial context
+- Blocked
+- Low evidence
+- Low context
+- Approval pending
+- Error
 
 ## Acceptance Criteria
 
-Panel helps the user decide what to do next.
+- The panel helps the user decide what to do next.
+- The panel is impossible to confuse with a generic chat widget.
