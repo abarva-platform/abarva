@@ -1,6 +1,7 @@
 export * from './agent-validation';
 export * from './agent-validation-fixtures';
 export * from './agent-validation-report';
+export * from './admin-setup-readiness-contract';
 export * from './agent-validation-runner';
 export * from './agent-mission-report';
 export * from './agent-mission-types';
