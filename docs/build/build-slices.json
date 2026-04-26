@@ -7435,6 +7435,15 @@
       "status": "code_complete",
       "branch": "wave17/prod8-production-readiness-visual-flow",
       "description": "ProductionReadinessDecisionFlow with 8 sections: brief, demo, pilot, production blockers, component readiness pointer, evidence basis, live caveat, next 5 actions. Manifest-backed; not live monitoring."
+    },
+    {
+      "id": "SRC31",
+      "wave": "wave-17",
+      "name": "Source Commercial Hub Visual + Workflow Canon Refresh",
+      "type": "source-ui",
+      "status": "code_complete",
+      "branch": "wave17/src31-source-commercial-hub-workflow-canon",
+      "description": "SourceCommercialWorkflowCanvas \u2014 9-stage segmented commercial sourcing workflow (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Prop-slot composition. AbarVa canon. 14 tests."
     }
   ]
 }

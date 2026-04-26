@@ -879,7 +879,8 @@
         "SRC28 (wave-16): source-commercial-demo-scenario.ts deterministic seed. AMS outsourcing scenario: 4 vendors, 5 risks, 5 missions, 4 signals. 12 tests green.",
         "SRC27 (wave-16): SourceCommercialEventSection mounted in /source/events/[eventId]/page.tsx. Collapsible commercial intelligence section. Deterministic seed data, no live ingestion.",
         "SRC29 (wave-16): source-commercial-executive-brief.ts + SourceCommercialExecutiveBrief component. Dark-navy header, 3 risks, 3 BAFO levers, posture badge. 11 tests green.",
-        "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green."
+        "SRC30 (wave-16): source-commercial-action-queue.ts + SourceCommercialActionQueue component. 8-action queue, 5-item cap with show-more, state/priority chips. 12 tests green.",
+        "SRC31 (wave-17): SourceCommercialWorkflowCanvas with 9 workflow stages (brief, pricing, comparison, risk, BAFO, readiness, missions, signals, decision). Thin segmented nav. Deterministic caveat. 14 tests."
       ]
     },
     {
