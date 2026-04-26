@@ -7021,6 +7021,17 @@
       ],
       "sliceDoc": "docs/build/slices/LIVE4_AZURE_LAB_STORYBOARD.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "DEMO3",
+      "name": "20-Minute Boardroom Demo Pack",
+      "category": "demo",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/DEMO3_20_MINUTE_BOARDROOM_DEMO_PACK.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
