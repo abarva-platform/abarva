@@ -140,16 +140,17 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
 - 2026-04-25 · Source-specific Nexus API route stub implemented locally: deterministic no-model `POST /api/v1/source/[eventId]/nexus/ask` response using SourceAgentContextBundle, context validation report, workflow validation report, and multi-agent briefing.
 
 ## Last status emission
+- 2026-04-26 - Source dashboard mission preview big pack - PR #262 visual review approved the dashboard mission preview as current baseline with authenticated screenshot still blocked, PR #264 added deterministic Source dashboard route/component smoke and moved Source route-smoke evidence to partial, PR #265 planned the Source event canvas shell, and PR #266 refreshed the Source data readiness panel plan for the event canvas direction. Slice 2 polish skipped because the review did not identify safe specific polish without authenticated screenshot.
 - 2026-04-26 - Source Agent Mission report batch complete - PR #255 mission report formatter, PR #256 mission activity UI plan, PR #257 dashboard mission preview plan, and PR #259 dashboard mission preview all merged; next safe step is authenticated `/source` review with the mission preview visible.
 - 2026-04-25 - Larger gated Source batch status update - Slice 1 pricing PR updated to remove per-slice CYCLE_STATE changes, Slice 5 data readiness panel plan opened, Slice 2 and Slice 4 already had open equivalent PRs, Slice 3 blocked by open PR #221 - no runtime/model/upload/parsing work in this state slice.
 - 2026-04-25 - Supervised Source Agent Mission batch state - Agent Mission Model is on main, architecture alignment reconciliation opened, Source agent mission queue plan opened, agent mission activity UI plan opened, deterministic mission read-model implementation skipped until the queue plan is merged.
 
 ## AbarVa Source Sidecar State
 
-- Current completed milestone: PR #259 merged - tiny deterministic Source dashboard mission preview.
-- Dashboard decision: approve with minor polish, pending authenticated screenshot/review.
-- Current objective: review the authenticated `/source` dashboard with the deterministic mission preview visible, then decide whether tiny mission UI polish is safe.
-- Current item: Source Agent Mission report batch state update.
+- Current completed milestone: PR #266 merged - Source data readiness panel plan refreshed after mission preview review, route smoke, and event canvas shell planning.
+- Dashboard decision: approve as baseline. Authenticated screenshot remains unavailable in Codex, so no tiny polish was implemented.
+- Current objective: implement a bounded Source event canvas shell next, while preserving no chat UI, no model calls, no upload/parsing, no scorecard/artifact/value UI, and no workflow/approval engine.
+- Current item: Source dashboard mission preview batch state update.
 - Completed this cycle:
   - AbarVa Source Build Pack docs.
   - Context-awareness docs.
@@ -218,6 +219,10 @@ All 13 originally-P0 items COMPLETE · primitives #168 · banners #169 · §4.9 
   - Source data readiness and Admin/Setup integration spec created. Admin/Setup owns data onboarding, connector setup, dataset readiness, permissions, parsing status, and evidence usability; Source consumes readiness state for event workflow impact.
   - Source Nexus API route stub merged via PR #230 and contract tests merged via PR #245. The route remains deterministic/no-model and is not a production-ready agent runtime.
   - AbarVa Agent Mission Model merged via PR #248. Nexus, Sentinel, Atlas, and Steward now have mission, trigger, handoff, queue-state, priority, and calm activity UI canon.
+  - Source dashboard mission preview visual review merged via PR #262. Decision: approve as baseline; authenticated screenshot remains blocked by lack of signed-in Codex session.
+  - Source dashboard route/component smoke merged via PR #264. Deterministic `/source` page rendering and mission preview coverage now exist; authenticated live route smoke remains incomplete.
+  - Source event canvas shell plan merged via PR #265. Next implementation should harden the existing `/source/events/[eventId]` and `NexusEngagementCanvas` boundary as shell only.
+  - Source data readiness panel plan refresh merged via PR #266. Admin/Setup remains readiness owner; Source consumes readiness into event-canvas gaps and deterministic agent missions.
   - Source Agent Mission batch opened docs-only follow-up PRs: architecture alignment reconciliation, Source mission queue plan, and agent mission activity UI plan.
   - Deterministic Source agent mission read model merged via PR #254. Source can now derive Nexus, Sentinel, Atlas, and Steward missions from seeded Source context plus context/workflow validation reports without model calls, persistence, API routes, scheduler, or UI.
   - Deterministic Source agent mission report formatter merged via PR #255. Mission reports summarize 11 seeded missions, including 2 critical, 7 high, and 2 medium missions, with top mission and markdown reporting helpers.
