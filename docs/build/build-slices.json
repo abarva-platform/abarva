@@ -5947,6 +5947,443 @@
         "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
       ],
       "notes": "QA14 lands the fourth founder-facing verification runbook covering the canvas implementation slices (SOL10 Canvas UI Shell, SOL11 Architecture Draft Read Model, SOL12 Workshop-to-Architecture Refinement, SOL13 Architecture Deliverable Renderer, SOL14 Canvas Versioning Layer) plus MW7 Workshop Deliverable Refinement Loop. Documentation only at the manifest level. Replaces the prior QA2 SOL1 / SOL2 / MW2 / PF2 contents at SOLUTION_WORKSHOP_VERIFICATION_RUNBOOK.md; the QA2 contents are preserved in spirit by SOLUTION_INTELLIGENCE_VERIFICATION_RUNBOOK.md sections A and I. Rows for SOL10-SOL14 / MW7 read as deferred until the corresponding implementation slice lands. validation_qa stays tested (not promoted); solution_intelligence is not promoted from this docs-only runbook. The runbook does not execute the verification it documents."
+    },
+    {
+      "id": "TEN4",
+      "name": "Data Plane Adapter Contract",
+      "category": "TEN",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane A (Wave3 controlled multi-agent build)",
+      "dependsOn": [
+        "TEN1",
+        "TEN2",
+        "TEN3"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/architecture/data-plane-adapter-contract.ts",
+        "src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "docs/build/slices/TEN4_DATA_PLANE_ADAPTER_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/data-plane-adapter-contract.ts exports the seven canonical adapter interfaces (RelationalStoreAdapter, ObjectStoreAdapter, VectorSearchAdapter, GraphProviderAdapter, EvidenceLedgerAdapter, ModelGatewayProviderAdapter, AuditStoreAdapter); each declares provider: string, capabilities: ReadonlyArray<string>, requiredEnvVars: ReadonlyArray<string>, safetyConstraints: ReadonlyArray<string>; module also exports the canonical tuples (DATA_PLANE_ADAPTER_KINDS, DATA_PLANE_DEPLOYMENT_MODES) and helpers buildDataPlaneAdapterContractSeed, summarizeDataPlaneAdapters, validateDataPlaneAdapter.",
+        "Every emitted adapter carries createdFrom 'deterministic_data_plane_adapter_contract_seed'; buildDataPlaneAdapterContractSeed returns a seed with exactly one entry per canonical adapter kind.",
+        "src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts asserts all seven adapter shapes are representable, proves byte-equal determinism (JSON.stringify-equal across repeated buildDataPlaneAdapterContractSeed and summarizeDataPlaneAdapters calls), asserts the validator rejects empty provider / capabilities / requiredEnvVars / safetyConstraints / wrong createdFrom, asserts the summary reconciles totals, and asserts module hygiene with a stripStringLiterals pass: no Date.now / Math.random / new Date( / fetch( in code; no openai / anthropic / @anthropic-ai/* / @openai/* / aws-sdk / @azure/* / @google-cloud/* / pg / pinecone / neo4j-driver imports; no imports from @/lib/auth / source / sentinel / atlas / nexus / agent; no supabase reference.",
+        "docs/build/slices/TEN4_DATA_PLANE_ADAPTER_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, readiness impact, validation commands, and acceptance criteria.",
+        "docs/build/build-slices.json appends a TEN4 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (TEN1, TEN2, TEN3), status code_complete, risk low, ownerAgent Lane A, and lastUpdated 2026-04-26; manifest top-level lastUpdated is 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates data_evidence_knowledge_fabric and production_deployment notes / nextAction (conservative; no promotion) and bumps top-level lastUpdated to 2026-04-26.",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/data-plane-adapter-contract.ts src/__tests__/integration/architecture/data-plane-adapter-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that defines the provider-agnostic adapter shapes for every component of the AbarVa data plane (relational store, object store, vector search, graph provider, evidence ledger, model gateway provider, audit store). Each adapter interface declares provider, capabilities, requiredEnvVars, and safetyConstraints so AbarVa can run on shared SaaS, dedicated tenant, or private (customer-owned) deployments without changing the runtime contract. Type-only module - no provider SDK import, no fetch, no Date, no randomness, no UI, no persistence. Companion test (16 cases) proves all seven shapes representable, byte-equal determinism, validator rejects bad input, summary reconciles totals, and module hygiene. Read model only; data_evidence_knowledge_fabric status is preserved at scaffolded; production_deployment status is preserved at blocked; no other component is promoted. The live adapter implementations and the tenant adapter registry runtime land in later slices behind this shape contract."
+    },
+    {
+      "id": "CLOUD6",
+      "name": "Enterprise Dependency Matrix",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane B (parallel build pack)",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2",
+        "CLOUD5",
+        "TEN3"
+      ],
+      "allowedFiles": [
+        "docs/architecture/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md",
+        "src/lib/architecture/enterprise-dependency-matrix.ts",
+        "src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts",
+        "docs/build/slices/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        ".github/workflows/**",
+        "azure.yaml",
+        "terraform/**",
+        "infra/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/enterprise-dependency-matrix.ts exports DEPLOYMENT_TARGETS (5 entries: vercel_saas, azure_vnet, gcp_vpc, aws_private, on_prem_air_gapped), DEPENDENCY_CAPABILITIES (11 entries: frontend_hosting, compute, postgres, blob, secrets, idp, observability, vector_search, graph, model_gateway, ci_cd), DEPENDENCY_READINESS_STATES (4 entries: available, preview, deferred, not_supported), and the corresponding union types DeploymentTarget / DependencyCapability / DependencyReadiness, plus the interfaces DependencyMatrixEntry, EnterpriseDependencyMatrix, and DependencyMatrixSummary.",
+        "src/lib/architecture/enterprise-dependency-matrix.ts exports buildEnterpriseDependencyMatrix(), summarizeEnterpriseDependencyMatrix(matrix?), and getNotSupportedCombinations(matrix?); the matrix contains exactly 55 entries (11 capabilities x 5 targets) with stable ids of the form matrix-{capability}-{target}; every entry carries createdFrom 'deterministic_enterprise_dependency_matrix_seed'.",
+        "src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts asserts: all 5 deployment targets present and ordered; all 11 capabilities present and ordered; all 4 readiness states representable and ordered; byte-equal determinism for buildEnterpriseDependencyMatrix / summarizeEnterpriseDependencyMatrix / getNotSupportedCombinations across repeated calls; coverage (every capability x target pair appears exactly once, ids are stable, every cell carries non-empty defaultOption / fallbackOption / notes / followUp / label); summary reconciliation (entriesByTarget / entriesByCapability / entriesByReadiness sum to totalEntries; per-target counts equal capability count; per-capability counts equal target count); getNotSupportedCombinations returns only not_supported rows; module hygiene (no Date.now / Math.random / new Date / fetch; no auth / supabase / source / sentinel / atlas / nexus / agent imports; no vendor model names; no useState / useEffect; no placeholder language; no dollar amounts; no production_ready / production-ready claims).",
+        "docs/architecture/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md documents the 11x5 matrix shape, axes, readiness states, what is explicitly out of scope, why it is safe, forward use, and how to re-run; cross-references CLOUD1, CLOUD2, CLOUD5, TEN3, ARCH1, MG2, MG3.",
+        "docs/build/slices/CLOUD6_ENTERPRISE_DEPENDENCY_MATRIX.md documents purpose, what changed, what is explicitly out of scope, why it is safe, how to re-run, and readiness impact.",
+        "docs/build/build-slices.json appends a CLOUD6 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2, CLOUD5, TEN3), status code_complete, risk low, ownerAgent Wave3 Lane B, and lastUpdated 2026-04-26; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "docs/build/production-readiness.json production_deployment component appends a note acknowledging that the CLOUD6 enterprise dependency matrix has landed as a deterministic read model covering 55 cells; status is preserved (no promotion); production_deployment.nextAction is UNIONed conservatively without overwriting prior PROD1 / PROD2 / PROD3 / PROD4 / OPS1 / TEN1 / TEN2 / CLOUD1 / CLOUD2 / OPS2 / CLOUD5 wording; manifest top-level lastUpdated is bumped to 2026-04-26.",
+        "Read model only; no application code, no runtime, no cloud SDK call, no deploy, no auth, no supabase, no migrations, no package manifest, no IaC, no platform-design doc is modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts",
+        "npx eslint src/lib/architecture/enterprise-dependency-matrix.ts src/__tests__/integration/architecture/enterprise-dependency-matrix.test.ts --max-warnings=0",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that maps the 11 canonical AbarVa dependency capabilities (frontend hosting, compute, postgres, blob, secrets, idp, observability, vector_search, graph, model_gateway, ci_cd) onto the 5 canonical deployment targets (vercel_saas, azure_vnet, gcp_vpc, aws_private, on_prem_air_gapped). 55 cells; every cell records readiness (available / preview / deferred / not_supported), defaultOption, fallbackOption, notes, and followUp. The single not_supported cell is model_gateway x on_prem_air_gapped; the matrix records the honest reason. CLOUD6 does not deploy, does not authenticate, does not call any cloud SDK or vendor model provider. production_deployment status is preserved (still blocked); nextAction is UNIONed conservatively. Wave3 Lane B commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "TRUST4",
+      "name": "Evidence Manifest / No-Raw-Copy Mode",
+      "category": "TRUST",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane C (parallel build pack)",
+      "dependsOn": [
+        "TRUST1"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/admin/evidence-manifest-model.ts",
+        "src/__tests__/integration/admin/evidence-manifest-model.test.ts",
+        "docs/build/slices/TRUST4_EVIDENCE_MANIFEST_NO_RAW_COPY_MODE.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/admin/evidence-manifest-model.ts exports EvidenceManifestEntry, EvidenceMetricKind ('count' | 'rate' | 'currency' | 'duration' | 'percentage' | 'category' | 'narrative'), EvidenceManifestSourceOwner, EvidenceManifestDateRange, EvidenceManifestSummary, and EvidenceManifestVerification ('self_attested' | 'owner_signed' | 'co_signed' | 'audited').",
+        "Each EvidenceManifestEntry carries metric, metricKind, value (string only \u2014 never raw data), unit?, sourceOwner (named ownerRole + sourceSystem), dateRange (ISO YYYY-MM-DD bounded), verification, rawDataLocation (free-form label pointing to client-side storage), and rawRetainedByClient: true (structurally enforced by the type literal).",
+        "Module exports buildEvidenceManifestSeed, summarizeEvidenceManifests, validateEvidenceManifestEntry, and getUnverifiedEvidence helpers; createdFrom 'deterministic_evidence_manifest_seed' appears on every seed entry.",
+        "buildEvidenceManifestSeed is byte-equal across repeated calls (JSON.stringify equality enforced).",
+        "Seed represents all 7 metric kinds and all 4 verification states at least once; every seed entry has rawRetainedByClient: true (test enforced).",
+        "No actual raw data values: regex enforced \u2014 no long alphanumeric strings (>= 32 chars without spaces or punctuation) and no http/https URLs in any value or rawDataLocation field across the seed.",
+        "validateEvidenceManifestEntry rejects entries with raw payloads in value or rawDataLocation, inverted date ranges, missing source owner role/system, non-canonical metric kinds, non-canonical verification states, wrong createdFrom markers, and rawRetainedByClient !== true.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references; source contains zero embedded URLs (test enforced)."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/evidence-manifest-model.test.ts",
+        "npx eslint src/lib/admin/evidence-manifest-model.ts src/__tests__/integration/admin/evidence-manifest-model.test.ts --max-warnings=0"
+      ],
+      "notes": "Pure deterministic evidence manifest read model that defines how a client supplies evidence to AbarVa by manifest only \u2014 never by raw data copy. Each manifest entry names a metric, a labelled string value (never raw), the named source owner (role + system), a bounded ISO date range, the verification posture (self_attested / owner_signed / co_signed / audited), and a free-form label pointing to where the underlying data lives on the client side. rawRetainedByClient is structurally true on every entry. Seven canonical metric kinds (count, rate, currency, duration, percentage, category, narrative) and four canonical verification states. Validator rejects raw payloads (long alphanumeric blobs and http/https URLs), inverted date ranges, missing source owner, non-canonical kinds / verifications, and forced rawRetainedByClient overrides. No DB writes, no migrations, no live runtime, no audit ledger writes, no model invocation, no Steward runtime; the future Steward UI and runtime gateway will consume this read model before any client evidence is cited."
+    },
+    {
+      "id": "DATA6",
+      "name": "Provider-Agnostic Vector / Search Contract",
+      "category": "DATA",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (wave3 data parallel pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TEN2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/vector-search-provider-contract.ts",
+        "src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "docs/build/slices/DATA6_PROVIDER_AGNOSTIC_VECTOR_SEARCH_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "src/app/**",
+        "src/components/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md"
+      ],
+      "acceptanceCriteria": [
+        "Module exports VectorSearchProviderKind union over the 4 canonical provider kinds (pgvector, azure_ai_search, alloydb_cloud_sql_vector, pinecone_like_generic), VectorSearchCapability union over the 6 canonical capabilities (similarity_search, hybrid_search, metadata_filter, reranking, tenant_isolation, index_management), VectorSearchTenantIsolationModel union over the 3 canonical isolation models (logical_namespace, physical_separation, index_per_tenant), and the VectorSearchProviderProfile / VectorSearchAdapterContract / VectorSearchProviderSummary interfaces.",
+        "Every provider profile carries kind, description, capabilities (subset of the 6 canonical capabilities), tenantIsolationModel (one of the 3 canonical models), auditHooks (non-empty ReadonlyArray<string>), requiredEnvVars (non-empty ReadonlyArray<string>), and liveExecution === false; every adapter contract carries createdFrom === 'deterministic_vector_search_provider_seed' and liveBinding === false.",
+        "Helpers listVectorSearchProviders(), buildVectorSearchProviderRegistry(), and summarizeVectorSearchProviders() are byte-equal deterministic across consecutive invocations and reconcile with the canonical lists; getVectorSearchProviderProfile returns the canonical profile for a known kind and null for unknown / empty input.",
+        "Integration test asserts all 4 provider kinds present, all 6 capabilities representable, all 3 tenant-isolation models present, byte-equal determinism across calls, and module hygiene: no provider SDK imports (@pinecone-database, @azure/search-documents, pg, @google-cloud/*, openai, @anthropic-ai/*, axios), no fetch( / http( / axios runtime calls, no Date.now / Math.random / new Date(, no React hooks, no placeholder copy, no forbidden runtime imports (sentinel / atlas / nexus / source / agent / auth / supabase).",
+        "Slice documentation explains the contract scope, names the per-provider capabilities and tenant-isolation models, lists out-of-scope items (no live provider calls, no connector binding, no production-readiness promotion, no UI, no migrations), and lists the validation commands.",
+        "production-readiness.json data_evidence_knowledge_fabric notes / nextAction are UNION-updated conservatively without overwriting prior wording; no component status promotion; manifest top-level lastUpdated remains 2026-04-26."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/vector-search-provider-contract.ts src/__tests__/integration/architecture/vector-search-provider-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Provider-agnostic vector / search contract. Pure type-only / data-only module: zero runtime, no provider SDK, no fetch / http / axios, no Date / random / live retrieval, no UI, no migrations, no auth / source / sentinel / atlas / nexus / agent / supabase imports. Names the providers (pgvector, Azure AI Search, AlloyDB / Cloud SQL vector, generic Pinecone-like), capabilities, tenant-isolation models, audit hooks, and env vars the live retrieval runtime must enforce regardless of which provider is wired up. data_evidence_knowledge_fabric status is preserved (still scaffolded); future live adapter binding is deferred to a follow-up slice."
+    },
+    {
+      "id": "GRAPH1",
+      "name": "Graph Provider Contract + Relationship Fallback",
+      "category": "ARCH",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane E (Wave3 parallel build pack)",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TEN2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/graph-provider-contract.ts",
+        "src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "docs/build/slices/GRAPH1_GRAPH_PROVIDER_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/auth/**",
+        "src/lib/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/graph-provider-contract.ts exports GraphProviderKind, GraphQueryCapability, GraphProviderRuntimeStatus, GraphProviderProfile, GraphFallbackColumn, GraphFallbackColumnTypeFamily, GraphRelationshipFallbackTable, GraphRelationshipFallbackSchema, GraphProviderSummary, GRAPH_PROVIDER_KINDS, GRAPH_QUERY_CAPABILITIES, listGraphProviders, buildGraphProviderRegistry, summarizeGraphProviders, buildRelationshipFallbackSchema.",
+        "GraphProviderKind covers exactly 'neo4j', 'cosmos_db_gremlin', 'neptune', and 'postgres_relationship_fallback'; every value appears exactly once in the seed registry.",
+        "GraphQueryCapability covers exactly 'shortest_path', 'multi_hop_traversal', 'subgraph_extract', 'relationship_count', 'pattern_match', and 'tenant_scoped_query'; every value appears at least once across the seed.",
+        "Exactly one provider records isFallback: true and it is the postgres_relationship_fallback kind; non-fallback providers all record runtimeStatus 'contract_only'.",
+        "Every provider records non-empty risk, mitigation, auditRequirement, label, family, and tenantKeyProperty; every provider supports tenant_scoped_query and records requiresTenantKeyOnTraversal: true.",
+        "Every provider and every fallback table is tagged createdFrom 'deterministic_graph_provider_contract_seed'.",
+        "buildRelationshipFallbackSchema returns a deterministic SQL-like schema description (NOT executable SQL) declaring graph_fallback_nodes, graph_fallback_edges, and graph_fallback_edge_versions; every table carries a non-null tenant_key column and at least one index that includes tenant_key.",
+        "src/__tests__/integration/architecture/graph-provider-contract.test.ts proves byte-equal determinism for both buildGraphProviderRegistry and buildRelationshipFallbackSchema, all 4 provider kinds, all 6 capabilities, the documented fallback option, summarizeGraphProviders reconciliation, and module hygiene (no prisma., no supabase., no await db, no Date.now, no Math.random, no new Date(, no fetch(, no React hooks, no placeholder copy, no executable SQL DDL).",
+        "docs/build/slices/GRAPH1_GRAPH_PROVIDER_CONTRACT.md documents the slice purpose, what changed, what is explicitly out of scope, why it is safe, validation commands, and acceptance criteria.",
+        "docs/build/build-slices.json appends a GRAPH1 entry with allowedFiles, forbiddenFiles, validationCommands, dependsOn TEN2, status code_complete, risk low, ownerAgent Lane E, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json data_evidence_knowledge_fabric notes / nextAction are UNION-updated conservatively without overwriting prior wording; data_evidence_knowledge_fabric status is preserved (still scaffolded, not promoted).",
+        "Read model only; no auth implementation changes, no RLS, no migrations, no live runtime claim; only the five allowed files are staged."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "npx eslint --max-warnings=0 src/lib/architecture/graph-provider-contract.ts src/__tests__/integration/architecture/graph-provider-contract.test.ts",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Deterministic, file-pure read model that names the canonical graph provider kinds (Neo4j, Cosmos DB Gremlin, Neptune, Postgres relationship-table fallback), the six query capabilities each provider must advertise, and the typed shape of the Postgres relationship-table fallback (graph_fallback_nodes, graph_fallback_edges, graph_fallback_edge_versions). Read-only complement to TEN2 graph boundary kind. Documents shape only; does not connect to any graph database, does not run any traversal, does not generate or execute SQL, does not migrate, does not promote data_evidence_knowledge_fabric. The fallback schema is a typed description, not a CREATE TABLE statement; the migration slice is a separate follow-up. Lane E commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "MG4",
+      "name": "Tenant Model Provider Policy Matrix",
+      "category": "MG",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane F",
+      "dependsOn": [
+        "MG2",
+        "MG3"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/tenant-model-provider-policy.ts",
+        "src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts",
+        "docs/build/slices/MG4_TENANT_MODEL_PROVIDER_POLICY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/source/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/components/**",
+        "src/app/**"
+      ],
+      "acceptanceCriteria": [
+        "New module src/lib/architecture/tenant-model-provider-policy.ts exposes ModelProviderKind ('provider_alpha' | 'provider_beta' | 'provider_gamma' | 'on_prem_open_weight' | 'azure_oai' | 'vertex_ai' | 'bedrock'), TenantModelPolicyDecision ('approved' | 'blocked' | 'deferred' | 'requires_review'), TenantModelPolicyBasis ('data_classification' | 'tenant_admin_decision' | 'security_review' | 'governance_review' | 'cost_constraint'), TenantModelPolicyPurpose, TenantModelPolicyEntry, TenantModelPolicyMatrixSummary, and TenantModelAccessEvaluation types.",
+        "Module exports MODEL_PROVIDER_KINDS (7 kinds in canonical order), TENANT_MODEL_POLICY_DECISIONS (4 decisions in canonical order), TENANT_MODEL_POLICY_BASES (5 basis values in canonical order), TENANT_MODEL_POLICY_PURPOSES (7 purposes), and TENANT_MODEL_POLICY_TENANT_KEYS readonly constants.",
+        "buildTenantModelPolicyMatrix() returns a deterministic seed covering 3 tenants x 7 providers = 21 entries; every entry is tagged createdFrom 'deterministic_tenant_model_provider_policy_seed' and id formatted as 'tmpp-{tenantKey}-{provider}'.",
+        "Seed covers all 7 provider kinds, all 4 decisions, and all 5 basis values at least once; every approved entry carries a non-empty basis and an empty nextReviewStep; every non-approved entry carries a non-empty basis and a non-empty nextReviewStep; every entry has at least one purpose and a non-empty rationale.",
+        "evaluateTenantModelAccess(tenantKey, provider, purpose) returns blocked decision for empty tenantKey, requires_review decision with matchedEntryId null for unknown (tenant, provider) pair, requires_review decision with the entry id when entry exists but does not cover the requested purpose, and the matched entry's decision and basis otherwise.",
+        "summarizeTenantModelPolicyMatrix reconciles totalProviders === 7, totalTenants === uniqueTenants.length, byDecision sums to totalEntries, byProvider sums to totalEntries, uniqueTenants is sorted ascending and de-duplicated, approvedCount / blockedCount / deferredCount / requiresReviewCount mirror byDecision, empty input returns a zero-counted summary.",
+        "Module hygiene: no provider SDK import (no 'openai', no 'anthropic', no '@anthropic-ai/sdk', no '@openai/sdk', no 'cohere-ai'); no Date.now, no Math.random, no new Date(, no fetch(, no useState / useEffect, no 'Coming soon' / 'TBD' / 'Lorem ipsum'; no imports from src/lib/sentinel, src/lib/atlas, src/lib/nexus, src/lib/source, src/lib/agent, src/lib/auth, or supabase. The hygiene scanner strips comments and string literals before regex.",
+        "New integration test src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts asserts canonical vocabularies, full coverage, approved-requires-basis invariant, byte-equal determinism, evaluator behavior, summary reconciliation, and module hygiene; no anthropic / openai SDK imports.",
+        "docs/build/slices/MG4_TENANT_MODEL_PROVIDER_POLICY_MATRIX.md documents the slice (relationship to MG2 / MG3, what changed, provider kinds table, decisions, basis values, coverage, evaluator behavior, what is intentionally not in v1, hygiene invariants, validation commands, future slices, acceptance criteria mapping). Cites MG2 and MG3 explicitly.",
+        "docs/build/build-slices.json appends the MG4 entry with category MG, dependsOn [MG2, MG3], status code_complete, risk low, allowedFiles, forbiddenFiles, acceptanceCriteria, validationCommands, and notes; manifest lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates the model_gateway and agent_runtime notes / nextAction to acknowledge the MG4 tenant model provider policy matrix; statuses are preserved (no promotions); manifest lastUpdated remains 2026-04-26.",
+        "No application UI, runtime, auth, supabase, agent runtime, or migrations are modified. No live model invocation."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts",
+        "npx eslint src/lib/architecture/tenant-model-provider-policy.ts src/__tests__/integration/architecture/tenant-model-provider-policy.test.ts --max-warnings=0",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic per-tenant model provider policy matrix. Read-only complement to MG3 (integration contract) and MG2 (deterministic stub). Names which providers each tenant has approved / blocked / deferred / requires_review for which canonical purposes, with the policy basis (data classification, tenant admin decision, security review, governance review, cost constraint) recorded for every decision. Seed is dense: 3 tenants x 7 providers = 21 entries. The live model gateway runtime (MG5) will consume this matrix when dispatching tenant requests. No live model invocation, no SDK import, no network, no Date.now, no randomness. model_gateway and agent_runtime statuses are intentionally not promoted by MG4."
+    },
+    {
+      "id": "CLOUD7",
+      "name": "Enterprise Deployment Verification Runbook",
+      "category": "CLOUD",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Wave3 Lane G",
+      "dependsOn": [
+        "CLOUD1",
+        "CLOUD2",
+        "TRUST1",
+        "TRUST2",
+        "TEN1",
+        "TEN2"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md",
+        "docs/build/slices/CLOUD7_ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/app/**",
+        "src/components/**",
+        "src/lib/**",
+        "src/__tests__/**",
+        "supabase/**",
+        "db/**",
+        "package.json",
+        "package-lock.json",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**",
+        "docs/CORE_APP_CONTEXT_PACK.md",
+        "infra/**",
+        "terraform/**",
+        "bicep/**",
+        ".github/workflows/**",
+        "azure.yaml",
+        "next.config.ts",
+        ".env",
+        ".env.local",
+        ".env.production",
+        ".env.development",
+        ".gitignore",
+        "Dockerfile",
+        ".dockerignore"
+      ],
+      "acceptanceCriteria": [
+        "docs/build/ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents \u00a7A SaaS pilot readiness (TEN1 SaaS tenancy architecture + TEN2 five canonical tenant isolation levels + MG2 shared egress posture for the pilot tier), \u00a7B dedicated tenant readiness (TEN3 conditional with DB / storage / vector / graph / audit / model gateway / SSO / tenant admin / onboarding / upgrade / backup paths), \u00a7C private data plane readiness (CLOUD1 four-tier strategy + control-plane / data-plane separation + dependency replacement matrix + per-tier model gateway posture + per-tier operational responsibility split), \u00a7D Azure VNet reference lab (CLOUD2 blueprint + CLOUD5 Bicep starter parses + parameters file uses <replace-me> placeholders + no hardcoded secrets + README marks STARTER / LAB / not production), \u00a7E Docker runtime packaging (CLOUD3 multi-stage Dockerfile + non-root user + no baked secrets + .dockerignore covers node_modules / .env / .git / reports/), \u00a7F dataset trust contract (TRUST1 five sharing levels L0\u2013L4 and five-state trust ladder loaded \u2192 metadata_only \u2192 sample_summary \u2192 audited_summary \u2192 decision_grade with L4 default-deny and revocation / expiration), \u00a7G agent data access policy (TRUST2 matrix covering all four canonical agents and all five sharing levels with default-deny and approval-evidence requirement), \u00a7H evidence manifest mode (EVID2 ledger + EVID3 claim/support + honest-unavailable posture), \u00a7I model provider policy (MG2 per-tier provider policy + egress allowlist + no direct SDK call from outside the gateway), \u00a7J runtime safety gate (deterministic guardrail before egress + tool manifest enforcement + TRUST2 level enforcement + audit emission + no-bypass posture), \u00a7K unified audit (AUD2 fifteen canonical event types + immutable / traceId / tenantKey / workObject / createdFrom on every event + three actor kinds + no live persistence claim), \u00a7L no-fabrication contract (no fake citations / approvals / dollar amounts / live model claim / live monitoring claim + honest-unavailable as the default), \u00a7M CI / Vercel signal + security checklist + morning review rules (PROD3 live refresh API + PROD4 honest unavailable + PROD5 DeploymentStatusCard honest chip + ESLint + routes-and-disclaimers + Vercel green + Supabase Preview skipping + secrets / GUID / auth / future-only / canon-chrome / dark-surface / .env.example checks + PR merge gated on PROD2 passed + conservative-status policy + canonical cherry-pick path + lane agents commit only + integration agent owns merges + founder owns push and merge decisions + conditional rows record deferred not failed), \u00a7N morning review note template.",
+        "docs/build/slices/CLOUD7_ENTERPRISE_DEPLOYMENT_VERIFICATION_RUNBOOK.md documents purpose (sibling runbook to QA8 walking operator-posture instead of slice contracts), what changed (new runbook + new slice contract + manifest updates), out of scope (no application code, no runtime, no migrations, no auth, no supabase, no IaC, no .github/workflows, no package manifests, no next.config.ts, no model call, no live cloud call, no live persona crawler, no CI integration, no new env file, no platform-design changes, no component promotion, no QA8 wording overwrite), why this is safe (documentation only; UNION manifest updates; conditional rows record deferred), how to re-run (tsc clean + JSON parse + line count sanity), readiness impact (production_deployment status preserved at blocked; validation_qa preserved at tested; prod-deploy-verification blocker preserved verbatim; no component promotion; lastUpdated bumped), and cross-references (QA8 sibling + CLOUD1 / CLOUD2 / CLOUD3 / CLOUD4 / CLOUD5 / CLOUD8 / TEN1 / TEN2 / TEN3 / TRUST1 / TRUST2 / TRUST3 / EVID2 / EVID3 / AUD2 / MG2 / PROD3 / PROD4 / PROD5).",
+        "docs/build/build-slices.json appends a CLOUD7 entry with this slice's allowedFiles, forbiddenFiles, validationCommands, dependsOn (CLOUD1, CLOUD2, TRUST1, TRUST2, TEN1, TEN2), status code_complete, risk low, ownerAgent Wave3 Lane G, and lastUpdated 2026-04-26; manifest top-level lastUpdated remains 2026-04-26.",
+        "docs/build/production-readiness.json UNION-updates validation_qa.notes / validation_qa.nextAction and production_deployment.notes / production_deployment.nextAction acknowledging CLOUD7 as a sibling operator-posture runbook to QA8; component statuses are preserved (no promotions); the prod-deploy-verification blocker is preserved verbatim; manifest top-level lastUpdated is set to 2026-04-26.",
+        "Documentation only; no application code, runtime, auth, supabase, migrations, package manifests, infrastructure-as-code, GitHub workflows, next.config.ts, env files, .gitignore, Dockerfile, .dockerignore, or platform-design docs are modified."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "node -e \"JSON.parse(require('fs').readFileSync('docs/build/build-slices.json','utf8')); JSON.parse(require('fs').readFileSync('docs/build/production-readiness.json','utf8')); console.log('json ok')\""
+      ],
+      "notes": "Founder-facing operator-posture runbook for verifying enterprise deployment (SaaS pilot, dedicated tenant, private data plane, fully self-managed) plus Azure VNet lab, Docker packaging, dataset trust contract, agent data access, evidence manifest mode, model provider policy, runtime safety gate, unified audit, no-fabrication contract, CI / Vercel signal, security review checklist, and morning review / merge gates. Sibling runbook to QA8 (ENTERPRISE_DEPLOYMENT_TRUST_VERIFICATION_RUNBOOK): QA8 walks slice contracts as filed; CLOUD7 walks the operator posture an enterprise prospect or security review team would walk against the platform. Documentation only. Deterministic \u2014 does not exercise live retrieval, model calls, browser automation, or live cloud calls. TEN3 / TRUST3 / CLOUD3 / CLOUD4 / CLOUD5 / PROD4 / ADM6 are explicitly conditional: each row is verified only if the matching slice has landed in the batch under review and otherwise records deferred (not failed). production_deployment status is preserved (still blocked); the prod-deploy-verification blocker is preserved verbatim; no component is promoted; QA8 wording is preserved verbatim. Wave3 Lane G commits locally only; the integration agent owns the cherry-pick and merge."
+    },
+    {
+      "id": "SEC1",
+      "name": "Runtime Safety / Policy Gate Contract",
+      "category": "SEC",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Steward",
+      "lastUpdated": "2026-04-26",
+      "dependsOn": [
+        "TOOL2",
+        "TOOL3",
+        "TRUST2"
+      ],
+      "allowedFiles": [
+        "src/lib/architecture/runtime-policy-gate.ts",
+        "src/__tests__/integration/architecture/runtime-policy-gate.test.ts",
+        "docs/build/slices/SEC1_RUNTIME_SAFETY_POLICY_GATE_CONTRACT.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/lib/nexus/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/agent/**",
+        "src/lib/auth/**",
+        "supabase/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/source/**"
+      ],
+      "acceptanceCriteria": [
+        "src/lib/architecture/runtime-policy-gate.ts exports the canonical POLICY_CHECK_KINDS tuple ('tenant_scope', 'tool_use', 'model_gateway_use', 'evidence_use', 'dataset_trust', 'export_download', 'agent_handoff') and POLICY_DECISIONS tuple ('allow', 'deny', 'require_waiver', 'require_review') in canonical order.",
+        "Module exports PolicyCheckKind, PolicyDecision, PolicyDenyReason, PolicyReviewerRole, PolicyCheckRequest, PolicyCheckResult, and PolicyGateSummary types with the contract-required fields, and helpers evaluatePolicyCheck, summarizePolicyChecks, getDenyReasons.",
+        "Every PolicyCheckResult emitted by evaluatePolicyCheck carries decision, rationale, policyBasis (shape 'runtime_policy_gate.v1.<kind>'), createdFrom 'deterministic_runtime_policy_gate_seed', and optional denyReason / reviewerRole when applicable.",
+        "tenant_scope returns deny with denyReason 'tenant_scope_mismatch' when subjectTenantKey differs from tenantKey (and neither is platform) or when tenantKey is empty; tool_use returns deny when toolRegistered === false or toolActorAllowed === false; model_gateway_use returns require_review unless modelGatewayLive === true; evidence_use returns deny on 'unusable' / require_review on 'unknown' / allow on 'usable'; dataset_trust denies L4 sensitive without explicit_approved, denies revoked / expired approvals at any level, and require_waiver for L3 without explicit_approved; export_download returns require_waiver unless approvalState === 'explicit_approved'; agent_handoff returns deny when handoffAuthorized === false / require_review when undefined / allow when true.",
+        "summarizePolicyChecks reconciles totals (byDecision and byKind sum to totalChecks); allowCount / denyCount / waiverCount / reviewCount mirror byDecision; empty input returns a zero-counted summary.",
+        "getDenyReasons returns only the deny-decision reasons in input order and an empty list when nothing is denied.",
+        "Module has no imports from @/lib/sentinel|atlas|nexus|agent|source|auth or supabase, no Date.now / Math.random / new Date( / fetch(, no anthropic / openai, no useState / useEffect, no Coming soon / TBD / Lorem ipsum placeholder language, and no await / shell exec / fs writes.",
+        "Test suite at src/__tests__/integration/architecture/runtime-policy-gate.test.ts is fully green and enforces all 7 check kinds, all 4 decisions, tenant_scope mismatch -> deny, export_download without approval -> require_waiver, byte-equal JSON determinism, and module hygiene.",
+        "Production readiness manifest is UNION-updated to acknowledge SEC1 under agent_runtime, audit_governance, and validation_qa with live enforcement at the dispatcher boundary deferred; all other manifest fields are preserved exactly."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/architecture/runtime-policy-gate.test.ts",
+        "npx eslint src/lib/architecture/runtime-policy-gate.ts src/__tests__/integration/architecture/runtime-policy-gate.test.ts --max-warnings=0",
+        "python3 -c \"import json; json.load(open('docs/build/build-slices.json')); json.load(open('docs/build/production-readiness.json'))\""
+      ],
+      "notes": "Deterministic, file-pure contract that names the safety / policy checks the runtime must apply BEFORE any tool call, model call, evidence use, dataset access, export, or cross-agent handoff. Companion to TOOL2 (Tool Registry MVP) and TOOL3 (Tool Invocation Audit). 7 canonical check kinds, 4 canonical decisions, 9-element deny-reason closed set, 4-element reviewer-role closed set. No tool dispatch, no model calls, no audit-ledger persistence, no migrations, no UI."
     }
   ]
 }
