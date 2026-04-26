@@ -4403,6 +4403,62 @@
         "npm run build"
       ],
       "notes": "Pure deterministic dataset trust read model that defines progressive client data sharing levels (L0 public/external \u2192 L4 sensitive raw data) and a five-state trust ladder (loaded \u2192 available \u2192 usable_evidence \u2192 agent_usable \u2192 decision_grade). Encodes canonical rules so clients can engage AbarVa without granting broad raw-data access: loaded \u2260 usable, available \u2260 agent-usable, raw data not required by default, evidence supplied via manifests, agent use denied by default, L4 requires explicit named approval, approval is never fabricated. No DB writes, no migrations, no live retrieval, no model invocation. Future TRUST2 attaches trust + ladder fields to ADM3 inventory items without a TRUST1 contract change."
+    },
+    {
+      "id": "TRUST2",
+      "name": "Agent Data Access Policy Matrix",
+      "category": "TRUST",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Lane D (parallel build pack)",
+      "dependsOn": [
+        "ADM3"
+      ],
+      "lastUpdated": "2026-04-26",
+      "allowedFiles": [
+        "src/lib/admin/agent-data-access-policy.ts",
+        "src/__tests__/integration/admin/agent-data-access-policy.test.ts",
+        "docs/build/slices/TRUST2_AGENT_DATA_ACCESS_POLICY_MATRIX.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/lib/admin/dataset-trust-model.ts",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module declares the canonical agent string-literal union 'nexus' | 'sentinel' | 'atlas' | 'steward' and the AgentDataUsePurpose union covering summarize, recommend, cite_as_evidence, generate_deliverable, evaluate_governance, create_mission, produce_executive_brief.",
+        "Module redeclares the sharing-level union locally as AgentDatasetSharingLevel ('L0_public_external' | 'L1_metadata_only' | 'L2_summary_aggregate' | 'L3_redacted_extract' | 'L4_sensitive_raw_data') and the approval-state union locally as AgentEvidenceApprovalState; does NOT import from src/lib/admin/dataset-trust-model.ts (lane isolation).",
+        "listAgentDataAccessPolicies and buildAgentDataAccessMatrix are byte-equal across repeated calls and only emit (agent, purpose) entries for which the agent is authorized for that purpose.",
+        "Each of the four agents has policy entries for at least 4 of the seven canonical purposes.",
+        "Steward policies cover policy / readiness purposes only (envelope is L0 / L1 / L2); Atlas policies cover aggregate / approved executive signals only (envelope is L0 / L1 / L2); Sentinel policies cover evidence candidates + patterns; Nexus policies cover agent-approved program / workshop / deliverable purposes.",
+        "evaluateAgentDataAccess blocks every L4_sensitive_raw_data request unless approvalState === 'explicit_approved'; blocks cite_as_evidence unless the approval state is conditionally_approved or explicit_approved; refuses produce_executive_brief at L3 / L4 either via the level-outside-envelope check (Atlas, Steward) or the executive_brief_prefers_aggregate reason if the level is in envelope.",
+        "Every policy carries permissions for all 5 canonical sharing levels in canonical order, every permission carries a non-empty rationale, and every decision returned by evaluateAgentDataAccess populates a non-empty rationale (and a non-null blockReason when allowed === false).",
+        "Every policy and decision carries createdFrom: 'deterministic_agent_data_access_seed'.",
+        "summarizeAgentDataAccessMatrix reconciles byAgent, byPurpose, permissionsRequiringExplicitApproval, and preferredAggregateForExecutiveBrief counts to the policy list.",
+        "Module imports nothing from Source UI, Sentinel / Atlas / Nexus / Agent runtime, src/lib/admin/dataset-trust-model.ts, legacy /programs, mock.ts, auth, or supabase; no Date.now / Math.random / new Date / fetch; no anthropic / openai / pinecone references."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/admin/agent-data-access-policy.test.ts",
+        "npm run build"
+      ],
+      "notes": "Pure deterministic agent data access policy matrix that defines which agents (Nexus / Sentinel / Atlas / Steward) may use which dataset sharing levels for which canonical purposes. Read model only \u2014 no live enforcement, no audit ledger writes, no model invocation, no DB persistence. Lane-isolated from TRUST1 (parallel build pack): redeclares DatasetTrustLevel and DatasetTrustLadderState locally and the integration agent reconciles duplicate type declarations during cherry-pick. Future TRUST slices wire the matrix into the Steward Setup UI and the runtime tool dispatcher / Model Gateway; per-tenant policy override and live enforcement remain deferred."
     }
   ]
 }
