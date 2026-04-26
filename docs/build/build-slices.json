@@ -5622,6 +5622,59 @@
         "npm run build"
       ],
       "notes": "Pure deterministic library that maps SOL9 solution recommendations onto recommended workshops, SME role bundles, evidence-need hints, and deliverable hints for future Program Workshop Mode surfaces. Library only \u2014 no UI renderer, no live retrieval, no model calls, no tenant runtime state, no live SME directory, no calendar/booking. The bridge keeps its input contract structural so it runs even when SOL9 is not present on the branch; SOL9 outputs match the contract directly. Status not promoted on agent_runtime or program_workshop_mode \u2014 production-readiness notes are UNION-updated conservatively."
+    },
+    {
+      "id": "SOL12",
+      "name": "Architecture Draft Read Model",
+      "category": "SOL",
+      "status": "code_complete",
+      "risk": "low",
+      "ownerAgent": "Builder + Reviewer",
+      "dependsOn": [],
+      "allowedFiles": [
+        "src/lib/solutions/architecture-draft-read-model.ts",
+        "src/__tests__/integration/solutions/architecture-draft-read-model.test.ts",
+        "docs/build/slices/SOL12_ARCHITECTURE_DRAFT_READ_MODEL.md",
+        "docs/build/build-slices.json",
+        "docs/build/production-readiness.json"
+      ],
+      "forbiddenFiles": [
+        "src/lib/source/**",
+        "src/app/(maestro)/source/**",
+        "src/lib/sentinel/**",
+        "src/lib/atlas/**",
+        "src/lib/nexus/**",
+        "src/lib/agent/**",
+        "src/components/agent/**",
+        "src/app/programs/**",
+        "src/app/(maestro)/preview/**",
+        "src/app/demo/**",
+        "src/lib/programs/mock.ts",
+        "src/lib/auth/**",
+        "supabase/**",
+        "CYCLE_STATE.md",
+        "docs/abarva-source/**",
+        "docs/platform-design/**"
+      ],
+      "acceptanceCriteria": [
+        "Module exports ArchitectureDraft, ArchitectureDraftSection, ArchitectureAssumption, ArchitectureComponent, ArchitectureRisk, ArchitectureEvidenceGap, ArchitectureDraftSummary, and ArchitectureDraftStatus as the canonical contract.",
+        "ArchitectureDraftStatus is a string-literal union of exactly 'draft' | 'reviewed' | 'approved' | 'requires_workshop' | 'blocked'.",
+        "ArchitectureDraftSectionKey is a string-literal union of exactly 'context' | 'capabilities' | 'data_model' | 'integration' | 'security' | 'governance' | 'observability' | 'rollout'.",
+        "buildArchitectureDraft returns a draft whose sections contain exactly the eight canonical section keys in canonical order.",
+        "buildArchitectureDraft is byte-equal across repeated calls for the same input (no input and populated input both verified).",
+        "Default seed surfaces at least one assumption, component, risk, and evidence gap per canonical section, each with a unique id.",
+        "summarizeArchitectureDraft reconciles totals against the draft (sections, assumptions, components, risks, evidence gaps, blocker counts, workshop-gated assumption count).",
+        "getArchitectureBlockers returns approval-blocking risks and approval-blocking evidence gaps; returns an empty list when the caller supplies no blocking content.",
+        "Serialised draft contains no fabricated dollar amounts, no 'https://' / 'http://' URLs (no fake citations), and no banned placeholder phrases ('Coming soon', 'TBD', 'Lorem ipsum').",
+        "createdFrom equals 'deterministic_architecture_draft_seed' on every draft and basis.source equals 'deterministic_architecture_draft_seed'.",
+        "Module imports nothing from Sentinel / Atlas / Nexus / Agent runtime, Source UI, legacy /programs, mock.ts, auth, or supabase; contains no Math.random, clock reads, fetch, anthropic, openai, useState, useEffect."
+      ],
+      "validationCommands": [
+        "npx tsc --noEmit --pretty false",
+        "npx jest src/__tests__/integration/solutions/architecture-draft-read-model.test.ts",
+        "npx eslint --max-warnings=0 src/lib/solutions/architecture-draft-read-model.ts src/__tests__/integration/solutions/architecture-draft-read-model.test.ts"
+      ],
+      "notes": "Pure deterministic architecture draft read model. Library only \u2014 no model-generated architecture, no fake citations, no live retrieval, no tenant runtime state, no persistence. The default seed names a generic cross-sector architecture draft so the contract stands alone; per-archetype seed packs are deferred and callers can already pass a populated ArchitectureDraftInput to override the seed verbatim. Consumed downstream by the future Solution Intelligence Canvas (SOL10+) and by Nexus when composing per-tenant architecture drafts. agent_runtime status is not promoted by this slice."
     }
   ]
 }
