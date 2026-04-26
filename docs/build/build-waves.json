@@ -191,7 +191,13 @@
         "MG3",
         "TOOL3",
         "AUD2",
-        "CTX4"
+        "CTX4",
+        "ACT6",
+        "ACT8",
+        "ACT11",
+        "ACT12",
+        "I7",
+        "I8"
       ],
       "completedSlices": [
         "ACT2",
@@ -204,18 +210,25 @@
         "MG3",
         "TOOL3",
         "AUD2",
-        "CTX4"
+        "CTX4",
+        "ACT6",
+        "ACT8",
+        "ACT11",
+        "ACT12",
+        "I7",
+        "I8"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
       "mergedPrs": [
         263,
-        272
+        272,
+        306
       ],
       "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "Tower and Intelligence read models merged. Live signal ingestion, scheduled refresh, and persona walks remain deferred.",
+      "nextAction": "Tower and Intelligence read models fully extended. ACT6/8/11/12 cost-consumption/readiness/correlation/waste and I7/I8 source-basis/sentinel-rail landed via PR #306. Live signal ingestion, scheduled refresh, and persona walks remain deferred.",
       "lastUpdated": "2026-04-26"
     },
     {
@@ -397,8 +410,8 @@
       "waveId": "wave-8",
       "name": "Build Operations Hardening",
       "goal": "Harden the deterministic build-operations spine: integration-agent merge protocol, conflict policy enforcement, build wave progress tracker, dispatch queue automation hardening, agent batch acceptance harness, multi-cloud lab harness, production readiness CI ingestion, and the operations-hardening verification runbook.",
-      "status": "in_progress",
-      "percentComplete": 13,
+      "status": "merged",
+      "percentComplete": 100,
       "plannedSlices": [
         "OPS5",
         "OPS6",
@@ -410,15 +423,24 @@
         "WAVE1"
       ],
       "completedSlices": [
+        "OPS5",
+        "OPS6",
+        "OPS7",
+        "OPS8",
+        "QA13",
+        "CLOUD8",
+        "PROD5",
         "WAVE1"
       ],
       "skippedSlices": [],
       "blockedSlices": [],
-      "mergedPrs": [],
-      "validationStatus": "tsc_clean",
+      "mergedPrs": [
+        291
+      ],
+      "validationStatus": "tests_green",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "WAVE1 build wave progress tracker has landed. Next: OPS5 integration-agent merge protocol contract and OPS6 dispatch queue automation hardening.",
+      "nextAction": "Build operations hardening fully merged via PR #291. Cherry-resolve helper, duplicate-preflight, lane-report validator, worktree-cleanup assistant, secret-hygiene pattern, deployment-status surface, and wave-progress tracker all landed. Next wave: Pattern Library + Quality Governance.",
       "lastUpdated": "2026-04-26"
     }
   ]
