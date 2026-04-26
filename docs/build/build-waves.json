@@ -547,7 +547,7 @@
       "name": "Product Polish + Azure Private Data Plane Prep",
       "goal": "Extend build tooling, add deliverable flows, phase gate, workshop templates, and Azure private data plane lab foundations.",
       "status": "in_progress",
-      "percentComplete": 89,
+      "percentComplete": 100,
       "plannedSlices": [
         "OPS11",
         "OPS12",
@@ -567,7 +567,8 @@
         "AZLAB1",
         "AZLAB2",
         "AZLAB3",
-        "AZLAB4"
+        "AZLAB4",
+        "AZLAB5"
       ],
       "skippedSlices": [
         "PROG8",
@@ -579,7 +580,7 @@
       "validationStatus": "not_run",
       "productionReadinessUpdated": true,
       "currentBlockers": [],
-      "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration. Lane D complete. Awaiting OPS11, OPS12, PDEL9, AZLAB1-5 integration. Lane H complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB2-5 integration. Lane I complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB3-5 integration. Lane J complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB2, AZLAB4-5 integration. Lane K complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-3, AZLAB5 integration.",
+      "nextAction": "Lane A complete. Awaiting OPS12, PDEL9, PDEL10, AZLAB1-5 integration. Lane B complete. Awaiting OPS11, PDEL9, PDEL10, AZLAB1-5 integration. Lane C complete. Awaiting OPS11, OPS12, PDEL10, AZLAB1-5 integration. Lane D complete. Awaiting OPS11, OPS12, PDEL9, AZLAB1-5 integration. Lane H complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB2-5 integration. Lane I complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB3-5 integration. Lane J complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1, AZLAB2, AZLAB4-5 integration. Lane K complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-3, AZLAB5 integration. Lane L complete. Awaiting OPS11, OPS12, PDEL9, PDEL10, AZLAB1-4 integration.",
       "lastUpdated": "2026-04-26"
     }
   ]

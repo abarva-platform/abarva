@@ -1505,7 +1505,8 @@
         "2026-04-26: PROD4B confirms the admin Production Readiness page and production-readiness.json are the unified readiness control plane. This is deterministic read-model alignment only; no live monitoring, GitHub polling, Vercel polling, observability, deploy verification, or production readiness promotion is added.",
         "DEMO1: Demo script documents enterprise trust narrative, Azure private data plane pitch, and close/ask framework.",
         "PROD7: Production readiness summary polish created; static read model surfaces real blockers, pilot/production narratives, and manifest freshness caveat. Never claims production_ready.",
-        "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined."
+        "AZLAB1: SaaS Control Plane + Private Data Plane lab blueprint created; Azure resource groups and boundary architecture documented; May 4 deployment path outlined.",
+        "AZLAB5: Azure lab deployment runbook created; covers VNet, Container Apps, PostgreSQL, Key Vault, cost guardrails, and simulation-vs-real distinctions."
       ]
     }
   ]

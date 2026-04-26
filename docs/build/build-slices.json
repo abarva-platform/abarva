@@ -6954,6 +6954,17 @@
       ],
       "sliceDoc": "docs/build/slices/AZLAB4_PRIVATE_EVIDENCE_MANIFEST_DEMO.md",
       "createdAt": "2026-04-26"
+    },
+    {
+      "id": "AZLAB5",
+      "name": "Azure Lab Deployment Runbook",
+      "category": "architecture",
+      "status": "code_complete",
+      "risk": "low",
+      "sourceFiles": [],
+      "testFiles": [],
+      "sliceDoc": "docs/build/slices/AZLAB5_AZURE_LAB_DEPLOYMENT_RUNBOOK.md",
+      "createdAt": "2026-04-26"
     }
   ]
 }
